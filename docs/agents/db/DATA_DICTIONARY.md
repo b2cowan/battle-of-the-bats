@@ -2296,7 +2296,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 4. **No `program_year_id` and none needed** — `player_id` is inherently season-scoped (season rollover mints a new `rep_roster_players` row; same as `rep_player_awards` gotcha 4). Cross-season history arrives via continuity links (slice 3C), not season columns here.
 5. **Hard-deletable** (undo a mis-entry) — a different concern from retiring a *type*.
 6. **UI honesty rules are app-side law:** a trend/sparkline renders only at ≥2 entries of the same type in-season; team-wide lists stay roster-ordered (never sort-by-result). No DB enforcement — flag any violation in review.
-7. **Slice 3B adds a nullable `session_id`** (evaluation-session back-reference) — not present at mig 189.
+7. **`session_id` (mig 190) is a nullable evaluation-session back-reference** — entries logged from an Evaluation Session carry it; singles logged from the player-profile card leave it NULL. Both doors write the SAME rows (one dataset, two doors). **The FK is COMPOSITE `(session_id, team_id) → rep_team_evaluation_sessions(id, team_id)`** so a reading can never reference another team's session even via direct PostgREST (3B review fix; MATCH SIMPLE skips NULL session_id; the SET NULL action is column-scoped to session_id — PG15+). **Partial unique `(session_id, player_id, measurable_type_id) WHERE session_id IS NOT NULL`** = one reading per player per test per session (duplicate → 409 app-side); singles are unconstrained. Deleting a session degrades its entries to singles, never erases readings. The app additionally requires the session's `program_year_id` to match the player row's (a prior-season session id can't be attached to a current reading).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -2324,6 +2324,38 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_player_measurables.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who logged it.
+
+<!-- dict:col:rep_player_measurables.session_id -->
+**`session_id`** (FK → `rep_team_evaluation_sessions.id` ON DELETE SET NULL, nullable; mig 190) — the evaluation session this reading was collected in (gotcha 7); NULL = logged as a single from the player profile.
+
+### `rep_team_evaluation_sessions`
+<!-- dict:table:rep_team_evaluation_sessions -->
+
+**Purpose:** the Evaluation Session artifact — "Jul 17 — 14 players, 3 tests." The coach's batch-collection unit for measurables (Player Development slice 3B, migration 190); the session grid writes ordinary `rep_player_measurables` rows tagged with `session_id`. **⚠ DEV-ONLY / PROD-PENDING at author time — promote with mig 189.**
+
+**Gotchas (read first):**
+1. **A session is a grouping artifact, not the record.** Readings are permanent; deleting a session `SET NULL`s its entries back to singles — never deletes them (column-scoped SET NULL via the composite FK from `rep_player_measurables`; see that table's gotcha 7). Session stats ("14 players · 3 tests") are DERIVED at read time from the entries, never stored. `UNIQUE (id, team_id)` exists solely as the composite-FK target.
+2. **Head-coach-only writes at BOTH layers from birth** (D1): app routes gate on `canWriteDevelopment`, RLS write policies require `coach_role='head_coach'`, no org-admin write policies (same posture mig 189 was tightened to). All policies DROP-guarded → re-runnable.
+3. **`program_year_id` IS stored here** (unlike the per-player Development tables, which season-scope via `player_id`) — a session belongs to a season directly, and the hub lists the active program year's sessions.
+4. **UI honesty rules (app-side law):** the session grid renders the roster in ROSTER ORDER only (never sort-by-result); skipped/absent players simply have no entry (an honest dash, never a fabricated 0).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_evaluation_sessions.org_id -->
+<!-- dict:col:rep_team_evaluation_sessions.team_id -->
+**`org_id` / `team_id`** (FK, NOT NULL, CASCADE) — scope; sourced from the URL/context, not the request body.
+
+<!-- dict:col:rep_team_evaluation_sessions.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL, CASCADE) — the season the session belongs to (gotcha 3).
+
+<!-- dict:col:rep_team_evaluation_sessions.session_date -->
+**`session_date`** (date, NOT NULL) — when the tests were run; defaults to today in the UI, same 2000..next-year sanity bounds as `rep_player_measurables.recorded_on` (app-enforced).
+
+<!-- dict:col:rep_team_evaluation_sessions.note -->
+**`note`** (text, nullable; CHECK `≤ 200` chars) — optional session label ("post-break testing").
+
+<!-- dict:col:rep_team_evaluation_sessions.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the head coach who ran it.
 
 ### `rep_player_development_goals`
 <!-- dict:table:rep_player_development_goals -->

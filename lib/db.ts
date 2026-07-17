@@ -5,7 +5,7 @@ import { createClient as createBrowserSupabaseClient } from './supabase-browser'
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepTeamEvaluationSession, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -7145,6 +7145,7 @@ function mapRepPlayerMeasurable(r: any): RepPlayerMeasurable {
     unit: r.unit,
     recordedOn: r.recorded_on,
     note: r.note ?? null,
+    sessionId: r.session_id ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -7166,7 +7167,8 @@ export async function getRepPlayerMeasurablesForPlayer(playerId: string): Promis
 
 export async function createRepPlayerMeasurable(fields: {
   orgId: string; teamId: string; playerId: string; measurableTypeId: string;
-  value: number; unit: string; recordedOn: string; note?: string | null; createdBy?: string | null;
+  value: number; unit: string; recordedOn: string; note?: string | null;
+  sessionId?: string | null; createdBy?: string | null;
 }): Promise<RepPlayerMeasurable> {
   const { data, error } = await supabaseAdmin
     .from('rep_player_measurables')
@@ -7179,6 +7181,7 @@ export async function createRepPlayerMeasurable(fields: {
       unit: fields.unit.trim(),
       recorded_on: fields.recordedOn,
       note: fields.note?.trim() || null,
+      session_id: fields.sessionId ?? null,
       created_by: fields.createdBy ?? null,
     })
     .select()
@@ -7269,6 +7272,157 @@ export async function updateRepPlayerDevelopmentGoal(
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepPlayerDevelopmentGoal(data) : null;
+}
+
+// ── Evaluation Sessions (slice 3B — migration 190) ──
+
+function mapRepTeamEvaluationSession(r: any): RepTeamEvaluationSession {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    programYearId: r.program_year_id,
+    sessionDate: r.session_date,
+    note: r.note ?? null,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/** Sessions for one season, newest-first, with DERIVED stats (players/tests/readings touched)
+ *  aggregated from the entries — a session never stores its own counts (dictionary gotcha 1). */
+export async function getRepTeamEvaluationSessions(programYearId: string): Promise<RepTeamEvaluationSession[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_evaluation_sessions')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .order('session_date', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const sessions = (data ?? []).map(mapRepTeamEvaluationSession);
+  if (sessions.length === 0) return sessions;
+
+  const { data: entryRows, error: entriesError } = await supabaseAdmin
+    .from('rep_player_measurables')
+    .select('session_id, player_id, measurable_type_id')
+    .in('session_id', sessions.map(s => s.id));
+  if (entriesError) throw entriesError;
+
+  const agg = new Map<string, { players: Set<string>; types: Set<string>; entries: number }>();
+  for (const row of entryRows ?? []) {
+    if (!row.session_id) continue;
+    let a = agg.get(row.session_id);
+    if (!a) { a = { players: new Set(), types: new Set(), entries: 0 }; agg.set(row.session_id, a); }
+    a.players.add(row.player_id);
+    a.types.add(row.measurable_type_id);
+    a.entries += 1;
+  }
+  return sessions.map(s => {
+    const a = agg.get(s.id);
+    return { ...s, playerCount: a?.players.size ?? 0, typeCount: a?.types.size ?? 0, entryCount: a?.entries ?? 0 };
+  });
+}
+
+export async function createRepTeamEvaluationSession(fields: {
+  orgId: string; teamId: string; programYearId: string; sessionDate: string;
+  note?: string | null; createdBy?: string | null;
+}): Promise<RepTeamEvaluationSession> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_evaluation_sessions')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      program_year_id: fields.programYearId,
+      session_date: fields.sessionDate,
+      note: fields.note?.trim() || null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamEvaluationSession(data);
+}
+
+/** Scoped single-session read (team_id guards cross-team ids). */
+export async function getRepTeamEvaluationSession(id: string, teamId: string): Promise<RepTeamEvaluationSession | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_evaluation_sessions')
+    .select('*')
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamEvaluationSession(data) : null;
+}
+
+export async function updateRepTeamEvaluationSession(
+  id: string, teamId: string,
+  fields: { sessionDate?: string; note?: string | null },
+): Promise<RepTeamEvaluationSession | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.sessionDate !== undefined) patch.session_date = fields.sessionDate;
+  if (fields.note !== undefined) patch.note = fields.note?.trim() || null;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_evaluation_sessions')
+    .update(patch)
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamEvaluationSession(data) : null;
+}
+
+/** Deleting a session degrades its entries to singles via ON DELETE SET NULL — readings
+ *  are never erased (dictionary gotcha 1). */
+export async function deleteRepTeamEvaluationSession(id: string, teamId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_evaluation_sessions')
+    .delete()
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
+/** Every reading collected in one session (the run screen's resume state). team_id scoping
+ *  is belt-and-suspenders on top of the composite FK — the file's own cross-team rule. */
+export async function getRepSessionMeasurables(sessionId: string, teamId: string): Promise<RepPlayerMeasurable[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_measurables')
+    .select('*')
+    .eq('session_id', sessionId)
+    .eq('team_id', teamId)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerMeasurable);
+}
+
+/** Team-wide season measurables for the board (players are already season-scoped rows). */
+export async function getRepTeamMeasurablesForPlayers(playerIds: string[]): Promise<RepPlayerMeasurable[]> {
+  if (playerIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_measurables')
+    .select('*')
+    .in('player_id', playerIds)
+    .order('recorded_on', { ascending: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerMeasurable);
+}
+
+/** Team-wide season goals for the board. */
+export async function getRepTeamDevelopmentGoalsForPlayers(playerIds: string[]): Promise<RepPlayerDevelopmentGoal[]> {
+  if (playerIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_development_goals')
+    .select('*')
+    .in('player_id', playerIds)
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerDevelopmentGoal);
 }
 
 /** Scoped delete — undoes a mis-entry (archiving is status='parked', not delete). */

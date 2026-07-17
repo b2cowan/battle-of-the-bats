@@ -2601,6 +2601,38 @@
   },
   {
     "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_session_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "session_id",
+    "foreign_table": "rep_team_evaluation_sessions",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_session_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "session_id",
+    "foreign_table": "rep_team_evaluation_sessions",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_session_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_team_evaluation_sessions",
+    "foreign_column": "team_id"
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_session_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_team_evaluation_sessions",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_measurables",
     "constraint_name": "rep_player_measurables_team_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
@@ -2838,6 +2870,62 @@
     "column_name": "user_id",
     "foreign_table": null,
     "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "constraint_name": "rep_team_evaluation_sessions_created_by_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "created_by",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "constraint_name": "rep_team_evaluation_sessions_id_team_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "constraint_name": "rep_team_evaluation_sessions_id_team_uniq",
+    "constraint_type": "UNIQUE",
+    "column_name": "team_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "constraint_name": "rep_team_evaluation_sessions_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "constraint_name": "rep_team_evaluation_sessions_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "constraint_name": "rep_team_evaluation_sessions_program_year_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "program_year_id",
+    "foreign_table": "rep_program_years",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "constraint_name": "rep_team_evaluation_sessions_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_team_event_attendance",

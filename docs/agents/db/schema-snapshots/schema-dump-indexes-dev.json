@@ -1396,6 +1396,16 @@
   },
   {
     "tablename": "rep_player_measurables",
+    "indexname": "rep_player_measurables_session_entry_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_measurables_session_entry_uniq ON public.rep_player_measurables USING btree (session_id, player_id, measurable_type_id) WHERE (session_id IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_player_measurables",
+    "indexname": "rep_player_measurables_session_idx",
+    "indexdef": "CREATE INDEX rep_player_measurables_session_idx ON public.rep_player_measurables USING btree (session_id)"
+  },
+  {
+    "tablename": "rep_player_measurables",
     "indexname": "rep_player_measurables_team_idx",
     "indexdef": "CREATE INDEX rep_player_measurables_team_idx ON public.rep_player_measurables USING btree (team_id, recorded_on DESC)"
   },
@@ -1498,6 +1508,31 @@
     "tablename": "rep_team_coaches",
     "indexname": "rep_team_coaches_user_idx",
     "indexdef": "CREATE INDEX rep_team_coaches_user_idx ON public.rep_team_coaches USING btree (org_id, user_id)"
+  },
+  {
+    "tablename": "rep_team_evaluation_sessions",
+    "indexname": "rep_team_evaluation_sessions_id_team_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_evaluation_sessions_id_team_uniq ON public.rep_team_evaluation_sessions USING btree (id, team_id)"
+  },
+  {
+    "tablename": "rep_team_evaluation_sessions",
+    "indexname": "rep_team_evaluation_sessions_org_idx",
+    "indexdef": "CREATE INDEX rep_team_evaluation_sessions_org_idx ON public.rep_team_evaluation_sessions USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_evaluation_sessions",
+    "indexname": "rep_team_evaluation_sessions_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_evaluation_sessions_pkey ON public.rep_team_evaluation_sessions USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_evaluation_sessions",
+    "indexname": "rep_team_evaluation_sessions_py_idx",
+    "indexdef": "CREATE INDEX rep_team_evaluation_sessions_py_idx ON public.rep_team_evaluation_sessions USING btree (program_year_id)"
+  },
+  {
+    "tablename": "rep_team_evaluation_sessions",
+    "indexname": "rep_team_evaluation_sessions_team_idx",
+    "indexdef": "CREATE INDEX rep_team_evaluation_sessions_team_idx ON public.rep_team_evaluation_sessions USING btree (team_id, session_date DESC)"
   },
   {
     "tablename": "rep_team_event_attendance",

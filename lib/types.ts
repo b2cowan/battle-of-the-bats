@@ -1466,9 +1466,30 @@ export interface RepPlayerMeasurable {
   unit: string;
   recordedOn: string;
   note: string | null;
+  // Evaluation-session back-reference (mig 190) — null = logged as a single from the
+  // player profile. Both doors write the same rows.
+  sessionId: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// The Evaluation Session artifact (Player Development 3B, mig 190) — a grouping of
+// measurable readings collected in one sitting; stats are derived at read time.
+export interface RepTeamEvaluationSession {
+  id: string;
+  orgId: string;
+  teamId: string;
+  programYearId: string;
+  sessionDate: string;
+  note: string | null;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+  // Derived (never stored): how many players/tests/readings the session touched.
+  playerCount?: number;
+  typeCount?: number;
+  entryCount?: number;
 }
 
 export type RepDevelopmentGoalStatus = 'working' | 'achieved' | 'parked';

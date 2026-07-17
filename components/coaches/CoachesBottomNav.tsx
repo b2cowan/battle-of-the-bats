@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, MessageSquare, Trophy,
   Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
-  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered,
+  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered, TrendingUp,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -30,6 +30,7 @@ type MoreItem = { key: string; icon: typeof Users; label: string; conditional?: 
 const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   { header: 'Squad', items: [
     { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
+    { key: '/development',   icon: TrendingUp,    label: 'Development' },
     { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts', conditional: 'tryouts' },
   ] },
   { header: 'Season', items: [

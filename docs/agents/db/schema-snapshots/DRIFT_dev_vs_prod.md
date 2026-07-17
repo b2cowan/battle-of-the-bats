@@ -2,24 +2,25 @@
 
 **Generated:** 2026-07-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 214 divergence(s)** across dev/prod.
+**⚠️ 240 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 9 | 0 | — |
-| Columns | 71 | 3 | 24 |
-| Indexes | 38 | 3 | 0 |
-| Constraints | 42 | 9 | — |
-| RLS / CHECK | 14 | 1 | 0 (RLS state) |
+| Tables | 10 | 0 | — |
+| Columns | 81 | 3 | 24 |
+| Indexes | 45 | 3 | 0 |
+| Constraints | 49 | 9 | — |
+| RLS / CHECK | 15 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (9)
+### Only in DEV (10)
 - `fan_alert_prefs`
 - `fan_follows`
 - `rep_player_awards`
 - `rep_player_development_goals`
 - `rep_player_measurables`
 - `rep_team_award_types`
+- `rep_team_evaluation_sessions`
 - `rep_team_expense_tags`
 - `rep_team_measurable_types`
 - `user_marketing_opt_outs`
@@ -28,7 +29,7 @@
 _none_
 
 ## Columns
-### Only in DEV (71)
+### Only in DEV (81)
 - `fan_alert_prefs.created_at`
 - `fan_alert_prefs.event_news`
 - `fan_alert_prefs.game_alerts`
@@ -71,6 +72,7 @@ _none_
 - `rep_player_measurables.org_id`
 - `rep_player_measurables.player_id`
 - `rep_player_measurables.recorded_on`
+- `rep_player_measurables.session_id`
 - `rep_player_measurables.team_id`
 - `rep_player_measurables.unit`
 - `rep_player_measurables.updated_at`
@@ -85,6 +87,15 @@ _none_
 - `rep_team_award_types.sort_order`
 - `rep_team_award_types.team_id`
 - `rep_team_award_types.updated_at`
+- `rep_team_evaluation_sessions.created_at`
+- `rep_team_evaluation_sessions.created_by`
+- `rep_team_evaluation_sessions.id`
+- `rep_team_evaluation_sessions.note`
+- `rep_team_evaluation_sessions.org_id`
+- `rep_team_evaluation_sessions.program_year_id`
+- `rep_team_evaluation_sessions.session_date`
+- `rep_team_evaluation_sessions.team_id`
+- `rep_team_evaluation_sessions.updated_at`
 - `rep_team_expense_tags.created_at`
 - `rep_team_expense_tags.expense_id`
 - `rep_team_expense_tags.tag_id`
@@ -133,7 +144,7 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (38)
+### Only in DEV (45)
 - `fan_alert_prefs_pkey`
 - `fan_follows_entity_idx`
 - `fan_follows_pkey`
@@ -155,6 +166,8 @@ _none_
 - `rep_player_measurables_org_idx`
 - `rep_player_measurables_pkey`
 - `rep_player_measurables_player_idx`
+- `rep_player_measurables_session_entry_uniq`
+- `rep_player_measurables_session_idx`
 - `rep_player_measurables_team_idx`
 - `rep_player_measurables_type_idx`
 - `rep_team_award_types_name_uniq`
@@ -163,6 +176,11 @@ _none_
 - `rep_team_award_types_org_shared_idx`
 - `rep_team_award_types_pkey`
 - `rep_team_award_types_team_idx`
+- `rep_team_evaluation_sessions_id_team_uniq`
+- `rep_team_evaluation_sessions_org_idx`
+- `rep_team_evaluation_sessions_pkey`
+- `rep_team_evaluation_sessions_py_idx`
+- `rep_team_evaluation_sessions_team_idx`
 - `rep_team_expense_tags_pkey`
 - `rep_team_expense_tags_tag_idx`
 - `rep_team_measurable_types_name_uniq`
@@ -182,7 +200,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (42)
+### Only in DEV (49)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
@@ -210,11 +228,18 @@ _none_
 - `rep_player_measurables.rep_player_measurables_org_id_fkey`
 - `rep_player_measurables.rep_player_measurables_pkey`
 - `rep_player_measurables.rep_player_measurables_player_id_fkey`
+- `rep_player_measurables.rep_player_measurables_session_team_fkey`
 - `rep_player_measurables.rep_player_measurables_team_id_fkey`
 - `rep_team_award_types.rep_team_award_types_created_by_fkey`
 - `rep_team_award_types.rep_team_award_types_org_id_fkey`
 - `rep_team_award_types.rep_team_award_types_pkey`
 - `rep_team_award_types.rep_team_award_types_team_id_fkey`
+- `rep_team_evaluation_sessions.rep_team_evaluation_sessions_created_by_fkey`
+- `rep_team_evaluation_sessions.rep_team_evaluation_sessions_id_team_uniq`
+- `rep_team_evaluation_sessions.rep_team_evaluation_sessions_org_id_fkey`
+- `rep_team_evaluation_sessions.rep_team_evaluation_sessions_pkey`
+- `rep_team_evaluation_sessions.rep_team_evaluation_sessions_program_year_id_fkey`
+- `rep_team_evaluation_sessions.rep_team_evaluation_sessions_team_id_fkey`
 - `rep_team_expense_tags.rep_team_expense_tags_expense_id_fkey`
 - `rep_team_expense_tags.rep_team_expense_tags_pkey`
 - `rep_team_expense_tags.rep_team_expense_tags_tag_id_fkey`
@@ -241,7 +266,7 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (14)
+### CHECK only in DEV (15)
 - `fan_follows.fan_follows_entity_type_check`
 - `fan_follows.fan_follows_source_check`
 - `rep_player_awards.rep_player_awards_note_check`
@@ -254,6 +279,7 @@ _none_
 - `rep_player_measurables.rep_player_measurables_value_check`
 - `rep_team_award_types.rep_team_award_types_emoji_check`
 - `rep_team_award_types.rep_team_award_types_name_check`
+- `rep_team_evaluation_sessions.rep_team_evaluation_sessions_note_check`
 - `rep_team_measurable_types.rep_team_measurable_types_name_check`
 - `rep_team_measurable_types.rep_team_measurable_types_unit_check`
 

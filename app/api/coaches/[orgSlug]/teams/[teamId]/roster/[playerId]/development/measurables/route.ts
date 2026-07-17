@@ -4,10 +4,12 @@ import {
   getCoachingAssignmentsForUser,
   getRepRosterPlayer,
   getRepTeamMeasurableTypes,
+  getRepTeamEvaluationSession,
   createRepPlayerMeasurable,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { isValidRecordDate } from '@/lib/measurable-format';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -36,7 +38,7 @@ export const POST = withObservability(async (req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can log measurables.');
   if (denied) return denied;
 
-  let body: { measurableTypeId?: unknown; value?: unknown; recordedOn?: unknown; note?: unknown };
+  let body: { measurableTypeId?: unknown; value?: unknown; recordedOn?: unknown; note?: unknown; sessionId?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -61,14 +63,8 @@ export const POST = withObservability(async (req: Request,
   }
 
   const recordedOn = typeof body.recordedOn === 'string' ? body.recordedOn : '';
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(recordedOn) || isNaN(new Date(`${recordedOn}T00:00:00`).getTime())) {
-    return NextResponse.json({ error: 'recordedOn must be a valid YYYY-MM-DD date.' }, { status: 400 });
-  }
-  // A fat-fingered year (0202-…, 2199-…) would silently corrupt the newest-first sort and
-  // the trend line — bound to a sane window instead of trusting the picker.
-  const year = Number(recordedOn.slice(0, 4));
-  if (year < 2000 || year > new Date().getFullYear() + 1) {
-    return NextResponse.json({ error: 'That date looks off — check the year.' }, { status: 400 });
+  if (!isValidRecordDate(recordedOn)) {
+    return NextResponse.json({ error: 'recordedOn must be a valid YYYY-MM-DD date — check the year.' }, { status: 400 });
   }
 
   const note = typeof body.note === 'string' ? body.note.trim() : '';
@@ -76,18 +72,42 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Note is too long (max 200 characters).' }, { status: 400 });
   }
 
-  const entry = await createRepPlayerMeasurable({
-    orgId: ctx.org.id,
-    teamId,
-    playerId,
-    measurableTypeId,
-    value,
-    // Unit snapshot comes from the TYPE server-side — never from the client — so a later
-    // unit edit can't rewrite what was logged today.
-    unit: type.unit,
-    recordedOn,
-    note: note || null,
-    createdBy: ctx.user.id,
-  });
-  return NextResponse.json({ entry }, { status: 201 });
+  // Optional evaluation-session tag (3B) — must be THIS team's session AND the same season
+  // as the player row (a prior-season session id must not attach to a current reading; the
+  // player row is season-scoped, so its program_year_id is the parity anchor).
+  let sessionId: string | null = null;
+  if (body.sessionId != null) {
+    if (typeof body.sessionId !== 'string') {
+      return NextResponse.json({ error: 'Invalid sessionId' }, { status: 400 });
+    }
+    const session = await getRepTeamEvaluationSession(body.sessionId, teamId);
+    if (!session || session.programYearId !== resolved.player.programYearId) {
+      return NextResponse.json({ error: 'Session not found for this team and season.' }, { status: 400 });
+    }
+    sessionId = session.id;
+  }
+
+  try {
+    const entry = await createRepPlayerMeasurable({
+      orgId: ctx.org.id,
+      teamId,
+      playerId,
+      measurableTypeId,
+      value,
+      // Unit snapshot comes from the TYPE server-side — never from the client — so a later
+      // unit edit can't rewrite what was logged today.
+      unit: type.unit,
+      recordedOn,
+      note: note || null,
+      sessionId,
+      createdBy: ctx.user.id,
+    });
+    return NextResponse.json({ entry }, { status: 201 });
+  } catch (error: unknown) {
+    // Partial unique (session, player, test) — one reading per player per test per session.
+    if (typeof error === 'object' && error !== null && (error as { code?: string }).code === '23505') {
+      return NextResponse.json({ error: 'Already logged for this player in this session — remove the existing reading first.' }, { status: 409 });
+    }
+    throw error;
+  }
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/development/measurables' });

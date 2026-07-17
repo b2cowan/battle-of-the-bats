@@ -3893,3 +3893,71 @@
   border-radius: 10px; padding: 0.65rem 0.85rem; margin-bottom: 0.9rem; font-size: 0.85rem;
 }
 .moneyTagSummary strong { color: var(--logic-lime); }
+
+/* ── Player Development 3B — hub grid, session run screen, team board ──
+   Hub composes as a section-card GRID on desktop per the 2026-07-09 multi-domain layout
+   rule (design decision 2026-07-17); phones stack. Tokens only — no new primitives. */
+.devHubGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+.devSlotCard {
+  border: 1px dashed var(--border-subtle, rgba(255, 255, 255, 0.14));
+  border-radius: var(--radius);
+  padding: 1rem;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+}
+.devSlotCard p { margin: 0.25rem 0 0; font-size: 0.85rem; }
+
+/* Session run screen — roster rows are ≥44px tap targets, ROSTER ORDER ONLY. */
+.devRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0.35rem 0.6rem;
+  border-top: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+}
+.devRow:first-child { border-top: none; }
+.devRowName { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.devRowNum { color: var(--white-45, rgba(255, 255, 255, 0.45)); font-family: var(--font-data); font-size: 0.78rem; }
+.devRowVal {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.88rem;
+}
+.devRowDash { color: var(--white-45, rgba(255, 255, 255, 0.45)); }
+.devRowInput { max-width: 130px; }
+
+/* Team board — desktop data-face table; phones reflow to per-player cards. */
+.devBoardTable { width: 100%; border-collapse: collapse; }
+.devBoardTable th {
+  text-align: left;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+}
+.devBoardTable td {
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--white-10, rgba(255, 255, 255, 0.1));
+  vertical-align: top;
+}
+.devBoardVal { font-family: var(--font-data); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.devBoardMuted { color: var(--white-45, rgba(255, 255, 255, 0.45)); }
+/* Mobile reflow comes from the shared .tableAsCards primitive — no bespoke dual tree. */
+
+/* Muted sentence copy inside Development cards — wraps normally (NEVER reuse .miniRowMeta,
+   whose nowrap is for single-line row labels, for multi-word sentences). */
+.devCardNote {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--white-45);
+  white-space: normal;
+  margin: 0;
+}

@@ -9434,6 +9434,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_player_measurables",
+        "pos": 13,
+        "column_name": "session_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_program_years",
         "pos": 1,
         "column_name": "id",
@@ -10170,6 +10179,87 @@
         "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 4,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 5,
+        "column_name": "session_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 6,
+        "column_name": "note",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 7,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 9,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
       },
       {
         "table_name": "rep_team_event_attendance",
@@ -15748,6 +15838,34 @@
       },
       {
         "table_name": "rep_player_measurables",
+        "column_name": "session_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "session_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_teams",
         "foreign_column": "id",
@@ -15878,6 +15996,34 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "rep_team_coaches_user_id_fkey"
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_evaluation_sessions_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_evaluation_sessions_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_evaluation_sessions_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_evaluation_sessions_team_id_fkey"
       },
       {
         "table_name": "rep_team_event_attendance",
@@ -18139,6 +18285,16 @@
       },
       {
         "tablename": "rep_player_measurables",
+        "indexname": "rep_player_measurables_session_entry_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_measurables_session_entry_uniq ON public.rep_player_measurables USING btree (session_id, player_id, measurable_type_id) WHERE (session_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_player_measurables",
+        "indexname": "rep_player_measurables_session_idx",
+        "indexdef": "CREATE INDEX rep_player_measurables_session_idx ON public.rep_player_measurables USING btree (session_id)"
+      },
+      {
+        "tablename": "rep_player_measurables",
         "indexname": "rep_player_measurables_team_idx",
         "indexdef": "CREATE INDEX rep_player_measurables_team_idx ON public.rep_player_measurables USING btree (team_id, recorded_on DESC)"
       },
@@ -18241,6 +18397,31 @@
         "tablename": "rep_team_coaches",
         "indexname": "rep_team_coaches_user_idx",
         "indexdef": "CREATE INDEX rep_team_coaches_user_idx ON public.rep_team_coaches USING btree (org_id, user_id)"
+      },
+      {
+        "tablename": "rep_team_evaluation_sessions",
+        "indexname": "rep_team_evaluation_sessions_id_team_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_evaluation_sessions_id_team_uniq ON public.rep_team_evaluation_sessions USING btree (id, team_id)"
+      },
+      {
+        "tablename": "rep_team_evaluation_sessions",
+        "indexname": "rep_team_evaluation_sessions_org_idx",
+        "indexdef": "CREATE INDEX rep_team_evaluation_sessions_org_idx ON public.rep_team_evaluation_sessions USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_evaluation_sessions",
+        "indexname": "rep_team_evaluation_sessions_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_evaluation_sessions_pkey ON public.rep_team_evaluation_sessions USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_evaluation_sessions",
+        "indexname": "rep_team_evaluation_sessions_py_idx",
+        "indexdef": "CREATE INDEX rep_team_evaluation_sessions_py_idx ON public.rep_team_evaluation_sessions USING btree (program_year_id)"
+      },
+      {
+        "tablename": "rep_team_evaluation_sessions",
+        "indexname": "rep_team_evaluation_sessions_team_idx",
+        "indexdef": "CREATE INDEX rep_team_evaluation_sessions_team_idx ON public.rep_team_evaluation_sessions USING btree (team_id, session_date DESC)"
       },
       {
         "tablename": "rep_team_event_attendance",
@@ -20215,6 +20396,18 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_coaches",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_evaluation_sessions",
+        "detail": "rep_team_evaluation_sessions_note_check",
+        "check_clause": "((note IS NULL) OR (char_length(note) <= 200))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_evaluation_sessions",
         "detail": "ENABLED",
         "check_clause": null
       },

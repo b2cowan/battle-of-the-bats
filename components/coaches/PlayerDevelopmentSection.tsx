@@ -4,6 +4,8 @@ import { Plus, X, Check, Settings2 } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
+import TestTypesManager, { NewTypeFields } from '@/components/coaches/TestTypesManager';
+import { formatValue, todayLocal, formatShortDate } from '@/lib/measurable-format';
 import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus,
 } from '@/lib/types';
@@ -35,51 +37,7 @@ interface Props {
   attendancePct: number | null;
 }
 
-/** Local calendar date (the coach's own "today") — this is a coach-chosen date, not a
- *  tournament-timezone date, so local is correct here. en-CA formats as YYYY-MM-DD. */
-function todayLocal(): string {
-  return new Date().toLocaleDateString('en-CA');
-}
-
-function formatEntryDate(iso: string): string {
-  const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
-  return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
-/** Value formatting: keep what the coach typed, minus float noise. */
-function formatValue(v: number): string {
-  return Number.isInteger(v) ? String(v) : String(Number(v.toFixed(3)));
-}
-
-/** The "add a new test type" fields — ONE implementation for both the inline log flow and
- *  the manage dialog. They deliberately share the same draft state via props; when both are
- *  visible the manage dialog overlays the log form, so only one is interactable at a time. */
-function NewTypeFields({ idPrefix, name, unit, onName, onUnit, onAdd }: {
-  idPrefix: string;
-  name: string;
-  unit: string;
-  onName: (v: string) => void;
-  onUnit: (v: string) => void;
-  onAdd: () => void;
-}) {
-  return (
-    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
-      <div className={styles.field} style={{ flex: '1 1 160px' }}>
-        <label className={styles.label} htmlFor={`${idPrefix}-name`}>New test name</label>
-        <input id={`${idPrefix}-name`} className={styles.input} type="text" value={name}
-          onChange={e => onName(e.target.value)} maxLength={40} placeholder="e.g. 60-yd sprint" />
-      </div>
-      <div className={styles.field} style={{ flex: '0 1 120px' }}>
-        <label className={styles.label} htmlFor={`${idPrefix}-unit`}>Unit</label>
-        <input id={`${idPrefix}-unit`} className={styles.input} type="text" value={unit}
-          onChange={e => onUnit(e.target.value)} maxLength={20} placeholder="seconds" />
-      </div>
-      <button type="button" className="btn btn-ghost" style={{ fontSize: '0.8rem' }} onClick={onAdd}>
-        Add test
-      </button>
-    </div>
-  );
-}
+// NewTypeFields lives in TestTypesManager.tsx (single home; acyclic import graph).
 
 export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, bestPositions, attendancePct }: Props) {
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}/development`;
@@ -108,9 +66,6 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
   const [newTypeUnit, setNewTypeUnit] = useState('');
 
   const [manageOpen, setManageOpen] = useState(false);
-  const [renamingTypeId, setRenamingTypeId] = useState<string | null>(null);
-  const [renameName, setRenameName] = useState('');
-  const [renameUnit, setRenameUnit] = useState('');
 
   const [expandedTypeId, setExpandedTypeId] = useState<string | null>(null);
 
@@ -118,8 +73,6 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
   // silently does nothing is not an answer (owner feedback, 2026-07-17).
   const [goalErr, setGoalErr] = useState('');
   const [logErr, setLogErr] = useState('');
-  const [manageErr, setManageErr] = useState('');
-
   const load = useCallback(async () => {
     try {
       const res = await fetch(base);
@@ -362,30 +315,6 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
     }
   }
 
-  async function patchType(typeId: string, body: { name?: string; unit?: string; isActive?: boolean }) {
-    if (busy) return;
-    setManageErr('');
-    setBusy(true);
-    try {
-      const res = await fetch(`${typesBase}/${typeId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
-      });
-      const json = await res.json().catch(() => null);
-      if (!res.ok || !json) {
-        setManageErr(json?.error ?? 'Could not update the test type — try again.');
-        return;
-      }
-      setRenamingTypeId(null);
-      setData(d => d ? { ...d, types: d.types.map(t => t.id === json.type.id ? json.type : t) } : d);
-    } catch {
-      setManageErr('Could not update the test type — try again.');
-    } finally {
-      setBusy(false);
-    }
-  }
-
   if (!data && !error) {
     return <p className={styles.detailPlaceholder}>Loading development…</p>;
   }
@@ -449,7 +378,7 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
           {canWrite && data.showMeasurables && (
             <button type="button" className="btn btn-ghost"
               style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-              onClick={() => { setManageOpen(true); setManageErr(''); }}>
+              onClick={() => setManageOpen(true)}>
               <Settings2 size={13} /> Test types
             </button>
           )}
@@ -485,7 +414,7 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
                         {g.focusArea}
                       </button>
                     ) : g.focusArea}
-                    {g.note && <span className={styles.miniRowMeta} style={{ display: 'block' }}>{g.note}</span>}
+                    {g.note && <span className={styles.devCardNote}>{g.note}</span>}
                   </span>
                   {canWrite ? (
                     <button type="button"
@@ -577,7 +506,7 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
                       {chronoValues.length >= 2
                         ? <Sparkline values={chronoValues.slice(-10)} />
                         : <span className={styles.miniRowMeta} style={{ fontStyle: 'italic' }}>trend shows after a second entry</span>}
-                      <span className={styles.miniRowMeta}>{formatEntryDate(latest.recordedOn)}</span>
+                      <span className={styles.miniRowMeta}>{formatShortDate(latest.recordedOn)}</span>
                     </>
                   ) : (
                     <span className={styles.miniRowMeta}>no readings yet</span>
@@ -590,7 +519,7 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
                             {formatValue(e.value)} {e.unit}
                           </span>
                           {e.note && <span className={styles.miniRowMeta}>{e.note}</span>}
-                          <span className={styles.miniRowMeta}>{formatEntryDate(e.recordedOn)}</span>
+                          <span className={styles.miniRowMeta}>{formatShortDate(e.recordedOn)}</span>
                           {canWrite && (
                             <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.1rem 0.35rem' }}
                               aria-label="Remove this reading" onClick={() => deleteEntry(e.id)}>
@@ -708,75 +637,23 @@ export default function PlayerDevelopmentSection({ orgSlug, teamId, playerId, be
         </>
       )}
 
-      {/* ── Manage test types (M3) — a centered dialog, not a buried inline panel ── */}
+      {/* ── Manage test types (M3) — a centered dialog hosting the ONE shared manager ── */}
       {canWrite && manageOpen && data.showMeasurables && (
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Test types</h3>
               <button type="button" className={styles.modalCloseBtn} aria-label="Close"
-                onClick={() => { setManageOpen(false); setRenamingTypeId(null); setManageErr(''); }}>
+                onClick={() => setManageOpen(false)}>
                 <X size={18} />
               </button>
             </div>
-            {data.types.length === 0 && (
-              <p className={styles.detailPlaceholder}>No test types yet — add your first below (like &ldquo;60-yd sprint&rdquo; in seconds).</p>
-            )}
-            {data.types.length > 0 && (
-              <ul className={styles.miniList}>
-                {data.types.map(t => (
-                  <li key={t.id} className={styles.miniRow}>
-                    {renamingTypeId === t.id ? (
-                      <span className={styles.miniRowMain} style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                        <input className={styles.input} style={{ maxWidth: 180 }} type="text" value={renameName}
-                          onChange={e => setRenameName(e.target.value)} maxLength={40} aria-label="Test name" />
-                        <input className={styles.input} style={{ maxWidth: 110 }} type="text" value={renameUnit}
-                          onChange={e => setRenameUnit(e.target.value)} maxLength={20} aria-label="Unit" />
-                        <button type="button" className="btn btn-ghost" style={{ fontSize: '0.75rem' }}
-                          onClick={() => {
-                            if (!renameName.trim() || !renameUnit.trim()) { setManageErr('The test needs a name and a unit.'); return; }
-                            patchType(t.id, { name: renameName, unit: renameUnit });
-                          }}>
-                          Save
-                        </button>
-                        <button type="button" className="btn btn-ghost" style={{ fontSize: '0.75rem' }}
-                          onClick={() => { setRenamingTypeId(null); setManageErr(''); }}>
-                          Cancel
-                        </button>
-                      </span>
-                    ) : (
-                      <>
-                        <span className={styles.miniRowMain}>{t.name}{!t.isActive && ' (retired)'}</span>
-                        <span className={styles.miniRowMeta}>{t.unit}</span>
-                        <button type="button" className="btn btn-ghost" style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem' }}
-                          onClick={() => { setRenamingTypeId(t.id); setRenameName(t.name); setRenameUnit(t.unit); setManageErr(''); }}>
-                          Rename
-                        </button>
-                        <button type="button" className="btn btn-ghost" style={{ fontSize: '0.72rem', padding: '0.15rem 0.45rem' }}
-                          onClick={() => patchType(t.id, { isActive: !t.isActive })}>
-                          {t.isActive ? 'Retire' : 'Restore'}
-                        </button>
-                      </>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-            <div style={{ marginTop: '0.8rem' }}>
-              <NewTypeFields idPrefix="dev-manage-newtype" name={newTypeName} unit={newTypeUnit}
-                onName={setNewTypeName} onUnit={setNewTypeUnit}
-                onAdd={async () => {
-                  if (!newTypeName.trim() || !newTypeUnit.trim()) { setManageErr('Give the test a name and a unit (like seconds).'); return; }
-                  setManageErr('');
-                  await createType(setManageErr);
-                }} />
-            </div>
-            {manageErr && (
-              <p className={styles.errorText} role="alert" style={{ marginTop: '0.5rem' }}>{manageErr}</p>
-            )}
-            <p className={styles.miniRowMeta} style={{ display: 'block', marginTop: '0.8rem' }}>
-              Retired tests keep their logged history — they just leave the picker.
-            </p>
+            <TestTypesManager
+              apiBase={typesBase}
+              types={data.types}
+              canWrite={canWrite}
+              onTypesChanged={update => setData(d => d ? { ...d, types: update(d.types) } : d)}
+            />
           </div>
         </div>
       )}

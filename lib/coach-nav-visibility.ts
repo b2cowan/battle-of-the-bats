@@ -27,6 +27,9 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     // the money rows inside stay money-gated server-side (Phase 4 F2 split) and the lineup /
     // attendance sections gate per-section on their own capabilities.
     case 'Insights':      return true;
+    // Player Development (3B): the hub is useful with EITHER goals (notes) or measurables
+    // (roster view); all writes stay head-coach-only server-side (D1).
+    case 'Development':   return caps.notes || caps.roster !== 'off';
     case 'Documents':     return caps.documents !== 'off';
     case 'Staff':         return caps.isHeadCoach;
     default:              return true;
