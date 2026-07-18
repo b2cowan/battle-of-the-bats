@@ -97,6 +97,20 @@
   overflow-y: auto;
 }
 
+.groupHeader {
+  padding: 0.45rem 0.55rem 0.2rem;
+  color: var(--text-secondary);
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.groupHeader:first-child {
+  padding-top: 0.15rem;
+}
+
 .teamBtn {
   display: flex;
   align-items: center;

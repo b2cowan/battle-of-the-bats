@@ -27,6 +27,7 @@ import RollingNumber from '@/components/public/RollingNumber';
 import ShareScoreButton from '@/components/public/ShareScoreButton';
 import LocationLink from '@/components/LocationLink';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
+import UnfollowConfirmSheet from '@/components/public/UnfollowConfirmSheet';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 import styles from './MyTeamDock.module.css';
 
@@ -59,6 +60,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
   const [loaded, setLoaded] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [confirmUnfollow, setConfirmUnfollow] = useState(false);
 
   // G1 (owner-decided 2026-07-16): on the two routes that already tell the same
   // live story inline — the Schedule (pinned My Team card) and a team page (its
@@ -305,7 +307,7 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
           <button
             type="button"
             className={styles.expandUnfollow}
-            onClick={() => { unfollow(); setExpanded(false); }}
+            onClick={() => setConfirmUnfollow(true)}
           >
             Unfollow {team.name}
           </button>
@@ -334,6 +336,13 @@ export default function MyTeamDock({ orgSlug, tournamentSlug, inProgress, fanAle
           <ChevronUp size={16} className={styles.dockChevron} aria-hidden="true" />
         </span>
       </button>
+
+      <UnfollowConfirmSheet
+        open={confirmUnfollow}
+        teamName={team.name}
+        onCancel={() => setConfirmUnfollow(false)}
+        onConfirm={() => { unfollow(); setExpanded(false); setConfirmUnfollow(false); }}
+      />
     </div>
   );
 }

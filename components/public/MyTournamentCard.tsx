@@ -19,6 +19,7 @@ import LocationLink from '@/components/LocationLink';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import FollowTeamPicker from '@/components/public/FollowTeamPicker';
+import UnfollowConfirmSheet from '@/components/public/UnfollowConfirmSheet';
 import homeStyles from '@/app/[orgSlug]/Home.module.css';
 
 export interface MyCardStandingRow {
@@ -82,8 +83,9 @@ export default function MyTournamentCard({
   fanAlertsEnabled = false,
   isCompleted = false,
 }: Props) {
-  const { followedTeamId } = useFollowedTeam(orgSlug, tournamentSlug);
+  const { followedTeamId, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [confirmUnfollow, setConfirmUnfollow] = useState(false);
 
   useEffect(() => {
     const id = window.setInterval(() => setNowMs(Date.now()), 30_000);
@@ -115,7 +117,7 @@ export default function MyTournamentCard({
         <p className={homeStyles.dayCardSub}>
           Pin your team&apos;s live score, next game, and standing here — no account needed.
         </p>
-        <FollowTeamPicker orgSlug={orgSlug} tournamentSlug={tournamentSlug} teams={teams} variant="inline" />
+        <FollowTeamPicker orgSlug={orgSlug} tournamentSlug={tournamentSlug} teams={teams} divisions={divisions} variant="inline" />
       </div>
     );
   }
@@ -193,7 +195,15 @@ export default function MyTournamentCard({
   return (
     <div className={`card ${homeStyles.myTeamCard}`}>
       <div className={homeStyles.dayCardHeader}>
-        <div className={homeStyles.dayCardIcon}><Star size={16} fill="currentColor" /></div>
+        <button
+          type="button"
+          className={`${homeStyles.dayCardIcon} ${homeStyles.dayCardIconBtn}`}
+          onClick={() => setConfirmUnfollow(true)}
+          aria-label={`Unfollow ${cleanTeamName(team.name)}`}
+          title={`Unfollow ${cleanTeamName(team.name)}`}
+        >
+          <Star size={16} fill="currentColor" />
+        </button>
         <div>
           <span className={homeStyles.dayCardKicker}>My Team</span>
           <h3>{cleanTeamName(team.name)}</h3>
@@ -264,6 +274,13 @@ export default function MyTournamentCard({
           <Trophy size={14} /> Profile
         </Link>
       </div>
+
+      <UnfollowConfirmSheet
+        open={confirmUnfollow}
+        teamName={cleanTeamName(team.name)}
+        onCancel={() => setConfirmUnfollow(false)}
+        onConfirm={() => { unfollow(); setConfirmUnfollow(false); }}
+      />
     </div>
   );
 }

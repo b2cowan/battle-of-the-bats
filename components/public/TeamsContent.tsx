@@ -12,6 +12,7 @@ import styles from '@/app/[orgSlug]/teams/teams.module.css';
 import { fetchPublicTournamentData } from '@/lib/public-tournament-client';
 import type { PublicTournamentPageData } from '@/lib/public-tournament-data';
 import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere, isTournamentInProgress } from '@/lib/follow';
+import UnfollowConfirmSheet from '@/components/public/UnfollowConfirmSheet';
 import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
@@ -274,6 +275,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   const [standingsByDivision, setStandingsByDivision] = useState<Record<string, DivisionStandingRow[]>>(
     () => initialData?.standingsByDivision ?? {},
   );
+  const [unfollowTarget, setUnfollowTarget] = useState<PublicTeam | null>(null);
 
   useEffect(() => {
     if (initialData) return;
@@ -369,7 +371,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   }
 
   function stopFollowing(team: PublicTeam) {
-    unfollowTeamEverywhere(orgSlug, tournamentSlug, team.id);
+    setUnfollowTarget(team);
   }
 
   if (selectedTournament && !isPublicPageEnabled(selectedTournament, 'teams')) {
@@ -420,6 +422,7 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
   };
 
   return (
+    <>
     <div className={`page-content ${dockActive ? styles.dockClear : ''}`}>
       <div className="section">
         <div className="container">
@@ -526,5 +529,15 @@ export default function TeamsContent({ orgSlug, tournamentSlug, isPreview = fals
         </div>
       </div>
     </div>
+    <UnfollowConfirmSheet
+      open={unfollowTarget !== null}
+      teamName={unfollowTarget?.name ?? ''}
+      onCancel={() => setUnfollowTarget(null)}
+      onConfirm={() => {
+        if (unfollowTarget) unfollowTeamEverywhere(orgSlug, tournamentSlug, unfollowTarget.id);
+        setUnfollowTarget(null);
+      }}
+    />
+    </>
   );
 }

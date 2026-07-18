@@ -6,9 +6,9 @@
  * dock / scorebug / my-team strip appear immediately. Reused as a standalone card
  * (home empty-state) and inline (schedule scorebug prompt). Caller scopes `teams`.
  */
-import { useMemo, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { Star, Search, X } from 'lucide-react';
-import type { PublicTeam } from '@/lib/types';
+import type { Division, PublicTeam } from '@/lib/types';
 import { saveFollowedTeam } from '@/lib/follow';
 import styles from './FollowTeamPicker.module.css';
 
@@ -21,6 +21,11 @@ interface Props {
   variant?: 'card' | 'inline';
   /** Fires after a team is followed — e.g. to trigger the post-follow alerts nudge. */
   onFollowed?: (team: PublicTeam) => void;
+  /** When the caller spans multiple divisions (e.g. the home empty-state, which
+   *  lists every team tournament-wide), pass these so the list groups under a
+   *  small division header per section instead of one flat A–Z list. Omit (or a
+   *  single division) for an already division-scoped caller — no headers then. */
+  divisions?: Division[];
 }
 
 export default function FollowTeamPicker({
@@ -29,6 +34,7 @@ export default function FollowTeamPicker({
   teams,
   variant = 'inline',
   onFollowed,
+  divisions,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -38,6 +44,27 @@ export default function FollowTeamPicker({
     const q = query.trim().toLowerCase();
     return q ? sorted.filter(t => t.name.toLowerCase().includes(q)) : sorted;
   }, [sorted, query]);
+
+  // Group by division only when the caller supplied 2+ divisions — a single-division
+  // caller (e.g. the schedule scorebug prompt, already scoped) stays a flat list.
+  const groups = useMemo(() => {
+    if (!divisions || divisions.length < 2) return null;
+    const orderedDivisions = [...divisions].sort((a, b) => a.order - b.order);
+    const byDivision = new Map<string, PublicTeam[]>();
+    for (const t of filtered) {
+      const key = t.divisionId ?? '__other';
+      if (!byDivision.has(key)) byDivision.set(key, []);
+      byDivision.get(key)!.push(t);
+    }
+    const out: { id: string; name: string; teams: PublicTeam[] }[] = [];
+    for (const d of orderedDivisions) {
+      const divTeams = byDivision.get(d.id);
+      if (divTeams?.length) out.push({ id: d.id, name: d.name, teams: divTeams });
+    }
+    const other = byDivision.get('__other');
+    if (other?.length) out.push({ id: '__other', name: 'Other', teams: other });
+    return out;
+  }, [divisions, filtered]);
 
   if (teams.length === 0) return null;
 
@@ -72,14 +99,30 @@ export default function FollowTeamPicker({
             </button>
           </div>
           <ul className={styles.list}>
-            {filtered.map(t => (
-              <li key={t.id}>
-                <button type="button" className={styles.teamBtn} onClick={() => pick(t)}>
-                  <Star size={12} className={styles.teamStar} aria-hidden />
-                  <span>{t.name}</span>
-                </button>
-              </li>
-            ))}
+            {groups ? (
+              groups.map(g => (
+                <Fragment key={g.id}>
+                  <li className={styles.groupHeader} aria-hidden="true">{g.name}</li>
+                  {g.teams.map(t => (
+                    <li key={t.id}>
+                      <button type="button" className={styles.teamBtn} onClick={() => pick(t)}>
+                        <Star size={12} className={styles.teamStar} aria-hidden />
+                        <span>{t.name}</span>
+                      </button>
+                    </li>
+                  ))}
+                </Fragment>
+              ))
+            ) : (
+              filtered.map(t => (
+                <li key={t.id}>
+                  <button type="button" className={styles.teamBtn} onClick={() => pick(t)}>
+                    <Star size={12} className={styles.teamStar} aria-hidden />
+                    <span>{t.name}</span>
+                  </button>
+                </li>
+              ))
+            )}
             {filtered.length === 0 && <li className={styles.empty}>No teams match “{query}”.</li>}
           </ul>
         </div>

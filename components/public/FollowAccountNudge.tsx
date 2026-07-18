@@ -21,9 +21,15 @@ interface Props {
   tournamentSlug: string;
 }
 
-const DISMISS_KEY = 'fl_follow_account_nudge_dismissed';
 const DISMISS_MS = 30 * 24 * 60 * 60 * 1000; // 30 days — offer again occasionally, don't nag
 const FALLBACK_RETURN = '/following';
+
+// Scoped per tournament (mirrors AlertsNudge's nudgeKey) — dismissing the offer for
+// one tournament must not silently suppress it for every other tournament on this
+// device (was a single global key; fixed 2026-07-17).
+function dismissKey(orgSlug: string, tournamentSlug: string): string {
+  return `fl_follow_account_nudge_dismissed_${orgSlug}_${tournamentSlug}`;
+}
 
 // Land back on the page the fan was watching (their intent), not a different tab
 // (conversion sweep S4). The sign-in link already honors `next`; this keeps the
@@ -52,7 +58,7 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
     const evaluate = async () => {
       let dismissed = false;
       try {
-        const raw = localStorage.getItem(DISMISS_KEY);
+        const raw = localStorage.getItem(dismissKey(orgSlug, tournamentSlug));
         dismissed = !!raw && Date.now() - parseInt(raw, 10) < DISMISS_MS;
       } catch { /* ignore */ }
       if (dismissed) return;
@@ -86,8 +92,17 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
     };
   }, [orgSlug, tournamentSlug]);
 
+  // Just hides the sheet — backdrop tap, Escape, and the post-signup "Done" button
+  // all go through here. None of those are the visitor saying "no thanks", so none
+  // of them should suppress the offer for 30 days (2026-07-17).
+  function close() {
+    setOpen(false);
+  }
+
+  // The explicit decline — "Just follow on this device" — is the only action that
+  // suppresses the offer.
   function dismiss() {
-    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch { /* ignore */ }
+    try { localStorage.setItem(dismissKey(orgSlug, tournamentSlug), String(Date.now())); } catch { /* ignore */ }
     setOpen(false);
   }
 
@@ -134,7 +149,7 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
   const loginHref = `/auth/login?next=${encodeURIComponent(returnPath())}`;
 
   return (
-    <BottomSheet open={open} onClose={dismiss} ariaLabel="Create an account to follow across devices">
+    <BottomSheet open={open} onClose={close} ariaLabel="Create an account to follow across devices">
       {stage === 'check-email' ? (
         <div className={styles.done}>
           <p className={styles.doneTitle}>Check your email</p>
@@ -142,7 +157,7 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
             We sent a confirmation link to <strong>{email}</strong>. Open it to finish creating your
             account — your followed teams will be waiting.
           </p>
-          <button type="button" className="btn btn-ghost btn-sm" onClick={dismiss}>Done</button>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={close}>Done</button>
         </div>
       ) : (
         <>

@@ -507,6 +507,19 @@
   color: var(--primary-light);
 }
 
+/* Interactive variant (unfollow star) — same look, but a real button under it. */
+.dayCardIconBtn {
+  padding: 0;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.dayCardIconBtn:hover,
+.dayCardIconBtn:focus-visible {
+  background: rgba(var(--primary-rgb), 0.3);
+  border-color: rgba(var(--primary-rgb), 0.45);
+}
+
 .dayCardKicker {
   display: block;
   margin-bottom: 0.12rem;
