@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { Users, Search, ChevronDown, Star } from 'lucide-react';
 import { getDivisionPref, setDivisionPref } from '@/lib/division-cookie';
@@ -232,6 +232,9 @@ function TeamCard({
             <button
               type="button"
               className={`${styles.followBtn} ${isFollowed ? styles.followBtnActive : ''}`}
+              /* Following speaks the team's colour here like it does on the team
+                 page (full name, matching the avatar's hue derivation). */
+              style={{ '--team-color': teamColor(team.name) } as CSSProperties}
               onClick={() => isFollowed ? onUnfollow(team) : onFollow(team)}
               aria-pressed={isFollowed}
             >

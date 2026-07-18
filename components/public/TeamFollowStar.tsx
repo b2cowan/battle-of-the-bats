@@ -15,9 +15,11 @@ interface Props {
   tournamentSlug: string;
   team: Pick<PublicTeam, 'id' | 'name' | 'divisionId'>;
   size?: number;
+  /** Extra class from the host surface (e.g. the game-detail compact inline variant). */
+  className?: string;
 }
 
-export default function TeamFollowStar({ orgSlug, tournamentSlug, team, size = 15 }: Props) {
+export default function TeamFollowStar({ orgSlug, tournamentSlug, team, size = 15, className }: Props) {
   const { followedTeamId, follow } = useFollowedTeam(orgSlug, tournamentSlug);
   // N2: a signed-in fan's ACCOUNT follows count too — her own team never shows "Follow".
   const accountIds = useAccountFollowedTeamIds(orgSlug, tournamentSlug);
@@ -31,7 +33,7 @@ export default function TeamFollowStar({ orgSlug, tournamentSlug, team, size = 1
   return (
     <button
       type="button"
-      className={`${styles.star} ${isFollowed ? styles.active : ''}`}
+      className={`${styles.star} ${isFollowed ? styles.active : ''} ${className ?? ''}`}
       onClick={toggle}
       aria-pressed={isFollowed}
       aria-label={isFollowed ? `Unfollow ${team.name}` : `Follow ${team.name}`}

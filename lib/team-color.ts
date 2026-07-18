@@ -22,6 +22,32 @@ export function teamColor(name: string, saturation = 58, lightness = 45): string
 }
 
 /**
+ * Text ink for content sitting ON a teamColor() fill. Warm hues (0–79 pass the
+ * lime-shift untouched) land light enough that white text fails WCAG AA — same
+ * problem lib/themes.ts solves for org primaries with onPrimaryColor(), same
+ * luminance threshold here so the two guards agree.
+ */
+export function teamInk(name: string, saturation = 58, lightness = 45): string {
+  const h = teamAvatarHue(name) / 360;
+  const s = saturation / 100;
+  const l = lightness / 100;
+  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  const p = 2 * l - q;
+  const channel = (t: number) => {
+    if (t < 0) t += 1;
+    if (t > 1) t -= 1;
+    if (t < 1 / 6) return p + (q - p) * 6 * t;
+    if (t < 1 / 2) return q;
+    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
+    return p;
+  };
+  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
+  const luminance =
+    0.2126 * lin(channel(h + 1 / 3)) + 0.7152 * lin(channel(h)) + 0.0722 * lin(channel(h - 1 / 3));
+  return luminance > 0.42 ? '#0F1123' : '#FFFFFF';
+}
+
+/**
  * Up-to-two-letter monogram. Parentheticals (e.g. coach surnames) are stripped
  * first, otherwise "Halton Hawks (Johnstone)" → "H(".
  */

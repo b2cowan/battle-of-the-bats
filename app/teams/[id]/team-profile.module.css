@@ -1,6 +1,5 @@
-/* Tabular numerals — stat tiles, records, scores and times stay aligned. */
+/* Tabular numerals — records, scores and times stay aligned. */
 .heroStatValue,
-.statTileValue,
 .nextGameTime,
 .gameDate strong,
 .resultBadge strong {
@@ -90,7 +89,8 @@
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 900;
-  color: #fff;
+  /* Ink picked by luminance of the team colour (TP-4) — white fails on warm hues. */
+  color: var(--team-ink, #fff);
   letter-spacing: 0.02em;
   flex-shrink: 0;
 }
@@ -165,7 +165,7 @@
 .followHeroBtnActive {
   background: var(--team-color, var(--primary));
   border-color: var(--team-color, var(--primary));
-  color: #fff;
+  color: var(--team-ink, #fff);
 }
 
 /* Alerts bell (F4): one mount — labeled ghost button on desktop; the mobile
@@ -176,7 +176,7 @@
 .heroStats {
   display: flex;
   align-items: center;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--white-8);
   margin: 0 -1.5rem;
   padding: 0 1.5rem;
 }
@@ -215,55 +215,12 @@
 .heroStatDivider {
   width: 1px;
   height: 32px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--white-10);
   flex-shrink: 0;
 }
 
-/* ── Stat tiles (2×2 grid) ───────────────────────────────────────────────────── */
-
-.statGrid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.625rem;
-  margin-bottom: 0.75rem;
-}
-
-.statTile {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding: 1rem;
-  background: var(--white-5);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-}
-
-.statTileLabel {
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  color: var(--white-40);
-}
-
-.statTileValue {
-  font-family: var(--font-data, var(--font-display));
-  font-size: 1.75rem;
-  font-weight: 900;
-  color: var(--white);
-  line-height: 1;
-}
-
-.statTileAccent {
-  color: var(--team-accent);
-}
-
-.statTileSub {
-  font-size: 0.7rem;
-  color: var(--white-40);
-  font-weight: 500;
-}
+/* The RF/RA stat tiles retired 2026-07-18 (TP-2) — Run Diff in the hero strip
+   summarizes them and the full numbers live in Standings. */
 
 /* ── Champion treatment (J6-025) — gold ─────────────────────────────────────── */
 .championBanner {
@@ -280,17 +237,6 @@
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-}
-
-.statTileChampion {
-  background: rgba(var(--warning-rgb), 0.12);
-  border-color: rgba(var(--warning-rgb), 0.35);
-}
-
-.statTileChampionSub {
-  font-size: 0.7rem;
-  color: var(--warning-strong);
-  font-weight: 700;
 }
 
 /* ── Form card ───────────────────────────────────────────────────────────────── */
@@ -333,7 +279,7 @@
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 900;
@@ -364,37 +310,9 @@
   color: var(--team-accent);
 }
 
-/* LIVE chips — the platform's one soft LIVE treatment (ticker/schedule/game
-   detail): danger-tinted fill, danger text, data face. Never a solid banner. */
-.liveTag {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: rgba(var(--danger-rgb), 0.15);
-  border: 1px solid rgba(var(--danger-rgb), 0.4);
-  color: var(--danger-strong);
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.45rem;
-  border-radius: 3px;
-}
-
-.liveDot {
-  width: 5px;
-  height: 5px;
-  background: var(--danger);
-  border-radius: 50%;
-  flex-shrink: 0;
-  animation: livePulse 1.4s ease-in-out infinite;
-}
-
-@keyframes livePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.4; }
-}
+/* LIVE chips — this page reuses the canonical .liveBadge/.liveDot from
+   schedule.module.css (cross-module import in page.tsx); the local copies it
+   carried had drifted (3px radius, no pulse-glow) and are gone. */
 
 .nextGameDetails {
   display: flex;
@@ -479,7 +397,7 @@
 
 .gameRowLive {
   border-color: var(--danger);
-  background: rgba(239, 68, 68, 0.05);
+  background: rgba(var(--danger-rgb), 0.05);
 }
 
 .gameDate {
@@ -515,10 +433,14 @@
   flex-wrap: wrap;
 }
 
+/* Upright mono (TP-6) — the italic was the only italic on the page. */
 .vsLabel {
-  font-size: 0.75rem;
-  color: var(--white-30);
-  font-style: italic;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white-35);
 }
 
 .opponentName {
@@ -534,7 +456,7 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
   padding: 0.1rem 0.4rem;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--team-color, var(--primary)) 22%, transparent);
   color: var(--team-accent);
 }
@@ -570,7 +492,7 @@
   justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 900;
@@ -590,23 +512,9 @@
   color: var(--team-accent);
   background: color-mix(in srgb, var(--team-color, var(--primary)) 12%, transparent);
   padding: 0.3rem 0.65rem;
-  border-radius: 20px;
-}
-
-.liveBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  background: rgba(var(--danger-rgb), 0.15);
-  border: 1px solid rgba(var(--danger-rgb), 0.4);
-  color: var(--danger-strong);
-  font-family: var(--font-data);
-  font-size: 0.6rem;
-  font-weight: 900;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 0.15rem 0.45rem;
-  border-radius: 3px;
+  /* One small-chip radius family with W/L/T + Playoff (TP-6) — the old 20px
+     pill was a one-off; pills stay reserved for the hero header. */
+  border-radius: var(--radius-sm);
 }
 
 /* ── Empty states ────────────────────────────────────────────────────────────── */

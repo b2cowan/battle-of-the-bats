@@ -424,9 +424,9 @@ a.gameRow { cursor: pointer; }
 .gameDetailCard {
   overflow: hidden;
   border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius);
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
 }
 
 .detailTop {
@@ -500,12 +500,52 @@ a.gameRow { cursor: pointer; }
 }
 
 .detailTeamSide {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
   color: var(--white-40);
   font-family: var(--font-data);
   font-size: 0.62rem;
   font-weight: 900;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+}
+
+/* Follow star on the side-label line (GD-8) — the label never moves with name
+   length, so the two stars always align. Negative margins keep the 44px tap box
+   from inflating the ~16px label line; the overflow lands on non-interactive
+   whitespace. */
+@media (max-width: 640px) {
+  .detailSideStar {
+    margin: -13px -12px;
+  }
+}
+
+/* Followed = a plain filled star (owner call) — no chip. The standalone star's
+   ink-on-lime chip exists for light-mode legibility of raw --logic-lime; here
+   the fill uses --primary-light, which the public theme already keeps legible
+   in BOTH modes (same accent as this page's meta icons and panel headings). */
+.detailTeamSide .detailSideStar[aria-pressed="true"] {
+  background: none;
+  color: var(--primary-light);
+}
+
+/* Team monogram (GD-3) — the broadcast card's avatar recipe scaled up, LIVE
+   games only, so the identity a fan tapped through from carries onto the page
+   while it matters and the card stays calm before/after. */
+.detailAvatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: 0.03em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .detailTeamName {
@@ -536,13 +576,30 @@ a.gameRow { cursor: pointer; }
   font-family: var(--font-data);
 }
 
-.detailScoreCol strong {
+/* Score digits live in a RollingNumber (GD-2) — class-addressed so the odometer
+   wrapper picks up the marquee sizing wherever it lands in the band. */
+.detailScoreNum {
   font-size: 2.75rem;
   font-weight: 950;
   line-height: 1;
   font-variant-numeric: tabular-nums;
-  /* Colour set inline per outcome (success / danger / warning). */
 }
+
+/* Live leader emphasis — the broadcast card's .bcLead recipe, verbatim. Applied
+   only while live; finished games use the W/L/T outcome colours below. */
+.detailScoreLead {
+  color: var(--primary-light);
+  text-shadow: 0 0 18px rgba(var(--primary-rgb), 0.45);
+}
+
+.detailScoreTrail {
+  color: var(--white-70);
+}
+
+/* Finished-game outcome colours (previously inline styles). */
+.detailScoreW { color: var(--success); }
+.detailScoreL { color: rgba(var(--danger-rgb), 0.72); }
+.detailScoreT { color: var(--warning); }
 
 .detailScoreDash {
   align-self: flex-start;
@@ -553,12 +610,13 @@ a.gameRow { cursor: pointer; }
   line-height: 1;
 }
 
-/* Outcome pill — compact badge below the score number. */
-.detailScoreCol span {
+/* Outcome pill — compact badge below the score number. Attribute-scoped so it
+   never bleeds into the RollingNumber spans that now share this column. */
+.detailScoreCol span[data-outcome] {
   display: inline-flex;
   align-items: center;
   padding: 0.1rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-sm);
   font-family: var(--font-data);
   font-size: 0.6rem;
   font-weight: 900;
@@ -580,7 +638,7 @@ a.gameRow { cursor: pointer; }
 .detailScoreCol span[data-outcome="L"] {
   background: rgba(var(--danger-rgb), 0.08);
   border: 1px solid rgba(var(--danger-rgb), 0.25);
-  color: rgba(var(--danger-rgb), 0.72);
+  color: var(--danger-strong);
 }
 
 .detailScorePending {
@@ -636,6 +694,19 @@ a.gameRow { cursor: pointer; }
 .detailStakes svg {
   flex-shrink: 0;
   color: var(--primary-light);
+}
+
+/* Championship variant (GD-7) — the title game borrows the champion-gold
+   language (same warning-tint recipe as the team page's Division Champion
+   banner) so the finale reads like the finale. */
+.detailStakesGold {
+  border-color: rgba(var(--warning-rgb), 0.4);
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--warning-strong);
+}
+
+.detailStakesGold svg {
+  color: var(--warning-strong);
 }
 
 .detailPanelGrid {
@@ -792,8 +863,14 @@ a.gameRow { cursor: pointer; }
     gap: 1.1rem;
   }
 
-  .detailScoreCol strong {
+  .detailScoreNum {
     font-size: 2.1rem;
+  }
+
+  .detailAvatar {
+    width: 32px;
+    height: 32px;
+    font-size: 0.7rem;
   }
 
   .detailScoreDash {

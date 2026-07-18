@@ -401,10 +401,16 @@
   color: var(--white);
 }
 
+/* Following = the team's own colour language, same soft-tint + lifted-accent
+   recipe the team-profile hero uses (--team-color set inline per button). */
 .followBtnActive {
-  border-color: rgba(var(--primary-rgb), 0.6);
-  background: rgba(var(--primary-rgb), 0.14);
-  color: var(--primary-light);
+  border-color: color-mix(in srgb, var(--team-color, var(--primary)) 45%, transparent);
+  background: color-mix(in srgb, var(--team-color, var(--primary)) 14%, transparent);
+  color: color-mix(in srgb, var(--team-color, var(--primary)) 62%, #ffffff 38%);
+}
+
+[data-color-mode="light"] .followBtnActive {
+  color: color-mix(in srgb, var(--team-color, var(--primary)) 80%, #000000 20%);
 }
 
 /* LIVE status line — compact red LIVE pill + full opponent name (ellipsis if long). */

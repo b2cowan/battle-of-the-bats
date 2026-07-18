@@ -8,17 +8,14 @@ import { formatTime } from '@/lib/utils';
 import { isGameLive, publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { bracketRoundInfo, bracketRoundLabel } from '@/lib/playoff-bracket';
+import { teamAvatarHue, teamInitials } from '@/lib/team-color';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
+import Countdown from '@/components/public/Countdown';
 import GameDetailLiveRefresher from '@/components/public/GameDetailLiveRefresher';
+import RollingNumber from '@/components/public/RollingNumber';
 import ShareScoreButton from '@/components/public/ShareScoreButton';
 import TeamFollowStar from '@/components/public/TeamFollowStar';
 import styles from '@/app/[orgSlug]/schedule/schedule.module.css';
-
-const outcomeColors: Record<string, string> = {
-  W: 'var(--success)',
-  L: 'rgba(var(--danger-rgb), 0.72)',
-  T: 'var(--warning)',
-};
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
@@ -74,8 +71,9 @@ function getWinner(game: Game): 'home' | 'away' | 'tie' | null {
  * Plain-language stakes line for a playoff game. Finds the downstream game the
  * winner feeds into (a game whose placeholder references `Winner <thisCode>`)
  * and names that round; falls back to fixed labels for deciding games.
+ * `gold` marks the title game so the strip can wear the champion treatment.
  */
-function getPlayoffStakes(game: Game, allGames: Game[]): string | null {
+function getPlayoffStakes(game: Game, allGames: Game[]): { text: string; gold: boolean } | null {
   if (!game.isPlayoff || !game.bracketCode) return null;
   const code = game.bracketCode.toUpperCase();
   const ref = `Winner ${game.bracketCode}`;
@@ -86,12 +84,12 @@ function getPlayoffStakes(game: Game, allGames: Game[]): string | null {
     bracketRoundInfo(other.bracketCode).key !== myKey,
   );
   if (next?.bracketCode) {
-    return `Winner advances to the ${bracketRoundInfo(next.bracketCode).title}`;
+    return { text: `Winner advances to the ${bracketRoundInfo(next.bracketCode).title}`, gold: false };
   }
   // No downstream game references this winner — it's a deciding game.
-  if (code === 'FIN' || code === 'GF' || code === 'GF2') return 'Championship — winner takes the title';
-  if (code === 'P3' || code === '3RD') return 'Battling for 3rd place';
-  if (code.startsWith('CON')) return 'Consolation final';
+  if (code === 'FIN' || code === 'GF' || code === 'GF2') return { text: 'Championship — winner takes the title', gold: true };
+  if (code === 'P3' || code === '3RD') return { text: 'Battling for 3rd place', gold: false };
+  if (code.startsWith('CON')) return { text: 'Consolation final', gold: false };
   return null;
 }
 
@@ -249,6 +247,20 @@ export default async function PublicGameDetailsPage({
   }
   const venue = getVenueDisplay(game, data.venues);
   const stakes = getPlayoffStakes(game, data.games);
+  // Monogram hues mirror the broadcast card exactly (same hue fn, same 42% fill)
+  // so the identity a fan tapped through from doesn't shift colour on arrival.
+  const awayHue = awayName !== 'TBD' ? `hsl(${teamAvatarHue(awayName)}, 58%, 42%)` : null;
+  const homeHue = homeName !== 'TBD' ? `hsl(${teamAvatarHue(homeName)}, 58%, 42%)` : null;
+  // Score digit colour: leader emphasis while live (bcLead recipe), W/L/T once decided.
+  const scoreClass = (side: 'away' | 'home', outcome: string | null) => {
+    if (isLiveGame && winner && winner !== 'tie') {
+      return winner === side ? styles.detailScoreLead : styles.detailScoreTrail;
+    }
+    if (outcome === 'W') return styles.detailScoreW;
+    if (outcome === 'L') return styles.detailScoreL;
+    if (outcome === 'T') return styles.detailScoreT;
+    return '';
+  };
 
   // Live refresh on game day — re-render this server page when the score changes.
   const liveSignature = `${game.homeScore ?? ''}:${game.awayScore ?? ''}:${game.status}`;
@@ -318,36 +330,77 @@ export default async function PublicGameDetailsPage({
               <div className={styles.detailMatchup}>
                 <div className={styles.detailTeams}>
                   <div className={`${styles.detailTeam} ${styles.detailAway} ${winner === 'home' && !isLiveGame ? styles.detailTeamLost : ''}`}>
-                    <span className={styles.detailTeamSide}>Away</span>
+                    {isLiveGame && awayHue && (
+                      <span className={styles.detailAvatar} style={{ background: awayHue }} aria-hidden>
+                        {teamInitials(awayName)}
+                      </span>
+                    )}
+                    <span className={styles.detailTeamSide}>
+                      Away
+                      {awayTeam && (
+                        <TeamFollowStar
+                          orgSlug={orgSlug}
+                          tournamentSlug={tournamentSlug}
+                          team={awayTeam}
+                          size={13}
+                          className={styles.detailSideStar}
+                        />
+                      )}
+                    </span>
                     <strong className={styles.detailTeamName}>{awayName}</strong>
-                    {awayTeam && <TeamFollowStar orgSlug={orgSlug} tournamentSlug={tournamentSlug} team={awayTeam} />}
                   </div>
 
                   <span className={styles.detailVs}>VS</span>
 
                   <div className={`${styles.detailTeam} ${styles.detailHome} ${winner === 'away' && !isLiveGame ? styles.detailTeamLost : ''}`}>
-                    <span className={styles.detailTeamSide}>Home</span>
+                    {isLiveGame && homeHue && (
+                      <span className={styles.detailAvatar} style={{ background: homeHue }} aria-hidden>
+                        {teamInitials(homeName)}
+                      </span>
+                    )}
+                    <span className={styles.detailTeamSide}>
+                      Home
+                      {homeTeam && (
+                        <TeamFollowStar
+                          orgSlug={orgSlug}
+                          tournamentSlug={tournamentSlug}
+                          team={homeTeam}
+                          size={13}
+                          className={styles.detailSideStar}
+                        />
+                      )}
+                    </span>
                     <strong className={styles.detailTeamName}>{homeName}</strong>
-                    {homeTeam && <TeamFollowStar orgSlug={orgSlug} tournamentSlug={tournamentSlug} team={homeTeam} />}
                   </div>
                 </div>
 
                 {hasScore ? (
                   <div className={styles.detailScoreWrap}>
-                    {isLiveGame && (
-                      <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
-                    )}
                     <div className={styles.detailScoreBand}>
                       <div className={styles.detailScoreCol}>
-                        <strong style={awayOutcome ? { color: outcomeColors[awayOutcome] } : undefined}>{game.awayScore}</strong>
+                        <RollingNumber
+                          value={game.awayScore}
+                          className={`${styles.detailScoreNum} ${scoreClass('away', awayOutcome)}`}
+                        />
                         {awayOutcome && <span data-outcome={awayOutcome}>{awayOutcome}</span>}
                       </div>
                       <span className={styles.detailScoreDash}>–</span>
                       <div className={styles.detailScoreCol}>
-                        <strong style={homeOutcome ? { color: outcomeColors[homeOutcome] } : undefined}>{game.homeScore}</strong>
+                        <RollingNumber
+                          value={game.homeScore}
+                          className={`${styles.detailScoreNum} ${scoreClass('home', homeOutcome)}`}
+                        />
                         {homeOutcome && <span data-outcome={homeOutcome}>{homeOutcome}</span>}
                       </div>
                     </div>
+                  </div>
+                ) : game.date && game.time ? (
+                  <div className={styles.detailScorePending}>
+                    <Countdown
+                      target={`${game.date}T${game.time.slice(0, 5)}:00`}
+                      prefix="First pitch in "
+                      whenPast="Starting soon"
+                    />
                   </div>
                 ) : (
                   <div className={styles.detailScorePending}>Score TBD</div>
@@ -355,8 +408,8 @@ export default async function PublicGameDetailsPage({
               </div>
 
               {stakes && (
-                <div className={styles.detailStakes}>
-                  <Trophy size={14} /> {stakes}
+                <div className={`${styles.detailStakes} ${stakes.gold ? styles.detailStakesGold : ''}`}>
+                  <Trophy size={14} /> {stakes.text}
                 </div>
               )}
 
@@ -388,18 +441,16 @@ export default async function PublicGameDetailsPage({
 
                 <section className={styles.detailPanel}>
                   <h2><Info size={15} /> Game</h2>
+                  {/* Stage/Status live as badges in the top rail — repeating them
+                      here as text said nothing new (GD-6). */}
                   <dl className={styles.detailFacts}>
                     <div>
                       <dt>Division</dt>
                       <dd>{division?.name ?? 'Division TBD'}</dd>
                     </div>
                     <div>
-                      <dt>Stage</dt>
-                      <dd>{gameType}</dd>
-                    </div>
-                    <div>
-                      <dt>Status</dt>
-                      <dd>{getStatusText(game, requireFinalization, isLiveGame)}</dd>
+                      <dt>Game length</dt>
+                      <dd>{liveWindowMinutes} min</dd>
                     </div>
                   </dl>
                 </section>

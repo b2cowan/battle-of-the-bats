@@ -5,7 +5,7 @@ import { CalendarPlus, ChevronLeft, Star, AlertTriangle, Users, Clock, Trophy } 
 import { downloadTeamScheduleICS } from '@/lib/team-calendar';
 import type { Game, PublicTeam, Division } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
-import { teamColor, teamInitials } from '@/lib/team-color';
+import { teamColor, teamInitials, teamInk } from '@/lib/team-color';
 import SharePageButton from '@/components/public/SharePageButton';
 import FollowAlertsToggle from '@/components/public/FollowAlertsToggle';
 import { useOrgNav } from '@/components/OrgNavContext';
@@ -13,6 +13,9 @@ import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } fr
 import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import styles from '../../../../teams/[id]/team-profile.module.css';
+// Canonical LIVE chip — one recipe platform-wide (same cross-module reuse as the
+// Playoff Picture chip); the local copies this page carried dropped the pulse.
+import scheduleStyles from '@/app/[orgSlug]/schedule/schedule.module.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -142,6 +145,8 @@ export default function TeamProfilePage({
   const cleanedName = cleanName(team.name);
   const initials = teamInitials(cleanedName);
   const color = teamColor(cleanedName);
+  // Warm auto-hues can leave white text under 3:1 — pick ink by luminance (TP-4).
+  const ink = teamInk(cleanedName);
   const isFollowed = followedTeamId === team.id || accountFollowIds.has(team.id);
 
   const teamsHref = `/${orgSlug}/${tournamentSlug}/teams`;
@@ -246,7 +251,7 @@ export default function TeamProfilePage({
     <div className="page-content">
       <div className="section">
         <div className="container">
-         <div className={styles.profile} style={{ '--team-color': color } as CSSProperties}>
+         <div className={styles.profile} style={{ '--team-color': color, '--team-ink': ink } as CSSProperties}>
 
           {/* Back nav */}
           <Link href={teamsHref} className={styles.backNav}>
@@ -351,47 +356,18 @@ export default function TeamProfilePage({
             </div>
           </div>
 
-          {/* Stat tiles — detail metrics not already shown in the hero strip */}
-          <div className={styles.statGrid}>
-            <div className={styles.statTile}>
-              <span className={styles.statTileLabel}>RUNS FOR</span>
-              <span className={styles.statTileValue}>{standings.rf}</span>
-            </div>
-            <div className={styles.statTile}>
-              <span className={styles.statTileLabel}>RUNS AGAINST</span>
-              <span className={styles.statTileValue}>{standings.ra}</span>
-            </div>
-          </div>
-
-          {/* Form + next game */}
+          {/* Live/next game + recent results — directly under the hero: on game
+              day "are we playing right now?" outranks season totals (TP-1). The
+              RF/RA tiles retired with it — Run Diff in the strip tells that
+              story, full RF/RA live one tap away in Standings (TP-2). */}
           {(formBubbles.length > 0 || focusGame) && (
             <div className={styles.formCard}>
-              {formBubbles.length > 0 && (
-                <div className={styles.formRow}>
-                  {/* "Form" is soccer jargon — owner renamed it 2026-07-16 (Round 3). */}
-                  <span className={styles.formLabel}>Recent results</span>
-                  <div className={styles.formBubbles}>
-                    {formBubbles.map((result, i) => (
-                      <span
-                        key={i}
-                        className={`${styles.formBubble} ${
-                          result === 'W' ? styles.formW : result === 'L' ? styles.formL : styles.formT
-                        }`}
-                      >
-                        {result}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {focusGame && (
                 <div className={styles.nextGameRow}>
                   <div className={styles.nextGameLabel}>
                     {liveGame ? (
-                      <span className={styles.liveTag}>
-                        <span className={styles.liveDot} />{' '}
-                        LIVE
+                      <span className={scheduleStyles.liveBadge}>
+                        <span className={scheduleStyles.liveDot} />LIVE
                       </span>
                     ) : (
                       <span className={styles.nextGameKicker}>NEXT GAME</span>
@@ -409,6 +385,25 @@ export default function TeamProfilePage({
                         {gameDay(focusGame.date)}{focusGame.time ? ` · ${formatTime(focusGame.time)}` : ''}
                       </span>
                     )}
+                  </div>
+                </div>
+              )}
+
+              {formBubbles.length > 0 && (
+                <div className={styles.formRow}>
+                  {/* "Form" is soccer jargon — owner renamed it 2026-07-16 (Round 3). */}
+                  <span className={styles.formLabel}>Recent results</span>
+                  <div className={styles.formBubbles}>
+                    {formBubbles.map((result, i) => (
+                      <span
+                        key={i}
+                        className={`${styles.formBubble} ${
+                          result === 'W' ? styles.formW : result === 'L' ? styles.formL : styles.formT
+                        }`}
+                      >
+                        {result}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -464,8 +459,8 @@ export default function TeamProfilePage({
                       <div className={styles.gameResult}>
                         {live && (
                           <div className={styles.resultBadge}>
-                            <span className={styles.liveBadge}>
-                              <span className={styles.liveDot} /> LIVE
+                            <span className={scheduleStyles.liveBadge}>
+                              <span className={scheduleStyles.liveDot} /> LIVE
                             </span>
                             {/* Running score, team-first — matches the dock/ticker.
                                 A live game before its first run shows 0 – 0. */}
