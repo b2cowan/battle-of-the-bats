@@ -1,0 +1,14 @@
+/* app/coaches/join/join.module.css
+   /coaches/join keeps the global marketing nav (app/coaches/layout.tsx — a
+   signup/marketing pass-through route), unlike the /auth/* pages this page
+   borrows its card styling from (auth.module.css), where SiteChrome hides the
+   nav entirely. The shared .page rule has no nav clearance, so the fixed
+   Navbar was overlapping the card. This adds it back, scoped to this page only
+   — auth.module.css itself stays untouched for the chrome-less /auth/* pages
+   that correctly rely on it having none. */
+/* Doubled selector (not a typo) — bumps specificity above auth.module.css's
+   .page shorthand `padding` so this longhand `padding-top` always wins,
+   regardless of which CSS module the bundler happens to emit first. */
+.pageWithNav.pageWithNav {
+  padding-top: calc(var(--nav-height) + 1.75rem);
+}

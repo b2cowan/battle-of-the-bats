@@ -9,6 +9,7 @@ import {
   normalizeCoachPortalNext,
 } from '@/lib/coaches-portal-routes';
 import styles from '../../(consumer)/auth/auth.module.css';
+import navStyles from './join.module.css';
 
 type BasicCoachTeamOption = {
   id: string;
@@ -462,7 +463,7 @@ function JoinForm() {
 
 export default function CoachesJoinPage() {
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${navStyles.pageWithNav}`}>
       <Suspense fallback={
         <div className={styles.card}>
           <HudSkeleton message="LOADING..." rows={3} />
