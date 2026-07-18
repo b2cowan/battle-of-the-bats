@@ -5,7 +5,7 @@ import { ArrowLeft, Calendar, Clock, ExternalLink, Info, MapPin, Navigation, Tro
 import { getPublicTournamentPageData } from '@/lib/public-tournament-data';
 import type { Game, PublicTeam, Venue } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
-import { isGameLive, publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
+import { isGameLive, isGameUpcoming, publicGameStatus, publicGameStatusLabel, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
 import { bracketRoundInfo, bracketRoundLabel } from '@/lib/playoff-bracket';
 import { teamAvatarHue, teamInitials } from '@/lib/team-color';
@@ -249,8 +249,10 @@ export default async function PublicGameDetailsPage({
   const stakes = getPlayoffStakes(game, data.games);
   // Monogram hues mirror the broadcast card exactly (same hue fn, same 42% fill)
   // so the identity a fan tapped through from doesn't shift colour on arrival.
-  const awayHue = awayName !== 'TBD' ? `hsl(${teamAvatarHue(awayName)}, 58%, 42%)` : null;
-  const homeHue = homeName !== 'TBD' ? `hsl(${teamAvatarHue(homeName)}, 58%, 42%)` : null;
+  // Gated on the RESOLVED team (like the follow star) — a live window over an
+  // unresolved bracket slot must not mint a monogram for "Winner QF1".
+  const awayHue = awayTeam ? `hsl(${teamAvatarHue(awayName)}, 58%, 42%)` : null;
+  const homeHue = homeTeam ? `hsl(${teamAvatarHue(homeName)}, 58%, 42%)` : null;
   // Score digit colour: leader emphasis while live (bcLead recipe), W/L/T once decided.
   const scoreClass = (side: 'away' | 'home', outcome: string | null) => {
     if (isLiveGame && winner && winner !== 'tie') {
@@ -374,12 +376,16 @@ export default async function PublicGameDetailsPage({
                   </div>
                 </div>
 
-                {hasScore ? (
+                {/* Live shows the running score from 0–0 (broadcast-card precedent)
+                    even before the first submission; the countdown belongs to
+                    still-scheduled games only — never to a live window or a
+                    cancelled/forfeited game whose rail badge says otherwise. */}
+                {hasScore || isLiveGame ? (
                   <div className={styles.detailScoreWrap}>
                     <div className={styles.detailScoreBand}>
                       <div className={styles.detailScoreCol}>
                         <RollingNumber
-                          value={game.awayScore}
+                          value={game.awayScore ?? 0}
                           className={`${styles.detailScoreNum} ${scoreClass('away', awayOutcome)}`}
                         />
                         {awayOutcome && <span data-outcome={awayOutcome}>{awayOutcome}</span>}
@@ -387,14 +393,14 @@ export default async function PublicGameDetailsPage({
                       <span className={styles.detailScoreDash}>–</span>
                       <div className={styles.detailScoreCol}>
                         <RollingNumber
-                          value={game.homeScore}
+                          value={game.homeScore ?? 0}
                           className={`${styles.detailScoreNum} ${scoreClass('home', homeOutcome)}`}
                         />
                         {homeOutcome && <span data-outcome={homeOutcome}>{homeOutcome}</span>}
                       </div>
                     </div>
                   </div>
-                ) : game.date && game.time ? (
+                ) : game.status === 'scheduled' && game.date && game.time && isGameUpcoming(game) ? (
                   <div className={styles.detailScorePending}>
                     <Countdown
                       target={`${game.date}T${game.time.slice(0, 5)}:00`}

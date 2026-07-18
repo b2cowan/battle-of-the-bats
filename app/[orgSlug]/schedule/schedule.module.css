@@ -871,6 +871,10 @@ a.gameRow { cursor: pointer; }
     width: 32px;
     height: 32px;
     font-size: 0.7rem;
+    /* Clearance for the label row's follow star below — its 44px tap box
+       extends ~13px above the label line; without this the invisible hit area
+       reaches into the avatar and a tap there silently toggles the follow. */
+    margin-bottom: 0.5rem;
   }
 
   .detailScoreDash {

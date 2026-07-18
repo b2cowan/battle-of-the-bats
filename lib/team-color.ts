@@ -44,7 +44,12 @@ export function teamInk(name: string, saturation = 58, lightness = 45): string {
   const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
   const luminance =
     0.2126 * lin(channel(h + 1 / 3)) + 0.7152 * lin(channel(h)) + 0.0722 * lin(channel(h - 1 / 3));
-  return luminance > 0.42 ? '#0F1123' : '#FFFFFF';
+  // 0.2 = the equal-contrast crossover between white and near-black ink
+  // ((L+0.05)² = 0.05·1.05) — NOT themes.ts's 0.42, which is tuned for arbitrary
+  // full-range brand colors; teamColor()'s fixed 45% lightness tops out at
+  // L≈0.43, so 0.42 would leave warm golds (e.g. hue 44 ⇒ L≈0.31) on white
+  // text at ~2.9:1. Above the crossover, ink always contrasts better.
+  return luminance > 0.2 ? '#0F1123' : '#FFFFFF';
 }
 
 /**
