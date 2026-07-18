@@ -127,6 +127,7 @@
   border-radius: 12px;
   background: var(--hud-surface, rgba(255, 255, 255, 0.02));
   text-decoration: none;
+  cursor: pointer;
   transition: border-color 0.2s ease, background 0.2s ease;
 }
 .card:hover {
@@ -238,6 +239,10 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
   text-decoration: none;
+  /* Without an explicit cursor, iOS Safari treats a hover-styled link as needing
+     a first tap to "arm" :hover and a second to actually follow it — the exact
+     double-tap-to-sign-in report (2026-07-18). .ctaGhost already had this. */
+  cursor: pointer;
   transition: filter 0.2s ease, box-shadow 0.2s ease;
 }
 .cta:hover { filter: brightness(1.08); box-shadow: var(--glow-sm); }
