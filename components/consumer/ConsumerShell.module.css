@@ -172,6 +172,12 @@
     justify-content: space-around;
     align-items: flex-start;
   }
+  /* While a text field (e.g. Discover search) has focus, give the keyboard and
+     results the full screen instead of floating the tab bar above the keyboard —
+     it reappears the instant focus leaves the field. */
+  .shell:has(input:focus, textarea:focus) .bottomNav {
+    display: none;
+  }
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
     .bottomNav { background: var(--bg); }
   }
