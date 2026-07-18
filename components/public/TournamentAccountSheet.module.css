@@ -196,7 +196,7 @@
   .chip { display: none; }
 }
 
-/* Quiet mono kicker between the YOU rows and the THIS EVENT rows (G4 convention). */
+/* Quiet mono kicker labeling each row group (FieldLogicHQ / This event) (G4 convention). */
 .sectionKicker {
   margin: 0.9rem 0 0.4rem;
   font-family: var(--font-data);

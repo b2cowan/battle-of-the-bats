@@ -250,36 +250,54 @@ export default function TournamentAccountSheet() {
         </button>
       )}
       <BottomSheet open={open} onClose={close} title={viewer?.displayName || (signedIn ? 'Signed in' : 'More')}>
-        {/* The "At {event}" line exists to scope the HAT rows ("you coach HERE").
-            Without hats it read as a second group header fighting THIS EVENT —
+        {/* The "At {event}" line scopes the HAT rows ("you coach HERE") + the
+            coach alerts row that rides under them — both are event-scoped.
+            Without hats it read as a second group header fighting FieldLogicHQ —
             owner feedback 2026-07-15 — so it only renders when hats do. */}
-        {tournamentName && (viewer?.hats.length ?? 0) > 0 && <p className={styles.context}>At {tournamentName}</p>}
+        {tournamentName && (viewer?.hats.length ?? 0) > 0 && (
+          <>
+            <p className={styles.context}>At {tournamentName}</p>
+            <div className={styles.rows}>
+              {viewer?.hats.map(hat => (
+                <Link
+                  key={`${hat.kind}:${hat.href}`}
+                  href={hat.href}
+                  className={styles.row}
+                  data-kind={hat.kind}
+                  onClick={close}
+                >
+                  <span className={styles.rowText}>
+                    <span className={styles.eyebrow}>{HAT_META[hat.kind].eyebrow}</span>
+                    <span className={styles.label}>{hat.label}</span>
+                  </span>
+                  <span className={styles.action}>{HAT_META[hat.kind].action}</span>
+                </Link>
+              ))}
+              {/* N3b: one-tap own-team alerts, directly under the coach hat (approved
+                  mockup) — rides the account-alerts model, no new plumbing. */}
+              {coachHat?.teamId && (
+                <CoachAlertsRow
+                  teamId={coachHat.teamId}
+                  teamName={coachHat.label}
+                  orgSlug={orgSlug}
+                  tournamentSlug={tournamentSlug}
+                />
+              )}
+            </div>
+          </>
+        )}
+
+        {/* ── FieldLogicHQ: every platform-level (not event-level) door in one
+            labeled group — identity (sign in, or Following/Your FieldLogicHQ),
+            the app install, and the two platform-wide exits (N1, ratified §8
+            decision). Kept FIRST, right where sign-in already sat, so the
+            highest-value conversion row stays above the fold — merging it
+            into the group that used to trail after "This event" would have
+            buried it below Follow/Notifications/News/Rules (owner UX review
+            2026-07-17: the old unlabeled top group and the labeled bottom
+            FieldLogicHQ group were the same category of thing, split in two). ── */}
+        <p className={styles.sectionKicker}>FieldLogicHQ</p>
         <div className={styles.rows}>
-          {viewer?.hats.map(hat => (
-            <Link
-              key={`${hat.kind}:${hat.href}`}
-              href={hat.href}
-              className={styles.row}
-              data-kind={hat.kind}
-              onClick={close}
-            >
-              <span className={styles.rowText}>
-                <span className={styles.eyebrow}>{HAT_META[hat.kind].eyebrow}</span>
-                <span className={styles.label}>{hat.label}</span>
-              </span>
-              <span className={styles.action}>{HAT_META[hat.kind].action}</span>
-            </Link>
-          ))}
-          {/* N3b: one-tap own-team alerts, directly under the coach hat (approved
-              mockup) — rides the account-alerts model, no new plumbing. */}
-          {coachHat?.teamId && (
-            <CoachAlertsRow
-              teamId={coachHat.teamId}
-              teamName={coachHat.label}
-              orgSlug={orgSlug}
-              tournamentSlug={tournamentSlug}
-            />
-          )}
           {!signedIn && (
             <SheetRow
               icon={<LogIn size={15} strokeWidth={1.8} aria-hidden />}
@@ -307,10 +325,7 @@ export default function TournamentAccountSheet() {
               onClick={close}
             />
           )}
-          {/* Platform-level, not event-level (owner 2026-07-15): ONE universal
-              FieldLogicHQ app since Phase 0 — so the install door sits with the
-              other platform rows, not under "This event". Dispatch force-shows
-              the shared install prompt (bypasses its dismissal gates). */}
+          {/* Dispatch force-shows the shared install prompt (bypasses its dismissal gates). */}
           {showGetApp && (
             <SheetRow
               icon={<Download size={15} strokeWidth={1.8} aria-hidden />}
@@ -322,11 +337,25 @@ export default function TournamentAccountSheet() {
               }}
             />
           )}
+          <SheetRow
+            icon={<Compass size={15} strokeWidth={1.8} aria-hidden />}
+            label="Browse tournaments"
+            sub="FieldLogicHQ Discover"
+            href="/discover"
+            onClick={close}
+          />
+          <SheetRow
+            icon={<Radio size={15} strokeWidth={1.8} aria-hidden />}
+            label="Live scores"
+            sub="Everything on right now"
+            href="/scores"
+            onClick={close}
+          />
         </div>
 
         {/* ── This event: the device-level follow, notifications, and the pages
             that left the tab bar (G5). A signed-out fan's follow is event-scoped,
-            so it lives HERE — the top group is purely "you" (owner 2026-07-15). ── */}
+            so it lives HERE, separate from the platform-level FieldLogicHQ group above. ── */}
         {(showBell || !signedIn || !hidden('news') || !hidden('rules')) && (
           <>
             <p className={styles.sectionKicker}>This event</p>
@@ -372,28 +401,6 @@ export default function TournamentAccountSheet() {
             </div>
           </>
         )}
-
-        {/* ── FieldLogicHQ: the app-level EXITS (N1, ratified §8 decision — rides
-            this sheet per mockup Option B). Every nav link inside a tournament
-            points inward; a QR/share arrival in the installed app had NO way out.
-            These two rows serve EVERYONE, signed in or not. ── */}
-        <p className={styles.sectionKicker}>FieldLogicHQ</p>
-        <div className={styles.rows}>
-          <SheetRow
-            icon={<Compass size={15} strokeWidth={1.8} aria-hidden />}
-            label="Browse tournaments"
-            sub="FieldLogicHQ Discover"
-            href="/discover"
-            onClick={close}
-          />
-          <SheetRow
-            icon={<Radio size={15} strokeWidth={1.8} aria-hidden />}
-            label="Live scores"
-            sub="Everything on right now"
-            href="/scores"
-            onClick={close}
-          />
-        </div>
       </BottomSheet>
     </>
   );
