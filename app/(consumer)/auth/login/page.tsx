@@ -11,22 +11,28 @@ import styles from '../auth.module.css';
 /**
  * Resolve the post-login destination. Honors `next` ONLY when it is a same-origin
  * path (safeNextPath — CWE-601, the same hardening signup/callback got in 696bc794)
- * AND the resolver lands the user in a real workspace (/home or /platform-admin);
- * a recovery destination (/auth/suspended, /start) always wins over a `next` the
- * session can't reach. Shared by the submit handler and the already-authenticated
- * guard so both break the J8-018 / J10-019 login loops the same way.
+ * AND the resolver reports the user has real workspace access (`hasWorkspace`) — a
+ * recovery/fallback destination (/auth/suspended, or Home for a fan/zero-context
+ * account) always wins over a `next` the session can't reach. Shared by the submit
+ * handler and the already-authenticated guard so both break the J8-018 / J10-019
+ * login loops the same way.
+ *
+ * `hasWorkspace` replaces the old "destination === '/home'" sentinel: the Unified
+ * Home fast-path now returns concrete workspace URLs for solo users, so the
+ * next-is-safe signal has to be explicit (see getAuthDestinationDetail).
  */
 async function resolveLoginDestination(next: string | null): Promise<string> {
-  let destination = '/home';
+  let destination = '/discover';
+  let hasWorkspace = false;
   try {
-    const res = await fetch('/api/auth/destination');
-    destination = (await res.json()).destination ?? '/home';
+    const data = await (await fetch('/api/auth/destination')).json();
+    destination = data.destination ?? '/discover';
+    hasWorkspace = !!data.hasWorkspace;
   } catch {
-    destination = '/home';
+    destination = '/discover';
   }
-  const resolverIsWorkspace = destination === '/home' || destination === '/platform-admin';
   const safeNext = safeNextPath(next, null);
-  return safeNext && resolverIsWorkspace ? safeNext : destination;
+  return safeNext && hasWorkspace ? safeNext : destination;
 }
 
 const AUTH_ERRORS: Record<string, string> = {

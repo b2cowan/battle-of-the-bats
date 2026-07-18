@@ -228,7 +228,7 @@ export default function StartLeagueForm({ isLoggedIn, email }: { isLoggedIn: boo
         <div className={authStyles.footer}>
           <p className={authStyles.footerText}>
             {isLoggedIn ? (
-              <Link href="/home?pick=1" className={authStyles.footerLink}>← Back to your workspaces</Link>
+              <Link href="/discover" className={authStyles.footerLink}>← Back to your workspaces</Link>
             ) : (
               <>Already have an account?{' '}
                 <Link href={`/auth/login?next=${encodeURIComponent('/start/league')}`} className={authStyles.footerLink}>Sign in</Link>

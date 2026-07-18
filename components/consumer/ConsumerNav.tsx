@@ -2,25 +2,27 @@
 /**
  * components/consumer/ConsumerNav.tsx
  *
- * Primary navigation for the logged-out consumer shell (unified-app Phase 1).
+ * Primary navigation for the consumer shell (Unified Home IA redesign, Phase 0).
  * Renders an app-like top bar and a mobile bottom tab bar — the same responsive
  * pattern the rest of the site uses (top links ≥900px, bottom nav below).
  *
- * Tabs: Discover / Scores / Following / Account. On desktop the header also carries
- * the organizer/utility affordances (Run a tournament + Sign in / Your workspaces)
- * so desktop visitors who land here from search can still convert or sign in —
- * the directory stays a funnel, not just a fan surface. Those utility links are
- * desktop-only; on mobile the bottom-nav Account tab covers the same ground.
+ * Tabs: Home / Scores / Chat / Account (identical shape signed-in vs signed-out).
+ * Home lives at /discover (the canonical, SEO-bearing directory URL — unchanged);
+ * only its label/icon change. It absorbs the retired Discover + Following tabs and
+ * the /home workspace launchpad. On desktop the header also carries the organizer
+ * affordances (Run a tournament + coach pill + Sign in) so desktop visitors who
+ * land here from search can still convert or sign in. The old "Your workspaces"
+ * utility link is gone — Home now carries the workspaces list.
  */
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Compass, Radio, Star, User } from 'lucide-react';
+import { Home, Radio, MessageCircle, User } from 'lucide-react';
 import styles from './ConsumerShell.module.css';
 
 const TABS = [
-  { href: '/discover', label: 'Discover', icon: Compass },
+  { href: '/discover', label: 'Home', icon: Home },
   { href: '/scores', label: 'Scores', icon: Radio },
-  { href: '/following', label: 'Following', icon: Star },
+  { href: '/chat', label: 'Chat', icon: MessageCircle },
   { href: '/account', label: 'Account', icon: User },
 ] as const;
 
@@ -68,9 +70,9 @@ export default function ConsumerNav({
           {signedIn && isCoach && (
             <Link href="/coaches" className={styles.utilCoach}>Coaches Portal</Link>
           )}
-          {signedIn ? (
-            <Link href="/home" className={styles.utilCta}>Your workspaces</Link>
-          ) : pathname.startsWith('/auth') ? null : ( // no "Sign in" button ON the sign-in pages
+          {/* "Your workspaces" retired — Home carries the workspaces list now.
+             Signed-out visitors keep a "Sign in" affordance (never ON the sign-in pages). */}
+          {!signedIn && !pathname.startsWith('/auth') && (
             <Link href="/auth/login" className={styles.utilCta}>Sign in</Link>
           )}
         </div>

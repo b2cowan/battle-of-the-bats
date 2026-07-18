@@ -102,9 +102,10 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     // Account-only (fan) signups can pass a return path — e.g. the Follows feed or the
-    // tournament page they were on — instead of the org-oriented /home. Validated to a
+    // tournament page they were on — else default to Home (/discover). Validated to a
     // same-origin relative path (safeNextPath) so it can never become an open redirect.
-    const safeNext = accountOnly ? safeNextPath(next, '/home') : '/home';
+    // (Org signups ignore this on the client — the page runs its own onboarding redirect.)
+    const safeNext = accountOnly ? safeNextPath(next, '/discover') : '/discover';
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json({ error: 'Missing required fields.' }, { status: 400 });

@@ -338,7 +338,7 @@ export default function TournamentAccountSheet() {
               icon={<LayoutGrid size={15} strokeWidth={1.8} aria-hidden />}
               label="Your FieldLogicHQ"
               sub="All workspaces & following"
-              href="/home"
+              href="/discover"
               onClick={close}
             />
           )}

@@ -7,6 +7,8 @@ import {
   Layers, LayoutGrid, List, MapPin, SlidersHorizontal,
 } from 'lucide-react';
 import type { DirectoryItem, DirectoryFacets, DirectoryResult, Timeframe } from '@/lib/directory';
+import HomePersonalization from '@/components/consumer/HomePersonalization';
+import warm from '@/components/consumer/warmTheme.module.css';
 import styles from './page.module.css';
 
 type TimeframeFilter = 'current' | 'completed' | 'all';
@@ -187,35 +189,23 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
   };
 
   const isFiltering = debouncedQ !== '' || sport !== '' || province !== '' || timeframe !== 'current';
+  // Personalization (invites/workspaces/following) hides only while a TEXT search is active —
+  // results replace those sections in place (§3c). Directory filters (timeframe/sport/region)
+  // narrow Browse without hiding the account sections.
+  const isSearching = debouncedQ !== '';
 
   return (
-    <div className={styles.page}>
-      {/* ── Header ── */}
-      <div className={styles.header}>
-        <div className="container">
-          <div className={styles.headerInner}>
-            <div>
-              <p className={styles.eyebrow}>Discover</p>
-              <h1 className={styles.headerTitle}>Browse tournaments</h1>
-              <p className={styles.headerSub}>
-                Find tournaments across the FieldLogicHQ community — live scores, schedules, and standings, free to follow.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Sticky filter bar ── */}
+    <div className={`${warm.warm} ${styles.page}`}>
+      {/* ── Sticky search bar (Home leads with search — R1-3) ── */}
       <div className={styles.filterBar}>
-        <div className="container">
-          <div className={styles.controls}>
+        <div className={styles.controls}>
             {/* Search */}
             <div className={styles.searchWrap}>
               <Search size={15} className={styles.searchIcon} />
               <input
                 type="text"
-                aria-label="Search tournaments"
-                placeholder="Search tournaments…"
+                aria-label="Find a tournament, team, or organization"
+                placeholder="Find a Tournament, Team, or Organization"
                 value={searchInput}
                 onChange={e => setSearchInput(e.target.value)}
                 className={styles.searchInput}
@@ -285,11 +275,15 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
             </div>
           </div>
         </div>
-      </div>
 
-      {/* ── Body ── */}
-      <div className={styles.body}>
-        <div className="container">
+      <div className={styles.homeInner}>
+        {/* Account sections — hidden while a text search is active (results take over). */}
+        {!isSearching && <HomePersonalization />}
+
+        {/* ── Browse (the directory always renders beneath — SEO/acquisition funnel) ── */}
+        <div className={styles.body}>
+          <div className={styles.browseSection}>
+            <p className={styles.browseHeading}>{isSearching ? 'Search results' : 'Browse tournaments'}</p>
           {items.length === 0 && !refreshing ? (
             <div className={styles.empty}>
               <div className={styles.emptyIcon}><Trophy size={24} /></div>
@@ -402,6 +396,7 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
               )}
             </>
           )}
+          </div>
         </div>
       </div>
     </div>

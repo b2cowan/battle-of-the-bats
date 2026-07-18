@@ -125,10 +125,10 @@ function SignupForm() {
       return;
     }
 
-    // Account-only (dev / verification-off): land on /home, where reconciliation +
-    // the pending-invite card take over.
+    // Account-only (dev / verification-off): land on Home (/discover), where reconciliation +
+    // the pending-invitations card take over.
     if (accountOnly) {
-      router.push(safeNext ?? '/home');
+      router.push(safeNext ?? '/discover');
       router.refresh();
       return;
     }

@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { getAuthDestination } from '@/lib/auth-destination';
 import AddOrgForm from './AddOrgForm';
 
 export const metadata: Metadata = {
@@ -36,10 +37,12 @@ export default async function StartTournamentPage() {
     .eq('user_id', user.id)
     .eq('status', 'active');
   if ((activeMemberships ?? 0) > 0) {
-    redirect('/home');
+    // Drop them into their existing workspace — getAuthDestination carries the
+    // single-context fast-path the retired /home launchpad used to provide.
+    redirect(await getAuthDestination());
   }
 
-  // A pending invite means they already have somewhere to go — send them to /home's
+  // A pending invite means they already have somewhere to go — send them to Home's
   // pending-invite card instead of creating a stray org (Sign-up Invite Guard, Phase 3).
   const { count: pendingInvites } = await supabaseAdmin
     .from('organization_members')
@@ -47,7 +50,7 @@ export default async function StartTournamentPage() {
     .eq('user_id', user.id)
     .eq('status', 'invited');
   if ((pendingInvites ?? 0) > 0) {
-    redirect('/home');
+    redirect('/discover');
   }
 
   return <AddOrgForm />;

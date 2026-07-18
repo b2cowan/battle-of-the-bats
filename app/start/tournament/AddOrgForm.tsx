@@ -94,7 +94,7 @@ export default function AddOrgForm() {
 
         <div className={authStyles.footer}>
           <p className={authStyles.footerText}>
-            <Link href="/home?pick=1" className={authStyles.footerLink}>← Back to your workspaces</Link>
+            <Link href="/discover" className={authStyles.footerLink}>← Back to your workspaces</Link>
           </p>
         </div>
       </div>

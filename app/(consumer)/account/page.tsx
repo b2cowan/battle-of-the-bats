@@ -47,7 +47,7 @@ export default async function AccountPage() {
              The organizer door below is the one deliberate exception (C6b): mobile
              had no organizer entry outside a dismissible banner. */
           <>
-            <Link href="/home" className={`${styles.cta} ${styles.blockBtn}`}>Your FieldLogicHQ →</Link>
+            <Link href="/discover" className={`${styles.cta} ${styles.blockBtn}`}>Your FieldLogicHQ →</Link>
             <Link href="/account/notifications" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Notification settings</Link>
             <Link href="/start" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Run a tournament</Link>
             <AccountSignOutButton />

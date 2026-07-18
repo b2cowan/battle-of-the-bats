@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { supabaseAdmin } from './supabase-admin';
 import { isPlatformAdminEmail } from './platform-auth';
 import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
@@ -667,6 +668,15 @@ export async function getBasicCoachTournamentTeamsForUser(params: {
   }));
 }
 
+/** Request-memoized (cache(), primitive-keyed) variant of the basic-coach scan. A single Home
+ *  load resolves access contexts (→ getBasicCoachTournamentSummary) AND the coached-team dedupe
+ *  set (→ getCoachedRegistrationTeamIds) for the same user; routing both through this shared
+ *  wrapper runs the 4-query scan once instead of twice. Both callers pass the same (userId, email)
+ *  primitives so cache() dedupes. */
+const getBasicCoachTournamentTeamsForUserCached = cache(
+  (userId: string, email: string | null) => getBasicCoachTournamentTeamsForUser({ userId, email }),
+);
+
 /**
  * Rich per-team context for the team-scoped Coaches Portal shell (nav rebuild). Per team:
  * its activated Tier-2 features (nav visibility), its most-relevant lifecycle chip (the rail
@@ -1065,7 +1075,7 @@ export async function getBasicCoachTournamentSummary(params: {
   // second, free "Coaches Portal" card for them. Mirrors the free /coaches "Your teams" list.
   // Canceled upgrades are kept (the free team is usable again).
   const teams = await excludeActivePremiumUpgrades(
-    await getBasicCoachTournamentTeamsForUser(params),
+    await getBasicCoachTournamentTeamsForUserCached(params.userId, params.email ?? null),
   );
   const registrationIds = new Set<string>();
   const tournamentIds = new Set<string>();
@@ -1089,6 +1099,27 @@ export async function getBasicCoachTournamentSummary(params: {
       registrationCount: team.registrations.length,
     })),
   };
+}
+
+/**
+ * The set of tournament-registration team ids (`teams.id`) this user COACHES — used by
+ * Unified Home to dedupe the Following section: a team you coach must not also render as
+ * a fan "Following" card (role chip wins, §3c). Fan follows reference `teams.id`, and a
+ * basic-coach registration's `id` is the same `teams.id` (via basic_coach_team_registrations),
+ * so this is the "normalize basic-coach synthetic context ids to real team ids" step the
+ * plan requires. Premium (rep_teams) coaching lives in a different id namespace and never
+ * collides with a team follow, so it correctly does not participate here.
+ */
+export async function getCoachedRegistrationTeamIds(params: {
+  userId: string;
+  email?: string | null;
+}): Promise<Set<string>> {
+  const teams = await getBasicCoachTournamentTeamsForUserCached(params.userId, params.email ?? null);
+  const ids = new Set<string>();
+  for (const team of teams) {
+    for (const registration of team.registrations) ids.add(registration.id);
+  }
+  return ids;
 }
 
 export async function canUserAccessTournamentRegistration(params: {

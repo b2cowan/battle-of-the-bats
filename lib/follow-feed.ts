@@ -26,29 +26,9 @@ export const FOLLOW_FEED_GROUP_ORDER: Record<FollowFeedGroup, number> = {
   none: 3,
 };
 
-/** One-line status text for a feed entry (compact surfaces: the switcher home's
- *  Following rows). FollowFeedCard derives the same vocabulary for its richer DOM
- *  (rolling score, meta line) — if wording changes here, change it there too. */
-export function followStatusText(entry: FollowFeedEntry): { text: string; live: boolean } {
-  const score =
-    entry.myScore !== null && entry.oppScore !== null
-      ? `${entry.myScore}–${entry.oppScore}`
-      : null;
-  switch (entry.group) {
-    case 'live':
-      return { text: score ? `${score} · Live` : 'Live now', live: true };
-    case 'upcoming': {
-      const when = [entry.dateLabel, entry.timeLabel].filter(Boolean).join(' · ');
-      return { text: when || 'Upcoming', live: false };
-    }
-    case 'recent': {
-      const label = entry.isFinal ? 'Final' : 'Unofficial';
-      return { text: score ? `${score} · ${label}` : label, live: false };
-    }
-    default:
-      return { text: 'No games yet', live: false };
-  }
-}
+// followStatusText now lives in the PURE lib/home-following.ts so client surfaces can
+// use it too; re-exported here for existing server callers of this module.
+export { followStatusText } from './home-following';
 
 export interface FollowFeedEntry {
   teamId: string;

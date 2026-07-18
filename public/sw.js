@@ -15,11 +15,13 @@
 
 /* ── Cache config ──────────────────────────────────────────────────────────── */
 
+// v5: Unified Home IA — new /chat top-level route added to NEVER_CACHE_PREFIXES;
+//     bump forces a clean refresh so no old shell serves a pre-/chat nav.
 // v4: purge DATA_CACHE copies of /api/public/tournament-viewer — per-user identity
 //     had been cached in the shared data cache (/review 2026-07-15).
 // v3: unified-app Phase 0 — clean refresh of pages that referenced old
 //     per-tournament/scorekeeper manifests.
-const CACHE_VERSION = 'v4';
+const CACHE_VERSION = 'v5';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
@@ -37,10 +39,13 @@ const PRECACHE_URLS = [OFFLINE_URL, '/icons/pwa-192.png', '/icons/badge-72.png']
 // HTML and serve it offline to the next person on a shared device.
 // `/account` reflects sign-in state; `/following` is device-personal — both stay
 // off the shared cache (unified-app Phase 1 consumer shell). `/discover` and
-// `/scores` are anonymous/public and may be cached normally.
+// `/scores` are anonymous/public and may be cached normally. `/chat` is a NEW
+// authed-capable top-level route (Unified Home) — its member inbox lands next
+// phase, but the route is denylisted from the shared cache from day one so a
+// signed-in inbox can never be served offline to the next person on a device.
 const NEVER_CACHE_PREFIXES = [
   '/api/', '/auth', '/platform-admin', '/home', '/dashboard', '/my',
-  '/coaches', '/team', '/start', '/account', '/following',
+  '/coaches', '/team', '/start', '/account', '/following', '/chat',
 ];
 // Org sub-sections that are operator/authed surfaces (/{org}/{section}/...).
 const PRIVATE_ORG_SECTIONS = ['admin', 'coaches', 'scorekeeper', 'check-in', 'official', 'league'];

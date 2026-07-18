@@ -172,12 +172,9 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (segments[0] === 'home' && !user) {
-    const url = request.nextUrl.clone();
-    url.pathname = '/auth/login';
-    url.searchParams.set('next', pathname);
-    return NextResponse.redirect(url);
-  }
+  // (/home is no longer auth-gated here — Unified Home retired the workspace launchpad;
+  //  /home is now a permanent redirect to the PUBLIC Home (/discover), so anon visitors
+  //  following an old /home link must reach Home, not bounce through login.)
 
   // Carry the request id onto the response so the client can read it (pages + /api/admin/*).
   supabaseResponse.headers.set('x-request-id', requestId);
@@ -196,7 +193,6 @@ export const config = {
     '/platform-admin',
     '/platform-admin/:path*',
     '/platform-admin/login',
-    '/home',
     // All API routes: /api/admin/* runs the full proxy below; every other /api/* hits the cheap
     // x-request-id fast-path at the top (no session work). Replaces the prior per-prefix /api entries.
     '/api/:path*',

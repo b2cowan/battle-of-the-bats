@@ -623,7 +623,7 @@ export default function AdminSidebar() {
             </Link>
           )}
           {hasMultipleWorkspaces && (
-            <Link href="/home?pick=1" className={styles.footerLink} id="admin-all-workspaces">
+            <Link href="/discover" className={styles.footerLink} id="admin-all-workspaces">
               <LayoutGrid size={15} /> All Workspaces
             </Link>
           )}

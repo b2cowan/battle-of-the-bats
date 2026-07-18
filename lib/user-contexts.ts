@@ -157,7 +157,14 @@ async function hasExplicitPlanChoice(orgId: string, planId: OrgPlan): Promise<bo
   return (tasks as Record<string, { status?: unknown }>).plan?.status === 'complete';
 }
 
-async function getActiveMembershipRows(userId: string): Promise<ActiveMemberRow[]> {
+// Request-memoized (cache()) so a single Home load — which resolves access contexts AND lapsed
+// workspaces, both keyed on the same userId — runs this membership query once, not twice.
+// NB this dedup is LOAD-BEARING, not just perf: getUserAccessContexts (drops lapsed) and
+// getLapsedWorkspacesForUser (surfaces lapsed) must observe the SAME subscription_status snapshot,
+// or a billing write landing mid-request could show a workspace as both active AND lapsed (or
+// neither). Both must stay within one React request scope (server components / route handlers) so
+// cache() actually memoizes — don't move either call outside it.
+const getActiveMembershipRows = cache(async (userId: string): Promise<ActiveMemberRow[]> => {
   const { data } = await supabaseAdmin
     .from('organization_members')
     .select('id, organization_id, role, organizations(id, slug, name, plan_id, subscription_status, enabled_addons, account_kind, team_workspace_status, onboarding_completed_at, free_floor)')
@@ -165,7 +172,7 @@ async function getActiveMembershipRows(userId: string): Promise<ActiveMemberRow[
     .eq('status', 'active');
 
   return (data ?? []) as ActiveMemberRow[];
-}
+});
 
 function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | null {
   const org = normalizeOrg(member);
@@ -475,6 +482,48 @@ export async function findSuspendedMembershipOrg(userId: string): Promise<{ name
   const org = Array.isArray(relation) ? relation[0] : relation;
   if (!org) return null;
   return { name: org.name ?? null, slug: org.slug ?? null };
+}
+
+/** A workspace whose subscription has lapsed and which therefore VANISHES from the active
+ *  context list (team-workspace + coach-role memberships return null in buildMembershipContext
+ *  when the subscription isn't active). Unified Home surfaces these as an explicit degraded
+ *  "reactivate" card so a paused workspace is never silently omitted from the front door (§3c). */
+export interface LapsedWorkspace {
+  orgId: string;
+  orgSlug: string;
+  orgName: string;
+  planLabel: string;
+  /** Where the reactivate card points — the coaches portal, which carries the reactivation prompt. */
+  destination: string;
+}
+
+export async function getLapsedWorkspacesForUser(userId: string): Promise<LapsedWorkspace[]> {
+  // Reuses the cache()-memoized membership rows (no extra query when getUserAccessContexts also
+  // runs this request). The eligibility test below is the INVERSE of buildMembershipContext's
+  // drop conditions (team-workspace or coach role + inactive subscription → returns null there) —
+  // keep the two in step if a workspace-eligibility rule changes.
+  const members = await getActiveMembershipRows(userId);
+  const out: LapsedWorkspace[] = [];
+  for (const member of members) {
+    const org = normalizeOrg(member);
+    const slug = org?.slug;
+    const orgId = org?.id ?? member.organization_id;
+    if (!slug || !orgId) continue;
+    // Still active → not lapsed (org-admin/official contexts also never vanish on lapse).
+    if (isActiveSubscriptionStatus(org?.subscription_status)) continue;
+    const planId = org?.plan_id ?? 'tournament';
+    const accountKind = org?.account_kind ?? 'organization';
+    // Only the contexts that actually disappear on lapse need the reactivate card.
+    if (!isTeamWorkspaceOrg({ accountKind, planId }) && member.role !== 'coach') continue;
+    out.push({
+      orgId,
+      orgSlug: slug,
+      orgName: org?.name ?? slug,
+      planLabel: formatPlan(planId),
+      destination: `/${slug}/coaches`,
+    });
+  }
+  return out;
 }
 
 export async function getUserAccessContexts(user: {

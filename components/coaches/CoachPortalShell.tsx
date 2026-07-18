@@ -303,7 +303,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
             <HelpCircle size={14} aria-hidden /><span>Help</span>
           </Link>
           {hasMultipleWorkspaces && (
-            <Link href="/home?pick=1" className={styles.railFooterLink}>
+            <Link href="/discover" className={styles.railFooterLink}>
               <LayoutGrid size={14} aria-hidden /><span>All workspaces</span>
             </Link>
           )}
@@ -459,7 +459,7 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
             {/* Account utilities */}
             {email && <p className={styles.sheetEmail} title={email}>{email}</p>}
             {hasMultipleWorkspaces && (
-              <Link href="/home?pick=1" className={styles.sheetItem} onClick={closeMore}>
+              <Link href="/discover" className={styles.sheetItem} onClick={closeMore}>
                 <LayoutGrid size={16} aria-hidden /><span>All workspaces</span>
               </Link>
             )}

@@ -22,8 +22,9 @@ export default async function SuspendedPage() {
   if (!user?.email) redirect('/auth/login');
 
   // If the user has any active workspace, they're not locked out — don't show a suspended wall.
+  // Home (/discover) carries the workspaces list now, so land them there.
   const contexts = await getUserAccessContexts({ id: user.id, email: user.email });
-  if (contexts.length > 0) redirect('/home');
+  if (contexts.length > 0) redirect('/discover');
 
   const suspended = await findSuspendedMembershipOrg(user.id);
   // No suspended membership either → nothing to explain here; route to the normal front door.
