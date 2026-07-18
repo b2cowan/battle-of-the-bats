@@ -25,9 +25,9 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-import { ArrowRight, Star, LayoutGrid, LogIn, Megaphone, ScrollText, Bell, BellRing, Download, Compass, Radio } from 'lucide-react';
+import { ArrowRight, Star, LayoutGrid, LogIn, LogOut, Megaphone, ScrollText, Bell, BellRing, Download, Compass, Radio } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
-import { getSession } from '@/lib/auth';
+import { getSession, signOut } from '@/lib/auth';
 import { createClient } from '@/lib/supabase-browser';
 import { readFollowedTeam, syncFollowToAccount } from '@/lib/follow';
 import { isInstallEligibleBrowser } from '@/lib/device';
@@ -62,12 +62,13 @@ export const OPEN_TOURNAMENT_SHEET_EVENT = 'flhq:open-tournament-sheet';
 /** One standard sheet row — icon · label/sub · chevron. Link when href is given,
  *  button otherwise. The hat rows (eyebrow + action) and CoachAlertsRow keep
  *  their own richer anatomy. */
-function SheetRow({ icon, label, sub, href, onClick }: {
+function SheetRow({ icon, label, sub, href, onClick, disabled }: {
   icon: React.ReactNode;
   label: string;
   sub: string;
   href?: string;
   onClick?: () => void;
+  disabled?: boolean;
 }) {
   const body = (
     <>
@@ -82,7 +83,7 @@ function SheetRow({ icon, label, sub, href, onClick }: {
   return href ? (
     <Link href={href} className={styles.row} onClick={onClick}>{body}</Link>
   ) : (
-    <button type="button" className={`${styles.row} ${styles.rowBtn}`} onClick={onClick}>{body}</button>
+    <button type="button" className={`${styles.row} ${styles.rowBtn}`} onClick={onClick} disabled={disabled}>{body}</button>
   );
 }
 
@@ -160,6 +161,7 @@ export default function TournamentAccountSheet() {
   const [openedAtPath, setOpenedAtPath] = useState<string | null>(null);
   const open = openedAtPath === pathname;
   const [authTick, setAuthTick] = useState(0);
+  const [signingOut, setSigningOut] = useState(false);
 
   // Sign-in/out are SPA navigations (no full reload) — re-resolve the chip so a
   // sign-out in another tab doesn't leave stale identity in the chrome.
@@ -217,6 +219,21 @@ export default function TournamentAccountSheet() {
 
   if (!orgSlug || !tournamentSlug) return null;
   const close = () => setOpenedAtPath(null);
+
+  // In-place sign-out (no full reload): the onAuthStateChange listener above bumps
+  // authTick on SIGNED_OUT, which re-resolves the viewer to null — the sheet and
+  // chip fall back to the signed-out state on their own (same SPA-transition
+  // convention as sign-in, see the listener's comment).
+  async function handleSignOut() {
+    if (signingOut) return;
+    setSigningOut(true);
+    try {
+      await signOut();
+      close();
+    } catch {
+      setSigningOut(false);
+    }
+  }
 
   const publicBase = `/${orgSlug}/${tournamentSlug}`;
   const hidden = (key: PublicPageKey) => tournamentHiddenPages.includes(key);
@@ -400,6 +417,21 @@ export default function TournamentAccountSheet() {
               )}
             </div>
           </>
+        )}
+
+        {/* Sign out sits alone at the very bottom, apart from the navigational rows
+            above it (owner feedback 2026-07-17: it was missing from the sheet
+            entirely — a signed-in fan had no way to sign out on mobile). */}
+        {signedIn && (
+          <div className={`${styles.rows} ${styles.signOutRow}`}>
+            <SheetRow
+              icon={<LogOut size={15} strokeWidth={1.8} aria-hidden />}
+              label={signingOut ? 'Signing out…' : 'Sign out'}
+              sub="End your session on this device"
+              onClick={handleSignOut}
+              disabled={signingOut}
+            />
+          </div>
         )}
       </BottomSheet>
     </>

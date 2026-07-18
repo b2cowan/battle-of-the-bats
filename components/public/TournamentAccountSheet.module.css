@@ -196,6 +196,18 @@
   .chip { display: none; }
 }
 
+/* Sign out — separated from the row groups above it, no section kicker (it isn't
+   a category of navigation, it's the one destructive exit). */
+.signOutRow {
+  margin-top: 0.9rem;
+}
+.signOutRow .rowIcon {
+  color: var(--danger-strong);
+}
+.signOutRow .label {
+  color: var(--danger-strong);
+}
+
 /* Quiet mono kicker labeling each row group (FieldLogicHQ / This event) (G4 convention). */
 .sectionKicker {
   margin: 0.9rem 0 0.4rem;
