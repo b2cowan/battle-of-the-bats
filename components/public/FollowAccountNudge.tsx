@@ -46,7 +46,8 @@ function returnPath(): string {
 export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
   const [team, setTeam] = useState<FollowedTeam | null>(null);
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [stage, setStage] = useState<'form' | 'check-email'>('form');
@@ -54,7 +55,7 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let pendingShow: number | undefined;
+    let cancelled = false;
     const evaluate = async () => {
       let dismissed = false;
       try {
@@ -71,22 +72,16 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
         const session = await getSession();
         if (session?.user) return; // already signed in — their follow syncs automatically
       } catch { /* treat as signed out; the follow already saved locally regardless */ }
-      // Let the follow LAND first — the sheet on the same tap read as an instant
-      // signup wall (conversion sweep C1). A beat later, the ask feels like a
-      // follow-up, not a toll. Timer is cleared if the visitor navigates away;
-      // a rapid second follow replaces (never stacks) the pending timer.
-      window.clearTimeout(pendingShow);
-      pendingShow = window.setTimeout(() => {
-        setTeam(followed);
-        setOpen(true);
-      }, 1600);
+      if (cancelled) return;
+      setTeam(followed);
+      setOpen(true);
     };
     // Only react to a NEW follow, not on mount (avoid popping for someone who followed
     // long ago and returns) — so we listen for the change event, not the initial state.
     window.addEventListener('fl-follow-change', evaluate);
     window.addEventListener('storage', evaluate);
     return () => {
-      window.clearTimeout(pendingShow);
+      cancelled = true;
       window.removeEventListener('fl-follow-change', evaluate);
       window.removeEventListener('storage', evaluate);
     };
@@ -115,15 +110,18 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
     if (password.length < 8) { setError('Use a password of at least 8 characters.'); return; }
     setBusy(true);
     try {
-      const parts = name.trim().split(/\s+/).filter(Boolean);
-      const firstName = parts[0] || 'Fan';
-      const lastName = parts.slice(1).join(' ') || firstName;
       const next = returnPath();
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // orgName OMITTED → account-only (no org, no role). next → the page they were on.
-        body: JSON.stringify({ email: email.trim(), password, firstName, lastName, next }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          next,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) { setError(data.error ?? 'Could not create your account. Please try again.'); return; }
@@ -173,11 +171,18 @@ export default function FollowAccountNudge({ orgSlug, tournamentSlug }: Props) {
           </div>
 
           <form className={styles.form} onSubmit={submit}>
-            <label className={styles.field}>
-              <span className={styles.label}>Your name</span>
-              <input className={styles.input} value={name} onChange={e => setName(e.target.value)}
-                autoComplete="name" required />
-            </label>
+            <div className={styles.nameRow}>
+              <label className={styles.field}>
+                <span className={styles.label}>First Name</span>
+                <input className={styles.input} value={firstName} onChange={e => setFirstName(e.target.value)}
+                  autoComplete="given-name" required />
+              </label>
+              <label className={styles.field}>
+                <span className={styles.label}>Last Name</span>
+                <input className={styles.input} value={lastName} onChange={e => setLastName(e.target.value)}
+                  autoComplete="family-name" required />
+              </label>
+            </div>
             <label className={styles.field}>
               <span className={styles.label}>Email</span>
               <input className={styles.input} type="email" value={email} onChange={e => setEmail(e.target.value)}

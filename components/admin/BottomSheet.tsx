@@ -34,21 +34,31 @@ export default function BottomSheet({
 }) {
   const sheetRef = useRef<HTMLDivElement>(null);
 
+  // Read the latest onClose via a ref rather than depending on it directly below.
+  // A caller that doesn't memoize onClose (most don't) passes a new function every
+  // render — if that render happened because the CALLER's own state changed (e.g.
+  // typing into a form field inside the sheet), depending on `onClose` re-ran this
+  // effect and called sheetRef.current?.focus() again, yanking focus off the input
+  // mid-keystroke and dismissing the mobile keyboard on every character (2026-07-17).
+  const onCloseRef = useRef(onClose);
+  useEffect(() => { onCloseRef.current = onClose; }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
     function onKey(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
+      if (event.key === 'Escape') onCloseRef.current();
     }
     document.addEventListener('keydown', onKey);
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    // Move focus into the sheet for keyboard users.
+    // Move focus into the sheet for keyboard users. Only on the open/close
+    // transition — see the ref note above for why onClose isn't a dependency here.
     sheetRef.current?.focus();
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = previousOverflow;
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open || typeof document === 'undefined') return null;
 
