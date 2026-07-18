@@ -75,9 +75,9 @@ export default async function UserHomePage({
   ]);
 
   if (contexts.length === 0 && pendingInvites.length === 0) {
-    // No active context AND no pending invite — send to the account-first front door,
-    // not straight into org-creation.
-    redirect('/start');
+    // No active context AND no pending invite — most often a fan account. Mirrors
+    // getAuthDestination: land on Discover, not the organizer chooser (2026-07-18).
+    redirect('/discover');
   }
 
   // If they have ONLY pending invites (no active context), we render /home with the

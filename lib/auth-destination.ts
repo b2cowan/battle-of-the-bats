@@ -42,9 +42,13 @@ export async function getAuthDestination() {
     const pending = await listPendingInvitesForUser(user.id);
     if (pending.length > 0) return '/home';
 
-    // No workspace yet — send to the account-first front door, not straight into
-    // org-creation (Phase 2: /start asks the user their job first).
-    return '/start';
+    // No workspace yet and nothing pending — this is most often a fan account (e.g.
+    // the follow-a-team account offer), not someone mid-setup for an organization.
+    // Land them where a signed-out visitor already goes: Discover, no wall. /start
+    // (the organizer chooser) stays one tap away from the nav for anyone who does
+    // want to set up an org (2026-07-18 — was /start, which trapped fan accounts in
+    // a chooser meant for organizers, with no way back to just browsing).
+    return '/discover';
   }
 
   // Single-context users land on /home too, so the switcher (and "Start something
