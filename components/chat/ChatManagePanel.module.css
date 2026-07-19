@@ -181,3 +181,45 @@
   color: var(--white-45);
   font-weight: 700;
 }
+
+/* ── Reported messages (R3-2 moderation queue) — pinned to the top of the panel body when non-empty. */
+.reportsBlock {
+  padding: 0.6rem 0.7rem 0.7rem;
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--danger-rgb), 0.06);
+}
+.reportsHeadLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--danger);
+}
+.reportRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid var(--white-8);
+}
+.reportRow:last-child { border-bottom: none; }
+.reportMain { flex: 1 1 auto; min-width: 0; }
+.reportMeta {
+  font-size: 0.68rem;
+  color: var(--white-45);
+  margin-bottom: 0.15rem;
+}
+.reportBody {
+  font-size: 0.84rem;
+  color: var(--white-90);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.reportBody em { color: var(--white-45); }
+.reportActions {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: stretch;
+}

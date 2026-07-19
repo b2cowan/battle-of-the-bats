@@ -16,6 +16,8 @@ import {
   muteMember,
   unmuteMember,
   softDeleteMessage,
+  resolveReportsForMessage,
+  resolveMessageReport,
   setPinned,
   setRoomArchived,
   MAX_MUTE_HOURS,
@@ -26,11 +28,13 @@ export const runtime = 'nodejs';
 type Params = { params: Promise<{ tournamentId: string }> };
 
 type ModerateBody = {
-  action?: 'mute' | 'unmute' | 'delete' | 'close' | 'reopen' | 'pin' | 'unpin';
+  action?: 'mute' | 'unmute' | 'delete' | 'close' | 'reopen' | 'pin' | 'unpin' | 'dismiss_report';
   /** which room to act on; omit for the default "All coaches" room (back-compat). */
   roomId?: string;
   targetUserId?: string;
   messageId?: string;
+  /** the report to dismiss (dismiss_report action; Unified Home R3-2 queue). */
+  reportId?: string;
   hours?: number;
 };
 
@@ -84,6 +88,19 @@ export const POST = withObservability(async (req: NextRequest, { params }: Param
     case 'delete': {
       if (!body.messageId) return NextResponse.json({ error: 'messageId required' }, { status: 400 });
       await softDeleteMessage({ roomId: room.id, messageId: body.messageId, byUserId: ctx.user.id });
+      // Clearing any open reports on the removed message is best-effort — the delete already committed, so
+      // a secondary-write hiccup must not 500 the request (that would wrongly tell the admin the delete
+      // failed, on the frequent delete path where usually no report even exists).
+      try {
+        await resolveReportsForMessage({ roomId: room.id, messageId: body.messageId, status: 'actioned', byUserId: ctx.user.id });
+      } catch (err) {
+        console.error('[chat/moderate] clearing reports after delete failed (non-fatal):', err);
+      }
+      return NextResponse.json({ ok: true });
+    }
+    case 'dismiss_report': {
+      if (!body.reportId) return NextResponse.json({ error: 'reportId required' }, { status: 400 });
+      await resolveMessageReport({ reportId: body.reportId, roomId: room.id, status: 'dismissed', byUserId: ctx.user.id });
       return NextResponse.json({ ok: true });
     }
     case 'pin':

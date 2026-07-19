@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { X, VolumeX, Volume2, Copy, Check, Mail, UserCog, Pencil, Lock, Unlock, Trash2 } from 'lucide-react';
+import { X, VolumeX, Volume2, Copy, Check, Mail, UserCog, Pencil, Lock, Unlock, Trash2, Flag } from 'lucide-react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import styles from './ChatManagePanel.module.css';
 
@@ -33,6 +33,16 @@ export type ChatPending = {
   email: string | null;
 };
 
+/** A member-filed report awaiting an organizer decision (Unified Home R3-2). */
+export type ChatReport = {
+  id: string;
+  messageId: string;
+  reporterName: string;
+  reason: string | null;
+  createdAt: string;
+  message: { senderName: string; body: string; deletedAt: string | null; sentAt: string } | null;
+};
+
 function lastSeenLabel(iso: string | null): string {
   if (!iso) return 'Not yet';
   const d = new Date(iso);
@@ -57,10 +67,16 @@ type Props = {
   onClose: () => void;
   members: ChatMember[];
   pending: ChatPending[];
+  /** Member-filed message reports awaiting a decision (Unified Home R3-2). */
+  reports: ChatReport[];
   busy: boolean;
   onToggleMute: (member: ChatMember, mute: boolean) => void;
   onCopyInvite: (p: ChatPending) => void;
   copiedId: string | null;
+  /** Remove the reported message (soft-delete; also clears its reports). */
+  onRemoveReported: (messageId: string) => void;
+  /** Dismiss a report without removing the message. */
+  onDismissReport: (reportId: string) => void;
   // ── Room settings (the open room) ──
   isArchived: boolean;
   onToggleClose: (close: boolean) => void;
@@ -73,7 +89,8 @@ type Props = {
 };
 
 export default function ChatManagePanel({
-  open, onClose, members, pending, busy, onToggleMute, onCopyInvite, copiedId,
+  open, onClose, members, pending, reports, busy, onToggleMute, onCopyInvite, copiedId,
+  onRemoveReported, onDismissReport,
   isArchived, onToggleClose, onRename, onDelete, deleteNote,
 }: Props) {
   const panelRef = useRef<HTMLElement>(null);
@@ -129,6 +146,47 @@ export default function ChatManagePanel({
         </div>
 
         <div className={styles.body}>
+          {/* Reported messages — the R3-2 moderation queue, pinned to the top when non-empty. */}
+          {reports.length > 0 && (
+            <div className={`${styles.block} ${styles.reportsBlock}`}>
+              <div className={styles.blockHead}>
+                <span className={styles.reportsHeadLabel}><Flag size={14} aria-hidden /> Reported messages</span>
+                <span className={styles.count}>{reports.length}</span>
+              </div>
+              {reports.map((r) => {
+                const removed = Boolean(r.message?.deletedAt);
+                return (
+                  <div key={r.id} className={styles.reportRow}>
+                    <div className={styles.reportMain}>
+                      <div className={styles.reportMeta}>
+                        {r.message ? r.message.senderName : 'Unknown sender'} · reported by {r.reporterName} · {lastSeenLabel(r.createdAt)}
+                      </div>
+                      <div className={styles.reportBody}>
+                        {r.message == null ? (
+                          <em>This message no longer exists.</em>
+                        ) : removed ? (
+                          <em>Message already removed.</em>
+                        ) : (
+                          r.message.body
+                        )}
+                      </div>
+                    </div>
+                    <div className={styles.reportActions}>
+                      {r.message && !removed && (
+                        <button type="button" className="btn btn-danger btn-data" onClick={() => onRemoveReported(r.messageId)} disabled={busy}>
+                          <Trash2 size={13} aria-hidden /> Remove
+                        </button>
+                      )}
+                      <button type="button" className="btn btn-ghost btn-data" onClick={() => onDismissReport(r.id)} disabled={busy}>
+                        Dismiss
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {/* Members */}
           <div className={styles.block}>
             <div className={styles.blockHead}>

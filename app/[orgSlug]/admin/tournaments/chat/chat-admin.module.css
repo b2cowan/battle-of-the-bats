@@ -110,3 +110,21 @@
 
 .spin { animation: chat-admin-spin 0.9s linear infinite; }
 @keyframes chat-admin-spin { to { transform: rotate(360deg); } }
+
+/* Reported-message count on the "Manage room" button (R3-2 moderation queue). */
+.manageReportsBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 0.28rem;
+  margin-left: 0.1rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: #fff;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  line-height: 1;
+}

@@ -14,6 +14,7 @@ import {
   ChatError,
   getTournamentRoomById,
   getRoomRoster,
+  listOpenReportsForRoom,
   syncTournamentChatRoom,
   renameChatRoom,
   deleteTournamentChatRoom,
@@ -57,7 +58,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
   if (r instanceof Response) return r;
 
   const sync = await syncTournamentChatRoom({ room: r.room });
-  const roster = await getRoomRoster(r.room);
+  const [roster, reports] = await Promise.all([getRoomRoster(r.room), listOpenReportsForRoom(r.room.id)]);
   return NextResponse.json({
     room: {
       id: r.room.id,
@@ -69,6 +70,8 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
     members: roster.members,
     pending: roster.pending,
     activeCount: sync.activeCount,
+    // Member-filed reports awaiting an organizer decision (Unified Home R3-2 moderation queue).
+    reports,
   });
 }, { route: '/api/admin/tournaments/[tournamentId]/chat/rooms/[roomId]' });
 

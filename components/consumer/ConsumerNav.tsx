@@ -17,6 +17,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Radio, MessageCircle, User } from 'lucide-react';
+import { useChatUnread } from '@/lib/use-chat-unread';
 import styles from './ConsumerShell.module.css';
 
 const TABS = [
@@ -39,6 +40,15 @@ export default function ConsumerNav({
   const pathname = usePathname();
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
+  // Rolled-up unread across all the member's chat rooms (self-muted rooms excluded server-side; R3-1).
+  // Signed-out visitors never fetch it. Rides the same endpoint + realtime nudge as the portal badges.
+  // Keyed by href so both nav loops read `badges[href]` — a second badge (e.g. Account) is one entry, not
+  // another string check copy-pasted into both loops.
+  const chatUnread = useChatUnread(signedIn);
+  const badges: Record<string, string | null> = {
+    '/chat': chatUnread > 0 ? (chatUnread > 9 ? '9+' : String(chatUnread)) : null,
+  };
+
   return (
     <>
       <header id="consumer-topbar" className={styles.topbar}>
@@ -51,6 +61,7 @@ export default function ConsumerNav({
           <nav className={styles.topNav} aria-label="Primary">
             {TABS.map(({ href, label }) => {
               const active = isActive(href);
+              const badge = badges[href];
               return (
                 <Link
                   key={href}
@@ -59,6 +70,7 @@ export default function ConsumerNav({
                   aria-current={active ? 'page' : undefined}
                 >
                   {label}
+                  {badge && <span className={styles.topBadge} aria-label={`${badge} unread`}>{badge}</span>}
                 </Link>
               );
             })}
@@ -81,6 +93,7 @@ export default function ConsumerNav({
       <nav className={styles.bottomNav} aria-label="Primary">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
+          const badge = badges[href];
           return (
             <Link
               key={href}
@@ -91,6 +104,7 @@ export default function ConsumerNav({
               <span className={styles.iconWrap}>
                 <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
                 {active && <span className={styles.activeDot} />}
+                {badge && <span className={styles.tabBadge} aria-label={`${badge} unread`}>{badge}</span>}
               </span>
               <span className={styles.label}>{label}</span>
             </Link>

@@ -5780,7 +5780,10 @@ One generic engine, three tables: **chat_rooms** (a conversation, typed by `surf
 **`status`** (text, NN, default `active`; CHECK `active|pending|muted|removed`) — only `active` grants access. `pending` = a coach who hasn't finished signup ("not yet joined"), auto-activated later.
 
 <!-- dict:col:chat_room_members.muted_until -->
-**`muted_until`** (timestamptz, nullable) — admin mute expiry (≤72h at the surface).
+**`muted_until`** (timestamptz, nullable) — admin mute expiry (≤72h at the surface). The organizer's **post-blocking** mute (`postChatMessage` rejects while `muted_until > now`). DISTINCT from `notifications_muted_at` below.
+
+<!-- dict:col:chat_room_members.notifications_muted_at -->
+**`notifications_muted_at`** (timestamptz, nullable; mig 193) — the member's OWN "Mute this room" toggle (Unified Home Phase 4 / R3-2). NULL = not muted; a timestamp = self-muted since then. Excludes the room from the member's unread rollup + the Chat-tab badge (`getUnreadTotalForUser`) and suppresses its push fan-out (`postChatMessage`). **DISTINCT from `muted_until`:** a self-mute never blocks the member's own posting — they keep read + post access, it just goes quiet. Written **service-role only** (the `authenticated` column grant stays `UPDATE(last_read_at)` only), via the member's `/api/chat/rooms/[roomId]/self-mute` route.
 
 <!-- dict:col:chat_room_members.joined_at -->
 **`joined_at`** (timestamptz, NN, default now()) — when added.
@@ -5884,6 +5887,43 @@ One generic engine, three tables: **chat_rooms** (a conversation, typed by `surf
 <!-- dict:col:chat_poll_votes.removed_at -->
 **`removed_at`** (timestamptz, nullable; mig 148) — soft-delete marker. NULL = active vote; set on revote/retract (an UPDATE, never a hard DELETE). UNIQUE on `(message_id, option_id, user_id)` means re-casting revives this row.
 
+## `chat_message_reports`
+<!-- dict:table:chat_message_reports -->
+
+**Purpose** (mig 193, Unified Home Phase 4 / R3-2): member-filed reports on chat messages. A member long-presses a message in the consumer inbox → "Report to organizers"; the report surfaces as a queue item in the organizer's EXISTING chat "Manage room" panel (moderation lives where the organizer already moderates), where they can remove the message or dismiss the report.
+
+**Gotchas (read first):**
+1. **Service-role only — RLS enabled, ZERO policies** (same posture as `fan_alert_prefs`/`fan_follows`): prod anon/authenticated hold a default SELECT on public tables, so RLS is the only wall. Members file + organizers read/resolve exclusively via service-role API routes; a member never reads another member's reports (no cross-member visibility).
+2. **`org_id` is DENORMALIZED** (from the room) so the organizer queue scopes by org (and per-tournament via `room_id`) without a join back through `chat_rooms`.
+3. **Partial unique index `(message_id, reporter_user_id) WHERE status = 'open'`** (NOT a table-wide constraint) — one OPEN report per member per message: a repeat tap while a report is open is an idempotent no-op, but once the prior report is resolved a member CAN re-report a still-abusive message (a table-wide unique would have silently swallowed every re-report after the first resolution).
+4. **NOT realtime-published** — the organizer queue is fetched on demand / refreshed, not streamed.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:chat_message_reports.room_id -->
+**`room_id`** (FK → chat_rooms.id, NN, CASCADE) — the room the reported message is in; scopes the per-room organizer queue.
+
+<!-- dict:col:chat_message_reports.message_id -->
+**`message_id`** (FK → chat_messages.id, NN, CASCADE) — the reported message. Partial-unique with `reporter_user_id` WHERE `status='open'` (one open report per member per message). Indexed.
+
+<!-- dict:col:chat_message_reports.org_id -->
+**`org_id`** (FK → organizations.id, NN, CASCADE) — denormalized from the room so the queue scopes by org without a join. Indexed with `status`.
+
+<!-- dict:col:chat_message_reports.reporter_user_id -->
+**`reporter_user_id`** (FK → auth.users.id, NN, CASCADE) — the member who filed the report. Set server-side to the caller (no client write path → cannot be spoofed).
+
+<!-- dict:col:chat_message_reports.reason -->
+**`reason`** (text, nullable) — optional free-text; the R3-2 sheet is one-tap (no reason picker), so this is reserved for a future reason taxonomy.
+
+<!-- dict:col:chat_message_reports.status -->
+**`status`** (text, NN, default `open`; CHECK `open|actioned|dismissed`) — queue state. `open` → `actioned` (organizer removed the message) or `dismissed` (organizer declined).
+
+<!-- dict:col:chat_message_reports.resolved_by_user_id -->
+**`resolved_by_user_id`** (FK → auth.users.id, nullable, SET NULL) — the organizer who resolved it; set alongside `resolved_at`.
+
+<!-- dict:col:chat_message_reports.resolved_at -->
+**`resolved_at`** (timestamptz, nullable) — when the report left `open`.
+
 ---
 
-*End of Chat (migrations 141 + 146 + 147 + 148, DEV-only / ⚠ prod-pending; 5 tables). Membership-based RLS (org-agnostic by design for future cross-org), own-rows-only member visibility to dodge RLS recursion, `chat_messages` + `chat_message_reactions` + `chat_poll_votes` realtime-published (REPLICA IDENTITY FULL) — soft-delete + pin/unpin + reactions + poll votes ride it; **hard DELETE is avoided platform-wide on these tables because Supabase `postgres_changes` does not RLS-gate DELETE events**. Proving slice validated via `scripts/validate-chat-slice.mjs` (34 checks). Cross-references — not redocuments — `organizations`, `auth.users`, and the Notifications & Push domain (the bell/push path).*
+*End of Chat (migrations 141 + 146 + 147 + 148 + 193, DEV-only / ⚠ prod-pending; 6 tables). Membership-based RLS (org-agnostic by design for future cross-org), own-rows-only member visibility to dodge RLS recursion, `chat_messages` + `chat_message_reactions` + `chat_poll_votes` realtime-published (REPLICA IDENTITY FULL) — soft-delete + pin/unpin + reactions + poll votes ride it; **hard DELETE is avoided platform-wide on these tables because Supabase `postgres_changes` does not RLS-gate DELETE events**. Two Phase-4 additions (mig 193): `chat_room_members.notifications_muted_at` (member self-mute, distinct from the organizer `muted_until` post-block) and `chat_message_reports` (member report → organizer queue, service-role only). Proving slice validated via `scripts/validate-chat-slice.mjs` (34 checks). Cross-references — not redocuments — `organizations`, `auth.users`, and the Notifications & Push domain (the bell/push path).*

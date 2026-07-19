@@ -31,6 +31,17 @@
   --home-shadow:       0 1px 2px rgba(70, 55, 30, 0.05), 0 6px 18px rgba(70, 55, 30, 0.07);
   --home-shadow-sm:    0 1px 2px rgba(70, 55, 30, 0.06);
 
+  /* Captured brand lime (real, not the olive accent) for the few LIME FILLS that survive on the warm
+     ground — e.g. the conversation's Send button (ink-on-lime chip). Captured here on `.warm` so it
+     resolves to the true --logic-lime and inherits down even into a descendant that locally remaps
+     --logic-lime to the olive accent (the warm ChatPanel does). rgb triples feed the warm ChatPanel's
+     scoped token remap without any literal colour in that stylesheet. */
+  --home-lime:         var(--logic-lime);
+  --home-olive-rgb:    87, 101, 30;
+  --home-live-rgb:     217, 72, 43;
+  --home-amber-rgb:    161, 98, 7;
+  --home-line-rgb:     70, 55, 30;
+
   /* The warm surface owns its own ground so the dark shell background never shows
      through (the wrapper flex-fills the shell's .content column). */
   background: var(--home-paper);

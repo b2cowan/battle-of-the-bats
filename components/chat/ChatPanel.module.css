@@ -384,6 +384,9 @@
   font-weight: 700;
   margin: 0 0.25rem 0.15rem;
   letter-spacing: 0.02em;
+  /* Dark skin passes a per-team HSL inline as --sender-tint; the warm skin sets its own color directly
+     (.panelWarm .sender below) and never sets --sender-tint inline, so the fallback covers that case. */
+  color: var(--sender-tint, var(--white-90));
 }
 
 .bubble {
@@ -1147,4 +1150,62 @@
 /* Mobile: full-bleed conversation (no floating rounded card against the screen edge). */
 @media (max-width: 900px) {
   .panel { border-radius: 0; border-left: none; border-right: none; }
+}
+
+/* ── Warm consumer skin (Unified Home R3-3) ──────────────────────────────────
+   ONE engine, per-shell presentation: the consumer Chat renders <ChatPanel variant="warm">, which adds
+   `.panelWarm`. This SCOPED block remaps the panel's design tokens to the warm palette — it never
+   redefines a GLOBAL dark token, so the coaches/admin ChatPanel (no variant) is byte-for-byte unchanged.
+   The --home-* tokens are inherited from the enclosing `.warm` consumer shell. */
+.panelWarm {
+  --card-bg: var(--home-paper);          /* panel + message-list ground = warm paper */
+  --bg-inset: var(--home-card);          /* header + composer bars = white */
+  --white-90: var(--home-ink);
+  --white-80: var(--home-ink);
+  --white-70: var(--home-ink-soft);
+  --white-60: var(--home-dim);
+  --white-55: var(--home-dim);
+  --white-50: var(--home-dim);
+  --white-45: var(--home-dim);
+  --white-40: var(--home-dim);
+  --white-35: var(--home-dim);
+  --white-10: var(--home-line);
+  --white-8: var(--home-card);           /* incoming bubbles / chips = solid white */
+  --white-5: var(--home-paper);
+  --logic-lime: var(--home-olive);       /* lime-as-accent darkens to olive on warm ground (E3 rule) */
+  --logic-lime-rgb: var(--home-olive-rgb);
+  --blueprint-blue-rgb: var(--home-line-rgb);
+  --danger: var(--home-live);
+  --danger-rgb: var(--home-live-rgb);
+  --warning: var(--home-amber);
+  --warning-rgb: var(--home-amber-rgb);
+  --radius: var(--home-radius);
+  --radius-sm: var(--home-radius-sm);
+}
+
+/* Sender kicker → mono + a uniform readable ink. The warm span never carries the inline --sender-tint
+   (the per-team HSL washes out on white), so this class rule sets the color directly — `.panelWarm
+   .sender` outspecifies the base `.sender`, no !important, no inline to fight. */
+.panelWarm .sender {
+  color: var(--home-ink-soft);
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+}
+
+/* Long-press is the safety-sheet gesture here — suppress native text-selection / callout so a hold
+   opens the sheet cleanly instead of selecting the bubble text. */
+.panelWarm .bubble {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Pill composer + a brand-LIME Send (ink-on-lime survives on the warm ground; the olive remap above
+   would otherwise olive-ify it). `button.sendBtn` outspecifies the global `.btn-lime`(:hover). */
+.panelWarm .input { border-radius: var(--home-radius-pill); }
+.panelWarm button.sendBtn {
+  background: var(--home-lime);
+  border-color: var(--home-lime);
+  color: var(--home-ink);
 }

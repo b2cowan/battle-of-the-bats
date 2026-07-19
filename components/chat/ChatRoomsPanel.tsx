@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Plus, Lock, Hash, Megaphone } from 'lucide-react';
+import { roomDisplayName } from '@/lib/chat-display';
 import styles from './ChatRoomsPanel.module.css';
 
 /**
@@ -70,9 +71,9 @@ export default function ChatRoomsPanel({
     };
   }, [open, onClose]);
 
-  // In the tournament admin the default room is simply "All coaches" (the tournament is already named
-  // in the left nav) — keeps the header + rows short. Division rooms show their organizer-chosen name.
-  const displayName = (r: RoomSwitchItem) => (r.refSubId == null ? 'All coaches' : r.name);
+  // Default room reads "All coaches" (the tournament is already named in the left nav); division rooms
+  // show their organizer-chosen name. Shared rule (roomDisplayName) — same as the inbox + admin header.
+  const displayName = (r: RoomSwitchItem) => roomDisplayName(r);
   const scopeLabel = (r: RoomSwitchItem): string | null => {
     if (r.refSubId == null) return null;
     const names = r.divisionIds.map((id) => divisionName(id)).filter(Boolean);

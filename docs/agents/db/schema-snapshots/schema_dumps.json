@@ -1721,6 +1721,96 @@
         "column_default": null
       },
       {
+        "table_name": "chat_message_reports",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 2,
+        "column_name": "room_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 3,
+        "column_name": "message_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 5,
+        "column_name": "reporter_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 6,
+        "column_name": "reason",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 7,
+        "column_name": "status",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'open'::text"
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 8,
+        "column_name": "resolved_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 9,
+        "column_name": "resolved_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_message_reports",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "chat_messages",
         "pos": 1,
         "column_name": "id",
@@ -1940,6 +2030,15 @@
         "table_name": "chat_room_members",
         "pos": 8,
         "column_name": "last_read_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "chat_room_members",
+        "pos": 9,
+        "column_name": "notifications_muted_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
@@ -14882,6 +14981,41 @@
         "constraint_name": "chat_message_reactions_user_id_fkey"
       },
       {
+        "table_name": "chat_message_reports",
+        "column_name": "message_id",
+        "foreign_table": "chat_messages",
+        "foreign_column": "id",
+        "constraint_name": "chat_message_reports_message_id_fkey"
+      },
+      {
+        "table_name": "chat_message_reports",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "chat_message_reports_org_id_fkey"
+      },
+      {
+        "table_name": "chat_message_reports",
+        "column_name": "reporter_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "chat_message_reports_reporter_user_id_fkey"
+      },
+      {
+        "table_name": "chat_message_reports",
+        "column_name": "resolved_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "chat_message_reports_resolved_by_user_id_fkey"
+      },
+      {
+        "table_name": "chat_message_reports",
+        "column_name": "room_id",
+        "foreign_table": "chat_rooms",
+        "foreign_column": "id",
+        "constraint_name": "chat_message_reports_room_id_fkey"
+      },
+      {
         "table_name": "chat_messages",
         "column_name": "deleted_by_user_id",
         "foreign_table": null,
@@ -15844,14 +15978,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -15872,14 +16006,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -15914,14 +16048,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -15942,14 +16076,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -16124,14 +16258,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -17431,6 +17565,31 @@
         "tablename": "chat_message_reactions",
         "indexname": "chat_message_reactions_unique",
         "indexdef": "CREATE UNIQUE INDEX chat_message_reactions_unique ON public.chat_message_reactions USING btree (message_id, user_id, emoji)"
+      },
+      {
+        "tablename": "chat_message_reports",
+        "indexname": "chat_message_reports_message_idx",
+        "indexdef": "CREATE INDEX chat_message_reports_message_idx ON public.chat_message_reports USING btree (message_id)"
+      },
+      {
+        "tablename": "chat_message_reports",
+        "indexname": "chat_message_reports_open_uniq",
+        "indexdef": "CREATE UNIQUE INDEX chat_message_reports_open_uniq ON public.chat_message_reports USING btree (message_id, reporter_user_id) WHERE (status = 'open'::text)"
+      },
+      {
+        "tablename": "chat_message_reports",
+        "indexname": "chat_message_reports_org_status_idx",
+        "indexdef": "CREATE INDEX chat_message_reports_org_status_idx ON public.chat_message_reports USING btree (org_id, status)"
+      },
+      {
+        "tablename": "chat_message_reports",
+        "indexname": "chat_message_reports_pkey",
+        "indexdef": "CREATE UNIQUE INDEX chat_message_reports_pkey ON public.chat_message_reports USING btree (id)"
+      },
+      {
+        "tablename": "chat_message_reports",
+        "indexname": "chat_message_reports_room_status_idx",
+        "indexdef": "CREATE INDEX chat_message_reports_room_status_idx ON public.chat_message_reports USING btree (room_id, status)"
       },
       {
         "tablename": "chat_messages",
@@ -19688,6 +19847,18 @@
       {
         "kind": "RLS",
         "table_name": "chat_message_reactions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "chat_message_reports",
+        "detail": "chat_message_reports_status_check",
+        "check_clause": "(status = ANY (ARRAY['open'::text, 'actioned'::text, 'dismissed'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "chat_message_reports",
         "detail": "ENABLED",
         "check_clause": null
       },

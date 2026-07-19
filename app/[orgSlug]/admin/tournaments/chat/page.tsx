@@ -6,7 +6,8 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import UpgradeGate from '@/components/billing/UpgradeGate';
 import ChatPanel from '@/components/chat/ChatPanel';
-import ChatManagePanel, { type ChatMember, type ChatPending } from '@/components/chat/ChatManagePanel';
+import ChatManagePanel, { type ChatMember, type ChatPending, type ChatReport } from '@/components/chat/ChatManagePanel';
+import { roomDisplayName } from '@/lib/chat-display';
 import ChatRoomsPanel from '@/components/chat/ChatRoomsPanel';
 import NewRoomDialog, { type DivisionOption } from '@/components/chat/NewRoomDialog';
 import s from '../../admin-common.module.css';
@@ -30,6 +31,7 @@ type RosterResponse = {
   members: ChatMember[];
   pending: ChatPending[];
   activeCount: number;
+  reports: ChatReport[];
 };
 
 /**
@@ -140,33 +142,41 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
     if (fresh) setRoster(fresh);
   }
 
-  async function toggleClose(close: boolean) {
-    if (close && typeof window !== 'undefined' &&
-      !window.confirm('Close this room? Coaches can read it but cannot post until you reopen it.')) {
-      return;
-    }
+  // Shared moderation runner: busy toggle + moderate() + refresh + error surface. Each handler supplies
+  // only the action payload and its error message.
+  async function runModeration(action: Record<string, unknown>, errorMsg: string) {
     setBusy(true);
     try {
-      await moderate({ action: close ? 'close' : 'reopen' });
+      await moderate(action);
       await refreshSelected();
     } catch {
-      setListError('Could not update the room.');
+      setListError(errorMsg);
     } finally {
       setBusy(false);
     }
   }
 
-  async function toggleMute(member: ChatMember, mute: boolean) {
-    setBusy(true);
-    try {
-      await moderate(mute ? { action: 'mute', targetUserId: member.userId, hours: 72 } : { action: 'unmute', targetUserId: member.userId });
-      await refreshSelected();
-    } catch {
-      setListError('Could not update the member.');
-    } finally {
-      setBusy(false);
+  function toggleClose(close: boolean) {
+    if (close && typeof window !== 'undefined' &&
+      !window.confirm('Close this room? Coaches can read it but cannot post until you reopen it.')) {
+      return;
     }
+    void runModeration({ action: close ? 'close' : 'reopen' }, 'Could not update the room.');
   }
+
+  function toggleMute(member: ChatMember, mute: boolean) {
+    void runModeration(
+      mute ? { action: 'mute', targetUserId: member.userId, hours: 72 } : { action: 'unmute', targetUserId: member.userId },
+      'Could not update the member.',
+    );
+  }
+
+  // Reported-message queue (R3-2): remove the message (soft-delete; the API also clears its reports) or
+  // dismiss the report without touching the message.
+  const handleRemoveReported = (messageId: string) =>
+    void runModeration({ action: 'delete', messageId }, 'Could not remove the message.');
+  const handleDismissReport = (reportId: string) =>
+    void runModeration({ action: 'dismiss_report', reportId }, 'Could not update the report.');
 
   function copyInvite(p: ChatPending) {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
@@ -251,7 +261,11 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
     return <div className={styles.state} style={{ color: 'var(--danger)' }}>{listError ?? 'Unable to load chat.'}</div>;
   }
 
-  const isArchived = roster?.room.id === selectedRoomId ? roster.room.isArchived : (selected?.isArchived ?? false);
+  // Is the loaded roster for the currently-selected room? (Guards against a stale roster from a rapid
+  // room switch.) Hoisted once — used by isArchived / openReports and the ChatManagePanel props below.
+  const rosterFresh = roster?.room.id === selectedRoomId;
+  const isArchived = rosterFresh ? roster!.room.isArchived : (selected?.isArchived ?? false);
+  const openReports = rosterFresh ? (roster!.reports?.length ?? 0) : 0;
   const isDivisionRoom = Boolean(selected?.refSubId);
   // Delete protects history: only an empty division room (no messages) can be removed; otherwise close it.
   const isEmptyRoom = (selected?.lastMessageAt ?? null) === null;
@@ -281,7 +295,7 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
             <ChatPanel
               key={selectedRoomId}
               roomId={selectedRoomId}
-              roomName={selected ? (selected.refSubId == null ? 'All coaches' : selected.name) : undefined}
+              roomName={selected ? roomDisplayName(selected) : undefined}
               iconBefore={
                 <button
                   type="button"
@@ -310,6 +324,11 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
                 >
                   <UserCog size={14} aria-hidden />
                   <span className={styles.manageBtnLabel}>Manage room</span>
+                  {openReports > 0 && (
+                    <span className={styles.manageReportsBadge} aria-label={`${openReports} reported message${openReports === 1 ? '' : 's'}`}>
+                      {openReports > 9 ? '9+' : openReports}
+                    </span>
+                  )}
                   <ChevronRight size={13} aria-hidden className={styles.manageBtnChevron} />
                 </button>
               }
@@ -321,12 +340,15 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
         <ChatManagePanel
           open={manageOpen}
           onClose={closeManage}
-          members={roster?.room.id === selectedRoomId ? roster.members : []}
-          pending={roster?.room.id === selectedRoomId ? roster.pending : []}
+          members={rosterFresh ? roster!.members : []}
+          pending={rosterFresh ? roster!.pending : []}
+          reports={rosterFresh ? (roster!.reports ?? []) : []}
           busy={busy}
           onToggleMute={toggleMute}
           onCopyInvite={copyInvite}
           copiedId={copied}
+          onRemoveReported={handleRemoveReported}
+          onDismissReport={handleDismissReport}
           isArchived={isArchived}
           onToggleClose={toggleClose}
           onRename={isDivisionRoom ? handleRename : undefined}

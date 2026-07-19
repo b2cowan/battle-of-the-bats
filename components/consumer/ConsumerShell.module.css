@@ -134,6 +134,27 @@
 .topLink:hover { color: var(--fl-text); }
 .topLink.active { color: var(--primary-light); }
 
+/* Desktop Chat-tab unread pill — rolled-up count (self-muted rooms excluded); red (semantic --danger,
+   the platform red family — R3-1's #D9482B). */
+.topLink { position: relative; }
+.topBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  margin-left: 0.35rem;
+  padding: 0 0.28rem;
+  border-radius: 999px;
+  background: var(--danger);
+  color: var(--fl-text);
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: middle;
+}
+
 /* Below 900px the top links give way to the bottom nav (matches the site pattern). */
 @media (max-width: 900px) {
   .topNav { display: none; }
@@ -220,6 +241,26 @@
     border-radius: 50%;
     background: var(--primary-light);
     box-shadow: 0 0 6px var(--primary-light);
+  }
+
+  /* Chat-tab unread pill on the icon — rolled-up count, self-muted rooms excluded (R3-1). */
+  .tabBadge {
+    position: absolute;
+    top: -3px;
+    left: calc(50% + 7px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 0.24rem;
+    border-radius: 999px;
+    background: var(--danger);
+    color: var(--fl-text);
+    font-family: var(--font-data, monospace);
+    font-size: 0.58rem;
+    font-weight: 700;
+    line-height: 1;
   }
 
   .label {

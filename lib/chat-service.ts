@@ -17,6 +17,7 @@ import {
   isTournamentChatParticipant,
   type PendingChatCoach,
 } from './chat-resolvers';
+import { roomDisplayName } from './chat-display';
 
 /**
  * lib/chat-service.ts — server-side service layer for Tournament Chat.
@@ -112,6 +113,12 @@ export type ChatRoomListItem = {
   /** the tournament name this room belongs to — a secondary label so a coach can tell apart several
    *  rooms in one tournament (e.g. "All coaches" vs "Championship") and same-named rooms across events. */
   contextLabel: string | null;
+  /** sender of the room's most-recent message (null = no messages / system) — the consumer inbox
+   *  turns this into a "Organizer:" / "Coach Dana:" / "You:" preview prefix. Coach/admin surfaces ignore it. */
+  lastMessageSenderId?: string | null;
+  /** the member's OWN "Mute this room" state (notifications_muted_at set; mig 193). A muted room is
+   *  excluded from every unread count and dimmed in the consumer inbox. Coaches can't self-mute today. */
+  selfNotifMuted?: boolean;
 };
 
 type RoomRow = {
@@ -420,6 +427,25 @@ export async function getActiveMemberUserIds(roomId: string): Promise<string[]> 
   return (data ?? []).map(r => r.user_id as string);
 }
 
+/** Active member ids + the subset who self-muted, in ONE query — for the post hot path (recipients +
+ *  push-suppression) so a send doesn't pay two round-trips to chat_room_members. */
+async function getActiveMembersWithMute(roomId: string): Promise<{ activeIds: string[]; mutedIds: Set<string> }> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_room_members')
+    .select('user_id, notifications_muted_at')
+    .eq('room_id', roomId)
+    .eq('status', 'active');
+  if (error) throw error;
+  const activeIds: string[] = [];
+  const mutedIds = new Set<string>();
+  for (const r of data ?? []) {
+    const uid = r.user_id as string;
+    activeIds.push(uid);
+    if (r.notifications_muted_at) mutedIds.add(uid);
+  }
+  return { activeIds, mutedIds };
+}
+
 /** Org owners + admins, who become moderators of the room. */
 async function getHostModeratorUserIds(orgId: string): Promise<string[]> {
   const { data, error } = await supabaseAdmin
@@ -640,18 +666,20 @@ async function unreadCountForMember(
   return count ?? 0;
 }
 
-async function lastMessageFor(roomId: string): Promise<{ at: string; preview: string } | null> {
+async function lastMessageFor(
+  roomId: string,
+): Promise<{ at: string; preview: string; senderUserId: string | null } | null> {
   const { data, error } = await supabaseAdmin
     .from('chat_messages')
-    .select('body, sent_at, deleted_at')
+    .select('body, sent_at, deleted_at, sender_user_id')
     .eq('room_id', roomId)
     .order('sent_at', { ascending: false })
     .limit(1)
-    .maybeSingle<{ body: string; sent_at: string; deleted_at: string | null }>();
+    .maybeSingle<{ body: string; sent_at: string; deleted_at: string | null; sender_user_id: string | null }>();
   if (error) throw error;
   if (!data) return null;
   const preview = data.deleted_at ? 'Message removed' : data.body.slice(0, 120);
-  return { at: data.sent_at, preview };
+  return { at: data.sent_at, preview, senderUserId: data.sender_user_id };
 }
 
 /**
@@ -675,7 +703,7 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
   // List from the membership table (covers both freshly-healed + previously-existing rooms).
   const { data: memberships, error } = await supabaseAdmin
     .from('chat_room_members')
-    .select('room_id, member_role, status, muted_until, last_read_at')
+    .select('room_id, member_role, status, muted_until, last_read_at, notifications_muted_at')
     .eq('user_id', userId)
     .neq('status', 'removed');
   if (error) throw error;
@@ -717,8 +745,10 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
       unreadCount,
       lastMessageAt: last?.at ?? null,
       lastMessagePreview: last?.preview ?? null,
+      lastMessageSenderId: last?.senderUserId ?? null,
       isModerator: m.member_role === 'moderator',
       selfMutedUntil: mutedUntil && new Date(mutedUntil) > new Date() ? mutedUntil : null,
+      selfNotifMuted: Boolean(m.notifications_muted_at),
       readOnly: room.isArchived,
       contextLabel: tournamentNameById.get(room.refId) ?? null,
     } as ChatRoomListItem;
@@ -728,13 +758,16 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
   return items;
 }
 
-/** Total unread across all the coach's rooms (portal sidebar badge). Does NOT self-heal (cheap). */
+/** Total unread across all the coach's rooms (portal + consumer-nav badge). Does NOT self-heal (cheap).
+ *  Self-muted rooms (notifications_muted_at set) are EXCLUDED — a muted room never contributes to any
+ *  unread count (Unified Home R3-1). Coaches can't self-mute today, so this is a no-op for them. */
 export async function getUnreadTotalForUser(userId: string): Promise<number> {
   const { data: memberships, error } = await supabaseAdmin
     .from('chat_room_members')
     .select('room_id, last_read_at')
     .eq('user_id', userId)
-    .eq('status', 'active');
+    .eq('status', 'active')
+    .is('notifications_muted_at', null);
   if (error) throw error;
   const counts = await Promise.all((memberships ?? []).map(m =>
     unreadCountForMember(m.room_id as string, m.last_read_at as string | null, userId)));
@@ -886,7 +919,8 @@ export async function postChatMessage(params: {
   const replyTo = params.replyToId ? await buildReplyRef(params.roomId, params.replyToId) : null;
 
   // Mentions: keep only ids that are REAL active members; resolve display names server-side (anti-spoof).
-  const activeIds = await getActiveMemberUserIds(params.roomId);
+  // One query yields both the recipient set AND who self-muted (for push suppression below).
+  const { activeIds, mutedIds } = await getActiveMembersWithMute(params.roomId);
   let mentions: MentionRef[] = [];
   if (params.mentionUserIds?.length) {
     const activeSet = new Set(activeIds);
@@ -922,7 +956,11 @@ export async function postChatMessage(params: {
   // are removed from the general fan-out so nobody is double-notified for one message.
   try {
     const mentionedIds = new Set(mentions.map(m => m.userId));
-    const general = activeIds.filter(id => id !== params.senderUserId && !mentionedIds.has(id));
+    // Members who self-muted this room chose silence — drop them from the general fan-out (a direct
+    // @mention still pierces, being targeted). `mutedIds` came free with the recipient query above.
+    const general = activeIds.filter(
+      id => id !== params.senderUserId && !mentionedIds.has(id) && !mutedIds.has(id),
+    );
     if (general.length > 0) {
       await notify({
         orgId: room.orgId,
@@ -1649,4 +1687,261 @@ export async function getTournamentDivisionsForChat(tournamentId: string): Promi
     name: d.name as string,
     teamCount: countByDivision.get(d.id as string) ?? 0,
   }));
+}
+
+// ── Consumer inbox + self-mute (Unified Home Phase 4) ────────────────────────
+
+/**
+ * Toggle the caller's OWN "Mute this room" (Unified Home R3-2). Distinct from the organizer mute
+ * (`muted_until`): a self-mute silences pushes + drops the room from every unread count, but the member
+ * keeps read AND post access. Service-role write (the member's column grant is `last_read_at` only).
+ */
+export async function setSelfMute(params: {
+  roomId: string;
+  userId: string;
+  muted: boolean;
+}): Promise<{ muted: boolean }> {
+  const membership = await getMembership(params.roomId, params.userId);
+  if (!membership || membership.status === 'removed') {
+    throw new ChatError('not_member', 'You are not a member of this conversation.', 403);
+  }
+  const { error } = await supabaseAdmin
+    .from('chat_room_members')
+    .update({ notifications_muted_at: params.muted ? new Date().toISOString() : null })
+    .eq('room_id', params.roomId)
+    .eq('user_id', params.userId);
+  if (error) throw error;
+  return { muted: params.muted };
+}
+
+/** One conversation in the consumer cross-context inbox — a room, grouped by its event. */
+export type ChatInboxRoom = {
+  roomId: string;
+  /** the room's role within its event ("All coaches" or a division room's name). */
+  roomName: string;
+  /** grouping key = the tournament this room belongs to (chat_rooms.ref_id). */
+  eventId: string;
+  /** the event group's mono kicker (tournament name). */
+  eventName: string | null;
+  /** unread for the caller — forced to 0 when self-muted (a muted room never badges). */
+  unreadCount: number;
+  selfNotifMuted: boolean;
+  readOnly: boolean;
+  lastMessageAt: string | null;
+  /** sender-prefixed one-line preview: "You: …" / "Organizer: …" / "{name}: …" (plain for system/removed). */
+  preview: string | null;
+};
+
+export type ChatInbox = { rooms: ChatInboxRoom[]; unreadTotal: number };
+
+/**
+ * The signed-in member's cross-context chat inbox (Unified Home Phase 4 / R3-1): every active room
+ * across all their tournaments, newest-activity first, grouped by event, with sender-prefixed previews
+ * and a mute-excluded unread rollup. Builds on `listRoomsForUser` (which self-heals memberships on
+ * load — a coach never sees a false "no chats"), then enriches previews with the last sender's label.
+ */
+export async function getChatInboxForUser(userId: string): Promise<ChatInbox> {
+  const items = await listRoomsForUser(userId);
+  if (items.length === 0) return { rooms: [], unreadTotal: 0 };
+
+  // Resolve the last-message sender's label per room: "You" (self), "Organizer" (moderator), or their
+  // display name. The role lookup and the name hydration both depend only on senderIds — run them
+  // together rather than back-to-back (one round-trip off every inbox load).
+  const senderIds = [...new Set(items.map((i) => i.lastMessageSenderId).filter((v): v is string => Boolean(v)))];
+  const [roleRows, display] = await Promise.all([
+    (async () => {
+      if (senderIds.length === 0) return [] as Array<{ room_id: string; user_id: string; member_role: string }>;
+      const { data, error } = await supabaseAdmin
+        .from('chat_room_members')
+        .select('room_id, user_id, member_role')
+        .in('room_id', items.map((i) => i.room.id))
+        .in('user_id', senderIds);
+      if (error) throw error;
+      return (data ?? []) as Array<{ room_id: string; user_id: string; member_role: string }>;
+    })(),
+    hydrateUserDisplay(senderIds),
+  ]);
+  const roleByRoomUser = new Map<string, string>();
+  for (const r of roleRows) roleByRoomUser.set(`${r.room_id}:${r.user_id}`, r.member_role);
+
+  const rooms: ChatInboxRoom[] = items.map((i) => {
+    const muted = Boolean(i.selfNotifMuted);
+    let preview = i.lastMessagePreview;
+    const sid = i.lastMessageSenderId ?? null;
+    // Prefix with the sender — but never a system message (no sender) or an already-removed placeholder.
+    if (preview && preview !== 'Message removed' && sid) {
+      if (sid === userId) {
+        preview = `You: ${preview}`;
+      } else {
+        const role = roleByRoomUser.get(`${i.room.id}:${sid}`);
+        const label = role === 'moderator' ? 'Organizer' : (display.get(sid)?.name ?? 'Coach');
+        preview = `${label}: ${preview}`;
+      }
+    }
+    return {
+      roomId: i.room.id,
+      roomName: roomDisplayName(i.room),
+      eventId: i.room.refId,
+      // Only the real tournament name is an event label; if the name lookup failed (contextLabel null),
+      // leave it null so the client renders its generic "Conversations" kicker — never a lone room's name.
+      eventName: i.contextLabel,
+      unreadCount: muted ? 0 : i.unreadCount,
+      selfNotifMuted: muted,
+      readOnly: i.readOnly,
+      lastMessageAt: i.lastMessageAt,
+      preview,
+    };
+  });
+  // `listRoomsForUser` already sorted newest-activity first; keep that order (the client groups by event,
+  // first-seen order = most-recently-active group first).
+  const unreadTotal = rooms.reduce((sum, r) => sum + r.unreadCount, 0);
+  return { rooms, unreadTotal };
+}
+
+// ── Message reports (member → organizer queue; Unified Home Phase 4 / R3-2) ──
+
+/** A reported message as the organizer sees it in the Manage-room panel's Reports queue. */
+export type ChatReportView = {
+  id: string;
+  messageId: string;
+  reporterName: string;
+  reason: string | null;
+  createdAt: string;
+  /** the reported message (null if the row is gone); `body` is '' when the message was already removed. */
+  message: { senderName: string; body: string; deletedAt: string | null; sentAt: string } | null;
+};
+
+/**
+ * File a member's report on a message (long-press → "Report to organizers"). Verifies the reporter is
+ * an active member of the room and the message belongs to it; you cannot report your own message.
+ * Idempotent while a report is OPEN — a repeat report is a no-op ('exists'); once the prior report is
+ * resolved the partial-unique index no longer conflicts, so a fresh report is filed ('ok').
+ */
+export async function createMessageReport(params: {
+  roomId: string;
+  messageId: string;
+  reporterUserId: string;
+}): Promise<'ok' | 'exists'> {
+  const room = await getRoomById(params.roomId);
+  if (!room) throw new ChatError('not_found', 'Conversation not found.', 404);
+  const membership = await getMembership(params.roomId, params.reporterUserId);
+  if (!membership || membership.status === 'removed') {
+    throw new ChatError('not_member', 'You are not a member of this conversation.', 403);
+  }
+  const { data: msg, error: msgErr } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, sender_user_id')
+    .eq('id', params.messageId)
+    .eq('room_id', params.roomId)
+    .maybeSingle<{ id: string; sender_user_id: string | null }>();
+  if (msgErr) throw msgErr;
+  if (!msg) throw new ChatError('not_found', 'Message not found.', 404);
+  if (msg.sender_user_id && msg.sender_user_id === params.reporterUserId) {
+    throw new ChatError('invalid', 'You cannot report your own message.', 400);
+  }
+
+  const { error } = await supabaseAdmin.from('chat_message_reports').insert({
+    room_id: params.roomId,
+    message_id: params.messageId,
+    org_id: room.orgId,
+    reporter_user_id: params.reporterUserId,
+  });
+  if (error) {
+    if ((error as { code?: string }).code === '23505') return 'exists'; // one report per member per message
+    throw error;
+  }
+  return 'ok';
+}
+
+/** Count of open reports in a room — drives the "Reports · N" badge on the organizer Manage button. */
+export async function countOpenReportsForRoom(roomId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('chat_message_reports')
+    .select('id', { count: 'exact', head: true })
+    .eq('room_id', roomId)
+    .eq('status', 'open');
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/** The open reports for a room (newest first), each with the reported message + reporter, for the queue. */
+export async function listOpenReportsForRoom(roomId: string): Promise<ChatReportView[]> {
+  const { data: reports, error } = await supabaseAdmin
+    .from('chat_message_reports')
+    .select('id, message_id, reporter_user_id, reason, created_at')
+    .eq('room_id', roomId)
+    .eq('status', 'open')
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  if (!reports || reports.length === 0) return [];
+
+  const messageIds = [...new Set(reports.map((r) => r.message_id as string))];
+  const { data: msgs, error: msgErr } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, sender_user_id, body, deleted_at, sent_at')
+    .in('id', messageIds);
+  if (msgErr) throw msgErr;
+  const msgById = new Map((msgs ?? []).map((m) => [m.id as string, m]));
+
+  const userIds = [
+    ...reports.map((r) => r.reporter_user_id as string),
+    ...(msgs ?? []).map((m) => m.sender_user_id as string).filter(Boolean),
+  ];
+  const display = await hydrateUserDisplay(userIds);
+
+  return reports.map((r) => {
+    const m = msgById.get(r.message_id as string);
+    return {
+      id: r.id as string,
+      messageId: r.message_id as string,
+      reporterName: display.get(r.reporter_user_id as string)?.name ?? 'A member',
+      reason: (r.reason as string | null) ?? null,
+      createdAt: r.created_at as string,
+      message: m
+        ? {
+            senderName: m.sender_user_id ? (display.get(m.sender_user_id as string)?.name ?? 'Coach') : 'Coach',
+            body: m.deleted_at ? '' : (m.body as string),
+            deletedAt: m.deleted_at as string | null,
+            sentAt: m.sent_at as string,
+          }
+        : null,
+    };
+  });
+}
+
+/** The shared resolution patch — one place to change if the schema grows (e.g. a resolution note). */
+function reportResolution(status: 'actioned' | 'dismissed', byUserId: string) {
+  return { status, resolved_by_user_id: byUserId, resolved_at: new Date().toISOString() };
+}
+
+/** Resolve ONE report (dismiss). Scoped to the room so an organizer can only act on their own room's queue. */
+export async function resolveMessageReport(params: {
+  reportId: string;
+  roomId: string;
+  status: 'actioned' | 'dismissed';
+  byUserId: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('chat_message_reports')
+    .update(reportResolution(params.status, params.byUserId))
+    .eq('id', params.reportId)
+    .eq('room_id', params.roomId)
+    .eq('status', 'open');
+  if (error) throw error;
+}
+
+/** Close EVERY open report on a message (used when the organizer removes the reported message → 'actioned'). */
+export async function resolveReportsForMessage(params: {
+  roomId: string;
+  messageId: string;
+  status: 'actioned' | 'dismissed';
+  byUserId: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('chat_message_reports')
+    .update(reportResolution(params.status, params.byUserId))
+    .eq('room_id', params.roomId)
+    .eq('message_id', params.messageId)
+    .eq('status', 'open');
+  if (error) throw error;
 }

@@ -3,6 +3,7 @@
 import {
   useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState,
   type ReactNode, type ChangeEvent, type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent, type MouseEvent as ReactMouseEvent, type CSSProperties,
 } from 'react';
 import {
   Send, Trash2, Loader2, ChevronUp, ChevronDown, MessageSquare, X, Smile, SmilePlus, Search, Check, CheckCheck, Reply, Pin, BarChart3, Plus, Lock,
@@ -65,6 +66,12 @@ type Props = {
   /** Unread count at open — drives a one-time "New messages" divider + scroll-to-first-unread. */
   unreadCount?: number;
   className?: string;
+  /** Presentation skin. 'warm' = the consumer-shell paper/olive skin (Unified Home R3-3); the default
+   *  is the dark coaches/admin skin, byte-for-byte unchanged (they pass no variant). One engine. */
+  variant?: 'default' | 'warm';
+  /** Present only on the consumer surface — a long-press / right-click on a message opens the caller's
+   *  safety sheet (Report to organizers + Mute this room; Unified Home R3-2). The host owns the sheet. */
+  onLongPressMessage?: (msg: { id: string; senderName: string; sentAt: string; mine: boolean; deleted: boolean }) => void;
 };
 
 function prefersReducedMotion(): boolean {
@@ -190,6 +197,7 @@ type RenderItem =
 
 export default function ChatPanel({
   roomId, roomName, onModerateDelete, onDeleteOwn, onPin, headerRight, iconBefore, unreadCount, className,
+  variant = 'default', onLongPressMessage,
 }: Props) {
   const instanceId = useId();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -261,6 +269,47 @@ export default function ChatPanel({
   const suppressAutoScrollRef = useRef(false);
   const prevLenRef = useRef(0);
   const unreadCountRef = useRef(unreadCount);
+  // Long-press (touch) / right-click (desktop) → the consumer safety sheet. A fired long-press sets a
+  // flag so the click that follows on pointer-up doesn't also toggle the message's action reveal.
+  const longPressTimerRef = useRef<number | null>(null);
+  const longPressFiredRef = useRef(false);
+  const longPressStartRef = useRef<{ x: number; y: number } | null>(null);
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimerRef.current != null) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    longPressStartRef.current = null;
+  }, []);
+  // Bind long-press handlers to a bubble (only when the host wired a safety sheet). Touch fires the
+  // sheet after a 500ms still hold (a >10px drag cancels it — that's a scroll); desktop uses right-click.
+  // Called inline per bubble (its result is spread straight into JSX), so a fresh object each render is
+  // unavoidable anyway — a plain function, not useCallback (which would memoize a value nothing reuses).
+  const longPressHandlers = (payload: { id: string; senderName: string; sentAt: string; mine: boolean; deleted: boolean }) =>
+    onLongPressMessage
+      ? {
+          onPointerDown: (e: ReactPointerEvent) => {
+            if (e.pointerType === 'mouse') return; // desktop uses onContextMenu
+            longPressFiredRef.current = false;
+            cancelLongPress();
+            longPressStartRef.current = { x: e.clientX, y: e.clientY };
+            longPressTimerRef.current = window.setTimeout(() => {
+              longPressFiredRef.current = true;
+              onLongPressMessage(payload);
+            }, 500);
+          },
+          onPointerMove: (e: ReactPointerEvent) => {
+            const start = longPressStartRef.current;
+            if (start && Math.hypot(e.clientX - start.x, e.clientY - start.y) > 10) cancelLongPress();
+          },
+          onPointerUp: cancelLongPress,
+          onPointerCancel: cancelLongPress,
+          onContextMenu: (e: ReactMouseEvent) => { e.preventDefault(); onLongPressMessage(payload); },
+        }
+      : {};
+  // Clear a pending long-press timer if the panel unmounts mid-press (e.g. a fast back-navigation while
+  // the finger is still down) so the timeout can't fire on an unmounted tree.
+  useEffect(() => () => cancelLongPress(), [cancelLongPress]);
   // Keep the latest `self` reachable from the realtime callback (set up once) without re-subscribing.
   useEffect(() => {
     selfRef.current = self;
@@ -1248,7 +1297,7 @@ export default function ChatPanel({
   const charsLeft = 4000 - draft.length;
 
   return (
-    <div className={`${styles.panel}${className ? ` ${className}` : ''}`}>
+    <div className={`${styles.panel}${variant === 'warm' ? ` ${styles.panelWarm}` : ''}${className ? ` ${className}` : ''}`}>
       {(roomName || headerRight || iconBefore) && (
         <div className={styles.header}>
           {iconBefore && <span className={styles.headerIcon}>{iconBefore}</span>}
@@ -1436,12 +1485,22 @@ export default function ChatPanel({
                   )}
                   <div className={styles.bubbleWrap}>
                     {showName && (
-                      <span className={styles.sender} style={{ color: teamColor(idKey, 70, 72) }}>{nameFor(m)}</span>
+                      <span
+                        className={styles.sender}
+                        // Per-team tint only on the dark skin; the warm skin sets its own mono ink color
+                        // directly (an inline custom prop can't be overridden by a class rule).
+                        style={variant === 'warm' ? undefined : ({ '--sender-tint': teamColor(idKey, 70, 72) } as CSSProperties)}
+                      >{nameFor(m)}</span>
                     )}
                     <div
                       data-mid={m.id}
                       className={`${styles.bubble}${styles[`bubble_${pos}`] ? ` ${styles[`bubble_${pos}`]}` : ''}${mine ? ` ${styles.bubbleMine}` : ''}${deleted ? ` ${styles.bubbleDeleted}` : ''}${flashId === m.id ? ` ${styles.bubbleFlash}` : ''}${hasActions && revealedId === m.id ? ` ${styles.bubbleRevealed}` : ''}`}
-                      onClick={hasActions ? () => setRevealedId((cur) => (cur === m.id ? null : m.id)) : undefined}
+                      onClick={hasActions ? () => {
+                        // Swallow the click that trails a fired long-press so it doesn't also toggle the reveal.
+                        if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
+                        setRevealedId((cur) => (cur === m.id ? null : m.id));
+                      } : undefined}
+                      {...longPressHandlers({ id: m.id, senderName: nameFor(m), sentAt: m.sentAt, mine, deleted })}
                     >
                       {m.replyTo && (
                         <button

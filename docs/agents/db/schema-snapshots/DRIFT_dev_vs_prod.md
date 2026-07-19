@@ -1,27 +1,37 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-07-17 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-07-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 50 divergence(s)** across dev/prod.
+**⚠️ 74 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 0 | 0 | — |
-| Columns | 0 | 3 | 23 |
-| Indexes | 4 | 3 | 0 |
-| Constraints | 7 | 9 | — |
-| RLS / CHECK | 0 | 1 | 0 (RLS state) |
+| Tables | 1 | 0 | — |
+| Columns | 11 | 3 | 23 |
+| Indexes | 9 | 3 | 0 |
+| Constraints | 13 | 9 | — |
+| RLS / CHECK | 1 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (0)
-_none_
+### Only in DEV (1)
+- `chat_message_reports`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (0)
-_none_
+### Only in DEV (11)
+- `chat_message_reports.created_at`
+- `chat_message_reports.id`
+- `chat_message_reports.message_id`
+- `chat_message_reports.org_id`
+- `chat_message_reports.reason`
+- `chat_message_reports.reporter_user_id`
+- `chat_message_reports.resolved_at`
+- `chat_message_reports.resolved_by_user_id`
+- `chat_message_reports.room_id`
+- `chat_message_reports.status`
+- `chat_room_members.notifications_muted_at`
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -54,7 +64,12 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (4)
+### Only in DEV (9)
+- `chat_message_reports_message_idx`
+- `chat_message_reports_open_uniq`
+- `chat_message_reports_org_status_idx`
+- `chat_message_reports_pkey`
+- `chat_message_reports_room_status_idx`
 - `league_practices_recurrence_idx`
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
@@ -69,8 +84,14 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (7)
+### Only in DEV (13)
 - `announcements.announcements_tournament_id_fkey`
+- `chat_message_reports.chat_message_reports_message_id_fkey`
+- `chat_message_reports.chat_message_reports_org_id_fkey`
+- `chat_message_reports.chat_message_reports_pkey`
+- `chat_message_reports.chat_message_reports_reporter_user_id_fkey`
+- `chat_message_reports.chat_message_reports_resolved_by_user_id_fkey`
+- `chat_message_reports.chat_message_reports_room_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
 - `games.games_age_group_id_fkey`
@@ -93,8 +114,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (0)
-_none_
+### CHECK only in DEV (1)
+- `chat_message_reports.chat_message_reports_status_check`
 
 ### CHECK only in PROD (1)
 - `tournaments.tournaments_status_check`
