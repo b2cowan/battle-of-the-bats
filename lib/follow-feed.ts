@@ -1,9 +1,8 @@
 import 'server-only';
 import { getPublicTournamentPageData } from './public-tournament-data';
-import { selectTeamGames, publicGameStatus, DEFAULT_GAME_DURATION_MINUTES } from './game-status';
+import { selectTeamGames, publicGameStatus, DEFAULT_GAME_DURATION_MINUTES, opponentNameFor, teamScoreFor } from './game-status';
 import { tournamentToday } from './timezone';
 import { formatTime, relativeDayLabel } from './utils';
-import type { Game, PublicTeam } from './types';
 
 /**
  * lib/follow-feed.ts — server-side read layer that turns a flat list of
@@ -54,22 +53,6 @@ export interface FollowFeedInput {
   teamName: string;
   orgSlug: string;
   tournamentSlug: string;
-}
-
-function opponentNameFor(game: Game, teamId: string, teams: PublicTeam[]): string | null {
-  const isHome = game.homeTeamId === teamId;
-  const oppId = isHome ? game.awayTeamId : game.homeTeamId;
-  return teams.find(t => t.id === oppId)?.name
-    ?? (isHome ? game.awayPlaceholder : game.homePlaceholder)
-    ?? null;
-}
-
-function teamScoreFor(game: Game, teamId: string): { my: number | null; opp: number | null } {
-  const isHome = game.homeTeamId === teamId;
-  return {
-    my: (isHome ? game.homeScore : game.awayScore) ?? null,
-    opp: (isHome ? game.awayScore : game.homeScore) ?? null,
-  };
 }
 
 const tournamentKey = (orgSlug: string, tournamentSlug: string) => `${orgSlug}/${tournamentSlug}`;

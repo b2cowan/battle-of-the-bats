@@ -16,7 +16,7 @@ import { hasPlanFeature } from './plan-features';
 import { isPublicPageEnabled, type PublicPageKey } from './public-pages';
 import type { Announcement, Division, Venue, Game, Organization, Resource, RuleSection, Team, PublicTeam, Tournament, TournamentRegistrationField } from './types';
 
-export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context';
+export type PublicTournamentSection = Extract<PublicPageKey, 'schedule' | 'standings' | 'teams' | 'rules' | 'register'> | 'context' | 'scores';
 
 /**
  * Strip a {@link Team} down to its public-safe fields ({@link PublicTeam}). The single
@@ -130,7 +130,10 @@ export async function getPublicTournamentPageData(
   if (!context) return null;
 
   const { org, tournaments, tournament } = context;
-  const sectionKey = section === 'context' ? null : section;
+  // 'scores' is the cross-tournament consumer feed (My Games) — gate it on the SCHEDULE
+  // page's visibility, exactly like the 'schedule' section, so a hidden schedule never
+  // leaks games here either.
+  const sectionKey = section === 'context' ? null : section === 'scores' ? 'schedule' : section;
   const pageEnabled = !sectionKey || isPublicPageEnabled(tournament, sectionKey);
 
   // Resolve the contact email shown on public pages, honoring the per-tournament
@@ -160,6 +163,17 @@ export async function getPublicTournamentPageData(
 
   if (!tournament || !pageEnabled || section === 'context') {
     return base;
+  }
+
+  // Cross-tournament consumer scores feed (Unified Home Scores tab): only games + teams are
+  // read downstream, so skip the schedule section's venues / divisions / announcements fetches
+  // — this path is polled, so those extra round-trips would repeat every tick.
+  if (section === 'scores') {
+    const [games, teams] = await Promise.all([
+      getGames(tournament.id, { admin: true }),
+      getTeams(tournament.id, { admin: true }),
+    ]);
+    return { ...base, games, teams: teams.filter(t => t.status === 'accepted').map(t => toPublicTeam(t, tournament.coachNamesShowOnPublic === true)) };
   }
 
   if (section === 'schedule') {

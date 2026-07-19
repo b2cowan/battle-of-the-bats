@@ -673,7 +673,7 @@ export async function getBasicCoachTournamentTeamsForUser(params: {
  *  set (→ getCoachedRegistrationTeamIds) for the same user; routing both through this shared
  *  wrapper runs the 4-query scan once instead of twice. Both callers pass the same (userId, email)
  *  primitives so cache() dedupes. */
-const getBasicCoachTournamentTeamsForUserCached = cache(
+export const getBasicCoachTournamentTeamsForUserCached = cache(
   (userId: string, email: string | null) => getBasicCoachTournamentTeamsForUser({ userId, email }),
 );
 

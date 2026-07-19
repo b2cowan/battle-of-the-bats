@@ -163,7 +163,19 @@ export function calendarDaysBetween(
   to: Date,
   timeZone: string = ORG_TIME_ZONE,
 ): number {
-  const [ay, am, ad] = tournamentToday(from, timeZone).split('-').map(Number);
-  const [by, bm, bd] = tournamentToday(to, timeZone).split('-').map(Number);
+  return daysBetweenDateStrings(tournamentToday(from, timeZone), tournamentToday(to, timeZone));
+}
+
+/**
+ * Whole calendar days from `from` to `to`, both already `YYYY-MM-DD` strings — the pure
+ * date-string primitive under {@link calendarDaysBetween} (which zones its `Date` inputs
+ * down to strings first). Positive when `to` is after `from`, negative before, 0 same day;
+ * returns 0 if either string is malformed. No timezone: both inputs are already calendar
+ * dates, so this is plain UTC-midnight arithmetic — safe to call from client code.
+ */
+export function daysBetweenDateStrings(from: string, to: string): number {
+  const [ay, am, ad] = from.split('-').map(Number);
+  const [by, bm, bd] = to.split('-').map(Number);
+  if (!ay || !by) return 0;
   return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86_400_000);
 }

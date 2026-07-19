@@ -19,7 +19,7 @@
  * required, not live) → upcoming.
  */
 import { zonedWallClockToUtc } from './timezone';
-import type { Game } from './types';
+import type { Game, PublicTeam } from './types';
 
 /** Minutes after a game's scheduled end during which it still reads LIVE — covers
  *  extra innings / clock overruns before it settles into its score state. */
@@ -159,4 +159,24 @@ export function selectTeamGames(
     .at(-1) ?? null;
 
   return { live, next, lastResult };
+}
+
+/** The opposing team's display name for a game from `teamId`'s perspective — resolved from
+ *  the tournament's public team list, falling back to the placeholder slot (e.g.
+ *  "Winner of QF1") or null. Shared by every cross-tournament team feed (Following + Scores). */
+export function opponentNameFor(game: Game, teamId: string, teams: PublicTeam[]): string | null {
+  const isHome = game.homeTeamId === teamId;
+  const oppId = isHome ? game.awayTeamId : game.homeTeamId;
+  return teams.find(t => t.id === oppId)?.name
+    ?? (isHome ? game.awayPlaceholder : game.homePlaceholder)
+    ?? null;
+}
+
+/** A game's score from `teamId`'s perspective — `my` is teamId's score, `opp` the other side. */
+export function teamScoreFor(game: Game, teamId: string): { my: number | null; opp: number | null } {
+  const isHome = game.homeTeamId === teamId;
+  return {
+    my: (isHome ? game.homeScore : game.awayScore) ?? null,
+    opp: (isHome ? game.awayScore : game.homeScore) ?? null,
+  };
 }
