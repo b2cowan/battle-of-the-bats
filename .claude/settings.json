@@ -43,7 +43,22 @@
       "Bash(node scripts/check-public-tokens.mjs)",
       "Bash(node scripts/check-dictionary-coverage.mjs)",
       "Bash(node scripts/check-admin-org-context.mjs)",
-      "Bash(xargs -I{} echo {})"
+      "Bash(xargs -I{} echo {})",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/182_rep_team_award_types.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/183_scheduled_http_ticks.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/184_money_tags_and_org_shared_library.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/185_user_marketing_opt_outs.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/186_fan_follows.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/187_notifications_realtime.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/188_fan_alert_prefs.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/189_player_development.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/190_evaluation_sessions.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/191_player_continuity_links.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs supabase/migrations/192_continuity_carry_forward.sql --prod)",
+      "Bash(node scripts/apply-migration-api.mjs \"C:\\\\\\\\Users\\\\\\\\b2cow\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\c--Users-b2cow-Documents-tournament-website\\\\\\\\0fb50d85-9780-4cc7-b890-64d54883b1a5\\\\\\\\scratchpad\\\\\\\\set-prod-vault-secrets.sql\" --prod)",
+      "Bash(node scripts/apply-migration-api.mjs \"C:\\\\\\\\Users\\\\\\\\b2cow\\\\\\\\AppData\\\\\\\\Local\\\\\\\\Temp\\\\\\\\claude\\\\\\\\c--Users-b2cow-Documents-tournament-website\\\\\\\\0fb50d85-9780-4cc7-b890-64d54883b1a5\\\\\\\\scratchpad\\\\\\\\check-prod-prereqs.sql\" --prod)",
+      "Bash(git fetch *)",
+      "Bash(npx tsc *)"
     ]
   },
   "hooks": {
