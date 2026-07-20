@@ -20,13 +20,14 @@
 | **League Plus** | $89 | $890 | Unlimited | No — early-access / express-interest | Live (app label is "League Plus") |
 | **Club** | **$219** *(was $179)* | **$2,190** | **Up to 15 teams** | No — early-access | **Built dev 2026-06-22** (app config repriced; Stripe live prices = owner step) · price = Target/anchor |
 | **Club · Association** | **$379** | **$3,790** | **15–30 teams** (custom > 30) | No — early-access | **Built dev 2026-06-22** (plan key `club_large`) · price = Target/anchor · *public name pending final /marketing sign-off* |
-| **Premium Coaches Portal** (standalone) | $29 | $290 | One team | No — early-access | Live |
+| **Premium Coaches Portal** (standalone) | $29 *(Founding Season: $0 — see Promotions; Decided 2026-07-20, comp path not yet built)* | $290 | One team | **Becoming yes** — $0 comp self-serve at the Coaches-launch build (Phase 3); until then closed (see Promotions ⚠ drift note) | Live |
 
 **Annual convention:** ≈ 2 months free (pay for 10). $219→$2,190 and $379→$3,790 follow it.
 
 ## Promotions (live)
 
 - **Founding Season — Tournament Plus free until 2027-01-01.** Runtime: `lib/plan-config.ts` `FOUNDING_SEASON_END` (env-overridable via `NEXT_PUBLIC_FOUNDING_SEASON_END`), `isFoundingSeasonActive()`. This is a **promo, not a repricing** — the $39/$390 list price stands and is what post-promo billing anchors to. Customer-facing framing lives in `PRICING_PAGE_COPY.md` §16. *(Line added 2026-07-14 — drift repair: this doc was the one place the live promo wasn't recorded, flagged by the Free App Conversion sweep.)*
+- **Founding Season — Premium Coaches Portal free until 2027-01-01** (Decided 2026-07-20, `BUSINESS_DECISIONS.md`; **not yet built** — ships at `FOUNDING_SEASON_COACHES_FREE_PLAN.md` Phase 3). Same promo window + runtime constants as Tournament Plus; $29/$290 list stands as the visible anchor ("Free until Jan 1, 2027 — then $29/mo"). Comp enrollment provisions the workspace without Stripe (`platform_override` + null subscription id). Pauses the 2026-06-22 Club-bridge do-not-cannibalize economics for 2026 only. January 2027 conversion for the whole comp cohort = **manual owner runbook** (no automation). ⚠ **Drift note (2026-07-20):** `plan_gating.team` was found `'live'` on prod (mig-065 seed, never audited) with live Stripe prices — the $29 checkout was accidentally open (0 sales). Being closed to early-access immediately; reopens deliberately as the $0 comp path at Phase 3 launch.
 
 ---
 

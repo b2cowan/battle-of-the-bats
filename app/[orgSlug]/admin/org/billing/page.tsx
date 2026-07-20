@@ -153,9 +153,39 @@ export default function BillingPage() {
   const [panelPlan, setPanelPlan]       = useState<'tournament_plus' | 'league' | 'club' | 'team' | null>(null);
   const [loading, setLoading]           = useState<OrgPlan | null>(null);
   const [portalLoading, setPortalLoading] = useState(false);
-  const [successOpen, setSuccessOpen]     = useState(() => searchParams.get('success') === '1');
-  const [successTitle, setSuccessTitle]   = useState('Subscription activated!');
-  const [successMsg, setSuccessMsg]       = useState("Your plan has been upgraded. Enjoy your new features — they're applied immediately.");
+  const [addCardLoading, setAddCardLoading] = useState(false);
+  // Success modal state — one object so title/message/open can't drift apart.
+  // Seeded from the redirect-return query params the billing endpoints append:
+  // ?card_saved=1 = returning from the mode='setup' card-on-file session (no
+  // subscription started, nothing charged); ?success=1 = returning from checkout.
+  const [success, setSuccess] = useState<{ title: string; msg: string } | null>(() => {
+    if (searchParams.get('card_saved') === '1') {
+      return {
+        title: 'Card saved',
+        // The founding-season promise only while the promo is live — the same
+        // card-save flow keeps working after Jan 1 with generic copy.
+        msg: isFoundingSeasonActive()
+          ? 'Your payment method is on file. Nothing will be charged before January 1, 2027 — your founding season stays free through December 31, 2026.'
+          : 'Your payment method is on file for future invoices.',
+      };
+    }
+    if (searchParams.get('success') === '1') {
+      return {
+        title: 'Subscription activated!',
+        msg: "Your plan has been upgraded. Enjoy your new features — they're applied immediately.",
+      };
+    }
+    return null;
+  });
+
+  // Strip the one-shot return flags so a refresh doesn't re-open the modal forever
+  // (pre-existing quirk with ?success=1; fixed for both now).
+  useEffect(() => {
+    if (searchParams.get('card_saved') === '1' || searchParams.get('success') === '1') {
+      router.replace(window.location.pathname, { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [errorOpen, setErrorOpen]         = useState(false);
   const [errorMsg, setErrorMsg]           = useState('');
   const [downgradePreflight, setDowngradePreflight] = useState<DowngradePreflight | null>(null);
@@ -225,16 +255,15 @@ export default function BillingPage() {
         if (data.foundingSeason) {
           setFoundingSeasonStatus({ isFoundingSeason: true, compUntil: data.compUntil ?? null });
         }
-        setSuccessTitle('Plan updated');
         const remainingCopy = data.remainingRetainedCount
           ? ` ${data.remainingRetainedCount} retained tournament${data.remainingRetainedCount === 1 ? '' : 's'} still exceed this plan limit and remain in retention.`
           : '';
-        setSuccessMsg(
-          data.restoredCount
+        setSuccess({
+          title: 'Plan updated',
+          msg: data.restoredCount
             ? `Your plan has been updated to ${PLAN_CONFIG[planKey].label}. ${data.restoredCount} retained tournament${data.restoredCount === 1 ? '' : 's'} restored.${remainingCopy}`
-            : `Your plan has been updated to ${PLAN_CONFIG[planKey].label}.${remainingCopy}`
-        );
-        setSuccessOpen(true);
+            : `Your plan has been updated to ${PLAN_CONFIG[planKey].label}.${remainingCopy}`,
+        });
         setLoading(null);
         return;
       }
@@ -247,20 +276,34 @@ export default function BillingPage() {
     }
   }
 
-  async function handlePortal() {
-    setPortalLoading(true);
+  /** Shared POST-then-redirect skeleton for the billing endpoints that answer with a
+   *  Stripe destination URL. (The portal endpoint itself falls back to the card-setup
+   *  session server-side when no billing account exists yet, so every response here
+   *  is just a URL.) */
+  async function redirectToBillingUrl(endpoint: string, setBusy: (b: boolean) => void, failMsg: string) {
+    setBusy(true);
     try {
-      const res = await fetch('/api/billing/portal', { method: 'POST' });
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // Explicit org scoping — multi-org members must act on THIS page's org.
+        body: JSON.stringify({ orgSlug: currentOrg?.slug }),
+      });
       const data = await res.json() as { url?: string; error?: string };
-      if (!res.ok) throw new Error(data.error ?? 'Portal failed');
-      if (!data.url) throw new Error('Portal did not return a destination.');
+      if (!res.ok) throw new Error(data.error ?? failMsg);
+      if (!data.url) throw new Error(failMsg);
       window.location.assign(data.url);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
       setErrorOpen(true);
-      setPortalLoading(false);
+      setBusy(false);
     }
   }
+
+  const handlePortal = () =>
+    redirectToBillingUrl('/api/billing/portal', setPortalLoading, 'Portal did not return a destination.');
+  const handleAddCard = () =>
+    redirectToBillingUrl('/api/billing/setup-payment-method', setAddCardLoading, 'Card setup did not return a destination.');
 
   async function openDowngradeReview(planKey: OrgPlan) {
     setDowngradePreflight(null);
@@ -303,13 +346,12 @@ export default function BillingPage() {
       if (!res.ok) throw new Error(data.error ?? 'Downgrade failed');
       await refreshBillingState();
       setDowngradePreflight(null);
-      setSuccessTitle('Plan updated');
-      setSuccessMsg(
-        data.retainedCount
+      setSuccess({
+        title: 'Plan updated',
+        msg: data.retainedCount
           ? `${data.retainedCount} tournament${data.retainedCount === 1 ? '' : 's'} moved to retention for 90 days.`
-          : 'Your plan was updated.'
-      );
-      setSuccessOpen(true);
+          : 'Your plan was updated.',
+      });
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Downgrade failed.');
       setErrorOpen(true);
@@ -346,13 +388,12 @@ export default function BillingPage() {
       if (!res.ok) throw new Error(data.error ?? 'Cancellation failed');
       await refreshBillingState();
       setCancelPreflight(null);
-      setSuccessTitle('Account suspended');
-      setSuccessMsg(
-        currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team'
+      setSuccess({
+        title: 'Account suspended',
+        msg: currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team'
           ? 'Premium Coaches Portal is inactive. Basic tournament records remain available and premium team data is retained for 90 days.'
-          : 'Public pages and modules have been shut down. Data is retained for 90 days.'
-      );
-      setSuccessOpen(true);
+          : 'Public pages and modules have been shut down. Data is retained for 90 days.',
+      });
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : 'Cancellation failed.');
       setErrorOpen(true);
@@ -373,7 +414,7 @@ export default function BillingPage() {
     currentOrg.accountKind !== 'team_workspace';
 
   function handleSuccessClose() {
-    setSuccessOpen(false);
+    setSuccess(null);
     if (isTournamentOnlyOrg && currentOrg) {
       router.push(`/${currentOrg.slug}/admin/tournaments`);
     }
@@ -574,10 +615,10 @@ export default function BillingPage() {
         )}
 
         <FeedbackModal
-          isOpen={successOpen}
+          isOpen={success !== null}
           onClose={handleSuccessClose}
-          title={successTitle}
-          message={successMsg}
+          title={success?.title ?? ''}
+          message={success?.msg ?? ''}
           type="success"
         />
         <FeedbackModal
@@ -941,13 +982,15 @@ export default function BillingPage() {
             </p>
           </div>
           {!isBeforeOctober && canManageBilling && (
+            /* mode='setup' card-on-file save — NOT the subscription checkout (which
+               starts a 14-day trial and would bill before Jan 1). */
             <button
               className="btn btn-outline"
-              onClick={() => handleUpgrade('tournament_plus')}
-              disabled={loading === 'tournament_plus'}
+              onClick={handleAddCard}
+              disabled={addCardLoading}
             >
-              {loading === 'tournament_plus' ? 'Redirecting…' : 'Add payment method'}
-              {loading !== 'tournament_plus' && <ArrowRight size={14} />}
+              {addCardLoading ? 'Redirecting…' : 'Add payment method'}
+              {!addCardLoading && <ArrowRight size={14} />}
             </button>
           )}
         </div>
@@ -1092,10 +1135,10 @@ export default function BillingPage() {
       )}
 
       <FeedbackModal
-        isOpen={successOpen}
+        isOpen={success !== null}
         onClose={handleSuccessClose}
-        title={successTitle}
-        message={successMsg}
+        title={success?.title ?? ''}
+        message={success?.msg ?? ''}
         type="success"
       />
       <FeedbackModal

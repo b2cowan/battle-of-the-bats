@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { isFoundingSeasonCompExpiry } from '@/lib/plan-config';
 import { withObservability } from '@/lib/observability';
 
 /**
@@ -30,8 +31,7 @@ export const GET = withObservability(async (req: Request) => {
   }
 
   const compUntil = data.expires_at as string;
-  // Founding season specifically = comp_period expiring on 2027-01-01
-  const isFoundingSeason = compUntil.startsWith('2027-01-01');
+  const isFoundingSeason = isFoundingSeasonCompExpiry(compUntil);
 
   return NextResponse.json({ isFoundingSeason, compUntil });
 }, { route: '/api/admin/org/founding-season-status' });

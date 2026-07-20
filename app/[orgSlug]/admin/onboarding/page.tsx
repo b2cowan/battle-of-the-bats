@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonActive } from '@/lib/plan-config';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
 import type { FreeFloor, OrgPlan, TournamentFormat, FacilityType } from '@/lib/types';
@@ -1691,7 +1691,7 @@ export default function OnboardingPage() {
         { value: '2-3', label: '2–3', sub: 'A few each season' },
         { value: '4+', label: '4 or more', sub: 'Running a full tournament program' },
       ];
-      const isFoundingSeasonWindow = new Date() < new Date('2027-01-01T00:00:00.000Z');
+      const isFoundingSeasonWindow = isFoundingSeasonActive();
       return renderModalFrame(
         'One quick question',
         'How many tournaments does your organization run per year? This helps us tailor the setup for you.',
@@ -2558,7 +2558,7 @@ export default function OnboardingPage() {
         <p className={styles.sub}>Let&apos;s get {currentOrg.name} set up in a few quick steps.</p>
       </div>
 
-      {new Date() < new Date('2027-01-01T00:00:00.000Z') && (
+      {isFoundingSeasonActive() && (
         <div className={styles.foundingSeasonBanner}>
           <p className={styles.foundingSeasonBannerEyebrow}>Founding Season</p>
           <p className={styles.foundingSeasonBannerTitle}>Welcome to your founding season.</p>

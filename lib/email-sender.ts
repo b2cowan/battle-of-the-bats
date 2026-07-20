@@ -19,6 +19,7 @@
 
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { buildUnsubscribeUrl, buildUserUnsubscribeUrl } from '@/lib/unsubscribe-token';
+import { FOUNDING_SEASON_END } from '@/lib/plan-config';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <hello@fieldlogichq.ca>';
@@ -472,7 +473,7 @@ export async function cancelScheduledEmailForRecipient(
 // LOWER than these counts — never higher. (An over-count is the safe direction:
 // the operator never under-estimates a blast.)
 
-const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
+
 
 /** The three audience segments a marketing email can target. */
 export type MarketingAudience = 'founding' | 'not_on_club' | 'coaches';
@@ -496,7 +497,7 @@ async function foundingOrgIds(): Promise<string[]> {
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_EXPIRES);
+    .eq('expires_at', FOUNDING_SEASON_END);
   return (data ?? []).map(o => o.org_id as string);
 }
 

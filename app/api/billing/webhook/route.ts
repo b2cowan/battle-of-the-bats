@@ -26,10 +26,13 @@ function toIso(unixSeconds: number | null | undefined): string | null {
   return new Date(unixSeconds * 1000).toISOString();
 }
 
+/** Stripe expandable references arrive as either a plain id string or an expanded object. */
+function stripeId<T extends { id: string }>(value: string | T | null | undefined): string | null {
+  return typeof value === 'string' ? value : value?.id ?? null;
+}
+
 function subscriptionIdFromSession(session: Stripe.Checkout.Session): string | null {
-  return typeof session.subscription === 'string'
-    ? session.subscription
-    : session.subscription?.id ?? null;
+  return stripeId(session.subscription);
 }
 
 function subscriptionItemId(sub: Stripe.Subscription): string | null {
@@ -71,6 +74,37 @@ export const POST = withObservability(async (req: Request) => {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
+
+      // Founding Season card-on-file (mode='setup'): no subscription exists — the
+      // session only saved a payment method. Promote it to the customer's default
+      // so the January 2027 conversion can charge it, and defensively persist
+      // stripe_customer_id on the org. Nothing is billed here. The Stripe chain and
+      // the org update are independent — run them concurrently.
+      if (session.mode === 'setup') {
+        const setupIntentId = stripeId(session.setup_intent);
+        const setupOrgId = session.metadata?.orgId;
+        await Promise.all([
+          (async () => {
+            if (!setupIntentId) return;
+            const setupIntent = await stripe.setupIntents.retrieve(setupIntentId);
+            const paymentMethodId = stripeId(setupIntent.payment_method);
+            if (paymentMethodId) {
+              await stripe.customers.update(customerId, {
+                invoice_settings: { default_payment_method: paymentMethodId },
+              });
+            }
+          })(),
+          setupOrgId
+            ? supabaseAdmin
+                .from('organizations')
+                .update({ stripe_customer_id: customerId })
+                .eq('id', setupOrgId)
+                .is('stripe_customer_id', null)
+            : Promise.resolve(),
+        ]);
+        break;
+      }
+
       // RETIRING (Club Repackaging 2026-06-22): org_team_addon checkouts are no longer
       // initiated (the takeover is retired). Kept only to settle any in-flight pre-cutover
       // session — 0 exist in dev/prod. Remove this arm post-cutover.

@@ -191,6 +191,12 @@ export function normalizeBillingCycle(value: unknown): BillingCycle {
  * ISO end timestamp for the founding-season free Tournament Plus promotion.
  * Overridable via the NEXT_PUBLIC_FOUNDING_SEASON_END env var (set in Amplify) so the
  * date can change without a code PR. A platform-admin-editable setting is the eventual home.
+ *
+ * ⚠ Operational caveat (2026-07-20): comp_period rows are WRITTEN with this value at
+ * signup/org-create, and the founding-season status + email-audience queries MATCH on it.
+ * Changing the override mid-promotion therefore silently drops rows written under the old
+ * date from founding-season recognition and marketing audiences — if the date ever moves,
+ * backfill existing comp_period.expires_at rows in the same change.
  */
 export const FOUNDING_SEASON_END =
   process.env.NEXT_PUBLIC_FOUNDING_SEASON_END ?? '2027-01-01T00:00:00.000Z';
@@ -199,6 +205,17 @@ const FOUNDING_SEASON_END_MS = new Date(FOUNDING_SEASON_END).getTime();
 /** Returns true while the global founding-season promotion is still active. */
 export function isFoundingSeasonActive(): boolean {
   return Date.now() < FOUNDING_SEASON_END_MS;
+}
+
+/**
+ * True when a comp_period override expiry marks a founding-season comp.
+ * Compares the calendar date only: Postgres timestamptz formatting
+ * ('2027-01-01 00:00:00+00') differs from the ISO constant, so full-string
+ * equality would silently fail. Lives here so that fragility is documented
+ * once, next to the constant it guards.
+ */
+export function isFoundingSeasonCompExpiry(expiresAt: string): boolean {
+  return expiresAt.startsWith(FOUNDING_SEASON_END.slice(0, 10));
 }
 
 // ─── Price display helpers ────────────────────────────────────────────────────

@@ -1,9 +1,14 @@
 import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
+import { createCardSetupSession } from '@/lib/billing-setup';
 import { withObservability } from '@/lib/observability';
 
-export const POST = withObservability(async () => {
-  const auth = await getAuthContext();
+export const POST = withObservability(async (req: Request) => {
+  // Scope to the org whose billing page invoked this — never the caller's home org
+  // (a multi-org member on Org B's page must not open/create Org A's billing).
+  const body = await req.json().catch(() => ({})) as { orgSlug?: unknown };
+  const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
+  const auth = await getAuthContext(orgSlug ? { orgSlug } : {});
   if (!auth) return unauthorized();
   // Billing is owner-only — enforce server-side (the UI also hides these controls).
   const denied = await requireCapability(auth, 'billing');
@@ -28,8 +33,13 @@ export const POST = withObservability(async () => {
   }
 
   if (!auth.org.stripeCustomerId) {
-    return new Response(JSON.stringify({ error: 'No billing account found' }), {
-      status: 400,
+    // Not an error state: founding-season orgs upgraded via the $0 comp flip never
+    // created a Stripe customer. Answer with a card-on-file setup session instead of
+    // dead-ending (post-promo this was a hard 400 with no self-serve exit) — decided
+    // server-side so the client treats every portal response as a redirect URL.
+    const url = await createCardSetupSession(auth.org, auth.user.email);
+    return new Response(JSON.stringify({ url }), {
+      status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
   }

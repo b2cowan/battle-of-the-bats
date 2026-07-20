@@ -16,12 +16,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { FOUNDING_SEASON_END } from '@/lib/plan-config';
 import { sendMarketingEmail, createEmailBatch, finalizeBatch } from '@/lib/email-sender';
 import { resolvePlatformTemplate, renderTemplateEmail } from '@/lib/platform-email-templates';
 import type { EmailVars } from '@/lib/email-markup';
 import { withObservability } from '@/lib/observability';
 
-const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
+
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
 // ── Valid marketing campaign keys ─────────────────────────────────────────────
@@ -45,7 +46,7 @@ async function getFoundingSeasonRecipients(): Promise<
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_EXPIRES);
+    .eq('expires_at', FOUNDING_SEASON_END);
 
   if (ovErr || !overrides?.length) return [];
 
@@ -104,7 +105,7 @@ async function getFoundingSeasonRecipientsNotOnClub(): Promise<
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_EXPIRES);
+    .eq('expires_at', FOUNDING_SEASON_END);
 
   if (!overrides?.length) return [];
   const orgIds = overrides.map(o => o.org_id as string);
@@ -153,7 +154,7 @@ async function getCoachRecipients(): Promise<
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_EXPIRES);
+    .eq('expires_at', FOUNDING_SEASON_END);
 
   if (!overrides?.length) return [];
   const orgIds = overrides.map(o => o.org_id as string);

@@ -314,19 +314,9 @@ export const POST = withObservability(async (req: Request) => {
   }
 
   const { stripe } = await import('@/lib/stripe');
+  const { ensureStripeCustomer } = await import('@/lib/billing-setup');
 
-  let customerId = auth.org.stripeCustomerId;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: auth.user.email,
-      metadata: { orgId: auth.org.id },
-    });
-    customerId = customer.id;
-    await supabaseAdmin
-      .from('organizations')
-      .update({ stripe_customer_id: customerId })
-      .eq('id', auth.org.id);
-  }
+  const customerId = await ensureStripeCustomer(auth.org, auth.user.email);
 
   await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
 

@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { FOUNDING_SEASON_END } from '@/lib/plan-config';
 import { getPlatformAdminContext, requirePlatformAreaView } from '@/lib/platform-auth';
 import { getMarketingAudienceCounts, MARKETING_EMAIL_AUDIENCE } from '@/lib/email-sender';
 import EmailDashboardClient from './EmailDashboardClient';
@@ -8,7 +9,7 @@ export const metadata: Metadata = {
   title: 'Email Dashboard — Platform Admin',
 };
 
-const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
+
 
 async function getInitialData() {
   const [batchesResult, optOutsResult, overridesResult, scheduleResult] = await Promise.all([
@@ -29,7 +30,7 @@ async function getInitialData() {
       .from('org_overrides')
       .select('org_id')
       .eq('type', 'comp_period')
-      .eq('expires_at', FOUNDING_SEASON_EXPIRES),
+      .eq('expires_at', FOUNDING_SEASON_END),
 
     // Editable planned dates + current subject/custom status for each marketing campaign.
     supabaseAdmin

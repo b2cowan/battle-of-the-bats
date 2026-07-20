@@ -12,12 +12,13 @@
 import { NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { FOUNDING_SEASON_END } from '@/lib/plan-config';
 import { withObservability } from '@/lib/observability';
 
 // ── Founding season audience query ────────────────────────────────────────────
 // Orgs with a founding-season comp_period override (expires_at = Jan 1 2027)
 // that have NOT opted out of marketing emails.
-const FOUNDING_SEASON_EXPIRES = '2027-01-01T00:00:00.000Z';
+
 
 async function getFoundingSeasonRecipientCount(): Promise<number> {
   // Step 1: get founding season org IDs
@@ -25,7 +26,7 @@ async function getFoundingSeasonRecipientCount(): Promise<number> {
     .from('org_overrides')
     .select('org_id')
     .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_EXPIRES);
+    .eq('expires_at', FOUNDING_SEASON_END);
 
   if (ovErr || !overrides?.length) return 0;
   const orgIds = overrides.map(o => o.org_id as string);
