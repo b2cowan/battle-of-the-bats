@@ -21,6 +21,7 @@ import FanAlertsCard, { type FanCardData } from '@/components/notifications/FanA
 import { useOrgPreferences } from '@/components/notifications/useOrgPreferences';
 import { NOTIFICATION_SECTIONS, simpleGroupsFor } from '@/lib/notification-labels';
 import type { NotificationEventType } from '@/lib/types';
+import warm from '@/components/consumer/warmTheme.module.css';
 import styles from './AccountNotifications.module.css';
 
 export type NotificationCard = {
@@ -242,7 +243,8 @@ export default function AccountNotificationsClient({
   ) : null;
 
   return (
-    <div className={styles.page}>
+    <div className={warm.warm}>
+      <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Notification settings</h1>
         <p className={styles.subtitle}>
@@ -287,6 +289,7 @@ export default function AccountNotificationsClient({
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }

@@ -1,10 +1,14 @@
 /* PushDeviceTester — "your devices" list + send-test control.
-   Matches the admin dark theme via shared design tokens. */
+   Warm-light consumer skin (Unified Home R1-4): consumer-only component, warms directly
+   on the --home-* tokens from the enclosing `.warm` shell. White card, olive accents, the
+   two "register / test this device" primaries keep the ink-on-lime brand fill; secondary
+   actions are quiet outlines; result banners use the warm status set. */
 
 .card {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  border-radius: 4px;
+  border: 1px solid var(--home-line);
+  background: var(--home-card);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
   padding: 1rem 1.1rem;
   margin-bottom: 1.25rem;
 }
@@ -25,25 +29,25 @@
 
 .headerIcon {
   flex-shrink: 0;
-  color: var(--logic-lime);
+  color: var(--home-olive);
   margin-top: 0.15rem;
 }
 
 .title {
   font-size: 0.9rem;
   font-weight: 800;
-  color: var(--white-90, #f0f0f0);
+  color: var(--home-ink);
   letter-spacing: 0.01em;
 }
 
 .sub {
   font-size: 0.78rem;
   line-height: 1.45;
-  color: var(--white-60, rgba(255, 255, 255, 0.6));
+  color: var(--home-dim);
   margin-top: 0.15rem;
 }
 
-.sub strong { color: var(--white-90, #f0f0f0); font-weight: 700; }
+.sub strong { color: var(--home-ink); font-weight: 700; }
 
 .refreshBtn {
   flex-shrink: 0;
@@ -51,14 +55,14 @@
   align-items: center;
   justify-content: center;
   padding: 0.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  border: 1px solid var(--home-line-strong);
   background: transparent;
-  color: var(--white-60, rgba(255, 255, 255, 0.6));
-  border-radius: 2px;
+  color: var(--home-dim);
+  border-radius: var(--home-radius-sm);
   cursor: pointer;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
-.refreshBtn:hover:not(:disabled) { color: var(--white-90, #f0f0f0); border-color: rgba(255, 255, 255, 0.3); }
+.refreshBtn:hover:not(:disabled) { color: var(--home-ink); border-color: var(--home-olive); }
 .refreshBtn:disabled { opacity: 0.5; cursor: default; }
 
 .spin { animation: spin 0.8s linear infinite; }
@@ -68,9 +72,9 @@
   margin-top: 0.85rem;
   font-size: 0.8rem;
   line-height: 1.5;
-  color: var(--white-60, rgba(255, 255, 255, 0.6));
+  color: var(--home-dim);
 }
-.empty strong { color: var(--white-90, #f0f0f0); }
+.empty strong { color: var(--home-ink); }
 
 .enableRow {
   margin-top: 0.85rem;
@@ -78,21 +82,22 @@
   flex-direction: column;
   gap: 0.45rem;
   padding: 0.75rem;
-  border: 1px solid rgba(217, 249, 157, 0.28);
-  background: rgba(217, 249, 157, 0.07);
-  border-radius: 3px;
+  border: 1px solid rgba(var(--home-olive-rgb), 0.30);
+  background: var(--home-olive-soft);
+  border-radius: var(--home-radius-sm);
 }
 
+/* Primary: the one-tap "register this device" — the sanctioned ink-on-lime brand chip. */
 .enableBtn {
   align-self: flex-start;
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
   padding: 0.5rem 0.95rem;
-  border-radius: 2px;
-  border: 1px solid var(--logic-lime);
-  background: var(--logic-lime);
-  color: #0b1220;
+  border-radius: var(--home-radius-sm);
+  border: 1px solid var(--home-lime);
+  background: var(--home-lime);
+  color: var(--home-ink);
   font-size: 0.8rem;
   font-weight: 800;
   cursor: pointer;
@@ -104,9 +109,9 @@
 .enableHint {
   font-size: 0.76rem;
   line-height: 1.45;
-  color: var(--white-60, rgba(255, 255, 255, 0.6));
+  color: var(--home-dim);
 }
-.enableHint strong { color: var(--white-90, #f0f0f0); }
+.enableHint strong { color: var(--home-ink); }
 
 .enableError {
   display: flex;
@@ -114,7 +119,7 @@
   gap: 0.35rem;
   font-size: 0.76rem;
   line-height: 1.4;
-  color: #fca5a5;
+  color: var(--home-live);
 }
 .enableError svg { flex-shrink: 0; margin-top: 0.1rem; }
 
@@ -128,7 +133,7 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.78rem;
-  color: #fca5a5;
+  color: var(--home-live);
 }
 
 .list {
@@ -141,10 +146,10 @@
 }
 
 .device {
-  border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 3px;
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius-sm);
   padding: 0.65rem 0.75rem;
-  background: rgba(0, 0, 0, 0.18);
+  background: var(--home-paper);
 }
 
 .deviceTop {
@@ -162,7 +167,7 @@
   gap: 0.5rem;
   font-size: 0.84rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--home-ink);
 }
 
 .currentBadge {
@@ -172,13 +177,13 @@
   text-transform: uppercase;
   padding: 0.12rem 0.4rem;
   border-radius: 2px;
-  background: rgba(217, 249, 157, 0.16);
-  color: var(--logic-lime);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
 }
 
 .deviceMeta {
   font-size: 0.72rem;
-  color: var(--white-40, rgba(255, 255, 255, 0.42));
+  color: var(--home-dim);
 }
 
 .testBtn {
@@ -187,23 +192,24 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.4rem 0.8rem;
-  border-radius: 2px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: var(--home-radius-sm);
+  border: 1px solid var(--home-line-strong);
   background: transparent;
-  color: var(--white-90, #f0f0f0);
+  color: var(--home-ink);
   font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: opacity 0.15s ease, border-color 0.15s ease;
 }
-.testBtn:hover:not(:disabled) { border-color: rgba(255, 255, 255, 0.4); }
+.testBtn:hover:not(:disabled) { border-color: var(--home-olive); }
 .testBtn:disabled { opacity: 0.55; cursor: default; }
 
+/* "Test this device" (the current device) = the panel's primary act → ink-on-lime. */
 .testBtnPrimary {
-  background: var(--logic-lime);
-  color: #0b1220;
-  border-color: var(--logic-lime);
+  background: var(--home-lime);
+  color: var(--home-ink);
+  border-color: var(--home-lime);
 }
 .testBtnPrimary:hover:not(:disabled) { opacity: 0.88; }
 
@@ -219,17 +225,17 @@
   align-items: center;
   gap: 0.35rem;
   padding: 0.4rem 0.7rem;
-  border-radius: 2px;
-  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: var(--home-radius-sm);
+  border: 1px solid rgba(var(--home-live-rgb), 0.30);
   background: transparent;
-  color: rgba(252, 165, 165, 0.9);
+  color: var(--home-live);
   font-size: 0.76rem;
   font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
   transition: color 0.15s ease, border-color 0.15s ease;
 }
-.removeBtn:hover:not(:disabled) { border-color: rgba(248, 113, 113, 0.6); color: #fca5a5; }
+.removeBtn:hover:not(:disabled) { border-color: rgba(var(--home-live-rgb), 0.60); color: var(--home-live); }
 .removeBtn:disabled { opacity: 0.55; cursor: default; }
 
 .result {
@@ -240,23 +246,23 @@
   font-size: 0.77rem;
   line-height: 1.45;
   padding: 0.45rem 0.55rem;
-  border-radius: 2px;
+  border-radius: var(--home-radius-sm);
 }
 .result svg { flex-shrink: 0; margin-top: 0.1rem; }
 
 .result_delivered {
-  background: rgba(217, 249, 157, 0.1);
-  color: #d9f99d;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
 }
 .result_not_configured,
 .result_gone {
-  background: rgba(251, 191, 36, 0.1);
-  color: #fcd34d;
+  background: rgba(var(--home-amber-rgb), 0.10);
+  color: var(--home-amber);
 }
 .result_mismatch,
 .result_error {
-  background: rgba(248, 113, 113, 0.1);
-  color: #fca5a5;
+  background: var(--home-live-soft);
+  color: var(--home-live);
 }
 
 @media (max-width: 560px) {

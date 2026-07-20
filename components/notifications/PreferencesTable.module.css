@@ -1,12 +1,17 @@
 /* Shared notification-preferences grid (Notification Settings Phase 1).
-   Extracted verbatim from the org preferences page's table styling so every
-   surface — org card, coach card, and later the universal container — renders
-   one identical grid. */
+   Warm-light consumer skin (Unified Home R1-4): consumer-only component, so it warms
+   directly on the --home-* tokens inherited from the enclosing `.warm` shell. Off
+   switches read as quiet warm-grey, ON as the sanctioned ink-on-lime fill (pillOn/E3),
+   and the tri-state "mixed" as a distinct olive-tinted indeterminate control. Section
+   kickers + column heads carry the mono data face; event names stay sans (content). */
 
 .tableWrap {
-  border-radius: 2px;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  overflow: hidden;
+  border-radius: var(--home-radius-sm);
+  border: 1px solid var(--home-line);
+  /* Scroll rather than clip: on the rare too-narrow width the last column (Email) stays
+     reachable by a small horizontal scroll instead of being cut off the edge. When it
+     fits (the normal case) no scrollbar shows. */
+  overflow-x: auto;
 }
 
 .table {
@@ -14,18 +19,21 @@
   border-collapse: collapse;
 }
 
-.table thead {
-  background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
-}
+/* The global table reset in globals.css paints the header on the <tr> and <th>, not the
+   <thead>: `thead tr { background: var(--surface-2) }` (dark navy) and `th { border-bottom:
+   var(--border) }`. So warm the header at the row + cell level (a `.table thead` background
+   would just sit occluded behind the opaque row). */
+.table thead tr { background: var(--home-paper); }
 
 .table th {
   padding: 0.6rem 1rem;
+  font-family: var(--font-data, monospace);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--home-dim);
+  border-bottom: 1px solid var(--home-line);
   text-align: left;
 }
 
@@ -49,7 +57,7 @@
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.06em;
-  color: var(--white-30, rgba(255,255,255,0.3));
+  color: var(--home-dim);
   text-transform: uppercase;
   margin-left: 0.2rem;
 }
@@ -57,36 +65,37 @@
 /* ── Section headers ─────────────────────────────────────────────────────────── */
 
 .sectionHeaderRow {
-  background: rgba(255,255,255,0.025);
+  background: var(--home-paper);
 }
 
 .sectionHeaderRowBorder {
-  border-top: 1px solid var(--border, rgba(255,255,255,0.1));
+  border-top: 1px solid var(--home-line);
 }
 
 .sectionHeaderCell {
   padding: 0.5rem 1rem;
+  font-family: var(--font-data, monospace);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--home-dim);
 }
 
 /* The lead section (rule R1) — a default-ON control (the digest) that must read as
-   prominent, never buried. Tinted with the accent so it stands apart from the grid. */
+   prominent, never buried. Olive accent on warm ground (raw lime fails as text — E3). */
 .sectionHeaderLead {
-  color: var(--logic-lime, #d9f99d) !important;
+  color: var(--home-olive) !important;
 }
 
 .leadRow {
-  background: rgba(217, 249, 157, 0.045);
+  background: var(--home-olive-soft);
 }
 
 /* ── Rows ────────────────────────────────────────────────────────────────────── */
 
 .row {
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.05));
+  border-bottom: 1px solid var(--home-line);
   transition: background 0.15s ease;
 }
 
@@ -95,7 +104,7 @@
 }
 
 .row:hover {
-  background: rgba(255,255,255,0.02);
+  background: rgba(var(--home-line-rgb), 0.03);
 }
 
 .rowSaving {
@@ -111,18 +120,25 @@
   display: block;
   font-size: 0.88rem;
   font-weight: 600;
-  color: var(--white-90, #f0f0f0);
+  color: var(--home-ink);
   margin-bottom: 0.2rem;
 }
 
+/* Also the tap-to-reveal control on mobile (Option B) — reset native button chrome so it
+   reads identically to the old inline description on desktop. */
 .eventDesc {
   display: inline-flex;
   align-items: flex-start;
   gap: 0.3rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--home-dim);
   font-size: 0.76rem;
   cursor: default;
   position: relative;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font-family: inherit;
 }
 
 .eventDesc svg {
@@ -135,6 +151,13 @@
   line-height: 1.45;
 }
 
+/* Mobile-only affordance shown in place of the description until tapped (desktop hides it). */
+.descHint {
+  display: none;
+  font-family: var(--font-data, monospace);
+  color: var(--home-dim);
+}
+
 .tdChannel {
   padding: 0.8rem 1rem;
   text-align: center;
@@ -143,7 +166,7 @@
 
 /* An unavailable channel cell (a channel not offered for this row) reads as a quiet dash. */
 .cellNa {
-  color: var(--white-20, rgba(255,255,255,0.2));
+  color: var(--home-dim);
   font-size: 0.9rem;
 }
 
@@ -155,8 +178,8 @@
   width: 36px;
   height: 20px;
   border-radius: 20px;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(var(--home-line-rgb), 0.10);
+  border: 1px solid var(--home-line-strong);
   cursor: pointer;
   transition: background 0.18s ease, border-color 0.18s ease;
   flex-shrink: 0;
@@ -171,22 +194,24 @@
   width: 14px;
   height: 14px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.45);
+  background: var(--home-dim);
   transition: transform 0.18s ease, background 0.18s ease;
 }
 
+/* ON = the sanctioned ink-on-lime fill (pillOn/E3 — a lime FILL with ink knob is the
+   brand "switched on", where raw lime as text would fail). */
 .toggleOn {
-  background: var(--logic-lime, #D9F99D);
-  border-color: var(--logic-lime, #D9F99D);
+  background: var(--home-lime);
+  border-color: var(--home-lime);
 }
 
 .toggleOn::after {
-  background: #111827;
+  background: var(--home-ink);
   transform: translateX(16px);
 }
 
 .toggle:focus-visible {
-  outline: 2px solid var(--logic-lime);
+  outline: 2px solid var(--home-olive);
   outline-offset: 2px;
 }
 
@@ -196,13 +221,13 @@
 }
 
 /* Tri-state (Simple-view group rollup): some events on, some off. Reads as an
-   indeterminate control — muted accent, knob centred, a dash — distinct from on/off. */
+   indeterminate control — olive tint, knob centred, a dash — distinct from on/off. */
 .toggleMixed {
-  background: rgba(217, 249, 157, 0.26);
-  border-color: rgba(217, 249, 157, 0.5);
+  background: var(--home-olive-soft);
+  border-color: rgba(var(--home-olive-rgb), 0.45);
 }
 .toggleMixed::after {
-  background: #0e131b;
+  background: var(--home-ink);
   transform: translateX(8px);
 }
 .toggleMixed::before {
@@ -213,15 +238,15 @@
   width: 6px;
   height: 2px;
   border-radius: 2px;
-  background: var(--logic-lime, #d9f99d);
+  background: var(--home-olive);
   z-index: 2;
 }
 
 /* ── Simple-view group rollups (Phase 2) ─────────────────────────────────────── */
 
 .groupsWrap {
-  border-radius: 2px;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
+  border-radius: var(--home-radius-sm);
+  border: 1px solid var(--home-line);
   overflow: hidden;
 }
 
@@ -229,64 +254,88 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) 54px 54px 54px;
   padding: 0.6rem 1rem 0.4rem;
-  background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
+  background: var(--home-paper);
+  border-bottom: 1px solid var(--home-line);
+  font-family: var(--font-data, monospace);
   font-size: 0.66rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--home-dim);
 }
 .groupsHead span:not(:first-child) { text-align: center; }
 
 .group {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 54px 54px 54px;
-  align-items: center;
+  /* Top-align so the switches sit beside the label's FIRST line, not floating to the
+     vertical middle of a tall (wrapped label + preview + caption) column. */
+  align-items: start;
   padding: 0.85rem 1rem;
-  border-top: 1px solid var(--border, rgba(255,255,255,0.05));
+  border-top: 1px solid var(--home-line);
 }
 .group:first-of-type { border-top: none; }
 
 /* Lead group (rule R1) — the always-visible default-ON control (the coach digest). */
-.groupLead { background: rgba(217, 249, 157, 0.05); }
+.groupLead { background: var(--home-olive-soft); }
 
 .groupLabelWrap { min-width: 0; }
 
 .groupLabel {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  /* wrap so a tight column drops the "N types" chip onto its own line instead of
+     squeezing the label into one-word-per-line (the mobile squish). */
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
   font-size: 0.92rem;
   font-weight: 600;
-  color: var(--white-90, #f0f0f0);
+  color: var(--home-ink);
 }
 
 .groupCount {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   font-family: var(--font-data, monospace);
   font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--white-30, rgba(255,255,255,0.35));
-  border: 1px solid var(--border, rgba(255,255,255,0.14));
+  color: var(--home-dim);
+  background: transparent;
+  border: 1px solid var(--home-line-strong);
   border-radius: 20px;
   padding: 0.05rem 0.4rem;
+  cursor: default;
 }
+.groupCountChev { display: none; transition: transform 0.15s ease; }
+.group[data-expanded="true"] .groupCountChev { transform: rotate(180deg); }
+
+/* Mobile-only condensed list (Option B): first event name + “+N more”. The full list in
+   .groupBlurb shows on desktop and when the chip expands the group on mobile. */
+.groupPreview {
+  display: none;
+  font-size: 0.77rem;
+  color: var(--home-dim);
+  margin-top: 0.15rem;
+  line-height: 1.4;
+}
+.groupPreviewMore { color: var(--home-olive); font-weight: 600; }
 
 .groupBlurb {
   font-size: 0.77rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
+  color: var(--home-dim);
   margin-top: 0.15rem;
   line-height: 1.4;
 }
 
-.triCell { display: flex; justify-content: center; }
+.triCell { display: flex; justify-content: center; padding-top: 0.1rem; }
 
 .groupCaption {
   grid-column: 1 / -1;
   margin-top: 0.55rem;
   font-size: 0.73rem;
-  color: var(--logic-lime, #d9f99d);
+  color: var(--home-olive);
   display: flex;
   align-items: center;
   gap: 0.4rem;
@@ -296,12 +345,16 @@
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: var(--logic-lime, #d9f99d);
+  background: var(--home-olive);
   flex-shrink: 0;
 }
 
-/* ── Narrow screens: tighten columns + padding so the grid never overflows ───── */
-@media (max-width: 480px) {
+/* ── Phones: tighten toggle columns + padding so the label keeps as much room as
+      possible (was ≤480; raised to ≤640 to match the density breakpoint below). ───── */
+/* ── Phones: tighten the grid + run Option B (condense the simple-view list, hide per-event
+      descriptions behind a tap). Desktop keeps everything visible. ─────────────────────── */
+@media (max-width: 640px) {
+  /* Tighter columns/padding so all three channel columns (incl. Email) fit the flush grid. */
   .groupsHead,
   .group { grid-template-columns: minmax(0, 1fr) 46px 46px 46px; }
   .group { padding: 0.85rem 0.7rem; }
@@ -309,7 +362,28 @@
   .thChannel { min-width: 44px; }
   .table th,
   .tdEvent,
-  .tdChannel { padding-left: 0.6rem; padding-right: 0.6rem; }
+  .tdChannel { padding-left: 0.5rem; padding-right: 0.5rem; }
+  /* Slim the channel headers so the Event column keeps its width — otherwise the "EMAIL"
+     header holds the channel columns wide and squeezes the label + "What's this?" hint. */
+  .channelLabel { font-size: 0.6rem; gap: 0.2rem; }
+  .channelLabel svg { width: 11px; height: 11px; }
+
+  /* Simple-view list → chip + preview; the chip expands the full list. */
+  .group:not(.groupLead) .groupBlurb { display: none; }
+  .groupPreview { display: block; }
+  .groupCount { cursor: pointer; }
+  .groupCount:hover { border-color: var(--home-olive); color: var(--home-olive); }
+  .groupCountChev { display: inline-block; }
+  /* Expanded overrides come after the hide rules so they win the equal-specificity tie. */
+  .group[data-expanded="true"] .groupBlurb { display: block; }
+  .group[data-expanded="true"] .groupPreview { display: none; }
+
+  /* Per-event description → tap-to-reveal (keep "What's this?" on one line). */
+  .eventDesc { cursor: pointer; }
+  .descHint { display: inline; white-space: nowrap; }
+  .descText { display: none; }
+  .eventDesc[aria-expanded="true"] .descHint { display: none; }
+  .eventDesc[aria-expanded="true"] .descText { display: block; }
 }
 
 /* ── Skeleton ────────────────────────────────────────────────────────────────── */
@@ -321,7 +395,7 @@
 .skeletonLabel {
   height: 14px;
   border-radius: 2px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--home-line-rgb), 0.09);
   width: 55%;
   animation: shimmer 1.4s ease-in-out infinite;
 }
@@ -330,7 +404,7 @@
   height: 20px;
   width: 36px;
   border-radius: 20px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(var(--home-line-rgb), 0.09);
   margin: 0 auto;
   animation: shimmer 1.4s ease-in-out infinite;
 }

@@ -1,14 +1,15 @@
 /* The "Followed teams" fan card on the unified notifications page (Phase 2 Slice 3).
-   The card anatomy (header/badge/body/footNote/errorBanner) comes from the page's
-   own AccountNotifications.module.css via cross-import in the component — only the
-   fan-specific pieces live here. */
+   Warm-light consumer skin (Unified Home R1-4). The card anatomy (header/badge/body/
+   footNote/errorBanner) comes from the page's own AccountNotifications.module.css via
+   cross-import in the component — only the fan-specific pieces live here. Tokens only,
+   inherited from the enclosing `.warm` shell. */
 
-/* Fan badge tint — composes with the page module's .badge base. */
+/* Fan badge = the follow-star colour (olive on warm ground — E3), composes the base .badge. */
 .badgeFan {
   font-size: 0.88rem;
-  background: rgba(var(--primary-rgb, 30, 58, 138), 0.14);
-  color: var(--primary-light, #d9f99d);
-  border: 1px solid rgba(var(--primary-rgb, 30, 58, 138), 0.4);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.35);
 }
 
 /* ── Switch rows ─────────────────────────────────────────────────────────────── */
@@ -19,7 +20,7 @@
   gap: 0.85rem;
 }
 .row + .row {
-  border-top: 1px solid var(--border-2, rgba(255, 255, 255, 0.08));
+  border-top: 1px solid var(--home-line);
   padding-top: 0.85rem;
 }
 
@@ -28,13 +29,13 @@
 .rowLabel {
   font-weight: 600;
   font-size: 0.88rem;
-  color: var(--fl-text, #f1f5f9);
+  color: var(--home-ink);
 }
 
 .rowBlurb {
   font-family: var(--font-data, monospace);
   font-size: 0.7rem;
-  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  color: var(--home-dim);
   margin-top: 0.15rem;
   line-height: 1.45;
 }
@@ -48,14 +49,14 @@
   gap: 0.45rem;
   margin: 0;
   padding-top: 0.85rem;
-  border-top: 1px dashed var(--white-10, rgba(255, 255, 255, 0.1));
+  border-top: 1px dashed var(--home-line);
   font-family: var(--font-data, monospace);
   font-size: 0.72rem;
   line-height: 1.5;
-  color: var(--white-45, rgba(255, 255, 255, 0.45));
+  color: var(--home-dim);
 }
-.gateNote svg { flex-shrink: 0; margin-top: 2px; color: var(--white-30, rgba(255, 255, 255, 0.3)); }
-.gateNote strong { color: var(--white-45, rgba(255, 255, 255, 0.45)); font-weight: 700; }
+.gateNote svg { flex-shrink: 0; margin-top: 2px; color: var(--home-dim); }
+.gateNote strong { color: var(--home-ink-soft); font-weight: 700; }
 
 /* Device-level caveat after a save (account pref stored; this device can't receive). */
 .deviceNote {
@@ -63,5 +64,5 @@
   font-family: var(--font-data, monospace);
   font-size: 0.72rem;
   line-height: 1.5;
-  color: var(--warning, #f59e0b);
+  color: var(--home-amber);
 }

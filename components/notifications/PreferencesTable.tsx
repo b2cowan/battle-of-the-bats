@@ -21,6 +21,7 @@ import {
   NOTIFICATION_EVENT_DESCRIPTIONS,
 } from '@/lib/notification-labels';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
+import { useToggleSet } from './useToggleSet';
 import styles from './PreferencesTable.module.css';
 
 export interface PreferenceSection {
@@ -79,6 +80,8 @@ export default function PreferencesTable({
   pushSupported,
   enablingPush,
 }: Props) {
+  // Mobile-only (Option B): which events have their description revealed by a tap.
+  const [revealed, toggleReveal] = useToggleSet<NotificationEventType>();
   const totalRows = sections.reduce((n, s) => n + s.eventTypes.length, 0) || 4;
 
   return (
@@ -129,10 +132,16 @@ export default function PreferencesTable({
                       >
                         <td className={styles.tdEvent}>
                           <span className={styles.eventLabel}>{NOTIFICATION_EVENT_LABELS[et]}</span>
-                          <span className={styles.eventDesc}>
-                            <Info size={12} />
+                          <button
+                            type="button"
+                            className={styles.eventDesc}
+                            aria-expanded={revealed.has(et)}
+                            onClick={() => toggleReveal(et)}
+                          >
+                            <Info size={12} aria-hidden />
+                            <span className={styles.descHint}>What&rsquo;s this?</span>
                             <span className={styles.descText}>{NOTIFICATION_EVENT_DESCRIPTIONS[et]}</span>
-                          </span>
+                          </button>
                         </td>
                         <td className={styles.tdChannel}>
                           <Toggle

@@ -13,8 +13,10 @@
  * per-event grid (PreferencesTable, behind "Customize") stays the source of truth.
  */
 
+import { ChevronDown } from 'lucide-react';
 import { NOTIFICATION_EVENT_LABELS } from '@/lib/notification-labels';
 import type { NotificationEventType, NotificationPreference } from '@/lib/types';
+import { useToggleSet } from './useToggleSet';
 import styles from './PreferencesTable.module.css';
 
 type Channel = 'channelBell' | 'channelPush' | 'channelEmail';
@@ -91,6 +93,9 @@ export default function PreferenceGroups({
   pushSupported,
   enablingPush,
 }: Props) {
+  // Mobile-only (Option B): which groups have their full covered-events list expanded.
+  const [expanded, toggleExpanded] = useToggleSet<string>();
+
   return (
     <div className={styles.groupsWrap}>
       <div className={styles.groupsHead}>
@@ -108,17 +113,39 @@ export default function PreferenceGroups({
         }));
         const mixed = states.filter(s => s.state === 'mixed');
         // Name the actual notifications the group covers (the lead digest keeps its own blurb).
-        const description = group.lead
-          ? group.blurb
-          : group.eventTypes.map(et => NOTIFICATION_EVENT_LABELS[et]).join(', ');
+        const labels = group.eventTypes.map(et => NOTIFICATION_EVENT_LABELS[et]);
+        // Simple view spells out every covered event; on phones that wraps tall, so a preview
+        // (first name + “+N more”) shows on mobile and the chip expands the full list (Option B).
+        const isExpanded = expanded.has(group.label);
         return (
-          <div key={group.label} className={`${styles.group} ${group.lead ? styles.groupLead : ''}`}>
+          <div
+            key={group.label}
+            className={`${styles.group} ${group.lead ? styles.groupLead : ''}`}
+            data-expanded={isExpanded ? 'true' : undefined}
+          >
             <div className={styles.groupLabelWrap}>
               <div className={styles.groupLabel}>
                 {group.label}
-                {!group.lead && <span className={styles.groupCount}>{n} {n === 1 ? 'type' : 'types'}</span>}
+                {!group.lead && (
+                  <button
+                    type="button"
+                    className={styles.groupCount}
+                    aria-expanded={isExpanded}
+                    aria-label={`${isExpanded ? 'Hide' : 'Show'} the ${typesLabel} in ${group.label}`}
+                    onClick={() => toggleExpanded(group.label)}
+                  >
+                    {n} {n === 1 ? 'type' : 'types'}
+                    <ChevronDown size={12} className={styles.groupCountChev} aria-hidden />
+                  </button>
+                )}
               </div>
-              <div className={styles.groupBlurb}>{description}</div>
+              <div className={styles.groupBlurb}>{group.lead ? group.blurb : labels.join(', ')}</div>
+              {!group.lead && (
+                <div className={styles.groupPreview}>
+                  {labels[0]}
+                  {n > 1 && <span className={styles.groupPreviewMore}> +{n - 1} more</span>}
+                </div>
+              )}
             </div>
             {states.map(({ key, label, state }) => (
               <div key={key} className={styles.triCell}>

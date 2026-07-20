@@ -34,10 +34,9 @@ const TABS = [
 // tabs — so we reuse `isConsumerShellPath` (the single source of truth the layout/SiteChrome/Footer
 // already share) rather than a second hardcoded route list that could silently drift when a tab is
 // added. The consumer shell ALSO wraps the auth / select-org / suspended pages, which `isConsumerShellPath`
-// correctly excludes, so they stay dark. One deliberate hold-out: the notification-settings sub-page
-// keeps its dark grid until its own reskin, so the whole page (nav included) stays dark there — a clean
-// theme handoff on navigation, never a warm-nav-over-dark-content seam.
-const WARM_HOLDOUTS = ['/account/notifications'];
+// correctly excludes, so they stay dark. Every consumer-shell content surface — including the
+// notification-settings sub-page (warmed alongside the Account tab) — now paints warm, so navigating
+// within the app never flips theme.
 const underPrefix = (path: string, p: string) => path === p || path.startsWith(p + '/');
 
 export default function ConsumerNav({
@@ -52,8 +51,7 @@ export default function ConsumerNav({
 }) {
   const pathname = usePathname();
   const isActive = (href: string) => underPrefix(pathname, href);
-  const warmRoute =
-    isConsumerShellPath(pathname) && !WARM_HOLDOUTS.some(p => underPrefix(pathname, p));
+  const warmRoute = isConsumerShellPath(pathname);
 
   // Unified cross-tab badge policy (Phase 5, owner-ratified): a red count means "something is
   // waiting for you to act." Two tabs qualify — Chat unread (rolled up, self-muted rooms excluded

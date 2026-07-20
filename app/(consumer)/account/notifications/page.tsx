@@ -9,7 +9,9 @@ import { getFanAlertOverview } from '@/lib/fan-alert-prefs';
 import type { Capability } from '@/lib/roles';
 import type { Organization } from '@/lib/types';
 import type { FanCardData } from '@/components/notifications/FanAlertsCard';
-import consumerStyles from '@/components/consumer/ConsumerPage.module.css';
+import warm from '@/components/consumer/warmTheme.module.css';
+import styles from './AccountNotifications.module.css';
+import accountStyles from '../account.module.css';
 import AccountNotificationsClient, { type NotificationCard } from './AccountNotificationsClient';
 
 // Auth-dependent (per-user cards) — never static, never indexed.
@@ -52,20 +54,22 @@ export default async function AccountNotificationsPage({
 
   if (!user?.email) {
     return (
-      <div className={consumerStyles.page}>
-        <div className={consumerStyles.header}>
-          <h1 className={consumerStyles.title}>Notification settings</h1>
-          <p className={consumerStyles.subtitle}>Sign in to manage what the platform sends you.</p>
+      <div className={warm.warm}>
+        <div className={styles.page}>
+          <div className={styles.header}>
+            <h1 className={styles.title}>Notification settings</h1>
+            <p className={styles.subtitle}>Sign in to manage what the platform sends you.</p>
+          </div>
+          <div className={accountStyles.ctaStack}>
+            <Link href="/auth/login?next=%2Faccount%2Fnotifications" className={accountStyles.ctaPrimary}>Sign in</Link>
+            <Link href="/discover" className={accountStyles.ctaGhost}>Browse tournaments</Link>
+          </div>
+          <p className={styles.signedOutNote}>
+            You don&rsquo;t need an account to follow teams and watch live scores — following works on
+            this device right away. <strong>Score alerts are what signing in gets you</strong> — a push
+            when your teams&rsquo; games go live, on every device you sign in on.
+          </p>
         </div>
-        <div className={consumerStyles.actions}>
-          <Link href="/auth/login?next=%2Faccount%2Fnotifications" className={consumerStyles.cta}>Sign in</Link>
-          <Link href="/discover" className={consumerStyles.ctaGhost}>Browse tournaments</Link>
-        </div>
-        <p className={consumerStyles.note}>
-          You don&rsquo;t need an account to follow teams and watch live scores — following works on
-          this device right away. <strong>Score alerts are what signing in gets you</strong> — a push
-          when your teams&rsquo; games go live, on every device you sign in on.
-        </p>
       </div>
     );
   }
