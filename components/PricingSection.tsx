@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
-import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PricingSection.module.css';
 
@@ -253,10 +253,10 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                     <span className={styles.currentBadge}>Current plan</span>
                   )}
                 </div>
-                {!isGated && plan.key === 'tournament_plus' && (
+                {!isGated && isFoundingSeasonPromoActive(plan.key) && (
                   <div className={styles.foundingSeasonBadge}>
-                    <span className={styles.foundingSeasonBadgeLabel}>⬡ Founding Season — Free through Dec 31, 2026</span>
-                    <span className={styles.foundingSeasonBadgeSub}>Normally {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month</span>
+                    <span className={styles.foundingSeasonBadgeLabel}>⬡ Founding Season — Free until Jan 1, 2027</span>
+                    <span className={styles.foundingSeasonBadgeSub}>Normally {formatPriceAmount(PLAN_CONFIG[plan.key].monthlyPrice)}/month</span>
                   </div>
                 )}
                 <p className={styles.planTagline}>{plan.tagline}</p>

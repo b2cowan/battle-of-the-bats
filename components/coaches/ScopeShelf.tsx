@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import styles from './ScopeShelf.module.css';
 
 /**
@@ -54,10 +55,13 @@ export default async function ScopeShelf({ basicTeamId, section }: { basicTeamId
   // The gate lives in each environment's own DB and fails closed, so a prod deploy can never flip it.
   // Forward the originating free team so the signup can pre-fill it and (Phase 2+) carry its data over.
   const checkoutOpen = !(await getPlanGatingMap()).team;
+  const promoActive = isFoundingSeasonPromoActive('team');
   const href = checkoutOpen
     ? `/coaches/start?source=coach_footer_${section}&basicTeamId=${encodeURIComponent(basicTeamId)}`
     : `/for-coaches?source=coach_footer_${section}`;
-  const linkLabel = checkoutOpen ? 'Upgrade to Premium →' : 'See everything it includes →';
+  const linkLabel = checkoutOpen
+    ? (promoActive ? 'Upgrade to Premium — free →' : 'Upgrade to Premium →')
+    : 'See everything it includes →';
   return (
     <footer className={styles.footer}>
       <p className={styles.footerEyebrow}>Premium Coaches Portal</p>
@@ -68,7 +72,9 @@ export default async function ScopeShelf({ basicTeamId, section }: { basicTeamId
           <>On {SECTION_LABEL[section]}: {COPY[section].value} — {COPY[section].teaser}.</>
         )}
         {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
-        {' '}Your free tools stay free. Premium is $29/month per team.
+        {' '}Your free tools stay free. {promoActive
+          ? 'Premium is free until Jan 1, 2027 — then $29/month per team.'
+          : 'Premium is $29/month per team.'}
       </p>
       <Link href={href} className={styles.footerLink}>{linkLabel}</Link>
     </footer>

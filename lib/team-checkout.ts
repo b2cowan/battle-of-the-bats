@@ -1,4 +1,5 @@
 import { normalizeBillingCycle, type BillingCycle } from './plan-config';
+import { ensureFoundingSeasonCompPeriod } from './founding-season';
 import { DEFAULT_SPORT } from './sports';
 import { writePlatformEvent, type PlatformEventInput } from './platform-events';
 import { supabaseAdmin } from './supabase-admin';
@@ -304,7 +305,10 @@ function restoredTournamentStatus(value: unknown): 'draft' | 'active' | 'complet
     : 'completed';
 }
 
-async function findReactivationWorkspace(parsed: TeamCheckoutMetadata): Promise<ReactivationWorkspace | null> {
+async function findReactivationWorkspace(
+  parsed: TeamCheckoutMetadata,
+  opts?: { allowPlatformOverride?: boolean },
+): Promise<ReactivationWorkspace | null> {
   if (!parsed.reactivateOrgSlug) return null;
 
   const { data: org, error: orgError } = await supabaseAdmin
@@ -350,7 +354,13 @@ async function findReactivationWorkspace(parsed: TeamCheckoutMetadata): Promise<
   if (!workspace) {
     throw new TeamWorkspaceProvisioningError('reactivation_workspace_not_found', 'The Coaches Portal workspace to reactivate was not found.');
   }
-  if (workspace.billing_mode !== 'team_direct') {
+  // team_direct = self-serve paid portal (Stripe reactivation). platform_override = Founding Season
+  // comp portal — only reactivatable via the comp path (opts.allowPlatformOverride). org_team_addon
+  // (org-billed) stays blocked from both: it reactivates through the linked org's billing flow.
+  const reactivatableModes = opts?.allowPlatformOverride
+    ? ['team_direct', 'platform_override']
+    : ['team_direct'];
+  if (!reactivatableModes.includes(workspace.billing_mode ?? '')) {
     throw new TeamWorkspaceProvisioningError('org_billed_reactivation_not_supported', 'Org-billed Coaches Portal workspaces must be reactivated from the linked organization billing flow.');
   }
   if (workspace.subscription_status !== 'canceled' && org.subscription_status !== 'canceled') return null;
@@ -659,6 +669,233 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
       );
     } catch (err) {
       console.error('[team-checkout] Premium welcome email failed:', err);
+    }
+  }
+
+  return { provisioned: true, result };
+}
+
+/** Founding Season comp reason for the workspace org's comp_period override (free text; cohort/status
+ * queries key on type + expires_at, not this string — see ensureFoundingSeasonCompPeriod). */
+const TEAM_COMP_REASON = 'Founding Season - Premium Coaches Portal free through December 31, 2026';
+
+/**
+ * Comp-reactivate a previously-canceled Coaches Portal workspace during Founding Season — the no-Stripe
+ * counterpart to reactivateTeamWorkspaceFromParsedMetadata. Returns null when there's nothing to
+ * reactivate (no reactivateOrgSlug, or the workspace isn't canceled). In practice this is defensive
+ * parity: while zero paid portals exist there is nothing to reactivate, but the branch keeps the comp
+ * path shaped like the Stripe path so a future canceled portal reactivates as comp, not a duplicate.
+ */
+async function reactivateCompTeamWorkspace(
+  parsed: TeamCheckoutMetadata,
+  params: { compPeriodEnd: string; eventSource: PlatformEventInput['source']; sourceEventId?: string | null },
+): Promise<TeamCheckoutProvisionResult | null> {
+  const workspace = await findReactivationWorkspace(parsed, { allowPlatformOverride: true });
+  if (!workspace) return null;
+
+  const now = new Date().toISOString();
+
+  const [{ error: workspaceError }, { error: orgError }] = await Promise.all([
+    supabaseAdmin
+      .from('team_workspaces')
+      .update({
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        billing_mode: 'platform_override',
+        subscription_status: 'active',
+        current_period_end: params.compPeriodEnd,
+        billing_owner_user_id: parsed.ownerUserId,
+        updated_at: now,
+      })
+      .eq('id', workspace.id),
+    supabaseAdmin
+      .from('organizations')
+      .update({
+        stripe_customer_id: null,
+        stripe_subscription_id: null,
+        subscription_status: 'active',
+        subscription_period: parsed.billingCycle,
+        current_period_end: params.compPeriodEnd,
+        billing_suspended_at: null,
+        billing_suspension_reason: null,
+        team_workspace_status: 'active',
+      })
+      .eq('id', workspace.workspace_org_id),
+  ]);
+  if (workspaceError) throw workspaceError;
+  if (orgError) throw orgError;
+
+  const { data: entitlement, error: entitlementLookupError } = await supabaseAdmin
+    .from('team_entitlements')
+    .select('id')
+    .eq('team_workspace_id', workspace.id)
+    .limit(1)
+    .maybeSingle<{ id: string }>();
+  if (entitlementLookupError) throw entitlementLookupError;
+
+  if (entitlement) {
+    const { error } = await supabaseAdmin
+      .from('team_entitlements')
+      .update({ status: 'active', source: 'team_plan', stripe_subscription_item_id: null, updated_at: now })
+      .eq('id', entitlement.id);
+    if (error) throw error;
+  } else {
+    const { error } = await supabaseAdmin
+      .from('team_entitlements')
+      .insert({
+        team_workspace_id: workspace.id,
+        org_id: workspace.workspace_org_id,
+        rep_team_id: workspace.rep_team_id,
+        source: 'team_plan',
+        status: 'active',
+        stripe_subscription_item_id: null,
+      });
+    if (error) throw error;
+  }
+
+  const restoreResult = await restoreCoachesPortalRetainedRecords(workspace.workspace_org_id, workspace.id);
+
+  try {
+    await ensureFoundingSeasonCompPeriod(workspace.workspace_org_id, parsed.ownerEmail, TEAM_COMP_REASON);
+  } catch (err) {
+    console.error('[team-checkout comp] founding-season comp_period write failed on reactivation (non-fatal):', err);
+  }
+
+  await writePlatformEvent({
+    eventType: 'subscription_recovered',
+    source: params.eventSource,
+    sourceEventId: params.sourceEventId ?? null,
+    orgId: workspace.workspace_org_id,
+    actorUserId: parsed.ownerUserId,
+    actorEmail: parsed.ownerEmail,
+    previousPlanId: 'team',
+    planId: 'team',
+    previousSubscriptionStatus: 'canceled',
+    subscriptionStatus: 'active',
+    metadata: {
+      scope: 'coaches_portal',
+      teamWorkspaceId: workspace.id,
+      comp: true,
+      restoredRetainedRecords: restoreResult.restoredCount,
+      restoredTournamentIds: restoreResult.restoredTournamentIds,
+    },
+  });
+
+  if (parsed.teamWorkspaceClaimId) {
+    await markTeamWorkspaceClaimed({
+      claimId: parsed.teamWorkspaceClaimId,
+      teamWorkspaceId: workspace.id,
+      claimedByUserId: parsed.ownerUserId,
+    });
+  }
+
+  return {
+    provisioned: false,
+    reason: 'reactivated',
+    workspaceOrgId: workspace.workspace_org_id,
+    teamWorkspaceId: workspace.id,
+    repTeamId: workspace.rep_team_id,
+  };
+}
+
+/**
+ * Founding Season comp provisioning for the Premium Coaches Portal — the Stripe-free path used while
+ * `isFoundingSeasonActive()`. Provisions (or comp-reactivates) the full workspace with billing_mode
+ * `platform_override` + NULL stripe_subscription_id + current_period_end = compPeriodEnd, then writes
+ * the workspace org's founding-season comp_period override so status + January-cohort queries
+ * recognize it. Covers new premium signups AND Basic-team upgrades (the free team back-links + Phase-4
+ * migration ride through provisionStandaloneTeamWorkspace exactly as the paid path does), signed-in or
+ * signed-out (the route creates the account first, either way).
+ *
+ * Idempotency: there is no Stripe subscription id to key on, so the "one live portal per owner" guard
+ * (getActiveOwnedTeamWorkspace) plus the route's pre-checkout existing-portal check are the guards. It
+ * mirrors provisionTeamWorkspaceFromCheckoutMetadata's shape (reactivation → owner guard → fresh
+ * provision → welcome email) minus the Stripe-subscription-id requirement and unique-violation race
+ * (a comp provision is synchronous and writes a NULL subscription id).
+ */
+export async function provisionCompTeamWorkspaceFromCheckout(params: {
+  metadata: Record<string, string> | null | undefined;
+  compPeriodEnd: string;
+  eventSource: PlatformEventInput['source'];
+  sourceEventId?: string | null;
+}): Promise<TeamCheckoutProvisionResult> {
+  const parsed = parseTeamCheckoutMetadata(params.metadata);
+  if (!parsed) return { provisioned: false, reason: 'not_team_checkout' };
+
+  const reactivation = await reactivateCompTeamWorkspace(parsed, params);
+  if (reactivation) return reactivation;
+
+  // One Coaches Portal per owner — the route already 409s on a pre-checkout existing portal; this is
+  // the in-provision guard (the comp path has no subscription-id unique index to fall back on).
+  const ownerLivePortal = await getActiveOwnedTeamWorkspace(parsed.ownerUserId);
+  if (ownerLivePortal) {
+    return { provisioned: false, reason: 'already_exists', workspaceOrgId: ownerLivePortal.workspaceOrgId };
+  }
+
+  await assertTeamWorkspaceClaimAvailableForProvisioning(parsed.teamWorkspaceClaimId);
+
+  const result = await provisionStandaloneTeamWorkspace({
+    ownerUserId: parsed.ownerUserId,
+    ownerEmail: parsed.ownerEmail,
+    teamName: parsed.teamName,
+    teamSlug: parsed.teamSlug,
+    workspaceName: parsed.workspaceName,
+    workspaceSlug: parsed.workspaceSlug,
+    sport: parsed.sport,
+    division: parsed.division,
+    seasonName: parsed.seasonName,
+    seasonYear: parsed.seasonYear,
+    source: parsed.source,
+    sourceTournamentId: parsed.sourceTournamentId,
+    sourceTournamentTeamId: parsed.sourceTournamentTeamId,
+    basicCoachTeamId: parsed.basicCoachTeamId ?? undefined,
+    billingMode: 'platform_override',
+    billingOwnerUserId: parsed.ownerUserId,
+    subscriptionStatus: 'active',
+    stripeCustomerId: null,
+    stripeSubscriptionId: null,
+    stripeSubscriptionItemId: null,
+    currentPeriodEnd: params.compPeriodEnd,
+    entitlementSource: 'team_plan',
+    entitlementStatus: 'active',
+    eventSource: params.eventSource,
+    sourceEventId: params.sourceEventId,
+    actorUserId: parsed.ownerUserId,
+    actorEmail: parsed.ownerEmail,
+  });
+
+  // Mark the workspace org as a founding-season comp (parallels the org-side call). Best-effort — the
+  // workspace is already committed with current_period_end = compPeriodEnd, so never fail the provision
+  // on this secondary cohort-bookkeeping write.
+  try {
+    await ensureFoundingSeasonCompPeriod(result.org.id, parsed.ownerEmail, TEAM_COMP_REASON);
+  } catch (err) {
+    console.error('[team-checkout comp] founding-season comp_period write failed (non-fatal):', err);
+  }
+
+  if (parsed.teamWorkspaceClaimId) {
+    await markTeamWorkspaceClaimed({
+      claimId: parsed.teamWorkspaceClaimId,
+      teamWorkspaceId: result.teamWorkspaceId,
+      claimedByUserId: parsed.ownerUserId,
+    });
+  }
+
+  // Comp welcome — best-effort, never blocks provisioning. Uses the comp variant (no "manage or cancel
+  // your subscription" line, since there is no subscription).
+  if (parsed.ownerEmail) {
+    try {
+      await sendEmail(
+        parsed.ownerEmail,
+        `Welcome to your Premium Coaches Portal — ${parsed.teamName}`,
+        teamWorkspaceWelcomeHtml({
+          teamName: parsed.teamName,
+          portalUrl: `${SITE_URL}/${result.org.slug}/coaches`,
+          comp: true,
+        }),
+      );
+    } catch (err) {
+      console.error('[team-checkout comp] Premium welcome email failed:', err);
     }
   }
 

@@ -7,6 +7,7 @@ import {
   Users, CalendarClock, CircleDollarSign, Megaphone, Check, ArrowUpRight, Loader2,
 } from 'lucide-react';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
+import { isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import styles from './CoachExploreCatalog.module.css';
 
 type FeatureKey = 'roster' | 'schedule' | 'fees' | 'announcements';
@@ -82,7 +83,10 @@ export default function CoachExploreCatalog({
   const premiumHref = checkoutOpen
     ? `/coaches/start?source=coach_explore&basicTeamId=${encodeURIComponent(basicTeamId)}`
     : '/for-coaches?source=coach_explore';
-  const premiumCtaLabel = checkoutOpen ? 'Upgrade to Premium →' : 'See everything it includes →';
+  const promoActive = isFoundingSeasonPromoActive('team');
+  const premiumCtaLabel = checkoutOpen
+    ? (promoActive ? 'Upgrade to Premium — free →' : 'Upgrade to Premium →')
+    : 'See everything it includes →';
 
   return (
     <div className={styles.catalog}>
@@ -146,9 +150,15 @@ export default function CoachExploreCatalog({
         <div className={styles.premiumFooter}>
           <div className={styles.premiumMeta}>
             <span className={styles.premiumReassure}>Everything above stays free.</span>
-            <span className={styles.premiumPrice}>
-              $29<span className={styles.premiumPriceUnit}>/month per team</span>
-            </span>
+            {promoActive ? (
+              <span className={styles.premiumPrice}>
+                Free until Jan 1, 2027<span className={styles.premiumPriceUnit}> · then $29/mo per team</span>
+              </span>
+            ) : (
+              <span className={styles.premiumPrice}>
+                $29<span className={styles.premiumPriceUnit}>/month per team</span>
+              </span>
+            )}
           </div>
           <Link href={premiumHref} className={styles.premiumCta}>{premiumCtaLabel}</Link>
         </div>

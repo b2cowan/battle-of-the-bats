@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check, Send } from 'lucide-react';
 import type { BasicCoachInterestOption } from '@/lib/basic-coach-interest';
+import { isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import styles from './ScopeCeilingInterest.module.css';
 
 type Props = {
@@ -72,18 +73,21 @@ export default function ScopeCeilingInterest({ basicTeamId, checkoutOpen = false
 
   // Gate open (dev / post-launch): a real upgrade CTA into the checkout instead of interest capture.
   if (checkoutOpen) {
+    const promoActive = isFoundingSeasonPromoActive('team');
     return (
       <div className={styles.panel}>
         <div className={styles.copy}>
           <h3>Ready for the full toolkit?</h3>
           {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
-          <p>Upgrade this team to the Premium Coaches Portal — lineups, attendance, documents, dues automation, and a season budget. $29/month per team, cancel anytime.</p>
+          <p>Upgrade this team to the Premium Coaches Portal — lineups, attendance, documents, dues automation, and a season budget. {promoActive
+            ? 'Free until Jan 1, 2027 — then $29/month per team. No credit card required.'
+            : '$29/month per team, cancel anytime.'}</p>
         </div>
         <Link
           href={`/coaches/start?source=coach_scope_ceiling&basicTeamId=${encodeURIComponent(basicTeamId)}`}
           className={styles.button}
         >
-          Upgrade to Premium →
+          {promoActive ? 'Upgrade to Premium — free →' : 'Upgrade to Premium →'}
         </Link>
       </div>
     );

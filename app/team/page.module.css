@@ -213,6 +213,13 @@
   margin: 0;
 }
 
+.priceSub {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+  margin: 0.2rem 0 0;
+}
+
 .priceMeta,
 .sessionState,
 .footerRow span {

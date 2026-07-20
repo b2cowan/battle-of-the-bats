@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import styles from './start.module.css';
 
 export const metadata: Metadata = {
@@ -50,20 +51,33 @@ const OPTIONS: StartOption[] = [
     title: 'I was invited',
     body: 'Someone invited you to their organization? Create an account to accept your invitation — no organization needed.',
   },
-  {
-    // Coaches Portal launch is DECIDED (BUSINESS_DECISIONS 2026-07-20 D2) but flips at the
-    // coordinated Phase 3 launch of FOUNDING_SEASON_COACHES_FREE_PLAN.md — door + $0 Premium
-    // comp path + copy + gate reopen together. Until then this stays on the express-interest
-    // page. At launch: href '/start/team', tag Free. (The free /start/team flow itself is
-    // fully built and working — roster/schedule/fees/announcements/chat/tournaments.)
-    href: '/for-coaches',
-    icon: Users,
-    label: 'Coach',
-    title: 'Coach a team',
-    body: 'A free team home for your season — no organization needed. Track your registrations and team.',
-    tag: { text: 'Coming soon', tone: 'soon' },
-  },
 ];
+
+// Coaches Portal launch (BUSINESS_DECISIONS 2026-07-20 D2 + FOUNDING_SEASON_COACHES_FREE_PLAN
+// Phase 3): the "Coach a team" door flips WITH the team checkout gate, so the whole coaches launch
+// (door + $0 Premium comp path + copy) turns on together per environment when the gate reopens —
+// never a "Free" door landing on a gated dead end. Open → the live free team setup; gated → the
+// express-interest explainer.
+function coachOption(checkoutOpen: boolean): StartOption {
+  return checkoutOpen
+    ? {
+        href: '/start/team',
+        icon: Users,
+        accent: 'free',
+        label: 'Coach',
+        title: 'Coach a team',
+        body: 'A free team home for your season — no organization needed. Track your registrations and team.',
+        tag: { text: 'Free', tone: 'free' },
+      }
+    : {
+        href: '/for-coaches',
+        icon: Users,
+        label: 'Coach',
+        title: 'Coach a team',
+        body: 'A free team home for your season — no organization needed. Track your registrations and team.',
+        tag: { text: 'Coming soon', tone: 'soon' },
+      };
+}
 
 // S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — no League or
 // Club cards until each is actually ready. League auto-returns the day its beta flag
@@ -91,7 +105,11 @@ export default async function StartPage() {
   // League Starter is an unlisted capped beta: the card only exists while the flag is
   // on (S1-1 rider — nothing not-yet-live is promoted on this surface).
   const leagueStarterLive = process.env.LEAGUE_STARTER_BETA === 'true';
-  const options: StartOption[] = leagueStarterLive ? [...OPTIONS, LEAGUE_OPTION] : OPTIONS;
+  const teamCheckoutOpen = !(await getPlanGatingMap()).team;
+  const coach = coachOption(teamCheckoutOpen);
+  const options: StartOption[] = leagueStarterLive
+    ? [...OPTIONS, coach, LEAGUE_OPTION]
+    : [...OPTIONS, coach];
 
   return (
     <div className={styles.page}>

@@ -19,7 +19,7 @@ import {
   COACHES_CLAIM_PATH,
   COACHES_START_PATH,
 } from '@/lib/coaches-portal-routes';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 type BillingCycle = 'monthly' | 'annual';
@@ -145,9 +145,12 @@ export default function TeamSignupClient({
   const busy = !!busyLabel;
   const cleanTeamName = teamName.trim();
   const previewSlug = slugPreview(cleanTeamName) || 'your-team';
-  const planPrice = billingCycle === 'annual'
-    ? `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD / season`
-    : `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`;
+  const foundingPromoActive = isFoundingSeasonPromoActive('team');
+  const planPrice = foundingPromoActive
+    ? 'Free until Jan 1, 2027'
+    : billingCycle === 'annual'
+      ? `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD / season`
+      : `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`;
   const accountReady = isAuthenticated || (email.trim() && password.length >= (authMode === 'signup' ? 8 : 1));
   const claimEmailMismatch = !!claim && isAuthenticated && !!email && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase();
   const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && !!accountReady && !busy;
@@ -359,6 +362,9 @@ export default function TeamSignupClient({
             <div>
               <p className={styles.priceLabel}>Premium Coaches Portal</p>
               <p className={styles.price}>{planPrice}</p>
+              {foundingPromoActive && (
+                <p className={styles.priceSub}>then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo · no credit card required</p>
+              )}
             </div>
             <div className={styles.priceMeta}>
               <ShieldCheck size={16} />
@@ -583,7 +589,9 @@ export default function TeamSignupClient({
           {error && <div className={styles.errorBox}>{error}</div>}
 
           <button type="submit" className={styles.primaryButton} disabled={!canSubmit}>
-            <span>{busyLabel || (isAuthenticated ? (isWarmUpgrade ? 'Upgrade now' : isReactivation ? 'Start reactivation' : 'Start checkout') : authMode === 'signup' ? 'Create account and checkout' : 'Sign in and checkout')}</span>
+            <span>{busyLabel || (foundingPromoActive && !isReactivation
+              ? (isAuthenticated ? (isWarmUpgrade ? 'Upgrade to Premium — free' : 'Start free') : authMode === 'signup' ? 'Create my team — free' : 'Sign in and start free')
+              : (isAuthenticated ? (isWarmUpgrade ? 'Upgrade now' : isReactivation ? 'Start reactivation' : 'Start checkout') : authMode === 'signup' ? 'Create account and checkout' : 'Sign in and checkout'))}</span>
             <ArrowRight size={16} />
           </button>
 

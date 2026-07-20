@@ -3,6 +3,7 @@ import { restoreRetainedDowngradeTournaments } from '@/lib/billing-retention';
 import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { normalizeBillingCycle, PLAN_CONFIG, isFoundingSeasonActive, FOUNDING_SEASON_END } from '@/lib/plan-config';
+import { ensureFoundingSeasonCompPeriod } from '@/lib/founding-season';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
@@ -54,34 +55,6 @@ async function resetStartupTasksForEditableOnboarding(orgId: string, enabled: bo
   if ((count ?? 0) > 0) return;
 
   await resetStartupTasksIfAvailable(orgId);
-}
-
-async function ensureFoundingSeasonCompPeriod(orgId: string, createdBy: string | null | undefined) {
-  const { data, error } = await supabaseAdmin
-    .from('org_overrides')
-    .select('id')
-    .eq('org_id', orgId)
-    .eq('type', 'comp_period')
-    .eq('expires_at', FOUNDING_SEASON_END)
-    .is('revoked_at', null)
-    .limit(1)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (data) return;
-
-  const { error: insertError } = await supabaseAdmin
-    .from('org_overrides')
-    .insert({
-      org_id: orgId,
-      type: 'comp_period',
-      value: null,
-      expires_at: FOUNDING_SEASON_END,
-      reason: 'Founding Season - Tournament Plus free through December 31, 2026',
-      created_by: createdBy ?? 'system',
-    });
-
-  if (insertError) throw insertError;
 }
 
 export const POST = withObservability(async (req: Request) => {

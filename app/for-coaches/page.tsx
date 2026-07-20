@@ -2,7 +2,8 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -14,7 +15,14 @@ export const metadata: Metadata = {
 const { painItems: PAIN_ITEMS, steps: STEPS, features: PORTAL_FEATURES } =
   PLAN_ARTICLE_CONTENT.team;
 
-export default function ForCoachesPage() {
+export default async function ForCoachesPage() {
+  // The whole page flips with the team checkout gate (Founding Season Phase 3 launch): when open,
+  // it's a live "Start free" front door into /coaches/start with the promo framing; when gated, it
+  // stays the express-interest explainer. This keeps /for-coaches coordinated with the launch on
+  // each environment. Marketing theme is unchanged (S1-2) — this is a copy/CTA flip only.
+  const checkoutOpen = !(await getPlanGatingMap()).team;
+  const promoActive = isFoundingSeasonPromoActive('team');
+  const startHref = '/coaches/start?source=for_coaches';
   return (
     <main className="bg-pitch-black min-h-screen">
 
@@ -33,13 +41,22 @@ export default function ForCoachesPage() {
             if your organization joins FieldLogicHQ later.
           </p>
           <div className={styles.heroActions}>
-            <EarlyAccessModalTrigger
-              className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
-              initialPlanInterest={['coaches_portal']}
-              initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
-            >
-              Express interest
-            </EarlyAccessModalTrigger>
+            {checkoutOpen ? (
+              <Link
+                href={startHref}
+                className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+              >
+                Start free
+              </Link>
+            ) : (
+              <EarlyAccessModalTrigger
+                className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+                initialPlanInterest={['coaches_portal']}
+                initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
+              >
+                Express interest
+              </EarlyAccessModalTrigger>
+            )}
             <Link
               href="/pricing"
               className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
@@ -48,11 +65,27 @@ export default function ForCoachesPage() {
             </Link>
           </div>
           <p className={styles.heroNote}>
-            <span className={styles.heroNoteAccent}>Coming soon</span>
-            {' '}— The Coaches Portal is in development. Express interest to be notified when it opens.
+            {checkoutOpen ? (
+              promoActive ? (
+                <>
+                  <span className={styles.heroNoteAccent}>Free until Jan 1, 2027</span>
+                  {' '}— then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month. No credit card required to start.
+                </>
+              ) : (
+                <>Start free — no credit card required.</>
+              )
+            ) : (
+              <>
+                <span className={styles.heroNoteAccent}>Coming soon</span>
+                {' '}— The Coaches Portal is in development. Express interest to be notified when it opens.
+              </>
+            )}
           </p>
           <div className={styles.trustRow}>
-            {[`${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`, `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} / season — save two months`, 'No org account needed'].map(s => (
+            {(checkoutOpen && promoActive
+              ? ['Free until Jan 1, 2027', `then ${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month`, 'No org account needed']
+              : [`${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`, `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} / season — save two months`, 'No org account needed']
+            ).map(s => (
               <div key={s} className={styles.trustItem}>
                 <span className={styles.trustDot} />
                 <span>{s}</span>
@@ -113,14 +146,28 @@ export default function ForCoachesPage() {
             {/* ── Coaches Portal plan ────────────────────────────────────── */}
             <div className={`${styles.planCard} ${styles.planCardFeatured}`}>
               <div>
-                <p className={styles.planName}>Coaches Portal</p>
-                <div className={styles.planPrice}>
-                  <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}</span>
-                  <span className={styles.planPeriod}>/month</span>
-                </div>
-                <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months · Standalone, no org required</p>
+                <p className={styles.planName}>Premium Coaches Portal</p>
+                {checkoutOpen && promoActive ? (
+                  <>
+                    <div className={styles.planPrice}>
+                      <span className={styles.planAmount}>Free</span>
+                      <span className={styles.planPeriod}>until Jan 1, 2027</span>
+                    </div>
+                    <p className={styles.planNote}>then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month · no credit card required · Standalone, no org required</p>
+                  </>
+                ) : (
+                  <>
+                    <div className={styles.planPrice}>
+                      <span className={styles.planAmount}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}</span>
+                      <span className={styles.planPeriod}>/month</span>
+                    </div>
+                    <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months · Standalone, no org required</p>
+                  </>
+                )}
               </div>
-              <span className={styles.comingSoonBadge}>Coming soon</span>
+              {checkoutOpen
+                ? <span className={styles.comingSoonBadge}>Free right now</span>
+                : <span className={styles.comingSoonBadge}>Coming soon</span>}
               <p className={styles.planTagline}>
                 The full coaching workspace for one rep team — roster, lineups, budget, documents,
                 and schedule — whether or not your organization is on FieldLogicHQ.
@@ -134,13 +181,19 @@ export default function ForCoachesPage() {
                   </div>
                 ))}
               </div>
-              <EarlyAccessModalTrigger
-                className={`${styles.planCta} ${styles.planCtaPrimary}`}
-                initialPlanInterest={['coaches_portal']}
-                initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
-              >
-                Express interest →
-              </EarlyAccessModalTrigger>
+              {checkoutOpen ? (
+                <Link href={startHref} className={`${styles.planCta} ${styles.planCtaPrimary}`}>
+                  {promoActive ? 'Start free →' : 'Start now →'}
+                </Link>
+              ) : (
+                <EarlyAccessModalTrigger
+                  className={`${styles.planCta} ${styles.planCtaPrimary}`}
+                  initialPlanInterest={['coaches_portal']}
+                  initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
+                >
+                  Express interest →
+                </EarlyAccessModalTrigger>
+              )}
             </div>
 
             {/* ── Org bridge callout ─────────────────────────────────────── */}
@@ -224,17 +277,29 @@ export default function ForCoachesPage() {
             <span className={styles.ctaAccent}>properly managed.</span>
           </h2>
           <p className={styles.ctaSub}>
-            Express interest in the Coaches Portal to be notified when it opens.
-            No commitment required.
+            {checkoutOpen
+              ? (promoActive
+                ? 'Start your Premium Coaches Portal free — $0 until January 1, 2027, then $29/month. No credit card required.'
+                : 'Start your Coaches Portal — no credit card required.')
+              : 'Express interest in the Coaches Portal to be notified when it opens. No commitment required.'}
           </p>
           <div className={styles.ctaActions}>
-            <EarlyAccessModalTrigger
-              className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
-              initialPlanInterest={['coaches_portal']}
-              initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
-            >
-              Express interest
-            </EarlyAccessModalTrigger>
+            {checkoutOpen ? (
+              <Link
+                href={startHref}
+                className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+              >
+                Start free
+              </Link>
+            ) : (
+              <EarlyAccessModalTrigger
+                className="font-mono text-sm font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors border-0 cursor-pointer"
+                initialPlanInterest={['coaches_portal']}
+                initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
+              >
+                Express interest
+              </EarlyAccessModalTrigger>
+            )}
             <Link
               href="/pricing"
               className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"

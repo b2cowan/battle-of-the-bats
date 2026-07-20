@@ -470,16 +470,24 @@ export function basicCoachTeamWelcomeHtml(p: {
 }
 
 /**
- * Welcome email sent once when a coach's PAID Premium Coaches Portal workspace is first provisioned
- * (Stripe checkout → webhook). Confirms the upgrade, names what's now unlocked, and links into the
- * portal. Naming canon: the product is the "Coaches Portal"; the paid tier is "Premium Coaches Portal".
+ * Welcome email sent once when a coach's Premium Coaches Portal workspace is first provisioned.
+ * Confirms the upgrade, names what's now unlocked, and links into the portal. Naming canon: the
+ * product is the "Coaches Portal"; the paid tier is "Premium Coaches Portal".
+ *
+ * `comp: true` is the Founding Season variant — the workspace is comped (no Stripe subscription),
+ * so the closing line must NOT say "manage or cancel your subscription" (there is none). It mirrors
+ * the org `founding_welcome` "free through the season, no card required" reassurance instead.
  */
 export function teamWorkspaceWelcomeHtml(p: {
   teamName: string;
   coachName?: string | null;
   portalUrl: string;
+  comp?: boolean;
 }) {
   const coachName = p.coachName?.trim() || 'Coach';
+  const closingLine = p.comp
+    ? `<p style="color:rgba(241,245,249,0.62);font-size:0.86rem;margin-top:1.5rem;">Your Premium Coaches Portal is <strong style="color:rgba(241,245,249,0.82);">free through the founding season</strong> — no credit card required until January 1, 2027. We'll email you before then so you can decide whether to continue.</p>`
+    : `<p style="color:rgba(241,245,249,0.45);font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>`;
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">Welcome to the Premium Coaches Portal 🎉</h2>
     <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
@@ -494,7 +502,7 @@ export function teamWorkspaceWelcomeHtml(p: {
       </p>
     </div>
     <a href="${escapeEmailHtml(p.portalUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;">Open your Coaches Portal &rarr;</a>
-    <p style="color:rgba(241,245,249,0.45);font-size:0.86rem;margin-top:1.5rem;">You can manage or cancel your subscription anytime from your portal billing settings.</p>
+    ${closingLine}
   `);
 }
 

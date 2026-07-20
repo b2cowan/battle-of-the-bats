@@ -218,6 +218,22 @@ export function isFoundingSeasonCompExpiry(expiresAt: string): boolean {
   return expiresAt.startsWith(FOUNDING_SEASON_END.slice(0, 10));
 }
 
+/**
+ * Plans that participate in the Founding Season $0 promo (BUSINESS_DECISIONS 2026-07-20 D1):
+ * Tournament Plus and the Premium Coaches Portal. The promo is a discount, not a repricing — the
+ * list price stays the visible anchor.
+ */
+const FOUNDING_SEASON_PLAN_KEYS: readonly OrgPlan[] = ['tournament_plus', 'team'];
+
+/**
+ * True when `planKey` is on the Founding Season promo AND the promo window is still open. Replaces
+ * the scattered `planKey === 'tournament_plus' && isFoundingSeasonActive()` checks so the promo
+ * uniformly covers the Premium Coaches Portal (`team`) too.
+ */
+export function isFoundingSeasonPromoActive(planKey: string): boolean {
+  return isFoundingSeasonActive() && (FOUNDING_SEASON_PLAN_KEYS as readonly string[]).includes(planKey);
+}
+
 // ─── Price display helpers ────────────────────────────────────────────────────
 
 function commaSeparate(n: number): string {

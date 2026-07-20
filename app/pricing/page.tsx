@@ -3,7 +3,7 @@ import PricingSection from '@/components/PricingSection';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import ComparisonTable from './ComparisonTable';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import styles from './page.module.css';
 
 export const metadata = {
@@ -157,6 +157,8 @@ const FAQS = [
 
 export default async function PricingPage() {
   const gatingMap = await getPlanGatingMap();
+  const teamCheckoutOpen = !gatingMap.team;
+  const teamPromoActive = isFoundingSeasonPromoActive('team');
 
   return (
     <main>
@@ -246,23 +248,42 @@ export default async function PricingPage() {
             No contract. Cancel anytime.
           </p>
 
-          {/* Coaches Portal — compact callout below plan grid */}
+          {/* Premium Coaches Portal — compact callout below plan grid. Flips with the checkout gate:
+              live "Start free" + Founding Season promo when open, "Coming soon" + express-interest when gated. */}
           <div className={styles.coachesCallout} id="coaches-portal">
             <div className={styles.coachesCalloutInner}>
-              <span className={styles.coachesCalloutLabel}>Coaches Portal</span>
-              <span className={styles.coachesCalloutPrice}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>/mo</span></span>
-              <span className={styles.coachesCalloutPriceSub}>or {formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months</span>
-              <span className={styles.coachesCalloutBody}>
-                A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically. Coming soon.
-              </span>
+              <span className={styles.coachesCalloutLabel}>Premium Coaches Portal</span>
+              {teamCheckoutOpen && teamPromoActive ? (
+                <>
+                  <span className={styles.coachesCalloutPrice}>Free <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>until Jan 1, 2027</span></span>
+                  <span className={styles.coachesCalloutPriceSub}>then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo — no credit card required</span>
+                  <span className={styles.coachesCalloutBody}>
+                    A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically.
+                  </span>
+                </>
+              ) : (
+                <>
+                  <span className={styles.coachesCalloutPrice}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>/mo</span></span>
+                  <span className={styles.coachesCalloutPriceSub}>or {formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months</span>
+                  <span className={styles.coachesCalloutBody}>
+                    A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically. Coming soon.
+                  </span>
+                </>
+              )}
             </div>
-            <EarlyAccessModalTrigger
-              className={styles.coachesCalloutCta}
-              initialPlanInterest={['coaches_portal']}
-              initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
-            >
-              Express interest →
-            </EarlyAccessModalTrigger>
+            {teamCheckoutOpen ? (
+              <Link href="/coaches/start?source=pricing" className={styles.coachesCalloutCta}>
+                {teamPromoActive ? 'Start free →' : 'Start now →'}
+              </Link>
+            ) : (
+              <EarlyAccessModalTrigger
+                className={styles.coachesCalloutCta}
+                initialPlanInterest={['coaches_portal']}
+                initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
+              >
+                Express interest →
+              </EarlyAccessModalTrigger>
+            )}
           </div>
         </div>
       </section>

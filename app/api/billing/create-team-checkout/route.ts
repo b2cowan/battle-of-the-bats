@@ -3,10 +3,12 @@ import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
+import { isFoundingSeasonActive, FOUNDING_SEASON_END } from '@/lib/plan-config';
 import {
   buildTeamCheckoutMetadata,
   normalizeTeamCheckoutRequest,
   provisionTeamWorkspaceFromCheckoutMetadata,
+  provisionCompTeamWorkspaceFromCheckout,
 } from '@/lib/team-checkout';
 import { getBasicCoachTeamForUser } from '@/lib/basic-coach-teams';
 import { getActiveOwnedTeamWorkspace } from '@/lib/team-workspace-entitlements';
@@ -20,6 +22,16 @@ import { captureError, withObservability } from '@/lib/observability';
 
 function appendSuccess(url: string) {
   return `${url}${url.includes('?') ? '&' : '?'}success=1`;
+}
+
+async function orgSlugById(orgId: string | null | undefined): Promise<string | null> {
+  if (!orgId) return null;
+  const { data } = await supabaseAdmin
+    .from('organizations')
+    .select('slug')
+    .eq('id', orgId)
+    .maybeSingle<{ slug: string }>();
+  return data?.slug ?? null;
 }
 
 export const POST = withObservability(async (req: Request) => {
@@ -102,6 +114,88 @@ export const POST = withObservability(async (req: Request) => {
       orgSlug: existingPortal.orgSlug,
       url: `${appUrl}/${existingPortal.orgSlug}/coaches`,
     }), { status: 409, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  // Founding Season: the Premium Coaches Portal is comped ($0). Provision the full workspace WITHOUT
+  // Stripe (platform_override billing mode + null subscription, comp period = FOUNDING_SEASON_END).
+  // This is the launch path for the promo and takes precedence over BOTH the dev mock and real Stripe
+  // checkout — no card is ever collected or charged while the promo is active.
+  if (isFoundingSeasonActive()) {
+    try {
+      const metadata = buildTeamCheckoutMetadata({
+        ownerUserId: user.id,
+        ownerEmail: user.email,
+        request: checkoutRequest,
+      });
+      const provisionResult = await provisionCompTeamWorkspaceFromCheckout({
+        metadata,
+        compPeriodEnd: FOUNDING_SEASON_END,
+        eventSource: 'founding_season',
+        sourceEventId: `founding_team_comp_${Date.now()}`,
+      });
+
+      if (!provisionResult.provisioned && provisionResult.reason === 'reactivated') {
+        const slug = await orgSlugById(provisionResult.workspaceOrgId);
+        if (!slug) throw new Error('Reactivated Coaches Portal workspace was not found.');
+        return new Response(JSON.stringify({
+          url: appendSuccess(`${appUrl}/${slug}/coaches`),
+          applied: true,
+          reactivated: true,
+          comped: true,
+          planKey: 'team',
+          billingCycle: checkoutRequest.billingCycle,
+          orgSlug: slug,
+          teamWorkspaceId: provisionResult.teamWorkspaceId,
+          repTeamId: provisionResult.repTeamId,
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      // Owner already has a live portal (race past the pre-checkout guard) — route them to it.
+      if (!provisionResult.provisioned && provisionResult.reason === 'already_exists') {
+        const slug = await orgSlugById(provisionResult.workspaceOrgId ?? null);
+        return new Response(JSON.stringify({
+          url: slug ? appendSuccess(`${appUrl}/${slug}/coaches`) : `${appUrl}${checkoutRequest.returnTo}`,
+          applied: true,
+          comped: true,
+          planKey: 'team',
+          billingCycle: checkoutRequest.billingCycle,
+          orgSlug: slug,
+        }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+      }
+
+      if (!provisionResult.provisioned) throw new Error('Could not create Coaches Portal.');
+      const { result } = provisionResult;
+
+      return new Response(JSON.stringify({
+        url: appendSuccess(`${appUrl}/${result.org.slug}/coaches`),
+        applied: true,
+        comped: true,
+        planKey: 'team',
+        billingCycle: checkoutRequest.billingCycle,
+        orgSlug: result.org.slug,
+        teamWorkspaceId: result.teamWorkspaceId,
+        repTeamId: result.team.id,
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    } catch (error) {
+      if (error instanceof TeamWorkspaceClaimError) {
+        return new Response(JSON.stringify({ error: error.message, code: error.code }), {
+          status: error.code === 'claim_email_mismatch' ? 403 : 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (error instanceof TeamWorkspaceProvisioningError) {
+        return new Response(JSON.stringify({ error: error.message, code: error.code }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      console.error('[team checkout comp] provisioning error:', error);
+      void captureError(error, { user: { id: user.id, email: user.email }, route: '/api/billing/create-team-checkout', method: 'POST', statusCode: 500 });
+      return new Response(JSON.stringify({ error: 'Failed to create your free Premium Coaches Portal.' }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
   }
 
   const shouldApplyDirectly = isBillingMockEnabled() || (!isStripeConfigured() && process.env.NODE_ENV !== 'production');

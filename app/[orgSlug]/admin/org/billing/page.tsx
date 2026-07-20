@@ -7,7 +7,7 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import { getBillingHref } from '@/lib/billing-urls';
-import { PLAN_CONFIG, isEffectivelyGated, isFoundingSeasonActive, formatPriceAmount, formatAnnualSavings } from '@/lib/plan-config';
+import { PLAN_CONFIG, isEffectivelyGated, isFoundingSeasonActive, isFoundingSeasonPromoActive, formatPriceAmount, formatAnnualSavings } from '@/lib/plan-config';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
@@ -428,6 +428,11 @@ export default function BillingPage() {
   const isTeamWorkspaceBilling = currentOrg.accountKind === 'team_workspace' || currentPlanKey === 'team';
   const isFoundingSeason = foundingSeasonStatus?.isFoundingSeason ?? false;
   const isBeforeOctober  = new Date() < new Date('2026-10-01T00:00:00.000Z');
+  // The founding-season banner copy is Tournament-Plus-specific (plan name, $39 price, and the
+  // org-only "add a payment method to keep Tournament Plus running" card-on-file ask — none of which
+  // is built for coach workspaces), so it stays suppressed for team-workspace billing. A comped coach
+  // still sees the honest $0 founding state via the promo-aware current-plan price card below
+  // (isFoundingSeasonPromoActive). Phase 3 P4 intent is met without the wrong-plan banner copy.
   const showFoundingSeasonBanner = isFoundingSeason && !isTeamWorkspaceBilling;
   const usageCount     = tournaments.filter(t => t.status !== 'archived').length;
   const usageLimit     = currentOrg.tournamentLimit;
@@ -450,7 +455,7 @@ export default function BillingPage() {
     : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
   function getPrice(planKey: OrgPlan): string {
     if (isEffectivelyGated(planKey)) return 'Coming soon';
-    if (planKey === 'tournament_plus' && isFoundingSeasonActive()) return 'Free through Dec 31, 2026';
+    if (isFoundingSeasonPromoActive(planKey)) return 'Free through Dec 31, 2026';
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
     if (billingCycle === 'annual') return `${formatPriceAmount(plan.annualPrice)} CAD / year`;
@@ -458,6 +463,7 @@ export default function BillingPage() {
   }
 
   function getShelfPrice(planKey: OrgPlan): string {
+    if (isFoundingSeasonPromoActive(planKey)) return 'Free until Jan 1, 2027';
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
     return `from ${formatPriceAmount(plan.monthlyPrice)} CAD / month`;
@@ -465,23 +471,21 @@ export default function BillingPage() {
 
   function getSavings(planKey: OrgPlan): string | null {
     if (isEffectivelyGated(planKey)) return null;
-    if (planKey === 'tournament_plus' && isFoundingSeasonActive()) return null;
+    if (isFoundingSeasonPromoActive(planKey)) return null;
     if (billingCycle !== 'annual') return null;
     return formatAnnualSavings(planKey);
   }
 
   function getTrialNote(planKey: OrgPlan): string {
     if (isEffectivelyGated(planKey)) return 'Early access only. Self-serve checkout is not open yet.';
-    if (planKey === 'tournament_plus' && isFoundingSeasonActive()) return 'No credit card required until Jan 1, 2027';
+    if (isFoundingSeasonPromoActive(planKey)) return 'No credit card required until Jan 1, 2027';
     const days = PLAN_CONFIG[planKey].trialDays;
     if (days === 90) return 'Early-access trial details collected in Stripe';
     return `${days}-day trial · Payment details collected in Stripe`;
   }
 
   function getUpgradeLoadingLabel(planKey: OrgPlan): string {
-    return currentPlanKey === 'tournament' && planKey === 'tournament_plus' && isFoundingSeasonActive()
-      ? 'Applying...'
-      : 'Redirecting...';
+    return isFoundingSeasonPromoActive(planKey) ? 'Applying...' : 'Redirecting...';
   }
 
   // ── Cancelled-state view: stripped page with reactivate CTA ──────────────
@@ -651,13 +655,18 @@ export default function BillingPage() {
             <div className={styles.planName}>{currentPlan.label} Plan</div>
             <div className={styles.planTagline}>{PLAN_TAGLINE[currentPlanKey]}</div>
             <div className={styles.planPrice}>
-              {currentPlan.monthlyPrice === 0
-                ? 'Free forever'
-                : currentOrg.subscriptionPeriod === 'annual'
-                  ? `${formatPriceAmount(currentPlan.annualPrice)} CAD / year`
-                  : `${formatPriceAmount(currentPlan.monthlyPrice)} CAD / month`}
+              {isFoundingSeasonPromoActive(currentPlanKey)
+                ? 'Free until Jan 1, 2027'
+                : currentPlan.monthlyPrice === 0
+                  ? 'Free forever'
+                  : currentOrg.subscriptionPeriod === 'annual'
+                    ? `${formatPriceAmount(currentPlan.annualPrice)} CAD / year`
+                    : `${formatPriceAmount(currentPlan.monthlyPrice)} CAD / month`}
             </div>
-            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && (
+            {isFoundingSeasonPromoActive(currentPlanKey) && (
+              <div className={styles.planBillingCycle}>then {formatPriceAmount(currentPlan.monthlyPrice)}/mo after the founding season</div>
+            )}
+            {currentOrg.subscriptionPeriod && currentPlan.monthlyPrice > 0 && !isFoundingSeasonPromoActive(currentPlanKey) && (
               <div className={styles.planBillingCycle}>
                 Billed {currentOrg.subscriptionPeriod === 'annual' ? 'annually' : 'monthly'}
               </div>

@@ -2,7 +2,7 @@
 import { useEffect } from 'react';
 import { X, CheckCircle } from 'lucide-react';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, isFoundingSeasonActive } from '@/lib/plan-config';
+import { PLAN_CONFIG, isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import styles from './PlanArticlePanel.module.css';
 
 type PlanKey = 'tournament_plus' | 'league' | 'club' | 'team';
@@ -46,17 +46,16 @@ export default function PlanArticlePanel({
 
   const article = PLAN_ARTICLE_CONTENT[planKey];
   const config  = PLAN_CONFIG[planKey];
+  const promoActive = isFoundingSeasonPromoActive(planKey);
   const price   =
-    planKey === 'tournament_plus' && isFoundingSeasonActive()
-      ? 'Free through Dec 31, 2026'
+    promoActive
+      ? 'Free until Jan 1, 2027'
       : config.monthlyPrice === 0
         ? 'Free'
         : billingCycle === 'annual'
           ? `$${config.annualPrice} CAD / year`
           : `$${config.monthlyPrice} CAD / month`;
-  const loadingLabel = planKey === 'tournament_plus' && isFoundingSeasonActive()
-    ? 'Applying...'
-    : 'Redirecting...';
+  const loadingLabel = promoActive ? 'Applying...' : 'Redirecting...';
 
   return (
     <>
@@ -77,11 +76,15 @@ export default function PlanArticlePanel({
         {/* Price strip */}
         <div className={styles.priceStrip}>
           <span className={styles.priceAmount}>{price}</span>
-          {billingCycle === 'annual' && config.monthlyPrice > 0 && (
+          {promoActive ? (
+            <span className={styles.priceSavings}>
+              then ${config.monthlyPrice}/mo · no credit card required
+            </span>
+          ) : billingCycle === 'annual' && config.monthlyPrice > 0 ? (
             <span className={styles.priceSavings}>
               Save ${config.monthlyPrice * 12 - config.annualPrice} — 2 months free
             </span>
-          )}
+          ) : null}
         </div>
 
         {/* Scrollable body */}
@@ -145,7 +148,7 @@ export default function PlanArticlePanel({
               onClick={() => onUpgrade(planKey)}
               disabled={upgradeLoading === planKey}
             >
-              {upgradeLoading === planKey ? loadingLabel : `Upgrade to ${config.label}`}
+              {upgradeLoading === planKey ? loadingLabel : promoActive ? `Get ${config.label} free` : `Upgrade to ${config.label}`}
             </button>
           ) : null}
           <button className={`btn btn-ghost ${styles.cancelBtn}`} onClick={onClose}>
