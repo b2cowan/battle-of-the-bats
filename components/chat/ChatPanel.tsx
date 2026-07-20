@@ -835,6 +835,14 @@ export default function ChatPanel({
     return () => { cancelled = true; clearInterval(id); document.removeEventListener('visibilitychange', onVis); };
   }, [latestOwnId, latestOwnSentAt, loading, loadError, roomId]);
 
+  // A "Read by N of M" line renders under the latest own message a beat AFTER the initial load-scroll
+  // resolves (it's a separate async fetch) — without this, it can land just past the visible edge with
+  // nothing pulling it back into view. Only re-pins if the viewport was already at the bottom.
+  useEffect(() => {
+    if (!readState) return;
+    if (isNearBottomRef.current) scrollToBottom();
+  }, [readState, scrollToBottom]);
+
   // Pinned banner — fetch the room's pins on load and whenever a pin/unpin/delete bumps the key.
   useEffect(() => {
     if (loading || loadError) return;

@@ -11,6 +11,11 @@
      search bar) offset their own sticky position by this so they sit flush
      beneath it. Custom properties cascade regardless of CSS-module scoping. */
   --consumer-top-h: calc(3rem + env(safe-area-inset-top, 0px));
+  /* Exact rendered height of .bottomNav below (71px) — keep in sync if the tab
+     icon/label sizing changes. Descendants that must stop flush above the nav
+     (e.g. the Chat tab's fixed-position conversation view) offset by this
+     instead of guessing, so the two can never drift apart. */
+  --consumer-bottom-h: calc(4.4375rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* ── Top bar (all sizes): wordmark left; inline links right on desktop ─────────── */
@@ -185,11 +190,13 @@
     left: 0;
     right: 0;
     z-index: 200;
+    box-sizing: border-box;
+    height: var(--consumer-bottom-h);
     background: var(--nav-mobile-bg);
     -webkit-backdrop-filter: blur(var(--blur-bar));
     backdrop-filter: blur(var(--blur-bar));
     border-top: 1px solid var(--border);
-    padding: 0.5rem 0 calc(0.5rem + env(safe-area-inset-bottom));
+    padding: 0.5rem 0;
     justify-content: space-around;
     align-items: flex-start;
   }

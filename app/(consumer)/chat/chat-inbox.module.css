@@ -177,6 +177,15 @@
   min-height: 0;
   width: 100%;
 }
+@media (max-width: 900px) {
+  .conversation {
+    position: fixed;
+    top: var(--consumer-top-h, 3rem);
+    bottom: var(--consumer-bottom-h, 4.4375rem);
+    left: 0;
+    right: 0;
+  }
+}
 .backBtn {
   display: inline-flex;
   align-items: center;
