@@ -2453,7 +2453,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id"
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2461,7 +2461,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id"
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2525,7 +2525,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id"
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2533,7 +2533,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id"
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2821,7 +2821,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "team_id"
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_measurables",
@@ -2829,14 +2829,6 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "id"
-  },
-  {
-    "table_name": "rep_player_measurables",
-    "constraint_name": "rep_player_measurables_session_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_team_evaluation_sessions",
     "foreign_column": "team_id"
   },
   {
@@ -2846,6 +2838,14 @@
     "column_name": "team_id",
     "foreign_table": "rep_team_evaluation_sessions",
     "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_player_measurables",
+    "constraint_name": "rep_player_measurables_session_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_team_evaluation_sessions",
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_measurables",
@@ -4610,6 +4610,22 @@
   {
     "table_name": "user_marketing_opt_outs",
     "constraint_name": "user_marketing_opt_outs_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "user_notification_settings",
+    "constraint_name": "user_notification_settings_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "user_notification_settings",
+    "constraint_name": "user_notification_settings_user_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "user_id",
     "foreign_table": null,

@@ -11,8 +11,8 @@
  * the card they came from (admin bell → org card; coaches bell → coach card).
  */
 
-import { useEffect, useMemo } from 'react';
-import { AlertCircle, ChevronRight } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { AlertCircle, BellOff, ChevronRight } from 'lucide-react';
 import { isStandalonePWA } from '@/lib/device';
 import PushDeviceTester from '@/components/notifications/PushDeviceTester';
 import PreferencesTable, { type PreferenceSection } from '@/components/notifications/PreferencesTable';
@@ -197,18 +197,83 @@ function CoachCard({ card }: { card: NotificationCard }) {
   );
 }
 
+/** Account-level master pause (owner-approved 2026-07-20). Non-destructive: it suppresses
+ *  delivery of everything except the protected floor (failed-payment + @mentions) without
+ *  touching any per-event setting. State is lifted so the cards below can show a "paused" note. */
+function PauseMasterCard({ paused, onChange }: { paused: boolean; onChange: (v: boolean) => void }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function toggle() {
+    if (saving) return;
+    const next = !paused;
+    onChange(next); // optimistic
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await fetch('/api/consumer/notification-pause', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paused: next }),
+      });
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      onChange(!!data.paused);
+    } catch {
+      onChange(!next); // revert
+      setError('Couldn’t save that — try again.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <div className={`${styles.pauseCard} ${paused ? styles.on : ''}`}>
+      <div className={styles.pauseMain}>
+        <span className={styles.pauseIcon} aria-hidden><BellOff size={20} /></span>
+        <span className={styles.pauseText}>
+          <span className={styles.pauseTitle}>Pause notifications</span>
+          <span className={styles.pauseSub}>
+            {paused
+              ? <>Paused — only the alerts below still get through.</>
+              : <>Mutes everything except the alerts below.<span className={styles.pauseSubExtra}> <strong>Off</strong> — you&rsquo;re receiving normally.</span></>}
+          </span>
+        </span>
+        <button
+          type="button"
+          role="switch"
+          aria-checked={paused}
+          aria-label="Pause all notifications"
+          className={styles.pauseToggle}
+          disabled={saving}
+          onClick={toggle}
+        />
+      </div>
+      <div className={styles.protectedChips}>
+        <span className={styles.protectedChip}>Failed payment · still on</span>
+        <span className={styles.protectedChip}>@mentions · still on</span>
+      </div>
+      {error && <div className={styles.pauseError}>{error}</div>}
+    </div>
+  );
+}
+
 export default function AccountNotificationsClient({
   cards,
   fanCard,
   userEmail,
   focus,
+  paused: initialPaused,
 }: {
   cards: NotificationCard[];
   /** The Followed-teams card (Slice 3) — null when the account follows nothing. */
   fanCard: FanCardData | null;
   userEmail: string;
   focus: string | null;
+  /** Account-level master pause (server-rendered initial state). */
+  paused: boolean;
 }) {
+  const [paused, setPaused] = useState(initialPaused);
   // Deep-link: land on the card the bell came from. Scroll once on mount.
   //
   // Deliberately NOT `el.scrollIntoView({behavior:'smooth'})`: WebKit (iOS Safari,
@@ -263,6 +328,16 @@ export default function AccountNotificationsClient({
         </div>
       ) : (
         <>
+          {/* Account-level master pause sits above everything — the one control that
+              governs all the cards below. */}
+          <PauseMasterCard paused={paused} onChange={setPaused} />
+          {paused && (
+            <p className={styles.pausedNote}>
+              <BellOff size={13} aria-hidden />
+              Notifications are paused — the settings below are saved and resume the moment you
+              turn the switch off. Failed-payment alerts and @mentions still come through.
+            </p>
+          )}
           {/* S3: a fan-only account (zero org/coach cards) leads with what they came
               for — their Followed teams — and the device-plumbing tester follows.
               Accounts WITH workspace cards keep the tester first (device health is
@@ -270,10 +345,18 @@ export default function AccountNotificationsClient({
           {/* Reaching this branch with zero cards proves fanCard is set (the empty
               state above owns cards-and-fan-both-empty), so fanSection is non-null. */}
           {cards.length === 0 && (
-            <div className={styles.cardsWrap}>{fanSection}</div>
+            <div
+              className={`${styles.cardsWrap} ${paused ? styles.cardsLocked : ''}`}
+              inert={paused ? true : undefined}
+            >
+              {fanSection}
+            </div>
           )}
           <PushDeviceTester />
-          <div className={styles.cardsWrap}>
+          <div
+            className={`${styles.cardsWrap} ${paused ? styles.cardsLocked : ''}`}
+            inert={paused ? true : undefined}
+          >
             {cards.length > 0 && fanSection}
             {cards.map(card => (
               <section

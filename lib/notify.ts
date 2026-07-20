@@ -14,6 +14,7 @@ import { sendWebPush, isPushConfigured } from './web-push';
 import { captureError } from './observability';
 import { hasPlanFeature, type PlanFeature } from './plan-features';
 import { PUSH_DEFAULT_ON_EVENTS, NOTIFICATION_CATEGORY } from './notification-labels';
+import { PAUSE_EXEMPT_EVENTS, filterUnpausedUsers } from './notification-pause';
 import type { NotificationEventType, OrgPlan } from './types';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -182,9 +183,31 @@ export async function notify(opts: NotifyOptions): Promise<void> {
       ? recipients.filter(r => !excludeSet.has(r.userId))
       : recipients;
 
+    // ── 2½. Account-level master pause (Layer 0) ────────────────────────────────
+    // A paused user receives NOTHING except the protected floor (payment_failed,
+    // chat_mention), which pierce the pause — mirrors the @mention-pierces-mute rule in
+    // chat-service. Resolved once per dispatch; skipped entirely for the exempt events
+    // (they always deliver, so there's nothing to look up).
+    //
+    // Fail-open: a lookup error (a transient blip, or the mig-194 table not yet existing if
+    // code ships ahead of the migration) must NOT black out the whole dispatch — deliver
+    // without the pause filter, matching this function's degrade-gracefully convention.
+    let allowedUnpaused: Set<string> | null = null;
+    if (!PAUSE_EXEMPT_EVENTS.has(opts.eventType)) {
+      try {
+        allowedUnpaused = new Set(await filterUnpausedUsers(filteredRecipients.map(r => r.userId)));
+      } catch (pauseErr) {
+        console.error('[notify] pause lookup failed; delivering without pause filter (fail-open):', pauseErr);
+        allowedUnpaused = null;
+      }
+    }
+
     // ── 3. Dispatch per recipient ──────────────────────────────────────────────
 
     for (const recipient of filteredRecipients) {
+
+      // Layer 0: skip a paused recipient (unless this is an exempt, always-on event).
+      if (allowedUnpaused && !allowedUnpaused.has(recipient.userId)) continue;
 
       // 2a. Tournament-level opt-out check (Layer 2)
       if (opts.tournamentId) {

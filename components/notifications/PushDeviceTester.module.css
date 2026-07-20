@@ -48,6 +48,12 @@
 }
 
 .sub strong { color: var(--home-ink); font-weight: 700; }
+/* On phones, drop the secondary how-to sentence + tighten padding — once the device list
+   renders, the "This device" button is self-evident. */
+@media (max-width: 640px) {
+  .subExtra { display: none; }
+  .card { padding: 0.85rem; }
+}
 
 .refreshBtn {
   flex-shrink: 0;

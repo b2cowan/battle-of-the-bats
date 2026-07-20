@@ -21,6 +21,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { sendWebPush } from './web-push';
 import { hasPlanFeature } from './plan-features';
 import { filterUsersWithCategoryOn } from './fan-alert-prefs';
+import { filterUnpausedUsers } from './notification-pause';
 import { captureError } from './observability';
 import type { GameStatus, OrgPlan } from './types';
 
@@ -57,30 +58,68 @@ async function anonymousTargets(
   return (data ?? []).map(s => ({ ...s, table: 'fan_push_subscriptions' as const }));
 }
 
+interface AccountTargetsResult {
+  targets: FanPushTarget[];
+  /** Device endpoints of followers whose account pause is ON. These must ALSO be stripped
+   *  from the legacy anonymous list: a device can hold both an anonymous and an account row
+   *  on the SAME endpoint, and a paused account drops out of `targets`, so the anonymous copy
+   *  would otherwise leak the push (the exact overlap the endpoint dedup can't catch once the
+   *  account row is gone). */
+  pausedEndpoints: Set<string>;
+}
+
 /** Account-routed recipients: users following any of these teams, with the given
- *  alert category on (missing prefs row = on), fanned out to every device
- *  endpoint they've registered (push_subscriptions is user-keyed). */
+ *  alert category on (missing prefs row = on), fanned out to every device endpoint they've
+ *  registered (push_subscriptions is user-keyed). Also returns the paused followers' endpoints
+ *  so mergedTargets can strip them from the anonymous path. */
 async function accountTargetsForTeams(
   teamIds: string[],
   category: 'game_alerts' | 'event_news',
-): Promise<FanPushTarget[]> {
-  if (teamIds.length === 0) return [];
+): Promise<AccountTargetsResult> {
+  const empty: AccountTargetsResult = { targets: [], pausedEndpoints: new Set() };
+  if (teamIds.length === 0) return empty;
   const { data: follows } = await supabaseAdmin
     .from('fan_follows')
     .select('user_id')
     .eq('entity_type', 'team')
     .in('entity_id', teamIds);
   const userIds = Array.from(new Set((follows ?? []).map(f => f.user_id)));
-  if (userIds.length === 0) return [];
+  if (userIds.length === 0) return empty;
 
-  const optedIn = await filterUsersWithCategoryOn(userIds, category);
-  if (optedIn.length === 0) return [];
+  // Account-level master pause. Fail-open: a lookup error (incl. the table not yet existing)
+  // must not black out fan push — treat everyone as un-paused and carry on.
+  let unpaused: Set<string>;
+  try {
+    unpaused = new Set(await filterUnpausedUsers(userIds));
+  } catch (err) {
+    console.error('[fan-notify] pause lookup failed; not filtering (fail-open):', err);
+    unpaused = new Set(userIds);
+  }
+  const pausedIds = userIds.filter(id => !unpaused.has(id));
+
+  // Paused followers' device endpoints — stripped from BOTH lists (account below, anonymous
+  // in mergedTargets). Regardless of category: a paused user gets nothing here.
+  let pausedEndpoints = new Set<string>();
+  if (pausedIds.length > 0) {
+    const { data: pausedSubs } = await supabaseAdmin
+      .from('push_subscriptions')
+      .select('endpoint')
+      .in('user_id', pausedIds);
+    pausedEndpoints = new Set((pausedSubs ?? []).map(s => s.endpoint));
+  }
+
+  // Account targets: un-paused followers with the category on.
+  const optedIn = (await filterUsersWithCategoryOn(userIds, category)).filter(id => unpaused.has(id));
+  if (optedIn.length === 0) return { targets: [], pausedEndpoints };
 
   const { data: subs } = await supabaseAdmin
     .from('push_subscriptions')
     .select('id, endpoint, keys_p256dh, keys_auth')
     .in('user_id', optedIn);
-  return (subs ?? []).map(s => ({ ...s, table: 'push_subscriptions' as const }));
+  return {
+    targets: (subs ?? []).map(s => ({ ...s, table: 'push_subscriptions' as const })),
+    pausedEndpoints,
+  };
 }
 
 /** Tournament-wide moments (playoffs/champions/announcements) reach the followers
@@ -88,7 +127,7 @@ async function accountTargetsForTeams(
 async function accountTargetsForTournament(
   tournamentId: string,
   category: 'game_alerts' | 'event_news',
-): Promise<FanPushTarget[]> {
+): Promise<AccountTargetsResult> {
   const { data: teams } = await supabaseAdmin
     .from('teams')
     .select('id')
@@ -114,8 +153,14 @@ async function mergedTargets(
       : accountTargetsForTournament(tournamentId, category),
     anonymousTargets(tournamentId, category === 'game_alerts' ? 'notify_scores' : 'notify_messages', teamIds),
   ]);
+  // Strip any anonymous row whose endpoint belongs to a paused account — otherwise a device
+  // holding both an anonymous and an account subscription would leak the push once the paused
+  // account row drops out (the account-side dedup can't fire when there's no account row left).
+  const anon = account.pausedEndpoints.size > 0
+    ? anonymous.filter(a => !account.pausedEndpoints.has(a.endpoint))
+    : anonymous;
   // Account first — on a shared endpoint, dedupe keeps the account row.
-  return [...account, ...anonymous];
+  return [...account.targets, ...anon];
 }
 
 /**

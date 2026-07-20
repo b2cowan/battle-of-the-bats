@@ -5364,6 +5364,27 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 <!-- dict:col:user_marketing_opt_outs.opted_out_at -->
 **`opted_out_at`** (tstz, NN, default `now()`) — when they opted out (audit).
 
+### `user_notification_settings`
+<!-- dict:table:user_notification_settings -->
+
+Account-level notification settings keyed by `user_id` (the "Pause notifications" master switch, mig 194). One row per user; **absent row = receiving normally**. Non-destructive — the pause never edits `notification_preferences`. Service-role only (RLS enabled, zero policies), same posture as `user_marketing_opt_outs` / `fan_alert_prefs`. Read/written via `lib/notification-pause.ts`.
+
+**Gotchas (read first):**
+1. **Recipient-side, not organizer-side** — a user silencing their OWN inbound notifications platform-wide. Do NOT confuse with `tournaments.settings.coach_email_pause_all` (an organizer silencing OUTBOUND coach emails on one event).
+2. **Protected floor pierces the pause** — even when paused, `payment_failed` and `chat_mention` still dispatch (enforced in `lib/notify.ts`; whitelist `PAUSE_EXEMPT_EVENTS` in `lib/notification-pause.ts`). Account-routed fan pushes (`lib/fan-notify.ts`) are silenced with no exemption.
+3. **v1 does NOT cover** organizer broadcast emails (`lib/dues-reminders.ts`, `lib/game-day-reminders.ts`) — those are email-keyed, not `user_id`-keyed.
+
+**Fields:**
+
+<!-- dict:col:user_notification_settings.user_id -->
+**`user_id`** (uuid, PK; FK→`auth.users(id)` ON DELETE CASCADE) — the account whose notifications are governed; one row per user.
+
+<!-- dict:col:user_notification_settings.notifications_paused_at -->
+**`notifications_paused_at`** (tstz, nullable) — NOT NULL = the master pause is ON (paused since that timestamp); NULL / absent row = not paused. The timestamp is informational (audit / "paused since"); only null-vs-not-null is read.
+
+<!-- dict:col:user_notification_settings.updated_at -->
+**`updated_at`** (tstz, NN, DEFAULT now()) — bumped on upsert; code-maintained.
+
 ### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
 
 - **`notify()`** ([lib/notify.ts:87](../../../lib/notify.ts#L87)) — the fan-out hub: resolve recipients (all org members, or an explicit `userIds` list forced to `role='member'`) → **Layer 2** tournament opt-out (only if `tournamentId` passed) → **Layer 1** global channel prefs (falling back to `systemDefaults`) → write bell row (`channel_bell`) → fan Web Push (`channel_push` → `push_subscriptions` → `sendWebPush`, 410-delete) → send email (`channel_email` → `notificationEmailHtml` → `sendEmail`). Fire-and-forget; the whole body never throws to the caller.

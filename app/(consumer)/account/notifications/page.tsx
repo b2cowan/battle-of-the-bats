@@ -6,6 +6,7 @@ import { getUserAccessContexts } from '@/lib/user-contexts';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getFanAlertOverview } from '@/lib/fan-alert-prefs';
+import { isNotificationsPaused } from '@/lib/notification-pause';
 import type { Capability } from '@/lib/roles';
 import type { Organization } from '@/lib/types';
 import type { FanCardData } from '@/components/notifications/FanAlertsCard';
@@ -117,7 +118,10 @@ export default async function AccountNotificationsPage({
   // The fan card (Slice 3): global alert switches + the honest per-event gate line.
   // Rendered whenever the account follows at least one team — a pure fan with no
   // org/coach hats sees just this card.
-  const overview = await getFanAlertOverview(user.id);
+  const [overview, paused] = await Promise.all([
+    getFanAlertOverview(user.id),
+    isNotificationsPaused(user.id),
+  ]);
   const fanCard: FanCardData | null = overview
     ? {
         teamCount: overview.teamCount,
@@ -128,6 +132,12 @@ export default async function AccountNotificationsPage({
     : null;
 
   return (
-    <AccountNotificationsClient cards={cards} fanCard={fanCard} userEmail={user.email} focus={focus ?? null} />
+    <AccountNotificationsClient
+      cards={cards}
+      fanCard={fanCard}
+      userEmail={user.email}
+      focus={focus ?? null}
+      paused={paused}
+    />
   );
 }

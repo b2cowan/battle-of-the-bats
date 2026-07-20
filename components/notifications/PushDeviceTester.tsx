@@ -178,8 +178,8 @@ export default function PushDeviceTester() {
           <div>
             <div className={styles.title}>Your notification devices</div>
             <div className={styles.sub}>
-              Send a test notification to confirm push is reaching a device. Open this page on the
-              phone you want to test and use its <strong>This device</strong> button.
+              Send a test to confirm push is reaching a device.
+              <span className={styles.subExtra}> Open this page on the phone you want to test and tap its <strong>This device</strong> button.</span>
             </div>
           </div>
         </div>

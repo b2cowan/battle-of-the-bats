@@ -1,26 +1,27 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-07-19 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-07-20 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 74 divergence(s)** across dev/prod.
+**⚠️ 81 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 1 | 0 | — |
-| Columns | 11 | 3 | 23 |
-| Indexes | 9 | 3 | 0 |
-| Constraints | 13 | 9 | — |
+| Tables | 2 | 0 | — |
+| Columns | 14 | 3 | 23 |
+| Indexes | 10 | 3 | 0 |
+| Constraints | 15 | 9 | — |
 | RLS / CHECK | 1 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (1)
+### Only in DEV (2)
 - `chat_message_reports`
+- `user_notification_settings`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (11)
+### Only in DEV (14)
 - `chat_message_reports.created_at`
 - `chat_message_reports.id`
 - `chat_message_reports.message_id`
@@ -32,6 +33,9 @@ _none_
 - `chat_message_reports.room_id`
 - `chat_message_reports.status`
 - `chat_room_members.notifications_muted_at`
+- `user_notification_settings.notifications_paused_at`
+- `user_notification_settings.updated_at`
+- `user_notification_settings.user_id`
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -64,7 +68,7 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (9)
+### Only in DEV (10)
 - `chat_message_reports_message_idx`
 - `chat_message_reports_open_uniq`
 - `chat_message_reports_org_status_idx`
@@ -74,6 +78,7 @@ _none_
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
 - `league_practices_team_idx`
+- `user_notification_settings_pkey`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`
@@ -84,7 +89,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (13)
+### Only in DEV (15)
 - `announcements.announcements_tournament_id_fkey`
 - `chat_message_reports.chat_message_reports_message_id_fkey`
 - `chat_message_reports.chat_message_reports_org_id_fkey`
@@ -98,6 +103,8 @@ _none_
 - `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
 - `teams.teams_tournament_id_fkey`
+- `user_notification_settings.user_notification_settings_pkey`
+- `user_notification_settings.user_notification_settings_user_id_fkey`
 
 ### Only in PROD (9)
 - `announcements.fk_announcements_tournament`

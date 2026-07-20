@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-07-19 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-07-20 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-07-19
+# DB Schema Reference — 2026-07-20
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -575,11 +575,14 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) →
 ### user_marketing_opt_outs
 user_id (uuid) NOT NULL, opted_out_at
 
+### user_notification_settings
+user_id (uuid) NOT NULL, notifications_paused_at, updated_at
+
 ---
 
 ## Tables by count
 
-Total: **140 tables** across 10 modules.
+Total: **141 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -590,4 +593,4 @@ Total: **140 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 26 tables
+- Other: 27 tables
