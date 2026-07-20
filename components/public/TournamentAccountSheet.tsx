@@ -29,7 +29,8 @@ import { ArrowRight, Star, LayoutGrid, LogIn, LogOut, Megaphone, ScrollText, Bel
 import { useOrgNav } from '@/components/OrgNavContext';
 import { getSession, signOut } from '@/lib/auth';
 import { createClient } from '@/lib/supabase-browser';
-import { readFollowedTeam, syncFollowToAccount } from '@/lib/follow';
+import { readFollowedTeam, syncFollowToAccount, useFollowedTournament } from '@/lib/follow';
+import { fireConsumerEvent } from '@/lib/consumer-events-client';
 import { isInstallEligibleBrowser } from '@/lib/device';
 import { saveFanAlertPref } from '@/lib/fan-alert-prefs-client';
 import type { PublicPageKey } from '@/lib/public-pages';
@@ -144,6 +145,37 @@ function CoachAlertsRow({ teamId, teamName, orgSlug, tournamentSlug }: {
         </span>
       </span>
       {!done && <span className={styles.chev}><ArrowRight size={14} strokeWidth={2.2} aria-hidden /></span>}
+    </button>
+  );
+}
+
+/** F1: the "Follow this tournament" door in the More sheet (rides beside follow-a-team wherever
+ *  those doors move). A whole-event follow — toggled here in place, no account needed. Device
+ *  state is the source of truth (the sheet is a convenience door; the follow mirrors to the
+ *  account like everywhere else). */
+function FollowTournamentSheetRow({ orgSlug, tournamentSlug, tournamentName, signedIn }: {
+  orgSlug: string;
+  tournamentSlug: string;
+  tournamentName: string;
+  signedIn: boolean;
+}) {
+  const { following, follow, unfollow } = useFollowedTournament(orgSlug, tournamentSlug);
+  const toggle = () => {
+    fireConsumerEvent('follow_tapped', { entityType: 'tournament', on: !following, signedIn });
+    if (following) unfollow(); else follow(tournamentName);
+  };
+  return (
+    <button
+      type="button"
+      className={`${styles.row} ${styles.rowBtn} ${styles.eventFollowRow}`}
+      aria-pressed={following}
+      onClick={toggle}
+    >
+      <span className={styles.rowIcon}><Star size={15} strokeWidth={1.8} fill={following ? 'currentColor' : 'none'} aria-hidden /></span>
+      <span className={styles.rowText}>
+        <span className={styles.label}>{following ? 'Following this event' : 'Follow this tournament'}</span>
+        <span className={styles.sub}>{following ? 'On your Home & Scores — this device' : 'See it on your Home & Scores — no account needed'}</span>
+      </span>
     </button>
   );
 }
@@ -370,14 +402,24 @@ export default function TournamentAccountSheet() {
           />
         </div>
 
-        {/* ── This event: the device-level follow, notifications, and the pages
-            that left the tab bar (G5). A signed-out fan's follow is event-scoped,
-            so it lives HERE, separate from the platform-level FieldLogicHQ group above. ── */}
-        {(showBell || !signedIn || !hidden('news') || !hidden('rules')) && (
+        {/* ── This event: the whole-event follow, the device-level team follow,
+            notifications, and the pages that left the tab bar (G5). Rendered only when at least
+            one row will show, so the "This event" kicker never sits alone over an empty group
+            (e.g. no tournament name + all doors hidden + no bell). ── */}
+        {(tournamentName || showBell || (!signedIn && !hidden('teams')) || !hidden('news') || !hidden('rules')) && (
           <>
             <p className={styles.sectionKicker}>This event</p>
             <div className={styles.rows}>
-              {/* Both follow rows honor the organizer's hidden-Teams choice — the
+              {/* F1: follow the WHOLE event (above the follow-a-team door). */}
+              {tournamentName && (
+                <FollowTournamentSheetRow
+                  orgSlug={orgSlug}
+                  tournamentSlug={tournamentSlug}
+                  tournamentName={tournamentName}
+                  signedIn={signedIn}
+                />
+              )}
+              {/* Both team-follow rows honor the organizer's hidden-Teams choice — the
                   sheet must not advertise a page the nav deliberately hides. */}
               {!signedIn && !hidden('teams') && (deviceFollow ? (
                 <SheetRow

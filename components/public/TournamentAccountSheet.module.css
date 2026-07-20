@@ -218,3 +218,10 @@
   text-transform: uppercase;
   color: var(--white-40);
 }
+
+/* Whole-event follow is a mobile affordance (owner call 2026-07-20) — the "Follow this
+   tournament" row shows only on phones, matching the strip. Desktop opens this sheet from the
+   account chip, where following a whole event is intentionally omitted. */
+@media (min-width: 901px) {
+  .eventFollowRow { display: none; }
+}

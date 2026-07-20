@@ -14,9 +14,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
 import { getUserAccessContexts, getLapsedWorkspacesForUser } from '@/lib/user-contexts';
-import { getFollowedTeamsForUser } from '@/lib/fan-follows';
+import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgsForUser } from '@/lib/fan-follows';
 import { getFollowFeed } from '@/lib/follow-feed';
-import { rollupFollowFeedByTournament, type ConsumerHomePayload } from '@/lib/home-following';
+import { rollupFollowFeedByTournament, mergeWholeEventIntoRollup, type ConsumerHomePayload } from '@/lib/home-following';
+import { getWholeEventFollowCards, getOrgFollowRollups } from '@/lib/entity-follow-status';
 import { getCoachedRegistrationTeamIds } from '@/lib/basic-coach-teams';
 import { reconcilePendingInvitesForUser, listPendingInvitesForUser } from '@/lib/invite-reconciliation';
 
@@ -27,6 +28,7 @@ const EMPTY: ConsumerHomePayload = {
   lapsed: [],
   followCount: 0,
   following: { current: [], past: [] },
+  organizations: [],
 };
 
 export const GET = withObservability(async () => {
@@ -38,10 +40,12 @@ export const GET = withObservability(async () => {
   // invite surfaces on Home (mirrors the retired /home launchpad). Idempotent — safe on load.
   await reconcilePendingInvitesForUser({ id: user.id, email: user.email, emailConfirmedAt: user.email_confirmed_at });
 
-  const [contexts, pendingInvites, follows, lapsed] = await Promise.all([
+  const [contexts, pendingInvites, follows, followedTournaments, followedOrgs, lapsed] = await Promise.all([
     getUserAccessContexts({ id: user.id, email: user.email }),
     listPendingInvitesForUser(user.id),
     getFollowedTeamsForUser(user.id),
+    getFollowedTournamentsForUser(user.id),
+    getFollowedOrgsForUser(user.id),
     getLapsedWorkspacesForUser(user.id),
   ]);
 
@@ -67,6 +71,32 @@ export const GET = withObservability(async () => {
       )
     : [];
 
+  const teamRollup = rollupFollowFeedByTournament(feedEntries);
+
+  // F6 dedupe — the ORG-follow rule only: "your own admin org shows as a workspace card, never a
+  // follow card", so drop org follows for orgs the user staffs. A WHOLE-EVENT follow is a distinct,
+  // deliberate fan action (follow THIS specific event), so it is NOT dropped for staffed orgs —
+  // it shows on Home + All following consistently, and Scores absorbs it via reason precedence
+  // (a staffed tournament renders as a Staff tile, not a duplicate).
+  const staffedOrgSlugs = new Set(contexts.filter(c => c.kind !== 'fan' && c.orgSlug).map(c => c.orgSlug!));
+
+  // Pre-filter whole-event follows against team-follow keys BEFORE resolving their status (F6: a team
+  // follow wins the card) so a tournament that's both team- and whole-event-followed isn't fetched twice.
+  const teamKeys = new Set([...teamRollup.current, ...teamRollup.past].map(c => c.key));
+  const wholeEventInputs = followedTournaments
+    .filter(t => !teamKeys.has(`${t.orgSlug}/${t.tournamentSlug}`))
+    .map(t => ({ orgSlug: t.orgSlug, tournamentSlug: t.tournamentSlug, tournamentName: t.tournamentName }));
+  const orgInputs = followedOrgs
+    .filter(o => !staffedOrgSlugs.has(o.orgSlug))
+    .map(o => ({ orgSlug: o.orgSlug, orgId: o.orgId, orgName: o.orgName, logoUrl: o.logoUrl }));
+
+  // The two rollups are independent — resolve concurrently.
+  const [wholeEventCards, organizations] = await Promise.all([
+    getWholeEventFollowCards(wholeEventInputs),
+    getOrgFollowRollups(orgInputs),
+  ]);
+  const following = mergeWholeEventIntoRollup(teamRollup, wholeEventCards);
+
   const payload: ConsumerHomePayload = {
     signedIn: true,
     pendingInvites: pendingInvites.map(i => ({
@@ -80,8 +110,9 @@ export const GET = withObservability(async () => {
     // Raw follow count (post coach-dedupe) — carried alongside the enriched cards so the client
     // can tell "follows nothing" apart from "follows teams whose game info dropped out" (a followed
     // team's tournament unpublished/canceled → getFollowFeed legitimately returns no card for it).
-    followCount: visibleFollows.length,
-    following: rollupFollowFeedByTournament(feedEntries),
+    followCount: visibleFollows.length + followedTournaments.length,
+    following,
+    organizations,
   };
   // Per-user, never shared: no-store is defense-in-depth beyond the SW's /api/ no-cache rule,
   // and matches every sibling consumer API (alert-prefs, follows, tournament-viewer).

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getSportPack } from '@/lib/sports';
 import { provinceName, isProvinceCode } from '@/lib/canadian-provinces';
 import { tournamentToday } from '@/lib/timezone';
+import type { Organization } from '@/lib/types';
 
 // Shared data layer for the public tournament discovery directory (/discover).
 // Called by BOTH the public API route (client-driven filtering/pagination) and the
@@ -357,12 +358,81 @@ function rankByNeedle<T>(rows: T[], fields: (r: T) => string[], needle: string):
 }
 
 /**
+ * THE org-follow / org-search eligibility predicate, applied in ONE place so the "is this a
+ * real, publicly-reachable org?" rule can never drift between Home search (searchOrgsForDirectory),
+ * a Phase-6 org follow write (resolveFollowableOrgBySlug), and the followed-org resolver
+ * (resolveFollowableOrgsByIds). Reuses the existing organizations.is_discoverable flag
+ * (owner-settled 2026-07-18 — the fan-visibility gate is the SAME switch as the coach→org link
+ * picker) plus is_public + isNormalLinkableOrg's exclusions (team-workspace shadow orgs, the
+ * `team` plan, canceled subs). A row that survives this always resolves to a live `/{orgSlug}`.
+ */
+function followableOrgQuery() {
+  return supabaseAdmin
+    .from('organizations')
+    .select('id, name, slug, logo_url')
+    .eq('is_discoverable', true)
+    .eq('is_public', true)
+    .neq('account_kind', 'team_workspace')
+    .neq('plan_id', 'team')
+    .neq('subscription_status', 'canceled');
+}
+
+/** In-memory mirror of followableOrgQuery's predicate — for a server component that ALREADY
+ *  loaded the org (the `/{orgSlug}` page) and just needs to decide whether to render the hero
+ *  Follow button, without a second query. Kept in step with followableOrgQuery above. */
+export function isFollowableOrg(
+  org: Pick<Organization, 'isDiscoverable' | 'isPublic' | 'accountKind' | 'planId' | 'subscriptionStatus'>,
+): boolean {
+  return org.isDiscoverable === true
+    && org.isPublic === true
+    && org.accountKind !== 'team_workspace'
+    && org.planId !== 'team'
+    && org.subscriptionStatus !== 'canceled';
+}
+
+/** One followable org resolved from its slug, or null when the org fails the eligibility
+ *  predicate above — the Phase-6 gate before recording an org follow (a follow must never
+ *  point at a dead `/{orgSlug}`). Mirrors teamBelongsToTournament's role for team follows. */
+export async function resolveFollowableOrgBySlug(slug: string): Promise<OrgDirectoryResult | null> {
+  const clean = (slug ?? '').trim().toLowerCase();
+  if (!clean) return null;
+  const { data, error } = await followableOrgQuery().eq('slug', clean).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return { id: data.id, orgName: data.name, orgSlug: data.slug, logoUrl: data.logo_url ?? null, href: `/${data.slug}` };
+}
+
+/** Resolve a set of org ids to their followable display info, dropping any that no longer
+ *  pass the eligibility predicate (canceled / made private / became a team workspace) — the
+ *  clean-drop posture getFollowedTeamsForUser uses, so a stale org follow never renders a dead card. */
+export async function resolveFollowableOrgsByIds(ids: string[]): Promise<Map<string, OrgDirectoryResult>> {
+  const out = new Map<string, OrgDirectoryResult>();
+  if (ids.length === 0) return out;
+  const { data, error } = await followableOrgQuery().in('id', ids);
+  if (error) throw error;
+  for (const o of data ?? []) {
+    out.set(o.id, { id: o.id, orgName: o.name, orgSlug: o.slug, logoUrl: o.logo_url ?? null, href: `/${o.slug}` });
+  }
+  return out;
+}
+
+/** Rollup-input shape for followed orgs (id + display info) — what the Home/Scores org rollups need. */
+export interface FollowableOrgInput { orgSlug: string; orgId: string; orgName: string; logoUrl: string | null; }
+
+/** Resolve a set of org SLUGS (a device's org follows) to rollup inputs, dropping any that fail the
+ *  eligibility predicate. The one place device org slugs → rollup inputs, shared by the Scores feed
+ *  and the /entities device endpoint (was copy-pasted in both). */
+export async function resolveFollowableOrgsBySlugs(slugs: string[]): Promise<FollowableOrgInput[]> {
+  const resolved = await Promise.all(slugs.map(s => resolveFollowableOrgBySlug(s).catch(() => null)));
+  return resolved
+    .filter((o): o is NonNullable<typeof o> => o !== null)
+    .map(o => ({ orgSlug: o.orgSlug, orgId: o.id, orgName: o.orgName, logoUrl: o.logoUrl }));
+}
+
+/**
  * Organizations matching `q`, scoped to real, publicly-reachable orgs so no result is a
- * dead link. Reuses the existing organizations.is_discoverable flag (owner-settled 2026-07-18
- * — the fan-search discoverability gate is the SAME switch as the coach→org link picker,
- * not a second flag). The predicate mirrors the /{orgSlug} page's own visibility gate
- * (notFound on !is_public || canceled) plus isNormalLinkableOrg (excludes team-workspace
- * shadow orgs), so a match always resolves to a live org page.
+ * dead link — the exact eligibility predicate (followableOrgQuery) a Phase-6 org follow uses,
+ * so a followable org and a searchable org are guaranteed to be the same set.
  */
 export async function searchOrgsForDirectory(
   q: string,
@@ -371,15 +441,7 @@ export async function searchOrgsForDirectory(
   const needle = (q ?? '').trim().toLowerCase().slice(0, 80);
   if (needle.length < SEARCH_MIN_CHARS) return { items: [], total: 0 };
 
-  const { data, error } = await supabaseAdmin
-    .from('organizations')
-    .select('id, name, slug, logo_url')
-    .eq('is_discoverable', true)
-    .eq('is_public', true)
-    .neq('account_kind', 'team_workspace')
-    .neq('plan_id', 'team')
-    .neq('subscription_status', 'canceled')
-    .limit(SCAN_CEILING);
+  const { data, error } = await followableOrgQuery().limit(SCAN_CEILING);
   if (error) throw error;
 
   const rows = data ?? [];

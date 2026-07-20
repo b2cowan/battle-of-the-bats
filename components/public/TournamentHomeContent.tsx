@@ -19,6 +19,7 @@ import { toPublicTeam } from '@/lib/public-tournament-data';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import CountUp from '@/components/public/CountUp';
 import Countdown from '@/components/public/Countdown';
+import FollowTournamentStrip from '@/components/public/FollowTournamentStrip';
 import styles from '@/app/[orgSlug]/Home.module.css';
 
 export default async function TournamentHomeContent({
@@ -273,6 +274,7 @@ export default async function TournamentHomeContent({
   // carry the realtime pulse. "Up next" keeps today's remaining games visible —
   // including a championship whose sides are still unresolved feeder refs (A7),
   // rendered in fan language, never raw "Winner SF2" jargon (A9).
+  // eslint-disable-next-line react-hooks/purity -- async server component (force-dynamic): Date.now() is a legitimate server-render snapshot, not a client re-render hazard. Pre-existing (surfaced when this file entered the focused-lint set).
   const nowMs = Date.now();
   const liveNowGames = !isFinished
     ? sortedGames.filter(g => isGameLive(g, g.durationMinutes ?? DEFAULT_GAME_DURATION_MINUTES))
@@ -887,6 +889,16 @@ export default async function TournamentHomeContent({
 
   return (
     <div className={styles.page}>
+      {/* F1: whole-event follow strip — HOME tab only, directly under the event header.
+          Inside .page so it sits below the mobile header clearance (padding-top). Live
+          public affordance — never in the admin preview. */}
+      {!isPreview && (
+        <FollowTournamentStrip
+          orgSlug={orgSlug}
+          tournamentSlug={tournamentSlug}
+          tournamentName={tournament.name}
+        />
+      )}
       {playoffsSet && (
         <section className={`${styles.hero} ${styles.heroCompact} ${styles.playoffHero}`} id="preview-home">
           <div className={styles.heroBg}>

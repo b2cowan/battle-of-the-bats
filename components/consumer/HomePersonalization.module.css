@@ -283,6 +283,25 @@
   font-variant-numeric: tabular-nums;
 }
 .followStatusLive { color: var(--home-live); }
+/* Quiet off-season org line — dimmer than the default status colour. */
+.followStatusQuiet { color: var(--home-ink-dim, var(--home-ink-soft)); font-weight: 600; letter-spacing: 0.01em; }
+
+/* Organization monogram — ROUND (F2), distinct from the tournament card's rounded square. */
+.orgLogo {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #fff;
+}
+.orgLogoImg { width: 100%; height: 100%; object-fit: cover; }
 .followLiveDot {
   display: inline-block;
   width: 6px;

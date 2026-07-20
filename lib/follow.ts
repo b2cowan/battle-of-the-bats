@@ -106,17 +106,41 @@ export function syncFollowToAccount(
   action: 'follow' | 'unfollow',
   params: { teamId: string; orgSlug: string; tournamentSlug: string },
 ): void {
+  postFollowSync({ action, entityType: 'team', ...params });
+}
+
+/** THE one POST to the account follow-mirror endpoint — every entity type (team, whole
+ *  tournament, org) fire-and-forgets through here so the endpoint contract + keepalive are
+ *  decided once. Anonymous server no-op ({ linked: false }); the device write is always the
+ *  source of truth and has already happened before this is called. */
+function postFollowSync(body: Record<string, unknown>): void {
   if (typeof window === 'undefined') return;
   try {
     void fetch('/api/consumer/follows', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, ...params }),
+      body: JSON.stringify(body),
       keepalive: true,
     }).catch(() => { /* device follow already saved; account sync is best-effort */ });
   } catch {
     /* ignore */
   }
+}
+
+/** Mirror a whole-TOURNAMENT follow/unfollow onto the account (Phase 6). */
+export function syncTournamentFollowToAccount(
+  action: 'follow' | 'unfollow',
+  params: { orgSlug: string; tournamentSlug: string },
+): void {
+  postFollowSync({ action, entityType: 'tournament', ...params });
+}
+
+/** Mirror an ORGANIZATION follow/unfollow onto the account (Phase 6). */
+export function syncOrgFollowToAccount(
+  action: 'follow' | 'unfollow',
+  params: { orgSlug: string },
+): void {
+  postFollowSync({ action, entityType: 'org', ...params });
 }
 
 export function saveFollowedTeam(
@@ -212,6 +236,224 @@ export function useAllFollowedTeams() {
   }, []);
 
   return { teams, ready } as const;
+}
+
+/* ── Phase 6 — whole-tournament + organization device follows ──────────────────
+   Plain device follows, deliberately WITHOUT the team pin/seeded/reconcile machinery
+   above (F6 full independence): a tournament/org follow never seeds a my-team pin, never
+   clears on sign-out, never auto-reconciles. Storage keeps the display name cached so
+   Home/Scores can label instantly before the server enriches:
+     fl_follow_tourn_${orgSlug}_${tournamentSlug} → { name, followedAt }
+     fl_follow_org_${orgSlug}                     → { name, followedAt }
+   They reuse the same `fl-follow-change` (same-tab) + `storage` (cross-tab) sync as teams. */
+
+const FOLLOW_TOURN_KEY_PREFIX = 'fl_follow_tourn_';
+const FOLLOW_ORG_KEY_PREFIX = 'fl_follow_org_';
+
+export function followTournamentKey(orgSlug: string, tournamentSlug: string): string {
+  return `${FOLLOW_TOURN_KEY_PREFIX}${orgSlug}_${tournamentSlug}`;
+}
+export function followOrgKey(orgSlug: string): string {
+  return `${FOLLOW_ORG_KEY_PREFIX}${orgSlug}`;
+}
+
+export interface FollowedTournamentEntry {
+  orgSlug: string;
+  tournamentSlug: string;
+  name: string;
+  followedAt: string;
+}
+export interface FollowedOrgEntry {
+  orgSlug: string;
+  name: string;
+  followedAt: string;
+}
+
+function notifyFollowChange(): void {
+  window.dispatchEvent(new CustomEvent('fl-follow-change'));
+}
+
+// ── Whole tournament ──────────────────────────────────────────────────────────
+export function readFollowedTournament(orgSlug: string, tournamentSlug: string): FollowedTournamentEntry | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(followTournamentKey(orgSlug, tournamentSlug));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<FollowedTournamentEntry>;
+    return { orgSlug, tournamentSlug, name: parsed.name ?? '', followedAt: parsed.followedAt ?? '' };
+  } catch {
+    return null;
+  }
+}
+
+export function isFollowingTournament(orgSlug: string, tournamentSlug: string): boolean {
+  return readFollowedTournament(orgSlug, tournamentSlug) !== null;
+}
+
+export function saveFollowedTournament(orgSlug: string, tournamentSlug: string, name: string): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(
+    followTournamentKey(orgSlug, tournamentSlug),
+    JSON.stringify({ name, followedAt: new Date().toISOString() }),
+  );
+  notifyFollowChange();
+  syncTournamentFollowToAccount('follow', { orgSlug, tournamentSlug });
+}
+
+export function clearFollowedTournament(orgSlug: string, tournamentSlug: string): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(followTournamentKey(orgSlug, tournamentSlug));
+  notifyFollowChange();
+  syncTournamentFollowToAccount('unfollow', { orgSlug, tournamentSlug });
+}
+
+export function readAllFollowedTournaments(): FollowedTournamentEntry[] {
+  if (typeof window === 'undefined') return [];
+  const out: FollowedTournamentEntry[] = [];
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key || !key.startsWith(FOLLOW_TOURN_KEY_PREFIX)) continue;
+      const rest = key.slice(FOLLOW_TOURN_KEY_PREFIX.length);
+      const sep = rest.indexOf('_');
+      if (sep <= 0) continue;
+      const orgSlug = rest.slice(0, sep);
+      const tournamentSlug = rest.slice(sep + 1);
+      if (!orgSlug || !tournamentSlug) continue;
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(key) ?? '') as Partial<FollowedTournamentEntry>;
+        out.push({ orgSlug, tournamentSlug, name: parsed.name ?? '', followedAt: parsed.followedAt ?? '' });
+      } catch { /* skip a malformed entry */ }
+    }
+  } catch { /* storage unavailable */ }
+  return out;
+}
+
+// ── Organization ──────────────────────────────────────────────────────────────
+export function readFollowedOrg(orgSlug: string): FollowedOrgEntry | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(followOrgKey(orgSlug));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as Partial<FollowedOrgEntry>;
+    return { orgSlug, name: parsed.name ?? '', followedAt: parsed.followedAt ?? '' };
+  } catch {
+    return null;
+  }
+}
+
+export function isFollowingOrg(orgSlug: string): boolean {
+  return readFollowedOrg(orgSlug) !== null;
+}
+
+export function saveFollowedOrg(orgSlug: string, name: string): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.setItem(
+    followOrgKey(orgSlug),
+    JSON.stringify({ name, followedAt: new Date().toISOString() }),
+  );
+  notifyFollowChange();
+  syncOrgFollowToAccount('follow', { orgSlug });
+}
+
+export function clearFollowedOrg(orgSlug: string): void {
+  if (typeof window === 'undefined') return;
+  window.localStorage.removeItem(followOrgKey(orgSlug));
+  notifyFollowChange();
+  syncOrgFollowToAccount('unfollow', { orgSlug });
+}
+
+export function readAllFollowedOrgs(): FollowedOrgEntry[] {
+  if (typeof window === 'undefined') return [];
+  const out: FollowedOrgEntry[] = [];
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (!key || !key.startsWith(FOLLOW_ORG_KEY_PREFIX)) continue;
+      const orgSlug = key.slice(FOLLOW_ORG_KEY_PREFIX.length);
+      if (!orgSlug) continue;
+      try {
+        const parsed = JSON.parse(window.localStorage.getItem(key) ?? '') as Partial<FollowedOrgEntry>;
+        out.push({ orgSlug, name: parsed.name ?? '', followedAt: parsed.followedAt ?? '' });
+      } catch { /* skip a malformed entry */ }
+    }
+  } catch { /* storage unavailable */ }
+  return out;
+}
+
+// ── Hooks ─────────────────────────────────────────────────────────────────────
+/** Followed-state hook for ONE tournament (the follow strip / sheet row). */
+export function useFollowedTournament(orgSlug: string, tournamentSlug: string) {
+  const [following, setFollowing] = useState(false);
+  useEffect(() => {
+    const sync = () => setFollowing(isFollowingTournament(orgSlug, tournamentSlug));
+    sync();
+    const onStorage = (e: StorageEvent) => { if (e.key === followTournamentKey(orgSlug, tournamentSlug)) sync(); };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('fl-follow-change', sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('fl-follow-change', sync);
+    };
+  }, [orgSlug, tournamentSlug]);
+
+  const follow = useCallback((name: string) => { saveFollowedTournament(orgSlug, tournamentSlug, name); setFollowing(true); }, [orgSlug, tournamentSlug]);
+  const unfollow = useCallback(() => { clearFollowedTournament(orgSlug, tournamentSlug); setFollowing(false); }, [orgSlug, tournamentSlug]);
+  return { following, follow, unfollow } as const;
+}
+
+/** Followed-state hook for ONE organization (the org-hero button). */
+export function useFollowedOrg(orgSlug: string) {
+  const [following, setFollowing] = useState(false);
+  useEffect(() => {
+    const sync = () => setFollowing(isFollowingOrg(orgSlug));
+    sync();
+    const onStorage = (e: StorageEvent) => { if (e.key === followOrgKey(orgSlug)) sync(); };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('fl-follow-change', sync);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('fl-follow-change', sync);
+    };
+  }, [orgSlug]);
+
+  const follow = useCallback((name: string) => { saveFollowedOrg(orgSlug, name); setFollowing(true); }, [orgSlug]);
+  const unfollow = useCallback(() => { clearFollowedOrg(orgSlug); setFollowing(false); }, [orgSlug]);
+  return { following, follow, unfollow } as const;
+}
+
+/** Every tournament this device follows — powers Home / Scores signed-out lanes. */
+export function useAllFollowedTournaments() {
+  const [tournaments, setTournaments] = useState<FollowedTournamentEntry[]>([]);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const sync = () => { setTournaments(readAllFollowedTournaments()); setReady(true); };
+    sync();
+    window.addEventListener('storage', sync);
+    window.addEventListener('fl-follow-change', sync);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('fl-follow-change', sync);
+    };
+  }, []);
+  return { tournaments, ready } as const;
+}
+
+/** Every organization this device follows — powers Home's Organizations section + Scores org tiles. */
+export function useAllFollowedOrgs() {
+  const [orgs, setOrgs] = useState<FollowedOrgEntry[]>([]);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const sync = () => { setOrgs(readAllFollowedOrgs()); setReady(true); };
+    sync();
+    window.addEventListener('storage', sync);
+    window.addEventListener('fl-follow-change', sync);
+    return () => {
+      window.removeEventListener('storage', sync);
+      window.removeEventListener('fl-follow-change', sync);
+    };
+  }, []);
+  return { orgs, ready } as const;
 }
 
 /* ── N2 — account follows on public pages ─────────────────────────────────────

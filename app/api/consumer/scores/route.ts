@@ -24,7 +24,7 @@ import type { ScoresPayload } from '@/lib/scores-view';
 const NO_STORE = { 'Cache-Control': 'no-store' };
 const MAX_FEED_TEAMS = 100; // sanity cap — mirrors /api/consumer/follows/feed
 
-const EMPTY: ScoresPayload = { signedIn: false, today: '', events: [], games: [], liveCount: 0 };
+const EMPTY: ScoresPayload = { signedIn: false, today: '', events: [], games: [], orgTiles: [], liveCount: 0 };
 
 export const GET = withObservability(async () => {
   const supabase = await createClient();
@@ -36,9 +36,11 @@ export const GET = withObservability(async () => {
 }, { route: '/api/consumer/scores' });
 
 interface FeedItem { teamId?: string; teamName?: string; orgSlug?: string; tournamentSlug?: string; }
+interface TournItem { orgSlug?: string; tournamentSlug?: string; }
+interface OrgItem { orgSlug?: string; }
 
 export const POST = withObservability(async (req: Request) => {
-  let body: { teams?: FeedItem[] };
+  let body: { teams?: FeedItem[]; tournaments?: TournItem[]; orgs?: OrgItem[] };
   try {
     body = await req.json();
   } catch {
@@ -51,6 +53,14 @@ export const POST = withObservability(async (req: Request) => {
       !!t.teamId && !!t.orgSlug && !!t.tournamentSlug)
     .map(t => ({ teamId: t.teamId, teamName: t.teamName ?? '', orgSlug: t.orgSlug, tournamentSlug: t.tournamentSlug }));
 
-  const payload = await getScoresFeedForDeviceFollows(teams);
+  // Phase 6: device whole-event + org follows also power the signed-out Scores grid.
+  const tournaments = (Array.isArray(body.tournaments) ? body.tournaments.slice(0, MAX_FEED_TEAMS) : [])
+    .filter((t): t is Required<TournItem> => !!t.orgSlug && !!t.tournamentSlug)
+    .map(t => ({ orgSlug: t.orgSlug, tournamentSlug: t.tournamentSlug }));
+  const orgSlugs = (Array.isArray(body.orgs) ? body.orgs.slice(0, MAX_FEED_TEAMS) : [])
+    .map(o => o.orgSlug)
+    .filter((s): s is string => !!s);
+
+  const payload = await getScoresFeedForDeviceFollows(teams, tournaments, orgSlugs);
   return NextResponse.json(payload, { headers: NO_STORE });
 }, { route: '/api/consumer/scores' });

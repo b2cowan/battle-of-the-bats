@@ -89,11 +89,15 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  overflow: hidden;
   font-family: var(--font-data);
   font-weight: 700;
   font-size: 0.9rem;
   color: #fff;
 }
+/* Organization monogram is ROUND (F2), distinct from the tournament rounded square. */
+.monogramRound { border-radius: 50%; }
+.monogramImg { width: 100%; height: 100%; object-fit: cover; }
 
 .body { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
 .name {

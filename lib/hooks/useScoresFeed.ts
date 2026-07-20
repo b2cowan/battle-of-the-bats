@@ -21,10 +21,16 @@ export interface DeviceFollowTeam {
   orgSlug: string;
   tournamentSlug: string;
 }
+export interface DeviceFollowTournament { orgSlug: string; tournamentSlug: string; }
+export interface DeviceFollowOrg { orgSlug: string; }
 
 interface Options {
   /** The device's local team follows — used for the signed-out lanes. */
   deviceTeams: DeviceFollowTeam[];
+  /** The device's local whole-event follows (Phase 6) — signed-out event tiles. */
+  deviceTournaments?: DeviceFollowTournament[];
+  /** The device's local org follows (Phase 6) — signed-out org tiles. */
+  deviceOrgs?: DeviceFollowOrg[];
   /** True once localStorage device follows have resolved (avoids a premature empty POST). */
   deviceReady: boolean;
   /** Poll cadence (ms) while something is live. Default 30s. */
@@ -42,12 +48,16 @@ async function fetchSession(): Promise<ScoresPayload | null> {
   }
 }
 
-async function fetchDevice(teams: DeviceFollowTeam[]): Promise<ScoresPayload | null> {
+async function fetchDevice(
+  teams: DeviceFollowTeam[],
+  tournaments: DeviceFollowTournament[],
+  orgs: DeviceFollowOrg[],
+): Promise<ScoresPayload | null> {
   try {
     const res = await fetch('/api/consumer/scores', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ teams }),
+      body: JSON.stringify({ teams, tournaments, orgs }),
     });
     return res.ok ? await res.json() : null;
   } catch {
@@ -57,6 +67,8 @@ async function fetchDevice(teams: DeviceFollowTeam[]): Promise<ScoresPayload | n
 
 export function useScoresFeed({
   deviceTeams,
+  deviceTournaments = [],
+  deviceOrgs = [],
   deviceReady,
   intervalMs = 30_000,
   idleIntervalMs = 5 * 60_000,
@@ -68,9 +80,14 @@ export function useScoresFeed({
   // until the refetch lands (mirrors useFollowFeed's renderedKeyRef).
   const renderedKeyRef = useRef<string | null>(null);
 
-  // Stable key so the effect only re-runs when the device team set (or readiness) actually
-  // changes — deviceTeams is a fresh array each render.
-  const teamsKey = deviceTeams.map(t => `${t.orgSlug}/${t.tournamentSlug}/${t.teamId}`).sort().join(',');
+  // Stable key so the effect only re-runs when the device follow set (or readiness) actually
+  // changes — the arrays are fresh each render. Covers all three device follow types.
+  const teamsKey = [
+    ...deviceTeams.map(t => `${t.orgSlug}/${t.tournamentSlug}/${t.teamId}`),
+    ...deviceTournaments.map(t => `t:${t.orgSlug}/${t.tournamentSlug}`),
+    ...deviceOrgs.map(o => `o:${o.orgSlug}`),
+  ].sort().join(',');
+  const hasDeviceFollows = deviceTeams.length > 0 || deviceTournaments.length > 0 || deviceOrgs.length > 0;
 
   useEffect(() => {
     if (renderedKeyRef.current !== null && renderedKeyRef.current !== teamsKey) {
@@ -90,21 +107,21 @@ export function useScoresFeed({
 
     async function tick(showLoading: boolean) {
       // Signed-out with no device follows → nothing personal to fetch; the board carries.
-      if (mode === 'device' && deviceTeams.length === 0) {
+      if (mode === 'device' && !hasDeviceFollows) {
         if (showLoading) setLoading(false);
         return;
       }
       const seq = ++requestSeq;
       if (showLoading) setLoading(true);
-      let data = mode === 'device' ? await fetchDevice(deviceTeams) : await fetchSession();
+      let data = mode === 'device' ? await fetchDevice(deviceTeams, deviceTournaments, deviceOrgs) : await fetchSession();
       if (cancelled || seq !== requestSeq) return;
 
-      // The first GET reveals auth: a signed-out device that follows teams switches to the
+      // The first GET reveals auth: a signed-out device that follows anything switches to the
       // POST/device path and re-fetches its real lanes in this SAME tick (no extra poll wait).
       if (mode === 'auto' && data) {
         mode = data.signedIn ? 'session' : 'device';
-        if (mode === 'device' && deviceTeams.length > 0) {
-          data = await fetchDevice(deviceTeams);
+        if (mode === 'device' && hasDeviceFollows) {
+          data = await fetchDevice(deviceTeams, deviceTournaments, deviceOrgs);
           if (cancelled || seq !== requestSeq) return;
         }
       }

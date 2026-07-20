@@ -48,6 +48,7 @@ export type PlatformEventType =
   | 'home_ready'              // client: Home personalization resolved — carries auth state, composition, TTI ms
   | 'home_card_tapped'        // client: a Workspaces / Following card tapped (tap-through)
   | 'chat_tab_opened'         // client: Chat tab opened, by auth state (fan/logged-out included)
+  | 'follow_tapped'           // client: a follow affordance tapped — { entityType, on, signedIn } (Phase 6 conversion)
   | 'directory_search'        // server (/api/public/search): a Home search ran
   | 'chat_inbox_loaded'       // server (/api/consumer/chat/inbox): member inbox loaded (coach DAU)
   | 'auth_workspace_landing'; // server (/api/auth/destination): sign-in destination resolved (fast-path health)

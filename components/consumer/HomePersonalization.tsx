@@ -6,13 +6,16 @@ import {
   X, Sparkles, Building2, ClipboardCheck, Trophy, Users, Star, ChevronRight,
   RotateCcw, type LucideIcon,
 } from 'lucide-react';
-import { useAllFollowedTeams } from '@/lib/follow';
+import { useAllFollowedTeams, useAllFollowedTournaments, useAllFollowedOrgs } from '@/lib/follow';
 import { useFollowFeed } from '@/lib/hooks/useFollowFeed';
+import { useDeviceEntityFollows } from '@/lib/hooks/useDeviceEntityFollows';
 import { fireConsumerEvent } from '@/lib/consumer-events-client';
 import {
   rollupFollowFeedByTournament,
+  mergeWholeEventIntoRollup,
   type ConsumerHomePayload,
   type TournamentFollowCard,
+  type OrgFollowCard,
 } from '@/lib/home-following';
 import type { UserAccessContext, UserAccessContextKind } from '@/lib/user-contexts';
 import { teamColor, teamInitials } from '@/lib/team-color';
@@ -89,15 +92,27 @@ export default function HomePersonalization() {
   // Signed-out: resolve the device's local follows into the same live feed, then roll them
   // up tournament-first exactly like the server does for signed-in accounts.
   const { teams: deviceTeams } = useAllFollowedTeams();
+  const { tournaments: deviceTournaments } = useAllFollowedTournaments();
+  const { orgs: deviceOrgs } = useAllFollowedOrgs();
   const deviceFeed = useFollowFeed({
     teams: useDevice
       ? deviceTeams.map(t => ({ teamId: t.id, teamName: t.name, orgSlug: t.orgSlug, tournamentSlug: t.tournamentSlug }))
       : [],
   });
-  const deviceFollowing = useDevice ? rollupFollowFeedByTournament(deviceFeed.entries) : EMPTY_FOLLOWING;
+  const deviceTeamRollup = useDevice ? rollupFollowFeedByTournament(deviceFeed.entries) : EMPTY_FOLLOWING;
+
+  // Signed-out whole-event + org follows, resolved to cards via a shared hook (same POST + guards
+  // the All-following page uses). Merge whole-event cards into the team rollup with the shared F6
+  // rule (team follow wins), matching the server's signed-in merge exactly.
+  const deviceEntities = useDeviceEntityFollows(deviceTournaments, deviceOrgs, useDevice);
+  const deviceFollowing = useDevice
+    ? mergeWholeEventIntoRollup(deviceTeamRollup, deviceEntities.wholeEvent)
+    : EMPTY_FOLLOWING;
 
   const following = signedIn ? (payload?.following ?? EMPTY_FOLLOWING) : deviceFollowing;
   const hasFollowing = following.current.length > 0 || following.past.length > 0;
+
+  const organizations = signedIn ? (payload?.organizations ?? []) : deviceEntities.organizations;
 
   const workspaces = signedIn ? (payload?.workspaces ?? []) : [];
   const lapsed = signedIn ? (payload?.lapsed ?? []) : [];
@@ -106,13 +121,14 @@ export default function HomePersonalization() {
   // Honest follow count (server-provided for accounts, device list otherwise) — independent of feed
   // enrichment. A followed team whose tournament went unpublished drops out of `following` but must
   // NOT flip Home to "Nothing here yet": show a quiet "game info unavailable" line instead.
-  const followCount = signedIn ? (payload?.followCount ?? 0) : deviceTeams.length;
+  const followCount = signedIn ? (payload?.followCount ?? 0) : (deviceTeams.length + deviceTournaments.length);
   const feedSettled = signedIn ? loaded : (useDevice && !deviceFeed.loading);
   const followsButEmpty = followCount > 0 && !hasFollowing && feedSettled;
 
   const signedInEmpty =
     loaded && signedIn &&
-    invites.length === 0 && workspaces.length === 0 && lapsed.length === 0 && followCount === 0;
+    invites.length === 0 && workspaces.length === 0 && lapsed.length === 0 &&
+    followCount === 0 && organizations.length === 0;
 
   return (
     <div className={styles.wrap}>
@@ -187,9 +203,20 @@ export default function HomePersonalization() {
         </section>
       )}
 
+      {organizations.length > 0 && (
+        <section className={styles.section}>
+          <div className={styles.sectionHead}>
+            <p className={styles.kicker}>Following · Organizations</p>
+          </div>
+          <div className={styles.cardList}>
+            {organizations.map(org => <OrgCard key={org.key} card={org} />)}
+          </div>
+        </section>
+      )}
+
       {signedInEmpty && (
         <p className={styles.quietEmpty}>
-          Nothing here yet — follow a team or tournament and it&rsquo;ll show up here.
+          Nothing here yet — follow a team, tournament, or organization and it&rsquo;ll show up here.
         </p>
       )}
     </div>
@@ -257,9 +284,12 @@ function WorkspaceCard({ ctx }: { ctx: UserAccessContext }) {
 }
 
 function FollowCard({ card, past }: { card: TournamentFollowCard; past?: boolean }) {
-  const teamLine = card.teamNames.length === 1
-    ? `Your team · ${card.teamNames[0]}`
-    : `Your teams · ${card.teamNames.join(', ')}`;
+  // Whole-event follows (F2) carry no team line — a fan following the event, not a roster.
+  const teamLine = card.teamNames.length === 0
+    ? null
+    : card.teamNames.length === 1
+      ? `Your team · ${card.teamNames[0]}`
+      : `Your teams · ${card.teamNames.join(', ')}`;
   return (
     <Link
       href={card.href}
@@ -271,10 +301,35 @@ function FollowCard({ card, past }: { card: TournamentFollowCard; past?: boolean
       </span>
       <span className={styles.followBody}>
         <span className={styles.followName}>{card.tournamentName}</span>
-        <span className={styles.followTeam}>{teamLine}</span>
+        {teamLine && <span className={styles.followTeam}>{teamLine}</span>}
         <span className={`${styles.followStatus} ${card.status.live ? styles.followStatusLive : ''}`}>
           {card.status.live && <span className={styles.followLiveDot} aria-hidden />}
           {card.status.text}
+        </span>
+      </span>
+      <Star size={14} strokeWidth={2} fill="currentColor" className={styles.followStar} aria-label="Following" />
+    </Link>
+  );
+}
+
+function OrgCard({ card }: { card: OrgFollowCard }) {
+  return (
+    <Link
+      href={card.href}
+      className={styles.followCard}
+      onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'organization' })}
+    >
+      <span className={styles.orgLogo} style={{ background: teamColor(card.orgName, 55, 42) }} aria-hidden>
+        {card.logoUrl
+          // eslint-disable-next-line @next/next/no-img-element
+          ? <img src={card.logoUrl} alt="" className={styles.orgLogoImg} />
+          : teamInitials(card.orgName)}
+      </span>
+      <span className={styles.followBody}>
+        <span className={styles.followName}>{card.orgName}</span>
+        <span className={`${styles.followStatus} ${card.context.live ? styles.followStatusLive : ''} ${card.context.offSeason ? styles.followStatusQuiet : ''}`}>
+          {card.context.live && <span className={styles.followLiveDot} aria-hidden />}
+          {card.context.text}
         </span>
       </span>
       <Star size={14} strokeWidth={2} fill="currentColor" className={styles.followStar} aria-label="Following" />

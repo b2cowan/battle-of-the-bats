@@ -7,6 +7,8 @@ import {
   getLeagueSeasons, getDivisions, getOpenTryoutsByOrg,
 } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { isFollowableOrg } from '@/lib/directory';
+import FollowOrgButton from '@/components/public/FollowOrgButton';
 import styles from './Home.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -16,6 +18,10 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   const org = await getOrganizationBySlug(orgSlug);
   if (!org || !org.isPublic) notFound();
   if (org?.subscriptionStatus === 'canceled') notFound();
+
+  // F1/F3: the hero Follow button shows only when the org passes the SAME eligibility gate a
+  // follow write validates against — so the button never offers a follow the API would reject.
+  const showFollow = isFollowableOrg(org);
 
   const allTournaments   = org ? await getTournamentsByOrg(org.id) : [];
   const activeTournaments = allTournaments.filter(t => t.status === 'active');
@@ -105,6 +111,8 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             {siteContent?.description && (
               <p className={styles.heroSub}>{siteContent.description}</p>
             )}
+
+            {showFollow && <FollowOrgButton orgSlug={orgSlug} orgName={org.name} />}
 
             {/* Social + contact row */}
             {(socialLinks.length > 0 || siteContent?.contactEmail) && (
@@ -303,6 +311,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
                 Draft tournament pages are private until the organizer activates registration.
               </div>
             )}
+            {showFollow && <FollowOrgButton orgSlug={orgSlug} orgName={org.name} />}
           </div>
         </section>
 
@@ -384,6 +393,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             {org?.name ?? orgSlug}
           </h1>
           <p className={styles.heroSub}>Select a tournament below to get started.</p>
+          {showFollow && <FollowOrgButton orgSlug={orgSlug} orgName={org.name} />}
         </div>
       </section>
 

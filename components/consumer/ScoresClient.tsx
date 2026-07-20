@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
-import { useAllFollowedTeams } from '@/lib/follow';
+import { useAllFollowedTeams, useAllFollowedTournaments, useAllFollowedOrgs } from '@/lib/follow';
 import { useScoresFeed } from '@/lib/hooks/useScoresFeed';
 import {
   buildScoresView,
@@ -10,6 +10,7 @@ import {
   PAST_WINDOW_DAYS,
   REASON_LABEL,
   type ScoresEvent,
+  type ScoresOrgTile,
   type ScoresGameRow,
   type ScoresDayGroup,
 } from '@/lib/scores-view';
@@ -35,11 +36,23 @@ export interface ScoresBoardItem {
  */
 export default function ScoresClient({ liveBoard }: { liveBoard: ScoresBoardItem[] }) {
   const { teams: deviceTeams, ready } = useAllFollowedTeams();
+  const { tournaments: deviceTournaments, ready: tReady } = useAllFollowedTournaments();
+  const { orgs: deviceOrgs, ready: oReady } = useAllFollowedOrgs();
   const deviceInputs = useMemo(
     () => deviceTeams.map(t => ({ teamId: t.id, teamName: t.name, orgSlug: t.orgSlug, tournamentSlug: t.tournamentSlug })),
     [deviceTeams],
   );
-  const { payload, loading } = useScoresFeed({ deviceTeams: deviceInputs, deviceReady: ready });
+  const deviceTournInputs = useMemo(
+    () => deviceTournaments.map(t => ({ orgSlug: t.orgSlug, tournamentSlug: t.tournamentSlug })),
+    [deviceTournaments],
+  );
+  const deviceOrgInputs = useMemo(() => deviceOrgs.map(o => ({ orgSlug: o.orgSlug })), [deviceOrgs]);
+  const { payload, loading } = useScoresFeed({
+    deviceTeams: deviceInputs,
+    deviceTournaments: deviceTournInputs,
+    deviceOrgs: deviceOrgInputs,
+    deviceReady: ready && tReady && oReady,
+  });
 
   const [filter, setFilter] = useState<'all' | 'live'>('all');
   const [eventsExpanded, setEventsExpanded] = useState(false);
@@ -47,8 +60,9 @@ export default function ScoresClient({ liveBoard }: { liveBoard: ScoresBoardItem
   const [showEarlier, setShowEarlier] = useState(false);
 
   const events = payload?.events ?? [];
+  const orgTiles = payload?.orgTiles ?? [];
   const liveCount = payload?.liveCount ?? 0;
-  const hasPersonal = events.length > 0 || (payload?.games.length ?? 0) > 0;
+  const hasPersonal = events.length > 0 || orgTiles.length > 0 || (payload?.games.length ?? 0) > 0;
 
   const view = useMemo(() => buildScoresView(payload?.games ?? []), [payload]);
 
@@ -73,7 +87,11 @@ export default function ScoresClient({ liveBoard }: { liveBoard: ScoresBoardItem
   }
 
   const liveOnly = filter === 'live';
-  const displayEvents = liveOnly ? events.filter(e => e.liveCount > 0) : events;
+  // My Events grid = event tiles + one org rollup tile per followed org (F4), live tiles first.
+  const gridItems: GridItem[] = [
+    ...(liveOnly ? events.filter(e => e.liveCount > 0) : events).map(e => ({ type: 'event' as const, event: e })),
+    ...(liveOnly ? orgTiles.filter(o => o.live) : orgTiles).map(o => ({ type: 'org' as const, org: o })),
+  ].sort((a, b) => Number(itemLive(b)) - Number(itemLive(a)));
   const liveRows = view.live;
 
   // Upcoming / past caps: initial window shows today..+3 days and yesterday..-7 days;
@@ -113,10 +131,10 @@ export default function ScoresClient({ liveBoard }: { liveBoard: ScoresBoardItem
       </div>
 
       {/* ── My Events grid ── */}
-      {displayEvents.length > 0 && (
+      {gridItems.length > 0 && (
         <section className={styles.section}>
           <p className={styles.kicker}>My Events</p>
-          <EventsGrid events={displayEvents} expanded={eventsExpanded} onToggle={() => setEventsExpanded(v => !v)} />
+          <EventsGrid items={gridItems} expanded={eventsExpanded} onToggle={() => setEventsExpanded(v => !v)} />
         </section>
       )}
 
@@ -176,16 +194,23 @@ function Header() {
 
 /* ── My Events ─────────────────────────────────────────────────────────────── */
 
-function EventsGrid({ events, expanded, onToggle }: { events: ScoresEvent[]; expanded: boolean; onToggle: () => void }) {
+/** A My-Events grid cell — either a tournament/event tile or a followed-org rollup tile (F4). */
+type GridItem = { type: 'event'; event: ScoresEvent } | { type: 'org'; org: ScoresOrgTile };
+const itemKey = (i: GridItem) => (i.type === 'event' ? i.event.key : i.org.key);
+const itemLive = (i: GridItem) => (i.type === 'event' ? i.event.liveCount > 0 : i.org.live);
+
+function EventsGrid({ items, expanded, onToggle }: { items: GridItem[]; expanded: boolean; onToggle: () => void }) {
   const CAP = 4; // 2 columns × 2 rows
-  const overflow = events.length > CAP;
+  const overflow = items.length > CAP;
   // Collapsed with overflow: 3 tiles + a "+N more" tile fills the 4th cell (2 rows).
-  const visible = overflow && !expanded ? events.slice(0, CAP - 1) : events;
-  const hiddenCount = events.length - (CAP - 1);
+  const visible = overflow && !expanded ? items.slice(0, CAP - 1) : items;
+  const hiddenCount = items.length - (CAP - 1);
 
   return (
     <div className={styles.eventsGrid}>
-      {visible.map(e => <EventTile key={e.key} event={e} />)}
+      {visible.map(i => i.type === 'event'
+        ? <EventTile key={itemKey(i)} event={i.event} />
+        : <OrgTile key={itemKey(i)} org={i.org} />)}
       {overflow && !expanded && (
         <button type="button" className={styles.moreTile} onClick={onToggle}>+{hiddenCount} more</button>
       )}
@@ -193,6 +218,33 @@ function EventsGrid({ events, expanded, onToggle }: { events: ScoresEvent[]; exp
         <button type="button" className={styles.moreTile} onClick={onToggle}>Show fewer</button>
       )}
     </div>
+  );
+}
+
+/** F4: ONE rollup tile per followed org — round monogram + Following chip + one mono fragment;
+ *  tap → the org page (which self-routes to its live event when exactly one is on). */
+function OrgTile({ org }: { org: ScoresOrgTile }) {
+  return (
+    <Link href={org.href} className={styles.eventTile}>
+      {org.logoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={org.logoUrl} alt="" className={`${styles.eventLogo} ${styles.orgLogoRound}`} />
+      ) : (
+        <span className={`${styles.eventLogo} ${styles.orgLogoRound}`} style={{ background: teamColor(org.orgName, 55, 42) }} aria-hidden>
+          {teamInitials(org.orgName)}
+        </span>
+      )}
+      <span className={styles.eventBody}>
+        <span className={styles.eventTop}>
+          <span className={styles.eventName}>{org.orgName}</span>
+          <span className={styles.eventChip} data-reason="following">{REASON_LABEL.following}</span>
+        </span>
+        <span className={`${styles.eventFragment} ${org.live ? styles.eventFragmentLive : ''}`}>
+          {org.live && <span className={styles.eventLiveDot} aria-hidden />}
+          {org.fragment}
+        </span>
+      </span>
+    </Link>
   );
 }
 

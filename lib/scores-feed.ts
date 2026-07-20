@@ -2,9 +2,11 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getTournamentsByOrg } from './db';
 import { getPublicTournamentPageData } from './public-tournament-data';
-import { getFollowedTeamsForUser } from './fan-follows';
+import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgsForUser } from './fan-follows';
 import { getBasicCoachTournamentTeamsForUserCached } from './basic-coach-teams';
 import { getUserAccessContexts, type UserAccessContext } from './user-contexts';
+import { getOrgFollowRollups } from './entity-follow-status';
+import { resolveFollowableOrgsBySlugs } from './directory';
 import {
   isGameLive,
   gameStartMs,
@@ -21,6 +23,7 @@ import type {
   ScoresReason,
   ScoresGameRow,
   ScoresEvent,
+  ScoresOrgTile,
   ScoresPayload,
 } from './scores-view';
 import type { Game } from './types';
@@ -57,11 +60,32 @@ interface WatchedTeam {
   reason: Extract<ScoresReason, 'coach' | 'following'>;
 }
 
-/** One watched event with no watched team in it (you run/officiate it). */
+/** One watched event with no watched team in it: you run/officiate it (staff/official) or you
+ *  follow the WHOLE event as a fan ('following' — F4: adds an event tile, never My-Games rows). */
 interface WatchedEvent {
   orgSlug: string;
   tournamentSlug: string;
-  reason: Extract<ScoresReason, 'staff' | 'official'>;
+  reason: Extract<ScoresReason, 'staff' | 'official' | 'following'>;
+}
+
+/** Build one Scores org rollup tile per followed org (F4) from the shared Home rollup, dropping
+ *  off-season orgs (Home holds the durable card) — Scores shows an org only while something's on. */
+async function buildOrgTiles(
+  orgs: Array<{ orgSlug: string; orgId: string; orgName: string; logoUrl: string | null }>,
+): Promise<ScoresOrgTile[]> {
+  if (orgs.length === 0) return [];
+  const rollups = await getOrgFollowRollups(orgs);
+  return rollups
+    .filter(r => !r.context.offSeason)
+    .map(r => ({
+      key: `org:${r.orgSlug}`,
+      orgSlug: r.orgSlug,
+      orgName: r.orgName,
+      href: r.href,
+      logoUrl: r.logoUrl,
+      fragment: r.context.text,
+      live: r.context.live,
+    }));
 }
 
 const tournamentKey = (orgSlug: string, tournamentSlug: string) => `${orgSlug}/${tournamentSlug}`;
@@ -263,6 +287,7 @@ async function buildScoresPayload(params: {
   signedIn: boolean;
   watchedTeams: WatchedTeam[];
   watchedEvents: WatchedEvent[];
+  orgTiles: ScoresOrgTile[];
 }): Promise<ScoresPayload> {
   const today = tournamentToday();
   const now = new Date();
@@ -288,7 +313,8 @@ async function buildScoresPayload(params: {
 
   const uniqueKeys = Array.from(eventReason.keys());
   if (uniqueKeys.length === 0) {
-    return { signedIn: params.signedIn, today, events: [], games: [], liveCount: 0 };
+    // No watched teams/events, but org tiles can still populate the grid on their own.
+    return { signedIn: params.signedIn, today, events: [], games: [], orgTiles: params.orgTiles, liveCount: 0 };
   }
 
   // One schedule fetch per unique tournament, shared across every watched team/event in it.
@@ -375,19 +401,23 @@ async function buildScoresPayload(params: {
     today,
     events,
     games,
+    orgTiles: params.orgTiles,
     liveCount: games.filter(g => g.live).length,
   };
 }
 
-/** Signed-in Scores union — memberships (coached teams + run/officiated events) ∪ follows. */
+/** Signed-in Scores union — memberships (coached teams + run/officiated events) ∪ follows
+ *  (teams → My Games rows + event tiles; whole tournaments → event tiles only; orgs → org tiles). */
 export async function getScoresFeedForUser(user: { id: string; email?: string | null }): Promise<ScoresPayload> {
   const today = tournamentToday();
-  const [follows, coached, contexts] = await Promise.all([
+  const [follows, followedTournaments, followedOrgs, coached, contexts] = await Promise.all([
     getFollowedTeamsForUser(user.id),
+    getFollowedTournamentsForUser(user.id),
+    getFollowedOrgsForUser(user.id),
     resolveCoachedTeams(user.id, user.email),
     getUserAccessContexts({ id: user.id, email: user.email }),
   ]);
-  const watchedEvents = await resolveStaffOfficialEvents(contexts, today);
+  const staffOfficialEvents = await resolveStaffOfficialEvents(contexts, today);
 
   const followedTeams: WatchedTeam[] = follows.map(f => ({
     teamId: f.teamId,
@@ -397,17 +427,43 @@ export async function getScoresFeedForUser(user: { id: string; email?: string | 
     reason: 'following',
   }));
 
+  // Whole-event follows → event tiles only (F4: never My-Games rows). The eventReason strongerReason
+  // merge means a tournament also coached/staffed/team-followed keeps its stronger chip.
+  const wholeEventFollows: WatchedEvent[] = followedTournaments.map(t => ({
+    orgSlug: t.orgSlug, tournamentSlug: t.tournamentSlug, reason: 'following',
+  }));
+
+  // F4/F6: an org the user works for (admin, official, OR coach) never gets an org tile — its events
+  // already surface via that role. Same predicate the Home Organizations section uses (any non-fan
+  // context), so the two surfaces agree on which orgs are "staffed".
+  const staffedOrgSlugs = new Set(
+    contexts.filter(c => c.kind !== 'fan' && c.orgSlug).map(c => c.orgSlug!),
+  );
+  const orgTiles = await buildOrgTiles(
+    followedOrgs
+      .filter(o => !staffedOrgSlugs.has(o.orgSlug))
+      .map(o => ({ orgSlug: o.orgSlug, orgId: o.orgId, orgName: o.orgName, logoUrl: o.logoUrl })),
+  );
+
   return buildScoresPayload({
     signedIn: true,
     watchedTeams: [...coached, ...followedTeams],
-    watchedEvents,
+    watchedEvents: [...staffOfficialEvents, ...wholeEventFollows],
+    orgTiles,
   });
 }
 
-/** Signed-out Scores — the device's local team follows only (public data), no memberships. */
+/** Signed-out Scores — the device's local follows only (public data), no memberships. */
 export async function getScoresFeedForDeviceFollows(
   teams: Array<{ teamId: string; teamName: string; orgSlug: string; tournamentSlug: string }>,
+  tournaments: Array<{ orgSlug: string; tournamentSlug: string }> = [],
+  orgSlugs: string[] = [],
 ): Promise<ScoresPayload> {
   const watchedTeams: WatchedTeam[] = teams.map(t => ({ ...t, reason: 'following' }));
-  return buildScoresPayload({ signedIn: false, watchedTeams, watchedEvents: [] });
+  const watchedEvents: WatchedEvent[] = tournaments.map(t => ({ ...t, reason: 'following' }));
+
+  // Resolve device org slugs → followable orgs (drops private/canceled), then build tiles.
+  const orgTiles = await buildOrgTiles(await resolveFollowableOrgsBySlugs(orgSlugs));
+
+  return buildScoresPayload({ signedIn: false, watchedTeams, watchedEvents, orgTiles });
 }

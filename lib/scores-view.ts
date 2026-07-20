@@ -89,12 +89,30 @@ export interface ScoresEvent {
   sortMs: number;
 }
 
+/** F4: ONE rollup tile per followed organization in the My Events grid (round monogram +
+ *  Following chip + one mono fragment; tap → the org page). Present only while the org has
+ *  something live/upcoming/≤1-week-completed — Home holds the durable off-season card. */
+export interface ScoresOrgTile {
+  /** `org:${orgSlug}` — stable key, namespaced so it can't collide with a ScoresEvent key. */
+  key: string;
+  orgSlug: string;
+  orgName: string;
+  /** The org landing page (self-routes to its one live event when exactly one is on). */
+  href: string;
+  logoUrl: string | null;
+  /** The ONE mono rollup fragment ("Live now · {event}" / "Today · {event}" / "Next · {event} · {dates}"). */
+  fragment: string;
+  live: boolean;
+}
+
 export interface ScoresPayload {
   signedIn: boolean;
   /** Tournament-local "today" the rows were bucketed against (YYYY-MM-DD). */
   today: string;
   events: ScoresEvent[];
   games: ScoresGameRow[];
+  /** F4: followed-org rollup tiles (additive — the shipped ScoresEvent contract is untouched). */
+  orgTiles: ScoresOrgTile[];
   /** Live My-Games rows — the number on the [Live •N] filter pill. */
   liveCount: number;
 }

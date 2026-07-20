@@ -1,0 +1,45 @@
+/* components/public/FollowOrgButton.module.css — Phase 6 (F1/F3)
+   Org-hero Follow button. The org landing page is FieldLogicHQ-branded (global tokens);
+   token-only (public token ratchet). Same ghost→pillOn recipe as the event follow strip. */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: var(--tap-min, 44px);
+  margin-top: 1rem;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem 1rem;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+}
+
+.btn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  border-color: rgba(var(--logic-lime-rgb), 0.55);
+}
+
+/* "Following" — solid lime fill with ink text (pillOn / E3). */
+.btnOn {
+  border-color: var(--logic-lime);
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+}
+
+.btnOn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.85);
+  border-color: rgba(var(--logic-lime-rgb), 0.85);
+}
+
+.saving {
+  opacity: 0.55;
+  pointer-events: none;
+}

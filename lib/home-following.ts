@@ -61,12 +61,29 @@ export interface TournamentFollowCard {
   tournamentName: string;
   /** Tournament HOME page (R1-2: tapping a followed-tournament card lands here, not a game). */
   href: string;
-  /** Distinct followed-team names in this tournament, in feed order. */
+  /** Distinct followed-team names in this tournament, in feed order. Empty for a whole-event follow. */
   teamNames: string[];
   /** Best status across the tournament's followed teams (live wins). */
   status: { text: string; live: boolean };
   /** Representative group — drives current-vs-Past bucketing + ordering. */
   group: FollowFeedGroup;
+  /** F2/F6: this card is a WHOLE-event follow (no team line) — a fan following the event, not a
+   *  roster. A team follow in the same tournament wins the card (team context beats whole-event). */
+  wholeEvent?: boolean;
+}
+
+/** F2: one organization the fan follows — the year-round relationship. Persists on Home even
+ *  off-season (org cards never drop). ONE context line, priority live → today → next-event →
+ *  quiet off-season. Pure shape; the server (entity-follow-status.ts) computes the context. */
+export interface OrgFollowCard {
+  /** `${orgSlug}` — stable key + dedupe key. */
+  key: string;
+  orgSlug: string;
+  orgName: string;
+  /** The org landing page (self-routes to its one live event when exactly one is on). */
+  href: string;
+  logoUrl: string | null;
+  context: { text: string; live: boolean; offSeason: boolean };
 }
 
 /**
@@ -113,6 +130,26 @@ export function rollupFollowFeedByTournament(entries: FollowFeedEntry[]): {
   return { current, past };
 }
 
+/**
+ * F6 merge rule (the single source of the Phase-6 "team follow wins the card" business rule):
+ * fold whole-event follow cards into a tournament-first team rollup, dropping any whose tournament
+ * is already covered by a team follow (team context beats a bare whole-event follow), then
+ * re-sort `current` live-first by GROUP_RANK. Pure — shared by the server (/api/consumer/home) and
+ * the client (signed-out Home) so the rule can never drift between them.
+ */
+export function mergeWholeEventIntoRollup(
+  teamRollup: { current: TournamentFollowCard[]; past: TournamentFollowCard[] },
+  wholeEventCards: TournamentFollowCard[],
+): { current: TournamentFollowCard[]; past: TournamentFollowCard[] } {
+  const teamKeys = new Set([...teamRollup.current, ...teamRollup.past].map(c => c.key));
+  const wholeEvent = wholeEventCards.filter(c => !teamKeys.has(c.key));
+  return {
+    current: [...teamRollup.current, ...wholeEvent.filter(c => c.group !== 'recent')]
+      .sort((a, b) => GROUP_RANK[a.group] - GROUP_RANK[b.group]),
+    past: [...teamRollup.past, ...wholeEvent.filter(c => c.group === 'recent')],
+  };
+}
+
 /* ── /api/consumer/home payload (shared server↔client contract) ───────────────── */
 
 export interface ConsumerHomePendingInvite {
@@ -132,6 +169,9 @@ export interface ConsumerHomePayload {
   /** Raw count of teams followed (post coach-dedupe), independent of feed-enrichment success — lets
    *  the client tell "follows nothing" from "follows teams whose game info is momentarily unavailable". */
   followCount: number;
-  /** Tournament-first follow cards, split into current + past. */
+  /** Tournament-first follow cards, split into current + past. Includes whole-event follows
+   *  (F2, `wholeEvent` flag) merged in and deduped against team follows (team wins, F6). */
   following: { current: TournamentFollowCard[]; past: TournamentFollowCard[] };
+  /** F2: followed organizations (below Following·Tournaments). Persists off-season. */
+  organizations: OrgFollowCard[];
 }

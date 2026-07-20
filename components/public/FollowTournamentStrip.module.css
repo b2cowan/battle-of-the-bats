@@ -1,0 +1,111 @@
+/* components/public/FollowTournamentStrip.module.css — Phase 6 (F1)
+   The whole-event follow strip under the unified event header (tournament HOME tab).
+   Branded-dark/light on-event affordance; token-only (public token ratchet). The pill
+   mirrors FollowAlertsToggle's ghost→pillOn recipe so all follow affordances agree. */
+
+/* Whole-event follow is a MOBILE affordance (owner call 2026-07-20): the strip lives on phones,
+   where the QR-in-the-bleachers follow moment happens and the unified mobile event header sits
+   directly above it. On desktop the tournament page omits it entirely (follow management still
+   lives on Home / Scores / All following at every width). This also removes the desktop overlap:
+   the desktop layout doesn't apply the mobile header clearance, so a top-of-page strip has no
+   room. Breakpoint matches the unified mobile event header (≤900px). */
+.wrap {
+  padding: 0.75rem 1rem 0;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+
+@media (min-width: 901px) {
+  .wrap { display: none; }
+}
+
+.strip {
+  display: flex;
+  align-items: center;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--tap-min, 44px);
+  border: 1px solid rgba(var(--primary-rgb), 0.3);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.8rem;
+  background: rgba(var(--primary-rgb), 0.08);
+  color: var(--primary-light);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, opacity 0.12s;
+}
+
+.pill:hover {
+  background: rgba(var(--primary-rgb), 0.14);
+  border-color: rgba(var(--primary-rgb), 0.5);
+}
+
+/* "Following" — the brand active state: a solid lime fill with ink text (pillOn / E3).
+   --logic-lime is never remapped by the public light theme, so this reads in both modes. */
+.pillOn {
+  border-color: var(--logic-lime);
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+}
+
+.pillOn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.85);
+  border-color: rgba(var(--logic-lime-rgb), 0.85);
+}
+
+/* The dimmed "saving beat" between ghost-star and the pillOn state. */
+.saving {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+/* Quiet, dismissible sign-in nudge under the strip (signed-out only, once per device). */
+.nudge {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.2);
+  border-radius: var(--radius-sm);
+  background: rgba(var(--primary-rgb), 0.05);
+}
+
+.nudgeText {
+  flex: 1;
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  line-height: 1.5;
+  color: var(--white-70);
+}
+
+.nudgeLink {
+  color: var(--primary-light);
+  text-decoration: none;
+  font-weight: 700;
+}
+.nudgeLink:hover { text-decoration: underline; }
+
+.nudgeClose {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: none;
+  background: transparent;
+  color: var(--white-45);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+.nudgeClose:hover { color: var(--white-70); }
+
+[data-color-mode="light"] .nudgeText { color: var(--fl-text); }

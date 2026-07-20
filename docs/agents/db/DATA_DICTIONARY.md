@@ -5164,7 +5164,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 
 **Gotchas (read first):**
 1. **Service-role only** — RLS enabled with ZERO policies; `supabaseAdmin` bypasses, anon/authenticated resolve to 0 rows. Never expose to the anon client (a follow list is per-user PII). Verify RLS live, not from the migration comment.
-2. **Polymorphic `(entity_type, entity_id)` — no FK.** Postgres can't express a polymorphic FK, so integrity is enforced app-side (`teamBelongsToTournament` validates before insert). Slice 1 only writes `entity_type='team'`.
+2. **Polymorphic `(entity_type, entity_id)` — no FK.** Postgres can't express a polymorphic FK, so integrity is enforced app-side, validated before every insert: `team`→`teamBelongsToTournament`, `tournament`→`resolveFollowableTournament` (public org + public tournament), `org`→`resolveFollowableOrgBySlug` (the Phase-2 org-search eligibility predicate). Phase 6 writes all three types (`team` since Slice 1; `tournament`/`org` added 2026-07-20 — whole-event + organization follows).
 3. **NOT an org membership** — follows cross organizations freely (no single-org constraint, no `organization_members` involvement). Do not reuse org-membership status semantics here.
 4. **Idempotent** — `UNIQUE(user_id, entity_type, entity_id)`; follows upsert (ignore-duplicates), so a re-follow is a no-op.
 5. **`device_reconcile` rows come only from an EXPLICIT claim** (the "add your device follows?" offer), never silently on login — the shared-device safeguard.
@@ -5175,10 +5175,10 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **`user_id`** (uuid, NN; FK→`auth.users(id)` ON DELETE CASCADE) — the account that holds the follow; every read filters on it.
 
 <!-- dict:col:fan_follows.entity_type -->
-**`entity_type`** (text, NN; CHECK in `tournament|team|org`) — what is followed. Slice 1 writes only `team`.
+**`entity_type`** (text, NN; CHECK in `tournament|team|org`) — what is followed. All three are written as of Phase 6 (2026-07-20): `team` (a team inside one tournament), `tournament` (a whole event), `org` (an organization, year-round).
 
 <!-- dict:col:fan_follows.entity_id -->
-**`entity_id`** (uuid, NN) — the followed row id (`teams.id` when `entity_type='team'`). No FK (polymorphic); validated in `lib/fan-follows.ts`.
+**`entity_id`** (uuid, NN) — the followed row id: `teams.id` (`team`), `tournaments.id` (`tournament`), or `organizations.id` (`org`). No FK (polymorphic); validated in `lib/fan-follows.ts` / `lib/directory.ts` per the gate in gotcha 2.
 
 <!-- dict:col:fan_follows.source -->
 **`source`** (text, NN, DEFAULT 'manual'; CHECK in `manual|directory|qr|device_reconcile|registration`) — how the follow was created. `manual` = a signed-in follow tap; `device_reconcile` = claimed from device localStorage.

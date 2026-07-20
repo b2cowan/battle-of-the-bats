@@ -11,7 +11,7 @@
 // Single source of truth for the client-fired event names: the ingest route imports this same
 // array for its allowlist, and the union type is derived from it — add an event in one place and
 // both the client helper and the server allowlist stay in lock-step.
-export const CONSUMER_CLIENT_EVENTS = ['home_ready', 'home_card_tapped', 'chat_tab_opened'] as const;
+export const CONSUMER_CLIENT_EVENTS = ['home_ready', 'home_card_tapped', 'chat_tab_opened', 'follow_tapped'] as const;
 export type ConsumerClientEvent = (typeof CONSUMER_CLIENT_EVENTS)[number];
 
 /**
