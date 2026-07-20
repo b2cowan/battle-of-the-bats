@@ -371,10 +371,60 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
                 className={styles.searchInput}
               />
             </div>
+          </div>
+        </div>
 
-            {/* Sport/region + timeframe pills belong to Browse — hidden while searching. */}
-            {!isSearching && (
-              <>
+      <div className={styles.homeInner}>
+        {/* Account sections — hidden while a text search is active (results take over). */}
+        {!isSearching && <HomePersonalization />}
+
+        {isSearching ? (
+          <SearchResults
+            data={searchData}
+            query={debouncedQ.slice(0, 80)}
+            activeType={activeType}
+            onSelectType={setActiveType}
+            onRetry={() => setRetryNonce(n => n + 1)}
+          />
+        ) : (
+          /* ── Browse (the directory always renders beneath — SEO/acquisition funnel) ── */
+          <div className={styles.body}>
+            <div className={styles.browseSection}>
+              <p className={styles.browseHeading}>Browse tournaments</p>
+
+              {/* Timeframe + sport/region filters scope THIS list, so they sit right
+                  above it — not up in the search bar, where they read as filtering the
+                  search box rather than the tournaments below. */}
+              <div className={styles.browseControls}>
+                <div className={styles.filterRow}>
+                  <div className={styles.filters}>
+                    {TIMEFRAME_FILTERS.map(t => (
+                      <button
+                        key={t.value}
+                        onClick={() => setTimeframe(t.value)}
+                        className={`${styles.filterBtn} ${timeframe === t.value ? styles.filterActive : ''}`}
+                      >
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Sport/region toggle — mobile only; desktop shows the selects inline beside */}
+                  {(facets.sports.length > 0 || facets.provinces.length > 0) && (
+                    <button
+                      type="button"
+                      onClick={() => setMoreOpen(o => !o)}
+                      className={`${styles.moreFiltersToggle} ${sport || province ? styles.moreFiltersToggleActive : ''}`}
+                      aria-expanded={moreOpen}
+                      aria-label="Filters"
+                    >
+                      <SlidersHorizontal size={14} />
+                      <span className={styles.moreFiltersLabel}>Filters</span>
+                      {(sport || province) && <span className={styles.filterDot} />}
+                    </button>
+                  )}
+                </div>
+
                 <div className={`${styles.moreFilters} ${moreOpen ? styles.moreFiltersOpen : ''}`}>
                   {/* Sport */}
                   {facets.sports.length > 0 && (
@@ -406,58 +456,8 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
                     </select>
                   )}
                 </div>
+              </div>
 
-                {/* Timeframe + (mobile) sport/region toggle share one row */}
-                <div className={styles.filterRow}>
-                  <div className={styles.filters}>
-                    {TIMEFRAME_FILTERS.map(t => (
-                      <button
-                        key={t.value}
-                        onClick={() => setTimeframe(t.value)}
-                        className={`${styles.filterBtn} ${timeframe === t.value ? styles.filterActive : ''}`}
-                      >
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Sport/region toggle — mobile only; desktop shows the selects inline above */}
-                  {(facets.sports.length > 0 || facets.provinces.length > 0) && (
-                    <button
-                      type="button"
-                      onClick={() => setMoreOpen(o => !o)}
-                      className={`${styles.moreFiltersToggle} ${sport || province ? styles.moreFiltersToggleActive : ''}`}
-                      aria-expanded={moreOpen}
-                      aria-label="Filters"
-                    >
-                      <SlidersHorizontal size={14} />
-                      <span className={styles.moreFiltersLabel}>Filters</span>
-                      {(sport || province) && <span className={styles.filterDot} />}
-                    </button>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-      <div className={styles.homeInner}>
-        {/* Account sections — hidden while a text search is active (results take over). */}
-        {!isSearching && <HomePersonalization />}
-
-        {isSearching ? (
-          <SearchResults
-            data={searchData}
-            query={debouncedQ.slice(0, 80)}
-            activeType={activeType}
-            onSelectType={setActiveType}
-            onRetry={() => setRetryNonce(n => n + 1)}
-          />
-        ) : (
-          /* ── Browse (the directory always renders beneath — SEO/acquisition funnel) ── */
-          <div className={styles.body}>
-            <div className={styles.browseSection}>
-              <p className={styles.browseHeading}>Browse tournaments</p>
             {items.length === 0 && !refreshing ? (
               <div className={styles.empty}>
                 <div className={styles.emptyIcon}><Trophy size={24} /></div>
