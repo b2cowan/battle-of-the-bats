@@ -1,0 +1,188 @@
+/* Account tab — warm settings surface (Unified Home Phase 5).
+ *
+ * The page is wrapped in `.warm` (warmTheme.module.css) so every --home-* token resolves;
+ * this module only styles layout + the warm identity/row/note chrome. Follows R1-4: paper
+ * ground (from the wrapper), white 14px cards, ink text, olive accents, mono kickers, and
+ * the surviving ink-on-lime chip for the one primary CTA. No literal colour — tokens only. */
+
+/* Outer wrapper (worn WITH warm.warm): full-width paper fill + a flex column so the inner
+   .page can stretch. Keeping the paper edge-to-edge here (max-width lives on .page) avoids
+   dark shell gutters showing beside the centered column between 560–900px. */
+.accountFill {
+  display: flex;
+  flex-direction: column;
+}
+
+.page {
+  max-width: 560px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 2rem;
+  /* Flex column that fills the wrapper so the quiet organizer note pins to the bottom
+     (.pinNote margin-top:auto) instead of floating mid-screen. */
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-family: var(--font-display, sans-serif);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--home-ink);
+  margin: 0 0 1.1rem;
+}
+
+/* Shared white-card surface (identity block + settings rows) — one place to tune the
+   card look so the two can't drift. */
+.surface {
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
+}
+
+/* ── Identity block — the one thing this screen exists to show, given real weight ── */
+.identity {
+  composes: surface;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1rem;
+}
+.avatar {
+  width: 46px;
+  height: 46px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+.identityMeta { display: flex; flex-direction: column; min-width: 0; gap: 0.15rem; }
+.identityLabel {
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--home-dim);
+}
+.identityValue {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--home-ink);
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.identityValue.dim { font-weight: 500; color: var(--home-ink-soft); font-size: 0.88rem; }
+
+/* ── Settings rows — one white card per action: icon + label + chevron ──────────── */
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}
+
+/* Shared by <a>, <button> and <Link> rows — reset native button/link chrome so all three
+   read identically. */
+.row {
+  composes: surface;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.85rem 1rem;
+  text-decoration: none;
+  text-align: left;
+  font: inherit;
+  color: var(--home-ink);
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.row:hover { border-color: var(--home-line-strong); box-shadow: var(--home-shadow); }
+.row:disabled { opacity: 0.6; cursor: default; box-shadow: var(--home-shadow-sm); }
+
+.rowIcon {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--home-olive);
+}
+.rowLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--home-ink);
+}
+.rowChevron { flex-shrink: 0; color: var(--home-dim); }
+
+/* Sign out — the one session-ending row, set apart by a gap and a quiet neutral icon
+   (deliberately NOT the live-red token, which stays reserved for live-game signals). */
+.signOutRow { margin-top: 0.9rem; }
+.signOutRow .rowIcon { color: var(--home-dim); }
+
+/* ── Signed-out CTA stack (actions unchanged; warm skin) ────────────────────────── */
+.ctaStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin-top: 1.1rem;
+}
+.ctaPrimary,
+.ctaGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.85rem 1rem;
+  border-radius: var(--home-radius);
+  font-size: 0.95rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+/* Primary = the surviving ink-on-lime brand chip (R1-4: raw lime is never TEXT on warm,
+   but a lime FILL with ink text is the sanctioned brand moment). */
+.ctaPrimary {
+  background: var(--home-lime);
+  color: var(--home-ink);
+  border: 1px solid var(--home-lime);
+  font-weight: 700;
+}
+.ctaGhost {
+  background: var(--home-card);
+  color: var(--home-ink);
+  border: 1px solid var(--home-line-strong);
+  font-weight: 600;
+  box-shadow: var(--home-shadow-sm);
+}
+.ctaGhost:hover { border-color: var(--home-olive); }
+
+/* ── Quiet pinned note (organizer door signed-in / device note signed-out) ──────── */
+.pinNote {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.75rem;
+  color: var(--home-dim);
+  line-height: 1.6;
+}
+.pinLink {
+  color: var(--home-olive);
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pinLink:hover { text-decoration: underline; }

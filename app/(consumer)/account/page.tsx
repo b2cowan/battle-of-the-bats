@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { User } from 'lucide-react';
+import { User, Bell, LifeBuoy, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import AccountSignOutButton from '@/components/consumer/AccountSignOutButton';
-import styles from '@/components/consumer/ConsumerPage.module.css';
+import warm from '@/components/consumer/warmTheme.module.css';
+import AccountInstallRow from './AccountInstallRow';
+import styles from './account.module.css';
 
 // Reflects sign-in state — dynamic and not for indexing.
 export const dynamic = 'force-dynamic';
@@ -13,6 +15,11 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
+// Consumer support has no dedicated help page (all Help lives in the admin/coach portals),
+// so the row opens a pre-addressed email — the right home for installed-app users who never
+// see the marketing site. Owner call 2026-07-20.
+const SUPPORT_MAILTO = 'mailto:hello@fieldlogichq.ca?subject=FieldLogicHQ%20support';
+
 export default async function AccountPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -20,53 +27,69 @@ export default async function AccountPage() {
   const signedIn = !!email;
 
   return (
-    <div className={styles.accountPage}>
-      <div className={styles.header}>
+    <div className={`${warm.warm} ${styles.accountFill}`}>
+      <div className={styles.page}>
         <h1 className={styles.title}>Account</h1>
-      </div>
 
-      {/* Identity block — the one thing this screen exists to show, given real weight. */}
-      <div className={styles.identity}>
-        <span className={styles.identityAvatar} aria-hidden>
-          {signedIn ? email!.charAt(0).toUpperCase() : <User size={22} />}
-        </span>
-        <span className={styles.identityMeta}>
-          <span className={styles.identityLabel}>{signedIn ? 'Signed in' : 'Not signed in'}</span>
-          <span className={styles.identityValue}>
-            {signedIn ? email : 'Sign in to manage your organizations, teams, and season'}
+        {/* Identity block — the one thing this screen exists to show, given real weight. */}
+        <div className={styles.identity}>
+          <span className={styles.avatar} aria-hidden>
+            {signedIn ? email!.charAt(0).toUpperCase() : <User size={22} />}
           </span>
-        </span>
-      </div>
+          <span className={styles.identityMeta}>
+            <span className={styles.identityLabel}>{signedIn ? 'Signed in' : 'Not signed in'}</span>
+            <span className={`${styles.identityValue}${signedIn ? '' : ` ${styles.dim}`}`}>
+              {signedIn ? email : 'Sign in to keep your teams, workspaces, and alerts on every device'}
+            </span>
+          </span>
+        </div>
 
-      {/* Primary + secondary actions, full-width block buttons. */}
-      <div className={styles.accountActions}>
         {signedIn ? (
-          /* Account things ONLY (owner direction 2026-07-14): the tabs already carry
-             Discover/Following, and Your FieldLogicHQ is the one door to every
-             workspace (incl. the coaches hub) — no duplicate destination rows here.
-             The organizer door below is the one deliberate exception (C6b): mobile
-             had no organizer entry outside a dismissible banner. */
           <>
-            <Link href="/discover" className={`${styles.cta} ${styles.blockBtn}`}>Your FieldLogicHQ →</Link>
-            <Link href="/account/notifications" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Notification settings</Link>
-            <Link href="/start" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Run a tournament</Link>
-            <AccountSignOutButton />
+            {/* Settings rows (§3g). "Your FieldLogicHQ →" is gone — Home carries the
+                workspaces list now. Legal (Terms/Privacy) is intentionally omitted: no
+                platform legal pages exist yet (owner call 2026-07-20 to omit rather than
+                link a 404); add the row here once those documents ship — installed-PWA
+                users have no other path to them. */}
+            <div className={styles.rows}>
+              <Link href="/account/notifications" className={styles.row}>
+                <span className={styles.rowIcon}><Bell size={19} aria-hidden /></span>
+                <span className={styles.rowLabel}>Notification settings</span>
+                <ChevronRight size={18} className={styles.rowChevron} aria-hidden />
+              </Link>
+
+              <AccountInstallRow />
+
+              <a href={SUPPORT_MAILTO} className={styles.row}>
+                <span className={styles.rowIcon}><LifeBuoy size={19} aria-hidden /></span>
+                <span className={styles.rowLabel}>Help &amp; support</span>
+                <ChevronRight size={18} className={styles.rowChevron} aria-hidden />
+              </a>
+
+              <AccountSignOutButton />
+            </div>
+
+            {/* Quiet organizer door, pinned to the bottom of the viewport. */}
+            <p className={styles.pinNote}>
+              Run your own event?{' '}
+              <Link href="/start" className={styles.pinLink}>Start a tournament →</Link>
+            </p>
           </>
         ) : (
           <>
-            <Link href="/auth/login" className={`${styles.cta} ${styles.blockBtn}`}>Sign in</Link>
-            <Link href="/auth/signup?account=1&next=/discover" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Create free account</Link>
-            <Link href="/start" className={`${styles.ctaGhost} ${styles.blockBtn}`}>Run a tournament</Link>
+            <div className={styles.ctaStack}>
+              <Link href="/auth/login" className={styles.ctaPrimary}>Sign in</Link>
+              <Link href="/auth/signup?account=1&next=/discover" className={styles.ctaGhost}>Create free account</Link>
+              <Link href="/start" className={styles.ctaGhost}>Run a tournament</Link>
+            </div>
+            {/* Quiet device-vs-account note, pinned to the bottom of the viewport. */}
+            <p className={styles.pinNote}>
+              Following works on this device without an account — sign in to keep your teams on every
+              device you use.
+            </p>
           </>
         )}
       </div>
-
-      {/* Quiet device-vs-account note, pinned to the bottom of the viewport. (C6b
-          promoted the organizer footnote link into the ghost row above.) */}
-      <p className={`${styles.note} ${styles.pinBottom}`}>
-        Following works on this device without an account — sign in to keep your teams on every
-        device you use.
-      </p>
     </div>
   );
 }

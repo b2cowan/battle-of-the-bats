@@ -1214,12 +1214,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-iphone-alerts',
           question: "Why don't score alerts appear on some iPhones?",
-          answerText: 'Apple only allows web push alerts on iPhone and iPad after the page is added to the home screen. Until then the alerts button shows an add-to-home-screen prompt. Once the fan adds it and opens it from the home screen, the Get score alerts button works normally. Android shows the alerts button directly.',
-          keywords: ['iphone alerts', 'ipad', 'add to home screen', 'safari', 'no alerts button', 'apple'],
+          answerText: 'Apple only allows web push alerts on iPhone and iPad after the page is added to the home screen. Until then the alerts button shows an add-to-home-screen prompt. A fan can add the app two ways — from that prompt on a tournament page, or from the Install app row on the Account tab — and once they open it from the home screen, the Get score alerts button works normally. Android shows the alerts button directly.',
+          keywords: ['iphone alerts', 'ipad', 'add to home screen', 'safari', 'no alerts button', 'apple', 'install app', 'account tab', 'install from account'],
           answer: (
             <>
               <p>On iPhone and iPad, Apple only allows these alerts <strong>after the page is added to the home screen</strong>. Until then, the alerts control shows an &ldquo;add to home screen for alerts&rdquo; prompt instead of a button that wouldn&rsquo;t work.</p>
-              <p>Once a fan adds it to their home screen from the tournament page and opens it from there, the <strong>Get score alerts</strong> button works normally, with a one-time reminder to switch alerts on. Android shows the alerts button directly — no install step needed.</p>
+              <p>A fan can add the app two ways — from that prompt on a tournament page, or from the <strong>Install app</strong> row on the <strong>Account</strong> tab. Once they open it from the home screen, the <strong>Get score alerts</strong> button works normally, with a one-time reminder to switch alerts on. Android shows the alerts button directly — no install step needed.</p>
             </>
           ),
         },

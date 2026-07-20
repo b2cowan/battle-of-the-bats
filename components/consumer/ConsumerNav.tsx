@@ -18,7 +18,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Radio, MessageCircle, User } from 'lucide-react';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { usePendingInviteCount } from '@/lib/use-pending-invites';
+import { isConsumerShellPath } from '@/lib/consumer-routes';
 import styles from './ConsumerShell.module.css';
+import warm from './warmTheme.module.css';
 
 const TABS = [
   { href: '/discover', label: 'Home', icon: Home },
@@ -26,6 +29,16 @@ const TABS = [
   { href: '/chat', label: 'Chat', icon: MessageCircle },
   { href: '/account', label: 'Account', icon: User },
 ] as const;
+
+// The nav skin follows the content (Phase 5). The warm surfaces are exactly the consumer-shell
+// tabs — so we reuse `isConsumerShellPath` (the single source of truth the layout/SiteChrome/Footer
+// already share) rather than a second hardcoded route list that could silently drift when a tab is
+// added. The consumer shell ALSO wraps the auth / select-org / suspended pages, which `isConsumerShellPath`
+// correctly excludes, so they stay dark. One deliberate hold-out: the notification-settings sub-page
+// keeps its dark grid until its own reskin, so the whole page (nav included) stays dark there — a clean
+// theme handoff on navigation, never a warm-nav-over-dark-content seam.
+const WARM_HOLDOUTS = ['/account/notifications'];
+const underPrefix = (path: string, p: string) => path === p || path.startsWith(p + '/');
 
 export default function ConsumerNav({
   signedIn = false,
@@ -38,20 +51,31 @@ export default function ConsumerNav({
   isCoach?: boolean;
 }) {
   const pathname = usePathname();
-  const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+  const isActive = (href: string) => underPrefix(pathname, href);
+  const warmRoute =
+    isConsumerShellPath(pathname) && !WARM_HOLDOUTS.some(p => underPrefix(pathname, p));
 
-  // Rolled-up unread across all the member's chat rooms (self-muted rooms excluded server-side; R3-1).
-  // Signed-out visitors never fetch it. Rides the same endpoint + realtime nudge as the portal badges.
-  // Keyed by href so both nav loops read `badges[href]` — a second badge (e.g. Account) is one entry, not
-  // another string check copy-pasted into both loops.
+  // Unified cross-tab badge policy (Phase 5, owner-ratified): a red count means "something is
+  // waiting for you to act." Two tabs qualify — Chat unread (rolled up, self-muted rooms excluded
+  // server-side; R3-1) and Home pending team/org invitations. Scores carries NO nav badge: its
+  // "Live · N" already lives in-page, and a badge lit every game-day would dull the red's meaning.
+  // Signed-out visitors fetch neither. Keyed by href so both nav loops read `badges[href]`.
   const chatUnread = useChatUnread(signedIn);
+  const pendingInvites = usePendingInviteCount(signedIn);
+  const cap = (n: number) => (n > 9 ? '9+' : String(n));
   const badges: Record<string, string | null> = {
-    '/chat': chatUnread > 0 ? (chatUnread > 9 ? '9+' : String(chatUnread)) : null,
+    '/discover': pendingInvites > 0 ? cap(pendingInvites) : null,
+    '/chat': chatUnread > 0 ? cap(chatUnread) : null,
   };
+  // Distinct screen-reader phrasing per badge so the count stays meaningful (invites vs unread).
+  const badgeNoun: Record<string, string> = { '/discover': 'pending invitations', '/chat': 'unread' };
+
+  const topbarCls = `${styles.topbar}${warmRoute ? ` ${warm.warmVars} ${styles.topbarWarm}` : ''}`;
+  const bottomNavCls = `${styles.bottomNav}${warmRoute ? ` ${warm.warmVars} ${styles.bottomNavWarm}` : ''}`;
 
   return (
     <>
-      <header id="consumer-topbar" className={styles.topbar}>
+      <header id="consumer-topbar" className={topbarCls}>
         <div className={styles.topLeft}>
           <Link href="/discover" className={styles.wordmark} aria-label="FieldLogicHQ home">
             <span className={styles.wm1}>FIELD</span>
@@ -70,7 +94,7 @@ export default function ConsumerNav({
                   aria-current={active ? 'page' : undefined}
                 >
                   {label}
-                  {badge && <span className={styles.topBadge} aria-label={`${badge} unread`}>{badge}</span>}
+                  {badge && <span className={styles.topBadge} aria-label={`${badge} ${badgeNoun[href] ?? 'unread'}`}>{badge}</span>}
                 </Link>
               );
             })}
@@ -90,7 +114,7 @@ export default function ConsumerNav({
         </div>
       </header>
 
-      <nav className={styles.bottomNav} aria-label="Primary">
+      <nav className={bottomNavCls} aria-label="Primary">
         {TABS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href);
           const badge = badges[href];
@@ -104,7 +128,7 @@ export default function ConsumerNav({
               <span className={styles.iconWrap}>
                 <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
                 {active && <span className={styles.activeDot} />}
-                {badge && <span className={styles.tabBadge} aria-label={`${badge} unread`}>{badge}</span>}
+                {badge && <span className={styles.tabBadge} aria-label={`${badge} ${badgeNoun[href] ?? 'unread'}`}>{badge}</span>}
               </span>
               <span className={styles.label}>{label}</span>
             </Link>

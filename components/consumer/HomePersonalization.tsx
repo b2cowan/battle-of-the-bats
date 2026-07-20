@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useAllFollowedTeams } from '@/lib/follow';
 import { useFollowFeed } from '@/lib/hooks/useFollowFeed';
+import { fireConsumerEvent } from '@/lib/consumer-events-client';
 import {
   rollupFollowFeedByTournament,
   type ConsumerHomePayload,
@@ -57,10 +58,26 @@ export default function HomePersonalization() {
 
   useEffect(() => {
     let cancelled = false;
+    const t0 = Date.now();
     fetch('/api/consumer/home')
       .then(r => (r.ok ? r.json() : null))
       .then((data: ConsumerHomePayload | null) => {
-        if (!cancelled) { setPayload(data); setLoaded(true); }
+        if (cancelled) return;
+        setPayload(data);
+        setLoaded(true);
+        // §6 metrics — Home time-to-interactive (ms), composition, and auth split (the signed-out
+        // events double as the bounce baseline). Fire only on a REAL resolved payload: a non-OK
+        // response yields data=null and must NOT be recorded as a signed-out "ready" (that would
+        // pollute the bounce baseline with load failures). Signed-out is still a non-null EMPTY payload.
+        if (data) {
+          fireConsumerEvent('home_ready', {
+            signedIn: data.signedIn ?? false,
+            workspaces: data.workspaces?.length ?? 0,
+            follows: data.followCount ?? 0,
+            invites: data.pendingInvites?.length ?? 0,
+            ms: Date.now() - t0,
+          });
+        }
       })
       .catch(() => { if (!cancelled) setLoaded(true); });
     return () => { cancelled = true; };
@@ -121,7 +138,12 @@ export default function HomePersonalization() {
         <section className={styles.section}>
           <div className={styles.cardList}>
             {lapsed.map(l => (
-              <Link key={l.orgId} href={l.destination} className={styles.lapsedCard}>
+              <Link
+                key={l.orgId}
+                href={l.destination}
+                className={styles.lapsedCard}
+                onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'lapsed' })}
+              >
                 <span className={styles.lapsedIcon} aria-hidden><RotateCcw size={18} strokeWidth={1.9} /></span>
                 <span style={{ minWidth: 0 }}>
                   <span className={styles.lapsedTitle} style={{ display: 'block' }}>{l.orgName}</span>
@@ -210,7 +232,11 @@ function WorkspaceCard({ ctx }: { ctx: UserAccessContext }) {
   const Icon = KIND_ICON[ctx.kind];
   const accent = KIND_ACCENT[ctx.kind];
   return (
-    <Link href={ctx.destination} className={styles.wsCard}>
+    <Link
+      href={ctx.destination}
+      className={styles.wsCard}
+      onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'workspace', context: ctx.kind })}
+    >
       <span className={styles.wsIcon} data-accent={accent} aria-hidden>
         <Icon size={19} strokeWidth={1.8} />
       </span>
@@ -235,7 +261,11 @@ function FollowCard({ card, past }: { card: TournamentFollowCard; past?: boolean
     ? `Your team · ${card.teamNames[0]}`
     : `Your teams · ${card.teamNames.join(', ')}`;
   return (
-    <Link href={card.href} className={`${styles.followCard} ${past ? styles.followCardPast : ''}`}>
+    <Link
+      href={card.href}
+      className={`${styles.followCard} ${past ? styles.followCardPast : ''}`}
+      onClick={() => fireConsumerEvent('home_card_tapped', { kind: 'following', past: !!past })}
+    >
       <span className={styles.followLogo} style={{ background: teamColor(card.tournamentName, 55, 42) }} aria-hidden>
         {teamInitials(card.tournamentName)}
       </span>

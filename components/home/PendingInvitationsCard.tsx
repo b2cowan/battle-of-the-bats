@@ -63,6 +63,9 @@ export default function PendingInvitationsCard({ invitations }: { invitations: P
       // Decline (or accept with no slug): drop it from the list in place.
       setItems(prev => prev.filter(i => i.memberId !== memberId));
       setBusyId(null);
+      // Nudge the persistent nav's pending-invites badge to refetch — it doesn't remount on this
+      // in-place resolve, so it would otherwise show a stale count (usePendingInviteCount listens).
+      window.dispatchEvent(new Event('flhq:invites-changed'));
       router.refresh();
     } catch {
       setError('Could not reach the server. Please try again.');

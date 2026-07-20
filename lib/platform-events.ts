@@ -41,7 +41,16 @@ export type PlatformEventType =
   | 'league_schedule_generated'
   | 'scope_wall_hit'
   | 'upgrade_intent_clicked'
-  | 'league_public_page_shared';
+  | 'league_public_page_shared'
+  // Unified Home Phase 5 — consumer front-door success metrics (§6). Same free-text store, no
+  // migration. `home_*` are CLIENT-fired via /api/events/consumer (allowlisted so they can't be
+  // forged); the rest are SERVER-fired from the route the interaction already hits.
+  | 'home_ready'              // client: Home personalization resolved — carries auth state, composition, TTI ms
+  | 'home_card_tapped'        // client: a Workspaces / Following card tapped (tap-through)
+  | 'chat_tab_opened'         // client: Chat tab opened, by auth state (fan/logged-out included)
+  | 'directory_search'        // server (/api/public/search): a Home search ran
+  | 'chat_inbox_loaded'       // server (/api/consumer/chat/inbox): member inbox loaded (coach DAU)
+  | 'auth_workspace_landing'; // server (/api/auth/destination): sign-in destination resolved (fast-path health)
 
 export type PlatformEventInput = {
   eventType: PlatformEventType;

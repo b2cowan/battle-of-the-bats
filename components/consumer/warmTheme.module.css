@@ -1,17 +1,22 @@
 /* Warm-light consumer-shell theme tokens — Unified Home IA, Round 1 (R1-4).
  *
- * These are ADDITIVE custom properties scoped to the `.warm` wrapper. They do NOT
- * redefine any global dark token (--bg, --white-45, --hud-surface, …), so the
- * shared nav and the not-yet-warmed tabs (Scores/Account) — which still reference
- * the dark tokens — render exactly as before. Only a surface that opts in by
- * wearing `.warm` (Home, All-following, Chat) turns warm. Extending warmth to the
- * nav / other tabs is a later, separate phase (Scores P3, Chat inbox P4, Account P5).
+ * These are ADDITIVE custom properties. They do NOT redefine any global dark token
+ * (--bg, --white-45, --hud-surface, …), so any surface still referencing the dark
+ * tokens renders exactly as before. Only a surface that opts in turns warm.
+ *
+ * Two classes, so a surface can take the warm TOKENS without the warm GROUND:
+ *   • `.warmVars` — declares ONLY the --home-* custom properties. Used by the shared
+ *     nav (Phase 5): the top bar / bottom nav need the tokens to paint warm, but must
+ *     NOT inherit the paper background + `flex:1 1 auto` that a full content wrapper wants.
+ *   • `.warm` — composes `.warmVars` and adds the paper ground + fill behaviour. Every
+ *     content surface (Home, All-following, Scores, Chat, Account) keeps wearing `.warm`
+ *     exactly as before — `warm.warm` resolves to both classes, so nothing regresses.
  *
  * Values are the ratified Round 1 spec (design_decisions.md 2026-07-18). Brand
  * carry-over rule: raw --logic-lime never renders as text on the warm ground — it
  * darkens to the olive family, same principle as the public light theme (E3).
  */
-.warm {
+.warmVars {
   --home-paper:        #F8F4ED;                 /* warm paper ground */
   --home-card:         #FFFFFF;                 /* white cards */
   --home-ink:          #241E15;                 /* primary text / ink-filled chips bg */
@@ -41,10 +46,38 @@
   --home-live-rgb:     217, 72, 43;
   --home-amber-rgb:    161, 98, 7;
   --home-line-rgb:     70, 55, 30;
+}
 
+/* The warm CONTENT ground. Composes the tokens above and adds the paper background +
+   fill behaviour, so `warm.warm` (used by every content surface — Home, All-following,
+   Scores, Chat, Account) resolves to BOTH classes and behaves exactly as before. The
+   shared nav wears `.warmVars` alone (tokens, no ground) so it can paint warm chrome
+   without stretching to fill or owning the paper background. */
+.warm {
+  composes: warmVars;
   /* The warm surface owns its own ground so the dark shell background never shows
      through (the wrapper flex-fills the shell's .content column). */
   background: var(--home-paper);
   color: var(--home-ink);
   flex: 1 1 auto;
+}
+
+/* On mobile the shell reserves a strip at the bottom to clear the fixed tab bar
+   (ConsumerShell .content padding-bottom). That strip lives OUTSIDE this wrapper, so
+   without this it renders in the dark shell ground — a nav-height black band under every
+   warm tab when scrolled to the end. Extend the paper ground down over that strip so the
+   warm surface reads unbroken all the way to the tab bar. (Only .warm turns warm — the
+   dark Account/auth pages keep the strip dark, matching their own ground, so no change
+   there.) The strip only exists ≤900px, where .content carries that padding. */
+@media (max-width: 900px) {
+  .warm { position: relative; }
+  .warm::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(4rem + env(safe-area-inset-bottom));
+    background: var(--home-paper);
+  }
 }

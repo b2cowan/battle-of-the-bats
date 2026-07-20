@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
 import { searchDirectory } from '@/lib/directory';
+import { writePlatformEvent } from '@/lib/platform-events';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +14,20 @@ export const GET = withObservability(async (req: Request) => {
     const result = await searchDirectory({
       q: searchParams.get('q') ?? '',
       types: searchParams.get('types') ?? undefined,
+    });
+    // §6 search-usage metric — anonymous by design (public route; actor not resolved to keep the
+    // path fast). AWAITED (not after()) so it reliably records on the serverless host: Amplify Lambda
+    // wires no after()/waitUntil bridge, so an after() write could be silently dropped once the
+    // response is sent. throw-proof by contract; the cost is one cheap insert on a path already
+    // doing DB work.
+    const hadResults =
+      result.tournaments.total > 0 || result.organizations.total > 0 || result.teams.total > 0;
+    // Bound the client-supplied `types` before it lands in metadata — only a short, known-shape value.
+    const types = (searchParams.get('types') ?? 'all').slice(0, 40);
+    await writePlatformEvent({
+      eventType: 'directory_search',
+      source: 'app',
+      metadata: { hadResults, types },
     });
     return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } });
   } catch (e: unknown) {

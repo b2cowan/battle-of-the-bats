@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Loader2, MessageCircle, RotateCw } from 'lucide-react';
+import { fireConsumerEvent } from '@/lib/consumer-events-client';
 import ChatPreview from './ChatPreview';
 import ChatInbox, { type InboxRoom } from './ChatInbox';
 import styles from './chat-inbox.module.css';
@@ -22,6 +23,9 @@ export default function ChatTab({ signedIn }: { signedIn: boolean }) {
   const [status, setStatus] = useState<'loading' | 'ready' | 'error'>(signedIn ? 'loading' : 'ready');
   const [rooms, setRooms] = useState<InboxRoom[]>([]);
   const [reloadKey, setReloadKey] = useState(0);
+
+  // §6 metric — Chat tab opens by auth state (fan/logged-out included; fires once per open).
+  useEffect(() => { fireConsumerEvent('chat_tab_opened', { signedIn }); }, [signedIn]);
 
   useEffect(() => {
     if (!signedIn) return;

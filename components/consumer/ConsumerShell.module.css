@@ -275,3 +275,43 @@
     max-width: 100%;
   }
 }
+
+/* ── Warm nav skin (Unified Home Phase 5) ─────────────────────────────────────
+   The four consumer tabs wear the warm theme; the shared nav now follows so the
+   shell reads as ONE surface instead of warm-content-under-dark-chrome. These rules
+   fire only when ConsumerNav adds `.topbarWarm` / `.bottomNavWarm` (warm routes); the
+   auth / select-org / suspended pages that share this shell stay dark. The `--home-*`
+   tokens arrive via `.warmVars` (added alongside these classes) — we never redefine a
+   global dark token, so the dark path is byte-for-byte unchanged. Solid paper-white
+   ground (no translucency) so the dark shell can't bleed through at the edges; the
+   base blur declarations are inert over an opaque background and left untouched. */
+.topbarWarm {
+  background: var(--home-card);
+  border-bottom-color: var(--home-line);
+}
+.topbarWarm .wm1 { color: var(--home-ink); }
+.topbarWarm .wm2 { color: var(--home-olive); }
+.topbarWarm .wm3 { color: var(--home-dim); }
+.topbarWarm .topLink { color: var(--home-dim); }
+.topbarWarm .topLink:hover { color: var(--home-ink); }
+.topbarWarm .topLink.active { color: var(--home-olive); }
+.topbarWarm .utilLink { color: var(--home-dim); }
+.topbarWarm .utilLink:hover { color: var(--home-ink); }
+.topbarWarm .utilCta { color: var(--home-ink); border-color: var(--home-line-strong); }
+.topbarWarm .utilCta:hover { color: var(--home-olive); border-color: var(--home-olive); }
+.topbarWarm .utilCoach { color: var(--home-olive); border-color: rgba(var(--home-olive-rgb), 0.4); }
+.topbarWarm .utilCoach:hover { border-color: var(--home-olive); }
+/* Red "needs you" badge on warm ground: warm live-red fill, paper-white glyph. */
+.topbarWarm .topBadge { background: var(--home-live); color: var(--home-card); }
+
+@media (max-width: 900px) {
+  .bottomNavWarm {
+    background: var(--home-card);
+    border-top-color: var(--home-line);
+  }
+  .bottomNavWarm .tab { color: var(--home-dim); }
+  .bottomNavWarm .tab.active { color: var(--home-olive); }
+  .bottomNavWarm .tab.active .iconWrap { background: var(--home-olive-soft); }
+  .bottomNavWarm .activeDot { background: var(--home-olive); box-shadow: 0 0 6px var(--home-olive); }
+  .bottomNavWarm .tabBadge { background: var(--home-live); color: var(--home-card); }
+}
