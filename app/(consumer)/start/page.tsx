@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import {
   ArrowRight,
-  Building2,
   CalendarDays,
   Compass,
   Trophy,
@@ -52,8 +51,11 @@ const OPTIONS: StartOption[] = [
     body: 'Someone invited you to their organization? Create an account to accept your invitation — no organization needed.',
   },
   {
-    // Coaches Portal is still in development (not customer-ready) — route to the express-interest
-    // page, not the live /start/team create flow. Flip back to '/start/team' + Free when it launches.
+    // Coaches Portal launch is DECIDED (BUSINESS_DECISIONS 2026-07-20 D2) but flips at the
+    // coordinated Phase 3 launch of FOUNDING_SEASON_COACHES_FREE_PLAN.md — door + $0 Premium
+    // comp path + copy + gate reopen together. Until then this stays on the express-interest
+    // page. At launch: href '/start/team', tag Free. (The free /start/team flow itself is
+    // fully built and working — roster/schedule/fees/announcements/chat/tournaments.)
     href: '/for-coaches',
     icon: Users,
     label: 'Coach',
@@ -61,24 +63,21 @@ const OPTIONS: StartOption[] = [
     body: 'A free team home for your season — no organization needed. Track your registrations and team.',
     tag: { text: 'Coming soon', tone: 'soon' },
   },
-  {
-    href: '/start/league',
-    icon: CalendarDays,
-    // accent + tag are set dynamically below from the LEAGUE_STARTER_BETA flag.
-    label: 'League admin',
-    title: 'Start a league season',
-    body: 'Run a house-league season — registration, draft, scheduling, standings, and parent comms.',
-    tag: { text: 'Coming soon', tone: 'soon' },
-  },
-  {
-    href: '/start/club',
-    icon: Building2,
-    label: 'Club',
-    title: 'Explore Club',
-    body: 'Everything in one place for multi-team clubs. Talk to us about a guided setup for your organization.',
-    tag: { text: 'Talk to us', tone: 'soon' },
-  },
 ];
+
+// S1-1 rider (owner, 2026-07-20): the chooser promotes only what's live — no League or
+// Club cards until each is actually ready. League auto-returns the day its beta flag
+// turns on; Club returns via its own decision. Their /start sub-pages stay reachable
+// by direct URL (harmless express-interest pages), just not promoted here.
+const LEAGUE_OPTION: StartOption = {
+  href: '/start/league',
+  icon: CalendarDays,
+  accent: 'free',
+  label: 'League admin',
+  title: 'Start a league season',
+  body: 'Run a house-league season — registration, draft, scheduling, standings, and parent comms.',
+  tag: { text: 'Free', tone: 'free' },
+};
 
 export default async function StartPage() {
   // Staff use /platform-admin — keep them out of the operator on-ramp (defense-in-depth;
@@ -89,14 +88,10 @@ export default async function StartPage() {
     redirect('/platform-admin');
   }
 
-  // League Starter is an unlisted capped beta: when the flag is on, the picker shows it as a
-  // live free start; otherwise it stays "Coming soon" (the page itself shows the waitlist).
+  // League Starter is an unlisted capped beta: the card only exists while the flag is
+  // on (S1-1 rider — nothing not-yet-live is promoted on this surface).
   const leagueStarterLive = process.env.LEAGUE_STARTER_BETA === 'true';
-  const options: StartOption[] = OPTIONS.map(opt =>
-    opt.href === '/start/league' && leagueStarterLive
-      ? { ...opt, accent: 'free', tag: { text: 'Free', tone: 'free' } }
-      : opt,
-  );
+  const options: StartOption[] = leagueStarterLive ? [...OPTIONS, LEAGUE_OPTION] : OPTIONS;
 
   return (
     <div className={styles.page}>

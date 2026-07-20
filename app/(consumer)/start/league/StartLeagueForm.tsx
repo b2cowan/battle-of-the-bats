@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CalendarDays, Eye, EyeOff } from 'lucide-react';
-import authStyles from '../../(consumer)/auth/auth.module.css';
+import authStyles from '../../auth/auth.module.css';
 
 function slugify(name: string) {
   return name

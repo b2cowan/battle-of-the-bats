@@ -10,11 +10,13 @@ export const metadata: Metadata = {
 
 /**
  * /start/team — the standalone coach on-ramp. Creates a FREE, org-less Basic coach
- * team (source `coach_created`), NOT the Premium `team_workspaces` flip (deferred).
+ * team (source `coach_created`), NOT the Premium `team_workspaces` purchase path.
  *  - Signed OUT → create account (name + email + password) then the team.
  *  - Signed IN  → just name the team (no re-signup; existing emails can't error).
- * The door opens thin: the new team lands on its org-less home; roster/schedule/comms
- * are Phases 3-4.
+ * The team lands on its org-less home with roster, schedule, fees, announcements,
+ * chat, and tournament history all live (verified 2026-07-20 — an earlier note here
+ * calling these "Phases 3-4" was stale). The /start picker card flips to this route
+ * at the FOUNDING_SEASON_COACHES_FREE_PLAN.md Phase 3 launch.
  */
 export default async function StartTeamPage() {
   const supabase = await createClient();

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Users } from 'lucide-react';
 import { coachTeamPath } from '@/lib/coaches-portal-routes';
-import authStyles from '../../(consumer)/auth/auth.module.css';
+import authStyles from '../../auth/auth.module.css';
 
 async function createTeam(name: string, primaryCoachName: string | null): Promise<string> {
   const res = await fetch('/api/coaches/teams', {

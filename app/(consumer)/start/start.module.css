@@ -1,7 +1,9 @@
+/* Lives inside the consumer shell (moved 2026-07-20, Founding Season coaches-free
+   P12): the shell owns the top bar + bottom tabs — so no min-height:100vh and no
+   vertical centering here, or short screens overflow behind the fixed tab bar
+   (same fix auth.module.css .page got when auth joined the shell). */
 .page {
-  min-height: 100vh;
   display: flex;
-  align-items: center;
   justify-content: center;
   position: relative;
   background: var(--pitch-black);
@@ -9,7 +11,7 @@
     linear-gradient(to right, rgba(30, 58, 138, 0.06) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(30, 58, 138, 0.06) 1px, transparent 1px);
   background-size: 40px 40px;
-  padding: 2.5rem 1.5rem;
+  padding: 2rem 1.5rem 2.5rem;
 }
 
 .container {
@@ -267,25 +269,15 @@
   border-color: #93c5fd;
 }
 
+/* S1-1 rider (owner, 2026-07-20): cards keep the COMPACT three-column shape on mobile
+   too — the old full-width bottom arrow button made each card ~2x taller and pushed
+   the chooser past a viewport. The right-side arrow chip stays tappable (38px). */
 @media (max-width: 640px) {
   .page {
-    align-items: flex-start;
     padding: 1.25rem 1rem;
   }
 
   .container {
     padding: 1.4rem;
-  }
-
-  .card {
-    grid-template-columns: auto minmax(0, 1fr);
-    align-items: flex-start;
-  }
-
-  .cardArrow {
-    grid-column: 1 / -1;
-    width: 100%;
-    height: 40px;
-    margin-top: 0.15rem;
   }
 }

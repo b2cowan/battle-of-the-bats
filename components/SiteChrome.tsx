@@ -23,6 +23,11 @@ export default function SiteChrome() {
     // the marketing Navbar is a jarring context switch for fans/coaches arriving
     // mid-flow from app surfaces, and it pushes the form below the fold on phones.
     pathname.startsWith('/auth') ||
+    // /start (the get-started chooser + its children) lives in the consumer shell
+    // (dark-skinned tab bar). Without this, the global Navbar falls into its empty
+    // org-home branch here — a fixed, invisible link over the page header that
+    // hijacked taps to '/' (Founding Season coaches-free plan, P7/P12).
+    pathname === '/start' || pathname.startsWith('/start/') ||
     isVolunteerShell ||
     isOrgCoachShell ||
     isCoachPortalShellPath(pathname) ||

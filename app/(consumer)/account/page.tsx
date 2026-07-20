@@ -80,12 +80,17 @@ export default async function AccountPage() {
             <div className={styles.ctaStack}>
               <Link href="/auth/login" className={styles.ctaPrimary}>Sign in</Link>
               <Link href="/auth/signup?account=1&next=/discover" className={styles.ctaGhost}>Create free account</Link>
-              <Link href="/start" className={styles.ctaGhost}>Run a tournament</Link>
             </div>
-            {/* Quiet device-vs-account note, pinned to the bottom of the viewport. */}
+            {/* Quiet pinned notes: device-vs-account, plus the organizer door. The door is
+                deliberately a text link, not a third button — it leads into org creation, a
+                far heavier commitment than the account CTA above, and the signed-out surface
+                follows the same quiet-organizer-door principle as the signed-in note (§3g). */}
             <p className={styles.pinNote}>
               Following works on this device without an account — sign in to keep your teams on every
               device you use.
+              <br />
+              Run your own event?{' '}
+              <Link href="/start" className={styles.pinLink}>Start a tournament →</Link>
             </p>
           </>
         )}

@@ -89,8 +89,7 @@ function SignupForm() {
 
     // Sign-up Invite Guard (owner mode only): the server recognized this email before creating
     // anything. Adapt the screen instead of proceeding into org creation. The `!accountOnly`
-    // guard is defensive — the server only returns inviteBranch on the owner path, never for the
-    // account-only ("I was invited") flow, which surfaces its own 409 handled below.
+    // guard is defensive — the server only returns inviteBranch on the owner path.
     if (!accountOnly && json.inviteBranch === 'invited') {
       setInviteBranch('invited');
       setInviteOrgName(json.orgName ?? null);
@@ -100,7 +99,10 @@ function SignupForm() {
       setLoading(false);
       return;
     }
-    if (!accountOnly && json.inviteBranch === 'account_exists') {
+    // Account-exists parity: the owner path signals via inviteBranch; the account-only
+    // ("I was invited") path returns a plain 409 for the same situation. Both render
+    // the inline notice with its tappable Sign-in link instead of a bare error string.
+    if (json.inviteBranch === 'account_exists' || (accountOnly && res.status === 409)) {
       setInviteBranch('account_exists');
       setLoading(false);
       return;
