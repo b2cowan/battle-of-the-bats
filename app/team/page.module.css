@@ -1,11 +1,29 @@
+/* Warm Premium Coaches Portal signup (Founding Season Coaches launch — S1-2). The /coaches/start
+   signup IS the "$0 confirm" moment, so it wears the consumer-shell warm language: paper ground,
+   white form card, paper inputs with an olive focus ring, ink-on-lime CTA, olive-tint promo +
+   reassurance, mono price/kickers. Structure + copy + routes unchanged — this is a restyle. The
+   --home-* tokens are composed in from the canonical warm stylesheet (not redefined). */
+
 .page {
-  min-height: calc(100vh - var(--nav-height));
-  padding: calc(var(--nav-height) + 3rem) 1.5rem 4rem;
-  background:
-    linear-gradient(to right, rgba(var(--blueprint-blue-rgb), 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(var(--blueprint-blue-rgb), 0.06) 1px, transparent 1px),
-    var(--pitch-black);
-  background-size: 40px 40px;
+  composes: warmVars from '../../components/consumer/warmTheme.module.css';
+  flex: 1 1 auto;
+  position: relative;
+  min-height: 100%;
+  padding: 2rem 1.5rem 3rem;
+  background: var(--home-paper);
+  color: var(--home-ink);
+}
+/* Extend the paper ground over the shell's bottom-nav clearance strip on mobile. */
+@media (max-width: 900px) {
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(4rem + env(safe-area-inset-bottom));
+    background: var(--home-paper);
+  }
 }
 
 .signupSurface {
@@ -18,18 +36,17 @@
 }
 
 /* Warm upgrade (arrived from a free team's "Upgrade to Premium"): the form IS the task, so it
-   becomes the wider, primary column beside a trimmed confirm summary. With the cold pitch gated
-   out, the two columns balance and the empty space below the form disappears. */
+   becomes the wider, primary column beside a trimmed confirm summary. */
 .signupSurface[data-warm='true'] {
   grid-template-columns: minmax(0, 0.72fr) minmax(440px, 1.28fr);
 }
 
 .signupSurface[data-warm='true'] .title {
-  font-size: 2rem;
+  font-size: 1.9rem;
 }
 
 .copyPane {
-  padding-top: 1.5rem;
+  padding-top: 0.5rem;
 }
 
 .eyebrow,
@@ -38,27 +55,27 @@
   font-family: var(--font-data);
   font-size: 0.7rem;
   font-weight: 700;
-  letter-spacing: 0;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
+  color: var(--home-olive);
   margin-bottom: 0.65rem;
 }
 
 .title {
-  font-family: var(--font-data);
-  font-size: 3.2rem;
-  line-height: 1;
-  font-weight: 700;
-  color: var(--fl-text);
+  font-size: 2.4rem;
+  line-height: 1.08;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--home-ink);
   margin-bottom: 1rem;
+  text-wrap: balance;
 }
 
 .lede {
   max-width: 54ch;
-  font-family: var(--font-data);
   font-size: 0.95rem;
-  line-height: 1.75;
-  color: var(--data-gray);
+  line-height: 1.7;
+  color: var(--home-dim);
   margin-bottom: 1.4rem;
 }
 
@@ -76,34 +93,26 @@
   justify-content: center;
   min-height: 42px;
   padding: 0 1rem;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  border-radius: 10px;
   text-decoration: none;
 }
 
-/* Scroll-anchor shortcut to the form on the long cold page — a navigation aid, not the purchase
-   action. Kept as a ghost so the lime fill is reserved for the single submit button (one primary
-   action per surface). */
+/* Scroll-anchor shortcut to the form — a ghost so the ink-on-lime fill stays the single CTA. */
 .heroPrimary {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.5);
-  color: var(--logic-lime);
+  border: 1px solid var(--home-olive);
+  color: var(--home-olive);
 }
-
-.heroPrimary:hover {
-  background: rgba(var(--logic-lime-rgb), 0.1);
-}
+.heroPrimary:hover { background: var(--home-olive-soft); }
 
 .heroSecondary {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
-  color: var(--data-gray);
+  border: 1px solid var(--home-line-strong);
+  color: var(--home-dim);
 }
-
 .heroSecondary:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.75);
-  color: var(--fl-text);
+  border-color: var(--home-olive);
+  color: var(--home-ink);
 }
 
 .pricePanel {
@@ -111,42 +120,59 @@
   align-items: center;
   justify-content: space-between;
   gap: 1.5rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.06);
-  padding: 1.4rem;
+  border: 1px solid var(--home-line);
+  background: var(--home-card);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
+  padding: 1.3rem 1.4rem;
   margin-bottom: 1.5rem;
 }
 
-/* Warm-upgrade reassurance: closes the "everything carries over" loop opened on the Explore card,
-   right before the coach pays. Lime-tinted to read as positive confirmation, not another pitch. */
+/* Olive-tint founding-season promo pill (mono; carries the ⬡ founding motif). */
+.promoPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border-radius: var(--home-radius-pill);
+  padding: 0.22rem 0.6rem;
+  margin-bottom: 0.6rem;
+}
+
+/* Warm-upgrade reassurance — olive-tint positive confirmation, never the dark semantic tokens. */
 .carryOver {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  background: rgba(var(--logic-lime-rgb), 0.05);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.28);
+  background: var(--home-olive-soft);
+  border-radius: var(--home-radius-sm);
   padding: 1.1rem 1.2rem;
   margin-bottom: 1.5rem;
 }
 
 .carryOverTitle {
   margin: 0 0 0.4rem;
-  color: var(--fl-text);
-  font-family: var(--font-data);
+  color: var(--home-ink);
   font-size: 0.92rem;
   font-weight: 700;
 }
 
 .carryOverBody {
   margin: 0;
-  color: var(--data-gray);
-  font-family: var(--font-data);
+  color: var(--home-ink-soft);
   font-size: 0.8rem;
   line-height: 1.6;
 }
 
 .workspacePreview {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.32);
-  background:
-    linear-gradient(135deg, rgba(var(--blueprint-blue-rgb), 0.08), rgba(var(--logic-lime-rgb), 0.035)),
-    rgba(255,255,255,0.025);
+  border: 1px solid var(--home-line);
+  background: var(--home-card);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
   padding: 1rem;
   margin-bottom: 1rem;
 }
@@ -161,8 +187,7 @@
 
 .previewHeader strong {
   display: block;
-  color: var(--fl-text);
-  font-family: var(--font-data);
+  color: var(--home-ink);
   font-size: 0.95rem;
 }
 
@@ -173,17 +198,19 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
+  color: var(--home-olive);
   margin-bottom: 0.2rem;
 }
 
+/* Ink-on-lime pill (the pillOn treatment). */
 .previewBadge {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  color: var(--logic-lime);
-  padding: 0.2rem 0.55rem;
+  border: 0;
+  background: var(--home-lime);
+  color: var(--home-ink);
+  border-radius: var(--home-radius-pill);
+  padding: 0.2rem 0.6rem;
   font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
 }
 
@@ -195,28 +222,28 @@
 
 .previewGrid span {
   min-height: 34px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.035);
-  color: var(--data-gray);
+  border: 1px solid var(--home-line);
+  background: var(--home-paper);
+  color: var(--home-dim);
+  border-radius: var(--home-radius-sm);
   display: flex;
   align-items: center;
   padding: 0 0.65rem;
-  font-family: var(--font-data);
   font-size: 0.72rem;
 }
 
 .price {
   font-family: var(--font-data);
-  font-size: 1.35rem;
+  font-size: 1.5rem;
   font-weight: 700;
-  color: var(--fl-text);
+  color: var(--home-ink);
+  letter-spacing: -0.01em;
   margin: 0;
 }
 
 .priceSub {
-  font-family: var(--font-data);
   font-size: 0.72rem;
-  color: var(--data-gray);
+  color: var(--home-dim);
   margin: 0.2rem 0 0;
 }
 
@@ -228,7 +255,7 @@
   gap: 0.45rem;
   font-family: var(--font-data);
   font-size: 0.75rem;
-  color: var(--logic-lime);
+  color: var(--home-olive);
 }
 
 .benefitGrid {
@@ -244,38 +271,36 @@
 }
 
 .valueCard {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
-  background: rgba(var(--blueprint-blue-rgb), 0.035);
+  border: 1px solid var(--home-line);
+  background: var(--home-card);
+  border-radius: var(--home-radius-sm);
   padding: 0.85rem;
 }
 
 .valueCard p {
   margin: 0 0 0.3rem;
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.78rem;
+  color: var(--home-ink);
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
 .valueCard span {
   display: block;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.71rem;
+  color: var(--home-dim);
+  font-size: 0.75rem;
   line-height: 1.55;
 }
 
 .workflowPanel {
-  border-left: 2px solid rgba(var(--logic-lime-rgb), 0.48);
+  border-left: 2px solid var(--home-olive);
   padding-left: 1rem;
   margin-bottom: 1.1rem;
 }
 
 .workflowTitle {
   margin: 0 0 0.7rem;
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.82rem;
+  color: var(--home-ink);
+  font-size: 0.9rem;
   font-weight: 700;
 }
 
@@ -297,8 +322,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.34);
-  color: var(--logic-lime);
+  border-radius: var(--home-radius-sm);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
   font-family: var(--font-data);
   font-size: 0.68rem;
   font-weight: 700;
@@ -306,17 +332,15 @@
 
 .workflowStep p {
   margin: 0 0 0.15rem;
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.76rem;
+  color: var(--home-ink);
+  font-size: 0.82rem;
   font-weight: 700;
 }
 
 .workflowStep small {
   display: block;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.7rem;
+  color: var(--home-dim);
+  font-size: 0.74rem;
   line-height: 1.45;
 }
 
@@ -325,33 +349,33 @@
   grid-template-columns: auto 1fr;
   gap: 0.7rem;
   align-items: start;
-  font-family: var(--font-data);
-  color: var(--data-gray);
+  color: var(--home-dim);
 }
 
 .benefit svg {
-  color: var(--logic-lime);
+  color: var(--home-olive);
   margin-top: 0.15rem;
 }
 
 .benefit p {
-  color: var(--fl-text);
-  font-size: 0.8rem;
+  color: var(--home-ink);
+  font-size: 0.85rem;
   font-weight: 700;
   margin: 0 0 0.2rem;
 }
 
 .benefit span {
   display: block;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   line-height: 1.55;
 }
 
 .formPane {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
-  background: var(--hud-surface);
-  padding: 2rem;
-  box-shadow: 0 0 0 1px rgba(var(--blueprint-blue-rgb), 0.12), 0 20px 60px rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--home-line);
+  background: var(--home-card);
+  border-radius: var(--home-radius);
+  padding: 1.8rem;
+  box-shadow: var(--home-shadow);
 }
 
 .formHeader {
@@ -360,28 +384,28 @@
   justify-content: space-between;
   gap: 1.5rem;
   padding-bottom: 1.25rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.24);
+  border-bottom: 1px solid var(--home-line);
   margin-bottom: 1.5rem;
 }
 
 .formHeader h2 {
-  font-family: var(--font-data);
-  font-size: 1.25rem;
-  line-height: 1.25;
-  color: var(--fl-text);
-  font-weight: 700;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: var(--home-ink);
+  font-weight: 800;
   margin: 0;
 }
 
 .formHeader svg {
-  color: var(--logic-lime);
+  color: var(--home-olive);
 }
 
 .sectionBlock {
   display: grid;
   gap: 1rem;
   padding: 1.2rem 0;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  border-bottom: 1px solid var(--home-line);
 }
 
 .sectionBlock:first-of-type {
@@ -393,56 +417,62 @@
   align-items: center;
   gap: 0.45rem;
   font-family: var(--font-data);
-  font-size: 0.74rem;
-  color: var(--fl-text);
+  font-size: 0.7rem;
+  color: var(--home-ink-soft);
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0;
+  letter-spacing: 0.04em;
 }
 
 .sectionTitle svg {
-  color: var(--blueprint-blue);
+  color: var(--home-olive);
 }
 
 .field {
   display: grid;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .field span {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  color: var(--data-gray);
+  font-size: 0.74rem;
+  color: var(--home-ink-soft);
+  font-weight: 600;
+}
+
+/* Required-field marker (owner feedback: first/last name + team name must be required). */
+.reqMark {
+  color: var(--home-live);
   font-weight: 700;
-  text-transform: uppercase;
+  margin-left: 0.05rem;
 }
 
 .field input,
 .field select {
   width: 100%;
   min-height: 44px;
-  background: rgba(var(--blueprint-blue-rgb), 0.05);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
-  color: var(--fl-text);
-  font-family: var(--font-data);
-  font-size: 0.86rem;
-  padding: 0.75rem 0.85rem;
+  background: var(--home-paper);
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
+  color: var(--home-ink);
+  font-size: 0.9rem;
+  padding: 0.7rem 0.8rem;
   outline: none;
 }
 
 .field input:focus,
 .field select:focus {
-  border-color: var(--blueprint-blue);
-  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.18);
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 3px rgba(var(--home-olive-rgb), 0.16);
 }
 
 .field input::placeholder {
-  color: rgba(255, 255, 255, 0.28);
+  color: var(--home-dim);
+  opacity: 0.75;
 }
 
 .field input:disabled,
 .field select:disabled {
-  opacity: 0.58;
+  opacity: 0.55;
   cursor: not-allowed;
 }
 
@@ -453,15 +483,23 @@
 }
 
 .previewLine {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   line-height: 1.5;
-  color: var(--data-gray);
+  color: var(--home-dim);
   margin: 0;
 }
 
 .previewLine span {
-  color: var(--logic-lime);
+  color: var(--home-olive);
+  font-weight: 600;
+}
+
+/* Founding-season billing reframe: the amounts are the AFTER-Jan-1 price, not a charge now. */
+.billingNote {
+  margin: 0 0 0.75rem;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft);
 }
 
 .segmented,
@@ -476,14 +514,13 @@
 
 .segmented button,
 .authToggle button {
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
-  background: rgba(var(--blueprint-blue-rgb), 0.04);
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.76rem;
+  border: 1px solid var(--home-line-strong);
+  background: var(--home-paper);
+  color: var(--home-dim);
+  font-size: 0.8rem;
   font-weight: 700;
-  text-transform: uppercase;
-  padding: 0.8rem 0.9rem;
+  border-radius: var(--home-radius-sm);
+  padding: 0.75rem 0.85rem;
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
@@ -494,30 +531,29 @@
 
 .segmented button span {
   display: block;
-  color: rgba(255, 255, 255, 0.48);
-  font-size: 0.68rem;
+  color: var(--home-dim);
+  font-size: 0.7rem;
   font-weight: 400;
-  text-transform: none;
   margin-top: 0.2rem;
 }
 
 .segmented button:hover,
 .authToggle button:hover {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.75);
-  color: var(--fl-text);
+  border-color: var(--home-olive);
+  color: var(--home-ink);
 }
 
 .segmented button:disabled,
 .authToggle button:disabled {
   cursor: not-allowed;
-  opacity: 0.58;
+  opacity: 0.55;
 }
 
 .segmentActive,
 .authActive {
-  border-color: rgba(var(--logic-lime-rgb), 0.7) !important;
-  color: var(--fl-text) !important;
-  background: rgba(var(--logic-lime-rgb), 0.08) !important;
+  border-color: var(--home-olive) !important;
+  color: var(--home-ink) !important;
+  background: var(--home-olive-soft) !important;
 }
 
 .authModeRow {
@@ -534,36 +570,37 @@
 
 .authToggle button {
   padding: 0.5rem;
-  font-size: 0.68rem;
+  font-size: 0.7rem;
 }
 
 .sessionState {
   width: 100%;
   margin-top: 1rem;
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  background: rgba(var(--logic-lime-rgb), 0.06);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.26);
+  background: var(--home-olive-soft);
+  border-radius: var(--home-radius-sm);
 }
 
 .successBox,
 .errorBox {
   margin-top: 1rem;
   padding: 0.85rem 1rem;
-  font-family: var(--font-data);
-  font-size: 0.78rem;
+  border-radius: var(--home-radius-sm);
+  font-size: 0.8rem;
   line-height: 1.55;
 }
 
 .successBox {
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.07);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.3);
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
 }
 
 .errorBox {
-  border: 1px solid rgba(239, 68, 68, 0.32);
-  color: #f87171;
-  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(var(--home-live-rgb), 0.3);
+  color: var(--home-live);
+  background: var(--home-live-soft);
 }
 
 .primaryButton {
@@ -571,22 +608,21 @@
   min-height: 48px;
   margin-top: 1.25rem;
   border: 0;
+  border-radius: 10px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.65rem;
-  background: var(--logic-lime);
-  color: var(--pitch-black);
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  font-weight: 700;
-  text-transform: uppercase;
+  background: var(--home-lime);
+  color: var(--home-ink);
+  font-size: 0.92rem;
+  font-weight: 800;
   cursor: pointer;
-  transition: background 0.15s, opacity 0.15s;
+  transition: filter 0.15s, opacity 0.15s;
 }
 
 .primaryButton:hover:not(:disabled) {
-  background: #fff;
+  filter: brightness(1.05);
 }
 
 .primaryButton:disabled {
@@ -600,22 +636,20 @@
   align-items: center;
   gap: 1rem;
   margin-top: 1rem;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
+  font-size: 0.78rem;
 }
 
 .footerRow a {
-  color: var(--data-gray);
+  color: var(--home-dim);
   text-decoration: none;
 }
 
 .footerRow a:hover {
-  color: var(--logic-lime);
+  color: var(--home-olive);
 }
 
-/* Quiet reassurance that replaces the "Compare plans" link in the warm upgrade footer. */
 .footerRow span.footerNote {
-  color: var(--data-gray);
+  color: var(--home-dim);
 }
 
 .inlineAction {
@@ -623,25 +657,20 @@
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  padding: 0.75rem 1rem;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.5);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.76rem;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--home-olive);
+  border-radius: 10px;
+  color: var(--home-olive);
+  font-size: 0.8rem;
   font-weight: 700;
-  text-transform: uppercase;
   text-decoration: none;
 }
 
 .inlineAction:hover {
-  background: rgba(var(--logic-lime-rgb), 0.1);
+  background: var(--home-olive-soft);
 }
 
 @media (max-width: 980px) {
-  /* The [data-warm] attribute selector outranks the bare class, so the mobile
-     collapse must name it too — without this, the warm-upgrade checkout kept its
-     440px-minimum desktop column on phones and overflowed unreadably (conversion
-     sweep 2026-07-14, Journey E finding M1 — the paid funnel's terminal step). */
   .signupSurface,
   .signupSurface[data-warm='true'] {
     grid-template-columns: 1fr;
@@ -653,13 +682,24 @@
   }
 
   .title {
-    font-size: 2.45rem;
+    font-size: 2rem;
+  }
+
+  /* On phones the founding signup leads with title + price + form — the cold-pitch marketing
+     (scroll anchor, workspace preview, value cards, workflow, benefits) is hidden so the form
+     isn't pushed off-screen (owner feedback 2026-07-21). Desktop keeps the full pitch beside it. */
+  .heroActions,
+  .workspacePreview,
+  .valueGrid,
+  .workflowPanel,
+  .benefitGrid {
+    display: none;
   }
 }
 
 @media (max-width: 640px) {
   .page {
-    padding: calc(var(--nav-height) + 1.5rem) 1rem 3rem;
+    padding: 1.5rem 1rem 3rem;
   }
 
   .formPane {

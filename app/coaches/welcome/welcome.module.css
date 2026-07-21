@@ -1,0 +1,110 @@
+/* Warm post-provision success screen (Founding Season Coaches launch — S1-2). Paper ground, one
+   white card with a check ring, the founding promo, and the ink-on-lime handoff CTA. --home-*
+   tokens are composed in from the canonical warm stylesheet (not redefined). */
+
+.page {
+  composes: warmVars from '../../../components/consumer/warmTheme.module.css';
+  flex: 1 1 auto;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  background: var(--home-paper);
+  color: var(--home-ink);
+  padding: 2.5rem 1.5rem 3rem;
+}
+@media (max-width: 900px) {
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(4rem + env(safe-area-inset-bottom));
+    background: var(--home-paper);
+  }
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  text-align: center;
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow);
+  padding: 2rem 1.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.ring {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.35rem;
+}
+
+.title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--home-ink);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.sub {
+  font-size: 0.88rem;
+  color: var(--home-dim);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 34ch;
+}
+
+.promoPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border-radius: var(--home-radius-pill);
+  padding: 0.25rem 0.7rem;
+  margin-top: 0.35rem;
+}
+
+.cta {
+  width: 100%;
+  margin-top: 0.9rem;
+  padding: 0.85rem 1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--home-lime);
+  color: var(--home-ink);
+  font-size: 0.92rem;
+  font-weight: 800;
+  border-radius: 10px;
+  text-decoration: none;
+  transition: filter 0.15s;
+}
+.cta:hover { filter: brightness(1.05); }
+
+.fine {
+  font-size: 0.72rem;
+  color: var(--home-dim);
+  margin: 0.2rem 0 0;
+}

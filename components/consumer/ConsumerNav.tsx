@@ -19,7 +19,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Radio, MessageCircle, User } from 'lucide-react';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { usePendingInviteCount } from '@/lib/use-pending-invites';
-import { isConsumerShellPath } from '@/lib/consumer-routes';
+import { isWarmSkinPath } from '@/lib/consumer-routes';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
 
@@ -30,13 +30,10 @@ const TABS = [
   { href: '/account', label: 'Account', icon: User },
 ] as const;
 
-// The nav skin follows the content (Phase 5). The warm surfaces are exactly the consumer-shell
-// tabs — so we reuse `isConsumerShellPath` (the single source of truth the layout/SiteChrome/Footer
-// already share) rather than a second hardcoded route list that could silently drift when a tab is
-// added. The consumer shell ALSO wraps the auth / select-org / suspended pages, which `isConsumerShellPath`
-// correctly excludes, so they stay dark. Every consumer-shell content surface — including the
-// notification-settings sub-page (warmed alongside the Account tab) — now paints warm, so navigating
-// within the app never flips theme.
+// The nav skin follows the content. Warm surfaces = the four consumer-shell tabs PLUS the coach
+// sign-up journey (/start + /coaches/start + the post-provision success screen), via `isWarmSkinPath`
+// (the single source of truth in lib/consumer-routes). Auth / select-org / suspended are excluded and
+// stay dark (R1-4), so navigating within the app never flips theme mid-surface.
 const underPrefix = (path: string, p: string) => path === p || path.startsWith(p + '/');
 
 export default function ConsumerNav({
@@ -51,7 +48,7 @@ export default function ConsumerNav({
 }) {
   const pathname = usePathname();
   const isActive = (href: string) => underPrefix(pathname, href);
-  const warmRoute = isConsumerShellPath(pathname);
+  const warmRoute = isWarmSkinPath(pathname);
 
   // Unified cross-tab badge policy (Phase 5, owner-ratified): a red count means "something is
   // waiting for you to act." Two tabs qualify — Chat unread (rolled up, self-muted rooms excluded

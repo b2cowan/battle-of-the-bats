@@ -31,8 +31,10 @@ export type SearchParamsRecord = Record<string, string | string[] | undefined>;
  * Authenticated tournament coach-portal routes that render inside `CoachPortalShell`
  * (and therefore suppress the global marketing top nav + footer). The signup /
  * marketing surfaces — `/coaches/join`, `/coaches/start`, `/coaches/claim`,
- * `/coaches/checkout` — are intentionally excluded: they keep the marketing chrome
- * and the shell passes their children through untouched. `/coaches/help` IS included so the
+ * `/coaches/checkout`, `/coaches/welcome` — are intentionally excluded so the shell passes
+ * their children through untouched. NOTE: `/coaches/start`, `/coaches/claim`, and
+ * `/coaches/welcome` now wear the consumer WARM chrome via their own nested layout
+ * (CoachJourneyChrome + isWarmJourneyPath), not the marketing chrome. `/coaches/help` IS included so the
  * marketing nav + footer are suppressed — but `CoachPortalShell` renders it as a FOCUSED
  * full-page guide (no rail / bottom-nav), matching how admin help renders without the admin
  * sidebar. Help must never collide with the global top bar nor keep an app side nav.

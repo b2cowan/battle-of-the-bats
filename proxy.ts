@@ -158,12 +158,14 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Protect Basic Coaches Portal tournament records while leaving signup,
-  // paid activation, claim, and checkout completion routes public.
+  // Protect Basic Coaches Portal tournament records while leaving signup, paid activation, claim,
+  // checkout completion, and the post-provision warm success screen (/coaches/welcome) public —
+  // the success screen (design_decisions S1-2) must render for a just-signed-up coach whether or
+  // not the browser session is established yet, and it exposes nothing sensitive.
   const isRootCoachesSection = segments[0] === 'coaches';
   const isPublicCoachesPath =
     isRootCoachesSection &&
-    ['join', 'start', 'claim', 'checkout'].includes(segments[1] ?? '');
+    ['join', 'start', 'claim', 'checkout', 'welcome'].includes(segments[1] ?? '');
 
   if (isRootCoachesSection && !isPublicCoachesPath && !user) {
     const url = request.nextUrl.clone();

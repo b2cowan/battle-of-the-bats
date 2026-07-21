@@ -117,17 +117,23 @@
   border-radius: var(--radius-sm);
 }
 
-/* ── Primary upsell: upgrade THIS team to the Premium Coaches Portal ─────── */
+/* ── Primary upsell: upgrade THIS team to the Premium Coaches Portal.
+   The upsell CARD goes warm (S1-2 bounded insert) — a paper doorway INSIDE the dark portal, which
+   keeps its own theme around it. The --home-* tokens are composed onto the card, so only it turns
+   warm; the free-feature cards + org nudge above stay dark. A deepened shadow lifts it off the
+   near-black ground. */
 .premiumBlock {
+  composes: warmVars from '../consumer/warmTheme.module.css';
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.4rem;
   padding: 1.15rem 1.2rem;
-  background: linear-gradient(180deg, rgba(217, 249, 157, 0.06), rgba(217, 249, 157, 0.015));
-  border: 1px solid rgba(217, 249, 157, 0.35);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
+  background: var(--home-paper);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.32);
+  border-radius: var(--home-radius);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  color: var(--home-ink);
 }
 
 .premiumHead {
@@ -143,9 +149,9 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  color: var(--logic-lime);
-  padding: 0.12rem 0.45rem;
-  border: 1px solid rgba(217, 249, 157, 0.4);
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  padding: 0.14rem 0.5rem;
   border-radius: 999px;
 }
 
@@ -153,14 +159,15 @@
   margin: 0;
   font-size: 1.02rem;
   font-weight: 800;
-  color: var(--white);
+  letter-spacing: -0.01em;
+  color: var(--home-ink);
 }
 
 .premiumBody {
   margin: 0;
   font-size: 0.85rem;
   line-height: 1.55;
-  color: var(--white-60);
+  color: var(--home-ink-soft);
 }
 
 .premiumFeatures {
@@ -178,9 +185,9 @@
   gap: 0.45rem;
   font-size: 0.83rem;
   font-weight: 600;
-  color: var(--white-70);
+  color: var(--home-ink-soft);
 }
-.premiumFeature svg { color: var(--logic-lime); flex-shrink: 0; }
+.premiumFeature svg { color: var(--home-olive); flex-shrink: 0; }
 
 .premiumFooter {
   display: flex;
@@ -190,7 +197,7 @@
   gap: 0.85rem;
   margin-top: 0.25rem;
   padding-top: 0.85rem;
-  border-top: 1px solid var(--border-2);
+  border-top: 1px solid var(--home-line);
 }
 
 .premiumMeta {
@@ -201,18 +208,19 @@
 
 .premiumReassure {
   font-size: 0.78rem;
-  color: var(--white-50);
+  color: var(--home-dim);
 }
 
 .premiumPrice {
+  font-family: var(--font-data, monospace);
   font-size: 1.05rem;
   font-weight: 800;
-  color: var(--white);
+  color: var(--home-ink);
 }
 .premiumPriceUnit {
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--white-55);
+  color: var(--home-dim);
   margin-left: 0.12rem;
 }
 
@@ -220,13 +228,13 @@
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
-  padding: 0.5rem 0.9rem;
+  padding: 0.55rem 0.95rem;
   font-size: 0.82rem;
-  font-weight: 700;
-  color: #0f1123;
-  background: var(--logic-lime);
-  border: 1px solid var(--logic-lime);
-  border-radius: var(--radius-sm);
+  font-weight: 800;
+  color: var(--home-ink);
+  background: var(--home-lime);
+  border: 0;
+  border-radius: 10px;
   text-decoration: none;
   transition: filter 0.15s;
 }

@@ -1,0 +1,311 @@
+/* Warm form skin for the /start sub-forms (Founding Season Coaches launch — S1-1).
+   A warm mirror of auth.module.css: the /start team/tournament/league forms re-point here
+   (import path only) so they wear the warm look, while the dark auth login/signup pages keep
+   auth.module.css untouched. Class names match auth.module.css exactly so the swap is one line
+   per form. --home-* tokens are composed onto .page (not redefined). */
+
+.page {
+  composes: warmVars from '../../../components/consumer/warmTheme.module.css';
+  flex: 1 1 auto;
+  display: flex;
+  justify-content: center;
+  position: relative;
+  background: var(--home-paper);
+  color: var(--home-ink);
+  padding: 1.75rem 1.25rem 2.5rem;
+}
+@media (max-width: 900px) {
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(4rem + env(safe-area-inset-bottom));
+    background: var(--home-paper);
+  }
+}
+
+/* Legacy decorative divs — neutralized (same as auth). */
+.bg, .orb1, .orb2 { display: none; }
+
+/* Flat, borderless — the shell is the frame; the form fits one phone viewport unscrolled. */
+.card {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 420px;
+  padding: 0.75rem 0 0;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 1.4rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--home-line);
+}
+
+.iconWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--home-radius-sm);
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.9rem;
+  color: var(--home-olive);
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.14;
+  color: var(--home-ink);
+  margin-bottom: 0.4rem;
+  text-wrap: balance;
+}
+
+.sub {
+  font-size: 0.82rem;
+  color: var(--home-dim);
+  line-height: 1.45;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+}
+
+/* Warm form controls — override the global dark input styles inside the warm card. */
+.form :global(.form-label) {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--home-ink-soft);
+}
+
+.form :global(.form-input) {
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
+  color: var(--home-ink);
+  font-size: 0.9rem;
+}
+
+.form :global(.form-input:focus) {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 3px rgba(var(--home-olive-rgb), 0.16);
+}
+
+.form :global(.form-input::placeholder) {
+  color: var(--home-dim);
+  opacity: 0.75;
+}
+
+.pwWrap { position: relative; }
+.pwWrap :global(.form-input) { padding-right: 2.75rem; }
+
+.pwToggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--home-dim);
+  padding: 0.25rem;
+  transition: color 0.15s;
+  cursor: pointer;
+}
+.pwToggle:hover { color: var(--home-olive); }
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--home-dim);
+}
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--home-line);
+}
+
+/* Primary submit = ink-on-lime. */
+.submitBtn {
+  width: 100%;
+  padding: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: none;
+  background: var(--home-lime);
+  color: var(--home-ink);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.submitBtn:hover:not(:disabled) { filter: brightness(1.05); }
+.submitBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Warm status set — never the dark semantic tokens. */
+.error {
+  background: var(--home-live-soft);
+  border: 1px solid rgba(var(--home-live-rgb), 0.3);
+  border-radius: var(--home-radius-sm);
+  padding: 0.625rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--home-live);
+}
+
+/* Invite-guard recognition panel — olive-tint, one lime CTA. */
+.invitePanel {
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.28);
+  border-radius: var(--home-radius-sm);
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-bottom: 1.25rem;
+}
+
+.inviteOrg {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--home-ink);
+}
+
+.inviteRole {
+  align-self: flex-start;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--home-olive);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.4);
+  border-radius: var(--home-radius-pill);
+  padding: 0.2rem 0.55rem;
+}
+
+.inviteBody {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+}
+
+.inviteSent {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.28);
+  border-radius: var(--home-radius-sm);
+  padding: 0.75rem 0.9rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--home-olive);
+}
+
+.inlineNotice {
+  margin-top: 0.5rem;
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.24);
+  border-radius: var(--home-radius-sm);
+  padding: 0.55rem 0.8rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--home-ink-soft);
+}
+
+.linkMuted {
+  font-size: 0.78rem;
+  color: var(--home-dim);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s;
+}
+.linkMuted:hover { color: var(--home-ink); }
+
+.confirmBox {
+  margin-top: 0.75rem;
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.28);
+  border-radius: var(--home-radius-sm);
+  padding: 0.9rem 1rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 0.6rem;
+}
+
+/* Ghost/outlined secondary — reserves the lime submit for the recommended path. */
+.btnGhost {
+  flex: 1;
+  padding: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+  background: transparent;
+  color: var(--home-olive);
+  border: 1px solid var(--home-olive);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btnGhost:hover { background: var(--home-olive-soft); }
+
+.footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--home-line);
+}
+
+.footerText {
+  font-size: 0.78rem;
+  color: var(--home-dim);
+}
+
+.footerLink {
+  color: var(--home-olive);
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+.footerLink:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .page { padding: 0.75rem 1rem 1.25rem; }
+  .card { padding: 0.25rem 0 0; }
+  .iconWrap { display: none; }
+  .header { margin-bottom: 1rem; padding-bottom: 0.8rem; }
+  .form { gap: 0.9rem; }
+}

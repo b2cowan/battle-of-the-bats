@@ -136,6 +136,9 @@ export default function TeamSignupClient({
   const [authMode, setAuthMode] = useState<AuthMode>('signup');
   const [email, setEmail] = useState(claim?.contactEmail ?? '');
   const [password, setPassword] = useState('');
+  // Signup collects the coach's real name — a Basic account has none otherwise (was landing as "n/a").
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [busyLabel, setBusyLabel] = useState('');
@@ -152,8 +155,10 @@ export default function TeamSignupClient({
       ? `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD / season`
       : `${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD / month`;
   const accountReady = isAuthenticated || (email.trim() && password.length >= (authMode === 'signup' ? 8 : 1));
+  // A new (signup) account must carry a real first + last name; already-authed / sign-in do not.
+  const nameReady = isAuthenticated || authMode === 'signin' || (!!firstName.trim() && !!lastName.trim());
   const claimEmailMismatch = !!claim && isAuthenticated && !!email && email.trim().toLowerCase() !== claim.contactEmail.toLowerCase();
-  const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && !!accountReady && !busy;
+  const canSubmit = !teamIsGated && !claimEmailMismatch && cleanTeamName.length >= 2 && !!accountReady && nameReady && !busy;
   // Isolate the draft per claim / per originating free team so a stale generic draft can't clobber a
   // team-specific pre-fill (and vice versa).
   const draftKey = claim
@@ -227,8 +232,10 @@ export default function TeamSignupClient({
     if (claimEmailMismatch) {
       return `You are signed in as ${email}. Sign in with ${claim.contactEmail} to claim this team.`;
     }
-    if (!isAuthenticated && authMode === 'signup' && password.length < 8) {
-      return 'Password must be at least 8 characters.';
+    if (!isAuthenticated && authMode === 'signup') {
+      if (!firstName.trim()) return 'Enter your first name.';
+      if (!lastName.trim()) return 'Enter your last name.';
+      if (password.length < 8) return 'Password must be at least 8 characters.';
     }
     if (!isAuthenticated && authMode === 'signin' && !password) {
       return 'Enter your password.';
@@ -246,7 +253,7 @@ export default function TeamSignupClient({
       const signupRes = await fetch('/api/auth/team-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, next: claimPath }),
+        body: JSON.stringify({ email, password, firstName: firstName.trim(), lastName: lastName.trim(), next: claimPath }),
       });
       const signupPayload = await readJson(signupRes);
 
@@ -311,7 +318,23 @@ export default function TeamSignupClient({
     }
 
     window.sessionStorage.removeItem(draftKey);
-    window.location.assign(payload.url);
+
+    // Founding-season comp path returns an INTERNAL portal URL (no Stripe). Route it through the
+    // warm success screen (design_decisions S1-2): it names the free period, then "Open your season
+    // workspace →" hands off into the operating portal (its own theme — the deliberate handoff). A
+    // real Stripe checkout returns an external URL and goes straight there; any non-founding path is
+    // unchanged (the welcome screen is the founding launch moment).
+    const dest = payload.url;
+    const isInternal = dest.startsWith('/') || dest.startsWith(window.location.origin);
+    if (isInternal && foundingPromoActive) {
+      // dest may be an ABSOLUTE same-origin URL (create-team-checkout builds `${NEXT_PUBLIC_APP_URL}/…`);
+      // pass a RELATIVE path so the welcome screen's same-origin guard accepts it (and no origin leaks).
+      const nextPath = dest.startsWith('/') ? dest : dest.slice(window.location.origin.length);
+      const params = new URLSearchParams({ next: nextPath, team: cleanTeamName });
+      window.location.assign(`/coaches/welcome?${params.toString()}`);
+    } else {
+      window.location.assign(dest);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -360,6 +383,9 @@ export default function TeamSignupClient({
 
           <div className={styles.pricePanel}>
             <div>
+              {foundingPromoActive && (
+                <span className={styles.promoPill}>⬡ Founding Season</span>
+              )}
               <p className={styles.priceLabel}>Premium Coaches Portal</p>
               <p className={styles.price}>{planPrice}</p>
               {foundingPromoActive && (
@@ -461,7 +487,7 @@ export default function TeamSignupClient({
               Team details
             </div>
             <label className={styles.field}>
-              <span>Team name</span>
+              <span>Team name <span className={styles.reqMark}>*</span></span>
               <input
                 value={teamName}
                 onChange={event => setTeamName(event.target.value)}
@@ -492,6 +518,11 @@ export default function TeamSignupClient({
               <WalletCards size={16} />
               Billing
             </div>
+            {foundingPromoActive && (
+              <p className={styles.billingNote}>
+                Free until Jan 1, 2027 — no card required. Pick the plan you&apos;ll move to after; change it any time before then.
+              </p>
+            )}
             <div className={styles.segmented} role="group" aria-label="Billing cycle">
               <button
                 type="button"
@@ -501,7 +532,7 @@ export default function TeamSignupClient({
                 aria-pressed={billingCycle === 'annual'}
               >
                 Seasonal{' '}
-                <span>{formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD</span>
+                <span>{foundingPromoActive && 'then '}{formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD</span>
               </button>
               <button
                 type="button"
@@ -511,7 +542,7 @@ export default function TeamSignupClient({
                 aria-pressed={billingCycle === 'monthly'}
               >
                 Monthly{' '}
-                <span>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD</span>
+                <span>{foundingPromoActive && 'then '}{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD</span>
               </button>
             </div>
           </div>
@@ -542,8 +573,32 @@ export default function TeamSignupClient({
                   </button>
                 </div>
               </div>
+              {authMode === 'signup' && (
+                <div className={styles.twoCol}>
+                  <label className={styles.field}>
+                    <span>First name <span className={styles.reqMark}>*</span></span>
+                    <input
+                      value={firstName}
+                      onChange={event => setFirstName(event.target.value)}
+                      placeholder="Jordan"
+                      autoComplete="given-name"
+                      disabled={busy}
+                    />
+                  </label>
+                  <label className={styles.field}>
+                    <span>Last name <span className={styles.reqMark}>*</span></span>
+                    <input
+                      value={lastName}
+                      onChange={event => setLastName(event.target.value)}
+                      placeholder="Lee"
+                      autoComplete="family-name"
+                      disabled={busy}
+                    />
+                  </label>
+                </div>
+              )}
               <label className={styles.field}>
-                <span>Email</span>
+                <span>Email <span className={styles.reqMark}>*</span></span>
                 <input
                   value={email}
                   onChange={event => setEmail(event.target.value)}
@@ -596,7 +651,9 @@ export default function TeamSignupClient({
           </button>
 
           <div className={styles.footerRow}>
-            <span><CalendarDays size={14} /> {seasonName}</span>
+            {foundingPromoActive
+              ? <span className={styles.footerNote}><CalendarDays size={14} /> Free until Jan 1, 2027</span>
+              : <span><CalendarDays size={14} /> {seasonName}</span>}
             {isWarmUpgrade
               ? <span className={styles.footerNote}>Cancel anytime</span>
               : <Link href="/pricing">Compare plans</Link>}

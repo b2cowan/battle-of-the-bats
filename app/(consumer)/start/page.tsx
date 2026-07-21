@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation';
 import {
   ArrowRight,
   CalendarDays,
-  Compass,
   Trophy,
   UserPlus,
   Users,
@@ -115,9 +114,7 @@ export default async function StartPage() {
     <div className={styles.page}>
       <div className={styles.container}>
         <header className={styles.header}>
-          <div className={styles.iconWrap}>
-            <Compass size={21} strokeWidth={1.8} aria-hidden />
-          </div>
+          <span className={styles.kicker}>Get started</span>
           <h1 className={styles.title}>What do you want to do?</h1>
           <p className={styles.sub}>Pick where you&apos;re starting</p>
         </header>

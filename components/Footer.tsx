@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
-import { isConsumerShellPath } from '@/lib/consumer-routes';
+import { isConsumerShellPath, isWarmJourneyPath } from '@/lib/consumer-routes';
 
 // Static top-level routes that live outside the org-slug space and should show the footer.
 // (Consumer-shell routes like /discover are handled earlier via isConsumerShellPath.)
@@ -50,6 +50,8 @@ export default function Footer() {
     pathname.startsWith('/platform-admin') ||
     pathname.startsWith('/home') ||
     isCoachPortalShellPath(pathname) ||
+    // The warm sign-up journey renders its own warm nav — no marketing footer.
+    isWarmJourneyPath(pathname) ||
     isConsumerShellPath(pathname)
   ) return null;
 

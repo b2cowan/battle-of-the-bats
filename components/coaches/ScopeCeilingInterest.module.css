@@ -1,15 +1,18 @@
-/* Basic coach scope-ceiling interest panel (free-tier Phase 4d).
-   No checkout or unlock; just a light signal for beyond-Basic team tools. */
+/* Basic coach scope-ceiling interest panel (free-tier Phase 4d). Warmed to a bounded INSERT card
+   (S1-2, owner Decision 1): a paper doorway inside the dark portal, which keeps its own theme
+   around it. The --home-* tokens are composed onto the card so only it turns warm. */
 
 .panel {
+  composes: warmVars from '../consumer/warmTheme.module.css';
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  padding: 1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
+  padding: 1.1rem 1.2rem;
+  background: var(--home-paper);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.32);
+  border-radius: var(--home-radius);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  color: var(--home-ink);
 }
 
 .copy {
@@ -20,15 +23,16 @@
 
 .copy h3 {
   margin: 0;
-  color: var(--white);
+  color: var(--home-ink);
   font-size: 1rem;
   font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .copy p {
   margin: 0;
   max-width: 54rem;
-  color: var(--white-60);
+  color: var(--home-ink-soft);
   font-size: 0.84rem;
   line-height: 1.55;
 }
@@ -45,23 +49,23 @@
   gap: 0.38rem;
   min-height: 38px;
   padding: 0 0.7rem;
-  color: var(--white-60);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
+  color: var(--home-ink-soft);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
 }
 
 .option input {
-  accent-color: var(--logic-lime);
+  accent-color: var(--home-olive);
 }
 
 .option:has(input:checked) {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.42);
-  background: rgba(var(--logic-lime-rgb), 0.07);
+  color: var(--home-olive);
+  border-color: rgba(var(--home-olive-rgb), 0.5);
+  background: var(--home-olive-soft);
 }
 
 .error,
@@ -71,22 +75,23 @@
   gap: 0.35rem;
   margin: 0;
   padding: 0.55rem 0.7rem;
-  border-radius: var(--radius-sm);
+  border-radius: var(--home-radius-sm);
   font-size: 0.82rem;
 }
 
 .error {
-  color: var(--danger);
-  background: rgba(var(--danger-rgb), 0.1);
-  border: 1px solid rgba(var(--danger-rgb), 0.3);
+  color: var(--home-live);
+  background: var(--home-live-soft);
+  border: 1px solid rgba(var(--home-live-rgb), 0.3);
 }
 
 .success {
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.3);
 }
 
+/* Ink-on-lime CTA (the pillOn treatment). */
 .button {
   display: inline-flex;
   align-items: center;
@@ -95,10 +100,10 @@
   align-self: flex-start;
   min-height: 42px;
   padding: 0 0.95rem;
-  color: #0f1123;
-  background: var(--logic-lime);
-  border: 1px solid var(--logic-lime);
-  border-radius: var(--radius-sm);
+  color: var(--home-ink);
+  background: var(--home-lime);
+  border: 0;
+  border-radius: 10px;
   font-size: 0.88rem;
   font-weight: 800;
   cursor: pointer;

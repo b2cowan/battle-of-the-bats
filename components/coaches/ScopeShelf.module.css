@@ -1,42 +1,58 @@
-/* Per-page feature-education PAGE FOOTER (COACH_PORTAL_GROWTH Phase 1, rev 2026-06-17). A quiet,
-   divider-separated footer zone at the bottom of a coach section page — informational, never a
-   card/button/dismiss. Three muted tiers (eyebrow → body → link); lime reserved to the link hover
-   (CP-1). NOT viewport-pinned (avoids a stranded footer on short pages). */
+/* Per-page upgrade nudge for the FREE Coaches Portal. Warmed to a bounded INSERT card (S1-2,
+   owner Decision 1): a paper doorway inside the dark portal, which keeps its own theme around it.
+   The --home-* tokens are composed onto the card so only it turns warm. This supersedes the
+   2026-06-17 "quiet footer, never a card" treatment for this surface, per the ratified warm restyle
+   (flagged to /design + /strategy to reconcile the design-decisions log). Olive text needs a warm
+   ground to stay legible — a card is the only way to warm this nudge without failing contrast. */
 
 .footer {
+  composes: warmVars from '../consumer/warmTheme.module.css';
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.55rem;
   margin-top: 2rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-2);
+  padding: 1.1rem 1.2rem;
+  background: var(--home-paper);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.32);
+  border-radius: var(--home-radius);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.32);
+  color: var(--home-ink);
 }
 
 .footerEyebrow {
   margin: 0;
-  color: var(--white-40);
+  color: var(--home-olive);
   font-family: var(--font-data, monospace);
   font-size: 0.62rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .footerBody {
-  margin: 0.35rem 0 0;
+  margin: 0;
   max-width: 72ch;
-  color: var(--white-40);
-  font-size: 0.8rem;
+  color: var(--home-ink-soft);
+  font-size: 0.82rem;
   line-height: 1.55;
 }
 
+/* Ink-on-lime CTA (the pillOn treatment). */
 .footerLink {
-  display: inline-block;
-  margin-top: 0.5rem;
-  color: var(--white-40);
-  font-size: 0.8rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  margin-top: 0.2rem;
+  padding: 0.55rem 0.95rem;
+  color: var(--home-ink);
+  background: var(--home-lime);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: 800;
   text-decoration: none;
-  transition: color 0.15s;
+  transition: filter 0.15s;
 }
 
 .footerLink:hover {
-  color: var(--logic-lime);
+  filter: brightness(1.05);
 }

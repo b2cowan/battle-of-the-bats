@@ -1,7 +1,7 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
-import { isConsumerShellPath } from '@/lib/consumer-routes';
+import { isConsumerShellPath, isWarmJourneyPath } from '@/lib/consumer-routes';
 import Navbar from './Navbar';
 
 export default function SiteChrome() {
@@ -23,11 +23,11 @@ export default function SiteChrome() {
     // the marketing Navbar is a jarring context switch for fans/coaches arriving
     // mid-flow from app surfaces, and it pushes the form below the fold on phones.
     pathname.startsWith('/auth') ||
-    // /start (the get-started chooser + its children) lives in the consumer shell
-    // (dark-skinned tab bar). Without this, the global Navbar falls into its empty
-    // org-home branch here — a fixed, invisible link over the page header that
-    // hijacked taps to '/' (Founding Season coaches-free plan, P7/P12).
-    pathname === '/start' || pathname.startsWith('/start/') ||
+    // The warm sign-up journey (the /start family + /coaches/start + /coaches/claim + the
+    // post-provision success screen) wears the consumer shell's own warm nav — the marketing
+    // Navbar would double up (and previously fell into its empty org-home branch on /start,
+    // hijacking taps to '/'). Single source of truth in lib/consumer-routes.
+    isWarmJourneyPath(pathname) ||
     isVolunteerShell ||
     isOrgCoachShell ||
     isCoachPortalShellPath(pathname) ||

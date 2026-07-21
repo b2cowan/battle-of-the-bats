@@ -1,17 +1,34 @@
-/* Lives inside the consumer shell (moved 2026-07-20, Founding Season coaches-free
-   P12): the shell owns the top bar + bottom tabs — so no min-height:100vh and no
-   vertical centering here, or short screens overflow behind the fixed tab bar
-   (same fix auth.module.css .page got when auth joined the shell). */
+/* Warm sign-up journey skin (Founding Season Coaches launch — design_decisions S1-1/S1-2).
+   The /start family adopts the consumer-shell warm language (paper ground, white 14px cards,
+   ink/olive, mono kickers) via the additive --home-* tokens. These classes are /start-only, so
+   warming them here can't touch the dark auth pages that share auth.module.css. The tokens are
+   pulled in from the canonical warm stylesheet (composed onto .page) rather than redefined, and
+   the nav paints warm alongside (ConsumerNav → isWarmSkinPath). */
+
 .page {
+  /* Bring the --home-* tokens into scope for the whole page subtree without redefining them. */
+  composes: warmVars from '../../../components/consumer/warmTheme.module.css';
+  flex: 1 1 auto;
   display: flex;
   justify-content: center;
   position: relative;
-  background: var(--pitch-black);
-  background-image:
-    linear-gradient(to right, rgba(30, 58, 138, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(30, 58, 138, 0.06) 1px, transparent 1px);
-  background-size: 40px 40px;
+  background: var(--home-paper);
+  color: var(--home-ink);
   padding: 2rem 1.5rem 2.5rem;
+}
+
+/* Extend the paper ground over the shell's bottom-nav clearance strip on mobile so the dark
+   shell never shows through below the page (mirrors warmTheme .warm::after). */
+@media (max-width: 900px) {
+  .page::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    height: calc(4rem + env(safe-area-inset-bottom));
+    background: var(--home-paper);
+  }
 }
 
 .container {
@@ -19,202 +36,192 @@
   z-index: 1;
   width: 100%;
   max-width: 760px;
-  background: var(--hud-surface);
-  border: 1px solid rgba(30, 58, 138, 0.5);
-  padding: 2.25rem;
-  box-shadow: 0 0 0 1px rgba(30, 58, 138, 0.15), 0 0 24px rgba(30, 58, 138, 0.08);
 }
 
 .header {
   text-align: center;
-  margin-bottom: 1.75rem;
-  padding-bottom: 1.35rem;
-  border-bottom: 1px solid rgba(30, 58, 138, 0.3);
+  margin-bottom: 1.6rem;
 }
 
+/* Mono eyebrow — replaces the old blueprint icon badge on the chooser (matches the warm mockup). */
+.kicker {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--home-olive);
+  margin-bottom: 0.55rem;
+}
+
+/* Kept for the sub-route explainer pages (tournament heads-up, club), which lead with an icon. */
 .iconWrap {
   width: 48px;
   height: 48px;
-  background: rgba(30, 58, 138, 0.1);
-  border: 1px solid rgba(30, 58, 138, 0.5);
+  border-radius: var(--home-radius-sm);
+  background: var(--home-olive-soft);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 auto 1.15rem;
-  color: var(--data-gray);
+  margin: 0 auto 1.1rem;
+  color: var(--home-olive);
 }
 
 .title {
-  font-family: var(--font-data);
-  font-size: 1.1rem;
+  font-size: 1.4rem;
   font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--logic-lime);
-  margin-bottom: 0.375rem;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  color: var(--home-ink);
+  margin-bottom: 0.4rem;
+  text-wrap: balance;
 }
 
 .sub {
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  letter-spacing: 0.08em;
-  color: var(--data-gray);
-  text-transform: uppercase;
+  font-size: 0.85rem;
+  color: var(--home-dim);
 }
 
 .grid {
   display: flex;
   flex-direction: column;
-  gap: 0.85rem;
+  gap: 0.6rem;
 }
 
+/* Compact three-column chooser card: icon | text | arrow chip (S1-1 shape, at every width). */
 .card {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
-  gap: 1rem;
-  min-height: 92px;
-  padding: 1rem 1.1rem;
+  gap: 0.85rem;
+  min-height: 72px;
+  padding: 0.85rem 0.9rem;
   color: inherit;
   text-decoration: none;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  transition: border-color 0.15s, background 0.15s;
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
 }
 
 .card:hover {
-  border-color: rgba(30, 58, 138, 0.7);
-  background: rgba(30, 58, 138, 0.08);
+  border-color: rgba(var(--home-olive-rgb), 0.35);
+  box-shadow: var(--home-shadow);
 }
+.card:active { transform: scale(0.995); }
 
 .cardIcon {
-  width: 42px;
-  height: 42px;
-  border: 1px solid rgba(147, 197, 253, 0.24);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #93c5fd;
-  background: rgba(59, 130, 246, 0.08);
+  color: var(--home-dim);
+  background: rgba(var(--home-line-rgb), 0.06);
   flex-shrink: 0;
 }
-
-.cardIcon[data-accent='coach'] {
-  color: #67e8f9;
-  border-color: rgba(103, 232, 249, 0.3);
-  background: rgba(103, 232, 249, 0.07);
-}
-
+/* The live free doors (coach / free) wear the olive accent tile. */
+.cardIcon[data-accent='coach'],
 .cardIcon[data-accent='free'] {
-  color: var(--logic-lime);
-  border-color: rgba(217, 249, 157, 0.3);
-  background: rgba(217, 249, 157, 0.07);
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
 }
 
-.cardInfo {
-  min-width: 0;
-}
+.cardInfo { min-width: 0; }
 
 .cardTop {
   display: flex;
   align-items: center;
-  gap: 0.6rem;
+  gap: 0.55rem;
   flex-wrap: wrap;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.12rem;
 }
 
 .cardLabel {
   font-family: var(--font-data);
   font-size: 0.58rem;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  font-weight: 700;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--data-gray);
+  color: var(--home-dim);
 }
 
+/* Free pill = ink-on-lime (the pillOn treatment; raw lime never renders as text on warm). */
 .tag {
   font-family: var(--font-data);
   font-size: 0.55rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  border-radius: 2px;
-  padding: 0.14rem 0.45rem;
-  border: 1px solid rgba(217, 249, 157, 0.4);
-  color: var(--logic-lime);
-  background: rgba(217, 249, 157, 0.08);
+  border-radius: var(--home-radius-pill);
+  padding: 0.16rem 0.5rem;
+  color: var(--home-ink);
+  background: var(--home-lime);
   white-space: nowrap;
 }
-
+/* Not-yet-live doors: quiet admin-blue tint, never a lime "Free". */
 .tag[data-tone='soon'] {
-  border-color: rgba(147, 197, 253, 0.4);
-  color: #93c5fd;
-  background: rgba(59, 130, 246, 0.08);
+  color: var(--home-blue);
+  background: rgba(var(--home-blue-rgb), 0.12);
 }
 
 .cardTitle {
-  font-family: var(--font-data);
   font-size: 0.95rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--fl-text);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--home-ink);
   overflow-wrap: anywhere;
 }
 
 .cardBody {
-  margin-top: 0.4rem;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  line-height: 1.5;
-  letter-spacing: 0.03em;
-  color: var(--data-gray);
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--home-dim);
 }
 
+/* Subtle olive-tint arrow chip (ink-on-lime is reserved for the primary CTAs). */
 .cardArrow {
-  width: 38px;
-  height: 38px;
+  width: 26px;
+  height: 26px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--logic-lime);
-  color: #0f1123;
-  border-radius: 2px;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+  border-radius: 8px;
   flex-shrink: 0;
   transition: background 0.15s;
 }
-
 .card:hover .cardArrow {
-  background: #fff;
+  background: rgba(var(--home-olive-rgb), 0.18);
 }
 
 .footer {
   margin-top: 1.5rem;
   padding-top: 1.2rem;
-  border-top: 1px solid rgba(30, 58, 138, 0.2);
+  border-top: 1px solid var(--home-line);
   text-align: center;
-  font-family: var(--font-data);
-  font-size: 0.7rem;
-  letter-spacing: 0.06em;
-  color: var(--data-gray);
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: var(--home-dim);
 }
 
 .footerLink {
-  color: var(--logic-lime);
+  color: var(--home-olive);
+  font-weight: 600;
   text-decoration: none;
 }
+.footerLink:hover { text-decoration: underline; }
 
-.footerLink:hover {
-  text-decoration: underline;
-}
-
-/* Sub-route lead text (wrapper pages) */
+/* Sub-route lead text (wrapper pages: tournament heads-up, club). */
 .lead {
-  font-family: var(--font-data);
-  font-size: 0.82rem;
+  font-size: 0.92rem;
   line-height: 1.6;
-  color: var(--fl-text);
+  color: var(--home-ink-soft);
   margin-bottom: 1.25rem;
 }
 
@@ -224,28 +231,24 @@
   gap: 0.75rem;
 }
 
+/* Primary CTA = ink-on-lime; secondary = olive ghost. */
 .ctaPrimary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   padding: 0.85rem 1rem;
-  font-family: var(--font-data);
-  font-size: 0.75rem;
+  font-size: 0.9rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: #0f1123;
-  background: var(--logic-lime);
+  color: var(--home-ink);
+  background: var(--home-lime);
   border: 0;
+  border-radius: 10px;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s;
+  transition: filter 0.15s;
 }
-
-.ctaPrimary:hover {
-  background: #fff;
-}
+.ctaPrimary:hover { filter: brightness(1.05); }
 
 .ctaSecondary {
   display: inline-flex;
@@ -253,31 +256,17 @@
   justify-content: center;
   width: 100%;
   padding: 0.8rem 1rem;
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--data-gray);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--home-olive);
   background: transparent;
-  border: 1px solid rgba(147, 197, 253, 0.4);
+  border: 1px solid var(--home-olive);
+  border-radius: 10px;
   text-decoration: none;
-  transition: color 0.15s, border-color 0.15s;
+  transition: background 0.15s;
 }
+.ctaSecondary:hover { background: var(--home-olive-soft); }
 
-.ctaSecondary:hover {
-  color: var(--fl-text);
-  border-color: #93c5fd;
-}
-
-/* S1-1 rider (owner, 2026-07-20): cards keep the COMPACT three-column shape on mobile
-   too — the old full-width bottom arrow button made each card ~2x taller and pushed
-   the chooser past a viewport. The right-side arrow chip stays tappable (38px). */
 @media (max-width: 640px) {
-  .page {
-    padding: 1.25rem 1rem;
-  }
-
-  .container {
-    padding: 1.4rem;
-  }
+  .page { padding: 1.25rem 1rem; }
 }

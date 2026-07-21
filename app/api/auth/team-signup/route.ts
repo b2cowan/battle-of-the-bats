@@ -26,10 +26,20 @@ export const POST = withObservability(async (req: Request) => {
   let userId: string | null = null;
 
   try {
-    const { email, password, next } = await req.json();
+    const { email, password, next, firstName, lastName } = await req.json();
     const normalizedEmail = String(email ?? '').trim().toLowerCase();
     const normalizedPassword = String(password ?? '');
     const safeNext = normalizeNext(next);
+    // Coach's real name (collected at signup so a Basic account isn't nameless). Optional here so a
+    // signed-in / claim caller isn't blocked; the signup form enforces it before this call.
+    const first = String(firstName ?? '').trim().slice(0, 80);
+    const last = String(lastName ?? '').trim().slice(0, 80);
+    const fullName = `${first} ${last}`.trim();
+    // display_name too, matching the coach-signup route — the platform-admin org-detail member list
+    // reads display_name with no fallback, so omitting it would show a blank name there.
+    const userMetadata = (first || last)
+      ? { first_name: first, last_name: last, full_name: fullName, display_name: fullName }
+      : undefined;
 
     if (!normalizedEmail || !normalizedPassword) {
       return NextResponse.json({ error: 'Email and password are required.' }, { status: 400 });
@@ -56,6 +66,7 @@ export const POST = withObservability(async (req: Request) => {
         email: normalizedEmail,
         password: normalizedPassword,
         options: {
+          data: userMetadata,
           redirectTo: `${origin}/auth/callback?next=${encodeURIComponent(safeNext)}`,
         },
       });
@@ -73,6 +84,7 @@ export const POST = withObservability(async (req: Request) => {
         email: normalizedEmail,
         password: normalizedPassword,
         email_confirm: true,
+        user_metadata: userMetadata,
       });
 
       if (authError || !authData.user) {
