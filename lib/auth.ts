@@ -40,6 +40,9 @@ export async function signIn(
 export async function signOut(): Promise<void> {
   const supabase = createClient();
   await supabase.auth.signOut();
+  // Shared-device follow hygiene (clear account-owned follows + restore parked
+  // anonymous pins) runs off the SIGNED_OUT auth event in lib/follow.ts, so every
+  // sign-out path is covered without this wrapper depending on the follow layer.
 }
 
 export async function getUser() {

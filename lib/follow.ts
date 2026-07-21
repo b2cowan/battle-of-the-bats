@@ -11,8 +11,22 @@
  */
 import { useCallback, useEffect, useState } from 'react';
 import { getSession } from './auth';
+import { createClient } from './supabase-browser';
 import { tournamentToday } from './timezone';
 import type { Team, Tournament } from './types';
+
+/**
+ * Who a device follow belongs to (Follow Ownership & Session Partition, Phase 2).
+ *  - 'anonymous' — created with NO session. The genuine no-account follow feature;
+ *    belongs to the device and survives sign-out.
+ *  - 'account'   — exists on the device because of a session: auto-seeded pins AND
+ *    follows tapped while signed in (which also mirror to fan_follows). Belongs to
+ *    the account, which holds the durable copy; cleared on sign-out so a shared
+ *    device never leaks one person's follows to the next.
+ * Untagged legacy entries are treated as 'anonymous' (never nuke what we can't
+ * classify). This is a separate axis from `seeded` (which drives pin reconciliation).
+ */
+export type FollowOrigin = 'anonymous' | 'account';
 
 export interface FollowedTeam {
   id: string;
@@ -23,9 +37,61 @@ export interface FollowedTeam {
    *  sign-out (shared-device hygiene) and replaced if the account stops
    *  following the team. An explicit on-device follow never carries this. */
   seeded?: boolean;
+  /** Ownership for the sign-out sweep (Phase 2). Seeded pins are always 'account'. */
+  origin?: FollowOrigin;
 }
 
 const FOLLOW_KEY_PREFIX = 'fl_follow_team_';
+
+/**
+ * Cache of whether a session is active, so the synchronous follow writes below can
+ * stamp ownership (`origin`) without an async/network hop. `null` = unknown →
+ * treated as anonymous. Kept fresh by the auth watcher below — the single source, so
+ * no follow-button surface has to remember to prime it.
+ *
+ * Known narrow limitation (accepted): the watcher's first event resolves
+ * asynchronously (Supabase validates/refreshes the session, occasionally a network
+ * hop), so there's a brief window after a fresh load where the hint is still `null`.
+ * A follow tapped in that window by a signed-in user is tagged 'anonymous' and thus
+ * survives the sign-out sweep (a narrow shared-device leak). We keep `null → anonymous`
+ * deliberately: the alternatives are worse — priming the hint 'account' from a stale
+ * token would turn the narrow leak into permanent LOSS of a real anonymous follow, and
+ * re-tagging by "team is in the account's follow list" would wrongly sweep a genuine
+ * anonymous follow of a team the account also follows. The account layer stays correct
+ * regardless (the follow is mirrored to fan_follows on write), so this costs at most
+ * one leaked follow, never data loss.
+ */
+let sessionSignedInHint: boolean | null = null;
+
+function resolveFollowOrigin(explicitAccount?: boolean): FollowOrigin {
+  if (explicitAccount) return 'account';
+  return sessionSignedInHint ? 'account' : 'anonymous';
+}
+
+/**
+ * Self-subscribed auth watcher (installed once, browser-only) — the single source
+ * that keeps `sessionSignedInHint` fresh AND runs the shared-device follow hygiene
+ * on sign-out, for EVERY surface. This is why no follow-button page has to prime the
+ * hint and why lib/auth stays a thin Supabase wrapper with no dependency on this
+ * module. Mirrors lib/fan-alert-prefs-client.ts's ensureAuthWatcher().
+ *   - Any state carrying a session → hint true.
+ *   - No session (SIGNED_OUT, or a signed-out INITIAL_SESSION on load) → hint false,
+ *     then clear every account-owned follow and restore parked anonymous pins — which
+ *     also self-heals a device still holding session-derived follows on a later load.
+ */
+let followAuthWatcherInstalled = false;
+function ensureFollowAuthWatcher(): void {
+  if (followAuthWatcherInstalled || typeof window === 'undefined') return;
+  followAuthWatcherInstalled = true;
+  createClient().auth.onAuthStateChange((_event, session) => {
+    sessionSignedInHint = !!session?.user;
+    if (!session?.user) {
+      clearAllAccountOwnedFollows();
+      restoreAllParkedFollows();
+    }
+  });
+}
+ensureFollowAuthWatcher();
 
 export function followKey(orgSlug: string, tournamentSlug: string): string {
   return `${FOLLOW_KEY_PREFIX}${orgSlug}_${tournamentSlug}`;
@@ -79,7 +145,7 @@ export function readFollowedTeam(orgSlug: string, tournamentSlug: string): Follo
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<FollowedTeam>;
     return parsed.id
-      ? { id: parsed.id, name: parsed.name ?? '', divisionId: parsed.divisionId, seeded: parsed.seeded === true || undefined }
+      ? { id: parsed.id, name: parsed.name ?? '', divisionId: parsed.divisionId, seeded: parsed.seeded === true || undefined, origin: parsed.origin }
       : null;
   } catch {
     return null;
@@ -153,8 +219,16 @@ export function saveFollowedTeam(
   window.localStorage.setItem(
     followKey(orgSlug, tournamentSlug),
     // `seeded` only persists when true (explicit follows stay unmarked — and an
-    // explicit follow OVERWRITING a seeded pin correctly un-marks it).
-    JSON.stringify({ id: team.id, name: team.name, divisionId: team.divisionId, ...(team.seeded ? { seeded: true } : {}) }),
+    // explicit follow OVERWRITING a seeded pin correctly un-marks it). `origin`
+    // records ownership for the sign-out sweep: a seeded pin, or any follow tapped
+    // while signed in, is 'account'; an anonymous tap is 'anonymous'.
+    JSON.stringify({
+      id: team.id,
+      name: team.name,
+      divisionId: team.divisionId,
+      ...(team.seeded ? { seeded: true } : {}),
+      origin: resolveFollowOrigin(team.seeded),
+    }),
   );
   // Notify same-tab listeners (the native `storage` event only fires cross-tab).
   window.dispatchEvent(new CustomEvent('fl-follow-change'));
@@ -174,6 +248,118 @@ export function clearFollowedTeam(orgSlug: string, tournamentSlug: string): void
     // team flip immediately instead of waiting for the next hydration.
     pruneAccountFollow(orgSlug, tournamentSlug, prev.id);
   }
+}
+
+/**
+ * Sign-out sweep (shared-device hygiene, Phase 2): drop EVERY account-owned device
+ * follow across ALL tournaments and orgs — team pins, whole-tournament follows, and
+ * org follows alike — not just the one tournament a page happens to have mounted.
+ * syncAccountFollowsToDevice only reconciles the tournament on screen, so anything
+ * that landed on the device because of a session (seeded pins, or follows tapped
+ * while signed in) otherwise survives a sign-out from the consumer shell (Account
+ * tab → /discover, where no AccountFollowSync is mounted) and keeps showing as
+ * "Following" on Scores/Home. Anonymous follows (origin 'anonymous', or untagged
+ * legacy entries) are deliberately left intact — the no-account feature.
+ */
+export function clearAllAccountOwnedFollows(): void {
+  if (typeof window === 'undefined') return;
+  const toRemove = collectStorageKeys(key =>
+    (key.startsWith(FOLLOW_KEY_PREFIX) || key.startsWith(FOLLOW_TOURN_KEY_PREFIX) || key.startsWith(FOLLOW_ORG_KEY_PREFIX))
+    && isAccountOwnedFollow(key));
+  for (const key of toRemove) window.localStorage.removeItem(key);
+  if (toRemove.length) {
+    invalidateAccountSync();
+    notifyFollowChange();
+  }
+}
+
+/** One guarded localStorage key scan, reused by the follow sweeps. Collects the keys
+ *  the predicate accepts and tolerates storage being unavailable. */
+function collectStorageKeys(predicate: (key: string) => boolean): string[] {
+  const out: string[] = [];
+  try {
+    for (let i = 0; i < window.localStorage.length; i++) {
+      const key = window.localStorage.key(i);
+      if (key && predicate(key)) out.push(key);
+    }
+  } catch { /* storage unavailable */ }
+  return out;
+}
+
+/** True for a stored follow that exists because of a session: tagged 'account', or a
+ *  legacy seeded team pin (pre-Phase-2 pins carry seeded:true with no origin). */
+function isAccountOwnedFollow(key: string): boolean {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(key) ?? '') as { origin?: FollowOrigin; seeded?: boolean };
+    return parsed.origin === 'account' || parsed.seeded === true;
+  } catch {
+    return false;
+  }
+}
+
+/* ── Session partition (Phase 3) ───────────────────────────────────────────────
+   While signed in, the ACCOUNT is authoritative for the single "my team" pin per
+   tournament. If the device already holds an ANONYMOUS pin, it is set aside
+   ("parked") so the account's own follow can occupy the pin slot — every pin
+   surface (dock, standings highlight, teams sort) keeps reading the primary key and
+   lights up with the account's team, not the device owner's. The anonymous pin is
+   never destroyed: it is restored to the primary slot on sign-out / session end, so
+   a shared device shows fan A's teams to fan A and fan B's to fan B. The parked key
+   uses a distinct prefix so readAllFollowedTeams / the sign-out sweep never see it. */
+
+const PARKED_TEAM_KEY_PREFIX = 'fl_parked_team_';
+
+function parkedTeamKey(orgSlug: string, tournamentSlug: string): string {
+  return `${PARKED_TEAM_KEY_PREFIX}${orgSlug}_${tournamentSlug}`;
+}
+
+/** Set the device's anonymous pin aside for the duration of a session. No-op with no pin. */
+function parkAnonymousPin(orgSlug: string, tournamentSlug: string): void {
+  const primary = followKey(orgSlug, tournamentSlug);
+  const raw = window.localStorage.getItem(primary);
+  if (!raw) return;
+  const parked = parkedTeamKey(orgSlug, tournamentSlug);
+  // Never clobber an already-parked pre-session anonymous pin — it has no server
+  // backup, so overwriting it loses it permanently. If one already exists, the
+  // current primary arose during the session (e.g. a hint-window mistag), so drop it
+  // rather than overwrite the genuine parked pin.
+  if (window.localStorage.getItem(parked) === null) {
+    window.localStorage.setItem(parked, raw);
+  }
+  window.localStorage.removeItem(primary);
+}
+
+/** Move a parked key's value into its primary slot, but only when the slot is free.
+ *  Returns true when the primary was written. */
+function restoreParkedByKey(parkedKey: string, primaryKey: string): boolean {
+  const raw = window.localStorage.getItem(parkedKey);
+  if (raw === null) return false;
+  // Check the slot BEFORE removing the parked value: if a primary already occupies it
+  // (shouldn't happen under the normal clear→restore order, but can under a two-tab
+  // sign-out race or a hint-window mistag), leave the parked pin in place so it is
+  // never lost — a later restore reclaims it once the slot frees.
+  if (window.localStorage.getItem(primaryKey) !== null) return false;
+  window.localStorage.removeItem(parkedKey);
+  window.localStorage.setItem(primaryKey, raw);
+  return true;
+}
+
+/** Restore a parked anonymous pin into the primary slot (per-tournament, session end). */
+function restoreParkedPin(orgSlug: string, tournamentSlug: string): boolean {
+  return restoreParkedByKey(parkedTeamKey(orgSlug, tournamentSlug), followKey(orgSlug, tournamentSlug));
+}
+
+/** Global restore of every parked anonymous pin — paired with clearAllAccountOwnedFollows
+ *  at sign-out so the device returns to exactly its pre-session anonymous follow set,
+ *  regardless of which shell the sign-out happened in. */
+export function restoreAllParkedFollows(): void {
+  if (typeof window === 'undefined') return;
+  let restored = false;
+  for (const parked of collectStorageKeys(key => key.startsWith(PARKED_TEAM_KEY_PREFIX))) {
+    const primary = FOLLOW_KEY_PREFIX + parked.slice(PARKED_TEAM_KEY_PREFIX.length);
+    if (restoreParkedByKey(parked, primary)) restored = true;
+  }
+  if (restored) notifyFollowChange();
 }
 
 /**
@@ -294,7 +480,7 @@ export function saveFollowedTournament(orgSlug: string, tournamentSlug: string, 
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(
     followTournamentKey(orgSlug, tournamentSlug),
-    JSON.stringify({ name, followedAt: new Date().toISOString() }),
+    JSON.stringify({ name, followedAt: new Date().toISOString(), origin: resolveFollowOrigin() }),
   );
   notifyFollowChange();
   syncTournamentFollowToAccount('follow', { orgSlug, tournamentSlug });
@@ -350,7 +536,7 @@ export function saveFollowedOrg(orgSlug: string, name: string): void {
   if (typeof window === 'undefined') return;
   window.localStorage.setItem(
     followOrgKey(orgSlug),
-    JSON.stringify({ name, followedAt: new Date().toISOString() }),
+    JSON.stringify({ name, followedAt: new Date().toISOString(), origin: resolveFollowOrigin() }),
   );
   notifyFollowChange();
   syncOrgFollowToAccount('follow', { orgSlug });
@@ -568,9 +754,18 @@ export async function syncAccountFollowsToDevice(orgSlug: string, tournamentSlug
 
   if (!signedIn) {
     setAccountFollows(orgSlug, tournamentSlug, new Set());
-    // Shared-device hygiene: an account-seeded pin never outlives its session
-    // (also self-heals a leftover seeded pin on any later anonymous visit).
-    if (pin?.seeded) clearFollowedTeam(orgSlug, tournamentSlug);
+    // Session over: drop any account-owned device pin (a seeded pin OR a team the
+    // account followed while signed in) — it must never outlive its session on a
+    // shared device — then restore the device owner's parked anonymous pin. Both
+    // also self-heal on any later anonymous visit. Direct removal (not
+    // clearFollowedTeam) avoids a spurious account-unfollow mirror.
+    let changed = false;
+    if (pin && (pin.seeded || pin.origin === 'account')) {
+      window.localStorage.removeItem(followKey(orgSlug, tournamentSlug));
+      changed = true;
+    }
+    if (restoreParkedPin(orgSlug, tournamentSlug)) changed = true;
+    if (changed) notifyFollowChange();
     return;
   }
 
@@ -586,9 +781,21 @@ export async function syncAccountFollowsToDevice(orgSlug: string, tournamentSlug
       seeded: true,
     });
 
-  if (!pin) {
-    if (list.length > 0) seedPin(list[0]);
-  } else if (pin.seeded && !list.some(f => f.teamId === pin.id)) {
+  // Session partition (Phase 3): an anonymous device pin is set aside so the account's
+  // own follow occupies the single pin slot. After parking, treat this tournament as
+  // pinless and seed from the account below.
+  let effectivePin = pin;
+  let parked = false;
+  if (pin && !pin.seeded && pin.origin !== 'account') {
+    parkAnonymousPin(orgSlug, tournamentSlug);
+    effectivePin = null;
+    parked = true;
+  }
+
+  if (!effectivePin) {
+    if (list.length > 0) seedPin(list[0]);        // seedPin → saveFollowedTeam dispatches the change
+    else if (parked) notifyFollowChange();         // parked with nothing to seed → announce the removal once
+  } else if (effectivePin.seeded && !list.some(f => f.teamId === effectivePin.id)) {
     // The account walked away from the seeded pin — follow it: replace with the
     // newest account follow, or clear when the account follows nothing here.
     if (list.length > 0) seedPin(list[0]);
