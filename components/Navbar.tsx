@@ -5,13 +5,14 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useOrgNav } from './OrgNavContext';
 import { cn } from '@/lib/utils';
-import type { PublicPageKey } from '@/lib/public-pages';
 import { phaseOf, fmtRange, daysUntil } from '@/lib/tournament-phase-display';
 import { tournamentToday } from '@/lib/timezone';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import SharePageButton from '@/components/public/SharePageButton';
 import FanNotificationBell from '@/components/public/FanNotificationBell';
 import TournamentAccountSheet from '@/components/public/TournamentAccountSheet';
+import TournamentTopTabs from '@/components/public/TournamentTopTabs';
+import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
 import styles from './Navbar.module.css';
 
 const MARKETING_NAV_LINKS = [
@@ -20,14 +21,6 @@ const MARKETING_NAV_LINKS = [
   { href: '/for-clubs',                 label: 'Clubs'      },
   { href: '/for-coaches',               label: 'Coaches'    },
   { href: '/pricing',                   label: 'Pricing'    },
-];
-
-const TOURNAMENT_NAV_KEYS = [
-  { key: 'news',      label: 'News'      },
-  { key: 'schedule',  label: 'Schedule'  },
-  { key: 'standings', label: 'Standings' },
-  { key: 'teams',     label: 'Teams'     },
-  { key: 'rules',     label: 'Rules'     },
 ];
 
 function isMarketingPath(pathname: string) {
@@ -241,7 +234,7 @@ export default function Navbar() {
         </div>
 
         <div className={styles.links}>
-          {TOURNAMENT_NAV_KEYS.filter(l => !tournamentHiddenPages.includes(l.key as PublicPageKey)).map(l => {
+          {TOURNAMENT_PAGE_TABS.filter(l => !tournamentHiddenPages.includes(l.key)).map(l => {
             const href = `/${orgSlug}/${tournamentSlug}/${l.key}`;
             const isActive = pathname.startsWith(href);
             return (
@@ -284,12 +277,19 @@ export default function Navbar() {
         )}
       </div>
 
+      {/* Tournament page tabs (Phase 5): the scrolling row that replaced the retired
+          bottom bar. Sits directly under the event header ≤900px and rides inside
+          this measured <nav>, so its height folds into --nav-visual-h/--nav-event-h
+          automatically (ticker + sticky day-labels + page padding all clear it). */}
+      <TournamentTopTabs />
+
       {/* One actions cluster for every width — absolutely positioned so the sheet,
           bell and share mount exactly once (portals + document listeners). */}
       <div className={styles.navActions}>
         {/* Team-independent notification opt-in — Plus tournaments only, hidden once
-            the event is over. DESKTOP-ONLY since G5: on mobile the bell lives as a
-            row inside the More sheet, and the header keeps only Share. */}
+            the event is over. DESKTOP-ONLY: on mobile the bell lives as a row inside the
+            account sheet (opened from the header chip — the retired More tab was its old
+            door), and the header keeps only Share. */}
         {tournamentSlug && tournamentId && fanAlertsEnabled && !tournamentFinished && (
           <span className={styles.bellSlot}>
             <FanNotificationBell />

@@ -41,6 +41,25 @@
   .topbar { background: var(--bg); }
 }
 
+/* ── Desktop global strip (Unified Home IA · Phase 3) ──
+   The tournament-route app bar on WIDE screens: a slim FIXED strip at the very top,
+   full-width, ABOVE the tournament's own side rail + top bar (both offset down by
+   --desktop-strip-h, which the tournament layout publishes ≥901px). Reuses the .topbar
+   content in the NEUTRAL skin (no warm classes → the tournament :root override drives it;
+   z-index 200 from .topbar keeps it above the rail/nav). Hidden ≤900px, where the bottom
+   bar is the app nav and the branded event header owns the top. */
+.topbarStrip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* 48px fallback = the tournament layout's --desktop-strip-h seed (keep the two in sync). */
+  height: var(--desktop-strip-h, 48px);
+}
+@media (max-width: 900px) {
+  .topbarStrip { display: none; }
+}
+
 .topLeft {
   display: flex;
   align-items: center;
@@ -175,7 +194,10 @@
 }
 @media (max-width: 900px) {
   .content {
-    padding-bottom: calc(4rem + env(safe-area-inset-bottom));
+    /* Canonical bottom clearance (Phase 5): the fixed-bar reserve var, not a hardcoded
+       4rem — reconciles the old 64/72 drift so content always clears the mounted bar.
+       Fallback matches the codebase-wide 72px convention (never the stale 64). */
+    padding-bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom));
   }
 }
 
@@ -200,6 +222,29 @@
     justify-content: space-around;
     align-items: flex-start;
   }
+
+  /* ── Tournament-route global bar (Unified Home IA · Phase 5) ──
+     The persistent Home·Scores·Chat·Account bar on public tournament pages. It is
+     root-mounted (no .shell ancestor), so --consumer-bottom-h is unavailable — set
+     an explicit COMPACT, safe-area-aware height instead, sized to hold the P0-2
+     scrolled-chrome floor (≤26% on a 667px viewport) while occupying the retired
+     tournament bar's slot. The 54px tab centres in the 56px bar (tap target stays
+     ≥44px). NEUTRAL skin: the tournament :root override drives the tokens (dark
+     event → dark bar, light event → light bar) with no warm classes. Height reads the
+     canonical --bottom-nav-height (the tournament layout publishes 3.5rem/56px on these
+     routes), so the bar, the page clearance, and the MyTeamDock / PoweredBy / banner /
+     install offsets all key off ONE number — no 56-vs-72 drift, dock sits flush again. */
+  .bottomNavTournament {
+    /* min-height, not height, so the bar can grow if a large OS text setting makes the
+       ~54px tab taller than the 56px content-box — avoids a 1–2px label clip; normal
+       fonts render at the nominal 56px the chrome floor was measured against. */
+    min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
+    height: auto;
+    align-items: center;
+    padding-top: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   /* While a text field (e.g. Discover search) has focus, give the keyboard and
      results the full screen instead of floating the tab bar above the keyboard —
      it reappears the instant focus leaves the field. */
@@ -293,7 +338,7 @@
    ground (no translucency) so the dark shell can't bleed through at the edges; the
    base blur declarations are inert over an opaque background and left untouched. */
 .topbarWarm {
-  background: var(--home-card);
+  background: var(--home-nav-bg);
   border-bottom-color: var(--home-line);
 }
 .topbarWarm .wm1 { color: var(--home-ink); }
@@ -308,17 +353,37 @@
 .topbarWarm .utilCta:hover { color: var(--home-olive); border-color: var(--home-olive); }
 .topbarWarm .utilCoach { color: var(--home-olive); border-color: rgba(var(--home-olive-rgb), 0.4); }
 .topbarWarm .utilCoach:hover { border-color: var(--home-olive); }
-/* Red "needs you" badge on warm ground: warm live-red fill, paper-white glyph. */
-.topbarWarm .topBadge { background: var(--home-live); color: var(--home-card); }
+/* Red "needs you" badge: live-red fill, light glyph (--home-on-live stays light in both themes). */
+.topbarWarm .topBadge { background: var(--home-live); color: var(--home-on-live); }
 
 @media (max-width: 900px) {
   .bottomNavWarm {
-    background: var(--home-card);
+    background: var(--home-nav-bg);
     border-top-color: var(--home-line);
   }
   .bottomNavWarm .tab { color: var(--home-dim); }
   .bottomNavWarm .tab.active { color: var(--home-olive); }
   .bottomNavWarm .tab.active .iconWrap { background: var(--home-olive-soft); }
   .bottomNavWarm .activeDot { background: var(--home-olive); box-shadow: 0 0 6px var(--home-olive); }
-  .bottomNavWarm .tabBadge { background: var(--home-live); color: var(--home-card); }
+  .bottomNavWarm .tabBadge { background: var(--home-live); color: var(--home-on-live); }
+}
+
+/* ── Pref-aware nav (Theme Toggle Foundation, TH-1/TH-3) ──────────────────────
+   On the four TABS the nav wears `.topbarWarmTab` / `.bottomNavWarmTab` ALONGSIDE the warm
+   classes; on the always-warm sign-up JOURNEY it wears only `.topbarWarm` / `.bottomNavWarm`.
+   Under an explicit Dark preference the tab nav resolves the warm token vocabulary to the NATIVE
+   dark-nav values, so the `.topbarWarm` / `.bottomNavWarm` rules above repaint as the exact dark
+   bar (the same chrome the auth / select-org pages already show) — no rule duplication. The
+   journey nav has no `…Tab` marker, so it stays warm regardless of preference. */
+:global(html[data-user-theme="dark"]) .topbarWarmTab,
+:global(html[data-user-theme="dark"]) .bottomNavWarmTab {
+  --home-nav-bg:      var(--nav-mobile-bg);
+  --home-line:        var(--border);
+  --home-line-strong: var(--border);
+  --home-ink:         var(--fl-text);
+  --home-dim:         var(--white-45);
+  --home-olive:       var(--primary-light);
+  --home-olive-soft:  rgba(var(--primary-rgb), 0.18);
+  --home-olive-rgb:   var(--logic-lime-rgb);
+  --home-live:        var(--danger);
 }

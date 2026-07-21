@@ -61,5 +61,9 @@ export function useChatUnread(enabled = true): number {
     };
   }, [enabled, instanceId]);
 
-  return count;
+  // Derive 0 when disabled (mirrors usePendingInviteCount): the last-fetched count is
+  // never reset on cleanup, so returning it raw would keep a stale badge after `enabled`
+  // goes false (e.g. an in-place sign-out on a tournament page) — visible to the next
+  // person on a shared device. Returning 0 when !enabled clears it immediately.
+  return enabled ? count : 0;
 }

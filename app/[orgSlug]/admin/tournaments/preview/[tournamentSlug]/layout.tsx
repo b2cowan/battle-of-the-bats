@@ -1,5 +1,5 @@
 import TournamentPreviewNav from '@/components/public/TournamentPreviewNav';
-import BottomNav from '@/components/BottomNav';
+import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import {
@@ -44,6 +44,12 @@ export default async function TournamentPreviewLayout({
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}
+      {/* Phase 3 preview parity: the fixed top-tab row adds ~45px below the preview top bar
+          (which reuses .nav = --nav-height) ≤900px, so seed BOTH chrome-top vars past both —
+          --nav-event-h (page-content padding) and --nav-visual-h (the sticky day-label / rail,
+          via --chrome-top-h). Derived from --nav-height (not a hardcoded 72) so it can't drift;
+          unlike the live seed there is NO ResizeObserver here to self-correct. */}
+      <style dangerouslySetInnerHTML={{ __html: `@media (max-width: 900px) { :root { --nav-event-h: calc(var(--nav-height) + 45px); --nav-visual-h: calc(var(--nav-height) + 45px); } }` }} />
       {/* Desktop-only (≥1024px) left rail — mirrors the live public shell. Links stay
           inside the preview (basePath) so navigation doesn't escape to the live site. */}
       <TournamentSideRail
@@ -64,10 +70,11 @@ export default async function TournamentPreviewLayout({
         />
         {children}
       </div>
-      {/* Mobile (≤900px) section nav — the preview gets no global bottom nav (that one
-          hides on /admin/* routes), so mount a preview-scoped instance whose tabs link
-          inside the preview. Matches the live public shell the admin is previewing. */}
-      <BottomNav basePath={previewBase} hiddenPages={hiddenPages} />
+      {/* Mobile (≤900px) section nav — Phase 3 preview parity: the same scrolling top-tab
+          row fans see live (basePath keeps links in-preview; `fixed` pins it below the
+          preview top bar). No global app bar / account / chat here — a preview shows the
+          event, not the personal app. */}
+      <TournamentTopTabs basePath={previewBase} hiddenPages={hiddenPages} fixed />
     </>
   );
 }

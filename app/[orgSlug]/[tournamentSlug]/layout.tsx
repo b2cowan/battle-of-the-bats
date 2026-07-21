@@ -204,10 +204,20 @@ export default async function TournamentLayout({
       {tournamentCssVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${tournamentCssVars} }` }} />
       )}
-      {/* Mobile unified event header (G3): pre-seed the expanded-header height so
-          SSR page padding is right on first paint; the Navbar measures and
-          corrects the real value (long titles wrap) after hydration. */}
-      <style dangerouslySetInnerHTML={{ __html: `@media (max-width: 900px) { :root { --nav-event-h: 116px; } }` }} />
+      {/* Chrome vars for the nav merge.
+          Desktop (default) — Phase 3:
+          • --desktop-strip-h → 48px: the global desktop STRIP's height; the tournament nav,
+            side rail, score ticker, top-anchored toasts and page top-padding all offset by it.
+          ≤900px — Phase 5 (mobile: no strip, a bottom bar instead):
+          • --desktop-strip-h → 0: zeroed at the SAME 900px boundary that hides the strip
+            (ConsumerShell .topbarStrip), so no fractional-width gap (900–901px) can leave the
+            strip visible while nothing offsets for it.
+          • --nav-event-h seed (≈116px header + ≈45px tabs) so SSR page padding is right on
+            first paint; Navbar's ResizeObserver corrects the real value after hydration.
+          • --bottom-nav-height → 3.5rem: the compact (56px) global bottom bar's height, the
+            canonical bottom-bar var (MyTeamDock, install prompt, growth chrome, page
+            clearances read it). */}
+      <style dangerouslySetInnerHTML={{ __html: `:root { --desktop-strip-h: 48px; } @media (max-width: 900px) { :root { --nav-event-h: 161px; --bottom-nav-height: 3.5rem; --desktop-strip-h: 0px; } }` }} />
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}

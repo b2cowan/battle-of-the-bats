@@ -1,8 +1,8 @@
 /* The preview now mirrors the live public shell at every width, so it defers to the
    base Navbar's responsive .links rules instead of force-showing them:
-     ≤900px      → a fixed mobile bottom nav (BottomNav, mounted by the preview layout)
-                   owns section nav; the top-bar links stay hidden so they can't wrap
-                   and overflow the fixed-height bar.
+     ≤900px      → a fixed scrolling section-tab row (TournamentTopTabs, mounted by the
+                   preview layout, pinned below the top bar) owns section nav; the top-bar
+                   links stay hidden so they can't wrap and overflow the top bar.
      901–1023px  → top-bar links visible (base Navbar default).
      ≥1024px     → the side rail owns nav; base Navbar hides the links + logo, and we
                    push the lone Register action to the right edge. */

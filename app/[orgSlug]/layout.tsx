@@ -89,7 +89,7 @@ export default async function OrgLayout({
   return (
     <>
       <OrgNavSync logoUrl={org.logoUrl ?? null} orgName={org.name} />
-      {/* Sets vars on :root so globally-mounted components (Navbar, BottomNav) inherit the org theme */}
+      {/* Sets vars on :root so globally-mounted components (Navbar, ConsumerNav) inherit the org theme */}
       <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
       <div
         className={fontClasses}

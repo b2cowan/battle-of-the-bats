@@ -3,7 +3,8 @@
    contested by the My-Team dock + install banner (J6-045). */
 .nudge {
   position: fixed;
-  top: calc(var(--ticker-h, 0px) + 0.6rem);
+  /* Below the desktop global strip (≥901px, 0 on mobile) + the score ticker. */
+  top: calc(var(--desktop-strip-h, 0px) + var(--ticker-h, 0px) + 0.6rem);
   left: 0.6rem;
   right: 0.6rem;
   margin: 0 auto;

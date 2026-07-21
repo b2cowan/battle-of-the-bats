@@ -17,19 +17,12 @@
  */
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
-import { Home, Megaphone, Calendar, Trophy, Users, ScrollText, type LucideIcon } from 'lucide-react';
+import { Home } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
+import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
 import DesktopMyTeamRailCard from '@/components/public/DesktopMyTeamRailCard';
 import styles from './TournamentSideRail.module.css';
-
-const RAIL_ITEMS: { key: PublicPageKey; label: string; Icon: LucideIcon }[] = [
-  { key: 'news', label: 'News', Icon: Megaphone },
-  { key: 'schedule', label: 'Schedule', Icon: Calendar },
-  { key: 'standings', label: 'Standings', Icon: Trophy },
-  { key: 'teams', label: 'Teams', Icon: Users },
-  { key: 'rules', label: 'Rules', Icon: ScrollText },
-];
 
 type TournamentSideRailProps = {
   /** Link prefix for the rail. Omit on the public site (derived from route params);
@@ -63,7 +56,7 @@ export default function TournamentSideRail({
   const resolvedHeading = heading !== undefined ? heading : (ctx.tournamentName || ctx.orgName);
   const resolvedColorMode = colorMode ?? ctx.tournamentColorMode ?? 'dark';
   const resolvedHidden = hiddenPages ?? ctx.tournamentHiddenPages;
-  const items = RAIL_ITEMS.filter(i => !resolvedHidden.includes(i.key));
+  const items = TOURNAMENT_PAGE_TABS.filter(i => !resolvedHidden.includes(i.key));
 
   return (
     <aside

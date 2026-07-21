@@ -3,14 +3,14 @@ import { Inter, Barlow_Condensed, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import SiteChrome from '@/components/SiteChrome';
 import Footer from '@/components/Footer';
-import BottomNav from '@/components/BottomNav';
+import ConsumerNav from '@/components/consumer/ConsumerNav';
 import { OrgNavProvider } from '@/components/OrgNavContext';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import ViewportKeyboardVars from '@/components/ViewportKeyboardVars';
 import LegacyInstallBanner from '@/components/LegacyInstallBanner';
 import { NO_FLASH_SCRIPT } from '@/lib/no-flash-script';
 
-const inter = Inter({
+const inter = Inter({ 
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-sans'
@@ -86,7 +86,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SiteChrome />
           <main id="main-content">{children}</main>
           <Footer />
-          <BottomNav />
+          {/* Persistent global bar on public tournament routes (Unified Home IA · Phase 5+3).
+              Self-gating (like the other root-mounted chrome): renders the Home·Scores·Chat·
+              Account bar (neutral, venue-following, client-resolved identity) ONLY on
+              /{orgSlug}/{tournamentSlug}/* — the bottom bar ≤900px, a slim top strip >900px. */}
+          <ConsumerNav variant="tournament" />
         </OrgNavProvider>
         {/* Install prompts are mounted per-context, not globally: the fan prompt on
             tournament pages and the member prompt in authenticated shells. The

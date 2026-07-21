@@ -1,6 +1,8 @@
 .nav {
   position: fixed;
-  top: 0;
+  /* Offset below the Phase 3 desktop global strip on tournament routes (the tournament
+     layout publishes --desktop-strip-h ≥901px); 0 on org/preview/marketing (var unset). */
+  top: var(--desktop-strip-h, 0px);
   left: 0;
   right: 0;
   z-index: 100;
@@ -362,8 +364,12 @@
   .hasEventHead .navShare button { transition: background 0.25s ease, border-color 0.25s ease; }
   /* Condensed bar: the actions centre on the (single) title line instead of
      hanging from the expanded header's top edge. */
+  /* Centre the actions cluster in the COLLAPSED header (its ~48px top band), NOT the
+     whole scrolled nav — the Phase 5 top-tab row (~45px) grows the scrolled nav to ~93px,
+     so a raw top:50% would sink the cluster ~20px into the tabs and (z-index:2) cover
+     their taps. 24px = half the collapsed .eventHead min-height (48px, below). */
   .hasEventHead.scrolled .navActions {
-    top: 50%;
+    top: 24px;
     transform: translateY(-50%);
   }
   .hasEventHead .navActions { transition: top 0.25s ease, transform 0.25s ease; }

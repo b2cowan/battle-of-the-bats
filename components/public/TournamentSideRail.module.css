@@ -13,7 +13,9 @@
 @media (min-width: 1024px) {
   .rail {
     position: fixed;
-    top: 0;
+    /* Sit below the Phase 3 desktop global strip (--desktop-strip-h, published by the
+       tournament layout ≥901px); 0 in the admin preview, which has no strip. */
+    top: var(--desktop-strip-h, 0px);
     left: 0;
     bottom: 0;
     width: 248px;

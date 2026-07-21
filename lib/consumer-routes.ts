@@ -6,6 +6,8 @@
  * instead of the marketing Navbar/Footer. Single source of truth so the shell layout,
  * SiteChrome, and Footer all agree on which routes are consumer-shell routes.
  */
+import { RESERVED_ORG_SLUGS } from './reserved-slugs';
+
 // NOTE: this is the "full consumer-shell tab" set — it drives the shell layout, the
 // marketing Navbar/Footer suppression, AND the warm nav skin. /auth lives physically inside
 // the (consumer) group (the tab bar mounts there) but is deliberately NOT here — sign-in /
@@ -32,4 +34,46 @@ export function isWarmJourneyPath(pathname: string): boolean {
 /** Routes that paint the warm ConsumerNav skin: the four consumer tabs + the warm sign-up journey. */
 export function isWarmSkinPath(pathname: string): boolean {
   return isConsumerShellPath(pathname) || isWarmJourneyPath(pathname);
+}
+
+// ── Tournament-chrome gate (Unified Home IA · Phase 5) ────────────────────────
+// Split out of isConsumerShellPath so the persistent global bar and the branded
+// event chrome (header + top tabs) can BOTH be true on /{orgSlug}/{tournamentSlug}/*.
+
+// Static children of app/[orgSlug]/ — org-level public pages + operator shells.
+// Next resolves these static segments BEFORE the dynamic [tournamentSlug], so a
+// tournament slug can never occupy one; excluding them keeps the global bar off
+// org pages AND off day-of ops shells (admin/coaches/scorekeeper/check-in/official/
+// league) by construction. Keep in sync with the app/[orgSlug]/ directory.
+const ORG_STATIC_SECTIONS = new Set([
+  'admin', 'archives', 'check-in', 'coaches', 'league', 'news', 'official',
+  'register', 'results', 'rules', 'schedule', 'scorekeeper', 'standings', 'teams',
+]);
+
+/**
+ * Public tournament routes — `/{orgSlug}/{tournamentSlug}[/...]`. Gates the root-mounted
+ * global consumer bar. (The branded event chrome — header + top tabs — gates independently
+ * via useParams + OrgNavContext; this predicate is the bar's gate.)
+ *
+ * seg[0] is checked against RESERVED_ORG_SLUGS — the CANONICAL "can't be an org slug" list
+ * (one source, reused, not a second drifting copy), so every real top-level route (/discover,
+ * /teams/[id], /platform/…, /tryout-response/…, …) is excluded; a real org slug is never
+ * reserved, so it passes through to the seg[1] section check.
+ *
+ * The bar mount pairs this with `useParams().tournamentSlug`, and BOTH checks are needed —
+ * neither subsumes the other:
+ *   • seg[1] in ORG_STATIC_SECTIONS excludes org-level public pages (`/{orgSlug}/teams…`) AND
+ *     every operator shell — crucially the admin PREVIEW (`/{org}/admin/tournaments/preview/
+ *     [tournamentSlug]`), whose route ALSO carries a `tournamentSlug` param, so the param check
+ *     alone can NOT keep the bar off it; `'admin'` in ORG_STATIC_SECTIONS is what does.
+ *   • The param is truthy ONLY on a matched `[tournamentSlug]` route, so if a new static child
+ *     dir is added under app/[orgSlug]/ and missed from ORG_STATIC_SECTIONS, that org page
+ *     (which lacks the param) still won't mis-mount the bar.
+ */
+export function showsTournamentChrome(pathname: string): boolean {
+  const seg = pathname.split('/').filter(Boolean);
+  if (seg.length < 2) return false;                 // '/' or org home '/{orgSlug}' — out of scope
+  if (RESERVED_ORG_SLUGS.has(seg[0])) return false; // seg[0] is a real top-level route, not an org
+  if (ORG_STATIC_SECTIONS.has(seg[1])) return false;
+  return true;
 }

@@ -1,19 +1,23 @@
 'use client';
 /**
  * components/public/TournamentAccountSheet.tsx — Phase 3 "one-home connective tissue,"
- * reshaped by Tournament Mobile Polish G5 (owner decision 2026-07-14).
+ * reshaped by Tournament Mobile Polish G5 (2026-07-14) and the Unified Home nav merge
+ * (Phase 5, 2026-07-21).
  *
- * TWO doors, one sheet:
- *   • Desktop (>900px): the signed-in account chip in the top bar (Phase 3, unchanged).
- *   • Mobile (≤900px): the bottom-nav "More" tab dispatches `flhq:open-tournament-sheet`
- *     — the chip hides (the header keeps only Share).
+ * The header chip is a TOOLS door, not an account door: it renders ONLY for a signed-in
+ * viewer who holds a hat on THIS event (coach / admin / official) — the sole in-page jump
+ * to Coach view / Open admin / Scorekeeper. Plain fans (signed-out, or signed-in with no
+ * hat) get NO chip: the global Account tab + the "Follow this tournament" strip already
+ * cover sign-in / account / follow, so a fan chip was redundant and ate header space
+ * (owner call 2026-07-21; the retired bottom-nav "More" tab was the old mobile door).
  *
- * The sheet now serves EVERY visitor, never empty (G5):
- *   • Signed in — the hats this account owns on THIS event (coach / admin / official),
- *     Following, Your FieldLogicHQ.
- *   • Signed out — a sign-in row plus this device's followed team.
- *   • Everyone — THIS EVENT: Notifications (the fan bell, relocated from the mobile
- *     header), News and Rules (their tab-bar slots moved here).
+ * The sheet (opened by that chip) carries the hat-holder's event-scoped rows plus a few
+ * shared conveniences:
+ *   • The hats this account owns on THIS event (coach / admin / official) + one-tap coach alerts.
+ *   • This event — the whole-event follow, follow-a-team, and the fan bell.
+ *   • The app install; sign out.
+ * RETIRED here (Phase 5): Following, Your FieldLogicHQ, Browse tournaments and Live
+ * scores (now the global Home/Scores/Account tabs); News + Rules (now top tabs).
  *
  * Identity is fetched CLIENT-SIDE via /api/public/tournament-viewer, never
  * server-rendered into the page: the service worker offline-caches public tournament
@@ -22,10 +26,10 @@
  * — the session check is a local read, no network. Auth transitions are SPA
  * navigations, so the chip re-resolves on sign-in/out (fan-alert-prefs precedent).
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-import { ArrowRight, Star, LayoutGrid, LogIn, LogOut, Megaphone, ScrollText, Bell, BellRing, Download, Compass, Radio } from 'lucide-react';
+import { ArrowRight, Star, LogIn, LogOut, Bell, BellRing, Download } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { getSession, signOut } from '@/lib/auth';
 import { createClient } from '@/lib/supabase-browser';
@@ -56,9 +60,6 @@ const HAT_META: Record<ViewerHat['kind'], { eyebrow: string; action: string }> =
   admin: { eyebrow: 'You run this event', action: 'Open admin' },
   official: { eyebrow: 'You officiate here', action: 'Scorekeeper' },
 };
-
-/** BottomNav's More tab opens the sheet through this event (single mount here). */
-export const OPEN_TOURNAMENT_SHEET_EVENT = 'flhq:open-tournament-sheet';
 
 /** One standard sheet row — icon · label/sub · chevron. Link when href is given,
  *  button otherwise. The hat rows (eyebrow + action) and CoachAlertsRow keep
@@ -206,17 +207,6 @@ export default function TournamentAccountSheet() {
     return () => data.subscription.unsubscribe();
   }, []);
 
-  // Mobile More tab → open here (the sheet mounts exactly once, in the Navbar).
-  // Registered once; the handler reads the CURRENT pathname through a ref so the
-  // listener isn't torn down and re-added on every navigation.
-  const pathnameRef = useRef(pathname);
-  useEffect(() => { pathnameRef.current = pathname; }, [pathname]);
-  useEffect(() => {
-    const onOpen = () => setOpenedAtPath(pathnameRef.current);
-    window.addEventListener(OPEN_TOURNAMENT_SHEET_EVENT, onOpen);
-    return () => window.removeEventListener(OPEN_TOURNAMENT_SHEET_EVENT, onOpen);
-  }, []);
-
   useEffect(() => {
     // No slugs → nothing to resolve; the render gate below keeps any previous
     // viewer from showing (the Navbar unmounts this component off tournament routes).
@@ -283,18 +273,19 @@ export default function TournamentAccountSheet() {
 
   return (
     <>
-      {/* Desktop-only account chip (Phase 3). Hidden ≤900px by CSS — the More tab
-          is mobile's door. Anonymous visitors have no chip on any width. */}
-      {viewer && (
+      {/* Header chip = the event-scoped TOOLS door for a signed-in coach / admin / official
+          (the only in-page jump to Coach view / Open admin / Scorekeeper). NOT shown for
+          plain fans — signed-out, or signed-in with no hat here — because the global Account
+          tab + the "Follow this tournament" strip already cover sign-in / account / follow,
+          so a fan chip here was redundant and ate header space (owner call 2026-07-21). */}
+      {viewer && viewer.hats.length > 0 && (
         <button
           type="button"
           className={coachHat ? `${styles.chip} ${styles.chipCoach}` : styles.chip}
           onClick={() => setOpenedAtPath(pathname)}
-          aria-label={coachHat ? 'Your account on this event — you coach here' : 'Your account on this event'}
+          aria-label={coachHat ? 'Your tools on this event — you coach here' : 'Your tools on this event'}
         >
           {viewer.initials}
-          {/* N3b: the chip earns its space by saying WHY it's there (approved mockup:
-              initials + role, desktop only — the chip is already hidden ≤900px). */}
           {coachHat && <span className={styles.chipRole}>· Coach</span>}
         </button>
       )}
@@ -336,77 +327,48 @@ export default function TournamentAccountSheet() {
           </>
         )}
 
-        {/* ── FieldLogicHQ: every platform-level (not event-level) door in one
-            labeled group — identity (sign in, or Following/Your FieldLogicHQ),
-            the app install, and the two platform-wide exits (N1, ratified §8
-            decision). Kept FIRST, right where sign-in already sat, so the
-            highest-value conversion row stays above the fold — merging it
-            into the group that used to trail after "This event" would have
-            buried it below Follow/Notifications/News/Rules (owner UX review
-            2026-07-17: the old unlabeled top group and the labeled bottom
-            FieldLogicHQ group were the same category of thing, split in two). ── */}
-        <p className={styles.sectionKicker}>FieldLogicHQ</p>
-        <div className={styles.rows}>
-          {!signedIn && (
-            <SheetRow
-              icon={<LogIn size={15} strokeWidth={1.8} aria-hidden />}
-              label="Sign in"
-              sub="Follow everywhere & get score alerts"
-              href={`/auth/login?next=${encodeURIComponent(pathname || publicBase)}`}
-              onClick={close}
-            />
-          )}
-          {signedIn && (
-            <SheetRow
-              icon={<Star size={15} strokeWidth={1.8} aria-hidden />}
-              label="Following"
-              sub="Your followed teams"
-              href="/following"
-              onClick={close}
-            />
-          )}
-          {signedIn && (
-            <SheetRow
-              icon={<LayoutGrid size={15} strokeWidth={1.8} aria-hidden />}
-              label="Your FieldLogicHQ"
-              sub="All workspaces & following"
-              href="/discover"
-              onClick={close}
-            />
-          )}
-          {/* Dispatch force-shows the shared install prompt (bypasses its dismissal gates). */}
-          {showGetApp && (
-            <SheetRow
-              icon={<Download size={15} strokeWidth={1.8} aria-hidden />}
-              label="Get the app"
-              sub="FieldLogicHQ on your home screen"
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('flhq:show-install'));
-                close();
-              }}
-            />
-          )}
-          <SheetRow
-            icon={<Compass size={15} strokeWidth={1.8} aria-hidden />}
-            label="Browse tournaments"
-            sub="FieldLogicHQ Discover"
-            href="/discover"
-            onClick={close}
-          />
-          <SheetRow
-            icon={<Radio size={15} strokeWidth={1.8} aria-hidden />}
-            label="Live scores"
-            sub="Everything on right now"
-            href="/scores"
-            onClick={close}
-          />
-        </div>
+        {/* ── FieldLogicHQ (Phase 5): the four cross-app doors that used to live here —
+            Following, Your FieldLogicHQ, Browse tournaments, Live scores — RETIRED; the
+            always-present global bar (Home·Scores·Chat·Account) covers them now. What
+            remains is the signed-out sign-in prompt (kept above the fold — the highest-
+            value conversion row) and the app install. Rendered only when at least one
+            row will show, so the group never sits empty for a signed-in installed app. ── */}
+        {(!signedIn || showGetApp) && (
+          <>
+            {/* Kept its "FieldLogicHQ" kicker so this stays a labeled group beside the
+                labeled "This event" group below — not an orphaned unlabeled block. */}
+            <p className={styles.sectionKicker}>FieldLogicHQ</p>
+            <div className={styles.rows}>
+              {!signedIn && (
+                <SheetRow
+                  icon={<LogIn size={15} strokeWidth={1.8} aria-hidden />}
+                  label="Sign in"
+                  sub="Follow everywhere & get score alerts"
+                  href={`/auth/login?next=${encodeURIComponent(pathname || publicBase)}`}
+                  onClick={close}
+                />
+              )}
+              {/* Dispatch force-shows the shared install prompt (bypasses its dismissal gates). */}
+              {showGetApp && (
+                <SheetRow
+                  icon={<Download size={15} strokeWidth={1.8} aria-hidden />}
+                  label="Get the app"
+                  sub="FieldLogicHQ on your home screen"
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent('flhq:show-install'));
+                    close();
+                  }}
+                />
+              )}
+            </div>
+          </>
+        )}
 
-        {/* ── This event: the whole-event follow, the device-level team follow,
-            notifications, and the pages that left the tab bar (G5). Rendered only when at least
-            one row will show, so the "This event" kicker never sits alone over an empty group
-            (e.g. no tournament name + all doors hidden + no bell). ── */}
-        {(tournamentName || showBell || (!signedIn && !hidden('teams')) || !hidden('news') || !hidden('rules')) && (
+        {/* ── This event: the whole-event follow, the device-level team follow, and the
+            fan notification bell. News + Rules left this group in Phase 5 — they are real
+            top tabs again. Rendered only when at least one row will show, so the "This
+            event" kicker never sits alone over an empty group. ── */}
+        {(tournamentName || showBell || (!signedIn && !hidden('teams'))) && (
           <>
             <p className={styles.sectionKicker}>This event</p>
             <div className={styles.rows}>
@@ -439,24 +401,6 @@ export default function TournamentAccountSheet() {
                 />
               ))}
               {showBell && <FanNotificationBell variant="row" />}
-              {!hidden('news') && (
-                <SheetRow
-                  icon={<Megaphone size={15} strokeWidth={1.8} aria-hidden />}
-                  label="News & announcements"
-                  sub="Latest from the organizer"
-                  href={`${publicBase}/news`}
-                  onClick={close}
-                />
-              )}
-              {!hidden('rules') && (
-                <SheetRow
-                  icon={<ScrollText size={15} strokeWidth={1.8} aria-hidden />}
-                  label="Rules"
-                  sub="Format & tie-breakers"
-                  href={`${publicBase}/rules`}
-                  onClick={close}
-                />
-              )}
             </div>
           </>
         )}

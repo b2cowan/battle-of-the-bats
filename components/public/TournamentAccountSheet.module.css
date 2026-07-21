@@ -30,9 +30,9 @@
   outline-offset: 2px;
 }
 
-/* N3b: a coach at their own event gets a labeled pill chip — identity, then the
-   offer (approved mockup). Desktop-only by construction: the chip itself is
-   hidden ≤900px (G5), so no extra breakpoint is needed here. */
+/* N3b: a coach at their own event gets a labeled pill chip on desktop — identity,
+   then the offer (approved mockup). ≤900px the chip reverts to the plain circle
+   (initials only; the "· Coach" label hides) so it fits the mobile actions row. */
 .chipCoach {
   width: auto;
   gap: 0.3rem;
@@ -191,9 +191,17 @@
   display: inline-flex;
 }
 
-/* G5: mobile's door is the bottom-nav More tab — the chip is desktop-only. */
+/* Phase 5: the chip shows only for a hat-holding coach/admin/official (their event-scoped
+   tools door), on every width. On mobile a coach's labeled pill reverts to the plain
+   initials circle so it fits the compact actions row (share + chip); the "· Coach" text is
+   a desktop-only nicety. */
 @media (max-width: 900px) {
-  .chip { display: none; }
+  .chipRole { display: none; }
+  .chipCoach {
+    width: 34px;
+    padding: 0;
+    border-radius: 50%;
+  }
 }
 
 /* Sign out — separated from the row groups above it, no section kicker (it isn't

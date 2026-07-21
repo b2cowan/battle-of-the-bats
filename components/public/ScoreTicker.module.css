@@ -2,7 +2,7 @@
   position: fixed;
   /* --nav-visual-h tracks the mobile event header's live height (expanded ↔
      condensed on scroll); unset elsewhere, so this falls back to the bar. */
-  top: var(--nav-visual-h, var(--nav-height));
+  top: calc(var(--nav-visual-h, var(--nav-height)) + var(--desktop-strip-h, 0px));
   left: 0;
   right: 0;
   height: 40px;
@@ -138,7 +138,7 @@
 /* ── Minimized restore bar — slim, static, same position as the full ticker. ── */
 .tickerMin {
   position: fixed;
-  top: var(--nav-visual-h, var(--nav-height));
+  top: calc(var(--nav-visual-h, var(--nav-height)) + var(--desktop-strip-h, 0px));
   left: 0;
   right: 0;
   height: 24px;

@@ -1,0 +1,111 @@
+/* Tournament top tabs (Unified Home IA · Phase 5). Rendered inside the Navbar's
+   fixed mobile event header, directly beneath it — a horizontally-scrolling page
+   nav that replaces the retired tournament bottom bar. Mobile/tablet-landscape
+   only (≤900px), exactly where the event header shows and the desktop side rail
+   does not. Skin follows the venue via tokens the tournament :root overrides —
+   no literal colour here (dark event → dark, light event → light, active tab
+   → --primary-light). */
+
+.tabs {
+  /* The event header owns identity ≤900px; the tabs live only there. Hidden
+     elsewhere (tablet keeps the top-bar links; desktop uses the side rail). */
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .tabs {
+    display: block;
+    position: relative;
+    /* Frosted, venue-following ground so page content scrolling underneath the fixed
+       nav never bleeds through the tab row. Uses --nav-bg-scrolled (not --nav-mobile-bg)
+       so it MATCHES the outer nav's own frost once scrolled — the collapsed event header
+       above shows that same token, so there's no brightness seam at their boundary. */
+    background: var(--nav-bg-scrolled);
+    /* -webkit- BEFORE standard: the minifier keeps the LAST of the alias pair,
+       so standard-last is what ships (backdrop-filter prefix-order gotcha). */
+    -webkit-backdrop-filter: blur(var(--blur-bar));
+    backdrop-filter: blur(var(--blur-bar));
+    /* No top border — the event header above already carries its bottom hairline.
+       The bottom hairline separates the tabs from the ticker / page content below. */
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* Preview standalone mount (Phase 3): the row is mounted on its own (not inside the
+     measured live event-header nav), so pin it fixed just below the preview's top bar.
+     Live usage stays in normal flow inside the nav. */
+  .tabsFixed {
+    position: fixed;
+    top: var(--nav-height);
+    left: 0;
+    right: 0;
+    z-index: 90;
+  }
+
+  /* Solid fallback where the browser can't frost. */
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .tabs { background: var(--bg); }
+  }
+
+  /* The scroll container is transparent (the bar's frosted ground shows through)
+     and edge-masked so partially-scrolled tabs dissolve into the bar at both
+     edges — the "there's more" affordance. `black` = opaque alpha for the mask;
+     no colour is painted, so it stays token-clean. The fade ramp = the track's own
+     edge padding (0.6rem), so at rest the fade covers ONLY the empty edge padding —
+     the first tab's content + its active underline start past it, fully opaque (a wider
+     ramp used to dim the leftmost active tab's underline at scrollLeft 0). Content that
+     scrolls under the padding still fades — the peek cue is preserved. */
+  .scroller {
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 0.6rem, black calc(100% - 0.6rem), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 0.6rem, black calc(100% - 0.6rem), transparent 100%);
+  }
+  .scroller::-webkit-scrollbar { display: none; }
+
+  .track {
+    display: flex;
+    align-items: stretch;
+    /* Centre the tabs: when few pages are published (playoff-only auto-hides standings,
+       or the organizer hid several) the 1–3 remaining tabs sit centred instead of
+       left-packed with dead space on the right. When they overflow (max-content > 100%)
+       there's no free space, so this is inert and the scroller still starts at the left. */
+    justify-content: center;
+    gap: 0.1rem;
+    width: max-content;
+    min-width: 100%;
+    padding: 0 0.6rem;
+  }
+
+  .tab {
+    scroll-snap-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    /* Tap floor (Tournament Mobile Polish baseline) — the row reads ~44px. */
+    min-height: 44px;
+    padding: 0 0.7rem;
+    white-space: nowrap;
+    text-decoration: none;
+    font-family: var(--font-data);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: var(--white-45);
+    border-bottom: 2px solid transparent;
+    transition: color 0.18s ease, border-color 0.18s ease;
+  }
+  .tab svg { flex-shrink: 0; opacity: 0.9; }
+  .tab:hover { color: var(--white-70); }
+  .tab:active { opacity: 0.65; }
+
+  .tab.active {
+    color: var(--primary-light);
+    border-bottom-color: var(--primary-light);
+  }
+}

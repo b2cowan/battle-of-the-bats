@@ -15,13 +15,18 @@
 
 /* ── Cache config ──────────────────────────────────────────────────────────── */
 
+// v6: Unified Home IA · Phase 5 (nav merge) — public tournament pages now render the
+//     persistent global bar (Home·Scores·Chat·Account) + a top-tab row, and the
+//     tournament bottom bar is retired. Bump forces a clean refresh so no old cached
+//     tournament HTML serves the pre-merge nav. Identity stays CLIENT-resolved, so the
+//     cached HTML is still anonymous (shared-device replay re-verified on this bump).
 // v5: Unified Home IA — new /chat top-level route added to NEVER_CACHE_PREFIXES;
 //     bump forces a clean refresh so no old shell serves a pre-/chat nav.
 // v4: purge DATA_CACHE copies of /api/public/tournament-viewer — per-user identity
 //     had been cached in the shared data cache (/review 2026-07-15).
 // v3: unified-app Phase 0 — clean refresh of pages that referenced old
 //     per-tournament/scorekeeper manifests.
-const CACHE_VERSION = 'v5';
+const CACHE_VERSION = 'v6';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON

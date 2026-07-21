@@ -18,7 +18,7 @@
  */
 export const RESERVED_ORG_SLUGS: ReadonlySet<string> = new Set([
   // Consumer shell + logged-out front door
-  'discover', 'scores', 'following', 'account',
+  'discover', 'scores', 'chat', 'following', 'account',
   // Auth / entry / workspace switcher
   'auth', 'home', 'start', 'my', 'login', 'logout', 'signup', 'onboarding',
   // Platform / admin / API

@@ -320,12 +320,12 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-coach-own-team-alerts',
           question: 'How do I get score alerts for my own team?',
-          answerText: 'On the tournament’s public site (use the Fan view link), open your account menu — your initials chip on a computer, the More tab on your phone — and tap "Get alerts for your team." One tap turns on score alerts for your account and this device: a push when your team’s game goes live and a Final when it ends (offered on Tournament Plus events and above). The "Highlight my team" button on your tournament record is different — it only pins your team on this device’s public schedule and scorebug, and does not send alerts.',
+          answerText: 'On the tournament’s public site (use the Fan view link), open your account menu — tap your initials chip in the top-right of the header (it’s there on computer and phone alike now) — and tap "Get alerts for your team." One tap turns on score alerts for your account and this device: a push when your team’s game goes live and a Final when it ends (offered on Tournament Plus events and above). The "Highlight my team" button on your tournament record is different — it only pins your team on this device’s public schedule and scorebug, and does not send alerts.',
           keywords: ['score alerts', 'own team alerts', 'get alerts for your team', 'coach alerts', 'push notification', 'highlight my team', 'pin team', 'follow team'],
           popular: true,
           answer: (
             <>
-              <p>On the tournament&apos;s public site (the <strong>Fan view</strong> link takes you there), open your account menu — your initials chip on a computer, the <strong>More</strong> tab on your phone — and tap <strong>Get alerts for your team</strong>. One tap turns on score alerts for your account and the device you&apos;re holding: a push when your team&apos;s game goes live and a &ldquo;Final&rdquo; when it ends. (Alerts are offered on Tournament Plus events and above.)</p>
+              <p>On the tournament&apos;s public site (the <strong>Fan view</strong> link takes you there), open your account menu — tap your <strong>initials chip</strong> in the top-right of the header (it&apos;s there on computer and phone alike now) — and tap <strong>Get alerts for your team</strong>. One tap turns on score alerts for your account and the device you&apos;re holding: a push when your team&apos;s game goes live and a &ldquo;Final&rdquo; when it ends. (Alerts are offered on Tournament Plus events and above.)</p>
               <p>The <strong>Highlight my team</strong> button on your tournament record is different — it only pins your team front-and-centre on <em>this device&apos;s</em> view of the public schedule and scorebug. It does <strong>not</strong> send alerts.</p>
             </>
           ),
