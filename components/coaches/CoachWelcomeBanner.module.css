@@ -3,9 +3,9 @@
   margin-bottom: 1.75rem;
   padding: 1.5rem 1.5rem 1.4rem;
   background:
-    linear-gradient(180deg, rgba(217, 249, 157, 0.06), rgba(217, 249, 157, 0) 60%),
+    linear-gradient(180deg, rgba(var(--logic-lime-rgb), 0.06), rgba(var(--logic-lime-rgb), 0) 60%),
     var(--surface);
-  border: 1px solid rgba(217, 249, 157, 0.28);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
   border-radius: var(--radius);
   box-shadow: var(--highlight-top);
 }
@@ -46,8 +46,8 @@
   width: 2.5rem;
   height: 2.5rem;
   border-radius: 999px;
-  background: rgba(217, 249, 157, 0.14);
-  border: 1px solid rgba(217, 249, 157, 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.14);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
   color: var(--logic-lime);
 }
 
@@ -109,8 +109,8 @@
 }
 .resourceLink:hover {
   color: var(--logic-lime);
-  border-color: rgba(217, 249, 157, 0.4);
-  background: rgba(217, 249, 157, 0.08);
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.08);
 }
 
 @media (max-width: 600px) {

@@ -129,7 +129,7 @@
     transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .dropItem:hover { background: rgba(79, 163, 224, 0.08); color: #fff; }
+  .dropItem:hover { background: rgba(79, 163, 224, 0.08); color: var(--white); }
 
   .dropActive {
     background: rgba(79, 163, 224, 0.12);

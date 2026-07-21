@@ -864,7 +864,7 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
 .transferGroup select {
   background: #111111;
   border: 1px solid var(--border-2);
-  color: #ffffff;
+  color: var(--white);
   padding: 0.75rem;
   border-radius: var(--radius-sm);
   font-size: 0.95rem;

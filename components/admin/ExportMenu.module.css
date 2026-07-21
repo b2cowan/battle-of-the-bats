@@ -43,7 +43,7 @@
   min-width: 220px;
   max-width: calc(100vw - 1.5rem);
   background: var(--hud-surface, #111827);
-  border: 1px solid rgba(30, 58, 138, 0.35);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
   border-radius: 2px;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
   padding: 0.3rem 0;

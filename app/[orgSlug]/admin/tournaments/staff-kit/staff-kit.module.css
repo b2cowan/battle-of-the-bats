@@ -111,7 +111,7 @@
   }
   .card {
     border: 1px solid #ccc;
-    background: #fff;
+    background: var(--white);
     break-inside: avoid;
   }
   .cardTitle { color: #000; }

@@ -177,7 +177,7 @@
 }
 
 .charCountWarn {
-  color: #f59e0b;
+  color: var(--warning);
   font-weight: 600;
 }
 
@@ -216,7 +216,7 @@
 .unsavedLabel {
   font-size: 0.82rem;
   font-weight: 600;
-  color: #f59e0b;
+  color: var(--warning);
 }
 
 /* ── Access denied ──────────────────────────── */
@@ -277,7 +277,7 @@
 }
 
 .swatchActive {
-  border-color: #fff;
+  border-color: var(--white);
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
 }
 
@@ -287,7 +287,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--white);
   filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
 }
 
@@ -297,7 +297,7 @@
 }
 
 .swatchCustom.swatchActive {
-  border-color: #fff;
+  border-color: var(--white);
 }
 
 .planLock {
@@ -342,7 +342,7 @@
   align-items: center;
   gap: 0.4rem;
   font-size: 0.82rem;
-  color: #f59e0b;
+  color: var(--warning);
   font-weight: 600;
   padding: 0.5rem 0.75rem;
   background: rgba(245, 158, 11, 0.1);
@@ -381,7 +381,7 @@
   font-weight: 600;
   padding: 0.35rem 0.9rem;
   background: var(--primary);
-  color: #fff;
+  color: var(--white);
   border: none;
   border-radius: 2px;
   cursor: default;
@@ -622,7 +622,7 @@
   align-items: center;
   gap: 0.75rem;
   margin-bottom: 1rem;
-  color: #f59e0b;
+  color: var(--warning);
 }
 
 .modalHeader h3 {
@@ -842,7 +842,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--white);
 }
 
 .stockLockBadge {
@@ -865,7 +865,7 @@
   align-items: center;
   gap: 0.5rem;
   font-size: 0.82rem;
-  color: #f59e0b;
+  color: var(--warning);
   font-weight: 600;
   padding: 0.6rem 0.875rem;
   background: rgba(245, 158, 11, 0.08);

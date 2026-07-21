@@ -218,8 +218,8 @@
   height: 28px;
   border-radius: var(--radius-sm);
   color: var(--logic-lime);
-  background: rgba(217, 249, 157, 0.1);
-  border: 1px solid rgba(217, 249, 157, 0.22);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
 }
 
 /* Tournament history rows */

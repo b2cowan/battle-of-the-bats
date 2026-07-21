@@ -153,7 +153,7 @@
     background: rgba(255,255,255,0.075);
     border: 1px solid rgba(var(--blueprint-blue-rgb), 0.44);
     border-radius: 2px;
-    color: #fff;
+    color: var(--white);
     font-size: 0.9rem;
     font-weight: 800;
     line-height: 1.25;
@@ -213,7 +213,7 @@
   .livePill {
     font-size: 0.72rem;
     font-weight: 700;
-    color: #22c55e;
+    color: var(--success);
     letter-spacing: 0.08em;
   }
 
@@ -248,7 +248,7 @@
     transition: background 0.15s ease, color 0.15s ease;
   }
 
-  .dropItem:hover { background: rgba(var(--blueprint-blue-rgb), 0.1); color: #fff; }
+  .dropItem:hover { background: rgba(var(--blueprint-blue-rgb), 0.1); color: var(--white); }
 
   .dropActive {
     background: rgba(var(--logic-lime-rgb), 0.08);

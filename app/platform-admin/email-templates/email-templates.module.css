@@ -171,8 +171,8 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 0.15rem 0.45rem;
-  border: 1px solid rgba(217, 249, 157, 0.4);
-  background: rgba(217, 249, 157, 0.07);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.07);
   color: var(--logic-lime);
 }
 
@@ -337,8 +337,8 @@
   font-family: var(--font-mono, monospace);
   font-size: 0.62rem;
   padding: 0.15rem 0.45rem;
-  background: rgba(30, 58, 138, 0.2);
-  border: 1px solid rgba(30, 58, 138, 0.4);
+  background: rgba(var(--blueprint-blue-rgb), 0.2);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
   color: rgba(241, 245, 249, 0.65);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
@@ -346,7 +346,7 @@
 }
 
 .varChip:hover {
-  background: rgba(30, 58, 138, 0.4);
+  background: rgba(var(--blueprint-blue-rgb), 0.4);
   color: var(--fl-text);
 }
 
@@ -413,7 +413,7 @@
   text-transform: uppercase;
   padding: 0.5rem 1rem;
   background: transparent;
-  border: 1px solid rgba(30, 58, 138, 0.5);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
   color: rgba(148, 163, 184, 0.9);
   cursor: pointer;
   display: inline-flex;
@@ -424,7 +424,7 @@
 }
 
 .testBtn:hover:not(:disabled) {
-  border-color: rgba(30, 58, 138, 0.8);
+  border-color: rgba(var(--blueprint-blue-rgb), 0.8);
   color: var(--fl-text);
 }
 
@@ -478,10 +478,10 @@
 
 .previewFrame {
   background: var(--hud-surface);
-  border: 1px solid rgba(30, 58, 138, 0.35);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
   padding: 1.5rem;
   font-family: Inter, -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #F1F5F9;
+  color: var(--fl-text);
   font-size: 0.82rem;
   line-height: 1.65;
   overflow: hidden;

@@ -44,8 +44,8 @@
   width: 1.5rem;
   height: 1.5rem;
   border-radius: 999px;
-  background: rgba(217, 249, 157, 0.14);
-  border: 1px solid rgba(217, 249, 157, 0.3);
+  background: rgba(var(--logic-lime-rgb), 0.14);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
   color: var(--logic-lime);
   font-family: var(--font-data, monospace);
   font-size: 0.78rem;

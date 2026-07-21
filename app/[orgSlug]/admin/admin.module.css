@@ -15,8 +15,8 @@
   min-width: 0;
   background: var(--hud-surface);
   background-image:
-    linear-gradient(to right, rgba(30,58,138,0.09) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(30,58,138,0.09) 1px, transparent 1px);
+    linear-gradient(to right, rgba(var(--blueprint-blue-rgb), 0.09) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(var(--blueprint-blue-rgb), 0.09) 1px, transparent 1px);
   background-size: 40px 40px;
 }
 
@@ -61,8 +61,8 @@
     /* Quieter blueprint grid on small screens — lighter paint, less busy behind
        dense content (desktop keeps the 40px / 0.09 grid). */
     background-image:
-      linear-gradient(to right, rgba(30, 58, 138, 0.05) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(30, 58, 138, 0.05) 1px, transparent 1px);
+      linear-gradient(to right, rgba(var(--blueprint-blue-rgb), 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(var(--blueprint-blue-rgb), 0.05) 1px, transparent 1px);
     background-size: 28px 28px;
   }
 

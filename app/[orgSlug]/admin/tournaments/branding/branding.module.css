@@ -336,7 +336,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--white);
 }
 
 .swatchCustom {
@@ -358,7 +358,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--white);
 }
 
 .customPickers {
@@ -660,7 +660,7 @@
 }
 
 .modePreviewDark .previewHeroText strong {
-  color: #FFFFFF;
+  color: var(--white);
 }
 
 .modePreviewDark .previewHeroText > span:last-child {
@@ -716,7 +716,7 @@
 .previewPrimaryDark,
 .previewPrimaryLight {
   background: var(--primary);
-  color: #FFFFFF;
+  color: var(--white);
   border: 1px solid var(--primary);
 }
 

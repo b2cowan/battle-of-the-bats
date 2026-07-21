@@ -18,7 +18,7 @@
   /* Soft lime glow from the top reads as an intentional illustration, not a
      blank box. Literal lime RGB (217,249,157) is the resolved `--logic-lime`. */
   background:
-    radial-gradient(110% 80% at 50% 0%, rgba(217, 249, 157, 0.07), transparent 55%),
+    radial-gradient(110% 80% at 50% 0%, rgba(var(--logic-lime-rgb), 0.07), transparent 55%),
     var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -50,9 +50,9 @@
   height: 52px;
   border-radius: var(--radius);
   color: var(--logic-lime);
-  background: rgba(217, 249, 157, 0.1);
-  border: 1px solid rgba(217, 249, 157, 0.25);
-  box-shadow: 0 0 24px rgba(217, 249, 157, 0.15);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
+  box-shadow: 0 0 24px rgba(var(--logic-lime-rgb), 0.15);
 }
 
 .compact .medallion {

@@ -14,7 +14,7 @@
 
 .kicker {
   margin: 0 0 0.25rem;
-  color: #d9f99d;
+  color: var(--logic-lime);
   font-family: var(--font-data);
   font-size: 0.68rem;
   font-weight: 800;
@@ -50,7 +50,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #111827;
+  background: var(--surface);
   color: #e2e8f0;
 }
 
@@ -69,10 +69,10 @@
   gap: 0.15rem 0.55rem;
   align-items: center;
   padding: 0.8rem;
-  border: 1px solid rgba(30, 58, 138, 0.45);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
   border-radius: 8px;
-  background: #111827;
-  color: #94a3b8;
+  background: var(--surface);
+  color: var(--data-gray);
 }
 
 .stat span {
@@ -85,7 +85,7 @@
 
 .stat small {
   grid-column: 1 / -1;
-  color: #94a3b8;
+  color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 0.66rem;
   font-weight: 800;
@@ -107,10 +107,10 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0 0.75rem;
-  border: 1px solid rgba(30, 58, 138, 0.55);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.55);
   border-radius: 6px;
-  background: #111827;
-  color: #94a3b8;
+  background: var(--surface);
+  color: var(--data-gray);
 }
 
 .dateControl input,
@@ -129,9 +129,9 @@
 .select {
   min-height: 44px;
   padding: 0 0.75rem;
-  border: 1px solid rgba(30, 58, 138, 0.55);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.55);
   border-radius: 6px;
-  background: #111827;
+  background: var(--surface);
 }
 
 .todayButton,
@@ -151,14 +151,14 @@
 .statusTab,
 .statusTabActive {
   padding: 0 0.55rem;
-  background: #0f172a;
-  color: #94a3b8;
+  background: var(--surface-2);
+  color: var(--data-gray);
   font-size: 0.68rem;
 }
 
 .statusTabActive {
-  border-color: #d9f99d;
-  background: rgba(217, 249, 157, 0.12);
+  border-color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.12);
   color: #f8fafc;
 }
 
@@ -169,7 +169,7 @@
   padding: 0.85rem 1rem;
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 8px;
-  background: #111827;
+  background: var(--surface);
   color: #cbd5e1;
   font-size: 0.83rem;
   line-height: 1.45;
@@ -183,7 +183,7 @@
   text-transform: uppercase;
 }
 
-.notice_success { border-color: rgba(217, 249, 157, 0.42); }
+.notice_success { border-color: rgba(var(--logic-lime-rgb), 0.42); }
 .notice_warning { border-color: rgba(245, 158, 11, 0.52); }
 .notice_danger { border-color: rgba(239, 68, 68, 0.48); }
 .notice_info { border-color: rgba(59, 130, 246, 0.42); }
@@ -198,8 +198,8 @@
   display: inline-flex;
   align-items: center;
   border-radius: 6px;
-  background: #d9f99d;
-  color: #0a0a0a;
+  background: var(--logic-lime);
+  color: var(--bg);
   font-family: var(--font-data);
   font-size: 0.74rem;
   font-weight: 700;
@@ -217,7 +217,7 @@
 .loadingState span {
   min-height: 126px;
   border-radius: 8px;
-  background: linear-gradient(90deg, #111827 0%, #172036 50%, #111827 100%);
+  background: linear-gradient(90deg, var(--surface) 0%, #172036 50%, var(--surface) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite;
 }
@@ -227,10 +227,10 @@
   justify-items: center;
   gap: 0.65rem;
   padding: 2.2rem 1rem;
-  border: 1px solid rgba(30, 58, 138, 0.45);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
   border-radius: 8px;
-  background: #111827;
-  color: #94a3b8;
+  background: var(--surface);
+  color: var(--data-gray);
   text-align: center;
 }
 
@@ -254,9 +254,9 @@
   width: 100%;
   min-height: 142px;
   padding: 1rem;
-  border: 1px solid #1e3a8a;
+  border: 1px solid var(--blueprint-blue);
   border-radius: 8px;
-  background: #111827;
+  background: var(--surface);
   color: inherit;
   text-align: left;
 }
@@ -267,7 +267,7 @@
 
 .gameCard_scheduled:hover,
 .gameCard_submitted:hover {
-  border-color: #d9f99d;
+  border-color: var(--logic-lime);
 }
 
 .gameCard_submitted {
@@ -276,8 +276,8 @@
 }
 
 .gameCard_completed {
-  border-color: rgba(217, 249, 157, 0.32);
-  background: rgba(30, 58, 138, 0.18);
+  border-color: rgba(var(--logic-lime-rgb), 0.32);
+  background: rgba(var(--blueprint-blue-rgb), 0.18);
 }
 
 .gameCard_cancelled {
@@ -290,7 +290,7 @@
   align-items: center;
   gap: 0.4rem;
   min-width: 0;
-  color: #94a3b8;
+  color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 0.68rem;
   font-weight: 800;
@@ -319,12 +319,12 @@
 }
 
 .status_completed {
-  border-color: rgba(217, 249, 157, 0.45);
-  color: #d9f99d;
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+  color: var(--logic-lime);
 }
 
 .status_cancelled {
-  color: #94a3b8;
+  color: var(--data-gray);
 }
 
 .matchup {
@@ -355,14 +355,14 @@
 }
 
 .teamBlock strong {
-  color: #d9f99d;
+  color: var(--logic-lime);
   font-family: var(--font-data);
   font-size: 2.2rem;
   line-height: 1;
 }
 
 .versus {
-  color: #94a3b8;
+  color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 0.75rem;
   font-weight: 900;
@@ -373,7 +373,7 @@
 
 .cardAction {
   grid-column: 1 / -1;
-  color: #94a3b8;
+  color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 0.68rem;
   font-weight: 800;
@@ -396,9 +396,9 @@
 .scoreSheet {
   width: min(100%, 520px);
   padding: 1rem;
-  border: 1px solid #1e3a8a;
+  border: 1px solid var(--blueprint-blue);
   border-radius: 8px;
-  background: #111827;
+  background: var(--surface);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
@@ -444,10 +444,10 @@
 .scoreGrid input {
   width: 100%;
   min-height: 72px;
-  border: 1px solid rgba(30, 58, 138, 0.7);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.7);
   border-radius: 8px;
   background: #020617;
-  color: #d9f99d;
+  color: var(--logic-lime);
   font-family: var(--font-data);
   font-size: 2.8rem;
   font-weight: 900;
@@ -456,7 +456,7 @@
 }
 
 .scoreGrid input.inputError {
-  border-color: #ef4444;
+  border-color: var(--danger);
 }
 
 /* J8-007: thumb steppers + brighter input border. A never-trained volunteer can tap −/+ without a
@@ -468,25 +468,25 @@
   gap: 0.4rem;
 }
 .scoreStepper .scoreInput {
-  border-color: rgba(217, 249, 157, 0.55);
+  border-color: rgba(var(--logic-lime-rgb), 0.55);
 }
 .stepBtn {
   min-height: 48px;
-  border: 1px solid rgba(217, 249, 157, 0.45);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
   border-radius: 8px;
-  background: rgba(217, 249, 157, 0.1);
-  color: #d9f99d;
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
   font-family: var(--font-data);
   font-size: 1.8rem;
   font-weight: 900;
   line-height: 1;
   cursor: pointer;
 }
-.stepBtn:active { background: rgba(217, 249, 157, 0.22); }
+.stepBtn:active { background: rgba(var(--logic-lime-rgb), 0.22); }
 
 .scoreDivider {
   align-self: center;
-  color: #94a3b8;
+  color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 1.4rem;
   font-weight: 900;
@@ -517,25 +517,25 @@
   color: #fcd9a3;
 }
 .policyNote[data-tone='final'] {
-  border-color: rgba(217, 249, 157, 0.45);
-  background: rgba(217, 249, 157, 0.09);
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+  background: rgba(var(--logic-lime-rgb), 0.09);
   color: #e6f5c4;
 }
 
 /* J8-006: "now" / up-next signal on the soonest un-scored card — a left stripe + a lime chip so the
    volunteer can tell at a glance which game to score, instead of an undifferentiated stack. */
 .gameCardNow {
-  border-color: rgba(217, 249, 157, 0.6);
+  border-color: rgba(var(--logic-lime-rgb), 0.6);
   border-left-width: 4px;
-  box-shadow: 0 0 0 1px rgba(217, 249, 157, 0.25);
+  box-shadow: 0 0 0 1px rgba(var(--logic-lime-rgb), 0.25);
 }
 .nowBadge {
   justify-self: end;
   align-self: start;
   padding: 0.24rem 0.5rem;
   border-radius: 4px;
-  background: #d9f99d;
-  color: #0a0a0a;
+  background: var(--logic-lime);
+  color: var(--bg);
   font-family: var(--font-data);
   font-size: 0.62rem;
   font-weight: 900;
@@ -561,9 +561,9 @@
   justify-content: center;
   gap: 0.45rem;
   padding: 0 1rem;
-  border-color: #d9f99d;
-  background: #d9f99d;
-  color: #0a0a0a;
+  border-color: var(--logic-lime);
+  background: var(--logic-lime);
+  color: var(--bg);
 }
 
 .primaryButton:disabled,

@@ -637,7 +637,7 @@
   font-family: var(--font-data);
   font-size: 0.6rem;
   font-weight: 700;
-  color: #f59e0b;
+  color: var(--warning);
   margin-top: 0.3rem;
   flex-basis: 100%;
 }

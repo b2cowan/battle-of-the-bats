@@ -5,46 +5,33 @@
 
 ## Summary
 
-- **446** literal hex colors across **56** files
-- **88** map exactly to an existing token (safe swaps — dark-identical, fix light-mode drift)
-- **358** have no token match (custom colors — leave, or promote to a new token case-by-case)
+- **365** literal hex colors across **55** files
+- **18** map exactly to an existing token (safe swaps — dark-identical, fix light-mode drift)
+- **347** have no token match (custom colors — leave, or promote to a new token case-by-case)
 
 ## Worst offenders (fix these tranches first)
 
-- `app/[orgSlug]/scorekeeper/scorekeeper.module.css` — 58
 - `app/[orgSlug]/admin/accounting/accounting.module.css` — 28
-- `app/[orgSlug]/admin/tournaments/branding/branding.module.css` — 23
-- `app/[orgSlug]/admin/org/settings/settings.module.css` — 21
+- `app/[orgSlug]/scorekeeper/scorekeeper.module.css` — 20
+- `app/[orgSlug]/admin/tournaments/branding/branding.module.css` — 19
 - `app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/budget.module.css` — 19
-- `app/[orgSlug]/admin/admin-common.module.css` — 18
 - `app/[orgSlug]/admin/onboarding/onboarding.module.css` — 18
-- `app/platform-admin/email/email.module.css` — 18
 - `app/[orgSlug]/admin/accounting/budget-vs-actual/bva.module.css` — 17
-- `app/[orgSlug]/coaches/coaches.module.css` — 17
 - `app/[orgSlug]/admin/org/members/members.module.css` — 16
+- `app/[orgSlug]/coaches/coaches.module.css` — 14
 - `app/platform-admin/dev-tools/dev.module.css` — 14
 - `app/platform-admin/dev-tools/playbook.module.css` — 14
+- `app/platform-admin/email/email.module.css` — 14
 - `app/platform-admin/change-requests/change-requests.module.css` — 13
+- `app/[orgSlug]/admin/org/settings/settings.module.css` — 11
 - `app/platform-admin/plans-pricing/plans-pricing.module.css` — 11
+- `components/admin/TournamentSetupWizard.module.css` — 10
 
 ## Exact-token candidates (safe to swap, verify light mode)
 
 | File:line | Literal | Candidate token(s) |
 |---|---|---|
-| `app/[orgSlug]/admin/admin-common.module.css:164` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/admin-common.module.css:171` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/admin-common.module.css:189` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/admin/admin-common.module.css:191` | `#22c55e` | `--success` |
-| `app/[orgSlug]/admin/admin-common.module.css:192` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/admin-common.module.css:194` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/admin/admin-common.module.css:196` | `#22c55e` | `--success` |
-| `app/[orgSlug]/admin/admin-common.module.css:197` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/admin-common.module.css:202` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/admin-common.module.css:203` | `#22c55e` | `--success` |
-| `app/[orgSlug]/admin/admin-common.module.css:207` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/admin-common.module.css:208` | `#22c55e` | `--success` |
 | `app/[orgSlug]/admin/onboarding/onboarding.module.css:687` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/org/billing/mock-portal/mock-portal.module.css:13` | `#f59e0b` | `--warning` |
 | `app/[orgSlug]/admin/org/members/members.module.css:147` | `#f59e0b` | `--warning` |
 | `app/[orgSlug]/admin/org/members/members.module.css:191` | `#ef4444` | `--danger` |
 | `app/[orgSlug]/admin/org/members/members.module.css:261` | `#fff` | `--white` / `--on-primary` |
@@ -53,72 +40,15 @@
 | `app/[orgSlug]/admin/org/members/members.module.css:570` | `#f59e0b` | `--warning` |
 | `app/[orgSlug]/admin/org/members/members.module.css:611` | `#f59e0b` | `--warning` |
 | `app/[orgSlug]/admin/org/settings/settings.module.css:140` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:180` | `#f59e0b` | `--warning` |
 | `app/[orgSlug]/admin/org/settings/settings.module.css:186` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:219` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:280` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:290` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:300` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:345` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:384` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:625` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:845` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/org/settings/settings.module.css:868` | `#f59e0b` | `--warning` |
 | `app/[orgSlug]/admin/org/tournaments/tournaments-admin.module.css:43` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/admin/tournaments/branding/branding.module.css:339` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/tournaments/branding/branding.module.css:361` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/tournaments/branding/branding.module.css:663` | `#FFFFFF` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/tournaments/branding/branding.module.css:719` | `#FFFFFF` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/tournaments/chat/chat-admin.module.css:125` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css:867` | `#ffffff` | `--white` / `--on-primary` |
 | `app/[orgSlug]/admin/tournaments/registrations/teams-admin.module.css:1660` | `#f59e0b` | `--warning` |
 | `app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css:3470` | `#f59e0b` | `--warning` |
 | `app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css:3481` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/tournaments/staff-kit/staff-kit.module.css:114` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/coaches/coaches.module.css:472` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/coaches/coaches.module.css:1495` | `#fff` | `--white` / `--on-primary` |
-| `app/[orgSlug]/coaches/coaches.module.css:2343` | `#f59e0b` | `--warning` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:17` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:53` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:74` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:112` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:134` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:154` | `#0f172a` | `--bg-2` / `--surface-2` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:160` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:172` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:201` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:202` | `#0a0a0a` | `--bg` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:220` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:220` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:232` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:257` | `#1e3a8a` | `--platform-primary` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:259` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:270` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:323` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:358` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:399` | `#1e3a8a` | `--platform-primary` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:401` | `#111827` | `--bg-3` / `--surface` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:450` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:459` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:478` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:537` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:538` | `#0a0a0a` | `--bg` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:564` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:565` | `#d9f99d` | `--primary-light` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:566` | `#0a0a0a` | `--bg` |
 | `app/platform-admin/email-templates/email-templates.module.css:565` | `#0f172a` | `--bg-2` / `--surface-2` |
-| `app/platform-admin/email/email.module.css:214` | `#f59e0b` | `--warning` |
-| `app/platform-admin/email/email.module.css:238` | `#f59e0b` | `--warning` |
-| `app/platform-admin/email/email.module.css:520` | `#f59e0b` | `--warning` |
-| `app/platform-admin/email/email.module.css:584` | `#f59e0b` | `--warning` |
-| `app/platform-admin/orgs/[id]/orgDetail.module.css:640` | `#f59e0b` | `--warning` |
-| `components/admin/AdminBottomNav.module.css:156` | `#fff` | `--white` / `--on-primary` |
-| `components/admin/AdminBottomNav.module.css:216` | `#22c55e` | `--success` |
-| `components/admin/AdminBottomNav.module.css:251` | `#fff` | `--white` / `--on-primary` |
 | `components/admin/CheckInBoard.module.css:443` | `#d9f99d` | `--primary-light` |
 | `components/admin/ExportMenu.module.css:45` | `#111827` | `--bg-3` / `--surface` |
 | `components/admin/ExportMenu.module.css:62` | `#fff` | `--white` / `--on-primary` |
-| `components/coaches/CoachesBottomNav.module.css:132` | `#fff` | `--white` / `--on-primary` |
 
 ## Custom colors (no token match — decide per-instance)
 
@@ -310,30 +240,20 @@
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/budget.module.css:562` | `#4ade80` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:27` | `#f8fafc` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:54` | `#e2e8f0` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:75` | `#94a3b8` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:79` | `#f8fafc` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:88` | `#94a3b8` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:113` | `#94a3b8` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:124` | `#f8fafc` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:140` | `#cbd5e1` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:155` | `#94a3b8` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:162` | `#f8fafc` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:173` | `#cbd5e1` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:179` | `#f8fafc` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:220` | `#172036` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:233` | `#94a3b8` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:239` | `#f8fafc` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:293` | `#94a3b8` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:307` | `#cbd5e1` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:318` | `#fbbf24` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:327` | `#94a3b8` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:349` | `#f8fafc` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:365` | `#94a3b8` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:376` | `#94a3b8` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:415` | `#f8fafc` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:434` | `#cbd5e1` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:449` | `#020617` |
-| `app/[orgSlug]/scorekeeper/scorekeeper.module.css:489` | `#94a3b8` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:508` | `#cbd5e1` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:517` | `#fcd9a3` |
 | `app/[orgSlug]/scorekeeper/scorekeeper.module.css:522` | `#e6f5c4` |
@@ -397,7 +317,6 @@
 | `app/platform-admin/early-access/early-access.module.css:364` | `#fca5a5` |
 | `app/platform-admin/early-access/early-access.module.css:370` | `#86efac` |
 | `app/platform-admin/email-templates/email-templates.module.css:440` | `#86efac` |
-| `app/platform-admin/email-templates/email-templates.module.css:484` | `#F1F5F9` |
 | `app/platform-admin/email/email.module.css:207` | `#4ade80` |
 | `app/platform-admin/email/email.module.css:220` | `#f87171` |
 | `app/platform-admin/email/email.module.css:232` | `#f87171` |

@@ -211,7 +211,7 @@
 
 .badgePending,
 .badgeRunning {
-  color: #f59e0b;
+  color: var(--warning);
   border-color: rgba(245, 158, 11, 0.35);
   background: rgba(245, 158, 11, 0.06);
 }
@@ -235,7 +235,7 @@
 }
 
 .badgeDueSoon {
-  color: #f59e0b;
+  color: var(--warning);
   border-color: rgba(245, 158, 11, 0.4);
   background: rgba(245, 158, 11, 0.08);
 }
@@ -249,7 +249,7 @@
 .badgeAuto {
   color: #93c5fd;
   border-color: rgba(147, 197, 253, 0.3);
-  background: rgba(30, 58, 138, 0.12);
+  background: rgba(var(--blueprint-blue-rgb), 0.12);
 }
 
 /* ── Action buttons ──────────────────────────────────────────────────────── */
@@ -517,7 +517,7 @@
 .sendingNote {
   font-family: var(--font-data);
   font-size: 0.62rem;
-  color: #f59e0b;
+  color: var(--warning);
   margin-top: 0.5rem;
 }
 
@@ -581,7 +581,7 @@
 }
 
 .needsPastDue .needsTitle { color: #f87171; }
-.needsUpcoming .needsTitle { color: #f59e0b; }
+.needsUpcoming .needsTitle { color: var(--warning); }
 
 .needsItem {
   display: flex;
