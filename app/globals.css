@@ -18,9 +18,21 @@
   --bg-inset:    rgba(0, 0, 0, 0.2);
   --bg-card:     var(--bg-surface);
 
-  /* Primary color — overridden per-org via inline style on [orgSlug] wrapper */
-  --primary-rgb:   30, 58, 138;
-  --primary:       #1E3A8A;
+  /* Platform structural blue — the FieldLogicHQ brand constant, org-brand-INDEPENDENT.
+     Single source for BOTH the default --primary below AND the operator --blueprint-blue
+     family (additive platform block, ~line 307). A FieldLogicHQ rebrand edits THESE two lines
+     to move every CSS consumer of both; the NON-CSS copies (lib/themes.ts `platform` default,
+     email templates, brand SVGs) are separate hard-coded values on the rebrand checklist. Org
+     themes override --primary (public surfaces) but NEVER touch --platform-primary, so operator
+     chrome (coaches portal + admin) stays platform blue regardless of an org's brand colour.
+     (design_decisions TH-3a resolved 2026-07-21: operator chrome pinned, not org-following.) */
+  --platform-primary-rgb: 30, 58, 138;
+  --platform-primary:     #1E3A8A;
+
+  /* Primary color — default is the platform blue; overridden per-org via inline style on
+     the [orgSlug] wrapper (public surfaces only — operator chrome reads --blueprint-blue). */
+  --primary-rgb:   var(--platform-primary-rgb);
+  --primary:       var(--platform-primary);
   --primary-light: #D9F99D;
   --primary-glow:  rgba(var(--primary-rgb), 0.35);
   --primary-faint: rgba(var(--primary-rgb), 0.08);
@@ -142,9 +154,10 @@
                            padding, so the collapse never shifts the layout.
      --nav-visual-h / --nav-event-h are published by the Navbar on mobile
      tournament routes and unset elsewhere; --ticker-h by the ScoreTicker on
-     game day. All fall back cleanly to the plain fixed bar. */
-  --chrome-top-h: calc(var(--nav-visual-h, var(--nav-height)) + var(--ticker-h, 0px));
-  --chrome-top-static-h: calc(var(--nav-event-h, var(--nav-height)) + var(--ticker-h, 0px));
+     game day; --desktop-strip-h by the tournament layout ≥901px (the Phase 3
+     global strip). All fall back cleanly to the plain fixed bar. */
+  --chrome-top-h: calc(var(--nav-visual-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px));
+  --chrome-top-static-h: calc(var(--nav-event-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px));
 
   /* Opacity-alpha text tokens used by some component CSS */
 }
@@ -304,8 +317,12 @@ body:has([data-chat-fullbleed]) {
 :root {
   /* FieldLogic palette */
   --pitch-black:         #0A0A0A;
-  --blueprint-blue:      #1E3A8A;
-  --blueprint-blue-rgb:  30, 58, 138;
+  /* Operator / structural accent — the coach-portal + admin accent system (887 refs across
+     70 files). PINNED to the platform blue via --platform-primary, NOT --primary, so a
+     custom org's brand override can't bleed into internal operator chrome (TH-3a). Editing
+     --platform-primary (top of globals.css) moves this and the default --primary together. */
+  --blueprint-blue:      var(--platform-primary);
+  --blueprint-blue-rgb:  var(--platform-primary-rgb);
   --logic-lime:          #D9F99D;
   --logic-lime-rgb:      217, 249, 157;
   /* Gold-medal / championship-achievement hue — the one sanctioned categorical hue
@@ -392,11 +409,6 @@ body:has([data-chat-fullbleed]) {
    and lime is the wrong family for live: red owns live. The canonical red
    `.live-dot` glyph lives beside the badge family below.) */
 
-@keyframes pulse-lime {
-  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba(217, 249, 157, 0.4); }
-  50%       { opacity: 0.6; box-shadow: 0 0 20px rgba(217, 249, 157, 0.8); }
-}
-
 a { color: inherit; text-decoration: none; }
 button { cursor: pointer; font-family: inherit; }
 img { max-width: 100%; display: block; }
@@ -474,7 +486,8 @@ h1, h2, h3, h4, h5, h6 {
 
 .page-content {
   min-height: calc(100vh - var(--nav-height));
-  /* Expanded-header + ticker composition — see the --chrome-top-* tokens. */
+  /* Expanded-header + ticker + Phase-3 desktop-strip composition — all folded into the
+     --chrome-top-* tokens, so this is just the one var (no local strip add to double-count). */
   padding-top: var(--chrome-top-static-h);
 }
 
@@ -631,12 +644,12 @@ h1, h2, h3, h4, h5, h6 {
 .btn-ghost:hover { background: var(--white-30); }
 
 .btn-danger {
-  background: rgba(239, 68, 68, 0.15);
+  background: rgba(var(--danger-rgb), 0.15);
   color: var(--danger);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
 }
 
-.btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+.btn-danger:hover { background: rgba(var(--danger-rgb), 0.25); }
 
 /* Confirm/finalize action — green-tinted parallel to btn-danger (semantic --success). */
 .btn-success {

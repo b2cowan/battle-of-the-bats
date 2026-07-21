@@ -5385,6 +5385,30 @@ Account-level notification settings keyed by `user_id` (the "Pause notifications
 <!-- dict:col:user_notification_settings.updated_at -->
 **`updated_at`** (tstz, NN, DEFAULT now()) — bumped on upsert; code-maintained.
 
+### `user_preferences`
+<!-- dict:table:user_preferences -->
+
+**Added by migration 195 (2026-07-21 — applied to DEV; ⚠ PROD-PENDING).** Per-user identity-scoped **UI preferences**, one row per user, keyed on `user_id` alone (NOT membership-scoped — a multi-org user carries ONE set everywhere, never forking per org). First (and currently only) column is `theme`, the account source of truth for the Dark⇄Warm app **theme toggle** (Theme Toggle Foundation — design_decisions **TH-1/TH-3**). Deliberately a **general** prefs table (not `user_theme_*`) so future account-synced UI prefs (e.g. an account-level density, today device-local via `fl_admin_density`) join as **new typed columns** rather than spawning more single-column tables. **Absent row / NULL `theme` = each shell's default** (consumer shell warm, coaches portal dark) — non-choosers store nothing and see zero change. Read/written **service-role only** (RLS enabled, zero policies — same posture as `user_notification_settings` / `fan_alert_prefs` / `user_marketing_opt_outs`) via `lib/user-preferences.ts` (Phase 2 plumbing), surfaced as the **Appearance** card on `/account`. Filed here with the other account-keyed `user_*` tables for discoverability; it is a cross-cutting platform preference, not a notifications sub-system member.
+
+**Gotchas (read first):**
+1. **Governs platform-neutral chrome ONLY.** The preference themes the consumer shell (now) and the coaches operating portal (once its warm leg exists — TH-2, not yet built); **admin + scorekeeper are excluded**. Org-branded surfaces (tournament public, org home, public team pages) and the warm sign-up journey **ignore it entirely** — the org's brand always wins there (M2 precedence). It drives a NEW `data-user-theme` attribute on `<html>`, architecturally disjoint from `data-color-mode` (the org/tournament authority) — one authority per token per theme.
+2. **Absent row / NULL = default, not a value.** `theme` is `dark` | `warm` | NULL; the CHECK permits NULL. Treat a missing row or NULL as "each shell's current default", never coerce it to a concrete theme.
+3. **Service-role only** — RLS enabled with ZERO policies (prod `anon` carries a default SELECT grant, so RLS is what walls it off; see [[reference_supabase_rls_grants]]). Verify RLS live, not from the migration comment.
+
+**Fields:**
+
+<!-- dict:col:user_preferences.user_id -->
+**`user_id`** (uuid, PK; FK→`auth.users(id)` ON DELETE CASCADE) — the account holding the preferences; one row per user.
+
+<!-- dict:col:user_preferences.theme -->
+**`theme`** (text, nullable; CHECK `theme IS NULL OR theme IN ('dark','warm')`) — the app theme preference. NULL / absent row = each shell's default (consumer warm, coaches dark); `'dark'` / `'warm'` = an explicit pick. Drives the `data-user-theme` attribute; never applied to org-branded surfaces.
+
+<!-- dict:col:user_preferences.created_at -->
+**`created_at`** (tstz, NN, DEFAULT now()) — row creation (first preference set); audit only.
+
+<!-- dict:col:user_preferences.updated_at -->
+**`updated_at`** (tstz, NN, DEFAULT now()) — bumped on upsert; code-maintained.
+
 ### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
 
 - **`notify()`** ([lib/notify.ts:87](../../../lib/notify.ts#L87)) — the fan-out hub: resolve recipients (all org members, or an explicit `userIds` list forced to `role='member'`) → **Layer 2** tournament opt-out (only if `tournamentId` passed) → **Layer 1** global channel prefs (falling back to `systemDefaults`) → write bell row (`channel_bell`) → fan Web Push (`channel_push` → `push_subscriptions` → `sendWebPush`, 410-delete) → send email (`channel_email` → `notificationEmailHtml` → `sendEmail`). Fire-and-forget; the whole body never throws to the caller.
@@ -5395,7 +5419,7 @@ Account-level notification settings keyed by `user_id` (the "Pause notifications
 
 ---
 
-*End of Notifications & Push (Phase 10 — 9 tables across 3 sub-systems (incl. `user_marketing_opt_outs`, mig 185): in-app bell + the global/per-tournament preference layers, the member-vs-fan web-push split, and the Resend send-log + mirror template registry. `notify()` is the fan-out hub; only `notifications` carries RLS policies (vestigial for data paths); the two push tables and the DB template registry are built-but-unexercised. Cross-references — not redocuments — `auth.users`, `organizations`, `tournaments`, `teams`, `org_member_tournament_assignments` (Org core), `platform_events.PlatformEventType` (the name-collision), and [[project_email_stack]] / [[project_public_tournament_wow]].)*
+*End of Notifications & Push (Phase 10 — 10 tables across 3 sub-systems (incl. `user_marketing_opt_outs` mig 185 and the cross-cutting per-user `user_preferences` mig 195): in-app bell + the global/per-tournament preference layers, the member-vs-fan web-push split, and the Resend send-log + mirror template registry. `notify()` is the fan-out hub; only `notifications` carries RLS policies (vestigial for data paths); the two push tables and the DB template registry are built-but-unexercised. Cross-references — not redocuments — `auth.users`, `organizations`, `tournaments`, `teams`, `org_member_tournament_assignments` (Org core), `platform_events.PlatformEventType` (the name-collision), and [[project_email_stack]] / [[project_public_tournament_wow]].)*
 
 ---
 

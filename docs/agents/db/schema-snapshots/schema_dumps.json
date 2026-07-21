@@ -14699,6 +14699,42 @@
         "column_default": "now()"
       },
       {
+        "table_name": "user_preferences",
+        "pos": 1,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "user_preferences",
+        "pos": 2,
+        "column_name": "theme",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "user_preferences",
+        "pos": 3,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "user_preferences",
+        "pos": 4,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "venue_facilities",
         "pos": 1,
         "column_name": "id",
@@ -16019,20 +16055,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
@@ -16041,6 +16070,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -16299,14 +16335,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -17316,6 +17352,13 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "user_notification_settings_user_id_fkey"
+      },
+      {
+        "table_name": "user_preferences",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "user_preferences_user_id_fkey"
       },
       {
         "table_name": "venue_facilities",
@@ -19621,6 +19664,11 @@
         "indexdef": "CREATE UNIQUE INDEX user_notification_settings_pkey ON public.user_notification_settings USING btree (user_id)"
       },
       {
+        "tablename": "user_preferences",
+        "indexname": "user_preferences_pkey",
+        "indexdef": "CREATE UNIQUE INDEX user_preferences_pkey ON public.user_preferences USING btree (user_id)"
+      },
+      {
         "tablename": "venue_facilities",
         "indexname": "venue_facilities_pkey",
         "indexdef": "CREATE UNIQUE INDEX venue_facilities_pkey ON public.venue_facilities USING btree (id)"
@@ -21476,6 +21524,18 @@
       {
         "kind": "RLS",
         "table_name": "user_notification_settings",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "user_preferences",
+        "detail": "user_preferences_theme_check",
+        "check_clause": "((theme IS NULL) OR (theme = ANY (ARRAY['dark'::text, 'warm'::text])))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "user_preferences",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -1,28 +1,78 @@
 /**
- * Token-debt guardrail + inventory for public CSS modules.
+ * Token-debt guardrail + inventory for CSS modules — TWO independent scopes.
  *
- * Scans `*.module.css` under the public surfaces (app/[orgSlug]/** excluding
- * /admin/, and components/public/**) for literal hex colors that should be design
+ *   --scope=public    (default)  public fan/org surfaces + shared public chrome
+ *   --scope=operator             operator shells (admin / coaches / scorekeeper / platform-admin)
+ *
+ * Each scope has its OWN baseline file and its OWN report doc — they are NEVER conflated
+ * (the public redesign and the operator cleanup are separate initiatives with separate debt).
+ * Scans `*.module.css` under the scope's roots for literal hex colors that should be design
  * tokens (`var(--*)`), maps each to a candidate token from app/globals.css, and:
  *
- *   node scripts/check-public-tokens.mjs            # RATCHET: fail if any file has
- *                                                   #   more literals than its baseline
- *   node scripts/check-public-tokens.mjs --report   # write the inventory doc
- *   node scripts/check-public-tokens.mjs --init      # snapshot/lower the baseline
+ *   node scripts/check-public-tokens.mjs [--scope=…]            # RATCHET: fail if any file has
+ *                                                               #   more literals than its baseline
+ *   node scripts/check-public-tokens.mjs [--scope=…] --report   # write the inventory doc
+ *   node scripts/check-public-tokens.mjs [--scope=…] --init      # snapshot/lower the baseline
  *
- * The ratchet lets the ~existing debt stay while making it impossible to ADD new
- * literals. As tranches get fixed, re-run --init to lock in the lower counts.
+ * The ratchet lets the ~existing debt stay while making it impossible to ADD new literals.
+ * As tranches get fixed, re-run --init to lock in the lower counts.
  */
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, sep } from 'node:path';
 
 const ROOT = process.cwd();
-// Public tournament/org surfaces + the public team profile + public components.
-const PUBLIC_DIRS = ['app/[orgSlug]', 'app/teams', 'components/public'];
-// Operator surfaces own their own styling (separate admin redesign) — not token-debt here.
-const EXCLUDE_SEGMENTS = new Set(['admin', 'scorekeeper', 'coaches']);
-const BASELINE = 'scripts/.public-token-baseline.json';
-const REPORT = 'docs/projects/active/PUBLIC_VISUAL_REDESIGN_TOKEN_DEBT.md';
+
+// ── scope config ──────────────────────────────────────────────────────────────
+// Each scope: the recursive dirs to walk, extra individual files outside those dirs,
+// path segments to skip, plus its own baseline + report. Operator surfaces own their own
+// styling (separate from the public redesign) — hence a separate scope, not an exclude flip.
+const SCOPES = {
+  public: {
+    // Public tournament/org surfaces + the public team profile + public components.
+    dirs: ['app/[orgSlug]', 'app/teams', 'components/public'],
+    // Individual public-chrome CSS modules that live OUTSIDE the dirs above (Unified Home
+    // nav merge, Phase 5): the shared nav bars now theme public tournament pages, so guard
+    // them against new literal hex too. warmTheme.module.css is intentionally NOT listed —
+    // it DEFINES the --home-* tokens, so literal hex there is correct by construction.
+    files: [
+      'components/Navbar.module.css',
+      'components/consumer/ConsumerShell.module.css',
+    ],
+    // Operator surfaces are covered by the operator scope — keep them out of the public count.
+    excludeSegments: new Set(['admin', 'scorekeeper', 'coaches']),
+    baseline: 'scripts/.public-token-baseline.json',
+    report: 'docs/projects/active/PUBLIC_VISUAL_REDESIGN_TOKEN_DEBT.md',
+    reportTitle: 'Public Visual Redesign',
+  },
+  operator: {
+    // Operator shells: the org-scoped day-of/admin/coaches surfaces, the platform coach
+    // journey, platform-admin, and their shared component libraries. The public scan never
+    // visits these (it excludes admin/coaches/scorekeeper), so they need their own roots —
+    // the exclude-set alone can never reach them.
+    dirs: [
+      'app/[orgSlug]/admin',
+      'app/[orgSlug]/coaches',
+      'app/[orgSlug]/scorekeeper',
+      'app/coaches',
+      'app/platform-admin',
+      'components/admin',
+      'components/coaches',
+    ],
+    files: [],
+    excludeSegments: new Set(),
+    baseline: 'scripts/.operator-token-baseline.json',
+    report: 'docs/projects/active/OPERATOR_VISUAL_TOKEN_DEBT.md',
+    reportTitle: 'Operator Visual Cleanup',
+  },
+};
+
+const scopeArg = process.argv.find(a => a.startsWith('--scope='));
+const SCOPE = scopeArg ? scopeArg.slice('--scope='.length) : 'public';
+const cfg = SCOPES[SCOPE];
+if (!cfg) {
+  console.error(`Unknown --scope="${SCOPE}". Use --scope=public (default) or --scope=operator.`);
+  process.exit(1);
+}
 
 const mode = process.argv.includes('--report') ? 'report'
   : process.argv.includes('--init') ? 'init'
@@ -55,17 +105,20 @@ function buildTokenMap() {
   return map;
 }
 
-function publicModuleFiles() {
+function moduleFiles() {
   const out = [];
-  for (const d of PUBLIC_DIRS) {
+  for (const d of cfg.dirs) {
     const abs = join(ROOT, d);
     if (!existsSync(abs)) continue;
     for (const rel of readdirSync(abs, { recursive: true })) {
       const p = String(rel).split(sep).join('/');
       if (!p.endsWith('.module.css')) continue;
-      if (p.split('/').some(s => EXCLUDE_SEGMENTS.has(s))) continue;
+      if (p.split('/').some(s => cfg.excludeSegments.has(s))) continue;
       out.push(`${d}/${p}`);
     }
+  }
+  for (const f of cfg.files) {
+    if (existsSync(join(ROOT, f))) out.push(f);
   }
   return out.sort();
 }
@@ -83,34 +136,34 @@ function scan(file) {
 }
 
 const tokenMap = buildTokenMap();
-const files = publicModuleFiles();
+const files = moduleFiles();
 const perFile = files.map(f => ({ file: f, hits: scan(f) })).filter(x => x.hits.length);
 
 // ── modes ───────────────────────────────────────────────────────────────────
 if (mode === 'init') {
   const baseline = {};
   for (const { file, hits } of perFile) baseline[file] = hits.length;
-  writeFileSync(join(ROOT, BASELINE), JSON.stringify(baseline, null, 2) + '\n');
+  writeFileSync(join(ROOT, cfg.baseline), JSON.stringify(baseline, null, 2) + '\n');
   const total = perFile.reduce((s, x) => s + x.hits.length, 0);
-  console.log(`Baseline written: ${BASELINE} (${Object.keys(baseline).length} files, ${total} literals)`);
+  console.log(`Baseline written (${SCOPE}): ${cfg.baseline} (${Object.keys(baseline).length} files, ${total} literals)`);
   process.exit(0);
 }
 
 if (mode === 'check') {
-  const baseline = existsSync(join(ROOT, BASELINE)) ? JSON.parse(readFileSync(join(ROOT, BASELINE), 'utf8')) : {};
+  const baseline = existsSync(join(ROOT, cfg.baseline)) ? JSON.parse(readFileSync(join(ROOT, cfg.baseline), 'utf8')) : {};
   const offenders = [];
   for (const { file, hits } of perFile) {
     const allowed = baseline[file] ?? 0;
     if (hits.length > allowed) offenders.push({ file, count: hits.length, allowed });
   }
   if (offenders.length) {
-    console.error('✖ Token-debt ratchet: new literal hex color(s) in public CSS modules.');
+    console.error(`✖ Token-debt ratchet (${SCOPE}): new literal hex color(s) in ${SCOPE} CSS modules.`);
     console.error('  Use design tokens (var(--*)) instead. Offending files:');
     for (const o of offenders) console.error(`    ${o.file}: ${o.count} literals (baseline ${o.allowed})`);
-    console.error('  If a literal is genuinely intentional, add the token or (last resort) re-baseline with --init.');
+    console.error(`  If a literal is genuinely intentional, add the token or (last resort) re-baseline with --scope=${SCOPE} --init.`);
     process.exit(1);
   }
-  console.log(`✓ Token-debt ratchet: no new literal hex in ${files.length} public module(s).`);
+  console.log(`✓ Token-debt ratchet (${SCOPE}): no new literal hex in ${files.length} module(s).`);
   process.exit(0);
 }
 
@@ -126,9 +179,9 @@ for (const { file, hits } of perFile) {
 const total = matchable.length + custom.length;
 const byFile = [...perFile].sort((a, b) => b.hits.length - a.hits.length);
 
-let md = `# Public Visual Redesign — Token-Debt Inventory\n\n`;
-md += `> Auto-generated: \`node scripts/check-public-tokens.mjs --report\`. Read-only analysis.\n`;
-md += `> Literal hex colors in public \`*.module.css\` that should be \`var(--*)\` tokens.\n\n`;
+let md = `# ${cfg.reportTitle} — Token-Debt Inventory\n\n`;
+md += `> Auto-generated: \`node scripts/check-public-tokens.mjs --scope=${SCOPE} --report\`. Read-only analysis.\n`;
+md += `> Literal hex colors in ${SCOPE} \`*.module.css\` that should be \`var(--*)\` tokens.\n\n`;
 md += `## Summary\n\n`;
 md += `- **${total}** literal hex colors across **${perFile.length}** files\n`;
 md += `- **${matchable.length}** map exactly to an existing token (safe swaps — dark-identical, fix light-mode drift)\n`;
@@ -141,6 +194,6 @@ for (const r of matchable) md += `| \`${r.file}:${r.line}\` | \`${r.hex}\` | ${r
 md += `\n## Custom colors (no token match — decide per-instance)\n\n`;
 md += `| File:line | Literal |\n|---|---|\n`;
 for (const r of custom) md += `| \`${r.file}:${r.line}\` | \`${r.hex}\` |\n`;
-writeFileSync(join(ROOT, REPORT), md);
-console.log(`Report written: ${REPORT}`);
+writeFileSync(join(ROOT, cfg.report), md);
+console.log(`Report written (${SCOPE}): ${cfg.report}`);
 console.log(`  ${total} literals · ${matchable.length} token-matchable · ${custom.length} custom · ${perFile.length} files`);

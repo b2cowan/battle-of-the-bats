@@ -1,27 +1,28 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-07-20 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-07-21 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 81 divergence(s)** across dev/prod.
+**⚠️ 90 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 2 | 0 | — |
-| Columns | 14 | 3 | 23 |
-| Indexes | 10 | 3 | 0 |
-| Constraints | 15 | 9 | — |
-| RLS / CHECK | 1 | 1 | 0 (RLS state) |
+| Tables | 3 | 0 | — |
+| Columns | 18 | 3 | 23 |
+| Indexes | 11 | 3 | 0 |
+| Constraints | 17 | 9 | — |
+| RLS / CHECK | 2 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (2)
+### Only in DEV (3)
 - `chat_message_reports`
 - `user_notification_settings`
+- `user_preferences`
 
 ### Only in PROD (0)
 _none_
 
 ## Columns
-### Only in DEV (14)
+### Only in DEV (18)
 - `chat_message_reports.created_at`
 - `chat_message_reports.id`
 - `chat_message_reports.message_id`
@@ -36,6 +37,10 @@ _none_
 - `user_notification_settings.notifications_paused_at`
 - `user_notification_settings.updated_at`
 - `user_notification_settings.user_id`
+- `user_preferences.created_at`
+- `user_preferences.theme`
+- `user_preferences.updated_at`
+- `user_preferences.user_id`
 
 ### Only in PROD (3)
 - `resources.created_at`
@@ -68,7 +73,7 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (10)
+### Only in DEV (11)
 - `chat_message_reports_message_idx`
 - `chat_message_reports_open_uniq`
 - `chat_message_reports_org_status_idx`
@@ -79,6 +84,7 @@ _none_
 - `league_practices_season_idx`
 - `league_practices_team_idx`
 - `user_notification_settings_pkey`
+- `user_preferences_pkey`
 
 ### Only in PROD (3)
 - `league_practices_recurrence_group_id_idx`
@@ -89,7 +95,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (15)
+### Only in DEV (17)
 - `announcements.announcements_tournament_id_fkey`
 - `chat_message_reports.chat_message_reports_message_id_fkey`
 - `chat_message_reports.chat_message_reports_org_id_fkey`
@@ -105,6 +111,8 @@ _none_
 - `teams.teams_tournament_id_fkey`
 - `user_notification_settings.user_notification_settings_pkey`
 - `user_notification_settings.user_notification_settings_user_id_fkey`
+- `user_preferences.user_preferences_pkey`
+- `user_preferences.user_preferences_user_id_fkey`
 
 ### Only in PROD (9)
 - `announcements.fk_announcements_tournament`
@@ -121,8 +129,9 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (1)
+### CHECK only in DEV (2)
 - `chat_message_reports.chat_message_reports_status_check`
+- `user_preferences.user_preferences_theme_check`
 
 ### CHECK only in PROD (1)
 - `tournaments.tournaments_status_check`
