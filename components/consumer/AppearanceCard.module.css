@@ -1,0 +1,115 @@
+/* AppearanceCard — Account → Appearance (Theme Toggle Foundation, TH-1/TH-3).
+   Card chrome uses the --home-* vocabulary so it repaints correctly in both themes via the tab
+   dark-gate. The two SWATCHES are fixed previews of each theme, so their colors are intentional
+   literals (the canonical warm + dark values), NOT --home-* — a preview must not follow the
+   currently-active theme. (components/consumer is outside the token ratchet's operator/public
+   scopes; these preview literals are correct by construction, like warmTheme.module.css itself.) */
+
+.card {
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  box-shadow: var(--home-shadow-sm);
+  padding: 1rem 1.1rem 1.1rem;
+  margin: 1.25rem 0;
+}
+
+.heading {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--home-ink);
+}
+
+.options {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.option {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.5rem;
+  background: transparent;
+  border: 2px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.option:hover { border-color: var(--home-dim); }
+.optionActive { border-color: var(--home-olive); background: var(--home-olive-soft); }
+
+/* ── Mini theme preview: a nav bar strip + a card + an accent dot on the theme's ground ── */
+.swatch {
+  position: relative;
+  height: 46px;
+  border-radius: 7px;
+  overflow: hidden;
+  background: var(--sw-ground);
+  border: 1px solid var(--sw-edge);
+}
+.swatchBar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 32%;
+  background: var(--sw-bar);
+  border-bottom: 1px solid var(--sw-edge);
+}
+.swatchCard {
+  position: absolute;
+  left: 8px; right: 8px; bottom: 7px;
+  height: 42%;
+  border-radius: 3px;
+  background: var(--sw-card);
+  border: 1px solid var(--sw-edge);
+}
+.swatchAccent {
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--sw-accent);
+}
+
+/* Fixed theme-preview palettes (intentional literals — see file header). */
+.swatch_warm {
+  --sw-ground: #f8f4ed;
+  --sw-bar:    #ffffff;
+  --sw-card:   #ffffff;
+  --sw-accent: #57651e;
+  --sw-edge:   rgba(70, 55, 30, 0.14);
+}
+.swatch_dark {
+  --sw-ground: #0a0a0a;
+  --sw-bar:    #0f1115;
+  --sw-card:   #1e293b;
+  --sw-accent: #d9f99d;
+  --sw-edge:   rgba(255, 255, 255, 0.12);
+}
+
+.optionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem;
+}
+.optionLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--home-ink);
+}
+.check { color: var(--home-olive); flex-shrink: 0; }
+
+.note {
+  margin: 0.9rem 0 0;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--home-dim);
+}

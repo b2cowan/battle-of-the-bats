@@ -157,7 +157,7 @@
    but a lime FILL with ink text is the sanctioned brand moment). */
 .ctaPrimary {
   background: var(--home-lime);
-  color: var(--home-ink);
+  color: var(--home-lime-ink);
   border: 1px solid var(--home-lime);
   font-weight: 700;
 }

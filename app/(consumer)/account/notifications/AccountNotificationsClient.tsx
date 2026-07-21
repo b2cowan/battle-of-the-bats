@@ -308,7 +308,7 @@ export default function AccountNotificationsClient({
   ) : null;
 
   return (
-    <div className={warm.warm}>
+    <div className={warm.warmTab}>
       <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Notification settings</h1>

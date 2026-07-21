@@ -24,7 +24,7 @@
   top: var(--consumer-top-h, var(--nav-height));
   z-index: 10;
   /* Warm translucent so content scrolls under it legibly. */
-  background: rgba(248, 244, 237, 0.92);
+  background: rgba(var(--home-paper-rgb), 0.92);
   -webkit-backdrop-filter: blur(14px);
   backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--home-line);
@@ -319,8 +319,8 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.statusActive   { background: var(--home-live-soft);   color: var(--home-live);  border: 1px solid rgba(217, 72, 43, 0.25); }
-.statusUpcoming { background: rgba(161, 98, 7, 0.1);    color: var(--home-amber); border: 1px solid rgba(161, 98, 7, 0.25); }
+.statusActive   { background: var(--home-live-soft);   color: var(--home-live);  border: 1px solid rgba(var(--home-live-rgb), 0.25); }
+.statusUpcoming { background: rgba(var(--home-amber-rgb), 0.1);    color: var(--home-amber); border: 1px solid rgba(var(--home-amber-rgb), 0.25); }
 .statusDone     { background: transparent;              color: var(--home-dim);   border: 1px solid var(--home-line-strong); }
 .statusDot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 

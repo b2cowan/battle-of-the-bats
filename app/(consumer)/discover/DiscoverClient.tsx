@@ -351,7 +351,7 @@ export default function DiscoverClient({ initial }: { initial: DirectoryResult }
   const isFiltering = sport !== '' || province !== '' || timeframe !== 'current';
 
   return (
-    <div className={`${warm.warm} ${styles.page}`}>
+    <div className={`${warm.warmTab} ${styles.page}`}>
       {/* ── Sticky search bar (Home leads with search — R1-3) ── */}
       <div className={styles.filterBar}>
         <div className={styles.controls}>

@@ -155,7 +155,7 @@ export default function FollowingList({
     : 'blank';
 
   return (
-    <div className={`${warm.warm} ${styles.page}`}>
+    <div className={`${warm.warmTab} ${styles.page}`}>
       <div className={styles.headerRow}>
         <Link href="/discover" className={styles.back}>
           <ArrowLeft size={13} strokeWidth={2.4} aria-hidden /> Home

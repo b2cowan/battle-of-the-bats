@@ -69,7 +69,7 @@ export default function ScoresClient({ liveBoard }: { liveBoard: ScoresBoardItem
   // Still resolving the first payload — quiet skeleton (the SSR shell already painted the board).
   if (!payload && loading) {
     return (
-      <div className={`${warm.warm} ${styles.page}`}>
+      <div className={`${warm.warmTab} ${styles.page}`}>
         <Header />
         <div className={styles.skeleton} aria-hidden />
       </div>
@@ -79,7 +79,7 @@ export default function ScoresClient({ liveBoard }: { liveBoard: ScoresBoardItem
   // Nothing personal → the platform-wide live board + a gentle nudge (never a dead page).
   if (!hasPersonal) {
     return (
-      <div className={`${warm.warm} ${styles.page}`}>
+      <div className={`${warm.warmTab} ${styles.page}`}>
         <Header />
         <PlatformBoard board={liveBoard} signedIn={payload?.signedIn ?? false} />
       </div>
@@ -108,7 +108,7 @@ export default function ScoresClient({ liveBoard }: { liveBoard: ScoresBoardItem
   const gamesKicker = liveCount > 0 ? 'My Games' : hasUpcomingGame ? 'Next up' : 'Recent results';
 
   return (
-    <div className={`${warm.warm} ${styles.page}`}>
+    <div className={`${warm.warmTab} ${styles.page}`}>
       <Header />
 
       <div className={styles.filterRow}>

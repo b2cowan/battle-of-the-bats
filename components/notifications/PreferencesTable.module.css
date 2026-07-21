@@ -206,7 +206,7 @@
 }
 
 .toggleOn::after {
-  background: var(--home-ink);
+  background: var(--home-lime-ink);
   transform: translateX(16px);
 }
 

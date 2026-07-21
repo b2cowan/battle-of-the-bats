@@ -141,11 +141,11 @@
   padding: 0.1rem 0.4rem;
   color: var(--home-olive);
   background: var(--home-olive-soft);
-  border: 1px solid rgba(87, 101, 30, 0.25);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.25);
   white-space: nowrap;
 }
-.eventChip[data-reason='staff']  { color: var(--home-blue);  background: rgba(37, 99, 235, 0.08); border-color: rgba(37, 99, 235, 0.25); }
-.eventChip[data-reason='official'] { color: var(--home-amber); background: rgba(161, 98, 7, 0.08); border-color: rgba(161, 98, 7, 0.25); }
+.eventChip[data-reason='staff']  { color: var(--home-blue);  background: rgba(var(--home-blue-rgb), 0.08); border-color: rgba(var(--home-blue-rgb), 0.25); }
+.eventChip[data-reason='official'] { color: var(--home-amber); background: rgba(var(--home-amber-rgb), 0.08); border-color: rgba(var(--home-amber-rgb), 0.25); }
 .eventFragment {
   font-family: var(--font-data);
   font-size: 0.66rem;
@@ -222,7 +222,7 @@
   box-shadow: var(--home-shadow);
   transform: translateY(-1px);
 }
-.gameRowLive { border-color: rgba(217, 72, 43, 0.35); }
+.gameRowLive { border-color: rgba(var(--home-live-rgb), 0.35); }
 .gameRowPast { opacity: 0.82; }
 
 .gameMono {
@@ -301,9 +301,9 @@
   padding: 0.15rem 0.4rem;
   border: 1px solid transparent;
 }
-.wlWin  { color: #3E7A32; background: rgba(62, 122, 50, 0.12); border-color: rgba(62, 122, 50, 0.28); }
-.wlLoss { color: var(--home-live); background: var(--home-live-soft); border-color: rgba(217, 72, 43, 0.28); }
-.wlTie  { color: var(--home-dim); background: rgba(70, 55, 30, 0.06); border-color: var(--home-line-strong); }
+.wlWin  { color: var(--home-win); background: rgba(var(--home-win-rgb), 0.12); border-color: rgba(var(--home-win-rgb), 0.28); }
+.wlLoss { color: var(--home-live); background: var(--home-live-soft); border-color: rgba(var(--home-live-rgb), 0.28); }
+.wlTie  { color: var(--home-dim); background: rgba(var(--home-line-rgb), 0.06); border-color: var(--home-line-strong); }
 
 /* Ghost "Show earlier / later" caps — no infinite scroll. */
 .showMore {
@@ -399,7 +399,7 @@
 .nudge {
   margin-top: 1.5rem;
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(87, 101, 30, 0.3);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.3);
   border-radius: var(--home-radius);
   background: var(--home-olive-soft);
 }
@@ -436,7 +436,7 @@
 .skeleton {
   height: 96px;
   border-radius: var(--home-radius);
-  background: linear-gradient(90deg, rgba(70,55,30,0.05) 25%, rgba(70,55,30,0.09) 37%, rgba(70,55,30,0.05) 63%);
+  background: linear-gradient(90deg, rgba(var(--home-line-rgb),0.05) 25%, rgba(var(--home-line-rgb),0.09) 37%, rgba(var(--home-line-rgb),0.05) 63%);
   background-size: 400% 100%;
   animation: scoresShimmer 1.4s ease infinite;
 }

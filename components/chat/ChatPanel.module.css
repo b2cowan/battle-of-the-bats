@@ -1207,5 +1207,7 @@
 .panelWarm button.sendBtn {
   background: var(--home-lime);
   border-color: var(--home-lime);
-  color: var(--home-ink);
+  /* --home-lime-ink stays dark in both themes (lime is light on any ground), so ink-on-lime
+     keeps its contrast under the Dark app theme without a separate override. */
+  color: var(--home-lime-ink);
 }

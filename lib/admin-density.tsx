@@ -79,8 +79,7 @@ export function useAdminDensity(): DensityContextValue {
   return useContext(DensityContext) ?? { density: 'compact', setDensity: () => {} };
 }
 
-/** Inline script body for the admin layout — sets data-density before first paint. */
-export const DENSITY_NO_FLASH_SCRIPT =
-  "(function(){try{var k='fl_admin_density',v=null;try{v=localStorage.getItem(k);}catch(e){}" +
-  "if(v!=='comfortable'&&v!=='compact'){v=(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches)?'comfortable':'compact';}" +
-  "document.documentElement.setAttribute('data-density',v);}catch(e){}})();";
+// The density no-flash logic now lives in the single consolidated root-layout script
+// (lib/no-flash-script.ts, `NO_FLASH_SCRIPT`) alongside the user-theme attribute — one
+// injection point instead of a hand-copied literal per shell. STORAGE_KEY above is the
+// shared source of truth for the key both use.

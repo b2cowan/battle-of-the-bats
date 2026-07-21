@@ -220,7 +220,7 @@
   background: var(--home-card);
   border: 1px solid var(--home-line);
   border-radius: 18px;
-  box-shadow: 0 -2px 12px rgba(70, 55, 30, 0.16), 0 12px 32px rgba(70, 55, 30, 0.22);
+  box-shadow: 0 -2px 12px rgba(var(--home-line-rgb), 0.16), 0 12px 32px rgba(var(--home-line-rgb), 0.22);
   animation: chat-sheet-up 0.18s ease-out;
 }
 @keyframes chat-sheet-fade { from { opacity: 0; } to { opacity: 1; } }

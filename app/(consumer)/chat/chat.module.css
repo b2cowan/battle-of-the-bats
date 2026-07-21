@@ -50,8 +50,8 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--home-amber);
-  background: rgba(161, 98, 7, 0.1);
-  border: 1px solid rgba(161, 98, 7, 0.25);
+  background: rgba(var(--home-amber-rgb), 0.1);
+  border: 1px solid rgba(var(--home-amber-rgb), 0.25);
   border-radius: var(--home-radius-pill);
   padding: 0.25rem 0.6rem;
   margin-bottom: 0.9rem;
@@ -89,7 +89,7 @@
 .bubbleOut {
   background: var(--home-olive-soft);
   color: var(--home-ink);
-  border: 1px solid rgba(87, 101, 30, 0.2);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.2);
   border-top-right-radius: 4px;
 }
 

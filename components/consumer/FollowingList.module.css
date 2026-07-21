@@ -170,7 +170,7 @@
 
 /* ── Claim device-follows offer (signed-in, shared-device safeguard) ─────── */
 .claim {
-  border: 1px solid rgba(87, 101, 30, 0.3);
+  border: 1px solid rgba(var(--home-olive-rgb), 0.3);
   border-radius: var(--home-radius);
   background: var(--home-olive-soft);
   padding: 1rem 1.1rem 1.1rem;

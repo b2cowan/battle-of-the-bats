@@ -26,7 +26,7 @@ export default async function ChatPage() {
   const signedIn = !!user?.email;
 
   return (
-    <div className={`${warm.warm} ${shell.chatShell}`}>
+    <div className={`${warm.warmTab} ${shell.chatShell}`}>
       <ChatTab signedIn={signedIn} />
     </div>
   );

@@ -316,7 +316,7 @@
   transition: transform 0.18s ease, background 0.18s ease;
 }
 .pauseToggle[aria-checked="true"] { background: var(--home-lime); border-color: var(--home-lime); }
-.pauseToggle[aria-checked="true"]::after { background: var(--home-ink); transform: translateX(20px); }
+.pauseToggle[aria-checked="true"]::after { background: var(--home-lime-ink); transform: translateX(20px); }
 .pauseToggle:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; }
 .pauseToggle:disabled { opacity: 0.5; cursor: default; }
 

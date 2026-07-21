@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { User, Bell, LifeBuoy, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import AccountSignOutButton from '@/components/consumer/AccountSignOutButton';
+import AppearanceCard from '@/components/consumer/AppearanceCard';
 import warm from '@/components/consumer/warmTheme.module.css';
 import AccountInstallRow from './AccountInstallRow';
 import styles from './account.module.css';
@@ -27,7 +28,7 @@ export default async function AccountPage() {
   const signedIn = !!email;
 
   return (
-    <div className={`${warm.warm} ${styles.accountFill}`}>
+    <div className={`${warm.warmTab} ${styles.accountFill}`}>
       <div className={styles.page}>
         <h1 className={styles.title}>Account</h1>
 
@@ -43,6 +44,8 @@ export default async function AccountPage() {
             </span>
           </span>
         </div>
+
+        <AppearanceCard signedIn={signedIn} />
 
         {signedIn ? (
           <>

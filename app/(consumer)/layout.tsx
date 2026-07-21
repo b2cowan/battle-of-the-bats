@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
+import ConsumerThemeManager from '@/components/consumer/ConsumerThemeManager';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from '@/components/consumer/ConsumerShell.module.css';
 import { createClient } from '@/lib/supabase-server';
 import { getUserAccessContextsCached, hasCoachAccess } from '@/lib/user-contexts';
+import { getUserTheme } from '@/lib/user-preferences';
+import type { UserTheme } from '@/lib/user-theme';
 
 /**
  * Consumer shell layout (unified-app Phase 1). Wraps the logged-out front door —
@@ -39,14 +42,24 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
   // teams count too — those coaches land on the hub's claim flow. Signed-out visitors
   // and crawlers never pay for this lookup; the /account page shares this resolution
   // via the per-request cache.
+  // One parallel pass: whether the account coaches (surfaces the coaches hub) AND its saved
+  // Dark⇄Warm theme. The layout already resolved `user`, so reading the theme here (vs. a client
+  // fetch from the theme manager) avoids a second auth round-trip; the manager reconciles it
+  // client-side. Signed-out visitors and crawlers pay for neither lookup.
   let isCoach = false;
+  let accountTheme: UserTheme | null = null;
   if (user?.email) {
-    const contexts = await getUserAccessContextsCached(user.id, user.email).catch(() => []);
+    const [contexts, theme] = await Promise.all([
+      getUserAccessContextsCached(user.id, user.email).catch(() => []),
+      getUserTheme(user.id).catch(() => null),
+    ]);
     isCoach = hasCoachAccess(contexts);
+    accountTheme = theme;
   }
 
   return (
     <div className={styles.shell}>
+      <ConsumerThemeManager accountTheme={accountTheme} />
       <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} />
       <div className={styles.content}>{children}</div>
       <InstallAppPrompt subtitle="Follow your teams and get live scores — add it to your home screen." />

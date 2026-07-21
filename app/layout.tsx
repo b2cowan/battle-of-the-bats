@@ -8,8 +8,9 @@ import { OrgNavProvider } from '@/components/OrgNavContext';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import ViewportKeyboardVars from '@/components/ViewportKeyboardVars';
 import LegacyInstallBanner from '@/components/LegacyInstallBanner';
+import { NO_FLASH_SCRIPT } from '@/lib/no-flash-script';
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   weight: ['300', '400', '500', '600', '700'],
   variable: '--font-sans'
@@ -60,16 +61,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
         {/* Apple touch icon for "Add to Home Screen" */}
         <link rel="apple-touch-icon" href="/icons/pwa-192.png" />
-        {/* No-flash admin density — set data-density on <html> before first paint.
-            Lives in the root layout (never re-created on client nav) so React only
-            ever hydrates it; placing it in a layout you navigate *into* makes React
-            re-create it on the client, which it can't execute (dev warning + FOUC). */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html:
-              "(function(){try{var k='fl_admin_density',v=null;try{v=localStorage.getItem(k);}catch(e){}if(v!=='comfortable'&&v!=='compact'){v=(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches)?'comfortable':'compact';}document.documentElement.setAttribute('data-density',v);}catch(e){}})();",
-          }}
-        />
+        {/* No-flash attributes (density + user theme) — set on <html> before first paint.
+            Lives in the ROOT layout only (never re-created on client nav) so React only ever
+            hydrates it; a nested layout would make React re-create it client-side, which it
+            can't execute (dev warning + FOUC). Consolidated in lib/no-flash-script.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: NO_FLASH_SCRIPT }} />
         {/* Capture the PWA install event as early as possible — before React
             hydrates InstallAppPrompt. Chromium fires `beforeinstallprompt` on
             load, often before the component's effect attaches; missing it means
