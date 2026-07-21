@@ -179,13 +179,13 @@ a.card:active {
 /* LIVE — tournament dates straddle today. Loudest: lime fill, dark text, pulse-dot. */
 .coachLifecycleChipLive {
   background: var(--logic-lime);
-  color: #0f1123;
+  color: var(--on-lime);
 }
 
 /* GAME DAY — start_date === today. Same lime, slightly dimmed to rank below LIVE. */
 .coachLifecycleChipGameDay {
   background: var(--logic-lime);
-  color: #0f1123;
+  color: var(--on-lime);
   opacity: 0.85;
 }
 

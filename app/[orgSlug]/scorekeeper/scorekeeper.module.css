@@ -2,6 +2,18 @@
   width: min(100%, 920px);
   margin: 0 auto;
   padding-bottom: 5rem;
+
+  /* --sk-*: scorekeeper's bespoke dark-only slate/status palette. Component-scoped so the
+     warm-portal program can remap this surface independently. P3 token pass: values unchanged. */
+  --sk-ink: #f8fafc;       /* brightest text — titles, big numbers, active labels */
+  --sk-ink-dim: #e2e8f0;   /* secondary text — icon-button glyphs */
+  --sk-ink-faint: #cbd5e1; /* tertiary text — secondary buttons, notices, captions, badges */
+  --sk-bg: #172036;        /* raised dark tier — loading shimmer stop */
+  --sk-bg-deep: #020617;   /* deepest dark tier — recessed score-input well */
+  --sk-amber: #fbbf24;     /* status — "submitted" badge */
+  --sk-warm: #fcd9a3;      /* status — policy-note "review" tone */
+  --sk-lime-tint: #e6f5c4; /* status — policy-note "final" tone */
+  --sk-red: #fca5a5;       /* status — form-error text */
 }
 
 .header {
@@ -24,7 +36,7 @@
 
 .title {
   margin: 0;
-  color: #f8fafc;
+  color: var(--sk-ink);
   font-size: clamp(1.7rem, 4vw, 2.35rem);
   line-height: 1;
 }
@@ -51,7 +63,7 @@
   align-items: center;
   justify-content: center;
   background: var(--surface);
-  color: #e2e8f0;
+  color: var(--sk-ink-dim);
 }
 
 .statsGrid {
@@ -76,7 +88,7 @@
 }
 
 .stat span {
-  color: #f8fafc;
+  color: var(--sk-ink);
   font-family: var(--font-data);
   font-size: 1.55rem;
   font-weight: 900;
@@ -121,7 +133,7 @@
   border: 0;
   outline: 0;
   background: transparent;
-  color: #f8fafc;
+  color: var(--sk-ink);
   font-family: var(--font-data);
   font-size: 0.82rem;
 }
@@ -137,7 +149,7 @@
 .todayButton,
 .secondaryButton {
   background: transparent;
-  color: #cbd5e1;
+  color: var(--sk-ink-faint);
   padding: 0 0.85rem;
 }
 
@@ -159,7 +171,7 @@
 .statusTabActive {
   border-color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.12);
-  color: #f8fafc;
+  color: var(--sk-ink);
 }
 
 .notice {
@@ -170,13 +182,13 @@
   border: 1px solid rgba(148, 163, 184, 0.28);
   border-radius: 8px;
   background: var(--surface);
-  color: #cbd5e1;
+  color: var(--sk-ink-faint);
   font-size: 0.83rem;
   line-height: 1.45;
 }
 
 .notice strong {
-  color: #f8fafc;
+  color: var(--sk-ink);
   font-family: var(--font-data);
   font-size: 0.72rem;
   letter-spacing: 0.08em;
@@ -217,7 +229,7 @@
 .loadingState span {
   min-height: 126px;
   border-radius: 8px;
-  background: linear-gradient(90deg, var(--surface) 0%, #172036 50%, var(--surface) 100%);
+  background: linear-gradient(90deg, var(--surface) 0%, var(--sk-bg) 50%, var(--surface) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s infinite;
 }
@@ -236,7 +248,7 @@
 
 .emptyState h2 {
   margin: 0;
-  color: #f8fafc;
+  color: var(--sk-ink);
   font-size: 1.05rem;
 }
 
@@ -304,7 +316,7 @@
   padding: 0.24rem 0.45rem;
   border: 1px solid rgba(148, 163, 184, 0.32);
   border-radius: 4px;
-  color: #cbd5e1;
+  color: var(--sk-ink-faint);
   font-family: var(--font-data);
   font-size: 0.62rem;
   font-weight: 900;
@@ -315,7 +327,7 @@
 
 .status_submitted {
   border-color: rgba(245, 158, 11, 0.58);
-  color: #fbbf24;
+  color: var(--sk-amber);
 }
 
 .status_completed {
@@ -346,7 +358,7 @@
 }
 
 .teamBlock span {
-  color: #f8fafc;
+  color: var(--sk-ink);
   font-family: var(--font-data);
   font-size: 1rem;
   font-weight: 900;
@@ -412,7 +424,7 @@
 
 .sheetHeader h2 {
   margin: 0;
-  color: #f8fafc;
+  color: var(--sk-ink);
   font-size: 1.1rem;
   line-height: 1.2;
 }
@@ -431,7 +443,7 @@
 
 .scoreGrid label span {
   min-height: 2.4em;
-  color: #cbd5e1;
+  color: var(--sk-ink-faint);
   font-family: var(--font-data);
   font-size: 0.72rem;
   font-weight: 900;
@@ -446,7 +458,7 @@
   min-height: 72px;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.7);
   border-radius: 8px;
-  background: #020617;
+  background: var(--sk-bg-deep);
   color: var(--logic-lime);
   font-family: var(--font-data);
   font-size: 2.8rem;
@@ -505,7 +517,7 @@
   border: 1px solid rgba(148, 163, 184, 0.3);
   border-radius: 8px;
   background: rgba(148, 163, 184, 0.08);
-  color: #cbd5e1;
+  color: var(--sk-ink-faint);
   font-size: 0.84rem;
   line-height: 1.4;
   text-align: left;
@@ -514,12 +526,12 @@
 .policyNote[data-tone='review'] {
   border-color: rgba(245, 158, 11, 0.5);
   background: rgba(245, 158, 11, 0.1);
-  color: #fcd9a3;
+  color: var(--sk-warm);
 }
 .policyNote[data-tone='final'] {
   border-color: rgba(var(--logic-lime-rgb), 0.45);
   background: rgba(var(--logic-lime-rgb), 0.09);
-  color: #e6f5c4;
+  color: var(--sk-lime-tint);
 }
 
 /* J8-006: "now" / up-next signal on the soonest un-scored card — a left stripe + a lime chip so the
@@ -545,7 +557,7 @@
 }
 
 .formError {
-  color: #fca5a5;
+  color: var(--sk-red);
 }
 
 .sheetActions {

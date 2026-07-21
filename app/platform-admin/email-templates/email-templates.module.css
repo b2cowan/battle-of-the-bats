@@ -437,7 +437,7 @@
   letter-spacing: 0.08em;
 }
 
-.statusOk { color: #86efac; }
+.statusOk { color: var(--pa-pos); }
 .statusErr { color: var(--danger); }
 
 /* ── Preview panel ────────────────────────────────────────────────────────────── */
@@ -562,7 +562,7 @@
 }
 
 .modal {
-  background: var(--hud-surface, #0f172a);
+  background: var(--hud-surface);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
   max-width: 420px;
   width: 100%;

@@ -1,5 +1,9 @@
 /* ── Shared layout ──────────────────────────────────────────────────────── */
-.page { max-width: 960px; }
+.page {
+  max-width: 960px;
+  --acct-violet: #a78bfa;
+  --acct-panel-bg: #1a1f2e;
+}
 
 .pageHeader {
   display: flex;
@@ -26,7 +30,7 @@
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.1;
 }
 
@@ -84,16 +88,16 @@
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 2px;
   padding: 0.55rem 0.75rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.9rem;
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
 .input:focus, .select:focus {
   outline: none;
-  border-color: var(--blueprint-blue, #60a5fa);
+  border-color: var(--blueprint-blue);
 }
-.select option { background: #1a1f2e; }
+.select option { background: var(--acct-panel-bg); }
 
 .hint {
   font-size: 0.78rem;
@@ -111,8 +115,8 @@
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
-.typeBadgeOrg        { background: rgba(96,165,250,0.12); color: #60a5fa; }
-.typeBadgeTournament { background: rgba(167,139,250,0.12); color: #a78bfa; }
+.typeBadgeOrg        { background: rgba(96,165,250,0.12); color: var(--info-light); }
+.typeBadgeTournament { background: rgba(167,139,250,0.12); color: var(--acct-violet); }
 
 /* ── Org totals banner (D2) ─────────────────────────────────────────────── */
 .totalsCard {
@@ -135,9 +139,9 @@
   display: block;
   margin-bottom: 0.2rem;
 }
-.totalValue { font-size: 1.1rem; font-weight: 700; color: var(--white-90, #f0f0f0); }
-.totalValuePos { color: #4ade80; }
-.totalValueNeg { color: #f87171; }
+.totalValue { font-size: 1.1rem; font-weight: 700; color: var(--white-90); }
+.totalValuePos { color: var(--success-light); }
+.totalValueNeg { color: var(--danger-light); }
 
 /* ── Ledger card grid (D2) ─────────────────────────────────────────────── */
 .ledgerGrid {
@@ -168,7 +172,7 @@
 .ledgerName {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.3;
 }
 
@@ -187,8 +191,8 @@
   margin-bottom: 0.75rem;
 }
 
-.balancePos     { color: #4ade80; }
-.balanceNeg     { color: #f87171; }
+.balancePos     { color: var(--success-light); }
+.balanceNeg     { color: var(--danger-light); }
 .balanceNeutral { color: var(--white-70, rgba(255,255,255,0.7)); }
 
 .pendingRow {
@@ -230,13 +234,13 @@
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 2px;
   padding: 0.5rem 0.65rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.85rem;
   width: 150px;
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
-.dateInput:focus { outline: none; border-color: var(--blueprint-blue, #60a5fa); }
+.dateInput:focus { outline: none; border-color: var(--blueprint-blue); }
 
 .pendingLedgersSection { margin-top: 1.5rem; }
 .pendingLedgerRow {
@@ -259,7 +263,7 @@
   gap: 0.3rem;
   font-size: 0.8rem;
   font-weight: 600;
-  color: var(--blueprint-blue, #60a5fa);
+  color: var(--blueprint-blue);
   text-decoration: none;
   margin-top: auto;
 }
@@ -285,7 +289,7 @@
 }
 
 .modal {
-  background: #1a1f2e;
+  background: var(--acct-panel-bg);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 2px;
   width: 100%;
@@ -305,7 +309,7 @@
 .modalTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   margin: 0;
 }
 
@@ -392,7 +396,7 @@
   transition: color 0.15s, border-color 0.15s;
 }
 .tab:hover { color: var(--white-70, rgba(255,255,255,0.7)); }
-.tabActive  { color: var(--blueprint-blue, #60a5fa); border-bottom-color: var(--blueprint-blue, #60a5fa); }
+.tabActive  { color: var(--blueprint-blue); border-bottom-color: var(--blueprint-blue); }
 
 /* ── Entry table (D3) ───────────────────────────────────────────────────── */
 .tableWrap { overflow-x: auto; margin-bottom: 0.75rem; }
@@ -424,13 +428,13 @@
 .voidRow .entryDesc { text-decoration: line-through; }
 .linkedIndicator {
   font-size: 0.68rem;
-  color: #a78bfa;
+  color: var(--acct-violet);
   margin-left: 0.4rem;
   opacity: 0.8;
 }
 
-.amountPos { color: #4ade80; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.amountNeg { color: #f87171; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.amountPos { color: var(--success-light); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.amountNeg { color: var(--danger-light); font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
 .typeChip {
   display: inline-block;
@@ -442,9 +446,9 @@
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
-.typeIncome   { background: rgba(74,222,128,0.12); color: #4ade80; }
-.typeExpense  { background: rgba(248,113,113,0.12); color: #f87171; }
-.typeTransfer { background: rgba(167,139,250,0.12); color: #a78bfa; }
+.typeIncome   { background: rgba(74,222,128,0.12); color: var(--success-light); }
+.typeExpense  { background: rgba(248,113,113,0.12); color: var(--danger-light); }
+.typeTransfer { background: rgba(167,139,250,0.12); color: var(--acct-violet); }
 
 .statusBadge {
   display: inline-block;
@@ -455,8 +459,8 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.statusPosted  { background: rgba(96,165,250,0.12); color: #60a5fa; }
-.statusPending { background: rgba(251,191,36,0.12); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+.statusPosted  { background: rgba(96,165,250,0.12); color: var(--info-light); }
+.statusPending { background: rgba(251,191,36,0.12); color: var(--warning-light); border: 1px solid rgba(251,191,36,0.25); }
 .statusVoid    { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
 
 .actionBtns { display: flex; gap: 0.4rem; }
@@ -473,7 +477,7 @@
   line-height: 1;
 }
 .actionBtn:hover          { color: var(--white-80, rgba(255,255,255,0.8)); border-color: rgba(255,255,255,0.25); }
-.actionBtnDanger:hover    { color: #f87171; border-color: rgba(248,113,113,0.4); }
+.actionBtnDanger:hover    { color: var(--danger-light); border-color: rgba(248,113,113,0.4); }
 .actionBtn:disabled       { opacity: 0.3; cursor: not-allowed; }
 
 .tableFooter {

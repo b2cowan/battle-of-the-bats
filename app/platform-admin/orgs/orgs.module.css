@@ -131,7 +131,7 @@
 }
 
 .attentionOk {
-  color: #86efac;
+  color: var(--pa-pos);
 }
 
 .workflowPanel,
@@ -317,7 +317,7 @@
 }
 
 .badgeActive {
-  color: #86efac;
+  color: var(--pa-pos);
   border-color: rgba(134, 239, 172, 0.3);
   background: rgba(134, 239, 172, 0.06);
 }

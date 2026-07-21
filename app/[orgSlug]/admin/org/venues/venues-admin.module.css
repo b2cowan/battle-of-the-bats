@@ -223,7 +223,7 @@
 
 .addFacilityError {
   font-size: 0.7rem;
-  color: var(--danger, #e54c4c);
+  color: var(--danger);
   font-family: var(--font-data);
   margin-top: 0.25rem;
   padding: 0 0.1rem;

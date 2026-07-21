@@ -1,5 +1,6 @@
 .page {
   max-width: 1180px;
+  --bulkops-badge-warn: #fde68a;
 }
 
 .header {
@@ -96,7 +97,7 @@
 .errorBanner {
   border-color: rgba(248, 113, 113, 0.34);
   background: rgba(248, 113, 113, 0.06);
-  color: #fca5a5;
+  color: var(--pa-neg);
 }
 
 .successBanner {
@@ -127,13 +128,13 @@
 .billingClarityCaution {
   border: 1px solid rgba(252, 211, 77, 0.4);
   background: rgba(252, 211, 77, 0.08);
-  color: #fcd34d;
+  color: var(--pa-caution);
 }
 
 .billingClarityDanger {
   border: 1px solid rgba(248, 113, 113, 0.45);
   background: rgba(248, 113, 113, 0.1);
-  color: #fca5a5;
+  color: var(--pa-neg);
 }
 
 .workspace {
@@ -293,7 +294,7 @@
 
 .badgeWarn {
   border-color: rgba(250, 204, 21, 0.34);
-  color: #fde68a;
+  color: var(--bulkops-badge-warn);
 }
 
 .badgeMuted {

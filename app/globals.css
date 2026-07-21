@@ -89,6 +89,17 @@
   --danger-strong:  var(--danger);
   --info-strong:    var(--info);
 
+  /* Status colours as LIGHTER TEXT/GLYPH on DARK operator surfaces (the Tailwind
+     -400 tier). Brighter than the base --success/--warning/--danger/--info fills so
+     small status text/icons read clearly on dark panels/pills. Operator surfaces are
+     dark-only, so these need no light-mode override. --danger-light / --warning-light
+     finish a convention the codebase already referenced but never defined (P3 tranche
+     2026-07-21). Use for TEXT/GLYPHS on dark; the base tokens stay for fills/tints. */
+  --success-light: #4ade80;
+  --warning-light: #fbbf24;
+  --danger-light:  #f87171;
+  --info-light:    #60a5fa;
+
   --radius-sm:   6px;
   --radius:      12px;
   --radius-xs:   4px;
@@ -325,6 +336,11 @@ body:has([data-chat-fullbleed]) {
   --blueprint-blue-rgb:  var(--platform-primary-rgb);
   --logic-lime:          #D9F99D;
   --logic-lime-rgb:      217, 249, 157;
+  /* Dark ink for TEXT/GLYPHS on a bright fill (lime / gold / amber chips + the
+     .btn-lime CTA) — the on-fill counterpart to --on-primary (text on --primary).
+     Consolidates the hand-copied #0f1123 "dark text on lime" literal across the
+     coaches editors, champion badges, and segmented controls (P3 tranche 2026-07-21). */
+  --on-lime:             #0f1123;
   /* Gold-medal / championship-achievement hue — the one sanctioned categorical hue
      beyond lime/amber/success/danger (logged 2026-07-02, scope broadened to tournament
      champions 2026-07-06). Not a general-purpose accent.
@@ -342,6 +358,20 @@ body:has([data-chat-fullbleed]) {
   --card-bg:             var(--hud-surface); /* ghost-token fix: coaches/rep-teams use this; resolves to --hud-surface */
   --data-gray:           #94A3B8;
   --fl-text:             #F1F5F9;
+
+  /* Platform-admin internal staff console — status-pill palette (Tailwind -300 tier)
+     + shared near-black surfaces. Console-only (never customer-facing, never themed);
+     a deliberately distinct namespaced set from the general --*-light status tier
+     because the console uses lighter -300 shades (P3 tranche 2026-07-21). */
+  --pa-pos:              #86efac;
+  --pa-neg:              #fca5a5;
+  --pa-info:             #93c5fd;
+  --pa-caution:          #fcd34d;
+  --pa-option-bg:        #0a0f0a;
+  --pa-preview-bg:       #050705;
+  --pa-confirm-bg:       #060807;
+  --pa-option-text:      #f8fafc;   /* native <select> option text on the dark console */
+  --pa-option-checked-bg: #2563eb;  /* native <select> option :checked highlight */
 
   /* HUD shadows */
   --glow-blue: 0 0 12px rgba(var(--blueprint-blue-rgb), 0.3);
@@ -692,7 +722,7 @@ h1, h2, h3, h4, h5, h6 {
    Combine with btn-data for the operational size.                           */
 .btn-lime {
   background: var(--logic-lime);
-  color: #0f1123;
+  color: var(--on-lime);
   border-color: var(--logic-lime);
   box-shadow: none;
 }

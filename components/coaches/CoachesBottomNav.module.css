@@ -1,5 +1,10 @@
 /* Only on mobile */
-.bottomNav { display: none; }
+.bottomNav {
+  display: none;
+  /* Scoped dropdown-surface color (bespoke near-black, not a semantic token) — declared
+     unconditionally here so it cascades to .dropdown regardless of the media query. */
+  --nav-dropdown-bg: #0d111a;
+}
 
 @media (max-width: 900px) {
   .bottomNav {
@@ -36,7 +41,7 @@
     min-width: 0;
   }
 
-  .tab.active { color: var(--blueprint-blue, #4fa3e0); }
+  .tab.active { color: var(--blueprint-blue); }
   .tab:active { opacity: 0.65; }
 
   .iconWrap {
@@ -62,8 +67,8 @@
     width: 4px;
     height: 4px;
     border-radius: 50%;
-    background: var(--blueprint-blue, #4fa3e0);
-    box-shadow: 0 0 6px var(--blueprint-blue, #4fa3e0);
+    background: var(--blueprint-blue);
+    box-shadow: 0 0 6px var(--blueprint-blue);
   }
 
   .label {
@@ -91,7 +96,7 @@
     bottom: calc(100% + 0.75rem);
     right: 0;
     min-width: 210px;
-    background: #0d111a;
+    background: var(--nav-dropdown-bg);
     border: 1px solid rgba(79, 163, 224, 0.25);
     border-radius: 16px;
     box-shadow: 0 -8px 32px rgba(0,0,0,0.65), 0 0 24px rgba(79,163,224,0.1);
@@ -133,7 +138,7 @@
 
   .dropActive {
     background: rgba(79, 163, 224, 0.12);
-    color: var(--blueprint-blue, #4fa3e0);
+    color: var(--blueprint-blue);
   }
 
   .dropChevron {
@@ -148,8 +153,8 @@
     margin: 0.2rem 0;
   }
 
-  .dropLogout { color: #f87171; }
-  .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+  .dropLogout { color: var(--danger-light); }
+  .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger-light); }
 
   @keyframes slideUpMenu {
     from { opacity: 0; transform: translateY(12px); }

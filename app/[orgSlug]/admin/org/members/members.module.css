@@ -33,7 +33,7 @@
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.1;
 }
 
@@ -62,7 +62,7 @@
 }
 
 .seatCount strong {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .upgradeLink {
@@ -138,13 +138,13 @@
 }
 
 .statusAccepted {
-  color: var(--success, #4ade80);
+  color: var(--success);
   font-size: 0.82rem;
   font-weight: 600;
 }
 
 .statusPending {
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
   font-size: 0.82rem;
   font-weight: 600;
 }
@@ -188,7 +188,7 @@
 }
 
 .removeBtn:hover {
-  color: var(--danger, #ef4444);
+  color: var(--danger);
   background: rgba(239,68,68,0.1);
   border-color: rgba(239,68,68,0.2);
 }
@@ -206,7 +206,7 @@
 }
 
 .modal {
-  background: var(--bg-2, #1a1a2e);
+  background: var(--bg-2);
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   border-radius: 2px;
   padding: 1.5rem;
@@ -227,7 +227,7 @@
   font-size: 1.1rem;
   font-weight: 800;
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .confirmText {
@@ -238,7 +238,7 @@
 }
 
 .confirmText strong {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .field {
@@ -258,7 +258,7 @@
   background: var(--bg-3, rgba(255,255,255,0.06));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   border-radius: 2px;
-  color: var(--white, #fff);
+  color: var(--white);
   font-size: 0.875rem;
   padding: 0.6rem 0.75rem;
   box-sizing: border-box;
@@ -378,7 +378,7 @@
 
 .roleMatrix tbody tr:last-child td { border-bottom: none; }
 
-.matrixCheck { color: var(--success, #4ade80); font-weight: 700; }
+.matrixCheck { color: var(--success); font-weight: 700; }
 .matrixDash  { color: var(--white-15, rgba(255,255,255,0.15)); }
 
 .roleRefNote {
@@ -534,7 +534,7 @@
 }
 
 .iconBtnDanger:hover {
-  color: var(--danger, #ef4444);
+  color: var(--danger);
   background: rgba(239,68,68,0.1);
   border-color: rgba(239,68,68,0.2);
 }
@@ -562,12 +562,12 @@
   border: 1px solid rgba(245, 158, 11, 0.25);
   margin-bottom: 1.25rem;
   font-size: 0.82rem;
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
 }
 
 .nudgeLink {
   font-weight: 600;
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
   text-decoration: none;
 }
 
@@ -608,7 +608,7 @@
 .suspendBtn {
   background: rgba(245, 158, 11, 0.1);
   border: 1px solid rgba(245, 158, 11, 0.3);
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
 }
 
 .suspendBtn:hover {
@@ -631,7 +631,7 @@
 }
 
 .inlineConfirmText strong {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 /* ── Member title below role badge ───────────── */
@@ -645,7 +645,7 @@
 /* ── Display name in member rows ─────────────── */
 .displayName {
   font-weight: 600;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.875rem;
   line-height: 1.2;
 }

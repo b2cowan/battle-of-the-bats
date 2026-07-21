@@ -1,4 +1,7 @@
-.page { max-width: 960px; }
+.page {
+  max-width: 960px;
+  --budget-panel-bg: #1a1f2e;
+}
 
 .pageHeader {
   display: flex;
@@ -33,7 +36,7 @@
   font-weight: 900;
   font-family: var(--font-display, sans-serif);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.1;
 }
 
@@ -56,7 +59,7 @@
 .breadcrumb span { color: rgba(255,255,255,0.25); }
 
 .muted { color: var(--white-40, rgba(255,255,255,0.4)); padding: 2rem; }
-.errorText { color: #f87171; font-size: 0.85rem; margin: 0.5rem 0; }
+.errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0.5rem 0; }
 
 /* ── Summary banner ──────────────────────────────────────────────────────── */
 .summaryBanner {
@@ -84,7 +87,7 @@
 .summaryValue {
   font-size: 1.15rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-variant-numeric: tabular-nums;
 }
 
@@ -181,7 +184,7 @@
 .lineAmount {
   font-size: 0.95rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
   margin-left: auto;
@@ -201,7 +204,7 @@
   transition: color 0.12s, border-color 0.12s;
 }
 .actionBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); border-color: rgba(255,255,255,0.25); }
-.actionBtnDanger:hover { color: #f87171; border-color: rgba(248,113,113,0.4); }
+.actionBtnDanger:hover { color: var(--danger-light); border-color: rgba(248,113,113,0.4); }
 
 /* ── Period breakdown (expanded) ─────────────────────────────────────────── */
 .periodsTable {
@@ -240,7 +243,7 @@
 .grandTotalValue {
   font-size: 1.05rem;
   font-weight: 900;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-variant-numeric: tabular-nums;
 }
 
@@ -260,7 +263,7 @@
 
 .generateTitle {
   font-weight: 700;
-  color: #4ade80;
+  color: var(--success-light);
   margin: 0 0 0.3rem;
   font-size: 0.95rem;
 }
@@ -279,11 +282,11 @@
   background: rgba(74,222,128,0.06);
   border: 1px solid rgba(74,222,128,0.18);
   font-size: 0.88rem;
-  color: #4ade80;
+  color: var(--success-light);
 }
 
 .inlineLink {
-  color: #60a5fa;
+  color: var(--info-light);
   text-decoration: none;
   font-weight: 600;
 }
@@ -312,7 +315,7 @@
 }
 
 .modal {
-  background: #1a1f2e;
+  background: var(--budget-panel-bg);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 14px;
   width: 100%;
@@ -335,7 +338,7 @@
 .modalTitle {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   margin: 0;
 }
 
@@ -401,12 +404,12 @@
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.9rem;
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
-.input:focus { outline: none; border-color: var(--blueprint-blue, #60a5fa); }
+.input:focus { outline: none; border-color: var(--blueprint-blue); }
 
 .toggleLabel {
   display: flex;
@@ -445,7 +448,7 @@
   cursor: pointer;
   transition: color 0.12s, border-color 0.12s;
 }
-.addPeriodBtn:hover { color: var(--white-90, #f0f0f0); border-color: rgba(255,255,255,0.3); }
+.addPeriodBtn:hover { color: var(--white-90); border-color: rgba(255,255,255,0.3); }
 
 .periodInputRow {
   display: flex;
@@ -465,7 +468,7 @@
   padding: 0.3rem;
   transition: color 0.12s;
 }
-.removePeriodBtn:hover { color: #f87171; }
+.removePeriodBtn:hover { color: var(--danger-light); }
 
 .periodSumRow {
   display: flex;
@@ -477,8 +480,8 @@
   border-top: 1px solid rgba(255,255,255,0.06);
 }
 
-.periodSumError { color: #f87171; }
-.periodSumError span { color: #f87171; }
+.periodSumError { color: var(--danger-light); }
+.periodSumError span { color: var(--danger-light); }
 
 /* ── Generate installments modal ─────────────────────────────────────────── */
 .genInstructions {
@@ -487,7 +490,7 @@
   margin: 0 0 1.25rem;
   line-height: 1.5;
 }
-.genInstructions strong { color: var(--white-90, #f0f0f0); }
+.genInstructions strong { color: var(--white-90); }
 
 .genInstallmentsSection {
   background: rgba(255,255,255,0.02);
@@ -559,7 +562,7 @@
 .successState {
   text-align: center;
   padding: 1.5rem 0;
-  color: #4ade80;
+  color: var(--success-light);
   font-weight: 600;
   font-size: 0.95rem;
 }

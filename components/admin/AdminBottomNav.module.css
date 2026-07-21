@@ -82,7 +82,7 @@
     padding: 0 0.2rem;
     border-radius: 999px;
     background: var(--warning);
-    color: #0f1123;
+    color: var(--on-lime);
     font-family: var(--font-data);
     font-size: 0.5rem;
     font-weight: 800;
@@ -307,8 +307,8 @@
 
   .dropUtilItem:hover { color: rgba(255, 255, 255, 0.72); background: rgba(var(--blueprint-blue-rgb), 0.07); }
 
-  .dropLogout { color: #f87171; }
-  .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; }
+  .dropLogout { color: var(--danger-light); }
+  .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger-light); }
 
   /* ── Density toggle (Display section) ──────────────── */
   .densityRow {

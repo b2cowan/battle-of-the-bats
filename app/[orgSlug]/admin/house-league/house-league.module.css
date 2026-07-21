@@ -1179,6 +1179,7 @@
   margin-bottom: 0.4rem;
 }
 
+/* intentional purple, no semantic token (matches .statusCompleted) */
 .practiceBadge {
   background: rgba(167,139,250,0.12);
   color: #a78bfa;

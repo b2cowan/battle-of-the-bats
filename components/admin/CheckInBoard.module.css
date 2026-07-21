@@ -204,7 +204,7 @@
   font-weight: 700;
 }
 .rosterTag[data-state="none"] { color: var(--data-gray); }
-.rosterTag[data-state="submitted"] { color: var(--blueprint-blue, #60a5fa); }
+.rosterTag[data-state="submitted"] { color: var(--blueprint-blue); }
 .rosterTag[data-state="confirmed"] { color: var(--success); }
 .payTag[data-paid="true"] { color: var(--success); }
 .payTag[data-paid="false"] { color: var(--warning); }
@@ -440,7 +440,7 @@
   padding: 0.6rem 1rem;
   border-color: rgba(var(--logic-lime-rgb), 0.5);
   background: rgba(var(--logic-lime-rgb), 0.12);
-  color: var(--logic-lime, #d9f99d);
+  color: var(--logic-lime);
 }
 .editRosterBtn:disabled, .addRosterBtn:disabled { opacity: 0.45; cursor: default; }
 

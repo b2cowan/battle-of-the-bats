@@ -2,6 +2,7 @@
 .playbook {
   font-family: var(--font-data, monospace);
   color: var(--white-75);
+  --dev-debug: #ffff00;
 }
 
 .intro {
@@ -12,7 +13,7 @@
 }
 
 .intro code {
-  color: #ffff00;
+  color: var(--dev-debug);
   background: rgba(255,255,0,0.08);
   padding: 0.1rem 0.35rem;
   border-radius: 3px;
@@ -119,6 +120,9 @@
 }
 
 /* ─── Accent colours ─────────────────────────────────────────────────────────── */
+/* accent-green/blue/red reuse global status tokens; accent-yellow uses --dev-debug.
+   accent-purple/orange/cyan/pink/teal/lime are an intentional categorical rainbow
+   legend — not semantic status colors, so left as literal hex (not token-mapped). */
 .accent-green  { border-left-color: rgba(34,197,94,0.6); }
 .accent-green  .agentIcon, .accent-green  .agentCmd,
 .accent-green  .detailHeaderIcon, .accent-green .detailCmd { color: var(--success); }
@@ -129,7 +133,7 @@
 
 .accent-yellow { border-left-color: rgba(255,255,0,0.5); }
 .accent-yellow .agentIcon, .accent-yellow .agentCmd,
-.accent-yellow .detailHeaderIcon, .accent-yellow .detailCmd { color: #ffff00; }
+.accent-yellow .detailHeaderIcon, .accent-yellow .detailCmd { color: var(--dev-debug); }
 
 .accent-purple { border-left-color: rgba(167,139,250,0.6); }
 .accent-purple .agentIcon, .accent-purple .agentCmd,
@@ -275,7 +279,7 @@
 .rule strong { color: rgba(255,255,255,0.78); }
 
 .rule code, .rulesBox code {
-  color: #ffff00;
+  color: var(--dev-debug);
   background: rgba(255,255,0,0.08);
   padding: 0.05rem 0.3rem;
   border-radius: 3px;
@@ -396,7 +400,7 @@
 .pipelineCmd {
   font-size: 0.78rem;
   font-weight: 800;
-  color: #ffff00;
+  color: var(--dev-debug);
   background: rgba(255,255,0,0.08);
   padding: 0.1rem 0.4rem;
   border-radius: 4px;
@@ -441,7 +445,7 @@
 .quickRefCmd {
   font-size: 0.68rem;
   font-weight: 700;
-  color: #ffff00;
+  color: var(--dev-debug);
   text-align: right;
   white-space: nowrap;
 }
@@ -485,7 +489,7 @@
 
 .roleTable td:first-child code,
 .roleTable code {
-  color: #ffff00;
+  color: var(--dev-debug);
   background: rgba(255,255,0,0.08);
   padding: 0.05rem 0.3rem;
   border-radius: 3px;
@@ -507,7 +511,7 @@
 .orderedList strong { color: rgba(255,255,255,0.72); }
 
 .orderedList code {
-  color: #ffff00;
+  color: var(--dev-debug);
   background: rgba(255,255,0,0.08);
   padding: 0.05rem 0.3rem;
   border-radius: 3px;

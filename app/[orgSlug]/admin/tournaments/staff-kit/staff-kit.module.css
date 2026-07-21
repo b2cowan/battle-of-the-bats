@@ -101,6 +101,8 @@
 
 /* Printable one-pager — drop the app chrome, lay the two cards out for the gate table. */
 @media print {
+  /* Intentional print-only ink literals (#333/#ccc/#000 below) — fixed values for paper output,
+     independent of the on-screen dark theme. Keep literal. */
   .intro,
   .note {
     color: #333;

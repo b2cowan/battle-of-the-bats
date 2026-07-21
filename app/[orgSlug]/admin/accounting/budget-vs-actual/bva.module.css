@@ -25,7 +25,7 @@
 .pageTitle {
   font-size: 1.75rem; font-weight: 900;
   font-family: var(--font-data);
-  margin: 0; color: #f0f0f0; line-height: 1.1;
+  margin: 0; color: #f0f0f0; /* opaque #f0f0f0 heading; drifts from the var(--white-90) heading convention used elsewhere — pinned pending a separate normalization */ line-height: 1.1;
 }
 .pageSub { margin: 0.25rem 0 0; color: rgba(255,255,255,0.4); font-size: 0.9rem; }
 
@@ -57,8 +57,8 @@
 }
 .headroomLabel { font-size: 0.8rem; color: rgba(255,255,255,0.4); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 .headroomValue { font-size: 2.4rem; font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
-.headroomPos { color: #4ade80; }
-.headroomNeg { color: #f87171; }
+.headroomPos { color: var(--success-light); }
+.headroomNeg { color: var(--danger-light); }
 .headroomNote { font-size: 0.78rem; color: rgba(255,255,255,0.35); margin-top: 0.25rem; }
 
 /* ── Summary cards ───────────────────────────────────────────────────────── */
@@ -72,8 +72,8 @@
 }
 .summaryLabel { font-size: 0.73rem; color: rgba(255,255,255,0.4); margin-bottom: 0.3rem; }
 .summaryValue { font-size: 1.25rem; font-weight: 700; color: rgba(255,255,255,0.9); font-variant-numeric: tabular-nums; }
-.summaryPos  { color: #4ade80; }
-.summaryNeg  { color: #f87171; }
+.summaryPos  { color: var(--success-light); }
+.summaryNeg  { color: var(--danger-light); }
 .summaryMuted { color: rgba(255,255,255,0.55); }
 
 /* ── Section headers ─────────────────────────────────────────────────────── */
@@ -120,8 +120,8 @@
 
 .lineDesc { font-weight: 600; color: rgba(255,255,255,0.85); }
 
-.varPos { color: #4ade80; }
-.varNeg { color: #f87171; }
+.varPos { color: var(--success-light); }
+.varNeg { color: var(--danger-light); }
 .varNeutral { color: rgba(255,255,255,0.45); }
 
 /* ── Period expand row ───────────────────────────────────────────────────── */
@@ -146,13 +146,13 @@
 /* ── Allocation badge ────────────────────────────────────────────────────── */
 .badgeAllocated {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  background: rgba(74,222,128,0.1); color: #4ade80;
+  background: rgba(74,222,128,0.1); color: var(--success-light);
   border: 1px solid rgba(74,222,128,0.22); border-radius: 2px;
   font-size: 0.7rem; font-weight: 700; padding: 0.12rem 0.4rem; white-space: nowrap;
 }
 .badgeUnallocated {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  background: rgba(251,191,36,0.08); color: #fbbf24;
+  background: rgba(251,191,36,0.08); color: var(--warning-light);
   border: 1px solid rgba(251,191,36,0.2); border-radius: 2px;
   font-size: 0.7rem; font-weight: 700; padding: 0.12rem 0.4rem; white-space: nowrap;
 }
@@ -172,7 +172,7 @@
   display: flex; align-items: center; justify-content: space-between;
 }
 .actualsPanelTitle { font-size: 0.85rem; font-weight: 700; color: rgba(255,255,255,0.65); }
-.actualsPanelTotal { font-size: 0.85rem; font-variant-numeric: tabular-nums; color: #f87171; font-weight: 700; }
+.actualsPanelTotal { font-size: 0.85rem; font-variant-numeric: tabular-nums; color: var(--danger-light); font-weight: 700; }
 .actualsPanelNote { font-size: 0.72rem; color: rgba(255,255,255,0.35); padding: 0.5rem 1rem 0.75rem; }
 
 .actualsTable { width: 100%; border-collapse: collapse; font-size: 0.83rem; }
@@ -214,9 +214,9 @@
 .statusBadge {
   font-size: 0.68rem; font-weight: 700; border-radius: 2px; padding: 0.12rem 0.4rem;
 }
-.statusOnTrack { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.22); }
-.statusBehind  { background: rgba(251,191,36,0.1);  color: #fbbf24; border: 1px solid rgba(251,191,36,0.2);  }
-.statusOverdue { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.25); }
+.statusOnTrack { background: rgba(74,222,128,0.12); color: var(--success-light); border: 1px solid rgba(74,222,128,0.22); }
+.statusBehind  { background: rgba(251,191,36,0.1);  color: var(--warning-light); border: 1px solid rgba(251,191,36,0.2);  }
+.statusOverdue { background: rgba(248,113,113,0.12); color: var(--danger-light); border: 1px solid rgba(248,113,113,0.25); }
 
 .teamCardStats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.4rem 0.75rem; }
 .teamStatLabel { font-size: 0.7rem; color: rgba(255,255,255,0.35); margin-bottom: 0.1rem; }
@@ -227,9 +227,9 @@
   margin-top: 0.75rem; overflow: hidden;
 }
 .progressFill { height: 100%; border-radius: 2px; transition: width 0.3s; }
-.progressFillGood    { background: #4ade80; }
-.progressFillWarning { background: #fbbf24; }
-.progressFillDanger  { background: #f87171; }
+.progressFillGood    { background: var(--success-light); }
+.progressFillWarning { background: var(--warning-light); }
+.progressFillDanger  { background: var(--danger-light); }
 
 /* ── Empty states ────────────────────────────────────────────────────────── */
 .emptySection {
@@ -238,4 +238,4 @@
   border-radius: 2px; margin-bottom: 2rem;
 }
 
-.errorText { color: #f87171; font-size: 0.82rem; margin: 0 0 1rem; }
+.errorText { color: var(--danger-light); font-size: 0.82rem; margin: 0 0 1rem; }

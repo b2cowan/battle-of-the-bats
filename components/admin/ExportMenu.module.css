@@ -42,7 +42,7 @@
   z-index: 200;
   min-width: 220px;
   max-width: calc(100vw - 1.5rem);
-  background: var(--hud-surface, #111827);
+  background: var(--hud-surface);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
   border-radius: 2px;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.5);
@@ -59,7 +59,7 @@
   padding: 0.5rem 0.85rem;
   background: transparent;
   border: none;
-  color: var(--white, #fff);
+  color: var(--white);
   text-align: left;
   cursor: pointer;
   transition: background 0.12s;
@@ -90,7 +90,7 @@
 .menuIcon {
   flex-shrink: 0;
   margin-top: 2px;
-  color: var(--primary-light, #7dd3fc);
+  color: var(--primary-light);
 }
 
 .menuItemGated .menuIcon {
@@ -100,7 +100,7 @@
 .lockIcon {
   flex-shrink: 0;
   margin-top: 3px;
-  color: var(--warning, #fbbf24);
+  color: var(--warning);
 }
 
 .menuItemLabel {
@@ -121,7 +121,7 @@
 }
 
 .menuItemGated .menuItemHint {
-  color: var(--warning, #fbbf24);
+  color: var(--warning);
   opacity: 0.85;
 }
 

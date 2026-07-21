@@ -6,7 +6,9 @@
    reflows to a per-player accordion. */
 
 .wrap {
-  /* Best/Okay/Never chip tints — identical hexes to PositionProfileEditor so the two surfaces match. */
+  /* Best/Okay/Never chip tints — identical hexes to PositionProfileEditor so the two surfaces match.
+     Pinned design-audited palette (2026-07-02); kept as-is in the P3 token judgment tranche —
+     TH-5 warm variant is ratified separately, not a token-swap candidate here. */
   --best-bg: rgba(132, 204, 22, 0.16); --best-bd: rgba(132, 204, 22, 0.55); --best-fg: #bef264;
   --okay-bg: rgba(96, 165, 250, 0.14); --okay-bd: rgba(96, 165, 250, 0.45); --okay-fg: #93c5fd;
   --never-bg: rgba(248, 113, 113, 0.13); --never-bd: rgba(248, 113, 113, 0.5); --never-fg: #fca5a5;

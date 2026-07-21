@@ -1,4 +1,4 @@
-﻿.page { max-width: 1300px; }
+﻿.page { max-width: 1300px; --cu-surface: #1a1a1a; }
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
@@ -187,13 +187,13 @@
 }
 
 .badgeActive {
-  color: #86efac;
+  color: var(--pa-pos);
   border-color: rgba(134, 239, 172, 0.3);
   background: rgba(134, 239, 172, 0.06);
 }
 
 .badgeWarn {
-  color: #fcd34d;
+  color: var(--pa-caution);
   border-color: rgba(252, 211, 77, 0.35);
   background: rgba(252, 211, 77, 0.06);
 }
@@ -257,7 +257,7 @@
   right: 0;
   top: calc(100% + 4px);
   min-width: 148px;
-  background: var(--fl-surface, #1a1a1a);
+  background: var(--cu-surface);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
   z-index: 50;
   display: flex;
@@ -305,7 +305,7 @@
 }
 
 .modalBox {
-  background: var(--fl-surface, #1a1a1a);
+  background: var(--cu-surface);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
   padding: 1.75rem 2rem;
   width: 100%;

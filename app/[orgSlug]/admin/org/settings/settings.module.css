@@ -33,7 +33,7 @@
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.1;
 }
 
@@ -137,7 +137,7 @@
   background: var(--bg-3, rgba(255,255,255,0.06));
   border: 1px solid var(--border, rgba(255,255,255,0.08));
   border-radius: 2px;
-  color: var(--white, #fff);
+  color: var(--white);
   font-size: 0.9rem;
   padding: 0.6rem 0.75rem;
   box-sizing: border-box;
@@ -183,7 +183,7 @@
 
 .slugWarning {
   font-size: 0.82rem;
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
   margin: 0.4rem 0 0;
   font-weight: 600;
 }
@@ -503,7 +503,7 @@
 .fontBtnSample {
   font-size: 1.1rem;
   font-weight: 400;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-family: var(--font-data);
 }
 
@@ -608,7 +608,7 @@
 }
 
 .modal {
-  background: var(--bg-2, #12101e);
+  background: var(--bg-2);
   border: 1px solid var(--border, rgba(255,255,255,0.1));
   border-radius: 2px;
   padding: 1.75rem;
@@ -629,7 +629,7 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .modalBody {
@@ -687,7 +687,7 @@
 .cardPreviewTitle {
   font-size: 0.82rem;
   font-weight: 600;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .cardPreviewBadge {
@@ -708,7 +708,7 @@
 
 /* ── Stock logo picker modal ─────────────────────────── */
 .stockModal {
-  background: var(--bg-2, #12101e);
+  background: var(--bg-2);
   border: 1px solid var(--border, rgba(255,255,255,0.1));
   border-radius: 2px;
   padding: 1.75rem;
@@ -731,7 +731,7 @@
   margin: 0;
   font-size: 1.05rem;
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .stockModalSubtitle {
@@ -752,7 +752,7 @@
 }
 
 .stockModalClose:hover {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .stockCategoryLabel {
@@ -852,7 +852,7 @@
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background: var(--bg-2, #12101e);
+  background: var(--bg-2);
   border: 1px solid var(--border, rgba(255,255,255,0.1));
   display: flex;
   align-items: center;

@@ -499,7 +499,7 @@
 }
 
 .segmentBtn[data-active='true'] {
-  color: #0f1123;
+  color: var(--on-lime);
   background: var(--logic-lime);
 }
 
@@ -620,7 +620,7 @@
 }
 
 .saveBtn {
-  color: #0f1123;
+  color: var(--on-lime);
   background: var(--logic-lime);
   border: 1px solid var(--logic-lime);
 }

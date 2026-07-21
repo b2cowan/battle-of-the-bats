@@ -50,7 +50,7 @@
   font-size: 0.72rem;
 }
 
-.filterSelect option { background: #0a0f0a; }
+.filterSelect option { background: var(--pa-option-bg); }
 
 .filterBtn {
   padding: 0.4rem 0.9rem;
@@ -158,7 +158,7 @@
   margin: 0.5rem 0 0;
   padding: 0.75rem;
   border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
-  background: #050705;
+  background: var(--pa-preview-bg);
   color: var(--fl-text);
   font-family: monospace;
   font-size: 0.68rem;
@@ -225,7 +225,7 @@
 .escalateBtnActive {
   background: rgba(248, 113, 113, 0.1);
   border: 1px solid rgba(248, 113, 113, 0.4);
-  color: var(--danger, #f87171);
+  color: var(--danger);
 }
 
 .escalateBtnActive:hover { background: rgba(248, 113, 113, 0.18); }
@@ -243,13 +243,13 @@
   text-transform: capitalize;
 }
 
-.statusSelect option { background: #0a0f0a; }
+.statusSelect option { background: var(--pa-option-bg); }
 
 .statusSelect:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .statusError {
   font-size: 0.6rem;
-  color: var(--danger, #f87171);
+  color: var(--danger);
 }
 
 .emptyCell {

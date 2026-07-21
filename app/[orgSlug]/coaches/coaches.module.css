@@ -93,6 +93,11 @@
   display: flex;
   min-height: 100vh;
   background: var(--pitch-black);
+  /* Scoped bespoke tag/money-chip palette (org-tag blue-violet vs own-tag lime-green) —
+     not semantic tokens, declared once here so they cascade to every coaches page (P3). */
+  --tag-org-fg: #a9bdf5;
+  --tag-org-active-bg: #7aa2f7;
+  --tag-own-fg: #c9e89a;
 }
 
 .coachesMain {
@@ -226,11 +231,11 @@
   cursor: pointer;
   font-family: inherit;
   text-align: left;
-  color: #f87171;
+  color: var(--danger-light);
 }
 .sidebarLogout:hover {
   background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  color: var(--danger-light);
 }
 
 .sidebarDivider {
@@ -537,7 +542,7 @@
 .lineupAnalyticsName { flex: 0 0 40%; min-width: 0; color: var(--white-90); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lineupAnalyticsVal { flex: 1; min-width: 0; color: var(--white-60); font-size: 0.8rem; text-align: right; }
 .lineupAnalyticsBar { flex: 1; height: 7px; border-radius: 99px; background: var(--bg-inset, rgba(0,0,0,0.25)); overflow: hidden; max-width: 120px; }
-.lineupAnalyticsBar i { display: block; height: 100%; background: var(--logic-lime, #84cc16); }
+.lineupAnalyticsBar i { display: block; height: 100%; background: var(--logic-lime); }
 .lineupAnalyticsRec { color: var(--white-90); font-variant-numeric: tabular-nums; }
 .lineupAnalyticsFlag { font-style: normal; color: var(--warning); }
 .lineupAnalyticsEmpty { margin: 0.3rem 0; font-size: 0.82rem; color: var(--white-45); }
@@ -1919,7 +1924,7 @@
   color: var(--white-90);
   cursor: pointer;
 }
-.formCheck input { accent-color: var(--logic-lime, #84cc16); cursor: pointer; }
+.formCheck input { accent-color: var(--logic-lime); cursor: pointer; }
 
 /* Segmented Home / Away / Neutral choice — lime active fill (coach accent) */
 .segChoice {
@@ -1941,7 +1946,7 @@
 }
 .segBtn:last-child { border-right: none; }
 .segBtn:hover { background: rgba(255,255,255,0.09); }
-.segBtnActive, .segBtnActive:hover { background: var(--logic-lime, #84cc16); color: #0f1123; }
+.segBtnActive, .segBtnActive:hover { background: var(--logic-lime); color: var(--on-lime); }
 
 /* Form grids collapse to one column at the content breakpoint (migrated 520→640). */
 @media (max-width: 640px) {
@@ -3115,7 +3120,7 @@
   font-size: 0.76rem;
   color: var(--white-90);
 }
-.lineupPdfNotesToggle input { cursor: pointer; accent-color: var(--logic-lime, #84cc16); }
+.lineupPdfNotesToggle input { cursor: pointer; accent-color: var(--logic-lime); }
 
 /* Lineup templates menu (Save as / Start from) */
 .lineupTemplateSection { display: flex; flex-direction: column; gap: 0.45rem; }
@@ -3167,7 +3172,7 @@
 .lineupNotice {
   margin: 0 0 0.35rem;
   font-size: 0.78rem;
-  color: var(--logic-lime, #84cc16);
+  color: var(--logic-lime);
   font-weight: 600;
   line-height: 1.4;
 }
@@ -3833,7 +3838,7 @@
 .tagComboChipOrg {
   background: rgba(var(--blueprint-blue-rgb), 0.18);
   border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  color: #a9bdf5;
+  color: var(--tag-org-fg);
 }
 .tagComboChipX { cursor: pointer; opacity: 0.7; font-weight: 700; line-height: 1; background: none; border: none; color: inherit; padding: 0; }
 .tagComboChipX:hover { opacity: 1; }
@@ -3869,12 +3874,12 @@
   border-radius: 999px; padding: 0.05rem 0.4rem;
   background: rgba(var(--logic-lime-rgb), 0.1);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  color: #c9e89a;
+  color: var(--tag-own-fg);
 }
 .moneyTagChipOrg {
   background: rgba(var(--blueprint-blue-rgb), 0.16);
   border-color: rgba(var(--blueprint-blue-rgb), 0.4);
-  color: #a9bdf5;
+  color: var(--tag-org-fg);
 }
 
 /* Filter chip row shared by the expense list + Budget vs. Actual (money tags). */
@@ -3885,8 +3890,8 @@
   display: inline-flex; gap: 0.35rem; align-items: center;
 }
 .moneyFilterChipActive { background: var(--logic-lime); color: var(--pitch-black); border-color: var(--logic-lime); font-weight: 700; }
-.moneyFilterChipOrg { border-color: rgba(var(--blueprint-blue-rgb), 0.45); color: #a9bdf5; }
-.moneyFilterChipOrgActive { background: #7aa2f7; border-color: #7aa2f7; color: var(--pitch-black); font-weight: 700; }
+.moneyFilterChipOrg { border-color: rgba(var(--blueprint-blue-rgb), 0.45); color: var(--tag-org-fg); }
+.moneyFilterChipOrgActive { background: var(--tag-org-active-bg); border-color: var(--tag-org-active-bg); color: var(--pitch-black); font-weight: 700; }
 .moneyFilterCount { opacity: 0.6; font-size: 0.68rem; }
 .moneyTagSummary {
   background: rgba(var(--logic-lime-rgb), 0.07); border: 1px solid rgba(var(--logic-lime-rgb), 0.22);

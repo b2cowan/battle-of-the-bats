@@ -29,7 +29,7 @@
 .title {
   font-size: 1.4rem;
   font-weight: 900;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   margin: 0;
 }
 
@@ -77,13 +77,13 @@
 
 .pill:hover {
   border-color: var(--blueprint-blue);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .pillActive {
   background: rgba(var(--blueprint-blue-rgb), 0.12);
   border-color: var(--blueprint-blue);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .pillActive svg {

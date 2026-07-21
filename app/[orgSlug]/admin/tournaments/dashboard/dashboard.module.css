@@ -1997,6 +1997,7 @@
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
+  /* dark ink on lime; slight value drift from --on-lime, pinned pending normalization */
   color: #0b0f14;
   background: var(--logic-lime);
   border: none;

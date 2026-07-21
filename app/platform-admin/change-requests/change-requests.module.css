@@ -1,5 +1,7 @@
 ﻿.page {
   max-width: 1240px;
+  --changereq-modal-bg: #07100b;
+  --changereq-proposal-text: #bfdbfe;
 }
 
 .pageHeader {
@@ -86,13 +88,13 @@
 .errorBanner {
   border: 1px solid rgba(248, 113, 113, 0.32);
   background: rgba(248, 113, 113, 0.08);
-  color: #fca5a5;
+  color: var(--pa-neg);
 }
 
 .successBanner {
   border: 1px solid rgba(134, 239, 172, 0.32);
   background: rgba(134, 239, 172, 0.08);
-  color: #86efac;
+  color: var(--pa-pos);
 }
 
 .filterBar {
@@ -131,11 +133,11 @@
 
 .filterBar option {
   background: var(--structural-slate);
-  color: #f8fafc;
+  color: var(--pa-option-text);
 }
 
 .filterBar option:checked {
-  background: #2563eb;
+  background: var(--pa-option-checked-bg);
   color: var(--white);
 }
 
@@ -295,7 +297,7 @@
 .secondaryBtn {
   border-color: rgba(147, 197, 253, 0.32);
   background: rgba(59, 130, 246, 0.06);
-  color: #93c5fd;
+  color: var(--pa-info);
 }
 
 .secondaryBtn:hover {
@@ -305,7 +307,7 @@
 .dangerBtn {
   border-color: rgba(248, 113, 113, 0.3);
   background: rgba(248, 113, 113, 0.06);
-  color: #fca5a5;
+  color: var(--pa-neg);
 }
 
 .dangerBtn:hover {
@@ -332,19 +334,19 @@
 .badgeLive {
   border-color: rgba(134, 239, 172, 0.35);
   background: rgba(134, 239, 172, 0.07);
-  color: #86efac;
+  color: var(--pa-pos);
 }
 
 .badgePlanned {
   border-color: rgba(147, 197, 253, 0.35);
   background: rgba(147, 197, 253, 0.07);
-  color: #93c5fd;
+  color: var(--pa-info);
 }
 
 .badgeRetired {
   border-color: rgba(248, 113, 113, 0.3);
   background: rgba(248, 113, 113, 0.06);
-  color: #fca5a5;
+  color: var(--pa-neg);
 }
 
 .badgeDraft {
@@ -355,7 +357,7 @@
 .severityLaunchBlocker {
   border-color: rgba(248, 113, 113, 0.38);
   background: rgba(248, 113, 113, 0.08);
-  color: #fca5a5;
+  color: var(--pa-neg);
 }
 
 .severityHigh {
@@ -367,7 +369,7 @@
 .severityMedium {
   border-color: rgba(147, 197, 253, 0.35);
   background: rgba(147, 197, 253, 0.07);
-  color: #93c5fd;
+  color: var(--pa-info);
 }
 
 .severityLow {
@@ -407,7 +409,7 @@
 .detailModal {
   width: min(760px, 100%);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.24);
-  background: #07100b;
+  background: var(--changereq-modal-bg);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
 }
 
@@ -531,7 +533,7 @@
   padding: 0.75rem;
   border: 1px solid rgba(255, 255, 255, 0.08);
   background: rgba(0, 0, 0, 0.22);
-  color: #bfdbfe;
+  color: var(--changereq-proposal-text);
   font-family: var(--font-data);
   font-size: 0.64rem;
   line-height: 1.45;

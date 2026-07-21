@@ -304,7 +304,7 @@
   font-size: 0.72rem;
 }
 .filterInput { flex: 1; min-width: 160px; }
-.filterSelect option { background: #0a0f0a; }
+.filterSelect option { background: var(--pa-option-bg); }
 
 .filterBtn {
   padding: 0.4rem 0.9rem;
@@ -545,7 +545,7 @@
   margin: 0;
   padding: 0.75rem;
   border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
-  background: #050705;
+  background: var(--pa-preview-bg);
   color: var(--fl-text);
   font-family: monospace;
   font-size: 0.66rem;
@@ -602,7 +602,7 @@
   border: 1px solid rgba(255, 255, 255, 0.14);
   padding: 0.4rem 0.5rem;
 }
-.snoozeSelect option { background: #0a0f0a; }
+.snoozeSelect option { background: var(--pa-option-bg); }
 .triageError {
   font-family: var(--font-data);
   font-size: 0.62rem;

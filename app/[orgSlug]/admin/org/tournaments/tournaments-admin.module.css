@@ -40,7 +40,7 @@
 }
 
 .slotCountLimit {
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
 }
 
 .lifecycleToggleRow {

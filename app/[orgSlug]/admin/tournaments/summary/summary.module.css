@@ -1,5 +1,7 @@
 .page {
   max-width: 1060px;
+  /* Scoped token for .modalError below. */
+  --modal-error-text: #fecaca;
 }
 
 .pageHeader {
@@ -107,7 +109,7 @@
   /* Dark ink on the light lime fill (matches .btn-lime). `var(--black)` is NOT a
      defined token — only --black-10..40 exist — so it resolved to nothing and the
      text inherited white, rendering unreadable white-on-lime. */
-  color: #0f1123;
+  color: var(--on-lime);
   background: var(--logic-lime);
 }
 
@@ -474,7 +476,7 @@
   padding: 0.65rem 0.75rem;
   border: 1px solid rgba(239,68,68,0.35);
   border-radius: 2px;
-  color: #fecaca;
+  color: var(--modal-error-text);
   background: rgba(239,68,68,0.08);
   font-size: 0.8rem;
   line-height: 1.45;
@@ -537,7 +539,7 @@
 }
 
 .championBadge {
-  color: #0f1123; /* dark ink on lime (matches .btn-lime); see .championChip note */
+  color: var(--on-lime); /* dark ink on lime (matches .btn-lime); see .championChip note */
   background: var(--logic-lime);
 }
 

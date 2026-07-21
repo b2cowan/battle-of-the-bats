@@ -78,8 +78,8 @@
   border: 1px solid;
 }
 
-.headerStatusActive  { color: #86efac; border-color: rgba(134, 239, 172, 0.35); background: rgba(134, 239, 172, 0.06); }
-.headerStatusTrialing { color: #fcd34d; border-color: rgba(252, 211, 77, 0.35);  background: rgba(252, 211, 77, 0.06);  }
+.headerStatusActive  { color: var(--pa-pos); border-color: rgba(134, 239, 172, 0.35); background: rgba(134, 239, 172, 0.06); }
+.headerStatusTrialing { color: var(--pa-caution); border-color: rgba(252, 211, 77, 0.35);  background: rgba(252, 211, 77, 0.06);  }
 .headerStatusMuted   { color: var(--data-gray); border-color: rgba(255, 255, 255, 0.12); background: transparent; }
 
 .accountHero {
@@ -811,7 +811,7 @@
 }
 
 .badgeActive {
-  color: #86efac;
+  color: var(--pa-pos);
   border-color: rgba(134, 239, 172, 0.3);
   background: rgba(134, 239, 172, 0.06);
 }
@@ -914,7 +914,7 @@
 .confirmModal {
   width: min(32rem, 100%);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  background: #060807;
+  background: var(--pa-confirm-bg);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 1.25rem 3rem rgba(0, 0, 0, 0.45);
   padding: 1.25rem;
 }
@@ -1002,7 +1002,7 @@
   font-family: var(--font-data);
   font-size: 0.62rem;
   line-height: 1.5;
-  color: #fcd34d;
+  color: var(--pa-caution);
   margin: 0.2rem 0 0;
 }
 
@@ -1035,13 +1035,13 @@
 .billingClarityCaution {
   border: 1px solid rgba(252, 211, 77, 0.4);
   background: rgba(252, 211, 77, 0.08);
-  color: #fcd34d;
+  color: var(--pa-caution);
 }
 
 .billingClarityDanger {
   border: 1px solid rgba(248, 113, 113, 0.45);
   background: rgba(248, 113, 113, 0.1);
-  color: #fca5a5;
+  color: var(--pa-neg);
 }
 
 @media (max-width: 960px) {

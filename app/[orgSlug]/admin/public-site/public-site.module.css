@@ -27,7 +27,7 @@
   font-weight: 900;
   font-family: var(--font-data);
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   line-height: 1.1;
 }
 
@@ -59,7 +59,7 @@
   align-items: center;
   gap: 0.35rem;
   font-size: 0.8rem;
-  color: var(--blueprint-blue, #60a5fa);
+  color: var(--blueprint-blue);
   text-decoration: none;
   margin-bottom: 1.5rem;
 }
@@ -84,14 +84,14 @@
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 2px;
   padding: 0.55rem 0.75rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.9rem;
   box-sizing: border-box;
   transition: border-color 0.15s;
 }
 .input:focus {
   outline: none;
-  border-color: var(--blueprint-blue, #60a5fa);
+  border-color: var(--blueprint-blue);
 }
 
 .textarea {
@@ -118,7 +118,7 @@
   font-size: 0.75rem;
   color: var(--white-30, rgba(255,255,255,0.3));
 }
-.charCountWarn { color: #f87171; }
+.charCountWarn { color: var(--danger-light); }
 
 .toggleRow {
   display: flex;
@@ -141,8 +141,8 @@
   transition: background 0.2s;
 }
 .toggle:checked {
-  background: var(--blueprint-blue, #60a5fa);
-  border-color: var(--blueprint-blue, #60a5fa);
+  background: var(--blueprint-blue);
+  border-color: var(--blueprint-blue);
 }
 .toggle::after {
   content: '';

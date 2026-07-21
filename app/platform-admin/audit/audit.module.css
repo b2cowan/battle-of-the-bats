@@ -179,7 +179,7 @@
   margin: 0.5rem 0 0;
   padding: 0.75rem;
   border: 1px solid rgba(var(--logic-lime-rgb), 0.16);
-  background: #050705;
+  background: var(--pa-preview-bg);
   color: var(--fl-text);
   font-family: monospace;
   font-size: 0.68rem;
@@ -224,7 +224,7 @@
   font-size: 0.72rem;
 }
 
-.filterSelect option { background: #0a0f0a; }
+.filterSelect option { background: var(--pa-option-bg); }
 
 .filterBtn,
 .exportBtn {

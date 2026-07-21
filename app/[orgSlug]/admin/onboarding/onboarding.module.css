@@ -1,4 +1,7 @@
 .page {
+  --onboarding-modal-bg: #080b12;
+  --plan-badge-ok: #86efac;
+  --plan-error-text: #fecaca;
   max-width: 620px;
   margin: 0 auto;
   padding: 3rem 1.5rem 4rem;
@@ -12,6 +15,9 @@
 }
 
 .workflowOnlyPage {
+  --onboarding-modal-bg: #080b12;
+  --plan-badge-ok: #86efac;
+  --plan-error-text: #fecaca;
   min-height: 100vh;
 }
 
@@ -50,7 +56,7 @@
   font-size: 1.5rem;
   font-weight: 900;
   font-family: var(--font-data);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   margin: 0;
   line-height: 1.15;
 }
@@ -91,7 +97,7 @@
 }
 
 .stepDone .stepIcon {
-  color: #4ade80;
+  color: var(--success-light);
 }
 
 .optionalGroup {
@@ -167,7 +173,7 @@
 
 .stepTitle {
   font-weight: 700;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.95rem;
   margin-bottom: 0.25rem;
 }
@@ -256,7 +262,7 @@
   width: min(1040px, 100%);
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
-  background: #080b12;
+  background: var(--onboarding-modal-bg);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   padding: 1.25rem;
 }
@@ -276,7 +282,7 @@
   overflow-y: auto;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
-  background: #080b12;
+  background: var(--onboarding-modal-bg);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   padding: 1.25rem;
 }
@@ -393,7 +399,7 @@
 }
 
 .requiredLegend span {
-  color: var(--logic-lime, #c5f955);
+  color: var(--logic-lime);
   font-weight: 700;
 }
 
@@ -444,7 +450,7 @@
 
 .presetButtonCompactActive,
 .presetButtonCompact:hover {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
   background: rgba(var(--blueprint-blue-rgb), 0.1);
 }
@@ -684,7 +690,7 @@
 .venueSummaryName {
   font-size: 0.86rem;
   font-weight: 700;
-  color: var(--white, #fff);
+  color: var(--white);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -710,7 +716,7 @@
   font-family: var(--font-data);
   font-size: 0.7rem;
   letter-spacing: 0.04em;
-  color: var(--logic-lime, #c5f955);
+  color: var(--logic-lime);
 }
 
 .venueCard {
@@ -767,7 +773,7 @@
 }
 
 .iconOnlyButton:hover {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   background: rgba(255,255,255,0.05);
   border-color: var(--border, rgba(255,255,255,0.08));
 }
@@ -891,7 +897,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  color: #4ade80;
+  color: var(--success-light);
   background: rgba(74, 222, 128, 0.1);
 }
 
@@ -914,7 +920,7 @@
 
 .modalTitle {
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-family: var(--font-data);
   font-size: 1.2rem;
   font-weight: 900;
@@ -943,7 +949,7 @@
 
 .modalClose:hover {
   border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .billingToggle {
@@ -968,7 +974,7 @@
 
 .toggleActive {
   background: rgba(var(--blueprint-blue-rgb), 0.18);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .planGrid {
@@ -1002,7 +1008,7 @@
 
 .planCardHeader h3 {
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 1rem;
 }
 
@@ -1010,7 +1016,7 @@
   padding: 0.18rem 0.45rem;
   border-radius: 2px;
   background: rgba(74, 222, 128, 0.12);
-  color: #86efac;
+  color: var(--plan-badge-ok);
   font-size: 0.66rem;
   font-weight: 800;
   text-transform: uppercase;
@@ -1018,7 +1024,7 @@
 
 .planCardPrice {
   margin-top: 0.75rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 1.15rem;
   font-weight: 900;
 }
@@ -1075,7 +1081,7 @@
   border: 1px solid rgba(248, 113, 113, 0.35);
   border-radius: 2px;
   background: rgba(248, 113, 113, 0.08);
-  color: #fecaca;
+  color: var(--plan-error-text);
   font-size: 0.82rem;
   padding: 0.8rem 0.9rem;
 }

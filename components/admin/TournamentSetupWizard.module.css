@@ -1,4 +1,6 @@
 .modalOverlay {
+  --wizard-modal-bg: #080b12;
+  --plan-error-text: #fecaca;
   position: fixed;
   inset: 0;
   z-index: 1000;
@@ -16,7 +18,7 @@
   overflow-y: auto;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
   border-radius: 2px;
-  background: #080b12;
+  background: var(--wizard-modal-bg);
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.5);
   padding: 1.25rem;
 }
@@ -59,7 +61,7 @@
 
 .modalTitle {
   margin: 0;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-family: var(--font-data);
   font-size: 1.2rem;
   font-weight: 900;
@@ -99,7 +101,7 @@
 .modalClose:hover,
 .iconOnlyButton:hover {
   border-color: rgba(var(--blueprint-blue-rgb), 0.45);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .workflowSlide {
@@ -151,7 +153,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .reuseTitleRow svg {
@@ -341,7 +343,7 @@
 
 .presetButtonCompactActive,
 .presetButtonCompact:hover {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
   background: rgba(var(--blueprint-blue-rgb), 0.1);
 }
@@ -499,7 +501,7 @@
 .existingVenueSelected {
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
   background: rgba(var(--blueprint-blue-rgb), 0.08);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .existingVenueButton strong,
@@ -570,7 +572,7 @@
   border: 1px solid rgba(248, 113, 113, 0.35);
   border-radius: 2px;
   background: rgba(248, 113, 113, 0.08);
-  color: #fecaca;
+  color: var(--plan-error-text);
   font-size: 0.82rem;
   padding: 0.8rem 0.9rem;
 }
@@ -592,7 +594,7 @@
 
 .reuseCopyPanel h3 {
   margin: 0 0 0.65rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.8rem;
   font-weight: 900;
 }
@@ -658,7 +660,7 @@
 }
 
 .copyOptionCard strong {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.8rem;
   line-height: 1.35;
 }
@@ -804,7 +806,7 @@
 .nextStepsCallout strong {
   display: block;
   margin-bottom: 0.35rem;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-size: 0.76rem;
   font-weight: 800;
 }

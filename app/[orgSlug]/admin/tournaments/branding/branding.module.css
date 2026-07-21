@@ -197,7 +197,7 @@
 
 .segmentButtonActive {
   background: var(--logic-lime);
-  color: #0f1123;
+  color: var(--on-lime);
 }
 
 .toggleRow {
@@ -340,6 +340,7 @@
 }
 
 .swatchCustom {
+  /* Decorative "pick a color" wheel — categorical rainbow, not semantic status colors. Keep literal. */
   background: conic-gradient(#f87171, #fb923c, #fcd34d, #4ade80, #60a5fa, #c084fc, #f87171);
 }
 
@@ -609,7 +610,7 @@
 
 .modeToggleBtnActive {
   background: var(--logic-lime);
-  color: #0f1123;
+  color: var(--on-lime);
   box-shadow: 0 4px 12px rgba(var(--logic-lime-rgb), 0.25);
 }
 
@@ -626,6 +627,7 @@
 }
 
 .modePreviewDark {
+  /* Theme-preview mockup swatch — simulates the dark-mode bg, not live app chrome. Keep literal. */
   background:
     radial-gradient(circle at 82% 8%, rgba(var(--primary-rgb), 0.3), transparent 42%),
     linear-gradient(135deg, rgba(var(--primary-rgb), 0.18), transparent 45%),
@@ -634,6 +636,7 @@
 }
 
 .modePreviewLight {
+  /* Theme-preview mockup swatch — simulates the light-mode bg, not live app chrome. Keep literal. */
   background:
     radial-gradient(circle at 82% 8%, rgba(var(--primary-rgb), 0.12), transparent 42%),
     linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), transparent 46%),
@@ -668,6 +671,7 @@
 }
 
 .modePreviewLight .previewHeroText strong {
+  /* Theme-preview mockup text ink — simulates light-mode text, NOT the --on-lime ink token. Keep literal. */
   color: #0F1123;
 }
 
@@ -768,6 +772,7 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
+  /* Decorative "pick a color" wheel — categorical rainbow, not semantic status colors. Keep literal. */
   background: conic-gradient(#f87171, #fb923c, #fcd34d, #4ade80, #60a5fa, #c084fc, #f87171);
   border: 2px solid rgba(255,255,255,0.7);
   flex-shrink: 0;

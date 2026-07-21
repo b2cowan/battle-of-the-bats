@@ -812,8 +812,8 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
 .regHealthIssue strong { color: var(--white-85); }
 .regHealthIssue svg { flex: 0 0 auto; }
 
-.regHealthIssue[data-tone="danger"] { color: #f87171; background: rgba(var(--danger-rgb), 0.08); border: 1px solid rgba(var(--danger-rgb), 0.26); }
-.regHealthIssue[data-tone="warning"] { color: #fbbf24; background: rgba(var(--warning-rgb), 0.08); border: 1px solid rgba(var(--warning-rgb), 0.24); }
+.regHealthIssue[data-tone="danger"] { color: var(--danger-light); background: rgba(var(--danger-rgb), 0.08); border: 1px solid rgba(var(--danger-rgb), 0.26); }
+.regHealthIssue[data-tone="warning"] { color: var(--warning-light); background: rgba(var(--warning-rgb), 0.08); border: 1px solid rgba(var(--warning-rgb), 0.24); }
 .regHealthIssue[data-tone="neutral"] { color: var(--blueprint-blue); background: rgba(var(--blueprint-blue-rgb), 0.08); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2); }
 
 .regHealthGood {
@@ -862,7 +862,7 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
 .notesArea textarea:focus { border-color: var(--blueprint-blue); outline: none; }
 
 .transferGroup select {
-  background: #111111;
+  background: var(--teams-select-bg);
   border: 1px solid var(--border-2);
   color: var(--white);
   padding: 0.75rem;
@@ -945,16 +945,16 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
 
 /* Unassigned teams get a warning-tinted picker so they stand out as needing action */
 .rowPoolSelect[data-unassigned] {
-  /* --danger-light is not defined app-wide (latent gap, 16 usages) — fall back to a light red. */
-  color: var(--danger-light, #f87171);
+  /* --danger-light is now defined globally (P3 token pass) — used directly, no fallback needed. */
+  color: var(--danger-light);
   background-color: rgba(var(--danger-rgb), 0.08);
   border-color: rgba(var(--danger-rgb), 0.35);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23ff6b6b' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
 }
 
 .rowPoolSelect option {
-  color: var(--white-90, #f5f5f5);
-  background: var(--surface-2, #1a1f2b);
+  color: var(--white-90);
+  background: var(--surface-2);
 }
 
 /* Empty-pool hint under a pool header with no teams yet */
@@ -1099,6 +1099,8 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
   gap: 0.5rem;
   width: 100%;
   max-width: 920px;
+  /* Scoped token for the transfer-group select (.transferGroup select) below. */
+  --teams-select-bg: #111111;
 }
 
 /* Single row: meta left, actions right */
@@ -1657,7 +1659,7 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
   font-weight: 600;
 }
 
-.countChip[data-variant="warning"] { background: rgba(245, 158, 11, 0.15); color: var(--warning-light, #f59e0b); }
+.countChip[data-variant="warning"] { background: rgba(245, 158, 11, 0.15); color: var(--warning); /* pinned to --warning to preserve the prior render; joining --warning-light is a separate value change */ }
 .countChip[data-variant="neutral"]  { background: var(--white-10); color: var(--white-40); }
 
 .slotPoolSection {

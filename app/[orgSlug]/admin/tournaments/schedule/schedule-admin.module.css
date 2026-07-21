@@ -905,6 +905,7 @@
 
 .healthRulesSave {
   background: var(--logic-lime);
+  /* dark ink on lime; slight value drift from --on-lime (#0f1123), pinned pending normalization */
   color: #0a0c12;
   border-color: var(--logic-lime);
 }
@@ -1011,13 +1012,13 @@
 }
 
 .healthIssueError {
-  color: #f87171;
+  color: var(--danger-light);
   background: rgba(var(--danger-rgb), 0.08);
   border: 1px solid rgba(var(--danger-rgb), 0.26);
 }
 
 .healthIssueWarning {
-  color: #fbbf24;
+  color: var(--warning-light);
   background: rgba(var(--warning-rgb), 0.08);
   border: 1px solid rgba(var(--warning-rgb), 0.24);
 }
@@ -1226,7 +1227,7 @@
 .errorBanner {
   background: rgba(var(--danger-rgb), 0.1);
   border: 1px solid rgba(var(--danger-rgb), 0.3);
-  color: #f87171;
+  color: var(--danger-light);
   padding: 0.75rem;
   border-radius: 2px;
   margin-bottom: 1rem;
@@ -3467,7 +3468,7 @@
 }
 
 .inlineCancelButton {
-  color: var(--warning, #f59e0b) !important;
+  color: var(--warning) !important;
 }
 
 .inlineActionSpacer {
@@ -3478,7 +3479,7 @@
 .saveError {
   font-family: var(--font-data);
   font-size: 0.68rem;
-  color: var(--danger, #ef4444);
+  color: var(--danger);
 }
 
 .cancelledActionBar {

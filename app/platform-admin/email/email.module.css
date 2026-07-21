@@ -1,5 +1,6 @@
 .page {
   max-width: 1280px;
+  --email-modal-bg: #0b0f14;
 }
 
 /* ── Page header ─────────────────────────────────────────────────────────── */
@@ -204,7 +205,7 @@
 
 .badgeSent,
 .badgeComplete {
-  color: #4ade80;
+  color: var(--success-light);
   border-color: rgba(74, 222, 128, 0.35);
   background: rgba(74, 222, 128, 0.06);
 }
@@ -217,7 +218,7 @@
 }
 
 .badgeFailed {
-  color: #f87171;
+  color: var(--danger-light);
   border-color: rgba(248, 113, 113, 0.35);
   background: rgba(248, 113, 113, 0.06);
 }
@@ -229,7 +230,7 @@
 }
 
 .badgePastDue {
-  color: #f87171;
+  color: var(--danger-light);
   border-color: rgba(248, 113, 113, 0.45);
   background: rgba(248, 113, 113, 0.08);
 }
@@ -247,7 +248,7 @@
 }
 
 .badgeAuto {
-  color: #93c5fd;
+  color: var(--pa-info);
   border-color: rgba(147, 197, 253, 0.3);
   background: rgba(var(--blueprint-blue-rgb), 0.12);
 }
@@ -281,7 +282,7 @@
 }
 
 .btnSend {
-  color: #4ade80;
+  color: var(--success-light);
   border-color: rgba(74, 222, 128, 0.3);
 }
 .btnSend:hover:not(:disabled) {
@@ -371,7 +372,7 @@
 }
 
 .modal {
-  background: #0b0f14;
+  background: var(--email-modal-bg);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
   width: 100%;
   max-width: 680px;
@@ -429,7 +430,7 @@
 
 .previewFrame {
   border: 1px solid rgba(255, 255, 255, 0.08);
-  background: #0b0f14;
+  background: var(--email-modal-bg);
 }
 
 .notBuiltNotice {
@@ -461,7 +462,7 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #f87171;
+  color: var(--danger-light);
   margin-bottom: 0.75rem;
 }
 
@@ -480,7 +481,7 @@
 .btnConfirmSend {
   background: rgba(74, 222, 128, 0.12);
   border: 1px solid rgba(74, 222, 128, 0.35);
-  color: #4ade80;
+  color: var(--success-light);
   font-family: var(--font-data);
   font-size: 0.65rem;
   font-weight: 700;
@@ -533,13 +534,13 @@
 }
 
 .resultSuccess {
-  color: #4ade80;
+  color: var(--success-light);
   border-color: rgba(74, 222, 128, 0.3);
   background: rgba(74, 222, 128, 0.06);
 }
 
 .resultError {
-  color: #f87171;
+  color: var(--danger-light);
   border-color: rgba(248, 113, 113, 0.3);
   background: rgba(248, 113, 113, 0.06);
 }
@@ -580,7 +581,7 @@
   margin-bottom: 0.6rem;
 }
 
-.needsPastDue .needsTitle { color: #f87171; }
+.needsPastDue .needsTitle { color: var(--danger-light); }
 .needsUpcoming .needsTitle { color: var(--warning); }
 
 .needsItem {
@@ -647,12 +648,12 @@
 .needsSendBtn {
   background: rgba(248, 113, 113, 0.12);
   border: 1px solid rgba(248, 113, 113, 0.5);
-  color: #f87171;
+  color: var(--danger-light);
 }
 
 .needsSendBtn:hover {
   background: rgba(248, 113, 113, 0.2);
-  border-color: #f87171;
+  border-color: var(--danger-light);
 }
 
 .needsSendBtnGhost {

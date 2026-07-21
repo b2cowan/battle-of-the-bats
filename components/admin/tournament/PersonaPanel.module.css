@@ -78,7 +78,7 @@
 .link {
   margin-top: auto;
   align-self: flex-start;
-  color: var(--info, #4fa3e0);
+  color: var(--info);
   font-family: var(--font-data);
   font-size: 0.72rem;
   text-decoration: none;

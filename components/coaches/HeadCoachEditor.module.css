@@ -127,7 +127,7 @@
   font-size: 0.9rem;
   font-weight: 700;
   /* Dark text on lime — matches the global .btn-lime convention. */
-  color: #0f1123;
+  color: var(--on-lime);
   background: var(--logic-lime);
   border: 1px solid var(--logic-lime);
   border-radius: var(--radius-sm);

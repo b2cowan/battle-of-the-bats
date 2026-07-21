@@ -349,6 +349,7 @@
   padding: 0.45rem 1rem;
   background: var(--logic-lime);
   border: none;
+  /* dark ink on lime; differs from --on-lime (#0f1123), pinned pending normalization */
   color: #000;
   cursor: pointer;
   transition: opacity 0.15s;
@@ -407,7 +408,7 @@
 .confirmModal {
   width: min(32rem, 100%);
   border: 1px solid rgba(var(--logic-lime-rgb), 0.28);
-  background: #060807;
+  background: var(--pa-confirm-bg);
   box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 1.25rem 3rem rgba(0, 0, 0, 0.45);
   padding: 1.25rem;
 }

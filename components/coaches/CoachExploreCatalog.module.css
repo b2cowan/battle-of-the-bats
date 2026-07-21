@@ -80,7 +80,7 @@
   cursor: pointer;
   font-size: 0.76rem;
   font-weight: 700;
-  color: #0f1123;
+  color: var(--on-lime);
   background: var(--logic-lime);
   border: 1px solid var(--logic-lime);
   border-radius: var(--radius-sm);
