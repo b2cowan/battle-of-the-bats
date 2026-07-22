@@ -119,6 +119,89 @@
   color: var(--white-40);
 }
 
+/* ── WI-2B: read-only real tournament games folded into the schedule ──────────────────────
+   Gold accent (distinct from the coach's own lime "game"); the whole row taps through to the
+   public game page when the tournament is public, else it's a static read-only row. */
+.tournamentRow {
+  border-left: 3px solid var(--warning);
+  background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.06), var(--surface));
+}
+.tournamentLink {
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color 0.12s, background 0.12s;
+}
+.tournamentLink:hover {
+  border-color: rgba(var(--warning-rgb), 0.5);
+}
+.typeChip[data-type='tournament'] {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.1);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+}
+.tourNameLine {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.tourOpp {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--white);
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.tournamentTag {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.12);
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  border-radius: 3px;
+  padding: 0.08rem 0.34rem;
+  white-space: nowrap;
+}
+.liveScore {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-data);
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--danger);
+  font-variant-numeric: tabular-nums;
+}
+.liveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--danger);
+  animation: skedLivePulse 1.4s infinite;
+}
+@keyframes skedLivePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .liveDot { animation: none; } }
+.finalScore {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-family: var(--font-data);
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--white);
+  font-variant-numeric: tabular-nums;
+}
+.result { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.04em; }
+.result_win { color: var(--success); }
+.result_loss { color: var(--danger); }
+.result_tie { color: var(--warning); }
+.readonlyIcon { color: var(--white-40); flex-shrink: 0; }
+
 .rowActions {
   flex-shrink: 0;
   display: flex;

@@ -61,6 +61,13 @@
   overflow-wrap: anywhere;
 }
 
+/* WI-2A: an OWED tournament entry fee (money owed to the organizer) — alarmed, and a touch smaller
+   than a bare stat number since it carries a label + amount ("Entry fee · $250 owed"). */
+.hqItem strong.hqFeeAlert {
+  color: var(--danger-strong);
+  font-size: 0.94rem;
+}
+
 .hqItem p {
   margin: 0;
   color: var(--white-60);

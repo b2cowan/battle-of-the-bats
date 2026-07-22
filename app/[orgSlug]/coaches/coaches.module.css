@@ -2463,6 +2463,35 @@
 .eventChipScore { font-size: 0.82rem; font-weight: 700; color: var(--white-90); font-variant-numeric: tabular-nums; }
 .eventChipResult { font-size: 0.7rem; font-weight: 700; }
 
+/* WI-2B: a REAL tournament game folded into the calendar — solid gold accent + read-only link to the
+   public game page (distinct from the coach's own colour-coded editable chips, and from the dashed
+   tryout marker). */
+.tournamentChip {
+  border-left-color: var(--warning);
+  text-decoration: none;
+  color: inherit;
+  background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.09), rgba(255,255,255,0.04));
+}
+.tournamentChip:hover { background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.13), rgba(255,255,255,0.06)); }
+.tournamentChipTag {
+  font-family: var(--font-data);
+  font-size: 0.56rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700;
+  color: var(--warning);
+}
+.tournamentLiveDot {
+  display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--danger);
+  margin-right: 0.28rem; vertical-align: 1px; animation: coachTournLive 1.4s infinite;
+}
+@keyframes coachTournLive { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .tournamentLiveDot { animation: none; } }
+/* month-cell dot variant */
+.calMonthEventDot.tournamentMonthDot {
+  background: rgba(var(--warning-rgb), 0.16) !important;
+  border: 1px solid rgba(var(--warning-rgb), 0.5);
+  color: var(--warning);
+  text-decoration: none;
+}
+
 .calWeekGrid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 0.5rem; overflow-x: auto; }
 .calWeekDay {
   background: rgba(255,255,255,0.02);

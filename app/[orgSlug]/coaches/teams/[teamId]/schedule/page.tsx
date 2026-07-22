@@ -19,6 +19,7 @@ import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resourc
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
+import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import styles from '../../../coaches.module.css';
 import type {
   RepAttendanceStatus,
@@ -434,6 +435,45 @@ function TryoutChip({ session, href }: { session: RepTryoutSession; href: string
   );
 }
 
+// WI-2B: a REAL tournament game projected onto the calendar — read-only, gold accent, links to the
+// public game page (never opens the event editor). Mirrors TryoutChip; games flow through none of the
+// editor / attendance / lineup / save paths. `dayKey` present in day-scoped views (week/month) → show
+// the time only; the flat list shows the date too.
+function TournamentGameChip({ game, dayKey }: { game: CoachScheduleTournamentGame; dayKey?: string }) {
+  const lead = dayKey
+    ? (game.timeLabel ?? (game.isLive ? 'Live' : 'TBD'))
+    : [game.dateLabel, game.timeLabel].filter(Boolean).join(' · ');
+  const inner = (
+    <>
+      <Trophy size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-hidden />
+      <span className={styles.eventChipTime}>{lead}</span>
+      <span className={styles.eventChipName}>
+        vs {game.opponentName}<span className={styles.eventChipOpp}> · </span>
+        <span className={styles.tournamentChipTag}>Tournament</span>
+      </span>
+      <span className={styles.eventChipTrail}>
+        {game.isLive ? (
+          <span className={styles.eventChipResult} style={{ color: 'var(--danger)' }}>
+            <span className={styles.tournamentLiveDot} aria-hidden />{game.myScore ?? 0}–{game.oppScore ?? 0}
+          </span>
+        ) : game.isFinal && game.myScore != null && game.oppScore != null ? (
+          <>
+            <span className={styles.eventChipScore}>{game.myScore}–{game.oppScore}</span>
+            {game.result && (
+              <span className={styles.eventChipResult} style={{ color: resultColor(game.result) }}>{game.result.toUpperCase()}</span>
+            )}
+          </>
+        ) : null}
+      </span>
+    </>
+  );
+  return game.href ? (
+    <Link href={game.href} className={`${styles.eventChip} ${styles.tournamentChip}`} title="Open the live game page">{inner}</Link>
+  ) : (
+    <div className={`${styles.eventChip} ${styles.tournamentChip}`} style={{ cursor: 'default' }}>{inner}</div>
+  );
+}
+
 function EventChip({ event, onClick, dayKey, mismatch, awardCount }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
@@ -514,6 +554,8 @@ export default function CoachesSchedulePage({
   // Lineups front door and the Overview "Build lineup" button link here). One-shot per mount.
   const deepLinkHandledRef = useRef(false);
   const [tryoutSessions, setTryoutSessions] = useState<RepTryoutSession[]>([]);
+  // WI-2B: the rep team's real tournament games, folded into every view read-only.
+  const [tournamentGames, setTournamentGames] = useState<CoachScheduleTournamentGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -596,6 +638,11 @@ export default function CoachesSchedulePage({
         const tRes = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions`);
         if (tRes.ok) { const tData = await tRes.json(); setTryoutSessions(tData.sessions ?? []); }
       } catch { /* ignore — tryout markers are optional */ }
+      // WI-2B: real tournament games (read-only). Non-fatal — the schedule still works without them.
+      try {
+        const gRes = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-games`);
+        if (gRes.ok) { const gData = await gRes.json(); setTournamentGames(gData.games ?? []); }
+      } catch { /* ignore — tournament games are optional */ }
     } catch (e: unknown) {
       setError(errorMessage(e, 'Failed to load events'));
     } finally {
@@ -1366,7 +1413,7 @@ export default function CoachesSchedulePage({
   const curWeek  = weekKey(cursorDate + 'T00:00:00');
 
   function renderListView() {
-    if (!events.length && !tryoutSessions.length) {
+    if (!events.length && !tryoutSessions.length && !tournamentGames.length) {
       return (
         <CoachEmptyState
           icon={<Calendar size={22} aria-hidden />}
@@ -1391,16 +1438,28 @@ export default function CoachesSchedulePage({
       const mk = s.startsAt.slice(0, 7); // wall-clock YYYY-MM (consistent with the week/month day slice)
       (tryByMonth[mk] ??= []).push(s);
     }
-    const months = Array.from(new Set([...Object.keys(grouped), ...Object.keys(tryByMonth)])).sort((a, b) => a.localeCompare(b));
+    // WI-2B: group the real tournament games by month too, so they list alongside self-entered events.
+    const gamesByMonth: Record<string, CoachScheduleTournamentGame[]> = {};
+    for (const g of tournamentGames) {
+      const mk = (g.gameDate ?? '').slice(0, 7);
+      if (mk) (gamesByMonth[mk] ??= []).push(g);
+    }
+    const months = Array.from(
+      new Set([...Object.keys(grouped), ...Object.keys(tryByMonth), ...Object.keys(gamesByMonth)]),
+    ).sort((a, b) => a.localeCompare(b));
     return months.map(mk => {
       const label = new Date(mk + '-01').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
       const trys = (tryByMonth[mk] ?? []).slice().sort((a, b) => a.startsAt.localeCompare(b.startsAt));
+      const games = (gamesByMonth[mk] ?? []).slice().sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
       return (
         <div key={mk} className={styles.calMonthGroup}>
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
             {(grouped[mk] ?? []).map(e => (
               <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} />
+            ))}
+            {games.map(g => (
+              <TournamentGameChip key={`g-${g.id}`} game={g} />
             ))}
             {trys.map(s => (
               <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
@@ -1424,18 +1483,24 @@ export default function CoachesSchedulePage({
           const key = day.toISOString().slice(0, 10);
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
           const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
+          const dayGames = tournamentGames
+            .filter(g => g.gameDate === key)
+            .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
           return (
             <div key={key} className={styles.calWeekDay}>
               <div className={styles.calWeekDayLabel}>
                 {day.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })}
               </div>
               <div className={styles.calWeekDayEvents}>
-                {dayEvents.length === 0 && dayTryouts.length === 0
+                {dayEvents.length === 0 && dayTryouts.length === 0 && dayGames.length === 0
                   ? <span className={styles.calWeekEmpty}>—</span>
                   : (
                     <>
                       {dayEvents.map(e => (
                         <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} />
+                      ))}
+                      {dayGames.map(g => (
+                        <TournamentGameChip key={`g-${g.id}`} game={g} dayKey={key} />
                       ))}
                       {dayTryouts.map(s => (
                         <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} />
@@ -1472,6 +1537,7 @@ export default function CoachesSchedulePage({
           const key = day.toISOString().slice(0, 10);
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
           const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
+          const dayGames = tournamentGames.filter(g => g.gameDate === key);
           const isToday = key === new Date().toISOString().slice(0, 10);
           return (
             <div key={key} className={`${styles.calMonthCell} ${isToday ? styles.calMonthCellToday : ''}`}>
@@ -1506,6 +1572,19 @@ export default function CoachesSchedulePage({
                     +{dayEvents.length - 3} more
                   </button>
                 )}
+                {dayGames.map(g => {
+                  const label = g.isLive ? `● ${g.opponentName}` : g.isFinal && g.myScore != null && g.oppScore != null ? `${g.myScore}–${g.oppScore} ${g.opponentName}` : `vs ${g.opponentName}`;
+                  const title = `${g.dateLabel}${g.timeLabel ? ` · ${g.timeLabel}` : ''} · vs ${g.opponentName}${g.tournamentName ? ` · ${g.tournamentName}` : ''}`;
+                  return g.href ? (
+                    <Link key={`g-${g.id}`} href={g.href} className={`${styles.calMonthEventDot} ${styles.tournamentMonthDot}`} title={title}>
+                      {label.slice(0, 14)}
+                    </Link>
+                  ) : (
+                    <span key={`g-${g.id}`} className={`${styles.calMonthEventDot} ${styles.tournamentMonthDot}`} title={title} style={{ cursor: 'default' }}>
+                      {label.slice(0, 14)}
+                    </span>
+                  );
+                })}
                 {dayTryouts.length > 0 && (
                   <Link
                     href={`${base}/tryouts`}
@@ -2152,6 +2231,12 @@ export default function CoachesSchedulePage({
               {addingTournamentGame && (
                 <section className={styles.formSection}>
                   <h4 className={styles.formSectionTitle}>Tournament</h4>
+                  {/* WI-2B: real FieldLogicHQ tournament games now appear on the schedule on their own,
+                      so this hand-entered slot is for a tournament run somewhere else. */}
+                  <p className={styles.formHint} style={{ marginTop: 0 }}>
+                    Games from a FieldLogicHQ tournament show up on your schedule automatically — add one
+                    here only for a tournament run somewhere else.
+                  </p>
                   {tournamentOptions.length === 0 ? (
                     <div className={styles.field}>
                       <p className={styles.formHint}>

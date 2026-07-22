@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { Pencil, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell } from 'lucide-react';
+import Link from 'next/link';
+import { Pencil, Trash2, Plus, X, Check, CalendarDays, Trophy, Dumbbell, Lock, ExternalLink } from 'lucide-react';
 import type { BasicCoachTeamEvent } from '@/lib/basic-coach-schedule';
+import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import CoachEmptyState from './CoachEmptyState';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './ScheduleEditor.module.css';
@@ -10,7 +12,20 @@ import styles from './ScheduleEditor.module.css';
 type Props = {
   basicTeamId: string;
   initialEvents: BasicCoachTeamEvent[];
+  /** WI-2B: the team's real tournament games, folded in READ-ONLY alongside self-entered events. */
+  tournamentGames?: CoachScheduleTournamentGame[];
 };
+
+/** A row in the merged Schedule list: a coach's own (editable) event, or a read-only tournament game. */
+type ScheduleItem =
+  | { kind: 'event'; sortKey: number; event: BasicCoachTeamEvent }
+  | { kind: 'tournament'; sortKey: number; game: CoachScheduleTournamentGame };
+
+function sortKeyOf(startsAt: string | null): number {
+  const ms = startsAt ? new Date(startsAt).getTime() : NaN;
+  // Unscheduled (TBD) games sort last, after everything with a real date.
+  return Number.isFinite(ms) ? ms : Number.POSITIVE_INFINITY;
+}
 
 type EventType = 'practice' | 'game' | 'event';
 
@@ -81,7 +96,7 @@ function formatWhen(startsAt: string, endsAt: string | null): string {
   return out;
 }
 
-export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
+export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentGames = [] }: Props) {
   const [events, setEvents] = useState<BasicCoachTeamEvent[]>([...initialEvents].sort(bySoonest));
   const [adding, setAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -153,16 +168,24 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
 
   const locked = adding || editingId !== null;
 
+  // WI-2B: interleave the coach's own (editable) events with the read-only tournament games,
+  // time-ordered, so a coach sees one true schedule. Tournament games are never editable.
+  const mergedItems: ScheduleItem[] = [
+    ...events.map(event => ({ kind: 'event' as const, sortKey: sortKeyOf(event.startsAt), event })),
+    ...tournamentGames.map(game => ({ kind: 'tournament' as const, sortKey: sortKeyOf(game.startsAt), game })),
+  ].sort((a, b) => a.sortKey - b.sortKey);
+  const hasContent = events.length > 0 || tournamentGames.length > 0;
+
   return (
     <div className={styles.editor}>
       {error && <p className={styles.error} role="alert">{error}</p>}
 
-      {events.length === 0 && !adding ? (
+      {!hasContent && !adding ? (
         <CoachEmptyState
           icon={<CalendarDays size={22} aria-hidden />}
           eyebrow="Schedule"
           headline="Plan your season"
-          description="Add your practices and games to keep your whole season in one place."
+          description="Add your practices and games to keep your whole season in one place. Your tournament games show up here automatically."
           primaryAction={{
             label: 'Add event',
             icon: <Plus size={15} aria-hidden />,
@@ -171,8 +194,57 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
         />
       ) : (
         <ul className={styles.list}>
-          {events.map(ev =>
-            editingId === ev.id ? (
+          {mergedItems.map(item => {
+            if (item.kind === 'tournament') {
+              const game = item.game;
+              const inner = (
+                <>
+                  <span className={styles.typeChip} data-type="tournament" aria-label="Tournament game">
+                    <Trophy size={17} aria-hidden />
+                  </span>
+                  <div className={styles.rowMain}>
+                    <span className={styles.tourNameLine}>
+                      <span className={styles.tourOpp}>vs {game.opponentName}</span>
+                      <span className={styles.tournamentTag}>Tournament</span>
+                    </span>
+                    <span className={styles.meta}>
+                      {[game.dateLabel, game.timeLabel, game.location, game.tournamentName].filter(Boolean).join(' · ')}
+                    </span>
+                  </div>
+                  <div className={styles.rowActions}>
+                    {game.isLive ? (
+                      <span className={styles.liveScore}>
+                        <span className={styles.liveDot} aria-hidden />{game.myScore ?? 0}–{game.oppScore ?? 0}
+                      </span>
+                    ) : game.isFinal && game.myScore != null && game.oppScore != null ? (
+                      <span className={styles.finalScore}>
+                        {game.myScore}–{game.oppScore}
+                        {game.result && (
+                          <span className={`${styles.result} ${styles[`result_${game.result}`]}`}>{game.result[0].toUpperCase()}</span>
+                        )}
+                      </span>
+                    ) : game.href ? (
+                      <ExternalLink size={14} className={styles.readonlyIcon} aria-hidden />
+                    ) : (
+                      <Lock size={13} className={styles.readonlyIcon} aria-label="Read-only — set by the organizer" />
+                    )}
+                  </div>
+                </>
+              );
+              return (
+                <li key={`t-${game.id}`}>
+                  {game.href ? (
+                    <Link href={game.href} className={`${styles.row} ${styles.tournamentRow} ${styles.tournamentLink}`} title="Open the live game page">
+                      {inner}
+                    </Link>
+                  ) : (
+                    <div className={`${styles.row} ${styles.tournamentRow}`}>{inner}</div>
+                  )}
+                </li>
+              );
+            }
+            const ev = item.event;
+            return editingId === ev.id ? (
               <li key={ev.id} className={styles.formRow}>
                 <EventForm
                   event={ev}
@@ -217,8 +289,8 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
                   </button>
                 </div>
               </li>
-            ),
-          )}
+            );
+          })}
         </ul>
       )}
 
@@ -226,7 +298,7 @@ export default function ScheduleEditor({ basicTeamId, initialEvents }: Props) {
         <div className={styles.formRow}>
           <EventForm busy={busy} onCancel={() => setAdding(false)} onSubmit={addEvent} />
         </div>
-      ) : events.length > 0 ? (
+      ) : hasContent ? (
         <button
           type="button"
           className={styles.addBtn}

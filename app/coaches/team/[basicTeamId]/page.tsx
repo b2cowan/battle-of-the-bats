@@ -125,6 +125,15 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   const nextEvent = findNextEvent(events);
   const unpaidFees = fees.filter(fee => fee.status === 'unpaid');
   const unpaidTotal = unpaidFees.reduce((total, fee) => total + fee.amount, 0);
+
+  // WI-2A: the REAL tournament entry fee (money owed to the organizer) so the Fees tile can't read a
+  // false "$0" while an entry fee is outstanding. `amountDue` on each accepted registration already
+  // carries the outstanding fee (buildCoachTournamentStatus); null tournamentFee = no accepted
+  // registration → the tile keeps its self-entered-only display.
+  const acceptedRegistrations = history.filter(entry => entry.registration.status === 'accepted');
+  const tournamentFee = acceptedRegistrations.length > 0
+    ? { owed: acceptedRegistrations.reduce((total, entry) => total + (entry.amountDue ?? 0), 0) }
+    : null;
   const latestHistory = history[0] ?? null;
   const latestHistoryLabel = latestHistory
     ? `${registrationStatusLabel(latestHistory.registration.status)} - ${latestHistory.tournament?.name ?? latestHistory.registration.name}`
@@ -177,6 +186,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         registrationGame={registrationGame}
         unpaidTotal={unpaidTotal}
         unpaidCount={unpaidFees.length}
+        tournamentFee={tournamentFee}
         recipientCount={announcementRecipientSummary.recipientCount}
         historyCount={history.length}
         latestHistoryLabel={latestHistoryLabel}
