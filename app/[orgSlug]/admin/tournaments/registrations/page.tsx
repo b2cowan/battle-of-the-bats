@@ -2,10 +2,11 @@
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ListChecks, Check, Lock, Unlock, CalendarClock } from 'lucide-react';
+import { Users, X, RefreshCw, ChevronDown, ChevronUp, AlertCircle, Plus, SlidersHorizontal, Trash2, ArrowLeftRight, Mail, Pencil, ClipboardList, ListChecks, Check, Lock, Unlock, CalendarClock, Link2, Search } from 'lucide-react';
 import { formatPoolName } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import {
@@ -295,6 +296,14 @@ export default function UnifiedTeamsPage() {
   const [paymentInstructions, setPaymentInstructions] = useState('');
   const [editingTeam, setEditingTeam] = useState<TeamRecord | null>(null);
   const [editForm, setEditForm] = useState({ name: '', coach: '', email: '', seed: '' as number | '' });
+  // WI-2C.3 — passive rep-team linking (League/Club orgs only). repTeams = this org's rep
+  // teams for the picker; repLinks = registrationId → linked rep team. repLinkPickerId =
+  // which registration's picker popover is open; repLinkSearch = its filter text.
+  const [repTeams, setRepTeams] = useState<Array<{ id: string; name: string; sport: string | null; division: string | null }>>([]);
+  const [repLinks, setRepLinks] = useState<Map<string, { repTeamId: string; repTeamName: string }>>(new Map());
+  const [repLinkPickerId, setRepLinkPickerId] = useState<string | null>(null);
+  const [repLinkSearch, setRepLinkSearch] = useState('');
+  const orgHasRepTeams = useMemo(() => (currentOrg ? hasModuleEntitlement(currentOrg, 'module_rep_teams') : false), [currentOrg]);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean; title: string; message: string;
     items?: Array<{ label: string; note?: string }>;
@@ -422,8 +431,42 @@ export default function UnifiedTeamsPage() {
     } catch { setPoolSlots([]); }
   }, [selectedDivisionId, currentTournament?.id, currentOrg?.slug]);
 
+  // WI-2C.3 — load this org's rep teams (picker options) + existing registration links.
+  // Only for rep-capable orgs; both endpoints self-gate the module server-side too.
+  const loadRepLinks = useCallback(async () => {
+    if (!orgHasRepTeams || !currentTournament) { setRepTeams([]); setRepLinks(new Map()); return; }
+    const orgOnlyParam = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+    const tParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+    try {
+      const [teamsRes, linksRes] = await Promise.all([
+        fetch(`/api/admin/rep-teams/teams${orgOnlyParam}`, SAME_ORIGIN_FETCH),
+        fetch(`/api/admin/teams/rep-team-link?tournamentId=${encodeURIComponent(currentTournament.id)}${tParam}`, SAME_ORIGIN_FETCH),
+      ]);
+      if (teamsRes.ok) {
+        const data = await teamsRes.json().catch(() => ({ teams: [] }));
+        const rows = Array.isArray(data.teams) ? data.teams : [];
+        setRepTeams(rows.map((r: any) => ({
+          id: r.team?.id, name: r.team?.name ?? '', sport: r.team?.sport ?? null, division: r.team?.division ?? null,
+        })).filter((t: any) => t.id));
+      } else {
+        setRepTeams([]);
+      }
+      if (linksRes.ok) {
+        const data = await linksRes.json().catch(() => ({ links: [] }));
+        const links = Array.isArray(data.links) ? data.links : [];
+        setRepLinks(new Map(links.map((l: any) => [l.registrationId, { repTeamId: l.repTeamId, repTeamName: l.repTeamName }])));
+      } else {
+        setRepLinks(new Map());
+      }
+    } catch {
+      setRepTeams([]);
+      setRepLinks(new Map());
+    }
+  }, [orgHasRepTeams, currentTournament?.id, currentOrg?.slug]);
+
   useEffect(() => { load(); }, [load]);
   useEffect(() => { loadPoolSlots(); }, [loadPoolSlots]);
+  useEffect(() => { loadRepLinks(); }, [loadRepLinks]);
 
   useEffect(() => {
     setSelectedRegistrationIds(prev => {
@@ -557,6 +600,72 @@ export default function UnifiedTeamsPage() {
             message: error instanceof Error ? error.message : 'Access link could not be sent.',
             type: 'danger',
           });
+        } finally {
+          setWorking(null);
+        }
+      },
+    });
+  }
+
+  // WI-2C.3 — link a registration to one of this org's rep teams (or relink). Optimistic-ish:
+  // reflects the new link locally on success. Server asserts rep_teams.org_id === ctx.org.id.
+  async function handleLinkRepTeam(registrationId: string, repTeamId: string) {
+    if (!currentTournament) return;
+    const repTeam = repTeams.find(t => t.id === repTeamId);
+    setWorking(registrationId);
+    try {
+      const res = await fetch(`/api/admin/teams/rep-team-link${orgQuery}`, {
+        credentials: 'same-origin',
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tournamentId: currentTournament.id, registrationId, repTeamId }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error ?? 'Could not link the rep team.');
+      setRepLinks(prev => {
+        const next = new Map(prev);
+        next.set(registrationId, { repTeamId, repTeamName: repTeam?.name ?? '' });
+        return next;
+      });
+      // Only close the picker if THIS registration's is still the open one — the admin may
+      // have opened another row's picker while this request was in flight.
+      setRepLinkPickerId(prev => (prev === registrationId ? null : prev));
+      setRepLinkSearch('');
+    } catch (e: any) {
+      setFeedback({ isOpen: true, title: 'Link Failed', message: e.message, type: 'danger' });
+    } finally {
+      setWorking(null);
+    }
+  }
+
+  function handleUnlinkRepTeam(registrationId: string) {
+    const link = repLinks.get(registrationId);
+    setFeedback({
+      isOpen: true,
+      title: 'Remove rep-team link?',
+      message: `Unlink this registration from "${link?.repTeamName ?? 'the rep team'}"? The team's coaches will still be recognized on the public page if their email is on the registration.`,
+      type: 'warning',
+      confirmText: 'Unlink',
+      onConfirm: async () => {
+        if (!currentTournament) return;
+        setWorking(registrationId);
+        try {
+          const res = await fetch(`/api/admin/teams/rep-team-link${orgQuery}`, {
+            credentials: 'same-origin',
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tournamentId: currentTournament.id, registrationId }),
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok) throw new Error(data.error ?? 'Could not unlink.');
+          setRepLinks(prev => {
+            const next = new Map(prev);
+            next.delete(registrationId);
+            return next;
+          });
+          setRepLinkPickerId(prev => (prev === registrationId ? null : prev));
+        } catch (e: any) {
+          setFeedback({ isOpen: true, title: 'Unlink Failed', message: e.message, type: 'danger' });
         } finally {
           setWorking(null);
         }
@@ -1277,6 +1386,85 @@ export default function UnifiedTeamsPage() {
       }));
   }, [poolSlots, selectedGroup]);
 
+  // WI-2C.3 — the passive "Link to rep team" control for one registration row. Renders a
+  // linked chip (name opens the picker to relink, ✕ unlinks) or a "Link to rep team" button,
+  // plus the anchored org-scoped picker popover. Only mounted for rep-capable orgs.
+  function renderRepLinkControl(team: TeamRecord, busy: boolean) {
+    const link = repLinks.get(team.id);
+    const pickerOpen = repLinkPickerId === team.id;
+    const togglePicker = () => {
+      setRepLinkPickerId(pickerOpen ? null : team.id);
+      setRepLinkSearch('');
+    };
+    const q = repLinkSearch.trim().toLowerCase();
+    const matches = repTeams.filter(t => !q || t.name.toLowerCase().includes(q));
+
+    return (
+      <div className={styles.repLinkWrap}>
+        {link ? (
+          <span className={styles.repLinkChip} title={`Linked to rep team ${link.repTeamName}`}>
+            <Link2 size={12} />
+            <button type="button" className={styles.repLinkChipName} onClick={togglePicker} disabled={busy}
+              aria-expanded={pickerOpen} title="Change linked rep team">
+              {link.repTeamName || 'Rep team'}
+            </button>
+            <button type="button" className={styles.repLinkChipX} onClick={() => handleUnlinkRepTeam(team.id)}
+              disabled={busy} aria-label={`Unlink ${team.name} from rep team`}>
+              <X size={11} />
+            </button>
+          </span>
+        ) : (
+          <button type="button" className="btn btn-ghost btn-data" onClick={togglePicker} disabled={busy}
+            aria-expanded={pickerOpen} aria-label={`Link ${team.name} to a rep team`} title="Link to rep team"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+            <Link2 size={12} /><span className={styles.repLinkBtnLabel}>Link to rep team</span>
+          </button>
+        )}
+        {pickerOpen && (
+          <div className={styles.repLinkPopover} role="dialog" aria-label={`Link ${team.name} to a rep team`}>
+            <div className={styles.repLinkPopHead}>
+              <div className={styles.repLinkPopTitle}>Link &ldquo;{team.name}&rdquo; to a rep team</div>
+              <div className={styles.repLinkPopSub}>Your organization&rsquo;s rep teams only</div>
+            </div>
+            <div className={styles.repLinkSearch}>
+              <Search size={13} />
+              <input autoFocus value={repLinkSearch} onChange={e => setRepLinkSearch(e.target.value)}
+                placeholder="Search rep teams…" aria-label="Search rep teams" />
+            </div>
+            <div className={styles.repLinkList}>
+              {repTeams.length === 0 ? (
+                <div className={styles.repLinkEmpty}>No rep teams in this organization yet.</div>
+              ) : matches.length === 0 ? (
+                <div className={styles.repLinkEmpty}>No rep teams match &ldquo;{repLinkSearch}&rdquo;.</div>
+              ) : (
+                matches.map(t => {
+                  const isCurrent = t.id === link?.repTeamId;
+                  const meta = [t.division, t.sport].filter(Boolean).join(' · ');
+                  return (
+                    <button key={t.id} type="button" className={styles.repLinkItem}
+                      onClick={() => handleLinkRepTeam(team.id, t.id)} disabled={busy || isCurrent}>
+                      <span className={styles.repLinkItemText}>
+                        <span className={styles.repLinkItemName}>{t.name}</span>
+                        {meta && <span className={styles.repLinkItemMeta}>{meta}</span>}
+                      </span>
+                      <span className={isCurrent ? styles.repLinkItemCurrent : styles.repLinkItemPick}>
+                        {isCurrent ? 'Linked' : 'Link →'}
+                      </span>
+                    </button>
+                  );
+                })
+              )}
+            </div>
+            <div className={styles.repLinkPopFoot}>
+              <span>{matches.length} of {repTeams.length} team{repTeams.length === 1 ? '' : 's'}</span>
+              <button type="button" className={styles.repLinkPopClose} onClick={() => setRepLinkPickerId(null)}>Close</button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   function renderExpandedTeamDetails(team: TeamRecord) {
     const effectiveFee = getEffectiveFee(team, divisions, feeMode, feeSchedule);
     const pStatus = computePaymentStatus(team, effectiveFee, today);
@@ -1325,6 +1513,7 @@ export default function UnifiedTeamsPage() {
                   {team.paymentStatus === 'paid' ? 'Mark Unpaid' : 'Mark Paid'}
                 </button>
               ) : null}
+              {orgHasRepTeams && renderRepLinkControl(team, busy)}
               {team.email?.trim() && (
                 <button className="btn btn-ghost btn-data" onClick={() => resendAccessLink(team)} disabled={busy || working === 'resend-access'} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Resend dashboard access link to ${team.name}`} title="Resend coach access link">
                   <Mail size={12} />

@@ -1312,6 +1312,39 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 
 ---
 
+## `rep_team_tournament_registrations`
+<!-- dict:table:rep_team_tournament_registrations -->
+
+**Purpose:** the **paid-portal** coach↔tournament identity bridge (mig 196, WI-2C) — links a rep team ([`rep_teams`](#rep_teams)) to a tournament registration (`tournament_team_id` → [`teams`](#teams)`.id`). The rep-side analogue of [`basic_coach_team_registrations`](#basic_coach_team_registrations): its existence is what lets a public tournament page recognize a coach who runs their team through the **paid** portal but whose registration email doesn't match their account (the org registered under a generic office email).
+
+**Gotchas (read first):**
+1. **This is Layer 2, not the whole story.** Rep-coach recognition on the public page has two layers ([lib/tournament-viewer-hats.ts](../../../lib/tournament-viewer-hats.ts)): **Layer 1** = query-time exact email-match (`teams.email`/`coach_email` == account email) gated by an org coaching assignment — **no row here needed**; **Layer 2** = a row here (this table) intersected with the viewer's coaching assignments. A registration that neither email-matches nor has a row here stays unrecognized — accepted design, not a bug.
+2. **Never an email match; never auto-linked.** Rows are written only by the passive admin "Link to rep team" control (`link_source='explicit'`) or the one-time backfill tool (`link_source='backfill'`). There is no registration-flow auto-link (unlike the basic bridge) — the shared `/register` route has no rep-team concept.
+3. **`tournament_team_id` UNIQUE** — a registration links to **at most one** rep team (mirrors the basic bridge).
+4. **`org_id` is denormalized because `teams` has none.** `teams` reaches org only via `tournament_id → tournaments.org_id`; this table carries `org_id` for the 1-hop tenant rule. It must equal BOTH `tournaments.org_id` of the registration AND `rep_teams.org_id` — the writing endpoint asserts both (registration in ctx.org via `requireTournamentInOrg`, and `rep_teams.org_id === ctx.org.id`) so cross-tenant linking is structurally impossible. The resolver org-scopes on **this table's own** `org_id`, never `rep_teams.org_id` alone.
+5. **Naming smell (inherited):** `tournament_team_id` FKs to the table literally named `teams` (tournament registrations), same as the basic bridge.
+6. **Service-role only.** RLS ENABLED with **no policies** — anon/authenticated get zero rows via PostgREST (prod anon has a default SELECT grant); all access is `supabaseAdmin`.
+7. **No `updated_at`.** A relink to a different rep team **upserts in place** (`onConflict: tournament_team_id`) — same `id`/`created_at`, new `rep_team_id`/`linked_by_user_id`/`link_source` — so `id`/`created_at` are NOT stable link-event identifiers across a relink. Unlink = delete the row.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_team_tournament_registrations.tournament_team_id -->
+**`tournament_team_id`** (FK → `teams.id` ON DELETE CASCADE, NOT NULL, UNIQUE) — the registration; the identity bridge (gotchas 3, 5).
+
+<!-- dict:col:rep_team_tournament_registrations.rep_team_id -->
+**`rep_team_id`** (FK → `rep_teams.id` ON DELETE CASCADE, NOT NULL) — the paid-portal team side.
+
+<!-- dict:col:rep_team_tournament_registrations.org_id -->
+**`org_id`** (FK → `organizations.id` ON DELETE CASCADE, NOT NULL) — denormalized tenant scope (gotcha 4).
+
+<!-- dict:col:rep_team_tournament_registrations.linked_by_user_id -->
+**`linked_by_user_id`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — audit of who linked it (`SET NULL` keeps the link if the user is deleted).
+
+<!-- dict:col:rep_team_tournament_registrations.link_source -->
+**`link_source`** (text, NOT NULL, default `'explicit'`, CHECK `explicit|backfill`) — provenance. `explicit` = an admin used the link control; `backfill` = the one-time candidate-match tool. No `registration_flow` value (no auto-link path exists).
+
+---
+
 ## `basic_coach_team_players`
 <!-- dict:table:basic_coach_team_players -->
 

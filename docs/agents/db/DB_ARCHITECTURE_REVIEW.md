@@ -27,6 +27,20 @@
 
 ---
 
+### [2026-07-22] — Finding #32: `rep_team_tournament_registrations` (mig 196) — paid-portal coach↔registration bridge, mirrors the basic bridge; single-column FKs OK because service-role-only
+
+**Severity:** Advisory (pre-build model confirmation; WI-2C, ratified into the build)
+**Finding:** WI-2C needs a stored link from a tournament registration (`teams`) to a `rep_team` so a public tournament page can recognize a paid-portal coach whose registration email doesn't match their account. `teams` carries no `org_id` (org only via `tournament_id → tournaments.org_id`), so a denormalized `org_id` is required for the 1-hop tenant rule.
+**Tables affected:** NEW `rep_team_tournament_registrations`; cross-refs `teams`, `rep_teams`
+**Recommendation (ratified design, built):**
+- Columns mirror `basic_coach_team_registrations` (mig 091): `tournament_team_id` (FK→teams.id CASCADE, **UNIQUE**), `rep_team_id` (FK→rep_teams.id CASCADE), `org_id` (FK→organizations.id CASCADE, NOT NULL, **indexed** — denormalized because teams has no org_id), `linked_by_user_id` (FK→auth.users SET NULL, audit), `link_source` (CHECK `explicit|backfill`, default `explicit`), `created_at`. No `updated_at` (immutable; unlink = delete). No `registration_flow` source — the shared `/register` route has no rep-team concept, so there is no auto-link path (unlike the basic bridge).
+- **Single-column FKs are correct here** (not the composite `(id, team_id)` hardening of Finding #31): this table is RLS-enabled-**no-policies** (service-role only), so no direct PostgREST write path exists to exploit. Tenant coherence (`org_id` must equal both `tournaments.org_id` and `rep_teams.org_id`) is enforced by the **writing endpoint** (`requireTournamentInOrg` on the registration + `rep_teams.org_id === ctx.org.id` assertion), and the resolver org-scopes on **this table's own** `org_id`, never `rep_teams.org_id` alone. Finding #31's composite FKs were needed because that table had real RLS SELECT policies + a reachable write surface.
+- RLS: `ENABLE ROW LEVEL SECURITY`, no policies (mig 091 / Finding #30 posture). Indexes: unique `(tournament_team_id)`, `(rep_team_id)`, `(org_id)`.
+- **Dev-only apply; prod is a separate explicit owner step** (mig 196 applied to dev 2026-07-22; expect it in `DRIFT_dev_vs_prod.md` as a dev-only table — intentional).
+**Status:** Addressed (built as ratified in mig 196; applied to dev, dictionary + snapshots refreshed).
+
+---
+
 ### [2026-07-17] — Finding #31: Player Development 3C — `rep_player_continuity_links` = dual-nullable REAL-FK sides (roster|registration per side), one row per pair for the whole suggested→confirmed|rejected lifecycle
 
 **Severity:** Advisory (pre-build model confirmation; plan-mandated /dba sign-off — ratified into the 3C build)

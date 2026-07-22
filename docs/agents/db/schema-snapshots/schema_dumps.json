@@ -11774,6 +11774,69 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_tournament_registrations",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "pos": 2,
+        "column_name": "tournament_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "pos": 3,
+        "column_name": "rep_team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "pos": 5,
+        "column_name": "linked_by_user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "pos": 6,
+        "column_name": "link_source",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": "'explicit'::text"
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "pos": 7,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_teams",
         "pos": 1,
         "column_name": "id",
@@ -16069,14 +16132,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -16139,14 +16202,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -16335,14 +16398,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -16827,6 +16890,34 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_tags_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "column_name": "linked_by_user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_tournament_registrations_linked_by_user_id_fkey"
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_tournament_registrations_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "column_name": "rep_team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_tournament_registrations_rep_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_tournament_registrations",
+        "column_name": "tournament_team_id",
+        "foreign_table": "teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_tournament_registrations_tournament_team_id_fkey"
       },
       {
         "table_name": "rep_teams",
@@ -19199,6 +19290,26 @@
         "indexdef": "CREATE INDEX rep_team_tags_team_idx ON public.rep_team_tags USING btree (team_id, kind)"
       },
       {
+        "tablename": "rep_team_tournament_registrations",
+        "indexname": "rep_team_tournament_registrations_org_idx",
+        "indexdef": "CREATE INDEX rep_team_tournament_registrations_org_idx ON public.rep_team_tournament_registrations USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_tournament_registrations",
+        "indexname": "rep_team_tournament_registrations_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_tournament_registrations_pkey ON public.rep_team_tournament_registrations USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_tournament_registrations",
+        "indexname": "rep_team_tournament_registrations_rep_team_idx",
+        "indexdef": "CREATE INDEX rep_team_tournament_registrations_rep_team_idx ON public.rep_team_tournament_registrations USING btree (rep_team_id)"
+      },
+      {
+        "tablename": "rep_team_tournament_registrations",
+        "indexname": "rep_team_tournament_registrations_tournament_team_unique",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_tournament_registrations_tournament_team_unique ON public.rep_team_tournament_registrations USING btree (tournament_team_id)"
+      },
+      {
         "tablename": "rep_teams",
         "indexname": "rep_teams_org_id_slug_key",
         "indexdef": "CREATE UNIQUE INDEX rep_teams_org_id_slug_key ON public.rep_teams USING btree (org_id, slug)"
@@ -21224,6 +21335,18 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_tags",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_tournament_registrations",
+        "detail": "rep_team_tournament_registrations_source_check",
+        "check_clause": "(link_source = ANY (ARRAY['explicit'::text, 'backfill'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_tournament_registrations",
         "detail": "ENABLED",
         "check_clause": null
       },

@@ -2453,7 +2453,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id"
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2461,7 +2461,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id"
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2541,7 +2541,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id"
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2549,7 +2549,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id"
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_continuity_links",
@@ -2837,7 +2837,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "team_id"
+    "foreign_column": "id"
   },
   {
     "table_name": "rep_player_measurables",
@@ -2845,7 +2845,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "id"
+    "foreign_column": "team_id"
   },
   {
     "table_name": "rep_player_measurables",
@@ -3677,6 +3677,46 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_tournament_registrations",
+    "constraint_name": "rep_team_tournament_registrations_linked_by_user_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "linked_by_user_id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_tournament_registrations",
+    "constraint_name": "rep_team_tournament_registrations_org_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "org_id",
+    "foreign_table": "organizations",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_tournament_registrations",
+    "constraint_name": "rep_team_tournament_registrations_pkey",
+    "constraint_type": "PRIMARY KEY",
+    "column_name": "id",
+    "foreign_table": null,
+    "foreign_column": null
+  },
+  {
+    "table_name": "rep_team_tournament_registrations",
+    "constraint_name": "rep_team_tournament_registrations_rep_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "rep_team_id",
+    "foreign_table": "rep_teams",
+    "foreign_column": "id"
+  },
+  {
+    "table_name": "rep_team_tournament_registrations",
+    "constraint_name": "rep_team_tournament_registrations_tournament_team_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_team_id",
+    "foreign_table": "teams",
     "foreign_column": "id"
   },
   {

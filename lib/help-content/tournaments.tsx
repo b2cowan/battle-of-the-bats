@@ -445,7 +445,7 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Review and accept teams',
       summary: 'Approve, waitlist, reject, and track payment readiness for teams.',
       keywords: ['review teams', 'approve registration', 'waitlist team', 'payment status', 'accepted teams', 'registration health'],
-      searchText: 'review team registrations approve accept waitlist reject pending payment deposit paid paid in full schedule eligibility selected teams bulk actions registration health score health score missing email no email on file needs action capacity filled percent filled add team email edit team email',
+      searchText: 'review team registrations approve accept waitlist reject pending payment deposit paid paid in full schedule eligibility selected teams bulk actions registration health score health score missing email no email on file needs action capacity filled percent filled add team email edit team email link to rep team connect registration rep team recognize coach public page paid portal coaches portal',
       links: [
         { label: 'Registrations', href: '../tournaments/registrations' },
       ],
@@ -485,6 +485,18 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['add team email', 'edit team email', 'fix email', 'no email on file', 'missing email', 'coach email'],
           answer: (
             <p>Open <strong>Registrations</strong>, expand the team&rsquo;s row, and click the pencil (<strong>Edit</strong>) icon &mdash; the email field is there along with the team name and coach name. If the <strong>Registration Health</strong> card or the dashboard&rsquo;s <strong>Coach Sign-ups &amp; Chat</strong> panel flags teams with no email on file, click that flag instead of searching manually &mdash; it jumps straight to the exact teams that need one.</p>
+          ),
+        },
+        {
+          id: 'faq-link-registration-rep-team',
+          question: 'How do I connect a team’s registration to one of my rep teams?',
+          answerText: 'On League and Club plans, expand the team’s registration row and use "Link to rep team" to attach it to one of your organization’s rep teams. Once linked, that team’s coaches are recognized as coaches on your public tournament pages — their account menu opens straight to their coach view. Coaches whose email is already on the registration are recognized automatically, so you only need this when a team was registered under a shared office email. You can pick a different team or unlink at any time. You can only link to rep teams in your own organization.',
+          keywords: ['link to rep team', 'rep team', 'connect registration', 'recognize coach', 'public page coach', 'rep coach recognition', 'paid portal coach'],
+          answer: (
+            <>
+              <p>On <strong>League</strong> and <strong>Club</strong> plans, expand the team&rsquo;s registration row and use <strong>Link to rep team</strong> to attach it to one of your organization&rsquo;s rep teams. Once linked, that team&rsquo;s coaches are recognized as coaches on your <strong>public tournament pages</strong> &mdash; their account menu opens straight to their coach view.</p>
+              <p>Coaches whose email is already on the registration are recognized <em>automatically</em>, so you only need this when a team was registered under a shared office email that doesn&rsquo;t match any coach. You can pick a different team or <strong>unlink</strong> at any time. You can only link to rep teams in <strong>your own organization</strong>.</p>
+            </>
           ),
         },
         {

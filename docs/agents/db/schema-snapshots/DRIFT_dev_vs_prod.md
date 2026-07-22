@@ -1,20 +1,21 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-07-21 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-07-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 90 divergence(s)** across dev/prod.
+**⚠️ 108 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 3 | 0 | — |
-| Columns | 18 | 3 | 23 |
-| Indexes | 11 | 3 | 0 |
-| Constraints | 17 | 9 | — |
-| RLS / CHECK | 2 | 1 | 0 (RLS state) |
+| Tables | 4 | 0 | — |
+| Columns | 25 | 3 | 23 |
+| Indexes | 15 | 3 | 0 |
+| Constraints | 22 | 9 | — |
+| RLS / CHECK | 3 | 1 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (3)
+### Only in DEV (4)
 - `chat_message_reports`
+- `rep_team_tournament_registrations`
 - `user_notification_settings`
 - `user_preferences`
 
@@ -22,7 +23,7 @@
 _none_
 
 ## Columns
-### Only in DEV (18)
+### Only in DEV (25)
 - `chat_message_reports.created_at`
 - `chat_message_reports.id`
 - `chat_message_reports.message_id`
@@ -34,6 +35,13 @@ _none_
 - `chat_message_reports.room_id`
 - `chat_message_reports.status`
 - `chat_room_members.notifications_muted_at`
+- `rep_team_tournament_registrations.created_at`
+- `rep_team_tournament_registrations.id`
+- `rep_team_tournament_registrations.link_source`
+- `rep_team_tournament_registrations.linked_by_user_id`
+- `rep_team_tournament_registrations.org_id`
+- `rep_team_tournament_registrations.rep_team_id`
+- `rep_team_tournament_registrations.tournament_team_id`
 - `user_notification_settings.notifications_paused_at`
 - `user_notification_settings.updated_at`
 - `user_notification_settings.user_id`
@@ -73,7 +81,7 @@ _none_
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 
 ## Indexes
-### Only in DEV (11)
+### Only in DEV (15)
 - `chat_message_reports_message_idx`
 - `chat_message_reports_open_uniq`
 - `chat_message_reports_org_status_idx`
@@ -83,6 +91,10 @@ _none_
 - `league_practices_schedule_idx`
 - `league_practices_season_idx`
 - `league_practices_team_idx`
+- `rep_team_tournament_registrations_org_idx`
+- `rep_team_tournament_registrations_pkey`
+- `rep_team_tournament_registrations_rep_team_idx`
+- `rep_team_tournament_registrations_tournament_team_unique`
 - `user_notification_settings_pkey`
 - `user_preferences_pkey`
 
@@ -95,7 +107,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (17)
+### Only in DEV (22)
 - `announcements.announcements_tournament_id_fkey`
 - `chat_message_reports.chat_message_reports_message_id_fkey`
 - `chat_message_reports.chat_message_reports_org_id_fkey`
@@ -108,6 +120,11 @@ _none_
 - `games.games_age_group_id_fkey`
 - `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
+- `rep_team_tournament_registrations.rep_team_tournament_registrations_linked_by_user_id_fkey`
+- `rep_team_tournament_registrations.rep_team_tournament_registrations_org_id_fkey`
+- `rep_team_tournament_registrations.rep_team_tournament_registrations_pkey`
+- `rep_team_tournament_registrations.rep_team_tournament_registrations_rep_team_id_fkey`
+- `rep_team_tournament_registrations.rep_team_tournament_registrations_tournament_team_id_fkey`
 - `teams.teams_tournament_id_fkey`
 - `user_notification_settings.user_notification_settings_pkey`
 - `user_notification_settings.user_notification_settings_user_id_fkey`
@@ -129,8 +146,9 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (2)
+### CHECK only in DEV (3)
 - `chat_message_reports.chat_message_reports_status_check`
+- `rep_team_tournament_registrations.rep_team_tournament_registrations_source_check`
 - `user_preferences.user_preferences_theme_check`
 
 ### CHECK only in PROD (1)
