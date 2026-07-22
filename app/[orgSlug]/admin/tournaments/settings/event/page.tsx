@@ -912,12 +912,12 @@ export default function TournamentEventSettingsPage() {
 
           <hr className={styles.cardDivider} />
 
-          {/* Public discovery directory listing (migration 158) — opt-in, default off */}
+          {/* Public discovery directory listing (mig 158; default flipped ON / opt-out in mig 197) */}
           <div className={styles.cardHeaderRow} style={{ alignItems: 'flex-start', gap: '1rem' }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <p className={styles.subSectionLabel} style={{ margin: 0 }}>List in public tournament directory</p>
               <p className={styles.descriptionText} style={{ margin: '0.15rem 0 0' }}>
-                Show this tournament on the FieldLogicHQ public directory, where anyone can discover it by sport, region, and date. Off by default.
+                Show this tournament on the FieldLogicHQ public directory, where anyone can discover it by sport, region, and date. On by default — turn it off to hide this event.
               </p>
             </div>
             <div className={styles.segmentedControl} role="radiogroup" aria-label="List in public tournament directory">
