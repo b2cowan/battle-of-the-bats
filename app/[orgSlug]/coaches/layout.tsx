@@ -14,6 +14,7 @@ import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import ConfirmProvider from '@/components/coaches/ConfirmProvider';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
+import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import styles from './coaches.module.css';
 
 export const metadata: Metadata = {
@@ -100,6 +101,7 @@ export default async function CoachesLayout({
             marker nested below the providers would leave them dark. Custom-property token
             overrides in globals.css cascade through display:contents to every subtree. */}
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
+          <CoachThemeColor />
           <HelpDrawerProvider>
             <ConfirmProvider>
               <div className={styles.coachesShell}>
