@@ -493,7 +493,12 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount }: { event: Re
       ? (span.days > 1 ? `Day ${daysBetween(span.start, dayKey) + 1}/${span.days}` : 'All day')
       : (span.days > 1 ? `${shortDate(span.start)}–${shortDate(span.end)}` : shortDate(span.start));
   } else {
-    lead = event.startsAt ? fmtTime(event.startsAt) : '';
+    // Day-scoped views (week/month/day-sheet) already carry the date as their column/header, so
+    // show only the time there. The flat LIST view has just a month header, so prefix the day
+    // ("Mar 15 · 2:00 p.m.") — otherwise a coach can't tell which day an event falls on.
+    lead = event.startsAt
+      ? (dayKey ? fmtTime(event.startsAt) : `${shortDate(dayStr(event.startsAt))} · ${fmtTime(event.startsAt)}`)
+      : '';
   }
   // Opponent safety-net: games auto-name "League Game vs Lady Jays" (opponent already in the name),
   // so only append "vs/@ {opp}" when the opponent is set but NOT already in the name.
@@ -1624,7 +1629,7 @@ export default function CoachesSchedulePage({
                   <Link
                     href={`${base}/tryouts`}
                     className={styles.calMonthEventDot}
-                    style={{ background: 'transparent', border: '1px dashed rgba(255,255,255,0.4)', color: 'rgba(255,255,255,0.75)' }}
+                    style={{ background: 'transparent', border: '1px dashed var(--home-line-strong, rgba(255,255,255,0.4))', color: 'var(--home-ink-soft, rgba(255,255,255,0.75))' }}
                     title="Tryout"
                   >
                     Tryout
