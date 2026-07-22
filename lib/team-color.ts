@@ -4,6 +4,7 @@
  * schedule avatars, scorebug, dock, broadcast card, and the team-profile page all
  * agree on what colour/initials a given team gets. Pure (name → deterministic).
  */
+import { hslChannels01, relativeLuminance01, pickInk } from './color-contrast';
 
 /**
  * Stable hue (0–359) derived from the team name, shifted out of the lime band
@@ -28,28 +29,13 @@ export function teamColor(name: string, saturation = 58, lightness = 45): string
  * luminance threshold here so the two guards agree.
  */
 export function teamInk(name: string, saturation = 58, lightness = 45): string {
-  const h = teamAvatarHue(name) / 360;
-  const s = saturation / 100;
-  const l = lightness / 100;
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-  const channel = (t: number) => {
-    if (t < 0) t += 1;
-    if (t > 1) t -= 1;
-    if (t < 1 / 6) return p + (q - p) * 6 * t;
-    if (t < 1 / 2) return q;
-    if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6;
-    return p;
-  };
-  const lin = (c: number) => (c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4));
-  const luminance =
-    0.2126 * lin(channel(h + 1 / 3)) + 0.7152 * lin(channel(h)) + 0.0722 * lin(channel(h - 1 / 3));
+  const [r, g, b] = hslChannels01(teamAvatarHue(name) / 360, saturation / 100, lightness / 100);
   // 0.2 = the equal-contrast crossover between white and near-black ink
   // ((L+0.05)² = 0.05·1.05) — NOT themes.ts's 0.42, which is tuned for arbitrary
   // full-range brand colors; teamColor()'s fixed 45% lightness tops out at
   // L≈0.43, so 0.42 would leave warm golds (e.g. hue 44 ⇒ L≈0.31) on white
   // text at ~2.9:1. Above the crossover, ink always contrasts better.
-  return luminance > 0.2 ? '#0F1123' : '#FFFFFF';
+  return pickInk(relativeLuminance01(r, g, b), 0.2);
 }
 
 /**

@@ -55,14 +55,22 @@ const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
+// Categorical event-type palette + win/loss/tie result colours, tokenized so the warm
+// portal variant can remap them per theme (dark values live in globals.css; the three
+// result hues reuse the existing --success/--danger/--warning semantic tokens).
 const EVENT_COLORS: Record<RepEventType, string> = {
-  external_tournament: '#f97316',
-  tournament_game:     '#f59e0b',
-  scrimmage:           '#3b82f6',
-  league_game:         '#22c55e',
-  practice:            '#a855f7',
-  team_event:          '#6b7280',
+  external_tournament: 'var(--evt-external-tournament)',
+  tournament_game:     'var(--evt-tournament-game)',
+  scrimmage:           'var(--evt-scrimmage)',
+  league_game:         'var(--evt-league-game)',
+  practice:            'var(--evt-practice)',
+  team_event:          'var(--evt-team-event)',
 };
+
+/** Win/loss/tie badge colour (reuses the semantic status tokens; tie falls through to warning). */
+function resultColor(result: string): string {
+  return result === 'win' ? 'var(--success)' : result === 'loss' ? 'var(--danger)' : 'var(--warning)';
+}
 
 const EVENT_LABELS: Record<RepEventType, string> = {
   external_tournament: 'Tournament',
@@ -462,10 +470,10 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount }: { event: Re
       </span>
       <span className={styles.eventChipTrail}>
         {mismatch && !cancelled && (
-          <TriangleAlert size={12} style={{ color: '#f59e0b', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
+          <TriangleAlert size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
         )}
         {cancelled ? (
-          <span className={styles.eventChipResult} style={{ color: '#f59e0b' }}>CANCELLED</span>
+          <span className={styles.eventChipResult} style={{ color: 'var(--warning)' }}>CANCELLED</span>
         ) : (
           <>
             {!!awardCount && (
@@ -475,9 +483,7 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount }: { event: Re
             )}
             {hasScore && <span className={styles.eventChipScore}>{event.teamScore}–{event.opponentScore}</span>}
             {!span && event.result && (
-              <span className={styles.eventChipResult} style={{
-                color: event.result === 'win' ? '#22c55e' : event.result === 'loss' ? '#ef4444' : '#f59e0b',
-              }}>
+              <span className={styles.eventChipResult} style={{ color: resultColor(event.result) }}>
                 {event.result.toUpperCase()}
               </span>
             )}
@@ -1650,11 +1656,11 @@ export default function CoachesSchedulePage({
               <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseSlideOver}><ArrowLeft size={20} /></button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 {(() => { const Icon = EVENT_ICONS[selectedEvent.eventType]; return <Icon size={16} style={{ color: EVENT_COLORS[selectedEvent.eventType] }} />; })()}
-                <span className={styles.eventTypePill} style={{ background: EVENT_COLORS[selectedEvent.eventType] + '22', color: EVENT_COLORS[selectedEvent.eventType] }}>
+                <span className={styles.eventTypePill} style={{ background: `color-mix(in srgb, ${EVENT_COLORS[selectedEvent.eventType]} 13.333%, transparent)`, color: EVENT_COLORS[selectedEvent.eventType] }}>
                   {EVENT_LABELS[selectedEvent.eventType]}
                 </span>
                 {selectedEvent.status === 'cancelled' && (
-                  <span className={styles.eventTypePill} style={{ background: '#f59e0b22', color: '#f59e0b' }}>Cancelled</span>
+                  <span className={styles.eventTypePill} style={{ background: 'color-mix(in srgb, var(--warning) 13.333%, transparent)', color: 'var(--warning)' }}>Cancelled</span>
                 )}
               </div>
               <button className={styles.modalCloseBtn} onClick={requestCloseSlideOver}>
@@ -1721,7 +1727,7 @@ export default function CoachesSchedulePage({
                         if (t === '' || o === '') return null;
                         const r = Number(t) > Number(o) ? 'win' : Number(t) < Number(o) ? 'loss' : 'tie';
                         return (
-                          <span className={styles.resultBadge} style={{ alignSelf: 'flex-end', paddingBottom: '0.5rem', color: r === 'win' ? '#22c55e' : r === 'loss' ? '#ef4444' : '#f59e0b' }}>
+                          <span className={styles.resultBadge} style={{ alignSelf: 'flex-end', paddingBottom: '0.5rem', color: resultColor(r) }}>
                             {r.toUpperCase()}
                           </span>
                         );
@@ -1737,7 +1743,7 @@ export default function CoachesSchedulePage({
                   <div className={styles.eventScore}>
                     <span className={styles.eventScoreValue}>{selectedEvent.teamScore} – {selectedEvent.opponentScore}</span>
                     {selectedEvent.result && (
-                      <span className={styles.resultBadge} style={{ color: selectedEvent.result === 'win' ? '#22c55e' : selectedEvent.result === 'loss' ? '#ef4444' : '#f59e0b' }}>
+                      <span className={styles.resultBadge} style={{ color: resultColor(selectedEvent.result) }}>
                         {selectedEvent.result.toUpperCase()}
                       </span>
                     )}

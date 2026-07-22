@@ -19,6 +19,7 @@ import {
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
 import { useHasMultipleWorkspaces } from '@/lib/use-has-multiple-workspaces';
+import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
@@ -270,7 +271,10 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
   const moreActive = Boolean(currentTeam && overflowSections.some(s => sectionActive(currentTeam!, s.sub)));
 
   return (
-    <div className={styles.shell}>
+    // {...coachWarmAttr} adds [data-coach-warm-enabled] only under the dev-preview flag; the
+    // shell root wraps the rail, top bar, content, bottom nav and More sheet, so the warm
+    // token flip in globals.css reaches the whole basic portal.
+    <div className={styles.shell} {...coachWarmAttr}>
       <FeedbackRequestIdProvider />
       {/* Desktop left rail (≥1024px) */}
       <aside className={styles.rail} aria-label="Coaches Portal">

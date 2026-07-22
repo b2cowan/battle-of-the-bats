@@ -8,7 +8,9 @@
 .wrap {
   /* Best/Okay/Never chip tints — identical hexes to PositionProfileEditor so the two surfaces match.
      Pinned design-audited palette (2026-07-02); kept as-is in the P3 token judgment tranche —
-     TH-5 warm variant is ratified separately, not a token-swap candidate here. */
+     TH-5 warm variant is ratified separately, not a token-swap candidate here.
+     ⚠ The warm portal remaps ALL of these locals at the foot of this file — keep the two lists in
+     sync: a new local token added here needs a matching warm line there, or it falls through dark. */
   --best-bg: rgba(132, 204, 22, 0.16); --best-bd: rgba(132, 204, 22, 0.55); --best-fg: #bef264;
   --okay-bg: rgba(96, 165, 250, 0.14); --okay-bd: rgba(96, 165, 250, 0.45); --okay-fg: #93c5fd;
   --never-bg: rgba(248, 113, 113, 0.13); --never-bd: rgba(248, 113, 113, 0.5); --never-fg: #fca5a5;
@@ -191,3 +193,33 @@
 .empty { padding: 28px 18px; text-align: center; color: var(--ink-70); font-size: 0.85rem; }
 .empty a { color: var(--okay-fg); text-decoration: none; font-weight: 600; }
 .readOnlyNote { font-size: 0.72rem; color: var(--ink-45); margin: 10px 2px 0; }
+
+/* ── Warm portal — ratified depth-chart palette (TH-5 ③), gated ──────────────────
+   The board defines its own near-white ink + pastel tri-tier palette for the DARK surface;
+   on the warm cream ground that ink washes out. This remaps the board's LOCAL tokens to the
+   ratified warm values — ink text on paper; Best = olive tint with the rank number in INK,
+   Okay = home-blue tint, Never = live-red tint. Additive + warm-gated, so the dark board
+   (the pinned 2026-07-02 palette above) is byte-identical. Full Stage-4 fidelity pass (star,
+   pitcher pills, mobile accordion) still reviews this against the round-2 frame. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wrap {
+  --ink:        var(--home-ink);
+  --ink-70:     var(--home-ink-soft);
+  --ink-45:     var(--home-dim);
+  --best-bg:    var(--home-olive-soft);
+  --best-bd:    rgba(var(--home-olive-rgb), 0.45);
+  --best-fg:    var(--home-ink);
+  --okay-bg:    rgba(var(--home-blue-rgb), 0.12);
+  --okay-bd:    rgba(var(--home-blue-rgb), 0.45);
+  --okay-fg:    var(--home-blue);
+  --never-bg:   var(--home-live-soft);
+  --never-bd:   rgba(var(--home-live-rgb), 0.5);
+  --never-fg:   var(--home-live);
+  --line:       var(--home-line-strong);
+  --line-soft:  var(--home-line);
+  --panel:      var(--home-card);
+  --panel-even: var(--home-paper);
+  /* A-squad star + column label render var(--gold) as a GLYPH; the pastel dark-gold washes out
+     on white (~1.6:1). Point --gold at the legible deep gold here so the star reads on paper
+     (ratified TH-5 ④ warm A-squad star = gold-strong, no glow). */
+  --gold:       var(--gold-strong);
+}

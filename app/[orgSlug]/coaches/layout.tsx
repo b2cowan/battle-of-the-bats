@@ -11,6 +11,7 @@ import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import ConfirmProvider from '@/components/coaches/ConfirmProvider';
+import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import styles from './coaches.module.css';
 
 export const metadata: Metadata = {
@@ -80,13 +81,18 @@ export default async function CoachesLayout({
             guide content load lazily on first click — no bundle cost until used). */}
         <HelpDrawerProvider>
           <ConfirmProvider>
-            <div className={styles.coachesShell}>
-              <CoachesSidebar orgSlug={orgSlug} />
-              <main className={styles.coachesMain}>
-                {children}
-              </main>
+            {/* Warm-portal preview gate: the marker sits on a display:contents wrapper (no
+                box, layout-neutral) so it covers BOTH the shell and the fixed bottom nav —
+                custom-property token overrides in globals.css cascade to both subtrees. */}
+            <div style={{ display: 'contents' }} {...coachWarmAttr}>
+              <div className={styles.coachesShell}>
+                <CoachesSidebar orgSlug={orgSlug} />
+                <main className={styles.coachesMain}>
+                  {children}
+                </main>
+              </div>
+              <CoachesBottomNav />
             </div>
-            <CoachesBottomNav />
           </ConfirmProvider>
           <InstallAppPrompt
             appName="FieldLogicHQ"

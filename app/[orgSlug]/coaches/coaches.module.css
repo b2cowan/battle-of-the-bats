@@ -3978,3 +3978,28 @@
 }
 .devCarryBanner b { color: var(--white-90, rgba(255, 255, 255, 0.9)); }
 .devCarryActions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
+
+/* ── Warm portal — Stage 1 chrome overrides (gated) ─────────────────────────────
+   The token flip in globals.css (html[data-user-theme="warm"] [data-coach-warm-enabled])
+   handles every var()-driven colour on the shell + sidebar automatically. These rules cover
+   the CHROME's remaining LITERAL rgba() values, which a token remap can't reach. All are
+   ADDITIVE and warm-gated, so dark output is untouched. --home-* tokens are inherited from
+   the marker (defined in the globals.css warm block). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebar { border-right-color: var(--home-line); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarHeader { border-bottom-color: var(--home-line); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarPortalLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarSectionLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarGroupLabel { color: var(--home-dim); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarItem:hover { background: var(--home-olive-soft); color: var(--home-ink); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarLogout:hover { background: var(--home-live-soft); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sidebarDivider { background: var(--home-line); }
+
+/* Segmented control (List ⇄ Depth chart, and every other .segChoice toggle): the ratified warm
+   treatment is an INK-FILLED active segment (near-black on cream), not the drab olive the lime→olive
+   accent remap produces. Inactive hover gets a soft olive tint (its dark white-alpha hover is
+   invisible on paper). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segChoice { border-color: var(--home-line-strong); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtn { border-right-color: var(--home-line); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtn:hover { background: var(--home-olive-soft); color: var(--home-ink); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive:hover { background: var(--home-ink); color: var(--home-paper); }

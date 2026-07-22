@@ -359,6 +359,17 @@ body:has([data-chat-fullbleed]) {
   --data-gray:           #94A3B8;
   --fl-text:             #F1F5F9;
 
+  /* Coaches schedule categorical event-type palette. Named so the warm portal variant
+     can remap them to warm-legible hues per theme (round-1 frame 3); dark values here are
+     the originals lifted out of the schedule TSX (P3 follow-on, warm-portal Stage 0). The
+     win/loss/tie result badges reuse --success/--danger/--warning, not this set. */
+  --evt-external-tournament: #f97316;
+  --evt-tournament-game:     #f59e0b;
+  --evt-scrimmage:           #3b82f6;
+  --evt-league-game:         #22c55e;
+  --evt-practice:            #a855f7;
+  --evt-team-event:          #6b7280;
+
   /* Platform-admin internal staff console — status-pill palette (Tailwind -300 tier)
      + shared near-black surfaces. Console-only (never customer-facing, never themed);
      a deliberately distinct namespaced set from the general --*-light status tier
@@ -393,6 +404,142 @@ body:has([data-chat-fullbleed]) {
   --warning-strong: #A16207;
   --danger-strong:  #B91C1C;
   --info-strong:    #1D4ED8;
+}
+
+/* ─── Warm Coaches Portal — theme option (TH-2 / TH-5) ──────────────────────────
+   The coaches portal renders DARK by default. When BOTH conditions hold it flips warm:
+     1. the account theme preference is Warm  → html[data-user-theme="warm"] (shared with
+        the consumer app, set pre-paint by the root no-flash script), AND
+     2. the internal dev-preview flag is on   → the shell emits [data-coach-warm-enabled]
+        only when NEXT_PUBLIC_COACH_WARM_PREVIEW === '1'.
+   Keying off the shared preference ALONE would flip the portal for every consumer-warm coach
+   the instant any warm rule shipped (the shared-preference trap) — so the dev-flag marker is
+   mandatory until the single public release (Stage 6) removes it. With the marker absent —
+   every non-chooser, and everyone in production today — this block never matches and the portal
+   is byte-identical dark.
+
+   The flip works by REDEFINING the dark tokens the shells already consume (they are ~99%
+   token-driven post-P3), so most of both shells warm with zero per-element edits. The warm
+   --home-* palette is inlined here (the coaches copy; the consumer shell keeps its own in
+   warmTheme.module.css) so this block is fully self-contained and touches no consumer token.
+   Token→--home-* mapping mirrors the ratified ChatPanel .panelWarm recipe — E3 rule: raw lime
+   never renders as text on paper, it darkens to olive. Literal lime FILLS (segmented controls,
+   CTAs) are restored to true lime per-surface in their own stages; chrome uses no lime fill. */
+html[data-user-theme="warm"] [data-coach-warm-enabled] {
+  /* Warm palette — mirrors warmTheme.module.css .warmVars (Round-1 ratified values). */
+  --home-paper:       #F8F4ED;
+  --home-card:        #FFFFFF;
+  --home-ink:         #241E15;
+  --home-ink-soft:    #4A4235;
+  --home-dim:         #8A8177;
+  --home-line:        rgba(70, 55, 30, 0.12);
+  --home-line-strong: rgba(70, 55, 30, 0.20);
+  --home-olive:       #57651E;
+  --home-olive-soft:  rgba(87, 101, 30, 0.10);
+  --home-olive-rgb:   87, 101, 30;
+  --home-live:        #D9482B;
+  --home-live-soft:   rgba(217, 72, 43, 0.10);
+  --home-live-rgb:    217, 72, 43;
+  --home-amber:       #A16207;
+  --home-amber-rgb:   161, 98, 7;
+  --home-blue:        #2563EB;
+  --home-blue-rgb:    37, 99, 235;
+  --home-win:         #3E7A32;
+  --home-win-rgb:     62, 122, 50;
+  --home-line-rgb:    70, 55, 30;
+  --home-paper-rgb:   248, 244, 237;
+  /* True lime kept for the few LIME FILLS that survive on paper (CTAs / "on" toggles) with
+     dark ink on top — the ratified ink-on-lime CTA. A literal (not var(--logic-lime), which
+     this block remaps to olive) so it stays true lime here. */
+  --home-lime:        #D9F99D;
+  --home-lime-rgb:    217, 249, 157;
+  --home-lime-ink:    #241E15;
+
+  /* ── Core canvas: near-black grounds → cream paper / white cards ── */
+  --pitch-black:      var(--home-paper);
+  --bg:               var(--home-paper);
+  --bg-2:             var(--home-card);
+  --bg-3:             var(--home-card);
+  --hud-surface:      var(--home-card);
+  --surface:          var(--home-card);
+  --surface-2:        var(--home-card);
+  --bg-surface:       var(--home-card);
+  --bg-raised:        var(--home-card);
+  --bracket-card:     var(--home-card);
+  --structural-slate: var(--home-card);
+  --card-bg:          var(--home-card);
+  --bg-card:          var(--home-card);
+  --bg-inset:         var(--home-olive-soft);
+  --fl-text:          var(--home-ink);
+  --data-gray:        var(--home-dim);
+
+  /* ── Text/overlay white ramp → ink tiers + hairlines (panelWarm recipe) ── */
+  --white:    var(--home-ink);
+  --white-90: var(--home-ink);
+  --white-85: var(--home-ink);
+  --white-80: var(--home-ink);
+  --white-75: var(--home-ink-soft);
+  --white-70: var(--home-ink-soft);
+  --white-65: var(--home-dim);
+  --white-60: var(--home-dim);
+  --white-55: var(--home-dim);
+  --white-50: var(--home-dim);
+  --white-45: var(--home-dim);
+  --white-40: var(--home-dim);
+  --white-35: var(--home-dim);
+  --white-30: var(--home-line-strong);
+  --white-20: var(--home-line-strong);
+  --white-10: var(--home-line);
+  --white-8:  var(--home-card);
+  --white-5:  var(--home-paper);
+  --white-05: var(--home-paper);
+  --white-03: var(--home-paper);
+
+  /* ── Borders → warm hairlines ── */
+  --border:        var(--home-line);
+  --border-2:      var(--home-line);
+  --border-subtle: var(--home-line);
+
+  /* ── Accent + structural blue → olive; pale lime accent → olive ── */
+  --logic-lime:         var(--home-olive);
+  --logic-lime-rgb:     var(--home-olive-rgb);
+  --blueprint-blue:     var(--home-olive);
+  --blueprint-blue-rgb: var(--home-olive-rgb);
+  --primary-light:      var(--home-olive);
+
+  /* ── Status hues → warm equivalents (base + -light text tier) ── */
+  --danger:        var(--home-live);
+  --danger-rgb:    var(--home-live-rgb);
+  --danger-light:  var(--home-live);
+  --warning:       var(--home-amber);
+  --warning-rgb:   var(--home-amber-rgb);
+  --warning-light: var(--home-amber);
+  --success:       var(--home-win);
+  --success-rgb:   var(--home-win-rgb);
+  --success-light: var(--home-win);
+  --info:          var(--home-blue);
+  --info-rgb:      var(--home-blue-rgb);
+  --info-light:    var(--home-blue);
+
+  /* ── Legible-on-white gold (round-2 A-squad star) ── */
+  --gold-strong: #856611;
+
+  /* ── Glows soften on paper (a blue/lime glow reads cold on cream) ── */
+  --glow-blue: 0 0 12px rgba(var(--home-olive-rgb), 0.20);
+  --glow-lime: 0 0 16px rgba(var(--home-olive-rgb), 0.22);
+}
+
+/* Warm CTA — the lime primary button (.btn-lime) is the ratified ink-on-lime call to action:
+   on paper it must stay TRUE lime with dark ink, not the drab olive the accent remap would give
+   it (olive is for lime-as-text, never lime-as-FILL). Restores the bright CTA on the warm ground. */
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime {
+  background: var(--home-lime);
+  border-color: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:hover {
+  background: rgba(var(--home-lime-rgb), 0.82);
+  border-color: rgba(var(--home-lime-rgb), 0.82);
 }
 
 /* ─── FieldLogic HUD Utilities ──────────────────────────────────────────────── */

@@ -160,4 +160,27 @@
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+
+  /* ── Warm portal overrides (gated) ──────────────────────────────────────────
+     The globals.css token flip warms every var()-driven colour (active tab, dots, logout
+     text). These rules cover the bar's LITERAL rgba() values — the bespoke near-black sheet,
+     the hand-copied blueprint-blue tints, and the white-alpha text/dividers — which a token
+     remap can't reach. Additive + warm-gated → dark is untouched. */
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bottomNav {
+    background: rgba(var(--home-paper-rgb), 0.92);
+    border-top-color: var(--home-line);
+    --nav-dropdown-bg: var(--home-card);
+  }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab { color: var(--home-dim); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab.active .iconWrap { background: var(--home-olive-soft); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropdown {
+    border-color: var(--home-line);
+    box-shadow: 0 -8px 32px rgba(var(--home-line-rgb), 0.14), 0 0 24px rgba(var(--home-olive-rgb), 0.06);
+  }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropSectionLabel { color: var(--home-dim); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem { color: var(--home-ink-soft); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem:hover { background: var(--home-olive-soft); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropActive { background: var(--home-olive-soft); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropDivider { background: var(--home-line); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropLogout:hover { background: var(--home-live-soft); }
 }

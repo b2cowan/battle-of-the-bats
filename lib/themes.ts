@@ -35,6 +35,8 @@ export const PRESETS: Record<string, Preset> = {
   midnight: { name: 'Midnight Blue', primary: '#1E40AF', primaryLight: '#93C5FD', primaryRgb: '30, 64, 175',   accent: '#93C5FD' },
 };
 
+import { relativeLuminance, pickInk } from './color-contrast';
+
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 
 function hexToRgb(hex: string): string {
@@ -42,14 +44,6 @@ function hexToRgb(hex: string): string {
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
   return `${r}, ${g}, ${b}`;
-}
-
-function relativeLuminance(hex: string): number {
-  const r = parseInt(hex.slice(1, 3), 16) / 255;
-  const g = parseInt(hex.slice(3, 5), 16) / 255;
-  const b = parseInt(hex.slice(5, 7), 16) / 255;
-  const linearize = (c: number) => c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  return 0.2126 * linearize(r) + 0.7152 * linearize(g) + 0.0722 * linearize(b);
 }
 
 function contrastRatio(hex: string): number {
@@ -94,7 +88,8 @@ function ensureLightTint(hex: string): string {
  */
 function onPrimaryColor(hex: string): string {
   if (!HEX_RE.test(hex)) return '#FFFFFF';
-  return relativeLuminance(hex) > 0.42 ? '#0F1123' : '#FFFFFF';
+  // 0.42 crossover: tuned for arbitrary full-range brand colours (see color-contrast.ts).
+  return pickInk(relativeLuminance(hex), 0.42);
 }
 
 export interface ResolvedTheme extends ThemeVars {
