@@ -61,6 +61,23 @@ Three items, all repairing a coach-side seam where the *correct* data/screen alr
 
 **Sequencing:** WI-2C Layer 1 can ride with WI-2A/2B; Layer 2 is its own phase gated on the `/dba` + `/plan` design above. Do not improvise the migration — surface the schema design for approval first.
 
+### Concrete design (scoped 2026-07-22)
+
+- **Storage (recommended): a link table `rep_team_tournament_registrations`**, mirroring `basic_coach_team_registrations` exactly — `tournament_team_id` (FK→`teams.id`, UNIQUE), `rep_team_id` (FK→`rep_teams.id`), `org_id` (denormalized tenant scope, indexed), `linked_by_user_id` (audit), `link_source` CHECK(`explicit`|`backfill`), `created_at`. NOT a column on `teams` (keeps the already-drift-heavy `teams` table untouched + matches the established bridge-table convention). Migration ⇒ DATA_DICTIONARY section (gotcha-first, cross-ref `teams` + `rep_teams`) + `refresh:snapshots` + `check:dictionary`, all same unit of work; **route the SQL through `/dba`**; dev-only first, prod is a separate explicit step.
+- **Admin link control — where the association is created:** the tournament **Registrations** admin page (`UnifiedTeamsPage`), in the expanded registration row's quick-actions row (accept/reject/edit/delete already live there). A new "Link to rep team" icon-button opens an org-scoped rep-team **name search/select** (divisions are free text with no shared id — no auto-match; human picks). New POST endpoint mirrors the existing `/api/admin/teams` auth chain + additionally asserts `rep_teams.org_id === ctx.org.id` (cross-tenant linking structurally impossible). **Needs a small mockup** (new control on a dense panel).
+- **Resolver:** additive branch in `getTournamentViewer` — the viewer's org coaching assignments (already fetched for Layer 1) ∩ `rep_team_tournament_registrations` for this tournament+org → coach hat, href `/${orgSlug}/coaches/teams/${repTeamId}` (identical to Layer 1's hat). Stays inside the never-SSR'd server-only resolver (cache-safety unchanged). `/review` after (identity/auth-adjacent). Extract a shared assignment-resolution helper if it becomes a 3rd copy (`/simplify`).
+- **Backfill:** a best-effort, human-confirmed candidate-match admin tool (name + org + rough division text) writing `link_source='backfill'` — NOT an automatic migration step. Built last (non-blocking cleanup).
+- **Build sequence:** Layer 1 (email-match, no migration) → migration + dictionary (`/dba`) → admin link control (mockup → build) → resolver (+`/review`) → backfill tool.
+
+**Owner product decision (2026-07-22): PASSIVE.** A quiet "Link to rep team" action in the expanded registration row (no proactive match-prompts anywhere). Coverage grows as staff link + via the one-time backfill tool. This drops all loose-match/prompt logic from scope → simpler build (a picker + a link write, no suggestion engine), and makes the backfill tool the primary path for existing registrations.
+
+**Build sequence (finalized):**
+1. **WI-2C.1 — Layer 1 (email-match, NO migration)** — buildable now, ships baseline coverage, no gate.
+2. **WI-2C.2 — the link table migration** (`rep_team_tournament_registrations`) via `/dba` + dictionary + snapshots (dev-first; prod later).
+3. **WI-2C.3 — the passive admin link control** (mockup → approve → build): the "Link to rep team" row action + org-scoped rep-team picker + the link/unlink endpoint.
+4. **WI-2C.4 — resolver** consumes the stored link (+`/review`).
+5. **WI-2C.5 — backfill tool** (candidate-match, human-confirmed) — last, non-blocking.
+
 **Caveats:** `lib/tournament-viewer-hats.ts` is a `server-only`, cache-sensitive identity resolver (its own header warns it must never be server-rendered into cached public HTML) — any change stays server-fetched only. Identity/auth-adjacent ⇒ `/review` after build. If the assignment-resolution chain gets copied a third time (it already exists in the tournament-history route + `CoachTournamentRecord`), extract a shared helper (`/simplify`).
 
 **Gate:** the query-vs-migration decision above must be settled before build.
