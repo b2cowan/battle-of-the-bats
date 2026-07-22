@@ -120,6 +120,11 @@ const ADD_MENU: { type: RepEventType; nested?: boolean }[] = [
   { type: 'team_event' },
 ];
 
+// Event-type picker order (colored pills that replace the type <select>). Tournament games are
+// created through their parent Tournament, so they aren't a top-level pill — the picker only
+// carries one if the form is *already* that type (opened via the nested add-menu / editing).
+const EVENT_TYPE_PILLS: RepEventType[] = ['external_tournament', 'league_game', 'scrimmage', 'practice', 'team_event'];
+
 const GAME_EVENT_TYPES: RepEventType[] = ['league_game', 'tournament_game', 'scrimmage'];
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -2248,11 +2253,24 @@ export default function CoachesSchedulePage({
               {!editingEventId && (
                 <div className={styles.field}>
                   <label className={styles.label}>Event type</label>
-                  <select className={styles.select} value={form.eventType} onChange={e => changeEventType(e.target.value as RepEventType)}>
-                    {(Object.keys(EVENT_LABELS) as RepEventType[]).map(t => (
-                      <option key={t} value={t}>{EVENT_LABELS[t]}</option>
-                    ))}
-                  </select>
+                  <div className={styles.eventTypePicker} role="group" aria-label="Event type">
+                    {(form.eventType === 'tournament_game' ? [...EVENT_TYPE_PILLS, 'tournament_game' as RepEventType] : EVENT_TYPE_PILLS).map(t => {
+                      const active = form.eventType === t;
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          className={`${styles.eventTypeOption} ${active ? styles.eventTypeOptionActive : ''}`}
+                          style={active ? { borderColor: EVENT_COLORS[t], background: `color-mix(in srgb, ${EVENT_COLORS[t]} 10%, transparent)` } : undefined}
+                          aria-pressed={active}
+                          onClick={() => changeEventType(t)}
+                        >
+                          <span className={styles.eventTypeDot} style={{ background: EVENT_COLORS[t] }} />
+                          {EVENT_LABELS[t]}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
@@ -2306,6 +2324,9 @@ export default function CoachesSchedulePage({
               {/* WHEN */}
               <section className={styles.formSection}>
                 <h4 className={styles.formSectionTitle}>When</h4>
+                {/* Repeat-weekly lives here (above the date layout), NOT inside a branch — toggling it
+                    flips `recurringSeries`, which swaps the date layout below; keeping the checkbox in
+                    one stable slot means it never remounts (no lost focus) as that swap happens. */}
                 {needsRecurrence(form.eventType) && !editingEventId && (
                   <label className={styles.formCheck}>
                     <input type="checkbox" checked={form.isRecurring} onChange={e => setForm(f => ({ ...f, isRecurring: e.target.checked }))} />
@@ -2313,7 +2334,7 @@ export default function CoachesSchedulePage({
                   </label>
                 )}
                 {form.eventType === 'external_tournament' ? (
-                  <>
+                  <div className={styles.formSectionGrid}>
                     <div className={styles.field}>
                       <label className={styles.label}>Start date <span className={styles.labelRequired}>*</span></label>
                       <input className={styles.input} type="date" value={form.startsAt.slice(0, 10)} onChange={e => setForm(f => ({ ...f, startsAt: e.target.value ? `${e.target.value}T00:00` : '' }))} />
@@ -2322,7 +2343,7 @@ export default function CoachesSchedulePage({
                       <label className={styles.label}>End date</label>
                       <input className={styles.input} type="date" value={form.endsAt.slice(0, 10)} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value ? `${e.target.value}T00:00` : '' }))} />
                     </div>
-                  </>
+                  </div>
                 ) : recurringSeries ? (
                   <>
                     <div className={styles.formSectionGrid}>
@@ -2357,13 +2378,15 @@ export default function CoachesSchedulePage({
                   </>
                 ) : (
                   <>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Starts <span className={styles.labelRequired}>*</span></label>
-                      <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setStartsAt(e.target.value)} />
-                    </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Ends</label>
-                      <input className={styles.input} type="datetime-local" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} />
+                    <div className={styles.formSectionGrid}>
+                      <div className={styles.field}>
+                        <label className={styles.label}>Starts <span className={styles.labelRequired}>*</span></label>
+                        <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setStartsAt(e.target.value)} />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label}>Ends</label>
+                        <input className={styles.input} type="datetime-local" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} />
+                      </div>
                     </div>
                     <div className={styles.field}>
                       <label className={styles.label}>Arrival / call time</label>
@@ -2607,7 +2630,7 @@ export default function CoachesSchedulePage({
                   disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid}
                   onClick={editingEventId && editingRecurring ? () => setEditScopeOpen(true) : handleSave}
                 >
-                  {saving ? 'Saving…' : editingEventId ? 'Save changes' : 'Save'}
+                  {saving ? 'Saving…' : editingEventId ? 'Save changes' : 'Save Event'}
                 </button>
               </div>
             )}

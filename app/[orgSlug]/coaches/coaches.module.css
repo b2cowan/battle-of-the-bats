@@ -1706,6 +1706,10 @@
    slide-over, which read as modals "jumping" between center and right). */
 .eventFormModal { max-width: 600px; padding-bottom: 0; }
 .eventFormModal .modalFooter { margin-bottom: 0; }
+/* Rounded (pill) footer actions — scoped to the event modal so the rest of the app's square
+   buttons are untouched. */
+.eventFormModal .modalFooter .btnPrimary,
+.eventFormModal .modalFooter .btnGhost { border-radius: 999px; }
 
 /* Scrolling-body modal (Add Expense / Add Payable): when the form is taller than the window, the
    FIELDS scroll and the footer stays pinned BELOW them, so the last field (Tags) never hides
@@ -1795,6 +1799,24 @@
   color: var(--white-45);
 }
 .formSectionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+
+/* Event-type picker — tap-to-choose colored pills that replace the type <select>. Each is an
+   individually-rounded chip with its event-color dot; the active chip rings in its own color
+   (inline-styled from EVENT_COLORS). Wraps to as many rows as it needs. */
+.eventTypePicker { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.eventTypeOption {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.42rem 0.8rem;
+  background: var(--white-05);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
+  border-radius: 999px;
+  color: var(--white-90);
+  font-size: 0.82rem; font-weight: 600;
+  cursor: pointer;
+}
+.eventTypeOption:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
+.eventTypeOptionActive { border-width: 1.5px; }
+.eventTypeDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
 
 /* Tap-to-fill "recent locations" chips (themed replacement for the native datalist popup). */
 .locationChips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
@@ -4053,3 +4075,8 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtn:hover { background: var(--home-olive-soft); color: var(--home-ink); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive:hover { background: var(--home-ink); color: var(--home-paper); }
+
+/* Event-type picker in warm: dark ink text on cream, soft olive hover (the white-alpha defaults
+   are invisible on paper). The active chip keeps its inline event-color ring. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .eventTypeOption { border-color: var(--home-line-strong); color: var(--home-ink); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .eventTypeOption:hover { background: var(--home-olive-soft); }
