@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, forbidden, unauthorized } from '@/lib/api-auth';
 import {
-  findBasicCoachTeamIdForTournamentRegistration,
   getBasicCoachTournamentHistoryForTeam,
   getRegistrationGamesForTeam,
+  resolveBasicCoachTeamIdForWorkspace,
 } from '@/lib/basic-coach-teams';
 import {
   getTeamScopedRepTeamAccess,
@@ -35,11 +35,7 @@ export const GET = withObservability(async (_req: Request,
     if (!access.allowed) return forbidden();
 
     const workspace = await getTeamWorkspaceForRepTeam(teamId);
-    const basicCoachTeamId =
-      workspace?.basicCoachTeamId ??
-      (workspace?.sourceTournamentTeamId
-        ? await findBasicCoachTeamIdForTournamentRegistration(workspace.sourceTournamentTeamId)
-        : null);
+    const basicCoachTeamId = workspace ? await resolveBasicCoachTeamIdForWorkspace(workspace) : null;
     if (!basicCoachTeamId) {
       return NextResponse.json({ games: [] });
     }

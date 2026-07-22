@@ -168,7 +168,10 @@ type OrgRow = {
   name: string;
 };
 
-function normalizeEmail(email: string | null | undefined) {
+/** Exact, case-insensitive email normalization (trim + lowercase). The single trust key
+ *  for coach↔registration matching since Migration 092 removed ILIKE/fuzzy fallbacks —
+ *  reused by the tournament-viewer rep-coach recognition (WI-2C) so there is no 3rd copy. */
+export function normalizeEmail(email: string | null | undefined) {
   return (email ?? '').trim().toLowerCase();
 }
 
@@ -953,46 +956,66 @@ export function formatGameTimeLabel(gameTime: string | null): string | null {
  * "Live" mirrors CoachLiveSchedule: a submitted score on a game dated today, in the
  * tournament timezone (never raw UTC — the J6-056 rollover trap).
  */
-export async function getNextRegistrationGameForTeam(
+/** One row of the accepted-registration games query, shared by the two functions below. */
+type AcceptedGameRow = {
+  id: string;
+  game_date: string | null;
+  game_time: string | null;
+  location: string | null;
+  home_team_id: string | null;
+  away_team_id: string | null;
+  home_score: number | null;
+  away_score: number | null;
+  status: string;
+  tournament_id: string;
+  home_placeholder: string | null;
+  away_placeholder: string | null;
+};
+
+/**
+ * Shared loader for a team's ACCEPTED + PUBLISHED tournament game rows — the "honest reveal" query
+ * (published divisions only; opponent names from accepted teams only) that both
+ * `getNextRegistrationGameForTeam` and `getRegistrationGamesForTeam` build on. Returns `null` when
+ * there is nothing to reveal (no accepted registration / no division / no published division), so
+ * callers can early-return their own empty shape. Keeping this in ONE place means the reveal rule
+ * (a real security-adjacent rule) can never drift between the two callers.
+ */
+async function loadAcceptedTournamentGameRows(
   history: BasicCoachTournamentHistoryEntry[],
-): Promise<BasicCoachRegistrationGame | null> {
+): Promise<{
+  rows: AcceptedGameRow[];
+  registrationIdSet: Set<string>;
+  teamNameById: Map<string, string>;
+  entries: BasicCoachTournamentHistoryEntry[];
+  today: string;
+  nowTime: string;
+} | null> {
   const accepted = history.filter(
     entry => entry.registration.status === 'accepted' && entry.tournament && entry.registration.tournamentId,
   );
   if (accepted.length === 0) return null;
 
-  const divisionIds = [...new Set(
-    accepted.map(entry => entry.registration.divisionId).filter(Boolean),
-  )] as string[];
+  const divisionIds = [...new Set(accepted.map(e => e.registration.divisionId).filter(Boolean))] as string[];
   if (divisionIds.length === 0) return null;
 
-  const acceptedRegistrationIds = accepted.map(entry => entry.registration.id);
-  const tournamentIds = [...new Set(accepted.map(entry => entry.registration.tournamentId))] as string[];
-  const registrationIdList = acceptedRegistrationIds.join(',');
+  const tournamentIds = [...new Set(accepted.map(e => e.registration.tournamentId))] as string[];
+  const registrationIdList = accepted.map(e => e.registration.id).join(',');
 
   const [
     { data: divisions, error: divisionError },
     { data: games, error: gamesError },
     { data: acceptedTeams, error: teamsError },
   ] = await Promise.all([
-    supabaseAdmin
-      .from('divisions')
-      .select('id, schedule_visibility')
-      .in('id', divisionIds),
+    supabaseAdmin.from('divisions').select('id, schedule_visibility').in('id', divisionIds),
     supabaseAdmin
       .from('games')
-      .select('game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, tournament_id, home_placeholder, away_placeholder')
+      .select('id, game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, tournament_id, home_placeholder, away_placeholder')
       .in('tournament_id', tournamentIds)
       .or(`home_team_id.in.(${registrationIdList}),away_team_id.in.(${registrationIdList})`)
       .order('game_date', { ascending: true })
       .order('game_time', { ascending: true }),
-    // Opponent names resolve from the accepted set only (same honest-reveal rule as the
-    // tournament record — never names a pending/waitlisted team).
-    supabaseAdmin
-      .from('teams')
-      .select('id, name')
-      .in('tournament_id', tournamentIds)
-      .eq('status', 'accepted'),
+    // Opponent names resolve from the accepted set only (never a pending/waitlisted team).
+    supabaseAdmin.from('teams').select('id, name').in('tournament_id', tournamentIds).eq('status', 'accepted'),
   ]);
   if (divisionError) throw divisionError;
   if (gamesError) throw gamesError;
@@ -1000,35 +1023,32 @@ export async function getNextRegistrationGameForTeam(
 
   const publishedDivisions = new Set(
     ((divisions ?? []) as Array<{ id: string; schedule_visibility: string | null }>)
-      .filter(division => division.schedule_visibility === 'published')
-      .map(division => division.id),
+      .filter(d => d.schedule_visibility === 'published')
+      .map(d => d.id),
   );
   const entries = accepted.filter(
-    entry => entry.registration.divisionId && publishedDivisions.has(entry.registration.divisionId),
+    e => e.registration.divisionId && publishedDivisions.has(e.registration.divisionId),
   );
   if (entries.length === 0) return null;
-  const registrationIdSet = new Set(entries.map(entry => entry.registration.id));
+  const registrationIdSet = new Set(entries.map(e => e.registration.id));
 
-  type GameRow = {
-    game_date: string | null;
-    game_time: string | null;
-    location: string | null;
-    home_team_id: string | null;
-    away_team_id: string | null;
-    home_score: number | null;
-    away_score: number | null;
-    status: string;
-    tournament_id: string;
-    home_placeholder: string | null;
-    away_placeholder: string | null;
-  };
-  // The games query covered every accepted registration; the published-division
-  // reveal rule applies here, in memory.
-  const rows = ((games ?? []) as GameRow[]).filter(g =>
+  const rows = ((games ?? []) as AcceptedGameRow[]).filter(g =>
     (g.home_team_id !== null && registrationIdSet.has(g.home_team_id)) ||
     (g.away_team_id !== null && registrationIdSet.has(g.away_team_id)),
   );
+  const teamNameById = new Map(
+    ((acceptedTeams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name] as const),
+  );
   const { date: today, time: nowTime } = tournamentNow();
+  return { rows, registrationIdSet, teamNameById, entries, today, nowTime };
+}
+
+export async function getNextRegistrationGameForTeam(
+  history: BasicCoachTournamentHistoryEntry[],
+): Promise<BasicCoachRegistrationGame | null> {
+  const loaded = await loadAcceptedTournamentGameRows(history);
+  if (!loaded) return null;
+  const { rows, registrationIdSet, teamNameById, entries, today, nowTime } = loaded;
 
   const liveGame = rows.find(g => g.status === 'submitted' && g.game_date === today) ?? null;
   const upcomingGame = rows.find(g =>
@@ -1041,9 +1061,6 @@ export async function getNextRegistrationGameForTeam(
 
   const isHome = game.home_team_id !== null && registrationIdSet.has(game.home_team_id);
   const opponentId = isHome ? game.away_team_id : game.home_team_id;
-  const teamNameById = new Map(
-    ((acceptedTeams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name] as const),
-  );
   const opponentName =
     (opponentId && opponentId !== NIL_GAME_TEAM_UUID ? teamNameById.get(opponentId) : undefined)
       ?? (isHome ? game.away_placeholder : game.home_placeholder)
@@ -1066,7 +1083,13 @@ export async function getNextRegistrationGameForTeam(
   };
 }
 
-/** A team's real tournament game, shaped for the Schedule tab merge (WI-2B) — read-only. */
+/**
+ * A team's real tournament game, shaped for the Schedule tab merge (WI-2B) — read-only.
+ * ⚠ SECURITY INVARIANT: this shape carries NO fee/money field, which is why the `/tournament-games`
+ * route (unlike its tournament-history sibling) skips the WI-5 money-redaction gate. Do NOT add an
+ * `amountDue`/fee field here without also wiring `isMoneyRedactedForTeam` into that route, or a
+ * money-off assistant coach would receive fee data unredacted.
+ */
 export type CoachScheduleTournamentGame = {
   id: string;
   /** ISO local start ("YYYY-MM-DDThh:mm") for interleaving with self-entered events; null when unscheduled. */
@@ -1079,8 +1102,9 @@ export type CoachScheduleTournamentGame = {
   myScore: number | null;
   oppScore: number | null;
   status: string;
-  isLive: boolean;
-  isFinal: boolean;
+  /** The one score-state classification, computed once here so consumers don't re-derive it:
+   *  'live' = submitted score today; 'final' = completed/forfeit WITH both scores; else 'scheduled'. */
+  phase: 'live' | 'final' | 'scheduled';
   result: 'win' | 'loss' | 'tie' | null;
   tournamentName: string;
   /** Public game page — present only when the tournament is publicly visible (active|completed). */
@@ -1098,47 +1122,9 @@ export type CoachScheduleTournamentGame = {
 export async function getRegistrationGamesForTeam(
   history: BasicCoachTournamentHistoryEntry[],
 ): Promise<CoachScheduleTournamentGame[]> {
-  const accepted = history.filter(
-    entry => entry.registration.status === 'accepted' && entry.tournament && entry.registration.tournamentId,
-  );
-  if (accepted.length === 0) return [];
-
-  const divisionIds = [...new Set(accepted.map(e => e.registration.divisionId).filter(Boolean))] as string[];
-  if (divisionIds.length === 0) return [];
-
-  const acceptedRegistrationIds = accepted.map(e => e.registration.id);
-  const tournamentIds = [...new Set(accepted.map(e => e.registration.tournamentId))] as string[];
-  const registrationIdList = acceptedRegistrationIds.join(',');
-
-  const [
-    { data: divisions, error: divisionError },
-    { data: games, error: gamesError },
-    { data: acceptedTeams, error: teamsError },
-  ] = await Promise.all([
-    supabaseAdmin.from('divisions').select('id, schedule_visibility').in('id', divisionIds),
-    supabaseAdmin
-      .from('games')
-      .select('id, game_date, game_time, location, home_team_id, away_team_id, home_score, away_score, status, tournament_id, home_placeholder, away_placeholder')
-      .in('tournament_id', tournamentIds)
-      .or(`home_team_id.in.(${registrationIdList}),away_team_id.in.(${registrationIdList})`)
-      .order('game_date', { ascending: true })
-      .order('game_time', { ascending: true }),
-    supabaseAdmin.from('teams').select('id, name').in('tournament_id', tournamentIds).eq('status', 'accepted'),
-  ]);
-  if (divisionError) throw divisionError;
-  if (gamesError) throw gamesError;
-  if (teamsError) throw teamsError;
-
-  const publishedDivisions = new Set(
-    ((divisions ?? []) as Array<{ id: string; schedule_visibility: string | null }>)
-      .filter(d => d.schedule_visibility === 'published')
-      .map(d => d.id),
-  );
-  const entries = accepted.filter(
-    e => e.registration.divisionId && publishedDivisions.has(e.registration.divisionId),
-  );
-  if (entries.length === 0) return [];
-  const registrationIdSet = new Set(entries.map(e => e.registration.id));
+  const loaded = await loadAcceptedTournamentGameRows(history);
+  if (!loaded) return [];
+  const { rows, registrationIdSet, teamNameById, entries, today } = loaded;
 
   // Per-tournament public-link context (slug/status) keyed off the accepted history entries.
   const tournamentCtx = new Map<string, { orgSlug: string | null; tournamentSlug: string | null; isPublic: boolean; name: string }>();
@@ -1154,21 +1140,6 @@ export async function getRegistrationGamesForTeam(
     }
   }
 
-  const teamNameById = new Map(
-    ((acceptedTeams ?? []) as Array<{ id: string; name: string }>).map(t => [t.id, t.name] as const),
-  );
-
-  type GameRow = {
-    id: string; game_date: string | null; game_time: string | null; location: string | null;
-    home_team_id: string | null; away_team_id: string | null; home_score: number | null; away_score: number | null;
-    status: string; tournament_id: string; home_placeholder: string | null; away_placeholder: string | null;
-  };
-  const rows = ((games ?? []) as GameRow[]).filter(g =>
-    (g.home_team_id !== null && registrationIdSet.has(g.home_team_id)) ||
-    (g.away_team_id !== null && registrationIdSet.has(g.away_team_id)),
-  );
-  const { date: today } = tournamentNow();
-
   return rows.map(game => {
     const isHome = game.home_team_id !== null && registrationIdSet.has(game.home_team_id);
     const opponentId = isHome ? game.away_team_id : game.home_team_id;
@@ -1178,11 +1149,20 @@ export async function getRegistrationGamesForTeam(
         ?? 'TBD';
     const myScore = isHome ? game.home_score : game.away_score;
     const oppScore = isHome ? game.away_score : game.home_score;
-    const isFinal = game.status === 'completed' || game.status === 'forfeit';
-    const isLive = game.status === 'submitted' && game.game_date === today;
+    const hasScore = myScore != null && oppScore != null;
+    // 'live' = a score submitted today (on now / just in). Otherwise ANY game that already has both
+    // scores shows them ('final') — this must cover a still-pending SUBMITTED score whose day has
+    // passed (finalization-required orgs can lag), so a played+scored game never reads as unplayed.
+    const phase: 'live' | 'final' | 'scheduled' =
+      game.status === 'submitted' && game.game_date === today ? 'live'
+        : hasScore ? 'final'
+          : 'scheduled';
+    // The W/L/T badge asserts an outcome, so it shows ONLY for a truly finalized result
+    // (completed/forfeit). A pending submitted score shows the numbers without claiming the result.
+    const isFinalized = game.status === 'completed' || game.status === 'forfeit';
     const result: 'win' | 'loss' | 'tie' | null =
-      isFinal && myScore != null && oppScore != null
-        ? (myScore > oppScore ? 'win' : myScore < oppScore ? 'loss' : 'tie')
+      isFinalized && hasScore
+        ? (myScore! > oppScore! ? 'win' : myScore! < oppScore! ? 'loss' : 'tie')
         : null;
     const ctx = tournamentCtx.get(game.tournament_id);
     const href = ctx?.isPublic && ctx.orgSlug && ctx.tournamentSlug
@@ -1199,13 +1179,41 @@ export async function getRegistrationGamesForTeam(
       myScore,
       oppScore,
       status: game.status,
-      isLive,
-      isFinal,
+      phase,
       result,
       tournamentName: ctx?.name ?? '',
       href,
     };
   });
+}
+
+/**
+ * Resolve the Basic-coach team id linked to a rep team's workspace — the ONLY bridge today from a
+ * rep team to its tournament registration — self-healing the link (persisting it both ways) on first
+ * resolve. Shared by the coaches tournament-history + tournament-games routes so the resolution AND
+ * the write-back stay identical (they had drifted: one route did the self-heal, the other didn't).
+ */
+export async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
+  id: string;
+  sourceTournamentTeamId: string | null;
+  basicCoachTeamId: string | null;
+}): Promise<string | null> {
+  if (teamWorkspace.basicCoachTeamId) return teamWorkspace.basicCoachTeamId;
+  if (!teamWorkspace.sourceTournamentTeamId) return null;
+
+  const basicCoachTeamId = await findBasicCoachTeamIdForTournamentRegistration(
+    teamWorkspace.sourceTournamentTeamId,
+  );
+  if (!basicCoachTeamId) return null;
+
+  await Promise.all([
+    supabaseAdmin.from('team_workspaces').update({ basic_coach_team_id: basicCoachTeamId }).eq('id', teamWorkspace.id),
+    supabaseAdmin.from('basic_coach_teams').update({ team_workspace_id: teamWorkspace.id }).eq('id', basicCoachTeamId),
+  ]).then(results => {
+    for (const { error } of results) if (error) throw error;
+  });
+
+  return basicCoachTeamId;
 }
 
 export async function getBasicCoachTournamentSummary(params: {

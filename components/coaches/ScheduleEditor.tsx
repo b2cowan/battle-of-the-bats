@@ -22,9 +22,15 @@ type ScheduleItem =
   | { kind: 'tournament'; sortKey: number; game: CoachScheduleTournamentGame };
 
 function sortKeyOf(startsAt: string | null): number {
-  const ms = startsAt ? new Date(startsAt).getTime() : NaN;
-  // Unscheduled (TBD) games sort last, after everything with a real date.
-  return Number.isFinite(ms) ? ms : Number.POSITIVE_INFINITY;
+  if (!startsAt) return Number.POSITIVE_INFINITY; // unscheduled (TBD) games sort last
+  const d = new Date(startsAt);
+  if (Number.isNaN(d.getTime())) return Number.POSITIVE_INFINITY;
+  // Sort by each item's DISPLAYED local wall-clock, not its UTC instant: a self-entered event's
+  // startsAt is a UTC ISO string (shown in browser-local) while a tournament game's is a naive
+  // wall-clock (shown as its game_time). Comparing raw instants mixes the two frames and can
+  // mis-order a game vs a same-day event when the coach's device timezone differs from the
+  // tournament's (reference_timezone_date_math_gotcha). Local Y/M/D/H/M keys both to what's shown.
+  return d.getFullYear() * 1e8 + (d.getMonth() + 1) * 1e6 + d.getDate() * 1e4 + d.getHours() * 100 + d.getMinutes();
 }
 
 type EventType = 'practice' | 'game' | 'event';
@@ -174,7 +180,7 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
     ...events.map(event => ({ kind: 'event' as const, sortKey: sortKeyOf(event.startsAt), event })),
     ...tournamentGames.map(game => ({ kind: 'tournament' as const, sortKey: sortKeyOf(game.startsAt), game })),
   ].sort((a, b) => a.sortKey - b.sortKey);
-  const hasContent = events.length > 0 || tournamentGames.length > 0;
+  const hasContent = mergedItems.length > 0;
 
   return (
     <div className={styles.editor}>
@@ -212,11 +218,11 @@ export default function ScheduleEditor({ basicTeamId, initialEvents, tournamentG
                     </span>
                   </div>
                   <div className={styles.rowActions}>
-                    {game.isLive ? (
+                    {game.phase === 'live' ? (
                       <span className={styles.liveScore}>
                         <span className={styles.liveDot} aria-hidden />{game.myScore ?? 0}–{game.oppScore ?? 0}
                       </span>
-                    ) : game.isFinal && game.myScore != null && game.oppScore != null ? (
+                    ) : game.phase === 'final' ? (
                       <span className={styles.finalScore}>
                         {game.myScore}–{game.oppScore}
                         {game.result && (

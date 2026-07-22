@@ -26,10 +26,10 @@ type StandaloneTeamHQProps = {
   /** Self-entered player-fee ledger (money owed TO the coach). */
   unpaidTotal: number;
   unpaidCount: number;
-  /** WI-2A: the real TOURNAMENT entry fee (money owed to the ORGANIZER), summed across the team's
-   *  accepted registrations. `null` when the team is in no tournament (no fee context) — the Fees
-   *  tile then shows only the self-entered player fees, unchanged. `owed` is 0 when clear/paid. */
-  tournamentFee?: { owed: number } | null;
+  /** WI-2A: the real TOURNAMENT entry fee owed to the ORGANIZER, summed across the team's accepted
+   *  registrations. `null` when the team is in no tournament (no fee context) — the Fees tile then
+   *  shows only the self-entered player fees, unchanged. `0` means clear/paid. */
+  tournamentFee?: number | null;
   recipientCount: number;
   historyCount: number;
   latestHistoryLabel: string;
@@ -176,10 +176,10 @@ function StandaloneTeamHQ({
           {/* WI-2A: when the team is in a tournament, lead with the ENTRY fee (money owed to the
               organizer — the higher-stakes "am I clear for this event" line, alarm-styled when owed),
               then the self-entered PLAYER fees below. Off-tournament, the tile is unchanged. */}
-          {tournamentFee ? (
+          {tournamentFee != null ? (
             <>
-              {tournamentFee.owed > 0 ? (
-                <strong className={styles.hqFeeAlert}>Entry fee · {formatMoney(tournamentFee.owed)} owed</strong>
+              {tournamentFee > 0 ? (
+                <strong className={styles.hqFeeAlert}>Entry fee · {formatMoney(tournamentFee)} owed</strong>
               ) : (
                 <strong>Entry fee · clear</strong>
               )}

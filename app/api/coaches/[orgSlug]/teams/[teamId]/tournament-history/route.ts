@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, forbidden, unauthorized } from '@/lib/api-auth';
 import {
-  findBasicCoachTeamIdForTournamentRegistration,
   getBasicCoachTournamentHistoryForTeam,
+  resolveBasicCoachTeamIdForWorkspace,
 } from '@/lib/basic-coach-teams';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import {
   getTeamScopedRepTeamAccess,
   getTeamWorkspaceForRepTeam,
@@ -12,37 +11,6 @@ import {
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
-
-async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
-  id: string;
-  sourceTournamentTeamId: string | null;
-  basicCoachTeamId: string | null;
-}) {
-  if (teamWorkspace.basicCoachTeamId) return teamWorkspace.basicCoachTeamId;
-  if (!teamWorkspace.sourceTournamentTeamId) return null;
-
-  const basicCoachTeamId = await findBasicCoachTeamIdForTournamentRegistration(
-    teamWorkspace.sourceTournamentTeamId,
-  );
-  if (!basicCoachTeamId) return null;
-
-  await Promise.all([
-    supabaseAdmin
-      .from('team_workspaces')
-      .update({ basic_coach_team_id: basicCoachTeamId })
-      .eq('id', teamWorkspace.id),
-    supabaseAdmin
-      .from('basic_coach_teams')
-      .update({ team_workspace_id: teamWorkspace.id })
-      .eq('id', basicCoachTeamId),
-  ]).then(results => {
-    for (const { error } of results) {
-      if (error) throw error;
-    }
-  });
-
-  return basicCoachTeamId;
-}
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {

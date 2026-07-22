@@ -132,7 +132,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   // registration → the tile keeps its self-entered-only display.
   const acceptedRegistrations = history.filter(entry => entry.registration.status === 'accepted');
   const tournamentFee = acceptedRegistrations.length > 0
-    ? { owed: acceptedRegistrations.reduce((total, entry) => total + (entry.amountDue ?? 0), 0) }
+    ? acceptedRegistrations.reduce((total, entry) => total + (entry.amountDue ?? 0), 0)
     : null;
   const latestHistory = history[0] ?? null;
   const latestHistoryLabel = latestHistory

@@ -441,7 +441,7 @@ function TryoutChip({ session, href }: { session: RepTryoutSession; href: string
 // the time only; the flat list shows the date too.
 function TournamentGameChip({ game, dayKey }: { game: CoachScheduleTournamentGame; dayKey?: string }) {
   const lead = dayKey
-    ? (game.timeLabel ?? (game.isLive ? 'Live' : 'TBD'))
+    ? (game.timeLabel ?? (game.phase === 'live' ? 'Live' : 'TBD'))
     : [game.dateLabel, game.timeLabel].filter(Boolean).join(' · ');
   const inner = (
     <>
@@ -452,11 +452,11 @@ function TournamentGameChip({ game, dayKey }: { game: CoachScheduleTournamentGam
         <span className={styles.tournamentChipTag}>Tournament</span>
       </span>
       <span className={styles.eventChipTrail}>
-        {game.isLive ? (
+        {game.phase === 'live' ? (
           <span className={styles.eventChipResult} style={{ color: 'var(--danger)' }}>
             <span className={styles.tournamentLiveDot} aria-hidden />{game.myScore ?? 0}–{game.oppScore ?? 0}
           </span>
-        ) : game.isFinal && game.myScore != null && game.oppScore != null ? (
+        ) : game.phase === 'final' ? (
           <>
             <span className={styles.eventChipScore}>{game.myScore}–{game.oppScore}</span>
             {game.result && (
@@ -634,15 +634,18 @@ export default function CoachesSchedulePage({
       setAwardCountByEventId(data.awardCountByEventId ?? {});
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
-      try {
-        const tRes = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions`);
-        if (tRes.ok) { const tData = await tRes.json(); setTryoutSessions(tData.sessions ?? []); }
-      } catch { /* ignore — tryout markers are optional */ }
-      // WI-2B: real tournament games (read-only). Non-fatal — the schedule still works without them.
-      try {
-        const gRes = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-games`);
-        if (gRes.ok) { const gData = await gRes.json(); setTournamentGames(gData.games ?? []); }
-      } catch { /* ignore — tournament games are optional */ }
+      // Tryout markers + real tournament games are both optional read-only overlays keyed only on
+      // org/team — fetch them concurrently (one round-trip, not two) and apply each independently.
+      const [tryoutRes, gamesRes] = await Promise.allSettled([
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-games`),
+      ]);
+      if (tryoutRes.status === 'fulfilled' && tryoutRes.value.ok) {
+        try { setTryoutSessions((await tryoutRes.value.json()).sessions ?? []); } catch { /* optional */ }
+      }
+      if (gamesRes.status === 'fulfilled' && gamesRes.value.ok) {
+        try { setTournamentGames((await gamesRes.value.json()).games ?? []); } catch { /* optional */ }
+      }
     } catch (e: unknown) {
       setError(errorMessage(e, 'Failed to load events'));
     } finally {
@@ -1438,16 +1441,21 @@ export default function CoachesSchedulePage({
       const mk = s.startsAt.slice(0, 7); // wall-clock YYYY-MM (consistent with the week/month day slice)
       (tryByMonth[mk] ??= []).push(s);
     }
-    // WI-2B: group the real tournament games by month too, so they list alongside self-entered events.
+    // WI-2B: group the real tournament games by month too, so they list alongside self-entered
+    // events. A game with no date yet (an unresolved bracket slot) has no month — collect those
+    // separately so the list view still shows them (a trailing "To be scheduled" group) rather than
+    // silently dropping them, matching the free-portal Schedule.
     const gamesByMonth: Record<string, CoachScheduleTournamentGame[]> = {};
+    const tbdGames: CoachScheduleTournamentGame[] = [];
     for (const g of tournamentGames) {
       const mk = (g.gameDate ?? '').slice(0, 7);
       if (mk) (gamesByMonth[mk] ??= []).push(g);
+      else tbdGames.push(g);
     }
     const months = Array.from(
       new Set([...Object.keys(grouped), ...Object.keys(tryByMonth), ...Object.keys(gamesByMonth)]),
     ).sort((a, b) => a.localeCompare(b));
-    return months.map(mk => {
+    const monthGroups = months.map(mk => {
       const label = new Date(mk + '-01').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
       const trys = (tryByMonth[mk] ?? []).slice().sort((a, b) => a.startsAt.localeCompare(b.startsAt));
       const games = (gamesByMonth[mk] ?? []).slice().sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
@@ -1468,6 +1476,21 @@ export default function CoachesSchedulePage({
         </div>
       );
     });
+    return (
+      <>
+        {monthGroups}
+        {tbdGames.length > 0 && (
+          <div key="tbd" className={styles.calMonthGroup}>
+            <div className={styles.calMonthLabel}>To be scheduled</div>
+            <div className={styles.calEventList}>
+              {tbdGames.map(g => (
+                <TournamentGameChip key={`g-${g.id}`} game={g} />
+              ))}
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
 
   function renderWeekView() {
@@ -1572,8 +1595,8 @@ export default function CoachesSchedulePage({
                     +{dayEvents.length - 3} more
                   </button>
                 )}
-                {dayGames.map(g => {
-                  const label = g.isLive ? `● ${g.opponentName}` : g.isFinal && g.myScore != null && g.oppScore != null ? `${g.myScore}–${g.oppScore} ${g.opponentName}` : `vs ${g.opponentName}`;
+                {dayGames.slice(0, 2).map(g => {
+                  const label = g.phase === 'live' ? `● ${g.opponentName}` : g.phase === 'final' ? `${g.myScore}–${g.oppScore} ${g.opponentName}` : `vs ${g.opponentName}`;
                   const title = `${g.dateLabel}${g.timeLabel ? ` · ${g.timeLabel}` : ''} · vs ${g.opponentName}${g.tournamentName ? ` · ${g.tournamentName}` : ''}`;
                   return g.href ? (
                     <Link key={`g-${g.id}`} href={g.href} className={`${styles.calMonthEventDot} ${styles.tournamentMonthDot}`} title={title}>
@@ -1585,6 +1608,13 @@ export default function CoachesSchedulePage({
                     </span>
                   );
                 })}
+                {/* Cap tournament-game dots like events do, so a busy pool-play day can't overflow the
+                    cell (Week/List views show the full set). */}
+                {dayGames.length > 2 && (
+                  <span className={`${styles.calMonthEventDot} ${styles.tournamentMonthDot}`} style={{ cursor: 'default' }} title="Switch to Week or List to see all games">
+                    +{dayGames.length - 2} game{dayGames.length - 2 === 1 ? '' : 's'}
+                  </span>
+                )}
                 {dayTryouts.length > 0 && (
                   <Link
                     href={`${base}/tryouts`}
