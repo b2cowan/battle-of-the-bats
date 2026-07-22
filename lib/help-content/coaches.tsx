@@ -54,6 +54,18 @@ const coachesHelp: HelpPageContent = {
             <p>Make sure you signed in with the same email the organizer used to register the team. If a team was registered with your email, a <strong>Claim your team</strong> prompt appears on your portal home — claim it to link it. If no one registered a team for you, use <strong>Start free team home</strong> to create your own.</p>
           ),
         },
+        {
+          id: 'faq-coach-appearance',
+          question: 'Can I change how my portal looks (light or dark)?',
+          answerText: "Yes. Under Account then Appearance you can switch FieldLogicHQ between a Warm (light) look and a Dark look. Warm is the default. It's one setting for your whole account — not one per area — so it applies to your coaches workspace and the rest of the app together, and follows you across your devices when you're signed in. The one thing it doesn't change: an organizer's public tournament pages, which always show that organizer's own branding and colours.",
+          keywords: ['dark mode', 'light mode', 'warm', 'appearance', 'theme', 'change portal colour', 'change portal color', 'coaches portal look', 'portal too dark', 'portal too bright', 'default theme'],
+          answer: (
+            <>
+              <p>Yes — under <strong>Account &rarr; Appearance</strong> you can switch FieldLogicHQ between a <strong>Warm</strong> (light) look and a <strong>Dark</strong> look. <strong>Warm is the default.</strong></p>
+              <p>It&rsquo;s <strong>one setting for your whole account</strong>, not one per area — so it applies to your <strong>coaches workspace</strong> and the rest of the app together, and follows you across your devices when you&rsquo;re signed in. The one thing it doesn&rsquo;t change is an organizer&rsquo;s public <strong>tournament pages</strong> — those always show that organizer&rsquo;s own branding and colours.</p>
+            </>
+          ),
+        },
       ],
     },
     {

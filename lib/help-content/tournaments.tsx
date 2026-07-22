@@ -1288,13 +1288,14 @@ const tournamentsHelp: HelpPageContent = {
         },
         {
           id: 'faq-app-appearance',
-          question: "Can fans change how the app looks, and does it affect my tournament's colours?",
-          answerText: "Fans and coaches can pick a Warm (light) or Dark look for the FieldLogicHQ app under Account then Appearance. It changes only the app's own screens — Home, Scores, Chat, and Account. It never changes your tournament pages: those always show your organization's branding and colours to everyone, so a fan choosing Dark can't change how your event looks. The setting follows a signed-in person across their devices; signed out, it's remembered on that one device.",
-          keywords: ['dark mode', 'light mode', 'dark theme', 'warm', 'app appearance', 'appearance', 'theme', 'app colours', 'app colors', 'does dark mode change my tournament', 'account appearance', 'app looks different', 'change app colour'],
+          question: "Can people change how the app looks, and does it affect my tournament's colours?",
+          answerText: "Anyone can pick a Warm (light) or Dark look for FieldLogicHQ under Account then Appearance. Warm is the default; Dark is optional. It's ONE account-wide setting per person — not one per area — that follows a signed-in person across their devices (signed out, it's remembered on that one device). The choice applies everywhere they work: the app's own screens (Home, Scores, Chat, Account) and, for coaches, their whole coaches workspace. It never changes your tournament pages: those always show your organization's branding and colours to everyone, so someone choosing Dark can't change how your event looks.",
+          keywords: ['dark mode', 'light mode', 'dark theme', 'warm', 'warm default', 'default theme', 'app appearance', 'appearance', 'theme', 'app colours', 'app colors', 'does dark mode change my tournament', 'account appearance', 'app looks different', 'change app colour', 'coaches workspace theme', 'coach portal colours', 'change coaches portal colour', 'one setting or per area'],
           answer: (
             <>
-              <p>Yes — under <strong>Account &rarr; Appearance</strong>, a fan or coach can switch the FieldLogicHQ app between a <strong>Warm</strong> (light) look and a <strong>Dark</strong> look. It changes only the app&rsquo;s own screens — <strong>Home, Scores, Chat, and Account</strong>.</p>
-              <p>It <strong>never</strong> changes your tournament pages. Those always show <strong>your organization&rsquo;s branding and colours</strong> to everyone, so a fan choosing Dark can&rsquo;t affect how your event looks. The setting follows a signed-in person across their devices; signed out, it&rsquo;s remembered on that one device.</p>
+              <p>Yes — under <strong>Account &rarr; Appearance</strong>, anyone can switch FieldLogicHQ between a <strong>Warm</strong> (light) look and a <strong>Dark</strong> look. <strong>Warm is the default</strong>; Dark is there for anyone who prefers it.</p>
+              <p>It&rsquo;s <strong>one setting per person</strong> — not one per area. It follows a signed-in person across their devices and applies everywhere they work: the app&rsquo;s own screens (<strong>Home, Scores, Chat, Account</strong>) and, for coaches, their whole <strong>coaches workspace</strong>. (Signed out, it&rsquo;s remembered on that one device.)</p>
+              <p>It <strong>never</strong> changes your tournament pages. Those always show <strong>your organization&rsquo;s branding and colours</strong> to everyone, so someone choosing Dark can&rsquo;t affect how your event looks.</p>
             </>
           ),
         },
