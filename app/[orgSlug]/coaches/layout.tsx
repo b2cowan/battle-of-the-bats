@@ -79,12 +79,15 @@ export default async function CoachesLayout({
       <CoachesProvider orgSlug={orgSlug}>
         {/* Hosts the in-context "?" help slide-over for the team work pages (drawer +
             guide content load lazily on first click — no bundle cost until used). */}
-        <HelpDrawerProvider>
-          <ConfirmProvider>
-            {/* Warm-portal preview gate: the marker sits on a display:contents wrapper (no
-                box, layout-neutral) so it covers BOTH the shell and the fixed bottom nav —
-                custom-property token overrides in globals.css cascade to both subtrees. */}
-            <div style={{ display: 'contents' }} {...coachWarmAttr}>
+        {/* Warm-portal preview gate: the marker sits on a display:contents wrapper (no box,
+            layout-neutral) placed ABOVE the providers so it covers not just the shell + bottom
+            nav but also the modals/drawers they render (the Confirm/discard dialog, the help
+            drawer, the install prompt) — those are rendered as siblings of the shell, so a
+            marker nested below the providers would leave them dark. Custom-property token
+            overrides in globals.css cascade through display:contents to every subtree. */}
+        <div style={{ display: 'contents' }} {...coachWarmAttr}>
+          <HelpDrawerProvider>
+            <ConfirmProvider>
               <div className={styles.coachesShell}>
                 <CoachesSidebar orgSlug={orgSlug} />
                 <main className={styles.coachesMain}>
@@ -92,13 +95,13 @@ export default async function CoachesLayout({
                 </main>
               </div>
               <CoachesBottomNav />
-            </div>
-          </ConfirmProvider>
-          <InstallAppPrompt
-            appName="FieldLogicHQ"
-            subtitle="Your teams, schedules and scores — one tap away."
-          />
-        </HelpDrawerProvider>
+            </ConfirmProvider>
+            <InstallAppPrompt
+              appName="FieldLogicHQ"
+              subtitle="Your teams, schedules and scores — one tap away."
+            />
+          </HelpDrawerProvider>
+        </div>
       </CoachesProvider>
     </OrgProvider>
   );

@@ -2564,10 +2564,20 @@
 .calMonthDayEvents { display: flex; flex-direction: column; gap: 2px; margin-top: 2px; min-width: 0; }
 .calMonthEventDot {
   display: block; max-width: 100%; font-size: 0.68rem; padding: 1px 4px; border-radius: 3px;
-  color: var(--white); border: none; cursor: pointer; text-align: left;
+  color: var(--on-team-color); border: none; cursor: pointer; text-align: left; /* label stays light on the solid event colour in both themes */
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9;
 }
 .calMonthEventDot:hover { opacity: 1; }
+/* Cancelled month chips are faded via inline opacity:0.55 on the WHOLE element, which washes out
+   the label AND the fill together — unreadable on cream no matter the text colour. Under warm,
+   restore full opacity and give it a muted-neutral chip with dark ink + the strikethrough, so
+   "cancelled" reads clearly. Keyed off the inline line-through the cancelled state sets, so the
+   whole fix lives here (no schedule-page edit). Dark keeps the inline faded look (rule is gated). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .calMonthEventDot[style*="line-through"] {
+  opacity: 1 !important;
+  background: var(--home-line-strong) !important;
+  color: var(--home-ink-soft);
+}
 .calMonthMoreDots {
   font-size: 0.67rem; color: var(--home-dim, rgba(255,255,255,0.35)); padding: 0 2px;
   background: none; border: none; cursor: pointer; text-align: left; display: block;
@@ -2987,6 +2997,16 @@
 .rsvpOptionActive[data-status="absent"]    { background: rgba(var(--danger-rgb),0.14); border-color: var(--danger); color: var(--danger); }
 .rsvpOptionActive[data-status="unknown"]   { background: var(--home-card, rgba(255,255,255,0.12)); border-color: var(--home-line-strong, rgba(255,255,255,0.3)); color: var(--white-90); }
 .rsvpOptionActive svg { color: inherit; }
+
+/* Warm coaches portal (dev-gated) — ratified RSVP palette (TH-5): In = OLIVE (not the
+   win-green the --success remap gives), so "attending" reads on the warm palette and
+   stays distinct from a game win. Late=amber, Out=live-red, No-reply=dim already track
+   --warning/--danger/neutral tokens. Dark keeps the --success green (unchanged). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rsvpOptionActive[data-status="attending"] {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
 
 /* Mobile: bump the dense attendance controls to ≥36px so they clear the
    touch-target floor (desktop keeps the compact 34/30px density). */

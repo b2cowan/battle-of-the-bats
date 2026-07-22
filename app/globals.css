@@ -548,6 +548,16 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-rust:     #B45309;
   --home-rust-rgb: 180, 83, 9;
 
+  /* ── Schedule EVENT_COLORS → warm-legible event palette (Stage 4, round-1 frame 3) ──
+     Dark keeps the saturated hues (defined at :root); these warm cousins read on cream
+     and reuse the warm palette so the six event types stay distinguishable. */
+  --evt-external-tournament: var(--home-rust);   /* was #f97316 orange */
+  --evt-tournament-game:     var(--home-amber);  /* was #f59e0b amber  */
+  --evt-scrimmage:           var(--home-blue);   /* was #3b82f6 blue   */
+  --evt-league-game:         var(--home-win);    /* was #22c55e green  */
+  --evt-practice:            var(--home-plum);   /* was #a855f7 purple */
+  --evt-team-event:          #67625A;            /* was #6b7280 gray — warm slate, dark enough for legible white chip text (--home-dim was too light) */
+
   /* ── Glows soften on paper (a blue/lime glow reads cold on cream) ── */
   --glow-blue: 0 0 12px rgba(var(--home-olive-rgb), 0.20);
   --glow-lime: 0 0 16px rgba(var(--home-olive-rgb), 0.22);
