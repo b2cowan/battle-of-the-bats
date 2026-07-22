@@ -149,7 +149,9 @@
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: #fff;
+  /* Initials sit on a per-room name-hash fill — light in BOTH themes (--on-team-color is #fff
+     under dark and warm alike), so the monogram stays legible when the portal goes warm. */
+  color: var(--on-team-color, #fff);
 }
 
 .roomMain {
@@ -246,4 +248,15 @@
 @keyframes chat-cv-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) {
   .spin { animation: none; }
+}
+
+/* ── Warm coaches portal (TH-5) ──────────────────────────────────────────────
+   The room-list / master-detail chrome is ~99% token-driven, so it warms automatically inside the
+   marker (grounds→white/paper, text→ink tiers, blue/lime accents→olive). The one exception is the
+   unread badge: the token remap would turn its lime fill drab olive with light ink — off the warm
+   convention. Restore the bright ink-on-lime badge (matches the ChatPanel .sendBtn / consumer unread).
+   Never edits a dark declaration → dark byte-identical. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .unread {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
 }

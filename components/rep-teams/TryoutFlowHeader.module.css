@@ -98,3 +98,69 @@
 }
 .rosterLink:hover { border-color: var(--logic-lime, #a3e635); }
 .resultEmpty { font-size: 0.85rem; color: rgba(255,255,255,0.45); margin: 0; }
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5) ─────────────────────────────
+   Tryouts run OUTDOORS in glare, so the warm variant is deliberately solid, not airy: white cards on
+   paper, ink text at full weight, and the "next action" + progress markers keep a SOLID lime fill with
+   dark ink (the most glare-legible pairing) rather than the drab olive the accent remap would give a
+   lime FILL. lime-as-TEXT/border still darkens to olive (E3). Flat additive rules (the proven pattern) —
+   never edit a dark declaration, so the dark coaches/admin header stays byte-identical. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wrap,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .results,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .how {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .nextText,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabActive,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .resultNum,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howStep strong,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howBtn:hover,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rosterLink:hover {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .nextHint,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .doneNote,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panelIntroText,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .resultLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .resultEmpty,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howStep span,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabNum {
+  color: var(--home-dim);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab:hover {
+  color: var(--home-ink-soft);
+}
+/* Next-action prompt: olive-tint container, SOLID lime CTA + dark ink (sunlight floor) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .next {
+  background: var(--home-olive-soft);
+  border-color: rgba(var(--home-olive-rgb), 0.30);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howNum {
+  background: var(--home-olive-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabNum {
+  background: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabBar {
+  border-bottom-color: var(--home-line);
+}
+/* SOLID lime fills — next-action button + active/done progress numerals (glare-legible) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .nextBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabActive .tabNum,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabDone .tabNum {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .nextBtn:hover {
+  background: rgba(var(--home-lime-rgb), 0.82);
+}
+/* Results footer roster link: ink text on white card, hairline border */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rosterLink {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--home-ink);
+}

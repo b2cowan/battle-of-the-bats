@@ -131,3 +131,76 @@
   .modal { max-width: none; border-radius: 14px 14px 0 0; }
   .row2 { grid-template-columns: 1fr; }
 }
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5) ─────────────────────────────
+   Day-of check-in is the single most glare-critical surface — a coach standing on a field in bright sun.
+   So the warm variant is maximally solid: white rows on paper, ink text at full weight, and the checked
+   state keeps ALL THREE cues (solid lime fill + check icon + green "Checked in" label + olive left edge),
+   never colour alone. The sticky header ground + progress fill are already token-driven (paper + warm
+   green). Flat additive rules — never edit a dark declaration, so the dark portal is byte-identical. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .progressText,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bib,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .name,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalTitle,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn:hover {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .label,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .backLink:hover {
+  color: var(--home-ink-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .backLink,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .progressText .total,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .meta,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bibOnly,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .labelOff,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .empty {
+  color: var(--home-dim);
+}
+
+/* Candidate rows: white cards on paper; checked row keeps its olive left edge + faint olive wash */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .row,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modal {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rowChecked {
+  background: var(--home-olive-soft);
+  border-left-color: var(--home-olive);
+}
+
+/* Search + walk-up inputs: warm paper field, ink text, hairline border (olive focus ring is automatic) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .search,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .input {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn {
+  border-color: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bar {
+  background: var(--home-line);
+}
+
+/* Check state — cue #1: SOLID lime fill + dark check (icon + green label carry the other two cues) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconOn {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconOff {
+  border-color: var(--home-line-strong);
+}
+
+/* Blind-scoring chip → warm blue on a legible tint */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .blindChip {
+  background: rgba(var(--home-blue-rgb), 0.12);
+  border-color: rgba(var(--home-blue-rgb), 0.35);
+  color: var(--home-blue);
+}
+
+/* Warm ink scrim behind the walk-up sheet */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scrim {
+  background: rgba(var(--home-line-rgb), 0.50);
+}

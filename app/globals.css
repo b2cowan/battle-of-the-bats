@@ -466,6 +466,12 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-lime:        #D9F99D;
   --home-lime-rgb:    217, 249, 157;
   --home-lime-ink:    #241E15;
+  /* Warm geometry (theme-agnostic; mirrors warmTheme.module.css). Needed so the shared ChatPanel
+     `.panelWarm` recipe — which the coach portal now reuses via the marker — resolves its
+     --radius/--radius-sm/pill remaps here instead of the consumer `.warm` shell. */
+  --home-radius:      14px;
+  --home-radius-sm:   9px;
+  --home-radius-pill: 999px;
 
   /* ── Core canvas: near-black grounds → cream paper / white cards ── */
   --pitch-black:      var(--home-paper);
@@ -574,6 +580,22 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime {
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:hover {
   background: rgba(var(--home-lime-rgb), 0.82);
   border-color: rgba(var(--home-lime-rgb), 0.82);
+}
+
+/* Warm default PRIMARY button (.btn-primary) — the platform navy primary would otherwise keep its
+   navy fill (--primary is not remapped) while its --white label flips to dark ink → dark-on-navy.
+   Warm it to the ratified ink-on-lime primary (same as .btn-lime / the coaches .btnPrimary CTA) — the
+   ONE appealing warm primary language across the portal; olive stays a text/border accent, never a
+   button FILL. Cold blue glow drops on paper. Used portal-wide (e.g. tryouts "Open day-of check-in"). */
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  box-shadow: none;
+}
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:hover {
+  background: rgba(var(--home-lime-rgb), 0.82);
+  box-shadow: none;
+  filter: none;
 }
 
 /* ─── FieldLogic HUD Utilities ──────────────────────────────────────────────── */

@@ -133,3 +133,83 @@
   .scrim { align-items: flex-end; }
   .panel { max-width: none; height: 94vh; border-left: none; border-radius: 16px 16px 0 0; }
 }
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5) ─────────────────────────────
+   Accept-to-roster + fee setup slide-over. Shared with the admin Rep Teams panel (which renders dark —
+   no marker), so this warms ONLY in the coach shell. White drawer on a warm ink scrim, ink text at full
+   weight, a SOLID lime fee-toggle, and warm amber for the "installments don't add up" / error signals.
+   Flat additive rules — never edit a dark declaration, so the dark drawer is byte-identical. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scrim {
+  background: rgba(var(--home-line-rgb), 0.50);
+}
+/* White drawer surfaces (panel body + sticky header + sticky footer) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .header,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .footer {
+  background: var(--home-card);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel { border-left-color: var(--home-line); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .header { border-bottom-color: var(--home-line); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .footer { border-top-color: var(--home-line); }
+
+/* Text tiers */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .headerTitle,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .readValue,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .closeBtn:hover,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .linkBtn:hover {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .label,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .linkBtn {
+  color: var(--home-ink-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .headerSub,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sectionTitle,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .readLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .hint,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .instNum,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .closeBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .removeBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sumLabel {
+  color: var(--home-dim);
+}
+
+/* Warm paper inputs, ink text, hairline border (olive focus ring is automatic) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .input {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+  color: var(--home-ink);
+}
+/* Hairline chrome + sum row */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .closeBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .removeBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sumRow {
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sumRow {
+  background: var(--home-card);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .closeBtn:hover {
+  border-color: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .linkBtn {
+  border-color: var(--home-line-strong);
+}
+
+/* Fee toggle: light off-track, SOLID lime on-track */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .switch {
+  background: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .switchOn {
+  background: var(--home-lime);
+}
+
+/* Danger + validation warnings → warm live / amber */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .removeBtn:hover {
+  color: var(--home-live);
+  border-color: rgba(var(--home-live-rgb), 0.40);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sumBad,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .errText {
+  color: var(--home-amber);
+}

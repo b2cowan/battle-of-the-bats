@@ -306,3 +306,148 @@
   .choiceGroup { width: 100%; }
   .choiceBtn { flex: 1 1 auto; }
 }
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5) ─────────────────────────────
+   The tryout-day workhorse: session setup, live scoreboard, decision board. Used OUTDOORS in glare, so
+   the warm variant is solid, not airy — white cards on paper, ink text at full weight, and every DECISION
+   state (offer / waitlist / cut, on-toggle, accept) is a SOLID fill + explicit label, never colour alone.
+   lime-as-fill → true lime + dark ink; amber/live fills → the deep warm hue + white text (dark ink washes
+   out on them). lime/blue-as-TEXT/border darkens to olive automatically (E3). Flat additive rules — never
+   edit a dark declaration, so the dark coaches/admin card is byte-identical. Also warms admin? No: this
+   component renders dark in the admin Rep Teams panel (no marker) — only the coach shell carries it. */
+
+/* White cards on paper; accent-bar rows keep their olive left edge */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .card,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modal,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tally {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionRow,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scoreRow {
+  background: var(--home-card);
+  border-color: var(--home-line);
+  border-left-color: var(--home-olive);
+}
+/* Warm ink scrim behind modals (round-2 spec) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scrim {
+  background: rgba(var(--home-line-rgb), 0.50);
+}
+
+/* Text tiers */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionWhen,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .composite,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .modalTitle,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tallyItem strong,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn:hover,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn:hover {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .blindToggle,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalChip,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .choiceBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .label {
+  color: var(--home-ink-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .subtitle,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .blindHint,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .revealedChip,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sessionMeta,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .empty,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rank,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .compositeUnit,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tallyItem,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalChipMean,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .resendBtn {
+  color: var(--home-dim);
+}
+
+/* Toggles: light off-track, SOLID lime on-track */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .switch {
+  background: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .switchOn {
+  background: var(--home-lime);
+}
+
+/* Inputs: warm paper field, ink text, hairline border (olive focus ring is automatic) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .input {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+  color: var(--home-ink);
+}
+
+/* Chrome buttons + reveal: hairline borders, olive-tint reveal */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalChip {
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconBtn:hover {
+  border-color: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addBtn {
+  border-color: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .revealBtn {
+  background: var(--home-olive-soft);
+  border-color: rgba(var(--home-olive-rgb), 0.40);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .revealBtn:hover {
+  background: rgba(var(--home-olive-rgb), 0.16);
+}
+
+/* Danger icon hover → warm live */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .iconDanger:hover {
+  color: var(--home-live);
+  border-color: rgba(var(--home-live-rgb), 0.40);
+}
+
+/* Bias / "spot opened" nudges → warm amber, solid enough to read in glare */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .biasFlag,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .offerNudge {
+  color: var(--home-amber);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .evalChipBias {
+  background: rgba(var(--home-amber-rgb), 0.10);
+  border-color: rgba(var(--home-amber-rgb), 0.45);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .offerNudge {
+  background: rgba(var(--home-amber-rgb), 0.08);
+  border-color: rgba(var(--home-amber-rgb), 0.35);
+  border-left-color: var(--home-amber);
+}
+
+/* Decision chips + accept: SOLID fills + labels (never colour-alone) */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .choiceBtn {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .choice_offer {
+  background: var(--home-lime);
+  border-color: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .choice_waitlist {
+  background: var(--home-amber);
+  border-color: var(--home-amber);
+  color: var(--on-team-color, #fff);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .choice_cut {
+  background: var(--home-live);
+  border-color: var(--home-live);
+  color: var(--on-team-color, #fff);
+}
+/* Accept-to-roster: the follow-up confirm — an olive-OUTLINE button (olive tint + border + text, never
+   an olive fill) so it reads distinctly from the SOLID lime "Offer" chip beside it (mirrors the dark
+   board's outlined-vs-solid hierarchy). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .acceptRosterBtn {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .acceptRosterBtn:hover {
+  background: rgba(var(--home-olive-rgb), 0.16);
+}

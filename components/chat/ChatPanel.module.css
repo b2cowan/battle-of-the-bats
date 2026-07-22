@@ -1152,12 +1152,17 @@
   .panel { border-radius: 0; border-left: none; border-right: none; }
 }
 
-/* ── Warm consumer skin (Unified Home R3-3) ──────────────────────────────────
-   ONE engine, per-shell presentation: the consumer Chat renders <ChatPanel variant="warm">, which adds
-   `.panelWarm`. This SCOPED block remaps the panel's design tokens to the warm palette — it never
-   redefines a GLOBAL dark token, so the coaches/admin ChatPanel (no variant) is byte-for-byte unchanged.
-   The --home-* tokens are inherited from the enclosing `.warm` consumer shell. */
-.panelWarm {
+/* ── Warm skin (Unified Home R3-3 + Warm Coaches Portal TH-5) ─────────────────
+   ONE engine, per-shell presentation. TWO shells opt in to the SAME recipe:
+     • the CONSUMER Chat renders <ChatPanel variant="warm"> → `.panelWarm` (--home-* from `.warm`);
+     • the COACH portal renders <ChatPanel> with NO variant, but inside the warm coaches marker
+       (`html[data-user-theme="warm"] [data-coach-warm-enabled]`), which supplies the same --home-*
+       tokens from globals.css. So the panel follows the coach's theme with no prop threading — chat
+       FOLLOWS the theme (ratified R3-3). The selector is widened, NOT forked: identical declarations.
+   This SCOPED block remaps the panel's design tokens to the warm palette — it never redefines a GLOBAL
+   dark token, so the admin ChatPanel (no variant, no marker) stays byte-for-byte unchanged. */
+.panelWarm,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel {
   --card-bg: var(--home-paper);          /* panel + message-list ground = warm paper */
   --bg-inset: var(--home-card);          /* header + composer bars = white */
   --white-90: var(--home-ink);
@@ -1186,7 +1191,8 @@
 /* Sender kicker → mono + a uniform readable ink. The warm span never carries the inline --sender-tint
    (the per-team HSL washes out on white), so this class rule sets the color directly — `.panelWarm
    .sender` outspecifies the base `.sender`, no !important, no inline to fight. */
-.panelWarm .sender {
+.panelWarm .sender,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel .sender {
   color: var(--home-ink-soft);
   font-family: var(--font-data);
   font-size: 0.62rem;
@@ -1195,7 +1201,8 @@
 
 /* Long-press is the safety-sheet gesture here — suppress native text-selection / callout so a hold
    opens the sheet cleanly instead of selecting the bubble text. */
-.panelWarm .bubble {
+.panelWarm .bubble,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel .bubble {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
@@ -1203,8 +1210,10 @@
 
 /* Pill composer + a brand-LIME Send (ink-on-lime survives on the warm ground; the olive remap above
    would otherwise olive-ify it). `button.sendBtn` outspecifies the global `.btn-lime`(:hover). */
-.panelWarm .input { border-radius: var(--home-radius-pill); }
-.panelWarm button.sendBtn {
+.panelWarm .input,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel .input { border-radius: var(--home-radius-pill); }
+.panelWarm button.sendBtn,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel button.sendBtn {
   background: var(--home-lime);
   border-color: var(--home-lime);
   /* --home-lime-ink stays dark in both themes (lime is light on any ground), so ink-on-lime
