@@ -58,17 +58,17 @@ function isOverdue(dueDate: string, paidAt: string | null) {
 }
 
 function balanceColor(b: number): string {
-  if (b < -0.005) return '#4ade80'; // in credit (good)
-  if (b > 0.005)  return '#f59e0b'; // still owes
-  return '#4ade80';                 // fully clear
+  if (b < -0.005) return 'var(--success-light)'; // in credit (good)
+  if (b > 0.005)  return 'var(--warning)'; // still owes
+  return 'var(--success-light)';                 // fully clear
 }
 
 function statusLabel(p: PlayerWithDues) {
-  if (!p.schedule) return { label: 'Not set', color: 'rgba(255,255,255,0.3)' };
-  if (p.rollingBalance < -0.005) return { label: 'In credit', color: '#4ade80' };
-  if (p.rollingBalance <= 0.005) return { label: 'Fully paid', color: '#4ade80' };
-  if (p.paidAmount > 0 || p.totalCredits > 0) return { label: 'Partial', color: '#f59e0b' };
-  return { label: 'Unpaid', color: 'rgba(255,255,255,0.4)' };
+  if (!p.schedule) return { label: 'Not set', color: 'var(--home-dim, rgba(255,255,255,0.3))' };
+  if (p.rollingBalance < -0.005) return { label: 'In credit', color: 'var(--success-light)' };
+  if (p.rollingBalance <= 0.005) return { label: 'Fully paid', color: 'var(--success-light)' };
+  if (p.paidAmount > 0 || p.totalCredits > 0) return { label: 'Partial', color: 'var(--warning)' };
+  return { label: 'Unpaid', color: 'var(--home-dim, rgba(255,255,255,0.4))' };
 }
 
 const CREDIT_TYPE_LABELS: Record<DuesCreditType, string> = {
@@ -591,16 +591,16 @@ export default function CoachesDuesPage({
             )}
           </div>
           {reminderResult && reminderResult.emailsSent > 0 && (
-            <span style={{ fontSize: '0.8rem', color: '#4ade80' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--success-light)' }}>
               Sent {reminderResult.emailsSent} reminder email{reminderResult.emailsSent !== 1 ? 's' : ''} covering {reminderResult.installmentsTagged} installment{reminderResult.installmentsTagged !== 1 ? 's' : ''}.
             </span>
           )}
           {reminderResult && reminderResult.emailsSent === 0 && (
-            <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
               No reminders needed — no installments due within 3 days.
             </span>
           )}
-          {reminderError && <span style={{ fontSize: '0.8rem', color: '#f87171' }}>{reminderError}</span>}
+          {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
         </div>
       </div>
 
@@ -617,7 +617,7 @@ export default function CoachesDuesPage({
           {moneyCanWrite && !players.some(p => p.schedule) && (
             <div className={styles.detailSection} style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
               <div style={{ flex: 1, minWidth: 220 }}>
-                <p style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: 0, fontSize: '0.92rem' }}>
+                <p style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', margin: 0, fontSize: '0.92rem' }}>
                   {hasBudgetLines && !budgetHasInstallments
                     ? 'Generate everyone’s schedule from your budget'
                     : 'Fastest way to set dues: start with a budget'}
@@ -643,15 +643,15 @@ export default function CoachesDuesPage({
           {neverPaid.length > 0 && (
             <div style={{
               marginBottom: '1.5rem', borderRadius: 10, overflow: 'hidden',
-              border: '1px solid rgba(245,158,11,0.25)', background: 'rgba(245,158,11,0.06)',
+              border: '1px solid color-mix(in srgb, var(--warning) 25%, transparent)', background: 'color-mix(in srgb, var(--warning) 6%, transparent)',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', padding: '0.85rem 1.1rem' }}>
                 <div>
-                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: '#f0f0f0', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <AlertTriangle size={15} style={{ color: '#f59e0b' }} />
+                  <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--home-ink, #f0f0f0)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <AlertTriangle size={15} style={{ color: 'var(--warning)' }} />
                     Haven&apos;t paid anything yet
                   </div>
-                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                  <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                     {neverPaid.length} player{neverPaid.length !== 1 ? 's' : ''} {neverPaid.length !== 1 ? 'owe' : 'owes'} dues with no payment recorded.
                   </p>
                 </div>
@@ -675,17 +675,17 @@ export default function CoachesDuesPage({
                   return (
                     <div
                       key={p.player.id}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.55rem 1.1rem', borderTop: '1px solid rgba(255,255,255,0.05)' }}
+                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.55rem 1.1rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.05))' }}
                     >
                       <button
                         className={styles.btnGhost}
-                        style={{ padding: 0, color: 'rgba(255,255,255,0.85)', fontSize: '0.86rem', fontWeight: 500 }}
+                        style={{ padding: 0, color: 'var(--home-ink, rgba(255,255,255,0.85))', fontSize: '0.86rem', fontWeight: 500 }}
                         onClick={() => { setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError(''); }}
                       >
                         {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
                       </button>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexShrink: 0 }}>
-                        <span style={{ fontVariantNumeric: 'tabular-nums', color: '#f59e0b', fontWeight: 600, fontSize: '0.84rem' }}>
+                        <span style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--warning)', fontWeight: 600, fontSize: '0.84rem' }}>
                           {fmt(owed)}
                         </span>
                         {moneyCanWrite && (
@@ -705,10 +705,10 @@ export default function CoachesDuesPage({
               </div>
 
               {(unpaidResult || unpaidError) && (
-                <div style={{ padding: '0.55rem 1.1rem', borderTop: '1px solid rgba(255,255,255,0.06)', fontSize: '0.8rem' }}>
-                  {unpaidError && <span style={{ color: '#f87171' }}>{unpaidError}</span>}
+                <div style={{ padding: '0.55rem 1.1rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))', fontSize: '0.8rem' }}>
+                  {unpaidError && <span style={{ color: 'var(--danger-light)' }}>{unpaidError}</span>}
                   {unpaidResult && (
-                    <span style={{ color: unpaidResult.emailsSent > 0 ? '#4ade80' : 'rgba(255,255,255,0.5)' }}>
+                    <span style={{ color: unpaidResult.emailsSent > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                       {unpaidResult.emailsSent > 0
                         ? `Sent ${unpaidResult.emailsSent} reminder${unpaidResult.emailsSent !== 1 ? 's' : ''} covering ${unpaidResult.playersReminded} player${unpaidResult.playersReminded !== 1 ? 's' : ''}.`
                         : 'No reminders sent.'}
@@ -750,10 +750,10 @@ export default function CoachesDuesPage({
                       <td className={styles.td} data-label="Total Dues" style={{ fontVariantNumeric: 'tabular-nums' }}>
                         {p.schedule ? fmt(p.schedule.totalAmount) : '—'}
                       </td>
-                      <td className={styles.td} data-label="Credits" style={{ color: p.totalCredits > 0 ? '#4ade80' : 'rgba(255,255,255,0.3)', fontVariantNumeric: 'tabular-nums' }}>
+                      <td className={styles.td} data-label="Credits" style={{ color: p.totalCredits > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))', fontVariantNumeric: 'tabular-nums' }}>
                         {p.totalCredits > 0 ? `-${fmt(p.totalCredits)}` : '—'}
                       </td>
-                      <td className={styles.td} data-label="Paid" style={{ color: '#4ade80', fontVariantNumeric: 'tabular-nums' }}>
+                      <td className={styles.td} data-label="Paid" style={{ color: 'var(--success-light)', fontVariantNumeric: 'tabular-nums' }}>
                         {p.schedule ? fmt(p.paidAmount) : '—'}
                       </td>
                       <td className={styles.td} data-label="Balance" style={{ color: balanceColor(p.rollingBalance), fontVariantNumeric: 'tabular-nums', fontWeight: 600 }}>
@@ -763,7 +763,7 @@ export default function CoachesDuesPage({
                         <span style={{ color, fontSize: '0.82rem', fontWeight: 500 }}>{label}</span>
                       </td>
                       <td className={styles.td}>
-                        <ChevronRight size={14} style={{ color: 'rgba(255,255,255,0.3)' }} />
+                        <ChevronRight size={14} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
                       </td>
                     </tr>
                   );
@@ -776,14 +776,14 @@ export default function CoachesDuesPage({
           <div style={{
             marginTop: '2rem',
             borderRadius: 10,
-            border: '1px solid rgba(255,255,255,0.08)',
+            border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
             overflow: 'hidden',
           }}>
             <button
               style={{
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                width: '100%', padding: '0.85rem 1.25rem', background: 'rgba(255,255,255,0.03)',
-                border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.7)',
+                width: '100%', padding: '0.85rem 1.25rem', background: 'var(--home-card, rgba(255,255,255,0.03))',
+                border: 'none', cursor: 'pointer', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))',
               }}
               onClick={() => {
                 const next = !refundOpen;
@@ -796,8 +796,8 @@ export default function CoachesDuesPage({
             </button>
 
             {refundOpen && (
-              <div style={{ padding: '1.25rem', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                <p style={{ fontSize: '0.83rem', color: 'rgba(255,255,255,0.5)', margin: '0 0 1rem' }}>
+              <div style={{ padding: '1.25rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.06))' }}>
+                <p style={{ fontSize: '0.83rem', color: 'var(--home-dim, rgba(255,255,255,0.5))', margin: '0 0 1rem' }}>
                   Enter the total remaining team funds at season end. Each player&apos;s individual credits come off the top, then the remainder is divided evenly.
                 </p>
 
@@ -844,21 +844,21 @@ export default function CoachesDuesPage({
                         <div style={{
                           display: 'flex', gap: '1.5rem', flexWrap: 'wrap',
                           padding: '0.75rem 1rem', borderRadius: 8,
-                          background: 'rgba(74,222,128,0.05)',
-                          border: '1px solid rgba(74,222,128,0.15)',
+                          background: 'color-mix(in srgb, var(--success-light) 5%, transparent)',
+                          border: '1px solid color-mix(in srgb, var(--success-light) 15%, transparent)',
                           marginBottom: '1rem', fontSize: '0.82rem',
                         }}>
-                          <span style={{ color: 'rgba(255,255,255,0.6)' }}>
-                            Total: <strong style={{ color: '#f0f0f0' }}>{fmt(surplusData.surplus.totalSurplus)}</strong>
+                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+                            Total: <strong style={{ color: 'var(--home-ink, #f0f0f0)' }}>{fmt(surplusData.surplus.totalSurplus)}</strong>
                           </span>
-                          <span style={{ color: 'rgba(255,255,255,0.6)' }}>
-                            Individual credits: <strong style={{ color: '#4ade80' }}>-{fmt(surplusData.totalAllCredits)}</strong>
+                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+                            Individual credits: <strong style={{ color: 'var(--success-light)' }}>-{fmt(surplusData.totalAllCredits)}</strong>
                           </span>
-                          <span style={{ color: 'rgba(255,255,255,0.6)' }}>
-                            Even pool: <strong style={{ color: '#f0f0f0' }}>{fmt(surplusData.evenPool)}</strong>
+                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+                            Even pool: <strong style={{ color: 'var(--home-ink, #f0f0f0)' }}>{fmt(surplusData.evenPool)}</strong>
                           </span>
-                          <span style={{ color: 'rgba(255,255,255,0.6)' }}>
-                            Per player (base): <strong style={{ color: '#f0f0f0' }}>
+                          <span style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+                            Per player (base): <strong style={{ color: 'var(--home-ink, #f0f0f0)' }}>
                               {fmt(surplusData.evenPool / (surplusData.playerCount || 1))}
                             </strong>
                           </span>
@@ -882,11 +882,11 @@ export default function CoachesDuesPage({
                                   <td className={styles.td} style={{ color: balanceColor(row.rollingBalance), fontVariantNumeric: 'tabular-nums' }}>
                                     {fmt(row.rollingBalance)}
                                   </td>
-                                  <td className={styles.td} style={{ color: row.creditPortion > 0 ? '#4ade80' : 'rgba(255,255,255,0.3)', fontVariantNumeric: 'tabular-nums' }}>
+                                  <td className={styles.td} style={{ color: row.creditPortion > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.3))', fontVariantNumeric: 'tabular-nums' }}>
                                     {row.creditPortion > 0 ? fmt(row.creditPortion) : '—'}
                                   </td>
                                   <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(row.evenShare)}</td>
-                                  <td className={styles.td} style={{ color: '#4ade80', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+                                  <td className={styles.td} style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
                                     {fmt(row.totalRefund)}
                                   </td>
                                 </tr>
@@ -905,9 +905,9 @@ export default function CoachesDuesPage({
           {/* Automatic Dues Reminders — team-level toggle (moved from the Money hub). */}
           {autoReminders !== null && (
             <div className={styles.detailSection} style={{ marginTop: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <Bell size={20} style={{ color: 'rgba(255,255,255,0.5)', flexShrink: 0 }} />
+              <Bell size={20} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', flexShrink: 0 }} />
               <div style={{ flex: 1 }}>
-                <p style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>Automatic Dues Reminders</p>
+                <p style={{ fontWeight: 600, color: 'var(--home-ink, rgba(255,255,255,0.9))', margin: 0 }}>Automatic Dues Reminders</p>
                 <p className={styles.muted} style={{ margin: 0, fontSize: '0.82rem' }}>
                   {autoReminders
                     ? 'On — guardians receive email reminders at 30 days and 7 days before each installment due date.'
@@ -934,7 +934,7 @@ export default function CoachesDuesPage({
         <div className={styles.modalOverlay} onClick={() => { setSelected(null); setEditingSchedule(false); setAddingCredit(false); }}>
           <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
-              <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)' }}>
+              <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
                 {[selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ')}
               </span>
               <button className={styles.modalCloseBtn} onClick={() => { setSelected(null); setEditingSchedule(false); setAddingCredit(false); }}>
@@ -950,20 +950,20 @@ export default function CoachesDuesPage({
                     <div style={{
                       display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem',
                       padding: '0.85rem 1rem', marginBottom: '1rem',
-                      background: 'rgba(255,255,255,0.03)', borderRadius: 8,
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
+                      border: '1px solid var(--home-line, rgba(255,255,255,0.06))',
                     }}>
                       {[
                         { label: 'Total Dues', value: fmt(selected.schedule.totalAmount), color: undefined },
-                        { label: 'Credits', value: selected.totalCredits > 0 ? `-${fmt(selected.totalCredits)}` : '—', color: selected.totalCredits > 0 ? '#4ade80' : undefined },
-                        { label: 'Paid', value: fmt(selected.paidAmount), color: '#4ade80' },
+                        { label: 'Credits', value: selected.totalCredits > 0 ? `-${fmt(selected.totalCredits)}` : '—', color: selected.totalCredits > 0 ? 'var(--success-light)' : undefined },
+                        { label: 'Paid', value: fmt(selected.paidAmount), color: 'var(--success-light)' },
                         { label: 'Balance', value: fmt(selected.rollingBalance), color: balanceColor(selected.rollingBalance) },
                       ].map(stat => (
                         <div key={stat.label}>
-                          <span style={{ display: 'block', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'rgba(255,255,255,0.35)', marginBottom: '0.15rem' }}>
+                          <span style={{ display: 'block', fontSize: '0.65rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--home-dim, rgba(255,255,255,0.35))', marginBottom: '0.15rem' }}>
                             {stat.label}
                           </span>
-                          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: stat.color ?? 'rgba(255,255,255,0.85)', fontVariantNumeric: 'tabular-nums' }}>
+                          <span style={{ fontSize: '0.95rem', fontWeight: 700, color: stat.color ?? 'var(--home-ink, rgba(255,255,255,0.85))', fontVariantNumeric: 'tabular-nums' }}>
                             {stat.value}
                           </span>
                         </div>
@@ -973,8 +973,8 @@ export default function CoachesDuesPage({
                     {selected.rollingBalance < -0.005 && (
                       <div style={{
                         padding: '0.6rem 0.85rem', marginBottom: '1rem', borderRadius: 7,
-                        background: 'rgba(74,222,128,0.08)', border: '1px solid rgba(74,222,128,0.2)',
-                        fontSize: '0.82rem', color: '#4ade80',
+                        background: 'color-mix(in srgb, var(--success-light) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--success-light) 20%, transparent)',
+                        fontSize: '0.82rem', color: 'var(--success-light)',
                       }}>
                         This player is in credit — their balance is {fmt(Math.abs(selected.rollingBalance))} in their favour.
                       </div>
@@ -1005,15 +1005,15 @@ export default function CoachesDuesPage({
                               const overdue = isOverdue(inst.dueDate, inst.paidAt);
                               return (
                                 <tr key={inst.id} className={styles.tr}>
-                                  <td className={styles.td} style={{ color: 'rgba(255,255,255,0.4)' }}>{inst.installmentNumber}</td>
+                                  <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
                                   <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
-                                  <td className={styles.td} style={{ color: overdue ? '#f87171' : 'rgba(255,255,255,0.65)' }}>
+                                  <td className={styles.td} style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
                                     {fmtDate(inst.dueDate)}
-                                    {overdue && <AlertTriangle size={11} style={{ marginLeft: 4, verticalAlign: 'middle', color: '#f87171' }} />}
+                                    {overdue && <AlertTriangle size={11} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
                                   </td>
                                   <td className={styles.td}>
                                     {inst.paidAt ? (
-                                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: '#4ade80' }}>
+                                      <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
                                         <CheckCircle2 size={12} /> Paid {fmtDate(inst.paidAt)}
                                       </span>
                                     ) : (
@@ -1044,12 +1044,12 @@ export default function CoachesDuesPage({
 
                     {/* Credits section */}
                     <div style={{
-                      borderTop: '1px solid rgba(255,255,255,0.07)',
+                      borderTop: '1px solid var(--home-line, rgba(255,255,255,0.07))',
                       paddingTop: '1rem',
                       marginTop: selected.installments.length > 0 ? 0 : '0.5rem',
                     }}>
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.65rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.4)' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
                           Credits
                         </span>
                         {!addingCredit && (
@@ -1067,8 +1067,8 @@ export default function CoachesDuesPage({
                       {addingCredit && (
                         <div style={{
                           padding: '0.85rem', marginBottom: '0.85rem',
-                          background: 'rgba(255,255,255,0.03)', borderRadius: 8,
-                          border: '1px solid rgba(255,255,255,0.08)',
+                          background: 'var(--home-card, rgba(255,255,255,0.03))', borderRadius: 8,
+                          border: '1px solid var(--home-line, rgba(255,255,255,0.08))',
                         }}>
                           <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
                             <span className={styles.labelRequired}>*</span> Required
@@ -1145,21 +1145,21 @@ export default function CoachesDuesPage({
                             <div key={c.id} style={{
                               display: 'flex', alignItems: 'center', gap: '0.6rem',
                               padding: '0.5rem 0.65rem', borderRadius: 7,
-                              background: 'rgba(74,222,128,0.05)',
-                              border: '1px solid rgba(74,222,128,0.12)',
+                              background: 'color-mix(in srgb, var(--success-light) 5%, transparent)',
+                              border: '1px solid color-mix(in srgb, var(--success-light) 12%, transparent)',
                               fontSize: '0.83rem',
                             }}>
-                              <span style={{ color: '#4ade80', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
+                              <span style={{ color: 'var(--success-light)', fontWeight: 700, fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>
                                 -{fmt(c.amount as number)}
                               </span>
-                              <span style={{ flex: 1, color: 'rgba(255,255,255,0.75)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                              <span style={{ flex: 1, color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                                 {c.description}
                               </span>
-                              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.75rem', flexShrink: 0 }}>
+                              <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', fontSize: '0.75rem', flexShrink: 0 }}>
                                 {CREDIT_TYPE_LABELS[c.creditType]} · {fmtDate(c.creditDate as string)}
                               </span>
                               <button
-                                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                                style={{ background: 'none', border: 'none', color: 'var(--home-dim, rgba(255,255,255,0.3))', cursor: 'pointer', padding: '0.15rem', display: 'flex', alignItems: 'center', flexShrink: 0 }}
                                 disabled={deletingCreditId === c.id}
                                 onClick={() => deleteCredit(c.id)}
                                 title="Remove credit"
@@ -1171,7 +1171,7 @@ export default function CoachesDuesPage({
                         </div>
                       ) : (
                         !addingCredit && (
-                          <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)', margin: 0 }}>
+                          <p style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.3))', margin: 0 }}>
                             No credits applied to this player.
                           </p>
                         )
@@ -1288,7 +1288,7 @@ function ScheduleForm({
       </p>
       {installmentRows.map((row, idx) => (
         <div key={idx} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.4rem' }}>
-          <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', width: '1.5rem', textAlign: 'right', flexShrink: 0 }}>#{row.installmentNumber}</span>
+          <span style={{ fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', width: '1.5rem', textAlign: 'right', flexShrink: 0 }}>#{row.installmentNumber}</span>
           <input
             className={styles.input}
             type="number"

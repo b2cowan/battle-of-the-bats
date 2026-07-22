@@ -235,7 +235,13 @@
   color: rgba(15, 17, 35, 0.3);
 }
 
-[data-color-mode="light"] select { color-scheme: light; }
+/* Native form controls render light on ANY light surface: tournament light-mode
+   AND the warm coaches portal (same treatment, two triggers — keep them together
+   so a change to native-control theming transmits to both). The warm portal's
+   select options already flip via tokens (--bg-2 → white, --white → ink); it just
+   needs color-scheme:light so the OS popup chrome matches. */
+[data-color-mode="light"] select,
+html[data-user-theme="warm"] [data-coach-warm-enabled] select { color-scheme: light; }
 
 [data-color-mode="light"] select option {
   background: #FFFFFF;
@@ -521,8 +527,20 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --info-rgb:      var(--home-blue-rgb);
   --info-light:    var(--home-blue);
 
-  /* ── Legible-on-white gold (round-2 A-squad star) ── */
+  /* ── Legible-on-white gold (round-2 A-squad star). Also remap --gold itself so
+     gold GLYPHS (the A-squad star) deepen to the legible tone on cream instead of
+     the pastel dark-mode gold (round-2 rule: gold-as-glyph → gold-strong). ── */
   --gold-strong: #856611;
+  --gold:     var(--gold-strong);
+  --gold-rgb: 133, 102, 17;
+
+  /* ── Money category accents (Stage 3, owner-ratified warm-tune 2026-07-22) ──
+     Dark keeps the raw purple/orange via each inline fallback; these warm cousins
+     read on cream. --home-plum = Collect/Dues/Credits, --home-rust = Spend/Expenses. */
+  --home-plum:     #7B4B6E;
+  --home-plum-rgb: 123, 75, 110;
+  --home-rust:     #B45309;
+  --home-rust-rgb: 180, 83, 9;
 
   /* ── Glows soften on paper (a blue/lime glow reads cold on cream) ── */
   --glow-blue: 0 0 12px rgba(var(--home-olive-rgb), 0.20);
@@ -1026,6 +1044,13 @@ input[type="password"]::-ms-clear { display: none; }
 input[type="date"],
 input[type="datetime-local"] {
   color-scheme: dark;
+}
+
+/* …but light on light surfaces (warm coaches portal), so the native picker + text
+   render legibly on cream. Same treatment could extend to [data-color-mode="light"]. */
+html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"],
+html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"] {
+  color-scheme: light;
 }
 
 input[type="date"]::-webkit-calendar-picker-indicator,

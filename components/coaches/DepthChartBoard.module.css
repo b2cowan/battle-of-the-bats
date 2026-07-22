@@ -116,7 +116,7 @@
 
 .star {
   width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; /* ≥36 dense-grid target */
-  font-size: 1.35rem; line-height: 1; cursor: pointer; color: rgba(255, 255, 255, 0.45); /* --white-45 outline */
+  font-size: 1.35rem; line-height: 1; cursor: pointer; color: var(--white-45); /* warm-remaps to --home-dim so the empty-star outline stays visible on cream */
   user-select: none; transition: 0.1s; background: none; border: none; padding: 0;
 }
 .star.on { color: var(--gold); text-shadow: 0 0 12px rgba(var(--gold-rgb), 0.4); }

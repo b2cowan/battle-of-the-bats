@@ -770,7 +770,7 @@ export default function BudgetPlannerPage({
                 <div className={styles.periodsSectionHeader}>
                   <span className={styles.label}>Period Breakdown</span>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span style={{ display: 'inline-flex', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 6, overflow: 'hidden' }}>
+                    <span style={{ display: 'inline-flex', border: '1px solid var(--home-line, rgba(255,255,255,0.15))', borderRadius: 6, overflow: 'hidden' }}>
                       {(['amount', 'percent'] as const).map(mode => (
                         <button
                           key={mode}
@@ -778,8 +778,8 @@ export default function BudgetPlannerPage({
                           onClick={() => switchPeriodMode(mode)}
                           style={{
                             padding: '0.2rem 0.6rem', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', border: 'none',
-                            background: form.periodMode === mode ? 'rgba(255,255,255,0.14)' : 'transparent',
-                            color: form.periodMode === mode ? 'rgba(255,255,255,0.9)' : 'rgba(255,255,255,0.45)',
+                            background: form.periodMode === mode ? 'var(--home-olive-soft, rgba(255,255,255,0.14))' : 'transparent',
+                            color: form.periodMode === mode ? 'var(--home-ink, rgba(255,255,255,0.9))' : 'var(--home-dim, rgba(255,255,255,0.45))',
                           }}
                         >
                           {mode === 'amount' ? '$' : '%'}
@@ -832,7 +832,7 @@ export default function BudgetPlannerPage({
                       })}
                     />
                     {form.periodMode === 'percent' && (
-                      <span style={{ flexShrink: 0, minWidth: 70, textAlign: 'right', fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ flexShrink: 0, minWidth: 70, textAlign: 'right', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.45))', fontVariantNumeric: 'tabular-nums' }}>
                         {(parseFloat(form.totalAmount) || 0) > 0 && parseFloat(p.amount) > 0
                           ? fmt(((parseFloat(form.totalAmount) || 0) * parseFloat(p.amount)) / 100)
                           : '—'}
@@ -899,7 +899,7 @@ export default function BudgetPlannerPage({
               <h3 className={styles.modalTitle}>Delete Budget Line?</h3>
               <button className={styles.modalCloseBtn} onClick={() => setDeletingId(null)}><X size={16} /></button>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
+            <p style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
               This will also remove any period breakdown for this line. This cannot be undone.
             </p>
             <div className={styles.modalFooter}>

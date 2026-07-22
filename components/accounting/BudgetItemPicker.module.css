@@ -29,8 +29,8 @@
 
 .select, .input {
   width: 100%;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--home-card, rgba(255,255,255,0.05));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
   border-radius: 8px;
   padding: 0.55rem 0.75rem;
   color: var(--white-90, #f0f0f0);
@@ -44,7 +44,7 @@
   border-color: var(--blueprint-blue, #60a5fa);
 }
 
-.select option { background: #1a1f2e; }
+.select option { background: var(--home-card, #1a1f2e); }
 
 /* ── Inline add-item form ────────────────────────────────────────────────── */
 .addForm {
@@ -75,7 +75,7 @@
 
 .error {
   font-size: 0.8rem;
-  color: #f87171;
+  color: var(--danger-light);
   margin: 0;
 }
 
@@ -83,4 +83,13 @@
   font-size: 0.75rem;
   color: var(--white-40, rgba(255,255,255,0.4));
   margin: 0;
+}
+
+/* Warm coaches portal (dev-gated) — the inline add-item panel is tinted with the accent-blue
+   literal directly (rgba(96,165,250,…), not the --blueprint-blue token), so the global token
+   remap can't reach it; it would stay blue on cream. Give it a matching olive tint instead.
+   Additive — dark output unchanged. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addForm {
+  background: rgba(var(--home-olive-rgb), 0.05);
+  border-color: rgba(var(--home-olive-rgb), 0.18);
 }

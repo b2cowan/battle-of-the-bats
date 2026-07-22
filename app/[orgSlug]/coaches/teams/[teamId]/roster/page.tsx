@@ -751,14 +751,14 @@ function SortableRow({
           type="button"
           aria-label="Drag to reorder"
           disabled={dragDisabled}
-          style={{ background: 'none', border: 'none', padding: 4, lineHeight: 0, cursor: dragDisabled ? 'default' : 'grab', color: 'rgba(255,255,255,0.35)', touchAction: 'none' }}
+          style={{ background: 'none', border: 'none', padding: 4, lineHeight: 0, cursor: dragDisabled ? 'default' : 'grab', color: 'var(--home-dim, rgba(255,255,255,0.35))', touchAction: 'none' }}
           {...attributes}
           {...listeners}
         >
           <GripVertical size={15} />
         </button>
       </td>
-      <td className={styles.td} data-label="#" style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.85rem', width: '52px' }}>
+      <td className={styles.td} data-label="#" style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.55))', fontSize: '0.85rem', width: '52px' }}>
         {p.playerNumber
           ? (isDuplicateNumber
               ? <span className={styles.jerseyDup} title="Another player wears this number"><AlertTriangle size={12} /> {p.playerNumber}</span>

@@ -250,7 +250,7 @@ export default function FundraiserDetailPage({
           <div className={styles.summaryGrid} style={{ marginBottom: '2rem' }}>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>Total Raised</span>
-              <span className={styles.summaryCardValue} style={{ color: '#4ade80' }}>
+              <span className={styles.summaryCardValue} style={{ color: 'var(--success-light)' }}>
                 {fmt(summary.totalRaised)}
               </span>
             </div>
@@ -262,7 +262,7 @@ export default function FundraiserDetailPage({
             </div>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>Credits Issued</span>
-              <span className={styles.summaryCardValue} style={{ color: '#a855f7' }}>
+              <span className={styles.summaryCardValue} style={{ color: 'var(--home-plum, #a855f7)' }}>
                 {fmt(summary.totalCredits)}
               </span>
             </div>
@@ -299,7 +299,7 @@ export default function FundraiserDetailPage({
                     const rank = player.entry ? idx + 1 : null;
                     return (
                       <tr key={player.playerId} className={styles.tr}>
-                        <td className={styles.td} style={{ color: 'rgba(255,255,255,0.3)', width: '2.5rem' }}>
+                        <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', width: '2.5rem' }}>
                           {rank ?? '—'}
                         </td>
                         <td className={styles.td}>
@@ -307,20 +307,20 @@ export default function FundraiserDetailPage({
                         </td>
                         <td className={styles.td} style={{ textAlign: 'right' }}>
                           {player.entry ? (
-                            <span style={{ fontWeight: 700, color: '#4ade80' }}>{fmt(player.entry.amountRaised)}</span>
+                            <span style={{ fontWeight: 700, color: 'var(--success-light)' }}>{fmt(player.entry.amountRaised)}</span>
                           ) : (
-                            <span style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
+                            <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
                           )}
                         </td>
                         <td className={styles.td} style={{ textAlign: 'right' }}>
                           {player.entry && player.entry.rebateAmount > 0 ? (
-                            <span style={{ fontWeight: 600, color: '#a855f7' }}>{fmt(player.entry.rebateAmount)}</span>
+                            <span style={{ fontWeight: 600, color: 'var(--home-plum, #a855f7)' }}>{fmt(player.entry.rebateAmount)}</span>
                           ) : (
-                            <span style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
+                            <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
                           )}
                         </td>
                         <td className={styles.td} style={{ textAlign: 'right' }}>
-                          <span style={{ color: player.remainingDues > 0 ? '#f97316' : 'rgba(255,255,255,0.4)' }}>
+                          <span style={{ color: player.remainingDues > 0 ? 'var(--home-amber, #f97316)' : 'var(--home-dim, rgba(255,255,255,0.4))' }}>
                             {player.remainingDues > 0 ? fmt(player.remainingDues) : '—'}
                           </span>
                         </td>
@@ -427,7 +427,7 @@ export default function FundraiserDetailPage({
                     value={editRebate}
                     onChange={e => setEditRebate(e.target.value)}
                   />
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>
                     Only applies to new entries — existing entries keep their snapshotted rate
                   </p>
                 </div>

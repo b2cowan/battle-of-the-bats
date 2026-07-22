@@ -368,7 +368,7 @@ export default function PlayerDetailPage({
           {pitcherPos && (
             <div className={`${styles.field} ${styles.formGridFull}`}>
               <label className={styles.label}>Pitching</label>
-              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'rgba(255,255,255,0.85)' }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'var(--home-ink, rgba(255,255,255,0.85))' }}>
                 <input type="checkbox" checked={form.pitcher.isPitcher}
                   onChange={e => { const on = e.target.checked; setForm(f => f ? { ...f, pitcher: { ...f.pitcher, isPitcher: on } } : f); }} />
                 <span>This player pitches</span>
@@ -396,7 +396,7 @@ export default function PlayerDetailPage({
                   </div>
                 </div>
               )}
-              <p style={{ marginTop: 8, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+              <p style={{ marginTop: 8, fontSize: 12, color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                 Guides the game-day Auto-fill: competitive games lead with your ace; balanced &amp; development games spread innings down the order. Auto-fill never exceeds the max-innings cap.
               </p>
             </div>
@@ -409,12 +409,12 @@ export default function PlayerDetailPage({
               style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               <span aria-hidden style={{
                 fontSize: 26, lineHeight: 1, transition: '0.12s',
-                color: form.aSquad ? 'var(--gold)' : 'rgba(255,255,255,0.45)',
+                color: form.aSquad ? 'var(--gold)' : 'var(--home-dim, rgba(255,255,255,0.45))',
                 textShadow: form.aSquad ? '0 0 12px rgba(var(--gold-rgb),0.4)' : 'none',
               }}>★</span>
-              <span style={{ fontSize: 14, color: 'rgba(255,255,255,0.85)' }}>Gold-medal starter{form.aSquad ? '' : ' — tap to mark'}</span>
+              <span style={{ fontSize: 14, color: 'var(--home-ink, rgba(255,255,255,0.85))' }}>Gold-medal starter{form.aSquad ? '' : ' — tap to mark'}</span>
             </button>
-            <p style={{ marginTop: 6, fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
+            <p style={{ marginTop: 6, fontSize: 12, color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
               In <strong>competitive</strong> games, A-squad players get their best positions and are protected from the bench. No effect on balanced or development games.
             </p>
           </div>

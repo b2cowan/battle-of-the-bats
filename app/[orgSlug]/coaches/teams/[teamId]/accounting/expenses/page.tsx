@@ -465,11 +465,11 @@ export default function CoachesExpensesPage({
                         </>
                       )}
                     </td>
-                    <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)' }}>{e.category ?? '—'}</td>
+                    <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
                     <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(e.amount)}</td>
                     <td className={styles.td}>
                       {e.expensePaidAt ? (
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: '#4ade80' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
                           <CheckCircle2 size={12} /> Paid {fmtDate(e.expensePaidAt)}
                         </span>
                       ) : (
@@ -506,25 +506,25 @@ export default function CoachesExpensesPage({
                 <div key={e.id} className={styles.detailSection}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                     <div>
-                      <p style={{ fontWeight: 600, color: 'rgba(255,255,255,0.9)', margin: 0 }}>{e.description}</p>
+                      <p style={{ fontWeight: 600, color: 'var(--home-ink, rgba(255,255,255,0.9))', margin: 0 }}>{e.description}</p>
                       {e.category && <p className={styles.muted} style={{ margin: 0, fontSize: '0.78rem' }}>{e.category}</p>}
                     </div>
-                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'rgba(255,255,255,0.85)', flexShrink: 0 }}>{fmt(e.amount)}</span>
+                    <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--home-ink, rgba(255,255,255,0.85))', flexShrink: 0 }}>{fmt(e.amount)}</span>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                     {/* Deposit */}
-                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
-                      <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Deposit</p>
+                    <div style={{ background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
+                      <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Deposit</p>
                       {e.depositAmount != null ? (
                         <>
                           <p style={{ margin: 0, fontWeight: 600 }}>{fmt(e.depositAmount)}</p>
-                          <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: depositOverdue ? '#f87171' : 'rgba(255,255,255,0.5)' }}>
+                          <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: depositOverdue ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                             Due {fmtDate(e.depositDueDate)}
                             {depositOverdue && <AlertTriangle size={11} style={{ marginLeft: 3, verticalAlign: 'middle' }} />}
                           </p>
                           {e.depositPaidAt ? (
-                            <span style={{ fontSize: '0.75rem', color: '#4ade80', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--success-light)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}>
                               <CheckCircle2 size={11} /> Paid
                             </span>
                           ) : (
@@ -542,17 +542,17 @@ export default function CoachesExpensesPage({
                     </div>
 
                     {/* Balance */}
-                    <div style={{ background: 'rgba(255,255,255,0.04)', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
-                      <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Balance</p>
+                    <div style={{ background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
+                      <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Balance</p>
                       {e.balanceAmount != null ? (
                         <>
                           <p style={{ margin: 0, fontWeight: 600 }}>{fmt(e.balanceAmount)}</p>
-                          <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: balanceOverdue ? '#f87171' : 'rgba(255,255,255,0.5)' }}>
+                          <p style={{ margin: '0.15rem 0 0', fontSize: '0.78rem', color: balanceOverdue ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
                             Due {fmtDate(e.balanceDueDate)}
                             {balanceOverdue && <AlertTriangle size={11} style={{ marginLeft: 3, verticalAlign: 'middle' }} />}
                           </p>
                           {e.balancePaidAt ? (
-                            <span style={{ fontSize: '0.75rem', color: '#4ade80', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--success-light)', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.35rem' }}>
                               <CheckCircle2 size={11} /> Paid
                             </span>
                           ) : (

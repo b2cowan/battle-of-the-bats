@@ -31,19 +31,19 @@ function fmtDate(d: string) {
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    pending:  'rgba(250,204,21,0.15)',
-    approved: 'rgba(74,222,128,0.15)',
-    denied:   'rgba(248,113,113,0.15)',
+    pending:  'color-mix(in srgb, var(--home-amber, #facc15) 15%, transparent)',
+    approved: 'color-mix(in srgb, var(--success-light) 15%, transparent)',
+    denied:   'color-mix(in srgb, var(--danger-light) 15%, transparent)',
   };
   const text: Record<string, string> = {
-    pending:  '#facc15',
-    approved: '#4ade80',
-    denied:   '#f87171',
+    pending:  'var(--home-amber, #facc15)',
+    approved: 'var(--success-light)',
+    denied:   'var(--danger-light)',
   };
   return (
     <span style={{
       background:   colors[status] ?? 'transparent',
-      color:        text[status]   ?? 'rgba(255,255,255,0.5)',
+      color:        text[status]   ?? 'var(--home-dim, rgba(255,255,255,0.5))',
       borderRadius: 6,
       padding:      '0.2rem 0.55rem',
       fontSize:     '0.75rem',
@@ -62,8 +62,8 @@ function TypeBadge({ type }: { type: string }) {
       display:      'inline-flex',
       alignItems:   'center',
       gap:          '0.3rem',
-      background:   isPay ? 'rgba(248,113,113,0.1)' : 'rgba(74,222,128,0.1)',
-      color:        isPay ? '#f87171' : '#4ade80',
+      background:   isPay ? 'color-mix(in srgb, var(--danger-light) 10%, transparent)' : 'color-mix(in srgb, var(--success-light) 10%, transparent)',
+      color:        isPay ? 'var(--danger-light)' : 'var(--success-light)',
       borderRadius: 6,
       padding:      '0.2rem 0.55rem',
       fontSize:     '0.75rem',
@@ -212,15 +212,15 @@ export default function PaymentRequestsPage({
         <div className={styles.summaryGrid} style={{ marginBottom: '1.5rem' }}>
           <div className={styles.summaryCard}>
             <span className={styles.summaryCardLabel}>Pending</span>
-            <span className={styles.summaryCardValue} style={{ color: '#facc15' }}>{pending}</span>
+            <span className={styles.summaryCardValue} style={{ color: 'var(--home-amber, #facc15)' }}>{pending}</span>
           </div>
           <div className={styles.summaryCard}>
             <span className={styles.summaryCardLabel}>Approved</span>
-            <span className={styles.summaryCardValue} style={{ color: '#4ade80' }}>{approved}</span>
+            <span className={styles.summaryCardValue} style={{ color: 'var(--success-light)' }}>{approved}</span>
           </div>
           <div className={styles.summaryCard}>
             <span className={styles.summaryCardLabel}>Denied</span>
-            <span className={styles.summaryCardValue} style={{ color: '#f87171' }}>{denied}</span>
+            <span className={styles.summaryCardValue} style={{ color: 'var(--danger-light)' }}>{denied}</span>
           </div>
         </div>
       )}
@@ -245,11 +245,11 @@ export default function PaymentRequestsPage({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.35rem' }}>
                     <TypeBadge type={r.requestType} />
                     <StatusBadge status={r.status} />
-                    <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', fontSize: '0.95rem' }}>
                       {fmt(r.amount)}
                     </span>
                   </div>
-                  <p style={{ margin: 0, color: 'rgba(255,255,255,0.8)', fontSize: '0.88rem' }}>{r.description}</p>
+                  <p style={{ margin: 0, color: 'var(--home-ink, rgba(255,255,255,0.8))', fontSize: '0.88rem' }}>{r.description}</p>
                   <p className={styles.muted} style={{ margin: '0.2rem 0 0', fontSize: '0.78rem' }}>
                     Submitted {fmtDate(r.createdAt)}
                     {r.paymentMethod && ` · ${r.paymentMethod}`}
@@ -272,7 +272,7 @@ export default function PaymentRequestsPage({
                     <button
                       type="button"
                       className={styles.btnGhost}
-                      style={{ fontSize: '0.78rem', padding: '0.25rem 0.55rem', color: '#f87171' }}
+                      style={{ fontSize: '0.78rem', padding: '0.25rem 0.55rem', color: 'var(--danger-light)' }}
                       onClick={() => handleCancel(r.id)}
                       disabled={cancelling === r.id}
                     >
@@ -283,22 +283,22 @@ export default function PaymentRequestsPage({
               </div>
 
               {expandedId === r.id && (
-                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <div style={{ marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.08))' }}>
                   {r.status === 'denied' && r.denialReason && (
                     <div style={{
-                      background:   'rgba(248,113,113,0.08)',
-                      border:       '1px solid rgba(248,113,113,0.2)',
+                      background:   'color-mix(in srgb, var(--danger-light) 8%, transparent)',
+                      border:       '1px solid color-mix(in srgb, var(--danger-light) 20%, transparent)',
                       borderRadius: 6,
                       padding:      '0.6rem 0.75rem',
                       marginBottom: r.notes ? '0.5rem' : 0,
                     }}>
-                      <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: '#f87171' }}>Denial reason:</p>
-                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'rgba(255,255,255,0.7)' }}>{r.denialReason}</p>
+                      <p style={{ margin: 0, fontSize: '0.82rem', fontWeight: 600, color: 'var(--danger-light)' }}>Denial reason:</p>
+                      <p style={{ margin: '0.25rem 0 0', fontSize: '0.82rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>{r.denialReason}</p>
                     </div>
                   )}
                   {r.notes && (
-                    <p style={{ margin: 0, fontSize: '0.82rem', color: 'rgba(255,255,255,0.6)' }}>
-                      <strong style={{ color: 'rgba(255,255,255,0.5)' }}>Notes:</strong> {r.notes}
+                    <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+                      <strong style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>Notes:</strong> {r.notes}
                     </p>
                   )}
                 </div>
@@ -320,7 +320,7 @@ export default function PaymentRequestsPage({
             <div className={styles.formGrid}>
               {/* Type picker */}
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Request Type <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label}>Request Type <span style={{ color: 'var(--danger-light)' }}>*</span></label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <button
                     type="button"
@@ -329,9 +329,9 @@ export default function PaymentRequestsPage({
                       flex: 1,
                       padding: '0.65rem 0.75rem',
                       borderRadius: 8,
-                      border: `2px solid ${formType === 'payment_to_org' ? '#f87171' : 'rgba(255,255,255,0.1)'}`,
-                      background: formType === 'payment_to_org' ? 'rgba(248,113,113,0.1)' : 'rgba(255,255,255,0.03)',
-                      color: formType === 'payment_to_org' ? '#f87171' : 'rgba(255,255,255,0.5)',
+                      border: `2px solid ${formType === 'payment_to_org' ? 'var(--danger-light)' : 'var(--home-line, rgba(255,255,255,0.1))'}`,
+                      background: formType === 'payment_to_org' ? 'color-mix(in srgb, var(--danger-light) 10%, transparent)' : 'var(--home-card, rgba(255,255,255,0.03))',
+                      color: formType === 'payment_to_org' ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))',
                       cursor: 'pointer',
                       fontSize: '0.83rem',
                       fontWeight: 600,
@@ -350,9 +350,9 @@ export default function PaymentRequestsPage({
                       flex: 1,
                       padding: '0.65rem 0.75rem',
                       borderRadius: 8,
-                      border: `2px solid ${formType === 'charge_to_org' ? '#4ade80' : 'rgba(255,255,255,0.1)'}`,
-                      background: formType === 'charge_to_org' ? 'rgba(74,222,128,0.1)' : 'rgba(255,255,255,0.03)',
-                      color: formType === 'charge_to_org' ? '#4ade80' : 'rgba(255,255,255,0.5)',
+                      border: `2px solid ${formType === 'charge_to_org' ? 'var(--success-light)' : 'var(--home-line, rgba(255,255,255,0.1))'}`,
+                      background: formType === 'charge_to_org' ? 'color-mix(in srgb, var(--success-light) 10%, transparent)' : 'var(--home-card, rgba(255,255,255,0.03))',
+                      color: formType === 'charge_to_org' ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.5))',
                       cursor: 'pointer',
                       fontSize: '0.83rem',
                       fontWeight: 600,
@@ -368,7 +368,7 @@ export default function PaymentRequestsPage({
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="pr-amount">Amount ($) <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label} htmlFor="pr-amount">Amount ($) <span style={{ color: 'var(--danger-light)' }}>*</span></label>
                 <input
                   id="pr-amount"
                   className={styles.input}
@@ -396,7 +396,7 @@ export default function PaymentRequestsPage({
               </div>
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="pr-desc">Description <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label} htmlFor="pr-desc">Description <span style={{ color: 'var(--danger-light)' }}>*</span></label>
                 <input
                   id="pr-desc"
                   className={styles.input}

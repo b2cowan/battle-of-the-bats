@@ -139,16 +139,16 @@ export default function CoachesAllocationsPage({
             </div>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>Paid</span>
-              <span className={styles.summaryCardValue} style={{ color: '#4ade80' }}>{fmt(collected)}</span>
+              <span className={styles.summaryCardValue} style={{ color: 'var(--success-light)' }}>{fmt(collected)}</span>
             </div>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>Outstanding</span>
-              <span className={styles.summaryCardValue} style={{ color: outstanding > 0 ? 'rgba(255,255,255,0.8)' : '#4ade80' }}>{fmt(outstanding)}</span>
+              <span className={styles.summaryCardValue} style={{ color: outstanding > 0 ? 'var(--home-ink, rgba(255,255,255,0.8))' : 'var(--success-light)' }}>{fmt(outstanding)}</span>
             </div>
             {overdueCount > 0 && (
-              <div className={styles.summaryCard} style={{ borderColor: 'rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.05)' }}>
-                <span className={styles.summaryCardLabel} style={{ color: '#f87171' }}>Overdue</span>
-                <span className={styles.summaryCardValue} style={{ color: '#f87171' }}>{overdueCount}</span>
+              <div className={styles.summaryCard} style={{ borderColor: 'color-mix(in srgb, var(--danger-light) 30%, transparent)', background: 'color-mix(in srgb, var(--danger-light) 5%, transparent)' }}>
+                <span className={styles.summaryCardLabel} style={{ color: 'var(--danger-light)' }}>Overdue</span>
+                <span className={styles.summaryCardValue} style={{ color: 'var(--danger-light)' }}>{overdueCount}</span>
               </div>
             )}
           </div>
@@ -173,13 +173,13 @@ export default function CoachesAllocationsPage({
                   onClick={() => setExpanded(prev => ({ ...prev, [split.id]: !prev[split.id] }))}
                 >
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                    <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', fontSize: '0.95rem' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', fontSize: '0.95rem' }}>
                       {split.allocationDescription}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
                       {fmt(split.amount)} total
                       {splitOverdue > 0 && (
-                        <span style={{ color: '#f87171', marginLeft: '0.5rem' }}>
+                        <span style={{ color: 'var(--danger-light)', marginLeft: '0.5rem' }}>
                           <AlertTriangle size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 2 }} />
                           {splitOverdue} overdue
                         </span>
@@ -187,21 +187,21 @@ export default function CoachesAllocationsPage({
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '0.82rem', color: '#4ade80' }}>{fmt(splitCollected)} paid</span>
+                    <span style={{ fontSize: '0.82rem', color: 'var(--success-light)' }}>{fmt(splitCollected)} paid</span>
                     {splitOutstanding > 0 && (
-                      <span style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>{fmt(splitOutstanding)} due</span>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{fmt(splitOutstanding)} due</span>
                     )}
                     {isOpen
-                      ? <ChevronUp size={16} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
-                      : <ChevronDown size={16} style={{ color: 'rgba(255,255,255,0.3)', flexShrink: 0 }} />
+                      ? <ChevronUp size={16} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', flexShrink: 0 }} />
+                      : <ChevronDown size={16} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', flexShrink: 0 }} />
                     }
                   </div>
                 </button>
 
                 {isOpen && (
-                  <div style={{ borderTop: '1px solid rgba(255,255,255,0.07)', padding: '1rem 1.25rem' }}>
+                  <div style={{ borderTop: '1px solid var(--home-line, rgba(255,255,255,0.07))', padding: '1rem 1.25rem' }}>
                     {split.notes && (
-                      <p style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)', marginBottom: '1rem' }}>
+                      <p style={{ fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', marginBottom: '1rem' }}>
                         {split.notes}
                       </p>
                     )}
@@ -221,15 +221,15 @@ export default function CoachesAllocationsPage({
                             const overdue = isOverdue(inst.dueDate, inst.paidAt);
                             return (
                               <tr key={inst.id} className={styles.tr}>
-                                <td className={styles.td} style={{ color: 'rgba(255,255,255,0.4)' }}>{inst.installmentNumber}</td>
+                                <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
                                 <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
-                                <td className={styles.td} style={{ color: overdue ? '#f87171' : 'rgba(255,255,255,0.65)' }}>
+                                <td className={styles.td} style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
                                   {fmtDate(inst.dueDate)}
-                                  {overdue && <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: '#f87171' }} />}
+                                  {overdue && <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
                                 </td>
                                 <td className={styles.td}>
                                   {inst.paidAt ? (
-                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: '#4ade80' }}>
+                                    <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
                                       <CheckCircle2 size={13} /> Paid {fmtDate(inst.paidAt)}
                                     </span>
                                   ) : (

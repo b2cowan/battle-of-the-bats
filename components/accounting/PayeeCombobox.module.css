@@ -11,17 +11,17 @@
 .input {
   width: 100%;
   box-sizing: border-box;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--home-card, rgba(255,255,255,0.05));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
   border-radius: 6px;
-  color: rgba(255,255,255,0.85);
+  color: var(--home-ink, rgba(255,255,255,0.85));
   font-size: 0.875rem;
   padding: 0.45rem 2rem 0.45rem 0.75rem;
   outline: none;
   transition: border-color 0.15s;
 }
 .input:focus { border-color: rgba(79,163,224,0.6); }
-.input::placeholder { color: rgba(255,255,255,0.3); }
+.input::placeholder { color: var(--home-dim, rgba(255,255,255,0.3)); }
 .input:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .chevron {
@@ -29,7 +29,7 @@
   right: 0.55rem;
   top: 50%;
   transform: translateY(-50%);
-  color: rgba(255,255,255,0.3);
+  color: var(--home-dim, rgba(255,255,255,0.3));
   pointer-events: none;
 }
 
@@ -38,8 +38,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(255,255,255,0.05);
-  border: 1px solid rgba(255,255,255,0.12);
+  background: var(--home-card, rgba(255,255,255,0.05));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
   border-radius: 6px;
   padding: 0.45rem 0.75rem;
   min-height: 2.1rem;
@@ -48,7 +48,7 @@
 .selectedName {
   flex: 1;
   font-size: 0.875rem;
-  color: rgba(255,255,255,0.85);
+  color: var(--home-ink, rgba(255,255,255,0.85));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -57,8 +57,8 @@
 .oneTimeLabel {
   font-size: 0.7rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.35);
-  background: rgba(255,255,255,0.07);
+  color: var(--home-dim, rgba(255,255,255,0.35));
+  background: var(--home-card, rgba(255,255,255,0.07));
   border-radius: 4px;
   padding: 0.1rem 0.4rem;
   flex-shrink: 0;
@@ -68,7 +68,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: rgba(255,255,255,0.35);
+  color: var(--home-dim, rgba(255,255,255,0.35));
   display: flex;
   align-items: center;
   padding: 0.15rem;
@@ -76,7 +76,7 @@
   flex-shrink: 0;
   transition: color 0.1s;
 }
-.clearBtn:hover { color: rgba(255,255,255,0.7); }
+.clearBtn:hover { color: var(--home-ink-soft, rgba(255,255,255,0.7)); }
 
 /* ── Dropdown ─────────────────────────────────────────────────────────────── */
 .dropdown {
@@ -85,8 +85,8 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: #1a1f2e;
-  border: 1px solid rgba(255,255,255,0.1);
+  background: var(--home-card, #1a1f2e);
+  border: 1px solid var(--home-line, rgba(255,255,255,0.1));
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
   overflow: hidden;
@@ -98,7 +98,7 @@
   padding: 0.35rem 0;
 }
 .section + .section {
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.06));
 }
 
 .sectionLabel {
@@ -106,7 +106,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.3);
+  color: var(--home-dim, rgba(255,255,255,0.3));
   padding: 0.3rem 0.85rem 0.15rem;
   margin: 0;
 }
@@ -119,15 +119,15 @@
   text-align: left;
   padding: 0.5rem 0.85rem;
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.75);
+  color: var(--home-ink-soft, rgba(255,255,255,0.75));
   cursor: pointer;
   transition: background 0.1s;
 }
-.option:hover { background: rgba(255,255,255,0.05); }
+.option:hover { background: var(--home-card, rgba(255,255,255,0.05)); }
 .option:disabled { opacity: 0.5; cursor: wait; }
 
 .optionAction {
-  color: rgba(255,255,255,0.5);
+  color: var(--home-dim, rgba(255,255,255,0.5));
   font-style: italic;
 }
 
@@ -138,16 +138,27 @@
 
 .saveError {
   font-size: 0.78rem;
-  color: #f87171;
+  color: var(--danger-light);
   padding: 0.15rem 0.85rem 0.35rem;
   margin: 0;
 }
 
 .empty {
   font-size: 0.82rem;
-  color: rgba(255,255,255,0.25);
+  color: var(--home-dim, rgba(255,255,255,0.25));
   padding: 0.85rem;
   margin: 0;
   text-align: center;
   font-style: italic;
+}
+
+/* ── Warm coaches portal (dev-gated) — accent focus ring ─────────────────────
+   The input's focus border is a one-off raw accent blue with no matching design token
+   (it is NOT --blueprint-blue, which resolves to a different navy). The coach-warm gate
+   darkens raw accent colors to the olive family (same rule already applied to
+   --logic-lime/--blueprint-blue elsewhere in globals.css), so give this focus ring the
+   same treatment. Purely additive — the dark rule above is untouched, so dark output
+   stays byte-identical; this block only matches under the warm + coach-preview gate. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .input:focus {
+  border-color: var(--home-olive, rgba(79,163,224,0.6));
 }

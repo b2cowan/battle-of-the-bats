@@ -93,9 +93,9 @@ function fmtMonth(yyyyMm: string): string {
 }
 
 function varianceColor(v: number): string {
-  if (v > 0.005) return '#4ade80';
-  if (v < -0.005) return '#f87171';
-  return 'rgba(255,255,255,0.6)';
+  if (v > 0.005) return 'var(--success-light)';
+  if (v < -0.005) return 'var(--danger-light)';
+  return 'var(--home-ink-soft, rgba(255,255,255,0.6))';
 }
 
 function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
@@ -130,42 +130,44 @@ function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
 
   return (
     <svg viewBox={`0 0 ${VW} ${VH}`} style={{ width: '100%', height: 'auto', display: 'block' }}>
+      {/* SVG presentation attributes can't resolve var(); colours live in inline style
+          so the warm gate reaches them. Fallbacks keep dark byte-identical. */}
       {gridLines.map((g, i) => (
         <g key={i}>
           <line x1={ML} y1={g.y} x2={ML + CW} y2={g.y}
-            stroke="rgba(255,255,255,0.06)" strokeWidth="1" />
+            style={{ stroke: 'var(--home-line, rgba(255,255,255,0.06))' }} strokeWidth="1" />
           <text x={ML - 4} y={g.y + 4} textAnchor="end" fontSize="9"
-            fill="rgba(255,255,255,0.3)">{g.label}</text>
+            style={{ fill: 'var(--home-dim, rgba(255,255,255,0.3))' }}>{g.label}</text>
         </g>
       ))}
       <line x1={ML} y1={MT + CH} x2={ML + CW} y2={MT + CH}
-        stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+        style={{ stroke: 'var(--home-line-strong, rgba(255,255,255,0.12))' }} strokeWidth="1" />
 
-      <path d={areaPath} fill="rgba(74,222,128,0.07)" />
-      <path d={budgetPath} stroke="#60a5fa" strokeWidth="2" fill="none"
+      <path d={areaPath} style={{ fill: 'color-mix(in srgb, var(--success-light) 7%, transparent)' }} />
+      <path d={budgetPath} style={{ stroke: 'var(--info-light)' }} strokeWidth="2" fill="none"
         strokeDasharray="5,3" opacity="0.7" />
-      <path d={actualPath} stroke="#4ade80" strokeWidth="2" fill="none" />
+      <path d={actualPath} style={{ stroke: 'var(--success-light)' }} strokeWidth="2" fill="none" />
 
       {data.map((d, i) => (
-        <circle key={i} cx={xPos(i)} cy={yPos(d.cumActual)} r="3" fill="#4ade80" />
+        <circle key={i} cx={xPos(i)} cy={yPos(d.cumActual)} r="3" style={{ fill: 'var(--success-light)' }} />
       ))}
 
       {data.map((d, i) => {
         if (n > 8 && i % 2 !== 0) return null;
         return (
           <text key={i} x={xPos(i)} y={VH - 6} textAnchor="middle" fontSize="9"
-            fill="rgba(255,255,255,0.35)">
+            style={{ fill: 'var(--home-dim, rgba(255,255,255,0.35))' }}>
             {fmtMonth(d.month)}
           </text>
         );
       })}
 
       <g transform={`translate(${ML + 8},${MT + 8})`}>
-        <line x1="0" y1="6" x2="18" y2="6" stroke="#60a5fa" strokeWidth="2"
+        <line x1="0" y1="6" x2="18" y2="6" style={{ stroke: 'var(--info-light)' }} strokeWidth="2"
           strokeDasharray="5,3" opacity="0.7" />
-        <text x="22" y="10" fontSize="9" fill="rgba(255,255,255,0.45)">Budgeted (cumulative)</text>
-        <line x1="132" y1="6" x2="150" y2="6" stroke="#4ade80" strokeWidth="2" />
-        <text x="154" y="10" fontSize="9" fill="rgba(255,255,255,0.45)">Actual (cumulative)</text>
+        <text x="22" y="10" fontSize="9" style={{ fill: 'var(--home-dim, rgba(255,255,255,0.45))' }}>Budgeted (cumulative)</text>
+        <line x1="132" y1="6" x2="150" y2="6" style={{ stroke: 'var(--success-light)' }} strokeWidth="2" />
+        <text x="154" y="10" fontSize="9" style={{ fill: 'var(--home-dim, rgba(255,255,255,0.45))' }}>Actual (cumulative)</text>
       </g>
     </svg>
   );
@@ -427,7 +429,7 @@ export default function BudgetVsActualPage({
               <span className={styles.summaryLabel}>Headroom</span>
               <span
                 className={styles.summaryValue}
-                style={{ color: data.headroom >= 0 ? '#4ade80' : '#f87171', fontSize: '1.45rem' }}
+                style={{ color: data.headroom >= 0 ? 'var(--success-light)' : 'var(--danger-light)', fontSize: '1.45rem' }}
               >
                 {data.headroom < 0 ? '-' : '+'}{fmt(data.headroom)}
               </span>
@@ -460,7 +462,7 @@ export default function BudgetVsActualPage({
                 </div>
                 <div className={styles.duesStat}>
                   <span className={styles.summaryLabel}>Collected</span>
-                  <span className={styles.duesValue} style={{ color: '#4ade80' }}>
+                  <span className={styles.duesValue} style={{ color: 'var(--success-light)' }}>
                     {fmt(data.duesCollection.collected)}
                   </span>
                 </div>
@@ -468,7 +470,7 @@ export default function BudgetVsActualPage({
                   <span className={styles.summaryLabel}>Outstanding</span>
                   <span
                     className={styles.duesValue}
-                    style={{ color: data.duesCollection.outstanding > 0 ? '#f87171' : undefined }}
+                    style={{ color: data.duesCollection.outstanding > 0 ? 'var(--danger-light)' : undefined }}
                   >
                     {fmt(data.duesCollection.outstanding)}
                   </span>
@@ -550,8 +552,8 @@ export default function BudgetVsActualPage({
                                 <span className={styles.lineDesc}>{line.description}</span>
                               </div>
                               <span className={styles.lineNum}>{fmt(line.totalEstimated)}</span>
-                              <span className={styles.lineNum} style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
-                              <span className={styles.lineNum} style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
+                              <span className={styles.lineNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
+                              <span className={styles.lineNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
                             </div>
 
                             {line.hasPeriods && expandedLines.has(line.budgetLineId) && (
@@ -571,13 +573,13 @@ export default function BudgetVsActualPage({
                                       <span className={styles.periodNum}>{fmt(p.estimated)}</span>
                                       <span
                                         className={styles.periodNum}
-                                        style={{ color: p.actual > 0 ? '#4ade80' : 'rgba(255,255,255,0.25)' }}
+                                        style={{ color: p.actual > 0 ? 'var(--success-light)' : 'var(--home-dim, rgba(255,255,255,0.25))' }}
                                       >
                                         {p.actual > 0 ? fmt(p.actual) : '—'}
                                       </span>
                                       <span
                                         className={styles.periodNum}
-                                        style={{ color: p.actual > 0 ? varianceColor(variance) : 'rgba(255,255,255,0.25)' }}
+                                        style={{ color: p.actual > 0 ? varianceColor(variance) : 'var(--home-dim, rgba(255,255,255,0.25))' }}
                                       >
                                         {p.actual > 0
                                           ? `${variance > 0.005 ? '+' : variance < -0.005 ? '-' : ''}${fmt(Math.abs(variance))}`
@@ -605,8 +607,8 @@ export default function BudgetVsActualPage({
                       <span className={styles.categoryName}>Non-itemized buffer</span>
                     </div>
                     <span className={styles.catNum}>{fmt(data.buffer)}</span>
-                    <span className={styles.catNum} style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
-                    <span className={styles.catNum} style={{ color: 'rgba(255,255,255,0.25)' }}>—</span>
+                    <span className={styles.catNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
+                    <span className={styles.catNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
                   </div>
                 </div>
               )}

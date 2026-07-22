@@ -352,7 +352,7 @@ export default function CoachesAccountingPage({
             <div className={styles.moneyCards}>
               {card(
                 `${base}/accounting/dues`,
-                <Users size={20} style={{ color: '#a855f7' }} />,
+                <Users size={20} style={{ color: 'var(--home-plum, #a855f7)' }} />,
                 'Player Dues',
                 'Installment schedules, payments, credits, reminders',
                 summary.dues.schedulesCount > 0 ? (
@@ -403,7 +403,7 @@ export default function CoachesAccountingPage({
             <div className={styles.moneyCards}>
               {card(
                 `${base}/accounting/expenses`,
-                <Receipt size={20} style={{ color: '#f97316' }} />,
+                <Receipt size={20} style={{ color: 'var(--home-rust, #f97316)' }} />,
                 'Expenses & Tournament Payables',
                 'Log spending by category, track tournament deposits and balances',
                 summary.expenses.loggedCount > 0 ? (

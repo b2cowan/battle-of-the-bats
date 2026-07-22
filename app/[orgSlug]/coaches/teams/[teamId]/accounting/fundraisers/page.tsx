@@ -166,9 +166,9 @@ export default function FundraisersListPage({
             >
               <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', flex: 1, minWidth: 0 }}>
-                  <TrendingUp size={18} style={{ color: '#4ade80', flexShrink: 0, marginTop: '2px' }} />
+                  <TrendingUp size={18} style={{ color: 'var(--success-light)', flexShrink: 0, marginTop: '2px' }} />
                   <div style={{ minWidth: 0 }}>
-                    <p style={{ fontWeight: 700, color: 'rgba(255,255,255,0.9)', margin: '0 0 0.15rem', fontSize: '0.97rem' }}>
+                    <p style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', margin: '0 0 0.15rem', fontSize: '0.97rem' }}>
                       {f.name}
                     </p>
                     {f.description && (
@@ -183,22 +183,22 @@ export default function FundraisersListPage({
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', flexShrink: 0 }}>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Raised</p>
-                    <p style={{ margin: 0, fontWeight: 700, color: '#4ade80', fontSize: '1rem' }}>{fmt(f.totalRaised)}</p>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.35))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Raised</p>
+                    <p style={{ margin: 0, fontWeight: 700, color: 'var(--success-light)', fontSize: '1rem' }}>{fmt(f.totalRaised)}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Team Keeps</p>
-                    <p style={{ margin: 0, fontWeight: 700, color: 'rgba(255,255,255,0.8)', fontSize: '1rem' }}>{fmt(f.teamNet)}</p>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.35))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Team Keeps</p>
+                    <p style={{ margin: 0, fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.8))', fontSize: '1rem' }}>{fmt(f.teamNet)}</p>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Credits</p>
-                    <p style={{ margin: 0, fontWeight: 700, color: '#a855f7', fontSize: '1rem' }}>{fmt(f.totalCredits)}</p>
+                    <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--home-dim, rgba(255,255,255,0.35))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Credits</p>
+                    <p style={{ margin: 0, fontWeight: 700, color: 'var(--home-plum, #a855f7)', fontSize: '1rem' }}>{fmt(f.totalCredits)}</p>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
                     <span className={`${styles.badge} ${f.isActive ? styles.badgeActive : styles.badgeArchived}`}>
                       {f.isActive ? 'Active' : 'Closed'}
                     </span>
-                    <ChevronRight size={16} style={{ color: 'rgba(255,255,255,0.2)' }} />
+                    <ChevronRight size={16} style={{ color: 'var(--home-dim, rgba(255,255,255,0.2))' }} />
                   </div>
                 </div>
               </div>
@@ -250,7 +250,7 @@ export default function FundraisersListPage({
                     onChange={e => setFormRebate(e.target.value)}
                     placeholder="0"
                   />
-                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
+                  <p style={{ margin: 0, fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>
                     % of each player's earnings credited to their dues
                   </p>
                 </div>
