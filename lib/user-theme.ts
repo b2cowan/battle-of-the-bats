@@ -6,9 +6,11 @@
  * access is call-time guarded.
  *
  * The theme drives a SINGLE attribute — `data-user-theme` on <html> — never the org/tournament
- * `data-color-mode` authority (M2 precedence: org brand always wins on branded surfaces). Absent
- * attribute = each shell's default (consumer shell warm, coaches portal dark), so a non-chooser
- * sees exactly today's surfaces. Only an explicit `dark`/`warm` is ever stored or set.
+ * `data-color-mode` authority (M2 precedence: org brand always wins on branded surfaces). WARM is
+ * the platform default: the no-flash script sets the attribute to `warm` for everyone except an
+ * explicit stored `dark`, so a non-chooser sees warm on both the consumer app and the coaches
+ * workspace. Only an explicit `dark`/`warm` is ever STORED (the account/device preference); the
+ * attribute itself is always present after the no-flash script runs.
  */
 
 export type UserTheme = 'dark' | 'warm';

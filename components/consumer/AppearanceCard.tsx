@@ -79,11 +79,12 @@ export default function AppearanceCard({ signedIn }: { signedIn: boolean }) {
           );
         })}
       </div>
-      {/* Copy per design_decisions TH-5 (release rule): the picker must NOT promise the coaches
-          workspace until its warm coverage ships as one public release. Amended from the round-1
-          frame's "…app and coaches workspace" accordingly. */}
+      {/* Copy per design_decisions TH-5 §4: the warm coaches portal has shipped as one public
+          release, so the picker now names the coaches workspace (Warm is the default). Tournament
+          pages still ignore the personal theme — org brand always wins there (M2). */}
       <p className={styles.note}>
-        Applies to your FieldLogicHQ app. Tournament pages always show the organizer&rsquo;s colors.
+        Applies to your FieldLogicHQ app and coaches workspace. Tournament pages always show the
+        organizer&rsquo;s colors.
       </p>
     </section>
   );

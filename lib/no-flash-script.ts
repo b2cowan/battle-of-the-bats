@@ -9,7 +9,8 @@
  *
  * Two attributes today:
  *   - data-density     (fl_admin_density → 'comfortable' | 'compact'; coarse-pointer default)
- *   - data-user-theme  (fl_user_theme → 'dark' | 'warm'; ABSENT = each shell's default)
+ *   - data-user-theme  (fl_user_theme → 'dark' | 'warm'; WARM is the platform default — the
+ *     attribute is always set to 'warm' unless the user explicitly stored 'dark')
  *
  * The keys mirror STORAGE_KEY (lib/admin-density) and THEME_STORAGE_KEY (lib/user-theme). It is a
  * raw string (an inline script can't import modules), kept minimal + fully try/caught so blocked
@@ -22,7 +23,9 @@ export const NO_FLASH_SCRIPT =
   "var dk='fl_admin_density',dv=null;try{dv=localStorage.getItem(dk);}catch(e){}" +
   "if(dv!=='comfortable'&&dv!=='compact'){dv=(window.matchMedia&&window.matchMedia('(pointer: coarse)').matches)?'comfortable':'compact';}" +
   "document.documentElement.setAttribute('data-density',dv);" +
-  // User theme: set ONLY on an explicit stored choice, so non-choosers keep the shell default.
+  // User theme: WARM is the platform default — set 'dark' only on an explicit stored 'dark',
+  // otherwise 'warm'. (The attribute is always present so both shells default warm; the coaches
+  // portal warms via its marker + this attribute, the consumer shell's dark override never fires.)
   "var tk='fl_user_theme',tv=null;try{tv=localStorage.getItem(tk);}catch(e){}" +
-  "if(tv==='dark'||tv==='warm'){document.documentElement.setAttribute('data-user-theme',tv);}" +
+  "document.documentElement.setAttribute('data-user-theme',tv==='dark'?'dark':'warm');" +
   "}catch(e){}})();";
