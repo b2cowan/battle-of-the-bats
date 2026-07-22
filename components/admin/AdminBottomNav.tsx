@@ -7,13 +7,14 @@ import {
   LogOut, X, ChevronRight, ChevronDown,
   LayoutGrid, CalendarDays, UserCheck,
   ExternalLink, FileText, MessageSquarePlus, Globe, Download,
+  Home, MessageCircle, User,
   type LucideIcon,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { isStandalonePWA } from '@/lib/device';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
+import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
@@ -64,7 +65,11 @@ export default function AdminBottomNav() {
   const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
   const isModule      = isRepTeams || isHouseLeague || pathname.startsWith(`${base}/org`) || pathname.startsWith(`${base}/public-site`) || pathname.startsWith(`${base}/accounting`);
-  const hasCurrentOrgCoachAccess = useCurrentOrgCoachAccess(currentOrgSlug, isRepTeams);
+  // Enabled for every non-canceled admin so the coach-view door + section-aware Coaches tab
+  // resolve regardless of which section they're browsing (P3-2). Returns rep + Basic presence;
+  // coachDoorFor centralizes the show/href rule (shared with the desktop sidebar).
+  const coachAccess = useCurrentOrgCoachAccess(currentOrgSlug, currentOrg?.subscriptionStatus !== 'canceled');
+  const coachDoor = coachDoorFor(coachAccess, currentOrgSlug);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
 
   // Derive sections from shared config so labels stay in sync with the desktop sidebar.
@@ -178,7 +183,7 @@ export default function AdminBottomNav() {
   const modulePrimaryTabs = isRepTeams
     ? [
         { href: `${base}/rep-teams`,   icon: Users,      label: 'Rep Teams'  },
-        ...(hasCurrentOrgCoachAccess
+        ...(coachAccess.hasRepAccess
           ? [{ href: `/${orgSlug}/coaches`, icon: UserCheck, label: 'Coaches' }]
           : []),
         { href: base,                  icon: LayoutGrid, label: 'Hub'        },
@@ -332,6 +337,31 @@ export default function AdminBottomNav() {
 
             <div className={styles.dropSectionLabel}>Admin</div>
             {dropNavItems(adminMore)}
+
+            <div className={styles.dropDivider} />
+
+            {/* "You" — the signed-in person's own global doors: their coach view (P3-2) and their
+                consumer Home/Chat/Account (P3-3). A single-org admin on mobile otherwise has no way
+                to reach their own inbox/account from inside the admin shell (review B11). */}
+            <div className={styles.dropSectionLabel}>You</div>
+            {[
+              ...(coachDoor.show ? [{ id: 'coaches-portal', href: coachDoor.href, icon: UserCheck, label: 'Coaches Portal' }] : []),
+              { id: 'home', href: '/discover', icon: Home, label: 'Home' },
+              { id: 'chat', href: '/chat', icon: MessageCircle, label: 'Chat' },
+              { id: 'account', href: '/account', icon: User, label: 'Account' },
+            ].map(({ id, href, icon: Icon, label }) => (
+              <Link
+                key={id}
+                className={styles.dropItem}
+                href={href}
+                onClick={() => setMoreOpen(false)}
+                role="menuitem"
+                id={`admin-mob-${id}`}
+              >
+                <Icon size={17} />
+                <span>{label}</span>
+              </Link>
+            ))}
 
             <div className={styles.dropDivider} />
 

@@ -2,7 +2,7 @@
 import { Fragment } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp } from 'lucide-react';
+import { ArrowLeft, Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useCoaches } from '@/lib/coaches-context';
 import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
@@ -55,7 +55,10 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const { assignments } = useCoaches();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole } = useOrg();
+  // "Back to admin" — only for a coach who also administers this org (seeded from the layout's
+  // membership role; a coach-only user has no admin role, so no door). Review P3-4.
+  const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
   const chatUnread = useChatUnread();
 
   async function handleSignOut() {
@@ -209,6 +212,12 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
           Help
           <ReleaseDot />
         </Link>
+        {isOrgAdmin && (
+          <Link href={`/${orgSlug}/admin`} className={styles.sidebarItem}>
+            <Shield size={14} />
+            Back to admin
+          </Link>
+        )}
         <button
           type="button"
           onClick={handleSignOut}

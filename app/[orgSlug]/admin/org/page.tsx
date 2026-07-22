@@ -8,7 +8,9 @@ export default function OrgAdminHub() {
   const { currentOrg, userRole, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin/org`;
   const adminBase = `/${currentOrg?.slug ?? ''}/admin`;
-  const hasCurrentOrgCoachAccess = useCurrentOrgCoachAccess(
+  // Rep-only here: the "My Coaches Portal" tile opens the paid team workspace assigned to the
+  // admin in THIS org, so it gates on rep access (not the free-coach signal the shell doors use).
+  const coachAccess = useCurrentOrgCoachAccess(
     currentOrg?.slug,
     Boolean(userRole === 'owner' || userRole === 'admin'),
   );
@@ -53,7 +55,7 @@ export default function OrgAdminHub() {
         icon: Link2,
         href: `${base}/coaches-portal-links`,
       },
-      ...(hasCurrentOrgCoachAccess ? [{
+      ...(coachAccess.hasRepAccess ? [{
         label: 'My Coaches Portal',
         desc: 'Open the team workspace assigned to you in this organization',
         icon: UserCheck,

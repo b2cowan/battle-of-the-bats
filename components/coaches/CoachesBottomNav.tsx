@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, MessageSquare, Trophy,
   Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
-  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered, TrendingUp,
+  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered, TrendingUp, Shield,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
@@ -54,10 +54,13 @@ const ALL_MORE_KEYS = MORE_SECTIONS.flatMap(s => s.items.map(i => i.key));
 export default function CoachesBottomNav() {
   const pathname = usePathname();
   const router   = useRouter();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole } = useOrg();
   const { assignments } = useCoaches();
   const orgSlug  = currentOrg?.slug ?? '';
   const base     = `/${orgSlug}/coaches`;
+  // "Back to admin" — only for a coach who also administers this org (seeded from the layout's
+  // membership role; a coach-only user has no admin role, so no door). Review P3-4.
+  const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
 
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
@@ -246,6 +249,18 @@ export default function CoachesBottomNav() {
               <span>Help</span>
               <ChevronRight size={14} className={styles.dropChevron} />
             </Link>
+            {isOrgAdmin && (
+              <Link
+                href={`/${orgSlug}/admin`}
+                className={styles.dropItem}
+                role="menuitem"
+                id="coaches-mob-back-to-admin"
+                onClick={() => setMoreOpen(false)}
+              >
+                <Shield size={17} />
+                <span>Back to admin</span>
+              </Link>
+            )}
             <button
               className={`${styles.dropItem} ${styles.dropLogout}`}
               onClick={handleLogout}

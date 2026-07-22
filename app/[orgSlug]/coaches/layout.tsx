@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getAuthContext } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import type { OrgRole } from '@/lib/types';
 import { OrgProvider } from '@/lib/org-context';
 import { CoachesProvider } from '@/lib/coaches-context';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
@@ -41,13 +43,25 @@ export default async function CoachesLayout({
     redirect(`/${authCtx.org.slug}/coaches`);
   }
 
+  // The viewer's org-membership role (null when they're a coach but NOT org staff) — seeded into
+  // OrgProvider so the portal can show a "Back to admin" door only to admin-coaches (P3-4). Read
+  // separately from the auth gate on purpose: a coach-only user has no membership row and must
+  // still reach the portal (getAuthContextWithRole would null them out and redirect to login).
+  const { data: membership } = await supabaseAdmin
+    .from('organization_members')
+    .select('role')
+    .eq('organization_id', authCtx.org.id)
+    .eq('user_id', authCtx.user.id)
+    .maybeSingle();
+  const initialUserRole = (membership?.role as OrgRole | undefined) ?? null;
+
   const assignments = await getCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id);
 
   if (assignments.length === 0) {
     const { name: orgName, contactEmail } = authCtx.org;
     const isTeamWorkspace = isTeamWorkspaceOrg(authCtx.org);
     return (
-      <OrgProvider initialOrg={authCtx.org}>
+      <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole}>
         <div className={styles.notAssigned}>
           <h2>{isTeamWorkspace ? 'Coaches Portal not ready' : 'Not assigned to any teams'}</h2>
           <p>
@@ -75,7 +89,7 @@ export default async function CoachesLayout({
     // layout). Without this, OrgProvider fetches /api/org-context with no slug and a multi-org
     // user resolves to their DEFAULT org, not this team workspace — which mislabeled the sidebar
     // and scoped the notification bell to the wrong org (found 2026-07-13).
-    <OrgProvider initialOrg={authCtx.org}>
+    <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole}>
       <CoachesProvider orgSlug={orgSlug}>
         {/* Hosts the in-context "?" help slide-over for the team work pages (drawer +
             guide content load lazily on first click — no bundle cost until used). */}

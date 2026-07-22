@@ -18,7 +18,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
-import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
+import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useHasMultipleWorkspaces } from '@/lib/use-has-multiple-workspaces';
 import { getBillingHref, isTournamentTier, getNotificationSettingsHref } from '@/lib/billing-urls';
 import { isWithinEventDates } from '@/lib/tournament-phase';
@@ -119,10 +119,11 @@ export default function AdminSidebar() {
   const canSeeRepTeams = userRole
     ? canUseModule('module_rep_teams')
     : false;
-  const hasCurrentOrgCoachAccess = useCurrentOrgCoachAccess(
-    currentOrgSlug,
-    Boolean(canSeeRepTeams && !isCanceled),
-  );
+  // Enabled for ALL non-canceled admins (not just rep orgs) so a free-tier owner who also
+  // coaches gets a coach-view door too (P3-2). The hook returns both rep + Basic presence;
+  // coachDoorFor centralizes the show/href rule (shared with the mobile nav).
+  const coachAccess = useCurrentOrgCoachAccess(currentOrgSlug, !isCanceled);
+  const coachDoor = coachDoorFor(coachAccess, currentOrgSlug);
   // "Single-org by default" (2026-06-19): only surface the workspace switcher when the user
   // actually has more than one workspace; single-org admins never see it.
   const hasMultipleWorkspaces = useHasMultipleWorkspaces();
@@ -427,7 +428,7 @@ export default function AdminSidebar() {
               {navLink('rt-past', Archive, 'Past Seasons',
                 `${base}/rep-teams/past`,
                 pathname.startsWith(`${base}/rep-teams/past`))}
-              {hasCurrentOrgCoachAccess && navLink('rt-coaches-portal', ExternalLink, 'Coaches Portal',
+              {coachAccess.hasRepAccess && navLink('rt-coaches-portal', ExternalLink, 'Coaches Portal',
                 `/${currentOrg?.slug ?? ''}/coaches`,
                 pathname.startsWith(`/${currentOrg?.slug ?? ''}/coaches`))}
             </nav>
@@ -617,8 +618,8 @@ export default function AdminSidebar() {
               <Home size={15} /> Back to Site
             </Link>
           )}
-          {hasCurrentOrgCoachAccess && currentOrgSlug && (
-            <Link href={`/${currentOrgSlug}/coaches`} className={styles.footerLink} id="admin-coaches-portal">
+          {coachDoor.show && (
+            <Link href={coachDoor.href} className={styles.footerLink} id="admin-coaches-portal">
               <Users2 size={15} /> Coaches Portal
             </Link>
           )}

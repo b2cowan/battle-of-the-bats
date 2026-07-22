@@ -43,6 +43,20 @@ const orgHelp: HelpPageContent = {
           <p>Owners can grant or revoke individual capabilities on any member via <strong>Members → Manage</strong>. This lets you fine-tune access without changing someone's base role.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-switch-admin-coach-view',
+          question: 'I run the tournament and also coach a team — how do I move between admin and my coach view?',
+          answerText: 'If you are an owner or admin who also coaches, the admin area shows a Coaches Portal door (in the desktop sidebar and, on mobile, under More → You) that opens your coach view. From inside your coaches portal, a Back to admin link returns you to the admin area. On mobile, the admin More menu also has a You section with Home, Chat, and Account so you can reach your own inbox and account without leaving admin. A member with only the Coach role still cannot open the admin panel.',
+          keywords: ['coaches portal door', 'back to admin', 'coach view', 'switch admin coach', 'both admin and coach', 'run tournament and coach', 'reach chat from admin', 'account from admin'],
+          answer: (
+            <>
+              <p>If you&rsquo;re an <strong>owner</strong> or <strong>admin</strong> who also coaches, the admin area shows a <strong>Coaches Portal</strong> door (in the desktop sidebar footer, and on mobile under <strong>More → You</strong>) that opens your coach view. From inside your coaches portal, a <strong>Back to admin</strong> link brings you back.</p>
+              <p>On mobile, that same admin <strong>More</strong> menu has a <strong>You</strong> section with <strong>Home</strong>, <strong>Chat</strong>, and <strong>Account</strong>, so you can reach your own inbox and account without leaving admin. A member with <em>only</em> the Coach role still can&rsquo;t open the admin panel — these doors appear only when the same account holds both.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-review-team-link-request',

@@ -15,6 +15,10 @@
 
 /* ── Cache config ──────────────────────────────────────────────────────────── */
 
+// v8: Tournament Seam P3 (P3-1) — signed-in (authed) navigations now fall back to the branded
+//     offline shell instead of the browser's raw error page. Authed HTML is STILL never cached
+//     (offline.html is a fixed generic page — no per-user data), so the shared-device PII rule is
+//     intact; only the offline *fallback* is new. Bump forces a clean SW refresh.
 // v7: Tournament Seam P1 (WI-2) — notificationclick now NAVIGATES an already-open tab to the
 //     full deep-link target (?room= / ?gameId=) instead of only focusing it by pathname, so a
 //     chat/score push lands in the right room/game even when the app is already open. Bump forces
@@ -30,7 +34,7 @@
 //     had been cached in the shared data cache (/review 2026-07-15).
 // v3: unified-app Phase 0 — clean refresh of pages that referenced old
 //     per-tournament/scorekeeper manifests.
-const CACHE_VERSION = 'v7';
+const CACHE_VERSION = 'v8';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
@@ -135,6 +139,16 @@ function networkFirstData(request) {
   });
 }
 
+// The branded offline shell (or a plain 503 if it somehow isn't cached) — the shared tail of
+// every navigation's offline path.
+function offlineFallback() {
+  return caches.match(OFFLINE_URL).then(function (offline) {
+    return offline || new Response('You are offline.', {
+      status: 503, headers: { 'Content-Type': 'text/plain' },
+    });
+  });
+}
+
 function navigationHandler(request, pathname) {
   return fetch(request).then(function (res) {
     // Keep a copy of good, non-redirected public tournament pages for offline use.
@@ -159,15 +173,20 @@ function navigationHandler(request, pathname) {
     // the branded offline fallback.
     return caches.open(PAGES_CACHE).then(function (cache) {
       return cache.match(request, { ignoreVary: true }).then(function (cachedPage) {
-        if (cachedPage) return cachedPage;
-        return caches.match(OFFLINE_URL).then(function (offline) {
-          return offline || new Response('You are offline.', {
-            status: 503, headers: { 'Content-Type': 'text/plain' },
-          });
-        });
+        return cachedPage || offlineFallback();
       });
     });
   });
+}
+
+// Authed/sensitive navigations (coaches/admin/scorekeeper/…): network-only, but on an offline
+// failure serve the branded offline shell instead of the browser's raw error page. The response
+// is NEVER cached (offline.html is a fixed generic page — no per-user data), so a signed-in
+// screen can never be replayed to the next person on a shared device (P3-1).
+function navigationOfflineOnly(request) {
+  return fetch(request).then(function (res) {
+    return res; // pass through live (incl. redirects) — never cached
+  }).catch(offlineFallback);
 }
 
 /* ── Install / activate ────────────────────────────────────────────────────── */
@@ -213,20 +232,26 @@ self.addEventListener('fetch', function (event) {
     return;
   }
 
-  // 2. Sensitive/authed/mutation traffic → never intercept (straight to network).
-  if (isNeverCache(pathname)) return;
-
-  // 3. Content-hashed static + icons → cache-first.
+  // 2. Content-hashed static + icons → cache-first (safe regardless of auth).
   if (isStaticAsset(pathname)) {
     event.respondWith(cacheFirst(request, SHELL_CACHE));
     return;
   }
 
-  // 4. Page navigations → network-first with an offline page/fallback.
+  // 3. Page navigations → branded offline fallback for EVERY in-app screen.
+  //    Authed/sensitive routes get the offline shell too (P3-1) but are NEVER cached (no PII
+  //    stored); only public tournament pages keep a last-good copy for offline "last scores".
   if (request.mode === 'navigate') {
-    event.respondWith(navigationHandler(request, pathname));
+    event.respondWith(
+      isNeverCache(pathname)
+        ? navigationOfflineOnly(request)
+        : navigationHandler(request, pathname),
+    );
     return;
   }
+
+  // 4. Sensitive/authed/mutation NON-navigation traffic (subresources, API) → never intercept.
+  if (isNeverCache(pathname)) return;
 
   // 5. Everything else → default (network).
 });
