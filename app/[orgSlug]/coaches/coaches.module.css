@@ -1919,7 +1919,7 @@
   border-radius: var(--radius-sm);
   cursor: pointer;
 }
-.awardEmojiPickBtn:hover { border-color: var(--primary); }
+.awardEmojiPickBtn:hover { border-color: var(--home-olive, var(--primary)); }
 .awardEmojiGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.4rem; }
 .awardEmojiOpt {
   font-size: 1.3rem;
@@ -2987,7 +2987,7 @@
 .rsvpOption {
   display: inline-flex; align-items: center; gap: 0.35rem;
   min-height: 38px; padding: 0.4rem 0.7rem; border-radius: 8px;
-  border: 1px solid var(--white-10); background: rgba(255,255,255,0.03);
+  border: 1px solid var(--white-10); background: var(--home-card, rgba(255,255,255,0.03));
   color: var(--white-70); font-size: 0.82rem; font-weight: 600; cursor: pointer;
 }
 .rsvpOption svg { color: var(--home-dim, rgba(255,255,255,0.5)); }
@@ -4100,3 +4100,22 @@
    are invisible on paper). The active chip keeps its inline event-color ring. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .eventTypeOption { border-color: var(--home-line-strong); color: var(--home-ink); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .eventTypeOption:hover { background: var(--home-olive-soft); }
+
+/* ── Warm coaches portal (TH-5) — org-vs-own tag/money chips ──────────────────
+   The bespoke chip palette uses literal pastel text (--tag-*-fg, tuned for near-black chips) that goes
+   invisible on cream, and its org-chip tints ride --blueprint-blue-rgb which the warm gate remaps to
+   OLIVE — collapsing the org(blue)-vs-own(lime) distinction. Restore both: legible dark text (org→warm
+   blue, own→olive) and a warm-BLUE tint for org chips so they stay distinct from the olive own chips. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachesShell {
+  --tag-org-fg: var(--home-blue);
+  --tag-org-active-bg: var(--home-blue);
+  --tag-own-fg: var(--home-olive);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tagComboChipOrg,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyTagChipOrg {
+  background: rgba(var(--home-blue-rgb), 0.12);
+  border-color: rgba(var(--home-blue-rgb), 0.40);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipOrg {
+  border-color: rgba(var(--home-blue-rgb), 0.45);
+}

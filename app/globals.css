@@ -598,6 +598,24 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:hover {
   filter: none;
 }
 
+/* Warm outline button (.btn-outline) — its text already warms (--primary-light→olive) but its border
+   stays platform navy (--primary is not remapped) and its hover fill is navy-faint. Pair the border to
+   the olive text and use an olive-soft hover wash so it reads as a coherent olive outline on cream. */
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline {
+  border-color: var(--home-olive);
+}
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:hover {
+  background: var(--home-olive-soft);
+  box-shadow: none;
+}
+
+/* Warm card hover — the global .card hover borders in platform navy; soften to a warm hairline + drop
+   the cold blue glow so hovering a card on cream doesn't flash a navy edge. */
+html[data-user-theme="warm"] [data-coach-warm-enabled] .card:hover {
+  border-color: var(--home-line-strong);
+  box-shadow: var(--highlight-top);
+}
+
 /* ─── FieldLogic HUD Utilities ──────────────────────────────────────────────── */
 
 .hud-panel {
