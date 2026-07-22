@@ -11,11 +11,13 @@
      search bar) offset their own sticky position by this so they sit flush
      beneath it. Custom properties cascade regardless of CSS-module scoping. */
   --consumer-top-h: calc(3rem + env(safe-area-inset-top, 0px));
-  /* Exact rendered height of .bottomNav below (71px) — keep in sync if the tab
-     icon/label sizing changes. Descendants that must stop flush above the nav
-     (e.g. the Chat tab's fixed-position conversation view) offset by this
-     instead of guessing, so the two can never drift apart. */
-  --consumer-bottom-h: calc(4.4375rem + env(safe-area-inset-bottom, 0px));
+  /* Rendered height of .bottomNav below — pinned to the codebase-wide 72px
+     (--bottom-nav-height convention) so the bar is byte-identical in height and
+     position to the tournament-route bar (.bottomNavTournament) and never jumps
+     when navigating Home ⇄ tournament. Tab content renders 71px top-aligned; the
+     spare 1px sits at the bottom edge. Descendants that must stop flush above
+     the nav (e.g. the Chat tab's fixed conversation view) offset by this. */
+  --consumer-bottom-h: calc(4.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* ── Top bar (all sizes): wordmark left; inline links right on desktop ─────────── */
@@ -225,24 +227,25 @@
 
   /* ── Tournament-route global bar (Unified Home IA · Phase 5) ──
      The persistent Home·Scores·Chat·Account bar on public tournament pages. It is
-     root-mounted (no .shell ancestor), so --consumer-bottom-h is unavailable — set
-     an explicit COMPACT, safe-area-aware height instead, sized to hold the P0-2
-     scrolled-chrome floor (≤26% on a 667px viewport) while occupying the retired
-     tournament bar's slot. The 54px tab centres in the 56px bar (tap target stays
-     ≥44px). NEUTRAL skin: the tournament :root override drives the tokens (dark
-     event → dark bar, light event → light bar) with no warm classes. Height reads the
-     canonical --bottom-nav-height (the tournament layout publishes 3.5rem/56px on these
-     routes), so the bar, the page clearance, and the MyTeamDock / PoweredBy / banner /
-     install offsets all key off ONE number — no 56-vs-72 drift, dock sits flush again. */
+     root-mounted (no .shell ancestor), so --consumer-bottom-h is unavailable — set an
+     explicit safe-area-aware height instead. UNIFIED with the main consumer shell: the
+     tournament layout publishes --bottom-nav-height: 4.5rem (72px) here, and the tabs are
+     top-aligned with the same 0.5rem padding as .bottomNav, so the persistent bar reads as
+     the SAME app chrome on tournament routes as on Chat/Discover/Scores/Account (a bottom
+     bar that visibly changed height/position between surfaces broke the one-app frame).
+     NEUTRAL skin: the tournament :root override drives the tokens (dark event → dark bar,
+     light event → light bar) with no warm classes. Height reads the canonical
+     --bottom-nav-height, so the bar, the page clearance, and the MyTeamDock / PoweredBy /
+     banner / install offsets all key off ONE number — no drift, dock sits flush. */
   .bottomNavTournament {
     /* min-height, not height, so the bar can grow if a large OS text setting makes the
-       ~54px tab taller than the 56px content-box — avoids a 1–2px label clip; normal
-       fonts render at the nominal 56px the chrome floor was measured against. */
+       tab taller than the 72px content-box — avoids a label clip; normal fonts render at
+       the nominal 72px, matching the main consumer bar. */
     min-height: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom, 0px));
     height: auto;
-    align-items: center;
-    padding-top: 0;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    align-items: flex-start;
+    padding-top: 0.5rem;
+    padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   /* While a text field (e.g. Discover search) has focus, give the keyboard and

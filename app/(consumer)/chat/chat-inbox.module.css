@@ -181,7 +181,7 @@
   .conversation {
     position: fixed;
     top: var(--consumer-top-h, 3rem);
-    bottom: var(--consumer-bottom-h, 4.4375rem);
+    bottom: var(--consumer-bottom-h, 4.5rem);
     left: 0;
     right: 0;
   }
