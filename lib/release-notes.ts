@@ -44,6 +44,44 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-22',
+    title: 'A warmer look, a simpler home, and the Coaches Portal founding season',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Pick your look: choose a Warm (light) or Dark theme under Account → Appearance. It applies across the whole app and your coaches workspace and follows you between devices. Warm is the new default.',
+      },
+      {
+        category: 'new',
+        text: 'A simpler home: the app is organized around four tabs — Home, Scores, Chat, and Account — with a cleaner, warmer Home to start from.',
+      },
+      {
+        category: 'new',
+        text: 'Follow tournaments and organizations: tap Follow to keep an event or club on your Home and Scores. No account needed.',
+      },
+      {
+        category: 'new',
+        text: 'Coaches Portal founding season: coaches get the full Coaches Portal free through the founding season, with a warmer, simpler sign-up.',
+      },
+      {
+        category: 'new',
+        text: 'Pause notifications: one switch to mute everything when you need a break, and turn it back on when you are ready.',
+      },
+      {
+        category: 'improved',
+        text: 'Smoother game day: more dependable chat, notifications, and scorekeeper hand-offs across the tournament experience, plus one consistent navigation across tournament pages.',
+      },
+      {
+        category: 'improved',
+        text: 'Mobile polish: cleaner game and team pages, following, and scores on phones.',
+      },
+      {
+        category: 'fixed',
+        text: 'Mobile sign-in and navigation: sign in works on the first tap in Safari, Sign out is back in the tournament “More” menu, the keyboard no longer covers what you are typing, and long lists on Following and Scores no longer overflow.',
+      },
+    ],
+  },
+  {
     date: '2026-07-17',
     title: 'Follow your team from any device and get score alerts — plus a mobile makeover for tournament pages',
     highlights: [
