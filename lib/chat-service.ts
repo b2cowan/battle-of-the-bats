@@ -113,6 +113,12 @@ export type ChatRoomListItem = {
   /** the tournament name this room belongs to — a secondary label so a coach can tell apart several
    *  rooms in one tournament (e.g. "All coaches" vs "Championship") and same-named rooms across events. */
   contextLabel: string | null;
+  /** WI-1: the room's tournament slug — resolved in the SAME batched tournaments lookup that builds
+   *  `contextLabel` (no extra round-trip), consumed by the consumer inbox's return-path event chip. */
+  tournamentSlug: string | null;
+  /** WI-1: whether the tournament is PUBLISHED (active|completed) and therefore has a public home.
+   *  A draft has no public page, so the return-path chip must be hidden for it (not a 404 link). */
+  tournamentIsPublic: boolean;
   /** sender of the room's most-recent message (null = no messages / system) — the consumer inbox
    *  turns this into a "Organizer:" / "Coach Dana:" / "You:" preview prefix. Coach/admin surfaces ignore it. */
   lastMessageSenderId?: string | null;
@@ -718,17 +724,26 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
   if (roomErr) throw roomErr;
   const roomById = new Map((roomRows ?? []).map(r => [r.id, mapRoom(r as RoomRow)]));
 
-  // Tournament names for the rooms' subjects → a per-room context label (one batched lookup).
+  // Tournament names + slugs for the rooms' subjects → a per-room context label (WI-1: and the
+  // return-path slug) from ONE batched lookup — no separate slug query on the inbox path.
   const tournamentIdsForRooms = [...new Set([...roomById.values()].map((r) => r.refId))];
   const tournamentNameById = new Map<string, string>();
+  const tournamentSlugById = new Map<string, string>();
+  // WI-1: only a PUBLISHED tournament (active|completed) has a public home; a draft would 404. Track
+  // which are public so the return-path event chip is hidden (not a broken href) for draft events.
+  const tournamentPublicById = new Map<string, boolean>();
   if (tournamentIdsForRooms.length > 0) {
     const { data: tRows, error: tErr } = await supabaseAdmin
       .from('tournaments')
-      .select('id, name')
+      .select('id, name, slug, status')
       .in('id', tournamentIdsForRooms);
-    // Non-fatal: a failure just means rooms render without their context label.
+    // Non-fatal: a failure just means rooms render without their context label / return-path chip.
     if (tErr) console.error('[chat-service] room context-label lookup failed (non-fatal):', tErr);
-    for (const t of tRows ?? []) tournamentNameById.set(t.id as string, t.name as string);
+    for (const t of tRows ?? []) {
+      tournamentNameById.set(t.id as string, t.name as string);
+      if (t.slug) tournamentSlugById.set(t.id as string, t.slug as string);
+      tournamentPublicById.set(t.id as string, t.status === 'active' || t.status === 'completed');
+    }
   }
 
   // Per-room last-message + unread in parallel (was O(rooms) sequential round-trips).
@@ -751,6 +766,8 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
       selfNotifMuted: Boolean(m.notifications_muted_at),
       readOnly: room.isArchived,
       contextLabel: tournamentNameById.get(room.refId) ?? null,
+      tournamentSlug: tournamentSlugById.get(room.refId) ?? null,
+      tournamentIsPublic: tournamentPublicById.get(room.refId) ?? false,
     } as ChatRoomListItem;
   }))).filter((x): x is ChatRoomListItem => x !== null);
   // Most-recently-active room first; rooms with no messages sink to the bottom.
@@ -971,6 +988,8 @@ export async function postChatMessage(params: {
         userIds: general,
         excludeUserIds: [params.senderUserId],
         requiredFeature: 'tournament_chat',
+        // WI-2: land the push in the room itself (sw.js opens payload.link; was falling back to '/').
+        link: `/chat?room=${params.roomId}`,
       });
     }
     if (mentionedIds.size > 0) {
@@ -983,6 +1002,8 @@ export async function postChatMessage(params: {
         userIds: [...mentionedIds],
         excludeUserIds: [params.senderUserId],
         requiredFeature: 'tournament_chat',
+        // WI-2: land the push in the conversation itself.
+        link: `/chat?room=${params.roomId}`,
       });
     }
   } catch (err) {
@@ -1723,6 +1744,16 @@ export type ChatInboxRoom = {
   eventId: string;
   /** the event group's mono kicker (tournament name). */
   eventName: string | null;
+  /** WI-1: return-path slugs for the open-room header. The event chip links to
+   *  `/${orgSlug}/${tournamentSlug}`; both are null-guarded (a suspended org degrades to no chip,
+   *  never a broken href). Resolved best-effort — a lookup failure leaves them null. */
+  orgSlug: string | null;
+  tournamentSlug: string | null;
+  /** WI-1: the tournament is published (has a public home). The event chip is hidden when false
+   *  (a draft tournament's public page 404s), even though the room + admin door still work. */
+  tournamentIsPublic: boolean;
+  /** WI-1: the caller moderates this room (org owner/admin) — gates the "Event admin" header link. */
+  isModerator: boolean;
   /** unread for the caller — forced to 0 when self-muted (a muted room never badges). */
   unreadCount: number;
   selfNotifMuted: boolean;
@@ -1748,7 +1779,12 @@ export async function getChatInboxForUser(userId: string): Promise<ChatInbox> {
   // display name. The role lookup and the name hydration both depend only on senderIds — run them
   // together rather than back-to-back (one round-trip off every inbox load).
   const senderIds = [...new Set(items.map((i) => i.lastMessageSenderId).filter((v): v is string => Boolean(v)))];
-  const [roleRows, display] = await Promise.all([
+  // WI-1: resolve ORG slugs for the return-path header links, alongside the existing sender-label
+  // lookups (one more parallel round-trip, not a serial one). The tournament slug already rode in on
+  // `items` (from listRoomsForUser's context-label lookup) — no separate query. Non-fatal: a failure
+  // leaves the map empty and the header simply renders without the chip / admin link.
+  const orgIds = [...new Set(items.map((i) => i.room.orgId).filter(Boolean))];
+  const [roleRows, display, orgSlugById] = await Promise.all([
     (async () => {
       if (senderIds.length === 0) return [] as Array<{ room_id: string; user_id: string; member_role: string }>;
       const { data, error } = await supabaseAdmin
@@ -1760,6 +1796,17 @@ export async function getChatInboxForUser(userId: string): Promise<ChatInbox> {
       return (data ?? []) as Array<{ room_id: string; user_id: string; member_role: string }>;
     })(),
     hydrateUserDisplay(senderIds),
+    (async () => {
+      const map = new Map<string, string>();
+      if (orgIds.length === 0) return map;
+      const { data, error } = await supabaseAdmin
+        .from('organizations')
+        .select('id, slug')
+        .in('id', orgIds);
+      if (error) { console.error('[chat-service] inbox org-slug lookup failed (non-fatal):', error); return map; }
+      for (const o of data ?? []) if (o.slug) map.set(o.id as string, o.slug as string);
+      return map;
+    })(),
   ]);
   const roleByRoomUser = new Map<string, string>();
   for (const r of roleRows) roleByRoomUser.set(`${r.room_id}:${r.user_id}`, r.member_role);
@@ -1785,6 +1832,10 @@ export async function getChatInboxForUser(userId: string): Promise<ChatInbox> {
       // Only the real tournament name is an event label; if the name lookup failed (contextLabel null),
       // leave it null so the client renders its generic "Conversations" kicker — never a lone room's name.
       eventName: i.contextLabel,
+      orgSlug: orgSlugById.get(i.room.orgId) ?? null,
+      tournamentSlug: i.tournamentSlug,
+      tournamentIsPublic: i.tournamentIsPublic,
+      isModerator: i.isModerator,
       unreadCount: muted ? 0 : i.unreadCount,
       selfNotifMuted: muted,
       readOnly: i.readOnly,

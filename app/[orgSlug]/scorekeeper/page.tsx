@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
   AlertTriangle,
@@ -22,6 +22,19 @@ import styles from './scorekeeper.module.css';
 
 type ScoreState = 'idle' | 'entering' | 'saving';
 type StatusFilter = 'open' | 'pending' | 'final' | 'all';
+
+// WI-3: a score typed but not yet saved when the session lapsed. Stashed per-tab (sessionStorage
+// survives the sign-in navigation; precedent: TeamSignupClient's draft) so the volunteer's numbers
+// come back after they sign in, on the same game and date.
+const PENDING_KEY = 'sk:pendingScore';
+
+type PendingScore = {
+  orgSlug: string;
+  gameId: string;
+  homeScore: string;
+  awayScore: string;
+  date: string;
+};
 
 type ScorekeeperEmptyReason =
   | 'access_denied'
@@ -254,6 +267,52 @@ export default function ScorekeeperPage() {
     };
   }, [orgSlug, supabase, tournamentKey]);
 
+  // WI-3: after a sign-in round-trip, restore a score the volunteer typed before their session
+  // lapsed. Runs once (ref-guarded). If the stash is for another date, switch to it and let the
+  // reload re-fire this effect; once the matching day's cards are in, re-check editability and
+  // reopen the sheet with the values. Always clears the stash so it can't re-open a second time.
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (loading || restoredRef.current) return;
+
+    let pending: PendingScore | null = null;
+    try {
+      const raw = sessionStorage.getItem(PENDING_KEY);
+      if (raw) pending = JSON.parse(raw) as PendingScore;
+    } catch { pending = null; }
+    if (!pending || typeof pending.gameId !== 'string') return;
+
+    if (pending.orgSlug !== orgSlug) {
+      // Stash belongs to a different org's scorekeeper — leave it for that tab; don't consume here.
+      restoredRef.current = true;
+      return;
+    }
+
+    if (pending.date !== date) {
+      // The lapsed score was on another day — jump there. Set loading NOW so this effect's own
+      // re-fire (from the date change) short-circuits on the `loading` guard instead of consuming
+      // the stash against the OLD day's still-current `cards` (the reload is deferred a tick, so
+      // without this the restore would run against stale cards, find nothing, and drop the score).
+      setDate(pending.date);
+      setLoading(true);
+      return;
+    }
+
+    // Right org + right day, cards are loaded: consume the stash exactly once.
+    restoredRef.current = true;
+    try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
+
+    const card = cards.find(c => c.game.id === pending!.gameId);
+    if (card && canEdit(card.game)) {
+      setEditingCard(card);
+      setHomeScore(pending.homeScore);
+      setAwayScore(pending.awayScore);
+      setShowScoreErrors(false);
+      setScoreState('entering');
+      setNotice(null);
+    }
+  }, [cards, loading, date, orgSlug]);
+
   const counts = useMemo(() => ({
     open: cards.filter(card => card.game.status === 'scheduled').length,
     pending: cards.filter(card => card.game.status === 'submitted').length,
@@ -350,10 +409,21 @@ export default function ScorekeeperPage() {
       if (!response.ok) {
         // J8-002: a lapsed session on save is recoverable, not a dead "Score not saved" error.
         if (response.status === 401) {
+          // WI-3: preserve the typed numbers across the sign-in round-trip so they aren't lost.
+          try {
+            const pending: PendingScore = {
+              orgSlug,
+              gameId: editingCard.game.id,
+              homeScore,
+              awayScore,
+              date,
+            };
+            sessionStorage.setItem(PENDING_KEY, JSON.stringify(pending));
+          } catch { /* sessionStorage unavailable — degrade to the notice-only recovery */ }
           setNotice({
             kind: 'warning',
             title: 'Sign in required',
-            message: 'Your session ended before the score saved. Sign in again, then re-enter it.',
+            message: 'Your session ended before the score saved. Sign in again — your score is saved here and will come back.',
             action: { label: 'Sign in', href: `/auth/login?next=/${orgSlug}/scorekeeper` },
           });
           setScoreState('entering');
@@ -361,6 +431,9 @@ export default function ScorekeeperPage() {
         }
         throw new Error(data.error ?? 'Failed to save score.');
       }
+
+      // WI-3: the save landed — drop any stashed pending score so it can't re-open later.
+      try { sessionStorage.removeItem(PENDING_KEY); } catch { /* ignore */ }
 
       const nextStatus = statusFromRealtime(data.status, selectedPolicyRequiresReview ? 'submitted' : 'completed');
       setCards(previous => previous.map(card => (
@@ -412,6 +485,22 @@ export default function ScorekeeperPage() {
     : selectedPolicyRequiresReview
       ? 'Submit for Review'
       : 'Finalize Score';
+
+  // WI-3: the notice (incl. the session-lapsed "Sign in" recovery) must be visible where the
+  // volunteer's eyes are. When the score sheet is open it renders INSIDE the sheet, above the
+  // numbers; otherwise it renders in its usual place in the list.
+  const sheetOpen = Boolean(editingCard) && scoreState !== 'idle';
+  const noticeBlock = notice ? (
+    <div className={`${styles.notice} ${styles[`notice_${notice.kind}`] ?? ''}`}>
+      <strong>{notice.title}</strong>
+      <span>{notice.message}</span>
+      {notice.action && (
+        <a href={notice.action.href} className={styles.noticeAction}>
+          {notice.action.label}
+        </a>
+      )}
+    </div>
+  ) : null;
 
   return (
     <div className={styles.page}>
@@ -495,17 +584,7 @@ export default function ScorekeeperPage() {
         ))}
       </section>
 
-      {notice && (
-        <div className={`${styles.notice} ${styles[`notice_${notice.kind}`] ?? ''}`}>
-          <strong>{notice.title}</strong>
-          <span>{notice.message}</span>
-          {notice.action && (
-            <a href={notice.action.href} className={styles.noticeAction}>
-              {notice.action.label}
-            </a>
-          )}
-        </div>
-      )}
+      {!sheetOpen && noticeBlock}
 
       {loading ? (
         <section className={styles.loadingState} aria-label="Loading games">
@@ -607,6 +686,10 @@ export default function ScorekeeperPage() {
                 <X size={18} />
               </button>
             </div>
+
+            {/* WI-3: session-lapsed (and other) notices render here, above the score, while the
+                sheet is open — so the volunteer sees the "Sign in" recovery without closing it. */}
+            {noticeBlock}
 
             {/* J8-007: high-contrast inputs + thumb steppers — the most critical field moment.
                 A never-trained volunteer can tap −/+ without a keyboard; the input stays editable. */}

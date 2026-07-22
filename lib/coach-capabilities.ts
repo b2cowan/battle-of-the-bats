@@ -118,6 +118,21 @@ export function resolveCoachCapabilities(
 
 // ── Predicates ───────────────────────────────────────────────────────────────
 export const canViewMoney = (c: CoachCapabilities) => c.money !== 'off';
+
+/**
+ * WI-5 (security): the single source of truth for "must this caller's team-money be redacted on
+ * this team?". Fails CLOSED — no matching assignment ⇒ redacted (a resolver miss must never leak
+ * fees). Takes the caller's already-resolved coaching assignments (from `getCoachingAssignmentsForUser`,
+ * which keys the whole portal) so this stays a pure predicate with no DB import. Both server-side fee
+ * gates (the Premium tournament record + the tournament-history API) call this so they can't diverge.
+ */
+export function isMoneyRedactedForTeam(
+  assignments: ReadonlyArray<{ teamId: string; capabilities: CoachCapabilities }>,
+  teamId: string,
+): boolean {
+  const assignment = assignments.find((a) => a.teamId === teamId);
+  return !assignment || !canViewMoney(assignment.capabilities);
+}
 export const canWriteMoney = (c: CoachCapabilities) => c.money === 'write';
 export const canViewDocuments = (c: CoachCapabilities) => c.documents !== 'off';
 export const canManageDocuments = (c: CoachCapabilities) => c.documents === 'manage';

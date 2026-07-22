@@ -201,6 +201,48 @@
 }
 .backBtn:hover { background: var(--home-olive-soft); }
 
+/* ── WI-1: open-room return-path header links (event chip + Event-admin shortcut) ──────────
+   Icon+label on desktop; icon-only ≤ mobile so the tight header row (icon+title+search+these)
+   never wraps. The chip label truncates so a long tournament name can't blow out the row. */
+.headerLinks {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-width: 0;
+}
+.eventChip,
+.adminLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  max-width: 12rem;
+  min-width: 0;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius-sm);
+  background: none;
+  color: var(--home-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.eventChip:hover,
+.adminLink:hover { background: var(--home-olive-soft); border-color: var(--home-olive); }
+.eventChip svg,
+.adminLink svg { flex: 0 0 auto; }
+.headerLinkLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .eventChip,
+  .adminLink { max-width: none; padding: 0.35rem; }
+  .headerLinkLabel { display: none; }
+}
+
 /* ── Safety sheet (long-press → Report / Mute; R3-2) ───────────────────── */
 .sheetBackdrop {
   position: fixed;

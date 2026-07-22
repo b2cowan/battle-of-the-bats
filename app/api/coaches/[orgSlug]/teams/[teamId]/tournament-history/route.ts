@@ -9,6 +9,8 @@ import {
   getTeamScopedRepTeamAccess,
   getTeamWorkspaceForRepTeam,
 } from '@/lib/team-workspace-entitlements';
+import { getCoachingAssignmentsForUser } from '@/lib/db';
+import { isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 
 async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
@@ -70,7 +72,16 @@ export const GET = withObservability(async (_req: Request,
     }
 
     const history = await getBasicCoachTournamentHistoryForTeam(basicCoachTeamId);
-    return NextResponse.json({ history, basicCoachTeamId });
+
+    // WI-5 (security): a money='off' assistant coach must not receive fee amounts in the payload
+    // (the Overview tile is already render-gated, but the JSON itself leaked `amountDue`). Resolve
+    // the caller's capability on this rep team and FAIL CLOSED (redact when no assignment resolves).
+    const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
+    const safeHistory = isMoneyRedactedForTeam(assignments, teamId)
+      ? history.map(entry => ({ ...entry, amountDue: null }))
+      : history;
+
+    return NextResponse.json({ history: safeHistory, basicCoachTeamId });
   } catch (error) {
     console.error('[coaches tournament history] load error:', error);
     return NextResponse.json(

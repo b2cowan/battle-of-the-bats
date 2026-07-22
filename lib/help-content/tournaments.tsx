@@ -843,6 +843,18 @@ const tournamentsHelp: HelpPageContent = {
             <p>Use the <strong>Open Scorekeeper View</strong> action from Results &amp; Scoring, or visit <code>/{'{orgSlug}'}/scorekeeper</code> directly. Opening the lightweight view does not grant admin access to scorekeepers; route permissions still come from member role and capability checks.</p>
           ),
         },
+        {
+          id: 'faq-scorekeeper-signed-out-recovery',
+          question: 'What happens if a scorekeeper gets signed out while entering a score?',
+          answerText: 'If a volunteer’s sign-in lapses while a score is open, the score sheet itself shows a “sign in required” notice above the numbers instead of failing silently, and the score they typed is kept. After they sign back in they land back on the same game with the numbers still filled in, ready to save. Check-in volunteers get the same clear sign-in prompt if their session lapses.',
+          keywords: ['signed out', 'session expired', 'sign in required', 'lost score', 'score not saved', 'kicked out', 'log back in', 'session lapsed', 'volunteer signed out', 'check-in signed out'],
+          answer: (
+            <>
+              <p>The score sheet itself shows a <strong>&ldquo;sign in required&rdquo;</strong> notice above the numbers rather than failing silently — and the score they typed is <strong>kept</strong>. After they sign back in they land back on the <strong>same game</strong> with the numbers still filled in, ready to save.</p>
+              <p>Check-in / gate volunteers get the same clear <strong>sign-in prompt</strong> if their session lapses, instead of a generic error.</p>
+            </>
+          ),
+        },
       ],
     },
 
@@ -851,8 +863,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Game Day & Scores',
       heading: 'Review and finalize scores',
       summary: 'Record results from admins or scorekeepers, confirm pending reviews, and correct mistakes.',
-      keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'now playing', 'up next', 'needs a score', 'game-day dashboard'],
-      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring completed games public standings correct score revert scheduled score finalization now playing up next needs a score game day dashboard live board overdue unscored game what is on now sections panels reorder',
+      keywords: ['enter scores', 'finalize scores', 'pending review', 'scorekeeper submissions', 'results', 'review scores', 'now playing', 'up next', 'needs a score', 'game-day dashboard', 'completed chip', 'show finalized games', 'correct a final score', 'score submitted notification'],
+      searchText: 'enter scores finalize scores scorekeeper submissions pending review results scoring completed games public standings correct score revert scheduled score finalization now playing up next needs a score game day dashboard live board overdue unscored game what is on now sections panels reorder completed count chip show finalized games on phone mobile correct an already final score score submitted notification opens results with the game ready',
       links: [
         { label: 'Results & Scoring', href: '../tournaments/results' },
         { label: 'Scorekeeper View', href: '../../scorekeeper' },
@@ -870,9 +882,34 @@ const tournamentsHelp: HelpPageContent = {
           </ol>
           <p><strong>Pending Review</strong> means a score has been submitted but still needs admin confirmation before it is treated as final. If finalization is disabled, scorekeeper submissions become completed scores immediately.</p>
           <p>Public result pages update from the game data in FieldLogicHQ. Pending Review scores may appear as submitted results, but only completed scores are treated as final for playoff advancement.</p>
+          <p><strong>On a phone,</strong> Results opens on the games that still need action, so already-final games are tucked away. To fix an <strong>already-finalized</strong> score, tap the muted <strong>Completed</strong> count in the filter strip to show those games, then open the one you need.</p>
         </>
       ),
       faqs: [
+        {
+          id: 'faq-score-submitted-notification',
+          question: 'Where does a “score submitted” notification take me?',
+          answerText: 'When a scorekeeper submits a score, admins get a notification. Tapping it opens Results & Scoring for that tournament with the game expanded and ready to review, finalize, or correct — no hunting for it. If you are signed out when you tap, you sign in first and then land on the same game.',
+          keywords: ['score submitted notification', 'score alert', 'notification takes me', 'where does the score notification go', 'scorekeeper submitted', 'review submitted score', 'notification opens results'],
+          answer: (
+            <>
+              <p>When a scorekeeper submits a score, admins get a notification. <strong>Tapping it opens Results &amp; Scoring</strong> for that tournament with the game <strong>expanded and ready</strong> to review, finalize, or correct — no hunting for it.</p>
+              <p>If you happen to be signed out when you tap, you&rsquo;ll sign in first and then land on that same game.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-correct-final-score-mobile',
+          question: 'On my phone, how do I correct a score that’s already final?',
+          answerText: 'On a phone, Results opens on games that still need action, so finalized games are hidden from the default view. Tap the muted Completed count in the filter strip to show finalized (and forfeited) games, then open the one you need and correct it. Reload returns to the default needs-action view.',
+          keywords: ['correct final score on phone', 'mobile results', 'completed chip', 'show finalized games', 'finalized game hidden', 'fix a final score', 'completed count', 'phone results filter'],
+          answer: (
+            <>
+              <p>On a phone, Results opens on the games that still <strong>need action</strong>, so finalized games are hidden from the default view. Tap the muted <strong>Completed</strong> count in the filter strip to reveal finalized (and forfeited) games, then open the one you need and correct it.</p>
+              <p>The default &ldquo;needs action&rdquo; view comes back on reload — showing Completed is a quick toggle, not a permanent change.</p>
+            </>
+          ),
+        },
         {
           id: 'faq-game-day-sections',
           question: 'What do the Now Playing, Up Next, and Needs a Score sections mean?',

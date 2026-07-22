@@ -847,7 +847,8 @@ export const PATCH = withObservability(async (req: Request) => {
         body: pending
           ? `${ctx.user.email ?? 'A scorekeeper'} marked a forfeit (${winningSide} team) — needs admin approval`
           : `Marked forfeit by ${ctx.user.email ?? 'an admin'} (${winningSide} team advances)`,
-        link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
+        // WI-2: land on Results with THIS game expanded.
+        link: `/${ctx.org.slug}/admin/tournaments/results?tournamentId=${gameRow.tournamentId}&gameId=${id}`,
         excludeUserIds: [ctx.user.id],
       }).catch(console.error);
     }
@@ -876,7 +877,8 @@ export const PATCH = withObservability(async (req: Request) => {
         eventType: 'score_submitted',
         title: 'Score submitted',
         body: `Submitted by ${ctx.user.email ?? 'an admin'}`,
-        link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
+        // WI-2: land on Results with THIS game expanded.
+        link: `/${ctx.org.slug}/admin/tournaments/results?tournamentId=${gameRow.tournamentId}&gameId=${id}`,
         excludeUserIds: [ctx.user.id],
       }).catch(console.error);
     }

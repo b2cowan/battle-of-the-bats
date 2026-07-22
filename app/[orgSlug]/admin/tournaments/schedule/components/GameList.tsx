@@ -38,6 +38,10 @@ interface GameListProps {
   conflictsOnly?: boolean;
   /** Tournament context used for conflict detection timing resolution. */
   tournament?: Tournament | null;
+  /** WI-2: a notification deep-link target. When it appears in the rendered list, its row expands
+   *  once and scrolls into view. Ref-guarded so a polling refresh can't re-expand a row the user
+   *  chose to collapse. */
+  focusGameId?: string | null;
 }
 
 type EditFields = { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string };
@@ -57,7 +61,7 @@ function parseGameStart(date?: string | null, time?: string | null): number {
 
 export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
-  onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onForfeit, onCreateVenue, mode, conflictsOnly = false, tournament
+  onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onForfeit, onCreateVenue, mode, conflictsOnly = false, tournament, focusGameId
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   // Which game's "who forfeited?" picker is open (scoring mode); null = closed.
@@ -78,6 +82,21 @@ export default function GameList({
     const id = setInterval(() => setNow(Date.now()), 60_000);
     return () => clearInterval(id);
   }, []);
+
+  // WI-2: expand + scroll to a notification-linked game, exactly once per id. Waits until the game
+  // is actually in the rendered list (the parent snaps filters so it is), then never fires again for
+  // that id — so the 15s polling refresh can't re-open a row the user has since collapsed.
+  const focusedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusGameId || focusedRef.current === focusGameId) return;
+    if (!games.some(g => g.id === focusGameId)) return;
+    focusedRef.current = focusGameId;
+    setExpanded(prev => (prev.has(focusGameId) ? prev : new Set(prev).add(focusGameId)));
+    requestAnimationFrame(() => {
+      const sel = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(focusGameId) : focusGameId;
+      document.querySelector(`[data-game-id="${sel}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }, [focusGameId, games]);
 
   const liveStates = useMemo(() => {
     const map = new Map<string, LiveState>();
@@ -399,7 +418,7 @@ export default function GameList({
       const forfeitMode = canForfeit && forfeitPickerId === g.id;
 
       return (
-        <div key={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status} data-live={liveStates.get(g.id) ?? undefined}>
+        <div key={g.id} data-game-id={g.id} className={`${s.row} ${styles.scoringRow}`} data-status={g.status} data-live={liveStates.get(g.id) ?? undefined}>
           {/* ── Compact row — scores always visible inline with team names ── */}
           <div className={`${s.rowMain} ${styles.gameRowMain} ${styles.scoringGameRow}`} style={{ gap: '1rem' }}>
             {/* Date · Time · status */}

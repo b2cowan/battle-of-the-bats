@@ -16,7 +16,7 @@ import styles from './chat-inbox.module.css';
  * The inbox rides ONE client fetch (/api/consumer/chat/inbox) — no real chat data is ever SSR'd. The
  * aggregator self-heals memberships on load, so a coach who just signed in isn't shown a false "no chats".
  */
-export default function ChatTab({ signedIn }: { signedIn: boolean }) {
+export default function ChatTab({ signedIn, initialRoomId }: { signedIn: boolean; initialRoomId?: string | null }) {
   // 'ready' means the fetch resolved; whether that renders the inbox or the fan pitch is DERIVED from
   // rooms.length (no separate 'inbox'/'preview' states to keep in sync with the list). Signed-out is
   // 'ready' with no rooms → the static preview, immediately, no fetch.
@@ -67,5 +67,8 @@ export default function ChatTab({ signedIn }: { signedIn: boolean }) {
   }
 
   // status === 'ready': the inbox if there's anything to show, else the honest fan pitch.
-  return rooms.length > 0 ? <ChatInbox initialRooms={rooms} /> : <ChatPreview signedIn={signedIn} />;
+  // WI-2: a `?room=` deep-link (chat push) preselects that conversation when the caller has rooms.
+  return rooms.length > 0
+    ? <ChatInbox initialRooms={rooms} initialSelectedId={initialRoomId} />
+    : <ChatPreview signedIn={signedIn} />;
 }

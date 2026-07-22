@@ -15,6 +15,10 @@
 
 /* ── Cache config ──────────────────────────────────────────────────────────── */
 
+// v7: Tournament Seam P1 (WI-2) — notificationclick now NAVIGATES an already-open tab to the
+//     full deep-link target (?room= / ?gameId=) instead of only focusing it by pathname, so a
+//     chat/score push lands in the right room/game even when the app is already open. Bump forces
+//     the updated SW to activate.
 // v6: Unified Home IA · Phase 5 (nav merge) — public tournament pages now render the
 //     persistent global bar (Home·Scores·Chat·Account) + a top-tab row, and the
 //     tournament bottom bar is retired. Bump forces a clean refresh so no old cached
@@ -26,7 +30,7 @@
 //     had been cached in the shared data cache (/review 2026-07-15).
 // v3: unified-app Phase 0 — clean refresh of pages that referenced old
 //     per-tournament/scorekeeper manifests.
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
@@ -275,12 +279,25 @@ self.addEventListener('notificationclick', function (event) {
       try { targetPath = new URL(targetUrl, self.location.origin).pathname; }
       catch (e) { targetPath = targetUrl; }
 
-      // A window already on this page → just focus it (no duplicate tab).
+      // Full target href (incl. query) so a deep link (?room=, ?gameId=) can be told apart from a
+      // tab already sitting on the same page but pointing elsewhere.
+      var targetHref;
+      try { targetHref = new URL(targetUrl, self.location.origin).href; } catch (e) { targetHref = null; }
+
+      // A window already on this page → reuse it. If the deep-link target differs from what that
+      // tab currently shows (different room/game), NAVIGATE it there first so the notification
+      // actually lands where it points; otherwise just focus (no reload). Falls back to focus if
+      // navigate() isn't available (uncontrolled client).
       for (var i = 0; i < windowClients.length; i++) {
         var client = windowClients[i];
         var clientPath;
         try { clientPath = new URL(client.url).pathname; } catch (e) { clientPath = null; }
         if (clientPath === targetPath && 'focus' in client) {
+          if ('navigate' in client && targetHref && client.url !== targetHref) {
+            return client.navigate(targetUrl)
+              .then(function (navigated) { return (navigated || client).focus(); })
+              .catch(function () { return client.focus(); });
+          }
           return client.focus();
         }
       }

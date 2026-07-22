@@ -123,7 +123,10 @@ export async function proxy(request: NextRequest) {
   if ((isOrgAdmin || isLegacyAdmin || isOrgScorekeeper || isOrgCheckIn) && !user) {
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
-    url.searchParams.set('next', isLegacyAdmin ? '/admin' : pathname);
+    // WI-2: preserve the query string so a deep-linked score push (…/results?tournamentId=&gameId=)
+    // survives the sign-in round-trip. Only this branch carries a meaningful query; the legacy /admin
+    // redirect keeps its bare path. safeNextPath already preserves `search` on the login side.
+    url.searchParams.set('next', isLegacyAdmin ? '/admin' : pathname + request.nextUrl.search);
     return NextResponse.redirect(url);
   }
 

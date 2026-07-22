@@ -12,6 +12,10 @@
 }
 
 .errorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin: 0.75rem 0;
   padding: 0.6rem 0.8rem;
   border: 1px solid rgba(var(--danger-rgb), 0.4);
@@ -19,6 +23,21 @@
   color: var(--danger);
   border-radius: 0;
   font-size: 0.8rem;
+}
+
+/* WI-3: sign-in recovery affordance when the session lapses mid-shift. */
+.errorAction {
+  flex-shrink: 0;
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--danger);
+  color: var(--danger);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.errorAction:hover {
+  background: rgba(var(--danger-rgb), 0.15);
 }
 
 /* ── gauges ──────────────────────────────────────────────────────────────── */

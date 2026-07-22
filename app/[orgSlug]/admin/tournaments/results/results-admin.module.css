@@ -654,12 +654,33 @@
     border: none;
     border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
     background: transparent;
-    cursor: pointer;
     text-align: left;
   }
 
   .activeSettingsSummary:hover .activeSettingsSummaryIcon {
     color: var(--logic-lime);
+  }
+
+  /* WI-4: the strip is now a wrapper <div>; the text + sliders are reset buttons that open the
+     sheet, and the Completed chip is a peer button. */
+  .summarySlidersBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* WI-4: the mobile Completed chip — the row-2 shrink overrides don't reach this instance, so
+     size the tap target here (≥34px) and keep it from collapsing under the strip's flex. */
+  .summaryCompletedChip {
+    min-height: 34px;
+    flex-shrink: 0;
   }
 
 /* ─── Summary strip: right-side wrapper + status count tally ─────────────── */
@@ -705,13 +726,20 @@
 .tallyInactive { opacity: 0.28; }
 
   .activeSettingsSummaryText {
+    /* WI-4: now a reset <button> (opens the sheet) — flex-grow so the ellipsis still works. */
+    flex: 1 1 auto;
+    min-width: 0;
+    border: none;
+    background: transparent;
+    padding: 0.4rem 0;
+    cursor: pointer;
+    text-align: left;
     font-family: var(--font-data);
     font-size: 0.62rem;
     font-weight: 700;
     letter-spacing: 0.06em;
     text-transform: uppercase;
     color: var(--logic-lime);
-    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

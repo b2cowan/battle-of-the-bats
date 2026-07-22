@@ -56,6 +56,7 @@ export default async function CoachTournamentRecord({
   email,
   suppressUpsell = false,
   welcome = false,
+  moneyRedacted = false,
   backHref,
 }: {
   registrationId: string;
@@ -63,6 +64,12 @@ export default async function CoachTournamentRecord({
   email: string;
   suppressUpsell?: boolean;
   welcome?: boolean;
+  /**
+   * WI-5 (security): when true (a money='off' assistant coach in the Premium portal), neutralize
+   * ALL fee signals — the hero fee strip, the status Fee row, the "Pay your entry fee" next-step,
+   * and the pending fee preview. Defaults false so the free-portal caller is unchanged.
+   */
+  moneyRedacted?: boolean;
   backHref?: string;
 }) {
   const access = await canUserAccessTournamentRegistration({
@@ -278,6 +285,20 @@ export default async function CoachTournamentRecord({
       })
     : null;
 
+  // WI-5 (security): a single neutralization point. Everything downstream (TeamHQ fee strip,
+  // hero checklist Fee row, "Pay your entry fee" next-step, TournamentStatusBlock) keys off
+  // `fee.hasSchedule`, so flattening it to a no-schedule shape hides every fee affordance at once.
+  if (coachStatus && moneyRedacted) {
+    coachStatus.fee = {
+      ...coachStatus.fee,
+      hasSchedule: false,
+      isPaid: false,
+      amountDue: null,
+      dueDate: null,
+      collectedAt: null,
+    };
+  }
+
   const dateRange = tournament?.start_date
     ? tournament.end_date
       ? `${new Date(tournament.start_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} - ${new Date(tournament.end_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`
@@ -456,7 +477,7 @@ export default async function CoachTournamentRecord({
         rosterRequired={rosterRequirements.required}
         record={record}
         standingsHref={standingsHref}
-        pendingFeeAmount={pendingFeeAmount}
+        pendingFeeAmount={moneyRedacted ? null : pendingFeeAmount}
         todayGames={todayGames}
       />
 
@@ -520,7 +541,8 @@ export default async function CoachTournamentRecord({
             status={coachStatus}
             contactEmail={coachContactEmail}
             showCheckIn={isGameDayOrLater}
-            paymentInstructions={paymentInstructions}
+            paymentInstructions={moneyRedacted ? null : paymentInstructions}
+            hideFeeRow={moneyRedacted}
           />
         </section>
       )}

@@ -7,6 +7,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { usePathname } from 'next/navigation';
 import { UserCheck, UserX, RotateCcw, Search, DollarSign, ClipboardList, Plus, Trash2, Check } from 'lucide-react';
 import BottomSheet from '@/components/admin/BottomSheet';
 import styles from './CheckInBoard.module.css';
@@ -145,6 +146,9 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
   const [divisions, setDivisions] = useState<DivInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // WI-3: true when the last failure was a 401 (session lapsed) — drives a "sign back in" link
+  // instead of a generic "Action failed." dead end. Works from both mount routes (gate + admin).
+  const [authLost, setAuthLost] = useState(false);
   const [search, setSearch] = useState('');
   const [divFilter, setDivFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState<'all' | CheckInStatus>('all');
@@ -153,16 +157,33 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
 
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
 
+  const pathname = usePathname();
+  // next= returns the volunteer to the same check-in surface after re-auth (works from the gate
+  // route and the admin route alike, since it reads the live pathname).
+  const signInHref = `/auth/login?next=${encodeURIComponent(pathname || `/${orgSlug}/check-in`)}`;
+
+  // WI-3: one place to raise the session-lapsed banner (load + action both hit it on a 401).
+  const markAuthLost = useCallback(() => {
+    setAuthLost(true);
+    setError('Signed out — sign back in to continue check-in.');
+  }, []);
+
   const loadBoard = useCallback(async (silent = false) => {
     if (!tournamentId) return;
     if (!silent) setLoading(true);
-    setError(null);
+    // A silent revert-reload after an action failure must NOT wipe the failure message that's
+    // already on screen — only a fresh (non-silent) load starts clean.
+    if (!silent) { setError(null); setAuthLost(false); }
     try {
       const tid = encodeURIComponent(tournamentId);
       const [boardRes, divRes] = await Promise.all([
         fetch(`/api/admin/check-in?tournamentId=${tid}${orgParam}`, FETCH),
         fetch(`/api/admin/divisions?tournamentId=${tid}${orgParam}`, FETCH),
       ]);
+      if (boardRes.status === 401) {
+        markAuthLost();
+        return;
+      }
       if (!boardRes.ok) throw new Error((await boardRes.json().catch(() => ({})))?.error || 'Could not load check-in.');
       const board = await boardRes.json();
       setTeams(board.teams ?? []);
@@ -173,7 +194,7 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
     } finally {
       if (!silent) setLoading(false);
     }
-  }, [tournamentId, orgParam]);
+  }, [tournamentId, orgParam, markAuthLost]);
 
   useEffect(() => { void loadBoard(); }, [loadBoard]);
 
@@ -192,14 +213,26 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'same-origin',
         body: JSON.stringify({ action: act, teamId, ...extra }),
       });
+      if (res.status === 401) {
+        // WI-3: a lapsed session mid-action is recoverable — surface the sign-in link, then revert
+        // the optimistic flip to server truth (the silent reload leaves this message in place).
+        markAuthLost();
+        void loadBoard(true);
+        return;
+      }
       if (!res.ok) throw new Error((await res.json().catch(() => ({})))?.error || 'Action failed.');
+      // A successful action proves the session recovered — clear any lingering "signed out" / failure
+      // banner (otherwise only a non-silent load clears it, and that never re-runs after mount). Both
+      // setters no-op via React's bail-out when already clear, so no dependency on the current values.
+      setError(null);
+      setAuthLost(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Action failed.');
-      void loadBoard(true); // revert optimistic change to server truth
+      void loadBoard(true); // revert optimistic change to server truth (keeps the message visible)
     } finally {
       setBusyId(null);
     }
-  }, [tournamentId, orgParam, loadBoard]);
+  }, [tournamentId, orgParam, loadBoard, markAuthLost]);
 
   const openTeam = useCallback((id: string) => setSheetId(id), []);
   const quickCheckIn = useCallback((id: string) => { void action('check_in', id); }, [action]);
@@ -271,7 +304,12 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
         </div>
       </div>
 
-      {error && <div className={styles.errorBanner}>{error}</div>}
+      {error && (
+        <div className={styles.errorBanner}>
+          <span>{error}</span>
+          {authLost && <a href={signInHref} className={styles.errorAction}>Sign in</a>}
+        </div>
+      )}
       {loading && <div className={styles.loading}>Loading check-in…</div>}
 
       {!loading && filtered.length === 0 && (

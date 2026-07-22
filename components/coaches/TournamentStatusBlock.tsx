@@ -50,6 +50,7 @@ export default function TournamentStatusBlock({
   contactEmail,
   showCheckIn,
   paymentInstructions,
+  hideFeeRow = false,
 }: {
   status: CoachTournamentStatus;
   contactEmail: string | null;
@@ -61,6 +62,12 @@ export default function TournamentStatusBlock({
    * how much / by when / the process). Null when unset or the fee is already paid.
    */
   paymentInstructions?: string | null;
+  /**
+   * WI-5 (security): hide the Fee row entirely for a money='off' assistant coach. The caller
+   * already flattens `fee.hasSchedule` to false, which would otherwise render the "No fee set"
+   * fallback — that reads as data ("this event is free"), so suppress the whole row instead.
+   */
+  hideFeeRow?: boolean;
 }) {
   const { fee, checkIn, roster } = status;
   const paidDate = formatDate(fee.collectedAt);
@@ -70,6 +77,7 @@ export default function TournamentStatusBlock({
 
   return (
     <div className={styles.block} aria-label="Your status">
+      {!hideFeeRow && (
       <div className={styles.row}>
         <span className={styles.label}>Fee</span>
         <div className={styles.value}>
@@ -89,6 +97,7 @@ export default function TournamentStatusBlock({
           )}
         </div>
       </div>
+      )}
 
       {fee.hasSchedule && !fee.isPaid && (
         paymentInstructions ? (

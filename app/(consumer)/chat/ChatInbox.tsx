@@ -12,6 +12,12 @@ export type InboxRoom = {
   roomName: string;
   eventId: string;
   eventName: string | null;
+  /** WI-1: return-path links in the open-room header (event chip + Event-admin shortcut). */
+  orgSlug: string | null;
+  tournamentSlug: string | null;
+  /** WI-1: false for a draft tournament (no public home) → the event chip is hidden. */
+  tournamentIsPublic: boolean;
+  isModerator: boolean;
   unreadCount: number;
   selfNotifMuted: boolean;
   readOnly: boolean;
@@ -39,9 +45,20 @@ function relTime(iso: string | null): string {
  * with a slash-bell). Tap a room → the warm conversation; back → the inbox (which refetches so unread /
  * previews stay fresh). Master/detail is a full swap — mobile-first, matching the Round 3 frames.
  */
-export default function ChatInbox({ initialRooms }: { initialRooms: InboxRoom[] }) {
+export default function ChatInbox({
+  initialRooms,
+  initialSelectedId,
+}: {
+  initialRooms: InboxRoom[];
+  /** WI-2: a notification deep-link (`/chat?room=…`) preselects that room. WI-1: with no explicit
+   *  target, a lone room auto-opens (no one-item list). Both resolve once, so Back returns to the
+   *  inbox and never re-opens. A stale/foreign id falls through to the inbox (find no-ops). */
+  initialSelectedId?: string | null;
+}) {
   const [rooms, setRooms] = useState<InboxRoom[]>(initialRooms);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(
+    () => initialSelectedId ?? (initialRooms.length === 1 ? initialRooms[0].roomId : null),
+  );
   // Monotonic version bumped by every refresh AND every optimistic mutation; a refresh only commits if
   // its version is still current when it resolves — so a slow refresh can't clobber a newer optimistic
   // mute (or a newer refresh) that landed while it was in flight.

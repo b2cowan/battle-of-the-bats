@@ -68,7 +68,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
       eventType: 'score_submitted',
       title: 'Score submitted',
       body: `Submitted by scorekeeper ${ctx.user.email ?? ''}`.trim(),
-      link: `/${ctx.org.slug}/admin/tournaments/schedule?tournamentId=${gameRow.tournamentId}`,
+      // WI-2: land on Results with THIS game expanded (was Schedule, which has no score tools).
+      link: `/${ctx.org.slug}/admin/tournaments/results?tournamentId=${gameRow.tournamentId}&gameId=${body.id}`,
       excludeUserIds: [ctx.user.id],
     }).catch(console.error);
 

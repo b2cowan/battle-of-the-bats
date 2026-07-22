@@ -1,5 +1,6 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ExternalLink, SlidersHorizontal, Trophy, RefreshCw } from 'lucide-react';
 import { formatTime } from '@/lib/utils';
 import { useTournament } from '@/lib/tournament-context';
@@ -169,6 +170,31 @@ export default function AdminResultsPage() {
       }));
     } catch {}
   }, [tournamentId, filterGroup, selectedStatuses, viewMode, groupMode, divisions.length]);
+
+  // WI-2: notification deep link (…/results?gameId=…). Once games load, snap division / stage /
+  // status filters so the target game is actually in view BEFORE GameList renders (default filters
+  // would otherwise hide a completed game entirely), then hand GameList the id to expand + scroll.
+  // Runs once per gameId (ref-guarded) so it never fights the user's later filter changes.
+  const searchParams = useSearchParams();
+  const focusGameId = searchParams.get('gameId');
+  const focusSnappedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!focusGameId || focusSnappedRef.current === focusGameId) return;
+    const target = games.find(g => g.id === focusGameId);
+    if (!target) return; // wait until the games list has loaded
+    focusSnappedRef.current = focusGameId;
+    if (target.divisionId) setFilterGroup(target.divisionId);
+    setViewMode(target.isPlayoff ? 'playoff' : 'pool');
+    const bucket: ResultsFilter =
+      target.status === 'scheduled' ? 'pending' : target.status === 'submitted' ? 'submitted' : 'completed';
+    setSelectedStatuses(prev => (prev.includes(bucket) ? prev : [...prev, bucket]));
+  }, [focusGameId, games]);
+
+  // One toggle for the status filter chips — shared by the desktop chip row, the mobile settings
+  // sheet, and the mobile summary-strip Completed chip (all three flip the same `selectedStatuses`).
+  const toggleStatus = useCallback((key: ResultsFilter) => {
+    setSelectedStatuses(prev => (prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key]));
+  }, []);
 
   function getTeamName(id: string) {
     return teams.find(t => t.id === id)?.name ?? 'TBD';
@@ -478,7 +504,7 @@ export default function AdminResultsPage() {
                 type="button"
                 className={`${s.filterChip} ${statusChipClass[key]} ${selectedStatuses.includes(key) ? s.chipActive : ''}`}
                 data-empty={count === 0 ? 'true' : undefined}
-                onClick={() => setSelectedStatuses(prev => prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key])}
+                onClick={() => toggleStatus(key)}
               >
                 <span>{label}</span>
                 <span className={s.chipCount}>{count}</span>
@@ -564,9 +590,7 @@ export default function AdminResultsPage() {
                       key={key}
                       type="button"
                       className={`${styles.sheetSeg} ${selectedStatuses.includes(key) ? styles.sheetSegActive : ''}`}
-                      onClick={() => setSelectedStatuses(prev =>
-                        prev.includes(key) ? prev.filter(s => s !== key) : [...prev, key]
-                      )}
+                      onClick={() => toggleStatus(key)}
                     >
                       {label}
                     </button>
@@ -599,15 +623,19 @@ export default function AdminResultsPage() {
         </>
       )}
 
-      {/* ── Active settings summary strip (mobile only, outside sheet) ── */}
+      {/* ── Active settings summary strip (mobile only, outside sheet) ──
+          WI-4: split from a single strip-button into a wrapper (buttons can't nest) so the new
+          Completed chip is independently tappable. The text + sliders both still open the sheet. */}
       {currentTournament && !mobileSettingsOpen && (
-        <button
-          type="button"
-          className={styles.activeSettingsSummary}
-          onClick={() => setMobileSettingsOpen(true)}
-          aria-label={`View settings: ${settingsSummary}`}
-        >
-          <span className={styles.activeSettingsSummaryText}>{settingsSummary}</span>
+        <div className={styles.activeSettingsSummary}>
+          <button
+            type="button"
+            className={styles.activeSettingsSummaryText}
+            onClick={() => setMobileSettingsOpen(true)}
+            aria-label={`View settings: ${settingsSummary}`}
+          >
+            {settingsSummary}
+          </button>
           <span className={styles.summaryRight}>
             {/* Single "needs action" count — only games awaiting finalize (the one
                 number that demands attention); per-row stripes carry the rest. */}
@@ -617,9 +645,29 @@ export default function AdminResultsPage() {
                 {submittedCount}
               </span>
             )}
-            <SlidersHorizontal size={12} className={styles.activeSettingsSummaryIcon} aria-hidden />
+            {/* WI-4: the desktop's Completed chip, now on mobile — one tap reveals finalized games
+                (the most common bleachers correction) without opening the settings sheet. */}
+            <button
+              type="button"
+              className={`${s.filterChip} ${s.chip_success} ${styles.summaryCompletedChip} ${selectedStatuses.includes('completed') ? s.chipActive : ''}`}
+              data-empty={completedCount === 0 ? 'true' : undefined}
+              aria-pressed={selectedStatuses.includes('completed')}
+              aria-label={`${selectedStatuses.includes('completed') ? 'Hide' : 'Show'} completed games (${completedCount})`}
+              onClick={() => toggleStatus('completed')}
+            >
+              <span>Completed</span>
+              <span className={s.chipCount}>{completedCount}</span>
+            </button>
+            <button
+              type="button"
+              className={styles.summarySlidersBtn}
+              onClick={() => setMobileSettingsOpen(true)}
+              aria-label="Open view settings"
+            >
+              <SlidersHorizontal size={12} className={styles.activeSettingsSummaryIcon} aria-hidden />
+            </button>
           </span>
-        </button>
+        </div>
       )}
 
 
@@ -661,6 +709,7 @@ export default function AdminResultsPage() {
             onForfeit={handleForfeit}
             onFinalize={finalizeGame}
             onSchedule={markScheduled}
+            focusGameId={focusGameId}
             mode="scoring"
           />
         </div>
