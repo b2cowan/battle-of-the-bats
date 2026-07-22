@@ -253,7 +253,7 @@
   height: 52px;
   border-radius: var(--radius-sm);
   background: var(--team-color, var(--logic-lime));
-  color: var(--white);
+  color: var(--on-team-color); /* stay light on the theme-stable team colour */
   font-family: var(--font-display, sans-serif);
   font-weight: 900;
   font-size: 1.25rem;

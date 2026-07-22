@@ -36,7 +36,7 @@
     border-radius: 10px;
     padding: 0.65rem 0.85rem;
     margin-bottom: 0.65rem;
-    background: rgba(255,255,255,0.025);
+    background: var(--home-olive-soft, rgba(255,255,255,0.025));
   }
   .tableAsCards td {
     display: flex;
@@ -84,7 +84,7 @@
   bottom: 0;
   z-index: 2;
   background: var(--card-bg);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.08));
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
@@ -122,7 +122,7 @@
   width: 220px;
   flex-shrink: 0;
   background: var(--card-bg);
-  border-right: 1px solid rgba(255,255,255,0.07);
+  border-right: 1px solid var(--home-line, rgba(255,255,255,0.07));
   display: flex;
   flex-direction: column;
   padding: 1.5rem 0 2rem;
@@ -135,7 +135,7 @@
 
 .sidebarHeader {
   padding: 0 1.25rem 1.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07));
   margin-bottom: 0.75rem;
 }
 
@@ -152,7 +152,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.25);
+  color: var(--home-dim, rgba(255,255,255,0.25));
   margin: 0;
 }
 
@@ -184,7 +184,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.25);
+  color: var(--home-dim, rgba(255,255,255,0.25));
   padding: 0.25rem 1.25rem 0.5rem;
 }
 
@@ -195,7 +195,7 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255,255,255,0.22);
+  color: var(--home-dim, rgba(255,255,255,0.22));
   padding: 0.5rem 1.25rem 0.35rem;
   margin-top: 0.15rem;
 }
@@ -212,8 +212,8 @@
   transition: background 0.1s, color 0.1s;
 }
 .sidebarItem:hover {
-  background: rgba(255,255,255,0.04);
-  color: rgba(255,255,255,0.85);
+  background: var(--home-olive-soft, rgba(255,255,255,0.04));
+  color: var(--home-ink, rgba(255,255,255,0.85));
 }
 
 .sidebarItemActive {
@@ -240,7 +240,7 @@
 
 .sidebarDivider {
   height: 1px;
-  background: rgba(255,255,255,0.06);
+  background: var(--home-line, rgba(255,255,255,0.06));
   margin: 0.5rem 0;
 }
 
@@ -537,7 +537,7 @@
 .lineupAnalyticsBody { padding: 0.2rem 0.9rem 0.8rem; }
 .lineupAnalyticsRow {
   display: flex; align-items: center; gap: 0.7rem;
-  padding: 0.4rem 0; border-top: 1px solid rgba(255,255,255,0.05); font-size: 0.85rem;
+  padding: 0.4rem 0; border-top: 1px solid var(--home-line, rgba(255,255,255,0.05)); font-size: 0.85rem;
 }
 .lineupAnalyticsName { flex: 0 0 40%; min-width: 0; color: var(--white-90); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lineupAnalyticsVal { flex: 1; min-width: 0; color: var(--white-60); font-size: 0.8rem; text-align: right; }
@@ -635,7 +635,7 @@
   cursor: pointer;
   transition: background 0.1s, border-color 0.1s, color 0.1s;
 }
-.lineupFilterChip:hover { background: rgba(255,255,255,0.09); }
+.lineupFilterChip:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 /* The page tabs are a primary standalone control — mobile conventions want ≥40px touch height
    there (bumped in the 640 block); chips are a compact control row bumped to ≥36px on mobile. */
 .lineupTabs .segBtn { min-height: 36px; }
@@ -666,8 +666,8 @@
    Region 2: findings strip — the centerpiece (lime-tinted top border).
    Region 3: question-titled doorway tiles → full report pages (never expand).
    Season-over-season comparisons retired; every signal is within-season. */
-.insightsBand { display: flex; flex-wrap: wrap; gap: 0.9rem 0; border-top: 1px solid rgba(255,255,255,0.09); border-bottom: 1px solid rgba(255,255,255,0.09); padding: 0.9rem 0; margin-bottom: 1.2rem; }
-.insightsStat { flex: 1 1 auto; min-width: 118px; padding: 0 1.1rem; border-right: 1px solid rgba(255,255,255,0.07); min-height: 40px; }
+.insightsBand { display: flex; flex-wrap: wrap; gap: 0.9rem 0; border-top: 1px solid var(--home-line, rgba(255,255,255,0.09)); border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.09)); padding: 0.9rem 0; margin-bottom: 1.2rem; }
+.insightsStat { flex: 1 1 auto; min-width: 118px; padding: 0 1.1rem; border-right: 1px solid var(--home-line, rgba(255,255,255,0.07)); min-height: 40px; }
 .insightsStat:last-child { border-right: 0; }
 .insightsStatLbl { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--white-40); margin: 0 0 0.3rem; }
 .insightsStatVal { font-family: var(--font-display); font-weight: 800; font-size: 1.65rem; line-height: 1; color: var(--white-90); font-variant-numeric: tabular-nums; margin: 0; }
@@ -675,13 +675,13 @@
 .insightsStatVal[data-pos="true"] { color: var(--success); }
 .insightsStatVal[data-pos="false"] { color: var(--danger); }
 .insightsStatCap { font-size: 0.68rem; color: var(--white-45); margin: 0.3rem 0 0; }
-.insightsSegBar { display: block; height: 6px; max-width: 130px; border-radius: 3px; background: rgba(255,255,255,0.13); overflow: hidden; margin-top: 0.4rem; }
+.insightsSegBar { display: block; height: 6px; max-width: 130px; border-radius: 3px; background: var(--home-card, rgba(255,255,255,0.13)); overflow: hidden; margin-top: 0.4rem; }
 .insightsSegBar i { display: block; height: 100%; background: var(--logic-lime); border-radius: 3px 0 0 3px; }
-.insightsCalm { color: var(--white-45); font-size: 0.85rem; padding: 0.9rem 0.1rem; border-top: 1px solid rgba(255,255,255,0.09); border-bottom: 1px solid rgba(255,255,255,0.09); margin-bottom: 1.2rem; }
+.insightsCalm { color: var(--white-45); font-size: 0.85rem; padding: 0.9rem 0.1rem; border-top: 1px solid var(--home-line, rgba(255,255,255,0.09)); border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.09)); margin-bottom: 1.2rem; }
 /* What stands out — the one lime-TINTED frame on the page (a highlight, not an action). */
 .insightsCallouts { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25); border-top: 2px solid rgba(var(--logic-lime-rgb), 0.45); border-radius: var(--radius); background: var(--white-8); box-shadow: var(--shadow-sm), var(--highlight-top); padding: 0.95rem 1rem 0.55rem; margin-bottom: 1.25rem; }
 .insightsCo { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.5rem 0.4rem; border-radius: 10px; text-decoration: none; color: inherit; min-height: 40px; }
-.insightsCo:hover { background: rgba(255,255,255,0.05); }
+.insightsCo:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)); }
 .insightsCoDot { flex: none; width: 9px; height: 9px; border-radius: 50%; margin-top: 0.42rem; }
 .insightsCoDot[data-tone="warn"] { background: var(--warning); box-shadow: 0 0 8px rgba(var(--warning-rgb), 0.45); }
 .insightsCoDot[data-tone="info"] { background: var(--blueprint-blue); }
@@ -719,10 +719,10 @@
 .insightsTagSummaryRuns { font-size: 0.78rem; color: var(--white-45); font-variant-numeric: tabular-nums; }
 .insightsTableWrap { overflow-x: auto; }
 .insightsTable { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
-.insightsTable th { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white-35); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.12); white-space: nowrap; }
-.insightsTable td { padding: 0.55rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); color: var(--white-90); }
+.insightsTable th { font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white-35); text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.12)); white-space: nowrap; }
+.insightsTable td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); color: var(--white-90); }
 .insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; }
-.insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: rgba(255,255,255,0.12); border-radius: 3px; margin-left: 0.5rem; overflow: hidden; }
+.insightsFieldBar { display: inline-block; vertical-align: middle; height: 5px; width: 64px; background: var(--home-card, rgba(255,255,255,0.12)); border-radius: 3px; margin-left: 0.5rem; overflow: hidden; }
 .insightsFieldBar i { display: block; height: 100%; background: rgba(var(--blueprint-blue-rgb), 0.75); }
 .insightsFlagWarn { color: var(--warning); font-size: 0.75rem; font-weight: 700; }
 .insightsRecGood { color: var(--success); }
@@ -737,7 +737,7 @@
 .insightsBridge a { color: var(--blueprint-blue); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .insightsBridge a:hover { text-decoration: underline; }
 /* Past seasons — one compact line per year, expandable for the detail stats. */
-.insightsSeasonRow { border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; margin-bottom: 0.4rem; background: rgba(255,255,255,0.03); }
+.insightsSeasonRow { border: 1px solid var(--home-line-strong, rgba(255,255,255,0.08)); border-radius: 8px; margin-bottom: 0.4rem; background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
 .insightsSeasonRow summary { list-style: none; display: flex; align-items: center; gap: 0.6rem; padding: 0.55rem 0.7rem; cursor: pointer; min-height: 40px; }
 .insightsSeasonRow summary::-webkit-details-marker { display: none; }
 .insightsSeasonName { font-weight: 700; font-size: 0.88rem; color: var(--white-90); min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -969,8 +969,8 @@
   margin-bottom: 1.5rem;
 }
 .breadcrumb a { color: var(--white-55); text-decoration: none; }
-.breadcrumb a:hover { color: rgba(255,255,255,0.8); }
-.breadcrumb span { color: rgba(255,255,255,0.25); }
+.breadcrumb a:hover { color: var(--home-ink, rgba(255,255,255,0.8)); }
+.breadcrumb span { color: var(--home-dim, rgba(255,255,255,0.25)); }
 
 /* ── Team cards (dashboard) ─────────────────────────────────────────────── */
 .teamGrid {
@@ -980,7 +980,7 @@
 }
 
 .teamCard {
-  background: rgba(255,255,255,0.04);
+  background: var(--home-card, rgba(255,255,255,0.04));
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
   border-radius: 10px;
   padding: 1.25rem;
@@ -992,7 +992,7 @@
 }
 .teamCard:hover {
   border-color: rgba(var(--blueprint-blue-rgb), 0.4);
-  background: rgba(255,255,255,0.06);
+  background: var(--home-olive-soft, rgba(255,255,255,0.06));
 }
 
 .teamCardTop {
@@ -1007,7 +1007,7 @@
   border-radius: 3px;
   flex-shrink: 0;
   margin-top: 3px;
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.15));
 }
 
 .teamName {
@@ -1026,14 +1026,14 @@
 
 .teamRole {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.4);
+  color: var(--home-dim, rgba(255,255,255,0.4));
 }
 
 .teamStats {
   display: flex;
   gap: 1.25rem;
   padding-top: 0.25rem;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.06));
 }
 
 .statItem { display: flex; flex-direction: column; gap: 0.1rem; }
@@ -1049,7 +1049,7 @@
 }
 
 .summaryCard {
-  background: rgba(255,255,255,0.04);
+  background: var(--home-card, rgba(255,255,255,0.04));
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
   border-radius: 8px;
   padding: 1rem;
@@ -1060,7 +1060,7 @@
 
 .summaryCardLabel {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.4);
+  color: var(--home-dim, rgba(255,255,255,0.4));
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -1082,7 +1082,7 @@
 
 /* ── Badges ─────────────────────────────────────────────────────────────── */
 .setupPanel {
-  background: rgba(255,255,255,0.035);
+  background: var(--home-olive-soft, rgba(255,255,255,0.035));
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
   border-radius: 8px;
   padding: 1rem;
@@ -1099,7 +1099,7 @@
 
 .setupKicker {
   margin: 0 0 0.2rem;
-  color: rgba(255,255,255,0.36);
+  color: var(--home-dim, rgba(255,255,255,0.36));
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1165,13 +1165,13 @@
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  background: rgba(255,255,255,0.028);
+  background: var(--home-olive-soft, rgba(255,255,255,0.028));
   text-decoration: none;
   transition: border-color 0.12s, background 0.12s;
 }
 
 .setupItem:hover {
-  background: rgba(255,255,255,0.052);
+  background: var(--home-olive-soft, rgba(255,255,255,0.052));
   border-color: rgba(var(--blueprint-blue-rgb),0.28);
 }
 
@@ -1181,7 +1181,7 @@
 }
 
 .setupIconTodo {
-  color: rgba(255,255,255,0.28);
+  color: var(--home-dim, rgba(255,255,255,0.28));
   flex-shrink: 0;
 }
 
@@ -1208,7 +1208,7 @@
 .setupItemLabel:hover { text-decoration: underline; }
 
 .setupItemDetail {
-  color: rgba(255,255,255,0.38);
+  color: var(--home-dim, rgba(255,255,255,0.38));
   font-size: 0.76rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1273,7 +1273,7 @@
 /* "Optional" group divider under the core season-setup list */
 .setupGroupLabel {
   margin: 0.9rem 0 0.5rem;
-  color: rgba(255,255,255,0.36);
+  color: var(--home-dim, rgba(255,255,255,0.36));
   font-size: 0.66rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -1281,11 +1281,11 @@
 }
 
 .setupActionIcon {
-  color: rgba(255,255,255,0.32);
+  color: var(--home-dim, rgba(255,255,255,0.32));
 }
 
 .tournamentHistoryPanel {
-  background: rgba(255,255,255,0.035);
+  background: var(--home-olive-soft, rgba(255,255,255,0.035));
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
   border-radius: 8px;
   padding: 1rem;
@@ -1299,7 +1299,7 @@
 
 .tournamentHistoryEmpty {
   margin: 0;
-  color: rgba(255,255,255,0.38);
+  color: var(--home-dim, rgba(255,255,255,0.38));
   font-size: 0.84rem;
   line-height: 1.5;
 }
@@ -1316,7 +1316,7 @@
   gap: 0.75rem;
   min-height: 58px;
   padding: 0.7rem 0.8rem;
-  background: rgba(255,255,255,0.028);
+  background: var(--home-olive-soft, rgba(255,255,255,0.028));
   border: 1px solid var(--border-2);
   border-radius: 8px;
   text-decoration: none;
@@ -1324,7 +1324,7 @@
 }
 
 .tournamentHistoryItem:hover {
-  background: rgba(255,255,255,0.052);
+  background: var(--home-olive-soft, rgba(255,255,255,0.052));
   border-color: rgba(var(--blueprint-blue-rgb),0.28);
 }
 
@@ -1348,7 +1348,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem 0.7rem;
-  color: rgba(255,255,255,0.38);
+  color: var(--home-dim, rgba(255,255,255,0.38));
   font-size: 0.76rem;
 }
 
@@ -1361,12 +1361,12 @@
   letter-spacing: 0.03em;
 }
 
-.badgeDraft     { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
+.badgeDraft     { background: var(--home-card, rgba(255,255,255,0.08)); color: var(--home-dim, rgba(255,255,255,0.5)); border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); }
 .badgeActive    { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
 .badgeCompleted { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
-.badgeArchived  { background: var(--white-05); color: rgba(255,255,255,0.3); border: 1px solid var(--border-2); }
+.badgeArchived  { background: var(--white-05); color: var(--home-dim, rgba(255,255,255,0.3)); border: 1px solid var(--border-2); }
 .badgeTryout    { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); border: 1px solid rgba(var(--blueprint-blue-rgb),0.3); }
-.badgeManual    { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.12); }
+.badgeManual    { background: var(--home-card, rgba(255,255,255,0.08)); color: var(--home-dim, rgba(255,255,255,0.5)); border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); }
 .badgeOverdue   { background: rgba(var(--danger-rgb), 0.12); color: var(--danger); border: 1px solid rgba(var(--danger-rgb), 0.3); }
 .badgeUpcoming  { background: rgba(var(--success-rgb), 0.10); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
 
@@ -1403,12 +1403,12 @@
 .emptyStateTitle {
   font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(255,255,255,0.5);
+  color: var(--home-dim, rgba(255,255,255,0.5));
   margin: 0 0 0.4rem;
 }
 .emptyStateSub {
   font-size: 0.82rem;
-  color: rgba(255,255,255,0.3);
+  color: var(--home-dim, rgba(255,255,255,0.3));
   margin: 0 auto;
   max-width: 280px;
   line-height: 1.5;
@@ -1435,8 +1435,8 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--white-35);
-  background: rgba(255,255,255,0.02);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  background: var(--home-olive-soft, rgba(255,255,255,0.02));
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07));
   white-space: nowrap;
 }
 
@@ -1448,7 +1448,7 @@
 }
 
 .tr { transition: background 0.1s; }
-.tr:hover .td { background: rgba(255,255,255,0.03); }
+.tr:hover .td { background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
 .tr:last-child .td { border-bottom: none; }
 
 .playerName { font-weight: 600; font-size: 0.92rem; }
@@ -1497,8 +1497,8 @@
   font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.02em;
-  color: var(--white);
-  border: 1px solid rgba(255,255,255,0.16);
+  color: var(--on-team-color); /* stay light on the theme-stable name-hash avatar colour */
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.16));
 }
 .playerNameLink {
   font-weight: 600;
@@ -1550,11 +1550,11 @@
   height: 40px;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  background: rgba(255,255,255,0.04);
+  background: var(--home-card, rgba(255,255,255,0.04));
   color: var(--white-55);
   cursor: pointer;
 }
-.rosterMoveBtn:hover { background: rgba(255,255,255,0.09); color: var(--white-90); }
+.rosterMoveBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); color: var(--white-90); }
 .rosterMoveBtn:disabled { opacity: 0.3; cursor: default; }
 
 /* Let header help popovers (e.g. the Source "?") escape instead of being clipped.
@@ -1575,7 +1575,7 @@
     border-radius: 10px;
     padding: 0.5rem 0.7rem;
     margin-bottom: 0.5rem;
-    background: rgba(255,255,255,0.025);
+    background: var(--home-olive-soft, rgba(255,255,255,0.025));
   }
   .rosterTable td {
     display: flex;
@@ -1662,12 +1662,12 @@
 .modalCloseBtn {
   background: none;
   border: none;
-  color: rgba(255,255,255,0.4);
+  color: var(--home-dim, rgba(255,255,255,0.4));
   cursor: pointer;
   padding: 0.25rem;
   line-height: 1;
 }
-.modalCloseBtn:hover { color: rgba(255,255,255,0.8); }
+.modalCloseBtn:hover { color: var(--home-ink, rgba(255,255,255,0.8)); }
 
 /* Mobile back arrow — replaces the X when a modal goes full-screen (see the
    sheetOnMobile @640 block). Hidden on desktop. */
@@ -1694,7 +1694,7 @@
   gap: 0.5rem;
   margin: 1.25rem -1.5rem -1.5rem;   /* bleed to the modal edges (modal padding = 1.5rem) */
   padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.07));
   background: var(--card-bg);
 }
 
@@ -1725,7 +1725,7 @@
   gap: 0.5rem;
   margin: 1.25rem -1.5rem 0;
   padding: 1rem 1.5rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.07));
   background: var(--card-bg);
 }
 .editScopeMsg { margin: 0; font-size: 0.85rem; font-weight: 600; color: var(--white-90); }
@@ -1761,7 +1761,7 @@
 
 .input, .select, .textarea {
   background: var(--white-05);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
   border-radius: 6px;
   color: var(--white-90);
   padding: 0.5rem 0.75rem;
@@ -1778,8 +1778,8 @@
 /* padding-bottom lets the last field (Notes) scroll clear of the sticky Save footer. */
 .formBody { display: flex; flex-direction: column; gap: 0.85rem; padding-bottom: 2.5rem; }
 .formSection {
-  background: rgba(255,255,255,0.025);
-  border: 1px solid rgba(255,255,255,0.08);
+  background: var(--home-olive-soft, rgba(255,255,255,0.025));
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.08));
   border-radius: 8px;
   padding: 0.8rem 0.85rem;
   display: flex;
@@ -1804,7 +1804,7 @@
 }
 .locationChip {
   background: var(--white-05);
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
   border-radius: 999px;
   color: var(--white-75);
   padding: 0.26rem 0.7rem;
@@ -1812,7 +1812,7 @@
   cursor: pointer;
   transition: background 0.1s, border-color 0.1s;
 }
-.locationChip:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
+.locationChip:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); border-color: var(--home-line-strong, rgba(255,255,255,0.25)); }
 .locationChipActive {
   background: rgba(var(--logic-lime-rgb), 0.16);
   border-color: var(--logic-lime);
@@ -1827,7 +1827,7 @@
 .tagChips { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.5rem; }
 .tagChip {
   background: var(--white-05);
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
   border-radius: 999px;
   color: var(--white-75);
   padding: 0.26rem 0.7rem;
@@ -1835,7 +1835,7 @@
   cursor: pointer;
   transition: background 0.1s, border-color 0.1s;
 }
-.tagChip:hover { background: rgba(255,255,255,0.09); border-color: rgba(255,255,255,0.25); }
+.tagChip:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); border-color: var(--home-line-strong, rgba(255,255,255,0.25)); }
 .tagChipActive {
   background: rgba(var(--logic-lime-rgb), 0.16);
   border-color: var(--logic-lime);
@@ -1843,7 +1843,7 @@
 }
 .tagChipCreate {
   background: transparent;
-  border: 1px dashed rgba(255,255,255,0.25);
+  border: 1px dashed var(--home-line-strong, rgba(255,255,255,0.25));
   border-radius: 999px;
   color: var(--white-55);
   padding: 0.26rem 0.7rem;
@@ -1870,7 +1870,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.5rem 0;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06));
 }
 .tagManagerRow:last-child { border-bottom: none; }
 .tagManagerName { flex: 1; min-width: 0; }
@@ -1883,7 +1883,7 @@
   cursor: pointer;
   border-radius: 4px;
 }
-.tagManagerActions button:hover { color: var(--white-90); background: rgba(255,255,255,0.08); }
+.tagManagerActions button:hover { color: var(--white-90); background: var(--home-olive-soft, rgba(255,255,255,0.08)); }
 
 /* Award icon picker (Coach Tags & Player Awards Phase 2) — trigger button + choice grid,
    reused by the award-type manager and the give-award form's "+ New" inline create row. */
@@ -1902,13 +1902,13 @@
 .awardEmojiOpt {
   font-size: 1.3rem;
   background: var(--white-05);
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
   border-radius: 8px;
   padding: 0.5rem 0;
   cursor: pointer;
   text-align: center;
 }
-.awardEmojiOpt:hover { background: rgba(255,255,255,0.09); }
+.awardEmojiOpt:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 .awardEmojiOptSelected, .awardEmojiOptSelected:hover {
   border-color: var(--logic-lime);
   background: rgba(var(--logic-lime-rgb), 0.16);
@@ -1929,7 +1929,7 @@
 /* Segmented Home / Away / Neutral choice — lime active fill (coach accent) */
 .segChoice {
   display: inline-flex;
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
   border-radius: 7px;
   overflow: hidden;
   width: fit-content;
@@ -1938,14 +1938,14 @@
   padding: 0.42rem 1rem;
   background: var(--white-05);
   border: none;
-  border-right: 1px solid rgba(255,255,255,0.1);
+  border-right: 1px solid var(--home-line, rgba(255,255,255,0.1));
   color: var(--white-55);
   font-size: 0.82rem;
   font-weight: 600;
   cursor: pointer;
 }
 .segBtn:last-child { border-right: none; }
-.segBtn:hover { background: rgba(255,255,255,0.09); }
+.segBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 .segBtnActive, .segBtnActive:hover { background: var(--logic-lime); color: var(--on-lime); }
 
 /* Form grids collapse to one column at the content breakpoint (migrated 520→640). */
@@ -1963,7 +1963,7 @@
 
 /* ── Detail form (player detail page) ──────────────────────────────────── */
 .detailSection {
-  background: rgba(255,255,255,0.03);
+  background: var(--home-olive-soft, rgba(255,255,255,0.03));
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
   border-radius: 8px;
   padding: 1.25rem;
@@ -1975,13 +1975,13 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: rgba(255,255,255,0.3);
+  color: var(--home-dim, rgba(255,255,255,0.3));
   margin: 0 0 1rem;
 }
 
 .detailPlaceholder {
   font-size: 0.85rem;
-  color: rgba(255,255,255,0.25);
+  color: var(--home-dim, rgba(255,255,255,0.25));
   font-style: italic;
 }
 
@@ -2075,7 +2075,7 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.4rem 0.6rem;
-  background: rgba(255,255,255,0.025);
+  background: var(--home-olive-soft, rgba(255,255,255,0.025));
   border: 1px solid var(--border-2);
   border-radius: 8px;
 }
@@ -2159,8 +2159,8 @@
   align-items: center;
   gap: 0.75rem;
   padding: 0.75rem 1rem;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--home-olive-soft, rgba(255,255,255,0.03));
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.07));
   border-radius: 8px;
   margin-bottom: 1.5rem;
   flex-wrap: wrap;
@@ -2168,7 +2168,7 @@
 
 .statusLabel {
   font-size: 0.8rem;
-  color: rgba(255,255,255,0.4);
+  color: var(--home-dim, rgba(255,255,255,0.4));
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -2176,12 +2176,12 @@
 .notAssigned {
   padding: 4rem 2rem;
   text-align: center;
-  color: rgba(255,255,255,0.4);
+  color: var(--home-dim, rgba(255,255,255,0.4));
 }
 .notAssigned h2 {
   font-size: 1.1rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.6);
+  color: var(--home-ink-soft, rgba(255,255,255,0.6));
   margin: 1rem 0 0.5rem;
 }
 .notAssigned p {
@@ -2208,7 +2208,7 @@
   text-decoration: none;
   transition: color 0.12s;
 }
-.notAssignedBack:hover { color: rgba(255,255,255,0.8); }
+.notAssignedBack:hover { color: var(--home-ink, rgba(255,255,255,0.8)); }
 
 /* ── Sidebar team list sub-label ────────────────────────────────────────── */
 .sidebarTeamInfo {
@@ -2220,7 +2220,7 @@
 
 .sidebarTeamYear {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.3);
+  color: var(--home-dim, rgba(255,255,255,0.3));
   font-weight: 400;
   white-space: nowrap;
   overflow: hidden;
@@ -2275,7 +2275,7 @@
   cursor: pointer;
   transition: background 0.1s, color 0.1s;
 }
-.viewToggleBtn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
+.viewToggleBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.06)); color: var(--home-ink, rgba(255,255,255,0.8)); }
 .viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); font-weight: 600; }
 
 .addEventWrap { position: relative; }
@@ -2305,7 +2305,7 @@
   text-align: left;
   transition: background 0.1s;
 }
-.addEventMenuItem:hover { background: rgba(255,255,255,0.06); }
+.addEventMenuItem:hover { background: var(--home-olive-soft, rgba(255,255,255,0.06)); }
 /* Tournament game nests under Tournament so the parent/child relationship is visible. */
 .addEventMenuSubItem { padding-left: 2.1rem; position: relative; }
 .addEventMenuSubItem::before {
@@ -2372,7 +2372,7 @@
   align-items: center;
   gap: 0.25rem;
   background: var(--white-05);
-  border: 1px solid rgba(255,255,255,0.14);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
   border-radius: 999px;
   color: var(--white-45);
   padding: 0.2rem 0.62rem;
@@ -2381,7 +2381,7 @@
   cursor: pointer;
   transition: background 0.1s, border-color 0.1s, color 0.1s;
 }
-.wltToggle:hover { background: rgba(255,255,255,0.09); }
+.wltToggle:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 .wltToggleActive {
   background: rgba(var(--logic-lime-rgb), 0.16);
   border-color: var(--logic-lime);
@@ -2418,32 +2418,32 @@
   background: var(--white-05);
   border: 1px solid var(--white-10);
   border-radius: 6px;
-  color: rgba(255,255,255,0.6);
+  color: var(--home-ink-soft, rgba(255,255,255,0.6));
   width: 32px; height: 32px;
   display: flex; align-items: center; justify-content: center;
   cursor: pointer;
 }
-.calNavBtn:hover { background: rgba(255,255,255,0.09); }
+.calNavBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 .calNavLabel { font-size: 0.95rem; font-weight: 700; color: var(--white-90); }
 
 .calMonthGroup { margin-bottom: 1.75rem; }
 .calMonthLabel {
   font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em;
-  color: rgba(255,255,255,0.3); padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 0.75rem;
+  color: var(--home-dim, rgba(255,255,255,0.3)); padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07)); margin-bottom: 0.75rem;
 }
 .calEventList { display: flex; flex-direction: column; gap: 0.35rem; }
 
 .eventChip {
   display: flex; align-items: center; gap: 0.5rem;
-  background: rgba(255,255,255,0.04); border: none;
+  background: var(--home-card, rgba(255,255,255,0.04)); border: none;
   border-left: 3px solid transparent;
   border-radius: 0 6px 6px 0;
   padding: 0.45rem 0.75rem; text-align: left; cursor: pointer; width: 100%;
   transition: background 0.1s;
 }
-.eventChip:hover { background: rgba(255,255,255,0.07); }
-.eventChipTime { font-size: 0.78rem; color: rgba(255,255,255,0.4); min-width: 5.5rem; flex-shrink: 0; }
+.eventChip:hover { background: var(--home-olive-soft, rgba(255,255,255,0.07)); }
+.eventChipTime { font-size: 0.78rem; color: var(--home-dim, rgba(255,255,255,0.4)); min-width: 5.5rem; flex-shrink: 0; }
 .eventChipName {
   font-size: 0.88rem; color: var(--white-90); flex: 1;
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
@@ -2454,7 +2454,7 @@
 /* Tryout session projected onto the calendar — dashed muted accent + read-only link (distinct from
    a game's solid colour-coded chip). */
 .tryoutChip {
-  border-left-color: rgba(255,255,255,0.32);
+  border-left-color: var(--home-line-strong, rgba(255,255,255,0.32));
   border-left-style: dashed;
   text-decoration: none;
   color: inherit;
@@ -2470,9 +2470,9 @@
   border-left-color: var(--warning);
   text-decoration: none;
   color: inherit;
-  background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.09), rgba(255,255,255,0.04));
+  background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.09), var(--home-card, rgba(255,255,255,0.04)));
 }
-.tournamentChip:hover { background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.13), rgba(255,255,255,0.06)); }
+.tournamentChip:hover { background: linear-gradient(90deg, rgba(var(--warning-rgb), 0.13), var(--home-olive-soft, rgba(255,255,255,0.06))); }
 .tournamentChipTag {
   font-family: var(--font-data);
   font-size: 0.56rem; letter-spacing: 0.09em; text-transform: uppercase; font-weight: 700;
@@ -2494,12 +2494,12 @@
 
 .calWeekGrid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 0.5rem; overflow-x: auto; }
 .calWeekDay {
-  background: rgba(255,255,255,0.02);
-  border: 1px solid rgba(255,255,255,0.06); border-radius: 6px; min-width: 110px; overflow: hidden;
+  background: var(--home-olive-soft, rgba(255,255,255,0.02));
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.06)); border-radius: 6px; min-width: 110px; overflow: hidden;
 }
-.calWeekDayLabel { font-size: 0.72rem; font-weight: 700; color: var(--white-35); padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.calWeekDayLabel { font-size: 0.72rem; font-weight: 700; color: var(--white-35); padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); }
 .calWeekDayEvents { display: flex; flex-direction: column; gap: 0.25rem; padding: 0.4rem; min-height: 60px; }
-.calWeekEmpty { font-size: 0.78rem; color: rgba(255,255,255,0.15); padding: 0.25rem 0; }
+.calWeekEmpty { font-size: 0.78rem; color: var(--home-dim, rgba(255,255,255,0.15)); padding: 0.25rem 0; }
 
 /* Week-view day columns are as narrow as the mobile list even on desktop — reuse the same
    wrap layout (time -> trail -> full-width name) instead of one rigid row. */
@@ -2525,13 +2525,13 @@
 
 .calMonthGrid {
   display: grid; grid-template-columns: repeat(7,1fr); gap: 1px;
-  background: rgba(255,255,255,0.06);
+  background: var(--home-line, rgba(255,255,255,0.06));
   border: 1px solid var(--border-2); border-radius: 8px; overflow: hidden;
 }
 .calMonthHeader {
-  background: rgba(255,255,255,0.03); padding: 0.4rem;
+  background: var(--home-olive-soft, rgba(255,255,255,0.03)); padding: 0.4rem;
   font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
-  color: rgba(255,255,255,0.3); text-align: center;
+  color: var(--home-dim, rgba(255,255,255,0.3)); text-align: center;
 }
 /* min-width:0 lets each 1fr column actually shrink to fit the viewport — without it a
    no-wrap event label sets a min-content floor and the 7-col grid overflows sideways
@@ -2547,10 +2547,10 @@
 }
 .calMonthEventDot:hover { opacity: 1; }
 .calMonthMoreDots {
-  font-size: 0.67rem; color: rgba(255,255,255,0.35); padding: 0 2px;
+  font-size: 0.67rem; color: var(--home-dim, rgba(255,255,255,0.35)); padding: 0 2px;
   background: none; border: none; cursor: pointer; text-align: left; display: block;
 }
-.calMonthMoreDots:hover { color: rgba(255,255,255,0.6); }
+.calMonthMoreDots:hover { color: var(--home-ink-soft, rgba(255,255,255,0.6)); }
 
 /* Mobile month view: keep the text strips (up to 3 + "+N more"), just shrink them so they fit
    the narrow cell and ellipsis-truncate — the familiar Google-Calendar month look. */
@@ -2595,7 +2595,7 @@
 /* Lineup tab needs room to show all innings without horizontal scroll on desktop */
 .slideOverWide { max-width: min(1180px, 96vw); }
 .slideOverTitle { font-size: 1.2rem; font-weight: 800; color: var(--white-90); margin: 0.5rem 0 1rem; }
-.slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
+.slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid var(--home-line, rgba(255,255,255,0.07)); display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; }
 /* Destructive pair pushed to the right, separated from the everyday Edit/Add-game actions. */
 .slideOverActionsRight { margin-left: auto; display: flex; gap: 0.5rem; flex-wrap: wrap; }
 /* On mobile the auto-margin pushed Cancel/Delete to the far edge, leaving a big gap that
@@ -2613,7 +2613,7 @@
   background: none; border: none; cursor: pointer;
   color: var(--white-35); padding: 0.25rem; line-height: 0; border-radius: 6px;
 }
-.resourceRemove:hover { color: var(--danger); background: rgba(255,255,255,0.06); }
+.resourceRemove:hover { color: var(--danger); background: var(--home-olive-soft, rgba(255,255,255,0.06)); }
 .resourceList { display: flex; flex-direction: column; gap: 0.3rem; margin: 0 0 0.75rem; }
 .resourceLink {
   display: inline-flex; align-items: center; gap: 0.45rem;
@@ -2621,7 +2621,7 @@
   color: var(--logic-lime); padding: 0.4rem 0.6rem; font-size: 0.84rem; font-weight: 600;
   cursor: pointer; text-align: left; width: 100%; transition: background 0.1s, border-color 0.1s;
 }
-.resourceLink:hover { background: rgba(255,255,255,0.09); border-color: rgba(var(--logic-lime-rgb),0.4); }
+.resourceLink:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); border-color: rgba(var(--logic-lime-rgb),0.4); }
 .resourceLinkLabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--white-90); }
 
 .slideOverMeta { margin: 0 0 0.6rem; font-size: 0.9rem; color: var(--white-90); line-height: 1.5; }
@@ -2687,7 +2687,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
   margin: 1.25rem 0 0.25rem;
 }
 .slideTab {
@@ -2727,7 +2727,7 @@
 .attendanceSection {
   margin-top: 0.9rem;
   padding-top: 0.9rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.07));
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -2750,7 +2750,7 @@
 .attendanceUnsaved,
 .attendanceEmpty {
   font-size: 0.78rem;
-  color: rgba(255,255,255,0.4);
+  color: var(--home-dim, rgba(255,255,255,0.4));
   margin: 0;
 }
 
@@ -2778,7 +2778,7 @@
   cursor: pointer;
   transition: background 0.1s, border-color 0.1s, color 0.1s;
 }
-.attFilter:hover { background: rgba(255,255,255,0.09); }
+.attFilter:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
 .attFilterCount { font-variant-numeric: tabular-nums; opacity: 0.85; }
 /* Status colours on the chip icon so each chip reads as a metric even when unselected. */
 .attFilter[data-status="attending"] svg { color: var(--success); }
@@ -2789,7 +2789,7 @@
 .attFilterActive[data-status="attending"] { background: rgba(var(--success-rgb),0.16); border-color: var(--success); color: var(--success); }
 .attFilterActive[data-status="late"] { background: rgba(var(--warning-rgb),0.16); border-color: var(--warning); color: var(--warning); }
 .attFilterActive[data-status="absent"] { background: rgba(var(--danger-rgb),0.14); border-color: var(--danger); color: var(--danger); }
-.attFilterActive[data-status="unknown"] { background: rgba(255,255,255,0.10); border-color: rgba(255,255,255,0.3); color: var(--white-90); }
+.attFilterActive[data-status="unknown"] { background: var(--home-card, rgba(255,255,255,0.10)); border-color: var(--home-line-strong, rgba(255,255,255,0.3)); color: var(--white-90); }
 .attFilterActiveAll { background: rgba(var(--logic-lime-rgb),0.16); border-color: var(--logic-lime); color: var(--logic-lime); }
 
 .attendanceList {
@@ -2806,8 +2806,8 @@
   align-items: center;
   gap: 0.4rem 0.5rem;
   padding: 0.4rem 0.55rem;
-  background: rgba(255,255,255,0.035);
-  border: 1px solid rgba(255,255,255,0.07);
+  background: var(--home-olive-soft, rgba(255,255,255,0.035));
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.07));
   border-radius: 8px;
 }
 
@@ -2831,7 +2831,7 @@
   border: 1px solid var(--white-10);
   border-radius: 8px;
   overflow: hidden;
-  background: rgba(255,255,255,0.03);
+  background: var(--home-olive-soft, rgba(255,255,255,0.03));
 }
 
 .attendanceStatusBtn {
@@ -2844,15 +2844,15 @@
   border-right: 1px solid var(--white-10);
   border-radius: 0;
   background: transparent;
-  color: rgba(255,255,255,0.45);
+  color: var(--home-dim, rgba(255,255,255,0.45));
   cursor: pointer;
   transition: background 0.1s, color 0.1s;
 }
 .attendanceStatusBtn:last-child { border-right: none; }
 
 .attendanceStatusBtn:hover {
-  background: rgba(255,255,255,0.07);
-  color: rgba(255,255,255,0.82);
+  background: var(--home-olive-soft, rgba(255,255,255,0.07));
+  color: var(--home-ink, rgba(255,255,255,0.82));
 }
 
 /* Active segment fills its status colour — no inner border (the group frames it). */
@@ -2872,7 +2872,7 @@
 }
 
 .attendanceStatusBtnActive[data-status="unknown"] {
-  background: rgba(255,255,255,0.12);
+  background: var(--home-card, rgba(255,255,255,0.12));
   color: var(--white-75);
 }
 
@@ -2891,7 +2891,7 @@
   border-radius: 6px;
   position: relative;
 }
-.attendanceNoteToggle:hover { color: var(--white-75); background: rgba(255,255,255,0.06); }
+.attendanceNoteToggle:hover { color: var(--white-75); background: var(--home-olive-soft, rgba(255,255,255,0.06)); }
 .attendanceNoteToggle[data-has="true"] { color: var(--logic-lime); }
 .attendanceNoteToggle[data-has="true"]::after {
   content: '';
@@ -2905,8 +2905,8 @@
 .attendanceNoteInput {
   flex-basis: 100%;
   min-height: 32px;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid rgba(255,255,255,0.09);
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.09));
   border-radius: 6px;
   color: var(--white-90);
   padding: 0.35rem 0.55rem;
@@ -2923,7 +2923,7 @@
   display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
   font-size: 0.76rem; font-weight: 700;
   padding: 0.2rem 0.5rem; border-radius: 999px;
-  border: 1px solid var(--white-10); background: rgba(255,255,255,0.03);
+  border: 1px solid var(--white-10); background: var(--home-olive-soft, rgba(255,255,255,0.03));
   color: var(--white-45);
 }
 .attendanceStatusBadge[data-status="attending"] { color: var(--success); border-color: rgba(var(--success-rgb),0.4); background: rgba(var(--success-rgb),0.12); }
@@ -2958,12 +2958,12 @@
   border: 1px solid var(--white-10); background: rgba(255,255,255,0.03);
   color: var(--white-70); font-size: 0.82rem; font-weight: 600; cursor: pointer;
 }
-.rsvpOption svg { color: rgba(255,255,255,0.5); }
-.rsvpOption:hover { background: rgba(255,255,255,0.07); }
+.rsvpOption svg { color: var(--home-dim, rgba(255,255,255,0.5)); }
+.rsvpOption:hover { background: var(--home-olive-soft, rgba(255,255,255,0.07)); }
 .rsvpOptionActive[data-status="attending"] { background: rgba(var(--success-rgb),0.16); border-color: var(--success); color: var(--success); }
 .rsvpOptionActive[data-status="late"]      { background: rgba(var(--warning-rgb),0.16); border-color: var(--warning); color: var(--warning); }
 .rsvpOptionActive[data-status="absent"]    { background: rgba(var(--danger-rgb),0.14); border-color: var(--danger); color: var(--danger); }
-.rsvpOptionActive[data-status="unknown"]   { background: rgba(255,255,255,0.12); border-color: rgba(255,255,255,0.3); color: var(--white-90); }
+.rsvpOptionActive[data-status="unknown"]   { background: var(--home-card, rgba(255,255,255,0.12)); border-color: var(--home-line-strong, rgba(255,255,255,0.3)); color: var(--white-90); }
 .rsvpOptionActive svg { color: inherit; }
 
 /* Mobile: bump the dense attendance controls to ≥36px so they clear the
@@ -2987,13 +2987,13 @@
   margin: 0.9rem -1.5rem -1.5rem;
   padding: 0.8rem 1.5rem calc(0.8rem + env(safe-area-inset-bottom, 0px));
   background: var(--card-bg);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.08));
 }
 
 .lineupSection {
   margin-top: 0.9rem;
   padding-top: 0.9rem;
-  border-top: 1px solid rgba(255,255,255,0.07);
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.07));
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -3014,7 +3014,7 @@
   right: 0;
   top: calc(100% + 6px);
   z-index: 60;
-  width: 270px;
+  width: 340px; /* fit the full "Balanced — preferred spots, rotate" option without truncation */
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
@@ -3058,12 +3058,12 @@
   height: 40px;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  background: rgba(255,255,255,0.04);
+  background: var(--home-card, rgba(255,255,255,0.04));
   color: var(--white-65);
   cursor: pointer;
   transition: background 0.1s, color 0.1s;
 }
-.footerIconBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: var(--white-90); }
+.footerIconBtn:hover:not(:disabled) { background: var(--home-olive-soft, rgba(255,255,255,0.1)); color: var(--white-90); }
 .footerIconBtn:disabled { opacity: 0.3; cursor: default; }
 
 /* Auto-save status (replaces the Save button) — quiet "Saving…/Saved" or a retry. */
@@ -3160,7 +3160,7 @@
 .lineupTemplateHead {
   font-size: 0.68rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.42);
+  color: var(--home-dim, rgba(255,255,255,0.42));
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -3229,8 +3229,8 @@
   text-align: center;
   color: var(--white-40);
   font-weight: 700;
-  background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: var(--home-olive-soft, rgba(255,255,255,0.03));
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
   white-space: nowrap;
 }
 .lineupSummaryTable td {
@@ -3307,6 +3307,14 @@
   color: var(--warning);
 }
 
+/* Warm coaches portal (dev-gated) — ratified TH-5 ①: a POSITION CLASH is the one hard error,
+   so under warm both its cues go live-red (the column-header number already uses --danger→
+   --home-live inline; this unifies the prose). Dark keeps the amber prose (unchanged dark
+   builder). Soft warnings (couldn't-fill, uneven bench) stay on plain .lineupWarn = amber. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .lineupWarnClash {
+  color: var(--home-live);
+}
+
 .lineupControls {
   display: flex;
   gap: 0.5rem;
@@ -3324,7 +3332,7 @@
 .lineupControlLabel span {
   font-size: 0.68rem;
   font-weight: 700;
-  color: rgba(255,255,255,0.42);
+  color: var(--home-dim, rgba(255,255,255,0.42));
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
@@ -3345,9 +3353,9 @@
 .lineupTable th {
   padding: 0.45rem;
   text-align: left;
-  color: rgba(255,255,255,0.4);
-  background: rgba(255,255,255,0.03);
-  border-bottom: 1px solid rgba(255,255,255,0.07);
+  color: var(--home-dim, rgba(255,255,255,0.4));
+  background: var(--home-olive-soft, rgba(255,255,255,0.03));
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.07));
   white-space: nowrap;
 }
 
@@ -3356,7 +3364,7 @@
 
 .lineupTable td {
   padding: 0.4rem;
-  border-bottom: 1px solid rgba(255,255,255,0.055);
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.055));
   vertical-align: middle;
 }
 
@@ -3366,7 +3374,7 @@
   width: 48px;
   min-height: 32px;
   background: var(--white-05);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
   border-radius: 6px;
   color: var(--white-90);
   padding: 0.25rem 0.35rem;
@@ -3401,7 +3409,7 @@
 .lineupNotPlaying {
   margin-top: 0.75rem; padding: 0.6rem 0.7rem;
   border: 1px dashed var(--white-10); border-radius: 8px;
-  background: rgba(255,255,255,0.02);
+  background: var(--home-olive-soft, rgba(255,255,255,0.02));
 }
 .lineupNotPlayingHead {
   margin: 0 0 0.5rem; font-size: 0.7rem; font-weight: 800;
@@ -3426,7 +3434,7 @@
 
 .lineupPlayerCell small {
   display: block;
-  color: rgba(255,255,255,0.36);
+  color: var(--home-dim, rgba(255,255,255,0.36));
   font-size: 0.7rem;
   margin-top: 0.1rem;
 }
@@ -3435,7 +3443,7 @@
   width: 58px;
   min-height: 32px;
   background: var(--white-05);
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
   border-radius: 6px;
   color: var(--white-90);
   padding: 0.25rem 0.35rem;
@@ -3503,13 +3511,13 @@
 .lineupPeekEmpty {
   text-align: center; padding: 1.4rem 1rem;
   border: 1px dashed var(--white-10); border-radius: 10px;
-  background: rgba(255,255,255,0.02);
+  background: var(--home-olive-soft, rgba(255,255,255,0.02));
 }
 .lineupPeekEmpty p { margin: 0 0 0.9rem; color: var(--white-60); font-size: 0.88rem; }
 .lineupPeekStats {
   display: flex; gap: 1.4rem; flex-wrap: wrap;
   padding: 0.7rem 0.9rem; border-radius: 10px;
-  background: rgba(255,255,255,0.03); border: 1px solid var(--white-8);
+  background: var(--home-olive-soft, rgba(255,255,255,0.03)); border: 1px solid var(--white-8);
 }
 .lineupPeekStats > div { display: flex; flex-direction: column; gap: 0.1rem; }
 .lineupPeekStats b { font-size: 1.05rem; font-weight: 700; color: var(--white-90); line-height: 1.1; }
@@ -3517,7 +3525,7 @@
 .lineupPeekOrder { list-style: none; margin: 0.4rem 0 0; padding: 0; }
 .lineupPeekOrder li {
   display: flex; align-items: center; gap: 0.6rem;
-  padding: 0.35rem 0; border-bottom: 1px solid rgba(255,255,255,0.05);
+  padding: 0.35rem 0; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
 }
 .lineupPeekOrder li:last-child { border-bottom: none; }
 .lineupPeekBat {
@@ -3558,7 +3566,7 @@
 .lineupPeekFooter { margin-top: 1.1rem; display: flex; justify-content: flex-end; }
 
 .deleteConfirm { display: flex; flex-direction: column; gap: 0.5rem; }
-.deleteConfirmMsg { font-size: 0.88rem; color: rgba(255,255,255,0.7); margin: 0; }
+.deleteConfirmMsg { font-size: 0.88rem; color: var(--home-ink-soft, rgba(255,255,255,0.7)); margin: 0; }
 .deleteConfirmBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
 /* Primary action — logic-lime fill, dark text (app-wide convention, matches the
@@ -3587,18 +3595,18 @@
 
 .btnSecondary {
   display: inline-flex; align-items: center; gap: 0.35rem;
-  background: rgba(255,255,255,0.07); color: var(--white-75);
-  border: 1px solid rgba(255,255,255,0.12); border-radius: 6px;
+  background: var(--home-card, rgba(255,255,255,0.07)); color: var(--white-75);
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); border-radius: 6px;
   padding: 0.45rem 0.9rem; font-size: 0.88rem; font-weight: 600; cursor: pointer;
 }
-.btnSecondary:hover { background: rgba(255,255,255,0.11); }
+.btnSecondary:hover { background: var(--home-olive-soft, rgba(255,255,255,0.11)); }
 
 .btnGhost {
   display: inline-flex; align-items: center; gap: 0.35rem;
   background: none; border: none; color: var(--white-45);
   font-size: 0.85rem; cursor: pointer; padding: 0.3rem 0.5rem;
 }
-.btnGhost:hover { color: rgba(255,255,255,0.8); }
+.btnGhost:hover { color: var(--home-ink, rgba(255,255,255,0.8)); }
 
 .btnDanger {
   display: inline-flex; align-items: center; gap: 0.35rem;
@@ -3634,7 +3642,7 @@
 }
 
 .linkCard {
-  background: rgba(255,255,255,0.035);
+  background: var(--home-olive-soft, rgba(255,255,255,0.035));
   border: 1px solid rgba(var(--blueprint-blue-rgb),0.15);
   border-radius: 8px;
   padding: 1rem;
@@ -3696,7 +3704,7 @@
   cursor: pointer;
   transition: background 0.1s, color 0.1s;
 }
-.lineupViewBtn:hover:not(:disabled) { background: rgba(255,255,255,0.06); color: var(--white-90); }
+.lineupViewBtn:hover:not(:disabled) { background: var(--home-olive-soft, rgba(255,255,255,0.06)); color: var(--white-90); }
 .lineupViewBtn:disabled { opacity: 0.4; cursor: default; }
 .lineupViewBtnActive,
 .lineupViewBtnActive:hover {
@@ -3754,7 +3762,7 @@
     cursor: pointer;
     padding: 0;
   }
-  .lineupMoveBtn:hover:not(:disabled) { background: rgba(255,255,255,0.1); color: var(--white-90); }
+  .lineupMoveBtn:hover:not(:disabled) { background: var(--home-olive-soft, rgba(255,255,255,0.1)); color: var(--white-90); }
   .lineupMoveBtn:disabled { opacity: 0.25; cursor: default; }
 }
 
@@ -3786,14 +3794,14 @@
   align-items: center;
   gap: 1rem;
   padding: 0.95rem 1.15rem;
-  background: rgba(255,255,255,0.03);
+  background: var(--home-olive-soft, rgba(255,255,255,0.03));
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
   border-radius: 8px;
   text-decoration: none;
   transition: border-color 0.12s ease, background 0.12s ease;
 }
 .moneyCard:hover {
-  background: rgba(255,255,255,0.05);
+  background: var(--home-olive-soft, rgba(255,255,255,0.05));
   border-color: rgba(var(--blueprint-blue-rgb), 0.35);
 }
 .moneyCardIcon { flex-shrink: 0; display: inline-flex; }

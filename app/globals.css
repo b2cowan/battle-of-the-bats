@@ -396,6 +396,12 @@ body:has([data-chat-fullbleed]) {
 
   /* Data font — new, doesn't conflict with --font-sans / --font-display */
   --font-data: var(--font-mono, 'IBM Plex Mono'), monospace;
+
+  /* Ink for text sitting ON a name-hash team/opponent colour badge (avatars, monograms).
+     Those backgrounds are theme-STABLE saturated colours, so the text must stay light in
+     EVERY theme — it must NOT flow through the white→ink warm remap (which would render it
+     dark-on-colour). Kept as a fixed value so a single reference themes all such badges. */
+  --on-team-color: #ffffff;
 }
 
 /* Light surfaces: the pastel --gold (#F5C451) washes out as small text/glyphs, so gold

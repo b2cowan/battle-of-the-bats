@@ -49,14 +49,14 @@ function SortableLineupRow({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
           <button type="button" aria-label={`Drag to reorder ${playerDisplayName(row.player)} in the batting order`}
             className={styles.lineupGrip} {...attributes} {...listeners}
-            style={{ background: 'none', border: 'none', padding: 2, lineHeight: 0, cursor: 'grab', color: 'rgba(255,255,255,0.35)', touchAction: 'none' }}>
+            style={{ background: 'none', border: 'none', padding: 2, lineHeight: 0, cursor: 'grab', color: 'var(--home-dim, rgba(255,255,255,0.35))', touchAction: 'none' }}>
             <GripVertical size={14} />
           </button>
           <span className={styles.lineupMoveControls}>
             <button type="button" className={styles.lineupMoveBtn} aria-label={`Move ${playerDisplayName(row.player)} up`} disabled={index === 0} onClick={() => onMove(index, -1)}><ChevronUp size={14} /></button>
             <button type="button" className={styles.lineupMoveBtn} aria-label={`Move ${playerDisplayName(row.player)} down`} disabled={index === count - 1} onClick={() => onMove(index, 1)}><ChevronDown size={14} /></button>
           </span>
-          <span style={{ minWidth: '1.2ch', textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: battingNumber ? 'var(--white-90)' : 'rgba(255,255,255,0.3)' }}>{battingNumber || '–'}</span>
+          <span style={{ minWidth: '1.2ch', textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: battingNumber ? 'var(--white-90)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>{battingNumber || '–'}</span>
         </div>
       </td>
       {mode === 'nine_player' && (
@@ -347,7 +347,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                     </select>
                   </label>
                   {autoPolicy === 'competitive' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '1px solid var(--home-line, rgba(255,255,255,0.08))' }}>
                       <label className={styles.lineupControlLabel}>
                         <span>A-squad</span>
                         <select className={styles.select} value={aSquadEmphasis} onChange={e => setASquadEmphasis(e.target.value as 'balanced_sits' | 'prioritized')}>
@@ -355,7 +355,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                           <option value="prioritized">Stay on field — others cover the bench</option>
                         </select>
                       </label>
-                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', cursor: 'pointer' }}>
                         <input type="checkbox" checked={noBackToBackSits} onChange={e => setNoBackToBackSits(e.target.checked)} />
                         <span>Nobody sits two innings in a row</span>
                       </label>
@@ -375,7 +375,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                         onChange={e => { const v = Number(e.target.value); setFillFrom(v); if (fillTo !== null && v > rangeTo) setFillTo(v); }}>
                         {Array.from({ length: inningCount }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
                       </select>
-                      <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 12 }}>to</span>
+                      <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: 12 }}>to</span>
                       <select className={styles.select} aria-label="Last inning to fill" value={rangeTo}
                         onChange={e => setFillTo(Number(e.target.value))}>
                         {Array.from({ length: inningCount }, (_, i) => i + 1).filter(n => n >= rangeFrom).map(n => <option key={n} value={n}>{n}</option>)}
@@ -384,7 +384,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                   </label>
                   {gameRules && onGameRulesChange && (
                     <div>
-                      <button type="button" onClick={() => setGameRulesOpen(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'rgba(255,255,255,0.6)' }}>
+                      <button type="button" onClick={() => setGameRulesOpen(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
                         Game rules {gameRulesOpen ? '▴' : '▾'}
                       </button>
                       {gameRulesOpen && (
@@ -394,7 +394,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                             { key: 'pitcher', label: 'Max innings pitched', def: seasonCaps?.pitcherMaxInningsDefault ?? null, min: 1 },
                             { key: 'minPlay', label: 'Min innings / player', def: seasonCaps?.minInningsPerPlayer ?? null, min: 1 },
                           ] as const).map(f => (
-                            <label key={f.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>
+                            <label key={f.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
                               <span>{f.label}</span>
                               <input type="number" min={f.min} max={12} className={styles.input} style={{ width: 128 }}
                                 placeholder={f.def != null ? `Season default (${f.def})` : 'Off'}
@@ -423,7 +423,7 @@ export default function LineupEditor(props: LineupEditorProps) {
           <div className={styles.lineupInsights}>
             {notice && <p className={styles.lineupNotice}>{notice}</p>}
             {analysis.hasConflicts && (
-              <p className={styles.lineupWarn}>⚠ Position clash: {analysis.conflicts.map(c => `two at ${c.position} in inning ${c.inning}`).join(' · ')}</p>
+              <p className={`${styles.lineupWarn} ${styles.lineupWarnClash}`}>⚠ Position clash: {analysis.conflicts.map(c => `two at ${c.position} in inning ${c.inning}`).join(' · ')}</p>
             )}
             {unfilled.length > 0 && (
               <p className={styles.lineupWarn}>⚠ Couldn&apos;t fill {unfilled.map(u => `${u.positions.join(', ')} in ${sportPack.periodLabel.toLowerCase()} ${u.inning}`).join(' · ')} — a player may have this spot set to &ldquo;Never,&rdquo; leaving no one eligible.</p>

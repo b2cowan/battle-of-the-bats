@@ -191,7 +191,7 @@ a.rowLink:active {
   place-items: center;
   border-radius: var(--radius-sm);
   background: var(--opp-color, var(--logic-lime));
-  color: var(--white);
+  color: var(--on-team-color); /* stay light on the theme-stable opponent colour */
   font-family: var(--font-data, monospace);
   font-weight: 800;
   letter-spacing: 0.02em;

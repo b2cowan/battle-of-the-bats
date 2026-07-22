@@ -53,7 +53,7 @@
 .swB { background: var(--best-bg); border-color: var(--best-bd); }
 .swO { background: var(--okay-bg); border-color: var(--okay-bd); }
 .swN { background: var(--never-bg); border-color: var(--never-bd); }
-.swX { background: rgba(255, 255, 255, 0.04); border-color: var(--line-soft); }
+.swX { background: var(--home-card, rgba(255, 255, 255, 0.04)); border-color: var(--line-soft); }
 .tip { margin-left: auto; color: var(--ink-45); }
 
 /* ── desktop grid ── */
@@ -81,13 +81,13 @@
 .table tbody tr:nth-child(even) td.cPlayer,
 .table tbody tr:nth-child(even) td.cPitch,
 .table tbody tr:nth-child(even) td.cASquad { background: var(--panel); }
-.table td { border-bottom: 1px solid rgba(255, 255, 255, 0.05); }
+.table td { border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.05)); }
 .pnum { color: var(--ink-45); font-size: 0.72rem; font-weight: 600; margin-right: 8px; font-variant-numeric: tabular-nums; }
 .pname { font-weight: 600; font-size: 0.84rem; color: var(--ink); }
 
 .cellbtn {
   width: 44px; height: 36px; margin: 0 auto; border-radius: var(--radius-sm);
-  border: 1px solid var(--line-soft); background: rgba(255, 255, 255, 0.03); color: var(--ink-45);
+  border: 1px solid var(--line-soft); background: var(--home-card, rgba(255, 255, 255, 0.03)); color: var(--ink-45);
   cursor: pointer; display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 0.8rem; font-variant-numeric: tabular-nums; transition: all 0.1s ease; user-select: none;
 }
@@ -103,10 +103,10 @@
   padding: 4px 12px; border-radius: 999px; border: 1px solid var(--best-bd);
   background: var(--best-bg); color: var(--best-fg); font-weight: 800; font-size: 0.72rem; cursor: pointer;
 }
-.pchip.off { border-color: var(--line-soft); background: rgba(255, 255, 255, 0.03); color: var(--ink-45); font-weight: 700; }
+.pchip.off { border-color: var(--line-soft); background: var(--home-card, rgba(255, 255, 255, 0.03)); color: var(--ink-45); font-weight: 700; }
 .pchip:disabled { cursor: default; opacity: 0.5; }
 .capInput {
-  width: 54px; min-height: 30px; text-align: center; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line-soft);
+  width: 54px; min-height: 30px; text-align: center; background: var(--home-card, rgba(255, 255, 255, 0.04)); border: 1px solid var(--line-soft);
   border-radius: var(--radius-sm); color: var(--okay-fg); font-size: 0.66rem; font-weight: 600; padding: 3px 4px;
   font-variant-numeric: tabular-nums;
 }
@@ -126,7 +126,7 @@
 .saveBar { display: flex; align-items: center; gap: 10px; margin-top: 14px; padding: 0 2px; }
 .iconBtn {
   width: 40px; height: 40px; border-radius: var(--radius-sm); border: 1px solid var(--line-soft);
-  background: rgba(255, 255, 255, 0.04); color: var(--ink-70); cursor: pointer; font-size: 1rem;
+  background: var(--home-card, rgba(255, 255, 255, 0.04)); color: var(--ink-70); cursor: pointer; font-size: 1rem;
   display: inline-flex; align-items: center; justify-content: center;
 }
 .iconBtn:disabled { opacity: 0.4; cursor: default; }
@@ -135,7 +135,7 @@
 .saveRetry { background: none; border: none; color: var(--danger); font-weight: 700; font-size: 0.78rem; cursor: pointer; text-decoration: underline; padding: 0; }
 .autofill {
   margin-left: auto; padding: 8px 14px; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.76rem;
-  border: 1px solid var(--line-soft); background: rgba(255, 255, 255, 0.04); color: var(--ink); text-decoration: none; white-space: nowrap;
+  border: 1px solid var(--line-soft); background: var(--home-card, rgba(255, 255, 255, 0.04)); color: var(--ink); text-decoration: none; white-space: nowrap;
 }
 .autofill:hover { border-color: var(--line); }
 
@@ -173,7 +173,7 @@
 .pitchRow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .checkLabel { display: inline-flex; align-items: center; gap: 8px; font-size: 0.85rem; cursor: pointer; color: var(--ink); min-height: 40px; }
 .rankSelect, .capNum {
-  background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
+  background: var(--home-card, rgba(255, 255, 255, 0.05)); border: 1px solid var(--line-soft); border-radius: var(--radius-sm);
   color: var(--ink); font-size: 0.82rem; padding: 9px 10px; min-height: 40px;
 }
 .rankSelect:focus, .capNum:focus { outline: none; border-color: var(--line); }
@@ -184,7 +184,7 @@
 .sub { font-size: 0.7rem; color: var(--ink-45); margin: 2px 0 0; }
 .miniStar {
   margin-left: auto; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; /* ≥40 mobile target */
-  font-size: 1.6rem; color: rgba(255, 255, 255, 0.45); cursor: pointer; background: none; border: none; padding: 0;
+  font-size: 1.6rem; color: var(--white-45); cursor: pointer; background: none; border: none; padding: 0;
 }
 .miniStar.on { color: var(--gold); text-shadow: 0 0 12px rgba(var(--gold-rgb), 0.4); }
 .miniStar:disabled { cursor: default; opacity: 0.5; }
@@ -222,4 +222,20 @@
      on white (~1.6:1). Point --gold at the legible deep gold here so the star reads on paper
      (ratified TH-5 ④ warm A-squad star = gold-strong, no glow). */
   --gold:       var(--gold-strong);
+}
+
+/* Ratified TH-5 ④: the warm A-squad star carries NO glow on white (the dark board keeps its
+   gold glow). Drop the text-shadow on all three star glyphs under the warm gate. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .star.on,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .miniStar.on,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .miniStarHead {
+  text-shadow: none;
+}
+
+/* Selected/unselected star contrast on cream: the SELECTED star is the saturated
+   gold-strong; make the UNSELECTED (empty) star a distinctly LIGHTER warm-neutral so
+   it clearly reads as "off" against the gold (on dark it stays the faint --white-45). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .star:not(.on),
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .miniStar:not(.on) {
+  color: rgba(var(--home-line-rgb), 0.4);
 }
