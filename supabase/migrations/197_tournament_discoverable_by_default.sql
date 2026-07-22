@@ -1,0 +1,13 @@
+-- 197_tournament_discoverable_by_default.sql
+--
+-- Make tournaments DISCOVERABLE BY DEFAULT — flip list_in_directory from opt-in to opt-out.
+-- Owner decision 2026-07-22: most events want to be found, so a new tournament should list in the
+-- public /discover directory automatically. Organizers keep the existing "list in directory" toggle
+-- (Event Settings → Tournament Overview) to hide an event.
+--
+-- Additive + safe: this changes only the DEFAULT for NEW rows. Existing rows are UNTOUCHED — NO
+-- backfill (the two prod tournaments are already listed; unlisted historical events must stay
+-- unlisted unless their organizer opts in). The public-status gate still ANDs at query time
+-- (status IN ('active','completed')), so a default-listed DRAFT never surfaces until it goes active.
+-- Available on all plans (no tier gate), unchanged.
+ALTER TABLE tournaments ALTER COLUMN list_in_directory SET DEFAULT true;

@@ -2,12 +2,12 @@
 
 **Generated:** 2026-07-22 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 50 divergence(s)** across dev/prod.
+**⚠️ 51 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 0 | 3 | 23 |
+| Columns | 0 | 3 | 24 |
 | Indexes | 4 | 3 | 0 |
 | Constraints | 7 | 9 | — |
 | RLS / CHECK | 0 | 1 | 0 (RLS state) |
@@ -28,7 +28,7 @@ _none_
 - `rule_items.created_at`
 - `rules.created_at`
 
-### Type/nullability/default changed (23)
+### Type/nullability/default changed (24)
 - `announcements.body` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `announcements.published_at` — dev: `timestamp with time zone|timestamptz|NO|now()` | prod: `timestamp with time zone|timestamptz|NO|`
 - `diamonds.address` — dev: `text|text|YES|` | prod: `text|text|NO|`
@@ -50,6 +50,7 @@ _none_
 - `teams.payment_status` — dev: `text|text|NO|'paid'::text` | prod: `text|text|YES|'paid'::text`
 - `teams.registered_at` — dev: `timestamp with time zone|timestamptz|NO|now()` | prod: `timestamp with time zone|timestamptz|YES|now()`
 - `teams.status` — dev: `text|text|NO|'accepted'::text` | prod: `text|text|YES|'accepted'::text`
+- `tournaments.list_in_directory` — dev: `boolean|bool|NO|true` | prod: `boolean|bool|NO|false`
 - `tournaments.slug` — dev: `text|text|YES|` | prod: `text|text|NO|`
 - `tournaments.status` — dev: `text|text|NO|'draft'::text` | prod: `text|text|NO|'completed'::text`
 

@@ -123,8 +123,8 @@ export default function TournamentEventSettingsPage() {
   // Contact visibility per audience — default on so existing events are unchanged (migration 120)
   const [contactShowToCoaches, setContactShowToCoaches] = useState(true);
   const [contactShowOnPublic, setContactShowOnPublic] = useState(true);
-  // Public discovery directory opt-in (migration 158) — default OFF (privacy-safe).
-  const [listInDirectory, setListInDirectory] = useState(false);
+  // Public discovery directory — default ON (opt-out; mig 197). Organizers can hide an event here.
+  const [listInDirectory, setListInDirectory] = useState(true);
   const [directoryProvince, setDirectoryProvince] = useState('');
   const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
   const [ownerMember, setOwnerMember] = useState<OrgMemberOption | null>(null);
@@ -165,7 +165,7 @@ export default function TournamentEventSettingsPage() {
     notifyMode: 'all' as 'all' | 'assigned',
     contactShowToCoaches: true,
     contactShowOnPublic: true,
-    listInDirectory: false,
+    listInDirectory: true,
     directoryProvince: '',
   });
 

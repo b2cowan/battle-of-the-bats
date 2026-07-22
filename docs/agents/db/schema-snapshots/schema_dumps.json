@@ -14687,7 +14687,7 @@
         "data_type": "boolean",
         "udt_name": "bool",
         "is_nullable": "NO",
-        "column_default": "false"
+        "column_default": "true"
       },
       {
         "table_name": "tournaments",

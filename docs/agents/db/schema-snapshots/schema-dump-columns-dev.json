@@ -14684,7 +14684,7 @@
     "data_type": "boolean",
     "udt_name": "bool",
     "is_nullable": "NO",
-    "column_default": "false",
+    "column_default": "true",
     "ordinal_position": 42
   },
   {

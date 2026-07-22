@@ -509,9 +509,9 @@ export const POST = withObservability(async (req: Request) => {
       if (data.contactShowToCoaches !== undefined) updates.contact_show_to_coaches = Boolean(data.contactShowToCoaches);
       if (data.contactShowOnPublic !== undefined) updates.contact_show_on_public = Boolean(data.contactShowOnPublic);
 
-      // Public discovery directory opt-in (migration 158) — default off, available on
-      // every plan (no tier gate). Province powers the directory's location filter and
-      // is whitelisted to recognized CA codes (else cleared).
+      // Public discovery directory (mig 158; default flipped ON / opt-out in mig 197) — available on
+      // every plan (no tier gate). Organizers can hide an event by turning this off. Province powers
+      // the directory's location filter and is whitelisted to recognized CA codes (else cleared).
       if (data.listInDirectory !== undefined) updates.list_in_directory = Boolean(data.listInDirectory);
       if (data.directoryProvince !== undefined) {
         updates.directory_province = isProvinceCode(data.directoryProvince) ? data.directoryProvince : null;
