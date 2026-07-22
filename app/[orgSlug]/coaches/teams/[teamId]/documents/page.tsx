@@ -130,10 +130,10 @@ export default function TeamDocumentsPage({
                     {DOC_TYPE_LABELS[t.documentType] ?? t.documentType}
                   </span>
                 </td>
-                <td className={styles.td} style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.82rem' }}>
+                <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.6))', fontSize: '0.82rem' }}>
                   {t.fileName}
                 </td>
-                <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
+                <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.82rem' }}>
                   {formatBytes(t.fileSize)}
                 </td>
                 <td className={styles.td} style={{ textAlign: 'right' }}>
@@ -149,7 +149,7 @@ export default function TeamDocumentsPage({
                       <Download size={13} /> Download
                     </a>
                   ) : (
-                    <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>Unavailable</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>Unavailable</span>
                   )}
                 </td>
               </tr>
@@ -262,7 +262,7 @@ export default function TeamDocumentsPage({
               </div>
 
               {uploadError && (
-                <p style={{ color: '#f87171', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
+                <p style={{ color: 'var(--danger-light)', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
               )}
             </div>
 

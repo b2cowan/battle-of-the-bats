@@ -28,7 +28,7 @@
 }
 .close:hover {
   color: var(--white);
-  background: var(--white-08, rgba(255, 255, 255, 0.08));
+  background: var(--white-8);
 }
 
 .head {
@@ -120,4 +120,11 @@
   .title {
     font-size: 1.08rem;
   }
+}
+
+/* Warm coaches portal (dev-gated) — the close-button hover is a faint white overlay the token
+   remap can't reach (its --white-08 fallback is a literal); it would wash white on cream.
+   Give it a subtle olive tint instead. Additive — dark output unchanged. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .close:hover {
+  background: var(--home-olive-soft);
 }

@@ -162,7 +162,7 @@ export default function TeamSettingsPage({
             <p className={styles.setupKicker}>Team</p>
             <h2 id="division-title" className={styles.setupTitle}>Division</h2>
           </div>
-          <Pencil size={18} style={{ color: 'rgba(255,255,255,0.3)' }} />
+          <Pencil size={18} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
         </div>
 
         {scope.canEditDivision ? (
@@ -208,7 +208,7 @@ export default function TeamSettingsPage({
               {season.name} <span className={styles.muted} style={{ fontWeight: 500 }}>· {STATUS_LABEL[season.status] ?? season.status}</span>
             </h2>
           </div>
-          <CalendarPlus size={18} style={{ color: 'rgba(255,255,255,0.3)' }} />
+          <CalendarPlus size={18} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
         </div>
 
         {scope.canManageSeasons ? (
@@ -247,7 +247,7 @@ export default function TeamSettingsPage({
             <p className={styles.setupKicker}>Lineups</p>
             <h2 id="lineup-rules-title" className={styles.setupTitle}>Lineup rules</h2>
           </div>
-          <SlidersHorizontal size={18} style={{ color: 'rgba(255,255,255,0.3)' }} />
+          <SlidersHorizontal size={18} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
         </div>
         <p style={{ margin: '0 0 0.9rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
           Season defaults the game-day Auto-fill follows. Leave a field blank to turn that rule off.
@@ -296,7 +296,7 @@ export default function TeamSettingsPage({
               <p className={styles.setupKicker}>Organization</p>
               <h2 id="org-title" className={styles.setupTitle}>Parent organization</h2>
             </div>
-            <Link2 size={18} style={{ color: 'rgba(255,255,255,0.3)' }} />
+            <Link2 size={18} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
           </div>
           <p style={{ margin: '0 0 0.7rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
             Belong to a club or league? Connect your team for recognition, or transfer it in entirely.

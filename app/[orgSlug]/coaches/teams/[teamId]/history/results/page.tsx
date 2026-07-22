@@ -258,8 +258,8 @@ export default function CoachesResultsReportPage({
                       <span
                         className={styles.insightsSeasonChip}
                         style={{
-                          background: y.status === 'archived' ? 'rgba(255,255,255,0.06)' : 'rgba(74,222,128,0.1)',
-                          color: y.status === 'archived' ? 'rgba(255,255,255,0.35)' : '#4ade80',
+                          background: y.status === 'archived' ? 'var(--home-line, rgba(255,255,255,0.06))' : 'color-mix(in srgb, var(--success-light) 10%, transparent)',
+                          color: y.status === 'archived' ? 'var(--home-dim, rgba(255,255,255,0.35))' : 'var(--success-light)',
                         }}
                       >
                         {y.status === 'archived' ? 'Archived' : 'Completed'}
@@ -280,11 +280,11 @@ export default function CoachesResultsReportPage({
                       {acct && (
                         <>
                           <div>
-                            <div style={{ fontWeight: 600, color: '#4ade80' }}>{fmt(acct.duesCollected)}</div>
+                            <div style={{ fontWeight: 600, color: 'var(--success-light)' }}>{fmt(acct.duesCollected)}</div>
                             <div className={styles.insightsSeasonStatLbl}>Dues collected</div>
                           </div>
                           <div>
-                            <div style={{ fontWeight: 600, color: acct.duesOutstanding > 0 ? '#f87171' : 'rgba(255,255,255,0.5)' }}>{fmt(acct.duesOutstanding)}</div>
+                            <div style={{ fontWeight: 600, color: acct.duesOutstanding > 0 ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>{fmt(acct.duesOutstanding)}</div>
                             <div className={styles.insightsSeasonStatLbl}>Outstanding</div>
                           </div>
                           <div>

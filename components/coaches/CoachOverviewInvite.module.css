@@ -43,7 +43,7 @@
   cursor: pointer;
   transition: color 0.15s, background 0.15s;
 }
-.inviteDismiss:hover { color: var(--white); background: var(--white-08, rgba(255, 255, 255, 0.08)); }
+.inviteDismiss:hover { color: var(--white); background: var(--white-8); }
 
 /* Degraded faint line — what dismissal leaves behind (thread not cut). */
 .faintLine {
@@ -57,3 +57,10 @@
 .faintLine svg { flex-shrink: 0; color: var(--white-40); }
 .faintLine:hover { color: var(--logic-lime); }
 .faintLine:hover svg { color: var(--logic-lime); }
+
+/* Warm coaches portal (dev-gated) — the dismiss hover is a faint white overlay the token remap
+   can't reach (its --white-08 fallback is a literal); it would read as a white wash on cream.
+   Give it a subtle olive tint instead. Additive — dark output unchanged. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .inviteDismiss:hover {
+  background: var(--home-olive-soft);
+}

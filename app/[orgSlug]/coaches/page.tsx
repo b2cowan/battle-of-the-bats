@@ -91,7 +91,7 @@ export default function CoachesDashboard({
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                <div style={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.4)' }}>
+                <div style={{ fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
                   {a.programYearName}
                 </div>
                 {(a.overdueInstallments > 0 || a.upcomingEventsCount > 0) && (

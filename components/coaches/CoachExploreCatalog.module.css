@@ -277,3 +277,10 @@
   .grid { grid-template-columns: 1fr; }
   .premiumFeatures { grid-template-columns: 1fr; }
 }
+
+/* Warm coaches portal (dev-gated) — the org-nudge inset uses a faint white wash the token remap
+   can't reach (its --white-02 fallback is a literal). Give it a subtle warm inset on paper.
+   Additive — dark output unchanged. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .orgNudge {
+  background: var(--home-olive-soft);
+}

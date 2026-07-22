@@ -29,8 +29,8 @@ function StatCell({ label, stat }: { label: string; stat: CategoryStat }) {
   const frac = fraction(stat);
   return (
     <div style={{ minWidth: 96 }}>
-      <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'rgba(255,255,255,0.38)' }}>{label}</div>
-      <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: frac ? 'rgba(255,255,255,0.85)' : 'rgba(255,255,255,0.3)' }}>
+      <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--home-dim, rgba(255,255,255,0.38))' }}>{label}</div>
+      <div style={{ fontWeight: 600, fontVariantNumeric: 'tabular-nums', color: frac ? 'var(--home-ink, rgba(255,255,255,0.85))' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>
         {frac ?? '—'}
       </div>
     </div>
@@ -129,7 +129,7 @@ export default function CoachesAttendancePage({
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
                   minHeight: 48, padding: '0.6rem 0.9rem', borderRadius: 9,
-                  background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)',
+                  background: 'var(--home-card, rgba(255,255,255,0.03))', border: '1px solid var(--home-line, rgba(255,255,255,0.07))',
                   textDecoration: 'none', color: 'inherit',
                 }}
               >
@@ -142,7 +142,7 @@ export default function CoachesAttendancePage({
                     <StatCell label="Practices" stat={r.practices} />
                   </div>
                 ) : (
-                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.3)' }}>not tracked yet</span>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.3))' }}>not tracked yet</span>
                 )}
               </Link>
             );
