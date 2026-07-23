@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
 import {
   LogOut, Home, Trophy,
   ChevronRight, CreditCard, Settings,
@@ -41,7 +41,12 @@ function isHouseLeagueSeasonOption(value: unknown): value is HouseLeagueSeasonOp
   return typeof season.id === 'string' && typeof season.name === 'string';
 }
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ notifCount, onNotifCountChange }: {
+  /** Hoisted unread count from the admin shell (so the bell shares one fetch+channel with the mobile
+   *  badge). Absent when the sidebar is reused outside the admin shell — the bell self-serves then. */
+  notifCount?: number;
+  onNotifCountChange?: Dispatch<SetStateAction<number>>;
+} = {}) {
   const pathname = usePathname();
   const router   = useRouter();
   const { currentOrg, userRole, userCapabilities } = useOrg();
@@ -239,16 +244,6 @@ export default function AdminSidebar() {
     : (hasOnlyTournamentWorkspace && isOrgAdmin) ? tournamentBackLink
     : hasOnlyTournamentWorkspace ? null
     : backLink;
-  const tournamentIsLive = currentTournament?.status === 'active' || currentTournament?.status === 'completed';
-  const tournamentPreviewHref = currentOrg?.slug && currentTournament
-    ? tournamentIsLive
-      ? `/${currentOrg.slug}/${currentTournament.slug}`
-      : `/${currentOrg.slug}/admin/tournaments/preview/${currentTournament.slug}`
-    : null;
-  const tournamentPreviewLabel = tournamentIsLive ? 'View Site' : 'Preview Site';
-  const tournamentPreviewTitle = tournamentIsLive
-    ? 'View the live public tournament site.'
-    : 'Preview the private draft tournament site. It is not public until activated.';
 
   return (
     <>
@@ -271,6 +266,8 @@ export default function AdminSidebar() {
                 orgId={currentOrg.id}
                 settingsHref={getNotificationSettingsHref(currentOrg.slug)}
                 seeAllHref={`/${currentOrg.slug}/admin/notifications`}
+                count={notifCount}
+                onCountChange={onNotifCountChange}
               />
             </div>
           )}
@@ -599,21 +596,10 @@ export default function AdminSidebar() {
 
         {/* Footer */}
         <div className={styles.footer}>
-          {isTournaments ? (
-            tournamentPreviewHref ? (
-              <Link
-                href={tournamentPreviewHref}
-                className={styles.footerLink}
-                id="admin-preview-site"
-                target="_blank"
-                rel="noopener noreferrer"
-                title={tournamentPreviewTitle}
-                aria-label={`${tournamentPreviewLabel} opens in a new tab`}
-              >
-                <ExternalLink size={15} /> {tournamentPreviewLabel}
-              </Link>
-            ) : null
-          ) : !isOrgAdmin && (
+          {/* The Flip: the tournament "View Site"/"Preview Site" footer link is retired — the always-
+              visible header FlipPill (top-right of the content area) replaces it. Non-tournament
+              sections keep their org-level "Back to Site" door (org-level is out of scope). */}
+          {!isTournaments && !isOrgAdmin && (
             <Link href={`/${currentOrg?.slug ?? 'milton-bats'}`} className={styles.footerLink} id="admin-back-site">
               <Home size={15} /> Back to Site
             </Link>

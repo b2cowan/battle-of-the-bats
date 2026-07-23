@@ -12,6 +12,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { Division, Communication, Team } from '@/lib/types';
 import s from '../../admin-common.module.css';
 import styles from './communication.module.css';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -61,6 +62,20 @@ function formatDate(iso: string) {
   return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+/** Stable fingerprint of every editable composer field — so the unsaved-changes guard catches
+ *  pin / division / channel edits, not just title/body (which silently lose otherwise). */
+function composerFingerprint(f: {
+  title: string; body: string; pinned: boolean;
+  channelSite: boolean; channelEmail: boolean; channelPush: boolean;
+  divisionIds: Iterable<string>;
+}): string {
+  return JSON.stringify({
+    title: f.title, body: f.body, pinned: f.pinned,
+    cs: f.channelSite, ce: f.channelEmail, cp: f.channelPush,
+    d: [...f.divisionIds].sort(),
+  });
+}
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function AdminCommunicationPage() {
@@ -98,6 +113,10 @@ export default function AdminCommunicationPage() {
   const [pinned,      setPinned]      = useState(false);
   const [siteDivisionIds, setSiteDivisionIds] = useState<Set<string>>(() => new Set());
   const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  // Fingerprint of the composer captured when composing/editing starts (and after a Clear), so the
+  // unsaved-changes guard only warns on genuine edits — not on a freshly-opened composer, an untouched
+  // template/post, or a cleared draft.
+  const [composeBaseline, setComposeBaseline] = useState('');
 
   // ── Load data ────────────────────────────────────────────────────────────────
   const loadData = useCallback(async () => {
@@ -133,6 +152,7 @@ export default function AdminCommunicationPage() {
     setTitle(''); setBody(''); setPinned(false);
     setSiteDivisionIds(new Set());
     setChannelSite(true); setChannelEmail(false); setChannelPush(false);
+    setComposeBaseline(composerFingerprint({ title: '', body: '', pinned: false, channelSite: true, channelEmail: false, channelPush: false, divisionIds: [] }));
     setActiveTemplate(null);
     setIsComposing(true);
     setSendResult(null);
@@ -146,6 +166,7 @@ export default function AdminCommunicationPage() {
     setChannelSite(item.channelSite);
     setChannelEmail(false);
     setChannelPush(false);
+    setComposeBaseline(composerFingerprint({ title: item.title, body: item.body, pinned: item.pinned, channelSite: item.channelSite, channelEmail: false, channelPush: false, divisionIds: item.divisionIds ?? [] }));
     setEditingId(item.id);
     // isComposing stays false — edit uses a modal, not the inline panel
     setSendResult(null);
@@ -162,8 +183,13 @@ export default function AdminCommunicationPage() {
 
   function applyTemplate(tpl: typeof QUICK_TEMPLATES[number]) {
     const tName = currentTournament?.name ?? 'the tournament';
-    setTitle(tpl.title.replace('{{tournament}}', tName));
-    setBody(tpl.body.replace(/{{tournament}}/g, tName));
+    const nextTitle = tpl.title.replace('{{tournament}}', tName);
+    const nextBody = tpl.body.replace(/{{tournament}}/g, tName);
+    setTitle(nextTitle);
+    setBody(nextBody);
+    // Applying a template isn't itself "unsaved work" — rebase so only edits after it warn (a template
+    // changes only title/body, so carry the current values of the other fields into the baseline).
+    setComposeBaseline(composerFingerprint({ title: nextTitle, body: nextBody, pinned, channelSite, channelEmail, channelPush, divisionIds: siteDivisionIds }));
     setActiveTemplate(tpl.label);
   }
 
@@ -298,12 +324,24 @@ export default function AdminCommunicationPage() {
     return verbs.join(' & ');
   }, [editingId, channelSite, channelEmail, channelPush, acceptedTeamCount]);
 
+  // Unsaved-changes guard: warn before a same-tab flip abandons an in-progress message. Fingerprints
+  // every editable field (title/body/pin/channels/divisions) vs. the compose/edit/template baseline,
+  // so a pin- or division-only edit still warns; never mid-send.
+  const composerDirty =
+    (isComposing || editingId != null) && !sending &&
+    composerFingerprint({ title, body, pinned, channelSite, channelEmail, channelPush, divisionIds: siteDivisionIds }) !== composeBaseline;
+
   // ─────────────────────────────────────────────────────────────────────────────
 
   if (loading) return <div className="empty-state"><RefreshCw className="spin" /><p>Loading communications…</p></div>;
 
   return (
     <div className={styles.page}>
+      {/* Same-tab flips (The Flip) can now leave the composer mid-message; warn before losing it. */}
+      <UnsavedChangesGuard
+        active={composerDirty}
+        message="You have an unsent message with unsaved changes. Leave without sending it?"
+      />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
       <div className={styles.pageHeader}>
@@ -355,7 +393,11 @@ export default function AdminCommunicationPage() {
                       </button>
                     ))}
                     {(title || body) && (
-                      <button type="button" className={styles.draftClear} onClick={() => { setTitle(''); setBody(''); setActiveTemplate(null); }}>
+                      <button type="button" className={styles.draftClear} onClick={() => {
+                        setTitle(''); setBody(''); setActiveTemplate(null);
+                        // Rebase so a deliberately-cleared draft isn't flagged as unsaved changes.
+                        setComposeBaseline(composerFingerprint({ title: '', body: '', pinned, channelSite, channelEmail, channelPush, divisionIds: siteDivisionIds }));
+                      }}>
                         × Clear
                       </button>
                     )}

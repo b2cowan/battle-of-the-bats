@@ -30,6 +30,17 @@ import {
   TournamentAdminToolbar,
 } from '@/components/admin/tournament/TournamentAdminUI';
 
+/**
+ * Signal that a game's score just became public (finalize / forfeit) so the mobile AdminContextStrip
+ * can offer a one-tap "See it live" nudge to that game on the public schedule (The Flip). The event
+ * carries the game's OWN tournament context so the deep-link can't drift if the admin switches
+ * tournaments or navigates away before the save resolves and this fires.
+ */
+function emitScorePublished(detail: { gameId: string; orgSlug: string; tournamentSlug: string; isDraft: boolean }) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent('flhq:score-published', { detail }));
+}
+
 // ── Export column definitions ─────────────────────────────────────────────
 // Admin-only export now includes score submission audit metadata for review.
 const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
@@ -224,6 +235,7 @@ export default function AdminResultsPage() {
 
   async function handleForfeit(id: string, winningSide: 'home' | 'away') {
     await patchGame({ action: 'forfeit', id, winningSide });
+    emitScorePublished({ gameId: id, orgSlug: orgSlug ?? '', tournamentSlug: currentTournament?.slug ?? '', isDraft: currentTournament?.status === 'draft' });
     refresh();
   }
 
@@ -242,6 +254,7 @@ export default function AdminResultsPage() {
 
   async function finalizeGame(id: string) {
     await patchGame({ action: 'finalize', id });
+    emitScorePublished({ gameId: id, orgSlug: orgSlug ?? '', tournamentSlug: currentTournament?.slug ?? '', isDraft: currentTournament?.status === 'draft' });
     refresh();
   }
 

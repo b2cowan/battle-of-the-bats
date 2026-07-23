@@ -1,7 +1,7 @@
 'use client';
-import { useEffect, useId, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { Bell, BellDot } from 'lucide-react';
-import { createClient } from '@/lib/supabase-browser';
+import { useNotificationUnread } from '@/lib/use-notification-unread';
 import NotificationPanel from './NotificationPanel';
 import styles from './notifications.module.css';
 
@@ -11,68 +11,22 @@ interface Props {
   settingsHref?: string;
   /** When provided, the panel footer shows a "See all" link to the full notifications page. */
   seeAllHref?: string;
+  /** When an ancestor owns the count (the admin shell hoists it once for the sidebar bell + the mobile
+   *  badge), pass it in — the bell then skips its own fetch + Realtime channel. Omit elsewhere (coach
+   *  shell, public) to keep the count self-contained. */
+  count?: number;
+  onCountChange?: Dispatch<SetStateAction<number>>;
 }
 
-export default function NotificationBell({ orgId, settingsHref, seeAllHref }: Props) {
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [open,        setOpen]        = useState(false);
-  const [userId,      setUserId]      = useState<string | null>(null);
+export default function NotificationBell({ orgId, settingsHref, seeAllHref, count, onCountChange }: Props) {
+  // Skip the internal fetch+Realtime when an ancestor provides the count (avoids a duplicate subscription).
+  const internal = useNotificationUnread(count === undefined ? orgId : null);
+  const unreadCount = count ?? internal.count;
+  // When the count is externally owned, updates go to the ancestor's setter (never internal.setCount,
+  // whose state nothing reads in that mode); a no-op if the ancestor didn't supply one.
+  const setUnreadCount = count === undefined ? internal.setCount : (onCountChange ?? (() => {}));
+  const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
-  const instanceId = useId();
-
-  // ── Initial unread count ───────────────────────────────────────────────────
-
-  const fetchUnread = useCallback(async () => {
-    if (!orgId) return;
-    try {
-      const res  = await fetch(`/api/notifications?orgId=${orgId}&unreadOnly=true&limit=1`);
-      const data = await res.json();
-      setUnreadCount(data.unreadCount ?? 0);
-    } catch {
-      // silent — don't crash the sidebar
-    }
-  }, [orgId]);
-
-  // ── Get user ID for Realtime filter ───────────────────────────────────────
-
-  useEffect(() => {
-    const supabase = createClient();
-    supabase.auth.getUser().then(({ data }) => {
-      setUserId(data.user?.id ?? null);
-    });
-  }, []);
-
-  useEffect(() => {
-    if (orgId) fetchUnread();
-  }, [orgId, fetchUnread]);
-
-  // ── Supabase Realtime — live badge update on new notification ─────────────
-
-  useEffect(() => {
-    if (!userId || !orgId) return;
-    const supabase = createClient();
-
-    const channel = supabase
-      .channel(`notifications:${userId}:${orgId}:${instanceId}`)
-      .on(
-        'postgres_changes',
-        {
-          event:  'INSERT',
-          schema: 'public',
-          table:  'notifications',
-          filter: `user_id=eq.${userId}`,
-        },
-        (payload) => {
-          // Only count if it's for this org
-          if ((payload.new as any)?.org_id === orgId) {
-            setUnreadCount(prev => prev + 1);
-          }
-        }
-      )
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [userId, orgId]);
 
   // ── Click outside to close ────────────────────────────────────────────────
 

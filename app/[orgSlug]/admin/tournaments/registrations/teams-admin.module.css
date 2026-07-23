@@ -40,7 +40,8 @@
 /* ─── Bulk Action Bar ─────────────────────────────────────────────────────── */
 .bulkBar {
   position: sticky;
-  top: 1rem;
+  /* Stick BELOW the shared AdminEventHeader (falls back to 1rem when there's no header). */
+  top: var(--admin-header-h, 1rem);
   z-index: 100;
   background: rgba(var(--blueprint-blue-rgb), 0.18);
   border-radius: 2px;

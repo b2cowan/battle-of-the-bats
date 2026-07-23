@@ -6,7 +6,7 @@ import {
   Users, MoreHorizontal,
   LogOut, X, ChevronRight, ChevronDown,
   LayoutGrid, CalendarDays, UserCheck,
-  ExternalLink, FileText, MessageSquarePlus, Globe, Download,
+  Bell, FileText, MessageSquarePlus, Globe, Download,
   Home, MessageCircle, User,
   type LucideIcon,
 } from 'lucide-react';
@@ -17,6 +17,8 @@ import { useTournament } from '@/lib/tournament-context';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { useAdminFlip } from '@/lib/use-admin-flip';
+import { primaryTarget } from '@/lib/flip-twins';
 import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
 import AdminContextStrip from './AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
@@ -37,7 +39,7 @@ function withBarLabel(item: TourNavItem | undefined, label: string, icon?: Lucid
   return item ? { ...item, label, ...(icon ? { icon } : {}) } : undefined;
 }
 
-export default function AdminBottomNav() {
+export default function AdminBottomNav({ notifUnread = 0 }: { notifUnread?: number } = {}) {
   const pathname  = usePathname();
   const router    = useRouter();
   const { currentOrg, userRole } = useOrg();
@@ -53,14 +55,16 @@ export default function AdminBottomNav() {
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
   const tournamentIsLive = currentTournament?.status === 'active' || currentTournament?.status === 'completed';
-  const tournamentPreviewLabel = tournamentIsLive ? 'View Site' : 'Preview Site';
-  const tournamentPreviewTitle = tournamentIsLive
-    ? 'View the live public tournament site.'
-    : 'Preview the private draft tournament site. It is not public until activated.';
   const inactiveTournamentCtaLabel =
     currentTournament?.status === 'draft'
       ? 'Review launch checklist'
       : 'Open dashboard';
+  // The Flip: the mobile notification bell now lives in this sheet (a row + a More-tab badge; the
+  // count is owned by the admin shell so it isn't fetched twice), and the old new-tab "View Site"
+  // link becomes ONE same-tab, page-matched mirror of the FlipPill.
+  const flip = useAdminFlip();
+  const flipTarget = flip ? primaryTarget(flip) : null;
+  const mirror = flipTarget ? { href: flipTarget.href, label: flipTarget.label } : null;
 
   const isRepTeams    = pathname.startsWith(`${base}/rep-teams`);
   const isHouseLeague = pathname.startsWith(`${base}/house-league`);
@@ -203,6 +207,8 @@ export default function AdminBottomNav() {
   const chatUnread = useChatUnread(!modulePrimaryTabs);
   // When Chat isn't a primary tab (draft phase), its unread badge bubbles up to the More tab + its row inside More.
   const moreChatUnread = !chatIsPrimary ? chatUnread : 0;
+  // The More tab bubbles up everything waiting inside it — demoted-chat unread + org notifications.
+  const moreBadgeCount = moreChatUnread + notifUnread;
 
   return (
     <nav className={styles.bottomNav} aria-label="Admin mobile navigation">
@@ -262,8 +268,8 @@ export default function AdminBottomNav() {
           id="admin-mob-more"
           aria-haspopup="true"
           aria-expanded={moreOpen}
-          aria-label={moreChatUnread > 0
-            ? `More, ${moreChatUnread > 9 ? '9+' : moreChatUnread} unread chat ${moreChatUnread === 1 ? 'message' : 'messages'}`
+          aria-label={moreBadgeCount > 0
+            ? `More, ${moreBadgeCount > 9 ? '9+' : moreBadgeCount} unread`
             : undefined}
         >
           <span className={styles.iconWrap}>
@@ -272,9 +278,9 @@ export default function AdminBottomNav() {
               : <MoreHorizontal size={22} strokeWidth={isMoreActive ? 2.5 : 1.8} />
             }
             {isMoreActive && !moreOpen && <span className={styles.activeDot} />}
-            {moreChatUnread > 0 && !moreOpen && (
+            {moreBadgeCount > 0 && !moreOpen && (
               <span className={styles.tabCount} style={{ background: 'var(--logic-lime)', color: 'var(--pitch-black)' }}>
-                {moreChatUnread > 9 ? '9+' : moreChatUnread}
+                {moreBadgeCount > 9 ? '9+' : moreBadgeCount}
               </span>
             )}
           </span>
@@ -283,6 +289,29 @@ export default function AdminBottomNav() {
 
         {moreOpen && (
           <div className={styles.dropdown} role="menu">
+
+            {/* Notifications — the mobile home for the bell that left the top bar (The Flip). Opens
+                the full feed page (see-all + settings intact); unread also badges the More tab. */}
+            {currentOrg?.id && (
+              <>
+                <Link
+                  className={styles.dropItem}
+                  href={`/${orgSlug}/admin/notifications`}
+                  onClick={() => setMoreOpen(false)}
+                  role="menuitem"
+                  id="admin-mob-notifications"
+                >
+                  <Bell size={17} />
+                  <span>Notifications</span>
+                  {notifUnread > 0 && (
+                    <span className={styles.dropCount} aria-label={`${notifUnread > 9 ? '9+' : notifUnread} unread`}>
+                      {notifUnread > 9 ? '9+' : notifUnread}
+                    </span>
+                  )}
+                </Link>
+                <div className={styles.dropDivider} />
+              </>
+            )}
 
             {/* Tournament switcher */}
             {tournaments.length > 0 && (
@@ -365,21 +394,18 @@ export default function AdminBottomNav() {
 
             <div className={styles.dropDivider} />
 
-            {currentTournament && (
+            {/* One same-tab, page-matched mirror of the FlipPill — kept for muscle memory this release
+                (labeled to match the pill: "Public · Schedule" / "Preview · …"). */}
+            {mirror && (
               <Link
                 className={`${styles.dropItem} ${styles.dropUtilItem}`}
-                href={tournamentIsLive
-                  ? `/${orgSlug}/${currentTournament.slug}`
-                  : `/${orgSlug}/admin/tournaments/preview/${currentTournament.slug}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                id="admin-mob-preview-site"
-                title={tournamentPreviewTitle}
-                aria-label={`${tournamentPreviewLabel} opens in a new tab`}
+                href={mirror.href}
+                onClick={() => setMoreOpen(false)}
+                id="admin-mob-view-site"
                 role="menuitem"
               >
-                <ExternalLink size={15} />
-                <span>{tournamentPreviewLabel}</span>
+                <Globe size={15} />
+                <span>{mirror.label}</span>
               </Link>
             )}
 

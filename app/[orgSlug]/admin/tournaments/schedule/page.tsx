@@ -32,6 +32,7 @@ import { buildScheduleMetrics, getScheduleHealthRules } from '@/lib/schedule-met
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
 import FeedbackModal from '@/components/FeedbackModal';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import HelpCallout from '@/components/help/HelpCallout';
 import AddVenueModal from '@/components/admin/AddVenueModal';
 import {
@@ -1202,6 +1203,12 @@ export default function AdminSchedulePage() {
 
   return (
     <div className={s.page}>
+      {/* Same-tab flips (The Flip) can now navigate away from unsaved Schedule Health rule edits that
+          the old new-tab "View Site" behavior accidentally protected — warn before leaving them. */}
+      <UnsavedChangesGuard
+        active={healthRulesDirty}
+        message="You have unsaved changes to the Schedule Health rules. Leave without saving them?"
+      />
       <TournamentAdminHeader
         icon={<Calendar size={20} />}
         help={{

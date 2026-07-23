@@ -438,7 +438,8 @@
   border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
   background: var(--bg-3, rgba(255,255,255,0.04));
   position: sticky;
-  top: 0;
+  /* Stick BELOW the shared AdminEventHeader, not under it. */
+  top: var(--admin-header-h, 0px);
   z-index: 1;
 }
 

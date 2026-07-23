@@ -1,6 +1,7 @@
 import TournamentPreviewNav from '@/components/public/TournamentPreviewNav';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import TournamentSideRail from '@/components/public/TournamentSideRail';
+import PreviewExitPill from '@/components/public/PreviewExitPill';
 import railStyles from '@/components/public/TournamentSideRail.module.css';
 import {
   buildPublicLightModeCssVars,
@@ -75,6 +76,8 @@ export default async function TournamentPreviewLayout({
           preview top bar). No global app bar / account / chat here — a preview shows the
           event, not the personal app. */}
       <TournamentTopTabs basePath={previewBase} hiddenPages={hiddenPages} fixed />
+      {/* The Flip (B14): the one exit door out of the preview back to the admin dashboard. */}
+      <PreviewExitPill dashboardHref={`/${orgSlug}/admin/tournaments/dashboard`} />
     </>
   );
 }

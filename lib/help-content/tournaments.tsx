@@ -1179,7 +1179,7 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Use <strong>Preview Site</strong> from the tournament sidebar footer to inspect the public tournament experience before or after activation.</p>
+          <p>Use the flip pill in the top-right corner of any tournament admin screen — labeled <strong>⇄ Preview</strong> on a draft and <strong>⇄ Public</strong> once the tournament is live — to open the matching public (or preview) page in the same tab and inspect the public tournament experience before or after activation.</p>
           <p>The public tournament site can include registration, schedule, standings, results, teams, rules, resources, and news depending on tournament setup and status.</p>
           <p>Preview is always available to admins regardless of tournament status. Share the preview link internally to review the public experience before you activate.</p>
           <p><strong>Consistent standings.</strong> A team&rsquo;s rank is the same everywhere it appears — the standings table, the Teams page cards, and the team&rsquo;s own page all rank by your tie-breaker rules (head-to-head, then run differential, and so on). So a team that wins a tie on head-to-head shows the same position to every fan, on every screen.</p>

@@ -1,0 +1,145 @@
+/**
+ * Shared admin header. Sticky to the top of the scrolling content column (sticks to the viewport on
+ * desktop's document scroll and to the inner scroller on mobile). Dark HUD; neutral FlipPill. Collapses
+ * to a slim name + state + pill strip on scroll. Admin is a dark-only surface, so tokens are used
+ * directly (no light variant needed).
+ */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  /* env() is 0 on desktop, so this clears the notch on mobile and is a plain top pad on desktop. */
+  padding: calc(0.72rem + env(safe-area-inset-top)) max(1.05rem, env(safe-area-inset-right)) 0.72rem max(1.05rem, env(safe-area-inset-left));
+  background: linear-gradient(180deg, rgba(var(--logic-lime-rgb), 0.05), transparent 92%), var(--hud-surface);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  box-shadow: var(--highlight-top);
+  transition: padding 0.18s ease;
+}
+
+.collapsed {
+  padding-top: calc(0.46rem + env(safe-area-inset-top));
+  padding-bottom: 0.46rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: grid;
+  place-items: center;
+  border-radius: 2px;
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  color: var(--logic-lime);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  transition: width 0.18s ease, height 0.18s ease, font-size 0.18s ease;
+}
+
+.collapsed .icon {
+  width: 24px;
+  height: 24px;
+  font-size: 0.62rem;
+}
+
+.meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.title {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--font-data);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--fl-text);
+  text-decoration: none;
+  transition: font-size 0.18s ease;
+}
+
+.collapsed .title { font-size: 0.88rem; }
+a.title:hover { color: var(--logic-lime); }
+
+/* Live/Open/Draft/Completed state pill — mirrors the mobile top bar's statusPill. */
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  flex-shrink: 0;
+  padding: 0.14rem 0.46rem;
+  border: 1px solid var(--border-2);
+  border-radius: 2px;
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+.status[data-phase="gameday"] {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--logic-lime);
+}
+.status[data-phase="open"] {
+  border-color: rgba(var(--info-rgb), 0.4);
+  background: rgba(var(--info-rgb), 0.12);
+  color: var(--info);
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  box-shadow: 0 0 6px rgba(var(--logic-lime-rgb), 0.6);
+  animation: hdrPulse 2s infinite;
+}
+@keyframes hdrPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+
+/* Meta line (date range / "Organization") — folds away when collapsed. */
+.sub {
+  max-height: 1.4em;
+  opacity: 0.9;
+  overflow: hidden;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  transition: max-height 0.18s ease, opacity 0.14s ease;
+}
+.collapsed .sub {
+  max-height: 0;
+  opacity: 0;
+}
+
+.pill {
+  margin-left: auto;
+  flex-shrink: 0;
+}

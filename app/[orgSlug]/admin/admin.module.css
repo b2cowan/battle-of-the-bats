@@ -10,18 +10,27 @@
 
 .adminMain {
   flex: 1;
-  padding: 2rem;
-  overflow-y: auto;
   min-width: 0;
   background: var(--hud-surface);
   background-image:
     linear-gradient(to right, rgba(var(--blueprint-blue-rgb), 0.09) 1px, transparent 1px),
     linear-gradient(to bottom, rgba(var(--blueprint-blue-rgb), 0.09) 1px, transparent 1px);
   background-size: 40px 40px;
+  /* Desktop scrolls the document (the shell grows), so .adminMain is NOT a scroll container here —
+     that lets the sticky AdminEventHeader stick to the viewport. Mobile makes it the app-shell
+     scroller below (where the header then sticks to it). */
+}
+
+/* Content padding lives on this inner wrapper (not on .adminMain) so the shared AdminEventHeader can
+   sit flush at the top of the scroll column and stick there. Focused flows render children straight
+   into .adminMain and pad themselves via .adminMainFocused. */
+.mainPad {
+  padding: 2rem;
 }
 
 .adminMainFocused {
   min-height: 100vh;
+  padding: 2rem;
   /* Focused flows (help, onboarding) scroll on the document, not inside .adminMain.
      .adminMain sets overflow-y:auto for the standard app-shell scroll; left in place
      that intervening scroll container neutralises the help TOC's position:sticky, so
@@ -56,8 +65,9 @@
     /* min-height: 0 is required for flex-grow to shrink properly inside
        a fixed-height container (prevents the child from overflowing the parent). */
     min-height: 0;
-    /* Top padding clears the fixed mobile top app-bar (48px + safe-area). */
-    padding: calc(48px + env(safe-area-inset-top) + 0.5rem) 1rem calc(80px + env(safe-area-inset-bottom) + var(--admin-strip-h, 0px));
+    /* Mobile is the app-shell scroller (the shell is locked to 100dvh) — the sticky header sticks
+       to the top of THIS container. */
+    overflow-y: auto;
     /* Quieter blueprint grid on small screens — lighter paint, less busy behind
        dense content (desktop keeps the 40px / 0.09 grid). */
     background-image:
@@ -66,9 +76,15 @@
     background-size: 28px 28px;
   }
 
-  /* Focused flows (onboarding/help) render no top bar — reset the top padding. */
+  /* The sticky AdminEventHeader sits above this; the bottom padding clears the fixed bottom nav
+     (+ the AdminContextStrip when present). No top offset — the header is in-flow above. */
+  .mainPad {
+    padding: 0.5rem 1rem calc(80px + env(safe-area-inset-bottom) + var(--admin-strip-h, 0px));
+  }
+
+  /* Focused flows (onboarding/help) render no header — lighter padding, natural scroll. */
   .adminMainFocused {
-    padding-top: 1rem;
+    padding: 1rem;
   }
 
   /* Focused flows switch the shell to display:block (see .adminShellFocused above),

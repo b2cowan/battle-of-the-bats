@@ -1,0 +1,38 @@
+/**
+ * Fixed exit-preview chip. Self-contained dark "system overlay" look (readable over any light/dark
+ * preview theme) using only design tokens — no literal hex (public-token guardrail). Bottom-left so it
+ * clears the preview top nav + the register CTA.
+ */
+.pill {
+  position: fixed;
+  left: max(1rem, env(safe-area-inset-left));
+  bottom: calc(1rem + env(safe-area-inset-bottom));
+  z-index: 400;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: var(--pitch-black);
+  color: var(--white);
+  border: 1px solid color-mix(in srgb, var(--white) 22%, transparent);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.4);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-decoration: none;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.pill:hover {
+  background: color-mix(in srgb, var(--white) 12%, var(--pitch-black));
+}
+
+.pill:active {
+  transform: translateY(1px);
+}
+
+.label {
+  white-space: nowrap;
+}
