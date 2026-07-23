@@ -64,9 +64,29 @@
 }
 
 .label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-width: 0;
+}
+
+.glyph {
+  flex-shrink: 0;
+  color: var(--data-gray);
+}
+
+.labelText {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Icon-only (admin header collapsed) — square-ish so the round pill reads as a compact button. */
+.compact {
+  padding: 0.4rem 0.46rem;
+}
+.compact .glyph {
+  color: var(--fl-text);
 }
 
 .caret {

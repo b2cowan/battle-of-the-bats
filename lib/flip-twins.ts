@@ -37,7 +37,8 @@ export interface FlipContext {
 export interface FlipTarget {
   /** Same-tab destination href. */
   href: string;
-  /** Bare destination label, e.g. "Public · Schedule" — FlipPill prepends the ⇄ glyph at render time. */
+  /** Bare pill label (e.g. "Public site"); FlipPill prepends the ⇄ glyph. The specific destination is
+   *  carried by `href`, not advertised in the label. */
   label: string;
   /** Optional one-line explainer shown under a popover row (e.g. the Standings→Results honesty note). */
   sublabel?: string;
@@ -51,13 +52,13 @@ export type FlipResolution =
 // ── Mapping tables (the ONE place the twin map lives) ────────────────────────────────────────────
 
 /** Admin screen (segment after /admin/tournaments/) → its public twin. Unlisted screens fall back. */
-const ADMIN_SCREEN_TO_TWIN: Record<string, PublicTwinKey | 'results-split'> = {
+const ADMIN_SCREEN_TO_TWIN: Record<string, PublicTwinKey> = {
   dashboard: 'overview',
   communication: 'news',
   schedule: 'schedule',
   registrations: 'teams',
   rules: 'rules',
-  results: 'results-split', // no public "results-admin" twin → offer Schedule + Standings
+  results: 'schedule', // Results' public counterpart is the Schedule — that's where posted scores land
 };
 
 /** Public twin → admin screen (the reverse map for `to-role`). */
@@ -68,15 +69,6 @@ const PUBLIC_TWIN_TO_ADMIN: Record<PublicTwinKey, string> = {
   standings: 'results', // no admin standings screen — Results is where scores live
   teams: 'registrations',
   rules: 'rules',
-};
-
-const TWIN_LABEL: Record<PublicTwinKey, string> = {
-  overview: 'Overview',
-  schedule: 'Schedule',
-  standings: 'Standings',
-  teams: 'Teams',
-  news: 'News',
-  rules: 'Rules',
 };
 
 const HAT_LABEL: Record<FlipHat, string> = {
@@ -114,8 +106,13 @@ function publicBase(ctx: FlipContext): string {
 }
 
 /** "Public" on a live event, "Preview" for a draft (no public site exists yet). */
-function sideWord(ctx: FlipContext): string {
-  return ctx.isDraft ? 'Preview' : 'Public';
+/**
+ * Uniform pill label. The page-matched destination is carried by the href, NOT advertised in the
+ * label (owner call 2026-07-23) — so the pill reads the same "Public site" everywhere and stays
+ * compact on mobile. Drafts (which only have a preview) read "Preview site".
+ */
+function siteLabel(ctx: FlipContext): string {
+  return ctx.isDraft ? 'Preview site' : 'Public site';
 }
 
 function publicHref(ctx: FlipContext, twin: PublicTwinKey, gameId?: string | null): string {
@@ -142,38 +139,28 @@ function nearestPermittedScreen(preferred: string, allowed?: string[]): string {
 
 // ── Resolvers ────────────────────────────────────────────────────────────────────────────────────
 
-/** Role surface (admin/coach/official) → the matching public (or preview) page. */
+/**
+ * Role surface (admin/coach/official) → the matching public (or preview) page. Always a single target
+ * with a uniform "Public site" label; the destination is still page-matched via the href (Results and
+ * the coach/official surfaces resolve to the Schedule, unmapped screens to the Overview front page).
+ */
 function resolveToPublic(pathname: string, hat: FlipHat, ctx: FlipContext): FlipResolution {
-  const side = sideWord(ctx);
+  const label = siteLabel(ctx);
 
   // Coach / scorekeeper surfaces land on the public Schedule for now (P3 refines coach record-aware
   // landings with the team's registration context).
   if (hat === 'coach' || hat === 'official') {
-    return { kind: 'single', target: { href: publicHref(ctx, 'schedule'), label: `${side} · Schedule` } };
+    return { kind: 'single', target: { href: publicHref(ctx, 'schedule'), label } };
   }
 
   const screen = adminScreenFromPath(pathname);
-  const mapped = screen ? ADMIN_SCREEN_TO_TWIN[screen] : undefined;
-
-  // Results has no single public twin — offer both Schedule and Standings.
-  if (mapped === 'results-split') {
-    return {
-      kind: 'multi',
-      label: side,
-      targets: [
-        { href: publicHref(ctx, 'schedule', ctx.gameId), label: `${side} · Schedule` },
-        { href: publicHref(ctx, 'standings'), label: `${side} · Standings`, sublabel: STANDINGS_SUBLABEL },
-      ],
-    };
-  }
-
-  // Everything else maps directly; unmapped screens fall back to Overview (never absent, never wrong).
-  const twin: PublicTwinKey = (mapped as PublicTwinKey | undefined) ?? 'overview';
+  // Everything maps to its twin; unmapped screens fall back to Overview (never absent, never wrong).
+  const twin: PublicTwinKey = (screen ? ADMIN_SCREEN_TO_TWIN[screen] : undefined) ?? 'overview';
   return {
     kind: 'single',
     target: {
       href: publicHref(ctx, twin, twin === 'schedule' ? ctx.gameId : null),
-      label: `${side} · ${TWIN_LABEL[twin]}`,
+      label,
     },
   };
 }

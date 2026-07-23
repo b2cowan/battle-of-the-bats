@@ -31,13 +31,6 @@ function getScrollParent(el: HTMLElement): HTMLElement | null {
   return null;
 }
 
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return '—';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 /** Compact date range for the meta line. Parses at noon to avoid a timezone day-shift on display. */
 function dateRange(start?: string | null, end?: string | null): string | null {
   const parse = (d: string) => new Date(d.includes('T') ? d : `${d}T12:00:00`);
@@ -69,7 +62,15 @@ export default function AdminEventHeader() {
   useEffect(() => {
     let scroller = ref.current ? getScrollParent(ref.current) : null;
     let raf = 0;
-    const read = () => setCollapsed(Math.max(window.scrollY || 0, scroller?.scrollTop || 0) > 20);
+    // Desktop has the room, so the header stays full even on scroll (owner call) — only mobile
+    // condenses. Hysteresis (mobile): collapse past 64px, expand only below 12px. The 52px dead-zone is
+    // wider than the header's collapse height change, so it can't bounce back across the line ("shake").
+    const mq = window.matchMedia('(max-width: 900px)');
+    const read = () => {
+      if (!mq.matches) { setCollapsed(false); return; }
+      const y = Math.max(window.scrollY || 0, scroller?.scrollTop || 0);
+      setCollapsed(prev => (prev ? y > 12 : y > 64));
+    };
     const onScroll = () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(read); };
     const onResize = () => { scroller = ref.current ? getScrollParent(ref.current) : null; read(); };
     scroller?.scrollTo(0, 0);
@@ -104,13 +105,15 @@ export default function AdminEventHeader() {
     !!currentTournament?.slug;
 
   let title: string;
-  let sub: string | null;
+  let eyebrow: string | null = null; // small org line above the name (tournament screens)
+  let sub: string | null = null;     // date range (tournament screens)
   let titleHref: string | null = null;
   let phase: string | null = null;
   let phaseLabel: string | null = null;
 
   if (onTournament && currentTournament) {
     title = currentTournament.name;
+    eyebrow = currentOrg?.name ?? null;
     phase = resolvePhase({
       status: currentTournament.status,
       isGameDay: isWithinEventDates(currentTournament.startDate, currentTournament.endDate),
@@ -119,32 +122,39 @@ export default function AdminEventHeader() {
     sub = dateRange(currentTournament.startDate, currentTournament.endDate);
     titleHref = `/${currentOrg?.slug ?? ''}/admin/tournaments/dashboard`;
   } else {
+    // Org-level screens: the org IS the identity, so it's the title (no redundant eyebrow/status).
     title = currentOrg?.name ?? 'Admin';
-    sub = 'Organization';
   }
 
+  const nameEl = (cls: string) =>
+    titleHref
+      ? <Link href={titleHref} className={cls} title={`${title} — open dashboard`}>{title}</Link>
+      : <span className={cls}>{title}</span>;
+
+  // ONE structure (no DOM swap on scroll — that caused the jitter). The eyebrow + meta rows fade via
+  // CSS on collapse, the name shrinks 2→1 line, and the pill drops to its ⇄ glyph — all transitioned.
   return (
     <header ref={ref} role="banner" className={`${styles.header} ${collapsed ? styles.collapsed : ''}`}>
-      <div className={styles.row}>
-        <span className={styles.icon} aria-hidden>{initials(title)}</span>
-        <div className={styles.meta}>
-          <div className={styles.titleRow}>
-            {titleHref ? (
-              <Link href={titleHref} className={styles.title} title={`${title} — open dashboard`}>{title}</Link>
-            ) : (
-              <span className={styles.title}>{title}</span>
-            )}
-            {phaseLabel && (
-              <span className={styles.status} data-phase={phase ?? undefined}>
-                {phase === 'gameday' && <span className={styles.dot} aria-hidden />}
-                {phaseLabel}
-              </span>
-            )}
-          </div>
-          {sub && <div className={styles.sub}>{sub}</div>}
+      {eyebrow && (
+        <div className={styles.eyebrowRow}>
+          <span className={styles.org}>{eyebrow}</span>
         </div>
-        <FlipPill resolution={flip} variant="inline" className={styles.pill} />
+      )}
+      <div className={styles.mainRow}>
+        {nameEl(styles.name)}
+        <FlipPill resolution={flip} variant="inline" compact={collapsed} className={styles.pill} />
       </div>
+      {(phaseLabel || sub) && (
+        <div className={styles.meta}>
+          {phaseLabel && (
+            <span className={styles.status} data-phase={phase ?? undefined}>
+              {phase === 'gameday' && <span className={styles.dot} aria-hidden />}
+              {phaseLabel}
+            </span>
+          )}
+          {sub && <span className={styles.date}>{sub}</span>}
+        </div>
+      )}
     </header>
   );
 }

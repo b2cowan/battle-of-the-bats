@@ -1,95 +1,112 @@
 /**
- * Shared admin header. Sticky to the top of the scrolling content column (sticks to the viewport on
- * desktop's document scroll and to the inner scroller on mobile). Dark HUD; neutral FlipPill. Collapses
- * to a slim name + state + pill strip on scroll. Admin is a dark-only surface, so tokens are used
- * directly (no light variant needed).
+ * Shared admin header. Sticky to the top of the scrolling content column (viewport on desktop's
+ * document scroll, the inner scroller on mobile). Mirrors the public tournament header: tall + name-
+ * first at the top, condenses to a slim "name … ⇄" line on scroll. ONE DOM structure — the eyebrow +
+ * meta rows fade, the name shrinks 2→1 line, the pill drops to its glyph, all via CSS transitions (no
+ * layout swap, so no scroll jitter). Dark-only HUD, tokens used directly.
  */
 .header {
   position: sticky;
   top: 0;
   z-index: 40;
   /* env() is 0 on desktop, so this clears the notch on mobile and is a plain top pad on desktop. */
-  padding: calc(0.72rem + env(safe-area-inset-top)) max(1.05rem, env(safe-area-inset-right)) 0.72rem max(1.05rem, env(safe-area-inset-left));
+  padding: calc(0.7rem + env(safe-area-inset-top)) max(0.9rem, env(safe-area-inset-right)) 0.7rem max(0.9rem, env(safe-area-inset-left));
   background: linear-gradient(180deg, rgba(var(--logic-lime-rgb), 0.05), transparent 92%), var(--hud-surface);
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
   box-shadow: var(--highlight-top);
-  transition: padding 0.18s ease;
+  transition: padding 0.2s ease;
 }
 
 .collapsed {
-  padding-top: calc(0.46rem + env(safe-area-inset-top));
-  padding-bottom: 0.46rem;
+  padding-top: calc(0.5rem + env(safe-area-inset-top));
+  padding-bottom: 0.5rem;
 }
 
-.row {
-  display: flex;
-  align-items: center;
-  gap: 0.7rem;
-  min-width: 0;
+/* Org eyebrow — fades out on collapse. */
+.eyebrowRow {
+  max-height: 1.4rem;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.2s ease, opacity 0.16s ease;
 }
-
-.icon {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  display: grid;
-  place-items: center;
-  border-radius: 2px;
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  transition: width 0.18s ease, height 0.18s ease, font-size 0.18s ease;
+.collapsed .eyebrowRow {
+  max-height: 0;
+  opacity: 0;
 }
-
-.collapsed .icon {
-  width: 24px;
-  height: 24px;
-  font-size: 0.62rem;
-}
-
-.meta {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.16rem;
-}
-
-.titleRow {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-width: 0;
-}
-
-.title {
+.org {
+  display: block;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: var(--font-data);
-  font-size: 1rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+/* Name + pill on one row; the pill aligns to the top so the name can wrap to two lines beneath it. */
+.mainRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-top: 0.28rem;
+  transition: margin-top 0.2s ease;
+}
+.collapsed .mainRow { margin-top: 0; align-items: center; }
+
+.name {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: var(--font-data);
+  font-size: 1.05rem;
   font-weight: 800;
+  line-height: 1.2;
   letter-spacing: 0.01em;
   color: var(--fl-text);
   text-decoration: none;
-  transition: font-size 0.18s ease;
+  transition: font-size 0.2s ease;
+}
+.collapsed .name {
+  -webkit-line-clamp: 1;
+  font-size: 0.95rem;
+}
+a.name:hover { color: var(--logic-lime); }
+
+.pill {
+  flex-shrink: 0;
 }
 
-.collapsed .title { font-size: 0.88rem; }
-a.title:hover { color: var(--logic-lime); }
+/* Status + date — fades out on collapse. */
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.4rem;
+  max-height: 1.8rem;
+  opacity: 1;
+  overflow: hidden;
+  transition: max-height 0.2s ease, opacity 0.16s ease, margin-top 0.2s ease;
+}
+.collapsed .meta {
+  max-height: 0;
+  opacity: 0;
+  margin-top: 0;
+}
 
-/* Live/Open/Draft/Completed state pill — mirrors the mobile top bar's statusPill. */
 .status {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   flex-shrink: 0;
-  padding: 0.14rem 0.46rem;
+  padding: 0.16rem 0.44rem;
+  line-height: 1;
   border: 1px solid var(--border-2);
   border-radius: 2px;
   font-family: var(--font-data);
@@ -122,24 +139,17 @@ a.title:hover { color: var(--logic-lime); }
 @keyframes hdrPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
 
-/* Meta line (date range / "Organization") — folds away when collapsed. */
-.sub {
-  max-height: 1.4em;
-  opacity: 0.9;
-  overflow: hidden;
+.date {
   font-family: var(--font-data);
-  font-size: 0.68rem;
-  letter-spacing: 0.03em;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--data-gray);
-  transition: max-height 0.18s ease, opacity 0.14s ease;
-}
-.collapsed .sub {
-  max-height: 0;
-  opacity: 0;
 }
 
-.pill {
-  margin-left: auto;
-  flex-shrink: 0;
+/* Desktop has room for a slightly larger name. */
+@media (min-width: 901px) {
+  .name { font-size: 1.2rem; }
+  .collapsed .name { font-size: 1.05rem; }
 }

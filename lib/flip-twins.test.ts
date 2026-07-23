@@ -23,88 +23,76 @@ function single(res: FlipResolution) {
   assert.equal(res.kind, 'single', `expected a single-target resolution, got ${res.kind}`);
   return (res as Extract<FlipResolution, { kind: 'single' }>).target;
 }
-function multi(res: FlipResolution) {
-  assert.equal(res.kind, 'multi', `expected a multi-target resolution, got ${res.kind}`);
-  return res as Extract<FlipResolution, { kind: 'multi' }>;
-}
 function adminPath(screen: string) {
   return `/${ORG}/admin/tournaments/${screen}`;
 }
 
 // ── to-public: admin screen → public page (Phase 1 core) ─────────────────────────────────────────
 
-test('admin → public: each mapped screen lands on its public twin with the right label', () => {
-  const cases: Array<[string, string, string]> = [
-    // [admin screen, expected href suffix, expected label]
-    ['dashboard', `/${ORG}/${SLUG}`, 'Public · Overview'],
-    ['communication', `/${ORG}/${SLUG}/news`, 'Public · News'],
-    ['schedule', `/${ORG}/${SLUG}/schedule`, 'Public · Schedule'],
-    ['registrations', `/${ORG}/${SLUG}/teams`, 'Public · Teams'],
-    ['rules', `/${ORG}/${SLUG}/rules`, 'Public · Rules'],
+// Every admin → public flip is a single target with a uniform "Public site" label; only the HREF is
+// page-matched (owner call 2026-07-23). Drafts read "Preview site".
+test('admin → public: each mapped screen page-matches the href but reads a uniform "Public site"', () => {
+  const cases: Array<[string, string]> = [
+    // [admin screen, expected href] — Results' public counterpart is the Schedule
+    ['dashboard', `/${ORG}/${SLUG}`],
+    ['communication', `/${ORG}/${SLUG}/news`],
+    ['schedule', `/${ORG}/${SLUG}/schedule`],
+    ['registrations', `/${ORG}/${SLUG}/teams`],
+    ['rules', `/${ORG}/${SLUG}/rules`],
+    ['results', `/${ORG}/${SLUG}/schedule`],
   ];
-  for (const [screen, href, label] of cases) {
+  for (const [screen, href] of cases) {
     const target = single(resolveFlip({ pathname: adminPath(screen), direction: 'to-public', ctx: liveCtx }));
     assert.equal(target.href, href, `href for ${screen}`);
-    assert.equal(target.label, label, `label for ${screen}`);
+    assert.equal(target.label, 'Public site', `label for ${screen}`);
   }
 });
 
-test('admin → public: Results is a two-target chooser (Schedule + Standings, with honesty note)', () => {
-  const res = multi(resolveFlip({ pathname: adminPath('results'), direction: 'to-public', ctx: liveCtx }));
-  assert.equal(res.label, 'Public');
-  assert.equal(res.targets.length, 2);
-  assert.deepEqual(res.targets.map(t => t.href), [`/${ORG}/${SLUG}/schedule`, `/${ORG}/${SLUG}/standings`]);
-  assert.deepEqual(res.targets.map(t => t.label), ['Public · Schedule', 'Public · Standings']);
-  assert.equal(res.targets[1].sublabel, 'Standings come from these scores');
-});
-
-test('admin → public: unmapped screens fall back to Overview (never absent, never a wrong guess)', () => {
+test('admin → public: unmapped screens fall back to the Overview front page (never absent, never wrong)', () => {
   for (const screen of ['check-in', 'staff-kit', 'data-tools', 'archives', 'settings', 'venues', 'divisions', 'branding', 'summary']) {
     const target = single(resolveFlip({ pathname: adminPath(screen), direction: 'to-public', ctx: liveCtx }));
-    assert.equal(target.href, `/${ORG}/${SLUG}`, `${screen} should fall back to Overview root`);
-    assert.equal(target.label, 'Public · Overview');
+    assert.equal(target.href, `/${ORG}/${SLUG}`, `${screen} should fall back to the Overview root`);
+    assert.equal(target.label, 'Public site');
   }
 });
 
-test('admin → public: a path with no admin screen still resolves to Overview', () => {
+test('admin → public: a path with no admin screen still resolves to the Overview root', () => {
   const target = single(resolveFlip({ pathname: `/${ORG}/admin/tournaments`, direction: 'to-public', ctx: liveCtx }));
   assert.equal(target.href, `/${ORG}/${SLUG}`);
-  assert.equal(target.label, 'Public · Overview');
+  assert.equal(target.label, 'Public site');
 });
 
 test('admin → public: nested sub-paths resolve by their top screen segment', () => {
   const target = single(resolveFlip({ pathname: adminPath('settings/event'), direction: 'to-public', ctx: liveCtx }));
-  assert.equal(target.label, 'Public · Overview'); // settings is unmapped → Overview
+  assert.equal(target.href, `/${ORG}/${SLUG}`); // settings is unmapped → Overview root
+  assert.equal(target.label, 'Public site');
 });
 
-// ── Draft → preview base + labels ────────────────────────────────────────────────────────────────
+// ── Draft → preview base + "Preview site" label ────────────────────────────────────────────────────
 
-test('draft tournaments resolve into the admin PREVIEW shell and read "Preview"', () => {
+test('draft tournaments resolve into the admin PREVIEW shell and read "Preview site"', () => {
   const previewBase = `/${ORG}/admin/tournaments/preview/${SLUG}`;
   const schedule = single(resolveFlip({ pathname: adminPath('schedule'), direction: 'to-public', ctx: draftCtx }));
   assert.equal(schedule.href, `${previewBase}/schedule`);
-  assert.equal(schedule.label, 'Preview · Schedule');
+  assert.equal(schedule.label, 'Preview site');
 
   const overview = single(resolveFlip({ pathname: adminPath('dashboard'), direction: 'to-public', ctx: draftCtx }));
   assert.equal(overview.href, previewBase);
-  assert.equal(overview.label, 'Preview · Overview');
+  assert.equal(overview.label, 'Preview site');
 
-  const results = multi(resolveFlip({ pathname: adminPath('results'), direction: 'to-public', ctx: draftCtx }));
-  assert.equal(results.label, 'Preview');
-  assert.deepEqual(results.targets.map(t => t.label), ['Preview · Schedule', 'Preview · Standings']);
+  const results = single(resolveFlip({ pathname: adminPath('results'), direction: 'to-public', ctx: draftCtx }));
+  assert.equal(results.href, `${previewBase}/schedule`);
+  assert.equal(results.label, 'Preview site');
 });
 
 // ── gameId passthrough ───────────────────────────────────────────────────────────────────────────
 
-test('gameId is carried onto the public Schedule deep-link (both the direct + Results-chooser paths)', () => {
+test('gameId is carried onto the public Schedule deep-link from both Schedule and Results', () => {
   const ctx: FlipContext = { ...liveCtx, gameId: 'game-123' };
   const schedule = single(resolveFlip({ pathname: adminPath('schedule'), direction: 'to-public', ctx }));
   assert.equal(schedule.href, `/${ORG}/${SLUG}/schedule?highlightGameId=game-123`);
-
-  const results = multi(resolveFlip({ pathname: adminPath('results'), direction: 'to-public', ctx }));
-  assert.equal(results.targets[0].href, `/${ORG}/${SLUG}/schedule?highlightGameId=game-123`);
-  // Standings never takes the highlight param.
-  assert.equal(results.targets[1].href, `/${ORG}/${SLUG}/standings`);
+  const results = single(resolveFlip({ pathname: adminPath('results'), direction: 'to-public', ctx }));
+  assert.equal(results.href, `/${ORG}/${SLUG}/schedule?highlightGameId=game-123`);
 });
 
 test('gameId is url-encoded', () => {
@@ -115,11 +103,11 @@ test('gameId is url-encoded', () => {
 
 // ── Coach / official hats (P3 seed) ──────────────────────────────────────────────────────────────
 
-test('coach + official surfaces flip to the public Schedule', () => {
+test('coach + official surfaces flip to the public Schedule, reading "Public site"', () => {
   for (const hat of ['coach', 'official'] as const) {
     const target = single(resolveFlip({ pathname: `/${ORG}/coaches`, direction: 'to-public', hat, ctx: liveCtx }));
     assert.equal(target.href, `/${ORG}/${SLUG}/schedule`);
-    assert.equal(target.label, 'Public · Schedule');
+    assert.equal(target.label, 'Public site');
   }
 });
 
@@ -178,14 +166,18 @@ test('to-role: an empty allow-list means unscoped (owner/admin) — exact twin',
 
 // ── primaryTarget (the shared single-destination picker) ─────────────────────────────────────────
 
-test('primaryTarget returns the target for single and the Schedule twin (index 0) for the Results chooser', () => {
-  const single = resolveFlip({ pathname: adminPath('schedule'), direction: 'to-public', ctx: liveCtx });
-  assert.equal(primaryTarget(single).href, `/${ORG}/${SLUG}/schedule`);
-  assert.equal(primaryTarget(single).label, 'Public · Schedule');
+test('primaryTarget returns the sole target for single, and index 0 for a multi resolution', () => {
+  const fromResults = resolveFlip({ pathname: adminPath('results'), direction: 'to-public', ctx: liveCtx });
+  assert.equal(primaryTarget(fromResults).href, `/${ORG}/${SLUG}/schedule`);
+  assert.equal(primaryTarget(fromResults).label, 'Public site');
 
-  const multi = resolveFlip({ pathname: adminPath('results'), direction: 'to-public', ctx: liveCtx });
-  assert.equal(primaryTarget(multi).href, `/${ORG}/${SLUG}/schedule`);
-  assert.equal(primaryTarget(multi).label, 'Public · Schedule');
+  // Multi (e.g. a future multi-hat popover) → the first target.
+  const roles: FlipResolution = {
+    kind: 'multi',
+    label: 'Roles',
+    targets: [{ href: '/admin-x', label: 'Admin' }, { href: '/coach-x', label: 'Coach' }],
+  };
+  assert.equal(primaryTarget(roles).href, '/admin-x');
 });
 
 // ── Return-memory parse ──────────────────────────────────────────────────────────────────────────

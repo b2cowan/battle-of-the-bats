@@ -27,12 +27,15 @@ interface FlipPillProps {
   resolution: FlipResolution;
   /** 'inline' = slim slot inside a bar/header; 'floating' = a docked content-corner control. */
   variant?: 'inline' | 'floating';
+  /** Icon-only: shows just the ⇄ glyph (the label stays as the accessible name). Used by the admin
+   *  header when it collapses on scroll, to free up the row for the event name. */
+  compact?: boolean;
   /** Overrides the accessible name (defaults to the visible destination label). */
   ariaLabel?: string;
   className?: string;
 }
 
-export default function FlipPill({ resolution, variant = 'inline', ariaLabel, className }: FlipPillProps) {
+export default function FlipPill({ resolution, variant = 'inline', compact = false, ariaLabel, className }: FlipPillProps) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -67,13 +70,22 @@ export default function FlipPill({ resolution, variant = 'inline', ariaLabel, cl
   }, [open]);
 
   const rootClass = `${styles.wrap} ${variant === 'floating' ? styles.floating : styles.inline} ${className ?? ''}`;
+  const pillClass = `${styles.pill} ${compact ? styles.compact : ''}`;
+  // The ⇄ glyph + (unless compact) the destination text. The glyph is decorative; the accessible
+  // name comes from aria-label, so icon-only stays labelled for screen readers.
+  const inner = (text: string) => (
+    <span className={styles.label}>
+      <span className={styles.glyph} aria-hidden>⇄</span>
+      {!compact && <span className={styles.labelText}>{text}</span>}
+    </span>
+  );
 
   // Return-memory (when present) always wins as a direct one-tap return.
   if (back) {
     return (
       <div className={rootClass}>
-        <Link href={back.href} className={styles.pill} aria-label={ariaLabel ?? back.label}>
-          <span className={styles.label}>⇄ {back.label}</span>
+        <Link href={back.href} className={pillClass} aria-label={ariaLabel ?? back.label}>
+          {inner(back.label)}
         </Link>
       </div>
     );
@@ -82,8 +94,8 @@ export default function FlipPill({ resolution, variant = 'inline', ariaLabel, cl
   if (resolution.kind === 'single') {
     return (
       <div className={rootClass}>
-        <Link href={resolution.target.href} className={styles.pill} aria-label={ariaLabel ?? resolution.target.label}>
-          <span className={styles.label}>⇄ {resolution.target.label}</span>
+        <Link href={resolution.target.href} className={pillClass} aria-label={ariaLabel ?? resolution.target.label}>
+          {inner(resolution.target.label)}
         </Link>
       </div>
     );
@@ -94,13 +106,13 @@ export default function FlipPill({ resolution, variant = 'inline', ariaLabel, cl
     <div className={rootClass} ref={wrapRef}>
       <button
         type="button"
-        className={styles.pill}
+        className={pillClass}
         onClick={() => setOpen(o => !o)}
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={ariaLabel ?? `${resolution.label} — choose a page`}
       >
-        <span className={styles.label}>⇄ {resolution.label}</span>
+        {inner(resolution.label)}
         <ChevronDown size={13} className={`${styles.caret} ${open ? styles.caretOpen : ''}`} aria-hidden />
       </button>
       {open && (
