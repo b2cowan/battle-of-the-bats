@@ -144,3 +144,23 @@
   line-height: 1.25;
   color: var(--data-gray);
 }
+
+/* ── Phone: icon-only short pill (owner call 2026-07-23, option B) ──
+   On the mobile chrome (≤900px) the inline pill drops to just the ⇄ glyph — no words — so a long
+   event name or a "⇄ Back to …" return label can't truncate the header. It keeps the SAME rounded
+   pill shape as desktop, just trimmed to the glyph (a short horizontal lozenge — NOT a square/circle,
+   which read as too heavy) so it reads as one consistent control across every surface (admin, public,
+   later coach/scorekeeper — all render this one component). The destination stays the accessible
+   name (aria-label) and the tap still flips to the right place. Same on the scroll-collapsed admin
+   header, so there's no size jump; multi-hat keeps its caret so "⇄ ▾" still reads as a chooser. */
+@media (max-width: 900px) {
+  .inline .labelText { display: none; }
+  .inline .pill {
+    max-width: none;
+    padding: 0.36rem 0.78rem;
+  }
+  .inline .glyph {
+    color: var(--fl-text);
+    font-size: 0.95rem; /* a touch larger so the lone glyph reads clearly */
+  }
+}

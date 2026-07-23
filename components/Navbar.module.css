@@ -189,8 +189,9 @@
   letter-spacing: 0.13em;
   text-transform: uppercase;
   color: var(--white-70);
-  /* Clear the floating actions cluster (up to bell + share + chip). */
-  padding-right: 9rem;
+  /* Full width — the flip pill sits down on the TITLE row (below this eyebrow), matching the admin
+     header, so the org line no longer has to clear a corner cluster. */
+  padding-right: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -210,6 +211,9 @@
   letter-spacing: 0.02em;
   color: var(--white);
   margin-top: 0.15rem;
+  /* The flip pill sits at the top-right of this title row (same as the admin header) — clear its
+     lane so a long name wraps beside it instead of under it. */
+  padding-right: 3.5rem;
   transition: font-size 0.25s ease;
 }
 
@@ -323,8 +327,10 @@
   }
   /* At rest the nav itself stays transparent (the header paints its own ground);
      the existing .scrolled frost covers the condensed state. */
+  /* Pill sits on the TITLE row (below the eyebrow), matching the admin header's placement — not up
+     in the top corner. ~1.5rem drops it past the eyebrow to align with the event name's first line. */
   .hasEventHead .navActions {
-    top: 0.35rem;
+    top: 1.5rem;
     height: auto;
     right: 0.75rem;
   }
@@ -366,7 +372,7 @@
     font-size: 1.05rem;
     -webkit-line-clamp: 1;
     margin-top: 0;
-    padding-right: 9rem;
+    padding-right: 3.5rem;
   }
 }
 
