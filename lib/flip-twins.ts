@@ -27,6 +27,13 @@ export interface FlipContext {
   /** Carried through the game↔Results pair so a finalized score deep-links its own game. */
   gameId?: string | null;
   /**
+   * Public → admin (`to-role`): which event to load into the admin area. Public pages can hold
+   * several of an org's tournaments, so a page-matched admin href (`…/schedule`) must carry
+   * `?tournamentId=` to land on THIS event (the admin tournament-context reads it). Absent on the
+   * admin-shell direction — the shell already has its tournament — so those hrefs are unchanged.
+   */
+  adminTournamentId?: string | null;
+  /**
    * Admin screens this staffer can actually open (the path segment after `/admin/tournaments/`,
    * e.g. `'results'`). When resolving `to-role`, an out-of-scope twin lands on the nearest permitted
    * screen instead of a 403. Omit (or leave empty) to allow all — the owner/admin case.
@@ -51,14 +58,16 @@ export type FlipResolution =
 
 // ── Mapping tables (the ONE place the twin map lives) ────────────────────────────────────────────
 
-/** Admin screen (segment after /admin/tournaments/) → its public twin. Unlisted screens fall back. */
-const ADMIN_SCREEN_TO_TWIN: Record<string, PublicTwinKey> = {
-  dashboard: 'overview',
-  communication: 'news',
-  schedule: 'schedule',
-  registrations: 'teams',
-  rules: 'rules',
-  results: 'schedule', // Results' public counterpart is the Schedule — that's where posted scores land
+/** Admin screen (segment after /admin/tournaments/) → its public twin + the page's own label (the
+ *  latter feeds the "⇄ Back to {label}" return memory). ONE map so adding a screen updates both at
+ *  once and they can't drift; unlisted screens fall back to the Overview twin / generic "Admin". */
+const ADMIN_SCREEN: Record<string, { twin: PublicTwinKey; label: string }> = {
+  dashboard:     { twin: 'overview', label: 'Dashboard' },
+  communication: { twin: 'news',     label: 'News' },
+  schedule:      { twin: 'schedule', label: 'Schedule' },
+  registrations: { twin: 'teams',    label: 'Teams' },
+  rules:         { twin: 'rules',    label: 'Rules' },
+  results:       { twin: 'schedule', label: 'Results' }, // public twin = Schedule (where scores land)
 };
 
 /** Public twin → admin screen (the reverse map for `to-role`). */
@@ -71,7 +80,8 @@ const PUBLIC_TWIN_TO_ADMIN: Record<PublicTwinKey, string> = {
   rules: 'rules',
 };
 
-const HAT_LABEL: Record<FlipHat, string> = {
+/** Hat → its role-side label (the public FlipPill reuses this for coach/official rows too). */
+export const HAT_LABEL: Record<FlipHat, string> = {
   admin: 'Admin',
   coach: 'Coach',
   official: 'Scorekeeper',
@@ -124,10 +134,15 @@ function publicHref(ctx: FlipContext, twin: PublicTwinKey, gameId?: string | nul
 
 function adminHref(ctx: FlipContext, screen: string, gameId?: string | null): string {
   const base = `/${ctx.orgSlug}/admin/tournaments`;
+  const params = new URLSearchParams();
   // Admin Results focuses a game via `?gameId=` (the existing WI-2 deep-link convention that the
   // Results page already reads) — NOT the public side's `?highlightGameId=`.
-  if (screen === 'results' && gameId) return `${base}/results?gameId=${encodeURIComponent(gameId)}`;
-  return `${base}/${screen}`;
+  if (screen === 'results' && gameId) params.set('gameId', gameId);
+  // Public → admin only: carry the event id so the admin lands on THIS tournament (see
+  // FlipContext.adminTournamentId). Never set on the admin-shell direction, so its hrefs stay bare.
+  if (ctx.adminTournamentId) params.set('tournamentId', ctx.adminTournamentId);
+  const qs = params.toString();
+  return qs ? `${base}/${screen}?${qs}` : `${base}/${screen}`;
 }
 
 /** Land on the nearest screen the staffer can actually open (never a wrong guess, never a 403). */
@@ -155,7 +170,7 @@ function resolveToPublic(pathname: string, hat: FlipHat, ctx: FlipContext): Flip
 
   const screen = adminScreenFromPath(pathname);
   // Everything maps to its twin; unmapped screens fall back to Overview (never absent, never wrong).
-  const twin: PublicTwinKey = (screen ? ADMIN_SCREEN_TO_TWIN[screen] : undefined) ?? 'overview';
+  const twin: PublicTwinKey = (screen ? ADMIN_SCREEN[screen]?.twin : undefined) ?? 'overview';
   return {
     kind: 'single',
     target: {
@@ -165,7 +180,13 @@ function resolveToPublic(pathname: string, hat: FlipHat, ctx: FlipContext): Flip
   };
 }
 
-/** Public page → the matching role screen (P2/P3 UI; mapping lives here so it can't drift). */
+/**
+ * Public page → the matching role screen (P2/P3 UI; mapping lives here so it can't drift).
+ *
+ * NB (P2): this resolves the ADMIN screen for every hat — the `hat` only drives the label. Coach and
+ * official destinations are still supplied by the viewer API (the public FlipPill forwards those hrefs
+ * directly); P3 moves that record-aware coach landing into this resolver so all three hats resolve here.
+ */
 function resolveToRole(pathname: string, hat: FlipHat, ctx: FlipContext): FlipResolution {
   const section = publicSectionFromPath(pathname, ctx.orgSlug, ctx.tournamentSlug ?? '');
   let twin: PublicTwinKey;
@@ -260,4 +281,49 @@ export function readReturnMemory(now: number, maxAgeMs: number = RETURN_MAX_AGE_
   } catch {
     return null;
   }
+}
+
+/**
+ * Persist the return snapshot at flip time (browser only) — the write half of the round trip.
+ * Called on EVERY hop, both directions, from the shared FlipPill, so the arrival side's pill can
+ * offer "⇄ Back to {label}". Best-effort: a storage failure just falls back to stateless resolution.
+ */
+export function writeReturnMemory(mem: { originUrl: string; label: string }, now: number): void {
+  try {
+    const payload: ReturnMemory = { originUrl: mem.originUrl, label: mem.label, ts: now };
+    sessionStorage.setItem(RETURN_KEY, JSON.stringify(payload));
+  } catch {
+    /* storage unavailable / quota — the stateless page-matched twin still works */
+  }
+}
+
+/**
+ * Spend the return snapshot (browser only). Called once the arrival side leaves its landing page, so
+ * the pill reverts to the stateless page-matched twin instead of a stale "⇄ Back to …". Best-effort.
+ */
+export function clearReturnMemory(): void {
+  try {
+    sessionStorage.removeItem(RETURN_KEY);
+  } catch {
+    /* storage unavailable — nothing to clear */
+  }
+}
+
+// ── Origin label ("⇄ Back to {label}") ───────────────────────────────────────────────────────────
+
+/**
+ * Human label for the page a flip is LEAVING — powers the arrival side's "⇄ Back to {label}".
+ * Derived from the pathname alone (no side-specific plumbing): admin screens read their label from
+ * the ADMIN_SCREEN map (the same map that owns the twin, so they can't drift); public sections are
+ * just the capitalized section segment (the twin maps own the canonical section vocabulary — this is
+ * a cosmetic label, so it needs no second table and gracefully names any section, e.g. Playoffs).
+ */
+export function flipOriginLabel(pathname: string): string {
+  if (/\/admin(\/|$)/.test(pathname)) {
+    const screen = adminScreenFromPath(pathname);
+    return (screen && ADMIN_SCREEN[screen]?.label) || 'Admin';
+  }
+  // Public tournament path: /{org}/{tournament}/{section?}/… — the section is the 3rd segment.
+  const section = pathname.split('/').filter(Boolean)[2];
+  return section ? section.charAt(0).toUpperCase() + section.slice(1) : 'Overview';
 }

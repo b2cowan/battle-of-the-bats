@@ -1054,6 +1054,22 @@ export default async function TournamentHomeContent({
       </section>
       )}
 
+      {/* Share this event — the persistent header Share button was retired in "The Flip" P2 (the
+          top-right corner is the role pill for a hat-holder, or the fan's own space), so the
+          shareable event link now lives in the Overview content. Game score-card + champions
+          shares stay where they are (they're content-level already). Never in the admin preview. */}
+      {!isPreview && (
+        <div className={`container ${styles.eventShareRow}`}>
+          <SharePageButton
+            url={publicBase}
+            title={tournament.name}
+            text="Live on FieldLogicHQ"
+            label="Share this event"
+            className="btn btn-outline btn-sm"
+          />
+        </div>
+      )}
+
       {liveNowSection}
       {preEventPanel}
       {championBanner}

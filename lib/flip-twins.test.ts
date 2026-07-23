@@ -10,6 +10,7 @@ import {
   resolveFlip,
   primaryTarget,
   parseReturnMemory,
+  flipOriginLabel,
   type FlipContext,
   type FlipResolution,
 } from './flip-twins.ts';
@@ -147,6 +148,37 @@ test('public → admin: the hat drives the label', () => {
   assert.equal(coach.label, 'Coach');
   const official = single(resolveFlip({ pathname: `/${ORG}/${SLUG}/schedule`, direction: 'to-role', hat: 'official', ctx: liveCtx }));
   assert.equal(official.label, 'Scorekeeper');
+});
+
+// ── Public → admin: carry the event id so the flip lands on THIS tournament (P2) ─────────────────
+
+test('to-role: adminTournamentId is carried onto the page-matched admin href (?tournamentId=)', () => {
+  const ctx: FlipContext = { ...liveCtx, adminTournamentId: 'evt-1' };
+  const schedule = single(resolveFlip({ pathname: `/${ORG}/${SLUG}/schedule`, direction: 'to-role', ctx }));
+  assert.equal(schedule.href, `/${ORG}/admin/tournaments/schedule?tournamentId=evt-1`);
+  // With a game context both params ride along (gameId first, then tournamentId).
+  const game = single(resolveFlip({ pathname: `/${ORG}/${SLUG}/schedule`, direction: 'to-role', ctx: { ...ctx, gameId: 'g9' } }));
+  assert.equal(game.href, `/${ORG}/admin/tournaments/results?gameId=g9&tournamentId=evt-1`);
+});
+
+test('to-public: adminTournamentId is NOT applied (the admin shell already has its tournament)', () => {
+  // The admin-shell direction never sets adminTournamentId, so its hrefs stay bare.
+  const ctx: FlipContext = { ...liveCtx, adminTournamentId: 'evt-1' };
+  const target = single(resolveFlip({ pathname: adminPath('schedule'), direction: 'to-public', ctx }));
+  assert.equal(target.href, `/${ORG}/${SLUG}/schedule`); // public twin, unaffected
+});
+
+// ── Origin labels ("⇄ Back to {label}") ──────────────────────────────────────────────────────────
+
+test('flipOriginLabel names admin screens and public sections from the pathname', () => {
+  assert.equal(flipOriginLabel(adminPath('results')), 'Results');
+  assert.equal(flipOriginLabel(adminPath('registrations')), 'Teams');
+  assert.equal(flipOriginLabel(`/${ORG}/admin/tournaments`), 'Admin'); // no screen segment
+  assert.equal(flipOriginLabel(`/${ORG}/admin/org/settings`), 'Admin'); // non-tournament admin
+  assert.equal(flipOriginLabel(`/${ORG}/${SLUG}`), 'Overview'); // public root
+  assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/schedule`), 'Schedule');
+  assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/standings`), 'Standings');
+  assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/schedule/game-123`), 'Schedule'); // game page → its section
 });
 
 // ── Staff scoping: nearest permitted screen, never a 403 ─────────────────────────────────────────

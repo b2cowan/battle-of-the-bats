@@ -22,6 +22,25 @@
   box-shadow: var(--glow-sm);
 }
 
+/* "See it live" highlight — a brief primary-tinted pulse on a game row deep-linked via
+   ?highlightGameId= (the admin finalize nudge / the public flip pill land here). Token-only ring
+   + glow so it reads on the event brand in both dark and light; clears itself after the animation.
+   scroll-margin-top keeps the row clear of the fixed chrome when scrolled into view. */
+.highlightFlash {
+  scroll-margin-top: calc(var(--chrome-top-h) + 1.5rem);
+  animation: seeItLivePulse 2s ease 1;
+}
+
+@keyframes seeItLivePulse {
+  0% { box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.7), var(--glow); }
+  15% { box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.6), var(--glow); }
+  100% { box-shadow: 0 0 0 0 rgba(var(--primary-rgb), 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .highlightFlash { animation: none; box-shadow: 0 0 0 2px rgba(var(--primary-rgb), 0.55); }
+}
+
 .dateGroup {
   margin-bottom: 1.1rem;
   border: 1px solid var(--border-2);

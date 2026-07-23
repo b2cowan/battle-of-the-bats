@@ -301,6 +301,16 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
   // Flash a score-flip animation on rows whose score/status just changed.
   const prevScoreSigRef = useRef<Map<string, string>>(new Map());
   const [flippedGameIds, setFlippedGameIds] = useState<Set<string>>(() => new Set());
+  // "See it live" seam (The Flip): a `?highlightGameId=` deep-link — the admin "Score saved — See it
+  // live" nudge and the public flip pill both land here — scrolls that game's row into view and
+  // briefly flashes it.
+  const [flashGameId, setFlashGameId] = useState<string | null>(null);
+  // The wanted game id, captured + stripped from the URL once on mount, then applied when its game
+  // data lands. `undefined` = not read yet; string|null after. A ref so the effects read it directly.
+  const pendingHighlightRef = useRef<string | null | undefined>(undefined);
+  // Set the instant the highlight routes a division, so the followed-team auto-jump can see it and
+  // bow out WITHIN THE SAME COMMIT — a batched setState wouldn't be visible to that sibling effect.
+  const highlightRoutedRef = useRef(false);
   useEffect(() => {
     const changed = new Set<string>();
     for (const g of games) {
@@ -316,6 +326,62 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     const timer = window.setTimeout(() => setFlippedGameIds(new Set()), 1600);
     return () => window.clearTimeout(timer);
   }, [games]);
+
+  // Capture + strip the `?highlightGameId=` param once on mount, BEFORE game data arrives — so it
+  // never lingers in the address bar (even for a stale link into an event with no games) and a
+  // refresh / reshared link can't replay it. The scroll-and-flash waits for the game (effect below).
+  useEffect(() => {
+    if (pendingHighlightRef.current !== undefined || typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const wantId = params.get('highlightGameId');
+    pendingHighlightRef.current = wantId; // string | null — recorded so we don't re-read the URL
+    if (!wantId) return;
+    params.delete('highlightGameId');
+    const qs = params.toString();
+    window.history.replaceState(null, '', `${window.location.pathname}${qs ? `?${qs}` : ''}${window.location.hash}`);
+  }, []);
+
+  // ── "See it live" highlight: once the deep-linked game's data has loaded, route the view to it ──
+  useEffect(() => {
+    const wantId = pendingHighlightRef.current;
+    if (!wantId || games.length === 0) return;
+    pendingHighlightRef.current = null; // consume: the game set is fully loaded now (found or not)
+    const target = games.find(g => g.id === wantId);
+    if (!target) return; // not in this event's set — nothing to highlight
+    // Land on the division/stage/day the game lives in, in list (not the bracket diagram), with no
+    // active search — so the row is actually mounted for the scroll-and-flash below.
+    if (target.divisionId) {
+      selectDivision(target.divisionId); // switch division + clear search + write the pref
+      // Pre-empt the followed-team auto-jump SYNCHRONOUSLY (a ref, not batched state) so that sibling
+      // effect bows out in this same commit — otherwise a viewer who follows a team in another
+      // division gets routed away and the highlighted row never mounts.
+      highlightRoutedRef.current = true;
+    }
+    setViewMode(target.isPlayoff ? 'playoff' : 'pool');
+    if (target.isPlayoff) setBracketLayout('list');
+    setSelectedDay(target.date || 'all');
+    setFlashGameId(wantId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [games]);
+
+  // Scroll to the flashed row + auto-clear the flash. Retries across a few frames because the routing
+  // state above re-renders the list, so the row may not be in the DOM on the first pass.
+  useEffect(() => {
+    if (!flashGameId) return;
+    let cancelled = false;
+    let raf = 0;
+    let tries = 0;
+    const attempt = () => {
+      if (cancelled) return;
+      const sel = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(flashGameId) : flashGameId;
+      const el = document.querySelector<HTMLElement>(`[data-game-id="${sel}"]`);
+      if (el) { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+      if (tries++ < 30) raf = requestAnimationFrame(attempt);
+    };
+    raf = requestAnimationFrame(attempt);
+    const clear = window.setTimeout(() => { if (!cancelled) setFlashGameId(null); }, 2000);
+    return () => { cancelled = true; cancelAnimationFrame(raf); window.clearTimeout(clear); };
+  }, [flashGameId]);
 
   // ── helper fns ─────────────────────────────────────────────────────────────
 
@@ -641,7 +707,10 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
 
 
   useEffect(() => {
-    if (!followedTeam || followedFilterApplied) return;
+    // A "See it live" deep-link owns the division — never yank the view to the followed team's
+    // division on top of it (the ref is set synchronously by the highlight effect above, so it's
+    // already visible here even in the same commit where game data first lands).
+    if (!followedTeam || followedFilterApplied || highlightRoutedRef.current) return;
     const followedDivision = divisions.find(g => g.id === followedTeam.divisionId);
     if (!followedDivision) return;
     // Jump to the followed team's division; do NOT auto-filter by team name —
@@ -883,13 +952,16 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
     );
 
     const broadcastClass = `${styles.broadcastCard} ${extraClass} ${isFollowedGame ? styles.followedBroadcast : ''} ${flippedGameIds.has(game.id) ? styles.scoreFlip : ''}`;
-    const wrapperClass = isLive ? broadcastClass : rowClassName;
+    // "See it live" highlight — a brief token-tinted pulse on the deep-linked game's row.
+    const isHighlight = flashGameId === game.id;
+    const wrapperClass = `${isLive ? broadcastClass : rowClassName}${isHighlight ? ` ${styles.highlightFlash}` : ''}`;
     const content = isLive ? broadcastContent : rowContent;
 
     if (isPreview) {
       return (
         <div
           key={game.id}
+          data-game-id={game.id}
           data-status={game.status}
           className={wrapperClass}
         >
@@ -903,6 +975,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
         key={game.id}
         href={gameHref}
         prefetch={false}
+        data-game-id={game.id}
         data-status={game.status}
         className={wrapperClass}
         aria-label={`View game details for ${gameLabel}`}

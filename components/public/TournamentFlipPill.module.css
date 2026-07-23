@@ -1,0 +1,10 @@
+/* The public FlipPill fades in once identity resolves — soft, so the hat-holder's pill doesn't pop
+   in hard after hydration. Reuses the global `fadeIn` keyframe (app/globals.css); layout is owned by
+   the FlipPill root, so nothing else is declared here (public-token ratchet: no color to add). */
+.enter {
+  animation: fadeIn 0.18s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enter { animation: none; }
+}

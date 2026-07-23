@@ -1755,3 +1755,13 @@
   object-fit: contain;
   border-radius: 10px;
 }
+
+/* "Share this event" — sits just under the hero on the Overview, right-aligned where the header
+   Share button used to live before "The Flip" P2 moved it into the page (layout only; the button
+   carries its own global .btn styling, so no color declared here — public-token ratchet safe). */
+.eventShareRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+  margin-bottom: 0.25rem;
+}

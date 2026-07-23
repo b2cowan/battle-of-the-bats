@@ -20,7 +20,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
-import { readReturnMemory, type FlipResolution } from '@/lib/flip-twins';
+import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipOriginLabel, type FlipResolution } from '@/lib/flip-twins';
 import styles from './FlipPill.module.css';
 
 interface FlipPillProps {
@@ -40,16 +40,27 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  // Return-memory read (post-mount, so SSR/hydration is stateless — no flash, no CLS). Inert in P1
-  // because nothing writes the snapshot yet; activates automatically once P2 wires the writes.
+  // Return-memory read (post-mount, so SSR/hydration is stateless — no flash, no CLS).
   const [back, setBack] = useState<{ href: string; label: string } | null>(null);
+  // The page the flip landed on: the "⇄ Back to {origin}" affordance lives ONLY on this page. Once
+  // the user navigates to a different section on this side, the memory is spent and the pill reverts
+  // to the stateless page-matched twin (ratified spec: revert on navigate-to-a-different-section — a
+  // per-instance ref, so a fresh arrival-side pill starts clean after each hop).
+  const arrivalPathRef = useRef<string | null>(null);
   useEffect(() => {
     const mem = readReturnMemory(Date.now());
     if (!mem) { setBack(null); return; }
     const here = `${pathname}`;
-    // Don't offer a return to the page we're already on.
+    // Never offer a return to the page we're already on.
     if (mem.originUrl === here || mem.originUrl.startsWith(`${here}?`)) { setBack(null); return; }
-    setBack({ href: mem.originUrl, label: `Back to ${mem.label}` });
+    if (arrivalPathRef.current === null) arrivalPathRef.current = here; // first page after the hop
+    if (arrivalPathRef.current === here) {
+      setBack({ href: mem.originUrl, label: `Back to ${mem.label}` });
+    } else {
+      // Moved on to another section → spend the memory so the pill returns to the page-matched twin.
+      clearReturnMemory();
+      setBack(null);
+    }
   }, [pathname]);
 
   // Close the popover on outside-click / Escape (mirrors the admin More-menu pattern).
@@ -69,6 +80,18 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
     };
   }, [open]);
 
+  // Stamp the return snapshot the instant a flip is taken — on EVERY hop, both directions — so the
+  // arrival side's pill can read "⇄ Back to {this page}". The origin is the exact current URL
+  // (search included, so a filtered schedule returns filtered); the label is derived from the path.
+  const stampReturn = () => {
+    try {
+      const search = typeof window !== 'undefined' ? window.location.search : '';
+      writeReturnMemory({ originUrl: `${pathname}${search}`, label: flipOriginLabel(pathname) }, Date.now());
+    } catch {
+      /* non-fatal — stateless resolution still works */
+    }
+  };
+
   const rootClass = `${styles.wrap} ${variant === 'floating' ? styles.floating : styles.inline} ${className ?? ''}`;
   const pillClass = `${styles.pill} ${compact ? styles.compact : ''}`;
   // The ⇄ glyph + (unless compact) the destination text. The glyph is decorative; the accessible
@@ -84,7 +107,7 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   if (back) {
     return (
       <div className={rootClass}>
-        <Link href={back.href} className={pillClass} aria-label={ariaLabel ?? back.label}>
+        <Link href={back.href} className={pillClass} aria-label={ariaLabel ?? back.label} onClick={stampReturn}>
           {inner(back.label)}
         </Link>
       </div>
@@ -94,7 +117,7 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   if (resolution.kind === 'single') {
     return (
       <div className={rootClass}>
-        <Link href={resolution.target.href} className={pillClass} aria-label={ariaLabel ?? resolution.target.label}>
+        <Link href={resolution.target.href} className={pillClass} aria-label={ariaLabel ?? resolution.target.label} onClick={stampReturn}>
           {inner(resolution.target.label)}
         </Link>
       </div>
@@ -123,7 +146,7 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
               href={target.href}
               className={styles.row}
               role="menuitem"
-              onClick={() => setOpen(false)}
+              onClick={() => { stampReturn(); setOpen(false); }}
             >
               <span className={styles.rowLabel}>{target.label}</span>
               {target.sublabel && <span className={styles.rowSub}>{target.sublabel}</span>}

@@ -146,24 +146,19 @@
   min-width: 0;
 }
 
-/* Top-bar additions. Status/ticker is desktop-only (see the ≥1024 block).
-   Share is a single icon — persistent + consistent on every page and size. */
+/* Top-bar additions. Status/ticker is desktop-only (see the ≥1024 block). */
 .navStatusSlot {
   display: none;
-}
-.navShare {
-  display: inline-flex;
-  align-items: center;
 }
 .bellSlot {
   display: inline-flex;
   align-items: center;
 }
 
-/* ── Tournament actions cluster (bell · share · account chip) ──
-   Nav-level absolute so bell/sheet portals mount exactly once across widths:
-   vertically centred in the 72px bar on tablet/desktop, pinned to the top-right
-   of the mobile event header. */
+/* ── Tournament actions cluster (bell · flip pill) ──
+   Nav-level absolute so the bell/pill portals + listeners mount exactly once across widths, and a
+   late-resolving pill never shifts the page: vertically centred in the 72px bar on tablet/desktop,
+   pinned to the top-right of the mobile event header. */
 .navActions {
   position: absolute;
   top: 0;
@@ -312,17 +307,11 @@
   .logo { flex: 1 1 auto; }
   .actions { flex: 0 0 auto; }
   .orgName { max-width: none; }
-  /* Touch floor: the Share button carries only global .btn classes, so the
-     hit-area rule scopes through this wrapper (never the bare .btn-sm). */
-  .navShare button {
-    min-height: var(--tap-min, 44px);
-    min-width: var(--tap-min, 44px);
-    justify-content: center;
-  }
 
   /* ── Unified event header takes over the tournament bar (G3) ── */
   .hasEventHead { height: auto; min-height: var(--nav-height); }
-  /* G5: mobile notifications live in the More sheet — the header keeps only Share. */
+  /* Mobile notifications live with the alert prompts / Account tab — the header corner is the
+     flip pill (a hat-holder) or nothing (a fan). */
   .bellSlot { display: none; }
   .hasEventHead .inner { display: none; }
   .hasEventHead .eventHead {
@@ -354,14 +343,6 @@
     flex-direction: column;
     justify-content: center;
   }
-  /* The Share button condenses with the bar: its box chrome dissolves to a bare
-     icon. The hit area NEVER shrinks — the 44px floor is padding, not paint. */
-  .hasEventHead.scrolled .navShare button {
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
-  }
-  .hasEventHead .navShare button { transition: background 0.25s ease, border-color 0.25s ease; }
   /* Condensed bar: the actions centre on the (single) title line instead of
      hanging from the expanded header's top edge. */
   /* Centre the actions cluster in the COLLAPSED header (its ~48px top band), NOT the

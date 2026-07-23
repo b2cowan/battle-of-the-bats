@@ -8,9 +8,8 @@ import { cn } from '@/lib/utils';
 import { phaseOf, fmtRange, daysUntil } from '@/lib/tournament-phase-display';
 import { tournamentToday } from '@/lib/timezone';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
-import SharePageButton from '@/components/public/SharePageButton';
 import FanNotificationBell from '@/components/public/FanNotificationBell';
-import TournamentAccountSheet from '@/components/public/TournamentAccountSheet';
+import TournamentFlipPill from '@/components/public/TournamentFlipPill';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
 import styles from './Navbar.module.css';
@@ -283,35 +282,23 @@ export default function Navbar() {
           automatically (ticker + sticky day-labels + page padding all clear it). */}
       <TournamentTopTabs />
 
-      {/* One actions cluster for every width — absolutely positioned so the sheet,
-          bell and share mount exactly once (portals + document listeners). */}
+      {/* One actions cluster for every width — absolutely positioned so the bell and the
+          flip pill mount exactly once (portals + document listeners) and a late-resolving
+          pill never shifts the page. */}
       <div className={styles.navActions}>
         {/* Team-independent notification opt-in — Plus tournaments only, hidden once
-            the event is over. DESKTOP-ONLY: on mobile the bell lives as a row inside the
-            account sheet (opened from the header chip — the retired More tab was its old
-            door), and the header keeps only Share. */}
+            the event is over. DESKTOP-ONLY (the mobile bell lives with the alert prompts /
+            Account tab). */}
         {tournamentSlug && tournamentId && fanAlertsEnabled && !tournamentFinished && (
           <span className={styles.bellSlot}>
             <FanNotificationBell />
           </span>
         )}
-        {/* Persistent, consistent share — the SAME icon in the SAME spot on every
-            page; it shares the page you're on (each public route has its own OG
-            preview). Register lives on the home page, not here. */}
-        {tournamentSlug && tournamentName && (
-          <span className={styles.navShare}>
-            <SharePageButton
-              url={pathname}
-              title={tournamentName}
-              text="Live on FieldLogicHQ"
-              className="btn btn-outline btn-sm"
-              compact
-            />
-          </span>
-        )}
-        {/* Signed-in account chip → the "hats you own here" sheet (Phase 3).
-            Self-gates: renders nothing when the viewer is anonymous. */}
-        <TournamentAccountSheet />
+        {/* "The Flip" pill (Phase 2) — a signed-in hat-holder's one-tap door to their side of
+            THIS event, page-matched. Self-gates: renders nothing for fans / signed-out visitors,
+            so the header corner (and long event names) belong to fans again. Share moved into the
+            Overview content. */}
+        <TournamentFlipPill />
       </div>
     </nav>
   );

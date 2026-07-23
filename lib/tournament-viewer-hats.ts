@@ -43,9 +43,10 @@ export interface ViewerHat {
   /** What the row names: the coached team, or the org for admin/official rows. */
   label: string;
   href: string;
-  /** Coach hats only: the tournament registration (`teams.id`) on THIS event —
-   *  powers the sheet's one-tap own-team alerts row (N3b). Never derive this from
-   *  `href` (an upgraded team's href points at a Premium slug, not the team id). */
+  /** Coach hats only: the tournament registration (`teams.id`) on THIS event. Computed server-side;
+   *  no live consumer since the account sheet retired ("The Flip" P2 — own-team alerts now source the
+   *  coach overview's tournament-history path). Kept for a future record-aware coach flip (P3). Never
+   *  derive it from `href` (an upgraded team's href points at a Premium slug, not the team id). */
   teamId?: string;
 }
 

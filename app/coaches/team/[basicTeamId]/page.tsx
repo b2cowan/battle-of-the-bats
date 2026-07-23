@@ -21,6 +21,8 @@ import {
 import { getActivePremiumPortalSlug } from '@/lib/coach-team-page';
 import HelpButton from '@/components/help/HelpButton';
 import TeamHQ from '@/components/coaches/TeamHQ';
+import CoachGameAlertsRow from '@/components/coaches/CoachGameAlertsRow';
+import { pickAlertRegistration } from '@/lib/coach-alert-registration';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
 import ScopeShelf from '@/components/coaches/ScopeShelf';
@@ -147,6 +149,11 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
       (entry.tournament.status === 'active' || entry.tournament.status === 'completed'),
   ) ?? null;
 
+  // N3b (The Flip P2): the one-tap own-team game-alerts row moved here from the retired public
+  // account sheet. Bind it to the team's alertable registration (shared rule with the premium
+  // overview so the two can't drift); null → the row self-hides.
+  const alertRegistration = pickAlertRegistration(history);
+
   // First-run banner: a brand-new team with nothing entered yet. Falls away on
   // its own once the coach adds anything (no persisted dismiss state needed).
   const isFirstRun =
@@ -191,6 +198,14 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         historyCount={history.length}
         latestHistoryLabel={latestHistoryLabel}
       />
+
+      {/* N3b (The Flip P2): one-tap own-team game alerts, relocated from the retired public account
+          sheet. Self-hides unless the team is in a live public tournament (a game to alert on). */}
+      {alertRegistration && (
+        <section className={shared.section}>
+          <CoachGameAlertsRow teamName={team.name} registration={alertRegistration} />
+        </section>
+      )}
 
       {/* Discovery nudge (Variant A): a quiet, dismissible invite to turn on the persisted-roster
           wedge → degrades to a faint line on dismiss (never erased; Explore link stays in the rail).
