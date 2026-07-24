@@ -155,6 +155,35 @@ at 74; coaches shells ~99% token-clean post-P3). Delivered:
   `rgba(0,0,0,.65)` shadow, hand-copied blueprint-blue rgba, logout hover) — hand-edit per round-1
   frame 8. (`CoachPortalShell`'s single `rgba(0,0,0,.5)` mobile scrim is low-risk, stays dark.)
 
+---
+
+## Post-release inline-TSX audit — PAID PORTAL subset (2026-07-24)
+
+Two-agent read-only audit (page CSS + component inline styles) of the org-embedded paid portal under the now-LIVE warm theme (release `c23feb82`, marker unconditional). This is the scoped, severity-ranked slice of the **known-open "P4 inline-TSX sweep"** (analysis §5.2 / debt-tranche note: 258 raw hits across the operator segment) that actually renders in the paid coaches portal and breaks under warm. It does NOT duplicate that item — it hands the sweep a prioritized paid-portal work-list.
+
+**Page CSS: effectively clean.** The Stage 1–3 remap + accounting local-token re-maps hold across `coaches.module.css` (4155 ln) and the accounting/chat sub-pages. Only 1 LOW nit: `coaches.module.css:606` `.lineupFrontChip[data-tone="ok"]` uses a raw green bg → `rgba(var(--success-rgb),0.12)` (its `[data-tone="warn"]` sibling is already correct).
+
+**Component inline styles: 52 defects** — inline `style={{}}` literals that NO warm CSS override can reach (inline wins). Severity: **28 HIGH** (hardcoded near-white text → invisible on cream), **19 MED** (off-palette light accents, low-contrast on cream), **5 LOW** (cosmetic tints/borders). Fix technique is the documented Stage-2 one: role-based `var(--home-X, <exact-dark-literal>)` (byte-identical dark, warms under the gate), and semantic hexes → the already-warm `-light` tokens (`#f87171`→`var(--danger-light)`, etc.).
+
+Grouped by screen (each = one atomic pass, mirrors the plan's per-surface discipline):
+
+| Screen (paid portal) | Component(s) | HIGH / MED / LOW | Notes |
+|---|---|---|---|
+| Roster → player detail | `PositionProfileEditor.tsx` (:36-39,88,94,105,113,144,155,165-166,193,214), `PlayerDocumentsSection.tsx` (:147,150,166,221), `ContinuityCompareCard.tsx` (:23,25) | 14 / 8 / 2 | Worst-hit screen; PositionProfileEditor is entirely inline-styled, no warm gating at all |
+| Roster → depth chart (mobile) | `PositionProfileEditor.tsx` (embedded accordion) | (same file as above) | DepthChartBoard's own CSS is clean; the embedded editor is the leak |
+| Team overview (post-upgrade) | `UpgradeSummaryBanner.tsx` (:104,108,109,112,119,122,129,144,96) | 6 / 2 / 1 | Entirely inline-styled; first thing a just-upgraded coach sees |
+| Staff | `CoachStaffPanel.tsx` (:161,184,208) | 1 / 2 / 0 | incl. the `--lime` dead-fallback bug below |
+| Settings → start next season | `StartNextSeasonModal.tsx` (:90,108) | 0 / 1 / 1 | incl. the `--lime` dead-fallback bug |
+| Tryouts flow | `TryoutDayCard.tsx` (:283,306,311), `TryoutRubricCard.tsx` (:115,148,162,190,174), `TryoutEvaluatorsCard.tsx` (:134,174), `TryoutDecisionBoard.tsx` (:209,240,337,338,339), `TryoutCheckIn.tsx` (:137,231) | 7 / 6 / 1 | These `.module.css` files ARE warm-audited (Stage 5); only the inline TSX literals leak. Also render dark in the admin Rep-Teams panel (no marker) — keep the dark fallback byte-identical |
+
+**Cross-cutting latent bug (both themes):** `var(--lime, #b6e34d)` in `CoachStaffPanel.tsx:184,208` and `StartNextSeasonModal.tsx:90` — `--lime` is undefined in `globals.css` (only `--logic-lime` exists), so the hardcoded green always renders in BOTH dark and warm. Fix `--lime` → `--logic-lime` (then it flips to olive under warm like every other accent).
+
+**Verified CLEAN (already token-based / warm-gated):** `DepthChartBoard.module.css` (local tints re-mapped under the gate), `CoachesBottomNav` (Stage-1 hand-edit), `TagSearchCombobox`, `PlayerDevelopmentSection` (shared classes), `TryoutFlowHeader` (Stage-5 gated), all 4 audited page CSS modules. **Excluded (not paid-portal-reachable):** `TryoutAcceptDrawer.tsx` (org-admin Rep-Teams surface only).
+
+**Recommended execution:** one atomic pass per screen-row above (Roster player-detail cluster first — highest breakage + traffic; then Upgrade banner; then Tryouts; then Staff/Settings + the `--lime` fix), each following the documented inline technique, then `/review` on the batch + owner browser QA in warm. Keeps dark byte-identical.
+
+---
+
 ### ⚠⚠ Activation gate (CRITICAL, discovered at Stage 0) — the shared-preference trap
 The theme preference is **one account-wide setting shared with the consumer app** (TH-1 rider). A coach
 who picked Warm for the consumer app **already has `data-user-theme="warm"` on the page**. Therefore

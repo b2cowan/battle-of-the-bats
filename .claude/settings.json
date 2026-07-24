@@ -310,7 +310,18 @@
       "Bash(node scripts/db-query.mjs --prod -q \"select column_name, is_nullable from information_schema.columns where table_name='divisions' and column_name in \\('min_age','max_age'\\);\")",
       "Bash(grep -rn \"black-\\\\${\" --include=\"*.ts\" --include=\"*.tsx\" .)",
       "Bash(grep -rn \"\\\\`--black-\" --include=\"*.ts\" --include=\"*.tsx\" .)",
-      "Bash(echo \"\\(exit $?\\)\")"
+      "Bash(echo \"\\(exit $?\\)\")",
+      "Bash(node scripts/db-query.mjs --prod -q \"select relname as table, indexrelname as index, pg_size_pretty\\(pg_relation_size\\(indexrelid\\)\\) as size from pg_stat_user_indexes where idx_scan=0 and indexrelname not like '%_pkey' and schemaname='public' order by pg_relation_size\\(indexrelid\\) desc limit 20\")",
+      "Bash(node scripts/db-query.mjs --prod -q \"select indexname, indexdef from pg_indexes where schemaname='public' and indexname in \\('organization_members_invited_email_idx','announcements_channel_site_idx','games_venue_facility_id_idx','idx_platform_admin_visits_path_time','games_schedule_facility_lane_id_idx','idx_teams_slot_id','budget_items_unique_default_name','budget_items_category_idx','idx_platform_addon_catalog_status_label','idx_platform_plan_versions_status_time','budget_items_org_idx','idx_games_generator_locked','idx_games_away_slot_id','org_member_tournament_assignmen_org_member_id_tournament_id_key','games_score_submitted_at_idx','idx_platform_catalog_change_applications_request_time','basic_coach_teams_primary_email_idx','idx_error_events_org_time','idx_error_events_occurred','basic_coach_teams_workspace_idx','idx_platform_catalog_change_applications_surface_time','idx_email_batches_email_key','idx_email_batches_status','idx_email_sends_email_key','idx_email_sends_batch_id','idx_platform_audit_actor','idx_org_overrides_org_active','idx_early_access_leads_plan_interest','idx_early_access_leads_features_interested','idx_games_home_slot_id'\\)\")",
+      "Bash(node -e \"console.log\\(process.version\\)\")",
+      "Bash(Get-Content supabase/migrations/105_schedule_generator_locks.sql)",
+      "Bash(Select-Object -First 40)",
+      "Bash(xargs grep -ln \"status\")",
+      "Bash(node scripts/db-query.mjs --prod -q \"select relname, indexrelname, idx_scan from pg_stat_user_indexes where indexrelname in \\('idx_platform_metric_snapshots_date','platform_metric_snapshots_snapshot_date_key','rep_team_lineups_event_idx','rep_team_lineups_event_id_key'\\) order by relname, indexrelname;\")",
+      "Bash(node scripts/db-query.mjs --dev -q \"select relname, indexrelname, idx_scan from pg_stat_user_indexes where indexrelname in \\('idx_platform_metric_snapshots_date','platform_metric_snapshots_snapshot_date_key','rep_team_lineups_event_idx','rep_team_lineups_event_id_key'\\) order by relname, indexrelname;\")",
+      "Bash(node scripts/db-query.mjs --prod -q \"select count\\(*\\) as null_invited_email_pending from organization_members where status='invited' and invited_email is null;\")",
+      "Bash(git --no-pager diff --name-only -- \"app/platform-admin/customer-users/CustomerUsersClient.tsx\" \"lib/team-ownership-transfer.ts\")",
+      "Bash(git --no-pager diff --cached --name-only)"
     ],
     "additionalDirectories": [
       "\\tmp",
@@ -324,10 +335,10 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/refresh-db-schema.mjs",
-            "if": "Bash(*run-migration*)",
-            "timeout": 30,
-            "statusMessage": "Refreshing DB schema memory..."
+            "command": "node scripts/refresh-db-snapshots.mjs",
+            "if": "Bash(*apply-migration-api*)",
+            "timeout": 180,
+            "statusMessage": "Refreshing DB snapshots + schema memory..."
           }
         ]
       }

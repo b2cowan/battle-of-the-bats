@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import {
-  X, Sparkles, Building2, ClipboardCheck, Trophy, Users, Star, ChevronRight,
+  Building2, ClipboardCheck, Trophy, Users, Star, ChevronRight,
   RotateCcw, type LucideIcon,
 } from 'lucide-react';
 import { useAllFollowedTeams, useAllFollowedTournaments, useAllFollowedOrgs } from '@/lib/follow';
@@ -21,8 +21,6 @@ import type { UserAccessContext, UserAccessContextKind } from '@/lib/user-contex
 import { teamColor, teamInitials } from '@/lib/team-color';
 import PendingInvitationsCard from '@/components/home/PendingInvitationsCard';
 import styles from './HomePersonalization.module.css';
-
-const INTRO_KEY = 'flhq_unified_home_intro_dismissed';
 
 const KIND_ICON: Record<UserAccessContextKind, LucideIcon> = {
   organization: Building2,
@@ -132,8 +130,6 @@ export default function HomePersonalization() {
 
   return (
     <div className={styles.wrap}>
-      <WhatsNewIntro />
-
       {/* Loading placeholder for the account sections (Browse below is already painted). */}
       {!loaded && <div className={styles.skeleton} aria-hidden />}
 
@@ -219,38 +215,6 @@ export default function HomePersonalization() {
           Nothing here yet — follow a team, tournament, or organization and it&rsquo;ll show up here.
         </p>
       )}
-    </div>
-  );
-}
-
-function WhatsNewIntro() {
-  // localStorage read is client-only — render nothing until mounted, then reveal after reading
-  // the dismissed flag. Deliberately SSR-safe (a lazy initializer would mismatch hydration);
-  // the one post-mount setState is the intended "sync from localStorage on mount".
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-shot sync from localStorage on mount (SSR-safe)
-    try { setShow(localStorage.getItem(INTRO_KEY) !== '1'); } catch { /* private mode → just show once */ }
-  }, []);
-  if (!show) return null;
-  return (
-    <div className={styles.intro}>
-      <Sparkles size={16} strokeWidth={2} className={styles.introIcon} aria-hidden />
-      <div className={styles.introBody}>
-        <span className={styles.introTitle}>Welcome to your new Home</span>
-        <span className={styles.introText}>
-          Discover and Following are now here on Home — your workspaces, teams, and tournaments in one place.
-          Scores and Chat each have their own tab below.
-        </span>
-      </div>
-      <button
-        type="button"
-        className={styles.introClose}
-        aria-label="Dismiss"
-        onClick={() => { try { localStorage.setItem(INTRO_KEY, '1'); } catch { /* ignore */ } setShow(false); }}
-      >
-        <X size={16} strokeWidth={2.2} aria-hidden />
-      </button>
     </div>
   );
 }

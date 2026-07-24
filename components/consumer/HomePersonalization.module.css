@@ -10,48 +10,6 @@
   margin-bottom: 0.5rem;
 }
 
-/* ── What's-new intro (one-time, dismissible) ────────────────────────────── */
-.intro {
-  position: relative;
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.9rem 2.4rem 0.9rem 1rem;
-  background: var(--home-olive-soft);
-  border: 1px solid rgba(var(--home-olive-rgb), 0.25);
-  border-radius: var(--home-radius);
-}
-.introIcon { color: var(--home-olive); flex-shrink: 0; margin-top: 0.1rem; }
-.introBody { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-.introTitle {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--home-ink);
-}
-.introText {
-  font-family: var(--font-sans, system-ui, sans-serif);
-  font-size: 0.82rem;
-  line-height: 1.45;
-  color: var(--home-ink-soft);
-}
-.introClose {
-  position: absolute;
-  top: 0.55rem;
-  right: 0.55rem;
-  width: 30px;
-  height: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: transparent;
-  color: var(--home-dim);
-  border-radius: var(--home-radius-pill);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-.introClose:hover { background: rgba(var(--home-line-rgb), 0.08); color: var(--home-ink); }
-
 /* ── Section scaffold ────────────────────────────────────────────────────── */
 .section { display: flex; flex-direction: column; }
 
