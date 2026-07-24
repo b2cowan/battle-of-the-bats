@@ -338,3 +338,121 @@
   .header { margin-bottom: 1rem; padding-bottom: 0.8rem; }
   .form { gap: 0.9rem; }
 }
+
+/* ── Warm theme (pref-gated) — design_decisions 2026-07-23 ────────────────────
+   The auth group follows the user theme like the four tabs (supersedes the R1-4
+   "auth stays dark" carve-out; warm is the platform default since 2026-07-22).
+   `.authSurface` is the inner wrapper app/(consumer)/auth/layout.tsx nests inside
+   `warmTab` — every rule here fires ONLY under html[data-user-theme="warm"], so
+   the Dark path (explicit Dark choosers, crawlers with no attribute) stays
+   byte-for-byte identical to the rules above.
+
+   Vocabulary remap first (the coach-gate precedent, globals.css warm block): the
+   dark ink/meta tokens this stylesheet AND the pages' inline styles consume
+   resolve warm here, so most rules — and every inline
+   `style={{ color: 'var(--fl-text)' }}` — flip with no per-page edits. Lime
+   never renders as TEXT on paper (E3): --logic-lime darkens to olive, and the
+   true-lime FILL is re-pinned per-element below via the captured --home-lime. */
+.authSurface { min-width: 0; }
+
+:global(html[data-user-theme="warm"]) .authSurface {
+  --fl-text:        var(--home-ink);
+  --data-gray:      var(--home-dim);
+  --text-tertiary:  var(--home-dim);
+  --logic-lime:     var(--home-olive);
+  --logic-lime-rgb: var(--home-olive-rgb);
+  --danger-light:   var(--home-live);
+  --blueprint-blue: var(--home-olive);   /* focus ring + ghost-hover accent */
+  /* Native controls (inputs, selects, autofill, date pickers) paint light. */
+  color-scheme: light;
+}
+
+/* Structural literals the remap can't reach (raw navy rgba borders/tints). */
+:global(html[data-user-theme="warm"]) .authSurface .header { border-bottom-color: var(--home-line); }
+
+:global(html[data-user-theme="warm"]) .authSurface .iconWrap {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+
+:global(html[data-user-theme="warm"]) .authSurface .form :global(.form-input) {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+}
+
+:global(html[data-user-theme="warm"]) .authSurface .form :global(.form-input:focus) {
+  box-shadow: 0 0 0 2px rgba(var(--home-olive-rgb), 0.22);
+}
+
+/* The dark rule stacks opacity 0.4 on the meta tone — legible on a dark input ground,
+   near-invisible (~1.6:1) once the field goes white. Full-opacity dim ink instead
+   (the coach-gate placeholder precedent). */
+:global(html[data-user-theme="warm"]) .authSurface .form :global(.form-input::placeholder) {
+  color: var(--home-dim);
+  opacity: 1;
+}
+
+:global(html[data-user-theme="warm"]) .authSurface .divider::before,
+:global(html[data-user-theme="warm"]) .authSurface .divider::after {
+  background: var(--home-line);
+}
+
+/* Warm primary = ink-on-lime (the ONE warm primary language, design_decisions
+   2026-07-22) — re-pinned to the captured true lime, not the olive remap. */
+:global(html[data-user-theme="warm"]) .authSurface .submitBtn {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+:global(html[data-user-theme="warm"]) .authSurface .submitBtn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--home-lime) 85%, var(--home-ink));
+}
+
+/* Same re-pin for the global lime CTA (accept-assistant-invite uses .btn.btn-lime):
+   without it the vocabulary remap turns the FILL olive under near-black --on-lime ink
+   (~2.9:1). The coach-gate .btn-lime override never fires here (no coach marker). */
+:global(html[data-user-theme="warm"]) .authSurface :global(.btn-lime) {
+  background: var(--home-lime);
+  border-color: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+:global(html[data-user-theme="warm"]) .authSurface :global(.btn-lime:hover) {
+  background: color-mix(in srgb, var(--home-lime) 85%, var(--home-ink));
+  border-color: color-mix(in srgb, var(--home-lime) 85%, var(--home-ink));
+}
+
+:global(html[data-user-theme="warm"]) .authSurface .error {
+  background: rgba(var(--home-live-rgb), 0.08);
+  border-color: rgba(var(--home-live-rgb), 0.3);
+  color: var(--home-live);
+}
+
+/* Navy-tint panels → white cards on paper (the warm card convention). */
+:global(html[data-user-theme="warm"]) .authSurface .invitePanel,
+:global(html[data-user-theme="warm"]) .authSurface .inlineNotice,
+:global(html[data-user-theme="warm"]) .authSurface .confirmBox {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+}
+
+:global(html[data-user-theme="warm"]) .authSurface .inviteRole { border-color: var(--home-line-strong); }
+
+/* Lime-tint confirmation → olive family (text auto-darkens via the remap). */
+:global(html[data-user-theme="warm"]) .authSurface .inviteSent {
+  background: var(--home-olive-soft);
+  border-color: rgba(var(--home-olive-rgb), 0.3);
+}
+
+:global(html[data-user-theme="warm"]) .authSurface .btnGhost { border-color: var(--home-line-strong); }
+
+:global(html[data-user-theme="warm"]) .authSurface .footerLink:hover { color: var(--home-ink); }
+
+:global(html[data-user-theme="warm"]) .authSurface .footer { border-top-color: var(--home-line); }
+
+/* HudSkeleton loading states: its lime status line + pulse dot are Tailwind literals
+   the token remap can't reach — darken both to olive on paper (E3; a bare lime fill is
+   reserved for ink-on-lime CTAs). Its navy-tint bars read as a subtle wash on cream
+   and are kept. */
+:global(html[data-user-theme="warm"]) .authSurface :global(.text-logic-lime) { color: var(--home-olive); }
+:global(html[data-user-theme="warm"]) .authSurface :global(.bg-logic-lime) { background-color: var(--home-olive); }

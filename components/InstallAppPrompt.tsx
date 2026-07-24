@@ -18,6 +18,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Download } from 'lucide-react';
 import { followKey, useFollowedTeam } from '@/lib/follow';
+import warm from './consumer/warmTheme.module.css';
 import styles from './InstallAppPrompt.module.css';
 
 const DISMISS_MS = 90 * 24 * 60 * 60 * 1000;
@@ -60,6 +61,14 @@ interface Props {
   /** Branded icon for the prompt (e.g. the tournament logo); falls back to the FLHQ PWA icon. */
   iconUrl?: string | null;
   /**
+   * Pref-gated warm skin (design_decisions 2026-07-23). The consumer shell passes
+   * true so the banner follows the user theme like the surfaces it floats over;
+   * org-branded tournament pages and the dark operator shells leave it off. The
+   * banner mounts OUTSIDE the pages' warmTab wrapper, so it must carry the
+   * `--home-*` vocabulary itself (warmVars) + the pref-gated skin class.
+   */
+  followsUserTheme?: boolean;
+  /**
    * When provided, the banner is suppressed entirely while the user follows a
    * team for this tournament (the dock takes priority on game day — J6-045).
    * Also used to apply the engagement gate (J6-005).
@@ -76,6 +85,7 @@ export default function InstallAppPrompt({
   subtitle = 'Add it to your home screen for one-tap access.',
   dismissKey = 'flhq-install',
   iconUrl = null,
+  followsUserTheme = false,
   orgSlug,
   tournamentSlug,
 }: Props) {
@@ -227,7 +237,11 @@ export default function InstallAppPrompt({
   if (mode === 'hidden') return null;
 
   return (
-    <div className={styles.banner} role="complementary" aria-label="Install app prompt">
+    <div
+      className={`${styles.banner}${followsUserTheme ? ` ${warm.warmVars} ${styles.bannerWarmTab}` : ''}`}
+      role="complementary"
+      aria-label="Install app prompt"
+    >
       <img src={iconUrl || '/icons/pwa-192.png'} alt={appName} className={styles.icon} />
 
       <div className={styles.body}>

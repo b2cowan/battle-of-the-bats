@@ -188,7 +188,7 @@ function SignupForm() {
         <div className={styles.header}>
           <div
             className={styles.iconWrap}
-            style={isInvited ? { color: 'var(--logic-lime)', borderColor: 'rgba(163,230,53,0.4)', background: 'rgba(163,230,53,0.06)' } : undefined}
+            style={isInvited ? { color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.4)', background: 'rgba(var(--logic-lime-rgb),0.06)' } : undefined}
           >
             {isInvited ? (
               <MailCheck size={20} strokeWidth={1.6} aria-hidden />
@@ -276,7 +276,7 @@ function SignupForm() {
                 ? 'Your account is almost ready. For security, verify your email to finish.'
                 : 'Your organization has been created. For security, verify your email before choosing a plan and opening onboarding.'}
             </p>
-            <div className={styles.error} style={{ color: 'var(--logic-lime)', borderColor: 'rgba(163,230,53,0.28)', background: 'rgba(163,230,53,0.08)' }}>
+            <div className={styles.error} style={{ color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.28)', background: 'rgba(var(--logic-lime-rgb),0.08)' }}>
               Verification email sent to {verificationEmail}.
             </div>
             <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.72rem', color: 'var(--data-gray)', lineHeight: 1.6, marginTop: '1rem' }}>

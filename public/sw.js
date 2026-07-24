@@ -15,6 +15,8 @@
 
 /* ── Cache config ──────────────────────────────────────────────────────────── */
 
+// v9: offline.html now follows the user theme (warm default, stored-dark stays dark) — bump so
+//     installed SWs re-precache the themed page instead of serving the old dark-only copy.
 // v8: Tournament Seam P3 (P3-1) — signed-in (authed) navigations now fall back to the branded
 //     offline shell instead of the browser's raw error page. Authed HTML is STILL never cached
 //     (offline.html is a fixed generic page — no per-user data), so the shared-device PII rule is
@@ -34,7 +36,7 @@
 //     had been cached in the shared data cache (/review 2026-07-15).
 // v3: unified-app Phase 0 — clean refresh of pages that referenced old
 //     per-tournament/scorekeeper manifests.
-const CACHE_VERSION = 'v8';
+const CACHE_VERSION = 'v9';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON

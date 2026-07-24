@@ -72,6 +72,8 @@ interface PendingOwnershipTransfer {
   repTeamId: string;
   teamName: string;
   teamSlug: string | null;
+  /** The counterpart (coach's Team workspace) org whose subscription is cancelled on completion. */
+  workspaceOrgId: string | null;
   workspaceOrgName: string;
   workspaceOrgSlug: string | null;
   billingMode: string | null;
@@ -288,6 +290,9 @@ export default function OrgDetailClient({
   const [ownershipSaving, setOwnershipSaving] = useState<Record<string, boolean>>({});
   const [ownershipError, setOwnershipError] = useState<Record<string, string>>({});
   const [ownershipSaved, setOwnershipSaved] = useState<Record<string, boolean>>({});
+  // Named confirmation gate before a Complete Transfer fires — it cancels the counterpart
+  // (coach's) org subscription and moves its data, so the operator must confirm that org first.
+  const [confirmTransfer, setConfirmTransfer] = useState<PendingOwnershipTransfer | null>(null);
 
   async function handleIdentitySave(e: React.FormEvent) {
     e.preventDefault();
@@ -386,13 +391,28 @@ export default function OrgDetailClient({
     }
   }
 
-  async function handleOwnershipTransferComplete(linkId: string) {
+  // Step 1 — validate the reason, then open the named confirmation. Nothing fires yet.
+  function requestOwnershipTransferComplete(transfer: PendingOwnershipTransfer) {
+    const reason = ownershipReasons[transfer.linkId]?.trim() ?? '';
+    if (reason.length < 5) {
+      setOwnershipError(prev => ({ ...prev, [transfer.linkId]: 'Reason is required' }));
+      return;
+    }
+    setOwnershipError(prev => ({ ...prev, [transfer.linkId]: '' }));
+    setConfirmTransfer(transfer);
+  }
+
+  // Step 2 — fire the completion, echoing the counterpart org id back so the server can verify
+  // the operator confirmed the exact org whose subscription will be cancelled.
+  async function handleOwnershipTransferComplete(transfer: PendingOwnershipTransfer) {
+    const linkId = transfer.linkId;
     const reason = ownershipReasons[linkId]?.trim() ?? '';
     if (reason.length < 5) {
       setOwnershipError(prev => ({ ...prev, [linkId]: 'Reason is required' }));
       return;
     }
 
+    setConfirmTransfer(null);
     setOwnershipSaving(prev => ({ ...prev, [linkId]: true }));
     setOwnershipError(prev => ({ ...prev, [linkId]: '' }));
     setOwnershipSaved(prev => ({ ...prev, [linkId]: false }));
@@ -400,14 +420,14 @@ export default function OrgDetailClient({
       const res = await fetch(`/api/platform-admin/team-ownership-transfers/${linkId}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
+        body: JSON.stringify({ reason, confirmWorkspaceOrgId: transfer.workspaceOrgId }),
       });
       const data = await res.json().catch((): ApiErrorBody => ({}));
       if (!res.ok) {
         setOwnershipError(prev => ({ ...prev, [linkId]: data.error ?? 'Ownership transfer failed' }));
         return;
       }
-      setPendingOwnershipTransfers(prev => prev.filter(transfer => transfer.linkId !== linkId));
+      setPendingOwnershipTransfers(prev => prev.filter(t => t.linkId !== linkId));
       setOwnershipReasons(prev => {
         const next = { ...prev };
         delete next[linkId];
@@ -1155,7 +1175,7 @@ export default function OrgDetailClient({
                             <button
                               type="button"
                               className={styles.saveBtn}
-                              onClick={() => handleOwnershipTransferComplete(transfer.linkId)}
+                              onClick={() => requestOwnershipTransferComplete(transfer)}
                               disabled={!transfer.readyForCompletion || ownershipSaving[transfer.linkId]}
                             >
                               {ownershipSaving[transfer.linkId] ? 'Completing...' : 'Complete Transfer'}
@@ -2114,6 +2134,55 @@ export default function OrgDetailClient({
                 disabled={transferOwnerSaving || !transferOwnerReason.trim()}
               >
                 {transferOwnerSaving ? 'Transferring…' : 'Confirm Transfer'}
+              </button>
+            </div>
+          </section>
+        </div>
+      )}
+
+      {confirmTransfer && (
+        <div className={styles.modalBackdrop} role="presentation">
+          <section
+            className={styles.confirmModal}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="confirm-transfer-title"
+          >
+            <div>
+              <div className={styles.sectionTitle} id="confirm-transfer-title">Complete ownership transfer?</div>
+              <p className={styles.modalCopy}>
+                This moves <strong>{confirmTransfer.teamName}</strong> into <strong>{orgName}</strong> and
+                will do the following to the coach&rsquo;s organization{' '}
+                <strong>{confirmTransfer.workspaceOrgSlug ? `/${confirmTransfer.workspaceOrgSlug}` : confirmTransfer.workspaceOrgName}</strong>:
+              </p>
+              <ul className={styles.modalCopy} style={{ margin: '0.5rem 0 0', paddingLeft: '1.1rem' }}>
+                <li>Its Coaches Portal subscription is cancelled</li>
+                <li>Its Stripe billing records are cleared</li>
+                <li>Its members are suspended</li>
+                <li>Its roster, schedule, documents, budget, and ledger move into {orgName}</li>
+              </ul>
+              <p className={styles.modalCopy} style={{ marginTop: '0.6rem' }}>
+                This is audit-logged and cannot be reversed from here.
+              </p>
+            </div>
+            <div className={styles.modalActions}>
+              <button
+                type="button"
+                className={styles.cancelBtn}
+                onClick={() => setConfirmTransfer(null)}
+                disabled={ownershipSaving[confirmTransfer.linkId]}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.confirmBtn}
+                onClick={() => handleOwnershipTransferComplete(confirmTransfer)}
+                disabled={ownershipSaving[confirmTransfer.linkId]}
+              >
+                {ownershipSaving[confirmTransfer.linkId]
+                  ? 'Completing…'
+                  : `Cancel ${confirmTransfer.workspaceOrgSlug ? `/${confirmTransfer.workspaceOrgSlug}` : confirmTransfer.workspaceOrgName} & transfer`}
               </button>
             </div>
           </section>

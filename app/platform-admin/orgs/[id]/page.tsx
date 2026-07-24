@@ -261,6 +261,7 @@ async function getPendingOwnershipTransfers(orgId: string) {
       repTeamId: row.rep_team_id,
       teamName: team?.name ?? 'Team workspace',
       teamSlug: team?.slug ?? null,
+      workspaceOrgId: workspace?.workspace_org_id ?? null,
       workspaceOrgName: workspaceOrg?.name ?? 'Team workspace',
       workspaceOrgSlug: workspaceOrg?.slug ?? null,
       billingMode: workspace?.billing_mode ?? null,

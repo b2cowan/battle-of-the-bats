@@ -114,3 +114,40 @@
   color: #fca5a5;
   margin-bottom: 0.7rem;
 }
+
+/* ── Warm theme (pref-gated) ──────────────────────────────────────────────────
+   This card renders ONLY inside the consumer Home tab's warmTab surface, but its
+   rules above are dark-shell literals/tokens the warm surface never remaps — on
+   the warm paper the org name (near-white ink) was literally invisible. Same
+   additive-gate pattern as the auth block: nothing here fires under an explicit
+   Dark preference, so the dark rendering stays byte-identical. The lime accept
+   CTA + near-black ink is legible on both grounds and is left alone (E3 fill). */
+:global(html[data-user-theme="warm"]) .wrap {
+  border-color: rgba(var(--home-olive-rgb), 0.35);
+  background: var(--home-olive-soft);
+}
+
+:global(html[data-user-theme="warm"]) .heading { color: var(--home-olive); }
+
+:global(html[data-user-theme="warm"]) .item {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+
+:global(html[data-user-theme="warm"]) .orgName { color: var(--home-ink); }
+
+:global(html[data-user-theme="warm"]) .roleLine { color: var(--home-dim); }
+
+:global(html[data-user-theme="warm"]) .roleLine strong { color: var(--home-ink-soft); }
+
+:global(html[data-user-theme="warm"]) .decline {
+  color: var(--home-dim);
+  border-color: var(--home-line-strong);
+}
+
+:global(html[data-user-theme="warm"]) .decline:hover:not(:disabled) {
+  color: var(--home-ink);
+  border-color: var(--home-dim);
+}
+
+:global(html[data-user-theme="warm"]) .error { color: var(--home-live); }

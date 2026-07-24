@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Check, ChevronDown, Copy, KeyRound, Search, Trash2 } from 'lucide-react';
+import { ChevronDown, KeyRound, MailCheck, Search, Trash2 } from 'lucide-react';
 import ExportMenu from '@/components/admin/ExportMenu';
 import HelpCallout from '@/components/help/HelpCallout';
 import { fmtAbsoluteDate, fmtAbsoluteDateTime, fmtSince } from '@/lib/format-date';
@@ -58,7 +58,7 @@ type Props = {
   canDelete: boolean;
 };
 
-type ResetState = { link?: string; error?: string; copied?: boolean };
+type ResetState = { sent?: boolean; error?: string };
 
 type BusyState = {
   userId: string;
@@ -163,7 +163,7 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
 
   // ── Reset password ────────────────────────────────────────────────────────
 
-  async function generateReset(row: CustomerUserRow) {
+  async function sendReset(row: CustomerUserRow) {
     if (!row.email || row.email === '(unknown)') return;
     setBusy({ userId: row.userId, action: 'reset' });
     setResetState(s => ({ ...s, [row.userId]: {} }));
@@ -174,25 +174,18 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: row.email }),
       });
-      const data = await res.json() as { link?: string; error?: string };
-      if (!res.ok || !data.link) {
-        setResetState(s => ({ ...s, [row.userId]: { error: data.error ?? 'Failed to generate reset link' } }));
+      const data = await res.json() as { ok?: boolean; error?: string };
+      if (!res.ok || !data.ok) {
+        setResetState(s => ({ ...s, [row.userId]: { error: data.error ?? 'Failed to send reset email' } }));
         return;
       }
-      setResetState(s => ({ ...s, [row.userId]: { link: data.link } }));
+      // The recovery link is emailed straight to the customer — the operator never sees it.
+      setResetState(s => ({ ...s, [row.userId]: { sent: true } }));
     } catch {
       setResetState(s => ({ ...s, [row.userId]: { error: 'Network error' } }));
     } finally {
       setBusy(null);
     }
-  }
-
-  async function copyLink(userId: string, link: string) {
-    await navigator.clipboard.writeText(link);
-    setResetState(s => ({ ...s, [userId]: { ...s[userId], copied: true } }));
-    window.setTimeout(() => {
-      setResetState(s => ({ ...s, [userId]: { ...s[userId], copied: false } }));
-    }, 1800);
   }
 
   // ── Confirm modal actions (ban / unban / revoke-sessions) ─────────────────
@@ -517,14 +510,10 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                     <div className={styles.primaryText}>{row.displayName || '-'}</div>
                     <div className={styles.emailText}>{row.email}</div>
                     <div className={styles.userId}>{row.userId}</div>
-                    {reset.link && (
-                      <div className={styles.linkBox}>
-                        <span className={styles.linkLabel}>Reset link</span>
-                        <code className={styles.link}>{reset.link}</code>
-                        <button className={styles.copyBtn} type="button" onClick={() => copyLink(row.userId, reset.link!)}>
-                          {reset.copied ? <Check size={12} /> : <Copy size={12} />}
-                          {reset.copied ? 'Copied' : 'Copy'}
-                        </button>
+                    {reset.sent && (
+                      <div className={styles.resetSentBox}>
+                        <MailCheck size={12} />
+                        <span>Reset email sent to {row.email}</span>
                       </div>
                     )}
                     {(reset.error || rowError) && (
@@ -573,7 +562,7 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                       >
                         {rowBusy ? (
                           <>
-                            {busy?.action === 'reset'           && 'Generating...'}
+                            {busy?.action === 'reset'           && 'Sending...'}
                             {busy?.action === 'ban'             && 'Banning...'}
                             {busy?.action === 'unban'           && 'Unbanning...'}
                             {busy?.action === 'confirm-email'   && 'Confirming...'}
@@ -589,7 +578,7 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                       {menuOpen && (
                         <div className={styles.menuList}>
                           {/* Triage order: everyday/safe → edits → destructive (last). */}
-                          <button className={styles.menuItem} type="button" onClick={() => generateReset(row)}>
+                          <button className={styles.menuItem} type="button" onClick={() => sendReset(row)}>
                             Reset Password
                           </button>
                           {row.authStatus === 'unconfirmed' && (

@@ -62,7 +62,10 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
       <ConsumerThemeManager accountTheme={accountTheme} />
       <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} />
       <div className={styles.content}>{children}</div>
-      <InstallAppPrompt subtitle="Follow your teams and get live scores — add it to your home screen." />
+      <InstallAppPrompt
+        followsUserTheme
+        subtitle="Follow your teams and get live scores — add it to your home screen."
+      />
     </div>
   );
 }

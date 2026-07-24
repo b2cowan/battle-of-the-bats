@@ -10,8 +10,9 @@
  *     choice) leaves the device preference untouched.
  *
  *  2. Dynamic `theme-color` meta: the OS status bar follows the active theme on consumer routes
- *     (warm journey always warm; the four tabs follow the preference; other consumer routes stay
- *     the platform dark). Restores the default when leaving the consumer shell.
+ *     (warm journey always warm; the four tabs AND the auth group follow the preference — /auth
+ *     is in CONSUMER_SHELL_PREFIXES since 2026-07-23). Restores the default when leaving the
+ *     consumer shell.
  */
 
 import { useEffect } from 'react';

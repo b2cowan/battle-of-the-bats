@@ -148,7 +148,9 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
 
   // Focused full-page help guide: no rail, no bottom nav — just the guide, padded so the
   // shared HelpPageLayout gets the breathing room it relies on (mirrors admin focused help).
-  if (isHelp) return <main className={styles.helpFocused}>{children}</main>;
+  // The focused help page returns BEFORE the shell div that carries the warm marker —
+  // it needs its own {...coachWarmAttr} or it stays dark under a warm preference.
+  if (isHelp) return <main className={styles.helpFocused} {...coachWarmAttr}>{children}</main>;
 
   async function handleSignOut() {
     await signOut();

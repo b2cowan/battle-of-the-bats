@@ -78,9 +78,9 @@
    (ConsumerShell .content padding-bottom). That strip lives OUTSIDE this wrapper, so
    without this it renders in the dark shell ground — a nav-height black band under every
    warm tab when scrolled to the end. Extend the paper ground down over that strip so the
-   warm surface reads unbroken all the way to the tab bar. (Only .warm turns warm — the
-   dark Account/auth pages keep the strip dark, matching their own ground, so no change
-   there.) The strip only exists ≤900px, where .content carries that padding. */
+   warm surface reads unbroken all the way to the tab bar. (Under an explicit Dark
+   preference `.warmTab` resolves --home-paper to the dark ground, so the strip matches
+   there too.) The strip only exists ≤900px, where .content carries that padding. */
 @media (max-width: 900px) {
   .warm { position: relative; }
   .warm::after {
@@ -98,7 +98,8 @@
 }
 
 /* ── Pref-aware tab surfaces (Theme Toggle Foundation, TH-1/TH-3) ──────────────
-   The four consumer TABS (Home / Scores / Chat / Account, incl. /account/notifications) wear
+   The four consumer TABS (Home / Scores / Chat / Account, incl. /account/notifications) AND
+   the auth group (via app/(consumer)/auth/layout.tsx, design_decisions 2026-07-23) wear
    `.warmTab` instead of plain `.warm`: the same warm surface by default, but it FOLLOWS the
    user's theme preference. When the account chose Dark (`data-user-theme="dark"` on <html>, set
    pre-paint by the root no-flash script), the whole `--home-*` vocabulary resolves to its dark

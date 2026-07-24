@@ -114,3 +114,41 @@
   background: var(--white-10);
   color: var(--white-85);
 }
+
+/* ── Pref-gated warm skin (design_decisions 2026-07-23) ───────────────────────
+   Worn ONLY by instances passed `followsUserTheme` (the consumer shell), which
+   also carry warmTheme `.warmVars` so the --home-* vocabulary resolves here (the
+   banner floats outside the pages' warmTab wrapper). Every rule is gated on the
+   Warm preference — under Dark (or on org-branded/operator instances, which never
+   get the class) nothing fires and the banner above is byte-identical. Install
+   CTA = ink-on-lime, the one warm primary language. */
+:global(html[data-user-theme="warm"]) .bannerWarmTab {
+  background: var(--home-card);
+  border-top-color: var(--home-olive);
+  box-shadow: 0 -4px 24px rgba(var(--home-line-rgb), 0.25);
+}
+
+:global(html[data-user-theme="warm"]) .bannerWarmTab .title { color: var(--home-ink); }
+:global(html[data-user-theme="warm"]) .bannerWarmTab .instructions { color: var(--home-dim); }
+:global(html[data-user-theme="warm"]) .bannerWarmTab .instructions strong { color: var(--home-ink-soft); }
+
+:global(html[data-user-theme="warm"]) .bannerWarmTab .install {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  box-shadow: 0 2px 8px rgba(var(--home-line-rgb), 0.2);
+}
+
+:global(html[data-user-theme="warm"]) .bannerWarmTab .install:hover {
+  background: color-mix(in srgb, var(--home-lime) 85%, var(--home-ink));
+  box-shadow: 0 4px 12px rgba(var(--home-line-rgb), 0.25);
+}
+
+:global(html[data-user-theme="warm"]) .bannerWarmTab .dismiss {
+  background: rgba(var(--home-line-rgb), 0.08);
+  color: var(--home-dim);
+}
+
+:global(html[data-user-theme="warm"]) .bannerWarmTab .dismiss:hover {
+  background: rgba(var(--home-line-rgb), 0.14);
+  color: var(--home-ink);
+}

@@ -1,0 +1,52 @@
+/* Root 404 + crash screens — theme-following (design_decisions 2026-07-23: system
+   screens on the platform-neutral surface follow the user theme; warm is the
+   platform default). These render OUTSIDE any consumer warmTab surface, so each
+   screen's wrapper wears warmTheme `.warmVars` (the --home-* tokens, no ground)
+   alongside `.page`. Every rule below is gated on html[data-user-theme="warm"] —
+   under an explicit Dark preference nothing fires and the dark HUD screens stay
+   byte-identical (the Tailwind utilities on the elements are untouched; these
+   gated selectors simply outspecify them under Warm). */
+
+:global(html[data-user-theme="warm"]) .page {
+  background-color: var(--home-paper);
+  background-image: none; /* drop the blueprint grid on paper */
+  color: var(--home-ink);
+}
+
+:global(html[data-user-theme="warm"]) .page :global(.hud-label) { color: var(--home-dim); }
+
+/* The oversized "404" watermark digit — a quiet ink wash instead of navy tint. */
+:global(html[data-user-theme="warm"]) .bigCode { color: rgba(var(--home-line-rgb), 0.45); }
+
+:global(html[data-user-theme="warm"]) .title { color: var(--home-ink); }
+:global(html[data-user-theme="warm"]) .body { color: var(--home-dim); }
+
+/* Outline CTA: lime-as-text darkens to olive (E3); hover = olive-soft wash
+   (the warm .btn-outline language), replacing the dark screen's lime-fill hover. */
+:global(html[data-user-theme="warm"]) .cta {
+  color: var(--home-olive);
+  border-color: var(--home-olive);
+}
+
+:global(html[data-user-theme="warm"]) .cta:hover {
+  background-color: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+/* Crash screen: the red family reads on both grounds — only the light red-400
+   label deepens to the warm live red; the red-tint card border/wash stays. */
+:global(html[data-user-theme="warm"]) .errLabel { color: var(--home-live); }
+
+:global(html[data-user-theme="warm"]) .retryBtn {
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+
+:global(html[data-user-theme="warm"]) .retryBtn:hover { background-color: var(--home-olive-soft); }
+
+:global(html[data-user-theme="warm"]) .quietLink {
+  color: var(--home-dim);
+  border-color: var(--home-line);
+}
+
+:global(html[data-user-theme="warm"]) .quietLink:hover { border-color: var(--home-line-strong); }

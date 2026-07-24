@@ -194,6 +194,12 @@ test.describe.serial('standalone Team ownership transfer smoke', () => {
       .fill('UAT ownership transfer smoke')
     await transferCard.getByRole('button', { name: 'Complete Transfer' }).click()
 
+    // A named confirmation now gates completion — it spells out that the coach's org
+    // subscription is cancelled and its data moved. Confirm it to actually fire the transfer.
+    const confirmDialog = platformPage.getByRole('dialog', { name: 'Complete ownership transfer?' })
+    await expect(confirmDialog).toBeVisible({ timeout: 10_000 })
+    await confirmDialog.getByRole('button', { name: /& transfer$/ }).click()
+
     const workspace = await poll(async () => {
       const { data, error } = await supabaseAdmin
         .from('team_workspaces')

@@ -66,7 +66,10 @@ export default function AuthCallbackPage() {
       justifyContent: 'center',
       height: '100vh',
       fontFamily: 'sans-serif',
-      color: 'rgba(255,255,255,0.4)',
+      /* --text-tertiary = --white-40 = rgba(255,255,255,0.4) under dark (value-identical),
+         and the auth surface remaps it to legible dim ink under warm — the raw literal
+         rendered ~invisible white-on-paper there. */
+      color: 'var(--text-tertiary)',
     }}>
       <Suspense fallback={null}>
         <CallbackHandler />

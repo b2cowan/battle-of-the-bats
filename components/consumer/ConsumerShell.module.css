@@ -334,8 +334,9 @@
 /* ── Warm nav skin (Unified Home Phase 5) ─────────────────────────────────────
    The four consumer tabs wear the warm theme; the shared nav now follows so the
    shell reads as ONE surface instead of warm-content-under-dark-chrome. These rules
-   fire only when ConsumerNav adds `.topbarWarm` / `.bottomNavWarm` (warm routes); the
-   auth / select-org / suspended pages that share this shell stay dark. The `--home-*`
+   fire only when ConsumerNav adds `.topbarWarm` / `.bottomNavWarm` (warm routes — the
+   tabs AND, since 2026-07-23, the auth group; both pref-gated via the `…WarmTab`
+   markers below). The `--home-*`
    tokens arrive via `.warmVars` (added alongside these classes) — we never redefine a
    global dark token, so the dark path is byte-for-byte unchanged. Solid paper-white
    ground (no translucency) so the dark shell can't bleed through at the edges; the
@@ -372,11 +373,12 @@
 }
 
 /* ── Pref-aware nav (Theme Toggle Foundation, TH-1/TH-3) ──────────────────────
-   On the four TABS the nav wears `.topbarWarmTab` / `.bottomNavWarmTab` ALONGSIDE the warm
-   classes; on the always-warm sign-up JOURNEY it wears only `.topbarWarm` / `.bottomNavWarm`.
+   On the four TABS and the auth group the nav wears `.topbarWarmTab` / `.bottomNavWarmTab`
+   ALONGSIDE the warm classes; on the always-warm sign-up JOURNEY it wears only
+   `.topbarWarm` / `.bottomNavWarm`.
    Under an explicit Dark preference the tab nav resolves the warm token vocabulary to the NATIVE
    dark-nav values, so the `.topbarWarm` / `.bottomNavWarm` rules above repaint as the exact dark
-   bar (the same chrome the auth / select-org pages already show) — no rule duplication. The
+   bar — no rule duplication. The
    journey nav has no `…Tab` marker, so it stays warm regardless of preference. */
 :global(html[data-user-theme="dark"]) .topbarWarmTab,
 :global(html[data-user-theme="dark"]) .bottomNavWarmTab {

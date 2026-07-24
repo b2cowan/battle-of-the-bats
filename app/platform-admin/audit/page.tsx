@@ -39,7 +39,7 @@ const ACTION_LABELS: Record<string, string> = {
   create_internal_note: 'Create Internal Note',
   delete_internal_note: 'Delete Internal Note',
   extend_billing_retention: 'Extend Billing Retention',
-  generate_reset_link: 'Generate Reset Link',
+  generate_reset_link: 'Send Password Reset Email',
   invite_platform_user: 'Invite Platform User',
   remove_platform_user: 'Remove Platform User',
   revoke_override: 'Revoke Override',

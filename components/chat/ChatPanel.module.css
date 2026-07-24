@@ -1174,6 +1174,8 @@
   --white-45: var(--home-dim);
   --white-40: var(--home-dim);
   --white-35: var(--home-dim);
+  --white-20: var(--home-line-strong);   /* action-dot / reaction / poll-close borders — a real
+                                            hairline on the light ground, not translucent white */
   --white-10: var(--home-line);
   --white-8: var(--home-card);           /* incoming bubbles / chips = solid white */
   --white-5: var(--home-paper);
@@ -1219,4 +1221,21 @@
   /* --home-lime-ink stays dark in both themes (lime is light on any ground), so ink-on-lime
      keeps its contrast under the Dark app theme without a separate override. */
   color: var(--home-lime-ink);
+}
+
+/* "New messages ↓" jump pill — same ink-on-lime re-pin as Send: a lime FILL must stay true
+   lime (the olive accent remap above would leave near-black ink on dark olive, ~3:1). */
+.panelWarm .jumpPill,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel .jumpPill {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+/* Empty-conversation icon — keep the structural-blue family (matches Discover/Scores admin-blue
+   accents); the -rgb remap above deliberately turns blueprint tints into warm hairlines, which
+   left a navy glyph on a tan chip here. */
+.panelWarm .emptyIcon,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panel .emptyIcon {
+  background: rgba(var(--home-blue-rgb), 0.12);
+  color: var(--home-blue);
 }

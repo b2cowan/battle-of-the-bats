@@ -9,7 +9,7 @@ export const POST = withObservability(async (req: NextRequest,
   if (auth.response) return auth.response;
 
   const { linkId } = await params;
-  let body: { reason?: unknown };
+  let body: { reason?: unknown; confirmWorkspaceOrgId?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -17,11 +17,15 @@ export const POST = withObservability(async (req: NextRequest,
   }
 
   const reason = typeof body.reason === 'string' ? body.reason.trim() : '';
+  // The operator must echo back the counterpart (coach's Team workspace) org id they confirmed,
+  // so a stray click can't cancel the wrong org's subscription. Verified server-side in the helper.
+  const confirmWorkspaceOrgId = typeof body.confirmWorkspaceOrgId === 'string' ? body.confirmWorkspaceOrgId : '';
   const result = await completeTeamOwnershipTransfer({
     linkId,
     actorUserId: auth.user.id,
     actorEmail: auth.user.email ?? 'platform-admin',
     reason,
+    confirmWorkspaceOrgId,
   });
 
   if (!result.ok) {

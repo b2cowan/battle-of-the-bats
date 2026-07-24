@@ -28,8 +28,9 @@ const ROOT = process.cwd();
 // styling (separate from the public redesign) — hence a separate scope, not an exclude flip.
 const SCOPES = {
   public: {
-    // Public tournament/org surfaces + the public team profile + public components.
-    dirs: ['app/[orgSlug]', 'app/teams', 'components/public'],
+    // Public tournament/org surfaces + public components. (app/teams — the pre-multi-tenant
+    // public team profile — was deleted 2026-07-24 with the other orphaned top-level pages.)
+    dirs: ['app/[orgSlug]', 'components/public'],
     // Individual public-chrome CSS modules that live OUTSIDE the dirs above (Unified Home
     // nav merge, Phase 5): the shared nav bars now theme public tournament pages, so guard
     // them against new literal hex too. warmTheme.module.css is intentionally NOT listed —

@@ -56,7 +56,34 @@
       cursor: pointer;
     }
     button:active { transform: translateY(1px); }
+
+    /* Warm theme (the platform default since 2026-07-22): the tiny script below mirrors
+       the app's no-flash rule — warm unless the device explicitly stored 'dark'. The
+       lime "Try again" button keeps its dark ink (ink-on-lime reads on both grounds);
+       lime-as-TEXT darkens to the olive family per the E3 rule. */
+    html[data-theme="warm"] { color-scheme: light; }
+    html[data-theme="warm"] body { background: #f8f4ed; color: #241e15; }
+    html[data-theme="warm"] .mark { color: rgba(36, 30, 21, 0.55); }
+    html[data-theme="warm"] .mark b { color: #57651e; }
+    html[data-theme="warm"] .glyph {
+      background: rgba(87, 101, 30, 0.10);
+      border-color: rgba(87, 101, 30, 0.35);
+    }
+    html[data-theme="warm"] .glyph svg { stroke: #57651e; }
+    html[data-theme="warm"] p { color: #6f675c; }
   </style>
+  <script>
+    // Same pre-paint default as lib/no-flash-script.ts: warm for everyone except an
+    // explicit stored 'dark'. Inline + try/catch so the page still renders with zero
+    // storage access (private mode, cleared storage → dark fallback).
+    try {
+      if (localStorage.getItem('fl_user_theme') !== 'dark') {
+        document.documentElement.setAttribute('data-theme', 'warm');
+        var flMeta = document.querySelector('meta[name="theme-color"]');
+        if (flMeta) flMeta.setAttribute('content', '#f8f4ed');
+      }
+    } catch (e) {}
+  </script>
 </head>
 <body>
   <div class="glyph" aria-hidden="true">

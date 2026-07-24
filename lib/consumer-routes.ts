@@ -8,13 +8,15 @@
  */
 import { RESERVED_ORG_SLUGS } from './reserved-slugs';
 
-// NOTE: this is the "full consumer-shell tab" set — it drives the shell layout, the
-// marketing Navbar/Footer suppression, AND the warm nav skin. /auth lives physically inside
-// the (consumer) group (the tab bar mounts there) but is deliberately NOT here — sign-in /
-// select-org / suspended stay DARK (R1-4). /start is also not a tab, but it DOES paint warm:
-// see WARM_JOURNEY_PREFIXES below, kept separate so the warm skin can extend to the coach
-// sign-up journey without entangling footer/Navbar classification.
-export const CONSUMER_SHELL_PREFIXES = ['/discover', '/scores', '/chat', '/following', '/account'] as const;
+// NOTE: this is the pref-gated consumer-shell set — it drives the shell layout, the
+// marketing Navbar/Footer suppression, the warm nav skin, AND the theme-color tint.
+// /auth is included (design_decisions 2026-07-23): once warm became the platform default,
+// the sign-in family staying dark was a jarring island — auth now follows the user theme
+// exactly like the tabs (its pages wear the warmTab surface via app/(consumer)/auth/layout.tsx).
+// This supersedes the R1-4 "auth stays dark" carve-out. /start is not a tab but DOES paint
+// warm: see WARM_JOURNEY_PREFIXES below, kept separate so the warm skin can extend to the
+// coach sign-up journey without entangling footer/Navbar classification.
+export const CONSUMER_SHELL_PREFIXES = ['/discover', '/scores', '/chat', '/following', '/account', '/auth'] as const;
 
 export function isConsumerShellPath(pathname: string): boolean {
   return CONSUMER_SHELL_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
@@ -57,7 +59,7 @@ const ORG_STATIC_SECTIONS = new Set([
  *
  * seg[0] is checked against RESERVED_ORG_SLUGS — the CANONICAL "can't be an org slug" list
  * (one source, reused, not a second drifting copy), so every real top-level route (/discover,
- * /teams/[id], /platform/…, /tryout-response/…, …) is excluded; a real org slug is never
+ * /platform/…, /tryout-response/…, …) is excluded; a real org slug is never
  * reserved, so it passes through to the seg[1] section check.
  *
  * The bar mount pairs this with `useParams().tournamentSlug`, and BOTH checks are needed —

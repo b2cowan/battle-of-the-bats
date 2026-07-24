@@ -531,6 +531,13 @@ export async function completeTeamOwnershipTransfer(input: {
   actorUserId: string;
   actorEmail: string;
   reason: string;
+  /**
+   * The counterpart (coach's Team workspace) org id the operator explicitly confirmed. Completion
+   * cancels this org's subscription, clears its Stripe ids, suspends its members, and reassigns its
+   * data — so we require the operator to echo the exact org back and verify it here, server-side, so
+   * the named-confirmation guard can't be skipped by a crafted request.
+   */
+  confirmWorkspaceOrgId: string;
 }): Promise<CompleteTeamOwnershipTransferResult> {
   const reason = input.reason.trim();
   if (reason.length < 5) {
@@ -539,6 +546,14 @@ export async function completeTeamOwnershipTransfer(input: {
 
   const found = await fetchLinkAndWorkspace(input.linkId);
   if (!found) return { ok: false, status: 404, error: 'Team ownership transfer was not found.' };
+
+  if (!input.confirmWorkspaceOrgId || input.confirmWorkspaceOrgId !== found.workspace.workspace_org_id) {
+    return {
+      ok: false,
+      status: 409,
+      error: 'Confirm the coach’s Team organization before completing this transfer.',
+    };
+  }
 
   if (
     found.link.status !== 'ownership_pending' ||

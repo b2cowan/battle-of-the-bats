@@ -114,7 +114,7 @@ export default function ResetPasswordPage() {
 
         {pageState === 'expired' && (
           <>
-            <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: '#f87171', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--danger-light)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
               This link has expired or is invalid. Request a new one below.
             </p>
             <div className={styles.footer}>
