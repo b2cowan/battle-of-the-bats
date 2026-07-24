@@ -44,6 +44,36 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-23',
+    title: 'One-tap flips for coaches and scorekeepers',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Coaches: flip to the fan side in one tap — your tournament record now has the same ⇄ button admins use, landing on the event’s public page, with a one-tap way back.',
+      },
+      {
+        category: 'new',
+        text: 'Your team Overview shows your live or upcoming tournament — name, dates, and a Fan view link — whenever your team is in one.',
+      },
+      {
+        category: 'new',
+        text: 'Scorekeepers get a ⇄ Public site button in their header to confirm a posted score on the public schedule — with a quick chooser when two events run on the same day.',
+      },
+      {
+        category: 'fixed',
+        text: 'Cleaned up hard-to-read text and badge colors in the Warm theme on coach pages and chat.',
+      },
+      {
+        category: 'fixed',
+        text: 'The coach schedule’s month heading no longer shows the wrong month in some time zones, and tryout cards no longer blink out while loading.',
+      },
+      {
+        category: 'fixed',
+        text: 'Alert buttons no longer get stuck on “Turning on…” — if this device can’t receive notifications, they now say so.',
+      },
+    ],
+  },
+  {
     date: '2026-07-22',
     title: 'A warmer look, a simpler home, and the Coaches Portal founding season',
     highlights: [
