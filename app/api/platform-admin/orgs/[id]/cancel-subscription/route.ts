@@ -11,7 +11,7 @@ import { cancellationConfirmationHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { PLAN_CONFIG, getEffectiveTeamLimit } from '@/lib/plan-config';
 import type { OrgPlan, Organization } from '@/lib/types';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 type OrgRow = {
   id: string;
@@ -133,7 +133,7 @@ export const POST = withObservability(async (req: NextRequest,
     .single();
 
   if (intentError) {
-    return NextResponse.json({ error: intentError.message }, { status: 500 });
+    return captureAndJson(intentError, { error: intentError.message }, 500);
   }
 
   if (preflight.tournaments.length > 0) {
@@ -206,7 +206,7 @@ export const POST = withObservability(async (req: NextRequest,
     .eq('id', id);
 
   if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 });
+    return captureAndJson(updateError, { error: updateError.message }, 500);
   }
 
   await writePlatformAuditLog(

@@ -11,7 +11,7 @@ import {
   hardBlockMessage,
   type PriceValidationResult,
 } from '@/lib/stripe-price-validation';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 function unauthorized() {
   return new Response(JSON.stringify({ error: 'Unauthorized' }), {
@@ -32,10 +32,7 @@ export const GET = withObservability(async () => {
     .order('billing_cycle');
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return captureAndJson(error, { error: error.message }, 500);
   }
 
   return Response.json(data);
@@ -117,10 +114,7 @@ export const PATCH = withObservability(async (req: Request) => {
     .eq('id', id);
 
   if (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return captureAndJson(error, { error: error.message }, 500);
   }
 
   await writePlatformAuditLog(

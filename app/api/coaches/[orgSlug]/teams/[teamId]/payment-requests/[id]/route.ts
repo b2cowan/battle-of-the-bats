@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -55,7 +55,7 @@ export const DELETE = withObservability(async (_req: Request,
     .delete()
     .eq('id', id);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return captureAndJson(error, { error: error.message }, 500);
 
   return NextResponse.json({ ok: true });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/payment-requests/[id]' });

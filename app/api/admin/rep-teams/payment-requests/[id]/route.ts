@@ -8,7 +8,7 @@ import {
   getOrCreateOrgLedger,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -71,7 +71,7 @@ export const PATCH = withObservability(async (req: Request,
       })
       .eq('id', id);
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+    if (error) return captureAndJson(error, { error: error.message }, 500);
     return NextResponse.json({ ok: true, status: 'denied' });
   }
 
@@ -85,7 +85,11 @@ export const PATCH = withObservability(async (req: Request,
   ]);
 
   if (!orgLedger) {
-    return NextResponse.json({ error: 'Org ledger not found' }, { status: 500 });
+    return captureAndJson(
+      new Error('Org ledger not found for rep-team payment approval'),
+      { error: 'Org ledger not found' },
+      500,
+    );
   }
 
   // payment_to_org → team pays org (team_ledger → org_ledger)
@@ -105,7 +109,7 @@ export const PATCH = withObservability(async (req: Request,
   });
 
   if (transferError) {
-    return NextResponse.json({ error: 'Failed to create accounting transfer' }, { status: 500 });
+    return captureAndJson(transferError, { error: 'Failed to create accounting transfer' }, 500);
   }
 
   const { error: updateError } = await supabaseAdmin
@@ -118,7 +122,7 @@ export const PATCH = withObservability(async (req: Request,
     })
     .eq('id', id);
 
-  if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 });
+  if (updateError) return captureAndJson(updateError, { error: updateError.message }, 500);
 
   return NextResponse.json({ ok: true, status: 'approved' });
 }, { route: '/api/admin/rep-teams/payment-requests/[id]' });

@@ -6,7 +6,7 @@ import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features'
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -193,9 +193,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       .eq('tournament_id', tournamentId),
   ]);
 
-  if (tournamentError) return json({ error: tournamentError.message }, 500);
-  if (teamsError) return json({ error: teamsError.message }, 500);
-  if (divisionError) return json({ error: divisionError.message }, 500);
+  if (tournamentError) return captureAndJson(tournamentError, { error: tournamentError.message }, 500);
+  if (teamsError) return captureAndJson(teamsError, { error: teamsError.message }, 500);
+  if (divisionError) return captureAndJson(divisionError, { error: divisionError.message }, 500);
   if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
 
   const selectedTeams = (teams ?? []) as TeamRow[];

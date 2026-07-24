@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 export const POST = withObservability(async (req: NextRequest,
   { params }: { params: Promise<{ id: string }> }) => {
@@ -32,7 +32,11 @@ export const POST = withObservability(async (req: NextRequest,
 
   if (error || !data?.properties?.action_link) {
     console.error('[platform-admin] generateLink error:', error);
-    return NextResponse.json({ error: 'Failed to generate reset link' }, { status: 500 });
+    return captureAndJson(
+      error ?? new Error('generateLink returned no action_link for password reset'),
+      { error: 'Failed to generate reset link' },
+      500,
+    );
   }
 
   await writePlatformAuditLog(auth.user.email!, null, 'generate_reset_link', 'email', null, email);

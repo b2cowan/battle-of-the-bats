@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -44,7 +44,7 @@ export const GET = withObservability(async (req: Request,
   if (status) query = query.eq('status', status);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return captureAndJson(error, { error: error.message }, 500);
 
   const requests = (data ?? []).map(r => ({
     id:                 r.id,
@@ -113,7 +113,7 @@ export const POST = withObservability(async (req: Request,
     .select()
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return captureAndJson(error, { error: error.message }, 500);
 
   return NextResponse.json({
     request: {

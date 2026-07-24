@@ -3,7 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -48,7 +48,7 @@ export const GET = withObservability(async (req: Request) => {
   if (scopedTeamIds) query = query.in('team_id', scopedTeamIds);
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return captureAndJson(error, { error: error.message }, 500);
 
   const requests = (data ?? []).map(r => ({
     id:                r.id,
