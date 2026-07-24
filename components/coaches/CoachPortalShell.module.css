@@ -17,6 +17,11 @@
   min-height: 100vh;
   min-height: 100dvh;
   background: var(--bg);
+  /* Re-anchor inherited text colour to the WARM-SCOPED ink. `body { color: var(--white) }`
+     computes to white OUTSIDE the warm scope, so any descendant text that doesn't set its
+     own colour token would inherit white and vanish on the cream ground. Resolving --white
+     here (inside the marker) makes it ink in warm / white in dark — same rule, both themes. */
+  color: var(--white);
 }
 
 /* Focused full-page help guide (/coaches/help): marketing nav/footer are suppressed like
