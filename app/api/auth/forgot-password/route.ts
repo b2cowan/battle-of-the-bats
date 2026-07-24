@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { platformPasswordResetHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability } from '@/lib/observability';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 
 export const POST = withObservability(async (req: NextRequest) => {
   const { email } = await req.json();
@@ -10,12 +11,10 @@ export const POST = withObservability(async (req: NextRequest) => {
     return NextResponse.json({ ok: true }); // never reveal whether email exists
   }
 
-  // Derive base URL from the incoming request's origin so that a reset
-  // initiated on dev.fieldlogichq.ca redirects back there, not to localhost.
-  const origin =
-    req.headers.get('origin') ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    'https://www.fieldlogichq.ca';
+  // Trusted base URL for the emailed reset link. The request Origin is honored only when it is one
+  // of our own hosts (preserving the dev-vs-prod "return where I started" behavior); an attacker
+  // host is rejected and we fall back to the canonical app URL — see resolveTrustedAppOrigin.
+  const origin = resolveTrustedAppOrigin(req);
 
   const { data, error } = await supabaseAdmin.auth.admin.generateLink({
     type: 'recovery',

@@ -4,6 +4,7 @@ import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 
 type RouteParams = { params: Promise<{ tournamentId: string; regId: string }> };
 
@@ -53,7 +54,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     return json({ error: 'This registration has no email address.' }, 400);
   }
 
-  const origin = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
+  // Trusted base URL for the emailed access links — only our own hosts are honored from the
+  // request Origin; an attacker host falls back to the canonical URL. See resolveTrustedAppOrigin.
+  const origin = resolveTrustedAppOrigin(req);
   const joinUrl = `${origin}/coaches/join?registrationId=${encodeURIComponent(regId)}&email=${encodeURIComponent(email)}&next=${encodeURIComponent('/coaches/tournaments')}`;
   const loginUrl = `${origin}/auth/login?next=${encodeURIComponent('/coaches/tournaments')}`;
 

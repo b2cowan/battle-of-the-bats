@@ -6,6 +6,7 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { resolveTournamentChatParticipants } from '@/lib/chat-resolvers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 
 /**
  * One-click "remind coaches to sign up" from the tournament dashboard's Chat Adoption panel.
@@ -71,7 +72,9 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     return json({ ok: true, sent: 0, failed: 0, skippedNoEmail, skippedOverCap, notJoined: pending.length });
   }
 
-  const origin = req.headers.get('origin') ?? process.env.NEXT_PUBLIC_APP_URL ?? '';
+  // Trusted base URL for the emailed access links — only our own hosts are honored from the
+  // request Origin; an attacker host falls back to the canonical URL. See resolveTrustedAppOrigin.
+  const origin = resolveTrustedAppOrigin(req);
   const loginUrl = `${origin}/auth/login?next=${encodeURIComponent('/coaches/tournaments')}`;
 
   const results = await Promise.allSettled(targets.map(async (team) => {

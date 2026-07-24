@@ -9,6 +9,7 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { findPendingInviteByEmail } from '@/lib/invite-reconciliation';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 
 // Abuse controls: signup is unauthenticated and fires Supabase admin calls + a Resend
 // email per attempt; Supabase's built-in auth limits DON'T cover admin-API calls, so this
@@ -150,10 +151,9 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     const requireVerification = shouldRequireEmailVerification();
-    const origin =
-      req.headers.get('origin') ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      'https://www.fieldlogichq.ca';
+    // Trusted base URL for emailed verification links — see resolveTrustedAppOrigin (only our own
+    // hosts are honored from the request Origin; an attacker host falls back to the canonical URL).
+    const origin = resolveTrustedAppOrigin(req);
 
     if (requireVerification && !process.env.RESEND_API_KEY) {
       return captureAndJson(

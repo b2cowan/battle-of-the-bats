@@ -4,6 +4,7 @@ import { signupVerificationHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { COACHES_START_PATH, normalizeCoachPortalNext } from '@/lib/coaches-portal-routes';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
+import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 
 function shouldRequireEmailVerification() {
   const explicit = process.env.REQUIRE_SIGNUP_EMAIL_VERIFICATION;
@@ -49,10 +50,9 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     const requireVerification = shouldRequireEmailVerification();
-    const origin =
-      req.headers.get('origin') ??
-      process.env.NEXT_PUBLIC_APP_URL ??
-      'https://www.fieldlogichq.ca';
+    // Trusted base URL for emailed verification links — see resolveTrustedAppOrigin (only our own
+    // hosts are honored from the request Origin; an attacker host falls back to the canonical URL).
+    const origin = resolveTrustedAppOrigin(req);
 
     if (requireVerification && !process.env.RESEND_API_KEY) {
       return captureAndJson(
