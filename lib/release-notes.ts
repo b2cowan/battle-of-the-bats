@@ -44,6 +44,20 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-24',
+    title: 'A cleaner sign-in, and a smoother coach invite',
+    highlights: [
+      {
+        category: 'improved',
+        text: 'The sign-in, sign-up, and password-reset screens have a cleaner, more consistent look.',
+      },
+      {
+        category: 'fixed',
+        text: 'Opening a coach invite while signed in to a different account now walks you through it instead of showing a confusing error.',
+      },
+    ],
+  },
+  {
     date: '2026-07-23',
     title: 'One-tap flips for coaches and scorekeepers',
     highlights: [
