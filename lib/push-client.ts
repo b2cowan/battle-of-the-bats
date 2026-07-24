@@ -90,6 +90,20 @@ export async function subscribeToPush(): Promise<BrowserPushSubscription> {
     if (result !== 'granted') throw new PushPermissionError('Notification permission was not granted.', 'dismissed');
   }
 
+  // `navigator.serviceWorker.ready` NEVER settles when no service worker is registered — it waits
+  // for a registration to become active, forever. That's guaranteed in dev (the app deliberately
+  // unregisters the SW — see ServiceWorkerRegistration) and possible in prod if registration
+  // failed, and it left every "turn on alerts" control stuck on its pending state. Check for a
+  // registration first so the flow fails honestly instead of hanging.
+  const existingRegistration = await navigator.serviceWorker.getRegistration();
+  if (!existingRegistration) {
+    throw new PushPermissionError(
+      process.env.NODE_ENV !== 'production'
+        ? 'Push is unavailable in dev builds (the service worker is disabled) — test alerts on a production build.'
+        : 'This browser can’t receive push notifications right now.',
+      'unsupported',
+    );
+  }
   const registration = await navigator.serviceWorker.ready;
   const existing = await registration.pushManager.getSubscription();
   const subscription =

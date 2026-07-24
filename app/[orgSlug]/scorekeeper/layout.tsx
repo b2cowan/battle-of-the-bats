@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import ShellSignOutButton from '@/components/volunteer/ShellSignOutButton';
+import { ScorekeeperFlipProvider, ScorekeeperFlipPill } from '@/components/volunteer/ScorekeeperFlip';
 import { getOrganizationBySlug } from '@/lib/db';
 import { hasCapability } from '@/lib/roles';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
@@ -75,6 +76,9 @@ export default async function ScorekeeperLayout({
   }
 
   return (
+    // "The Flip" P3: the provider bridges the page's score fetch (which knows the day's
+    // tournaments) to the header pill — see components/volunteer/ScorekeeperFlip.tsx.
+    <ScorekeeperFlipProvider>
     <div style={{ minHeight: '100vh', background: '#0A0A0A' }}>
       <header style={{
         borderBottom: '1px solid rgba(30,58,138,0.5)',
@@ -109,6 +113,8 @@ export default async function ScorekeeperLayout({
           </div>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', flexShrink: 0 }}>
+          {/* "The Flip" P3: constant public door — direct for one live event, chooser for 2+. */}
+          <ScorekeeperFlipPill orgSlug={orgSlug} />
           {/* J1-077: one-tap hop to the gate board for volunteers who also check teams in. */}
           {(hasCapability(authCtx.role, authCtx.capabilities, 'check_in_teams')
             || hasCapability(authCtx.role, authCtx.capabilities, 'manage_registrations')) && (
@@ -133,5 +139,6 @@ export default async function ScorekeeperLayout({
         subtitle="Your teams, schedules and scores — one tap away."
       />
     </div>
+    </ScorekeeperFlipProvider>
   );
 }

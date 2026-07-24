@@ -6,8 +6,8 @@ import { getAuthContextWithScope } from './api-auth';
 import { getBasicCoachTournamentTeamsForUser, normalizeEmail } from './basic-coach-teams';
 import { getCoachingAssignmentsForUser, type CoachingAssignment } from './db';
 import { getLinkedRepTeamsForTournament } from './rep-team-tournament-links';
-import { getActivePremiumPortalSlug } from './coach-team-page';
-import { coachTeamPath } from './coaches-portal-routes';
+import { getActivePremiumPortal } from './coach-team-page';
+import { coachTeamPath, COACHES_TOURNAMENTS_PATH } from './coaches-portal-routes';
 import { getUserDisplayName, getUserInitials } from './user-display';
 
 /**
@@ -42,11 +42,12 @@ export interface ViewerHat {
   kind: 'coach' | 'admin' | 'official';
   /** What the row names: the coached team, or the org for admin/official rows. */
   label: string;
+  /** Coach hats ("The Flip" P3): the team's TOURNAMENT RECORD for THIS event — the ratified
+   *  public→coach reverse trip ("check my fees ↔ see us live") — falling back to the team's
+   *  tournaments list / portal home only when the registration can't be pinned. */
   href: string;
-  /** Coach hats only: the tournament registration (`teams.id`) on THIS event. Computed server-side;
-   *  no live consumer since the account sheet retired ("The Flip" P2 — own-team alerts now source the
-   *  coach overview's tournament-history path). Kept for a future record-aware coach flip (P3). Never
-   *  derive it from `href` (an upgraded team's href points at a Premium slug, not the team id). */
+  /** Coach hats only: the tournament registration (`teams.id`) on THIS event, when unambiguous.
+   *  Never derive it from `href` (an upgraded team's href points at a Premium slug + rep team id). */
   teamId?: string;
 }
 
@@ -134,13 +135,19 @@ async function resolveRepCoachHats(params: {
       const team = params.assignments[0]; // size===1, so every row shares this team
       const href = hrefFor(team.teamId);
       if (!hatByHref.has(href)) {
-        // Own-team alerts row needs the registration id — only set when unambiguous.
+        // The record path needs the registration id — only set when unambiguous.
         hatByHref.set(href, { kind: 'coach', label: team.teamName, href, teamId: matched.length === 1 ? matched[0].id : undefined });
       }
     }
   }
 
-  return [...hatByHref.values()];
+  // "The Flip" P3 record-aware landing: a pinned registration → that record; ambiguous (two
+  // registrations here, or a Layer-1 multi-match) → the team's Tournaments list, which shows
+  // every entry for this event. The map above keys on the team base path so dedupe still works.
+  return [...hatByHref.values()].map(hat => ({
+    ...hat,
+    href: hat.teamId ? `${hat.href}/tournaments/${hat.teamId}` : `${hat.href}/tournaments`,
+  }));
 }
 
 export async function getTournamentViewer(params: {
@@ -178,18 +185,25 @@ export async function getTournamentViewer(params: {
     assignments: repAssignments,
   }).catch(() => [] as ViewerHat[]);
 
-  // Premium-slug lookups resolve concurrently (usually 0–1 teams match).
-  const premiumSlugs = await Promise.all(
-    teamsHere.map(team => getActivePremiumPortalSlug(team.teamWorkspaceId).catch(() => null)),
+  // Premium-portal lookups resolve concurrently (usually 0–1 teams match).
+  const premiumPortals = await Promise.all(
+    teamsHere.map(team => getActivePremiumPortal(team.teamWorkspaceId).catch(() => null)),
   );
-  // Upgraded to a LIVE Premium portal → the coach's home is the Premium workspace
-  // (the free shell redirects there anyway); otherwise the free team page.
-  const hats: ViewerHat[] = teamsHere.map((team, i) => ({
-    kind: 'coach',
-    label: team.name,
-    href: premiumSlugs[i] ? `/${premiumSlugs[i]}/coaches` : coachTeamPath(team.id),
-    teamId: team.registrations.find(reg => reg.tournamentId === params.tournamentId)?.id,
-  }));
+  // "The Flip" P3 record-aware landing: the flip from a public event lands on the team's
+  // TOURNAMENT RECORD for THIS event (the ratified reverse trip), in whichever shell owns the
+  // team — the live Premium workspace for an upgraded team (the free shell redirects there
+  // anyway), else the free portal's record. Only a registration that can't be pinned falls
+  // back to the portal home.
+  const hats: ViewerHat[] = teamsHere.map((team, i) => {
+    const registrationId = team.registrations.find(reg => reg.tournamentId === params.tournamentId)?.id;
+    const portal = premiumPortals[i];
+    const href = portal
+      ? (registrationId
+          ? `/${portal.slug}/coaches/teams/${portal.repTeamId}/tournaments/${registrationId}`
+          : `/${portal.slug}/coaches`)
+      : (registrationId ? `${COACHES_TOURNAMENTS_PATH}/${registrationId}` : coachTeamPath(team.id));
+    return { kind: 'coach', label: team.name, href, teamId: registrationId };
+  });
 
   const repHats = await repHatsPromise;
   for (const repHat of repHats) {

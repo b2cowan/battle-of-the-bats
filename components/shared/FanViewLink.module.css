@@ -1,0 +1,18 @@
+/* The quiet per-event flip door — accent-colored per the rev-3 mockups (olive under the
+   coach warm gate via the --logic-lime remap; lime on dark). The 0.5rem indent tucks it
+   under the event card/row it belongs to (the shared placement rule). */
+.fanView {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.2rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: var(--logic-lime);
+  text-decoration: none;
+}
+.fanView:hover { text-decoration: underline; }

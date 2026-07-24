@@ -66,25 +66,10 @@
   white-space: nowrap;
 }
 
-/* Card + its secondary "Fan view" link stacked (Phase 3 round trip to the
-   public space). The card keeps its whole-surface click. */
+/* Card + its secondary "⇄ Fan view" link stacked (the shared FanViewLink component owns the
+   link's look). The card keeps its whole-surface click. */
 .entry {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
 }
-
-.fanView {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-left: 0.5rem;
-  padding: 0.15rem 0.2rem;
-  font-family: var(--font-data, monospace);
-  font-size: 0.7rem;
-  letter-spacing: 0.03em;
-  color: var(--white-50);
-  text-decoration: none;
-}
-.fanView:hover { color: var(--white-90); text-decoration: underline; }

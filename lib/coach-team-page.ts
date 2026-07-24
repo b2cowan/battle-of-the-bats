@@ -7,24 +7,34 @@ import { coachTeamPath } from '@/lib/coaches-portal-routes';
 import type { BasicCoachTeam } from '@/lib/basic-coach-teams';
 
 /**
- * The org slug of the LIVE Premium portal a free Basic team has been upgraded to, or null. Keeps an
- * upgraded free team from becoming a stale, editable parallel: once Premium is live the coach is sent
- * to the Premium portal (which already holds the migrated roster/schedule/fees). When the Premium
- * subscription is CANCELED this returns null and the free team is usable again.
+ * The LIVE Premium portal a free Basic team has been upgraded to — its org slug + the premium
+ * (rep) team id inside that workspace — or null. Keeps an upgraded free team from becoming a
+ * stale, editable parallel: once Premium is live the coach is sent to the Premium portal (which
+ * already holds the migrated roster/schedule/fees). When the Premium subscription is CANCELED
+ * this returns null and the free team is usable again. The rep team id lets callers deep-link
+ * team-scoped premium pages (e.g. the tournament record — "The Flip" P3's record-aware landing).
  */
-export async function getActivePremiumPortalSlug(teamWorkspaceId: string | null): Promise<string | null> {
+export async function getActivePremiumPortal(
+  teamWorkspaceId: string | null,
+): Promise<{ slug: string; repTeamId: string } | null> {
   if (!teamWorkspaceId) return null;
   const { data } = await supabaseAdmin
     .from('team_workspaces')
-    .select('subscription_status, organizations!workspace_org_id(slug)')
+    .select('subscription_status, rep_team_id, organizations!workspace_org_id(slug)')
     .eq('id', teamWorkspaceId)
     .maybeSingle<{
       subscription_status: string | null;
+      rep_team_id: string;
       organizations: { slug: string | null } | { slug: string | null }[] | null;
     }>();
   if (!data || !data.subscription_status || data.subscription_status === 'canceled') return null;
   const org = Array.isArray(data.organizations) ? data.organizations[0] : data.organizations;
-  return org?.slug ?? null;
+  return org?.slug ? { slug: org.slug, repTeamId: data.rep_team_id } : null;
+}
+
+/** Slug-only convenience over {@link getActivePremiumPortal} (the pre-P3 signature). */
+export async function getActivePremiumPortalSlug(teamWorkspaceId: string | null): Promise<string | null> {
+  return (await getActivePremiumPortal(teamWorkspaceId))?.slug ?? null;
 }
 
 /**

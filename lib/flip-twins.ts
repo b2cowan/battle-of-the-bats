@@ -125,11 +125,26 @@ function siteLabel(ctx: FlipContext): string {
   return ctx.isDraft ? 'Preview site' : 'Public site';
 }
 
-function publicHref(ctx: FlipContext, twin: PublicTwinKey, gameId?: string | null): string {
+/**
+ * Href for a public twin page. Exported (P3) so coach surfaces that hand-build public links
+ * (standings, welcome resources) share the ONE base-URL construction and can't drift from the pill.
+ */
+export function publicHref(ctx: FlipContext, twin: PublicTwinKey, gameId?: string | null): string {
   const base = publicBase(ctx);
   if (twin === 'overview') return base;
   if (twin === 'schedule' && gameId) return `${base}/schedule?highlightGameId=${encodeURIComponent(gameId)}`;
   return `${base}/${twin}`;
+}
+
+/** The public game PAGE (`…/schedule/{gameId}`) — a different route from the Schedule's
+ *  `?highlightGameId=` deep-link above. Used by the coach record's per-game links. */
+export function publicGamePageHref(ctx: FlipContext, gameId: string): string {
+  return `${publicBase(ctx)}/schedule/${gameId}`;
+}
+
+/** The public team profile page (`…/teams/{teamId}`) — the coach record's share target. */
+export function publicTeamPageHref(ctx: FlipContext, teamId: string): string {
+  return `${publicBase(ctx)}/teams/${teamId}`;
 }
 
 function adminHref(ctx: FlipContext, screen: string, gameId?: string | null): string {
@@ -162,10 +177,16 @@ function nearestPermittedScreen(preferred: string, allowed?: string[]): string {
 function resolveToPublic(pathname: string, hat: FlipHat, ctx: FlipContext): FlipResolution {
   const label = siteLabel(ctx);
 
-  // Coach / scorekeeper surfaces land on the public Schedule for now (P3 refines coach record-aware
-  // landings with the team's registration context).
+  // Coach doors land on the event's public FRONT PAGE (owner call 2026-07-23 — the Overview is
+  // the natural "see it as fans do" landing, and where the pre-Flip Fan-view links pointed);
+  // the scorekeeper's job is scores, so the official hat lands on the Schedule. With no
+  // tournament in context (defensive — P3's contextual model only mounts the pill where one
+  // exists), fall back to the org's public root rather than emitting a broken `/{org}//…`.
   if (hat === 'coach' || hat === 'official') {
-    return { kind: 'single', target: { href: publicHref(ctx, 'schedule'), label } };
+    if (!ctx.tournamentSlug) {
+      return { kind: 'single', target: { href: `/${ctx.orgSlug}`, label } };
+    }
+    return { kind: 'single', target: { href: publicHref(ctx, hat === 'coach' ? 'overview' : 'schedule'), label } };
   }
 
   const screen = adminScreenFromPath(pathname);
@@ -220,15 +241,55 @@ function resolveToRole(pathname: string, hat: FlipHat, ctx: FlipContext): FlipRe
  * unmapped screens fall back to Overview — so the pill is never blank in a shell.
  */
 export function resolveFlip(input: {
-  pathname: string;
+  /** Optional because the coach/official to-public landing is context-driven, not page-matched. */
+  pathname?: string;
   direction: FlipDirection;
   hat?: FlipHat;
   ctx: FlipContext;
 }): FlipResolution {
   const hat = input.hat ?? 'admin';
+  const pathname = input.pathname ?? '';
   return input.direction === 'to-public'
-    ? resolveToPublic(input.pathname, hat, input.ctx)
-    : resolveToRole(input.pathname, hat, input.ctx);
+    ? resolveToPublic(pathname, hat, input.ctx)
+    : resolveToRole(pathname, hat, input.ctx);
+}
+
+/** One tournament the scorekeeper can flip to — the day's board list, threaded from the score API. */
+export interface ScorekeeperFlipTournament {
+  name: string;
+  slug: string;
+}
+
+/**
+ * The scorekeeper header pill's resolution (P3). The shell is tournament-scoped but a volunteer can
+ * cover several concurrent events, so: none in view → the org's public site (the pill is never
+ * absent in a shell); exactly one → that event's public Schedule; two or more → the shared `multi`
+ * chooser popover, one row per tournament (owner call 2026-07-24). Callers pass only the PUBLICLY
+ * VISIBLE tournaments (slug present, active/completed) — a draft has no public site to flip to.
+ */
+export function resolveScorekeeperFlip(input: {
+  orgSlug: string;
+  tournaments: ScorekeeperFlipTournament[];
+}): FlipResolution {
+  const { orgSlug, tournaments } = input;
+  if (tournaments.length <= 1) {
+    // One event → its public Schedule; none → the resolver's own org-root fallback (one mechanism,
+    // not a second hand-rolled copy of it).
+    return resolveFlip({
+      direction: 'to-public',
+      hat: 'official',
+      ctx: { orgSlug, tournamentSlug: tournaments[0]?.slug ?? null },
+    });
+  }
+  return {
+    kind: 'multi',
+    label: 'Public site',
+    targets: tournaments.map(t => ({
+      href: publicHref({ orgSlug, tournamentSlug: t.slug }, 'schedule'),
+      label: t.name,
+      sublabel: 'Public schedule',
+    })),
+  };
 }
 
 /**
@@ -323,6 +384,11 @@ export function flipOriginLabel(pathname: string): string {
     const screen = adminScreenFromPath(pathname);
     return (screen && ADMIN_SCREEN[screen]?.label) || 'Admin';
   }
+  // Coach portals (free `/coaches/…` + premium `/{org}/coaches/…`) and the scorekeeper shell (P3):
+  // their inner segments are ids/tools, not public sections, so name the surface itself — otherwise
+  // the fallback below would surface a raw UUID ("⇄ Back to 3f2a…").
+  if (/\/scorekeeper(\/|$)/.test(pathname)) return 'Scorekeeper';
+  if (/\/coaches(\/|$)/.test(pathname)) return 'Coach view';
   // Public tournament path: /{org}/{tournament}/{section?}/… — the section is the 3rd segment.
   const section = pathname.split('/').filter(Boolean)[2];
   return section ? section.charAt(0).toUpperCase() + section.slice(1) : 'Overview';

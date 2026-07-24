@@ -6,8 +6,8 @@ import { useOrg } from '@/lib/org-context';
 import { Archive, ArrowRight, Building2, Cake, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, TriangleAlert, Trophy, Users, Wallet } from 'lucide-react';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
-import CoachGameAlertsRow from '@/components/coaches/CoachGameAlertsRow';
-import { pickAlertRegistration, type AlertRegistration } from '@/lib/coach-alert-registration';
+import { pickFanViewRegistration, type FanViewRegistration } from '@/lib/coach-alert-registration';
+import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import { deriveRepPhase } from '@/lib/coach-rep-phase';
 import { calendarDaysBetween } from '@/lib/timezone';
 import HelpButton from '@/components/help/HelpButton';
@@ -112,9 +112,9 @@ export default function TeamOverviewPage({
   const [nextAttendance, setNextAttendance] = useState<{ in: number; late: number; out: number; noReply: number } | null>(null);
   // Tournament registrations summary → Tournaments tile.
   const [tournaments, setTournaments] = useState<{ count: number; pending: number; nextDate: string | null; liveNow: boolean; owed: number; owingCount: number } | null>(null);
-  // N3b (The Flip P2): the team's live public tournament registration, if any — binds the one-tap
-  // own-team game-alerts row (relocated here from the retired public account sheet). Null → no row.
-  const [alertRegistration, setAlertRegistration] = useState<AlertRegistration | null>(null);
+  // P3: the ⇄ Fan view door's eligibility — any registration in a live public event,
+  // shared rule with the free overview so the two tiers can't drift.
+  const [overviewFanView, setOverviewFanView] = useState<FanViewRegistration | null>(null);
   // Optional setup steps the coach has chosen to skip (per-team, remembered locally).
   const [skippedSteps, setSkippedSteps] = useState<Set<string>>(new Set());
   // Contextual org-invite banner (only when an org has actually invited this team)
@@ -333,7 +333,7 @@ export default function TeamOverviewPage({
         const hist = (json.history ?? []) as {
           registration: { id: string; status: string };
           org?: { slug?: string | null } | null;
-          tournament: { slug?: string | null; status?: string | null; startDate: string | null; endDate: string | null } | null;
+          tournament: { slug?: string | null; status?: string | null; name?: string | null; startDate: string | null; endDate: string | null } | null;
           amountDue?: number | null;
         }[];
         const todayStr = new Date().toISOString().slice(0, 10);
@@ -349,9 +349,7 @@ export default function TeamOverviewPage({
           if ((h.amountDue ?? 0) > 0) { owed += h.amountDue ?? 0; owingCount += 1; }
         }
         setTournaments({ count, pending, nextDate, liveNow, owed, owingCount });
-        // N3b: bind the game-alerts row to the team's alertable registration (shared rule with the
-        // free overview so the two can't drift). No such registration → the row self-hides.
-        setAlertRegistration(pickAlertRegistration(hist));
+        setOverviewFanView(pickFanViewRegistration(hist));
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -1016,11 +1014,13 @@ export default function TeamOverviewPage({
         </div>
       )}
 
-      {/* N3b (The Flip P2): one-tap own-team game alerts, relocated from the retired public account
-          sheet. Self-hides unless the team is in a live public tournament (a game to alert on). */}
-      {alertRegistration && (
+      {/* P3 rev-5 (owner call): the compact "your tournament" block — an event card naming the
+          live/upcoming public event + its ⇄ Fan view door. No alerts/follow affordance here —
+          the public side already carries those; the portal doesn't push follow at the coach.
+          Self-contained context: the phase anchor above isn't always about the tournament. */}
+      {overviewFanView && (
         <div style={{ marginBottom: '1.25rem' }}>
-          <CoachGameAlertsRow teamName={assignment.teamName} registration={alertRegistration} />
+          <CoachLiveEventCard event={overviewFanView} />
         </div>
       )}
 

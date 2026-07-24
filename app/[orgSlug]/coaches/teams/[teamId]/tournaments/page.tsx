@@ -3,6 +3,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Trophy } from 'lucide-react';
 import { deriveCoachLifecycleChip } from '@/lib/coach-tournament-lifecycle';
+import FanViewLink from '@/components/shared/FanViewLink';
 import styles from '../../../coaches.module.css';
 
 interface TournamentHistoryEntry {
@@ -84,29 +85,37 @@ export default function PremiumTeamTournamentsPage({
             const statusLabel = REG_STATUS_LABEL[entry.registration.status] ?? entry.registration.status;
             const statusClass = REG_STATUS_CSS[entry.registration.status] ?? styles.badgeManual;
             const range = formatRange(entry.tournament?.startDate ?? null, entry.tournament?.endDate ?? null);
+            // ⇄ Fan view ("The Flip" P3): per-row flip door for publicly-visible lifecycles
+            // (the shared FanViewLink resolves the target so it can't drift from the pill).
+            const canFanView = Boolean(entry.org?.slug && entry.tournament?.slug &&
+              (entry.tournament.status === 'active' || entry.tournament.status === 'completed'));
 
             return (
-              <Link
-                key={entry.registration.id}
-                href={`${base}/tournaments/${entry.registration.id}`}
-                className={styles.tournamentHistoryItem}
-              >
-                <span className={styles.tournamentHistoryMain}>
-                  <span className={styles.tournamentHistoryName}>
-                    {entry.tournament?.name ?? entry.registration.name}
+              <div key={entry.registration.id} className={styles.tournamentHistoryEntry}>
+                <Link
+                  href={`${base}/tournaments/${entry.registration.id}`}
+                  className={styles.tournamentHistoryItem}
+                >
+                  <span className={styles.tournamentHistoryMain}>
+                    <span className={styles.tournamentHistoryName}>
+                      {entry.tournament?.name ?? entry.registration.name}
+                    </span>
+                    <span className={styles.tournamentHistoryMeta}>
+                      {entry.org?.name && <span>{entry.org.name}</span>}
+                      {range && <span>{range}</span>}
+                      <span>{entry.registration.name}</span>
+                    </span>
                   </span>
-                  <span className={styles.tournamentHistoryMeta}>
-                    {entry.org?.name && <span>{entry.org.name}</span>}
-                    {range && <span>{range}</span>}
-                    <span>{entry.registration.name}</span>
-                  </span>
-                </span>
-                {isLive ? (
-                  <span className={`${styles.badge} ${styles.badgeActive}`}>{chip.label}</span>
-                ) : (
-                  <span className={`${styles.badge} ${statusClass}`}>{statusLabel}</span>
+                  {isLive ? (
+                    <span className={`${styles.badge} ${styles.badgeActive}`}>{chip.label}</span>
+                  ) : (
+                    <span className={`${styles.badge} ${statusClass}`}>{statusLabel}</span>
+                  )}
+                </Link>
+                {canFanView && (
+                  <FanViewLink orgSlug={entry.org!.slug} tournamentSlug={entry.tournament!.slug!} />
                 )}
-              </Link>
+              </div>
             );
           })}
         </div>

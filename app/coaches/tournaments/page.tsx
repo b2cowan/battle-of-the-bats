@@ -17,6 +17,7 @@ import {
   lifecycleChipClassKey,
   type CoachLifecycleChip,
 } from '@/lib/coach-tournament-lifecycle';
+import FanViewLink from '@/components/shared/FanViewLink';
 import portalStyles from '../coaches-portal.module.css';
 import styles from './tournaments.module.css';
 
@@ -235,32 +236,42 @@ function RegistrationCard({ reg, today }: { reg: Registration; today: string }) 
       : new Date(tournament.start_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
     : null;
 
+  // ⇄ Fan view ("The Flip" P3, owner call 2026-07-23): this cross-team list joins the per-row flip
+  // treatment. Publicly-visible lifecycles only (the public route 404s draft/archived).
+  const canFanView = Boolean(org?.slug && tournament?.slug &&
+    (tournament.status === 'active' || tournament.status === 'completed'));
+
   return (
-    <Link href={detailHref} className={styles.card}>
-      <div className={styles.cardMain}>
-        <div className={styles.cardTitle}>{tournament?.name ?? team.name}</div>
-        {tournament && (
-          <div className={styles.cardMeta}>
-            <span>{team.name}</span>
-            {org && <span>{org.name}</span>}
-            {dateRange && <span>{dateRange}</span>}
-            {/* When a lifecycle chip is present, the registration status demotes to
-                trailing meta — and is hidden entirely on LIVE rows (the chip wins). */}
-            {hasChip && !isLive && <span>{statusLabel}</span>}
-          </div>
-        )}
-      </div>
-      <div className={styles.cardStatus}>
-        {hasChip ? (
-          <span className={`${portalStyles.coachLifecycleChip} ${portalStyles[`coachLifecycleChip${chipClassKey}`]}`}>
-            {withDot && <span className={portalStyles.coachLifecycleChipDot} aria-hidden />}
-            {chip.label}
-          </span>
-        ) : (
-          <span className={`badge ${statusBadge}`}>{statusLabel}</span>
-        )}
-      </div>
-    </Link>
+    <div className={styles.entry}>
+      <Link href={detailHref} className={styles.card}>
+        <div className={styles.cardMain}>
+          <div className={styles.cardTitle}>{tournament?.name ?? team.name}</div>
+          {tournament && (
+            <div className={styles.cardMeta}>
+              <span>{team.name}</span>
+              {org && <span>{org.name}</span>}
+              {dateRange && <span>{dateRange}</span>}
+              {/* When a lifecycle chip is present, the registration status demotes to
+                  trailing meta — and is hidden entirely on LIVE rows (the chip wins). */}
+              {hasChip && !isLive && <span>{statusLabel}</span>}
+            </div>
+          )}
+        </div>
+        <div className={styles.cardStatus}>
+          {hasChip ? (
+            <span className={`${portalStyles.coachLifecycleChip} ${portalStyles[`coachLifecycleChip${chipClassKey}`]}`}>
+              {withDot && <span className={portalStyles.coachLifecycleChipDot} aria-hidden />}
+              {chip.label}
+            </span>
+          ) : (
+            <span className={`badge ${statusBadge}`}>{statusLabel}</span>
+          )}
+        </div>
+      </Link>
+      {canFanView && (
+        <FanViewLink orgSlug={org!.slug} tournamentSlug={tournament!.slug!} />
+      )}
+    </div>
   );
 }
 

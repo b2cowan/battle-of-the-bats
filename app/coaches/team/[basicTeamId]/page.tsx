@@ -21,12 +21,12 @@ import {
 import { getActivePremiumPortalSlug } from '@/lib/coach-team-page';
 import HelpButton from '@/components/help/HelpButton';
 import TeamHQ from '@/components/coaches/TeamHQ';
-import CoachGameAlertsRow from '@/components/coaches/CoachGameAlertsRow';
-import { pickAlertRegistration } from '@/lib/coach-alert-registration';
+import { pickFanViewRegistration } from '@/lib/coach-alert-registration';
+import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
 import ScopeShelf from '@/components/coaches/ScopeShelf';
-import { Rocket, Users, CalendarDays, Megaphone, ExternalLink } from 'lucide-react';
+import { Rocket, Users, CalendarDays, Megaphone } from 'lucide-react';
 import type { CSSProperties } from 'react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
@@ -141,18 +141,9 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     ? `${registrationStatusLabel(latestHistory.registration.status)} - ${latestHistory.tournament?.name ?? latestHistory.registration.name}`
     : 'No tournaments yet';
 
-  // S5: quiet round trip to the public event from the Overview (mirrors the Tournaments
-  // tab's Fan view link) — the latest publicly-visible registration; the public route
-  // 404s draft and archived tournaments.
-  const fanViewEntry = history.find(
-    entry => entry.org?.slug && entry.tournament?.slug &&
-      (entry.tournament.status === 'active' || entry.tournament.status === 'completed'),
-  ) ?? null;
-
-  // N3b (The Flip P2): the one-tap own-team game-alerts row moved here from the retired public
-  // account sheet. Bind it to the team's alertable registration (shared rule with the premium
-  // overview so the two can't drift); null → the row self-hides.
-  const alertRegistration = pickAlertRegistration(history);
+  // S5 → P3 ("The Flip"): quiet round trip to the public event from the Overview — the shared
+  // eligibility rule (live/upcoming public event, any registration status), same as premium.
+  const fanViewEntry = pickFanViewRegistration(history);
 
   // First-run banner: a brand-new team with nothing entered yet. Falls away on
   // its own once the coach adds anything (no persisted dismiss state needed).
@@ -199,11 +190,12 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         latestHistoryLabel={latestHistoryLabel}
       />
 
-      {/* N3b (The Flip P2): one-tap own-team game alerts, relocated from the retired public account
-          sheet. Self-hides unless the team is in a live public tournament (a game to alert on). */}
-      {alertRegistration && (
+      {/* P3 rev-5 (owner call): the compact "your tournament" block — event card naming the live/
+          upcoming public event + its ⇄ Fan view door. No alerts/follow affordance here — the
+          public side already carries those; the portal doesn't push follow at the coach. */}
+      {fanViewEntry && (
         <section className={shared.section}>
-          <CoachGameAlertsRow teamName={team.name} registration={alertRegistration} />
+          <CoachLiveEventCard event={fanViewEntry} />
         </section>
       )}
 
@@ -288,16 +280,8 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
               );
             })}
           </div>
-          {/* S5: Fan view — the same round trip the Tournaments tab offers, surfaced at
-              the Overview so a mid-event coach can jump to the public space in one tap. */}
-          {fanViewEntry && (
-            <Link
-              href={`/${fanViewEntry.org!.slug}/${fanViewEntry.tournament!.slug}`}
-              className={styles.fanView}
-            >
-              <ExternalLink size={12} strokeWidth={2.2} aria-hidden /> Fan view — public schedule &amp; live scores
-            </Link>
-          )}
+          {/* The Fan view door for a live event lives in the CoachLiveEventCard block up top
+              (P3 rev-4) — no duplicate link down here. */}
           </>
         )}
       </section>

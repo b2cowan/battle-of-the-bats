@@ -88,6 +88,14 @@
 }
 
 /* ── Registration card ────────────────────────────────────────────────────── */
+/* Card + its secondary "⇄ Fan view" link stacked ("The Flip" P3, shared FanViewLink) — the
+   card keeps its whole-surface click; the flip door sits on its own line just beneath. */
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .card {
   display: flex;
   align-items: center;

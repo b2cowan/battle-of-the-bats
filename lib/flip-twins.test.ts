@@ -8,9 +8,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   resolveFlip,
+  resolveScorekeeperFlip,
   primaryTarget,
   parseReturnMemory,
   flipOriginLabel,
+  publicGamePageHref,
+  publicTeamPageHref,
   type FlipContext,
   type FlipResolution,
 } from './flip-twins.ts';
@@ -104,12 +107,70 @@ test('gameId is url-encoded', () => {
 
 // ── Coach / official hats (P3 seed) ──────────────────────────────────────────────────────────────
 
-test('coach + official surfaces flip to the public Schedule, reading "Public site"', () => {
+test('coach surfaces flip to the event front page; official to the Schedule — both read "Public site"', () => {
+  // Coach → the public Overview (owner call 2026-07-23: "see it as fans do" lands on the front page).
+  const coach = single(resolveFlip({ pathname: `/${ORG}/coaches`, direction: 'to-public', hat: 'coach', ctx: liveCtx }));
+  assert.equal(coach.href, `/${ORG}/${SLUG}`);
+  assert.equal(coach.label, 'Public site');
+  // Official → the Schedule (scores are the scorekeeper's whole job).
+  const official = single(resolveFlip({ pathname: `/${ORG}/scorekeeper`, direction: 'to-public', hat: 'official', ctx: liveCtx }));
+  assert.equal(official.href, `/${ORG}/${SLUG}/schedule`);
+  assert.equal(official.label, 'Public site');
+});
+
+test('coach + official with NO tournament in context fall back to the org public root (never `//schedule`)', () => {
   for (const hat of ['coach', 'official'] as const) {
-    const target = single(resolveFlip({ pathname: `/${ORG}/coaches`, direction: 'to-public', hat, ctx: liveCtx }));
-    assert.equal(target.href, `/${ORG}/${SLUG}/schedule`);
-    assert.equal(target.label, 'Public site');
+    for (const tournamentSlug of [undefined, null, ''] as const) {
+      const target = single(resolveFlip({
+        pathname: `/${ORG}/coaches`,
+        direction: 'to-public',
+        hat,
+        ctx: { orgSlug: ORG, tournamentSlug },
+      }));
+      assert.equal(target.href, `/${ORG}`, `slug=${JSON.stringify(tournamentSlug)}`);
+      assert.equal(target.label, 'Public site');
+    }
   }
+});
+
+// ── Scorekeeper header pill (P3): direct / chooser / org fallback ────────────────────────────────
+
+test('scorekeeper flip: one tournament in view goes direct to its public Schedule', () => {
+  const res = resolveScorekeeperFlip({ orgSlug: ORG, tournaments: [{ name: 'Summer Slam', slug: SLUG }] });
+  assert.equal(single(res).href, `/${ORG}/${SLUG}/schedule`);
+  assert.equal(single(res).label, 'Public site');
+});
+
+test('scorekeeper flip: two or more tournaments open the chooser, one row per event', () => {
+  const res = resolveScorekeeperFlip({
+    orgSlug: ORG,
+    tournaments: [
+      { name: 'Summer Slam', slug: SLUG },
+      { name: 'Fall Kickoff', slug: 'fall-kickoff' },
+    ],
+  });
+  assert.equal(res.kind, 'multi');
+  const multi = res as Extract<FlipResolution, { kind: 'multi' }>;
+  assert.equal(multi.label, 'Public site');
+  assert.deepEqual(multi.targets.map(t => t.href), [
+    `/${ORG}/${SLUG}/schedule`,
+    `/${ORG}/fall-kickoff/schedule`,
+  ]);
+  assert.deepEqual(multi.targets.map(t => t.label), ['Summer Slam', 'Fall Kickoff']);
+  assert.ok(multi.targets.every(t => t.sublabel === 'Public schedule'));
+});
+
+test('scorekeeper flip: no tournaments in view falls back to the org public site (pill never absent)', () => {
+  const target = single(resolveScorekeeperFlip({ orgSlug: ORG, tournaments: [] }));
+  assert.equal(target.href, `/${ORG}`);
+  assert.equal(target.label, 'Public site');
+});
+
+// ── Coach public-link helpers (single-sourced base construction) ─────────────────────────────────
+
+test('publicGamePageHref and publicTeamPageHref build the public game/team page routes', () => {
+  assert.equal(publicGamePageHref(liveCtx, 'game-1'), `/${ORG}/${SLUG}/schedule/game-1`);
+  assert.equal(publicTeamPageHref(liveCtx, 'team-1'), `/${ORG}/${SLUG}/teams/team-1`);
 });
 
 // ── to-role: public page → admin screen (reverse map) ────────────────────────────────────────────
@@ -179,6 +240,14 @@ test('flipOriginLabel names admin screens and public sections from the pathname'
   assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/schedule`), 'Schedule');
   assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/standings`), 'Standings');
   assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/schedule/game-123`), 'Schedule'); // game page → its section
+});
+
+test('flipOriginLabel names the coach portals and scorekeeper shell (never a raw id segment)', () => {
+  assert.equal(flipOriginLabel('/coaches/tournaments/3f2a-uuid'), 'Coach view'); // free portal record
+  assert.equal(flipOriginLabel('/coaches/team/abc123'), 'Coach view');
+  assert.equal(flipOriginLabel(`/${ORG}/coaches/teams/t1/tournaments/r1`), 'Coach view'); // premium record
+  assert.equal(flipOriginLabel(`/${ORG}/coaches`), 'Coach view');
+  assert.equal(flipOriginLabel(`/${ORG}/scorekeeper`), 'Scorekeeper');
 });
 
 // ── Staff scoping: nearest permitted screen, never a 403 ─────────────────────────────────────────

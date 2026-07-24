@@ -494,7 +494,7 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['link to rep team', 'rep team', 'connect registration', 'recognize coach', 'public page coach', 'rep coach recognition', 'paid portal coach'],
           answer: (
             <>
-              <p>On <strong>League</strong> and <strong>Club</strong> plans, expand the team&rsquo;s registration row and use <strong>Link to rep team</strong> to attach it to one of your organization&rsquo;s rep teams. Once linked, that team&rsquo;s coaches are recognized as coaches on your <strong>public tournament pages</strong> &mdash; the <strong>flip pill</strong> in the top-right corner takes them straight to their coach view.</p>
+              <p>On <strong>League</strong> and <strong>Club</strong> plans, expand the team&rsquo;s registration row and use <strong>Link to rep team</strong> to attach it to one of your organization&rsquo;s rep teams. Once linked, that team&rsquo;s coaches are recognized as coaches on your <strong>public tournament pages</strong> &mdash; the <strong>flip pill</strong> in the top-right corner takes them straight to their team&rsquo;s <strong>tournament record</strong> for this event in their coach portal.</p>
               <p>Coaches whose email is already on the registration are recognized <em>automatically</em>, so you only need this when a team was registered under a shared office email that doesn&rsquo;t match any coach. You can pick a different team or <strong>unlink</strong> at any time. You can only link to rep teams in <strong>your own organization</strong>.</p>
             </>
           ),
@@ -820,8 +820,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Game Day & Scores',
       heading: 'Hand scoring to scorekeepers',
       summary: 'Set up scorekeepers and the Staff Kit so volunteers can enter scores from the field.',
-      keywords: ['scorekeepers', 'scorekeeper', 'staff kit', 'volunteer', 'day of scoring', 'submit score', 'game day'],
-      searchText: 'scorekeepers staff kit qr code volunteer check-in gate scorekeeper view day of game scoring submit score results scoring pending review finalization',
+      keywords: ['scorekeepers', 'scorekeeper', 'staff kit', 'volunteer', 'day of scoring', 'submit score', 'game day', 'public site pill'],
+      searchText: 'scorekeepers staff kit qr code volunteer check-in gate scorekeeper view day of game scoring submit score results scoring pending review finalization public site pill flip public schedule chooser',
       links: [
         { label: 'Staff Kit', href: '../tournaments/staff-kit' },
         { label: 'Scorekeeper View', href: '../../scorekeeper' },
@@ -830,6 +830,7 @@ const tournamentsHelp: HelpPageContent = {
       content: (
         <>
           <p>You do not have to enter every score yourself. Scorekeepers use <strong>Scorekeeper View</strong> at <code>/{'{orgSlug}'}/scorekeeper</code> — a field-focused interface that only shows assigned games, no admin access required.</p>
+          <p>Scorekeeper View also carries a <strong>⇄ Public site</strong> pill in its header — one tap opens the public schedule for the event being scored, so a volunteer can confirm a posted score is live without leaving their station. If two of your events run on the same day, the pill opens a small chooser with one row per tournament.</p>
           <p>Use the <strong>Staff Kit</strong> page to distribute scorekeeper and gate volunteer links. Staff Kit generates a QR code and copy-link for each volunteer surface (Scorekeeper View and Check-in/Gate), so you can print one sheet and post it at the volunteer table.</p>
           <p>Gate check-in is a separate surface at <code>/{'{orgSlug}'}/check-in</code>. Use it to run team arrivals at the gate without giving volunteers full admin access. Open the <strong>Gate view</strong> link from the Check-in admin page.</p>
           <p>Volunteers still authenticate when they arrive at each surface — Staff Kit links do not bypass login.</p>

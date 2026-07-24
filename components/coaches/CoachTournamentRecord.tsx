@@ -28,6 +28,8 @@ import CoachWelcomeBanner from '@/components/coaches/CoachWelcomeBanner';
 import CoachNextSteps, { type CoachNextStep } from '@/components/coaches/CoachNextSteps';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import SharePageButton from '@/components/public/SharePageButton';
+import FlipPill from '@/components/shared/FlipPill';
+import { resolveFlip, publicHref, publicGamePageHref, publicTeamPageHref } from '@/lib/flip-twins';
 import { parseRosterRequirements } from '@/lib/roster-requirements';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import type { GameStatus, TournamentSettings } from '@/lib/types';
@@ -207,7 +209,14 @@ export default async function CoachTournamentRecord({
   // schedule is published but the tournament isn't yet public, the schedule still
   // renders statically (names + final scores), just without links / polling / follow.
   const tournamentIsPublic = tournament?.status === 'active' || tournament?.status === 'completed';
-  const canLinkPublic = Boolean(scheduleVisible && tournamentIsPublic && org?.slug && tournament?.slug);
+
+  // "The Flip" P3: the one public-site context every public link on this page resolves through
+  // (header pill, per-game links, standings, share) — single-sourced so they can't drift apart.
+  // Null while the tournament isn't publicly visible (draft/hidden/archived) → no pill, no links.
+  const publicCtx = tournamentIsPublic && org?.slug && tournament?.slug
+    ? { orgSlug: org.slug, tournamentSlug: tournament.slug }
+    : null;
+  const canLinkPublic = Boolean(scheduleVisible && publicCtx);
 
   const initialGames: CoachScheduleGame[] = teamGames.map(g => {
     const isHome = g.home_team_id === teamId;
@@ -222,7 +231,7 @@ export default async function CoachTournamentRecord({
     const opponentName = realOpponentName ?? opponentPlaceholder ?? 'TBD';
     return {
       id: g.id,
-      href: canLinkPublic ? `/${org!.slug}/${tournament!.slug}/schedule/${g.id}` : null,
+      href: canLinkPublic ? publicGamePageHref(publicCtx!, g.id) : null,
       dateLabel: formatGameDateLabel(g.game_date),
       timeLabel: formatGameTimeLabel(g.game_time),
       date: g.game_date,
@@ -371,9 +380,9 @@ export default async function CoachTournamentRecord({
       )
     : null;
   // Standings link + team-profile share exist only when the tournament is public (active|completed).
-  const canShareAfterglow = Boolean(isResultPhase && tournamentIsPublic && org?.slug && tournament?.slug);
-  const standingsHref = canShareAfterglow ? `/${org!.slug}/${tournament!.slug}/standings` : null;
-  const shareUrl = canShareAfterglow ? `/${org!.slug}/${tournament!.slug}/teams/${teamId}` : null;
+  const canShareAfterglow = Boolean(isResultPhase && publicCtx);
+  const standingsHref = canShareAfterglow ? publicHref(publicCtx!, 'standings') : null;
+  const shareUrl = canShareAfterglow ? publicTeamPageHref(publicCtx!, teamId) : null;
   // The own-team express-interest ask is a FREE-tier nudge — never resolve it (or render it)
   // for a paying Premium coach (suppressUpsell).
   const afterglowBasicTeamId = isResultPhase && !suppressUpsell
@@ -389,10 +398,11 @@ export default async function CoachTournamentRecord({
     welcome && (team.status === 'pending' || team.status === 'waitlist') && Boolean(org?.slug && tournament?.slug);
   const welcomeResources: Array<{ href: string; label: string }> = [];
   if (showWelcome && org?.slug && tournament?.slug) {
-    const base = `/${org.slug}/${tournament.slug}`;
-    welcomeResources.push({ href: base, label: 'Tournament Home' });
-    if (!hiddenPages.includes('schedule')) welcomeResources.push({ href: `${base}/schedule`, label: 'Schedule' });
-    if (!hiddenPages.includes('rules')) welcomeResources.push({ href: `${base}/rules`, label: 'Tournament Rules' });
+    // Not gated on tournamentIsPublic (matches prior behavior for a just-registered pending team).
+    const welcomeCtx = { orgSlug: org.slug, tournamentSlug: tournament.slug };
+    welcomeResources.push({ href: publicHref(welcomeCtx, 'overview'), label: 'Tournament Home' });
+    if (!hiddenPages.includes('schedule')) welcomeResources.push({ href: publicHref(welcomeCtx, 'schedule'), label: 'Schedule' });
+    if (!hiddenPages.includes('rules')) welcomeResources.push({ href: publicHref(welcomeCtx, 'rules'), label: 'Tournament Rules' });
   }
 
   const isPending = coachPhase === 'pending';
@@ -457,6 +467,11 @@ export default async function CoachTournamentRecord({
             </p>
           )}
         </div>
+        {/* "The Flip" P3: this page IS one event, so it carries the coach corner pill — the
+            "check my fees ↔ see us live" loop (landing is context-driven, not page-matched). */}
+        {publicCtx && (
+          <FlipPill resolution={resolveFlip({ direction: 'to-public', hat: 'coach', ctx: publicCtx })} />
+        )}
       </div>
 
       <TeamHQ

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 
 type Params = { params: Promise<{ orgSlug: string }> };
@@ -9,6 +10,7 @@ type Params = { params: Promise<{ orgSlug: string }> };
 type TournamentRow = {
   id: string;
   name: string;
+  slug: string | null;
   year: number;
   status: string | null;
   require_score_finalization: boolean | null;
@@ -88,6 +90,10 @@ interface OfficialScorePayload {
   date: string;
   tournamentIds: string[];
   scorePolicyByTournamentId: Record<string, boolean>;
+  /** Publicly-visible (active/completed, slug present) tournaments in scope — the flip-pill set
+   *  (typed by the resolver that consumes it, so the two can't diverge). Present even when the
+   *  day has no games, so the header door still opens the right event. */
+  publicTournaments: ScorekeeperFlipTournament[];
   cards: OfficialScoreCard[];
   venues: Venue[];
   divisions: Division[];
@@ -106,11 +112,13 @@ function emptyPayload(
   tournamentIds: string[],
   state: OfficialScoreEmptyState,
   scorePolicyByTournamentId: Record<string, boolean> = {},
+  publicTournaments: ScorekeeperFlipTournament[] = [],
 ): OfficialScorePayload {
   return {
     date,
     tournamentIds,
     scorePolicyByTournamentId,
+    publicTournaments,
     cards: [],
     venues: [],
     divisions: [],
@@ -209,7 +217,7 @@ export async function getScore(req: Request, { params }: Params) {
 
   let tournamentQuery = supabaseAdmin
     .from('tournaments')
-    .select('id, name, year, status, require_score_finalization')
+    .select('id, name, slug, year, status, require_score_finalization')
     .eq('org_id', ctx.org.id)
     .neq('status', 'archived')
     .order('year', { ascending: false })
@@ -239,6 +247,11 @@ export async function getScore(req: Request, { params }: Params) {
 
   const tournaments = (tournamentRows ?? []) as TournamentRow[];
   const tournamentIds = tournaments.map(tournament => tournament.id);
+  // The flip-pill set: only events with a public site to open (a draft has none). An assigned
+  // scorekeeper's scope can include drafts; those score fine but don't appear in the pill.
+  const publicTournaments: ScorekeeperFlipTournament[] = tournaments
+    .filter(t => t.slug && (t.status === 'active' || t.status === 'completed'))
+    .map(t => ({ name: t.name, slug: t.slug! }));
   const scorePolicyByTournamentId = Object.fromEntries(
     tournaments.map(tournament => [
       tournament.id,
@@ -308,6 +321,7 @@ export async function getScore(req: Request, { params }: Params) {
         'Your tournament access is set, but there are no games scheduled for today.',
       ),
       scorePolicyByTournamentId,
+      publicTournaments,
     ));
   }
 
@@ -369,6 +383,7 @@ export async function getScore(req: Request, { params }: Params) {
     date,
     tournamentIds,
     scorePolicyByTournamentId,
+    publicTournaments,
     cards,
     venues,
     divisions,

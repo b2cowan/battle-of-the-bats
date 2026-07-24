@@ -12,7 +12,8 @@ import { deriveCoachLifecycleChip, lifecycleChipClassKey } from '@/lib/coach-tou
 import { teamColor, teamInitials } from '@/lib/team-color';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
-import { Trophy, ExternalLink } from 'lucide-react';
+import { Trophy } from 'lucide-react';
+import FanViewLink from '@/components/shared/FanViewLink';
 import portalStyles from '../../../coaches-portal.module.css';
 import styles from './tournaments.module.css';
 
@@ -79,15 +80,12 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
                     </span>
                   )}
                 </Link>
-                {/* Fan view — the round trip back to the event's public space (Phase 3
-                    connective tissue): schedules, live scores, standings as fans see them.
-                    Only for publicly-visible lifecycles — the public route 404s draft
-                    and archived tournaments (getPublicTournamentBySlug status filter). */}
+                {/* ⇄ Fan view — the round trip back to the event's public space ("The Flip" P3,
+                    shared component). Only for publicly-visible lifecycles — the public route
+                    404s draft and archived tournaments (getPublicTournamentBySlug status filter). */}
                 {org?.slug && tournament?.slug &&
                   (tournament.status === 'active' || tournament.status === 'completed') && (
-                  <Link href={`/${org.slug}/${tournament.slug}`} className={styles.fanView}>
-                    <ExternalLink size={12} strokeWidth={2.2} aria-hidden /> Fan view — public schedule &amp; live scores
-                  </Link>
+                  <FanViewLink orgSlug={org.slug} tournamentSlug={tournament.slug} />
                 )}
               </div>
             );

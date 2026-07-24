@@ -15,8 +15,8 @@ import type { TournamentViewer, ViewerHat } from '@/lib/tournament-viewer-hats';
  * NEVER server-rendered into SW-cached public HTML) and maps them to the flip control's target(s):
  *   • admin hat → the page-matched admin screen (public Schedule → admin Schedule, a public game →
  *     admin Results for that game), carrying `?tournamentId=` so it lands on THIS event;
- *   • coach / official hat → the record/scorekeeper path the viewer API resolved (P3 refines the
- *     coach landing to be record-aware — for now the API's context path is the destination).
+ *   • coach / official hat → the path the viewer API resolved; since P3 the coach href is
+ *     record-aware (the team's tournament record for THIS event — the ratified reverse trip).
  * One hat → a direct single flip; several → the "Roles" chooser popover. Returns null when there's
  * no hat / signed-out / still resolving, so the pill renders nothing and the fan header keeps its
  * corner. Sign-in tracking reuses the shared `useClientSignedIn` primitive (no network for fans).

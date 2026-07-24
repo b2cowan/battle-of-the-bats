@@ -1,0 +1,83 @@
+/* The overview's compact "your tournament" block — event card + the ⇄ Fan view door + (via
+   children) the game-alerts row. Chip language mirrors the portal's lifecycle chips
+   (coaches-portal.module.css) so the same event reads the same on the Overview and the
+   Tournaments list: LIVE = ink-on-lime with the pulsing dot, UPCOMING = info tint. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.7rem;
+  padding: 0.8rem 1rem;
+  background: var(--hud-surface);
+  border: 1px solid var(--border-2);
+  border-radius: 12px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: var(--radius-sm);
+  padding: 0.18rem 0.5rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.chipLive {
+  background: var(--logic-lime);
+  color: var(--on-lime);
+}
+
+/* Warm portal: keep the LIVE fill TRUE lime + dark ink (the token remap alone gives an
+   olive fill — banned, E3 — under unremapped --on-lime ink). Mirrors the lifecycle-chip
+   warm restore in coaches-portal.module.css. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .chipLive {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+.chipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex: 0 0 auto;
+  animation: coachEventDotPulse 1.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipDot { animation: none; }
+}
+
+.chipUpcoming {
+  background: rgba(var(--info-rgb), 0.1);
+  border: 1px solid rgba(var(--info-rgb), 0.45);
+  color: var(--info);
+}
+
+.name {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--white);
+  min-width: 0;
+}
+
+.dates {
+  font-size: 0.76rem;
+  color: var(--white-50);
+}
+
+@keyframes coachEventDotPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}

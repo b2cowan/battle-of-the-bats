@@ -16,6 +16,8 @@ import {
   X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
+import { useScorekeeperFlip } from '@/components/volunteer/ScorekeeperFlip';
+import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
 import styles from './scorekeeper.module.css';
@@ -61,6 +63,8 @@ interface ScorekeeperResponse {
   date: string;
   tournamentIds: string[];
   scorePolicyByTournamentId: Record<string, boolean>;
+  /** Publicly-visible tournaments in scope — feeds the header FlipPill ("The Flip" P3). */
+  publicTournaments: ScorekeeperFlipTournament[];
   cards: GameCard[];
   venues: Venue[];
   divisions: Division[];
@@ -153,6 +157,9 @@ export default function ScorekeeperPage() {
   const [scoreState, setScoreState] = useState<ScoreState>('idle');
   const [showScoreErrors, setShowScoreErrors] = useState(false);
 
+  // "The Flip" P3: publish the board's publicly-visible tournaments to the header pill.
+  const setFlipTournaments = useScorekeeperFlip();
+
   const loadGames = useCallback(async () => {
     setLoading(true);
     setNotice(null);
@@ -171,6 +178,7 @@ export default function ScorekeeperPage() {
         setDivisions([]);
         setTournamentIds([]);
         setScorePolicies({});
+        setFlipTournaments([]); // pill falls back to the org public site
 
         if (response.status === 401) {
           // J8-002: a session that lapses mid-shift must offer a way back in, not a dead end.
@@ -202,6 +210,7 @@ export default function ScorekeeperPage() {
       setDivisions(Array.isArray(data.divisions) ? data.divisions : []);
       setTournamentIds(Array.isArray(data.tournamentIds) ? data.tournamentIds : []);
       setScorePolicies(data.scorePolicyByTournamentId ?? {});
+      setFlipTournaments(Array.isArray(data.publicTournaments) ? data.publicTournaments : []);
       setEmptyState(isEmptyState(data.emptyState) ? data.emptyState : null);
     } catch (error) {
       setCards([]);
@@ -209,6 +218,7 @@ export default function ScorekeeperPage() {
       setDivisions([]);
       setTournamentIds([]);
       setScorePolicies({});
+      setFlipTournaments([]);
       setNotice({
         kind: 'danger',
         title: 'Unable to load assignments',
@@ -217,7 +227,7 @@ export default function ScorekeeperPage() {
     } finally {
       setLoading(false);
     }
-  }, [date, orgSlug]);
+  }, [date, orgSlug, setFlipTournaments]);
 
   useEffect(() => {
     const loadTimer = window.setTimeout(() => {

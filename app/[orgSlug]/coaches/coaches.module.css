@@ -1309,6 +1309,15 @@
   gap: 0.5rem;
 }
 
+/* "The Flip" P3: row card + its ⇄ Fan view door stacked (shared FanViewLink component) — the
+   card keeps its whole-surface click (opens the record); the flip link sits on its own line
+   just beneath, mirroring the free portal's list treatment. */
+.tournamentHistoryEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
 .tournamentHistoryItem {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

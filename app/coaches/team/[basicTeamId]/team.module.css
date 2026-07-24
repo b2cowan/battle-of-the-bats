@@ -278,19 +278,5 @@
   }
 }
 
-/* S5: quiet Fan view link under the tournament history — same treatment as the
-   Tournaments tab's per-entry link (tournaments.module.css .fanView). */
-.fanView {
-  align-self: flex-start;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin-top: 0.5rem;
-  padding: 0.15rem 0.2rem;
-  font-family: var(--font-data, monospace);
-  font-size: 0.7rem;
-  letter-spacing: 0.03em;
-  color: var(--white-50);
-  text-decoration: none;
-}
-.fanView:hover { color: var(--white-90); text-decoration: underline; }
+/* (P3 rev-4) The Overview's Fan view door moved into the CoachLiveEventCard block at the top of
+   the page — the old under-history link slot is gone. */
