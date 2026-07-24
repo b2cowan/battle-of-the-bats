@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureError } from '@/lib/observability';
 
 function json(data: unknown, status = 200) {
   return NextResponse.json(data, { status });
@@ -65,7 +65,21 @@ export const POST = withObservability(async (req: NextRequest) => {
     ) {
       return json({ error: 'email_exists' }, 409);
     }
-    console.error('[coach-signup] createUser error:', error);
+    // Pipe the REAL failure into the existing observability pipeline (same path org signup /
+    // org create already use) so the platform-admin issue AND the production alert email carry
+    // the actual cause — e.g. an auth signing-key error — instead of a generic "HTTP 500". Signup
+    // is on the critical-route allowlist, so this escalates to a critical alert on first occurrence.
+    // captureError never throws and, by marking the request captured, replaces withObservability's
+    // generic returned-5xx fallback with this rich attribution (no double-count).
+    await captureError(error, {
+      statusCode: 500,
+      user: { email },
+      requestContext: {
+        operation: 'supabaseAdmin.auth.admin.createUser',
+        supabaseStatus: error.status ?? null,
+        supabaseCode: (error as { code?: string }).code ?? null,
+      },
+    });
     return json({ error: 'Account could not be created. Please try again.' }, 500);
   }
 

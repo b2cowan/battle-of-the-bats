@@ -550,7 +550,14 @@ export async function linkTournamentRegistrationToBasicCoachTeam(params: {
     email,
     params.registrationId,
   );
-  if (!registration) throw new Error('This registration is not linked to your signed-in email.');
+  if (!registration) {
+    // Keep the literal "not linked" phrase: the basic-teams POST route maps this error to a 403
+    // by matching that substring — dropping it would fall through to a 500 and (wrongly) trip the
+    // observability error-alert pipeline for a benign wrong-account condition.
+    throw new Error(
+      `This registration is not linked to the email you're signed in as (${email}). Sign in with the invited email to continue.`,
+    );
+  }
 
   const existingBasicTeamId = await findLinkedBasicTeamForRegistration(params.userId, params.registrationId);
   if (existingBasicTeamId) {

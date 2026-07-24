@@ -226,6 +226,14 @@ function JoinForm() {
     }
   }
 
+  async function handleSwitchAccount() {
+    const { signOut } = await import('@/lib/auth');
+    await signOut();
+    // Reload the same invite URL, now signed-out: the signed-out flow re-runs and offers
+    // sign-in / create-account for the INVITED email (emailParam) instead of dead-ending.
+    window.location.reload();
+  }
+
   const loginNext = registrationId
     ? `/coaches/join?registered=1&registrationId=${encodeURIComponent(registrationId)}&email=${encodeURIComponent(emailParam)}&next=${encodeURIComponent(nextParam)}`
     : nextParam;
@@ -274,6 +282,49 @@ function JoinForm() {
               Create a new account
             </button>
           </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Signed in, but this session can't reach the invited registration (no pending registration
+  // resolved) — the classic "already signed in as a DIFFERENT coach than the invite is addressed
+  // to". The link POST would 403 with a cryptic "not linked to your signed-in email" and the
+  // interstitial's subtitle silently degrades to the generic "This registration". Detect it and
+  // offer to switch accounts instead of showing a doomed "Choose Team Profile" form.
+  const signedInMismatch =
+    Boolean(signedInEmail) &&
+    Boolean(registrationId) &&
+    !pendingRegistration &&
+    (!emailParam || signedInEmail!.trim().toLowerCase() !== emailParam.trim().toLowerCase());
+
+  if (signedInMismatch) {
+    return (
+      <div className={styles.card}>
+        <div className={styles.header}>
+          <div className={styles.iconWrap}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+              <circle cx="12" cy="7" r="4" />
+            </svg>
+          </div>
+          <h1 className={styles.title}>You&apos;re Signed In As a Different Account</h1>
+          <p className={styles.sub}>
+            {emailParam ? (
+              <>This invite is for <strong>{emailParam}</strong>, but you&apos;re signed in as{' '}
+              <strong>{signedInEmail}</strong>. Sign out and continue with the invited email to open this team.</>
+            ) : (
+              <>You&apos;re signed in as <strong>{signedInEmail}</strong>, which isn&apos;t linked to this registration.</>
+            )}
+          </p>
+        </div>
+        <div className={styles.form}>
+          <button type="button" className="btn btn-lime" style={{ width: '100%' }} onClick={handleSwitchAccount}>
+            {emailParam ? `Sign out & continue as ${emailParam}` : 'Sign out & use a different account'}
+          </button>
+          <Link href={nextParam} className={styles.footerLink} style={{ textAlign: 'center', display: 'block', marginTop: '0.75rem' }}>
+            Stay signed in as {signedInEmail}
+          </Link>
         </div>
       </div>
     );
