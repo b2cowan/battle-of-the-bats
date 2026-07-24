@@ -15,7 +15,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { planDowngradedHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import type { OrgPlan } from '@/lib/types';
-import { captureError, withObservability } from '@/lib/observability';
+import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 
 type ConfirmBody = {
   targetPlan?: unknown;
@@ -90,7 +90,7 @@ export const POST = withObservability(async (req: Request) => {
     .select('id')
     .single();
   if (intentError) {
-    return Response.json({ error: intentError.message }, { status: 500 });
+    return captureAndJson(intentError, { error: intentError.message }, 500);
   }
 
   if (retainedTournaments.length > 0) {
@@ -100,7 +100,7 @@ export const POST = withObservability(async (req: Request) => {
       .update({ status: 'archived', is_active: false })
       .eq('org_id', ctx.org.id)
       .in('id', retainedIds);
-    if (archiveError) return Response.json({ error: archiveError.message }, { status: 500 });
+    if (archiveError) return captureAndJson(archiveError, { error: archiveError.message }, 500);
 
     const { error: recordError } = await supabaseAdmin
       .from('billing_retained_records')
@@ -123,7 +123,7 @@ export const POST = withObservability(async (req: Request) => {
           targetPlan,
         },
       })));
-    if (recordError) return Response.json({ error: recordError.message }, { status: 500 });
+    if (recordError) return captureAndJson(recordError, { error: recordError.message }, 500);
   }
 
   const { error: orgError } = await supabaseAdmin
@@ -134,7 +134,7 @@ export const POST = withObservability(async (req: Request) => {
       subscription_status: 'active',
     })
     .eq('id', ctx.org.id);
-  if (orgError) return Response.json({ error: orgError.message }, { status: 500 });
+  if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
 
   await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_downgrade_confirmed', {
     fromPlan: ctx.org.planId,
@@ -200,7 +200,7 @@ export const POST = withObservability(async (req: Request) => {
     } catch (stripeErr) {
       const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
       console.error('[downgrade/confirm] Stripe reconciliation failed:', message);
-      void captureError(stripeErr, { ctx, route: '/api/billing/downgrade/confirm', method: 'POST', statusCode: 500 });
+      await captureError(stripeErr, { ctx, route: '/api/billing/downgrade/confirm', method: 'POST', statusCode: 500 });
       await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
         action: 'downgrade',
         targetPlan,

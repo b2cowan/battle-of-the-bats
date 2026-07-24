@@ -12,7 +12,7 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import type { OrgPlan } from '@/lib/types';
-import { captureError, withObservability } from '@/lib/observability';
+import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithRole();
@@ -46,7 +46,7 @@ export const POST = withObservability(async (req: Request) => {
     })
     .select('id')
     .single();
-  if (intentError) return Response.json({ error: intentError.message }, { status: 500 });
+  if (intentError) return captureAndJson(intentError, { error: intentError.message }, 500);
 
   if (isTeamWorkspaceCancellation) {
     const { data: workspace, error: workspaceError } = await supabaseAdmin
@@ -58,7 +58,7 @@ export const POST = withObservability(async (req: Request) => {
         stripe_subscription_id: string | null;
         billing_mode: string | null;
       }>();
-    if (workspaceError) return Response.json({ error: workspaceError.message }, { status: 500 });
+    if (workspaceError) return captureAndJson(workspaceError, { error: workspaceError.message }, 500);
     if (!workspace) return Response.json({ error: 'Coaches Portal workspace was not found.' }, { status: 404 });
 
     if (preflight.tournaments.length > 0) {
@@ -68,7 +68,7 @@ export const POST = withObservability(async (req: Request) => {
         .update({ status: 'archived', is_active: false })
         .eq('org_id', ctx.org.id)
         .in('id', retainedIds);
-      if (archiveError) return Response.json({ error: archiveError.message }, { status: 500 });
+      if (archiveError) return captureAndJson(archiveError, { error: archiveError.message }, 500);
 
       await supabaseAdmin
         .from('billing_retained_records')
@@ -97,7 +97,7 @@ export const POST = withObservability(async (req: Request) => {
             fromPlan: ctx.org.planId,
           },
         })));
-      if (tournamentRecordError) return Response.json({ error: tournamentRecordError.message }, { status: 500 });
+      if (tournamentRecordError) return captureAndJson(tournamentRecordError, { error: tournamentRecordError.message }, 500);
     }
 
     const { error: accountRecordError } = await supabaseAdmin
@@ -118,7 +118,7 @@ export const POST = withObservability(async (req: Request) => {
           basicTournamentRecordsRemainAvailable: true,
         },
       });
-    if (accountRecordError) return Response.json({ error: accountRecordError.message }, { status: 500 });
+    if (accountRecordError) return captureAndJson(accountRecordError, { error: accountRecordError.message }, 500);
 
     const now = new Date().toISOString();
     const [{ error: workspaceUpdateError }, { error: entitlementError }, { error: orgError }] = await Promise.all([
@@ -139,9 +139,9 @@ export const POST = withObservability(async (req: Request) => {
         })
         .eq('id', ctx.org.id),
     ]);
-    if (workspaceUpdateError) return Response.json({ error: workspaceUpdateError.message }, { status: 500 });
-    if (entitlementError) return Response.json({ error: entitlementError.message }, { status: 500 });
-    if (orgError) return Response.json({ error: orgError.message }, { status: 500 });
+    if (workspaceUpdateError) return captureAndJson(workspaceUpdateError, { error: workspaceUpdateError.message }, 500);
+    if (entitlementError) return captureAndJson(entitlementError, { error: entitlementError.message }, 500);
+    if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
 
     await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'coaches_portal_cancellation_confirmed', {
       fromPlan: ctx.org.planId,
@@ -176,7 +176,7 @@ export const POST = withObservability(async (req: Request) => {
       } catch (stripeErr) {
         const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
         console.error('[cancel/confirm] Coaches Portal Stripe reconciliation failed:', message);
-        void captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
+        await captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
         await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
           action: 'coaches_portal_cancellation',
           stripeSubscriptionId,
@@ -222,7 +222,7 @@ export const POST = withObservability(async (req: Request) => {
       .update({ status: 'archived', is_active: false })
       .eq('org_id', ctx.org.id)
       .in('id', retainedIds);
-    if (archiveError) return Response.json({ error: archiveError.message }, { status: 500 });
+    if (archiveError) return captureAndJson(archiveError, { error: archiveError.message }, 500);
 
     // Supersede any existing active retained records for these tournaments before
     // inserting fresh ones — prevents unique constraint violations if a prior retention
@@ -255,7 +255,7 @@ export const POST = withObservability(async (req: Request) => {
           fromPlan: ctx.org.planId,
         },
       })));
-    if (recordError) return Response.json({ error: recordError.message }, { status: 500 });
+    if (recordError) return captureAndJson(recordError, { error: recordError.message }, 500);
   }
 
   const { error: accountRecordError } = await supabaseAdmin
@@ -274,7 +274,7 @@ export const POST = withObservability(async (req: Request) => {
         moduleShutdown: preflight.shutsDown,
       },
     });
-  if (accountRecordError) return Response.json({ error: accountRecordError.message }, { status: 500 });
+  if (accountRecordError) return captureAndJson(accountRecordError, { error: accountRecordError.message }, 500);
 
   const { error: orgError } = await supabaseAdmin
     .from('organizations')
@@ -285,7 +285,7 @@ export const POST = withObservability(async (req: Request) => {
       billing_suspension_reason: reason,
     })
     .eq('id', ctx.org.id);
-  if (orgError) return Response.json({ error: orgError.message }, { status: 500 });
+  if (orgError) return captureAndJson(orgError, { error: orgError.message }, 500);
 
   await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_cancellation_confirmed', {
     fromPlan: ctx.org.planId,
@@ -323,7 +323,7 @@ export const POST = withObservability(async (req: Request) => {
     } catch (stripeErr) {
       const message = stripeErr instanceof Error ? stripeErr.message : String(stripeErr);
       console.error('[cancel/confirm] Stripe reconciliation failed:', message);
-      void captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
+      await captureError(stripeErr, { ctx, route: '/api/billing/cancel/confirm', method: 'POST', statusCode: 500 });
       await writeOrgBillingAudit(ctx.org.id, ctx.user.id, 'billing_stripe_reconciliation_failed', {
         action: 'cancellation',
         stripeSubscriptionId,

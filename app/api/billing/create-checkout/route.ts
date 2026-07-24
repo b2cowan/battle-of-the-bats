@@ -14,7 +14,7 @@ import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { sendMarketingEmail, cancelScheduledEmail } from '@/lib/email-sender';
 import { buildUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import type { OrgPlan } from '@/lib/types';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 /** Welcome email fires this many days after a user selects Tournament Plus at onboarding. */
 const PLUS_WELCOME_DELAY_DAYS = 1;
@@ -120,10 +120,7 @@ export const POST = withObservability(async (req: Request) => {
       })
       .eq('id', auth.org.id);
     if (orgError) {
-      return new Response(JSON.stringify({ error: orgError.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return captureAndJson(orgError, { error: orgError.message }, 500);
     }
 
     const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, plan.tournamentLimit);
@@ -200,10 +197,7 @@ export const POST = withObservability(async (req: Request) => {
       .eq('id', auth.org.id);
 
     if (orgError) {
-      return new Response(JSON.stringify({ error: orgError.message }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return captureAndJson(orgError, { error: orgError.message }, 500);
     }
 
     await ensureFoundingSeasonCompPeriod(auth.org.id, auth.user.email);

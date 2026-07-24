@@ -10,7 +10,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-teams';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
-import { captureError, withObservability } from '@/lib/observability';
+import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import {
@@ -248,11 +248,11 @@ export const POST = withObservability(async (req: NextRequest) => {
 
     if (divisionError) {
       console.error('Registration division lookup error:', divisionError);
-      return NextResponse.json({ error: 'Unable to confirm division availability. Please try again.' }, { status: 500 });
+      return captureAndJson(divisionError, { error: 'Unable to confirm division availability. Please try again.' }, 500);
     }
     if (tournamentError) {
       console.error('Registration tournament lookup error:', tournamentError);
-      return NextResponse.json({ error: 'Unable to confirm tournament availability. Please try again.' }, { status: 500 });
+      return captureAndJson(tournamentError, { error: 'Unable to confirm tournament availability. Please try again.' }, 500);
     }
     if (!tournament || tournament.status !== 'active') {
       return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
@@ -295,7 +295,7 @@ export const POST = withObservability(async (req: NextRequest) => {
 
       if (orgError) {
         console.error('Registration organization lookup error:', orgError);
-        return NextResponse.json({ error: 'Unable to confirm tournament availability. Please try again.' }, { status: 500 });
+        return captureAndJson(orgError, { error: 'Unable to confirm tournament availability. Please try again.' }, 500);
       }
 
       organization = orgData;
@@ -331,7 +331,7 @@ export const POST = withObservability(async (req: NextRequest) => {
 
     if (slotError) {
       console.error('Registration slot lookup error:', slotError);
-      return NextResponse.json({ error: 'Unable to confirm division availability. Please try again.' }, { status: 500 });
+      return captureAndJson(slotError, { error: 'Unable to confirm division availability. Please try again.' }, 500);
     }
 
     const slotConfigured = (slotCount ?? 0) > 0;
@@ -346,7 +346,7 @@ export const POST = withObservability(async (req: NextRequest) => {
 
       if (countError) {
         console.error('Registration count lookup error:', countError);
-        return NextResponse.json({ error: 'Unable to confirm division availability. Please try again.' }, { status: 500 });
+        return captureAndJson(countError, { error: 'Unable to confirm division availability. Please try again.' }, 500);
       }
 
       if (division.capacity && (regCount ?? 0) >= division.capacity) {
@@ -373,7 +373,7 @@ export const POST = withObservability(async (req: NextRequest) => {
 
     if (error) {
       console.error('Registration insert error:', error);
-      return NextResponse.json({ error: 'Registration could not be submitted. Please try again.' }, { status: 500 });
+      return captureAndJson(error, { error: 'Registration could not be submitted. Please try again.' }, 500);
     }
 
     if (data?.id && signedInCoach && signedInCoach.email === email) {
@@ -446,7 +446,7 @@ export const POST = withObservability(async (req: NextRequest) => {
             .upload(path, bytes, { contentType: answer.file.type || 'application/octet-stream' });
           if (uploadError) {
             console.error('Registration custom file upload error:', uploadError);
-            return NextResponse.json({ error: 'Registration file upload failed. Please try again.' }, { status: 500 });
+            return captureAndJson(uploadError, { error: 'Registration file upload failed. Please try again.' }, 500);
           }
           answerRows.push({ fieldId: answer.field.id, fileUrl: path });
         } else {
@@ -541,7 +541,7 @@ export const POST = withObservability(async (req: NextRequest) => {
     return NextResponse.json({ ok: true, id: data.id, status: finalStatus });
   } catch (e) {
     console.error('Register route error:', e);
-    void captureError(e, { route: '/api/register', method: 'POST', statusCode: 500 });
+    await captureError(e, { route: '/api/register', method: 'POST', statusCode: 500 });
     return NextResponse.json({ error: 'Registration could not be submitted. Please try again.' }, { status: 500 });
   }
 }, { route: '/api/register' });

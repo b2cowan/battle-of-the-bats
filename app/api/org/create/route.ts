@@ -5,7 +5,7 @@ import { FOUNDING_SEASON_END, isFoundingSeasonActive } from '@/lib/plan-config';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
-import { captureError, withObservability } from '@/lib/observability';
+import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 
 function slugify(name: string) {
   return name
@@ -112,7 +112,11 @@ export const POST = withObservability(async (req: Request) => {
     const member = await createOrganizationMember(org.id, user.id, 'owner');
     if (!member) {
       await supabaseAdmin.from('organizations').delete().eq('id', org.id).then(() => {}, () => {});
-      return NextResponse.json({ error: 'Failed to link you to the new organization.' }, { status: 500 });
+      return captureAndJson(
+        new Error('createOrganizationMember returned null (owner link failed)'),
+        { error: 'Failed to link you to the new organization.' },
+        500,
+      );
     }
 
     // Founding Season: each new free org gets Tournament Plus comped through 2026-12-31,
@@ -132,7 +136,7 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ ok: true, orgSlug: org.slug });
   } catch (err) {
     console.error('[org/create] error:', err);
-    void captureError(err, { route: '/api/org/create', method: 'POST', statusCode: 500 });
+    await captureError(err, { route: '/api/org/create', method: 'POST', statusCode: 500 });
     if (orgId) {
       await supabaseAdmin.from('organizations').delete().eq('id', orgId).then(() => {}, () => {});
     }

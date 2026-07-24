@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendPendingInviteLink } from '@/lib/invite-links';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 type Params = { params: Promise<{ memberId: string }> };
 
@@ -42,7 +42,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     orgSlug: org.slug,
   });
   if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: 500 });
+    return captureAndJson(
+      new Error(`sendPendingInviteLink failed: ${result.error ?? 'unknown'}`),
+      { error: result.error },
+      500,
+    );
   }
 
   return NextResponse.json({ ok: true });

@@ -3,7 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { signupVerificationHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { COACHES_START_PATH, normalizeCoachPortalNext } from '@/lib/coaches-portal-routes';
-import { captureError, withObservability } from '@/lib/observability';
+import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 
 function shouldRequireEmailVerification() {
   const explicit = process.env.REQUIRE_SIGNUP_EMAIL_VERIFICATION;
@@ -55,7 +55,11 @@ export const POST = withObservability(async (req: Request) => {
       'https://www.fieldlogichq.ca';
 
     if (requireVerification && !process.env.RESEND_API_KEY) {
-      return NextResponse.json({ error: 'Email verification is not configured.' }, { status: 500 });
+      return captureAndJson(
+        new Error('Signup email verification required but RESEND_API_KEY is not configured'),
+        { error: 'Email verification is not configured.' },
+        500,
+      );
     }
 
     let actionLink: string | null = null;
@@ -99,7 +103,11 @@ export const POST = withObservability(async (req: Request) => {
     if (requireVerification) {
       if (!actionLink) {
         if (userId) await rollbackAuthUser(userId);
-        return NextResponse.json({ error: 'Failed to generate verification email.' }, { status: 500 });
+        return captureAndJson(
+          new Error('generateLink returned no action_link for signup verification'),
+          { error: 'Failed to generate verification email.' },
+          500,
+        );
       }
 
       const verifyUrl = `${origin}/auth/signup-confirm?link=${encodeURIComponent(actionLink)}`;
@@ -121,7 +129,7 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ success: true, requiresEmailVerification: false, email: normalizedEmail });
   } catch (err) {
     console.error('Coaches Portal signup route error:', err);
-    void captureError(err, { route: '/api/auth/team-signup', method: 'POST', statusCode: 500 });
+    await captureError(err, { route: '/api/auth/team-signup', method: 'POST', statusCode: 500 });
     if (userId) {
       await rollbackAuthUser(userId).catch(() => {});
     }

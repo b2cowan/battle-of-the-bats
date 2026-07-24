@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -129,7 +129,7 @@ export const POST = withObservability(async (req: Request) => {
     .eq('id', member.id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return captureAndJson(error, { error: error.message }, 500);
   }
 
   const orgSlug = orgSlugFromRelation(member.organizations);

@@ -5,7 +5,7 @@ import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { sendEmail, orgInviteHtml, orgMemberAddedHtml } from '@/lib/email';
 import type { OrgRole } from '@/lib/types';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 function getActionLink(data: unknown) {
   return (data as { properties?: { action_link?: string | null } }).properties?.action_link ?? null;
@@ -133,7 +133,7 @@ export const POST = withObservability(async (req: Request) => {
       });
 
     if (insertError) {
-      return NextResponse.json({ error: insertError.message }, { status: 500 });
+      return captureAndJson(insertError, { error: insertError.message }, 500);
     }
 
     void supabaseAdmin.from('org_audit_log').insert({
@@ -163,7 +163,11 @@ export const POST = withObservability(async (req: Request) => {
   });
 
   if (linkError || !linkData) {
-    return NextResponse.json({ error: linkError?.message ?? 'Failed to generate invite link' }, { status: 500 });
+    return captureAndJson(
+      linkError ?? new Error('generateLink returned no data for member invite'),
+      { error: linkError?.message ?? 'Failed to generate invite link' },
+      500,
+    );
   }
 
   // Create pending member row (no accepted_at)

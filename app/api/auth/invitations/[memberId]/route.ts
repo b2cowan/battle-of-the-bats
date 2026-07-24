@@ -3,7 +3,7 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 
 async function getAuthenticatedUser() {
   const cookieStore = await cookies();
@@ -71,7 +71,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
       .eq('user_id', user.id)
       .eq('status', 'invited');
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return captureAndJson(error, { error: error.message }, 500);
     }
     return NextResponse.json({ ok: true, declined: true });
   }
@@ -110,7 +110,7 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     .eq('status', 'invited');
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return captureAndJson(error, { error: error.message }, 500);
   }
 
   return NextResponse.json({

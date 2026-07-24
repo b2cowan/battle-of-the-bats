@@ -5,7 +5,7 @@
  *
  * NOTE: the browser reporter lives in ./client (import it directly from client components).
  */
-export { captureError } from './capture';
+export { captureError, captureAndJson } from './capture';
 export type { CaptureOptions, Severity } from './capture';
 export { withObservability } from './with-observability';
 export { setRequestAuth, getRequestContext, runWithRequestContext } from './request-context';

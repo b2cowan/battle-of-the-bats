@@ -7,6 +7,7 @@
  * (lib/notify.ts) and writePlatformEvent(). It also console.error()s so CloudWatch log-based
  * debugging keeps working. Callers may `await` it on the error path (errors are rare) or fire it.
  */
+import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../supabase-admin';
 import { maybeSendCriticalAlert, type RecordErrorFlags } from './alerts';
 import { observabilityEnv } from './env';
@@ -74,6 +75,26 @@ function toError(err: unknown): { name: string; message: string; stack?: string 
   } catch {
     return { name: 'Error', message: String(err) };
   }
+}
+
+/**
+ * Capture a caught server error AND return the matching JSON error Response in one call — for
+ * CRITICAL routes that catch a failure and RETURN a 5xx (which the global onRequestError handler
+ * can't see; it only fires on uncaught throws). Awaiting captureError here means the observability
+ * issue + production alert carry the REAL cause instead of withObservability's generic
+ * "HTTP 500 (returned)" fallback. Route/method/attribution are read from the request's
+ * AsyncLocalStorage context, so callers usually pass just the error + the body they'd have returned.
+ *
+ * It preserves the caller's exact body + status — the client receives precisely what it did before.
+ */
+export async function captureAndJson(
+  err: unknown,
+  body: unknown,
+  status = 500,
+  opts: CaptureOptions = {},
+): Promise<Response> {
+  await captureError(err, { ...opts, statusCode: status });
+  return NextResponse.json(body, { status });
 }
 
 export async function captureError(err: unknown, opts: CaptureOptions = {}): Promise<void> {
