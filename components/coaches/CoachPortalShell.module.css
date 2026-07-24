@@ -8,6 +8,15 @@
   --coach-rail-w: 248px;
   --coach-topbar-h: 56px;
   --coach-bottomnav-h: 64px;
+  /* Paint an OPAQUE themed ground on the shell itself. The warm token remap
+     (globals.css) is scoped to [data-coach-warm-enabled] = this element, so `--bg`
+     resolves to warm paper here (and pitch-black under an explicit dark pref). Without
+     this, the content region is transparent and the DARK root `body { background: var(--bg) }`
+     — an ancestor OUTSIDE the warm scope — bleeds through, stranding warm dark-ink text
+     (headings) on a near-black ground. Mirrors the consumer shell (.shell paints var(--bg)). */
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--bg);
 }
 
 /* Focused full-page help guide (/coaches/help): marketing nav/footer are suppressed like
@@ -17,6 +26,10 @@
   min-height: 100vh;
   padding: 2rem;
   box-sizing: border-box;
+  /* Same reason as .shell: this branch also carries [data-coach-warm-enabled] but
+     returns before the shell ground, so it needs its own opaque themed background or
+     warm ink text strands on the dark root body. */
+  background: var(--bg);
 }
 
 @media (max-width: 1023px) {
