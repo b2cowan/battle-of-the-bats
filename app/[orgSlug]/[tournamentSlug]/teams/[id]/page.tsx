@@ -12,7 +12,7 @@ import { useOrgNav } from '@/components/OrgNavContext';
 import { useFollowedTeam, useAccountFollowedTeamIds, unfollowTeamEverywhere } from '@/lib/follow';
 import { isGameLive, gameStartMs, isGameUpcoming } from '@/lib/game-status';
 import { tournamentToday } from '@/lib/timezone';
-import styles from '../../../../teams/[id]/team-profile.module.css';
+import styles from './team-profile.module.css';
 // Canonical LIVE chip — one recipe platform-wide (same cross-module reuse as the
 // Playoff Picture chip); the local copies this page carried dropped the pulse.
 import scheduleStyles from '@/app/[orgSlug]/schedule/schedule.module.css';
