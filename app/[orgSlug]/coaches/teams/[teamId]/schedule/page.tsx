@@ -1466,7 +1466,7 @@ export default function CoachesSchedulePage({
       new Set([...Object.keys(grouped), ...Object.keys(tryByMonth), ...Object.keys(gamesByMonth)]),
     ).sort((a, b) => a.localeCompare(b));
     const monthGroups = months.map(mk => {
-      const label = new Date(mk + '-01').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
+      const label = new Date(mk + '-01T00:00:00').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' });
       const trys = (tryByMonth[mk] ?? []).slice().sort((a, b) => a.startsAt.localeCompare(b.startsAt));
       const games = (gamesByMonth[mk] ?? []).slice().sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
       return (
@@ -1723,7 +1723,7 @@ export default function CoachesSchedulePage({
           <button className={styles.calNavBtn} onClick={() => navigate(-1)}><ChevronLeft size={16} /></button>
           <span className={styles.calNavLabel}>
             {view === 'month'
-              ? new Date(curMonth + '-01').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
+              ? new Date(curMonth + '-01T00:00:00').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
               : (() => {
                 const start = new Date(curWeek + 'T00:00:00');
                 const end = new Date(curWeek + 'T00:00:00');

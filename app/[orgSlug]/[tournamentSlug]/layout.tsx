@@ -86,10 +86,10 @@ export default async function TournamentLayout({
   const isFreeTournamentPlan = org.planId === 'tournament';
   const authCtx = await getAuthContext({ orgSlug }).catch(() => null);
   const showAcquisitionBanner = isFreeTournamentPlan && (!authCtx || authCtx.org.id !== org.id);
-  // NB (Phase 3): the account chip's viewer/hats are deliberately NOT resolved here —
-  // the service worker offline-caches this page's HTML as anonymous content, so the
-  // chip fetches its identity client-side via /api/public/tournament-viewer instead
-  // (see TournamentAccountSheet). Do not thread per-user data into this layout.
+  // NB: the flip pill's viewer/hats are deliberately NOT resolved here — the service worker
+  // offline-caches this page's HTML as anonymous content, so the pill fetches its identity
+  // client-side via /api/public/tournament-viewer instead (see TournamentFlipPill /
+  // lib/use-public-flip). Do not thread per-user data into this layout.
   const effectiveColorMode = canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
   // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding values exist.
   const hasTournamentTheme = canUseAdvancedBranding
@@ -214,10 +214,11 @@ export default async function TournamentLayout({
             strip visible while nothing offsets for it.
           • --nav-event-h seed (≈116px header + ≈45px tabs) so SSR page padding is right on
             first paint; Navbar's ResizeObserver corrects the real value after hydration.
-          • --bottom-nav-height → 3.5rem: the compact (56px) global bottom bar's height, the
-            canonical bottom-bar var (MyTeamDock, install prompt, growth chrome, page
-            clearances read it). */}
-      <style dangerouslySetInnerHTML={{ __html: `:root { --desktop-strip-h: 48px; } @media (max-width: 900px) { :root { --nav-event-h: 161px; --bottom-nav-height: 3.5rem; --desktop-strip-h: 0px; } }` }} />
+          • --bottom-nav-height → 4.5rem: the global bottom bar's height, unified with the main
+            consumer shell (72px, top-aligned tabs) so the persistent tab bar reads as the same
+            app chrome on tournament routes as everywhere else. Canonical bottom-bar var
+            (MyTeamDock, install prompt, growth chrome, page clearances read it). */}
+      <style dangerouslySetInnerHTML={{ __html: `:root { --desktop-strip-h: 48px; } @media (max-width: 900px) { :root { --nav-event-h: 161px; --bottom-nav-height: 4.5rem; --desktop-strip-h: 0px; } }` }} />
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}

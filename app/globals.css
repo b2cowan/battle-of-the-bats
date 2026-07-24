@@ -513,6 +513,16 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --white-05: var(--home-paper);
   --white-03: var(--home-paper);
 
+  /* ── :root ALIASES of the ramp must be RE-DECLARED here (frozen-alias gotcha) ──
+     An alias like --text-primary: var(--white) resolves AT :root against the DARK
+     ramp, and descendants inherit that already-resolved value — the --white remaps
+     above never reach it (this block is on a nested marker, not :root, unlike the
+     light-mode override). Any :root token defined via var() of a token this block
+     remaps needs its own line here. */
+  --text-primary:   var(--home-ink);
+  --text-secondary: var(--home-ink-soft);
+  --text-tertiary:  var(--home-dim);
+
   /* ── Borders → warm hairlines ── */
   --border:        var(--home-line);
   --border-2:      var(--home-line);
@@ -538,6 +548,13 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --info:          var(--home-blue);
   --info-rgb:      var(--home-blue-rgb);
   --info-light:    var(--home-blue);
+  /* -strong (status-as-text) are :root ALIASES of the base tokens — frozen at the
+     dark values by the same rule as --text-* above, so re-point them at the warm
+     status colours (e.g. TeamHQ's owed-fee alert + live dot use --danger-strong). */
+  --success-strong: var(--home-win);
+  --warning-strong: var(--home-amber);
+  --danger-strong:  var(--home-live);
+  --info-strong:    var(--home-blue);
 
   /* ── Legible-on-white gold (round-2 A-squad star). Also remap --gold itself so
      gold GLYPHS (the A-squad star) deepen to the legible tone on cream instead of

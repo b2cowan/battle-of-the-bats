@@ -2372,10 +2372,12 @@
   width: 17px; height: 17px; border-radius: 4px;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 0.6rem; font-weight: 800; color: var(--pitch-black);
-  background: var(--white-15);
+  background: var(--white-20);
 }
 .wltPip[data-r="win"] { background: var(--logic-lime); }
-.wltPip[data-r="loss"] { background: var(--danger); color: var(--white); }
+/* --on-team-color, not --white: the glyph sits ON a red fill, so it must stay light in
+   both themes (warm remaps --white to dark ink, which would vanish on the loss red). */
+.wltPip[data-r="loss"] { background: var(--danger); color: var(--on-team-color); }
 .wltPip[data-r="tie"] { background: var(--warning); }
 .wltLast { font-size: 0.78rem; color: var(--white-55); }
 /* Scoring totals + current streak row. */
@@ -4127,4 +4129,27 @@
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipOrg {
   border-color: rgba(var(--home-blue-rgb), 0.45);
+}
+
+/* Lime-FILL "on"/brand chips: the token remap alone gives an olive fill (banned as a
+   fill, E3) under cream text — restore the ratified TRUE lime + dark ink, mirroring
+   .btnPrimary above and the solid-blue org-active chip (blue=org / lime=own preserved). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .titlePremiumBadge,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipActive,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltPip[data-r="win"] {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .moneyFilterChipActive {
+  border-color: var(--home-lime);
+}
+/* Result pips whose warm fill is NOT lime: the base (no-result) pip sits on a warm
+   hairline so its inherited cream ink vanishes → ink; the tie pip keeps a light glyph
+   on its amber fill (the ratified amber + white pairing). Loss is handled above via
+   --on-team-color. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltPip:not([data-r]) {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wltPip[data-r="tie"] {
+  color: var(--on-team-color);
 }

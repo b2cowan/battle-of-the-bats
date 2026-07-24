@@ -14,3 +14,11 @@
   line-height: 1;
   border-radius: 999px;
 }
+
+/* Warm coach shells: true lime + dark ink (the token remap alone gives olive + cream —
+   the same drab pairing the CoachChatView unread badge already corrects). Renders in
+   AdminSidebar too, which has no warm marker, so admin stays untouched. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .badge {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}

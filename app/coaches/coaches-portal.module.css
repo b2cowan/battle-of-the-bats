@@ -189,6 +189,15 @@ a.card:active {
   opacity: 0.85;
 }
 
+/* Warm portal: the LIVE / GAME DAY lime fill must stay TRUE lime with dark ink — the
+   token remap alone turns the fill olive (banned as a fill, E3) while --on-lime stays
+   near-black ink → dark-on-olive. Same ink-on-lime restore as the global .btn-lime. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachLifecycleChipLive,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachLifecycleChipGameDay {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
 /* The leading dot on LIVE / GAME DAY chips. */
 .coachLifecycleChipDot {
   width: 6px;

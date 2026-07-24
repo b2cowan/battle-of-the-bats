@@ -186,8 +186,6 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
 
   const windowNotice = form.startsAt ? getTryoutWindowNotice(new Date(form.startsAt), { sport }) : null;
 
-  if (loading) return null;
-
   return (
     <div className={styles.card}>
       <div className={styles.head}>
@@ -195,7 +193,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
           <h3 className={styles.title}><ClipboardList size={16} /> Tryout Day</h3>
           <p className={styles.subtitle}>Sessions appear on the team schedule.</p>
         </div>
-        {isAnonymous ? (
+        {loading ? null : isAnonymous ? (
           canWrite && (
             <button
               type="button"
@@ -214,11 +212,13 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
         )}
       </div>
 
-      {isAnonymous && (
+      {!loading && isAnonymous && (
         <p className={styles.blindHint}><strong>Blind evaluation is on</strong> — players show as bib numbers only. Reveal names when you’re ready to make decisions (one-way).</p>
       )}
 
-      {sessions.length === 0 ? (
+      {loading ? (
+        <p className={styles.empty}>Loading sessions…</p>
+      ) : sessions.length === 0 ? (
         <p className={styles.empty}>No sessions yet. Add the date(s) and time(s) of your tryout.</p>
       ) : (
         <div className={styles.sessionList}>
