@@ -37,9 +37,9 @@ const platformAdminHelp: HelpPageContent = {
       id: 'reset-password',
       group: 'Support SOP',
       heading: 'How to reset a customer password',
-      summary: 'Generate a password reset link from Customer Users and share it securely.',
-      keywords: ['password', 'reset', 'login', 'customer users', 'recovery link', 'forgot password'],
-      searchText: 'how do i reset a password customer cannot login generate recovery link customer users copy reset link',
+      summary: 'Send a password reset email to the customer from Customer Users.',
+      keywords: ['password', 'reset', 'login', 'customer users', 'reset email', 'recovery link', 'forgot password'],
+      searchText: 'how do i reset a password customer cannot login send reset email to customer customer users reset email sent recovery link forgot password',
       links: [
         { label: 'Customer Users', href: '/platform-admin/customer-users' },
         { label: 'Customer login help', href: '/platform-admin/help/org' },
@@ -50,32 +50,32 @@ const platformAdminHelp: HelpPageContent = {
             <li>Go to <strong>Customer Users</strong>.</li>
             <li>Search at least two characters from the user's email, name, user ID, organization, or org slug.</li>
             <li>Confirm you have the right person by checking their email and organization memberships.</li>
-            <li>Click <strong>Reset</strong> on the user's row.</li>
-            <li>Copy the generated reset link and send it through the support channel already being used with the customer.</li>
-            <li>Ask the customer to open the link and set a new password. Do not set or ask for the customer's password.</li>
+            <li>Open the <strong>Actions</strong> menu on the user's row and choose <strong>Reset Password</strong>.</li>
+            <li>FieldLogicHQ emails the reset link straight to the customer. You'll see a <strong>&ldquo;Reset email sent to&hellip;&rdquo;</strong> confirmation &mdash; no link is shown to you, and there is nothing to copy or forward.</li>
+            <li>Tell the customer to check their inbox and open the email to set a new password. Do not set or ask for the customer's password.</li>
           </ol>
-          <p>The reset action is audit-logged as <code>generate_reset_link</code>. If the generated link fails, have the customer use the normal <strong>Forgot password</strong> flow from the login page, then verify their email address and auth status in Customer Users.</p>
+          <p>The reset action is audit-logged as <strong>Send Password Reset Email</strong>. If the customer doesn't receive the email, confirm their email address and auth status in Customer Users (use <strong>Edit Info</strong> to correct a wrong address), and/or have them use the normal <strong>Forgot password</strong> flow from the login page.</p>
           <p>If the customer belongs to multiple organizations, resetting the password affects the same login across all of their FieldLogicHQ memberships.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-reset-link-expiry',
-          question: 'How long does a generated reset link last?',
+          question: 'How long does the emailed reset link last?',
           answer: (
-            <p>Supabase controls the recovery-link lifetime for the project. Treat every generated link as short-lived and ask the customer to use it right away. Generate a new link if they report that it expired.</p>
+            <p>Supabase controls the recovery-link lifetime for the project. Treat the emailed link as short-lived and ask the customer to open it right away. Send a new reset if they report that it expired.</p>
           ),
-          answerText: 'Supabase controls the recovery-link lifetime. Ask the customer to use it right away and generate a new link if it expires.',
-          keywords: ['expire', 'expiry', 'reset link'],
+          answerText: 'Supabase controls the recovery-link lifetime. Ask the customer to open the emailed link right away and send a new reset if it expires.',
+          keywords: ['expire', 'expiry', 'reset link', 'reset email'],
           popular: true,
         },
         {
           id: 'faq-reset-unknown-email',
           question: 'What if the user row has no usable email?',
           answer: (
-            <p>Do not generate a link. Search by organization first, verify the member record from the org detail People tab, then confirm the correct email with the customer before taking action.</p>
+            <p>The reset needs a valid email to send to, so the <strong>Reset Password</strong> action is unavailable when the row has no usable address. Search by organization first, verify the member record from the org detail People tab, and confirm or correct the email with the customer before sending a reset.</p>
           ),
-          answerText: 'Search by organization first, verify the member record, and confirm the correct email before taking action.',
+          answerText: 'The reset needs a valid email to send to. Search by organization, verify the member record, and confirm or correct the email before sending a reset.',
           keywords: ['unknown email', 'missing email'],
         },
       ],
