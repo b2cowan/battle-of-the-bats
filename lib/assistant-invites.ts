@@ -124,21 +124,6 @@ export async function revokeAssistantInvite(inviteId: string): Promise<void> {
     .in('status', ['pending', 'pending_approval']);
 }
 
-/** Outstanding (not-yet-accepted) invites for a team, for the head coach's manage panel + admin view. */
-export async function listOpenAssistantInvitesForTeam(
-  teamId: string,
-): Promise<{ id: string; invitedEmail: string; status: string; expiresAt: string; createdAt: string }[]> {
-  const { data } = await supabaseAdmin
-    .from('assistant_invite_tokens')
-    .select('id, invited_email, status, expires_at, created_at')
-    .eq('team_id', teamId)
-    .in('status', ['pending', 'pending_approval'])
-    .order('created_at', { ascending: false });
-  return (data ?? []).map((r: any) => ({
-    id: r.id, invitedEmail: r.invited_email, status: r.status, expiresAt: r.expires_at, createdAt: r.created_at,
-  }));
-}
-
 /** Outstanding invites across a whole org (admin oversight), joined to team name + group for scoping. */
 export async function listOpenAssistantInvitesForOrg(
   orgId: string,

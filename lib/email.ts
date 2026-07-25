@@ -973,16 +973,6 @@ export function tryoutDeclinedHtml(p: {
   `);
 }
 
-export function passwordResetHtml(resetLink: string) {
-  return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Reset Your Password</h2>
-    <p>We received a request to reset the password for your <strong>FieldLogicHQ</strong> account.</p>
-    <p style="color:rgba(241,245,249,0.7);">Click the button below to set a new password. This link expires in 1 hour.</p>
-    <a href="${resetLink}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.5rem 0;">Reset Password &rarr;</a>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you didn't request a password reset, you can safely ignore this email. Your password will not change.</p>
-  `);
-}
-
 export function platformPasswordResetHtml(resetLink: string) {
   return `
 <div style="font-family:monospace,sans-serif;background:#090d09;color:#e8efe8;max-width:480px;margin:0 auto;padding:2rem;border:1px solid rgba(163,230,53,0.2);">

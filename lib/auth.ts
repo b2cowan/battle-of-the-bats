@@ -82,15 +82,3 @@ export async function getSession() {
   const { data: { session } } = await supabase.auth.getSession();
   return session;
 }
-
-// ── Legacy stubs — kept so any remaining callers compile during the transition ─
-// Auth is now handled by middleware + Supabase session cookies.
-
-/** @deprecated Use signIn() instead */
-export function login(): boolean { return false; }
-
-/** @deprecated Use signOut() instead */
-export function logout(): void {}
-
-/** @deprecated Auth is enforced by middleware */
-export function isAuthenticated(): boolean { return false; }

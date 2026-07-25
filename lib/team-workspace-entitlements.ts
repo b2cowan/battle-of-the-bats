@@ -140,10 +140,6 @@ export function isTeamWorkspaceOrg(org: Pick<Organization, 'accountKind' | 'plan
   return org?.accountKind === 'team_workspace' || org?.planId === 'team';
 }
 
-export function hasTeamFreeTournamentSlot(org: Pick<Organization, 'planId' | 'subscriptionStatus'> | null | undefined): boolean {
-  return org?.planId === 'team' && org.subscriptionStatus !== 'canceled';
-}
-
 const LIVE_TEAM_WORKSPACE_SUB_STATUSES: TeamWorkspaceSubscriptionStatus[] = ['active', 'trialing', 'past_due'];
 
 /**
@@ -235,10 +231,6 @@ export async function getActiveTeamEntitlementsForOrg(orgId: string): Promise<Te
 export async function getActiveTeamEntitledRepTeamIds(orgId: string): Promise<Set<string>> {
   const entitlements = await getActiveTeamEntitlementsForOrg(orgId);
   return new Set(entitlements.map(entitlement => entitlement.repTeamId));
-}
-
-export async function hasTeamScopedRepTeamEntitlement(orgId: string, repTeamId: string): Promise<boolean> {
-  return Boolean(await getActiveTeamEntitlement(orgId, repTeamId));
 }
 
 export async function getTeamScopedRepTeamAccess(params: {

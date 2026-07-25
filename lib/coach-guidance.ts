@@ -2,16 +2,12 @@
  * Discovery & Orientation (help Layer 3) — lifecycle guidance for the Premium
  * Coaches Portal team Overview rail. The coach analogue of `tournament-guidance`:
  * one stage-aware "what's next" card (headline + one context line + one in-app
- * action), an optional dismissible nudge, and a set of "how do I…" shortcuts that
- * deep-link into the coach help guide.
+ * action) plus an optional dismissible nudge.
  *
- * Reuses the admin <GuidanceRail> (presentational) by returning its `Guidance` /
- * `TaskShortcut` shapes. Convention: the primary CTA + nudge action are in-app
- * (same tab); the shortcuts are help-guide anchors (the rail opens non-locked
- * shortcuts in a new tab, which is correct for a guide link and surfaces the
- * otherwise-buried guide).
+ * Reuses the admin <GuidanceRail> (presentational) by returning its `Guidance`
+ * shape. Convention: the primary CTA + nudge action are in-app (same tab).
  */
-import type { Guidance, TaskShortcut } from './tournament-guidance';
+import type { Guidance } from './tournament-guidance';
 
 export type CoachGuidanceStage = 'roster' | 'schedule' | 'budget' | 'ready';
 
@@ -20,19 +16,6 @@ export interface CoachGuidanceContext {
   base: string;
   /** Coach help guide base: `/{orgSlug}/coaches/help`. */
   helpHref: string;
-}
-
-/** Pick the stage from setup progress — earliest unmet step wins, so the rail
- *  always points at the one next thing rather than a wall of tasks. */
-export function getCoachGuidanceStage(opts: {
-  activeRosterCount: number;
-  eventCount: number;
-  budgetSet: boolean;
-}): CoachGuidanceStage {
-  if (opts.activeRosterCount === 0) return 'roster';
-  if (opts.eventCount === 0) return 'schedule';
-  if (!opts.budgetSet) return 'budget';
-  return 'ready';
 }
 
 export function getCoachGuidance(stage: CoachGuidanceStage, ctx: CoachGuidanceContext): Guidance {
@@ -82,16 +65,4 @@ export function getCoachGuidance(stage: CoachGuidanceStage, ctx: CoachGuidanceCo
         },
       };
   }
-}
-
-/** "How do I…" shortcuts → coach help guide anchors (open in a new tab via the
- *  rail, which is correct for guide links and surfaces the guide). */
-export function getCoachShortcuts(ctx: CoachGuidanceContext): TaskShortcut[] {
-  return [
-    { label: 'How to build your roster', href: `${ctx.helpHref}#recipe-add-player` },
-    { label: 'How to build your schedule', href: `${ctx.helpHref}#recipe-build-coach-schedule` },
-    { label: 'How to track team dues', href: `${ctx.helpHref}#recipe-track-dues` },
-    { label: 'How to message your team', href: `${ctx.helpHref}#recipe-announcements` },
-    { label: 'How to start your next season', href: `${ctx.helpHref}#recipe-start-next-season` },
-  ];
 }

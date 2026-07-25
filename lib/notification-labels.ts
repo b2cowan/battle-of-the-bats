@@ -109,35 +109,11 @@ export const NOTIFICATION_SECTIONS: NotificationSection[] = [
   // NOTE: 'assistant_coach_joined' + 'assistant_coach_approval_requested' are INTENTIONALLY not
   // listed here (like 'chat_mention') — they're targeted lifecycle bells (to the head coach / org
   // admins), not general per-user-configurable events, so they don't get a preferences-UI row.
-  // NOTE: 'coach_insights_digest' + 'tryout_offer_response' get their coach-facing rows via
-  // COACH_SETTINGS_SECTIONS below (the universal /account/notifications coach card), NOT here —
-  // an org admin doesn't receive the per-coach digest, so it must not render on the org grid (R4).
+  // NOTE: 'coach_insights_digest' + 'tryout_offer_response' get their coach-facing rows on the
+  // universal /account/notifications coach card, NOT here — an org admin doesn't receive the
+  // per-coach digest, so it must not render on the org grid (R4).
 ];
 
-/**
- * Sections for a rep/team-workspace coach's card on the universal /account/notifications page
- * (Notification Settings Phase 1). Distinct from NOTIFICATION_SECTIONS (the org-admin grid): a
- * coach receives a different, smaller set, and the weekly digest leads (rule R1 — a default-ON
- * notification gets an always-visible control on the default view, never buried in an accordion).
- * Chat prefs are intentionally absent (owner-locked: chat's surface is the Chat tab; the card
- * shows a pointer instead).
- */
-export const COACH_SETTINGS_SECTIONS: NotificationSection[] = [
-  {
-    label: 'Weekly summary',
-    module: null,
-    eventTypes: ['coach_insights_digest'],
-  },
-  {
-    label: 'Team activity',
-    module: null,
-    eventTypes: ['tryout_offer_response'],
-  },
-];
-
-/** All event types in display order — derived from NOTIFICATION_SECTIONS. Single source of truth. */
-export const ALL_EVENT_TYPES: NotificationEventType[] =
-  NOTIFICATION_SECTIONS.flatMap(s => s.eventTypes);
 
 /**
  * Events whose Push channel is ON by default (when a user has no saved preference row).

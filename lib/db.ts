@@ -78,17 +78,6 @@ export async function saveTournament(t: Omit<Tournament, 'id'>): Promise<Tournam
   return mapTournament(data);
 }
 
-export async function cloneVenues(targetTid: string, sourceVenues: Venue[]): Promise<void> {
-  if (sourceVenues.length === 0) return;
-  const rows = sourceVenues.map(d => ({
-    tournament_id: targetTid,
-    name: d.name,
-    address: d.address,
-    notes: d.notes
-  }));
-  await authClient().from('diamonds').insert(rows);
-}
-
 export async function initializeDivisions(targetTid: string, selectedDivisions: { name: string, capacity: number, poolCount: number, poolNames?: string, requiresPoolSelection: boolean }[]): Promise<void> {
   if (selectedDivisions.length === 0) return;
 
@@ -146,43 +135,6 @@ export async function initializeDivisions(targetTid: string, selectedDivisions: 
       }
     }
   }
-}
-
-export async function updateTournament(id: string, t: Partial<Tournament>): Promise<void> {
-  if (t.isActive) {
-    const { data: existing } = await supabase.from('tournaments').select('org_id').eq('id', id).single();
-    if (existing?.org_id) {
-      await authClient().from('tournaments')
-        .update({ is_active: false, status: 'completed' })
-        .eq('org_id', existing.org_id)
-        .neq('id', id);
-    }
-  }
-
-  const updates: any = {};
-  if (t.year !== undefined) updates.year = t.year;
-  if (t.name !== undefined) updates.name = t.name;
-  if (t.slug !== undefined) updates.slug = t.slug;
-  if (t.status !== undefined) { updates.status = t.status; updates.is_active = t.status === 'active'; }
-  if (t.isActive !== undefined) updates.is_active = t.isActive;
-  if (t.startDate !== undefined) updates.start_date = t.startDate;
-  if (t.endDate !== undefined) updates.end_date = t.endDate;
-  await authClient().from('tournaments').update(updates).eq('id', id);
-}
-
-export async function deleteTournament(id: string): Promise<void> {
-  await authClient().from('tournaments').delete().eq('id', id);
-}
-
-export async function setActiveTournament(id: string): Promise<void> {
-  const { data: t } = await supabase.from('tournaments').select('org_id').eq('id', id).single();
-  if (t?.org_id) {
-    await authClient().from('tournaments')
-      .update({ is_active: false, status: 'completed' })
-      .eq('org_id', t.org_id)
-      .neq('id', id);
-  }
-  await authClient().from('tournaments').update({ is_active: true, status: 'active' }).eq('id', id);
 }
 
 export type CloneTournamentOptions = {
@@ -987,32 +939,6 @@ export async function getVenues(
   return data.map((d: any) => mapVenueRow(d, facilityByVenue.get(d.id) ?? []));
 }
 
-export async function saveVenue(d: Omit<Venue, 'id'>): Promise<string> {
-  const { data, error } = await supabaseAdmin.from('diamonds').insert({
-    tournament_id:        d.tournamentId,
-    name:                 d.name,
-    address:              d.address ?? null,
-    notes:                d.notes   ?? null,
-    source_org_venue_id:  d.sourceOrgVenueId ?? null,
-  }).select('id').single();
-  if (error) throw error;
-  return data.id as string;
-}
-
-export async function updateVenue(id: string, d: Partial<Omit<Venue, 'facilities'>>): Promise<void> {
-  const updates: Record<string, unknown> = {};
-  if (d.name             !== undefined) updates.name                = d.name;
-  if (d.address          !== undefined) updates.address             = d.address ?? null;
-  if (d.notes            !== undefined) updates.notes               = d.notes   ?? null;
-  if (d.sourceOrgVenueId !== undefined) updates.source_org_venue_id = d.sourceOrgVenueId ?? null;
-  await supabaseAdmin.from('diamonds').update(updates).eq('id', id);
-}
-
-export async function deleteVenue(id: string): Promise<void> {
-  // venue_facilities cascade-deletes via FK ON DELETE CASCADE
-  await supabaseAdmin.from('diamonds').delete().eq('id', id);
-}
-
 // --- Venue Facilities ---
 
 export async function getVenueFacilities(venueId: string, options: ReadOptions = {}): Promise<VenueFacility[]> {
@@ -1024,33 +950,6 @@ export async function getVenueFacilities(venueId: string, options: ReadOptions =
     .order('display_order', { ascending: true });
   if (error) { console.error('getVenueFacilities error', error); return []; }
   return (data ?? []).map(mapFacilityRow);
-}
-
-export async function addVenueFacility(f: Omit<VenueFacility, 'id'>): Promise<string> {
-  const { data, error } = await supabaseAdmin.from('venue_facilities').insert({
-    venue_id:               f.venueId,
-    tournament_id:          f.tournamentId,
-    name:                   f.name,
-    facility_type:          f.facilityType,
-    display_order:          f.displayOrder,
-    notes:                  f.notes ?? null,
-    source_org_facility_id: f.sourceOrgFacilityId ?? null,
-  }).select('id').single();
-  if (error) throw error;
-  return data.id as string;
-}
-
-export async function updateVenueFacility(id: string, f: Partial<VenueFacility>): Promise<void> {
-  const updates: Record<string, unknown> = {};
-  if (f.name          !== undefined) updates.name          = f.name;
-  if (f.facilityType  !== undefined) updates.facility_type = f.facilityType;
-  if (f.displayOrder  !== undefined) updates.display_order = f.displayOrder;
-  if (f.notes         !== undefined) updates.notes         = f.notes ?? null;
-  await supabaseAdmin.from('venue_facilities').update(updates).eq('id', id);
-}
-
-export async function deleteVenueFacility(id: string): Promise<void> {
-  await supabaseAdmin.from('venue_facilities').delete().eq('id', id);
 }
 
 // --- Org Venue Library ---
@@ -1109,106 +1008,6 @@ export async function getOrgVenues(orgId: string): Promise<OrgVenue[]> {
   return (data ?? []).map((v: any) => mapOrgVenueRow(v, facilityByVenue.get(v.id) ?? []));
 }
 
-export async function saveOrgVenue(v: Omit<OrgVenue, 'id' | 'facilities'>): Promise<string> {
-  const { data, error } = await supabaseAdmin.from('org_venues').insert({
-    org_id:    v.orgId,
-    name:      v.name,
-    address:   v.address ?? null,
-    notes:     v.notes   ?? null,
-    is_active: v.isActive,
-  }).select('id').single();
-  if (error) throw error;
-  return data.id as string;
-}
-
-export async function updateOrgVenue(id: string, v: Partial<Omit<OrgVenue, 'id' | 'orgId' | 'facilities'>>): Promise<void> {
-  const updates: Record<string, unknown> = {};
-  if (v.name      !== undefined) updates.name      = v.name;
-  if (v.address   !== undefined) updates.address   = v.address ?? null;
-  if (v.notes     !== undefined) updates.notes     = v.notes   ?? null;
-  if (v.isActive  !== undefined) updates.is_active = v.isActive;
-  await supabaseAdmin.from('org_venues').update(updates).eq('id', id);
-}
-
-export async function deleteOrgVenue(id: string): Promise<void> {
-  // org_venue_facilities cascade via FK; mark inactive instead of hard-delete if preferred
-  await supabaseAdmin.from('org_venues').delete().eq('id', id);
-}
-
-export async function addOrgVenueFacility(f: Omit<OrgVenueFacility, 'id'>): Promise<string> {
-  const { data, error } = await supabaseAdmin.from('org_venue_facilities').insert({
-    org_venue_id:  f.orgVenueId,
-    org_id:        f.orgId,
-    name:          f.name,
-    facility_type: f.facilityType,
-    display_order: f.displayOrder,
-    notes:         f.notes ?? null,
-  }).select('id').single();
-  if (error) throw error;
-  return data.id as string;
-}
-
-export async function updateOrgVenueFacility(id: string, f: Partial<OrgVenueFacility>): Promise<void> {
-  const updates: Record<string, unknown> = {};
-  if (f.name          !== undefined) updates.name          = f.name;
-  if (f.facilityType  !== undefined) updates.facility_type = f.facilityType;
-  if (f.displayOrder  !== undefined) updates.display_order = f.displayOrder;
-  if (f.notes         !== undefined) updates.notes         = f.notes ?? null;
-  await supabaseAdmin.from('org_venue_facilities').update(updates).eq('id', id);
-}
-
-export async function deleteOrgVenueFacility(id: string): Promise<void> {
-  await supabaseAdmin.from('org_venue_facilities').delete().eq('id', id);
-}
-
-/**
- * Imports an org venue (and all its facilities) into a tournament.
- * Creates a local copy in the diamonds + venue_facilities tables.
- * Changes to the copy don't affect the org library.
- * Returns the new tournament venue id.
- */
-export async function importOrgVenueToTournament(
-  orgVenueId: string,
-  tournamentId: string,
-): Promise<string> {
-  // Fetch org venue + facilities
-  const { data: ov, error: ovErr } = await supabaseAdmin
-    .from('org_venues')
-    .select('*, org_venue_facilities(*)')
-    .eq('id', orgVenueId)
-    .single();
-  if (ovErr || !ov) throw ovErr ?? new Error('Org venue not found');
-
-  // Create tournament-scoped venue (diamond)
-  const { data: newVenue, error: vErr } = await supabaseAdmin.from('diamonds').insert({
-    tournament_id:        tournamentId,
-    name:                 ov.name,
-    address:              ov.address ?? null,
-    notes:                ov.notes   ?? null,
-    source_org_venue_id:  orgVenueId,
-  }).select('id').single();
-  if (vErr || !newVenue) throw vErr ?? new Error('Failed to create tournament venue');
-
-  // Copy each facility
-  const facilities: any[] = ov.org_venue_facilities ?? [];
-  if (facilities.length > 0) {
-    const { error: fErr } = await supabaseAdmin.from('venue_facilities').insert(
-      facilities.map((f: any) => ({
-        venue_id:               newVenue.id,
-        tournament_id:          tournamentId,
-        name:                   f.name,
-        facility_type:          f.facility_type,
-        display_order:          f.display_order,
-        notes:                  f.notes ?? null,
-        source_org_facility_id: f.id,
-      }))
-    );
-    if (fErr) throw fErr;
-  }
-
-  return newVenue.id as string;
-}
-
 // --- Divisions ---
 export async function getDivisions(tournamentId?: string, options: ReadOptions = {}): Promise<Division[]> {
   const client = options.admin ? supabaseAdmin : supabase;
@@ -1262,61 +1061,6 @@ export async function saveDivision(g: Omit<Division, 'id'>): Promise<void> {
   });
 }
 
-export async function updateTournamentDivision(id: string, g: Partial<Division>): Promise<void> {
-  const updates: any = {};
-  if (g.tournamentId !== undefined) updates.tournament_id = g.tournamentId;
-  if (g.name !== undefined) updates.name = g.name;
-  if (g.minAge !== undefined) updates.min_age = g.minAge;
-  if (g.maxAge !== undefined) updates.max_age = g.maxAge;
-  if (g.order !== undefined) updates.display_order = g.order;
-  if (g.isClosed !== undefined) updates.is_closed = g.isClosed;
-  if (g.capacity !== undefined) updates.capacity = g.capacity;
-  if (g.poolCount !== undefined) updates.pool_count = g.poolCount;
-  if (g.poolNames !== undefined) updates.pool_names = g.poolNames;
-  if (g.requiresPoolSelection !== undefined) updates.requires_pool_selection = g.requiresPoolSelection;
-  if (g.playoffConfig !== undefined) updates.playoff_config = g.playoffConfig;
-  if (g.scheduleVisibility !== undefined) updates.schedule_visibility = g.scheduleVisibility;
-  await authClient().from('divisions').update(updates).eq('id', id);
-}
-
-export async function deleteTournamentDivision(id: string): Promise<void> {
-  await authClient().from('divisions').delete().eq('id', id);
-}
-
-// --- Pools ---
-export async function getPools(divisionId: string): Promise<Pool[]> {
-  const { data, error } = await supabase
-    .from('pools')
-    .select('*')
-    .eq('division_id', divisionId)
-    .order('display_order', { ascending: true });
-  if (error || !data) return [];
-  return data.map((p: any) => ({
-    id: p.id,
-    divisionId: p.division_id,
-    name: p.name,
-    order: p.display_order
-  }));
-}
-
-export async function savePool(p: Omit<Pool, 'id'>): Promise<string> {
-  const { data, error } = await authClient().from('pools').insert({
-    division_id: p.divisionId,
-    name: p.name,
-    display_order: p.order
-  }).select().single();
-  if (error) throw error;
-  return data.id;
-}
-
-export async function updatePool(id: string, name: string): Promise<void> {
-  await authClient().from('pools').update({ name }).eq('id', id);
-}
-
-export async function deletePool(id: string): Promise<void> {
-  await authClient().from('pools').delete().eq('id', id);
-}
-
 // --- Teams ---
 export async function getTeams(tournamentId?: string, options: ReadOptions = {}): Promise<Team[]> {
   const client = options.admin ? supabaseAdmin : supabase;
@@ -1345,44 +1089,6 @@ export async function getTeams(tournamentId?: string, options: ReadOptions = {})
     slotId: t.slot_id ?? null,
     seed: t.seed ?? null,
   }));
-}
-
-export async function saveTeam(t: Omit<Team, 'id'> & { id?: string }): Promise<void> {
-  const payload: any = {
-    tournament_id: t.tournamentId,
-    division_id: t.divisionId,
-    name: t.name,
-    coach: t.coach,
-    email: t.email,
-    status: t.status || 'accepted',
-    payment_status: t.paymentStatus || 'paid',
-    registered_at: t.registeredAt || new Date().toISOString(),
-    admin_notes: t.adminNotes,
-    pool_id: t.poolId,
-    waitlist_position: t.waitlistPosition ?? null,
-    slot_id: t.slotId ?? null
-  };
-  if (t.id) payload.id = t.id;
-  const { error } = await authClient().from('teams').insert(payload);
-  if (error) throw error;
-}
-
-export async function updateTeam(id: string, t: Partial<Team>): Promise<void> {
-  const updates: any = {};
-  if (t.tournamentId !== undefined) updates.tournament_id = t.tournamentId;
-  if (t.divisionId !== undefined)   updates.division_id = t.divisionId;
-  if (t.name !== undefined)         updates.name = t.name;
-  if (t.coach !== undefined)        updates.coach = t.coach;
-  if (t.email !== undefined)        updates.email = t.email;
-  if (t.status !== undefined)       updates.status = t.status;
-  if (t.paymentStatus !== undefined) updates.payment_status = t.paymentStatus;
-  if (t.registeredAt !== undefined) updates.registered_at = t.registeredAt;
-  if (t.adminNotes !== undefined)        updates.admin_notes       = t.adminNotes;
-  if (t.poolId !== undefined)            updates.pool_id            = t.poolId;
-  if (t.waitlistPosition !== undefined)  updates.waitlist_position  = t.waitlistPosition;
-  if (t.slotId !== undefined)            updates.slot_id            = t.slotId;
-  const { error } = await authClient().from('teams').update(updates).eq('id', id);
-  if (error) throw error;
 }
 
 export async function deleteTeam(id: string): Promise<void> {
@@ -1684,16 +1390,6 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   }
 }
 
-export async function deleteGame(id: string): Promise<void> {
-  // .select() so we can detect an RLS-denied delete (0 rows, no error) and tell
-  // the operator, instead of silently doing nothing.
-  const { data, error } = await authClient().from('games').delete().eq('id', id).select('id');
-  if (error) throw error;
-  if (!data || data.length === 0) {
-    throw new Error("Couldn't remove the game — it may already be gone, or you may not have permission to modify this tournament.");
-  }
-}
-
 /** Async wrapper: fetch teams+games (filtered inside) then rank one division. */
 export async function getStandings(divisionId: string, config?: PlayoffConfig, options: ReadOptions = {}, tournamentSettings?: import('./types').TournamentSettings): Promise<DivisionStandingRow[]> {
   const games = await getGames(undefined, options);
@@ -1728,136 +1424,6 @@ export async function getAnnouncements(tournamentId?: string, options: ReadOptio
     pinned: a.pinned,
     divisionIds: a.division_ids ?? null,
   }));
-}
-
-export async function saveAnnouncement(a: Omit<Announcement, 'id'>): Promise<void> {
-  await authClient().from('announcements').insert({
-    tournament_id: a.tournamentId,
-    title: a.title,
-    body: a.body,
-    published_at: a.date,
-    pinned: a.pinned || false,
-    division_ids: a.divisionIds?.length ? a.divisionIds : null,
-  });
-}
-
-export async function updateAnnouncement(id: string, a: Partial<Announcement>): Promise<void> {
-  const updates: any = {};
-  if (a.tournamentId !== undefined) updates.tournament_id = a.tournamentId;
-  if (a.title !== undefined) updates.title = a.title;
-  if (a.body !== undefined) updates.body = a.body;
-  if (a.date !== undefined) updates.published_at = a.date;
-  if (a.pinned !== undefined) updates.pinned = a.pinned;
-  if (a.divisionIds !== undefined) updates.division_ids = a.divisionIds?.length ? a.divisionIds : null;
-  const { error } = await authClient().from('announcements').update(updates).eq('id', id);
-  if (error) throw error;
-}
-
-export async function deleteAnnouncement(id: string): Promise<void> {
-  await authClient().from('announcements').delete().eq('id', id);
-}
-
-// --- Seeding ---
-export async function seedTournamentData(tid: string, options: {
-  venues?: boolean, registrations?: boolean, schedule?: boolean, results?: boolean
-}) {
-  const divisions = await getDivisions(tid);
-  if (divisions.length === 0) return;
-
-  if (options.venues) {
-    const names = ['Memorial Park D1', 'Memorial Park D2', 'Lions Field', 'South Common', 'Milton Sports Center'];
-    const rows = names.map((name, i) => ({
-      tournament_id: tid,
-      name,
-      address: `${100 + i} Main St, Milton, ON`,
-      notes: i % 2 === 0 ? 'Lighted field' : ''
-    }));
-    await authClient().from('diamonds').insert(rows);
-  }
-
-  if (options.registrations) {
-    const defaultTeamNames = ['Milton Bats', 'Oakville Angels', 'Burlington Bulls', 'Mississauga Tigers', 'Hamilton Heat', 'Brampton Blazers', 'Toronto Titans', 'Guelph Gryphons', 'Kitchener Panthers', 'London Badgers', 'Windsor Selects', 'Whitby Eagles'];
-    const defaultCoaches = ['Coach Bob', 'Coach Alice', 'Coach Charlie', 'Coach Diana', 'Coach Ed', 'Coach Fiona', 'Coach Greg', 'Coach Heather', 'Coach Ian', 'Coach Jack', 'Coach Ken', 'Coach Leo'];
-
-    for (const group of divisions) {
-      const capacity = group.capacity || 8;
-      const teamRows: any[] = [];
-
-      // Seed up to capacity
-      for (let i = 0; i < capacity; i++) {
-        const nameBase = defaultTeamNames[i % defaultTeamNames.length];
-        const coachBase = defaultCoaches[i % defaultCoaches.length];
-
-        teamRows.push({
-          tournament_id: tid,
-          division_id: group.id,
-          name: `${nameBase} ${group.name} ${i + 1}`,
-          coach: coachBase,
-          email: `coach${i}@example.com`,
-          status: 'accepted',
-          payment_status: 'paid',
-          registered_at: new Date().toISOString()
-        });
-      }
-
-      // Add 2 waitlist teams per division
-      for (let i = 0; i < 2; i++) {
-        teamRows.push({
-          tournament_id: tid,
-          division_id: group.id,
-          name: `Waitlist Team ${i + 1} ${group.name}`,
-          coach: `Waitlist Coach ${i + 1}`,
-          email: `waitlist${i + 1}@example.com`,
-          status: 'waitlist',
-          payment_status: 'pending',
-          registered_at: new Date().toISOString()
-        });
-      }
-
-      const { error: teamError } = await authClient().from('teams').insert(teamRows);
-      if (teamError) {
-        console.error('Team seeding error:', teamError);
-        throw teamError;
-      }
-    }
-  }
-
-  if (options.schedule || options.results) {
-    const teams = await getTeams(tid);
-    const venues = await getVenues(tid);
-    if (teams.length < 2 || venues.length === 0) return;
-
-    const gameRows = [];
-    const tnt = await supabase.from('tournaments').select('*').eq('id', tid).single();
-    const baseDate = tnt.data?.start_date || new Date().toISOString().split('T')[0];
-
-    for (const group of divisions) {
-      const groupTeams = teams.filter(t => t.divisionId === group.id);
-      if (groupTeams.length < 2) continue;
-
-      // Simple 2 games per division for seed
-      for (let i = 0; i < 2; i++) {
-        const home = groupTeams[i % groupTeams.length];
-        const away = groupTeams[(i + 1) % groupTeams.length];
-        const venue = venues[i % venues.length];
-
-        gameRows.push({
-          tournament_id: tid,
-          division_id: group.id,
-          home_team_id: home.id,
-          away_team_id: away.id,
-          game_date: baseDate,
-          game_time: `${9 + i}:00`,
-          location: venue.name,
-          diamond_id: venue.id,
-          status: options.results ? 'final' : 'scheduled',
-          home_score: options.results ? Math.floor(Math.random() * 10) : null,
-          away_score: options.results ? Math.floor(Math.random() * 10) : null
-        });
-      }
-    }
-    await authClient().from('games').insert(gameRows);
-  }
 }
 
 export async function advancePlayoffs(game: Game, options: ReadOptions = {}) {
@@ -2218,92 +1784,6 @@ export async function uploadResourceFile(file: File): Promise<string | null> {
   }
 }
 
-export async function seedRulesAndResources(tournamentId: string) {
-  console.log('Seeding rules for tournament:', tournamentId);
-  // Neutral starter content; organizers should customize before publishing.
-  const RULES_SECTIONS = [
-    {
-      icon: 'Shield',
-      title: 'General Tournament Rules',
-      items: [
-        'Tournament-specific rules should be reviewed and published before the event goes live.',
-        'Teams must be ready to play before their scheduled game time.',
-        'Final eligibility, roster, scoring, and protest rules are set by the tournament organizer.',
-      ],
-    },
-    {
-      icon: 'BookOpen',
-      title: 'Eligibility & Divisions',
-      items: [
-        'Division eligibility should be confirmed by the tournament organizer.',
-        'Roster limits, player eligibility, and team documentation requirements should be published before registration opens.',
-      ],
-    },
-    {
-      icon: 'AlertCircle',
-      title: 'Code of Conduct',
-      items: [
-        'Respect for all players, coaches, umpires, and spectators is mandatory.',
-        'Any player, coach, or spectator ejected from a game may not return to the facility that day.',
-        'Aggressive or threatening behaviour will result in immediate removal from the tournament.',
-        'All disputes must be handled through official channels.',
-        'Coaches are responsible for the behaviour of their players and spectators.',
-      ],
-    },
-    {
-      icon: 'CheckCircle',
-      title: 'Equipment & Uniforms',
-      items: [
-        'Teams are responsible for meeting equipment requirements set by the tournament organizer.',
-        'Uniform and identification requirements should be published before the event.',
-      ],
-    },
-  ];
-
-  const RESOURCES = [
-    { label: 'Tournament Rules', url: '#' },
-    { label: 'Venue Map & Directions', url: '#' },
-    { label: 'Registration Requirements', url: '#' },
-  ];
-  try {
-    // Seed Rules
-    for (let i = 0; i < RULES_SECTIONS.length; i++) {
-      const s = RULES_SECTIONS[i];
-      const ruleId = await saveRuleSection({
-        tournamentId,
-        title: s.title,
-        icon: s.icon,
-        order: i
-      });
-      console.log('Saved section:', s.title, 'ID:', ruleId);
-      if (ruleId) {
-        for (let j = 0; j < s.items.length; j++) {
-          await saveRuleItem({
-            ruleId,
-            content: s.items[j],
-            order: j
-          });
-        }
-      }
-    }
-
-    // Seed Resources
-    for (let i = 0; i < RESOURCES.length; i++) {
-      const r = RESOURCES[i];
-      await saveResource({
-        tournamentId,
-        label: r.label,
-        url: r.url,
-        order: i
-      });
-    }
-    console.log('Seeding complete');
-  } catch (err) {
-    console.error('Seeding error:', err);
-    throw err;
-  }
-}
-
 // ── Organizations ─────────────────────────────────────────────────────────────
 
 export async function getOrganizationBySlug(slug: string): Promise<Organization | null> {
@@ -2314,31 +1794,6 @@ export async function getOrganizationBySlug(slug: string): Promise<Organization 
     .single();
   if (error || !data) return null;
   return applyEntitlementGrants(mapOrg(data));
-}
-
-export async function getOrganizationByUserId(userId: string): Promise<Organization | null> {
-  const { data, error } = await supabase
-    .from('organization_members')
-    .select('organizations(*)')
-    .eq('user_id', userId)
-    .single();
-  if (error || !data) return null;
-  const org = (data as any).organizations;
-  return org ? applyEntitlementGrants(mapOrg(org)) : null;
-}
-
-export async function getOrgMembership(
-  userId: string,
-  orgId: string
-): Promise<OrganizationMember | null> {
-  const { data, error } = await supabase
-    .from('organization_members')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('organization_id', orgId)
-    .single();
-  if (error || !data) return null;
-  return mapMember(data);
 }
 
 export async function getTournamentsByOrg(orgId: string, options: ReadOptions = {}): Promise<Tournament[]> {
@@ -2467,30 +1922,6 @@ export async function createOrganizationMember(
     .single();
   if (error) throw new Error(error.message);
   return mapMember(data);
-}
-
-export async function updateOrgSubscription(orgId: string, fields: {
-  stripeCustomerId?: string;
-  stripeSubscriptionId?: string | null;
-  subscriptionStatus?: string;
-  planId?: string;
-  tournamentLimit?: number;
-  subscriptionPeriod?: string | null;
-  currentPeriodEnd?: string | null;
-  repTeamSubscriptionItemId?: string | null;
-}): Promise<void> {
-  const update: Record<string, unknown> = {};
-  if (fields.stripeCustomerId !== undefined)        update.stripe_customer_id = fields.stripeCustomerId;
-  if (fields.stripeSubscriptionId !== undefined)    update.stripe_subscription_id = fields.stripeSubscriptionId;
-  if (fields.subscriptionStatus !== undefined)      update.subscription_status = fields.subscriptionStatus;
-  if (fields.planId !== undefined)                  update.plan_id = fields.planId;
-  if (fields.tournamentLimit !== undefined)         update.tournament_limit = fields.tournamentLimit;
-  if (fields.subscriptionPeriod !== undefined)      update.subscription_period = fields.subscriptionPeriod;
-  if (fields.currentPeriodEnd !== undefined)        update.current_period_end = fields.currentPeriodEnd;
-  if (fields.repTeamSubscriptionItemId !== undefined) update.rep_team_subscription_item_id = fields.repTeamSubscriptionItemId;
-  if (Object.keys(update).length === 0) return;
-  const { error } = await supabaseAdmin.from('organizations').update(update).eq('id', orgId);
-  if (error) throw new Error(error.message);
 }
 
 // ── Row mappers ───────────────────────────────────────────────────────────────
@@ -2625,31 +2056,6 @@ export async function resolveTournamentContactEmail(
   return memberEmail || t.contact_email || orgFallbackEmail || null;
 }
 
-/**
- * Merge-patch the tournament settings JSONB column.
- * Only supplied keys are changed; all other existing keys are preserved.
- */
-export async function updateTournamentSettings(
-  tournamentId: string,
-  patch: import('./types').TournamentSettings,
-): Promise<void> {
-  // Read-merge-write: safe for settings (low-contention, admin-only, small payload).
-  const { data: current, error: readErr } = await authClient()
-    .from('tournaments')
-    .select('settings')
-    .eq('id', tournamentId)
-    .single();
-  if (readErr) throw readErr;
-
-  const merged = { ...(current?.settings ?? {}), ...patch };
-
-  const { error } = await authClient()
-    .from('tournaments')
-    .update({ settings: merged })
-    .eq('id', tournamentId);
-  if (error) throw error;
-}
-
 function mapArchive(r: any): TournamentArchive {
   return {
     id:              r.id,
@@ -2747,27 +2153,6 @@ export async function getLedgerById(ledgerId: string, orgId: string): Promise<Ac
     .eq('org_id', orgId)
     .maybeSingle();
   return data ? mapLedger(data) : null;
-}
-
-export async function getOrCreateTournamentLedger(
-  orgId: string,
-  tournamentId: string,
-  tournamentName: string
-): Promise<AccountingLedger> {
-  const { data: existing } = await supabaseAdmin
-    .from('accounting_ledgers')
-    .select('*')
-    .eq('org_id', orgId)
-    .eq('entity_type', 'tournament')
-    .eq('entity_id', tournamentId)
-    .maybeSingle();
-  if (existing) return mapLedger(existing);
-  const { data } = await supabaseAdmin
-    .from('accounting_ledgers')
-    .insert({ org_id: orgId, entity_type: 'tournament', entity_id: tournamentId, name: tournamentName })
-    .select()
-    .single();
-  return mapLedger(data!);
 }
 
 export async function getOrCreateRepTeamLedger(
@@ -3117,31 +2502,6 @@ export async function getLeagueSeasonById(seasonId: string, orgId: string): Prom
   return data ? mapLeagueSeason(data) : null;
 }
 
-export async function createLeagueSeason(orgId: string, input: LeagueSeasonInput): Promise<LeagueSeason> {
-  const { data } = await supabaseAdmin
-    .from('league_seasons')
-    .insert({
-      org_id:                      orgId,
-      name:                        input.name,
-      slug:                        input.slug,
-      sport:                       input.sport ?? DEFAULT_SPORT,
-      division:                   input.division ?? null,
-      description:                 input.description ?? null,
-      registration_fee:            input.registrationFee ?? null,
-      auto_generate_fees:          input.autoGenerateFees ?? false,
-      auto_approve_under_capacity: input.autoApproveUnderCapacity ?? false,
-      auto_promote_waitlist:       input.autoPromoteWaitlist ?? false,
-      registration_open_at:        input.registrationOpenAt ?? null,
-      registration_close_at:       input.registrationCloseAt ?? null,
-      season_start_date:           input.seasonStartDate ?? null,
-      season_end_date:             input.seasonEndDate ?? null,
-      waiver_text:                 input.waiverText ?? null,
-    })
-    .select()
-    .single();
-  return mapLeagueSeason(data!);
-}
-
 export async function updateLeagueSeason(
   seasonId: string,
   orgId: string,
@@ -3180,23 +2540,6 @@ export async function getDivisionsForSeason(seasonId: string): Promise<LeagueDiv
     .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true });
   return (data ?? []).map(mapLeagueDivision);
-}
-
-export async function createDivision(
-  seasonId: string,
-  input: { name: string; capacity?: number | null; sortOrder?: number }
-): Promise<LeagueDivision> {
-  const { data } = await supabaseAdmin
-    .from('league_divisions')
-    .insert({
-      season_id:  seasonId,
-      name:       input.name,
-      capacity:   input.capacity ?? null,
-      sort_order: input.sortOrder ?? 0,
-    })
-    .select()
-    .single();
-  return mapLeagueDivision(data!);
 }
 
 export async function updateDivision(
@@ -3480,15 +2823,6 @@ export async function getPracticesForTeam(teamId: string): Promise<LeaguePractic
   return (data ?? []).map(mapLeaguePractice);
 }
 
-export async function getPracticesForSeason(seasonId: string): Promise<LeaguePractice[]> {
-  const { data } = await supabaseAdmin
-    .from('league_practices')
-    .select('*')
-    .eq('season_id', seasonId)
-    .order('scheduled_at', { ascending: true });
-  return (data ?? []).map(mapLeaguePractice);
-}
-
 interface LeaguePracticeInput {
   orgId: string;
   seasonId: string;
@@ -3585,13 +2919,6 @@ export async function updateLeagueGame(
   if (input.status      !== undefined) patch.status       = input.status;
   if (input.notes       !== undefined) patch.notes        = input.notes;
   await supabaseAdmin.from('league_games').update(patch).eq('id', gameId);
-}
-
-export async function enterGameResult(gameId: string, homeScore: number, awayScore: number): Promise<void> {
-  await supabaseAdmin
-    .from('league_games')
-    .update({ home_score: homeScore, away_score: awayScore, status: 'completed', updated_at: new Date().toISOString() })
-    .eq('id', gameId);
 }
 
 // ─── Standings (computed, not stored) ────────────────────────────────────────
@@ -3831,14 +3158,6 @@ export async function deleteRepTeamGroup(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function setRepTeamGroup(teamId: string, groupId: string | null): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from('rep_teams')
-    .update({ group_id: groupId })
-    .eq('id', teamId);
-  if (error) throw error;
-}
-
 export interface OpenTryout {
   teamId: string;
   teamName: string;
@@ -3935,27 +3254,6 @@ export async function updateRepTeam(teamId: string, fields: {
     .single();
   if (error) throw error;
   return mapRepTeam(data);
-}
-
-export async function deleteRepTeam(teamId: string): Promise<void> {
-  const { error } = await supabaseAdmin.from('rep_teams').delete().eq('id', teamId);
-  if (error) throw error;
-}
-
-/**
- * Returns the number of rep teams in an org that have at least one program year
- * in 'draft' or 'active' status. Used to determine the billable quantity for the
- * Club plan rep-team add-on (first 3 free, $19/month per additional).
- */
-export async function getActiveRepTeamCount(orgId: string): Promise<number> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_program_years')
-    .select('team_id')
-    .eq('org_id', orgId)
-    .in('status', ['draft', 'active']);
-  if (error) throw error;
-  const uniqueTeamIds = new Set((data ?? []).map((r: any) => r.team_id as string));
-  return uniqueTeamIds.size;
 }
 
 /**
@@ -5110,19 +4408,6 @@ export async function getRepTryoutSessions(tryoutId: string): Promise<RepTryoutS
   return (data ?? []).map(mapRepTryoutSession);
 }
 
-/** Scheduled (non-cancelled) tryout sessions for a team — the calendar PROJECTION source the coach
- *  schedule view unions in (no rep_team_events row is ever created for a tryout). */
-export async function getRepTryoutSessionsForTeam(teamId: string): Promise<RepTryoutSession[]> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_tryout_sessions')
-    .select('*')
-    .eq('team_id', teamId)
-    .eq('status', 'scheduled')
-    .order('starts_at', { ascending: true });
-  if (error) throw error;
-  return (data ?? []).map(mapRepTryoutSession);
-}
-
 export async function getRepTryoutSessionById(sessionId: string): Promise<RepTryoutSession | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_tryout_sessions')
@@ -5627,11 +4912,6 @@ export async function updateRepRosterPlayer(playerId: string, fields: {
   return mapRepRosterPlayer(data);
 }
 
-export async function deleteRepRosterPlayer(playerId: string): Promise<void> {
-  const { error } = await supabaseAdmin.from('rep_roster_players').delete().eq('id', playerId);
-  if (error) throw error;
-}
-
 // ── Player profile roll-ups (Wave B) ──────────────────────────────────────────
 
 export interface RepPlayerAttendanceSummary {
@@ -6038,22 +5318,6 @@ export async function updateRepTeamEventSeries(
     if (uErr) throw uErr;
   }
   return (rows ?? []).length;
-}
-
-export async function updateRepTeamEventsByRecurrenceParent(
-  recurrenceParentId: string,
-  fromStartsAt: string,
-  fields: { location?: string | null; endsAt?: string | null },
-): Promise<void> {
-  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (fields.location !== undefined) patch.location = fields.location;
-  if (fields.endsAt !== undefined)   patch.ends_at = fields.endsAt;
-  const { error } = await supabaseAdmin
-    .from('rep_team_events')
-    .update(patch)
-    .eq('recurrence_parent_id', recurrenceParentId)
-    .gte('starts_at', fromStartsAt);
-  if (error) throw error;
 }
 
 export async function deleteRepTeamEvent(eventId: string): Promise<void> {
@@ -6630,14 +5894,6 @@ export async function getRepTeamTagLibrary(teamId: string, kind: RepTagKind, org
     .order('name', { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapRepTeamTag);
-}
-
-/** Single tag by id — the coach [tagId]/merge routes load this to resolve the tag's kind (→ which
- *  capability gates the edit) and ownership (a team_id-NULL shared tag can't be edited by a coach). */
-export async function getRepTagById(id: string): Promise<RepTeamTag | null> {
-  const { data, error } = await supabaseAdmin.from('rep_team_tags').select('*').eq('id', id).maybeSingle();
-  if (error) throw error;
-  return data ? mapRepTeamTag(data) : null;
 }
 
 /** Org-authored shared tags of a kind (team_id NULL) — the admin Shared Library screen. */
@@ -8351,11 +7607,6 @@ export async function updateRepTeamExpense(expenseId: string, fields: {
   return mapRepTeamExpense(data);
 }
 
-export async function deleteRepTeamExpense(expenseId: string): Promise<void> {
-  const { error } = await supabaseAdmin.from('rep_team_expenses').delete().eq('id', expenseId);
-  if (error) throw error;
-}
-
 // ── Org Payees ────────────────────────────────────────────────────────────────
 
 function mapOrgPayee(r: any): OrgPayee {
@@ -9060,16 +8311,6 @@ export async function getPlatformUsers(): Promise<PlatformUser[]> {
     return [];
   }
   return (data ?? []).map(mapPlatformUser);
-}
-
-export async function getPlatformUserByEmail(email: string): Promise<PlatformUser | null> {
-  const { data, error } = await supabaseAdmin
-    .from('platform_users')
-    .select('*')
-    .eq('email', email.toLowerCase())
-    .maybeSingle();
-  if (error) throw error;
-  return data ? mapPlatformUser(data) : null;
 }
 
 export async function createPlatformUser(fields: {
