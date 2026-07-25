@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { getAuthDestination } from '@/lib/auth-destination';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import AddOrgForm from './AddOrgForm';
 import styles from '../start.module.css';
 
@@ -65,14 +66,10 @@ export default async function StartTournamentPage() {
     redirect('/platform-admin');
   }
 
-  // Single-org by default: an existing member can't self-serve a second empty org. Only a
-  // brand-new account with no active membership yet reaches the create-first-org form.
-  const { count: activeMemberships } = await supabaseAdmin
-    .from('organization_members')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .eq('status', 'active');
-  if ((activeMemberships ?? 0) > 0) {
+  // Single-org by default: an existing member of a REAL org can't self-serve a second empty org.
+  // A user's own Coaches Portal doesn't count (exemption-aware helper), so a portal-owning coach can
+  // still create their first real org. Only a brand-new account (or portal-only coach) reaches the form.
+  if (await userBelongsToOtherRealOrg(user.id)) {
     // Drop them into their existing workspace — getAuthDestination carries the
     // single-context fast-path the retired /home launchpad used to provide.
     redirect(await getAuthDestination());

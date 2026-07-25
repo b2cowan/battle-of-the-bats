@@ -15,11 +15,14 @@ import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  // Scope to the org the caller is acting on (multi-org owners), NOT their home org — fail closed
+  // if no orgSlug is supplied, so a destructive cancel can never default to the wrong subscription.
+  const body = await req.json().catch(() => ({}));
+  const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 
-  const body = await req.json().catch(() => ({}));
   const reason = typeof body.reason === 'string' && body.reason.trim()
     ? body.reason.trim()
     : null;

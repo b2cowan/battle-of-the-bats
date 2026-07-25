@@ -314,7 +314,8 @@ export default function BillingPage() {
       const res = await fetch('/api/billing/downgrade/preflight', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ targetPlan: planKey }),
+        // Explicit org scoping — multi-org owners must act on THIS page's org, not their home org.
+        body: JSON.stringify({ targetPlan: planKey, orgSlug: currentOrg?.slug }),
       });
       const data = await res.json() as DowngradePreflight | { error?: string };
       if (!res.ok) throw new Error('error' in data ? data.error ?? 'Downgrade review failed' : 'Downgrade review failed');
@@ -340,6 +341,7 @@ export default function BillingPage() {
           targetPlan: downgradePreflight.targetPlan,
           keepTournamentIds: selectedKeepIds,
           reason: downgradeReason,
+          orgSlug: currentOrg?.slug,
         }),
       });
       const data = await res.json() as { error?: string; retainedCount?: number };
@@ -365,7 +367,7 @@ export default function BillingPage() {
     setCancelPreflight(null);
     setCancelReason('');
     try {
-      const res = await fetch('/api/billing/cancel/preflight');
+      const res = await fetch(`/api/billing/cancel/preflight?orgSlug=${encodeURIComponent(currentOrg?.slug ?? '')}`);
       const data = await res.json() as CancellationPreflight | { error?: string };
       if (!res.ok) throw new Error('error' in data ? data.error ?? 'Cancellation review failed' : 'Cancellation review failed');
       setCancelPreflight(data as CancellationPreflight);
@@ -382,7 +384,8 @@ export default function BillingPage() {
       const res = await fetch('/api/billing/cancel/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason: cancelReason }),
+        // Explicit org scoping — multi-org owners must act on THIS page's org, not their home org.
+        body: JSON.stringify({ reason: cancelReason, orgSlug: currentOrg?.slug }),
       });
       const data = await res.json() as { error?: string };
       if (!res.ok) throw new Error(data.error ?? 'Cancellation failed');

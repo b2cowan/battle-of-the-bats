@@ -25,6 +25,12 @@ const JSON_OUT = process.argv.includes('--json');
 const SCOPES = [
   path.resolve('app/api/admin'),
   path.resolve('app/api/coaches'),
+  // Destructive billing actions (cancel + downgrade a subscription) must scope to the invoking org,
+  // never fall back to the caller's home org — a multi-org owner could otherwise cancel/downgrade the
+  // WRONG subscription. (Other billing routes — portal, checkout, payment-method — still soft-fall-back
+  // to home org today; tightening those is a separate follow-up.)
+  path.resolve('app/api/billing/cancel'),
+  path.resolve('app/api/billing/downgrade'),
 ];
 
 const AUTH_CALL = /\bgetAuthContext(?:WithRole|WithScope)?\s*\(/g;

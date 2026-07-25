@@ -5,6 +5,7 @@ import { FOUNDING_SEASON_END, isFoundingSeasonActive } from '@/lib/plan-config';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 
 function slugify(name: string) {
@@ -51,16 +52,13 @@ export const POST = withObservability(async (req: Request) => {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
     }
 
-    // Single-org by default (decision 2026-06-19): a signed-in user who already has an active
-    // membership cannot self-serve a second org — a second org comes only from a deliberate
-    // invite or a Coaches Portal purchase. Mirrors the /start/tournament page redirect; this is
+    // Single-org by default (decision 2026-06-19): a signed-in user who already belongs to a REAL
+    // organization cannot self-serve a second — a second org comes only from a deliberate invite or
+    // a Coaches Portal purchase. A user's OWN Coaches Portal (team_workspace) does NOT count, so a
+    // portal-owning coach can still create their first real org. Uses the shared exemption-aware
+    // helper (same rule accept-invite enforces); mirrors the /start/tournament page redirect and is
     // the server-side enforcement so the rule holds even if the page guard is bypassed.
-    const { count: activeMemberships } = await supabaseAdmin
-      .from('organization_members')
-      .select('id', { count: 'exact', head: true })
-      .eq('user_id', user.id)
-      .eq('status', 'active');
-    if ((activeMemberships ?? 0) > 0) {
+    if (await userBelongsToOtherRealOrg(user.id)) {
       return NextResponse.json(
         { error: 'Your account already has a workspace. To join another organization, ask them to invite you.' },
         { status: 403 }

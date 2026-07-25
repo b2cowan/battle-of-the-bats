@@ -8,11 +8,13 @@ import {
 import { withObservability } from '@/lib/observability';
 
 export const POST = withObservability(async (req: Request) => {
-  const ctx = await getAuthContextWithRole();
+  // Scope to the org the caller is viewing (multi-org owners), NOT their home org — fail closed.
+  const body = await req.json().catch(() => ({}));
+  const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 
-  const body = await req.json().catch(() => ({}));
   const targetPlan = normalizePlan(body.targetPlan);
   if (!targetPlan) {
     return Response.json({ error: 'Choose a valid target plan.' }, { status: 400 });
