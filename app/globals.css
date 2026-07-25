@@ -419,16 +419,13 @@ body:has([data-chat-fullbleed]) {
 }
 
 /* ─── Warm Coaches Portal — theme option (TH-2 / TH-5) ──────────────────────────
-   The coaches portal renders DARK by default. When BOTH conditions hold it flips warm:
-     1. the account theme preference is Warm  → html[data-user-theme="warm"] (shared with
-        the consumer app, set pre-paint by the root no-flash script), AND
-     2. the internal dev-preview flag is on   → the shell emits [data-coach-warm-enabled]
-        only when NEXT_PUBLIC_COACH_WARM_PREVIEW === '1'.
-   Keying off the shared preference ALONE would flip the portal for every consumer-warm coach
-   the instant any warm rule shipped (the shared-preference trap) — so the dev-flag marker is
-   mandatory until the single public release (Stage 6) removes it. With the marker absent —
-   every non-chooser, and everyone in production today — this block never matches and the portal
-   is byte-identical dark.
+   The warm coaches portal is PUBLICLY RELEASED. The two coaches shells always emit the
+   [data-coach-warm-enabled] marker on their outermost element (the internal
+   NEXT_PUBLIC_COACH_WARM_PREVIEW dev-gate is retired now that warm coverage is complete —
+   see lib/coach-warm-preview.ts). The portal flips warm whenever the shared account theme
+   preference is Warm — html[data-user-theme="warm"], set pre-paint by the root no-flash
+   script and shared with the consumer app. Warm is the platform default; the portal renders
+   dark only under an explicit Dark choice.
 
    The flip works by REDEFINING the dark tokens the shells already consume (they are ~99%
    token-driven post-P3), so most of both shells warm with zero per-element edits. The warm
