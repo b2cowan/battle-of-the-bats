@@ -732,35 +732,6 @@
   color: var(--data-gray);
 }
 
-.registrationOverview {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.registrationHeadline {
-  display: flex;
-  align-items: baseline;
-  gap: 0.45rem;
-}
-
-.registrationHeadlineCount {
-  font-family: var(--font-data);
-  font-size: 1.85rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--logic-lime);
-}
-
-.registrationHeadlineText {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--data-gray);
-}
-
 .registrationStatusTable {
   display: flex;
   flex-direction: column;
@@ -1165,122 +1136,6 @@
   color: var(--data-gray);
 }
 
-.registrationAttentionPanel {
-  background: rgba(var(--logic-lime-rgb), 0.025);
-  border-color: rgba(var(--logic-lime-rgb), 0.22);
-}
-
-.attentionTotalRow {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-}
-
-.attentionTotal {
-  font-family: var(--font-data);
-  font-size: 1.8rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--logic-lime);
-}
-
-.attentionTotalLabel {
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--data-gray);
-}
-
-.attentionList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.attentionItem {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.55rem 0.65rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  background: rgba(var(--blueprint-blue-rgb), 0.035);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.attentionItem:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.38);
-  background: rgba(var(--logic-lime-rgb), 0.055);
-}
-
-.attentionItem[data-tone="danger"] {
-  border-color: rgba(var(--danger-rgb), 0.26);
-}
-
-.attentionItem[data-tone="warning"] {
-  border-color: rgba(245, 158, 11, 0.28);
-}
-
-.attentionItem[data-locked="true"] {
-  border-style: dashed;
-}
-
-.attentionItemCount {
-  min-width: 1.65rem;
-  font-family: var(--font-data);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--logic-lime);
-  text-align: right;
-}
-
-.attentionItemBody {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.attentionItemBody strong {
-  overflow: hidden;
-  font-family: var(--font-data);
-  font-size: 0.76rem;
-  color: var(--fl-text);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attentionItemBody small {
-  overflow: hidden;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  color: var(--data-gray);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.attentionItemAction {
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: rgba(var(--logic-lime-rgb), 0.72);
-}
-
-.attentionUpgradeCopy {
-  margin: 0;
-  padding-top: 0.25rem;
-  font-family: var(--font-data);
-  font-size: 0.68rem;
-  line-height: 1.5;
-  color: var(--data-gray);
-}
-
 /* ── Stat card sub-value ─────────────────────────────── */
 .statSubValue {
   font-family: var(--font-data);
@@ -1454,20 +1309,6 @@
 }
 
 /* Mobile status chip (lives in the title block; desktop uses the right-corner block) */
-.statusChipMobile {
-  display: none;
-}
-
-.statusDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.statusChipSub {
-  color: var(--white-40);
-}
 
 /* ── Edit Layout mode ──────────────────────────────────── */
 .editToolbar {
@@ -1816,27 +1657,6 @@
   color: var(--logic-lime);
   border-color: rgba(var(--logic-lime-rgb), 0.55);
   background: rgba(var(--logic-lime-rgb), 0.1);
-}
-
-.resetBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.35rem 0;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--white-30);
-  transition: color 0.15s;
-}
-
-.resetBtn:hover {
-  color: var(--danger);
 }
 
 /* ── Communications panel ────────────────────────────── */

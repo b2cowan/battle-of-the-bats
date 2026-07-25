@@ -814,65 +814,11 @@
   text-align: center;
 }
 
-.helpNoResults {
-  margin: 0;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 1px dashed rgba(255, 255, 255, 0.12);
-  color: var(--white-40, rgba(255, 255, 255, 0.42));
-  font-size: 0.84rem;
-}
-
 /* ── Shared utility classes (kept for backward compat / hub agent) ─────────
    helpUtilityTitle is used by the hub; keep it here.                        */
-.helpUtilityTitle {
-  margin: 0 0 0.85rem;
-  font-size: 0.78rem;
-  font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--white-55, rgba(255, 255, 255, 0.72));
-}
 
 /* helpSectionHeader / helpSectionGroup / helpSectionHeading — kept for any
    content that still references them directly; harmless if unused.          */
-.helpSectionHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 0.6rem;
-}
-
-.helpSectionGroup {
-  margin: 0 0 0.25rem;
-  font-size: 0.68rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
-  color: rgba(79, 163, 224, 0.8);
-}
-
-.helpSectionHeading {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--fl-text, rgba(255, 255, 255, 0.85));
-  margin: 0;
-  line-height: 1.3;
-}
-
-.helpSectionSummary {
-  margin: 0 0 0.8rem;
-  font-size: 0.83rem;
-  line-height: 1.55;
-  color: var(--white-40, rgba(255, 255, 255, 0.42));
-}
-
-.helpSections {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 860px) {

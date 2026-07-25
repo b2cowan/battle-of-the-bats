@@ -118,14 +118,6 @@
   color: var(--white-35);
 }
 
-.advancedTitle {
-  margin: 0;
-  color: var(--white-85);
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 0.01em;
-}
-
 .planBadge,
 .lockedBadge {
   display: inline-flex;
@@ -147,13 +139,6 @@
 
 .lockedBadge {
   padding: 0.22rem 0.48rem;
-}
-
-.lockedAdvanced {
-  position: relative;
-  background:
-    linear-gradient(135deg, rgba(var(--blueprint-blue-rgb), 0.045), transparent),
-    var(--surface);
 }
 
 .settingsTitleRow {
@@ -198,25 +183,6 @@
 .segmentButtonActive {
   background: var(--logic-lime);
   color: var(--on-lime);
-}
-
-.toggleRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  cursor: pointer;
-}
-
-.toggleRowDisabled {
-  cursor: not-allowed;
-}
-
-.toggleLabel {
-  color: var(--fl-text);
-  font-size: 0.85rem;
-  font-weight: 600;
-  font-family: var(--font-data);
 }
 
 .descriptionText {
@@ -342,24 +308,6 @@
 .swatchCustom {
   /* Decorative "pick a color" wheel — categorical rainbow, not semantic status colors. Keep literal. */
   background: conic-gradient(#f87171, #fb923c, #fcd34d, #4ade80, #60a5fa, #c084fc, #f87171);
-}
-
-.swatchLocked {
-  opacity: 0.45;
-  cursor: default;
-}
-
-.swatchLocked:hover {
-  transform: none;
-}
-
-.swatchLockIcon {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--white);
 }
 
 .customPickers {
@@ -538,12 +486,6 @@
   justify-content: space-between;
   max-width: 260px;
   font-size: 0.68rem;
-  color: var(--white-40);
-}
-
-.upgradeNote {
-  margin: 0.75rem 0 0;
-  font-size: 0.78rem;
   color: var(--white-40);
 }
 
@@ -736,46 +678,10 @@
   border: 1px solid rgba(var(--primary-rgb), 0.48);
 }
 
-.customColorBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-height: 44px;
-  padding: 0.55rem 0.85rem;
-  border-radius: 2px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-  background: var(--bg-2);
-  color: var(--white-80);
-  font-weight: 800;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s, opacity 0.15s;
-}
-
-.customColorBtn:hover:not(:disabled) {
-  border-color: rgba(var(--primary-rgb), 0.4);
-  background: rgba(var(--primary-rgb), 0.06);
-}
-
-.customColorBtnActive {
-  border-color: var(--primary);
-  background: rgba(var(--primary-rgb), 0.1);
-}
-
-.customColorBtn:disabled,
 .fontBtn:disabled,
 .cardStyleBtn:disabled {
   cursor: not-allowed;
   opacity: 0.58;
-}
-
-.customColorSwatch {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  /* Decorative "pick a color" wheel — categorical rainbow, not semantic status colors. Keep literal. */
-  background: conic-gradient(#f87171, #fb923c, #fcd34d, #4ade80, #60a5fa, #c084fc, #f87171);
-  border: 2px solid rgba(255,255,255,0.7);
-  flex-shrink: 0;
 }
 
 /* ── Banner ──────────────────────────────── */
@@ -1065,24 +971,6 @@
   line-height: 1.5;
 }
 
-.confirmBanner {
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-start;
-  padding: 0.6rem 0.75rem;
-  background: rgba(var(--logic-lime-rgb), 0.04);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
-  border-radius: 2px;
-}
-
-.confirmBanner p {
-  margin: 0;
-  font-size: 0.78rem;
-  font-family: var(--font-data);
-  color: var(--white-70);
-  line-height: 1.5;
-}
-
 /* ── Public URL preview ────────────────────────── */
 .urlPreview {
   margin: 0.4rem 0 0;
@@ -1099,15 +987,6 @@
 }
 
 /* ── Tie-breaker sortable row ──────────────────── */
-.tieBreakerRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--bg-2);
-  padding: 0.5rem 0.75rem;
-  border-radius: 2px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
-}
 
 /* ── Accordion ───────────────────────────────── */
 
@@ -1205,8 +1084,7 @@
   }
 
   .settingsTitleRow,
-  .cardHeaderRow,
-  .toggleRow {
+  .cardHeaderRow {
     align-items: flex-start;
     flex-direction: column;
   }

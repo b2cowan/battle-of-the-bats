@@ -16,15 +16,6 @@
 
 .backLink:hover { color: var(--logic-lime); }
 
-.header {
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
-  padding-bottom: 1rem;
-  margin-bottom: 1.75rem;
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-}
-
 .headerLabel {
   font-family: var(--font-data);
   font-size: 0.6rem;
@@ -322,11 +313,6 @@
 .sectionHeader .sectionTitle { margin: 0; }
 
 /* ── Identity grid ─────────────────────────────────────────────── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.75rem 1.5rem;
-}
 
 .field { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
 

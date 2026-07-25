@@ -821,35 +821,6 @@
 .viewToggleBtn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.8); }
 .viewToggleBtnActive { background: rgba(var(--blueprint-blue-rgb),0.15); color: var(--blueprint-blue); font-weight: 600; }
 
-.addEventWrap { position: relative; }
-.addEventMenu {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 4px);
-  background: var(--card-bg);
-  border: 1px solid rgba(var(--blueprint-blue-rgb),0.25);
-  border-radius: 2px;
-  padding: 0.35rem 0;
-  min-width: 190px;
-  z-index: 50;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-}
-.addEventMenuItem {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  width: 100%;
-  background: none;
-  border: none;
-  color: var(--white-75);
-  padding: 0.5rem 1rem;
-  font-size: 0.88rem;
-  cursor: pointer;
-  text-align: left;
-  transition: background 0.1s;
-}
-.addEventMenuItem:hover { background: rgba(255,255,255,0.06); }
-
 /* W/L/T record widget */
 .wltWidget {
   display: inline-flex;
@@ -923,7 +894,6 @@
 .eventChip:hover { background: rgba(255,255,255,0.07); }
 .eventChipTime { font-size: 0.78rem; color: rgba(255,255,255,0.4); min-width: 5.5rem; }
 .eventChipName { font-size: 0.88rem; color: var(--white-90); flex: 1; }
-.eventChipResult { font-size: 0.7rem; font-weight: 700; }
 
 /* Week view */
 .calWeekGrid {
@@ -1016,7 +986,6 @@
 }
 .slideOverDetails dt { color: var(--white-35); font-size: 0.78rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
 .slideOverDetails dd { color: var(--white-90); margin: 0; }
-.slideOverActions { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.07); display: flex; gap: 0.5rem; }
 
 .eventTypePill {
   font-size: 0.72rem;
@@ -1028,18 +997,8 @@
 }
 
 /* Score section */
-.scoreSection { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid rgba(255,255,255,0.07); }
-.scoreDisplay { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.scoreNum { font-size: 2rem; font-weight: 900; line-height: 1; }
-.scoreSep { font-size: 1.2rem; color: rgba(255,255,255,0.3); }
-.resultBadge { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; }
-.scoreForm { margin-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
-.scoreFormRow { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
 
 /* Delete confirm inline */
-.deleteConfirm { display: flex; flex-direction: column; gap: 0.5rem; }
-.deleteConfirmMsg { font-size: 0.88rem; color: rgba(255,255,255,0.7); margin: 0; }
-.deleteConfirmBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
 /* Error text */
 .errorText { color: var(--danger); font-size: 0.85rem; margin: 0; }
@@ -1068,12 +1027,3 @@
   font-size: 0.85rem; cursor: pointer; padding: 0.3rem 0.5rem;
 }
 .btnGhost:hover { color: rgba(255,255,255,0.8); }
-
-.btnDanger {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  background: rgba(var(--danger-rgb), 0.12); color: var(--danger);
-  border: 1px solid rgba(var(--danger-rgb), 0.25); border-radius: 2px;
-  padding: 0.4rem 0.85rem; font-size: 0.85rem; font-weight: 600; cursor: pointer;
-}
-.btnDanger:hover { background: rgba(var(--danger-rgb), 0.2); }
-.btnDanger:disabled { opacity: 0.5; cursor: not-allowed; }

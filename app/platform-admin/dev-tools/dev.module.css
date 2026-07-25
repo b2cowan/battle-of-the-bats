@@ -1,4 +1,4 @@
-﻿.page {
+.page {
   min-height: 100vh;
   background: var(--pitch-black);
   padding: 2rem;
@@ -54,65 +54,6 @@
 .refreshBtn:hover { border-color: rgba(255,255,0,0.4); color: var(--dev-debug); }
 
 /* Credentials box */
-.credBox {
-  background: rgba(255,255,0,0.03);
-  border: 1px solid rgba(255,255,0,0.2);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.5rem;
-}
-
-.credLabel {
-  font-size: 0.65rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: rgba(255,255,0,0.7);
-  margin-bottom: 0.6rem;
-}
-
-.credLabel code {
-  background: rgba(255,255,0,0.12);
-  padding: 0.1rem 0.35rem;
-  border-radius: 3px;
-  color: var(--dev-debug);
-  font-size: 0.75rem;
-}
-
-.credGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.25rem 1.5rem;
-}
-
-.credRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.credEmail {
-  font-size: 0.72rem;
-  color: var(--white-75);
-}
-
-.credRole {
-  font-size: 0.6rem;
-  color: rgba(255,255,255,0.3);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.credOrg {
-  margin-top: 0.5rem;
-  font-size: 0.65rem;
-  color: var(--white-35);
-}
-
-.credOrg code {
-  color: rgba(255,255,0,0.7);
-  font-size: 0.72rem;
-}
 
 /* Seed cards */
 .cards {

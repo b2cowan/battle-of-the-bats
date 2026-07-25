@@ -309,12 +309,6 @@
   gap: 0.35rem;
 }
 
-.divisionStats {
-  display: flex;
-  gap: 1.25rem;
-  flex-wrap: wrap;
-}
-
 /* ── Capacity bar ─────────────────────────────────────────────────────────── */
 .capacityWrap {
   display: flex;
@@ -666,23 +660,6 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-}
-
-.poolSearch {
-  width: 100%;
-  background: rgba(255,255,255,0.04);
-  border: 1px solid var(--white-10);
-  border-radius: 2px;
-  padding: 0.4rem 0.65rem;
-  color: var(--white-80);
-  font-size: 0.82rem;
-  font-family: var(--font-data);
-  margin-bottom: 0.5rem;
-  box-sizing: border-box;
-}
-.poolSearch:focus {
-  outline: none;
-  border-color: var(--blueprint-blue);
 }
 
 .poolDropZone {

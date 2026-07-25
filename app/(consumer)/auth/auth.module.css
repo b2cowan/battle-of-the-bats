@@ -9,9 +9,6 @@
 }
 
 /* Legacy orb divs — neutralized */
-.bg  { display: none; }
-.orb1 { display: none; }
-.orb2 { display: none; }
 
 /* ── Card ────────────────────────────────────────────────────────────────── */
 /* Flat, borderless (owner direction 2026-07-14, matching the switcher): the shell

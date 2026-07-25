@@ -100,72 +100,6 @@
   color: var(--success-light);
 }
 
-.optionalGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  padding-top: 0.35rem;
-}
-
-.optionalHeader {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0 0.25rem 0.15rem;
-}
-
-.optionalHeader span {
-  color: var(--white-70, rgba(255,255,255,0.7));
-  font-size: 0.78rem;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.optionalHeader small {
-  color: var(--white-30, rgba(255,255,255,0.3));
-  font-size: 0.75rem;
-}
-
-.optionalStep {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.9rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.025);
-}
-
-.optionalStepLocked {
-  opacity: 0.62;
-}
-
-.stepSkipped {
-  border-color: rgba(148, 163, 184, 0.2);
-  background: rgba(148, 163, 184, 0.035);
-}
-
-.skippedPill {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 0.5rem;
-  padding: 0.1rem 0.4rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.62rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.splitActions {
-  display: flex;
-  flex-shrink: 0;
-  gap: 0.45rem;
-}
-
 .stepBody {
   flex: 1;
   min-width: 0;
@@ -233,15 +167,6 @@
   align-items: center;
   gap: 0.75rem;
   padding-top: 0.5rem;
-}
-
-.skipBtn {
-  font-size: 0.78rem;
-  color: var(--white-30, rgba(255,255,255,0.3));
-}
-
-.skipBtn:hover {
-  color: var(--white-50, rgba(255,255,255,0.5));
 }
 
 /* Modal */
@@ -558,24 +483,6 @@
   font-size: 0.9rem;
 }
 
-.reviewDivisionRow {
-  display: grid;
-  grid-template-columns: minmax(9rem, 1fr) 7rem auto;
-  align-items: center;
-  gap: 0.6rem;
-  padding: 0.65rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
-
-.venueInlineRow {
-  display: grid;
-  grid-template-columns: minmax(8rem, 0.9fr) minmax(10rem, 1.2fr) minmax(7rem, 0.8fr) auto;
-  align-items: center;
-  gap: 0.5rem;
-}
-
 .venueComposer {
   padding: 1rem;
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
@@ -590,8 +497,7 @@
   margin-top: 1rem;
 }
 
-.venueDraftGrid,
-.venueCardGrid {
+.venueDraftGrid {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 0.65rem;
@@ -602,20 +508,14 @@
 }
 
 .venueDraftGrid label:nth-child(1),
-.venueDraftGrid label:nth-child(2),
-.venueCardGrid label:nth-child(1),
-.venueCardGrid label:nth-child(2) {
+.venueDraftGrid label:nth-child(2) {
   grid-column: span 3;
 }
 
 .venueDraftGrid label:nth-child(3),
 .venueDraftGrid label:nth-child(4),
 .venueDraftGrid label:nth-child(5),
-.venueDraftGrid label:nth-child(6),
-.venueCardGrid label:nth-child(3),
-.venueCardGrid label:nth-child(4),
-.venueCardGrid label:nth-child(5),
-.venueCardGrid label:nth-child(6) {
+.venueDraftGrid label:nth-child(6) {
   grid-column: span 2;
 }
 
@@ -719,29 +619,6 @@
   color: var(--logic-lime);
 }
 
-.venueCard {
-  padding: 0.8rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
-
-.venueCardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.7rem;
-}
-
-.venueCardHeader strong {
-  color: var(--white-75, rgba(255,255,255,0.75));
-  font-size: 0.78rem;
-  font-weight: 900;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .compactCheckbox,
 .checkboxLine {
   display: inline-flex;
@@ -831,17 +708,6 @@
   font-size: 0.85rem;
 }
 
-.activatePanel {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255,255,255,0.025);
-}
-
 .reviewPanel {
   display: flex;
   flex-direction: column;
@@ -877,32 +743,6 @@
   color: var(--white-85, rgba(255,255,255,0.85));
   font-size: 0.9rem;
   text-align: right;
-}
-
-.planStepPanel {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  border: 1px solid rgba(74, 222, 128, 0.22);
-  border-radius: 2px;
-  background: rgba(74, 222, 128, 0.035);
-}
-
-.planStepIcon {
-  width: 42px;
-  height: 42px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  color: var(--success-light);
-  background: rgba(74, 222, 128, 0.1);
-}
-
-.planStepCopy {
-  min-width: 0;
 }
 
 .planStage {
@@ -952,127 +792,6 @@
   color: var(--white-90);
 }
 
-.billingToggle {
-  display: inline-flex;
-  align-self: flex-start;
-  margin-bottom: 1rem;
-  padding: 0.2rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: 2px;
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-}
-
-.toggleOption {
-  border: 0;
-  border-radius: 2px;
-  background: transparent;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  cursor: pointer;
-  font-weight: 700;
-  padding: 0.45rem 0.85rem;
-}
-
-.toggleActive {
-  background: rgba(var(--blueprint-blue-rgb), 0.18);
-  color: var(--white-90);
-}
-
-.planGrid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.85rem;
-}
-
-.planCard {
-  display: flex;
-  flex-direction: column;
-  min-height: 510px;
-  border: 1px solid var(--border, rgba(255,255,255,0.08));
-  border-radius: 2px;
-  background: rgba(255, 255, 255, 0.035);
-  padding: 1rem;
-}
-
-.planCardCurrent {
-  border-color: rgba(74, 222, 128, 0.35);
-  background: rgba(74, 222, 128, 0.045);
-}
-
-.planCardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  min-height: 26px;
-}
-
-.planCardHeader h3 {
-  margin: 0;
-  color: var(--white-90);
-  font-size: 1rem;
-}
-
-.planCardHeader span {
-  padding: 0.18rem 0.45rem;
-  border-radius: 2px;
-  background: rgba(74, 222, 128, 0.12);
-  color: var(--plan-badge-ok);
-  font-size: 0.66rem;
-  font-weight: 800;
-  text-transform: uppercase;
-}
-
-.planCardPrice {
-  margin-top: 0.75rem;
-  color: var(--white-90);
-  font-size: 1.15rem;
-  font-weight: 900;
-}
-
-.planCardTagline {
-  min-height: 86px;
-  margin: 0.65rem 0 0;
-  color: var(--white-50, rgba(255,255,255,0.5));
-  font-size: 0.8rem;
-  line-height: 1.45;
-}
-
-.planFeatureList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-  margin: 0.85rem 0 1rem;
-  padding: 0;
-  list-style: none;
-  color: var(--white-70, rgba(255,255,255,0.7));
-  font-size: 0.78rem;
-  line-height: 1.35;
-}
-
-.planFeatureList li {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.45rem;
-}
-
-.planFeatureList svg {
-  flex-shrink: 0;
-  margin-top: 0.08rem;
-  color: var(--logic-lime);
-}
-
-.planButton {
-  width: 100%;
-  margin-top: auto;
-  min-height: 50px;
-  justify-content: center;
-  padding-inline: 0.85rem;
-  text-align: center;
-  line-height: 1.15;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
 .planError {
   display: flex;
   align-items: center;
@@ -1107,12 +826,6 @@
   }
 }
 
-@media (max-width: 900px) {
-  .planGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 @media (max-width: 640px) {
   .page {
     padding-inline: 1rem;
@@ -1122,33 +835,9 @@
     flex-direction: column;
   }
 
-  .planStepPanel {
-    grid-template-columns: 1fr;
-    justify-items: stretch;
-  }
-
-  .planStepIcon {
-    justify-self: center;
-  }
-
-  .optionalHeader {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 0.15rem;
-  }
-
-  .optionalStep {
-    flex-direction: column;
-  }
-
-  .stepCta,
-  .splitActions {
+  .stepCta {
     width: 100%;
     justify-content: center;
-  }
-
-  .splitActions {
-    flex-direction: column;
   }
 
   .modalOverlay {
@@ -1156,17 +845,10 @@
     padding: 0.75rem;
   }
 
-  .planGrid {
-    grid-template-columns: 1fr;
-  }
-
   .modalGridTwo,
   .presetGridCompact,
   .divisionInlineRow,
-  .reviewDivisionRow,
-  .venueInlineRow,
   .venueDraftGrid,
-  .venueCardGrid,
   .addInlineRow {
     grid-template-columns: 1fr;
   }
@@ -1176,13 +858,7 @@
   .venueDraftGrid label:nth-child(3),
   .venueDraftGrid label:nth-child(4),
   .venueDraftGrid label:nth-child(5),
-  .venueDraftGrid label:nth-child(6),
-  .venueCardGrid label:nth-child(1),
-  .venueCardGrid label:nth-child(2),
-  .venueCardGrid label:nth-child(3),
-  .venueCardGrid label:nth-child(4),
-  .venueCardGrid label:nth-child(5),
-  .venueCardGrid label:nth-child(6) {
+  .venueDraftGrid label:nth-child(6) {
     grid-column: auto;
   }
 
@@ -1192,7 +868,6 @@
 
   .workflowModalFooter,
   .workflowFooterActions,
-  .activatePanel,
   .reviewItem,
   .poolControlsRow {
     align-items: stretch;
@@ -1206,14 +881,6 @@
   .wizardChrome {
     grid-template-columns: 1fr;
     gap: 0.45rem;
-  }
-
-  .planCard {
-    min-height: 0;
-  }
-
-  .planCardTagline {
-    min-height: 0;
   }
 }
 

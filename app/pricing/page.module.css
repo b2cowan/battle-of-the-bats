@@ -345,10 +345,6 @@
   transform: rotate(90deg);
 }
 
-.catLabel {
-  color: var(--logic-lime);
-}
-
 .dataRow:nth-child(even) {
   background: rgba(var(--blueprint-blue-rgb), 0.02);
 }

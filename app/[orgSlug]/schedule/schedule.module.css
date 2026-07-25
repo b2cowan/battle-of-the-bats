@@ -6,11 +6,6 @@
 .mobileTimePrimary,
 .mobileScoreAway,
 .mobileScoreNum,
-.scoreNumbers,
-.scorebugScoreDisplay,
-.scorebugNextTime,
-.railScoreNum,
-.railNextTime,
 .detailScoreCol strong {
   font-variant-numeric: tabular-nums;
 }
@@ -980,26 +975,8 @@ a.gameRow { cursor: pointer; }
 }
 
 /* Filter Row */
-.filterRow {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.controlsRow {
-  display: flex;
-  gap: 0.5rem;
-}
 
 @media (max-width: 768px) {
-  .filterRow {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
-  }
   .filterRow :global(.tabs) {
     flex: none;
     width: 100%;
@@ -1008,85 +985,20 @@ a.gameRow { cursor: pointer; }
     padding: 0.375rem 0.75rem;
     font-size: 0.8rem;
   }
-  .controlsRow {
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-  }
 }
 
 /* ── Status badge (cancelled only — success/warning are global) ── */
-.badgeCancelled {
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--white-40);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 999px;
-  padding: 0.15rem 0.6rem;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
 
 /* ── Score display ── */
 /* Single row (badge inline beside the numbers) so scored rows are the same
    height as unscored "VS" rows — even vertical rhythm, like the admin results. */
-.scoreChip {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 0.45rem;
-  flex-shrink: 0;
-}
-
-.scoreNumbers {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-family: var(--font-data);
-  font-size: 1.1rem;
-  font-weight: 900;
-  color: var(--white-60);
-  white-space: nowrap;
-}
-
-.scoreWin {
-  color: var(--primary-light);
-  text-shadow: 0 0 16px rgba(var(--primary-rgb), 0.4);
-}
-
-.scoreSep {
-  color: var(--white-30);
-  font-size: 0.9rem;
-}
 
 /* W/L/T outcome marker flanking the scores — colour set inline per outcome
    (green win / amber tie / muted-red loss), mirroring the admin results view. */
-.outcomeLetter {
-  font-weight: 900;
-  font-size: 0.82rem;
-}
 
 /* Inline status badge sitting above the score numbers */
-.statusBadgeInline {
-  font-size: 0.6rem !important;
-  padding: 0.1rem 0.5rem !important;
-  letter-spacing: 0.08em;
-}
 
 /* ── Winner / loser / trophy treatments ── */
-.winTeam {
-  color: var(--white) !important;
-}
-
-.loseTeam {
-  color: var(--white-50) !important;
-}
-
-.winIcon {
-  color: var(--warning-strong);
-  flex-shrink: 0;
-}
 
 /* ── Team filter control ── */
 .teamFilter {
@@ -1121,84 +1033,9 @@ a.gameRow { cursor: pointer; }
 
 /* "Matchups TBA" notice for placeholder-published (generic) divisions — info-tinted
    so a TBD grid reads as "times set, names coming", not a finalized schedule. */
-.tbaNotice {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.65rem;
-  padding: 0.45rem 0.6rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-03);
-  color: var(--white-60);
-  font-size: 0.72rem;
-  line-height: 1.35;
-}
-
-.tbaNotice svg {
-  color: var(--white-45);
-  flex-shrink: 0;
-}
-
-.followBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  padding: 0.85rem 1rem;
-  border: 1px solid rgba(var(--primary-rgb),0.35);
-  border-radius: var(--radius-sm);
-  background: rgba(var(--primary-rgb),0.08);
-}
-
-.followMain {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  color: var(--primary-light);
-  font-size: 0.85rem;
-  font-weight: 800;
-}
-
-.followMain span {
-  color: var(--white-50);
-  font-size: 0.75rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.followMain strong {
-  min-width: 0;
-  color: var(--white);
-  overflow-wrap: anywhere;
-}
-
-.followActions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  flex-shrink: 0;
-}
 
 .followedGameRow {
   background: var(--white-03);
-}
-
-.followedBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  border: 1px solid rgba(var(--primary-rgb),0.4);
-  border-radius: 999px;
-  background: rgba(var(--primary-rgb),0.12);
-  color: var(--primary-light);
-  padding: 0.18rem 0.55rem;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
 }
 
 .scheduleControls {
@@ -1316,11 +1153,6 @@ a.gameRow { cursor: pointer; }
   font-size: 0.9rem;
 }
 
-.calendarButton {
-  min-height: 34px;
-  white-space: nowrap;
-}
-
 .mobileControlBar {
   display: flex;
   align-items: stretch;
@@ -1378,12 +1210,6 @@ a.gameRow { cursor: pointer; }
   overflow-wrap: anywhere;
 }
 
-.mobileFilterButton {
-  min-height: 38px;
-  flex-shrink: 0;
-  font-size: 0.78rem;
-}
-
 .mobileTeamFilter {
   display: flex;
   align-items: center;
@@ -1404,241 +1230,8 @@ a.gameRow { cursor: pointer; }
   font-size: 0.78rem;
 }
 
-.filterCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 1.35rem;
-  height: 1.35rem;
-  padding: 0 0.35rem;
-  border-radius: 999px;
-  background: var(--primary);
-  color: var(--on-primary);
-  font-size: 0.66rem;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.mobileFilterSummary {
-  margin: -0.15rem 0 0;
-  color: var(--white-55);
-  font-size: 0.74rem;
-  line-height: 1.45;
-  overflow-wrap: anywhere;
-}
-
-.mobileFilterSummary strong {
-  color: var(--white);
-  font-weight: 800;
-}
-
-.sheetLayer {
-  position: fixed;
-  inset: 0;
-  z-index: 1300;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 0;
-}
-
-.sheetBackdrop {
-  position: absolute;
-  inset: 0;
-  border: 0;
-  background: rgba(0,0,0,0.58);
-  backdrop-filter: blur(5px);
-  cursor: pointer;
-}
-
-.filterSheet {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  width: min(100%, 640px);
-  max-height: min(88vh, 720px);
-  color: var(--white);
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-bottom: 0;
-  border-radius: var(--radius) var(--radius) 0 0;
-  box-shadow: 0 -24px 70px rgba(0,0,0,0.45);
-  outline: none;
-  overflow: hidden;
-}
-
-.sheetHandle {
-  width: 42px;
-  height: 4px;
-  margin: 0.65rem auto 0.2rem;
-  border-radius: 999px;
-  background: var(--white-20);
-}
-
-.sheetHeader,
-.sheetFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 1rem;
-}
-
-.sheetHeader {
-  border-bottom: 1px solid var(--border-2);
-}
-
-.sheetHeader span {
-  display: block;
-  margin-bottom: 0.15rem;
-  color: var(--white-45);
-  font-size: 0.68rem;
-  font-weight: 900;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.sheetHeader h2 {
-  margin: 0;
-  color: var(--white);
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 900;
-}
-
-.sheetClose {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-  color: var(--white-70);
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s, border-color 0.15s;
-}
-
-.sheetClose:hover {
-  background: var(--white-10);
-  border-color: rgba(var(--primary-rgb),0.35);
-  color: var(--white);
-}
-
-.sheetBody {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-  overflow-y: auto;
-}
-
-.sheetField {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.sheetField label,
-.sheetControlLabel {
-  color: var(--white-75);
-  font-size: 0.8rem;
-  font-weight: 850;
-}
-
-.sheetLabelRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.sheetTextButton {
-  border: 0;
-  background: transparent;
-  color: var(--primary-light);
-  font-size: 0.78rem;
-  font-weight: 850;
-  cursor: pointer;
-}
-
-.sheetSearchControl {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  min-height: 44px;
-  padding-left: 0.75rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-}
-
-.sheetSearchControl svg {
-  color: var(--white-40);
-  flex-shrink: 0;
-}
-
-.sheetSearchControl input {
-  min-width: 0;
-  min-height: 42px;
-  flex: 1;
-  border: 0;
-  background: transparent;
-}
-
-.myTeamFilterButton {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  min-height: 44px;
-  padding: 0.6rem 0.75rem;
-  border: 1px solid rgba(var(--primary-rgb),0.35);
-  border-radius: var(--radius-sm);
-  background: rgba(var(--primary-rgb),0.1);
-  color: var(--primary-light);
-  font-size: 0.82rem;
-  font-weight: 850;
-  cursor: pointer;
-  text-align: left;
-}
-
-.myTeamFilterButton span {
-  min-width: 0;
-  color: var(--white);
-  overflow-wrap: anywhere;
-}
-
-.sheetSegmented {
-  display: flex;
-  width: 100%;
-}
-
 .sheetSegmented .segmentButton {
   flex: 1;
-  min-height: 44px;
-}
-
-.sheetHint {
-  margin: 0;
-  padding: 0.85rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-  color: var(--white-60);
-  font-size: 0.85rem;
-  line-height: 1.45;
-}
-
-.sheetFooter {
-  padding-bottom: calc(0.9rem + env(safe-area-inset-bottom));
-  border-top: 1px solid var(--border-2);
-  background: var(--surface);
-}
-
-.sheetFooter > * {
-  flex: 1;
-  justify-content: center;
   min-height: 44px;
 }
 
@@ -1683,46 +1276,8 @@ a.gameRow { cursor: pointer; }
     flex: 1 1 100%;
   }
 
-  .mobileFilterSummary {
-    margin-top: -0.25rem;
-  }
-
   .filterLabel {
     display: none;
-  }
-
-  .followBar {
-    align-items: stretch;
-    flex-direction: column;
-    gap: 0.5rem;
-    margin-bottom: 0.85rem;
-    padding: 0.58rem 0.65rem;
-  }
-
-  .followMain {
-    gap: 0.4rem;
-    font-size: 0.78rem;
-  }
-
-  .followMain span {
-    font-size: 0.64rem;
-  }
-
-  .followMain strong {
-    font-size: 0.82rem;
-  }
-
-  .followActions {
-    align-items: stretch;
-    gap: 0.45rem;
-  }
-
-  .followActions > * {
-    flex: 1;
-    justify-content: center;
-    min-height: 36px;
-    padding: 0.38rem 0.55rem;
-    font-size: 0.78rem;
   }
 
   .primaryControls,
@@ -1762,12 +1317,6 @@ a.gameRow { cursor: pointer; }
     min-width: 44px;
     min-height: 44px;
   }
-
-  .calendarButton {
-    min-height: 44px;
-    width: 100%;
-    justify-content: center;
-  }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -1794,20 +1343,6 @@ a.gameRow { cursor: pointer; }
    bar, above) remains here. */
 
 /* "Not following" prompt inside the scorebug bar */
-.noFollowPrompt {
-  display: flex;
-  align-items: center;
-  gap: 0.55rem;
-  color: var(--white-40);
-  font-family: var(--font-data);
-  font-size: 0.78rem;
-  font-weight: 700;
-}
-
-.noFollowStar {
-  flex-shrink: 0;
-  color: var(--white-25);
-}
 
 /* "My Team Games" quick-filter link below the scorebug bar */
 .myGamesLink {
@@ -1938,8 +1473,7 @@ a.gameRow { cursor: pointer; }
 
 /* Brighter, "alive" pulsing glow on LIVE badges (additive — does not override
    the existing badge styles). */
-.liveBadge,
-.scorebugLive {
+.liveBadge {
   animation: livePulseGlow 1.9s ease-in-out infinite;
 }
 
@@ -2161,11 +1695,6 @@ a.broadcastCard { cursor: pointer; }
 }
 
 /* Clock icon on the followed team's next upcoming game */
-.nextGameClock {
-  color: var(--primary-light);
-  opacity: 0.65;
-  flex-shrink: 0;
-}
 
 /* ── Mobile inline stage toggle ──────────────────────────────────────────── */
 
@@ -2258,69 +1787,6 @@ a.broadcastCard { cursor: pointer; }
    card unification (2026-07-03). The rail's standings mini-table + buttons remain. */
 
 /* Standings inside the rail */
-.railStandingsHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0.42rem 0.85rem;
-  border-bottom: 1px solid var(--border-2);
-  font-family: var(--font-data);
-  font-size: 0.56rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--white-40);
-}
-
-.railStandingsRow {
-  display: grid;
-  grid-template-columns: 1.1rem minmax(0, 1fr) 3.5rem 1.6rem;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.38rem 0.85rem;
-  border-bottom: 1px solid rgba(var(--border-2-rgb, 255 255 255 / 0.08));
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--white-65);
-}
-
-.railStandingsRow:last-child { border-bottom: 0; }
-
-.followedRow {
-  background: rgba(var(--primary-rgb), 0.12);
-  color: var(--white);
-}
-
-.followedRow .railStandingsPts {
-  color: var(--primary-light);
-  font-weight: 900;
-}
-
-.railStandingsPos {
-  color: var(--white-35);
-  font-size: 0.6rem;
-}
-
-.railStandingsName {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  font-size: 0.7rem;
-}
-
-.railStandingsRec {
-  font-size: 0.6rem;
-  color: var(--white-45);
-  text-align: right;
-}
-
-.railStandingsPts {
-  font-size: 0.7rem;
-  font-weight: 900;
-  color: var(--white-75);
-  text-align: right;
-}
 
 /* Unfollow button in the rail */
 .stopFollowingBtn {

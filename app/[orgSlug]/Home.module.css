@@ -1,4 +1,4 @@
-﻿.page { overflow-x: hidden; }
+.page { overflow-x: hidden; }
 
 .page {
   overflow-x: hidden;
@@ -19,7 +19,6 @@
 .statNum,
 .countdown,
 .scorePill,
-.quickGameTime,
 .finalScore,
 .myTeamLiveScore,
 .myTeamRecord strong,
@@ -196,13 +195,6 @@
 .hero:has(.heroBanner) .heroSub,
 .hero:has(.heroBanner) .heroSub strong {
   color: #fff;
-}
-
-.heroAccent {
-  background: linear-gradient(135deg, var(--primary), var(--primary-light));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 .heroSub {
@@ -462,31 +454,8 @@
     var(--surface);
 }
 
-.championsHeroBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  margin-bottom: 1rem;
-  padding: 0.35rem 0.9rem;
-  border: 1px solid rgba(var(--gold-rgb), 0.55);
-  border-radius: 999px;
-  background: rgba(var(--gold-rgb), 0.14);
-  color: var(--gold-strong);
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 900;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 /* Secondary host attribution — sits under the result, de-emphasised so the
    champion + final lead the hero. */
-.championsHeroHost {
-  display: block;
-  margin-top: 0.6rem;
-  font-size: 0.85rem;
-  color: var(--white-45);
-}
 
 .dayCardHeader {
   display: flex;
@@ -545,34 +514,12 @@
 }
 
 .quickGameList,
-.venueShortcutList,
 .statusList {
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
 }
 
-.quickGameRow {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.7rem;
-  min-height: 44px;
-  padding: 0.6rem 0.7rem;
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  background: var(--white-5);
-  color: var(--white);
-  text-decoration: none;
-  transition: var(--transition);
-}
-
-.quickGameRow:hover {
-  border-color: rgba(var(--primary-rgb),0.45);
-  background: var(--white-10);
-}
-
-.quickGameTime,
 .scorePill {
   color: var(--primary-light);
   font-family: var(--font-data);
@@ -591,21 +538,6 @@
   border: 1px solid rgba(var(--primary-rgb),0.35);
   border-radius: var(--radius-sm);
   background: rgba(var(--primary-rgb),0.12);
-}
-
-.quickGameTeams {
-  min-width: 0;
-  color: var(--white);
-  font-size: 0.88rem;
-  font-weight: 700;
-  overflow-wrap: anywhere;
-}
-
-.quickGameMeta {
-  color: var(--white-45);
-  font-size: 0.75rem;
-  text-align: right;
-  overflow-wrap: anywhere;
 }
 
 /* Latest-Finals card — same stacked language as the Recent-Scores cards: away
@@ -1161,15 +1093,6 @@
   .recordActions {
     align-items: stretch;
     flex-direction: column;
-  }
-
-  .quickGameRow {
-    grid-template-columns: auto minmax(0, 1fr);
-  }
-
-  .quickGameMeta {
-    grid-column: 2;
-    text-align: left;
   }
 
   .dayCardActions > * {
