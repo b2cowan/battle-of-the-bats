@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrganizationBySlug, getPublicTournamentBySlug } from '@/lib/db';
 import { getTournamentViewer } from '@/lib/tournament-viewer-hats';
+import { withObservability } from '@/lib/observability';
 
 /**
  * GET /api/public/tournament-viewer?org={orgSlug}&tournament={tournamentSlug}
@@ -12,7 +13,7 @@ import { getTournamentViewer } from '@/lib/tournament-viewer-hats';
  * Anonymous / unknown org / non-public tournament all resolve to { viewer: null }
  * — this endpoint reveals nothing the viewer's own session doesn't already know.
  */
-export async function GET(request: NextRequest) {
+export const GET = withObservability(async (request: NextRequest) => {
   const orgSlug = request.nextUrl.searchParams.get('org');
   const tournamentSlug = request.nextUrl.searchParams.get('tournament');
   if (!orgSlug || !tournamentSlug) {
@@ -43,4 +44,4 @@ export async function GET(request: NextRequest) {
   } catch {
     return NextResponse.json({ viewer: null });
   }
-}
+}, { route: '/api/public/tournament-viewer' });
