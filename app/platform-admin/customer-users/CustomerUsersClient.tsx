@@ -33,6 +33,8 @@ export type CustomerUserRow = {
   displayName: string;
   authStatus: string;
   lastSignIn: string | null;
+  /** Watch-only safeguard: # of LIVE Premium Coaches Portals this account owns (>1 = flagged). */
+  livePortalCount: number;
   memberships: {
     orgId: string;
     orgName: string;
@@ -510,6 +512,14 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
                     <div className={styles.primaryText}>{row.displayName || '-'}</div>
                     <div className={styles.emailText}>{row.email}</div>
                     <div className={styles.userId}>{row.userId}</div>
+                    {row.livePortalCount > 1 && (
+                      <div
+                        className={styles.multiPortalFlag}
+                        title="This account owns more than one live Premium Coaches Portal — review for the one-portal cleanup."
+                      >
+                        ⚠ {row.livePortalCount} live portals
+                      </div>
+                    )}
                     {reset.sent && (
                       <div className={styles.resetSentBox}>
                         <MailCheck size={12} />

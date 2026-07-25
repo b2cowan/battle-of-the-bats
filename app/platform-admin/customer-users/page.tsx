@@ -47,16 +47,32 @@ async function getCustomerUsers(
   page: number,
   authStatusFilter: string,
 ): Promise<{ rows: CustomerUserRow[]; total: number }> {
-  const [authRes, membersRes, platformUsers] = await Promise.all([
+  const [authRes, membersRes, platformUsers, livePortalsRes] = await Promise.all([
     supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
     supabaseAdmin
       .from('organization_members')
       .select('user_id, role, status, organizations(id, name, slug, plan_id, subscription_status)')
       .limit(3000),
     getPlatformUsers(),
+    // Watch-only one-portal safeguard (detect, NEVER block): count each owner's LIVE Premium Coaches
+    // Portals so the console can flag any account holding 2+ (also the January conversion cleanup
+    // list). Live = active/trialing/past_due, per team-workspace-entitlements.
+    supabaseAdmin
+      .from('team_workspaces')
+      .select('primary_owner_user_id')
+      .in('subscription_status', ['active', 'trialing', 'past_due'])
+      .not('primary_owner_user_id', 'is', null)
+      .limit(5000), // explicit cap so the count can't silently under-report past a PostgREST default
   ]);
 
   const authUsers = authRes.data?.users ?? [];
+
+  // Live Premium Portals owned per user id (watch-only indicator; >1 = a double-portal owner).
+  const livePortalCountByOwner = new Map<string, number>();
+  for (const w of ((livePortalsRes.data ?? []) as Array<{ primary_owner_user_id: string | null }>)) {
+    if (!w.primary_owner_user_id) continue;
+    livePortalCountByOwner.set(w.primary_owner_user_id, (livePortalCountByOwner.get(w.primary_owner_user_id) ?? 0) + 1);
+  }
 
   // Exclude FieldLogicHQ employees (platform/company users + bootstrap admins).
   // Customer Users is a customer-support surface — staff accounts don't belong here.
@@ -90,6 +106,7 @@ async function getCustomerUsers(
       authStatus: user ? authStatusFor(user) : 'unknown',
       lastSignIn: user?.last_sign_in_at ?? null,
       memberships: [],
+      livePortalCount: livePortalCountByOwner.get(userId) ?? 0,
     };
     rowsByUser.set(userId, row);
     return row;

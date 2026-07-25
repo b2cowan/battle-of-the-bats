@@ -542,6 +542,15 @@ export async function provisionTeamWorkspaceFromCheckoutMetadata(params: {
   if (!parsed) return { provisioned: false, reason: 'not_team_checkout' };
   if (!params.stripeSubscriptionId) return { provisioned: false, reason: 'missing_subscription_id' };
 
+  // One Coaches Portal per owner — gate REACTIVATION too, not just fresh provision. A coach who
+  // already has another LIVE portal must not reactivate a second one into a parallel live portal.
+  // The reactivation target is a CANCELED workspace (not "live"), so reactivating your ONLY canceled
+  // portal still works — this only trips when a different portal is already active/trialing/past_due.
+  const ownerLivePortalPreReactivation = await getActiveOwnedTeamWorkspace(parsed.ownerUserId);
+  if (ownerLivePortalPreReactivation) {
+    return { provisioned: false, reason: 'already_exists', workspaceOrgId: ownerLivePortalPreReactivation.workspaceOrgId };
+  }
+
   const reactivation = await reactivateTeamWorkspaceFromParsedMetadata({
     parsed,
     stripeCustomerId: params.stripeCustomerId,
@@ -821,6 +830,13 @@ export async function provisionCompTeamWorkspaceFromCheckout(params: {
 }): Promise<TeamCheckoutProvisionResult> {
   const parsed = parseTeamCheckoutMetadata(params.metadata);
   if (!parsed) return { provisioned: false, reason: 'not_team_checkout' };
+
+  // One Coaches Portal per owner — gate REACTIVATION too (see the paid path): a coach with another
+  // LIVE portal can't reactivate a second. Reactivating your ONLY canceled portal still works.
+  const ownerLivePortalPreReactivation = await getActiveOwnedTeamWorkspace(parsed.ownerUserId);
+  if (ownerLivePortalPreReactivation) {
+    return { provisioned: false, reason: 'already_exists', workspaceOrgId: ownerLivePortalPreReactivation.workspaceOrgId };
+  }
 
   const reactivation = await reactivateCompTeamWorkspace(parsed, params);
   if (reactivation) return reactivation;
