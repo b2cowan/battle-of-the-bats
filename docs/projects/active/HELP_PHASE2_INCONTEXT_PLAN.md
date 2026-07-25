@@ -1,6 +1,6 @@
 # Help System Redesign — Phase 2: In-Context ("?") Help — Implementation Plan
 
-**Status:** Approved-pending-build — all six owner decisions RESOLVED 2026-06-18 (§9). Build sequencing agreed; awaiting the owner's final "go" to start Wave 0. No code until that go.
+**Status:** ✅ **SUBSTANTIALLY BUILT + SHIPPED TO PROD** — Parts 1/2/3B/3C + Deliverable E committed across 10 verified commits (tooltip fix, HelpDrawer foundation, 4-page wiring, FieldHints, heads-up warnings, coaches help entry; provider mounted in 3 live layouts, on origin/master). Remaining tail: cross-device dismiss + page-level capability spotlights (deferred pending owner go per Phase 5b). (Header previously said "awaiting the owner's final go… no code until that go"; corrected 2026-07-24 by the Codebase Cleanup audit, finding G24.)
 **Created:** 2026-06-18
 **Branch:** `dev` (all work; never `master`).
 **Parent plan:** [HELP_SYSTEM_REDESIGN_PLAN.md](HELP_SYSTEM_REDESIGN_PLAN.md) — this expands its §9 "Phase 2", §5(iii) drawer target-state, and §6 pattern matrix into a build-ready spec.

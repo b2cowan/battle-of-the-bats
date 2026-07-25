@@ -1,6 +1,6 @@
 # Founding Season — Coaches Free Extension + Billing Correctness Plan
 
-**Status:** PROPOSED (owner directive 2026-07-20; awaiting plan approval to start build)
+**Status:** ✅ **Phases 0–3 SHIPPED + LAUNCHED 2026-07-23** (commits `8ea30fe3`/`e1028b0a`/`26380896` + mig-198 copy re-seed `06d37b6f`, all on origin/master; prod plan gating flipped — the $0 comp enrollment is OPEN). **Still open:** one-per-owner safeguard decision, January conversion runbook, Stripe smoke test (S1-2 warm sign-up restyle shipped via `50c09ab5` + `d8c35f74`). (Header previously said "PROPOSED… awaiting plan approval"; corrected 2026-07-24 by the Codebase Cleanup audit, finding G25.)
 **Owner directive:** "I want the premium coaches portal free until January 1st and everything broken needs to be fixed… get it so that Tournament Plus and Premium Coaches Portal are free for users until 2027." Manual January conversion is explicitly acceptable (owner will mass-email + manage subscriptions by hand; current volume: 1 org / 2 free tournaments). Strategic goal: users on the platform giving feedback in 2026; free pricing justifies the beta feel.
 **PM brief:** `FOUNDING_SEASON_COACHES_FREE_PM_BRIEF.md`
 **Predecessor docs:** `FOUNDING_SEASON_PLAN.md` (Tournament Plus promo, shipped), audit results 2026-07-20 (two ultracode workflow runs, adversarially verified).

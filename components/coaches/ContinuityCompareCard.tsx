@@ -22,7 +22,7 @@ export default function ContinuityCompareCard({ row, busy, onConfirm, onReject, 
       borderRadius: 10,
       background: 'rgba(180, 83, 9, 0.1)',
     }}>
-      <p style={{ margin: '0 0 0.15rem', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: '#fcd34d' }}>
+      <p style={{ margin: '0 0 0.15rem', fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--home-amber, #fcd34d)' }}>
         Possible returning player — verify
       </p>
       <p style={{ margin: '0 0 0.45rem', fontSize: '0.8rem' }}>

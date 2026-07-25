@@ -1,6 +1,6 @@
 # Admin Role Parity — "Admin = Owner minus Billing & User Management"
 
-**Status:** Phase 1 + Phase 2 BUILT (2026-06-09) on branch `feat/free-tier-coaches`; awaiting browser verification. (Phase 1 = commit `ec64b17`; Phase 2 = follow-up commit.)
+**Status:** ✅ **Phase 1 + Phase 2 SHIPPED TO PROD** (commits `ec64b17` + `247a16b`, both confirmed ancestors of origin/master). Kept active: the "Still deferred (NOT built)" org-level-route items below remain open. (Header previously said "awaiting browser verification"; corrected 2026-07-24 by the Codebase Cleanup audit, finding G27.)
 **Owner decision (2026-06-09):** Tournament `admin` should do basically everything `owner` can **except billing and user/member management.**
 
 ---

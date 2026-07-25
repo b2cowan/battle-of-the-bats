@@ -1,6 +1,6 @@
 # Help System Redesign — Comprehensive Review & Plan (v2)
 
-**Status:** Proposed — review complete, awaiting owner direction on the open decisions in §10.
+**Status:** **Phases 1 / 1.5 / 2 / 5a / 5b BUILT + largely SHIPPED TO PROD**; owner decisions resolved 2026-06-17/18. Kept active as the umbrella roadmap — Phases 3/4 + the 5b remainder are open. (Header previously stuck at "Proposed — awaiting owner direction"; corrected 2026-07-24 by the Codebase Cleanup audit, finding G34.)
 **Created:** 2026-06-17
 **Supersedes:** `docs/projects/archive/TOURNAMENT_HELP_DOCS_REVIEW_PLAN.md` — that v1 plan shipped the search + Popular Questions + grouped-Topics rail + one-topic-at-a-time article that this review critiques.
 **Scope:** The whole in-app help system (help hub + guide pages + in-app contextual help). The tournament-organizer surface is the worked example for the in-app review.

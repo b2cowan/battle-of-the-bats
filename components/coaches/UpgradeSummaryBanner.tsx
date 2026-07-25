@@ -93,7 +93,7 @@ export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: str
 
   return (
     <div style={{
-      border: '1px solid rgba(96,165,250,0.3)', background: 'rgba(96,165,250,0.08)',
+      border: '1px solid rgba(var(--home-blue-rgb, 96,165,250),0.3)', background: 'rgba(var(--home-blue-rgb, 96,165,250),0.08)',
       borderRadius: 12, padding: '1rem 1.1rem', marginBottom: '1.25rem', position: 'relative',
     }}>
       <button
@@ -101,32 +101,32 @@ export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: str
         onClick={dismiss}
         disabled={dismissing}
         aria-label="Dismiss"
-        style={{ position: 'absolute', top: 10, right: 10, background: 'transparent', border: 'none', color: 'rgba(241,245,249,0.5)', cursor: 'pointer', padding: 4 }}
+        style={{ position: 'absolute', top: 10, right: 10, background: 'transparent', border: 'none', color: 'var(--home-dim, rgba(241,245,249,0.5))', cursor: 'pointer', padding: 4 }}
       >
         <X size={16} />
       </button>
-      <p style={{ margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 700, color: '#fff' }}>
-        <CheckCircle2 size={16} style={{ color: '#60A5FA' }} aria-hidden />
+      <p style={{ margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 700, color: 'var(--home-ink, #fff)' }}>
+        <CheckCircle2 size={16} style={{ color: 'var(--info-light, #60a5fa)' }} aria-hidden />
         Welcome to Premium — your team came with you
       </p>
-      <p style={{ margin: '0 0 0.6rem', color: 'rgba(241,245,249,0.82)', fontSize: '0.9rem' }}>
+      <p style={{ margin: '0 0 0.6rem', color: 'var(--home-ink-soft, rgba(241,245,249,0.82))', fontSize: '0.9rem' }}>
         {broughtOver.length > 0
           ? `We brought over ${broughtOver.join(', ')} from your free portal${s.cancelled ? ` (including ${s.cancelled} cancelled event${s.cancelled === 1 ? '' : 's'})` : ''}.`
           : 'Your Premium portal is ready.'}
       </p>
       {checkThese.length > 0 && (
         <>
-          <p style={{ margin: '0 0 0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'rgba(245,158,11,0.95)', fontSize: '0.82rem' }}>
+          <p style={{ margin: '0 0 0.35rem', display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: 600, color: 'rgba(var(--home-amber-rgb, 245,158,11),0.95)', fontSize: '0.82rem' }}>
             <TriangleAlert size={14} aria-hidden /> A few things to check
           </p>
-          <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'rgba(241,245,249,0.72)', fontSize: '0.85rem', lineHeight: 1.6 }}>
+          <ul style={{ margin: 0, paddingLeft: '1.2rem', color: 'var(--home-ink-soft, rgba(241,245,249,0.72))', fontSize: '0.85rem', lineHeight: 1.6 }}>
             {checkThese.map((item, i) => <li key={i}>{item}</li>)}
           </ul>
         </>
       )}
       {partial && (
         <div style={{ marginTop: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'rgba(241,245,249,0.8)' }}>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.82rem', color: 'var(--home-ink-soft, rgba(241,245,249,0.8))' }}>
             {retrying && <RefreshCw size={13} className="spin" aria-hidden style={{ animation: 'spin 1s linear infinite' }} />}
             {retrying
               ? 'Finishing bringing your data over…'
@@ -140,8 +140,8 @@ export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: str
             disabled={retrying}
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '0.35rem',
-              background: 'rgba(96,165,250,0.18)', border: '1px solid rgba(96,165,250,0.4)',
-              color: '#bfdbfe', borderRadius: 8, padding: '0.3rem 0.7rem', fontSize: '0.8rem',
+              background: 'rgba(var(--home-blue-rgb, 96,165,250),0.18)', border: '1px solid rgba(var(--home-blue-rgb, 96,165,250),0.4)',
+              color: 'var(--home-blue, #bfdbfe)', borderRadius: 8, padding: '0.3rem 0.7rem', fontSize: '0.8rem',
               fontWeight: 600, cursor: retrying ? 'default' : 'pointer', opacity: retrying ? 0.6 : 1,
             }}
           >

@@ -112,7 +112,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
 
       {hasRubric ? (
         <>
-          <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginBottom: '0.6rem' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))', marginBottom: '0.6rem' }}>
             Scale 1–{rubric!.scaleMax}{rubric!.name ? ` · ${rubric!.name}` : ''}
           </div>
           <div className={styles.sessionList}>
@@ -145,7 +145,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
             <h3 className={styles.modalTitle}>Evaluation scorecard</h3>
 
             <div className={styles.field}>
-              <label className={styles.label}>Name <span style={{ color: 'rgba(255,255,255,0.35)' }}>· optional</span></label>
+              <label className={styles.label}>Name <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
               <input className={styles.input} value={name} maxLength={120}
                 onChange={e => setName(e.target.value)} placeholder="e.g. U15 AAA tryout scorecard" />
             </div>
@@ -159,7 +159,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
                     type="button"
                     onClick={() => setScaleMax(s)}
                     className={styles.addBtn}
-                    style={scaleMax === s ? { borderStyle: 'solid', borderColor: 'var(--logic-lime, #a3e635)', color: '#f0f0f0' } : {}}
+                    style={scaleMax === s ? { borderStyle: 'solid', borderColor: 'var(--logic-lime, #a3e635)', color: 'var(--home-ink, #f0f0f0)' } : {}}
                   >
                     1–{s}
                   </button>
@@ -171,7 +171,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
               <label className={styles.label}>Categories</label>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 {cats.map((c, i) => (
-                  <div key={i} style={{ border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.6rem' }}>
+                  <div key={i} style={{ border: '1px solid var(--home-line, rgba(255,255,255,0.1))', borderRadius: 8, padding: '0.6rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       <input className={styles.input} style={{ flex: 1 }} value={c.label} maxLength={60}
                         placeholder="Category (e.g. Hitting)" onChange={e => updateCat(i, 'label', e.target.value)} />
@@ -187,7 +187,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
               <button type="button" className={styles.addBtn} style={{ marginTop: '0.5rem' }} onClick={addCat}><Plus size={14} /> Add category</button>
             </div>
 
-            {formError && <p style={{ color: '#f87171', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
+            {formError && <p style={{ color: 'var(--danger-light, #f87171)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
 
             <div className={styles.modalActions}>
               <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)} disabled={saving}>Cancel</button>

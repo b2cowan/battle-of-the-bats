@@ -1,6 +1,6 @@
 # Notification "Pause" Master Switch — Implementation Plan
 
-**Status:** In build (dev) · owner-approved 2026-07-20 · **NOT owner-tested** · joins the pending Unified Home prod bundle
+**Status:** ✅ **SHIPPED TO PROD in the 2026-07-22 promote** (`c743c276`; commit `5a6f20a8`, mig 194 applied to prod in the same batch) · owner device-test still unconfirmed — archive this doc once the owner confirms the pause switch works on their device. (Header previously said "joins the pending prod bundle"; corrected 2026-07-24 by the Codebase Cleanup audit, finding G32.)
 **Owner decisions (2026-07-20):** Safe pause (not a hard kill-all); protected floor = **failed-payment + @mentions**; **fan score/news pushes ARE included** in the pause.
 
 ## What it is

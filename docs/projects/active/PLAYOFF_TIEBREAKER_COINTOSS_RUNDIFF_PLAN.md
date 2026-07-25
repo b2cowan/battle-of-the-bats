@@ -1,7 +1,7 @@
 # Playoff Tie-Breakers — Coin Toss + Max Run-Differential Cap
 
-**Status:** Planned — awaiting build greenlight
-**Branch:** `feat/free-tier-coaches` (current)
+**Status:** **BUILT 2026-06-10 on dev** (see §Build status, line ~166, for the full detail this header previously contradicted) — no migration; **awaiting owner browser verification** before archive. (Header corrected 2026-07-24 by the Codebase Cleanup audit, finding G15.)
+**Branch:** `dev`
 **Created:** 2026-06-10
 **PM brief:** `PLAYOFF_TIEBREAKER_COINTOSS_RUNDIFF_PM_BRIEF.md`
 

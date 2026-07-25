@@ -87,7 +87,7 @@ export default function StartNextSeasonModal({
         {summary ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <CheckCircle2 size={18} style={{ color: 'var(--lime, #b6e34d)', flexShrink: 0 }} />
+              <CheckCircle2 size={18} style={{ color: 'var(--logic-lime, #b6e34d)', flexShrink: 0 }} />
               <p style={{ margin: 0, color: 'var(--white-90)' }}>
                 <strong>{summary.newSeason.name}</strong> is now your active season.
               </p>
@@ -105,7 +105,7 @@ export default function StartNextSeasonModal({
             </ul>
 
             {summary.notes.length > 0 && (
-              <div style={{ background: 'var(--white-05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, padding: '0.7rem 0.85rem' }}>
+              <div style={{ background: 'var(--white-05)', border: '1px solid var(--home-line, rgba(255,255,255,0.1))', borderRadius: 8, padding: '0.7rem 0.85rem' }}>
                 <p style={{ margin: '0 0 0.35rem', fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--white-55)' }}>Check these</p>
                 <ul style={{ margin: 0, paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.85rem', color: 'var(--white-70)' }}>
                   {summary.notes.map((n, i) => <li key={i}>{n}</li>)}

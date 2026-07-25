@@ -1,5 +1,6 @@
 # Stripe Price-Configuration Validation + H8 Price-Guard — Implementation Plan
 
+> **Status:** Phases 1–2 **SHIPPED TO PROD** 2026-06-29 (`38abab23`, confirmed ancestor of origin/master); **Phase 3 (H8 in-app card price-guard) NOT BUILT** — lands with the H8 build per TODO.md:37. (Status line added 2026-07-24 by the Codebase Cleanup audit, finding G10.)
 > **Created:** 2026-06-29 · Owner-approved during platform-admin QA 3.2. Routed to `/billing`.
 > **Decisions:** validation set + block/warn split ratified by owner 2026-06-29 (see `docs/projects/active/PLATFORM_ADMIN_WALKTHROUGHS.md` "3.2 — NEW"). Pairs with the H8 decision (`BUSINESS_DECISIONS.md` 2026-06-29 "Plan-launch mechanics") and the SoT governance principle (same date). No pricing/packaging values change.
 

@@ -134,7 +134,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
     }
   }
 
-  if (loading) return <p style={{ color: 'rgba(255,255,255,0.4)' }}>Loading…</p>;
+  if (loading) return <p style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>Loading…</p>;
 
   return (
     <div className={styles.wrap}>
@@ -228,7 +228,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
               </div>
             </div>
             <div className={styles.field}>
-              <label className={styles.label}>Guardian email <span style={{ color: 'rgba(255,255,255,0.35)' }}>· optional</span></label>
+              <label className={styles.label}>Guardian email <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
               <input className={styles.input} type="email" value={walkup.email} maxLength={200} onChange={e => setWalkup(w => ({ ...w, email: e.target.value }))} placeholder="Add now or later" />
             </div>
             <div className={styles.modalActions}>

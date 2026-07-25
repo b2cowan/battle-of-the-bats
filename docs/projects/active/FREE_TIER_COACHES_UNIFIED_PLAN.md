@@ -1,6 +1,6 @@
 # Free Tier + Coaches Experience — Unified Execution Plan
 
-**Status:** SCOPED 2026-06-08 · the single **execute-in-order** plan merging two projects · planning complete, build not started
+**Status:** **Phases 0–4 BUILT + SHIPPED TO PROD** (basic-coach roster/schedule live on origin/master; Phase 6 League Starter built to 6.7 with mig 125 on prod — see FREE_TIER_LEAGUE_STARTER_PLAN.md); later phases (tournament-coach experience etc.) remain open per memory/TODO. Still the canonical execute-in-order umbrella doc. (Header previously said "build not started"; corrected 2026-07-24 by the Codebase Cleanup audit, finding G26.)
 **This is the canonical execution sequence.** The two source plans remain as **detail references** (deep specs, findings, design/marketing synthesis) — but the order you build in lives **here**:
 - [FREE_TIER_STRATEGY_PLAN.md](FREE_TIER_STRATEGY_PLAN.md) — strategy; payments deferral (§9); opt-C coach line (§10); taxonomy / technical model / instrumentation / abuse controls (§11–§15).
 - [FREE_TIER_STRATEGY_PM_BRIEF.md](FREE_TIER_STRATEGY_PM_BRIEF.md)

@@ -280,7 +280,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
             )}
 
             <div className={styles.field}>
-              <label className={styles.label}>End time <span style={{ color: 'rgba(255,255,255,0.35)' }}>· optional</span></label>
+              <label className={styles.label}>End time <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
               <input
                 className={styles.input}
                 type="datetime-local"
@@ -303,12 +303,12 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label}>Label <span style={{ color: 'rgba(255,255,255,0.35)' }}>· optional</span></label>
+              <label className={styles.label}>Label <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.35))' }}>· optional</span></label>
               <input className={styles.input} type="text" maxLength={80} value={form.label}
                 onChange={e => setForm(f => ({ ...f, label: e.target.value }))} placeholder="e.g. Day 1 — skills" />
             </div>
 
-            {formError && <p style={{ color: '#f87171', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
+            {formError && <p style={{ color: 'var(--danger-light, #f87171)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
 
             <div className={styles.modalActions}>
               <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</button>

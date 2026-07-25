@@ -144,10 +144,10 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
                       {DOC_TYPE_LABELS[doc.documentType] ?? doc.documentType}
                     </span>
                   </td>
-                  <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem' }}>
+                  <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.82rem' }}>
                     {formatBytes(doc.fileSize)}
                   </td>
-                  <td className={styles.td} style={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
+                  <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
                     {new Date(doc.createdAt).toLocaleDateString()}
                   </td>
                   <td className={styles.td} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
@@ -163,7 +163,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
                     <button
                       type="button"
                       className="btn btn-ghost"
-                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', color: '#f87171', opacity: deletingId === doc.id ? 0.5 : 1 }}
+                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', color: 'var(--danger-light, #f87171)', opacity: deletingId === doc.id ? 0.5 : 1 }}
                       disabled={deletingId === doc.id}
                       onClick={() => handleDelete(doc.id)}
                       title="Delete"
@@ -218,7 +218,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
               </div>
 
               {uploadError && (
-                <p style={{ color: '#f87171', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
+                <p style={{ color: 'var(--danger-light, #f87171)', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
               )}
             </div>
 

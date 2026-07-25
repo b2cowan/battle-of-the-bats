@@ -1,6 +1,6 @@
 # The Flip — Role ⇄ Public Navigation (unified top-right pill)
 
-**Status:** P1 BUILT on dev (uncommitted) — P1 revised mid-build with the **shared admin header** (below) · **Ratified:** 2026-07-22 (owner approved rev 2 of the proposal artifact `claude.ai/code/artifact/23f4dbce-60dd-42c1-b9ec-7ca6597651e7` — the binding visual spec)
+**Status:** ✅ **P1–P3 SHIPPED TO PROD 2026-07-23 (promote `f064712d`)** · **P4 polish in progress** via `ROLE_FLIP_P4_BUILD_PROMPT.md` (P1–P3 prompts archived 2026-07-24). (Header previously frozen at "P1 BUILT uncommitted"; corrected 2026-07-24 by the Codebase Cleanup audit, finding G28.) · **Ratified:** 2026-07-22 (owner approved rev 2 of the proposal artifact `claude.ai/code/artifact/23f4dbce-60dd-42c1-b9ec-7ca6597651e7` — the binding visual spec)
 **PM brief:** `ROLE_FLIP_NAVIGATION_PM_BRIEF.md`
 
 > ### REVISION 2026-07-22 — Shared admin header (owner-approved; supersedes the P1 floating desktop pill)
