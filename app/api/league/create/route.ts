@@ -5,6 +5,7 @@ import { FOUNDING_SEASON_END, isFoundingSeasonActive } from '@/lib/plan-config';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { captureError, withObservability } from '@/lib/observability';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
@@ -67,6 +68,17 @@ export const POST = withObservability(async (req: Request) => {
     // FieldLogicHQ staff are not operators — a platform-admin session must never own a public org.
     if (await isPlatformAdminEmail(user.email)) {
       return NextResponse.json({ error: 'Sign in required.' }, { status: 401 });
+    }
+
+    // Single-org by default (decision 2026-06-19): a user who already belongs to a REAL org can't
+    // self-serve a second via the league path either. A user's own Coaches Portal (team_workspace)
+    // does NOT count, so a portal-owning coach can still create their first league. Same exemption-
+    // aware helper as org-create; mirrors the /start/league page guard (this is the server backstop).
+    if (await userBelongsToOtherRealOrg(user.id)) {
+      return NextResponse.json(
+        { error: 'Your account already has a workspace. To join another organization, ask them to invite you.' },
+        { status: 403 },
+      );
     }
 
     const { orgName, orgSlug } = await req.json().catch(() => ({}));

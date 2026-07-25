@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYear, getRepTeamCoaches, addRepTeamCoach, removeRepTeamCoach, cleanupOrphanedCoachMembership } from '@/lib/db';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { revokeStaleChatMembershipsForCoach } from '@/lib/chat-service';
 import { withObservability } from '@/lib/observability';
 
@@ -95,7 +96,7 @@ export const POST = withObservability(async (req: Request,
   // Guard: userId must be an active org member
   const { data: member } = await supabaseAdmin
     .from('organization_members')
-    .select('id')
+    .select('id, role')
     .eq('organization_id', ctx!.org.id)
     .eq('user_id', userId)
     .eq('status', 'active')
@@ -103,6 +104,22 @@ export const POST = withObservability(async (req: Request,
 
   if (!member) {
     return NextResponse.json({ error: 'User is not an active member of this organization' }, { status: 422 });
+  }
+
+  // Preserve cross-org guest ASSISTANT coaching (a ratified freedom) but block the SILENT escalation
+  // of such a guest into a HEAD-coach seat: a capability-less guest membership (role 'coach') whose
+  // holder is still active in ANOTHER real org is a cross-org guest, not a genuine local member — they
+  // must be invited as a full member of THIS org first. Assistant assignment and same-org head coaches
+  // (whose membership role is admin/staff/official/etc., or who have no other real org) are unaffected.
+  if (
+    coachRole === 'head_coach' &&
+    member.role === 'coach' &&
+    (await userBelongsToOtherRealOrg(userId, ctx!.org.id))
+  ) {
+    return NextResponse.json(
+      { error: 'This coach is a guest from another organization. Invite them as a full member of this organization before making them a head coach.' },
+      { status: 403 },
+    );
   }
 
   try {

@@ -5,6 +5,8 @@ import { CalendarDays } from 'lucide-react';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
+import { getAuthDestination } from '@/lib/auth-destination';
 import StartLeagueForm from './StartLeagueForm';
 import styles from '../start.module.css';
 
@@ -28,6 +30,12 @@ export default async function StartLeaguePage() {
   }
 
   if (process.env.LEAGUE_STARTER_BETA === 'true') {
+    // Single-org by default: a signed-in user who already belongs to a REAL org can't self-serve a
+    // second via the league path. A user's own Coaches Portal doesn't count (exemption-aware helper),
+    // so a portal-owning coach can still create their first league. Mirrors /start/tournament.
+    if (user?.id && (await userBelongsToOtherRealOrg(user.id))) {
+      redirect(await getAuthDestination());
+    }
     return <StartLeagueForm isLoggedIn={Boolean(user?.email)} email={user?.email ?? null} />;
   }
 

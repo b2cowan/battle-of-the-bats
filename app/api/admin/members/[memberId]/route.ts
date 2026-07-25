@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { ALL_CAPABILITY_KEYS, hasCapability } from '@/lib/roles';
+import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import type { OrgRole } from '@/lib/types';
 import { sendEmail, memberSuspendedHtml, memberRemovedHtml } from '@/lib/email';
 import {
@@ -281,6 +282,21 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     return NextResponse.json(
       { error: 'Cannot suspend an organization owner' },
       { status: 400 }
+    );
+  }
+
+  // Reinstate must re-check the one-org rule: if a suspended member has since become active in
+  // ANOTHER real org, reinstating them here would silently create a double real-org membership.
+  // Hard-block (owner-decided) — re-invite them if they have genuinely left the other org.
+  if (
+    hasStatusUpdate &&
+    body.status === 'active' &&
+    target.status === 'suspended' &&
+    (await userBelongsToOtherRealOrg(target.user_id, org.id))
+  ) {
+    return NextResponse.json(
+      { error: 'This member is now active in another organization. They must leave it before they can be reinstated here — re-invite them once they have.' },
+      { status: 409 }
     );
   }
 
