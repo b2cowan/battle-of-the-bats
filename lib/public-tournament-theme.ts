@@ -41,7 +41,6 @@ export function buildPublicLightModeCssVars(): string {
     '--white-8:         rgba(15,17,35,0.06)',
     '--white-5:         rgba(15,17,35,0.04)',
     '--white-03:        rgba(15,17,35,0.025)',
-    '--black-10:        rgba(15,17,35,0.03)',
     '--black-20:        rgba(15,17,35,0.04)',
     '--black-30:        rgba(15,17,35,0.06)',
     '--black-40:        rgba(15,17,35,0.08)',

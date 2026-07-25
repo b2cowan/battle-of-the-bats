@@ -13,7 +13,6 @@
   --surface:     #111827;
   --surface-2:   #0F172A;
   --bg-surface:  var(--surface);
-  --bg-raised:   #141D2B;
   --bracket-card: #1E293B;
   --bg-inset:    rgba(0, 0, 0, 0.2);
   --bg-card:     var(--bg-surface);
@@ -62,7 +61,6 @@
   --white-05:    var(--white-5);
   --white-03:    rgba(255, 255, 255, 0.03);
 
-  --black-10:    rgba(0, 0, 0, 0.1);
   --black-20:    rgba(0, 0, 0, 0.2);
   --black-30:    rgba(0, 0, 0, 0.3);
   --black-40:    rgba(0, 0, 0, 0.4);
@@ -87,7 +85,6 @@
   --success-strong: var(--success);
   --warning-strong: var(--warning);
   --danger-strong:  var(--danger);
-  --info-strong:    var(--info);
 
   /* Status colours as LIGHTER TEXT/GLYPH on DARK operator surfaces (the Tailwind
      -400 tier). Brighter than the base --success/--warning/--danger/--info fills so
@@ -189,7 +186,6 @@
    the boosted muted-text tokens regressed to ~2.6:1). Only alias/derived
    tokens the builder does not know about may live here. */
 [data-color-mode="light"] {
-  --bg-raised:   #FFFFFF;
   --bg-inset:    rgba(15, 17, 35, 0.04);
 
   /* Light-mode card highlight reads as a faint dark hairline, not a white glow */
@@ -415,7 +411,6 @@ body:has([data-chat-fullbleed]) {
   --success-strong: #15803D;
   --warning-strong: #A16207;
   --danger-strong:  #B91C1C;
-  --info-strong:    #1D4ED8;
 }
 
 /* ─── Warm Coaches Portal — theme option (TH-2 / TH-5) ──────────────────────────
@@ -479,7 +474,6 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --surface:          var(--home-card);
   --surface-2:        var(--home-card);
   --bg-surface:       var(--home-card);
-  --bg-raised:        var(--home-card);
   --bracket-card:     var(--home-card);
   --structural-slate: var(--home-card);
   --card-bg:          var(--home-card);
@@ -551,7 +545,6 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --success-strong: var(--home-win);
   --warning-strong: var(--home-amber);
   --danger-strong:  var(--home-live);
-  --info-strong:    var(--home-blue);
 
   /* ── Legible-on-white gold (round-2 A-squad star). Also remap --gold itself so
      gold GLYPHS (the A-squad star) deepen to the legible tone on cream instead of
@@ -564,7 +557,6 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
      Dark keeps the raw purple/orange via each inline fallback; these warm cousins
      read on cream. --home-plum = Collect/Dues/Credits, --home-rust = Spend/Expenses. */
   --home-plum:     #7B4B6E;
-  --home-plum-rgb: 123, 75, 110;
   --home-rust:     #B45309;
   --home-rust-rgb: 180, 83, 9;
 
