@@ -19,6 +19,7 @@
  */
 import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join, sep } from 'node:path';
+import { execSync } from 'node:child_process';
 
 const ROOT = process.cwd();
 
@@ -79,6 +80,43 @@ const mode = process.argv.includes('--report') ? 'report'
   : process.argv.includes('--init') ? 'init'
   : 'check';
 
+// ── --staged: pre-commit mode ─────────────────────────────────────────────────
+// Only fail on *.module.css files STAGED in this commit that exceed their baseline.
+// Pre-existing debt in files this commit doesn't touch never blocks the commit — so a
+// contributor is only ever stopped for a literal THEY are adding. Scans both scopes.
+if (process.argv.includes('--staged')) {
+  // The pre-commit hook (which runs git in its own shell) passes the staged *.module.css
+  // paths as args — the reliable path on Windows, where node's execSync shell may not see
+  // git on PATH. Fall back to querying git directly when invoked without file args.
+  let stagedFiles = process.argv.slice(2).filter(a => a.endsWith('.module.css'));
+  if (stagedFiles.length === 0) {
+    try {
+      stagedFiles = execSync('git diff --cached --name-only --diff-filter=ACM', { encoding: 'utf8' })
+        .split(/\r?\n/).map(s => s.trim()).filter(f => f.endsWith('.module.css'));
+    } catch { stagedFiles = []; }
+  }
+  const stagedSet = new Set(stagedFiles.map(f => f.replace(/\\/g, '/')));
+  const offenders = [];
+  for (const [scopeName, scfg] of Object.entries(SCOPES)) {
+    const baseline = existsSync(join(ROOT, scfg.baseline)) ? JSON.parse(readFileSync(join(ROOT, scfg.baseline), 'utf8')) : {};
+    for (const f of moduleFiles(scfg)) {
+      if (!stagedSet.has(f)) continue;
+      const hits = scan(f);
+      const allowed = baseline[f] ?? 0;
+      if (hits.length > allowed) offenders.push({ scopeName, file: f, count: hits.length, allowed });
+    }
+  }
+  if (offenders.length) {
+    console.error('✖ Pre-commit: staged CSS module(s) add literal hex color(s) that should be design tokens (var(--*)):');
+    for (const o of offenders) console.error(`    [${o.scopeName}] ${o.file}: ${o.count} literal(s) (baseline ${o.allowed})`);
+    console.error('  Fix: replace the literal with a var(--token) from app/globals.css.');
+    console.error('  Genuinely intentional? re-baseline: node scripts/check-public-tokens.mjs --init (add --scope=operator for operator files).');
+    process.exit(1);
+  }
+  console.log('✓ Pre-commit token check: staged CSS modules clean.');
+  process.exit(0);
+}
+
 function norm(hex) {
   let h = hex.replace('#', '').toLowerCase();
   if (h.length === 3) h = h.split('').map(c => c + c).join('');
@@ -106,7 +144,7 @@ function buildTokenMap() {
   return map;
 }
 
-function moduleFiles() {
+function moduleFiles(cfg) {
   const out = [];
   for (const d of cfg.dirs) {
     const abs = join(ROOT, d);
@@ -137,7 +175,7 @@ function scan(file) {
 }
 
 const tokenMap = buildTokenMap();
-const files = moduleFiles();
+const files = moduleFiles(cfg);
 const perFile = files.map(f => ({ file: f, hits: scan(f) })).filter(x => x.hits.length);
 
 // ── modes ───────────────────────────────────────────────────────────────────

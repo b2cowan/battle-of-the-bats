@@ -5,3 +5,6 @@
 docs/agents/db/schema-snapshots/*.json   text eol=lf
 docs/agents/db/schema-snapshots/*.md     text eol=lf
 scripts/.dictionary-coverage-baseline.json text eol=lf
+
+# Git hooks must stay LF — a CRLF shebang (`#!/bin/sh\r`) breaks the interpreter on checkout.
+.githooks/* text eol=lf

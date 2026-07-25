@@ -1,0 +1,15 @@
+#!/bin/sh
+# Color-token guardrail — block commits that ADD hardcoded hex color literals to guarded
+# CSS modules (they should be var(--token) from app/globals.css so a rebrand is one edit).
+#
+# Only the *.module.css files staged in THIS commit are checked, against their per-file
+# baseline — so pre-existing debt (or another session's files) never blocks an unrelated
+# commit. Bypass (discouraged): `git commit --no-verify`. The Amplify deploy build re-runs
+# the full scope check as the authoritative, unbypassable backstop.
+#
+# Wired via `git config core.hooksPath .githooks` (set automatically by the package.json
+# "prepare" script on `npm install`).
+set -f  # disable globbing — CSS-module paths contain [orgSlug] / (consumer) etc.
+files=$(git diff --cached --name-only --diff-filter=ACM | grep '\.module\.css$')
+[ -z "$files" ] && exit 0
+node scripts/check-public-tokens.mjs --staged $files

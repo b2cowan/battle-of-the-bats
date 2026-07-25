@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
     "dev": "node --max-old-space-size=3072 node_modules/next/dist/bin/next dev",
     "build": "next build --webpack",
     "start": "next start",

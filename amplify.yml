@@ -32,6 +32,12 @@ frontend:
         # the effective secret and breaks unsubscribe links already sent — so that fix is
         # decoupled from the scheduler work and will ship as its own deliberate change (ideally
         # paired with a fresh email send so live links go out re-signed). See SCHEDULED_JOBS plan.
+        # Color-token guardrail — unbypassable backstop to the local pre-commit hook.
+        # Fail the deploy if any guarded CSS module carries a hardcoded hex color that
+        # should be a var(--token), so a rebrand stays a single central edit. (Public +
+        # operator scopes; baselines let existing debt through, block only NEW literals.)
+        - node scripts/check-public-tokens.mjs
+        - node scripts/check-public-tokens.mjs --scope=operator
         # Webpack production build (next build --webpack) uses far more heap than the
         # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
         # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.
