@@ -390,7 +390,7 @@ const platformAdminHelp: HelpPageContent = {
       searchText: 'coaches portal premium launch readiness Stripe price IDs sandbox live direct checkout Club capacity bands Club Association band retired org billed extra team per-team add-on cancellation past due mobile coach portal help documentation',
       links: [
         { label: 'Dev Tools', href: '/platform-admin/dev-tools' },
-        { label: 'Stripe Prices', href: '/platform-admin/stripe-prices' },
+        { label: 'Stripe Prices', href: '/platform-admin/plans-pricing' },
         { label: 'Plans & Pricing', href: '/platform-admin/plans-pricing' },
       ],
       content: (

@@ -49,7 +49,8 @@ const PRECACHE_URLS = [OFFLINE_URL, '/icons/pwa-192.png', '/icons/badge-72.png']
 
 // Prefixes that must NEVER be cached/offline-served — authed, mutating, sensitive.
 // Enumerated against the full app/ route tree (top-level segments that auth-gate):
-// coaches, team, start, home, my, auth, platform-admin, api. ⚠ If you add a NEW
+// api, auth, platform-admin, home, my, coaches, team, start (+ account, following,
+// chat below). ⚠ If you add a NEW
 // authed top-level route, add it here — the page cache would otherwise store its
 // HTML and serve it offline to the next person on a shared device.
 // `/account` reflects sign-in state; `/following` is device-personal — both stay
@@ -59,7 +60,7 @@ const PRECACHE_URLS = [OFFLINE_URL, '/icons/pwa-192.png', '/icons/badge-72.png']
 // phase, but the route is denylisted from the shared cache from day one so a
 // signed-in inbox can never be served offline to the next person on a device.
 const NEVER_CACHE_PREFIXES = [
-  '/api/', '/auth', '/platform-admin', '/home', '/dashboard', '/my',
+  '/api/', '/auth', '/platform-admin', '/home', '/my',
   '/coaches', '/team', '/start', '/account', '/following', '/chat',
 ];
 // Org sub-sections that are operator/authed surfaces (/{org}/{section}/...).

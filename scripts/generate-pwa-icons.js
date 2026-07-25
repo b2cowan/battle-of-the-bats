@@ -19,7 +19,7 @@
  *
  * Override via CLI args:
  *   node scripts/generate-pwa-icons.js [--primary <path>] [--icon <path>] [--badge <path>] [--maskable <path>]
- *   node scripts/generate-pwa-icons.js public/brand/logo-A.svg   (shorthand: sets primary only)
+ *   node scripts/generate-pwa-icons.js public/brand/logo-B.svg   (shorthand: sets primary only)
  *
  * Run: node scripts/generate-pwa-icons.js
  * Requires: sharp (devDependency)
