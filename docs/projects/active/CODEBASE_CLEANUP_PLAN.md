@@ -31,7 +31,9 @@ No app-code behavior changes in this tranche. 0.1 is the single most important f
 
 ---
 
-## Tranche 1 — Safe-mechanical code deletions (~3,000 LOC, zero-runtime-risk, all CONFIRMED)
+## Tranche 1 — Safe-mechanical code deletions (~3,000 LOC, zero-runtime-risk, all CONFIRMED) ✅ **EXECUTED + COMMITTED 2026-07-25**
+
+Execution record (2026-07-25, solo chat): all sub-sections 1a–1h + the deferred Stripe-prices route executed on dev — 10 single-scope commits (`ef592614` 1a · `0669c12f` 1b · `c5ec38b1` 1c · `3f80d58b` 1d · `a3646da9` 1e-1 · `5dfe7a60` 1e-2 · `fccd41f5` 1f · `43f4c880` 1g · `024b1f24` 1h · `468b4841` Stripe route), ~9,000 LOC removed (atomic `git commit -- <paths>` after a concurrent rebase orphaned the first 1e-1 attempt — re-verified + re-landed). **Re-verify overturned the audit on 5 KEPT-live items:** HudSkeleton (still live), `--home-rust-rgb` (live consumer in TryoutDecisionBoard the audit missed → kept, `--home-plum-rgb` still removed), CoachGuidanceStage type + `helpHref` (used by live getCoachGuidance), btnPrimary/Secondary/Ghost. **Verify-then-include:** HudSkeleton EXCLUDED; Stripe-prices route DELETED (/billing-approved) + DATA_DICTIONARY trued to the single change-request write path. **R3:** 3 of the claimed 7 grouped exports enumerated + deleted; other 4 not identifiable from the analysis doc → deferred. `typecheck` clean; `verify:changed` clean EXCEPT the pre-existing team-profile.module.css public-ratchet (now committed by concurrent `a6117c31`, 4 color-mix/ink literals — NOT T1's, still red). Clean dev restart verified (login + `/` HTTP 200). Full commit-by-commit detail in memory `project_codebase_cleanup_audit.md`. Open follow-ups: post-HudPanel a few HUD tailwind tokens may now be orphaned (future finding); R3's 4 unidentified exports.
 
 Everything here had zero references in dev AND the prod tree, with all adversarial traps checked. Delete in the groups below; after the tranche: `verify:changed` + `typecheck` + dev-server clean restart.
 
