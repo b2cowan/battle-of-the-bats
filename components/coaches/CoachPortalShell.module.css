@@ -304,6 +304,17 @@
   }
 }
 
+/* Warm theme: the mobile chrome bars must go LIGHT to match the desktop rail. They paint the
+   dark --nav-mobile-bg, which the warm gate does NOT remap, so without this the bar stays dark
+   while everything else is cream — and the top-bar team name (var(--white) → ink in warm) renders
+   dark-on-dark, barely readable. A translucent warm-paper keeps the frosted-blur look; the bars'
+   existing text tokens (--white → ink, --white-50 → dim, --logic-lime → olive) then read correctly.
+   Consistent with the desktop rail (var(--surface) → white) and the consumer/fan warm nav. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .topbar,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bottomNav {
+  background: rgba(var(--home-paper-rgb, 248, 244, 237), 0.85);
+}
+
 @media (min-width: 1024px) {
   .topbar {
     display: none;
