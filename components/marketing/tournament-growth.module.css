@@ -76,8 +76,7 @@
   border-color: rgba(var(--info-rgb), 0.3);
 }
 
-.bannerIcon,
-.confirmationIcon {
+.bannerIcon {
   width: 34px;
   height: 34px;
   border-radius: 8px;
@@ -88,31 +87,27 @@
   border: 1px solid rgba(217,249,157,0.22);
 }
 
-.bannerBody,
-.confirmationBody {
+.bannerBody {
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   min-width: 0;
 }
 
-.bannerBody strong,
-.confirmationBody strong {
+.bannerBody strong {
   color: var(--white, #fff);
   font-size: 0.88rem;
   line-height: 1.2;
 }
 
-.bannerBody span,
-.confirmationBody span {
+.bannerBody span {
   color: rgba(255,255,255,0.58);
   font-size: 0.78rem;
   line-height: 1.35;
 }
 
 .bannerCta,
-.bannerCtaGhostBlue,
-.confirmationLink {
+.bannerCtaGhostBlue {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -135,8 +130,7 @@
 }
 
 .bannerCta:hover,
-.bannerCtaGhostBlue:hover,
-.confirmationLink:hover {
+.bannerCtaGhostBlue:hover {
   filter: brightness(0.96);
 }
 
@@ -156,17 +150,6 @@
   background: rgba(255,255,255,0.08);
 }
 
-.confirmationCta {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.85rem;
-  margin-top: 1.25rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid rgba(255,255,255,0.1);
-  text-align: left;
-}
-
 @media (max-width: 720px) {
   .poweredBy {
     left: 1rem;
@@ -175,14 +158,12 @@
   }
 
   .banner,
-  .coachBanner,
-  .confirmationCta {
+  .coachBanner {
     grid-template-columns: auto minmax(0, 1fr) auto;
   }
 
   .bannerCta,
-  .bannerCtaGhostBlue,
-  .confirmationLink {
+  .bannerCtaGhostBlue {
     grid-column: 1 / -1;
     width: 100%;
   }
