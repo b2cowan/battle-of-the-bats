@@ -12,11 +12,11 @@
    toward black on light. Everything below uses these two so the whole page reads
    as the team's colour, not the org primary. */
 .profile {
-  --team-accent: color-mix(in srgb, var(--team-color, var(--primary)) 62%, #ffffff 38%);
+  --team-accent: color-mix(in srgb, var(--team-color, var(--primary)) 62%, var(--white) 38%);
 }
 
 [data-color-mode="light"] .profile {
-  --team-accent: color-mix(in srgb, var(--team-color, var(--primary)) 80%, #000000 20%);
+  --team-accent: color-mix(in srgb, var(--team-color, var(--primary)) 80%, var(--black) 20%);
 }
 
 /* ── Back nav ────────────────────────────────────────────────────────────────── */
@@ -90,7 +90,7 @@
   font-size: 1.5rem;
   font-weight: 900;
   /* Ink picked by luminance of the team colour (TP-4) — white fails on warm hues. */
-  color: var(--team-ink, #fff);
+  color: var(--team-ink, var(--white));
   letter-spacing: 0.02em;
   flex-shrink: 0;
 }
@@ -165,7 +165,7 @@
 .followHeroBtnActive {
   background: var(--team-color, var(--primary));
   border-color: var(--team-color, var(--primary));
-  color: var(--team-ink, #fff);
+  color: var(--team-ink, var(--white));
 }
 
 /* Alerts bell (F4): one mount — labeled ghost button on desktop; the mobile
