@@ -1,9 +1,23 @@
 # Account-Model Hardening — Implementation Plan
 
-> **Status:** Planning
+> **Status:** BUILT + COMMITTED on `dev` (2026-07-24) — Phases 1–4 complete except **4.2 deferred to January**. NOT yet on prod.
 > **Created:** 2026-07-24
 > **Branch:** dev
 > **Parent decision:** 2026-07-24 "Verified Network" account-model decision (`docs/agents/strategy/BUSINESS_DECISIONS.md`); full analysis `docs/projects/active/ACCOUNT_MODEL_FREEDOM_ANALYSIS.md` §9 (fix-regardless-of-package list) + §12 (owner decisions 6–8).
+
+## Build Status (2026-07-24) — all on `dev`, none on prod
+
+| Phase | Commit | Notes |
+|---|---|---|
+| **1** support-tool security (reset email-only + named Complete-Transfer confirmation) | `f7813237` (bundled by a concurrent session; content verified) | /review clean after fixing a self-introduced origin-host regression |
+| Reset-password operator help sync | `43a6a4da` | via /docs |
+| **Origin hotfix** (out-of-scope but same root cause) — 5 auth/access email routes → `resolveTrustedAppOrigin` (`lib/app-origin.ts`) | `016fb16a` | Closes a **live, unauthenticated prod account-takeover** (forgot-password Origin-derived link host). Fixes forgot-password/signup/team-signup/resend-access/remind-signups. See `memory/reference_auth_email_origin_gotcha.md`. **Prod still vulnerable until promoted.** |
+| **2** org-create front door + billing cancel/downgrade org-scoping (fail-closed; guard extended to billing cancel/downgrade) | `bf1faa91` | /review clean |
+| **3** one-org leaks: league-create + `/start/league` guard, reinstate hard-block, cross-org head-coach block (freedom preserved) | `c36ac94c` | /review clean; advisory: rep-season-rollover defense-in-depth (not live) |
+| **4.1 + 4.3** reactivation owner-check gate + watch-only "2+ live portals" flag in Customer Users | `c95bffd1` | /review: 2 LOW (one hardened); no blocking |
+| **4.2** hard serialization of the double-provision race | **DEFERRED to January** (owner decision 2026-07-24) | A true per-owner lock is NOT achievable in code over the serverless/PostgREST path (txn-scoped advisory lock needs one txn/RPC; session locks break over pooling; a Node mutex can't span Lambda instances). Closes with the **January partial unique index** (`primary_owner_user_id` WHERE live) — the parked hard-enforce. Everyday paths already fenced (front-door + in-provision + 4.1); **4.3 watch-only now surfaces any occurrence** for cleanup before the index flips on. |
+
+**Remaining (owner):** browser-QA of Phases 2/3/4 (2.2 needs a multi-org account; 4.1/4.3 need a multi-portal account); **promote to prod** (prioritize the origin hotfix). **Follow-ups (flagged, not built):** billing portal/checkout/payment-method still soft-fall-back to home org (2.2 scoped to cancel/downgrade only); rep-season-rollover cross-org check; the later "Verified Network gate" feature.
 
 ## Goal
 
