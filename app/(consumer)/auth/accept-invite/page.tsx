@@ -106,7 +106,8 @@ function AcceptInviteForm() {
 
   const isScorekeeperInvite = inviteContext?.role === 'official';
   const title = isScorekeeperInvite ? 'Set Up Scorekeeper Access' : 'Accept Invitation';
-  const subtitle = isScorekeeperInvite ? 'FieldLogicHQ - Scorekeeper App' : 'FieldLogicHQ - Tournament Management Platform';
+  // Brand canon: never "tournament management platform" (memory/project_brand_name).
+  const subtitle = isScorekeeperInvite ? 'FieldLogicHQ - Scorekeeper App' : 'FieldLogicHQ';
   const introCopy = isScorekeeperInvite
     ? 'Create a password to open the scorekeeper workspace for assigned tournament games.'
     : 'Create a password to finish setting up your account.';
@@ -123,7 +124,8 @@ function AcceptInviteForm() {
             </svg>
           </div>
           <h1 className={styles.title}>Invite Link Expired</h1>
-          <p className={styles.sub}>FieldLogicHQ — Tournament Management Platform</p>
+          {/* Brand canon: never "tournament management platform" (memory/project_brand_name). */}
+          <p className={styles.sub}>FieldLogicHQ</p>
         </div>
         <p style={{ fontFamily: 'var(--font-data)', fontSize: '0.82rem', color: 'var(--fl-text)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
           This invite link is no longer valid. Ask your organization admin to resend the invitation.

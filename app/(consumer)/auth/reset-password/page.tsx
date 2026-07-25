@@ -71,23 +71,24 @@ export default function ResetPasswordPage() {
       setLoading(false);
     } else {
       setPageState('success');
-      // Determine the role-aware destination before redirecting.
-      let dest = '/admin';
+      // Determine the role-aware destination before redirecting. Platform admins keep
+      // their dedicated check; everyone else goes through the same resolver login uses
+      // (/api/auth/destination), which knows every context kind — including org-less
+      // basic coaches, whom the old /api/auth/me + '/admin' fallback 404'd.
+      let dest = '/discover';
       try {
         const paRes = await fetch('/api/platform-admin/me');
         if (paRes.ok) {
           dest = '/platform-admin';
         } else {
-          const res = await fetch('/api/auth/me');
+          const res = await fetch('/api/auth/destination?flow=password_reset');
           if (res.ok) {
-            const { orgSlug, role } = await res.json();
-            if (orgSlug) {
-              dest = role === 'official' ? `/${orgSlug}/scorekeeper` : `/${orgSlug}/admin`;
-            }
+            const { destination } = await res.json();
+            if (destination) dest = destination;
           }
         }
       } catch {
-        // Non-fatal — fall back to generic /admin
+        // Non-fatal — fall back to Home
       }
       setTimeout(() => { router.push(dest); router.refresh(); }, 1500);
     }
@@ -103,7 +104,8 @@ export default function ResetPasswordPage() {
             </svg>
           </div>
           <h1 className={styles.title}>Set New Password</h1>
-          <p className={styles.sub}>FieldLogicHQ — Tournament Management Platform</p>
+          {/* Brand canon: never "tournament management platform" (memory/project_brand_name). */}
+          <p className={styles.sub}>FieldLogicHQ</p>
         </div>
 
         {pageState === 'waiting' && (

@@ -55,7 +55,8 @@ export default function ResetConfirmPage() {
             </svg>
           </div>
           <h1 className={styles.title}>Reset Password</h1>
-          <p className={styles.sub}>FieldLogicHQ — Tournament Management Platform</p>
+          {/* Brand canon: never "tournament management platform" (memory/project_brand_name). */}
+          <p className={styles.sub}>FieldLogicHQ</p>
         </div>
         <Suspense fallback={null}>
           <ResetConfirmInner />

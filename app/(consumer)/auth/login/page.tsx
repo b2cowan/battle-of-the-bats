@@ -108,8 +108,14 @@ function LoginForm() {
           </svg>
         </div>
         <h1 className={styles.title}>Sign In</h1>
-        {/* Brand canon: never "tournament management platform" (memory/project_brand_name). */}
-        <p className={styles.sub}>FieldLogicHQ</p>
+        {/* Brand canon: never "tournament management platform" (memory/project_brand_name).
+            Coach deep links (signed-out visit to /coaches/*) land here — keep visual
+            continuity with the portal they're returning to. */}
+        <p className={styles.sub}>
+          {(searchParams.get('next') ?? '').startsWith('/coaches')
+            ? 'FieldLogicHQ — Coaches Portal'
+            : 'FieldLogicHQ'}
+        </p>
       </div>
 
       <form onSubmit={handleSubmit} className={styles.form}>
@@ -165,6 +171,12 @@ function LoginForm() {
       </form>
 
       <div className={styles.footer}>
+        {(searchParams.get('next') ?? '').startsWith('/coaches') && (
+          <p className={styles.footerText} style={{ marginBottom: '0.4rem' }}>
+            Heading back to your Coaches Portal? Sign in with the email you used
+            when you registered your team.
+          </p>
+        )}
         {/* Fans/parents are the default audience here — plain account signup first
             (carrying `next` so they land back where they were headed). The organizer
             path is the labeled exception, via the /start front door. */}

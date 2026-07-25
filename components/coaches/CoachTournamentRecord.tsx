@@ -49,8 +49,8 @@ const NIL_UUID = '00000000-0000-0000-0000-000000000000';
  * Caller resolves auth + passes the verified user; this component re-checks access to
  * the registration and `notFound()`s if the user can't see it. `suppressUpsell` hides
  * the free-tier "express interest / run your own event" asks (a paying coach is past
- * them). `backHref` renders a back link (the Premium shell points it at its
- * Tournaments list; the free portal omits it).
+ * them). `backHref` renders a back link (the Premium shell points it at its team-scoped
+ * Tournaments list; the free portal at the account-wide `/coaches/tournaments` hub).
  */
 export default async function CoachTournamentRecord({
   registrationId,

@@ -7,7 +7,7 @@
   padding: 2rem 1.5rem 4rem;
 }
 
-/* Back link to the Tournaments list (Premium shell only) */
+/* Back link to the Tournaments list (both shells pass backHref) */
 .recordBackLink {
   display: inline-flex;
   align-items: center;
@@ -39,12 +39,16 @@
   letter-spacing: -0.01em;
   margin: 0 0 0.25rem;
   color: var(--white);
+  /* Header stays a row at all widths (Flip pinned right) — an unbreakable long team
+     name must wrap, not overflow. Matches TeamHQ's team-name treatment. */
+  overflow-wrap: anywhere;
 }
 
 .tournamentName {
   color: var(--white-60);
   font-size: 0.88rem;
   margin: 0;
+  overflow-wrap: anywhere;
 }
 
 /* The status card was replaced by the shared phase-adaptive TeamHQ tournament hero
@@ -201,8 +205,8 @@
     padding: 1.5rem 1rem 3rem;
   }
 
-  .header {
-    flex-direction: column;
-    gap: 0.5rem;
-  }
+  /* .header stays a ROW at every width: the platform Flip convention pins the pill
+     top-right and never re-stacks (FlipPill drops to icon-only ≤900px on its own;
+     the title wraps via .headerMain min-width:0). The old column override here made
+     the pill fall bottom-left under the title. */
 }

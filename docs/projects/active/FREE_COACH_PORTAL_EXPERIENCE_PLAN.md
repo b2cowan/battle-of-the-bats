@@ -1,0 +1,141 @@
+# Free Coach Portal Experience — Fix & Delight Plan
+
+**Status:** Phase A1 BUILT 2026-07-25 (all 5 items + 4 /review refinements + 3 owner-QA addenda; gate green, adversarial review passed — pending owner browser QA + commit). **Resequenced 2026-07-25 after the two-family ruling** (BUSINESS_DECISIONS.md 2026-07-25; design_decisions.md same date): **A2 = consumer shell integration** (new), record-page regroup → **A3**, flow polish → **A4**. A2+ not started.
+**A1 addendum (owner QA feedback 2026-07-25):** shell header cleanup — removed the decorative auto-color team dot (`teamColor(name)` swatch) from the mobile topbar + desktop rail (`CoachPortalShell.tsx/.module.css`, unused classes + import removed), and the lifecycle chip no longer renders in state `complete` (persistent "COMPLETE" after an event read as stale noise; live/game-day/upcoming/future-month labels still show — gate at both render sites in `CoachPortalShell.tsx`).
+**A1 addendum 2 (owner QA 2026-07-25):** lifecycle-chip warm-theme contrast — `.coachLifecycleChipComplete`/`Future` in `app/coaches/coaches-portal.module.css` used `--white-30`/`--white-40` ink, which warm remaps to line/dim tokens (`--white-30` → `--home-line-strong`, a border color) → "COMPLETE" was illegible on warm cards. Switched both to `--text-tertiary` (white-40 on dark / `--home-dim` ink on warm). Shell's `.teamChip` (`--white-45` → `--home-dim`) already legible, untouched.
+**A1 addendum 3 (owner QA 2026-07-25):** olive upgrade-CTA fix — the three warm "paper doorway" upsell cards (`ScopeCeilingInterest`, `ScopeShelf`, `CoachExploreCatalog.premiumBlock`) compose consumer `warmVars`, whose `--home-lime: var(--logic-lime)` capture resolves INSIDE the coach warm gate (which remaps `--logic-lime`→`--home-olive`, globals.css:523) → CTA fills rendered olive (E3 ban). Fixed by re-pinning `--home-lime: #D9F99D` on each composing class (value-identical to root lime → dark output unchanged) + CTA ink normalized to `--home-lime-ink`. Other coach lime fills read the gate literal directly and were already correct.
+**A1 review follow-ups parked:** orphaned `/api/auth/me` route (delete in cleanup tranche); free-record back link (`/coaches/tournaments`) vs rail Tournaments tab (`/coaches/team/{id}/tournaments`) are two same-labeled links to sibling destinations — resolves in A2 (shell rework retargets the tab) / A3 list consolidation; desktop rail flashes "Get started" during context load on record pages (pre-existing, dies with the A2 shell rework); reset-page destination fetches have no timeout (pre-existing shape, advisory).
+**Source:** 14-agent workflow audit (2026-07-25), all key claims adversarially verified with file:line evidence. PM brief: `FREE_COACH_PORTAL_EXPERIENCE_PM_BRIEF.md`.
+**Persona:** first-time coach who registers a team for one tournament via the public site and lands in the free (account-level, org-less) Coaches Portal at `app/coaches/**` (basic_coach_* model).
+
+**Verified baseline (what already works — do not regress):**
+- Signup→landing is 1 click post-review: `Submit Registration` creates the auth account (email pre-confirmed, `app/api/auth/coach-signup/route.ts:50`), signs in client-side, inserts the registration (`app/api/register/route.ts:357-377`), and redirects straight to `/coaches/tournaments/{registrationId}?welcome=1` (`components/public/RegisterContent.tsx:473-476`). No hub/team-picker/verify-email detour. Multi-team branching correctly suppressed for first-timers.
+- Post-login destination resolution for a single-basic-team coach correctly fast-paths to their team (`lib/user-contexts.ts:296-310`, `lib/auth-destination.ts:77-88`).
+
+---
+
+## TRANCHE A — FIX (correctness + IA)
+
+### Phase A1 — Auth dead-end + navigation defects (highest priority, small diffs)
+
+**A1.1 Password-reset lands coaches on a 404 (HIGH).**
+`app/(consumer)/auth/reset-password/page.tsx:74-92` hardcodes `dest='/admin'`, overridden only via `/api/platform-admin/me` or `/api/auth/me`. `/api/auth/me` requires an `organization_members` row (`lib/api-auth.ts:169-179`) which org-less basic coaches never have → 401 → coach is sent to `/admin`, which has **no route** (zero `app/admin/**` matches) → authenticated user passes proxy (`proxy.ts:117-131` only redirects `!user`) → `app/not-found.tsx` "ROUTE_NOT_FOUND" screen. Fires for *every* free coach who resets a password — the persona most likely to reset, since their password was set inline during registration.
+**Fix:** reuse the shared destination resolver (`/api/auth/destination` → `getAuthDestinationDetail()`, same as login's `resolveLoginDestination`, `app/(consumer)/auth/login/page.tsx:24-36`). Never fall back to `/admin`.
+**Accept:** coach with only a basic team resets password → lands on `/coaches/team/{basicTeamId}` (or honored safe `next`).
+
+**A1.2 FlipPill drops bottom-left on mobile (shared component — fixes free AND paid portals).**
+Convention (verified): FlipPill pins top-right of the title row at every width; mobile degrades to icon-only, never re-stacks (`components/shared/FlipPill.module.css:148-166`; `components/admin/AdminEventHeader.tsx:143-146` + `.module.css:51-58` with no mobile column override; `components/Navbar.module.css:158-172` absolute top-right).
+Root cause: `components/coaches/CoachTournamentRecord.module.css:199-208` `@media (max-width:600px){ .header{flex-direction:column} }` with no compensating alignment → FlipPill (2nd child, `CoachTournamentRecord.tsx:460-475`) falls under the title flush-left.
+**Fix (pick one):** (a) keep `.header` a row at all widths and let title wrap/truncate (matches AdminEventHeader spirit — preferred), or (b) add `align-items:flex-end` in the mobile block.
+**Accept:** ≤600px, pill sits top-right beside/level with the title on both free and paid tournament-record pages.
+
+**A1.3 Missing "← Tournaments" back link on the free record page.**
+`CoachTournamentRecord.tsx:445-449` already renders a back link when `backHref` is passed; paid call site passes it (`app/[orgSlug]/coaches/teams/[teamId]/tournaments/[registrationId]/page.tsx:43`), free call site doesn't (`app/coaches/tournaments/[teamId]/page.tsx:48-55`).
+**Fix:** pass `backHref={COACHES_TOURNAMENTS_PATH}` (`lib/coaches-portal-routes.ts:4`).
+
+**A1.4 Wrong active tab: Overview highlighted on tournament-record pages.**
+`components/coaches/CoachPortalShell.tsx` `sectionActive()` (lines 194-206) deliberately claims `/coaches/tournaments/{regId}` for the Overview tab (regex vs `team.registrationIds`, lines 196-202), while the Tournaments tab's href is `/coaches/team/{basicTeamId}/tournaments` (`sectionHref`, 191-193) whose `startsWith` check (line 205) can never match the record URL. Same logic drives desktop rail (218-234) and mobile bottom nav (355-379).
+**Product call (recommended, confirm at build):** Tournaments tab should be active on a tournament-record page. Move the registrationIds match from the Overview branch to the Tournaments branch (ensure the two branches never both claim a route).
+**A1.4b:** retitle the `/coaches/tournaments` page h1 from "Coaches Portal" to "Tournaments" (`app/coaches/tournaments/page.tsx` header) — it's the Tournaments tab's destination.
+
+**A1.5 Auth-family branding + banned tagline.**
+"Coaches Portal" appears nowhere in `app/(consumer)/auth/**`. Banned phrase "FieldLogicHQ — Tournament Management Platform" (violates brand canon, `memory/project_brand_name.md`) at `forgot-password/page.tsx:35`, `reset-password/page.tsx:106`, `reset-confirm/page.tsx:58`.
+**Fix (minimum):** replace the tagline with canon copy on all three. **Stretch:** contextual "Sign back in to your Coaches Portal" framing when `next` targets `/coaches/*` (the common deep-link path: `app/coaches/team/[basicTeamId]/page.tsx:83-84` redirects signed-out visits straight to generic `/auth/login`, bypassing the friendlier `/coaches/join`). Reset-flow copy should acknowledge "your account was created when you registered your team" — coaches never had a deliberate set-a-password moment.
+
+### Phase A2 — Consumer shell integration (NEW; ratified 2026-07-25 — the two-family ruling)
+
+**Ruling:** free portal joins the CONSUMER family (see `docs/agents/strategy/BUSINESS_DECISIONS.md` 2026-07-25 + `memory/design_decisions.md` 2026-07-25). The portal becomes a lens over the tournament inside the one app; its own nav vocabulary retires.
+
+- **A2.1 Bottom nav → global consumer nav** (Home · Scores · Chat · Account — the same bar public tournament pages keep per the 2026-07-20 nav-merge decision). CoachPortalShell's own bottom nav + "More" sheet retire. Account utilities (sign out / feedback / help / all-workspaces) relocate to the Account tab per consumer convention.
+- **A2.2 Chat unification.** Verified pre-ratification: the consumer Chat tab already lists basic-coach team rooms — `lib/chat-service.ts` `listRoomsForUser` backs BOTH `/api/chat/rooms` (coach portal) and `/api/consumer/chat/inbox` (consumer tab); membership resolves via `lib/chat-resolvers.ts:245-253` (basic_coach_team_users → registrations → tournaments). The portal's Chat section retires; add a **"Team chat" doorway** (card/link) on team Overview so chat stays discoverable in-context.
+- **A2.3 Persistent team-space header** (shell-level, modeled on the public event header + AdminEventHeader conventions): team identity always; tournament identity + lifecycle pill when in a tournament context; **FlipPill top-right at shell level** — retires per-page Flip placement (closes the parked structural follow-up; the A1.2 CSS fix becomes belt-and-suspenders).
+- **A2.4 Top-line scrolling section tabs** (generalize the `TournamentTopTabs` pattern: frosted pill row, edge-fade, active-tab auto-center): Overview · Tournaments · [activated Tier-2 sections] · **Explore pinned at the end as the "add more" affordance**. Reuse A1's `sectionActive` ownership logic for tab state. No slot budget → progressive disclosure no longer overflows.
+- **A2.5 Desktop:** keep a left rail (TournamentSideRail-style) carrying the same section list + vocabulary.
+- **A2.6 Multi-team:** switcher moves into the header; Home's multi-team workspace card still lands on hubs (`lib/user-contexts.ts` buildTournamentRegistrationContext multi-team branches) — acceptable v1, direct-linking polish later.
+- **Build prerequisites:** `/design` pass on header composition, tab-row behavior, and the chat doorway (per the strategy handoff); confirm SW cache denylist needs no change (`/coaches` top-level already authed-denylisted); typecheck + full restart + `/review` (shared shell + nav seams).
+
+### Phase A3 — Tournament-record page regroup (the "stacked unrelated items" fix)
+
+Current state (verified): `CoachTournamentRecord.tsx` renders up to **13** independently-gated `<section>` blocks in one scroll (lines 443-644), no tabs/anchors/accordion/mini-TOC anywhere in the render tree. Duplication: fee state ×3 (`TeamHQ.tsx:421-445` fee strip, `:340-353` checklist row, `TournamentStatusBlock.tsx:80-100`), organizer contact ×3 (`TeamHQ.tsx:438-442`, `:514-518`, `TournamentStatusBlock.tsx:109-124`), schedule info ×3 (hero countdown/today-card `TeamHQ.tsx:447-480`, Schedule section, next-steps line). Adjacent near-duplicates: "Your entry" (588-607) vs "Registration Details" (609-623). Title register drifts ("Payment"/"Your status" dynamic swap :417-418, "That's a wrap", "Your roster" vs "Registration Details").
+
+**Design decision:** do NOT copy the public tournament's multi-page tabs (`lib/tournament-page-tabs.ts` + 4 chrome renderers). A registration record is one thing; splitting adds clicks. Adopt the public site's **within-page grammar** instead: eyebrow + heading section headers (public reference: `.section-header` primitive, `app/globals.css:1161-1188`; adopt the grammar in coach-portal styling, not necessarily the global class).
+
+**Target structure — 4 zones:**
+1. **Status & Payment** — one authoritative block: status badge/headline, fee amount + due date + how-to-pay + single contact line. Kill the triplication; hero keeps status + countdown only.
+2. **Schedule** — one block handling live bridge / empty / published states (merge the two current Schedule sections, `CoachTournamentRecord.tsx:507-522` and `565-579`).
+3. **Your Team** — roster submit + head-coach editor; merge "Your entry" + "Registration Details" into one card (editable fields + inert facts together).
+4. **From the Organizer** — announcements + welcome-banner resource links (Tournament Home / Schedule / Rules).
+
+Plus: mobile sticky anchor pills (4 anchors, one per zone — decide at build how these sit under A2's section tab row: in-page anchors are one level below the section tabs, so keep them subtle or fold into a compact sticky sub-nav); consistent title register; keep phase-adaptivity (pending/accepted/game-day/result) *within* zones rather than adding/removing whole sections where feasible.
+
+**A3.2 Team Overview page rhythm** (`app/coaches/team/[basicTeamId]/page.tsx`): only "Tournament history" (246-287) has a visible h2; the stat strip (180-191, aria-label only), CoachLiveEventCard (196-200), and CoachOverviewInvite (205-212) are headless. Give every block the same header treatment; this page also gains the A2.2 "Team chat" doorway.
+**A3.3 (optional/backlog):** the same registration list renders on 3 routes with 3 card styles (Overview history block; `app/coaches/team/[basicTeamId]/tournaments/page.tsx:37-97`; `app/coaches/tournaments/page.tsx:173-219`). Consolidate card component; consider whether the team-scoped list page earns its keep for single-team coaches once A2's Tournaments tab targets are settled.
+
+### Phase A4 — Registration-flow polish
+
+**A4.1 Confirmation email deep link.** `lib/email.ts:167-169` (`registrationConfirmationHtml`) hand-builds `next=/coaches/tournaments` (list) despite having `p.registrationId`; sibling emails use `coachPortalUrl()` (`lib/email.ts:142`) → `/coaches/tournaments/{registrationId}`. **Fix:** use the helper. One line.
+**A4.2 CTA signals account creation.** Desktop hero button says "Register" (`components/public/TournamentHomeContent.tsx:1015-1019`), mobile "Register a Team" (:506-508); neither hints an account is created. First mention of "Coaches Portal" is the mid-form password field (`RegisterContent.tsx:1040-1056`). **Fix:** one-line subtext near the CTA or atop the form: registering also sets up their free Coaches Portal.
+**A4.3 Sign-in-failure branch misleads.** `RegisterContent.tsx:417-424`: if signup succeeds but immediate `signIn()` fails, copy says "sign in… to finish" — but `/api/register` never ran; the coach signs in to an empty portal. **Fix:** copy must state the registration was NOT submitted; preserve form state and offer retry (re-submit after manual sign-in if feasible).
+**A4.4 Existing-account collision round trip.** `RegisterContent.tsx:393-411`: 409 → signs in, resets to `form` step, demands Review→Submit again. **Fix:** after successful sign-in, proceed directly to submission (or at minimum return to `review`).
+**A4.5 (low):** surface the "just here to follow? no account needed" off-ramp on the tournament home near the CTA, not only inside the form (`RegisterContent.tsx:846-862`).
+
+---
+
+## TRANCHE B — DELIGHT & CONVERT
+
+### Phase B1 — Zero-new-backend quick wins (mostly reuse of shipped fan-side pieces)
+
+- **B1.1 Add-all-games-to-calendar** on the record page schedule: reuse `lib/export/ics.ts` `downloadICS()` / `lib/team-calendar.ts` `downloadTeamScheduleICS` (already wired on public `ScheduleContent.tsx` / `MyTournamentCard.tsx`), offered to the coach when a schedule exists.
+- **B1.2 Tappable directions:** `components/coaches/CoachLiveSchedule.tsx:246` prints `game.location` as flat text; swap in `components/LocationLink.tsx` (already used by paid schedule + public game page).
+- **B1.3 "We're in!" share button** on `CoachWelcomeBanner.tsx`: reuse `components/public/SharePageButton.tsx` (as the afterglow already does, `CoachTournamentRecord.tsx:534`), pointing at the public tournament page (gate on `publicCtx` resolving); OG card already exists (`app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx`).
+- **B1.4 Organizer logo in hero:** `tournaments`/`organizations` carry `logo_url` (`lib/db.ts:663,1934,1994`) not selected by the record page's queries (`CoachTournamentRecord.tsx:108-121,154-161`); select + render beside the monogram.
+- **B1.5 "Meet the field":** the record page already queries accepted teams (`CoachTournamentRecord.tsx:144-150`, `id,name`); add `division_id` to the same select → "38 teams in — 9 in your division" + monogram chips. Gate on organizer's `publicHiddenPages` not hiding Teams.
+- **B1.6 "Where you stand" standings widget:** reuse the public standings computation via the same client the schedule bridge uses (`usePublicTournamentLive` / `fetchPublicTournamentData` with the `standings` section, computed server-side in `lib/public-tournament-data.ts`). Pool rank/record during round-robin; bracket position once seeded.
+
+### Phase B2 — Coach notifications (biggest capability gap; needs design pass first)
+
+Verified current state: **no channel fires to anyone on a routine single-game edit** (`app/api/admin/games/route.ts:770-797` writes and returns; only the bulk rain-delay shift calls `syncGameDayRemindersAfterReschedule` :736, which is email-only, first-game-only, org-disableable, and keyed to the registration-time email — `lib/game-day-reminders.ts:71-132`, `lib/email.ts:112-121`). Fan push targeting is 100% `fan_follows`/`fan_push_subscriptions` (`lib/fan-notify.ts:81-86`), never written by the basic-coach model (explicitly intentional today: comment at `app/coaches/team/[basicTeamId]/page.tsx:193-195`). `lib/notify.ts` recipient resolution is org-membership-shaped (:133-177) — structurally can't reach org-less coaches. `/account/notifications` has no `coaches_basic` branch by design ("later phases", `app/(consumer)/account/notifications/page.tsx:80-116`). CoachPortalShell has no notifications entry anywhere (:300-322, :467-487). NotificationEventType has no reschedule member (`lib/types.ts:1834-1858`).
+
+**B2.1 (M, in-app, no infra decision needed): schedule-change banner.** `CoachLiveSchedule.tsx`'s 30s game-day poll already receives full game rows but its `LivePatch` (line 74) merges only score/status, silently dropping time/location changes. Surface the diff: "Schedule updated — your 2:00 vs Thunder moved to 3:15, Field 4."
+**B2.2 (design decision): real coach alerts.** Options: (a) bridge basic-coach team ownership into the existing fan push pipeline (auto- or one-tap follow-your-own-team; today's "Highlight my team" hint explicitly says it doesn't alert), or (b) extend `notify()`/prefs with a `coaches_basic` recipient shape. Scope the minimum lovable: push/email on schedule change + game final for the coach's own team, with an opt-in toggle inside the portal (shell needs a notifications entry either way).
+**Dependencies/cautions:** prod Android PWA push issue (VAPID mismatch — see `memory/project_push_delivery_diagnosis.md`); single-game-edit should also trigger the email resync, not just the bulk tool; a reschedule NotificationEventType addition touches the notification-settings matrix (coordinate with `/plan` + notification-settings project).
+
+### Phase B3 — Premium bridges (moment-based, not banners; leverage Founding Season $0-until-2027-01-01)
+
+Verified gap: the highest-value persona (single team, one tournament) never sees the hub pitch banners (hub auto-redirect, `app/coaches/page.tsx:65-70`), Chat and the team tournaments list carry zero premium presence, and `ScopeCeilingInterest` in the afterglow only fires when `afterglowBasicTeamId` resolves. All new copy reuses the existing `checkoutOpen` / `isFoundingSeasonPromoActive('team')` gates (`lib/plan-config.ts`) — no new pricing surfaces; reconcile any copy against `docs/agents/strategy/PLAN_PRICING_FACTS.md`.
+
+- **B3.1 Personal afterglow:** lead the "That's a wrap" block with the coach's real result (record computed at `CoachTournamentRecord.tsx:366-381`, already fed to the hero) + "Premium keeps this: season history, playing time, awards." Also fix `afterglowBasicTeamId` reliability so the block can't silently vanish for register-flow-only coaches.
+- **B3.2 Second-tournament nudge:** on the team tournaments list when `history.length >= 2` — roster/history/next-season carry-forward line. Fires on a page that currently pitches nothing.
+- **B3.3 Multi-game-day lineup callout:** one dismissible line under the live schedule when `todayGames.length >= 2` in `game_day` phase — free roster is name+jersey only; Premium lineups/depth chart are the honest answer.
+- **B3.4 Solo-coach line in Chat** (first-open/empty-state, not per-message): free model has no assistant-coach concept at all (verified); bridges to Premium Staff.
+- **B3.5 (optional) fee toil counter:** dynamic line above the fees ScopeShelf using the page's own `totals.unpaid` when it crosses a threshold.
+
+---
+
+## Premium portal direction — OPERATOR family (decided 2026-07-25; later tranche, light touch)
+
+Ruling (same BUSINESS_DECISIONS.md 2026-07-25 entry): Premium stays workspace-shaped alongside org admin — deliberately NOT consumer-chromed. **No rebuild.** Standing rules + queued work:
+- **Tournament parity rule:** the tournament-record surface (`CoachTournamentRecord`) stays SHARED between tiers — every free-tier tournament improvement (A3 zones, B1 quick wins, B2 alerts) lands in Premium automatically. Tiers differ in season tools, never in tournament experience.
+- **When the Premium nav is next touched:** group `CoachesSidebar`'s ~14 sections into domains — Team (roster · staff · documents) / Season (schedule · attendance · lineups · development · tryouts) / Money (accounting suite) / Events (tournaments) / Insights (history · awards) / Comms (chat · announcements · notifications) — and converge shell components with admin conventions (shared header/Flip placement, mobile bottom-nav behavior, CollapsibleCard).
+- **Upgrade-moment narration:** one screen at Basic→Premium upgrade explaining the shell change ("your team now has a workspace") so the mental model upgrades with the plan.
+- **Marketing (at A2 build, via /marketing):** "tournament companion vs team operations HQ" tier language on `/for-coaches`, the pricing coach card, and upsell surfaces.
+
+## Out of scope / adjacent notes
+- **Online fee payment:** manual-only platform-wide by documented decision (`FREE_TIER_STRATEGY_PLAN.md` §9, decided 2026-06-07; prior adjudication TOURNAMENT_SEAM_UX_REVIEW A13 → Low/Advisory). Not re-opened here. Narrow follow-ups worth a backlog card: nudge organizers to fill `payment_instructions` at accept-time (field is optional/unenforced; worst case = bare mailto, `TournamentStatusBlock.tsx:116-125`), and `/strategy` should log the payments-deferral decision into `docs/agents/strategy/BUSINESS_DECISIONS.md` (currently only in the plan doc).
+- **Housekeeping candidate for cleanup tranches:** orphaned duplicate PATCH `app/api/registrations/[id]/route.ts` still writes `payment_status` without `markPaidInFullPatch` stamping (no live caller found) — delete or fix before anything wires to it.
+- **Shell-level FlipPill** (render the flip in CoachPortalShell like AdminEventHeader does, so placement can't drift per-page) — fold into any future coach-nav rework.
+
+## Verification
+- Owner browser-tests per AGENCY_RULES (mobile ≤600px for A1.2/A1.4; password-reset round trip for A1.1; a fresh registration for A3/B1 items).
+- `npm run verify:changed` per phase; `npm run typecheck` for phases touching shared modules (A1.4 shell, A2 record component, B2 notification types).
+- A1.1 and B2 touch auth/notification seams — run `/review` after each of those phases.
+- Dev-server restart before handoff on phases that add/delete files or touch shared modules.
+
+## Success criteria
+1. Zero dead ends: password reset always lands a coach back in their portal.
+2. On any coach page, the correct tab is highlighted and the flip + back affordances are where the platform convention puts them.
+3. The tournament record reads as 4 labeled zones; fee/contact/schedule each stated once, authoritatively.
+4. A coach can get schedule→calendar, directions, and standings without leaving the portal.
+5. A schedule change reaches the coach (banner minimum; push/email once B2.2 lands).
+6. Premium impressions for the single-team persona go from ~0 to ≥2 natural moments per tournament lifecycle, all Founding-Season-aware.
+7. After A2: the free portal wears the consumer app's chrome (global bottom nav + top section tabs + event-style header, Flip header-right) — no third nav vocabulary remains; team chat reachable from both the global Chat tab and the team Overview doorway.

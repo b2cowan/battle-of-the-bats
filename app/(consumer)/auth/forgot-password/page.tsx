@@ -32,7 +32,8 @@ export default function ForgotPasswordPage() {
             </svg>
           </div>
           <h1 className={styles.title}>Reset Password</h1>
-          <p className={styles.sub}>FieldLogicHQ — Tournament Management Platform</p>
+          {/* Brand canon: never "tournament management platform" (memory/project_brand_name). */}
+          <p className={styles.sub}>FieldLogicHQ</p>
         </div>
 
         {submitted ? (
@@ -77,6 +78,12 @@ export default function ForgotPasswordPage() {
               <p className={styles.footerText}>
                 Remembered it?{' '}
                 <Link href="/auth/login" className={styles.footerLink}>Back to Sign In</Link>
+              </p>
+              {/* Coaches' accounts are created inline during tournament registration —
+                  many never consciously "set" a password. Name that case here. */}
+              <p className={styles.footerText} style={{ marginTop: '0.4rem' }}>
+                Registered a team for a tournament? Your Coaches Portal account was
+                created then — reset using the email from your registration.
               </p>
             </div>
           </>

@@ -218,16 +218,19 @@ a.card:active {
   color: var(--info);
 }
 
-/* FUTURE — > 14 days. Quiet text, no container. */
+/* FUTURE — > 14 days. Quiet text, no container.
+   Theme-aware ink, NOT --white-* alpha: warm remaps --white-30/40 to line/dim tokens
+   (--white-30 → --home-line-strong, a BORDER color), which made this text illegible
+   on the warm cards. --text-tertiary = white-40 on dark / home-dim ink on warm. */
 .coachLifecycleChipFuture {
   padding: 0.18rem 0;
-  color: var(--white-40);
+  color: var(--text-tertiary);
 }
 
 /* COMPLETE — end_date < today. Muted text + faint border. */
 .coachLifecycleChipComplete {
   border-color: var(--border-2);
-  color: var(--white-30);
+  color: var(--text-tertiary);
 }
 
 @keyframes coachChipDotPulse {

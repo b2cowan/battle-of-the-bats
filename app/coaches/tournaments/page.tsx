@@ -21,7 +21,7 @@ import FanViewLink from '@/components/shared/FanViewLink';
 import portalStyles from '../coaches-portal.module.css';
 import styles from './tournaments.module.css';
 
-export const metadata = { title: 'Coaches Portal - Tournament Records' };
+export const metadata = { title: 'Tournaments - Coaches Portal' };
 
 type TournamentRow = {
   id: string;
@@ -80,7 +80,7 @@ export default async function CoachTournamentRecordsPage() {
     return (
       <div className={styles.page}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Coaches Portal</h1>
+          <h1 className={styles.title}>Tournaments</h1>
         </div>
         <div className="card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
           <p>Could not load your tournament records. Please try refreshing the page.</p>
@@ -95,7 +95,7 @@ export default async function CoachTournamentRecordsPage() {
     return (
       <div className={styles.page}>
         <div className={styles.header}>
-          <h1 className={styles.title}>Coaches Portal</h1>
+          <h1 className={styles.title}>Tournaments</h1>
           <p className={styles.sub}>Basic team profiles and tournament history for <strong>{email}</strong></p>
         </div>
         <div className="card" style={{ padding: '2.5rem', textAlign: 'center' }}>
@@ -173,7 +173,9 @@ export default async function CoachTournamentRecordsPage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Coaches Portal</h1>
+        {/* This is the Tournaments tab's destination — title it as such ("Coaches Portal"
+            here read as a disorienting third name for the same place). */}
+        <h1 className={styles.title}>Tournaments</h1>
         <p className={styles.sub}>Teams and tournament history linked to <strong>{email}</strong></p>
       </div>
 

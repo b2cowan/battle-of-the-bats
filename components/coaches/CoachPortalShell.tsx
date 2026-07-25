@@ -8,11 +8,11 @@ import {
   HelpCircle, MessageSquare,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
-import { teamColor } from '@/lib/team-color';
 import {
   COACHES_HOME_PATH,
   COACHES_HELP_PATH,
   COACHES_TEAM_PATH,
+  COACHES_TOURNAMENTS_PATH,
   coachTeamPath,
   isCoachPortalShellPath,
 } from '@/lib/coaches-portal-routes';
@@ -193,11 +193,15 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
   }
   function sectionActive(team: TeamContext, sub: string) {
     const base = `${COACHES_TEAM_PATH}/${team.id}`;
-    if (sub === '') {
-      // Overview is active on the bare team path AND on a tournament-record page for a
-      // registration that belongs to THIS team (not just any /coaches/tournaments/ path —
-      // that would wrongly light up Overview for another team's record).
-      if (pathname === base) return true;
+    if (sub === '') return pathname === base;
+    if (sub === '/tournaments') {
+      // Tournaments owns the whole tournament surface (owner call 2026-07-25 — it used
+      // to be claimed by Overview, which read as a mis-highlight): the team-scoped list,
+      // the account-wide records hub, and a record page for a registration that belongs
+      // to THIS team (not just any /coaches/tournaments/ path — that would wrongly
+      // light up for another team's record).
+      if (pathname.startsWith(`${base}${sub}`)) return true;
+      if (pathname === COACHES_TOURNAMENTS_PATH) return true;
       const reg = pathname.match(/^\/coaches\/tournaments\/([^/]+)/)?.[1];
       return Boolean(reg && team.registrationIds.includes(reg));
     }
@@ -249,11 +253,13 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
         </select>
       ) : (
         <div className={styles.teamContextHead}>
-          <span className={styles.teamDot} style={{ background: teamColor(currentTeam.name) }} aria-hidden />
           <span className={styles.teamName}>{currentTeam.name}</span>
         </div>
       )}
-      {currentTeam.lifecycle && (
+      {/* Chip earns header space only while it says something current (live / game day /
+          upcoming / future date). A finished event showing "Complete" forever read as
+          stale noise on every page (owner call 2026-07-25). */}
+      {currentTeam.lifecycle && currentTeam.lifecycle.state !== 'complete' && (
         <span className={chipClass(currentTeam.lifecycle.state)}>
           {(currentTeam.lifecycle.state === 'live' || currentTeam.lifecycle.state === 'game_day') && (
             <span className={styles.teamChipDot} aria-hidden />
@@ -331,9 +337,9 @@ export default function CoachPortalShell({ children }: { children: React.ReactNo
         </Link>
         {currentTeam ? (
           <div className={styles.topbarTeam}>
-            <span className={styles.topbarTeamDot} style={{ background: teamColor(currentTeam.name) }} aria-hidden />
             <span className={styles.topbarTeamName}>{currentTeam.name}</span>
-            {currentTeam.lifecycle && (
+            {/* Same "current only" gate as the rail chip above. */}
+            {currentTeam.lifecycle && currentTeam.lifecycle.state !== 'complete' && (
               <span className={chipClass(currentTeam.lifecycle.state)}>
                 {(currentTeam.lifecycle.state === 'live' || currentTeam.lifecycle.state === 'game_day') && (
                   <span className={styles.teamChipDot} aria-hidden />

@@ -51,6 +51,7 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
       userId={user.id}
       email={user.email}
       welcome={welcome === '1'}
+      backHref={COACHES_TOURNAMENTS_PATH}
     />
   );
 }

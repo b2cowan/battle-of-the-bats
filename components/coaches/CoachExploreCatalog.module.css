@@ -124,6 +124,11 @@
    near-black ground. */
 .premiumBlock {
   composes: warmVars from '../consumer/warmTheme.module.css';
+  /* warmVars captures --home-lime AS var(--logic-lime) at this element — but inside the
+     coach shell the warm gate remaps --logic-lime to OLIVE, so the capture bottles olive
+     and the CTA rendered as a banned olive fill (E3). Re-pin true lime (same literal as
+     the gate's own --home-lime and root --logic-lime, so dark output is unchanged). */
+  --home-lime: #D9F99D;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -231,7 +236,7 @@
   padding: 0.55rem 0.95rem;
   font-size: 0.82rem;
   font-weight: 800;
-  color: var(--home-ink);
+  color: var(--home-lime-ink);
   background: var(--home-lime);
   border: 0;
   border-radius: 10px;
