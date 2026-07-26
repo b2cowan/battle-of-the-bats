@@ -779,3 +779,18 @@ These are intended as guidance for sourcing real testimonials or writing represe
 | Rep Teams module | — | — | — | ✓ |
 | Unlimited staff seats | — | ✓ | ✓ | ✓ |
 | Free trial | — | 14 days | 30 days | 90 days |
+
+---
+
+## AMENDMENT — Two-family coach framing: "tournament companion vs team operations HQ" (applied 2026-07-26)
+
+Executes the 2026-07-25 strategy handoff (BUSINESS_DECISIONS.md two-family ruling; shipped with free-portal A2 re-chrome). The tier language is now live copy: the FREE Coaches Portal = the coach's **companion for the tournaments they enter**; the **Premium Coaches Portal = the team's operations HQ** for the whole season. No price, plan-name, capacity, or gate change; Founding Season lines ("free until Jan 1, 2027, then $29/month") and "your free tools stay free" kept verbatim.
+
+**Applied copy (live files are authoritative; this records approved intent):**
+- **/for-coaches hero sub:** "Every coach on FieldLogicHQ starts with the free Coaches Portal — a companion for the tournaments you enter. The Premium Coaches Portal turns it into your team's operations HQ: roster, lineups, budget, schedule, and documents for the whole season. No org account needed, and your workspace carries over if your organization joins later."
+- **/for-coaches plan section sub:** "Your free portal follows your tournaments. Premium is the operations HQ for the whole season — roster, lineups, budget, schedule, and documents in one place. Standalone, or included with Club when your org joins."
+- **/for-coaches plan tagline + /pricing coaches callout body:** "The operations HQ for one rep team — roster, lineups, budget, documents, and schedule…" (replaces "The full coaching workspace…" / "A standalone workspace…").
+- **/pricing coach segment card:** "Your free Coaches Portal follows every tournament you enter. Premium is the operations HQ for one competitive team — roster, lineups, budget, and schedule. No org account needed."
+- **In-portal upsells:** Explore premium block body now reads "…Premium turns this portal into your team's operations HQ, with the tools for running a whole season:"; afterglow upgrade panel reads "…the Premium Coaches Portal — your season operations HQ: lineups, attendance, documents, dues automation, and a season budget." (ScopeShelf one-liners deliberately left quiet — no framing bloat on the smallest surfaces.)
+
+**Drift fix in the same pass (reconciled to PLAN_PRICING_FACTS.md — Premium Coaches Portal is LIVE, self-serve, $0 comp during Founding Season):** the /pricing page's static coach copy still said "coming soon / can't buy" in four places while the checkout was open. The coach segment card, hero sub, and the three coach-touching FAQs now flip with the team checkout gate (live copy + real /coaches/start link when open; the old express-interest copy only when gated). The page metadata description is now availability-agnostic so it can never drift again. League Plus / Club "coming soon" copy untouched (still correct).
