@@ -162,7 +162,7 @@
 .statusRegistrationOpen   { background: rgba(var(--success-rgb), 0.12); color: var(--success); border: 1px solid rgba(var(--success-rgb), 0.25); }
 .statusRegistrationClosed { background: rgba(var(--warning-rgb), 0.12); color: var(--warning); border: 1px solid rgba(var(--warning-rgb), 0.25); }
 .statusActive             { background: rgba(var(--info-rgb), 0.12); color: var(--info); border: 1px solid rgba(var(--info-rgb), 0.25); }
-.statusCompleted          { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); } /* purple — no semantic token; intentional */
+.statusCompleted          { background: rgba(167,139,250,0.12); color: #a78bfa; border: 1px solid rgba(167,139,250,0.25); } /* token-exempt: purple status accent, no semantic token */
 .statusArchived           { background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.3); }
 
 /* ── Age group badge ──────────────────────────────────────────────────────── */
@@ -1159,7 +1159,7 @@
 /* intentional purple, no semantic token (matches .statusCompleted) */
 .practiceBadge {
   background: rgba(167,139,250,0.12);
-  color: #a78bfa;
+  color: #a78bfa; /* token-exempt: purple accent, matches .statusCompleted */
   border: 1px solid rgba(167,139,250,0.25);
 }
 

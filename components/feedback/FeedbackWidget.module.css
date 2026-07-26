@@ -70,7 +70,7 @@
   box-sizing: border-box;
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: var(--white, #f1f5f9);
+  color: var(--white);
   font-family: var(--font-data);
   font-size: 0.82rem;
   padding: 0.5rem 0.6rem;
@@ -84,7 +84,7 @@
 }
 
 .select option {
-  background: #0a0f0a;
+  background: #0a0f0a; /* token-exempt: <select> option bg; not console-only --pa-option-bg */
 }
 
 .textarea {
@@ -97,7 +97,7 @@
   margin: 0;
   font-family: var(--font-data);
   font-size: 0.74rem;
-  color: var(--danger, #f87171);
+  color: var(--danger);
 }
 
 .success {

@@ -1,4 +1,4 @@
-﻿.page { max-width: 1300px; --cu-surface: #1a1a1a; }
+﻿.page { max-width: 1300px; --cu-surface: #1a1a1a; } /* token-exempt: dropdown/modal near-black, no --bg/--surface match */
 
 .header {
   border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);

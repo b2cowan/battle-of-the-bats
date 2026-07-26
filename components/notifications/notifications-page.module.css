@@ -145,7 +145,7 @@
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.2);
   border-radius: 10px;
   overflow: hidden;
-  background: var(--surface, #111827);
+  background: var(--surface);
 }
 
 .sectionHeader {
@@ -162,14 +162,14 @@
 }
 
 .sectionHeaderAct {
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
 }
 
 .sectionCount {
   font-family: var(--font-data);
   font-size: 0.66rem;
   font-weight: 700;
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
 }
 
 .dateHeader {
@@ -207,7 +207,7 @@
 }
 
 .actItem {
-  box-shadow: inset 2px 0 0 var(--warning, #f59e0b);
+  box-shadow: inset 2px 0 0 var(--warning);
 }
 
 .icon {
@@ -252,7 +252,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: var(--blueprint-blue, #1E3A8A);
+  background: var(--blueprint-blue);
   flex-shrink: 0;
   margin-top: 6px;
 }

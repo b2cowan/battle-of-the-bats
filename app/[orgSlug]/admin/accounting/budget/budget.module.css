@@ -35,7 +35,7 @@
 .pageTitle {
   font-size: 1.75rem; font-weight: 900;
   font-family: var(--font-data);
-  margin: 0; color: #f0f0f0; /* opaque #f0f0f0 heading; drifts from the var(--white-90) heading convention used elsewhere — pinned pending a separate normalization */ line-height: 1.1;
+  margin: 0; color: var(--white-90); line-height: 1.1;
 }
 .pageSub { margin: 0.25rem 0 0; color: rgba(255,255,255,0.4); font-size: 0.9rem; }
 

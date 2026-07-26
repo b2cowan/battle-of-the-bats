@@ -1,8 +1,8 @@
 /* ── Shared layout ──────────────────────────────────────────────────────── */
 .page {
   max-width: 960px;
-  --acct-violet: #a78bfa;
-  --acct-panel-bg: #1a1f2e;
+  --acct-violet: #a78bfa; /* token-exempt: purple accent, no semantic token */
+  --acct-panel-bg: #1a1f2e; /* token-exempt: accounting select/panel tint, between --bg-2 and --surface */
 }
 
 .pageHeader {

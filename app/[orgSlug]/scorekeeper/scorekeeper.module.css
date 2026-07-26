@@ -5,15 +5,15 @@
 
   /* --sk-*: scorekeeper's bespoke dark-only slate/status palette. Component-scoped so the
      warm-portal program can remap this surface independently. P3 token pass: values unchanged. */
-  --sk-ink: #f8fafc;       /* brightest text — titles, big numbers, active labels */
-  --sk-ink-dim: #e2e8f0;   /* secondary text — icon-button glyphs */
-  --sk-ink-faint: #cbd5e1; /* tertiary text — secondary buttons, notices, captions, badges */
-  --sk-bg: #172036;        /* raised dark tier — loading shimmer stop */
-  --sk-bg-deep: #020617;   /* deepest dark tier — recessed score-input well */
-  --sk-amber: #fbbf24;     /* status — "submitted" badge */
-  --sk-warm: #fcd9a3;      /* status — policy-note "review" tone */
-  --sk-lime-tint: #e6f5c4; /* status — policy-note "final" tone */
-  --sk-red: #fca5a5;       /* status — form-error text */
+  --sk-ink: #f8fafc;       /* brightest text — titles, big numbers, active labels; token-exempt: matches --pa-option-text (console-only) */
+  --sk-ink-dim: #e2e8f0;   /* secondary text — icon-button glyphs; token-exempt: secondary ink, no global match */
+  --sk-ink-faint: #cbd5e1; /* token-exempt: scorekeeper tertiary ink (buttons/notices/captions) */
+  --sk-bg: #172036;        /* token-exempt: scorekeeper raised tier, loading-shimmer stop */
+  --sk-bg-deep: #020617;   /* token-exempt: scorekeeper deepest tier, recessed score-input well */
+  --sk-amber: var(--warning-light); /* status — "submitted" badge */
+  --sk-warm: #fcd9a3;      /* status — policy-note "review" tone; token-exempt: warm status tint, no global match */
+  --sk-lime-tint: #e6f5c4; /* status — policy-note "final" tone; token-exempt: lime status tint, no global match */
+  --sk-red: #fca5a5;       /* status — form-error text; token-exempt: matches --pa-neg (console-only) */
 }
 
 .header {
@@ -196,9 +196,9 @@
 }
 
 .notice_success { border-color: rgba(var(--logic-lime-rgb), 0.42); }
-.notice_warning { border-color: rgba(245, 158, 11, 0.52); }
-.notice_danger { border-color: rgba(239, 68, 68, 0.48); }
-.notice_info { border-color: rgba(59, 130, 246, 0.42); }
+.notice_warning { border-color: rgba(var(--warning-rgb), 0.52); }
+.notice_danger { border-color: rgba(var(--danger-rgb), 0.48); }
+.notice_info { border-color: rgba(var(--info-rgb), 0.42); }
 
 /* J8-002: recovery CTA inside a notice (e.g. "Sign in" when the session lapses). Field-friendly
    tap target, visually distinct from the body copy. */
@@ -283,8 +283,8 @@
 }
 
 .gameCard_submitted {
-  border-color: rgba(245, 158, 11, 0.58);
-  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(var(--warning-rgb), 0.58);
+  background: rgba(var(--warning-rgb), 0.08);
 }
 
 .gameCard_completed {
@@ -326,7 +326,7 @@
 }
 
 .status_submitted {
-  border-color: rgba(245, 158, 11, 0.58);
+  border-color: rgba(var(--warning-rgb), 0.58);
   color: var(--sk-amber);
 }
 
@@ -524,8 +524,8 @@
 }
 .policyNote svg { flex-shrink: 0; margin-top: 0.1rem; }
 .policyNote[data-tone='review'] {
-  border-color: rgba(245, 158, 11, 0.5);
-  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(var(--warning-rgb), 0.5);
+  background: rgba(var(--warning-rgb), 0.1);
   color: var(--sk-warm);
 }
 .policyNote[data-tone='final'] {

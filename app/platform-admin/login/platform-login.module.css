@@ -117,8 +117,8 @@
 
 /* ── Error ───────────────────────────────────────────────── */
 .error {
-  background: rgba(239, 68, 68, 0.07);
-  border: 1px solid rgba(239, 68, 68, 0.28);
+  background: rgba(var(--danger-rgb), 0.07);
+  border: 1px solid rgba(var(--danger-rgb), 0.28);
   padding: 0.625rem 1rem;
   font-family: var(--font-data);
   font-size: 0.72rem;

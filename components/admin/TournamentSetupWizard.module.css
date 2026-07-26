@@ -1,6 +1,6 @@
 .modalOverlay {
-  --wizard-modal-bg: #080b12;
-  --plan-error-text: #fecaca;
+  --wizard-modal-bg: #080b12; /* token-exempt: wizard modal near-black, no global match */
+  --plan-error-text: #fecaca; /* token-exempt: pale error text tone, no global match */
   position: fixed;
   inset: 0;
   z-index: 1000;

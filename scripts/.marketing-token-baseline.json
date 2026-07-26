@@ -1,14 +1,1 @@
-{
-  "app/page.module.css": {
-    "hex": 0,
-    "rgba": 3
-  },
-  "components/EarlyAccessForm.module.css": {
-    "hex": 1,
-    "rgba": 0
-  },
-  "components/marketing/tournament-growth.module.css": {
-    "hex": 7,
-    "rgba": 3
-  }
-}
+{}

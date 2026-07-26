@@ -1,6 +1,6 @@
 .page {
   max-width: 960px;
-  --budget-panel-bg: #1a1f2e;
+  --budget-panel-bg: #1a1f2e; /* token-exempt: local charcoal, no global surface match */
 }
 
 .pageHeader {

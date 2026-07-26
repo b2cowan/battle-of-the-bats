@@ -50,7 +50,7 @@
 }
 
 .required {
-  color: #f87171;
+  color: var(--danger-light);
   margin-left: 0.1em;
 }
 
@@ -61,7 +61,7 @@
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
-  color: #f0f0f0;
+  color: var(--white-90);
   font-size: 0.9rem;
   box-sizing: border-box;
   transition: border-color 0.15s;
@@ -70,9 +70,9 @@
 .input:focus,
 .textarea:focus {
   outline: none;
-  border-color: var(--logic-lime, #a3e635);
+  border-color: var(--logic-lime);
 }
-.inputError { border-color: #f87171 !important; }
+.inputError { border-color: var(--danger-light) !important; }
 .textarea {
   resize: vertical;
   min-height: 80px;
@@ -80,7 +80,7 @@
 
 .errorMsg {
   font-size: 0.78rem;
-  color: #f87171;
+  color: var(--danger-light);
   margin: 0.25rem 0 0;
 }
 
@@ -109,7 +109,7 @@
   width: 20px;
   height: 20px;
   margin-top: 0.1rem;
-  accent-color: var(--logic-lime, #a3e635);
+  accent-color: var(--logic-lime);
   cursor: pointer;
 }
 .consentText {
@@ -118,7 +118,7 @@
   color: rgba(255,255,255,0.72);
 }
 .consentLink {
-  color: var(--logic-lime, #a3e635);
+  color: var(--logic-lime);
   text-decoration: underline;
 }
 
@@ -128,7 +128,7 @@
   border-radius: 8px;
   background: rgba(248,113,113,0.1);
   border: 1px solid rgba(248,113,113,0.3);
-  color: #f87171;
+  color: var(--danger-light);
   font-size: 0.85rem;
   margin-bottom: 0.85rem;
 }
@@ -139,8 +139,8 @@
   padding: 0.9rem;
   font-size: 1rem;
   font-weight: 700;
-  background: var(--logic-lime, #a3e635);
-  color: #0A0A0A;
+  background: var(--logic-lime);
+  color: var(--pitch-black);
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -165,19 +165,19 @@
   width: 56px;
   height: 56px;
   border-radius: 50%;
-  background: rgba(163,230,53,0.1);
-  border: 1px solid rgba(163,230,53,0.25);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.25);
   display: flex;
   align-items: center;
   justify-content: center;
   margin: 0 auto 1.5rem;
-  color: var(--logic-lime, #a3e635);
+  color: var(--logic-lime);
 }
 
 .successTitle {
   font-size: 1.3rem;
   font-weight: 800;
-  color: #f0f0f0;
+  color: var(--white-90);
   margin: 0 0 0.6rem;
   font-family: var(--font-display, sans-serif);
 }

@@ -108,6 +108,7 @@
 }
 
 .error {
+  /* token-exempt: form error-red text; --pa-neg is platform-admin-console-only */
   color: #fca5a5;
 }
 

@@ -211,7 +211,7 @@
   font-family: var(--font-data);
   font-weight: 700;
   font-size: 0.95rem;
-  color: #fff;
+  color: var(--on-team-color);
 }
 
 .followBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
@@ -257,7 +257,7 @@
   font-family: var(--font-data);
   font-weight: 700;
   font-size: 0.95rem;
-  color: #fff;
+  color: var(--on-team-color);
 }
 .orgLogoImg { width: 100%; height: 100%; object-fit: cover; }
 .followLiveDot {

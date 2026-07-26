@@ -78,17 +78,17 @@
 
 /* Fixed theme-preview palettes (intentional literals — see file header). */
 .swatch_warm {
-  --sw-ground: #f8f4ed;
-  --sw-bar:    #ffffff;
-  --sw-card:   #ffffff;
-  --sw-accent: #57651e;
-  --sw-edge:   rgba(70, 55, 30, 0.14);
+  --sw-ground: #f8f4ed; /* token-exempt: fixed warm-theme preview, not the live theme */
+  --sw-bar:    #ffffff; /* token-exempt: fixed warm-theme preview, not the live theme */
+  --sw-card:   #ffffff; /* token-exempt: fixed warm-theme preview, not the live theme */
+  --sw-accent: #57651e; /* token-exempt: fixed warm-theme preview, not the live theme */
+  --sw-edge:   rgba(70, 55, 30, 0.14); /* token-exempt: fixed warm-theme preview swatch */
 }
 .swatch_dark {
-  --sw-ground: #0a0a0a;
-  --sw-bar:    #0f1115;
-  --sw-card:   #1e293b;
-  --sw-accent: #d9f99d;
+  --sw-ground: #0a0a0a; /* token-exempt: fixed dark-theme preview, not the live theme */
+  --sw-bar:    #0f1115; /* token-exempt: fixed dark-theme preview, not the live theme */
+  --sw-card:   #1e293b; /* token-exempt: fixed dark-theme preview, not the live theme */
+  --sw-accent: #d9f99d; /* token-exempt: fixed dark-theme preview, not the live theme */
   --sw-edge:   rgba(255, 255, 255, 0.12);
 }
 

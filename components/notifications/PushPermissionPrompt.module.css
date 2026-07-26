@@ -15,15 +15,15 @@
 }
 
 .promptDenied {
-  background: rgba(239, 68, 68, 0.07);
-  border-color: rgba(239, 68, 68, 0.2);
+  background: rgba(var(--danger-rgb), 0.07);
+  border-color: rgba(var(--danger-rgb), 0.2);
   flex-direction: column;
   gap: 0.6rem;
 }
 
 .promptError {
-  background: rgba(239, 68, 68, 0.07);
-  border-color: rgba(239, 68, 68, 0.2);
+  background: rgba(var(--danger-rgb), 0.07);
+  border-color: rgba(var(--danger-rgb), 0.2);
 }
 
 /* ── Icons ───────────────────────────────────────────────────────────────────── */
@@ -31,20 +31,20 @@
 .iconIdle {
   flex-shrink: 0;
   margin-top: 0.1rem;
-  color: var(--logic-lime, #D9F99D);
+  color: var(--logic-lime);
   opacity: 0.8;
 }
 
 .iconSuccess {
   flex-shrink: 0;
   margin-top: 0.1rem;
-  color: var(--logic-lime, #D9F99D);
+  color: var(--logic-lime);
 }
 
 .iconDenied {
   flex-shrink: 0;
   margin-top: 0.1rem;
-  color: #fca5a5;
+  color: #fca5a5; /* token-exempt: denied-state rose; --pa-neg is platform-admin-only */
 }
 
 /* ── Text ────────────────────────────────────────────────────────────────────── */
@@ -62,7 +62,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  color: #fca5a5;
+  color: #fca5a5; /* token-exempt: denied-state rose; --pa-neg is platform-admin-only */
   font-size: 0.82rem;
   font-weight: 600;
   width: 100%;
@@ -93,7 +93,7 @@
   border-radius: 2px;
   background: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.5);
-  color: var(--fl-text, #f1f5f9);
+  color: var(--fl-text);
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
@@ -114,7 +114,7 @@
   border: none;
   padding: 0;
   cursor: pointer;
-  color: rgba(252, 165, 165, 0.6);
+  color: rgba(252, 165, 165, 0.6); /* token-exempt: denied-state rose alpha; no --pa-neg-rgb tuple exists */
   display: flex;
   align-items: center;
   transition: color 0.15s;
@@ -122,5 +122,5 @@
 }
 
 .dismissBtn:hover {
-  color: #fca5a5;
+  color: #fca5a5; /* token-exempt: denied-state rose; --pa-neg is platform-admin-only */
 }

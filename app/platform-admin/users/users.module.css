@@ -203,8 +203,8 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding: 0.2rem 0.5rem;
-  background: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.35);
+  background: rgba(var(--success-rgb), 0.1);
+  border: 1px solid rgba(var(--success-rgb), 0.35);
   color: var(--success);
 }
 
@@ -350,7 +350,7 @@
   background: var(--logic-lime);
   border: none;
   /* dark ink on lime; differs from --on-lime (#0f1123), pinned pending normalization */
-  color: #000;
+  color: var(--black);
   cursor: pointer;
   transition: opacity 0.15s;
   white-space: nowrap;
@@ -366,14 +366,14 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
   padding: 0.35rem 0.6rem;
-  background: rgba(239, 68, 68, 0.08);
-  border: 1px solid rgba(239, 68, 68, 0.3);
+  background: rgba(var(--danger-rgb), 0.08);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
   color: var(--danger);
   cursor: pointer;
   transition: background 0.15s;
   white-space: nowrap;
 }
-.removeBtn:hover:not(:disabled) { background: rgba(239, 68, 68, 0.16); }
+.removeBtn:hover:not(:disabled) { background: rgba(var(--danger-rgb), 0.16); }
 .removeBtn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 /* Neutral cancel/back-out for confirm modals — never lime, never red. */

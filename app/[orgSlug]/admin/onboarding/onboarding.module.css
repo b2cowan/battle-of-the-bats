@@ -1,7 +1,7 @@
 .page {
-  --onboarding-modal-bg: #080b12;
-  --plan-badge-ok: #86efac;
-  --plan-error-text: #fecaca;
+  --onboarding-modal-bg: #080b12; /* token-exempt: modal bg, distinct shade near --bg */
+  --plan-badge-ok: #86efac; /* token-exempt: plan-ok badge green, only matches console-only --pa-pos */
+  --plan-error-text: #fecaca; /* token-exempt: plan-error text tint, lighter than --danger-light */
   max-width: 620px;
   margin: 0 auto;
   padding: 3rem 1.5rem 4rem;
@@ -15,9 +15,9 @@
 }
 
 .workflowOnlyPage {
-  --onboarding-modal-bg: #080b12;
-  --plan-badge-ok: #86efac;
-  --plan-error-text: #fecaca;
+  --onboarding-modal-bg: #080b12; /* token-exempt: modal bg, distinct shade near --bg */
+  --plan-badge-ok: #86efac; /* token-exempt: plan-ok badge green, only matches console-only --pa-pos */
+  --plan-error-text: #fecaca; /* token-exempt: plan-error text tint, lighter than --danger-light */
   min-height: 100vh;
 }
 

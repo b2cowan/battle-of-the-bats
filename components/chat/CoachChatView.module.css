@@ -151,7 +151,7 @@
   letter-spacing: 0.02em;
   /* Initials sit on a per-room name-hash fill — light in BOTH themes (--on-team-color is #fff
      under dark and warm alike), so the monogram stays legible when the portal goes warm. */
-  color: var(--on-team-color, #fff);
+  color: var(--on-team-color);
 }
 
 .roomMain {

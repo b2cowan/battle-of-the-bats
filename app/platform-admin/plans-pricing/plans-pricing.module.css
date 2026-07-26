@@ -113,7 +113,7 @@
   margin: 0.75rem 0 1rem;
   padding: 0.75rem 0.9rem;
   border: 1px solid rgba(147, 197, 253, 0.28);
-  background: rgba(59, 130, 246, 0.055);
+  background: rgba(var(--info-rgb), 0.055);
   font-family: var(--font-data);
   font-size: 0.68rem;
   color: var(--data-gray);
@@ -1029,7 +1029,7 @@
 .changeItem {
   padding: 0.75rem;
   border: 1px solid rgba(147, 197, 253, 0.22);
-  background: rgba(59, 130, 246, 0.045);
+  background: rgba(var(--info-rgb), 0.045);
 }
 
 .changeItem span,

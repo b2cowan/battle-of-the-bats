@@ -306,7 +306,7 @@
 }
 
 .swatchCustom {
-  /* Decorative "pick a color" wheel — categorical rainbow, not semantic status colors. Keep literal. */
+  /* token-exempt: decorative "pick a color" wheel — categorical rainbow gradient stops, not semantic status colors */
   background: conic-gradient(#f87171, #fb923c, #fcd34d, #4ade80, #60a5fa, #c084fc, #f87171);
 }
 
@@ -569,20 +569,20 @@
 }
 
 .modePreviewDark {
-  /* Theme-preview mockup swatch — simulates the dark-mode bg, not live app chrome. Keep literal. */
+  /* token-exempt: theme-preview mockup swatch — simulates the dark-mode bg, not live app chrome */
   background:
     radial-gradient(circle at 82% 8%, rgba(var(--primary-rgb), 0.3), transparent 42%),
     linear-gradient(135deg, rgba(var(--primary-rgb), 0.18), transparent 45%),
-    #080B14;
+    #080B14; /* token-exempt: dark-mode preview base fill, not live app chrome */
   border: 1px solid rgba(var(--primary-rgb), 0.35);
 }
 
 .modePreviewLight {
-  /* Theme-preview mockup swatch — simulates the light-mode bg, not live app chrome. Keep literal. */
+  /* token-exempt: theme-preview mockup swatch — simulates the light-mode bg, not live app chrome */
   background:
     radial-gradient(circle at 82% 8%, rgba(var(--primary-rgb), 0.12), transparent 42%),
     linear-gradient(135deg, rgba(var(--primary-rgb), 0.1), transparent 46%),
-    #F5F7FC;
+    #F5F7FC; /* token-exempt: light-mode preview base fill, not live app chrome */
   border: 1px solid rgba(var(--primary-rgb), 0.22);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.68);
 }
@@ -613,7 +613,7 @@
 }
 
 .modePreviewLight .previewHeroText strong {
-  /* Theme-preview mockup text ink — simulates light-mode text, NOT the --on-lime ink token. Keep literal. */
+  /* token-exempt: theme-preview mockup text ink — simulates light-mode text, NOT the --on-lime ink token */
   color: #0F1123;
 }
 

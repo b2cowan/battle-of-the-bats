@@ -1,6 +1,6 @@
 .page {
   max-width: 1280px;
-  --email-modal-bg: #0b0f14;
+  --email-modal-bg: #0b0f14; /* token-exempt: custom near-black modal tint, no exact --bg/--surface match */
 }
 
 /* ── Page header ─────────────────────────────────────────────────────────── */
@@ -213,8 +213,8 @@
 .badgePending,
 .badgeRunning {
   color: var(--warning);
-  border-color: rgba(245, 158, 11, 0.35);
-  background: rgba(245, 158, 11, 0.06);
+  border-color: rgba(var(--warning-rgb), 0.35);
+  background: rgba(var(--warning-rgb), 0.06);
 }
 
 .badgeFailed {
@@ -237,8 +237,8 @@
 
 .badgeDueSoon {
   color: var(--warning);
-  border-color: rgba(245, 158, 11, 0.4);
-  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(var(--warning-rgb), 0.4);
+  background: rgba(var(--warning-rgb), 0.08);
 }
 
 .badgePlanned {
@@ -565,8 +565,8 @@
 }
 
 .needsUpcoming {
-  border-color: rgba(245, 158, 11, 0.3);
-  background: rgba(245, 158, 11, 0.04);
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.04);
 }
 
 .needsTitle {

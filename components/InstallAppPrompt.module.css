@@ -72,7 +72,7 @@
   border: none;
   border-radius: var(--radius-sm);
   background: var(--primary);
-  color: #ffffff;
+  color: var(--on-primary);
   font-family: var(--font-data, monospace);
   font-size: 0.78rem;
   font-weight: 700;
@@ -85,7 +85,7 @@
 }
 
 .install:hover {
-  background: color-mix(in srgb, var(--primary) 88%, #000 12%);
+  background: color-mix(in srgb, var(--primary) 88%, var(--black) 12%);
   box-shadow: 0 4px 12px rgba(var(--primary-rgb), 0.42);
   transform: translateY(-1px);
 }

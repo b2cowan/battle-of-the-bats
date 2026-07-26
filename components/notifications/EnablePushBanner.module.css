@@ -14,8 +14,8 @@
 }
 
 .bannerDone {
-  background: rgba(217, 249, 157, 0.1);
-  border-color: rgba(217, 249, 157, 0.28);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border-color: rgba(var(--logic-lime-rgb), 0.28);
 }
 
 .icon {
@@ -37,14 +37,14 @@
 }
 
 .text strong {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   font-weight: 700;
 }
 
 .error {
   font-size: 0.76rem;
   line-height: 1.4;
-  color: #fca5a5;
+  color: #fca5a5; /* token-exempt: banner error text, not the console-only --pa-neg pill */
 }
 
 .cta {
@@ -54,7 +54,7 @@
   border: none;
   cursor: pointer;
   background: var(--logic-lime);
-  color: #0b1220;
+  color: #0b1220; /* token-exempt: ink on lime CTA, near --on-lime but not identical value */
   font-size: 0.78rem;
   font-weight: 800;
   letter-spacing: 0.02em;
@@ -86,7 +86,7 @@
 }
 
 .dismiss:hover {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 @media (max-width: 560px) {

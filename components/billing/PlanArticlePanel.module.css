@@ -24,7 +24,7 @@
   z-index: 201;
   display: flex;
   flex-direction: column;
-  background: #0e1117;
+  background: #0e1117; /* token-exempt: slide-over panel bg, distinct near-black, no exact token */
   border-left: 1px solid rgba(255, 255, 255, 0.1);
   animation: slideIn 0.22s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 }
@@ -65,7 +65,7 @@
 .panelHeadline {
   font-size: 1rem;
   font-weight: 800;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
   margin: 0;
   line-height: 1.3;
 }
@@ -87,7 +87,7 @@
 
 .closeBtn:hover {
   background: rgba(255, 255, 255, 0.1);
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 /* ── Price strip ───────────────────────────────────────────────────────────── */
@@ -105,7 +105,7 @@
 .priceAmount {
   font-size: 1rem;
   font-weight: 900;
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 .priceSavings {

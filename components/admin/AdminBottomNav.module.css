@@ -308,7 +308,7 @@
   .dropUtilItem:hover { color: rgba(255, 255, 255, 0.72); background: rgba(var(--blueprint-blue-rgb), 0.07); }
 
   .dropLogout { color: var(--danger-light); }
-  .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger-light); }
+  .dropLogout:hover { background: rgba(var(--danger-rgb), 0.1); color: var(--danger-light); }
 
   /* ── Density toggle (Display section) ──────────────── */
   .densityRow {

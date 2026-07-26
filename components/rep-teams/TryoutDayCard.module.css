@@ -1,4 +1,4 @@
-/* Tryout Day setup card — Phase 2A. Dark coaches/admin theme, lime accent (var-with-fallback,
+/* Tryout Day setup card — Phase 2A. Dark coaches/admin theme, lime accent (var(--logic-lime),
    matching register.module.css). Reuses HelpCallout for the provincial-window notice. */
 
 .card {
@@ -20,7 +20,7 @@
 .title {
   font-size: 0.95rem;
   font-weight: 800;
-  color: #f0f0f0;
+  color: var(--white-90);
   margin: 0;
   display: flex;
   align-items: center;
@@ -44,14 +44,14 @@
   display: inline-flex; align-items: center; gap: 0.35rem;
   padding: 0.45rem 0.8rem;
   font-size: 0.82rem; font-weight: 700;
-  border: 1px solid rgba(163,230,53,0.4);
+  border: 1px solid rgba(var(--logic-lime-rgb),0.4);
   border-radius: 8px;
-  background: rgba(163,230,53,0.08);
-  color: var(--logic-lime, #a3e635);
+  background: rgba(var(--logic-lime-rgb),0.08);
+  color: var(--logic-lime);
   cursor: pointer;
   flex: 0 0 auto;
 }
-.revealBtn:hover { background: rgba(163,230,53,0.14); }
+.revealBtn:hover { background: rgba(var(--logic-lime-rgb),0.14); }
 .revealBtn:disabled { opacity: 0.6; cursor: default; }
 .revealedChip {
   display: inline-flex; align-items: center; gap: 0.3rem;
@@ -68,12 +68,12 @@
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
   border: 1px solid rgba(255,255,255,0.08);
-  border-left: 3px solid var(--logic-lime, #a3e635);
+  border-left: 3px solid var(--logic-lime);
   border-radius: 8px;
   background: rgba(255,255,255,0.02);
 }
 .sessionMain { flex: 1 1 auto; min-width: 0; }
-.sessionWhen { font-size: 0.88rem; font-weight: 600; color: #f0f0f0; }
+.sessionWhen { font-size: 0.88rem; font-weight: 600; color: var(--white-90); }
 .sessionMeta { font-size: 0.8rem; color: rgba(255,255,255,0.45); margin-top: 0.1rem; }
 .sessionActions { display: flex; gap: 0.25rem; flex: 0 0 auto; }
 .iconBtn {
@@ -85,8 +85,8 @@
   color: rgba(255,255,255,0.6);
   cursor: pointer;
 }
-.iconBtn:hover { color: #f0f0f0; border-color: rgba(255,255,255,0.25); }
-.iconDanger:hover { color: #f87171; border-color: rgba(248,113,113,0.4); }
+.iconBtn:hover { color: var(--white-90); border-color: rgba(255,255,255,0.25); }
+.iconDanger:hover { color: var(--danger-light); border-color: rgba(248,113,113,0.4); } /* token-exempt: danger-light alpha tint, no -rgb token exists */
 
 .empty {
   font-size: 0.85rem;
@@ -105,7 +105,7 @@
   color: rgba(255,255,255,0.8);
   cursor: pointer;
 }
-.addBtn:hover { border-color: var(--logic-lime, #a3e635); color: #f0f0f0; }
+.addBtn:hover { border-color: var(--logic-lime); color: var(--white-90); }
 
 /* Modal */
 .scrim {
@@ -118,12 +118,12 @@
 .modal {
   width: 100%; max-width: 460px;
   max-height: 92vh; overflow-y: auto;
-  background: #141414;
+  background: #141414; /* token-exempt: modal surface tone, no --surface-family match */
   border: 1px solid rgba(255,255,255,0.1);
   border-radius: 14px;
   padding: 1.25rem 1.5rem;
 }
-.modalTitle { font-size: 1.05rem; font-weight: 800; color: #f0f0f0; margin: 0 0 1rem; }
+.modalTitle { font-size: 1.05rem; font-weight: 800; color: var(--white-90); margin: 0 0 1rem; }
 .field { margin-bottom: 0.85rem; }
 .label {
   display: block; font-size: 0.8rem; font-weight: 600;
@@ -135,10 +135,10 @@
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
   padding: 0.6rem 0.75rem;
-  color: #f0f0f0; font-size: 0.9rem;
+  color: var(--white-90); font-size: 0.9rem;
   box-sizing: border-box; font-family: inherit;
 }
-.input:focus { outline: none; border-color: var(--logic-lime, #a3e635); }
+.input:focus { outline: none; border-color: var(--logic-lime); }
 .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
 @media (max-width: 480px) { .row2 { grid-template-columns: 1fr; } }
 .modalActions {
@@ -155,7 +155,7 @@
 /* ── Live scoreboard (Phase 2B.2) ─────────────────────────────────────────── */
 .pollDot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: var(--logic-lime, #a3e635);
+  background: var(--logic-lime);
   display: inline-block;
   animation: tryoutPulse 1.8s ease-in-out infinite;
 }
@@ -171,10 +171,10 @@
   padding: 0.25rem 0.6rem;
 }
 .evalChipMean { color: rgba(255,255,255,0.45); font-weight: 500; }
-.evalChipBias { border-color: rgba(251,191,36,0.4); background: rgba(251,191,36,0.08); }
+.evalChipBias { border-color: rgba(251,191,36,0.4); background: rgba(251,191,36,0.08); } /* token-exempt: warning-light alpha tint, no -rgb token exists */
 .biasFlag {
   display: inline-flex; align-items: center; gap: 0.15rem;
-  color: rgba(251,191,36,0.95); font-weight: 700;
+  color: rgba(251,191,36,0.95); font-weight: 700; /* token-exempt: warning-light alpha tint, no -rgb token exists */
 }
 
 .scoreRow {
@@ -183,7 +183,7 @@
   gap: 0.75rem;
   padding: 0.6rem 0.75rem;
   border: 1px solid rgba(255,255,255,0.08);
-  border-left: 3px solid var(--logic-lime, #a3e635);
+  border-left: 3px solid var(--logic-lime);
   border-radius: 8px;
   background: rgba(255,255,255,0.02);
 }
@@ -198,11 +198,11 @@
 .bib {
   font-variant-numeric: tabular-nums;
   font-weight: 800;
-  color: var(--logic-lime, #a3e635);
+  color: var(--logic-lime);
 }
 .compositeWrap { flex: 0 0 auto; text-align: right; }
 .composite {
-  font-size: 1.15rem; font-weight: 800; color: #f0f0f0;
+  font-size: 1.15rem; font-weight: 800; color: var(--white-90);
   font-variant-numeric: tabular-nums; line-height: 1;
 }
 .compositeUnit { font-size: 0.72rem; color: rgba(255,255,255,0.4); margin-top: 0.15rem; }
@@ -216,7 +216,7 @@
   background: rgba(255,255,255,0.02);
 }
 .tallyItem { font-size: 0.72rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; }
-.tallyItem strong { font-size: 1rem; color: #f0f0f0; margin-right: 0.3rem; font-variant-numeric: tabular-nums; }
+.tallyItem strong { font-size: 1rem; color: var(--white-90); margin-right: 0.3rem; font-variant-numeric: tabular-nums; }
 
 .choiceGroup { display: flex; gap: 0.35rem; flex: 0 0 auto; }
 .choiceBtn {
@@ -227,31 +227,31 @@
   white-space: nowrap;
 }
 .choiceBtn:disabled { opacity: 0.55; cursor: default; }
-.choice_offer   { background: var(--logic-lime, #a3e635); border-color: var(--logic-lime, #a3e635); color: #0A0A0A; }
-.choice_waitlist{ background: rgba(251,191,36,0.9); border-color: rgba(251,191,36,0.9); color: #0A0A0A; }
-.choice_cut     { background: rgba(248,113,113,0.9); border-color: rgba(248,113,113,0.9); color: #0A0A0A; }
+.choice_offer   { background: var(--logic-lime); border-color: var(--logic-lime); color: var(--pitch-black); }
+.choice_waitlist{ background: rgba(251,191,36,0.9); border-color: rgba(251,191,36,0.9); color: var(--pitch-black); } /* token-exempt: warning-light alpha tint, no -rgb token exists */
+.choice_cut     { background: rgba(248,113,113,0.9); border-color: rgba(248,113,113,0.9); color: var(--pitch-black); } /* token-exempt: danger-light alpha tint, no -rgb token exists */
 .acceptedChip {
   display: inline-flex; align-items: center; gap: 0.3rem; flex: 0 0 auto;
-  font-size: 0.78rem; font-weight: 700; color: var(--logic-lime, #a3e635);
+  font-size: 0.78rem; font-weight: 700; color: var(--logic-lime);
 }
 
 /* 2B.5: "a spot may have opened" nudge (flag-the-coach; never auto-offers). */
 .offerNudge {
   margin: 0 0 0.85rem; padding: 0.55rem 0.75rem;
-  font-size: 0.8rem; color: rgba(251,191,36,0.95);
-  border: 1px solid rgba(251,191,36,0.3); border-left: 3px solid rgba(251,191,36,0.6);
-  border-radius: 8px; background: rgba(251,191,36,0.06);
+  font-size: 0.8rem; color: rgba(251,191,36,0.95); /* token-exempt: warning-light alpha tint, no -rgb token exists */
+  border: 1px solid rgba(251,191,36,0.3); border-left: 3px solid rgba(251,191,36,0.6); /* token-exempt: warning-light alpha tint, no -rgb token exists */
+  border-radius: 8px; background: rgba(251,191,36,0.06); /* token-exempt: warning-light alpha tint, no -rgb token exists */
 }
 
 /* Decision column: the offer/waitlist/cut group plus (for offered candidates) the Accept action. */
 .decisionCol { display: flex; flex-direction: column; gap: 0.4rem; flex: 0 0 auto; align-items: stretch; }
 .acceptRosterBtn {
   min-height: 40px; padding: 0 0.85rem;
-  border: 1px solid var(--logic-lime, #a3e635); border-radius: 8px;
-  background: rgba(163,230,53,0.12); color: var(--logic-lime, #a3e635);
+  border: 1px solid var(--logic-lime); border-radius: 8px;
+  background: rgba(var(--logic-lime-rgb),0.12); color: var(--logic-lime);
   font-size: 0.8rem; font-weight: 800; cursor: pointer; font-family: inherit; white-space: nowrap;
 }
-.acceptRosterBtn:hover { background: rgba(163,230,53,0.2); }
+.acceptRosterBtn:hover { background: rgba(var(--logic-lime-rgb),0.2); }
 .acceptRosterBtn:disabled { opacity: 0.55; cursor: default; }
 .resendBtn {
   align-self: flex-end; padding: 0.15rem 0.2rem;
@@ -391,12 +391,12 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .choice_waitlist {
   background: var(--home-amber);
   border-color: var(--home-amber);
-  color: var(--on-team-color, #fff);
+  color: var(--on-team-color);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .choice_cut {
   background: var(--home-live);
   border-color: var(--home-live);
-  color: var(--on-team-color, #fff);
+  color: var(--on-team-color);
 }
 /* Accept-to-roster: the follow-up confirm — an olive-OUTLINE button (olive tint + border + text, never
    an olive fill) so it reads distinctly from the SOLID lime "Offer" chip beside it (mirrors the dark

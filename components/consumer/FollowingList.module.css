@@ -93,7 +93,7 @@
   font-family: var(--font-data);
   font-weight: 700;
   font-size: 0.9rem;
-  color: #fff;
+  color: var(--on-team-color);
 }
 /* Organization monogram is ROUND (F2), distinct from the tournament rounded square. */
 .monogramRound { border-radius: 50%; }

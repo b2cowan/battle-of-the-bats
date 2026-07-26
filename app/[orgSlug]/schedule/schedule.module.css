@@ -557,7 +557,7 @@ a.gameRow { cursor: pointer; }
   font-family: var(--font-data);
   font-size: 0.78rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--on-team-color);
   letter-spacing: 0.03em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }
@@ -1598,7 +1598,7 @@ a.broadcastCard { cursor: pointer; }
   font-family: var(--font-data);
   font-size: 0.66rem;
   font-weight: 900;
-  color: #fff;
+  color: var(--on-team-color);
   letter-spacing: 0.03em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
 }

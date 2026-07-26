@@ -38,7 +38,7 @@
   min-width: 16px;
   height: 16px;
   background: var(--danger);
-  color: #fff;
+  color: var(--white);
   font-size: 0.6rem;
   font-weight: 700;
   font-family: var(--font-data);
@@ -61,7 +61,7 @@
   width: 320px;
   max-height: calc(100vh - 16px);
   overflow-y: auto;
-  background: var(--surface, #111827);
+  background: var(--surface);
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
@@ -113,7 +113,7 @@
   background: none;
   border: none;
   font-size: 0.72rem;
-  color: var(--blueprint-blue, #1E3A8A);
+  color: var(--blueprint-blue);
   cursor: pointer;
   padding: 0;
   font-family: var(--font-ui, inherit);
@@ -196,7 +196,7 @@
 }
 
 .settingsLink:hover {
-  color: var(--white-90, #f0f0f0);
+  color: var(--white-90);
 }
 
 /* ── Notification rows ─────────────────────────────────────────────────────── */
@@ -223,14 +223,14 @@
 
 /* "Needs attention" — amber, the platform's attention/action cue (--warning). */
 .sectionHeaderAct {
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
 }
 
 .sectionCount {
   font-family: var(--font-data);
   font-size: 0.64rem;
   font-weight: 700;
-  color: var(--warning, #f59e0b);
+  color: var(--warning);
 }
 
 /* Today / Yesterday / Earlier — quieter than a section header. */
@@ -247,7 +247,7 @@
 /* Act rows in "Needs attention" carry a subtle amber left edge (inset shadow =
    no layout shift vs. non-act rows). */
 .actItem {
-  box-shadow: inset 2px 0 0 var(--warning, #f59e0b);
+  box-shadow: inset 2px 0 0 var(--warning);
 }
 
 .notifItem {
@@ -282,7 +282,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--blueprint-blue, #1E3A8A);
+  background: var(--blueprint-blue);
   flex-shrink: 0;
   margin-top: 5px;
 }

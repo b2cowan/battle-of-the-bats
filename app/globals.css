@@ -54,6 +54,10 @@
   --white-40:    rgba(255, 255, 255, 0.4);
   --white-35:    rgba(255, 255, 255, 0.35);
   --white-30:    rgba(255, 255, 255, 0.3);
+  /* Was referenced by 10 rules across admin / coaches / schedule / teams / follow-picker but
+     never declared, so 9 of them were invalid and the text silently inherited its parent
+     colour instead of dimming. Declared 2026-07-25 (found by the color-guardrail sweep). */
+  --white-25:    rgba(255, 255, 255, 0.25);
   --white-20:    rgba(255, 255, 255, 0.2);
   --white-10:    rgba(255, 255, 255, 0.1);
   --white-8:     rgba(255, 255, 255, 0.08);

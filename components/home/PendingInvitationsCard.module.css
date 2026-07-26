@@ -1,8 +1,8 @@
 .wrap {
   margin-bottom: 1.25rem;
   padding: 1.1rem 1.15rem 1.2rem;
-  border: 1px solid rgba(217, 249, 157, 0.35);
-  background: rgba(217, 249, 157, 0.05);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.35);
+  background: rgba(var(--logic-lime-rgb), 0.05);
 }
 
 .heading {
@@ -89,7 +89,7 @@
 }
 
 .accept:hover:not(:disabled) {
-  background: #c7ed6f;
+  background: #c7ed6f; /* token-exempt: brighter lime hover tint, no matching central token */
 }
 
 .decline {
@@ -111,7 +111,7 @@
 
 .error {
   font-size: 0.75rem;
-  color: #fca5a5;
+  color: #fca5a5; /* token-exempt: consumer error-text tint; --pa-neg is console-only, not a semantic match */
   margin-bottom: 0.7rem;
 }
 

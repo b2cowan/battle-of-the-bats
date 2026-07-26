@@ -455,8 +455,8 @@
 }
 
 .compactUpsell[data-variant="warning"] {
-  border-color: rgba(245, 158, 11, 0.35);
-  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(var(--warning-rgb), 0.35);
+  background: rgba(var(--warning-rgb), 0.08);
 }
 
 .compactUpsellBody {

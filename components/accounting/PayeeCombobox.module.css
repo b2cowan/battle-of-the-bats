@@ -85,7 +85,7 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: var(--home-card, #1a1f2e);
+  background: var(--home-card, #1a1f2e); /* token-exempt: native dropdown bg outside warm gate, no root token */
   border: 1px solid var(--home-line, rgba(255,255,255,0.1));
   border-radius: 8px;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
@@ -132,7 +132,7 @@
 }
 
 .optionSave {
-  color: var(--blueprint-blue, #4fa3e0);
+  color: var(--blueprint-blue);
   font-weight: 600;
 }
 

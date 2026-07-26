@@ -11,9 +11,9 @@
      TH-5 warm variant is ratified separately, not a token-swap candidate here.
      ⚠ The warm portal remaps ALL of these locals at the foot of this file — keep the two lists in
      sync: a new local token added here needs a matching warm line there, or it falls through dark. */
-  --best-bg: rgba(132, 204, 22, 0.16); --best-bd: rgba(132, 204, 22, 0.55); --best-fg: #bef264;
-  --okay-bg: rgba(96, 165, 250, 0.14); --okay-bd: rgba(96, 165, 250, 0.45); --okay-fg: #93c5fd;
-  --never-bg: rgba(248, 113, 113, 0.13); --never-bd: rgba(248, 113, 113, 0.5); --never-fg: #fca5a5;
+  --best-bg: rgba(132, 204, 22, 0.16); --best-bd: rgba(132, 204, 22, 0.55); --best-fg: #bef264; /* token-exempt: pinned to match PositionProfileEditor palette */
+  --okay-bg: rgba(96, 165, 250, 0.14); --okay-bd: rgba(96, 165, 250, 0.45); --okay-fg: #93c5fd; /* token-exempt: pinned to match PositionProfileEditor palette */
+  --never-bg: rgba(248, 113, 113, 0.13); --never-bd: rgba(248, 113, 113, 0.5); --never-fg: #fca5a5; /* token-exempt: pinned to match PositionProfileEditor palette */
   --ink: rgba(231, 237, 246, 0.95); --ink-70: rgba(231, 237, 246, 0.72); --ink-45: rgba(231, 237, 246, 0.45);
   --line: rgba(var(--blueprint-blue-rgb), 0.28); /* coach card border */
   --line-soft: rgba(255, 255, 255, 0.08);        /* divider only */

@@ -3,7 +3,7 @@
   display: none;
   /* Scoped dropdown-surface color (bespoke near-black, not a semantic token) — declared
      unconditionally here so it cascades to .dropdown regardless of the media query. */
-  --nav-dropdown-bg: #0d111a;
+  --nav-dropdown-bg: #0d111a; /* token-exempt: bespoke near-black dropdown, no global match */
 }
 
 @media (max-width: 900px) {
@@ -154,7 +154,7 @@
   }
 
   .dropLogout { color: var(--danger-light); }
-  .dropLogout:hover { background: rgba(239, 68, 68, 0.1); color: var(--danger-light); }
+  .dropLogout:hover { background: rgba(var(--danger-rgb), 0.1); color: var(--danger-light); }
 
   @keyframes slideUpMenu {
     from { opacity: 0; transform: translateY(12px); }

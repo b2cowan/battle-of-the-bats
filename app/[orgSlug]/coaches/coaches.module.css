@@ -95,9 +95,9 @@
   background: var(--pitch-black);
   /* Scoped bespoke tag/money-chip palette (org-tag blue-violet vs own-tag lime-green) —
      not semantic tokens, declared once here so they cascade to every coaches page (P3). */
-  --tag-org-fg: #a9bdf5;
-  --tag-org-active-bg: #7aa2f7;
-  --tag-own-fg: #c9e89a;
+  --tag-org-fg: #a9bdf5;         /* token-exempt: org-tag chip hue, no global token */
+  --tag-org-active-bg: #7aa2f7;  /* token-exempt: org-tag active-state hue, no global token */
+  --tag-own-fg: #c9e89a;         /* token-exempt: own-tag lime-green hue, no global token */
 }
 
 .coachesMain {
@@ -234,7 +234,7 @@
   color: var(--danger-light);
 }
 .sidebarLogout:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(var(--danger-rgb), 0.1);
   color: var(--danger-light);
 }
 

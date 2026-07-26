@@ -1,6 +1,6 @@
 .page {
   max-width: 960px;
-  --bva-unbudgeted: #f97316;
+  --bva-unbudgeted: #f97316; /* token-exempt: distinct from schedule event accent */
 }
 
 .pageHeader {

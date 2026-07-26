@@ -106,13 +106,69 @@ The 2026-07-22/23 prod promotes made a large slice of tracking docs stale in the
 
 ## Tranche 3 — Token-ratchet scope extensions (then `--init` re-freeze both baselines)
 
-Current uncovered debt found: ~24 hex + ~132 rgba in consumer surfaces, 1 hex + 191 rgba in marketing pages, ~126 hex + ~304 rgba in operator component libs.
+> ## ✅ COMPLETE 2026-07-25 — all five CSS scopes at a TRUE ZERO baseline
+>
+> Shipped in `ae592abc` (coverage) + `ff796f58` (first paydown tranche) + the paydown commit
+> that follows. Items 1–5 below are all done; the C40 owner call went to a **third `shared`
+> scope** so cross-cutting debt is counted once.
+>
+> **Coverage:** 203/203 CSS modules, each in exactly one scope, enforced by a new `--coverage`
+> mode that FAILS if a stylesheet belongs to no scope (or to two). `--scope=all` runs every
+> scope in one pass, so `amplify.yml` and `verify:changed` never need editing when a scope is
+> added. Pre-commit hook now also passes `.tsx`.
+>
+> **Detection widened** beyond literal hex to brand `rgb()/rgba()` (target set built by
+> resolving globals' `--*-rgb` declarations through `var()` alias chains, plus the stale
+> pre-refresh lime). White/black alphas are deliberately NOT flagged — they are the
+> `--white-NN`/`--black-NN` family. Per-file baselines track hex and rgba separately so
+> trading one format for the other can't slip past a combined count.
+>
+> **Bug found and fixed in the scanner itself:** `buildTokenMap()` stopped at the FIRST `:root`
+> block, so the entire FieldLogic palette (`--logic-lime`, `--gold`, `--pa-*`, `--evt-*`,
+> `--on-lime`, `--hud-surface`…) was absent from the map and its literals were misreported as
+> unmatchable custom colors. That is why earlier estimates overstated the "no token match" pile.
+>
+> **Paydown (Tranche 4 "Token drift" folded in): 479 literals across 74 stylesheets → 0.**
+> ~308 tokenized, 101 annotated in place with a reason via the new `token-exempt: <why>` escape
+> hatch (owner ruling 2026-07-25: genuine one-offs are justified where they live, NOT promoted
+> into globals). C29/C30/C31/C33 are all absorbed by this sweep.
+>
+> **Verification:** a value-identity checker re-resolved every introduced token back through
+> globals and compared each file's full multiset of rendered colors before vs after —
+> **74/74 pixel-identical** in the default theme apart from 56 owner-approved shifts (stale
+> pre-refresh lime → `--logic-lime`; drifted `#f0f0f0` heading → `--white-90`) and one hover-state
+> fix on the tryout flow's Next button, whose hardcoded `#b6ef5a` was a lightened *old* lime that
+> had already fallen out of sync with its own resting state. Diff-shape audit: 62/65 files
+> color-only; the other 3 differ by a line split and a stale comment.
+>
+> **Latent bugs surfaced by the sweep** (pre-existing, NOT introduced): `--white-25` was
+> referenced by 10 rules across admin/coaches/schedule/teams/follow-picker but never declared —
+> 9 of them were invalid and silently inherited the parent color. Declared in globals as part of
+> this work. `--shadow-md` is referenced 5× in `components/chat/ChatPanel.module.css` and is
+> **still undeclared** — those box-shadows render as nothing. Left alone (visual change, needs an
+> owner call); see the open item below.
+>
+> **Residual, deliberately deferred:** the new `tsx` scope (inline `style={{…}}` / string colors
+> in component code) is **ratcheted at 536 literals across 104 files, not paid down.** Nothing new
+> can be added; clearing the existing population is its own project. Many are legitimately
+> unfixable in place — `opengraph-image.tsx` renders via Satori, which cannot read CSS custom
+> properties — and want `token-exempt` annotations rather than tokens.
+>
+> **Open follow-ups:** (a) declare or remove `--shadow-md`; (b) pay down or annotate the 536
+> inline TSX colors; (c) light-mode + warm-portal eyeball pass on the swept surfaces — the
+> value-identity proof covers the default dark theme ONLY, and a token adapting per theme where a
+> frozen literal did not is the intended behaviour, not a regression.
+
+Original scope (all items now complete). Uncovered debt at the time: ~24 hex + ~132 rgba in
+consumer surfaces, 1 hex + 191 rgba in marketing pages, ~126 hex + ~304 rgba in operator
+component libs. (Those rgba counts included white/black alphas, which the shipped scanner
+correctly does not flag; real brand-rgba debt was 148.)
 
 1. **New `consumer` scope** (C36): dirs `app/(consumer)`, `components/consumer` + files `components/home/PendingInvitationsCard.module.css`, `app/team/page.module.css`, `components/notifications/{PreferencesTable,PushDeviceTester,FanAlertsCard}.module.css`. Exclude `warmTheme.module.css` (defines tokens); `ConsumerShell` stays in public.files.
 2. **New `marketing` scope** (C37): dirs `app/for-*`, `app/pricing`, `app/changelog` + files `app/page.module.css`, `PricingSection`, `EarlyAccessForm`, `EarlyAccessModalTrigger`. Note: script counts hex only — decide whether to add an rgba counter (marketing debt is 99% rgba).
 3. **Extend `operator` scope** (C38/C39/C47): add dirs `components/accounting`, `components/billing`, `components/feedback`, `components/platform-admin`, `app/tryout-score`; add files (NOT whole dir — `register.module.css` is public per C24): `components/rep-teams/{TryoutDayCard,TryoutFlowHeader,TryoutCheckIn,TryoutAcceptDrawer}.module.css`, `components/notifications/{notifications,notifications-page,EnablePushBanner}.module.css`.
 4. **Extend `public` scope** (C24/C25): files `components/rep-teams/register.module.css`, `components/league/register.module.css`, `components/YearSelector.module.css`, `app/system-screens.module.css` (also add the latter to operator — it's root chrome).
-5. **Owner decision — shared surfaces** (C40): `components/chat/*`, `tournament-growth`, `FlipPill`, `InstallAppPrompt`, `TeamAvatar` render in both public and operator shells. Either a third `shared` scope with its own baseline, or double-list under both. Needs a call before extending.
+5. **Owner decision — shared surfaces** (C40): `components/chat/*`, `tournament-growth`, `FlipPill`, `InstallAppPrompt`, `TeamAvatar` render in both public and operator shells. Either a third `shared` scope with its own baseline, or double-list under both. Needs a call before extending. → **DECIDED 2026-07-25: third `shared` scope.** Also absorbed `components/help` (44 literals — the largest single file), `components/whats-new`, `components/bracket`, `PushPermissionPrompt`, and `app/system-screens.module.css` (root chrome, so `shared` rather than the double-list item 4 proposed). Note `tournament-growth` actually lives at `components/marketing/` → marketing scope, and `FlipPill` at `components/shared/`.
 
 ---
 

@@ -391,15 +391,15 @@
   text-transform: uppercase;
   padding: 0.5rem 1rem;
   background: transparent;
-  border: 1px solid rgba(239, 68, 68, 0.3);
-  color: rgba(239, 68, 68, 0.7);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+  color: rgba(var(--danger-rgb), 0.7);
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
   border-radius: 2px;
 }
 
 .resetBtn:hover:not(:disabled) {
-  border-color: rgba(239, 68, 68, 0.6);
+  border-color: rgba(var(--danger-rgb), 0.6);
   color: var(--danger);
 }
 
@@ -490,9 +490,9 @@
 .customisedNote {
   font-family: var(--font-data);
   font-size: 0.65rem;
-  color: rgba(245, 158, 11, 0.8);
-  background: rgba(245, 158, 11, 0.06);
-  border: 1px solid rgba(245, 158, 11, 0.2);
+  color: rgba(var(--warning-rgb), 0.8);
+  background: rgba(var(--warning-rgb), 0.06);
+  border: 1px solid rgba(var(--warning-rgb), 0.2);
   padding: 0.45rem 0.65rem;
   margin-bottom: 1rem;
   line-height: 1.45;

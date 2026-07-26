@@ -18,7 +18,7 @@
 }
 
 .poweredBy a {
-  color: var(--logic-lime, #d9f99d);
+  color: var(--logic-lime);
   font-weight: 700;
   text-decoration: none;
   white-space: nowrap;
@@ -45,7 +45,7 @@
   gap: 0.85rem;
   width: min(760px, calc(100vw - 2rem));
   padding: 0.75rem;
-  border: 1px solid rgba(217,249,157,0.26);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.26);
   border-radius: 8px;
   background: rgba(12, 17, 27, 0.94);
   color: rgba(255,255,255,0.82);
@@ -71,6 +71,7 @@
 }
 
 .bannerIconBlue {
+  /* token-exempt: organizer-blue accent icon; --pa-info is platform-admin-console-only */
   color: #93c5fd;
   background: rgba(var(--info-rgb), 0.12);
   border-color: rgba(var(--info-rgb), 0.3);
@@ -82,9 +83,9 @@
   border-radius: 8px;
   display: grid;
   place-items: center;
-  color: var(--logic-lime, #d9f99d);
-  background: rgba(217,249,157,0.12);
-  border: 1px solid rgba(217,249,157,0.22);
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
 }
 
 .bannerBody {
@@ -95,7 +96,7 @@
 }
 
 .bannerBody strong {
-  color: var(--white, #fff);
+  color: var(--white);
   font-size: 0.88rem;
   line-height: 1.2;
 }
@@ -114,7 +115,8 @@
   min-height: 34px;
   padding: 0 0.85rem;
   border-radius: 6px;
-  background: var(--logic-lime, #d9f99d);
+  background: var(--logic-lime);
+  /* token-exempt: on-lime CTA ink; differs slightly from --on-lime (#0f1123), kept exact */
   color: #111827;
   font-size: 0.8rem;
   font-weight: 800;
@@ -125,6 +127,7 @@
 /* C6a organizer CTA — blue ghost, one visual voice per audience. */
 .bannerCtaGhostBlue {
   background: transparent;
+  /* token-exempt: organizer-blue accent text; --pa-info is platform-admin-console-only */
   color: #93c5fd;
   border: 1px solid rgba(var(--info-rgb), 0.4);
 }

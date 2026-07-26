@@ -196,7 +196,7 @@
   border-radius: var(--radius-sm);
   font-family: var(--font-display);
   font-weight: 900;
-  color: #fff;
+  color: var(--on-team-color);
   letter-spacing: 0.02em;
   flex-shrink: 0;
   line-height: 1;
@@ -406,10 +406,12 @@
 .followBtnActive {
   border-color: color-mix(in srgb, var(--team-color, var(--primary)) 45%, transparent);
   background: color-mix(in srgb, var(--team-color, var(--primary)) 14%, transparent);
+  /* token-exempt: color-mix lightening endpoint (literal white), not the --white text token */
   color: color-mix(in srgb, var(--team-color, var(--primary)) 62%, #ffffff 38%);
 }
 
 [data-color-mode="light"] .followBtnActive {
+  /* token-exempt: color-mix darkening endpoint (literal black), not the --black token */
   color: color-mix(in srgb, var(--team-color, var(--primary)) 80%, #000000 20%);
 }
 

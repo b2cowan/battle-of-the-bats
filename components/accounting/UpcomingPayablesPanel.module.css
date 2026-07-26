@@ -61,7 +61,7 @@
 
 .daysBtnActive {
   background: rgba(var(--blueprint-blue-rgb, 79,163,224), 0.15);
-  color: var(--blueprint-blue, #4fa3e0);
+  color: var(--blueprint-blue);
 }
 
 /* ── Loading / empty ──────────────────────────────────────────────────────── */
@@ -146,7 +146,7 @@
 
 .tabActive {
   color: var(--home-ink, rgba(255,255,255,0.9));
-  border-bottom-color: var(--logic-lime, #a3e635);
+  border-bottom-color: var(--logic-lime);
 }
 
 .tabOverdueDot {
@@ -216,7 +216,7 @@
   padding: 0.5rem 0.85rem;
   font-size: 0.78rem;
   font-weight: 600;
-  color: var(--blueprint-blue, #4fa3e0);
+  color: var(--blueprint-blue);
   text-decoration: none;
   border-top: 1px solid var(--home-line, rgba(255,255,255,0.06));
   transition: background 0.1s;
@@ -306,13 +306,13 @@
 }
 
 .badgeWarning {
-  background: color-mix(in srgb, var(--home-amber, #facc15) 10%, transparent);
-  color: var(--home-amber, #facc15);
+  background: color-mix(in srgb, var(--home-amber, #facc15) 10%, transparent); /* token-exempt: dark-chrome fallback for gated --home-amber, no root token */
+  color: var(--home-amber, #facc15); /* token-exempt: dark-chrome fallback for gated --home-amber, no root token */
 }
 
 .badgeUrgent {
-  background: color-mix(in srgb, var(--home-amber, #f97316) 12%, transparent);
-  color: var(--home-amber, #f97316);
+  background: color-mix(in srgb, var(--home-amber, #f97316) 12%, transparent); /* token-exempt: dark-chrome fallback for gated --home-amber, no root token */
+  color: var(--home-amber, #f97316); /* token-exempt: dark-chrome fallback for gated --home-amber, no root token */
 }
 
 .badgeOverdue {
@@ -326,8 +326,8 @@
 }
 
 .badgeAction {
-  background: color-mix(in srgb, var(--home-amber, #facc15) 12%, transparent);
-  color: var(--home-amber, #facc15);
+  background: color-mix(in srgb, var(--home-amber, #facc15) 12%, transparent); /* token-exempt: dark-chrome fallback for gated --home-amber, no root token */
+  color: var(--home-amber, #facc15); /* token-exempt: dark-chrome fallback for gated --home-amber, no root token */
   border-radius: 4px;
   padding: 0.1rem 0.4rem;
   font-size: 0.7rem;

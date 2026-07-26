@@ -112,7 +112,7 @@
   font-family: var(--font-data);
   font-weight: 700;
   font-size: 0.8rem;
-  color: #fff;
+  color: var(--on-team-color);
   object-fit: cover;
   background: var(--home-olive-soft);
 }
@@ -236,7 +236,7 @@
   font-family: var(--font-data);
   font-weight: 700;
   font-size: 0.82rem;
-  color: #fff;
+  color: var(--on-team-color);
 }
 .gameBody { min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 
@@ -360,7 +360,7 @@
   font-family: var(--font-data);
   font-weight: 700;
   font-size: 0.95rem;
-  color: #fff;
+  color: var(--on-team-color);
   object-fit: cover;
   background: var(--home-olive-soft);
 }

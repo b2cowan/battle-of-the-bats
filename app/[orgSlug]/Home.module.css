@@ -194,6 +194,7 @@
 .hero:has(.heroBanner) .heroTitle,
 .hero:has(.heroBanner) .heroSub,
 .hero:has(.heroBanner) .heroSub strong {
+  /* token-exempt: must stay literal white regardless of --white's theme value */
   color: #fff;
 }
 
@@ -1332,7 +1333,7 @@
 }
 .socialLink:hover {
   background: rgba(var(--primary-rgb), 0.25);
-  color: #fff;
+  color: var(--white);
 }
 
 .tournamentCards {
