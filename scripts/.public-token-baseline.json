@@ -1,8 +1,30 @@
 {
-  "app/[orgSlug]/Home.module.css": 2,
-  "app/[orgSlug]/schedule/schedule.module.css": 4,
-  "app/[orgSlug]/standings/standings.module.css": 3,
-  "app/[orgSlug]/teams/teams.module.css": 3,
-  "app/teams/[id]/team-profile.module.css": 9,
-  "components/public/MyTeamDock.module.css": 1
+  "app/[orgSlug]/Home.module.css": {
+    "hex": 2,
+    "rgba": 0
+  },
+  "app/[orgSlug]/schedule/schedule.module.css": {
+    "hex": 2,
+    "rgba": 0
+  },
+  "app/[orgSlug]/standings/standings.module.css": {
+    "hex": 2,
+    "rgba": 0
+  },
+  "app/[orgSlug]/teams/teams.module.css": {
+    "hex": 3,
+    "rgba": 0
+  },
+  "components/league/register.module.css": {
+    "hex": 14,
+    "rgba": 5
+  },
+  "components/public/MyTeamDock.module.css": {
+    "hex": 1,
+    "rgba": 0
+  },
+  "components/rep-teams/register.module.css": {
+    "hex": 12,
+    "rgba": 2
+  }
 }

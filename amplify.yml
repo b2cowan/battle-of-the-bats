@@ -33,11 +33,12 @@ frontend:
         # decoupled from the scheduler work and will ship as its own deliberate change (ideally
         # paired with a fresh email send so live links go out re-signed). See SCHEDULED_JOBS plan.
         # Color-token guardrail — unbypassable backstop to the local pre-commit hook.
-        # Fail the deploy if any guarded CSS module carries a hardcoded hex color that
-        # should be a var(--token), so a rebrand stays a single central edit. (Public +
-        # operator scopes; baselines let existing debt through, block only NEW literals.)
-        - node scripts/check-public-tokens.mjs
-        - node scripts/check-public-tokens.mjs --scope=operator
+        # Fail the deploy if any guarded file carries a hardcoded color that should be a
+        # var(--token), so a rebrand stays a single central edit. `--scope=all` runs every
+        # scope (public / operator / consumer / marketing / shared / inline tsx) AND the
+        # coverage assertion, so a scope or a stylesheet added later is guarded here with
+        # no edit to this file. Baselines let existing debt through, block only NEW literals.
+        - node scripts/check-public-tokens.mjs --scope=all
         # Webpack production build (next build --webpack) uses far more heap than the
         # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
         # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.
