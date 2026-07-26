@@ -87,7 +87,7 @@ export default function StartNextSeasonModal({
         {summary ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <CheckCircle2 size={18} style={{ color: 'var(--logic-lime, #b6e34d)', flexShrink: 0 }} />
+              <CheckCircle2 size={18} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
               <p style={{ margin: 0, color: 'var(--white-90)' }}>
                 <strong>{summary.newSeason.name}</strong> is now your active season.
               </p>
@@ -116,7 +116,7 @@ export default function StartNextSeasonModal({
             {summary.warnings.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
                 {summary.warnings.map((w, i) => (
-                  <p key={i} style={{ margin: 0, display: 'flex', gap: '0.4rem', alignItems: 'flex-start', fontSize: '0.85rem', color: 'var(--danger, #e6794d)' }}>
+                  <p key={i} style={{ margin: 0, display: 'flex', gap: '0.4rem', alignItems: 'flex-start', fontSize: '0.85rem', color: 'var(--danger)' }}>
                     <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 2 }} />
                     <span>{w}</span>
                   </p>
@@ -167,7 +167,7 @@ export default function StartNextSeasonModal({
               background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)',
               borderRadius: 8, padding: '0.7rem 0.85rem',
             }}>
-              <AlertTriangle size={16} style={{ color: 'var(--warning, #f59e0b)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+              <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
               <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>
                 Once you start, <strong>{currentSeasonName}</strong> is locked as read-only. You can always look
                 back at its roster, schedule, and finances — but you won&apos;t be able to change them.

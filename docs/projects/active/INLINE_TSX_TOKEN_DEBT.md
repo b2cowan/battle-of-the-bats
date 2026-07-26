@@ -6,33 +6,33 @@
 
 ## Summary
 
-- **536** hardcoded colors across **104** files (465 hex · 71 brand rgba)
-- **399** map exactly to a current token — dark-identical swaps, verify LIGHT mode
-- **33** are the STALE pre-refresh lime — swapping CHANGES THE HUE, eyeball first
-- **104** have no token match — promote to a token, or annotate `/* token-exempt: why */`
+- **428** hardcoded colors across **89** files (357 hex · 71 brand rgba)
+- **330** map exactly to a current token — dark-identical swaps, verify LIGHT mode
+- **19** are the STALE pre-refresh lime — swapping CHANGES THE HUE, eyeball first
+- **79** have no token match — promote to a token, or annotate `/* token-exempt: why */`
 
 ## Worst offenders
 
-- `app/[orgSlug]/archives/page.tsx` — 20
-- `app/[orgSlug]/league/[seasonSlug]/page.tsx` — 18
-- `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx` — 16
-- `app/[orgSlug]/archives/[archiveId]/page.tsx` — 16
-- `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx` — 16
 - `app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/opengraph-image.tsx` — 15
+- `app/[orgSlug]/league/[seasonSlug]/page.tsx` — 15
 - `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/schedule/page.tsx` — 14
 - `app/platform-admin/dev-tools/page.tsx` — 14
 - `app/[orgSlug]/[tournamentSlug]/opengraph-image.tsx` — 13
-- `app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx` — 13
-- `app/[orgSlug]/admin/rep-teams/allocations/new/page.tsx` — 13
+- `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx` — 13
 - `app/[orgSlug]/league/[seasonSlug]/status/StatusLookupForm.tsx` — 13
-- `app/[orgSlug]/league/page.tsx` — 12
-- `app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx` — 11
+- `app/[orgSlug]/admin/rep-teams/allocations/new/page.tsx` — 12
+- `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx` — 12
+- `app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx` — 11
 - `app/[orgSlug]/admin/rep-teams/payment-requests/page.tsx` — 11
 - `app/[orgSlug]/scorekeeper/layout.tsx` — 11
+- `app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx` — 10
 - `app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx` — 10
 - `app/[orgSlug]/admin/tournaments/branding/page.tsx` — 10
 - `app/[orgSlug]/admin/org/settings/page.tsx` — 9
-- `app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx` — 9
+- `app/[orgSlug]/archives/[archiveId]/page.tsx` — 9
+- `app/[orgSlug]/league/page.tsx` — 9
+- `app/platform-admin/change-requests/ChangeRequestsClient.tsx` — 9
+- `app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx` — 8
 
 ## Exact-token candidates
 
@@ -107,10 +107,6 @@
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx:257` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx:95` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx:326` | `#60a5fa` | `--info-light` |
-| `app/[orgSlug]/admin/org/billing/page.tsx:777` | `#f59e0b` | `--warning` / `--evt-tournament-game` |
-| `app/[orgSlug]/admin/org/members/audit/page.tsx:157` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/org/members/page.tsx:646` | `#F59E0B` | `--warning` / `--evt-tournament-game` |
-| `app/[orgSlug]/admin/org/members/page.tsx:651` | `#F59E0B` | `--warning` / `--evt-tournament-game` |
 | `app/[orgSlug]/admin/org/settings/page.tsx:45` | `#1E3A8A` | `--platform-primary` |
 | `app/[orgSlug]/admin/org/settings/page.tsx:46` | `#D9F99D` | `--primary-light` / `--logic-lime` |
 | `app/[orgSlug]/admin/org/settings/page.tsx:86` | `#D9F99D` | `--primary-light` / `--logic-lime` |
@@ -121,12 +117,6 @@
 | `app/[orgSlug]/admin/org/settings/page.tsx:778` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/org/settings/page.tsx:791` | `#4ade80` | `--success-light` |
 | `app/[orgSlug]/admin/org/settings/pdf/page.tsx:317` | `#1e293b` | `--bracket-card` |
-| `app/[orgSlug]/admin/org/settings/pdf/page.tsx:381` | `#f59e0b` | `--warning` / `--evt-tournament-game` |
-| `app/[orgSlug]/admin/org/tournaments/page.tsx:626` | `#22c55e` | `--success` / `--evt-league-game` |
-| `app/[orgSlug]/admin/org/tournaments/page.tsx:628` | `#ef4444` | `--danger` |
-| `app/[orgSlug]/admin/org/tournaments/page.tsx:945` | `#f59e0b` | `--warning` / `--evt-tournament-game` |
-| `app/[orgSlug]/admin/org/tournaments/page.tsx:1178` | `#22c55e` | `--success` / `--evt-league-game` |
-| `app/[orgSlug]/admin/org/tournaments/page.tsx:1208` | `#22c55e` | `--success` / `--evt-league-game` |
 | `app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx:153` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx:203` | `#4ade80` | `--success-light` |
 | `app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx:207` | `#4ade80` | `--success-light` |
@@ -195,7 +185,6 @@
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/schedule/page.tsx:332` | `#22c55e` | `--success` / `--evt-league-game` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/schedule/page.tsx:332` | `#ef4444` | `--danger` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/schedule/page.tsx:332` | `#f59e0b` | `--warning` / `--evt-tournament-game` |
-| `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:566` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:602` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:624` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:752` | `#f87171` | `--danger-light` |
@@ -206,7 +195,6 @@
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:873` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:884` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:895` | `#f87171` | `--danger-light` |
-| `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:967` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:968` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:969` | `#fbbf24` | `--warning-light` |
 | `app/[orgSlug]/admin/tournaments/branding/page.tsx:67` | `#1E3A8A` | `--platform-primary` |
@@ -219,8 +207,6 @@
 | `app/[orgSlug]/admin/tournaments/branding/page.tsx:548` | `#ffffff` | `--white` / `--on-primary` / `--on-team-color` |
 | `app/[orgSlug]/admin/tournaments/branding/page.tsx:550` | `#ffffff` | `--white` / `--on-primary` / `--on-team-color` |
 | `app/[orgSlug]/admin/tournaments/registrations/page.tsx:2126` | `#fbbf24` | `--warning-light` |
-| `app/[orgSlug]/admin/tournaments/registrations/page.tsx:2752` | `#f87171` | `--danger-light` |
-| `app/[orgSlug]/admin/tournaments/registrations/page.tsx:2753` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx:1942` | `#fbbf24` | `--warning-light` |
 | `app/[orgSlug]/admin/tournaments/schedule/components/BracketEditor.tsx:396` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/admin/tournaments/schedule/components/BracketEditor.tsx:492` | `#f87171` | `--danger-light` |
@@ -241,13 +227,6 @@
 | `app/[orgSlug]/admin/tournaments/schedule/page.tsx:2201` | `rgb(239,68,68)` | `--danger-rgb` |
 | `app/[orgSlug]/admin/tournaments/staff-kit/page.tsx:57` | `#0a0a0a` | `--bg` / `--pitch-black` |
 | `app/[orgSlug]/admin/tournaments/staff-kit/page.tsx:57` | `#ffffff` | `--white` / `--on-primary` / `--on-team-color` |
-| `app/[orgSlug]/archives/[archiveId]/page.tsx:101` | `#1E3A8A` | `--platform-primary` |
-| `app/[orgSlug]/archives/[archiveId]/page.tsx:103` | `#94A3B8` | `--data-gray` |
-| `app/[orgSlug]/archives/[archiveId]/page.tsx:104` | `#F1F5F9` | `--fl-text` |
-| `app/[orgSlug]/archives/[archiveId]/page.tsx:105` | `#1E3A8A` | `--platform-primary` |
-| `app/[orgSlug]/archives/[archiveId]/page.tsx:106` | `#D9F99D` | `--primary-light` / `--logic-lime` |
-| `app/[orgSlug]/archives/[archiveId]/page.tsx:107` | `#111827` | `--bg-3` / `--surface` / `--hud-surface` |
-| `app/[orgSlug]/archives/[archiveId]/page.tsx:113` | `#0A0A0A` | `--bg` / `--pitch-black` |
 | `app/[orgSlug]/archives/[archiveId]/page.tsx:170` | `rgb(217,249,157)` | `--logic-lime-rgb` |
 | `app/[orgSlug]/archives/[archiveId]/page.tsx:189` | `rgb(217,249,157)` | `--logic-lime-rgb` |
 | `app/[orgSlug]/archives/[archiveId]/page.tsx:252` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
@@ -257,21 +236,6 @@
 | `app/[orgSlug]/archives/[archiveId]/page.tsx:388` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
 | `app/[orgSlug]/archives/[archiveId]/page.tsx:408` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
 | `app/[orgSlug]/archives/[archiveId]/page.tsx:438` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
-| `app/[orgSlug]/archives/page.tsx:26` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/archives/page.tsx:36` | `#1E3A8A` | `--platform-primary` |
-| `app/[orgSlug]/archives/page.tsx:51` | `#F1F5F9` | `--fl-text` |
-| `app/[orgSlug]/archives/page.tsx:61` | `#94A3B8` | `--data-gray` |
-| `app/[orgSlug]/archives/page.tsx:76` | `#94A3B8` | `--data-gray` |
-| `app/[orgSlug]/archives/page.tsx:93` | `#94A3B8` | `--data-gray` |
-| `app/[orgSlug]/archives/page.tsx:112` | `#1E3A8A` | `--platform-primary` |
-| `app/[orgSlug]/archives/page.tsx:138` | `#94A3B8` | `--data-gray` |
-| `app/[orgSlug]/archives/page.tsx:146` | `#F1F5F9` | `--fl-text` |
-| `app/[orgSlug]/archives/page.tsx:154` | `#94A3B8` | `--data-gray` |
-| `app/[orgSlug]/archives/page.tsx:165` | `#D9F99D` | `--primary-light` / `--logic-lime` |
-| `app/[orgSlug]/archives/page.tsx:176` | `#94A3B8` | `--data-gray` |
-| `app/[orgSlug]/archives/page.tsx:184` | `#94A3B8` | `--data-gray` |
-| `app/[orgSlug]/archives/page.tsx:202` | `#D9F99D` | `--primary-light` / `--logic-lime` |
-| `app/[orgSlug]/archives/page.tsx:229` | `#94A3B8` | `--data-gray` |
 | `app/[orgSlug]/archives/page.tsx:90` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
 | `app/[orgSlug]/archives/page.tsx:133` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
 | `app/[orgSlug]/archives/page.tsx:201` | `rgb(217,249,157)` | `--logic-lime-rgb` |
@@ -287,39 +251,27 @@
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/page.tsx:195` | `#a855f7` | `--evt-practice` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx:355` | `#a855f7` | `--evt-practice` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/page.tsx:406` | `#f97316` | `--evt-external-tournament` |
-| `app/[orgSlug]/coaches/teams/[teamId]/tryouts/page.tsx:124` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:21` | `#4ade80` | `--success-light` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:22` | `#fbbf24` | `--warning-light` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:23` | `#60a5fa` | `--info-light` |
-| `app/[orgSlug]/league/[seasonSlug]/page.tsx:74` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/league/[seasonSlug]/page.tsx:76` | `#F1F5F9` | `--fl-text` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:130` | `#60a5fa` | `--info-light` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:215` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:284` | `#f87171` | `--danger-light` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:284` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:292` | `#fbbf24` | `--warning-light` |
-| `app/[orgSlug]/league/[seasonSlug]/page.tsx:318` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:319` | `#0A0A0A` | `--bg` / `--pitch-black` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:373` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:370` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:380` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
-| `app/[orgSlug]/league/[seasonSlug]/register/page.tsx:42` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/league/[seasonSlug]/register/page.tsx:44` | `#F1F5F9` | `--fl-text` |
-| `app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx:90` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx:92` | `#F1F5F9` | `--fl-text` |
 | `app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx:152` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx:245` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx:151` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx:154` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
-| `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:40` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:42` | `#F1F5F9` | `--fl-text` |
 | `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:109` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:235` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:259` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:291` | `#4ade80` | `--success-light` |
 | `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:291` | `#f87171` | `--danger-light` |
-| `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:314` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:316` | `#F1F5F9` | `--fl-text` |
 | `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:108` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:111` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/[seasonSlug]/standings/page.tsx:204` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
@@ -335,15 +287,10 @@
 | `app/[orgSlug]/league/[seasonSlug]/status/StatusLookupForm.tsx:170` | `#94a3b8` | `--data-gray` |
 | `app/[orgSlug]/league/[seasonSlug]/status/StatusLookupForm.tsx:126` | `rgb(245,158,11)` | `--warning-rgb` |
 | `app/[orgSlug]/league/[seasonSlug]/status/StatusLookupForm.tsx:127` | `rgb(245,158,11)` | `--warning-rgb` |
-| `app/[orgSlug]/league/[seasonSlug]/status/page.tsx:24` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/league/[seasonSlug]/status/page.tsx:26` | `#F1F5F9` | `--fl-text` |
 | `app/[orgSlug]/league/page.tsx:18` | `#4ade80` | `--success-light` |
 | `app/[orgSlug]/league/page.tsx:19` | `#fbbf24` | `--warning-light` |
 | `app/[orgSlug]/league/page.tsx:20` | `#60a5fa` | `--info-light` |
-| `app/[orgSlug]/league/page.tsx:58` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/league/page.tsx:60` | `#F1F5F9` | `--fl-text` |
 | `app/[orgSlug]/league/page.tsx:198` | `#60a5fa` | `--info-light` |
-| `app/[orgSlug]/league/page.tsx:232` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/league/page.tsx:233` | `#0A0A0A` | `--bg` / `--pitch-black` |
 | `app/[orgSlug]/scorekeeper/layout.tsx:56` | `#0A0A0A` | `--bg` / `--pitch-black` |
 | `app/[orgSlug]/scorekeeper/layout.tsx:64` | `#111827` | `--bg-3` / `--surface` / `--hud-surface` |
@@ -356,25 +303,12 @@
 | `app/[orgSlug]/scorekeeper/layout.tsx:123` | `#D9F99D` | `--primary-light` / `--logic-lime` |
 | `app/[orgSlug]/scorekeeper/layout.tsx:63` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
 | `app/[orgSlug]/scorekeeper/layout.tsx:84` | `rgb(30,58,138)` | `--platform-primary-rgb` / `--primary-rgb` / `--blueprint-blue-rgb` |
-| `app/[orgSlug]/teams/[teamSlug]/page.tsx:50` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/teams/[teamSlug]/page.tsx:52` | `#F1F5F9` | `--fl-text` |
-| `app/[orgSlug]/teams/[teamSlug]/page.tsx:195` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
-| `app/[orgSlug]/teams/[teamSlug]/page.tsx:215` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/teams/[teamSlug]/page.tsx:216` | `#0A0A0A` | `--bg` / `--pitch-black` |
 | `app/[orgSlug]/teams/[teamSlug]/page.tsx:178` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/teams/[teamSlug]/page.tsx:180` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
-| `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/page.tsx:28` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/page.tsx:30` | `#F1F5F9` | `--fl-text` |
-| `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/page.tsx:115` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
-| `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/page.tsx:132` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/page.tsx:133` | `#0A0A0A` | `--bg` / `--pitch-black` |
 | `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/page.tsx:113` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
 | `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/page.tsx:114` | `rgb(163,230,53)` | `--logic-lime-rgb  ⚠ STALE pre-refresh lime — hue change` |
-| `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/register/page.tsx:29` | `#0A0A0A` | `--bg` / `--pitch-black` |
-| `app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/register/page.tsx:31` | `#F1F5F9` | `--fl-text` |
-| `app/coaches/join/page.tsx:259` | `#22C55E` | `--success` / `--evt-league-game` |
-| `app/coaches/join/page.tsx:338` | `#22C55E` | `--success` / `--evt-league-game` |
-| `app/coaches/join/page.tsx:406` | `#22C55E` | `--success` / `--evt-league-game` |
 | `app/coaches/join/page.tsx:258` | `rgb(34,197,94)` | `--success-rgb` |
 | `app/coaches/join/page.tsx:258` | `rgb(34,197,94)` | `--success-rgb` |
 | `app/coaches/join/page.tsx:337` | `rgb(34,197,94)` | `--success-rgb` |
@@ -443,32 +377,15 @@
 | `components/LegacyInstallBanner.tsx:79` | `#F1F5F9` | `--fl-text` |
 | `components/LegacyInstallBanner.tsx:88` | `#D9F99D` | `--primary-light` / `--logic-lime` |
 | `components/LegacyInstallBanner.tsx:76` | `rgb(217,249,157)` | `--logic-lime-rgb` |
-| `components/admin/LeagueCapUpgrade.tsx:79` | `#fff` | `--white` / `--on-primary` / `--on-team-color` |
 | `components/coaches/ContinuityCompareCard.tsx:25` | `#fcd34d` | `--pa-caution` |
-| `components/coaches/PlayerDevelopmentSection.tsx:643` | `#f87171` | `--danger-light` |
-| `components/coaches/PlayerDocumentsSection.tsx:166` | `#f87171` | `--danger-light` |
-| `components/coaches/PlayerDocumentsSection.tsx:221` | `#f87171` | `--danger-light` |
 | `components/coaches/PositionProfileEditor.tsx:42` | `#93c5fd` | `--pa-info` |
 | `components/coaches/PositionProfileEditor.tsx:43` | `#fca5a5` | `--pa-neg` |
-| `components/coaches/StartNextSeasonModal.tsx:170` | `#f59e0b` | `--warning` / `--evt-tournament-game` |
 | `components/coaches/StartNextSeasonModal.tsx:167` | `rgb(245,158,11)` | `--warning-rgb` |
 | `components/coaches/StartNextSeasonModal.tsx:167` | `rgb(245,158,11)` | `--warning-rgb` |
 | `components/coaches/UpgradeSummaryBanner.tsx:108` | `#fff` | `--white` / `--on-primary` / `--on-team-color` |
-| `components/coaches/UpgradeSummaryBanner.tsx:109` | `#60a5fa` | `--info-light` |
 | `components/feedback/FeedbackLauncher.tsx:44` | `#94A3B8` | `--data-gray` |
 | `components/public/ShareScoreButton.tsx:79` | `#1E3A8A` | `--platform-primary` |
-| `components/rep-teams/TryoutDayCard.tsx:311` | `#f87171` | `--danger-light` |
-| `components/rep-teams/TryoutDecisionBoard.tsx:209` | `#f87171` | `--danger-light` |
 | `components/rep-teams/TryoutDecisionBoard.tsx:240` | `#fcd34d` | `--pa-caution` |
-| `components/rep-teams/TryoutDecisionBoard.tsx:246` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
-| `components/rep-teams/TryoutDecisionBoard.tsx:336` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
-| `components/rep-teams/TryoutDecisionBoard.tsx:337` | `#f87171` | `--danger-light` |
-| `components/rep-teams/TryoutDecisionBoard.tsx:338` | `#fbbf24` | `--warning-light` |
-| `components/rep-teams/TryoutEvaluatorsCard.tsx:134` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
-| `components/rep-teams/TryoutEvaluatorsCard.tsx:174` | `#f87171` | `--danger-light` |
-| `components/rep-teams/TryoutFlowHeader.tsx:68` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
-| `components/rep-teams/TryoutRubricCard.tsx:162` | `#a3e635` | `--logic-lime  ⚠ STALE pre-refresh lime — hue change` |
-| `components/rep-teams/TryoutRubricCard.tsx:190` | `#f87171` | `--danger-light` |
 | `components/volunteer/ShellSignOutButton.tsx:39` | `#94A3B8` | `--data-gray` |
 
 ## No token match — decide per-instance
@@ -486,43 +403,31 @@
 | `app/[orgSlug]/[tournamentSlug]/schedule/[gameId]/opengraph-image.tsx:134` | `#0A0A12` |
 | `app/[orgSlug]/[tournamentSlug]/teams/[id]/opengraph-image.tsx:67` | `#0A0A12` |
 | `app/[orgSlug]/[tournamentSlug]/teams/[id]/opengraph-image.tsx:79` | `#0A0A12` |
-| `app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx:408` | `#4fa3e0` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx:114` | `#f0f0f0` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx:177` | `#f0f0f0` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/ledger/page.tsx:181` | `#f0f0f0` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/notifications/page.tsx:162` | `#1a1a2e` |
-| `app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx:610` | `#f0f0f0` |
-| `app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx:670` | `#f0f0f0` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx:132` | `#1a1f2e` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx:167` | `#f0f0f0` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/standings/page.tsx:239` | `#f0f0f0` |
 | `app/[orgSlug]/admin/house-league/seasons/[seasonId]/teams/page.tsx:71` | `#1a1f2e` |
-| `app/[orgSlug]/admin/org/members/page.tsx:954` | `#f0f0f0` |
 | `app/[orgSlug]/admin/org/tournaments/page.tsx:697` | `#f6c453` |
-| `app/[orgSlug]/admin/rep-teams/allocations/new/page.tsx:330` | `#4fa3e0` |
 | `app/[orgSlug]/admin/rep-teams/page.tsx:331` | `#facc15` |
-| `app/[orgSlug]/admin/rep-teams/page.tsx:625` | `#4fa3e0` |
 | `app/[orgSlug]/admin/rep-teams/payment-requests/page.tsx:43` | `#facc15` |
 | `app/[orgSlug]/admin/rep-teams/payment-requests/page.tsx:229` | `#facc15` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/history/[yearId]/page.tsx:331` | `#a78bfa` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/page.tsx:271` | `#f0f0f0` |
 | `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:651` | `#f0f0f0` |
-| `app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx:698` | `#4fa3e0` |
 | `app/[orgSlug]/admin/tournaments/branding/page.tsx:20` | `#0a0a12` |
 | `app/[orgSlug]/admin/tournaments/schedule/page.tsx:2145` | `#0d0f18` |
 | `app/[orgSlug]/admin/tournaments/settings/registration-fields/page.tsx:248` | `#add` |
-| `app/[orgSlug]/archives/page.tsx:113` | `#3B5FC4` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/page.tsx:650` | `#f0f0f0` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/page.tsx:852` | `#f0f0f0` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/page.tsx:858` | `#f0f0f0` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/page.tsx:861` | `#f0f0f0` |
-| `app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/page.tsx:460` | `#7f9cf5` |
-| `app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/page.tsx:589` | `#7f9cf5` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/payment-requests/page.tsx:34` | `#facc15` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/payment-requests/page.tsx:39` | `#facc15` |
 | `app/[orgSlug]/coaches/teams/[teamId]/accounting/payment-requests/page.tsx:215` | `#facc15` |
-| `app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx:185` | `#b6e34d` |
-| `app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx:285` | `#b6e34d` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:24` | `#a78bfa` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:142` | `#f0f0f0` |
 | `app/[orgSlug]/league/[seasonSlug]/page.tsx:262` | `#f0f0f0` |
@@ -554,28 +459,15 @@
 | `app/platform-admin/dev-tools/page.tsx:114` | `#f9a8d4` |
 | `app/platform-admin/dev-tools/page.tsx:1377` | `#f0f0f0` |
 | `app/platform-admin/dev-tools/page.tsx:1399` | `#ffff00` |
-| `app/platform-admin/observability/CallsVsErrorsChart.tsx:61` | `#84cc16` |
-| `app/platform-admin/observability/CallsVsErrorsChart.tsx:78` | `#84cc16` |
-| `app/platform-admin/observability/[groupId]/page.tsx:79` | `#84cc16` |
 | `app/tryout-response/[token]/page.tsx:24` | `#0b0f14` |
 | `app/tryout-response/[token]/page.tsx:145` | `#0b0f14` |
 | `app/unsubscribe/confirmed/page.tsx:26` | `#0b0f14` |
-| `components/admin/LeagueCapUpgrade.tsx:72` | `#14161b` |
-| `components/admin/TournamentSetupWizard.tsx:1539` | `#1e1e2e` |
-| `components/coaches/CoachStaffPanel.tsx:184` | `#b6e34d` |
-| `components/coaches/CoachStaffPanel.tsx:208` | `#b6e34d` |
-| `components/coaches/CoachStaffPanel.tsx:230` | `#b6e34d` |
-| `components/coaches/CoachStaffPanel.tsx:231` | `#0a0a0f` |
 | `components/coaches/CoachThemeColor.tsx:19` | `#0a0a0f` |
-| `components/coaches/ContinuityCompareCard.tsx:21` | `#b45309` |
 | `components/coaches/PositionProfileEditor.tsx:41` | `#bef264` |
 | `components/coaches/PositionProfileEditor.tsx:148` | `#f7fee7` |
 | `components/coaches/PositionProfileEditor.tsx:170` | `#bef264` |
 | `components/coaches/PositionProfileEditor.tsx:171` | `#ecfccb` |
-| `components/coaches/StartNextSeasonModal.tsx:90` | `#b6e34d` |
-| `components/coaches/StartNextSeasonModal.tsx:119` | `#e6794d` |
 | `components/coaches/UpgradeSummaryBanner.tsx:144` | `#bfdbfe` |
 | `components/consumer/ConsumerThemeManager.tsx:31` | `#0a0a0f` |
 | `components/help/HelpHubClient.tsx:127` | `#9654` |
-| `components/rep-teams/TryoutDecisionBoard.tsx:240` | `#b45309` |
 | `components/rep-teams/TryoutRubricCard.tsx:162` | `#f0f0f0` |

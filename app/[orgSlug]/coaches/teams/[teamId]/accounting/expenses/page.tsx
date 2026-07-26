@@ -457,7 +457,7 @@ export default function CoachesExpensesPage({
                           {canWriteMoney && (
                             <button
                               onClick={() => startEditTags(e.id)}
-                              style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.3rem', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--blueprint-blue, #7f9cf5)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                              style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.3rem', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--blueprint-blue)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
                             >
                               <Tag size={10} /> {(tagsByExpenseId[e.id] ?? []).length ? 'Edit tags' : 'Add tags'}
                             </button>
@@ -586,7 +586,7 @@ export default function CoachesExpensesPage({
                       {canWriteMoney && (
                         <button
                           onClick={() => startEditTags(e.id)}
-                          style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.3rem', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--blueprint-blue, #7f9cf5)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
+                          style={{ background: 'none', border: 'none', padding: 0, marginTop: '0.3rem', cursor: 'pointer', fontSize: '0.68rem', color: 'var(--blueprint-blue)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}
                         >
                           <Tag size={10} /> {(tagsByExpenseId[e.id] ?? []).length ? 'Edit tags' : 'Add tags'}
                         </button>

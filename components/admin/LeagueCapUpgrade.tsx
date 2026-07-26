@@ -69,14 +69,14 @@ export function LeagueCapUpgradeModal({ capHit, onClose, orgId }: { capHit: Leag
         onMouseDown={e => e.stopPropagation()}
         style={{
           width: '100%', maxWidth: 440,
-          background: 'var(--bg-elevated, #14161b)',
-          border: '1px solid var(--hairline, rgba(255,255,255,0.12))',
+          background: 'var(--surface)',
+          border: '1px solid var(--border-2)',
           borderRadius: 12,
           padding: '1.5rem',
           boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
         }}
       >
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', margin: '0 0 0.6rem', color: 'var(--white, #fff)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.05rem', margin: '0 0 0.6rem', color: 'var(--white)', textTransform: 'uppercase', letterSpacing: '0.02em' }}>
           {CAP_TITLE[capHit]}
         </h2>
         <p style={{ fontSize: '0.88rem', lineHeight: 1.55, color: 'var(--data-gray)', margin: '0 0 1.25rem' }}>

@@ -20,7 +20,7 @@
     "rgba": 0
   },
   "app/[orgSlug]/admin/accounting/budget/allocate/[lineId]/page.tsx": {
-    "hex": 11,
+    "hex": 10,
     "rgba": 0
   },
   "app/[orgSlug]/admin/accounting/budget/page.tsx": {
@@ -52,7 +52,7 @@
     "rgba": 0
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/registrations/page.tsx": {
-    "hex": 9,
+    "hex": 7,
     "rgba": 4
   },
   "app/[orgSlug]/admin/house-league/seasons/[seasonId]/schedule/page.tsx": {
@@ -67,28 +67,16 @@
     "hex": 3,
     "rgba": 0
   },
-  "app/[orgSlug]/admin/org/billing/page.tsx": {
-    "hex": 1,
-    "rgba": 0
-  },
-  "app/[orgSlug]/admin/org/members/audit/page.tsx": {
-    "hex": 1,
-    "rgba": 0
-  },
-  "app/[orgSlug]/admin/org/members/page.tsx": {
-    "hex": 3,
-    "rgba": 0
-  },
   "app/[orgSlug]/admin/org/settings/page.tsx": {
     "hex": 9,
     "rgba": 0
   },
   "app/[orgSlug]/admin/org/settings/pdf/page.tsx": {
-    "hex": 2,
+    "hex": 1,
     "rgba": 0
   },
   "app/[orgSlug]/admin/org/tournaments/page.tsx": {
-    "hex": 6,
+    "hex": 1,
     "rgba": 0
   },
   "app/[orgSlug]/admin/rep-teams/allocations/[allocationId]/page.tsx": {
@@ -96,7 +84,7 @@
     "rgba": 0
   },
   "app/[orgSlug]/admin/rep-teams/allocations/new/page.tsx": {
-    "hex": 13,
+    "hex": 12,
     "rgba": 0
   },
   "app/[orgSlug]/admin/rep-teams/allocations/page.tsx": {
@@ -108,7 +96,7 @@
     "rgba": 0
   },
   "app/[orgSlug]/admin/rep-teams/page.tsx": {
-    "hex": 6,
+    "hex": 5,
     "rgba": 0
   },
   "app/[orgSlug]/admin/rep-teams/past/page.tsx": {
@@ -148,7 +136,7 @@
     "rgba": 0
   },
   "app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx": {
-    "hex": 16,
+    "hex": 13,
     "rgba": 0
   },
   "app/[orgSlug]/admin/tournaments/branding/page.tsx": {
@@ -156,7 +144,7 @@
     "rgba": 0
   },
   "app/[orgSlug]/admin/tournaments/registrations/page.tsx": {
-    "hex": 3,
+    "hex": 1,
     "rgba": 0
   },
   "app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx": {
@@ -184,11 +172,11 @@
     "rgba": 0
   },
   "app/[orgSlug]/archives/[archiveId]/page.tsx": {
-    "hex": 7,
+    "hex": 0,
     "rgba": 9
   },
   "app/[orgSlug]/archives/page.tsx": {
-    "hex": 16,
+    "hex": 0,
     "rgba": 4
   },
   "app/[orgSlug]/check-in/layout.tsx": {
@@ -197,10 +185,6 @@
   },
   "app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/page.tsx": {
     "hex": 4,
-    "rgba": 0
-  },
-  "app/[orgSlug]/coaches/teams/[teamId]/accounting/expenses/page.tsx": {
-    "hex": 2,
     "rgba": 0
   },
   "app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/[fundraiserId]/page.tsx": {
@@ -219,28 +203,20 @@
     "hex": 3,
     "rgba": 0
   },
-  "app/[orgSlug]/coaches/teams/[teamId]/settings/page.tsx": {
-    "hex": 2,
-    "rgba": 0
-  },
-  "app/[orgSlug]/coaches/teams/[teamId]/tryouts/page.tsx": {
-    "hex": 1,
-    "rgba": 0
-  },
   "app/[orgSlug]/league/[seasonSlug]/page.tsx": {
-    "hex": 16,
+    "hex": 13,
     "rgba": 2
   },
   "app/[orgSlug]/league/[seasonSlug]/register/page.tsx": {
-    "hex": 3,
+    "hex": 1,
     "rgba": 0
   },
   "app/[orgSlug]/league/[seasonSlug]/schedule/page.tsx": {
-    "hex": 7,
+    "hex": 5,
     "rgba": 2
   },
   "app/[orgSlug]/league/[seasonSlug]/standings/page.tsx": {
-    "hex": 13,
+    "hex": 9,
     "rgba": 3
   },
   "app/[orgSlug]/league/[seasonSlug]/status/StatusLookupForm.tsx": {
@@ -248,11 +224,11 @@
     "rgba": 2
   },
   "app/[orgSlug]/league/[seasonSlug]/status/page.tsx": {
-    "hex": 3,
+    "hex": 1,
     "rgba": 0
   },
   "app/[orgSlug]/league/page.tsx": {
-    "hex": 12,
+    "hex": 9,
     "rgba": 0
   },
   "app/[orgSlug]/scorekeeper/layout.tsx": {
@@ -260,19 +236,19 @@
     "rgba": 2
   },
   "app/[orgSlug]/teams/[teamSlug]/page.tsx": {
-    "hex": 7,
+    "hex": 3,
     "rgba": 2
   },
   "app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/page.tsx": {
-    "hex": 7,
+    "hex": 3,
     "rgba": 2
   },
   "app/[orgSlug]/teams/[teamSlug]/tryouts/[yearId]/register/page.tsx": {
-    "hex": 3,
+    "hex": 1,
     "rgba": 0
   },
   "app/coaches/join/page.tsx": {
-    "hex": 3,
+    "hex": 0,
     "rgba": 6
   },
   "app/coaches/team/[basicTeamId]/tournaments/page.tsx": {
@@ -316,11 +292,7 @@
     "rgba": 1
   },
   "app/platform-admin/observability/CallsVsErrorsChart.tsx": {
-    "hex": 5,
-    "rgba": 0
-  },
-  "app/platform-admin/observability/[groupId]/page.tsx": {
-    "hex": 1,
+    "hex": 3,
     "rgba": 0
   },
   "app/tryout-response/[token]/page.tsx": {
@@ -335,32 +307,12 @@
     "hex": 3,
     "rgba": 1
   },
-  "components/admin/LeagueCapUpgrade.tsx": {
-    "hex": 2,
-    "rgba": 0
-  },
-  "components/admin/TournamentSetupWizard.tsx": {
-    "hex": 1,
-    "rgba": 0
-  },
-  "components/coaches/CoachStaffPanel.tsx": {
-    "hex": 4,
-    "rgba": 0
-  },
   "components/coaches/CoachThemeColor.tsx": {
     "hex": 1,
     "rgba": 0
   },
   "components/coaches/ContinuityCompareCard.tsx": {
-    "hex": 2,
-    "rgba": 0
-  },
-  "components/coaches/PlayerDevelopmentSection.tsx": {
     "hex": 1,
-    "rgba": 0
-  },
-  "components/coaches/PlayerDocumentsSection.tsx": {
-    "hex": 2,
     "rgba": 0
   },
   "components/coaches/PositionProfileEditor.tsx": {
@@ -368,11 +320,11 @@
     "rgba": 0
   },
   "components/coaches/StartNextSeasonModal.tsx": {
-    "hex": 3,
+    "hex": 0,
     "rgba": 2
   },
   "components/coaches/UpgradeSummaryBanner.tsx": {
-    "hex": 3,
+    "hex": 2,
     "rgba": 0
   },
   "components/consumer/ConsumerThemeManager.tsx": {
@@ -391,24 +343,12 @@
     "hex": 1,
     "rgba": 0
   },
-  "components/rep-teams/TryoutDayCard.tsx": {
-    "hex": 1,
-    "rgba": 0
-  },
   "components/rep-teams/TryoutDecisionBoard.tsx": {
-    "hex": 7,
-    "rgba": 0
-  },
-  "components/rep-teams/TryoutEvaluatorsCard.tsx": {
-    "hex": 2,
-    "rgba": 0
-  },
-  "components/rep-teams/TryoutFlowHeader.tsx": {
     "hex": 1,
     "rgba": 0
   },
   "components/rep-teams/TryoutRubricCard.tsx": {
-    "hex": 3,
+    "hex": 1,
     "rgba": 0
   },
   "components/volunteer/ShellSignOutButton.tsx": {

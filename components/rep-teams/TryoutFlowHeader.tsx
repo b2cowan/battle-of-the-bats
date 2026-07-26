@@ -65,7 +65,7 @@ export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTa
           </div>
         ) : (
           <p className={styles.doneNote}>
-            You&apos;ve made your decisions.{overview.stats.rosterFromTryouts > 0 && <> <a href={rosterHref} style={{ color: 'var(--logic-lime, #a3e635)' }}>{overview.stats.rosterFromTryouts} player{overview.stats.rosterFromTryouts === 1 ? '' : 's'} on your roster →</a></>}
+            You&apos;ve made your decisions.{overview.stats.rosterFromTryouts > 0 && <> <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>{overview.stats.rosterFromTryouts} player{overview.stats.rosterFromTryouts === 1 ? '' : 's'} on your roster →</a></>}
           </p>
         )}
 

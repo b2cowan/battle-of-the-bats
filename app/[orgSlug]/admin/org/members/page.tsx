@@ -643,12 +643,12 @@ export default function MembersPage() {
                             </p>
                           )}
                           {removeImpact && removeImpact.coachingAssignmentCount > 0 && (
-                            <p className={styles.inlineConfirmText} style={{ color: 'var(--logic-amber, #F59E0B)', marginTop: '0.35rem' }}>
+                            <p className={styles.inlineConfirmText} style={{ color: 'var(--warning)', marginTop: '0.35rem' }}>
                               ⚠ They hold {removeImpact.coachingAssignmentCount} coaching assignment{removeImpact.coachingAssignmentCount !== 1 ? 's' : ''}, which {removeImpact.coachingAssignmentCount !== 1 ? 'are' : 'is'} lost on removal.
                             </p>
                           )}
                           {removeImpact && (removeImpact.tournamentCount > 0 || removeImpact.divisionCount > 0) && (
-                            <p className={styles.inlineConfirmText} style={{ color: 'var(--logic-amber, #F59E0B)', marginTop: '0.35rem' }}>
+                            <p className={styles.inlineConfirmText} style={{ color: 'var(--warning)', marginTop: '0.35rem' }}>
                               ⚠ This member is the contact for{removeImpact.tournamentCount > 0 ? ` ${removeImpact.tournamentCount} tournament${removeImpact.tournamentCount !== 1 ? 's' : ''}` : ''}{removeImpact.tournamentCount > 0 && removeImpact.divisionCount > 0 ? ' and' : ''}{removeImpact.divisionCount > 0 ? ` ${removeImpact.divisionCount} division${removeImpact.divisionCount !== 1 ? 's' : ''}` : ''}. Those will reset to the tournament default on removal.
                             </p>
                           )}
@@ -812,7 +812,7 @@ export default function MembersPage() {
         <span className={styles.seatCount}>
           <strong>{seatCount}</strong> of <strong>{seatLimit >= 9999 ? 'Unlimited' : seatLimit}</strong> staff seats used
           {planCfg.officialsFreeSeats && officialCount > 0 && (
-            <span style={{ marginLeft: '0.5rem', color: 'var(--text-muted)', fontWeight: 400 }}>
+            <span style={{ marginLeft: '0.5rem', color: 'var(--text-tertiary)', fontWeight: 400 }}>
               · {officialCount} scorekeeper{officialCount === 1 ? '' : 's'} (free on this plan)
             </span>
           )}
@@ -951,7 +951,7 @@ export default function MembersPage() {
 
             {/* Identity line */}
             <p style={{ fontSize: '0.85rem', color: 'var(--white-40)', marginBottom: '1rem' }}>
-              <strong style={{ color: 'var(--white-90, #f0f0f0)' }}>{manageTarget.email}</strong>
+              <strong style={{ color: 'var(--white-90)' }}>{manageTarget.email}</strong>
               {' '}
               <span className={`badge ${STATUS_BADGE[manageTarget.status]}`} style={{ fontSize: '0.68rem', verticalAlign: 'middle' }}>
                 {STATUS_LABEL[manageTarget.status]}

@@ -71,9 +71,9 @@ export default async function LeagueSeasonPage({
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--pitch-black, #0A0A0A)',
+        background: 'var(--pitch-black)',
         fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text, #F1F5F9)',
+        color: 'var(--fl-text)',
       }}
     >
       <div
@@ -315,7 +315,7 @@ export default async function LeagueSeasonPage({
               style={{
                 display: 'inline-block',
                 padding: '0.85rem 2.5rem',
-                background: 'var(--logic-lime, #a3e635)',
+                background: 'var(--logic-lime)',
                 color: '#0A0A0A',
                 fontWeight: 800,
                 fontSize: '1rem',

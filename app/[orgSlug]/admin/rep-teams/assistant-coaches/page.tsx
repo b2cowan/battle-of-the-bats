@@ -134,7 +134,7 @@ export default function AdminAssistantCoachesPage() {
       {error && <p className={styles.errorText}>{error}</p>}
 
       {/* Approval setting */}
-      <section style={{ padding: '1rem', marginBottom: '1rem', background: 'var(--surface-2, rgba(255,255,255,0.03))', border: '1px solid var(--border, rgba(255,255,255,0.08))', borderRadius: 10 }}>
+      <section style={{ padding: '1rem', marginBottom: '1rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', gap: '0.6rem' }}>
             <ShieldCheck size={18} style={{ color: 'var(--white-45)', marginTop: 2 }} />
@@ -158,10 +158,10 @@ export default function AdminAssistantCoachesPage() {
 
       {/* Awaiting approval */}
       {approvalPending.length > 0 && (
-        <section style={{ padding: '1rem', marginBottom: '1rem', background: 'var(--surface-2, rgba(255,255,255,0.03))', border: '1px solid var(--border, rgba(255,255,255,0.08))', borderRadius: 10 }}>
+        <section style={{ padding: '1rem', marginBottom: '1rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }}>
           <h2 style={{ margin: '0 0 0.6rem', fontSize: '1rem' }}>Awaiting your approval ({approvalPending.length})</h2>
           {approvalPending.map(p => (
-            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-2, rgba(255,255,255,0.06))', flexWrap: 'wrap' }}>
+            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-2)', flexWrap: 'wrap' }}>
               <div>
                 <span style={{ fontWeight: 600 }}>{p.invitedEmail}</span>
                 <span style={{ color: 'var(--white-45)', fontSize: '0.85rem' }}> — {p.teamName ?? 'a team'}</span>
@@ -185,10 +185,10 @@ export default function AdminAssistantCoachesPage() {
 
       {/* Invited, awaiting acceptance */}
       {awaitingAccept.length > 0 && (
-        <section style={{ padding: '1rem', marginBottom: '1rem', background: 'var(--surface-2, rgba(255,255,255,0.03))', border: '1px solid var(--border, rgba(255,255,255,0.08))', borderRadius: 10 }}>
+        <section style={{ padding: '1rem', marginBottom: '1rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }}>
           <h2 style={{ margin: '0 0 0.6rem', fontSize: '1rem' }}>Invited — awaiting acceptance ({awaitingAccept.length})</h2>
           {awaitingAccept.map(p => (
-            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-2, rgba(255,255,255,0.06))', flexWrap: 'wrap' }}>
+            <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0', borderTop: '1px solid var(--border-2)', flexWrap: 'wrap' }}>
               <div>
                 <span style={{ fontWeight: 600 }}>{p.invitedEmail}</span>
                 <span style={{ color: 'var(--white-45)', fontSize: '0.85rem' }}> — {p.teamName ?? 'a team'}</span>
@@ -205,13 +205,13 @@ export default function AdminAssistantCoachesPage() {
       )}
 
       {/* Active assistants */}
-      <section style={{ padding: '1rem', background: 'var(--surface-2, rgba(255,255,255,0.03))', border: '1px solid var(--border, rgba(255,255,255,0.08))', borderRadius: 10 }}>
+      <section style={{ padding: '1rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }}>
         <h2 style={{ margin: '0 0 0.6rem', fontSize: '1rem' }}>Active assistant coaches ({assistants.length})</h2>
         {!loading && assistants.length === 0 && (
           <p className={styles.muted}>No assistant coaches yet. Head coaches add their own from a team&apos;s Staff tab.</p>
         )}
         {assistants.map(a => (
-          <div key={a.coachId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.6rem 0', borderTop: '1px solid var(--border-2, rgba(255,255,255,0.06))', flexWrap: 'wrap' }}>
+          <div key={a.coachId} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem', padding: '0.6rem 0', borderTop: '1px solid var(--border-2)', flexWrap: 'wrap' }}>
             <div>
               <p style={{ margin: 0, fontWeight: 600 }}>{a.displayName || a.email || 'Assistant coach'}</p>
               <p style={{ margin: '0.1rem 0 0', fontSize: '0.82rem', color: 'var(--white-45)' }}>

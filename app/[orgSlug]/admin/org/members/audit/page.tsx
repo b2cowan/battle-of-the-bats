@@ -154,7 +154,7 @@ export default function AuditLogPage() {
       </div>
 
       {errorMsg && (
-        <p style={{ color: 'var(--danger, #ef4444)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+        <p style={{ color: 'var(--danger)', marginBottom: '1rem', fontSize: '0.875rem' }}>
           {errorMsg}
         </p>
       )}

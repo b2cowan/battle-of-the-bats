@@ -607,7 +607,7 @@ export default function RegistrationsPage() {
               background: 'none',
               border: 'none',
               borderBottom: activeTab === tab.key ? '2px solid var(--logic-lime)' : '2px solid transparent',
-              color: activeTab === tab.key ? 'var(--white-90, #f0f0f0)' : 'var(--white-40)',
+              color: activeTab === tab.key ? 'var(--white-90)' : 'var(--white-40)',
               fontWeight: activeTab === tab.key ? 700 : 400,
               fontSize: '0.85rem',
               padding: '0.5rem 0.75rem',
@@ -667,7 +667,7 @@ export default function RegistrationsPage() {
                 >
                   {/* Player */}
                   <td style={{ padding: '0.65rem 0.75rem', whiteSpace: 'nowrap' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--white-90, #f0f0f0)' }}>
+                    <span style={{ fontWeight: 700, color: 'var(--white-90)' }}>
                       {reg.playerFirstName} {reg.playerLastName}
                     </span>
                     {activeTab === 'waitlisted' && reg.waitlistPosition !== null && (

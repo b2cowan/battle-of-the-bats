@@ -58,7 +58,7 @@ export default function CallsVsErrorsChart({ data }: { data: ChartPoint[] }) {
       <line x1={ML} y1={MT + CH} x2={ML + CW} y2={MT + CH} stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
 
       <path d={callsArea} fill="rgba(132,204,22,0.06)" />
-      <path d={callsPath} stroke="var(--logic-lime, #84cc16)" strokeWidth="2" fill="none" />
+      <path d={callsPath} stroke="var(--logic-lime)" strokeWidth="2" fill="none" />
       <path d={errorsPath} stroke="#f87171" strokeWidth="2" fill="none" />
 
       {data.map((d, i) => (
@@ -75,7 +75,7 @@ export default function CallsVsErrorsChart({ data }: { data: ChartPoint[] }) {
       })}
 
       <g transform={`translate(${ML + 8},${MT + 6})`}>
-        <line x1="0" y1="6" x2="18" y2="6" stroke="var(--logic-lime, #84cc16)" strokeWidth="2" />
+        <line x1="0" y1="6" x2="18" y2="6" stroke="var(--logic-lime)" strokeWidth="2" />
         <text x="22" y="10" fontSize="9" fill="rgba(255,255,255,0.5)">Calls</text>
         <line x1="74" y1="6" x2="92" y2="6" stroke="#f87171" strokeWidth="2" />
         <text x="96" y="10" fontSize="9" fill="rgba(255,255,255,0.5)">Errors</text>

@@ -2128,7 +2128,7 @@ export default function UnifiedTeamsPage() {
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
           padding: '0.45rem 1.25rem',
           borderBottom: '1px solid var(--border)',
-          background: atCap && !closed ? 'rgba(251,191,36,0.05)' : 'var(--white-3)',
+          background: atCap && !closed ? 'rgba(251,191,36,0.05)' : 'var(--white-03)',
         };
         const btnStyle: React.CSSProperties = {
           background: 'none', border: 'none', cursor: 'pointer', padding: '0.15rem 0',
@@ -2749,8 +2749,8 @@ export default function UnifiedTeamsPage() {
                           sections.map(sec => (
                             <div key={sec.id} className={s.poolSubSection} style={{ marginTop: 0 }}>
                               <div className={s.poolSubHeader}>
-                                <div className={s.poolDot} style={{ background: sec.isUnassigned ? 'var(--danger-light, #f87171)' : 'var(--logic-lime)' }} />
-                                <span className={s.poolSubLabel} style={{ color: sec.isUnassigned ? 'var(--danger-light, #f87171)' : undefined }}>
+                                <div className={s.poolDot} style={{ background: sec.isUnassigned ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
+                                <span className={s.poolSubLabel} style={{ color: sec.isUnassigned ? 'var(--danger-light)' : undefined }}>
                                   {sec.isUnassigned ? 'Unassigned' : formatPoolName(sec.name)}
                                 </span>
                                 <span className={s.poolSubCount}>({sec.teams.length})</span>

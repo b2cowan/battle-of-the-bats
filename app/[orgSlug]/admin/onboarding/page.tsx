@@ -1819,7 +1819,7 @@ export default function OnboardingPage() {
         (
           <div className={styles.inlineList}>
             <p style={{ fontSize: '0.72rem', color: 'var(--data-gray)', margin: 0, lineHeight: 1.5 }}>
-              <strong style={{ color: 'var(--white-55, rgba(255,255,255,0.55))' }}>Max players</strong> caps how many players can register in a division — it&apos;s
+              <strong style={{ color: 'var(--white-55)' }}>Max players</strong> caps how many players can register in a division — it&apos;s
               not the number of teams{leagueDivisionLimited ? ' (your free plan includes up to 8 teams, added after setup)' : ''}. Leave it blank for no limit.
             </p>
             {!leagueDivisionLimited && (
@@ -1958,7 +1958,7 @@ export default function OnboardingPage() {
                       onChange={e => setLeagueSeasonForm(form => ({ ...form, [key]: e.target.checked }))}
                     />
                     <span style={{ display: 'flex', flexDirection: 'column', gap: '0.15rem' }}>
-                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--white-70, rgba(255,255,255,0.7))' }}>{label}</span>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--white-70)' }}>{label}</span>
                       <span style={{ fontSize: '0.72rem', fontWeight: 400, color: 'var(--data-gray)', lineHeight: 1.4 }}>{help}</span>
                     </span>
                   </label>

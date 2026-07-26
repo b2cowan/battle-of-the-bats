@@ -26,9 +26,9 @@ export default async function TryoutRegisterPage({
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--pitch-black, #0A0A0A)',
+        background: 'var(--pitch-black)',
         fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text, #F1F5F9)',
+        color: 'var(--fl-text)',
       }}
     >
       <div

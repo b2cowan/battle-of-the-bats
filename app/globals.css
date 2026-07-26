@@ -341,6 +341,12 @@ body:has([data-chat-fullbleed]) {
      --platform-primary (top of globals.css) moves this and the default --primary together. */
   --blueprint-blue:      var(--platform-primary);
   --blueprint-blue-rgb:  var(--platform-primary-rgb);
+  /* Lighter blueprint tone for small labels sitting ON a --blueprint-blue-bordered surface
+     (the archives table header). Component code already referenced --blueprint-light by name
+     but it was never declared, so it silently rendered its frozen fallback and would NOT have
+     moved in a rebrand. Declared 2026-07-26 at that exact value — not a derivation of
+     --platform-primary, so a rebrand edits this line too. */
+  --blueprint-light:     #3B5FC4;
   --logic-lime:          #D9F99D;
   --logic-lime-rgb:      217, 249, 157;
   /* Dark ink for TEXT/GLYPHS on a bright fill (lime / gold / amber chips + the

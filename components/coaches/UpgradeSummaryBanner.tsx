@@ -106,7 +106,7 @@ export default function UpgradeSummaryBanner({ orgSlug, teamId }: { orgSlug: str
         <X size={16} />
       </button>
       <p style={{ margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.45rem', fontWeight: 700, color: 'var(--home-ink, #fff)' }}>
-        <CheckCircle2 size={16} style={{ color: 'var(--info-light, #60a5fa)' }} aria-hidden />
+        <CheckCircle2 size={16} style={{ color: 'var(--info-light)' }} aria-hidden />
         Welcome to Premium — your team came with you
       </p>
       <p style={{ margin: '0 0 0.6rem', color: 'var(--home-ink-soft, rgba(241,245,249,0.82))', fontSize: '0.9rem' }}>

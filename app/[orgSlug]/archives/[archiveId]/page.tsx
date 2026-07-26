@@ -98,19 +98,19 @@ export default async function ArchiveDetailPage({
     fontWeight: 700,
     letterSpacing: '0.12em',
     textTransform: 'uppercase' as const,
-    color: 'var(--blueprint-blue, #1E3A8A)',
+    color: 'var(--blueprint-blue)',
   };
-  const dataGray = 'var(--data-gray, #94A3B8)';
-  const flText   = 'var(--fl-text, #F1F5F9)';
-  const blue     = 'var(--blueprint-blue, #1E3A8A)';
-  const lime     = 'var(--logic-lime, #D9F99D)';
-  const surface  = 'var(--hud-surface, #111827)';
+  const dataGray = 'var(--data-gray)';
+  const flText   = 'var(--fl-text)';
+  const blue     = 'var(--blueprint-blue)';
+  const lime     = 'var(--logic-lime)';
+  const surface  = 'var(--hud-surface)';
 
   return (
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--pitch-black, #0A0A0A)',
+        background: 'var(--pitch-black)',
         padding: '2rem',
         ...mono,
       }}

@@ -182,7 +182,7 @@ export default function TeamSettingsPage({
                 {savingDivision ? 'Saving...' : 'Save'}
               </button>
             </div>
-            {divisionMsg && <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--lime, #b6e34d)' }}>{divisionMsg}</p>}
+            {divisionMsg && <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--success-light)' }}>{divisionMsg}</p>}
             {divisionError && <p className={styles.errorText} style={{ margin: 0 }}>{divisionError}</p>}
           </form>
         ) : (
@@ -282,7 +282,7 @@ export default function TeamSettingsPage({
             <button type="submit" className={styles.btnPrimary} disabled={savingCaps} style={{ whiteSpace: 'nowrap' }}>
               {savingCaps ? 'Saving...' : 'Save rules'}
             </button>
-            {capsMsg && <span style={{ fontSize: '0.85rem', color: 'var(--lime, #b6e34d)' }}>{capsMsg}</span>}
+            {capsMsg && <span style={{ fontSize: '0.85rem', color: 'var(--success-light)' }}>{capsMsg}</span>}
             {capsError && <span className={styles.errorText}>{capsError}</span>}
           </div>
         </form>

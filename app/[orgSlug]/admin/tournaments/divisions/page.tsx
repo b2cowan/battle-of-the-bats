@@ -539,7 +539,7 @@ export default function DivisionsPage() {
                     </button>
 
                     {advancedOpen && (
-                      <div style={{ border: '1px solid var(--border-2)', borderTop: 0, padding: '1.25rem 1rem', marginBottom: '1.5rem', borderRadius: '0 0 2px 2px', background: 'var(--white-02)' }}>
+                      <div style={{ border: '1px solid var(--border-2)', borderTop: 0, padding: '1.25rem 1rem', marginBottom: '1.5rem', borderRadius: '0 0 2px 2px', background: 'var(--white-03)' }}>
 
                         {/* Fee Schedule — conditional on fee_scope */}
                         {feeScope !== 'tournament' && feeScope !== 'free' && (

@@ -378,7 +378,7 @@ export default function PdfSettingsPage() {
               label="Include internal admin notes"
               hint={
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <AlertTriangle size={11} style={{ color: 'var(--warning, #f59e0b)', flexShrink: 0 }} />
+                  <AlertTriangle size={11} style={{ color: 'var(--warning)', flexShrink: 0 }} />
                   Off by default — internal notes are never shown to registering families
                 </span>
               }

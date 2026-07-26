@@ -640,7 +640,7 @@ export default function PlayerDevelopmentSection({
                   Discard
                 </button>
                 {editingGoalId && (
-                  <button type="button" className="btn btn-ghost" style={{ fontSize: '0.8rem', marginLeft: 'auto', color: 'var(--danger, #f87171)' }}
+                  <button type="button" className="btn btn-ghost" style={{ fontSize: '0.8rem', marginLeft: 'auto', color: 'var(--danger)' }}
                     onClick={() => deleteGoal(editingGoalId)}>
                     <X size={12} /> Remove
                   </button>

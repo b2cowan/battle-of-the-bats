@@ -76,7 +76,7 @@ function Sparkline({ data }: { data: { label: string; count: number }[] }) {
         const y = MT + (CH - h);
         return (
           <g key={d.label}>
-            <rect x={x} y={y} width={bw} height={Math.max(h, d.count > 0 ? 2 : 0)} fill="var(--logic-lime, #84cc16)" opacity={d.count > 0 ? 0.8 : 0.15} />
+            <rect x={x} y={y} width={bw} height={Math.max(h, d.count > 0 ? 2 : 0)} fill="var(--logic-lime)" opacity={d.count > 0 ? 0.8 : 0.15} />
             {(i === 0 || i === n - 1) && (
               <text x={x + bw / 2} y={VH - 5} textAnchor="middle" fontSize="8" fill="rgba(255,255,255,0.35)">{d.label}</text>
             )}

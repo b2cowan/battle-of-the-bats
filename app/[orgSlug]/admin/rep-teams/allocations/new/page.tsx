@@ -327,7 +327,7 @@ export default function NewAllocationPage() {
           <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <div style={{
               width: 28, height: 28, borderRadius: '50%',
-              background: step >= s ? 'var(--blueprint-blue,#4fa3e0)' : 'var(--white-8)',
+              background: step >= s ? 'var(--blueprint-blue)' : 'var(--white-8)',
               color: step >= s ? '#fff' : 'var(--white-30)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.8rem', fontWeight: 700, flexShrink: 0,

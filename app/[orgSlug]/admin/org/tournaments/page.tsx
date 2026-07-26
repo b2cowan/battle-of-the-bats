@@ -623,9 +623,9 @@ export default function AdminTournamentsPage({
   }
 
   const slugHintColor = slugStatus === 'available'
-    ? 'var(--success, #22c55e)'
+    ? 'var(--success)'
     : slugStatus === 'taken' || slugStatus === 'invalid'
-      ? 'var(--danger, #ef4444)'
+      ? 'var(--danger)'
       : 'var(--white-30)';
   const saveDisabled = slugStatus === 'checking' || slugStatus === 'taken' || slugStatus === 'invalid';
   const tournamentLimit = currentOrg?.tournamentLimit ?? 9999;
@@ -942,7 +942,7 @@ export default function AdminTournamentsPage({
                     </span>
                   )}
                   {modal === 'edit' && (
-                    <span style={{ color: 'var(--warning, #f59e0b)', marginLeft: '0.5rem' }}>
+                    <span style={{ color: 'var(--warning)', marginLeft: '0.5rem' }}>
                       Changing this will break existing links to this tournament.
                     </span>
                   )}
@@ -1175,7 +1175,7 @@ export default function AdminTournamentsPage({
           <div className="modal" style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="flex items-center gap-2">
-                <Check size={20} style={{ color: 'var(--success, #22c55e)' }} />
+                <Check size={20} style={{ color: 'var(--success)' }} />
                 <h3>{createdFromReuse ? 'Tournament Draft Created' : 'Tournament Created'}</h3>
               </div>
               <button className="btn btn-ghost btn-data" onClick={() => setCreatedTournament(null)}><X size={16} /></button>
@@ -1205,7 +1205,7 @@ export default function AdminTournamentsPage({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
                 {createdChecklist.map(item => (
                   <div key={item} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
-                    <Check size={14} style={{ color: 'var(--success, #22c55e)', flexShrink: 0, marginTop: '0.15rem' }} />
+                    <Check size={14} style={{ color: 'var(--success)', flexShrink: 0, marginTop: '0.15rem' }} />
                     <span style={{ fontSize: '0.9rem', color: 'var(--white-70)' }}>{item}</span>
                   </div>
                 ))}

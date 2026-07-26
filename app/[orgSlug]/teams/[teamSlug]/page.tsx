@@ -47,9 +47,9 @@ export default async function TeamPublicPage({
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--pitch-black, #0A0A0A)',
+        background: 'var(--pitch-black)',
         fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text, #F1F5F9)',
+        color: 'var(--fl-text)',
       }}
     >
       {/* Color accent strip */}
@@ -192,7 +192,7 @@ export default async function TeamPublicPage({
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '0.4rem',
-                  color: 'var(--logic-lime, #a3e635)',
+                  color: 'var(--logic-lime)',
                   fontSize: '0.75rem',
                   fontWeight: 700,
                   textTransform: 'uppercase',
@@ -212,7 +212,7 @@ export default async function TeamPublicPage({
               style={{
                 display: 'inline-block',
                 padding: '0.65rem 1.5rem',
-                background: 'var(--logic-lime, #a3e635)',
+                background: 'var(--logic-lime)',
                 color: '#0A0A0A',
                 borderRadius: '8px',
                 fontWeight: 700,

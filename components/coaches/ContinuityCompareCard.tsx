@@ -18,7 +18,7 @@ export default function ContinuityCompareCard({ row, busy, onConfirm, onReject, 
     <div style={{
       margin: '0 0 0.5rem',
       padding: '0.6rem 0.75rem',
-      border: '1px solid var(--warning, #b45309)',
+      border: '1px solid var(--warning)',
       borderRadius: 10,
       background: 'rgba(180, 83, 9, 0.1)',
     }}>

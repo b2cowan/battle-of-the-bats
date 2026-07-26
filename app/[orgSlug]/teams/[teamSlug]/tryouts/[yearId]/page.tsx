@@ -25,9 +25,9 @@ export default async function TryoutLandingPage({
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--pitch-black, #0A0A0A)',
+        background: 'var(--pitch-black)',
         fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text, #F1F5F9)',
+        color: 'var(--fl-text)',
       }}
     >
       <div
@@ -112,7 +112,7 @@ export default async function TryoutLandingPage({
                 borderRadius: '6px',
                 background: 'rgba(163,230,53,0.1)',
                 border: '1px solid rgba(163,230,53,0.3)',
-                color: 'var(--logic-lime, #a3e635)',
+                color: 'var(--logic-lime)',
                 fontSize: '0.75rem',
                 fontWeight: 700,
                 textTransform: 'uppercase',
@@ -129,7 +129,7 @@ export default async function TryoutLandingPage({
                 style={{
                   display: 'inline-block',
                   padding: '0.85rem 2rem',
-                  background: 'var(--logic-lime, #a3e635)',
+                  background: 'var(--logic-lime)',
                   color: '#0A0A0A',
                   borderRadius: '10px',
                   fontWeight: 700,

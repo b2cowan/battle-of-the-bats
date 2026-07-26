@@ -159,7 +159,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
                     type="button"
                     onClick={() => setScaleMax(s)}
                     className={styles.addBtn}
-                    style={scaleMax === s ? { borderStyle: 'solid', borderColor: 'var(--logic-lime, #a3e635)', color: 'var(--home-ink, #f0f0f0)' } : {}}
+                    style={scaleMax === s ? { borderStyle: 'solid', borderColor: 'var(--logic-lime)', color: 'var(--home-ink, #f0f0f0)' } : {}}
                   >
                     1–{s}
                   </button>
@@ -187,7 +187,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
               <button type="button" className={styles.addBtn} style={{ marginTop: '0.5rem' }} onClick={addCat}><Plus size={14} /> Add category</button>
             </div>
 
-            {formError && <p style={{ color: 'var(--danger-light, #f87171)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
+            {formError && <p style={{ color: 'var(--danger-light)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
 
             <div className={styles.modalActions}>
               <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)} disabled={saving}>Cancel</button>

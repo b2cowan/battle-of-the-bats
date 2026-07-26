@@ -131,7 +131,7 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
                 <div className={styles.sessionMain}>
                   <div className={styles.sessionWhen}>{e.evaluatorName ?? 'Evaluator'}</div>
                   <div className={styles.sessionMeta}>
-                    <span style={{ color: st.live ? 'var(--logic-lime, #a3e635)' : 'var(--home-dim, rgba(255,255,255,0.4))' }}>{st.label}</span>
+                    <span style={{ color: st.live ? 'var(--logic-lime)' : 'var(--home-dim, rgba(255,255,255,0.4))' }}>{st.label}</span>
                     {' · '}{e.candidatesScored} scored
                   </div>
                 </div>
@@ -171,7 +171,7 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
                 <p className={styles.subtitle} style={{ margin: '0 0 0.6rem' }}>
                   They’ll get a private link that works for 48 hours. No login, no app.
                 </p>
-                {formError && <p style={{ color: 'var(--danger-light, #f87171)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
+                {formError && <p style={{ color: 'var(--danger-light)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
                 <div className={styles.modalActions}>
                   <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)} disabled={saving}>Cancel</button>
                   <button type="button" className="btn btn-primary" onClick={create} disabled={saving}>{saving ? 'Creating…' : 'Create link'}</button>

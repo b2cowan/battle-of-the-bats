@@ -563,7 +563,7 @@ export default function TryoutsPage({
                         {reg.consentAt ? (
                           <span
                             title={`Consent recorded ${new Date(reg.consentAt).toLocaleString('en-CA')}`}
-                            style={{ color: 'var(--logic-lime, #a3e635)', whiteSpace: 'nowrap' }}
+                            style={{ color: 'var(--logic-lime)', whiteSpace: 'nowrap' }}
                           >
                             ✓ {new Date(reg.consentAt).toLocaleDateString('en-CA')}
                           </span>
@@ -695,7 +695,7 @@ export default function TryoutsPage({
                 </div>
                 <div className={styles.slideOverField}>
                   <span className={styles.slideOverFieldLabel}>Email</span>
-                  <a href={`mailto:${selected.guardianEmail}`} style={{ color: 'var(--blueprint-blue, #4fa3e0)' }}>
+                  <a href={`mailto:${selected.guardianEmail}`} style={{ color: 'var(--blueprint-blue)' }}>
                     {selected.guardianEmail}
                   </a>
                 </div>
@@ -964,13 +964,13 @@ export default function TryoutsPage({
 function OfferStateNote({ reg }: { reg: RepTryoutRegistration }) {
   const expired = !!reg.offerExpiresAt && new Date(reg.offerExpiresAt).getTime() < Date.now() && !reg.offerRespondedAt;
   let text: string, color: string;
-  if (reg.offerResponse === 'accepted') { text = '✓ Family accepted the offer — accept below to add them to the roster.'; color = 'var(--logic-lime, #a3e635)'; }
+  if (reg.offerResponse === 'accepted') { text = '✓ Family accepted the offer — accept below to add them to the roster.'; color = 'var(--logic-lime)'; }
   else if (reg.offerResponse === 'declined') { text = '✕ Family declined the offer.'; color = '#f87171'; }
   else if (expired) { text = 'Offer expired — no response by the deadline.'; color = '#fbbf24'; }
   else if (reg.offerSentAt) {
     const by = reg.offerExpiresAt ? new Date(reg.offerExpiresAt).toLocaleDateString('en-CA') : null;
-    text = by ? `Awaiting family response — respond by ${by}.` : 'Awaiting family response.'; color = 'var(--white-45, rgba(255,255,255,0.45))';
-  } else { text = 'No response link sent yet.'; color = 'var(--white-45, rgba(255,255,255,0.45))'; }
+    text = by ? `Awaiting family response — respond by ${by}.` : 'Awaiting family response.'; color = 'var(--white-45)';
+  } else { text = 'No response link sent yet.'; color = 'var(--white-45)'; }
   return (
     <div className={styles.slideOverSection}>
       <div className={styles.slideOverSectionTitle}>Offer response</div>

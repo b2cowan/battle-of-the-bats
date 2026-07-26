@@ -163,7 +163,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
                     <button
                       type="button"
                       className="btn btn-ghost"
-                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', color: 'var(--danger-light, #f87171)', opacity: deletingId === doc.id ? 0.5 : 1 }}
+                      style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', color: 'var(--danger-light)', opacity: deletingId === doc.id ? 0.5 : 1 }}
                       disabled={deletingId === doc.id}
                       onClick={() => handleDelete(doc.id)}
                       title="Delete"
@@ -218,7 +218,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
               </div>
 
               {uploadError && (
-                <p style={{ color: 'var(--danger-light, #f87171)', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
+                <p style={{ color: 'var(--danger-light)', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
               )}
             </div>
 

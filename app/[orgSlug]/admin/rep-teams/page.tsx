@@ -622,7 +622,7 @@ export default function RepTeamsPage() {
             <p className={styles.confirmMsg} style={{ marginTop: '-0.5rem' }}>
               <strong style={{ color: 'var(--white-70)' }}>Tip:</strong> If you want to reuse
               this team&apos;s URL slug for an incoming cohort, use{' '}
-              <Link href={`${base}/rep-teams/rename-slugs`} style={{ color: 'var(--blueprint-blue, #4fa3e0)' }}>
+              <Link href={`${base}/rep-teams/rename-slugs`} style={{ color: 'var(--blueprint-blue)' }}>
                 Rename Team URLs
               </Link>{' '}
               first to give this team a permanent cohort-based slug (e.g. <code style={{ fontSize: '0.8em', opacity: 0.7 }}>2025-u19-grads</code>).

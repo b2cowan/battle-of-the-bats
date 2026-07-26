@@ -774,7 +774,7 @@ export default function BillingPage() {
                     className={styles.usageFill}
                     style={{
                       width: `${pct}%`,
-                      background: pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning, #f59e0b)' : 'var(--logic-lime)',
+                      background: pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning)' : 'var(--logic-lime)',
                     }}
                   />
                 );

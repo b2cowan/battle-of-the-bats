@@ -23,7 +23,7 @@ export default async function ArchivesPage({
     <div
       style={{
         minHeight: '100vh',
-        background: 'var(--pitch-black, #0A0A0A)',
+        background: 'var(--pitch-black)',
         padding: 'calc(var(--nav-height) + 2rem) 2rem 2rem',
         fontFamily: 'var(--font-data, "IBM Plex Mono", monospace)',
       }}
@@ -33,7 +33,7 @@ export default async function ArchivesPage({
         {/* Page header */}
         <div
           style={{
-            borderBottom: '1px solid var(--blueprint-blue, #1E3A8A)',
+            borderBottom: '1px solid var(--blueprint-blue)',
             paddingBottom: '1.25rem',
             marginBottom: '2rem',
           }}
@@ -48,7 +48,7 @@ export default async function ArchivesPage({
               fontSize: '1.875rem',
               textTransform: 'uppercase',
               letterSpacing: '-0.02em',
-              color: 'var(--fl-text, #F1F5F9)',
+              color: 'var(--fl-text)',
               margin: 0,
             }}
           >
@@ -58,7 +58,7 @@ export default async function ArchivesPage({
             style={{
               fontFamily: 'var(--font-data, "IBM Plex Mono", monospace)',
               fontSize: '0.75rem',
-              color: 'var(--data-gray, #94A3B8)',
+              color: 'var(--data-gray)',
               marginTop: '0.375rem',
               display: 'flex',
               alignItems: 'center',
@@ -73,7 +73,7 @@ export default async function ArchivesPage({
                   fontSize: '0.625rem',
                   letterSpacing: '0.1em',
                   textTransform: 'uppercase',
-                  color: 'var(--data-gray, #94A3B8)',
+                  color: 'var(--data-gray)',
                   textDecoration: 'none',
                 }}
               >
@@ -90,7 +90,7 @@ export default async function ArchivesPage({
               border: '1px solid rgba(30,58,138,0.3)',
               padding: '3rem',
               textAlign: 'center',
-              color: 'var(--data-gray, #94A3B8)',
+              color: 'var(--data-gray)',
               fontSize: '0.75rem',
               letterSpacing: '0.08em',
             }}
@@ -109,8 +109,8 @@ export default async function ArchivesPage({
               <thead>
                 <tr
                   style={{
-                    borderBottom: '1px solid var(--blueprint-blue, #1E3A8A)',
-                    color: 'var(--blueprint-light, #3B5FC4)',
+                    borderBottom: '1px solid var(--blueprint-blue)',
+                    color: 'var(--blueprint-light)',
                     fontSize: '0.625rem',
                     textTransform: 'uppercase',
                     letterSpacing: '0.1em',
@@ -135,7 +135,7 @@ export default async function ArchivesPage({
                       cursor: 'pointer',
                     }}
                   >
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--data-gray, #94A3B8)' }}>
+                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--data-gray)' }}>
                       <Link
                         href={`/${orgSlug}/archives/${a.id}`}
                         style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
@@ -143,7 +143,7 @@ export default async function ArchivesPage({
                         {a.season}
                       </Link>
                     </td>
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--fl-text, #F1F5F9)' }}>
+                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--fl-text)' }}>
                       <Link
                         href={`/${orgSlug}/archives/${a.id}`}
                         style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
@@ -151,7 +151,7 @@ export default async function ArchivesPage({
                         {a.tournamentName}
                       </Link>
                     </td>
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--data-gray, #94A3B8)' }}>
+                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', color: 'var(--data-gray)' }}>
                       <Link
                         href={`/${orgSlug}/archives/${a.id}`}
                         style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
@@ -162,7 +162,7 @@ export default async function ArchivesPage({
                     <td
                       style={{
                         padding: '0.75rem 1.5rem 0.75rem 0',
-                        color: 'var(--logic-lime, #D9F99D)',
+                        color: 'var(--logic-lime)',
                         fontWeight: 700,
                       }}
                     >
@@ -173,7 +173,7 @@ export default async function ArchivesPage({
                         {a.winnerTeamName ?? '—'}
                       </Link>
                     </td>
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', textAlign: 'right', color: 'var(--data-gray, #94A3B8)' }}>
+                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', textAlign: 'right', color: 'var(--data-gray)' }}>
                       <Link
                         href={`/${orgSlug}/archives/${a.id}`}
                         style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
@@ -181,7 +181,7 @@ export default async function ArchivesPage({
                         {a.totalTeams ?? '—'}
                       </Link>
                     </td>
-                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', textAlign: 'right', color: 'var(--data-gray, #94A3B8)' }}>
+                    <td style={{ padding: '0.75rem 1.5rem 0.75rem 0', textAlign: 'right', color: 'var(--data-gray)' }}>
                       <Link
                         href={`/${orgSlug}/archives/${a.id}`}
                         style={{ color: 'inherit', textDecoration: 'none', display: 'block' }}
@@ -199,7 +199,7 @@ export default async function ArchivesPage({
                             style={{
                               fontSize: '0.625rem',
                               border: '1px solid rgba(217,249,157,0.4)',
-                              color: 'var(--logic-lime, #D9F99D)',
+                              color: 'var(--logic-lime)',
                               padding: '0.125rem 0.375rem',
                               letterSpacing: '0.06em',
                             }}
@@ -226,7 +226,7 @@ export default async function ArchivesPage({
               fontSize: '0.625rem',
               letterSpacing: '0.1em',
               textTransform: 'uppercase',
-              color: 'var(--data-gray, #94A3B8)',
+              color: 'var(--data-gray)',
               textDecoration: 'none',
             }}
           >

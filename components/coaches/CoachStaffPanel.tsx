@@ -181,7 +181,7 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
           <UserPlus size={15} /> {inviting ? 'Sending…' : 'Invite assistant'}
         </button>
       </form>
-      {inviteMsg && <p style={{ margin: '0 0 0.6rem', fontSize: '0.85rem', color: 'var(--logic-lime, #b6e34d)' }}>{inviteMsg}</p>}
+      {inviteMsg && <p style={{ margin: '0 0 0.6rem', fontSize: '0.85rem', color: 'var(--logic-lime)' }}>{inviteMsg}</p>}
       {inviteError && <p className={styles.errorText} style={{ margin: '0 0 0.6rem' }}>{inviteError}</p>}
 
       {loadError && <p className={styles.errorText}>{loadError}</p>}
@@ -197,7 +197,7 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
           const c = member.capabilities;
           const setCap = (patch: Partial<Caps>) => saveCaps(member, { ...c, ...patch });
           return (
-            <div key={member.coachId} style={{ border: '1px solid var(--border-2, rgba(255,255,255,0.08))', borderRadius: 10, padding: '0.85rem' }}>
+            <div key={member.coachId} style={{ border: '1px solid var(--border-2)', borderRadius: 10, padding: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
                 <div>
                   <p style={{ margin: 0, fontWeight: 600, color: 'var(--white-90)' }}>{member.displayName || member.email || 'Assistant coach'}</p>
@@ -205,7 +205,7 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                   {savingId === member.coachId && <span style={{ fontSize: '0.78rem', color: 'var(--white-45)' }}>Saving…</span>}
-                  {savedId === member.coachId && <span style={{ fontSize: '0.78rem', color: 'var(--logic-lime, #b6e34d)' }}>Saved</span>}
+                  {savedId === member.coachId && <span style={{ fontSize: '0.78rem', color: 'var(--logic-lime)' }}>Saved</span>}
                   <button type="button" onClick={() => removeAssistant(member)} disabled={removingId === member.coachId}
                     className={styles.btnSecondary}
                     style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', padding: '0.25rem 0.55rem' }}>
@@ -219,7 +219,7 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
                 {SEGMENTS.map(seg => (
                   <div key={String(seg.key)} style={{ minWidth: 170 }}>
                     <p style={{ margin: '0 0 0.2rem', fontSize: '0.8rem', color: 'var(--white-70)' }}>{seg.label}</p>
-                    <div style={{ display: 'inline-flex', border: '1px solid var(--border-2, rgba(255,255,255,0.12))', borderRadius: 8, overflow: 'hidden' }}>
+                    <div style={{ display: 'inline-flex', border: '1px solid var(--border-2)', borderRadius: 8, overflow: 'hidden' }}>
                       {seg.options.map(opt => {
                         const active = String(c[seg.key]) === opt.value;
                         return (
@@ -227,8 +227,8 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
                             onClick={() => setCap({ [seg.key]: opt.value } as Partial<Caps>)}
                             style={{
                               border: 'none', cursor: 'pointer', fontSize: '0.76rem', padding: '0.3rem 0.6rem',
-                              background: active ? 'var(--logic-lime, #b6e34d)' : 'transparent',
-                              color: active ? 'var(--pitch-black, #0a0a0f)' : 'var(--white-70)',
+                              background: active ? 'var(--logic-lime)' : 'transparent',
+                              color: active ? 'var(--pitch-black)' : 'var(--white-70)',
                               fontWeight: active ? 700 : 500,
                             }}>
                             {opt.label}

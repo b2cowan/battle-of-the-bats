@@ -121,7 +121,7 @@ export default function CoachTryoutsPage({
               <a className={flow.rosterLink} href={rosterHref}>View your team roster <ArrowRight size={15} /></a>
             </>
           ) : (
-            <p className={flow.resultEmpty}>Once you accept players from the decision board, they&apos;ll appear on your <a href={rosterHref} style={{ color: 'var(--logic-lime, #a3e635)' }}>team roster</a> — ready for lineups.</p>
+            <p className={flow.resultEmpty}>Once you accept players from the decision board, they&apos;ll appear on your <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>team roster</a> — ready for lineups.</p>
           )}
         </div>
       </div>

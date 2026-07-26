@@ -154,8 +154,47 @@ The 2026-07-22/23 prod promotes made a large slice of tracking docs stale in the
 > unfixable in place — `opengraph-image.tsx` renders via Satori, which cannot read CSS custom
 > properties — and want `token-exempt` annotations rather than tokens.
 >
-> **Open follow-ups:** (a) declare or remove `--shadow-md`; (b) pay down or annotate the 536
-> inline TSX colors; (c) light-mode + warm-portal eyeball pass on the swept surfaces — the
+> ### Inline-color follow-up — Tiers 1 & 2 done 2026-07-26 (tsx debt 536 → 428)
+>
+> The 536 were segmented rather than swept, because they are four different problems.
+>
+> **Tier 1 — 10 references to a color name that was never declared.** Four "frozen literal"
+> names (`--logic-amber`, `--lime`, `--blueprint-light`, `--bg-elevated`, `--hairline`) rendered
+> their fallback — so they *looked* tokenized, were not, and a rebrand would never have moved
+> them. Three more (`--text-muted`, `--white-02`, `--white-3`) had no fallback and rendered
+> **nothing**, silently inheriting or going transparent. `--logic-amber → --warning` is an exact
+> value match; the rest are small deliberate shifts (listed in the commit). `--blueprint-light`
+> was **promoted** into globals beside `--blueprint-blue`: it is a brand blue already referenced
+> by name, not a decorative one-off, so the no-single-use-tokens ruling does not bite.
+>
+> **Tier 2 — 119 `var(--token, #literal)` fallbacks that can never fire.** `app/globals.css` is
+> imported unconditionally by the root layout, so any top-level `:root` token always resolves and
+> the fallback is dead text. Stripped mechanically. Several had drifted badly — one carried a
+> light blue as the fallback for a dark-navy token.
+>
+> **The strictness that mattered: 186 fallbacks were deliberately KEPT.** Every `--home-*` site
+> uses `var(--home-X, <exact-dark-literal>)` as a **load-bearing** pattern — the token is the
+> warm-portal value and the fallback IS the dark-theme value. Only top-level `:root` tokens
+> qualify for stripping; theme-gated and module-scoped ones never do. A naive strip-all pass
+> would have broken the entire coaches portal in dark mode.
+>
+> ### Tiers 3 & 4 — remaining 428
+>
+> **Tier 4 (~43) is the valuable one despite being far smaller.** Social-share images, app icons
+> and color-picker defaults are rendered by engines that **never see a stylesheet**, so CSS
+> variables cannot reach them — and the same is true of `lib/themes.ts`, email templates, PDF
+> exports and static assets. Proposed fix: keep `globals.css` as the source of truth and derive a
+> TypeScript palette from it, with a freshness check on the same gate that guards the DB
+> dictionary. Then a rebrand moves CSS *and* non-CSS together. Note the "rebrand checklist"
+> referenced in a `globals.css` comment **does not exist** — this retires the need for one.
+>
+> **Tier 3 (~355 in-page colors)** is bulk work of the same shape as the CSS sweep; best done
+> opportunistically rather than as a dedicated pass, since nothing new can be added. Part of it
+> **should not** be tokenized at all — picker presets and chart series colors are data, not brand,
+> and want a written exemption.
+>
+> **Open follow-ups:** (a) declare or remove `--shadow-md`; (b) Tiers 3 & 4 above; (c) light-mode
+> + warm-portal eyeball pass on the swept surfaces — the
 > value-identity proof covers the default dark theme ONLY, and a token adapting per theme where a
 > frozen literal did not is the intended behaviour, not a regression.
 

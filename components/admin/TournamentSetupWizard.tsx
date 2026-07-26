@@ -1536,7 +1536,7 @@ export default function TournamentSetupWizard({
                 {venueSearchOpen && filteredVenues.length > 0 && (
                   <div style={{
                     position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-                    background: 'var(--surface-2, #1e1e2e)',
+                    background: 'var(--surface-2)',
                     border: '1px solid var(--border, var(--white-10))',
                     borderRadius: '2px', zIndex: 50,
                     maxHeight: '200px', overflowY: 'auto',

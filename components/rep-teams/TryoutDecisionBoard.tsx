@@ -206,7 +206,7 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
         <span className={styles.tallyItem}><strong>{board.counts.waitlisted}</strong> waitlist</span>
         <span className={styles.tallyItem}><strong>{board.counts.declined}</strong> passed</span>
         {board.counts.accepted > 0 && <span className={styles.tallyItem}><strong>{board.counts.accepted}</strong> accepted</span>}
-        {familyDeclined > 0 && <span className={styles.tallyItem} style={{ color: 'var(--danger-light, #f87171)' }}><strong>{familyDeclined}</strong> declined by family</span>}
+        {familyDeclined > 0 && <span className={styles.tallyItem} style={{ color: 'var(--danger-light)' }}><strong>{familyDeclined}</strong> declined by family</span>}
         <span className={styles.tallyItem} style={{ marginLeft: 'auto' }}><strong>{board.counts.pending}</strong> undecided</span>
       </div>
 
@@ -237,13 +237,13 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
                   {c.name && <span style={{ marginLeft: '0.5rem' }}>{c.name}</span>}
                   {suggested.length > 0 && (
                     <button type="button"
-                      style={{ marginLeft: '0.5rem', background: 'rgba(var(--home-rust-rgb, 180,83,9),0.18)', border: '1px solid var(--warning, #b45309)', color: 'var(--home-amber, #fcd34d)', fontSize: '0.66rem', fontWeight: 700, padding: '0.14rem 0.5rem', borderRadius: 999, cursor: 'pointer' }}
+                      style={{ marginLeft: '0.5rem', background: 'rgba(var(--home-rust-rgb, 180,83,9),0.18)', border: '1px solid var(--warning)', color: 'var(--home-amber, #fcd34d)', fontSize: '0.66rem', fontWeight: 700, padding: '0.14rem 0.5rem', borderRadius: 999, cursor: 'pointer' }}
                       onClick={() => setContinuityOpenId(id => id === c.registrationId ? null : c.registrationId)}>
                       Possible returning player — verify
                     </button>
                   )}
                   {confirmedRow && (
-                    <span style={{ marginLeft: '0.5rem', color: 'var(--logic-lime, #a3e635)', fontSize: '0.7rem' }}>
+                    <span style={{ marginLeft: '0.5rem', color: 'var(--logic-lime)', fontSize: '0.7rem' }}>
                       ↩ returning · {confirmedRow.prior.seasonLabel}
                     </span>
                   )}
@@ -333,9 +333,9 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
 /** A small chip showing where a family's offer response stands (offered rows only). */
 function offerBadge(c: Candidate) {
   let text: string, color: string;
-  if (c.offerResponse === 'accepted') { text = '✓ Family accepted'; color = 'var(--logic-lime, #a3e635)'; }
-  else if (c.offerResponse === 'declined') { text = '✕ Family declined'; color = 'var(--danger-light, #f87171)'; }
-  else if (c.offerExpired) { text = 'Offer expired'; color = 'var(--warning-light, #fbbf24)'; }
+  if (c.offerResponse === 'accepted') { text = '✓ Family accepted'; color = 'var(--logic-lime)'; }
+  else if (c.offerResponse === 'declined') { text = '✕ Family declined'; color = 'var(--danger-light)'; }
+  else if (c.offerExpired) { text = 'Offer expired'; color = 'var(--warning-light)'; }
   else { text = 'Awaiting response'; color = 'var(--home-dim, rgba(255,255,255,0.45))'; }
   return <span style={{ fontSize: '0.72rem', fontWeight: 700, color, textAlign: 'right' }}>{text}</span>;
 }

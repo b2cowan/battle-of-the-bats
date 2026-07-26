@@ -256,7 +256,7 @@ function JoinForm() {
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.iconWrap} style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
-            <CheckCircle size={20} style={{ color: 'var(--success, #22C55E)' }} />
+            <CheckCircle size={20} style={{ color: 'var(--success)' }} />
           </div>
           <h1 className={styles.title}>You&apos;re Already Set Up</h1>
           <p className={styles.sub}>
@@ -335,7 +335,7 @@ function JoinForm() {
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.iconWrap} style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
-            <CheckCircle size={20} style={{ color: 'var(--success, #22C55E)' }} />
+            <CheckCircle size={20} style={{ color: 'var(--success)' }} />
           </div>
           <h1 className={styles.title}>Choose Team Profile</h1>
           <p className={styles.sub}>
@@ -403,7 +403,7 @@ function JoinForm() {
       {fromReg ? (
         <div className={styles.header}>
           <div className={styles.iconWrap} style={{ background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.25)' }}>
-            <CheckCircle size={20} style={{ color: 'var(--success, #22C55E)' }} />
+            <CheckCircle size={20} style={{ color: 'var(--success)' }} />
           </div>
           <h1 className={styles.title}>Registration Submitted</h1>
           <p className={styles.sub}>
