@@ -138,7 +138,8 @@ export default function CoachExploreCatalog({
         </div>
         <p className={styles.premiumBody}>
           Upgrading keeps everything you&apos;ve already entered — your roster, schedule and fees
-          come straight across, nothing to re-type. Premium adds the tools for running a whole season:
+          come straight across, nothing to re-type. Premium turns this portal into your team&apos;s
+          operations HQ, with the tools for running a whole season:
         </p>
         <ul className={styles.premiumFeatures}>
           {PREMIUM_FEATURES.map(feature => (

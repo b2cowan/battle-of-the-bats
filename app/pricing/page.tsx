@@ -8,7 +8,7 @@ import styles from './page.module.css';
 
 export const metadata = {
   title: 'Pricing — FieldLogicHQ',
-  description: 'Simple, honest pricing for every role in your organization — from running one tournament to managing a full club. Tournament and Tournament Plus are available now. League Plus, Club, and the Coaches Portal are coming soon.',
+  description: 'Simple, honest pricing for every role in your organization — from one tournament or one competitive team to a full club.',
 };
 
 const TRUST_SIGNALS = [
@@ -57,7 +57,7 @@ const BUYER_SEGMENTS: Array<{
   {
     eyebrow: 'Coach or team manager',
     title: 'I manage one competitive team.',
-    body: 'A full Coaches Portal for one rep team — roster, lineups, budget, and schedule — without needing a full org account. Available soon; express interest now.',
+    body: 'Your free Coaches Portal follows every tournament you enter. Premium is the operations HQ for one competitive team — roster, lineups, budget, and schedule. No org account needed.',
     cta: 'Express interest',
     earlyAccess: true,
     initialPlanInterest: ['coaches_portal'],
@@ -160,6 +160,43 @@ export default async function PricingPage() {
   const teamCheckoutOpen = !gatingMap.team;
   const teamPromoActive = isFoundingSeasonPromoActive('team');
 
+  // The static segment/FAQ copy is written for the GATED state; when the team checkout is
+  // open (Founding Season launch), the coach-facing entries flip to live availability so the
+  // page can't contradict PLAN_PRICING_FACTS.md (Premium Coaches Portal: live, self-serve).
+  const segments = BUYER_SEGMENTS.map(segment =>
+    segment.initialPlanInterest?.[0] === 'coaches_portal' && teamCheckoutOpen
+      ? {
+          ...segment,
+          earlyAccess: false,
+          href: '/coaches/start?source=pricing',
+          cta: teamPromoActive ? 'Start free' : 'Start now',
+        }
+      : segment,
+  );
+  const faqs = !teamCheckoutOpen
+    ? FAQS
+    : FAQS.map(faq => {
+        if (faq.q === 'Is the platform only for tournaments?') {
+          return {
+            ...faq,
+            a: 'No. Tournament, Tournament Plus, and the Premium Coaches Portal are the live self-serve plans today — the Coaches Portal covers coaches managing a single competitive team. League Plus and Club — covering house league seasons, rep team management, and accounting — are the next parts of the platform. They\'re shown here so your organization can plan ahead.',
+          };
+        }
+        if (faq.q === 'What if I only manage one competitive team?') {
+          return {
+            ...faq,
+            a: `Use the Coaches Portal. Registering for a tournament gives you the free portal — your tournament record, schedule, and team chat in one place. The Premium Coaches Portal is the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? 'During the Founding Season it\'s free until January 1, 2027, then $29/month.' : 'It\'s $29/month, cancel anytime.'} If your organization joins FieldLogicHQ later, your workspace carries over automatically.`,
+          };
+        }
+        if (faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {
+          return {
+            ...faq,
+            a: `The Premium Coaches Portal is available now through self-serve checkout${teamPromoActive ? ' — free until January 1, 2027 during the Founding Season, then $29/month' : ' at $29/month'}. League Plus and Club aren't self-serve yet — they're shown as coming-soon previews so organizations can plan ahead and express interest while those workflows are finished.`,
+          };
+        }
+        return faq;
+      });
+
   return (
     <main>
 
@@ -172,8 +209,18 @@ export default async function PricingPage() {
             you actually operate.
           </h1>
           <p className={styles.heroSub}>
-            Tournament and Tournament Plus are live — start free, no credit card required.
-            League Plus, Club, and the Coaches Portal are open for interest while we finish those workflows.
+            {teamCheckoutOpen ? (
+              <>
+                Tournament, Tournament Plus, and the Premium Coaches Portal are live — start free,
+                no credit card required. League Plus and Club are open for interest while we finish
+                those workflows.
+              </>
+            ) : (
+              <>
+                Tournament and Tournament Plus are live — start free, no credit card required.
+                League Plus, Club, and the Coaches Portal are open for interest while we finish those workflows.
+              </>
+            )}
           </p>
           <div className={styles.trustRow}>
             {TRUST_SIGNALS.map(s => (
@@ -197,7 +244,7 @@ export default async function PricingPage() {
             </p>
           </div>
           <div className={styles.segmentGrid}>
-            {BUYER_SEGMENTS.map(segment => {
+            {segments.map(segment => {
               const cardClass = `${styles.segmentCard} ${segment.featured ? styles.segmentCardFeatured : ''}`;
               const cardContent = (
                 <>
@@ -258,7 +305,7 @@ export default async function PricingPage() {
                   <span className={styles.coachesCalloutPrice}>Free <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>until Jan 1, 2027</span></span>
                   <span className={styles.coachesCalloutPriceSub}>then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo — no credit card required</span>
                   <span className={styles.coachesCalloutBody}>
-                    A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically.
+                    The operations HQ for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically.
                   </span>
                 </>
               ) : (
@@ -266,7 +313,7 @@ export default async function PricingPage() {
                   <span className={styles.coachesCalloutPrice}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>/mo</span></span>
                   <span className={styles.coachesCalloutPriceSub}>or {formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months</span>
                   <span className={styles.coachesCalloutBody}>
-                    A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically. Coming soon.
+                    The operations HQ for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically. Coming soon.
                   </span>
                 </>
               )}
@@ -397,7 +444,7 @@ export default async function PricingPage() {
           </p>
 
           <div className={styles.faqList}>
-            {FAQS.map(faq => (
+            {faqs.map(faq => (
               <details key={faq.q} className={`${styles.faqItem} ${faq.featured ? styles.faqFeatured : ''}`}>
                 <summary className={styles.faqQuestion}>
                   {faq.featured && <span className={styles.faqBadge}>Volunteer orgs</span>}

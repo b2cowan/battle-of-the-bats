@@ -36,9 +36,10 @@ export default async function ForCoachesPage() {
             <span className={styles.heroAccent}>Not your inbox.</span>
           </h1>
           <p className={styles.heroSub}>
-            The Coaches Portal is a standalone workspace for one rep team — roster, lineups,
-            budget, schedule, and documents. No org account needed. Your workspace carries over
-            if your organization joins FieldLogicHQ later.
+            Every coach on FieldLogicHQ starts with the free Coaches Portal — a companion for the
+            tournaments you enter. The Premium Coaches Portal turns it into your team&apos;s
+            operations HQ: roster, lineups, budget, schedule, and documents for the whole season.
+            No org account needed, and your workspace carries over if your organization joins later.
           </p>
           <div className={styles.heroActions}>
             {checkoutOpen ? (
@@ -138,8 +139,9 @@ export default async function ForCoachesPage() {
           <p className={styles.sectionEyebrow}>The plan</p>
           <h2 className={styles.sectionTitle}>Coaches Portal — your team, your workspace.</h2>
           <p className={styles.sectionSub}>
-            One team, one tournament at a time — roster, lineups, budget, schedule, and documents,
-            all in one place. Standalone, or as part of a Club subscription when your org joins.
+            Your free portal follows your tournaments. Premium is the operations HQ for the whole
+            season — roster, lineups, budget, schedule, and documents in one place. Standalone,
+            or included with Club when your org joins.
           </p>
           <div className={styles.planGrid}>
 
@@ -169,7 +171,7 @@ export default async function ForCoachesPage() {
                 ? <span className={styles.comingSoonBadge}>Free right now</span>
                 : <span className={styles.comingSoonBadge}>Coming soon</span>}
               <p className={styles.planTagline}>
-                The full coaching workspace for one rep team — roster, lineups, budget, documents,
+                The operations HQ for one rep team — roster, lineups, budget, documents,
                 and schedule — whether or not your organization is on FieldLogicHQ.
               </p>
               <div className={styles.planFeatures}>

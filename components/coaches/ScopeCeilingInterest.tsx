@@ -79,7 +79,7 @@ export default function ScopeCeilingInterest({ basicTeamId, checkoutOpen = false
         <div className={styles.copy}>
           <h3>Ready for the full toolkit?</h3>
           {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
-          <p>Upgrade this team to the Premium Coaches Portal — lineups, attendance, documents, dues automation, and a season budget. {promoActive
+          <p>Upgrade this team to the Premium Coaches Portal — your season operations HQ: lineups, attendance, documents, dues automation, and a season budget. {promoActive
             ? 'Free until Jan 1, 2027 — then $29/month per team. No credit card required.'
             : '$29/month per team, cancel anytime.'}</p>
         </div>

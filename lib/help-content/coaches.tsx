@@ -12,8 +12,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'What the Coaches Portal is',
       summary: 'A free, year-round team home that grows from a single tournament into your full-season workspace.',
-      keywords: ['coaches portal', 'free', 'team home', 'what is', 'overview', 'coach', 'schedule tile', 'next game', 'fan view'],
-      searchText: 'coaches portal free team home tournament participant year round roster schedule fees announcements premium upgrade what is overview schedule tile next game live tournament game live score fan view public site flip public schedule',
+      keywords: ['coaches portal', 'free', 'team home', 'what is', 'overview', 'coach', 'schedule tile', 'next game', 'fan view', 'tabs', 'navigation', 'bottom bar'],
+      searchText: 'coaches portal free team home tournament participant year round roster schedule fees announcements premium upgrade what is overview schedule tile next game live tournament game live score fan view public site flip public schedule tabs tab row navigation getting around bottom bar home scores chat account team header where is the menu',
       content: (
         <>
           <p>The Coaches Portal is free. It often starts when you register a team for a tournament, but it&apos;s built to stay useful between events — a year-round home for your roster, schedule, team fees, and parent announcements.</p>
@@ -22,11 +22,26 @@ const coachesHelp: HelpPageContent = {
             <li><strong>Overview</strong> — your team at a glance: roster size, your next event, unpaid fees, how many parents you can reach, and your tournament history.</li>
             <li><strong>Tournaments</strong> — every tournament you&apos;ve registered the team for, with status and schedule.</li>
           </ul>
+          <p><strong>Getting around:</strong> your team&apos;s name sits in a header at the top of every portal page, and the portal&apos;s sections run as a row of <strong>tabs</strong> beneath it (on a computer they&apos;re a list on the left instead). The FieldLogicHQ bar — <strong>Home · Scores · Chat · Account</strong> — stays at the bottom of your phone the whole time, so live scores and your tournament chat are always one tap away.</p>
           <p>The Overview&apos;s <strong>Schedule</strong> tile shows your own next practice or game once you&apos;ve added events. Haven&apos;t added any? If your team is in a tournament with a published schedule, the tile borrows your next tournament game instead — and during a game it shows the <strong>live score</strong> — so game day is never a blank &ldquo;None.&rdquo; While your team is in a <strong>live or upcoming</strong> public tournament, your Overview shows a compact <strong>tournament card</strong> — the event&apos;s name, dates, and a Live/Upcoming badge — with a <strong>⇄ Fan view</strong> link that opens the event&apos;s public site — the schedule, live scores, and standings exactly as families see them.</p>
           <p>Four more tools — <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Fees</strong>, and <strong>Announcements</strong> — are free too, but stay hidden until you turn them on from <strong>Explore</strong>. That keeps the portal simple if all you need is your tournament record.</p>
           <p><strong>Premium Coaches Portal</strong> is the paid upgrade. It adds game-day tools (positions, attendance, lineups), recurring scheduling and calendar sync, dues automation and a season budget, and document storage. Each tool below notes what Premium adds. On Premium, <strong>every tool is already in your sidebar</strong> — there&apos;s no Explore step; the four-tools-off model just above applies to the free portal. See <strong>Getting around your Premium portal</strong> below for the tour.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-coach-nav-moved',
+          question: 'Where did the portal’s menu go? I can’t find sign out.',
+          answerText: 'The free portal now uses the same navigation as the rest of the FieldLogicHQ app. Your team sections (Overview, Tournaments, any tools you have turned on, and Explore) are a row of tabs under your team name — a list on the left on a computer. The old More menu is gone: sign out, appearance, feedback, and this help guide now live on the Account tab in the app bar at the bottom of your phone; team chat lives on the Chat tab. If you have more than one team, tap your team name in the header to switch.',
+          keywords: ['menu gone', 'more menu', 'where is sign out', 'sign out', 'log out', 'feedback', 'account tab', 'switch team', 'navigation changed', 'new layout'],
+          answer: (
+            <>
+              <p>The free portal now uses the <strong>same navigation as the rest of the FieldLogicHQ app</strong>. Your team sections — Overview, Tournaments, any tools you&rsquo;ve turned on, and Explore — are a row of <strong>tabs under your team name</strong> (a list on the left on a computer).</p>
+              <p>The old <strong>More</strong> menu is gone: <strong>sign out, appearance, feedback, and this help guide</strong> now live on the <strong>Account</strong> tab in the app bar at the bottom of your phone, and team chat lives on the <strong>Chat</strong> tab. If you coach more than one team, tap your <strong>team name</strong> in the header to switch.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-first-login',
@@ -78,14 +93,14 @@ const coachesHelp: HelpPageContent = {
       content: (
         <>
           <p><em>This applies to the free portal.</em> On <strong>Premium Coaches Portal</strong> every tool is already in your sidebar, so there&apos;s nothing to turn on — you can skip this section.</p>
-          <p>To keep the free portal uncluttered, the four team tools start switched off. Open <strong>Explore</strong> (always in the menu) to see them:</p>
+          <p>To keep the free portal uncluttered, the four team tools start switched off. Open <strong>Explore</strong> — always the <em>last tab</em> in your team&apos;s tab row (the last item in the left-hand list on a computer) — to see them:</p>
           <ul>
             <li><strong>Roster</strong> — enter your team once and reuse it for your next tournament registration.</li>
             <li><strong>Schedule</strong> — your tournament games plus your own practices, in one calendar.</li>
             <li><strong>Fees</strong> — track who has paid their team fees, no spreadsheet.</li>
             <li><strong>Announcements</strong> — send a note to your whole team at once.</li>
           </ul>
-          <p>Each shows a <strong>Free</strong> tag. Click <strong>Turn on</strong> and the tool appears in your menu and opens for you. Ignore the ones you don&apos;t need — nothing is forced on you, and you can turn a tool on any time from Explore.</p>
+          <p>Each shows a <strong>Free</strong> tag. Click <strong>Turn on</strong> and the tool appears as a new tab and opens for you. Ignore the ones you don&apos;t need — nothing is forced on you, and you can turn a tool on any time from Explore.</p>
           <p>If you can&apos;t find your Roster or Schedule tab, it&apos;s almost always because it hasn&apos;t been turned on yet. Open Explore and turn it on.</p>
         </>
       ),
@@ -372,7 +387,7 @@ const coachesHelp: HelpPageContent = {
       searchText: 'tournament chat group chat with organizer and other coaches live chat unread badge multiple rooms all coaches room division room channels switch rooms tournament name label reply quote a message jump to original message push notification phone alert tap notification opens conversation no email last seen read receipts read by sent read by everyone join automatically muted closed read only free or paid mention @mention tag a coach mention reaches you even if muted emoji smiley react with emoji search recent messages magnifier delete your own message message removed pinned messages pin schedule field map rules banner jump to message see pinned only organizer can pin Chat tab in the app inbox all your tournament conversations in one place grouped by event back to tournament event chip return to event Event admin shortcut organizer chat controls report a message press and hold long press right click report to organizers goes privately to organizers mute this room mute a chat stop notifications quiet unmute personal you can still post',
       content: (
         <>
-          <p>When an organizer runs a chat for a tournament your team is in, that conversation shows up on the <strong>Chat</strong> tab of the FieldLogicHQ app — every tournament you&rsquo;re in, gathered in one <strong>inbox</strong> and grouped by event, with an <strong>unread badge</strong> on new messages. (You can also reach it from the <strong>Chat</strong> entry in your coaches portal.) Open a conversation to read and reply in real time alongside the organizer and the other coaches in that tournament.</p>
+          <p>When an organizer runs a chat for a tournament your team is in, that conversation shows up on the <strong>Chat</strong> tab of the FieldLogicHQ app — the same Chat tab as everything else, with every tournament you&rsquo;re in gathered in one <strong>inbox</strong>, grouped by event, and an <strong>unread badge</strong> on new messages. A <strong>Team chat</strong> card at the top of your team&rsquo;s <strong>Overview</strong> shows the latest message and opens the same conversation. (On <strong>Premium Coaches Portal</strong>, Chat is also an item in your sidebar.) Open a conversation to read and reply in real time alongside the organizer and the other coaches in that tournament.</p>
           <ol>
             <li>Open <strong>Chat</strong> and pick a conversation. You&rsquo;re always in the <strong>All coaches</strong> room, and on a bigger event you may also see a room for your division — each is labelled with the tournament name so they&rsquo;re easy to tell apart. (If you only have one, it opens straight away.)</li>
             <li>Type your message and send — everyone in that room sees it right away.</li>
@@ -387,12 +402,12 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-tournament-chat-join',
           question: 'How do I join a tournament’s chat?',
-          answerText: 'You join automatically. When an organizer opens chat for a tournament your team is in, a Chat item appears in your coaches portal with an unread badge. There is nothing to accept — just sign in with the email on your team registration and the conversation shows up. It works the same whether your team is free or paid.',
-          keywords: ['join chat', 'tournament chat', 'no chat showing', 'where is chat', 'unread'],
+          answerText: 'You join automatically. When an organizer opens chat for a tournament your team is in, the conversation appears on the Chat tab of the app (the bar at the bottom of your phone) with an unread badge, and a Team chat card appears at the top of your team Overview. There is nothing to accept — just sign in with the email on your team registration and the conversation shows up. On Premium Coaches Portal, Chat is also an item in your sidebar. It works the same whether your team is free or paid.',
+          keywords: ['join chat', 'tournament chat', 'no chat showing', 'where is chat', 'unread', 'team chat card', 'chat tab'],
           popular: true,
           answer: (
             <>
-              <p>You join automatically. When an organizer opens chat for a tournament your team is in, a <strong>Chat</strong> item appears in your portal with an unread badge — there&rsquo;s nothing to accept.</p>
+              <p>You join automatically. When an organizer opens chat for a tournament your team is in, the conversation appears on the <strong>Chat</strong> tab of the app (the bar at the bottom of your phone) with an unread badge, and a <strong>Team chat</strong> card appears at the top of your team&rsquo;s <strong>Overview</strong> — there&rsquo;s nothing to accept. (On <strong>Premium Coaches Portal</strong>, Chat is also an item in your sidebar.)</p>
               <p>If you don&rsquo;t see it yet, make sure you&rsquo;ve signed in with the email on your team registration. It works the same whether your team is free or paid.</p>
             </>
           ),
