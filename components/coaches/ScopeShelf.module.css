@@ -11,7 +11,7 @@
      coach shell the warm gate remaps --logic-lime to OLIVE, so the capture bottles olive
      and the CTA rendered as a banned olive fill (E3). Re-pin true lime (same literal as
      the gate's own --home-lime and root --logic-lime, so dark output is unchanged). */
-  --home-lime: #D9F99D;
+  --home-lime: var(--logic-lime);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
