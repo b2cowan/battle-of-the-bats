@@ -155,15 +155,15 @@
 }
 /* ── Tone down PAID/success badge — noticeable but not dominant ── */
 .adminShell :global(.badge-success) {
-  background: rgba(34, 197, 94, 0.07);
-  color: rgba(34, 197, 94, 0.72);
-  border-color: rgba(34, 197, 94, 0.22);
+  background: rgba(var(--success-rgb), 0.07);
+  color: rgba(var(--success-rgb), 0.72);
+  border-color: rgba(var(--success-rgb), 0.22);
 }
 /* ── Tone down PENDING/warning badge to match ── */
 .adminShell :global(.badge-warning) {
-  background: rgba(245, 158, 11, 0.07);
-  color: rgba(245, 158, 11, 0.72);
-  border-color: rgba(245, 158, 11, 0.22);
+  background: rgba(var(--warning-rgb), 0.07);
+  color: rgba(var(--warning-rgb), 0.72);
+  border-color: rgba(var(--warning-rgb), 0.22);
 }
 
 /* ── Form controls: square corners to match operational feel ── */

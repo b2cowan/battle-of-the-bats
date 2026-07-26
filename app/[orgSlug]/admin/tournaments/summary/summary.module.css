@@ -1,7 +1,7 @@
 .page {
   max-width: 1060px;
   /* Scoped token for .modalError below. */
-  --modal-error-text: #fecaca;
+  --modal-error-text: #fecaca; /* token-exempt: lighter red-200 tint, no matching danger token */
 }
 
 .pageHeader {
@@ -474,10 +474,10 @@
 .modalError {
   margin-top: 0.85rem;
   padding: 0.65rem 0.75rem;
-  border: 1px solid rgba(239,68,68,0.35);
+  border: 1px solid rgba(var(--danger-rgb),0.35);
   border-radius: 2px;
   color: var(--modal-error-text);
-  background: rgba(239,68,68,0.08);
+  background: rgba(var(--danger-rgb),0.08);
   font-size: 0.8rem;
   line-height: 1.45;
 }

@@ -438,7 +438,7 @@
 }
 
 .attentionStripChip[data-tone="warning"] {
-  border-color: rgba(245, 158, 11, 0.32);
+  border-color: rgba(var(--warning-rgb), 0.32);
 }
 
 .attentionHeaderActions {
@@ -504,7 +504,7 @@
 }
 
 .attentionBucket[data-tone="warning"] {
-  border-color: rgba(245, 158, 11, 0.28);
+  border-color: rgba(var(--warning-rgb), 0.28);
 }
 
 .attentionBucket[data-locked="true"] {
@@ -1101,7 +1101,7 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
   width: 100%;
   max-width: 920px;
   /* Scoped token for the transfer-group select (.transferGroup select) below. */
-  --teams-select-bg: #111111;
+  --teams-select-bg: #111111; /* token-exempt: one-off near-black select bg, no token match */
 }
 
 /* Single row: meta left, actions right */
@@ -1660,7 +1660,7 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
   font-weight: 600;
 }
 
-.countChip[data-variant="warning"] { background: rgba(245, 158, 11, 0.15); color: var(--warning); /* pinned to --warning to preserve the prior render; joining --warning-light is a separate value change */ }
+.countChip[data-variant="warning"] { background: rgba(var(--warning-rgb), 0.15); color: var(--warning); /* pinned to --warning to preserve the prior render; joining --warning-light is a separate value change */ }
 .countChip[data-variant="neutral"]  { background: var(--white-10); color: var(--white-40); }
 
 .slotPoolSection {

@@ -821,7 +821,7 @@
 
 .healthRulesSave {
   background: var(--logic-lime);
-  /* dark ink on lime; slight value drift from --on-lime (#0f1123), pinned pending normalization */
+  /* token-exempt: drifts from --on-lime (#0f1123); pinned pending normalization */
   color: #0a0c12;
   border-color: var(--logic-lime);
 }

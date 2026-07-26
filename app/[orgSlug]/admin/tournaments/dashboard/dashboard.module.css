@@ -855,7 +855,7 @@
 }
 
 .registrationFollowUpChip[data-tone="warning"] {
-  border-color: rgba(245, 158, 11, 0.28);
+  border-color: rgba(var(--warning-rgb), 0.28);
 }
 
 .registrationFollowUpChip[data-locked="true"] {
@@ -1287,7 +1287,7 @@
 
 .payDivCell[data-tone="success"] { color: var(--success);         border-color: rgba(var(--success-rgb), 0.22); }
 .payDivCell[data-tone="info"]    { color: var(--info);  border-color: rgba(var(--info-rgb), 0.3); }
-.payDivCell[data-tone="warning"] { color: var(--warning);         border-color: rgba(245, 158, 11, 0.28); }
+.payDivCell[data-tone="warning"] { color: var(--warning);         border-color: rgba(var(--warning-rgb), 0.28); }
 .payDivCell[data-tone="danger"]  { color: var(--danger);          border-color: rgba(var(--danger-rgb), 0.28); }
 
 /* ── Dashboard customize panel ───────────────────────── */
@@ -1818,7 +1818,7 @@
   font-weight: 700;
   letter-spacing: 0.07em;
   text-transform: uppercase;
-  /* dark ink on lime; slight value drift from --on-lime, pinned pending normalization */
+  /* token-exempt: drifts from --on-lime; pinned pending normalization */
   color: #0b0f14;
   background: var(--logic-lime);
   border: none;

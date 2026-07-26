@@ -105,19 +105,19 @@
      independent of the on-screen dark theme. Keep literal. */
   .intro,
   .note {
-    color: #333;
+    color: #333; /* token-exempt: print-only ink, independent of dark theme */
   }
   .grid {
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
   }
   .card {
-    border: 1px solid #ccc;
+    border: 1px solid #ccc; /* token-exempt: print-only ink, independent of dark theme */
     background: var(--white);
     break-inside: avoid;
   }
-  .cardTitle { color: #000; }
+  .cardTitle { color: #000; /* token-exempt: print-only ink, independent of dark theme */ }
   .cardBlurb,
-  .url { color: #333; }
+  .url { color: #333; /* token-exempt: print-only ink, independent of dark theme */ }
   .urlActions { display: none; }
 }
