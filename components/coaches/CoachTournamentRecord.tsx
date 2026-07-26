@@ -60,6 +60,7 @@ export default async function CoachTournamentRecord({
   welcome = false,
   moneyRedacted = false,
   backHref,
+  hideHeader = false,
 }: {
   registrationId: string;
   userId: string;
@@ -73,6 +74,12 @@ export default async function CoachTournamentRecord({
    */
   moneyRedacted?: boolean;
   backHref?: string;
+  /**
+   * A2 (2026-07-25): the FREE portal's shell now renders the tournament identity + Flip in its
+   * persistent header, so the free call site hides this page's own title block. Defaults false —
+   * the Premium (operator-family) shell has no event header, so it keeps the in-page one.
+   */
+  hideHeader?: boolean;
 }) {
   const access = await canUserAccessTournamentRegistration({
     userId,
@@ -457,22 +464,27 @@ export default async function CoachTournamentRecord({
         />
       )}
 
-      <div className={styles.header}>
-        <div className={styles.headerMain}>
-          <h1 className={styles.title}>{team.name}</h1>
-          {tournament && (
-            <p className={styles.tournamentName}>
-              {tournament.name} {tournament.year && `(${tournament.year})`}
-              {org && ` - ${org.name}`}
-            </p>
+      {/* Free portal (hideHeader): the shell's persistent header carries team + tournament
+          identity and the Flip now. Premium keeps this in-page block — its operator shell
+          has no event header (two-family ruling; tournament surface itself stays shared). */}
+      {!hideHeader && (
+        <div className={styles.header}>
+          <div className={styles.headerMain}>
+            <h1 className={styles.title}>{team.name}</h1>
+            {tournament && (
+              <p className={styles.tournamentName}>
+                {tournament.name} {tournament.year && `(${tournament.year})`}
+                {org && ` - ${org.name}`}
+              </p>
+            )}
+          </div>
+          {/* "The Flip" P3: this page IS one event, so it carries the coach corner pill — the
+              "check my fees ↔ see us live" loop (landing is context-driven, not page-matched). */}
+          {publicCtx && (
+            <FlipPill resolution={resolveFlip({ direction: 'to-public', hat: 'coach', ctx: publicCtx })} />
           )}
         </div>
-        {/* "The Flip" P3: this page IS one event, so it carries the coach corner pill — the
-            "check my fees ↔ see us live" loop (landing is context-driven, not page-matched). */}
-        {publicCtx && (
-          <FlipPill resolution={resolveFlip({ direction: 'to-public', hat: 'coach', ctx: publicCtx })} />
-        )}
-      </div>
+      )}
 
       <TeamHQ
         variant="tournament"

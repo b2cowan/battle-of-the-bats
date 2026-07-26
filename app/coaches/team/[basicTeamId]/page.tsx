@@ -25,10 +25,9 @@ import { pickFanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
+import CoachTeamChatDoorway from '@/components/coaches/CoachTeamChatDoorway';
 import ScopeShelf from '@/components/coaches/ScopeShelf';
 import { Rocket, Users, CalendarDays, Megaphone } from 'lucide-react';
-import type { CSSProperties } from 'react';
-import { teamColor, teamInitials } from '@/lib/team-color';
 import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
 import shared from '../../coaches-portal.module.css';
 import styles from './team.module.css';
@@ -123,7 +122,6 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     registrationGamePromise,
   ]);
 
-  const metaParts = [team.primaryCoachName, team.sport, team.ageGroup].filter(Boolean) as string[];
   const nextEvent = findNextEvent(events);
   const unpaidFees = fees.filter(fee => fee.status === 'unpaid');
   const unpaidTotal = unpaidFees.reduce((total, fee) => total + fee.amount, 0);
@@ -154,21 +152,24 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     announcements.length === 0 &&
     history.length === 0;
 
+  // Tournament + division ids this team is registered in — the Team-chat doorway filters the
+  // coach's account-wide room list down to THIS team's conversations (A2.2; approved mockups).
+  // Divisions matter when one coach has two teams in the same tournament: without them,
+  // the sibling team's division room would surface here.
+  const chatTournamentIds = [
+    ...new Set(history.map(entry => entry.tournament?.id).filter((id): id is string => Boolean(id))),
+  ];
+  const chatDivisionIds = [
+    ...new Set(history.map(entry => entry.registration.divisionId).filter((id): id is string => Boolean(id))),
+  ];
+
   return (
     <div className={`${shared.page} ${styles.pageWide}`}>
-      <div
-        className={styles.identityBand}
-        style={{ '--team-color': teamColor(team.name) } as CSSProperties}
-      >
-        <p className={styles.identityWatermark} aria-hidden>{teamInitials(team.name)}</p>
-        <div className={styles.identityMonogram} aria-hidden>{teamInitials(team.name)}</div>
-        <div className={styles.identityText}>
-          <h1 className={styles.identityName}>{team.name}</h1>
-          <p className={styles.identityMeta}>
-            {metaParts.length > 0 ? metaParts.join(' · ') : 'Your team home'}
-          </p>
-        </div>
-        <div className={styles.identityHelp}>
+      {/* A2: team identity lives in the persistent shell header now (the old identity band is
+          retired — stated once, by the chrome). This slim head keeps the page h1 + "?" help. */}
+      <div className={shared.sectionHeader}>
+        <h1 className={shared.sectionTitle}>Overview</h1>
+        <div className={styles.sectionHeadEnd}>
           <HelpButton
             help={{ module: 'coaches', sectionIds: ['overview'], fullGuideHref: '/coaches/help#overview' }}
             label="Overview"
@@ -176,6 +177,12 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
           />
         </div>
       </div>
+
+      {/* Team-chat doorway (A2.2, owner call: TOP of Overview — game-weekend priority). Same
+          conversation as the global Chat tab; renders nothing until a room exists. */}
+      {chatTournamentIds.length > 0 && (
+        <CoachTeamChatDoorway tournamentIds={chatTournamentIds} divisionIds={chatDivisionIds} />
+      )}
 
       <TeamHQ
         variant="standalone"

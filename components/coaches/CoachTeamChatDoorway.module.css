@@ -1,0 +1,96 @@
+/* Team-chat doorway card (A2.2) — the consumer workspace-card idiom (grid: icon chip /
+   info column / trailing cluster), 14px radius. Tokens resolve per-theme through the
+   coach warm gate: --surface → white card, --logic-lime → olive accent on warm. */
+.door {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.8rem;
+  margin-bottom: 2rem;
+  padding: 0.8rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: var(--highlight-top);
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+.door:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  box-shadow: var(--glow-sm), var(--highlight-top);
+  transform: translateY(-1px);
+}
+
+.door:active {
+  transform: translateY(0);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
+}
+
+.info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.kind {
+  font-family: var(--font-data, monospace);
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40);
+}
+
+.title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preview {
+  font-size: 0.76rem;
+  color: var(--white-60);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.end {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--white-40);
+}
+
+/* Unread pill: a true-lime fill in both themes (--home-lime is real lime inside the warm
+   gate; dark falls back to --logic-lime) — mirrors the chat surfaces' own unread badge. */
+.unread {
+  min-width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--home-lime, var(--logic-lime));
+  color: var(--home-lime-ink, var(--on-lime));
+  font-family: var(--font-data, monospace);
+  font-size: 0.66rem;
+  font-weight: 800;
+}

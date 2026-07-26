@@ -52,8 +52,11 @@ export default function ConsumerNav({
    *  the persistent bottom bar ONLY, root-mounted + self-gating on public tournament
    *  routes, in the NEUTRAL venue-following skin (no warm classes → the tournament's
    *  :root override themes it), with identity resolved CLIENT-SIDE — the tournament
-   *  HTML is service-worker-cached anonymously, so identity must never be SSR'd in. */
-  variant?: 'consumer' | 'tournament';
+   *  HTML is service-worker-cached anonymously, so identity must never be SSR'd in.
+   *  'coach' (A2, 2026-07-25): mounted INSIDE CoachPortalShell on the free coach portal —
+   *  identical to 'consumer' (warm skin, pref-gated) except the top bar hides ≤900px,
+   *  where the coach team/event header owns the top of the screen. */
+  variant?: 'consumer' | 'tournament' | 'coach';
 }) {
   const pathname = usePathname();
   const params = useParams();
@@ -151,7 +154,9 @@ export default function ConsumerNav({
       </div>
       <div className={styles.topUtil}>
         <Link href="/start" className={styles.utilLink}>Run a tournament</Link>
-        {signedIn && isCoach && (
+        {/* The coach shell (variant 'coach') IS the Coaches Portal — a self-referential
+            door there is noise, so the pill renders only outside it. */}
+        {signedIn && isCoach && variant !== 'coach' && (
           <Link href="/coaches" className={styles.utilCoach}>Coaches Portal</Link>
         )}
         {/* Signed-out visitors keep a "Sign in" affordance (never ON the sign-in pages). */}
@@ -178,13 +183,17 @@ export default function ConsumerNav({
     );
   }
 
-  // Consumer variant only from here — the warm skin classes the tournament bar never uses.
-  const warmRoute = isWarmSkinPath(pathname);
+  // Consumer/coach variants only from here — the warm skin classes the tournament bar never
+  // uses. The coach portal (A2) is warm-by-default + pref-gated exactly like the four tabs;
+  // its routes aren't in isWarmSkinPath (that predicate also drives footer/theme-color for
+  // the (consumer) group), so the variant itself carries the warm decision.
+  const warmRoute = isWarmSkinPath(pathname) || variant === 'coach';
   // The four consumer TABS follow the user's theme preference (Dark⇄Warm); the always-warm
   // sign-up JOURNEY does not. The `…WarmTab` marker lets the CSS dark-gate repaint only the tab
   // nav under `data-user-theme="dark"`, leaving the journey nav warm. (TH-1/TH-3.)
-  const prefGated = isConsumerShellPath(pathname);
-  const topbarCls = `${styles.topbar}${warmRoute ? ` ${warm.warmVars} ${styles.topbarWarm}${prefGated ? ` ${styles.topbarWarmTab}` : ''}` : ''}`;
+  const prefGated = isConsumerShellPath(pathname) || variant === 'coach';
+  const coachCls = variant === 'coach' ? ` ${styles.topbarCoach}` : '';
+  const topbarCls = `${styles.topbar}${coachCls}${warmRoute ? ` ${warm.warmVars} ${styles.topbarWarm}${prefGated ? ` ${styles.topbarWarmTab}` : ''}` : ''}`;
   const bottomNavCls = `${styles.bottomNav}${warmRoute ? ` ${warm.warmVars} ${styles.bottomNavWarm}${prefGated ? ` ${styles.bottomNavWarmTab}` : ''}` : ''}`;
 
   return (

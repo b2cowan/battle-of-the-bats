@@ -1,9 +1,11 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { User, Bell, LifeBuoy, ChevronRight } from 'lucide-react';
+import { User, Bell, LifeBuoy, ChevronRight, HelpCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
+import { getUserAccessContextsCached, hasCoachAccess } from '@/lib/user-contexts';
 import AccountSignOutButton from '@/components/consumer/AccountSignOutButton';
 import AppearanceCard from '@/components/consumer/AppearanceCard';
+import AccountFeedbackRow from '@/components/consumer/AccountFeedbackRow';
 import warm from '@/components/consumer/warmTheme.module.css';
 import AccountInstallRow from './AccountInstallRow';
 import styles from './account.module.css';
@@ -26,6 +28,16 @@ export default async function AccountPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const email = user?.email ?? null;
   const signedIn = !!email;
+
+  // A2 (2026-07-25): the free coach portal's "More" sheet retired — its account utilities
+  // (Coaches Portal help, Send feedback) live HERE now, per consumer convention. Coach-gated
+  // so pure fans never see coach rows; shares the per-request access-context cache with the
+  // consumer layout.
+  let isCoach = false;
+  if (user?.email) {
+    const contexts = await getUserAccessContextsCached(user.id, user.email).catch(() => []);
+    isCoach = hasCoachAccess(contexts);
+  }
 
   return (
     <div className={`${warm.warmTab} ${styles.accountFill}`}>
@@ -62,6 +74,17 @@ export default async function AccountPage() {
               </Link>
 
               <AccountInstallRow />
+
+              {isCoach && (
+                <>
+                  <Link href="/coaches/help" className={styles.row}>
+                    <span className={styles.rowIcon}><HelpCircle size={19} aria-hidden /></span>
+                    <span className={styles.rowLabel}>Coaches Portal help</span>
+                    <ChevronRight size={18} className={styles.rowChevron} aria-hidden />
+                  </Link>
+                  <AccountFeedbackRow />
+                </>
+              )}
 
               <a href={SUPPORT_MAILTO} className={styles.row}>
                 <span className={styles.rowIcon}><LifeBuoy size={19} aria-hidden /></span>

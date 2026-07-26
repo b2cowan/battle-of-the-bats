@@ -62,6 +62,13 @@
   .topbarStrip { display: none; }
 }
 
+/* Coach-portal mount (A2): the free Coaches Portal wears this same nav via
+   CoachPortalShell, but ≤900px its own sticky team/event header owns the top of the
+   screen — the wordmark bar is desktop-only there (approved mockups 2026-07-25). */
+@media (max-width: 900px) {
+  .topbarCoach { display: none; }
+}
+
 .topLeft {
   display: flex;
   align-items: center;

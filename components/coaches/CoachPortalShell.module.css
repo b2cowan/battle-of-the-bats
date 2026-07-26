@@ -1,13 +1,24 @@
-/* ── Coaches Portal shell ──────────────────────────────────────────────────────
-   Desktop (≥1024px): fixed full-height left rail + content offset.
-   Mobile  (≤1023px): fixed frosted top bar + bottom nav.
-   The global marketing nav/footer are suppressed on these routes
-   (isCoachPortalShellPath), so the shell owns the chrome. */
+/* ── Coaches Portal shell (A2 consumer chrome — mockups 2026-07-25 are the visual spec) ──
+   Mobile  (≤900px): sticky team/event header + scrolling section tab row up top; the GLOBAL
+                     consumer bottom bar (Home · Scores · Chat · Account, 72px) at the bottom.
+   Desktop (≥901px): the global consumer top bar + a 248px left rail (public-rail idiom)
+                     carrying the same section list; the header band shows only in event
+                     context (the rail carries team identity on team-only pages).
+   The global marketing nav/footer are suppressed on these routes (isCoachPortalShellPath),
+   so the shell owns the chrome. The old coach-only bottom nav, "More" sheet, and 56px
+   topbar are retired (owner-approved A2 mockups). */
 
 .shell {
   --coach-rail-w: 248px;
-  --coach-topbar-h: 56px;
-  --coach-bottomnav-h: 64px;
+  /* ConsumerNav's .topbar/.bottomNav size themselves from these two custom properties,
+     which normally come from the CONSUMER shell's wrapper — absent here, their heights
+     would collapse to auto / lose the safe-area cushion (the exact failure the tournament
+     variant fixed with .bottomNavTournament). The coach mount supplies them itself.
+     KEEP IN SYNC with ConsumerShell.module.css `.shell` (3rem top / 4.5rem bottom). */
+  --consumer-top-h: calc(3rem + env(safe-area-inset-top, 0px));
+  --consumer-bottom-h: calc(4.5rem + env(safe-area-inset-bottom, 0px));
+  /* Height of the global consumer top bar the desktop rail and header band sit beneath. */
+  --coach-top-strip: var(--consumer-top-h);
   /* Paint an OPAQUE themed ground on the shell itself. The warm token remap
      (globals.css) is scoped to [data-coach-warm-enabled] = this element, so `--bg`
      resolves to warm paper here (and pitch-black under an explicit dark pref). Without
@@ -37,164 +48,388 @@
   background: var(--bg);
 }
 
-@media (max-width: 1023px) {
+@media (max-width: 900px) {
   .helpFocused {
     padding: 1rem;
   }
 }
 
-/* ── Brand lockup (shared by rail header + mobile top bar) ── */
-.brand {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  text-decoration: none;
-  color: var(--white);
+/* ── Persistent team/event header (sticky, frosted — the public event-header grammar) ── */
+.mhead {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: var(--nav-bg-scrolled, rgba(13, 11, 20, 0.92));
+  border-bottom: 1px solid var(--border-2);
+  -webkit-backdrop-filter: blur(var(--blur-bar, 20px));
+  backdrop-filter: blur(var(--blur-bar, 20px));
 }
 
-/* The real brand mark (favicon.svg, the 32px-optimized variant) at 30px — the
-   single cross-shell continuity device; rendered identically in the admin shell.
-   Replaces the old typed lime "FL" square (2026-06-17). */
-.brandLogo {
-  flex-shrink: 0;
-  display: block;
-  width: 30px;
-  height: 30px;
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .mhead {
+    background: var(--bg);
+  }
 }
 
-.brandLockup {
+/* Warm theme: the frosted bar must go LIGHT (the warm gate does not remap the nav frost
+   token). Translucent warm paper keeps the frosted-blur look; the header's text tokens
+   (--white → ink, --white-45 → dim, --logic-lime → olive) then read correctly. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .mhead {
+  background: rgba(var(--home-paper-rgb, 248, 244, 237), 0.92);
+}
+
+@media (min-width: 901px) {
+  .mhead {
+    top: var(--coach-top-strip);
+    margin-left: var(--coach-rail-w);
+  }
+  /* Team-only pages: the rail already carries team identity on desktop — the header band
+     earns its space only in tournament context (approved mockup: desktop record page). */
+  .mheadTeamOnly {
+    display: none;
+  }
+}
+
+.mhTop {
   display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.7rem 0.9rem 0.55rem;
+}
+
+.mhText {
+  flex: 1;
   min-width: 0;
 }
 
-.brandText {
-  font-weight: 800;
-  font-size: 0.95rem;
-  letter-spacing: -0.01em;
+.mhEyebrow {
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0.15rem;
 }
 
-.brandSub {
+.mhTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.22rem;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+
+.mhTitleText {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Multi-team only: the team NAME is the switcher tap target (chevron on the text — the Flip
+   pill keeps its own lane; ratified 2026-07-25). Single-team coaches get plain text. */
+.mhSwitchBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mhSwitchBtn svg {
+  flex-shrink: 0;
+  color: var(--white-45);
+}
+
+.mhMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.3rem;
   font-family: var(--font-data, monospace);
-  font-size: 0.58rem;
-  font-weight: 700;
+  font-size: 0.64rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--white-40);
+  color: var(--white-70);
+}
+
+/* The Flip stays in the header's top-right lane at every width (owner-ratified 2026-07-25;
+   FlipPill goes icon-only ≤900px by itself). flex-shrink:0 = the title wraps beside it. */
+.mhFlip {
+  flex-shrink: 0;
+}
+
+/* ── Lifecycle chip (public pill form; states + the 'complete'-hidden rule unchanged) ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.12rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-family: var(--font-data, monospace);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
-/* ── Desktop rail ─────────────────────────────────────────────────────────── */
+.chipInfo {
+  color: var(--info);
+  background: rgba(var(--info-rgb), 0.12);
+  border-color: rgba(var(--info-rgb), 0.3);
+}
+
+/* Live/game-day = a true-lime FILL in both themes. `--home-lime` is defined (as real lime)
+   only inside the warm gate, so warm resolves it directly and dark falls back to
+   --logic-lime — no olive fill can leak in (E3), no literal re-pin needed. */
+.chipLive {
+  color: var(--home-lime-ink, var(--on-lime));
+  background: var(--home-lime, var(--logic-lime));
+  border-color: var(--home-lime, var(--logic-lime));
+}
+
+.chipDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  animation: coachChipPulse 2s ease-in-out infinite;
+}
+
+@keyframes coachChipPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chipDot { animation: none; }
+}
+
+/* ── Section tab row (the public TournamentTopTabs recipe; mobile only — rail owns ≥901px) ── */
+.tabRow {
+  display: flex;
+  align-items: stretch;
+  gap: 0.1rem;
+  padding: 0 0.6rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Edge fade: -webkit- FIRST (minifier keeps the LAST of an aliased pair — prefix-order gotcha). */
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 0.6rem, black calc(100% - 0.6rem), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, black 0.6rem, black calc(100% - 0.6rem), transparent 100%);
+}
+.tabRow::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 901px) {
+  .tabRow {
+    display: none;
+  }
+}
+
+.tabPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  min-height: 44px;
+  padding: 0 0.7rem;
+  border-bottom: 2px solid transparent;
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  white-space: nowrap;
+  text-decoration: none;
+  scroll-snap-align: center;
+  transition: color 0.18s ease, border-color 0.18s ease;
+}
+.tabPill svg {
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+.tabPill:hover {
+  color: var(--white-70);
+}
+.tabPill:active {
+  opacity: 0.65;
+}
+
+.tabPillActive {
+  color: var(--logic-lime);
+  border-bottom-color: var(--logic-lime);
+}
+
+/* ── Loading skeleton (context resolving): header + tab shimmer; the global bar renders
+      instantly — it needs no team data (kills the old skeleton-tabs / "Get started" flash). ── */
+.skelText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  padding: 0.15rem 0;
+}
+.skelTabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 0.6rem 0.7rem;
+}
+
+/* ── Multi-team switcher menu (anchored under the header title) ── */
+/* Light popover, no scrim: the fixed bottom bar (z-200) and rail (z-110) stack above any
+   scrim the header's own z-100 context could host, so a dimmer can't actually cover them —
+   outside-click/Escape dismissal (the FlipPill-popover idiom) is the honest pattern here. */
+.switchWrap {
+  position: relative;
+  min-width: 0;
+}
+
+.switchMenu {
+  position: absolute;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  z-index: 210;
+  min-width: 260px;
+  max-width: min(78vw, 340px);
+  background: var(--surface);
+  border: 1px solid var(--border-2);
+  border-radius: 14px;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+.switchLabel {
+  padding: 0.7rem 0.95rem 0.3rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-40);
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  width: 100%;
+  padding: 0.68rem 0.95rem;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--white);
+  text-align: left;
+  cursor: pointer;
+}
+.switchRow:hover {
+  background: var(--white-05);
+}
+.switchRowCurrent {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+}
+.switchRowCurrent svg {
+  color: var(--logic-lime);
+}
+/* Non-current rows indent past the check column so names align. */
+.switchRowPad {
+  padding-left: calc(0.95rem + 16px + 0.6rem);
+}
+
+.switchFoot {
+  border-top: 1px solid var(--border-2);
+  padding: 0.55rem 0.95rem;
+  font-size: 0.74rem;
+  color: var(--white-45);
+}
+
+/* ── Desktop rail (≥901px; the public TournamentSideRail idiom) ─────────────── */
 .rail {
   display: none;
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 901px) {
   .rail {
     display: flex;
     flex-direction: column;
     position: fixed;
-    top: 0;
+    top: var(--coach-top-strip);
     left: 0;
     bottom: 0;
     width: var(--coach-rail-w);
     z-index: 110;
-    padding: 1.25rem 0.85rem;
+    padding: 1rem 0.85rem;
     background: var(--surface);
     border-right: 1px solid var(--border-2);
-    box-shadow: var(--highlight-top);
     overflow-y: auto;
   }
 }
 
 .railHeader {
-  padding: 0.25rem 0.5rem 1rem;
+  padding: 0 0.35rem 0.85rem;
   border-bottom: 1px solid var(--border-2);
-  margin-bottom: 0.85rem;
+  margin-bottom: 0.7rem;
 }
 
-.railEmail {
-  margin: 0.6rem 0 0;
-  font-size: 0.72rem;
-  color: var(--white-45);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.railNav {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.railLink {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  padding: 0.6rem 0.75rem;
-  border-radius: var(--radius);
-  color: var(--white-70);
-  text-decoration: none;
-  font-size: 0.88rem;
-  font-weight: 600;
-  position: relative;
-  transition: background 0.15s, color 0.15s;
-}
-
-.railLink:hover {
-  background: var(--white-05);
-  color: var(--white);
-}
-
-.railLinkActive {
-  color: var(--white);
-  background: var(--white-05);
-}
-
-.railLinkActive::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 1.1rem;
-  border-radius: 2px;
-  background: var(--logic-lime);
-}
-
-/* ── Team context (rail-top: name + chip, or a switcher when >1) ── */
-.teamContext {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.6rem 0.65rem;
-  margin-bottom: 0.85rem;
-  background: var(--white-03, rgba(255, 255, 255, 0.03));
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-}
-
-.teamContextHead {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.teamName {
+.railEyebrow {
+  font-family: var(--font-data, monospace);
+  font-size: 0.56rem;
   font-weight: 700;
-  font-size: 0.9rem;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--white-40);
+}
+
+.railTeamName {
+  margin: 0.2rem 0 0.3rem;
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.02rem;
+  font-weight: 800;
+  line-height: 1.2;
   color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.railMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--white-45);
 }
 
 .teamSelect {
   width: 100%;
+  margin: 0.2rem 0 0.3rem;
   font: inherit;
   font-weight: 700;
   font-size: 0.88rem;
@@ -210,361 +445,102 @@
   border-color: var(--logic-lime);
 }
 
-.teamChip,
-.teamChipLive {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  align-self: flex-start;
-  font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-.teamChip { color: var(--white-45); }
-.teamChipLive { color: var(--logic-lime); }
-.teamChipDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--logic-lime);
-}
-
-.railFooter {
-  margin-top: auto;
-  padding-top: 0.85rem;
-  border-top: 1px solid var(--border-2);
+.railNav {
   display: flex;
   flex-direction: column;
-  gap: 0.1rem;
+  gap: 0.15rem;
 }
 
-.railFooterLink {
-  display: inline-flex;
+.railLink {
+  display: flex;
   align-items: center;
-  gap: 0.55rem;
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  border: none;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--white-55);
-  font-size: 0.82rem;
-  font-weight: 600;
+  gap: 0.65rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+  color: var(--white-70);
   text-decoration: none;
-  text-align: left;
-  cursor: pointer;
+  font-family: var(--font-data, monospace);
+  font-size: 0.8rem;
+  font-weight: 700;
+  position: relative;
   transition: background 0.15s, color 0.15s;
 }
+.railLink svg {
+  color: var(--white-40);
+  flex-shrink: 0;
+}
 
-.railFooterLink:hover {
+.railLink:hover {
   background: var(--white-05);
   color: var(--white);
 }
-.railFooterLink svg { color: var(--white-40); flex-shrink: 0; }
-.railFooterLink:hover svg { color: var(--white-70); }
+.railLink:hover svg {
+  color: var(--logic-lime);
+}
+
+/* Active = soft accent fill + a left accent bar at the rail edge (public-rail idiom;
+   --logic-lime resolves to olive under warm, lime under dark — consumer-family accent). */
+.railLinkActive {
+  color: var(--white);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+}
+.railLinkActive svg {
+  color: var(--logic-lime);
+}
+.railLinkActive::before {
+  content: '';
+  position: absolute;
+  left: -0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 58%;
+  border-radius: 0 3px 3px 0;
+  background: var(--logic-lime);
+}
+
+.railDivider {
+  border-top: 1px solid var(--border-2);
+  margin: 0.5rem 0.35rem;
+}
+
+/* The rail keeps ONLY the quiet platform line — sign out / feedback / help / all-workspaces
+   moved to the Account tab (approved A2 mockups); in-context "?" help stays on pages. */
+.railFooter {
+  margin-top: auto;
+  padding: 0.8rem 0.35rem 0;
+}
 
 .railLive {
-  padding: 0 0.75rem;
   font-family: var(--font-data, monospace);
   font-size: 0.58rem;
+  font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--white-35);
 }
 
-/* ── Mobile top bar ───────────────────────────────────────────────────────── */
-.topbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 100;
-  height: var(--coach-topbar-h);
-  display: flex;
-  align-items: center;
-  padding: 0 1rem;
-  background: var(--nav-mobile-bg, var(--surface));
-  border-bottom: 1px solid var(--border-2);
-  -webkit-backdrop-filter: blur(var(--blur-bar));
-  backdrop-filter: blur(var(--blur-bar));
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .topbar {
-    background: var(--bg);
-  }
-}
-
-/* Warm theme: the mobile chrome bars must go LIGHT to match the desktop rail. They paint the
-   dark --nav-mobile-bg, which the warm gate does NOT remap, so without this the bar stays dark
-   while everything else is cream — and the top-bar team name (var(--white) → ink in warm) renders
-   dark-on-dark, barely readable. A translucent warm-paper keeps the frosted-blur look; the bars'
-   existing text tokens (--white → ink, --white-50 → dim, --logic-lime → olive) then read correctly.
-   Consistent with the desktop rail (var(--surface) → white) and the consumer/fan warm nav. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .topbar,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bottomNav {
-  background: rgba(var(--home-paper-rgb, 248, 244, 237), 0.85);
-}
-
-@media (min-width: 1024px) {
-  .topbar {
-    display: none;
-  }
-}
-
-/* ── Mobile top bar: team-first context strip (≤1023px) ───────────────────── */
-/* A small "FL" mark for brand presence, then the TEAM takes the rest of the bar (the team is
-   the high-value info; the wordmark is dropped on mobile). Account + switcher live in "More". */
-.topbarMark {
-  flex-shrink: 0;
-  display: inline-flex;
-  text-decoration: none;
-}
-
-.topbarTeam {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  min-width: 0;
-  margin-left: 0.7rem;
-  flex: 1;
-}
-.topbarTeamName {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--white);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-/* The lifecycle chip never shrinks the name to nothing — it sits after, can wrap off if tight. */
-.topbarTeam .teamChip,
-.topbarTeam .teamChipLive {
-  flex-shrink: 0;
-}
-
-.sheetOverlay {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: flex-end;
-}
-
-@media (min-width: 1024px) {
-  .sheetOverlay {
-    display: none;
-  }
-}
-
-.sheet {
-  width: 100%;
-  background: var(--surface);
-  border-top: 1px solid var(--border-2);
-  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
-  box-shadow: var(--highlight-top);
-  padding: 0.85rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px));
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.sheetEmail {
-  margin: 0.25rem 0.25rem 0.6rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid var(--border-2);
-  font-size: 0.82rem;
-  color: var(--white-60);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.sheetSelect {
-  width: 100%;
-  font: inherit;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: var(--white);
-  background: var(--surface-2, var(--surface));
-  border: 1px solid var(--border-2);
-  border-radius: var(--radius-sm);
-  padding: 0.6rem 2.2rem 0.6rem 0.6rem;
-  appearance: none;
-  cursor: pointer;
-}
-.sheetSelect:focus {
-  outline: none;
-  border-color: var(--logic-lime);
-}
-
-.sheetItem {
-  display: flex;
-  align-items: center;
-  gap: 0.65rem;
-  width: 100%;
-  padding: 0.7rem 0.5rem;
-  border: 0;
-  border-radius: var(--radius);
-  background: transparent;
-  color: var(--white-80, var(--white));
-  font-size: 0.9rem;
-  font-weight: 600;
-  text-align: left;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background 0.15s, color 0.15s;
-}
-
-.sheetItem:hover {
-  background: var(--white-05);
-  color: var(--white);
-}
-
-.sheetItemActive {
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  color: var(--logic-lime);
-}
-.sheetItemActive svg { color: var(--logic-lime); }
-
-.sheetItemChevron {
-  margin-left: auto;
-  flex-shrink: 0;
-  color: var(--white-30);
-}
-
-/* "Current team" / "Sections" labels inside the More sheet. */
-.sheetBlock {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.25rem 0.25rem 0.5rem;
-}
-.sheetBlockLabel {
-  padding: 0.4rem 0.5rem 0.2rem;
-  font-family: var(--font-data, monospace);
-  font-size: 0.6rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--white-40);
-}
-
-.sheetSelectShell {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.sheetSelectChevron {
-  position: absolute;
-  right: 0.6rem;
-  pointer-events: none;
-  color: var(--logic-lime);
-}
-
-.sheetDivider {
-  height: 1px;
-  background: var(--border-2);
-  margin: 0.4rem 0;
-}
-
 /* ── Content region ───────────────────────────────────────────────────────── */
 .content {
-  padding-top: var(--coach-topbar-h);
-  padding-bottom: calc(var(--coach-bottomnav-h) + env(safe-area-inset-bottom, 0px));
   min-height: 100vh;
 }
 
-@media (min-width: 1024px) {
+@media (max-width: 900px) {
   .content {
-    padding-top: 0;
-    padding-bottom: 0;
-    padding-left: var(--coach-rail-w);
+    /* Clear the fixed global consumer bottom bar (72px + safe area). */
+    padding-bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
   }
-}
 
-/* A full-bleed route (the chat surface) owns the dynamic viewport itself: it is pinned to exactly the
-   dynamic viewport (100dvh, border-box so the chrome-clearing padding is included) with overflow
-   hidden, so the PAGE never scrolls behind the fixed bars. Without this the shell's min-height:100vh
-   exceeds the dynamic viewport on mobile (vh includes the browser bar), opening a phantom scroll that
-   carried the chat's own header up under the fixed top bar when you scrolled the messages. The chat
-   then scrolls only INTERNALLY (its message list), and its fixed header stays put. */
-.content:has([data-chat-fullbleed]) {
-  box-sizing: border-box;
-  min-height: 0;
-  height: 100dvh;
-  max-height: 100dvh;
-  overflow: hidden;
-}
-
-/* ── Mobile bottom nav ────────────────────────────────────────────────────── */
-.bottomNav {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 100;
-  height: calc(var(--coach-bottomnav-h) + env(safe-area-inset-bottom, 0px));
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  background: var(--nav-mobile-bg, var(--surface));
-  border-top: 1px solid var(--border-2);
-  -webkit-backdrop-filter: blur(var(--blur-bar));
-  backdrop-filter: blur(var(--blur-bar));
-}
-
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-  .bottomNav {
-    background: var(--bg);
-  }
-}
-
-@media (min-width: 1024px) {
-  .bottomNav {
+  /* While a text field has focus, give the keyboard the space back — hide the global
+     bottom bar (matches the consumer shell's own :has(input:focus) behavior). The
+     ConsumerNav bottom bar is the only nav[aria-label="Primary"] inside this shell. */
+  .shell:has(input:focus, textarea:focus) nav[aria-label='Primary'] {
     display: none;
   }
 }
 
-.bottomTab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  color: var(--white-50);
-  text-decoration: none;
-  font-size: 0.68rem;
-  font-weight: 600;
-  /* Reset for the "More" <button> so it matches the <Link> tabs. */
-  border: none;
-  background: none;
-  font-family: inherit;
-  cursor: pointer;
-  transition: color 0.15s, transform 0.12s;
-}
-
-/* S6: rail placeholder while team contexts resolve — slots for the shared
-   AdminSkeleton shimmer blocks (icon square + label bar per tab). */
-.bottomTabSkeleton {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0.3rem;
-}
-.bottomTabSkeletonIcon {
-  border-radius: 6px;
-}
-
-.bottomTab:active {
-  transform: scale(0.94);
-}
-
-.bottomTabActive {
-  color: var(--logic-lime);
+@media (min-width: 901px) {
+  .content {
+    padding-left: var(--coach-rail-w);
+  }
 }

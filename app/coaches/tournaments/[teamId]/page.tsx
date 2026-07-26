@@ -52,6 +52,8 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
       email={user.email}
       welcome={welcome === '1'}
       backHref={COACHES_TOURNAMENTS_PATH}
+      /* A2: the shell's persistent header carries this page's identity + Flip. */
+      hideHeader
     />
   );
 }

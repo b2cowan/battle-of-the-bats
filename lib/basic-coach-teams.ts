@@ -20,6 +20,24 @@ export type BasicCoachTeam = {
   activatedFeatures: string[];
 };
 
+/** One registration's tournament identity for the shell header (A2 consumer chrome):
+ *  the persistent header shows tournament + org identity, dates, a lifecycle chip, and
+ *  the Flip target when the coach is on that registration's record page. */
+export type CoachTeamContextRegistration = {
+  id: string;
+  tournamentId: string | null;
+  tournamentName: string | null;
+  tournamentSlug: string | null;
+  /** active|completed → the tournament has a public page the shell Flip can target. */
+  tournamentIsPublic: boolean;
+  orgName: string | null;
+  orgSlug: string | null;
+  startDate: string | null;
+  endDate: string | null;
+  /** This registration's own lifecycle chip (the shell hides it in state 'complete'). */
+  chip: { state: string; label: string; rank: number } | null;
+};
+
 /** Rich per-team context for the team-scoped Coaches Portal shell (nav rebuild). */
 export type CoachTeamContext = {
   id: string;
@@ -32,6 +50,11 @@ export type CoachTeamContext = {
   /** tournament-registration (`teams`) ids under this team — lets the shell resolve the
    *  current team from a `/coaches/tournaments/{registrationId}` path. */
   registrationIds: string[];
+  /** Per-registration tournament identity for the shell's event-context header (A2). */
+  registrations: CoachTeamContextRegistration[];
+  /** The registration behind the team's `lifecycle` chip — the team-only header's
+   *  "next event" meta line ("Purple Classic · Aug 14–16"). null when nothing current. */
+  nextEvent: { registrationId: string; name: string | null; startDate: string | null; endDate: string | null } | null;
 };
 
 export type BasicCoachTeamRegistration = {
@@ -703,40 +726,95 @@ export async function getCoachTeamContextsForUser(params: {
   const teams = await getBasicCoachTournamentTeamsForUser({ userId: params.userId, email: params.email });
   const today = params.today ?? new Date().toISOString().split('T')[0];
 
-  // One dates lookup for every tournament referenced by any registration.
+  // One tournament lookup for every tournament referenced by any registration — dates for the
+  // lifecycle chips PLUS identity (name/slug/status/org) for the shell's event-context header (A2).
   const tournamentIds = [
     ...new Set(
       teams.flatMap(t => t.registrations.map(r => r.tournamentId).filter((id): id is string => Boolean(id))),
     ),
   ];
-  const datesById = new Map<string, { start: string | null; end: string | null }>();
+  type TournamentContextRow = {
+    id: string;
+    name: string | null;
+    slug: string | null;
+    status: string | null;
+    org_id: string | null;
+    start_date: string | null;
+    end_date: string | null;
+  };
+  const tournamentsById = new Map<string, TournamentContextRow>();
   if (tournamentIds.length > 0) {
     const { data, error } = await supabaseAdmin
       .from('tournaments')
-      .select('id, start_date, end_date')
+      .select('id, name, slug, status, org_id, start_date, end_date')
       .in('id', tournamentIds);
     if (error) throw error;
-    for (const row of (data ?? []) as Array<{ id: string; start_date: string | null; end_date: string | null }>) {
-      datesById.set(row.id, { start: row.start_date, end: row.end_date });
+    for (const row of (data ?? []) as TournamentContextRow[]) {
+      tournamentsById.set(row.id, row);
+    }
+  }
+  const orgIds = [
+    ...new Set([...tournamentsById.values()].map(t => t.org_id).filter((id): id is string => Boolean(id))),
+  ];
+  const orgsById = new Map<string, { name: string | null; slug: string | null }>();
+  if (orgIds.length > 0) {
+    const { data, error } = await supabaseAdmin
+      .from('organizations')
+      .select('id, name, slug')
+      .in('id', orgIds);
+    if (error) throw error;
+    for (const row of (data ?? []) as Array<{ id: string; name: string | null; slug: string | null }>) {
+      orgsById.set(row.id, { name: row.name, slug: row.slug });
     }
   }
 
   return teams.map(team => {
-    // Best (lowest-rank) lifecycle chip across the team's registrations → the rail status.
+    const registrations: CoachTeamContextRegistration[] = team.registrations.map(reg => {
+      const tournament = reg.tournamentId ? tournamentsById.get(reg.tournamentId) : null;
+      const org = tournament?.org_id ? orgsById.get(tournament.org_id) : null;
+      const chipRaw = tournament ? deriveCoachLifecycleChip(tournament.start_date, tournament.end_date, today) : null;
+      return {
+        id: reg.id,
+        tournamentId: reg.tournamentId,
+        tournamentName: tournament?.name ?? null,
+        tournamentSlug: tournament?.slug ?? null,
+        // Same publicness rule as the record page: only active|completed tournaments
+        // have a public site the Flip can land on (draft/hidden/archived → no pill).
+        tournamentIsPublic: tournament?.status === 'active' || tournament?.status === 'completed',
+        orgName: org?.name ?? null,
+        orgSlug: org?.slug ?? null,
+        startDate: tournament?.start_date ?? null,
+        endDate: tournament?.end_date ?? null,
+        chip: chipRaw && chipRaw.state !== 'unknown' ? chipRaw : null,
+      };
+    });
+    // Best (lowest-rank) lifecycle chip across the team's registrations → the header status.
     let best: { state: string; label: string; rank: number } | null = null;
-    for (const reg of team.registrations) {
-      const dates = reg.tournamentId ? datesById.get(reg.tournamentId) : null;
-      if (!dates) continue;
-      const chip = deriveCoachLifecycleChip(dates.start, dates.end, today);
-      if (chip.state === 'unknown') continue;
-      if (!best || chip.rank < best.rank) best = chip;
+    let bestReg: CoachTeamContextRegistration | null = null;
+    for (const reg of registrations) {
+      if (reg.chip && (!best || reg.chip.rank < best.rank)) {
+        best = reg.chip;
+        bestReg = reg;
+      }
     }
+    // The team-only header's "next event" line follows the chip that drives `lifecycle`;
+    // a finished event (chip hidden per the A1 'complete' rule) gets no meta line either.
+    const nextEvent = best && best.state !== 'complete' && bestReg
+      ? {
+          registrationId: bestReg.id,
+          name: bestReg.tournamentName,
+          startDate: bestReg.startDate,
+          endDate: bestReg.endDate,
+        }
+      : null;
     return {
       id: team.id,
       name: team.name,
       activatedFeatures: team.activatedFeatures,
       lifecycle: best,
       registrationIds: team.registrations.map(r => r.id),
+      registrations,
+      nextEvent,
     };
   });
 }
