@@ -47,6 +47,10 @@ type TournamentTeamHQProps = {
   teamName: string;
   tournamentName: string | null;
   orgName: string | null;
+  /** B1.4: the organizer's (or tournament's) logo, shown beside the team monogram in the
+   *  tournament hero. Null/absent keeps today's monogram-only head. Decorative — the org
+   *  name is already rendered as text. */
+  organizerLogoUrl?: string | null;
   /** YYYY-MM-DD start date, for the accepted-prep countdown / headline. */
   startDate: string | null;
   dateRangeLabel: string | null;
@@ -203,6 +207,7 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     teamName,
     tournamentName,
     orgName,
+    organizerLogoUrl,
     startDate,
     dateRangeLabel,
     record,
@@ -270,7 +275,26 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     >
       {celebration && <p className={styles.heroWatermark} aria-hidden>{monogram}</p>}
       <div className={styles.heroHead}>
-        <div className={styles.heroMonogram} aria-hidden>{monogram}</div>
+        {/* B1.4 — the organizer's own mark. This is a REAL uploaded logo, which is why it
+            survived the 2026-07-27 removal of the auto-generated team-initial squares: an
+            organizer's actual crest carries identity, two derived letters carried none.
+            Decorative (the org name is already text below), hence empty alt + aria-hidden. */}
+        {/* Org logos are arbitrary remote URLs (Supabase storage / customer CDNs) with no
+            configured next/image loader — the public event header renders them the same way. */}
+        {organizerLogoUrl && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={organizerLogoUrl}
+            alt=""
+            aria-hidden
+            className={styles.heroOrgLogo}
+            loading="lazy"
+            decoding="async"
+          />
+        )}
+        {/* (Owner call 2026-07-27: the auto-generated team-initial square is gone — two
+            letters derived from the team name told a coach nothing they couldn't read in
+            the title beside it. The organizer's real logo above is the identity mark.) */}
         <div className={styles.heroHeadText}>
           {/* Headline + status chip share the top row; the chip is pinned right
               (margin-left:auto) and never shrinks. Both are fixed phrases that don't

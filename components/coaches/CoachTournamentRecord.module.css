@@ -131,8 +131,20 @@
 
 .jumpNavInner {
   display: flex;
-  align-items: center;
-  gap: 1.05rem;
+  align-items: stretch;
+  /* Centre the four anchors AS A GROUP with a fixed gap, rather than pushing the first
+     and last to the content edges (owner call 2026-07-27: more breathing room outside
+     the group, tighter inside it). Edge inset is then whatever's left over, which is
+     always larger than the gap — the requested proportion — and it holds at any width
+     without a media query, because a narrow screen just consumes the free space first.
+     `safe center` keeps the row's start reachable if it ever does overflow (plain
+     `center` can clip the leading item in a scroll container); older engines ignore the
+     `safe` keyword and fall back to the `center` declared above it. */
+  justify-content: center;
+  justify-content: safe center;
+  /* Tuned by eye 2026-07-27: 1.05rem (edge-to-edge spread) read as dead space on the
+     right, 1.5rem bunched the four together. This sits between the two. */
+  gap: 2.5rem;
   height: 34px;
   max-width: 760px;
   margin: 0 auto;
@@ -146,6 +158,11 @@
 }
 
 .jumpLink {
+  /* Full-height flex item so the whole 34px band is tappable — the label alone was a
+     ~10px-tall target on a sticky mobile bar, which is well under the 44px guidance and
+     the hardest thing on the page to hit accurately on game day. */
+  display: flex;
+  align-items: center;
   font-family: var(--font-data, monospace);
   font-size: 0.58rem;
   font-weight: 700;
@@ -372,4 +389,174 @@
      top-right and never re-stacks (FlipPill drops to icon-only ≤900px on its own;
      the title wraps via .headerMain min-width:0). The old column override here made
      the pill fall bottom-left under the title. */
+}
+
+/* ══ B1 quick wins — all three live in the Schedule zone (decisions ◆H1/◆I1,
+      approved 2026-07-27). Same card grammar as the rest of the record so they
+      read as part of the zone, not bolted on. ═══════════════════════════════ */
+
+/* ── B1.1 Add-all-games-to-calendar ─────────────────────────────────────────── */
+.calBlock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.7rem;
+  padding: 0.7rem 0.8rem;
+}
+
+.calBtn {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.45rem;
+  padding: 0.5rem 0.8rem;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white);
+  background: var(--bg-2, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.calBtn:hover:not(:disabled) {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+
+.calBtn:disabled { opacity: 0.6; cursor: default; }
+
+/* The snapshot-not-subscription caveat — quiet, but never omitted. */
+.calNote {
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.45;
+  color: var(--text-tertiary);
+  max-width: 46ch;
+}
+
+/* ── B1.5 Meet the field (pre-event state of the Schedule zone) ─────────────── */
+.fieldCard,
+.standCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.fieldHead,
+.standHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.fieldTitle,
+.standTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.fieldLink,
+.standLink {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--logic-lime);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.fieldLink:hover,
+.standLink:hover { text-decoration: underline; }
+
+.fieldCount {
+  margin: 0;
+  font-family: var(--font-data, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.88rem;
+  color: var(--white-80);
+}
+
+.fieldCount strong { color: var(--white); }
+
+.fieldChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.fieldChip,
+.fieldChipMore {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.74rem;
+  border-radius: 999px;
+  background: var(--bg-2, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border);
+  color: var(--white-70);
+}
+
+.fieldChipMore {
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── B1.6 Where you stand ───────────────────────────────────────────────────── */
+.standBody {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.standRank {
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--logic-lime);
+  font-variant-numeric: tabular-nums;
+}
+
+.standFacts {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.standRecord {
+  margin: 0;
+  font-family: var(--font-data, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.85rem;
+  color: var(--white-80);
+}
+
+.standRecord strong { color: var(--white); }
+
+.standDiff {
+  margin: 0;
+  font-family: var(--font-data, monospace);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+}
+
+.standNote {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--text-tertiary);
+}
+
+/* ── B1.3 Permanent share, beside the organizer's resource pills (◆J1) ──────── */
+.organizerShare {
+  margin: 0 0 0.7rem;
 }

@@ -26,11 +26,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import RollingNumber from '@/components/public/RollingNumber';
+import { getMapsUrl } from '@/components/LocationLink';
+import { MapPin } from 'lucide-react';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
 import { readFollowedTeamId, useFollowedTeam } from '@/lib/follow';
-import { teamColor, teamInitials } from '@/lib/team-color';
-import type { CSSProperties } from 'react';
+
+
 import type { GameStatus } from '@/lib/types';
 import styles from './CoachLiveSchedule.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -46,9 +48,6 @@ export type CoachScheduleGame = {
   isHome: boolean;
   /** Resolved opponent name, or "TBD" for unscheduled bracket games. */
   opponentName: string;
-  opponentInitials: string;
-  /** CSS colour value for the opponent monogram. */
-  opponentColor: string;
   location: string | null;
   isPlayoff: boolean;
   myScore: number | null;
@@ -139,8 +138,6 @@ export default function CoachLiveSchedule({
   // UTC today, matching the page's server `today` + the phase derivation + the
   // public ScheduleContent LIVE check (consistent across the app).
   const today = tournamentToday();
-  const myColor = teamColor(teamName);
-  const myInitials = teamInitials(teamName);
 
   return (
     <div className={styles.bridge}>
@@ -167,8 +164,6 @@ export default function CoachLiveSchedule({
             game.myScore !== null &&
             game.oppScore !== null;
 
-          const oppStyle = { '--opp-color': game.opponentColor } as CSSProperties;
-          const myStyle = { '--opp-color': myColor } as CSSProperties;
           const sideLabel = game.isHome ? 'Home' : 'Away';
 
           // ── LIVE broadcast row — the marquee scorebug, reserved for a game in
@@ -179,7 +174,6 @@ export default function CoachLiveSchedule({
                 <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
                 <div className={styles.matchup}>
                   <div className={styles.side}>
-                    <span className={styles.mono} style={myStyle} aria-hidden>{myInitials}</span>
                     <span className={styles.sideName}>{teamName}</span>
                   </div>
                   <div className={styles.bcScores}>
@@ -196,7 +190,6 @@ export default function CoachLiveSchedule({
                     )}
                   </div>
                   <div className={`${styles.side} ${styles.sideRight}`}>
-                    <span className={styles.mono} style={oppStyle} aria-hidden>{game.opponentInitials}</span>
                     <span className={styles.sideName}>{game.opponentName}</span>
                   </div>
                 </div>
@@ -208,7 +201,11 @@ export default function CoachLiveSchedule({
               </>
             );
             return game.href ? (
-              <Link key={game.id} href={game.href} className={`${styles.row} ${styles.live} ${styles.rowLink}`}>
+              // B1.2: `rowLink` retired with the standard-row restructure; the live row is
+              // still a single anchor (its venue stays plain text inside the broadcast meta,
+              // so there's no nested-anchor problem here) and takes the same hover/press
+              // feedback from `rowInteractive`.
+              <Link key={game.id} href={game.href} className={`${styles.row} ${styles.live} ${styles.rowInteractive}`}>
                 {inner}
               </Link>
             ) : (
@@ -231,13 +228,11 @@ export default function CoachLiveSchedule({
                 {game.dateLabel}{game.timeLabel ? ` · ${game.timeLabel}` : ''}
               </div>
               <div className={styles.rowOpp}>
-                <span className={styles.monoSm} style={oppStyle} aria-hidden>{game.opponentInitials}</span>
                 <span className={styles.oppName}>
                   <span className={styles.vs}>{game.isHome ? 'vs' : '@'}</span> {game.opponentName}
                   {game.isPlayoff ? <span className={styles.tag}>Playoff</span> : null}
                 </span>
               </div>
-              {game.location && <div className={styles.rowLoc}>{game.location}</div>}
               {isCancelled ? (
                 <span className={styles.cancelChip}>Cancelled</span>
               ) : hasScore ? (
@@ -251,12 +246,39 @@ export default function CoachLiveSchedule({
             </>
           );
 
-          return game.href ? (
-            <Link key={game.id} href={game.href} className={`${styles.row} ${styles.rowLink}`}>
-              {inner}
-            </Link>
-          ) : (
-            <div key={game.id} className={styles.row}>{inner}</div>
+          // B1.2 — the venue is now its own Maps link, and an <a> inside an <a> is invalid
+          // HTML, so the row card can no longer BE the game link. The card keeps its flex
+          // layout; `.rowMain` carries the deep-link and the same wrapping behaviour the
+          // row had. Rows without a public game page render the same shape, minus the link.
+          return (
+            <div key={game.id} className={`${styles.row}${game.href ? ` ${styles.rowInteractive}` : ''}`}>
+              {game.href ? (
+                <Link href={game.href} className={styles.rowMain}>{inner}</Link>
+              ) : (
+                <div className={styles.rowMain}>{inner}</div>
+              )}
+              {game.location && (
+                /* Reuses LocationLink's URL builder rather than the component itself:
+                   LocationLink styles its anchor with INLINE styles (org `--primary-light`),
+                   which no stylesheet can override — and in the coach portal's warm theme
+                   that renders as muted grey, so the venue didn't read as tappable at all.
+                   The approved mockups call for a clear link, so the anchor is styled here
+                   while the Maps URL, new-tab semantics and pin icon stay identical. */
+                <div className={styles.rowLoc}>
+                  <a
+                    href={getMapsUrl(game.location)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={`Search "${game.location}" in Google Maps`}
+                    className={styles.rowLocLink}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    <MapPin size={11} aria-hidden />
+                    <span className={styles.rowLocText}>{game.location}</span>
+                  </a>
+                </div>
+              )}
+            </div>
           );
         })}
       </div>

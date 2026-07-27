@@ -88,3 +88,25 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .close:hover {
   background: var(--home-olive-soft);
 }
+
+/* B1.3 (◆J1) — "We're in!" share, the celebration half. The permanent copy lives in
+   the record's From-the-Organizer zone, so this one can die with the dismissal. */
+.shareRow {
+  margin-top: 0.75rem;
+}
+
+.shareBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--home-lime-ink, var(--black));
+  background: var(--home-lime, var(--logic-lime));
+  border: 1px solid transparent;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.shareBtn:hover { filter: brightness(1.05); }

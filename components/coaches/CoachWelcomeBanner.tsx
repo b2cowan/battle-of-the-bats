@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { PartyPopper, X } from 'lucide-react';
+import SharePageButton from '@/components/public/SharePageButton';
 import styles from './CoachWelcomeBanner.module.css';
 
 /**
@@ -17,10 +18,19 @@ export default function CoachWelcomeBanner({
   teamName,
   tournamentName,
   status,
+  shareHref,
 }: {
   teamName: string;
   tournamentName: string | null;
   status: 'pending' | 'waitlist';
+  /**
+   * B1.3 (◆J1): the celebration half of the share — "we're in!" is at its most
+   * shareable in the seconds after registering. Null when the tournament isn't
+   * public yet (a just-registered team can precede the event going live), and the
+   * permanent copy in the record's "From the Organizer" zone carries it from then on,
+   * so dismissing this banner never costs the coach the ability to share.
+   */
+  shareHref?: string | null;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -62,6 +72,18 @@ export default function CoachWelcomeBanner({
           </p>
         </div>
       </div>
+
+      {shareHref && (
+        <div className={styles.shareRow}>
+          <SharePageButton
+            url={shareHref}
+            title={tournamentName ?? 'Tournament'}
+            text={`${teamName} is ${isWaitlist ? 'on the waitlist for' : 'registered for'} ${tournamentName ?? 'the tournament'}!`}
+            label="We're in! Share it"
+            className={styles.shareBtn}
+          />
+        </div>
+      )}
     </div>
   );
 }

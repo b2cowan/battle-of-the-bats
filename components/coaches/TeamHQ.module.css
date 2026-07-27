@@ -245,20 +245,10 @@
   margin-bottom: 0.6rem;
 }
 
-.heroMonogram {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-sm);
-  background: var(--team-color, var(--logic-lime));
-  color: var(--on-team-color); /* stay light on the theme-stable team colour */
-  font-family: var(--font-display, sans-serif);
-  font-weight: 900;
-  font-size: 1.25rem;
-  letter-spacing: 0.01em;
-}
+/* (Owner call 2026-07-27: `.heroMonogram` — the auto-generated team-initial square in
+   the hero head — is gone. The organizer's REAL uploaded logo (.heroOrgLogo) survived:
+   a crest carries identity, two derived letters didn't. The team's deterministic hue
+   still drives the hero wash + the celebration watermark.) */
 
 /* Headline + status chip share the top row of the head-text column. The chip is pinned
    to the right edge (margin-left:auto) and never shrinks; the headline takes the left.
@@ -411,4 +401,23 @@
 
 .heroResultLink:hover {
   text-decoration: underline;
+}
+
+/* B1.4 — organizer/tournament logo beside the team monogram in the tournament hero.
+   Sized to match .heroMonogram so the pair reads as one identity block. `contain`
+   (not `cover`) because org logos are arbitrary aspect ratios and cropping a club
+   crest is worse than letterboxing it. Hidden below 380px, where the head row is
+   already tight and the team's own monogram is the identity that matters. */
+.heroOrgLogo {
+  flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  object-fit: contain;
+  background: var(--white-5);
+  padding: 0.3rem;
+}
+
+@media (max-width: 380px) {
+  .heroOrgLogo { display: none; }
 }

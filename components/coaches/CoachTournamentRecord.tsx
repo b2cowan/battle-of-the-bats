@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
-import { resolveTournamentContactEmail } from '@/lib/db';
+import { resolveTournamentContactEmail, getStandings } from '@/lib/db';
 import {
   canUserAccessTournamentRegistration,
   findLinkedBasicTeamForRegistration,
@@ -16,7 +16,7 @@ import {
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
 import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
 import { ArrowLeft, BookOpen, CalendarClock, CalendarDays, ChevronDown, ClipboardList, Home, Megaphone, UserCog, Users } from 'lucide-react';
-import { teamColor, teamInitials } from '@/lib/team-color';
+
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import TournamentStatusBlock from '@/components/coaches/TournamentStatusBlock';
 import TeamHQ from '@/components/coaches/TeamHQ';
@@ -26,12 +26,17 @@ import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import CoachWelcomeBanner from '@/components/coaches/CoachWelcomeBanner';
 import CoachRecordJumpNav from '@/components/coaches/CoachRecordJumpNav';
+import CoachScheduleCalendarButton from '@/components/coaches/CoachScheduleCalendarButton';
+import CoachMeetTheField from '@/components/coaches/CoachMeetTheField';
+import CoachStandingsSnapshot from '@/components/coaches/CoachStandingsSnapshot';
 import SharePageButton from '@/components/public/SharePageButton';
+import type { ICSEventInput } from '@/lib/export/ics';
 import FlipPill from '@/components/shared/FlipPill';
 import { resolveFlip, publicHref, publicGamePageHref, publicTeamPageHref } from '@/lib/flip-twins';
 import { parseRosterRequirements } from '@/lib/roster-requirements';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
-import type { GameStatus, TournamentSettings } from '@/lib/types';
+import type { GameStatus, TournamentSettings, PlayoffConfig } from '@/lib/types';
+import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
 import styles from './CoachTournamentRecord.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -115,7 +120,7 @@ export default async function CoachTournamentRecord({
     team.tournament_id
       ? supabaseAdmin
           .from('tournaments')
-          .select('id, name, slug, year, start_date, end_date, org_id, status, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings, public_hidden_pages')
+          .select('id, name, slug, year, start_date, end_date, org_id, status, contact_email, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings, public_hidden_pages, logo_url')
           .eq('id', team.tournament_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -123,7 +128,11 @@ export default async function CoachTournamentRecord({
     team.division_id
       ? supabaseAdmin
           .from('divisions')
-          .select('id, name, schedule_visibility, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+          // B1.6: `playoff_config` carries the division's tie-breaker overrides, run-diff cap
+          // AND any coin-toss results the organizer recorded to settle a real tie. Without it
+          // the coach's standings snapshot silently disagrees with the public standings page
+          // for exactly the ties a human had to intervene on.
+          .select('id, name, schedule_visibility, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, playoff_config')
           .eq('id', team.division_id)
           .maybeSingle()
       : Promise.resolve({ data: null }),
@@ -152,17 +161,20 @@ export default async function CoachTournamentRecord({
     team.tournament_id
       ? supabaseAdmin
           .from('teams')
-          .select('id, name')
+          // B1.5: `division_id` added to the EXISTING select (no new query) so "Meet the
+          // field" can say how many of the accepted teams share the coach's division.
+          .select('id, name, division_id')
           .eq('tournament_id', team.tournament_id)
           .eq('status', 'accepted')
       : Promise.resolve({ data: [] }),
   ]);
 
-  let org: { slug: string; name: string } | null = null;
+  let org: { slug: string; name: string; logo_url: string | null } | null = null;
   if (tournament?.org_id) {
     const { data: orgData } = await supabaseAdmin
       .from('organizations')
-      .select('slug, name')
+      // B1.4: logo_url so the hero can show the organizer's mark beside the team monogram.
+      .select('slug, name, logo_url')
       .eq('id', tournament.org_id)
       .maybeSingle();
     org = orgData;
@@ -231,11 +243,10 @@ export default async function CoachTournamentRecord({
     const opponentId = isHome ? g.away_team_id : g.home_team_id;
     const opponentPlaceholder = isHome ? g.away_placeholder : g.home_placeholder;
     // Reveal a real opponent name only when the schedule is published AND a real team
-    // is assigned; otherwise fall back to the game's placeholder/TBD with a neutral
-    // monogram (mirrors the public game page — never names an undecided team/bye).
+    // is assigned; otherwise fall back to the game's placeholder/TBD (mirrors the public
+    // game page — never names an undecided team/bye).
     const realOpponentId = opponentId && opponentId !== NIL_UUID ? opponentId : null;
     const realOpponentName = scheduleVisible && realOpponentId ? teamNameById.get(realOpponentId) : undefined;
-    const revealed = Boolean(realOpponentName);
     const opponentName = realOpponentName ?? opponentPlaceholder ?? 'TBD';
     return {
       id: g.id,
@@ -245,8 +256,6 @@ export default async function CoachTournamentRecord({
       date: g.game_date,
       isHome,
       opponentName,
-      opponentInitials: revealed ? teamInitials(opponentName) : '–',
-      opponentColor: revealed ? teamColor(opponentName) : 'var(--white-40)',
       location: g.location,
       isPlayoff: g.is_playoff,
       myScore: isHome ? g.home_score : g.away_score,
@@ -413,6 +422,94 @@ export default async function CoachTournamentRecord({
     if (!hiddenPages.includes('rules')) resourceLinks.push({ href: publicHref(resCtx, 'rules'), label: 'Tournament Rules' });
   }
 
+  /* ══ B1 quick wins — all three Schedule-zone blocks + the permanent share.
+        Every one of them is gated on the organizer's own public-page choices:
+        the portal must never surface something they deliberately switched off. ══ */
+
+  // B1.3 (◆J1): a share that OUTLIVES the dismissible welcome banner. Only once the
+  // tournament is actually public — sharing a private event link helps nobody.
+  const sharePublicHref = publicCtx ? publicHref(publicCtx, 'overview') : null;
+
+  // B1.5: "Meet the field" — counts off the accepted-teams list already loaded above.
+  const fieldTeams = (acceptedTeams ?? []) as Array<{ id: string; name: string; division_id: string | null }>;
+  const showMeetTheField =
+    team.status === 'accepted' && !hiddenPages.includes('teams') && fieldTeams.length > 1;
+  const fieldDivisionCount = team.division_id
+    ? fieldTeams.filter(t => t.division_id === team.division_id).length
+    : 0;
+  const fieldSampleNames = fieldTeams
+    .filter(t => t.id !== teamId)
+    // Prefer the coach's own division — those are the teams they'll actually meet.
+    .sort((a, b) => Number(b.division_id === team.division_id) - Number(a.division_id === team.division_id))
+    .map(t => t.name);
+  const teamsHref = publicCtx && !hiddenPages.includes('teams') ? publicHref(publicCtx, 'teams') : null;
+
+  // B1.1: ICS events built HERE (server) so the client button ships a few small objects
+  // instead of the tournament's whole games payload. Cancelled games are intentionally
+  // included — `downloadICS` marks them CANCELLED so a re-import cleans the coach's calendar.
+  const calendarEvents: ICSEventInput[] = showLiveBridge && tournament && org
+    ? teamGames
+        .filter(g => g.game_date)
+        .map(g => {
+          const isHome = g.home_team_id === teamId;
+          const oppId = isHome ? g.away_team_id : g.home_team_id;
+          const oppReal = oppId && oppId !== NIL_UUID ? teamNameById.get(oppId) : undefined;
+          const opponent = oppReal ?? (isHome ? g.away_placeholder : g.home_placeholder) ?? 'TBD';
+          return {
+            gameId: g.id,
+            title: `${team.name} ${isHome ? 'vs' : '@'} ${opponent}`,
+            date: g.game_date as string,
+            time: g.game_time || undefined,
+            location: g.location || undefined,
+            description: `${tournament.name}${division?.name ? ` · ${division.name}` : ''}`,
+            url: canLinkPublic ? `${publicGamePageHref(publicCtx!, g.id)}` : undefined,
+            cancelled: g.status === 'cancelled',
+          };
+        })
+    : [];
+
+  // B1.6: "Where you stand" — the coach's OWN row only (the full table is one tap away on
+  // the public site). Scoped to their division, so this is one standings computation, not
+  // the whole tournament's. Skipped entirely when the organizer hides standings publicly.
+  //
+  // Gate via the CANONICAL helper, not a raw `hiddenPages` check: `isPublicPageEnabled`
+  // also suppresses standings for a bracket-only tournament (no round-robin to stand in),
+  // which every public standings/champions/playoffs call site already honors.
+  const standingsPublicallyOn = isPublicPageEnabled(
+    { publicHiddenPages: hiddenPages as PublicPageKey[], settings: tournament?.settings as TournamentSettings },
+    'standings',
+  );
+  let standingSnapshot: {
+    rank: number; wins: number; losses: number; ties: number;
+    runDiff: number | null; groupLabel: string | null; gamesRemaining: number;
+  } | null = null;
+  if (team.status === 'accepted' && team.division_id && standingsPublicallyOn && showLiveBridge) {
+    const rows = await getStandings(
+      team.division_id,
+      // Same config every other standings caller passes — see the divisions select above.
+      (division?.playoff_config as PlayoffConfig | null) ?? undefined,
+      { admin: true },
+      tournament?.settings ?? undefined,
+    );
+    const mine = rows.find(r => r.teamId === teamId);
+    if (mine && mine.gp > 0) {
+      // Rank WITHIN the coach's pool when the division is pooled — telling a Pool A
+      // coach they're 7th of 12 across the whole division is a different (and wrong)
+      // answer to "where do we stand". getStandings already returns rows in order.
+      const group = mine.poolId ? rows.filter(r => r.poolId === mine.poolId) : rows;
+      standingSnapshot = {
+        rank: group.findIndex(r => r.teamId === teamId) + 1,
+        wins: mine.w,
+        losses: mine.l,
+        ties: mine.t,
+        runDiff: mine.rd,
+        groupLabel: division?.name ?? null,
+        gamesRemaining: teamGames.filter(g => g.status === 'scheduled').length,
+      };
+    }
+  }
+  const standingsPublicHref = publicCtx && standingsPublicallyOn ? publicHref(publicCtx, 'standings') : null;
+
   const isPending = coachPhase === 'pending';
 
   // Payment instructions (the organizer's "how to pay" text) shown to an ACCEPTED coach who owes.
@@ -461,6 +558,7 @@ export default async function CoachTournamentRecord({
             teamName={team.name}
             tournamentName={tournament?.name ?? null}
             status={team.status === 'waitlist' ? 'waitlist' : 'pending'}
+            shareHref={sharePublicHref}
           />
         )}
 
@@ -497,6 +595,9 @@ export default async function CoachTournamentRecord({
           teamName={team.name}
           tournamentName={tournament?.name ?? null}
           orgName={org?.name ?? null}
+          // B1.4: the tournament's own logo wins over the org's — a multi-event org often
+          // brands each tournament separately, and this record is about ONE event.
+          organizerLogoUrl={tournament?.logo_url ?? org?.logo_url ?? null}
           startDate={tournament?.start_date ?? null}
           dateRangeLabel={dateRange}
           record={record}
@@ -553,6 +654,24 @@ export default async function CoachTournamentRecord({
         {!isRejected && (
           <section id="schedule" className={`${styles.section} ${styles.zone}`}>
             <ZoneHead icon={<CalendarDays size={12} aria-hidden />} eyebrow="Your Games" title="Schedule" />
+
+            {/* B1.6 (◆H1) — "Where you stand" leads the zone once there's something to
+                stand on: between games it's the first thing a coach checks, and it's the
+                answer to the games listed directly below. Renders null before any game
+                is played and whenever the organizer hides standings publicly. */}
+            {standingSnapshot && (
+              <CoachStandingsSnapshot {...standingSnapshot} standingsHref={standingsPublicHref} />
+            )}
+
+            {/* B1.1 — calendar export sits above the list it exports. */}
+            {calendarEvents.length > 0 && (
+              <CoachScheduleCalendarButton
+                filename={`${team.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'team'}-schedule.ics`}
+                events={calendarEvents}
+                gameCount={calendarEvents.length}
+              />
+            )}
+
             {showLiveBridge ? (
               <CoachLiveSchedule
                 orgSlug={org?.slug ?? ''}
@@ -566,16 +685,31 @@ export default async function CoachTournamentRecord({
                 initialGames={initialGames}
               />
             ) : team.status === 'accepted' ? (
-              <CoachEmptyState
-                quiet
-                icon={<CalendarClock size={18} aria-hidden />}
-                headline={!scheduleVisible ? 'Schedule not published yet' : 'No games scheduled yet'}
-                description={
-                  !scheduleVisible
-                    ? 'The schedule for this division has not been published. Check back after the organizer publishes it.'
-                    : 'No games have been scheduled for your team yet.'
-                }
-              />
+              <>
+                <CoachEmptyState
+                  quiet
+                  icon={<CalendarClock size={18} aria-hidden />}
+                  headline={!scheduleVisible ? 'Schedule not published yet' : 'No games scheduled yet'}
+                  description={
+                    !scheduleVisible
+                      ? 'The schedule for this division has not been published. Check back after the organizer publishes it.'
+                      : 'No games have been scheduled for your team yet.'
+                  }
+                />
+                {/* B1.5 (◆I1) — this zone's PRE-EVENT state. The wait for a schedule is the
+                    longest stretch of the coach's relationship with the event; "who else is
+                    coming" is the one thing they're curious about, and it steps aside the
+                    moment real games arrive (this branch stops rendering). */}
+                {showMeetTheField && (
+                  <CoachMeetTheField
+                    totalTeams={fieldTeams.length}
+                    divisionTeams={fieldDivisionCount}
+                    divisionName={division?.name ?? null}
+                    sampleNames={fieldSampleNames}
+                    teamsHref={teamsHref}
+                  />
+                )}
+              </>
             ) : (
               <CoachEmptyState
                 quiet
@@ -639,6 +773,21 @@ export default async function CoachTournamentRecord({
                   {resourceIcon(r.label)} {r.label}
                 </Link>
               ))}
+            </div>
+          )}
+          {/* B1.3 (◆J1) — the PERMANENT half of the share. The welcome banner carries the
+              celebration version, but it's first-visit-only and dismissible, so the most
+              shareable thing a coach has would vanish on one tap of the X. This one is
+              still here in week three, beside the other event links. */}
+          {sharePublicHref && !isRejected && (
+            <div className={styles.organizerShare}>
+              <SharePageButton
+                url={sharePublicHref}
+                title={tournament?.name ?? 'Tournament'}
+                text={`${team.name} is playing at ${tournament?.name ?? 'this tournament'}.`}
+                label="Share this tournament"
+                className={styles.resourcePill}
+              />
             </div>
           )}
           {relevantAnnouncements.length === 0 ? (
