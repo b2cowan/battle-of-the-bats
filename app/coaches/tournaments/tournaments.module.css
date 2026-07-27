@@ -87,131 +87,13 @@
   margin-top: 1.25rem;
 }
 
-/* ── Registration card ────────────────────────────────────────────────────── */
-/* Card + its secondary "⇄ Fan view" link stacked ("The Flip" P3, shared FanViewLink) — the
-   card keeps its whole-surface click; the flip door sits on its own line just beneath. */
-.entry {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 1.25rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
-  text-decoration: none;
-  color: inherit;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
-}
-
-.card:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  box-shadow: var(--glow-sm), var(--highlight-top);
-}
-
-.card:active {
-  transform: translateY(1px);
-}
-
-.cardMain {
-  flex: 1;
-  min-width: 0;
-}
-
-.cardTitle {
-  font-weight: 700;
-  font-size: 0.95rem;
-  color: var(--white);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cardMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem 0.75rem;
-  margin-top: 0.25rem;
-  font-size: 0.78rem;
-  color: var(--white-60);
-}
-
-.cardMeta span + span::before {
-  content: '·';
-  margin-right: 0.75rem;
-}
-
-.cardStatus {
-  flex-shrink: 0;
-}
-
-/* ── CTA section ──────────────────────────────────────────────────────────── */
-.ctaSection {
-  margin-top: 3rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border-2);
-}
-
-.ctaGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-.ctaCard {
-  padding: 1.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
-}
-
-.ctaLabel {
-  font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--logic-lime);
-  margin-bottom: 0.4rem;
-}
-
-.ctaTitle {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: var(--white);
-  margin-bottom: 0.6rem;
-}
-
-.ctaDesc {
-  font-size: 0.83rem;
-  color: var(--white-60);
-  line-height: 1.55;
-  margin: 0 0 1.1rem;
-}
+/* A3.3: the registration-card anatomy moved to the shared CoachRegistrationCard
+   component (this page's treatment was promoted to the canon). The legacy .cta*
+   block (CtaCards were removed from this surface in Phase 5·0) is gone too. */
 
 @media (max-width: 640px) {
   .page {
     padding: 1.5rem 1rem 3rem;
-  }
-
-  .ctaGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .cardMeta span + span::before {
-    content: none;
-  }
-
-  .cardMeta {
-    flex-direction: column;
-    gap: 0.1rem;
   }
 
   .teamGroup {

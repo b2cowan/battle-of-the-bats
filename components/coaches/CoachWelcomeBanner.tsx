@@ -1,31 +1,26 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { PartyPopper, X, CalendarDays, BookOpen, Home } from 'lucide-react';
+import { PartyPopper, X } from 'lucide-react';
 import styles from './CoachWelcomeBanner.module.css';
-
-type ResourceLink = { href: string; label: string };
 
 /**
  * First-run greeting shown ONCE on the coach's tournament record, immediately after they
- * register (the register flow redirects here with `?welcome=1`). It's a thin, celebratory
- * one-liner + the tournament's public resource links — orientation ("what is this portal,
- * what happens next") lives in the persistent CoachNextSteps strip below, so it survives
- * dismissal. Dismissing this banner strips the `welcome` param so a refresh won't re-show
- * it — no DB state, no "seen" flag.
+ * register (the register flow redirects here with `?welcome=1`). A3 slimmed it to the
+ * celebration line only — the tournament resource links now live permanently in the
+ * record's "From the Organizer" zone, and orientation ("what happens next") lives in the
+ * Status & Payment zone, so nothing of value dies with the dismissal. Dismissing strips
+ * the `welcome` param so a refresh won't re-show it — no DB state, no "seen" flag.
  */
 export default function CoachWelcomeBanner({
   teamName,
   tournamentName,
   status,
-  resources,
 }: {
   teamName: string;
   tournamentName: string | null;
   status: 'pending' | 'waitlist';
-  resources: ResourceLink[];
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -44,11 +39,6 @@ export default function CoachWelcomeBanner({
   if (dismissed) return null;
 
   const isWaitlist = status === 'waitlist';
-  const iconFor = (label: string) => {
-    if (/schedule/i.test(label)) return <CalendarDays size={15} aria-hidden />;
-    if (/rule/i.test(label)) return <BookOpen size={15} aria-hidden />;
-    return <Home size={15} aria-hidden />;
-  };
 
   return (
     <div className={styles.banner} role="status">
@@ -72,19 +62,6 @@ export default function CoachWelcomeBanner({
           </p>
         </div>
       </div>
-
-      {resources.length > 0 && (
-        <div className={styles.resources}>
-          <span className={styles.resourcesLabel}>Tournament resources</span>
-          <div className={styles.resourceLinks}>
-            {resources.map(r => (
-              <Link key={r.href} href={r.href} className={styles.resourceLink}>
-                {iconFor(r.label)} {r.label}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }

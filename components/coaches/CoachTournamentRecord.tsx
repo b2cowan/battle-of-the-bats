@@ -15,7 +15,7 @@ import {
 } from '@/lib/coaches-status';
 import { buildCoachTournamentStatus } from '@/lib/coach-status-model';
 import { deriveCoachTournamentPhase } from '@/lib/coach-tournament-phase';
-import { ArrowLeft, CalendarClock, UserCog } from 'lucide-react';
+import { ArrowLeft, BookOpen, CalendarClock, CalendarDays, ChevronDown, ClipboardList, Home, Megaphone, UserCog, Users } from 'lucide-react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import TournamentStatusBlock from '@/components/coaches/TournamentStatusBlock';
@@ -25,8 +25,7 @@ import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit'
 import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
 import CoachWelcomeBanner from '@/components/coaches/CoachWelcomeBanner';
-import CoachNextSteps, { type CoachNextStep } from '@/components/coaches/CoachNextSteps';
-import CollapsibleCard from '@/components/admin/CollapsibleCard';
+import CoachRecordJumpNav from '@/components/coaches/CoachRecordJumpNav';
 import SharePageButton from '@/components/public/SharePageButton';
 import FlipPill from '@/components/shared/FlipPill';
 import { resolveFlip, publicHref, publicGamePageHref, publicTeamPageHref } from '@/lib/flip-twins';
@@ -50,8 +49,9 @@ const NIL_UUID = '00000000-0000-0000-0000-000000000000';
  * Caller resolves auth + passes the verified user; this component re-checks access to
  * the registration and `notFound()`s if the user can't see it. `suppressUpsell` hides
  * the free-tier "express interest / run your own event" asks (a paying coach is past
- * them). `backHref` renders a back link (the Premium shell points it at its team-scoped
- * Tournaments list; the free portal at the account-wide `/coaches/tournaments` hub).
+ * them). `backHref` renders a back link — BOTH shells point it at their team-scoped
+ * Tournaments list since A3.3 (the free caller falls back to the account-wide
+ * `/coaches/tournaments` hub only for a registration-only coach with no free team).
  */
 export default async function CoachTournamentRecord({
   registrationId,
@@ -332,10 +332,6 @@ export default async function CoachTournamentRecord({
     endDate: tournament?.end_date ?? null,
     today,
   });
-  const registeredDateLabel = team.registered_at
-    ? new Date(team.registered_at).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })
-    : null;
-
   // Theme 1 (5h) pending entry-fee preview — the organizer's scheduled fee, shown on the
   // pending phase as "due if accepted". Prefer the division fee, fall back to the
   // tournament total; PostgREST returns numerics as strings so coerce before the check.
@@ -364,10 +360,6 @@ export default async function CoachTournamentRecord({
   // shows in the hero checklist and whether the submit card appears.
   const rosterRequirements = parseRosterRequirements((tournament?.settings ?? null) as TournamentSettings | null);
   const showRosterSubmit = team.status === 'accepted' && (rosterRequirements.required || Boolean(team.roster_submitted_at));
-
-  // 5l head-coach assignment. The registrant assigns/changes the head-coach name for any
-  // non-rejected team — pending included, so the contact email can route the acceptance email.
-  const showHeadCoach = team.status !== 'rejected';
 
   // 5m afterglow (result phase only). Final W-L-T from completed games + a public standings link.
   const isResultPhase = coachPhase === 'result';
@@ -404,13 +396,21 @@ export default async function CoachTournamentRecord({
     : [];
   const showWelcome =
     welcome && (team.status === 'pending' || team.status === 'waitlist') && Boolean(org?.slug && tournament?.slug);
-  const welcomeResources: Array<{ href: string; label: string }> = [];
-  if (showWelcome && org?.slug && tournament?.slug) {
-    // Not gated on tournamentIsPublic (matches prior behavior for a just-registered pending team).
-    const welcomeCtx = { orgSlug: org.slug, tournamentSlug: tournament.slug };
-    welcomeResources.push({ href: publicHref(welcomeCtx, 'overview'), label: 'Tournament Home' });
-    if (!hiddenPages.includes('schedule')) welcomeResources.push({ href: publicHref(welcomeCtx, 'schedule'), label: 'Schedule' });
-    if (!hiddenPages.includes('rules')) welcomeResources.push({ href: publicHref(welcomeCtx, 'rules'), label: 'Tournament Rules' });
+
+  // A3: the tournament resource links moved OUT of the welcome banner into the permanent
+  // "From the Organizer" zone. Gate: slugs must exist, and the tournament must be public —
+  // EXCEPT for a pending/waitlist team, which keeps the prior welcome-banner behavior
+  // (a just-registered team may precede the tournament going public).
+  const resourceLinks: Array<{ href: string; label: string }> = [];
+  if (
+    org?.slug && tournament?.slug &&
+    team.status !== 'rejected' && // a rejected team never had these links — keep it that way
+    (tournamentIsPublic || team.status === 'pending' || team.status === 'waitlist')
+  ) {
+    const resCtx = { orgSlug: org.slug, tournamentSlug: tournament.slug };
+    resourceLinks.push({ href: publicHref(resCtx, 'overview'), label: 'Tournament Home' });
+    if (!hiddenPages.includes('schedule')) resourceLinks.push({ href: publicHref(resCtx, 'schedule'), label: 'Schedule' });
+    if (!hiddenPages.includes('rules')) resourceLinks.push({ href: publicHref(resCtx, 'rules'), label: 'Tournament Rules' });
   }
 
   const isPending = coachPhase === 'pending';
@@ -422,237 +422,261 @@ export default async function CoachTournamentRecord({
       ? rawPaymentInstructions.trim() || null
       : null;
 
-  const statusSectionTitle =
-    coachStatus && !isGameDayOrLater && coachStatus.roster.state === 'none' ? 'Payment' : 'Your status';
+  const isRejected = coachPhase === 'rejected';
 
-  const acceptedNextSteps: CoachNextStep[] = [];
-  if (coachPhase === 'accepted_prep' && coachStatus) {
-    const fee = coachStatus.fee;
-    if (fee.hasSchedule) {
-      acceptedNextSteps.push(
-        fee.isPaid
-          ? { title: 'Entry fee paid', detail: 'Your organizer has recorded your payment — thank you.', done: true }
-          : { title: 'Pay your entry fee', detail: 'See how to pay below.' },
-      );
-    }
-    if (showRosterSubmit) {
-      acceptedNextSteps.push(
-        team.roster_submitted_at
-          ? { title: 'Roster submitted', detail: 'You can still update it until the organizer locks rosters.', done: true }
-          : { title: 'Submit your roster', detail: 'Add your players in the roster section below.' },
-      );
-    }
-    acceptedNextSteps.push({
-      title: 'Watch for the schedule',
-      detail: 'Your games will appear here once the organizer publishes the schedule.',
-    });
-  }
+  // A3 result phase: the share action renders INSIDE the hero's result card ("how we
+  // finished" + "share it" together — approved mockups, decision ◆C).
+  const heroShareSlot = shareUrl ? (
+    <SharePageButton
+      url={shareUrl}
+      title={`${team.name} — ${tournament?.name ?? 'Tournament'}`}
+      text={`See how ${team.name} finished at ${tournament?.name ?? 'the tournament'}.`}
+      label="Share your team"
+    />
+  ) : null;
+
+  // A3 quick-jump anchors — free A2 chrome only (it offsets against the shell header;
+  // Premium's operator shell has none), and not for rejected (only two zones render).
+  const jumpItems = [
+    { id: 'status', label: 'Status' },
+    { id: 'schedule', label: 'Schedule' },
+    { id: 'team', label: 'Team' },
+    { id: 'organizer', label: 'Organizer' },
+  ];
 
   return (
-    <div className={styles.page}>
-      {backHref && (
-        <Link href={backHref} className={styles.recordBackLink}>
-          <ArrowLeft size={14} aria-hidden /> Tournaments
-        </Link>
-      )}
+    <>
+      {/* A3 quick-jump: folded into the sticky chrome directly under the A2 tab row. */}
+      {hideHeader && !isRejected && <CoachRecordJumpNav items={jumpItems} />}
 
-      {showWelcome && (
-        <CoachWelcomeBanner
+      <div className={styles.page}>
+        {backHref && (
+          <Link href={backHref} className={styles.recordBackLink}>
+            <ArrowLeft size={14} aria-hidden /> Tournaments
+          </Link>
+        )}
+
+        {showWelcome && (
+          <CoachWelcomeBanner
+            teamName={team.name}
+            tournamentName={tournament?.name ?? null}
+            status={team.status === 'waitlist' ? 'waitlist' : 'pending'}
+          />
+        )}
+
+        {/* Free portal (hideHeader): the shell's persistent header carries team + tournament
+            identity and the Flip now. Premium keeps this in-page block — its operator shell
+            has no event header (two-family ruling; tournament surface itself stays shared). */}
+        {!hideHeader && (
+          <div className={styles.header}>
+            <div className={styles.headerMain}>
+              <h1 className={styles.title}>{team.name}</h1>
+              {tournament && (
+                <p className={styles.tournamentName}>
+                  {tournament.name} {tournament.year && `(${tournament.year})`}
+                  {org && ` - ${org.name}`}
+                </p>
+              )}
+            </div>
+            {/* "The Flip" P3: this page IS one event, so it carries the coach corner pill — the
+                "check my fees ↔ see us live" loop (landing is context-driven, not page-matched). */}
+            {publicCtx && (
+              <FlipPill resolution={resolveFlip({ direction: 'to-public', hat: 'coach', ctx: publicCtx })} />
+            )}
+          </div>
+        )}
+
+        {/* A3 hero: identity + status + countdown only — fee, checklist, contact, and the
+            today detail live in the zones below (approved mockups 2026-07-26). */}
+        <TeamHQ
+          variant="tournament"
+          phase={coachPhase}
+          statusLabel={statusLabel}
+          statusBadgeClass={statusBadge}
+          statusDesc={statusDesc}
           teamName={team.name}
           tournamentName={tournament?.name ?? null}
-          status={team.status === 'waitlist' ? 'waitlist' : 'pending'}
-          resources={welcomeResources}
+          orgName={org?.name ?? null}
+          startDate={tournament?.start_date ?? null}
+          dateRangeLabel={dateRange}
+          record={record}
+          standingsHref={standingsHref}
+          todayGames={todayGames}
+          shareSlot={heroShareSlot}
         />
-      )}
 
-      {/* Free portal (hideHeader): the shell's persistent header carries team + tournament
-          identity and the Flip now. Premium keeps this in-page block — its operator shell
-          has no event header (two-family ruling; tournament surface itself stays shared). */}
-      {!hideHeader && (
-        <div className={styles.header}>
-          <div className={styles.headerMain}>
-            <h1 className={styles.title}>{team.name}</h1>
-            {tournament && (
-              <p className={styles.tournamentName}>
-                {tournament.name} {tournament.year && `(${tournament.year})`}
-                {org && ` - ${org.name}`}
-              </p>
-            )}
-          </div>
-          {/* "The Flip" P3: this page IS one event, so it carries the coach corner pill — the
-              "check my fees ↔ see us live" loop (landing is context-driven, not page-matched). */}
-          {publicCtx && (
-            <FlipPill resolution={resolveFlip({ direction: 'to-public', hat: 'coach', ctx: publicCtx })} />
-          )}
-        </div>
-      )}
-
-      <TeamHQ
-        variant="tournament"
-        phase={coachPhase}
-        statusLabel={statusLabel}
-        statusBadgeClass={statusBadge}
-        statusDesc={statusDesc}
-        teamName={team.name}
-        tournamentName={tournament?.name ?? null}
-        orgName={org?.name ?? null}
-        startDate={tournament?.start_date ?? null}
-        dateRangeLabel={dateRange}
-        contactEmail={coachContactEmail}
-        status={coachStatus}
-        showCheckIn={isGameDayOrLater}
-        registeredDateLabel={registeredDateLabel}
-        rosterRequired={rosterRequirements.required}
-        record={record}
-        standingsHref={standingsHref}
-        pendingFeeAmount={moneyRedacted ? null : pendingFeeAmount}
-        todayGames={todayGames}
-      />
-
-      {(team.status === 'pending' || team.status === 'waitlist') && (
-        <CoachNextSteps status={team.status === 'waitlist' ? 'waitlist' : 'pending'} />
-      )}
-
-      {acceptedNextSteps.length > 0 && (
-        <CoachNextSteps steps={acceptedNextSteps} label="What's next" />
-      )}
-
-      {showLiveBridge && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Schedule</h2>
-          <CoachLiveSchedule
-            orgSlug={org?.slug ?? ''}
-            tournamentSlug={tournament?.slug ?? ''}
-            teamId={teamId}
-            teamName={team.name}
-            teamDivisionId={team.division_id}
-            live={canLinkPublic}
-            pollEnabled={canLinkPublic && coachPhase === 'game_day'}
-            isResult={isResultPhase}
-            initialGames={initialGames}
-          />
-        </section>
-      )}
-
-      {isResultPhase && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>That&apos;s a wrap</h2>
-          <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1.25rem' }}>
-            <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.55 }}>
-              {suppressUpsell
-                ? `Thanks for a great event with ${team.name}. Share how your team finished.`
-                : `Thanks for a great event with ${team.name}. Share how your team did, and tell us which tools you'd want next — your Coaches Portal stays free between tournaments.`}
+        {/* Afterglow strip (◆C) — the old "That's a wrap" section dissolved: share moved into
+            the hero's result card; the Founding-Season doorway + organizer line sit here,
+            directly under the moment they belong to. Free tier only — Premium's hero already
+            carries the record + share, and a paying coach is past these asks. */}
+        {isResultPhase && !suppressUpsell && (
+          <div className={`card ${styles.afterglow}`}>
+            <p className={styles.afterglowText}>
+              Thanks for a great event with {team.name} — tell us which tools you&apos;d want next.
+              Your Coaches Portal stays free between tournaments.
             </p>
-            {shareUrl && (
-              <SharePageButton
-                url={shareUrl}
-                title={`${team.name} — ${tournament?.name ?? 'Tournament'}`}
-                text={`See how ${team.name} finished at ${tournament?.name ?? 'the tournament'}.`}
-                label="Share your team"
-              />
+            {afterglowBasicTeamId && (
+              <ScopeCeilingInterest basicTeamId={afterglowBasicTeamId} checkoutOpen={upgradeCheckoutOpen} />
             )}
-            {!suppressUpsell && afterglowBasicTeamId && <ScopeCeilingInterest basicTeamId={afterglowBasicTeamId} checkoutOpen={upgradeCheckoutOpen} />}
-            {!suppressUpsell && (
-              <p style={{ margin: 0, color: 'var(--text-tertiary)', fontSize: '0.82rem' }}>
-                Thinking about running your own event?{' '}
-                <Link href="/pricing?source=coach_afterglow" style={{ color: 'var(--logic-lime)' }}>See how organizers use FieldLogicHQ &rarr;</Link>
-              </p>
-            )}
+            <p className={styles.afterglowOrg}>
+              Thinking about running your own event?{' '}
+              <Link href="/pricing?source=coach_afterglow">See how organizers use FieldLogicHQ &rarr;</Link>
+            </p>
           </div>
-        </section>
-      )}
+        )}
 
-      {coachStatus && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>{statusSectionTitle}</h2>
+        {/* ── Zone 1 · Status & Payment — the ONE place fee, due date, how-to-pay, and the
+            organizer contact are stated (fee ×3 / contact ×3 → ×1). ───────────────────── */}
+        <section id="status" className={`${styles.section} ${styles.zone}`}>
+          <ZoneHead
+            icon={<ClipboardList size={12} aria-hidden />}
+            eyebrow="Your Registration"
+            title={moneyRedacted ? 'Status' : 'Status & Payment'}
+          />
           <TournamentStatusBlock
+            phase={coachPhase}
+            statusLabel={statusLabel}
+            statusBadgeClass={statusBadge}
             status={coachStatus}
             contactEmail={coachContactEmail}
             showCheckIn={isGameDayOrLater}
             paymentInstructions={moneyRedacted ? null : paymentInstructions}
             hideFeeRow={moneyRedacted}
+            pendingFeeAmount={moneyRedacted ? null : pendingFeeAmount}
+            rosterPointer={showRosterSubmit && !team.roster_submitted_at}
+            waitlisted={team.status === 'waitlist'}
           />
         </section>
-      )}
 
-      {team.status === 'accepted' && !showLiveBridge && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Schedule</h2>
-          <CoachEmptyState
-            quiet
-            icon={<CalendarClock size={18} aria-hidden />}
-            headline={!scheduleVisible ? 'Schedule not published yet' : 'No games scheduled yet'}
-            description={
-              !scheduleVisible
-                ? 'The schedule for this division has not been published. Check back after the organizer publishes it.'
-                : 'No games have been scheduled for your team yet.'
-            }
-          />
-        </section>
-      )}
-
-      {showRosterSubmit && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Your roster</h2>
-          <TournamentRosterSubmit teamId={teamId} />
-        </section>
-      )}
-
-      {showHeadCoach && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Your entry</h2>
-          {isPending && (
-            <p className={styles.zoneNote}>Optional for now — you can set this anytime before the event.</p>
-          )}
-          <CollapsibleCard
-            title="Head coach"
-            icon={<UserCog size={15} aria-hidden />}
-            defaultOpen={!isPending}
-          >
-            <HeadCoachEditor
-              teamId={teamId}
-              initialCoach={team.coach ?? ''}
-              initialCoachEmail={team.coach_email ?? null}
-              registrationEmail={team.email ?? null}
-            />
-          </CollapsibleCard>
-        </section>
-      )}
-
-      {!isPending && (
-        <section className={styles.section}>
-          <h2 className={styles.sectionTitle}>Registration Details</h2>
-          <div className="card">
-            <dl className={styles.detailGrid}>
-              <dt>Team</dt><dd>{team.name}</dd>
-              {team.coach && <><dt>Coach</dt><dd>{team.coach}</dd></>}
-              {division && <><dt>Division</dt><dd>{division.name}</dd></>}
-              {dateRange && <><dt>Dates</dt><dd>{dateRange}</dd></>}
-              <dt>Registered</dt>
-              <dd>{new Date(team.registered_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
-            </dl>
-          </div>
-        </section>
-      )}
-
-      <section className={styles.section}>
-        <h2 className={styles.sectionTitle}>Announcements</h2>
-        {relevantAnnouncements.length === 0 ? (
-          <p className={styles.organizerNote}>No announcements yet from the organizer.</p>
-        ) : (
-          <div className={styles.announcementList}>
-            {relevantAnnouncements.map(a => (
-              <div key={a.id} className={`card ${styles.announcementCard}`}>
-                <div className={styles.announcementTitle}>{a.title}</div>
-                {a.body && <p className={styles.announcementBody}>{a.body}</p>}
-                <div className={styles.announcementDate}>
-                  {new Date(a.created_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })}
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* ── Zone 2 · Schedule — one zone for every state (live bridge / unpublished /
+            pending). The old second Schedule section + hero today-card merged here. ──── */}
+        {!isRejected && (
+          <section id="schedule" className={`${styles.section} ${styles.zone}`}>
+            <ZoneHead icon={<CalendarDays size={12} aria-hidden />} eyebrow="Your Games" title="Schedule" />
+            {showLiveBridge ? (
+              <CoachLiveSchedule
+                orgSlug={org?.slug ?? ''}
+                tournamentSlug={tournament?.slug ?? ''}
+                teamId={teamId}
+                teamName={team.name}
+                teamDivisionId={team.division_id}
+                live={canLinkPublic}
+                pollEnabled={canLinkPublic && coachPhase === 'game_day'}
+                isResult={isResultPhase}
+                initialGames={initialGames}
+              />
+            ) : team.status === 'accepted' ? (
+              <CoachEmptyState
+                quiet
+                icon={<CalendarClock size={18} aria-hidden />}
+                headline={!scheduleVisible ? 'Schedule not published yet' : 'No games scheduled yet'}
+                description={
+                  !scheduleVisible
+                    ? 'The schedule for this division has not been published. Check back after the organizer publishes it.'
+                    : 'No games have been scheduled for your team yet.'
+                }
+              />
+            ) : (
+              <CoachEmptyState
+                quiet
+                icon={<CalendarClock size={18} aria-hidden />}
+                headline="Nothing scheduled yet"
+                description="Your games appear here once you're accepted and the organizer publishes the schedule."
+              />
+            )}
+          </section>
         )}
-      </section>
+
+        {/* ── Zone 3 · Your Team — roster submit + the merged entry card (head-coach editor
+            + inert registration facts together). ─────────────────────────────────────── */}
+        {!isRejected && (
+          <section id="team" className={`${styles.section} ${styles.zone}`}>
+            <ZoneHead icon={<Users size={12} aria-hidden />} eyebrow="Roster & Coach" title="Your Team" />
+            {isPending && (
+              <p className={styles.zoneNote}>Optional for now — you can set this anytime before the event.</p>
+            )}
+            <div className={styles.zoneStack}>
+              {showRosterSubmit && <TournamentRosterSubmit teamId={teamId} />}
+              <div className={`card ${styles.entryCard}`}>
+                <details className={styles.entryDetails} open={!isPending}>
+                  <summary className={styles.entrySummary}>
+                    <UserCog size={15} aria-hidden />
+                    <span>Head coach</span>
+                    <ChevronDown size={16} aria-hidden className={styles.entryChevron} />
+                  </summary>
+                  <div className={styles.entryBody}>
+                    <HeadCoachEditor
+                      embedded
+                      teamId={teamId}
+                      initialCoach={team.coach ?? ''}
+                      initialCoachEmail={team.coach_email ?? null}
+                      registrationEmail={team.email ?? null}
+                    />
+                  </div>
+                </details>
+                {/* No Dates row — the hero (and the free shell's header meta) already state
+                    the event dates; the facts grid keeps only what appears nowhere else. */}
+                <dl className={styles.entryFacts}>
+                  <dt>Team</dt><dd>{team.name}</dd>
+                  {team.coach && <><dt>Coach</dt><dd>{team.coach}</dd></>}
+                  {division && <><dt>Division</dt><dd>{division.name}</dd></>}
+                  <dt>Registered</dt>
+                  <dd>{new Date(team.registered_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
+                </dl>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── Zone 4 · From the Organizer — announcements + the tournament resource links
+            (moved out of the welcome banner; now permanent). ─────────────────────────── */}
+        <section id="organizer" className={`${styles.section} ${styles.zone}`}>
+          <ZoneHead icon={<Megaphone size={12} aria-hidden />} eyebrow="News & Resources" title="From the Organizer" />
+          {resourceLinks.length > 0 && (
+            <div className={styles.resourceLinks}>
+              {resourceLinks.map(r => (
+                <Link key={r.href} href={r.href} className={styles.resourcePill}>
+                  {resourceIcon(r.label)} {r.label}
+                </Link>
+              ))}
+            </div>
+          )}
+          {relevantAnnouncements.length === 0 ? (
+            <p className={styles.organizerNote}>No announcements yet from the organizer.</p>
+          ) : (
+            <div className={styles.announcementList}>
+              {relevantAnnouncements.map(a => (
+                <div key={a.id} className={`card ${styles.announcementCard}`}>
+                  <div className={styles.announcementTitle}>{a.title}</div>
+                  {a.body && <p className={styles.announcementBody}>{a.body}</p>}
+                  <div className={styles.announcementDate}>
+                    {new Date(a.created_at).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
+    </>
+  );
+}
+
+/** A3 zone header — the public site's eyebrow + heading grammar at portal scale
+ *  (Barlow Condensed pair, accent eyebrow w/ 12px icon; left-aligned — this is an
+ *  operating record, not a marketing section). */
+function ZoneHead({ icon, eyebrow, title }: { icon: React.ReactNode; eyebrow: string; title: string }) {
+  return (
+    <div className={styles.zoneHead}>
+      <p className={styles.zoneEyebrow}>{icon} {eyebrow}</p>
+      <h2 className={styles.zoneTitle}>{title}</h2>
     </div>
   );
+}
+
+/** Resource-pill icons (the welcome banner's label-regex idiom, relocated with the pills). */
+function resourceIcon(label: string) {
+  if (/schedule/i.test(label)) return <CalendarDays size={15} aria-hidden />;
+  if (/rule/i.test(label)) return <BookOpen size={15} aria-hidden />;
+  return <Home size={15} aria-hidden />;
 }

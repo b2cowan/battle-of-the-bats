@@ -52,6 +52,34 @@
   color: var(--logic-lime);
 }
 
+/* Pending entry-fee preview (moved from the hero in A3) — info-tinted: nothing is owed
+   until the team is accepted, so it must not read as an amber/red obligation. */
+.feePreview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--info) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--info) 20%, transparent);
+}
+
+.feePreviewLabel {
+  color: var(--text-tertiary);
+  font-family: var(--font-data, monospace);
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.feePreviewAmount {
+  color: var(--text-primary);
+  font-family: var(--font-data, monospace);
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
 /* How-to-pay panel — the detail layer the hero fee strip withholds. Quiet amber accent
    (the fee is owed, not complete), barely-there warning tint so it reads as "action info",
    not an alarm. Caps the organizer's text height so a long block can't dominate the page. */

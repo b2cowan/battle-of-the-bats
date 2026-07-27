@@ -10,49 +10,8 @@
   gap: 0.6rem;
 }
 
-/* ── Follow / install controls ────────────────────────────────────────────── */
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem 0.85rem;
-  flex-wrap: wrap;
-}
-
-.followBtn,
-.followActive {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.8rem;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
-}
-
-.followBtn {
-  color: var(--white-80);
-  background: var(--surface);
-  border: 1px solid var(--border);
-}
-
-.followBtn:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.5);
-}
-
-.followActive {
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
-}
-
-.followHint {
-  color: var(--white-40);
-  font-size: 0.76rem;
-  line-height: 1.4;
-}
+/* (The "Highlight my team" follow controls were removed 2026-07-27 — the coach's team
+   is auto-highlighted on the public schedule; see the seeding effect in the component.) */
 
 /* ── Game list ────────────────────────────────────────────────────────────── */
 .list {

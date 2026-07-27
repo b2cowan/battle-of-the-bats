@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import { ArrowLeft } from 'lucide-react';
 import { createClient } from '@/lib/supabase-server';
 import { safeNextPath } from '@/lib/safe-redirect';
 import warm from '@/components/consumer/warmTheme.module.css';
@@ -25,10 +27,19 @@ export const metadata: Metadata = {
 export default async function ChatPage({
   searchParams,
 }: {
-  searchParams: Promise<{ room?: string | string[] }>;
+  searchParams: Promise<{ room?: string | string[]; back?: string | string[] }>;
 }) {
-  const { room } = await searchParams;
+  const { room, back } = await searchParams;
   const rawRoom = typeof room === 'string' ? room : Array.isArray(room) ? room[0] : undefined;
+
+  // A3 QA (2026-07-27): a coach arriving from the portal (the shell's Chat tab appends
+  // `?back=<current portal path>`) gets a visible way home — first-time tournament coaches
+  // otherwise land in the global Chat tab with no idea how to return. Sanitized to an
+  // internal path AND restricted to the coach portal, so the affordance can't be aimed
+  // anywhere else; absent for fans and direct visits.
+  const rawBack = typeof back === 'string' ? back : Array.isArray(back) ? back[0] : undefined;
+  const safeBack = rawBack ? safeNextPath(rawBack, '/chat') : null;
+  const coachBackHref = safeBack && safeBack.startsWith('/coaches') ? safeBack : null;
   // Normalize an empty `?room=` to "no deep link" so it neither forces a pointless signed-out
   // sign-in round-trip nor blocks the lone-room auto-open (an empty string isn't nullish, so it
   // would otherwise win the `??` in ChatInbox and defeat that fallback).
@@ -48,6 +59,11 @@ export default async function ChatPage({
 
   return (
     <div className={`${warm.warmTab} ${shell.chatShell}`}>
+      {coachBackHref && (
+        <Link href={coachBackHref} className={shell.coachReturn}>
+          <ArrowLeft size={14} aria-hidden /> Back to your Coaches Portal
+        </Link>
+      )}
       <ChatTab signedIn={signedIn} initialRoomId={roomId} />
     </div>
   );

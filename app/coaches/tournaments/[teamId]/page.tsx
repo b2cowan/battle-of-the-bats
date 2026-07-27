@@ -1,8 +1,11 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { canUserAccessTournamentRegistration } from '@/lib/basic-coach-teams';
-import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import {
+  canUserAccessTournamentRegistration,
+  findLinkedBasicTeamForRegistration,
+} from '@/lib/basic-coach-teams';
+import { COACHES_TEAM_PATH, COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import CoachTournamentRecord from '@/components/coaches/CoachTournamentRecord';
 
 type RouteParams = {
@@ -45,13 +48,22 @@ export default async function CoachTournamentRecordDetailPage({ params, searchPa
     redirect(`/auth/login?next=${COACHES_TOURNAMENTS_PATH}/${teamId}`);
   }
 
+  // A3.3 (◆G): back returns to the TEAM-SCOPED Tournaments list — the A2 tab's actual
+  // destination, mirroring Premium's team-scoped back link. The account-wide hub stays
+  // the fallback for a registration-only coach with no linked free team (for whom the
+  // hub is the only list that exists).
+  const linkedBasicTeamId = await findLinkedBasicTeamForRegistration(user.id, teamId);
+  const backHref = linkedBasicTeamId
+    ? `${COACHES_TEAM_PATH}/${linkedBasicTeamId}/tournaments`
+    : COACHES_TOURNAMENTS_PATH;
+
   return (
     <CoachTournamentRecord
       registrationId={teamId}
       userId={user.id}
       email={user.email}
       welcome={welcome === '1'}
-      backHref={COACHES_TOURNAMENTS_PATH}
+      backHref={backHref}
       /* A2: the shell's persistent header carries this page's identity + Flip. */
       hideHeader
     />

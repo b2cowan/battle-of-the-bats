@@ -1,0 +1,76 @@
+/* ── A3.3 shared registration card ────────────────────────────────────────────
+   The hub card's treatment, promoted to the single design (lime hover + glow,
+   --border weight, dot-separated meta). Card + its "⇄ Fan view" line stack; the
+   card keeps its whole-surface click, the flip door sits on its own line beneath. */
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--highlight-top);
+  text-decoration: none;
+  color: inherit;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+.card:hover {
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  box-shadow: var(--glow-sm), var(--highlight-top);
+}
+
+.card:active {
+  transform: translateY(1px);
+}
+
+.cardMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.cardTitle {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem 0.75rem;
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  color: var(--white-60);
+}
+
+.cardMeta span + span::before {
+  content: '·';
+  margin-right: 0.75rem;
+}
+
+.cardStatus {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .cardMeta span + span::before {
+    content: none;
+  }
+
+  .cardMeta {
+    flex-direction: column;
+    gap: 0.1rem;
+  }
+}

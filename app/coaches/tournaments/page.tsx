@@ -11,14 +11,11 @@ import {
   COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
-import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
 import {
   deriveCoachLifecycleChip,
-  lifecycleChipClassKey,
   type CoachLifecycleChip,
 } from '@/lib/coach-tournament-lifecycle';
-import FanViewLink from '@/components/shared/FanViewLink';
-import portalStyles from '../coaches-portal.module.css';
+import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import styles from './tournaments.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -223,58 +220,26 @@ export default async function CoachTournamentRecordsPage() {
 
 function RegistrationCard({ reg, today }: { reg: Registration; today: string }) {
   const { team, tournament, org } = reg;
-  const statusBadge = registrationStatusBadge(team.status);
-  const statusLabel = registrationStatusLabel(team.status);
-  const detailHref  = `${COACHES_TOURNAMENTS_PATH}/${team.id}`;
-
-  const chip = deriveCoachLifecycleChip(tournament?.start_date ?? null, tournament?.end_date ?? null, today);
-  const chipClassKey = lifecycleChipClassKey(chip.state);
-  const hasChip = chip.state !== 'unknown' && chipClassKey !== '';
-  const isLive = chip.state === 'live';
-  const withDot = chip.state === 'live' || chip.state === 'game_day';
-
-  const dateRange = tournament?.start_date
-    ? tournament.end_date
-      ? `${new Date(tournament.start_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} - ${new Date(tournament.end_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`
-      : new Date(tournament.start_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
-    : null;
 
   // ⇄ Fan view ("The Flip" P3, owner call 2026-07-23): this cross-team list joins the per-row flip
   // treatment. Publicly-visible lifecycles only (the public route 404s draft/archived).
   const canFanView = Boolean(org?.slug && tournament?.slug &&
     (tournament.status === 'active' || tournament.status === 'completed'));
 
+  // A3.3: this card's treatment was promoted to the shared CoachRegistrationCard —
+  // the cross-team hub keeps the team name in the meta (the other two lists are
+  // already team-scoped and skip it).
   return (
-    <div className={styles.entry}>
-      <Link href={detailHref} className={styles.card}>
-        <div className={styles.cardMain}>
-          <div className={styles.cardTitle}>{tournament?.name ?? team.name}</div>
-          {tournament && (
-            <div className={styles.cardMeta}>
-              <span>{team.name}</span>
-              {org && <span>{org.name}</span>}
-              {dateRange && <span>{dateRange}</span>}
-              {/* When a lifecycle chip is present, the registration status demotes to
-                  trailing meta — and is hidden entirely on LIVE rows (the chip wins). */}
-              {hasChip && !isLive && <span>{statusLabel}</span>}
-            </div>
-          )}
-        </div>
-        <div className={styles.cardStatus}>
-          {hasChip ? (
-            <span className={`${portalStyles.coachLifecycleChip} ${portalStyles[`coachLifecycleChip${chipClassKey}`]}`}>
-              {withDot && <span className={portalStyles.coachLifecycleChipDot} aria-hidden />}
-              {chip.label}
-            </span>
-          ) : (
-            <span className={`badge ${statusBadge}`}>{statusLabel}</span>
-          )}
-        </div>
-      </Link>
-      {canFanView && (
-        <FanViewLink orgSlug={org!.slug} tournamentSlug={tournament!.slug!} />
-      )}
-    </div>
+    <CoachRegistrationCard
+      href={`${COACHES_TOURNAMENTS_PATH}/${team.id}`}
+      title={tournament?.name ?? team.name}
+      registrationStatus={team.status}
+      startDate={tournament?.start_date ?? null}
+      endDate={tournament?.end_date ?? null}
+      today={today}
+      metaParts={tournament ? [team.name, org?.name] : []}
+      fanView={canFanView ? { orgSlug: org!.slug, tournamentSlug: tournament!.slug! } : null}
+    />
   );
 }
 

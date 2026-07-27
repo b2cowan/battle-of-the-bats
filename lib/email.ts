@@ -1,4 +1,6 @@
-﻿const RESEND_API = 'https://api.resend.com/emails';
+﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+
+const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <onboarding@resend.dev>';
 const ADMIN_EMAIL = 'fieldlogichq@gmail.com';
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
@@ -139,7 +141,9 @@ export function coachPortalUrl(p: { registrationId?: string; email?: string }): 
   const params = new URLSearchParams();
   if (p.registrationId) params.set('registrationId', p.registrationId);
   if (p.email) params.set('email', p.email);
-  params.set('next', p.registrationId ? `/coaches/tournaments/${p.registrationId}` : '/coaches/tournaments');
+  // A3.3: the shared constant, not string literals — a route change can't silently strand
+  // the 8+ coach email templates that funnel through here.
+  params.set('next', p.registrationId ? `${COACHES_TOURNAMENTS_PATH}/${p.registrationId}` : COACHES_TOURNAMENTS_PATH);
   return `${SITE_URL}/coaches/join?${params.toString()}`;
 }
 
@@ -165,7 +169,7 @@ export function registrationConfirmationHtml(p: {
   // (signed out, or on another device) lands on /coaches/join with this exact registration
   // pre-selected and links it on sign-in — the email half of the claim-by-email gap fix.
   const joinUrl = p.coachEmail
-    ? `${SITE_URL}/coaches/join?${p.registrationId ? `registrationId=${encodeURIComponent(p.registrationId)}&` : ''}email=${encodeURIComponent(p.coachEmail)}&next=${encodeURIComponent('/coaches/tournaments')}&registered=1`
+    ? `${SITE_URL}/coaches/join?${p.registrationId ? `registrationId=${encodeURIComponent(p.registrationId)}&` : ''}email=${encodeURIComponent(p.coachEmail)}&next=${encodeURIComponent(COACHES_TOURNAMENTS_PATH)}&registered=1`
     : `${SITE_URL}/coaches/join`;
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>

@@ -25,22 +25,15 @@ import { pickFanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
-import CoachTeamChatDoorway from '@/components/coaches/CoachTeamChatDoorway';
 import ScopeShelf from '@/components/coaches/ScopeShelf';
 import { Rocket, Users, CalendarDays, Megaphone } from 'lucide-react';
-import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
+import { registrationStatusLabel } from '@/lib/coaches-status';
+import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
+import { tournamentToday } from '@/lib/timezone';
 import shared from '../../coaches-portal.module.css';
 import styles from './team.module.css';
 
 type RouteParams = { params: Promise<{ basicTeamId: string }> };
-
-function formatCalendarDate(value: string, options: Intl.DateTimeFormatOptions): string {
-  const dateOnly = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-  const date = dateOnly
-    ? new Date(Number(dateOnly[1]), Number(dateOnly[2]) - 1, Number(dateOnly[3]))
-    : new Date(value);
-  return date.toLocaleDateString('en-CA', options);
-}
 
 type TeamEventSummary = {
   startsAt: string;
@@ -152,22 +145,14 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
     announcements.length === 0 &&
     history.length === 0;
 
-  // Tournament + division ids this team is registered in — the Team-chat doorway filters the
-  // coach's account-wide room list down to THIS team's conversations (A2.2; approved mockups).
-  // Divisions matter when one coach has two teams in the same tournament: without them,
-  // the sibling team's division room would surface here.
-  const chatTournamentIds = [
-    ...new Set(history.map(entry => entry.tournament?.id).filter((id): id is string => Boolean(id))),
-  ];
-  const chatDivisionIds = [
-    ...new Set(history.map(entry => entry.registration.divisionId).filter((id): id is string => Boolean(id))),
-  ];
+  const today = tournamentToday();
 
   return (
     <div className={`${shared.page} ${styles.pageWide}`}>
       {/* A2: team identity lives in the persistent shell header now (the old identity band is
-          retired — stated once, by the chrome). This slim head keeps the page h1 + "?" help. */}
-      <div className={shared.sectionHeader}>
+          retired — stated once, by the chrome). This slim head keeps the page h1 + "?" help —
+          ONE row at every width (A3 QA: the stacked mobile "?" row read as wasted space). */}
+      <div className={`${shared.sectionHeader} ${styles.headRow}`}>
         <h1 className={shared.sectionTitle}>Overview</h1>
         <div className={styles.sectionHeadEnd}>
           <HelpButton
@@ -178,12 +163,73 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         </div>
       </div>
 
-      {/* Team-chat doorway (A2.2, owner call: TOP of Overview — game-weekend priority). Same
-          conversation as the global Chat tab; renders nothing until a room exists. */}
-      {chatTournamentIds.length > 0 && (
-        <CoachTeamChatDoorway tournamentIds={chatTournamentIds} divisionIds={chatDivisionIds} />
+      {/* A3 QA (owner call 2026-07-27): tournaments LEAD the page — they're why a
+          first-tournament coach is here. (The A2 chat doorway is retired — the global
+          Chat tab in the bottom bar is the one chat door.) */}
+      <section className={shared.section}>
+        <div className={shared.sectionHeader}>
+          <h2 className={shared.sectionTitle}>Your tournaments</h2>
+        </div>
+        {history.length === 0 ? (
+          <div className={shared.empty}>
+            <p>This team isn&apos;t in any tournaments yet. When you register it for one, the registration and schedule show up here.</p>
+          </div>
+        ) : (
+          <div className={styles.historyList}>
+            {/* A3.3: the shared registration card (lifecycle chip + one anatomy across all
+                three lists). fanView stays null HERE — the Fan view door for a live event
+                lives in the CoachLiveEventCard block below (P3 rev-4, no duplicate). */}
+            {history.map(entry => (
+              <CoachRegistrationCard
+                key={entry.registration.id}
+                href={`${COACHES_TOURNAMENTS_PATH}/${entry.registration.id}`}
+                title={entry.tournament?.name ?? entry.registration.name}
+                registrationStatus={entry.registration.status}
+                startDate={entry.tournament?.startDate ?? null}
+                endDate={entry.tournament?.endDate ?? null}
+                today={today}
+                metaParts={[entry.org?.name]}
+                fanView={null}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* P3 rev-5 (owner call): the compact "your tournament" block — event card naming the live/
+          upcoming public event + its ⇄ Fan view door. No alerts/follow affordance here — the
+          public side already carries those; the portal doesn't push follow at the coach. */}
+      {fanViewEntry && (
+        <section className={shared.section}>
+          <div className={shared.sectionHeader}>
+            <h2 className={shared.sectionTitle}>Your event</h2>
+          </div>
+          <CoachLiveEventCard event={fanViewEntry} />
+        </section>
       )}
 
+      {/* A3 QA: an explicit seam between the tournament group above and the team tools
+          below — a first-tournament coach must never read roster/schedule/fees as
+          something the tournament requires. Free-floor framing per copy canon (these
+          tools ARE free; the season HQ pitch lives in Explore). Hidden for a team with
+          no registrations — there, the whole page is team tools. */}
+      {history.length > 0 && (
+        <div className={styles.toolsDivider} role="separator" aria-label="Your team's own tools">
+          <p className={styles.toolsDividerEyebrow}>Your team — beyond this tournament</p>
+          <p className={styles.toolsDividerNote}>
+            Everything below belongs to your team, not this tournament — free tools to try
+            whenever you like, and they carry over to every event you enter.{' '}
+            <Link href={`${coachTeamPath(basicTeamId)}/explore`}>See everything included &rarr;</Link>
+          </p>
+        </div>
+      )}
+
+      {/* A3.2: every persistent Overview block announces itself in the same slim mono
+          register the page h1 already uses (the stat strip previously had only a
+          screen-reader label). */}
+      <div className={shared.sectionHeader}>
+        <h2 className={shared.sectionTitle}>At a glance</h2>
+      </div>
       <TeamHQ
         variant="standalone"
         rosterCount={players.length}
@@ -196,15 +242,6 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         historyCount={history.length}
         latestHistoryLabel={latestHistoryLabel}
       />
-
-      {/* P3 rev-5 (owner call): the compact "your tournament" block — event card naming the live/
-          upcoming public event + its ⇄ Fan view door. No alerts/follow affordance here — the
-          public side already carries those; the portal doesn't push follow at the coach. */}
-      {fanViewEntry && (
-        <section className={shared.section}>
-          <CoachLiveEventCard event={fanViewEntry} />
-        </section>
-      )}
 
       {/* Discovery nudge (Variant A): a quiet, dismissible invite to turn on the persisted-roster
           wedge → degrades to a faint line on dismiss (never erased; Explore link stays in the rail).
@@ -249,49 +286,7 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
           own sub-routes (/coaches/team/{id}/roster etc.) — reached via the rail once activated.
           The Overview keeps the at-a-glance stat strip (above) + tournament history (below). */}
 
-      {/* Tournament history — empty for a no-tournament team; never leads the page. */}
-      <section className={shared.section}>
-        <div className={shared.sectionHeader}>
-          <h2 className={shared.sectionTitle}>Tournament history</h2>
-        </div>
-        {history.length === 0 ? (
-          <div className={shared.empty}>
-            <p>This team isn&apos;t in any tournaments yet. When you register it for one, the registration and schedule show up here.</p>
-          </div>
-        ) : (
-          <>
-          <div className={styles.historyList}>
-            {history.map(entry => {
-              const badge = registrationStatusBadge(entry.registration.status);
-              const label = registrationStatusLabel(entry.registration.status);
-              const dateRange = entry.tournament?.startDate
-                ? entry.tournament.endDate
-                  ? `${formatCalendarDate(entry.tournament.startDate, { month: 'short', day: 'numeric' })} - ${formatCalendarDate(entry.tournament.endDate, { month: 'short', day: 'numeric', year: 'numeric' })}`
-                  : formatCalendarDate(entry.tournament.startDate, { month: 'long', day: 'numeric', year: 'numeric' })
-                : null;
-              return (
-                <Link
-                  key={entry.registration.id}
-                  href={`${COACHES_TOURNAMENTS_PATH}/${entry.registration.id}`}
-                  className={styles.historyRow}
-                >
-                  <div className={styles.historyMain}>
-                    <span className={styles.historyName}>{entry.tournament?.name ?? entry.registration.name}</span>
-                    <span className={styles.historyMeta}>
-                      {entry.org?.name ? `${entry.org.name}` : ''}
-                      {dateRange ? `${entry.org?.name ? ' · ' : ''}${dateRange}` : ''}
-                    </span>
-                  </div>
-                  <span className={`badge ${badge}`}>{label}</span>
-                </Link>
-              );
-            })}
-          </div>
-          {/* The Fan view door for a live event lives in the CoachLiveEventCard block up top
-              (P3 rev-4) — no duplicate link down here. */}
-          </>
-        )}
-      </section>
+      {/* (Tournament history moved to the TOP of the page — "Your tournaments" — A3 QA.) */}
 
       {/* C4: ONE light Premium hook on the Overview once any section has real content —
           before this, a new/light coach only ever saw pitches on the Explore tab. The

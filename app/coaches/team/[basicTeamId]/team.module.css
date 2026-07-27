@@ -67,6 +67,50 @@
 /* ── A2 (2026-07-25): the team-colour identity band is RETIRED — team identity lives in
    the persistent shell header now (stated once, by the chrome; approved mockups). Pages
    keep the section-header grammar: mono eyebrow h1 + a right-aligned meta/help cluster. */
+/* A3 QA: the page head stays ONE row at every width — the shared .sectionHeader
+   stacks to a column ≤700px (right for heads with long meta clusters), but here it
+   stranded the "?" help button on its own row. Double class beats the media rule. */
+.headRow.headRow {
+  flex-direction: row;
+  align-items: center;
+}
+
+/* A3 QA: the seam between the tournament group (why the coach came) and the team's
+   own free tools below — so roster/schedule/fees never read as tournament homework. */
+.toolsDivider {
+  margin: 2.4rem 0 1.6rem;
+  padding-top: 1.3rem;
+  border-top: 1px solid var(--border-2);
+}
+
+.toolsDividerEyebrow {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--logic-lime);
+}
+
+.toolsDividerNote {
+  margin: 0;
+  max-width: 62ch;
+  font-size: 0.84rem;
+  line-height: 1.55;
+  color: var(--white-60);
+}
+
+.toolsDividerNote a {
+  color: var(--logic-lime);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.toolsDividerNote a:hover {
+  text-decoration: underline;
+}
+
 .sectionHeadEnd {
   margin-left: auto;
   display: flex;
@@ -109,60 +153,12 @@
   border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
 }
 
-/* Tournament history rows */
+/* Tournament history rows — A3.3: the row anatomy retired in favour of the shared
+   CoachRegistrationCard; this wrapper keeps only the list rhythm. */
 .historyList {
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
-}
-
-.historyRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.9rem 1.1rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
-  color: inherit;
-  text-decoration: none;
-  transition: border-color 0.15s, box-shadow 0.15s, transform 0.12s;
-}
-
-.historyRow:hover {
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  box-shadow: var(--glow-sm), var(--highlight-top);
-}
-
-.historyRow:active {
-  transform: translateY(1px);
-}
-
-.historyMain {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-  min-width: 0;
-}
-
-.historyName {
-  color: var(--white);
-  font-size: 0.95rem;
-  font-weight: 700;
-}
-
-.historyMeta {
-  color: var(--white-60);
-  font-size: 0.8rem;
-}
-
-@media (max-width: 700px) {
-  .historyRow {
-    flex-direction: column;
-    align-items: flex-start;
-  }
 }
 
 /* (P3 rev-4) The Overview's Fan view door moved into the CoachLiveEventCard block at the top of

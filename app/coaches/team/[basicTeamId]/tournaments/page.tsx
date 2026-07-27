@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { resolveCoachTeamPage } from '@/lib/coach-team-page';
 import {
   getBasicCoachTeamForUser,
@@ -7,14 +6,10 @@ import {
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
-import { registrationStatusBadge, registrationStatusLabel } from '@/lib/coaches-status';
-import { deriveCoachLifecycleChip, lifecycleChipClassKey } from '@/lib/coach-tournament-lifecycle';
-import { teamColor, teamInitials } from '@/lib/team-color';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 import { Trophy } from 'lucide-react';
-import FanViewLink from '@/components/shared/FanViewLink';
-import portalStyles from '../../../coaches-portal.module.css';
 import styles from './tournaments.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -50,47 +45,26 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
         />
       ) : (
         <div className={styles.list}>
-          {history.map(({ registration, tournament, org }) => {
-            const chip = deriveCoachLifecycleChip(tournament?.startDate ?? null, tournament?.endDate ?? null, today);
-            const chipKey = lifecycleChipClassKey(chip.state);
-            const hasChip = chip.state !== 'unknown' && chipKey !== '';
-            const isLive = chip.state === 'live';
-            const withDot = chip.state === 'live' || chip.state === 'game_day';
-            const name = tournament?.name ?? registration.name;
-            return (
-              <div key={registration.id} className={styles.entry}>
-                <Link href={`${COACHES_TOURNAMENTS_PATH}/${registration.id}`} className={styles.card}>
-                  <span className={styles.cardMono} style={{ background: teamColor(name), color: '#0f1123' }} aria-hidden>
-                    {teamInitials(name)}
-                  </span>
-                  <div className={styles.cardMain}>
-                    <span className={styles.cardTitle}>{name}</span>
-                    <span className={styles.cardMeta}>
-                      {org?.name}
-                      {!isLive && <> · {registrationStatusLabel(registration.status)}</>}
-                    </span>
-                  </div>
-                  {hasChip ? (
-                    <span className={`${portalStyles.coachLifecycleChip} ${portalStyles[`coachLifecycleChip${chipKey}`]}`}>
-                      {withDot && <span className={portalStyles.coachLifecycleChipDot} aria-hidden />}
-                      {chip.label}
-                    </span>
-                  ) : (
-                    <span className={`badge ${registrationStatusBadge(registration.status)}`}>
-                      {registrationStatusLabel(registration.status)}
-                    </span>
-                  )}
-                </Link>
-                {/* ⇄ Fan view — the round trip back to the event's public space ("The Flip" P3,
-                    shared component). Only for publicly-visible lifecycles — the public route
-                    404s draft and archived tournaments (getPublicTournamentBySlug status filter). */}
-                {org?.slug && tournament?.slug &&
-                  (tournament.status === 'active' || tournament.status === 'completed') && (
-                  <FanViewLink orgSlug={org.slug} tournamentSlug={tournament.slug} />
-                )}
-              </div>
-            );
-          })}
+          {/* A3.3: the shared registration card — the old per-list design (tournament-hashed
+              monogram, fainter border, neutral hover) retired in favour of the one anatomy. */}
+          {history.map(({ registration, tournament, org }) => (
+            <CoachRegistrationCard
+              key={registration.id}
+              href={`${COACHES_TOURNAMENTS_PATH}/${registration.id}`}
+              title={tournament?.name ?? registration.name}
+              registrationStatus={registration.status}
+              startDate={tournament?.startDate ?? null}
+              endDate={tournament?.endDate ?? null}
+              today={today}
+              metaParts={[org?.name]}
+              fanView={
+                org?.slug && tournament?.slug &&
+                (tournament.status === 'active' || tournament.status === 'completed')
+                  ? { orgSlug: org.slug, tournamentSlug: tournament.slug }
+                  : null
+              }
+            />
+          ))}
         </div>
       )}
     </TeamSectionShell>

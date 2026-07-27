@@ -54,19 +54,122 @@
 /* The status card was replaced by the shared phase-adaptive TeamHQ tournament hero
    (slice 5h) — its styles live in components/coaches/TeamHQ.module.css. */
 
-/* ── Sections ─────────────────────────────────────────────────────────────── */
+/* ── Sections / zones ─────────────────────────────────────────────────────── */
 .section {
   margin-bottom: 2rem;
 }
 
-.sectionTitle {
-  font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
+/* A3 zone anchor target — clears the sticky shell header + quick-jump row on arrival.
+   --coach-mhead-h is measured + published by CoachPortalShell (free chrome); the
+   Premium shell has no sticky header, so the fallback 0px is correct there. */
+.zone {
+  scroll-margin-top: calc(var(--coach-mhead-h, 0px) + 42px);
+}
+
+@media (min-width: 901px) {
+  /* Desktop stacks the global consumer top bar ABOVE the header band (.mhead sits at
+     top: var(--coach-top-strip)) — a fragment navigation must clear both. The var is
+     defined at every width but only offsets the header ≥901px, hence the media split. */
+  .zone {
+    scroll-margin-top: calc(var(--coach-top-strip, 0px) + var(--coach-mhead-h, 0px) + 42px);
+  }
+}
+
+/* A3 zone header — the public .section-header grammar (eyebrow + heading) at portal
+   scale: left-aligned, display-font pair, accent eyebrow (lime on dark / olive on
+   warm via the --logic-lime remap — never raw lime text on paper). */
+.zoneHead {
+  margin: 0 0 0.65rem;
+}
+
+.zoneEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-family: var(--font-display, sans-serif);
+  font-size: 0.72rem;
   font-weight: 700;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--white-40);
-  margin: 0 0 0.6rem;
+  color: var(--logic-lime);
+}
+
+.zoneTitle {
+  margin: 0.12rem 0 0;
+  font-family: var(--font-display, sans-serif);
+  font-size: 1.18rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  color: var(--white);
+}
+
+/* Cards stacked inside one zone (roster submit + the entry card). */
+.zoneStack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── A3 quick-jump sub-nav (free A2 chrome, ≤900px) ───────────────────────────
+   A compact 34px row folded into the sticky stack under the shell's section tab
+   row. Subordinate on purpose: smaller mono type, no icons; the active zone gets
+   COLOUR ONLY (the 2px underline belongs to the tab row one level up). */
+.jumpNav {
+  position: sticky;
+  top: var(--coach-mhead-h, 0px);
+  z-index: 90; /* under the shell header (100), above page content */
+  background: var(--nav-bg-scrolled, rgba(13, 11, 20, 0.92));
+  -webkit-backdrop-filter: blur(var(--blur-bar, 20px)); /* webkit FIRST (minifier gotcha) */
+  backdrop-filter: blur(var(--blur-bar, 20px));
+  border-bottom: 1px solid var(--border-2);
+}
+
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .jumpNav {
+  background: rgba(var(--home-paper-rgb, 248, 244, 237), 0.92);
+}
+
+.jumpNavInner {
+  display: flex;
+  align-items: center;
+  gap: 1.05rem;
+  height: 34px;
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.jumpNavInner::-webkit-scrollbar {
+  display: none;
+}
+
+.jumpLink {
+  font-family: var(--font-data, monospace);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--white-45);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.jumpLink:hover {
+  color: var(--white-70);
+}
+
+.jumpLinkActive {
+  color: var(--logic-lime);
+}
+
+@media (min-width: 901px) {
+  /* Desktop has the rail + a much shorter page — the jump row is mobile chrome. */
+  .jumpNav {
+    display: none;
+  }
 }
 
 /* One-line note under a demoted section heading (e.g. the pending "Manage your
@@ -87,16 +190,67 @@
   line-height: 1.55;
 }
 
-/* ── Details grid ─────────────────────────────────────────────────────────── */
-.detailGrid {
+/* ── Zone 3 · merged entry card (head-coach editor + inert registration facts) ──
+   One card: a native <details> for the editor (collapsed while pending — the
+   optional-for-now framing) + the facts grid below a hairline. Replaces the old
+   separate "Your entry" CollapsibleCard + "Registration Details" card. */
+.entryCard {
+  display: flex;
+  flex-direction: column;
+  padding: 0.35rem 1.25rem 1.15rem;
+}
+
+.entrySummary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--font-data, monospace);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: rgba(var(--logic-lime-rgb), 0.85);
+}
+
+.entrySummary::-webkit-details-marker {
+  display: none;
+}
+
+.entrySummary::marker {
+  content: '';
+}
+
+.entrySummary:hover {
+  color: var(--logic-lime);
+}
+
+.entryChevron {
+  margin-left: auto;
+  color: var(--white-40);
+  transition: transform 0.15s ease;
+}
+
+.entryDetails[open] .entryChevron {
+  transform: rotate(180deg);
+}
+
+.entryBody {
+  padding: 0.1rem 0 0.4rem;
+}
+
+.entryFacts {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.45rem 1.5rem;
-  margin: 0;
-  padding: 1.25rem 1.5rem;
+  margin: 0.55rem 0 0;
+  padding: 0.95rem 0 0;
+  border-top: 1px solid var(--border-2);
 }
 
-.detailGrid dt {
+.entryFacts dt {
   font-size: 0.75rem;
   font-weight: 600;
   color: var(--white-40);
@@ -105,10 +259,67 @@
   padding-top: 0.05rem;
 }
 
-.detailGrid dd {
+.entryFacts dd {
   font-size: 0.88rem;
   color: var(--white-80);
   margin: 0;
+}
+
+/* ── Zone 4 · tournament resource links (moved from the welcome banner) ─────── */
+.resourceLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0 0 0.7rem;
+}
+
+.resourcePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white);
+  background: var(--bg-2, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: color 0.12s, border-color 0.12s, background 0.12s;
+}
+
+.resourcePill:hover {
+  color: var(--logic-lime);
+  border-color: rgba(var(--logic-lime-rgb), 0.4);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+
+/* ── Afterglow strip (◆C) — thanks + Founding-Season doorway + organizer line,
+   directly under the hero's result card. Replaces the "That's a wrap" section
+   (and its ad-hoc inline styles). ─────────────────────────────────────────── */
+.afterglow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  margin-bottom: 2rem;
+  padding: 1.1rem 1.25rem;
+}
+
+.afterglowText {
+  margin: 0;
+  color: var(--white-60);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.afterglowOrg {
+  margin: 0;
+  color: var(--white-40);
+  font-size: 0.82rem;
+}
+
+.afterglowOrg a {
+  color: var(--logic-lime);
 }
 
 /* The populated schedule + live scorebug moved to components/coaches/CoachLiveSchedule
@@ -145,64 +356,16 @@
   color: var(--white-40);
 }
 
-/* ── CTAs ─────────────────────────────────────────────────────────────────── */
-.ctaSection {
-  margin-top: 2.5rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--border-2);
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.ctaCard {
-  padding: 1.5rem;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--highlight-top);
-}
-
-.ctaLabel {
-  font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--logic-lime);
-  margin-bottom: 0.4rem;
-}
-
-.ctaTitle {
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--white);
-  margin-bottom: 0.5rem;
-}
-
-.ctaDesc {
-  font-size: 0.82rem;
-  color: var(--white-60);
-  line-height: 1.5;
-  margin: 0 0 1rem;
-}
-
-.ctaCardSecondary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.ctaSecondaryText {
-  font-size: 0.85rem;
-  color: var(--white-40);
-}
+/* (The unused legacy .cta* block was removed in A3 — the afterglow strip above is the
+   only post-event CTA surface on this page now.) */
 
 @media (max-width: 600px) {
   .page {
     padding: 1.5rem 1rem 3rem;
+  }
+
+  .jumpNavInner {
+    padding: 0 1rem;
   }
 
   /* .header stays a ROW at every width: the platform Flip convention pins the pill

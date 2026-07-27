@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -269,6 +269,26 @@ export default function CoachPortalShell({
     scroller.scrollTo({ left: Math.max(0, target), behavior: 'auto' });
   }, [pathname, sectionsKey]);
 
+  // A3: publish the sticky header's measured height as --coach-mhead-h on the shell root
+  // so page-level sticky chrome (the record page's quick-jump row) can stack directly
+  // beneath it and anchors can offset against the whole stack. ResizeObserver keeps it
+  // honest when the title wraps, the meta line grows, or the tab row hides (≥901px).
+  // Layout effect (not useEffect): on a scroll-restored paint (browser Back) the var's
+  // 0px fallback would put the quick-jump row BEHIND the header for a frame — measure
+  // before first paint instead (house pattern: OrgNavSync / ChatPanel).
+  const shellRef = useRef<HTMLDivElement>(null);
+  const mheadRef = useRef<HTMLElement>(null);
+  useLayoutEffect(() => {
+    const el = mheadRef.current;
+    const root = shellRef.current;
+    if (!el || !root) return;
+    const set = () => root.style.setProperty('--coach-mhead-h', `${el.offsetHeight}px`);
+    set();
+    const ro = new ResizeObserver(set);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [showShell, isHelp]);
+
   if (!showShell) return <>{children}</>;
 
   // Focused full-page help guide: no header/rail/tabs — just the guide, padded so the
@@ -322,6 +342,7 @@ export default function CoachPortalShell({
 
   const header = (
     <header
+      ref={mheadRef}
       className={`${styles.mhead}${currentReg ? '' : ` ${styles.mheadTeamOnly}`}`}
       aria-label="Team header"
     >
@@ -421,14 +442,15 @@ export default function CoachPortalShell({
     // {...coachWarmAttr} adds the [data-coach-warm-enabled] marker (always, post-release); the
     // shell root wraps the global nav, header, rail and content, so the warm token flip in
     // globals.css reaches the whole basic portal.
-    <div className={styles.shell} {...coachWarmAttr}>
+    <div className={styles.shell} ref={shellRef} {...coachWarmAttr}>
       <CoachThemeColor />
       <FeedbackRequestIdProvider />
 
       {/* The GLOBAL consumer nav: bottom bar ≤900px (Home · Scores · Chat · Account — no tab
           lights up inside the team space; the header says where you are), wordmark top bar
-          ≥901px. Renders instantly — it needs no team context. */}
-      <ConsumerNav variant="coach" signedIn={signedIn} isCoach={isCoach} />
+          ≥901px. Renders instantly — it needs no team context. chatBackPath (A3 QA): the
+          Chat tab carries the coach's CURRENT page so /chat can offer the way back. */}
+      <ConsumerNav variant="coach" signedIn={signedIn} isCoach={isCoach} chatBackPath={pathname} />
 
       {/* Desktop left rail (≥901px) — team identity + the same section list as the tab row. */}
       <aside className={styles.rail} aria-label="Coaches Portal">

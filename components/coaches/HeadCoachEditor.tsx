@@ -28,9 +28,12 @@ type Props = {
   /** The registration / access email (teams.email) — the fallback recipient when no
    *  contact override is set. Used only to spell out where organizer emails will go. */
   registrationEmail?: string | null;
+  /** A3: rendered inside the record page's merged "Your Team" entry card — drop the
+   *  component's own card chrome (the wrapping card owns border/padding). */
+  embedded?: boolean;
 };
 
-export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmail, registrationEmail }: Props) {
+export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmail, registrationEmail, embedded = false }: Props) {
   const router = useRouter();
 
   const [coach, setCoach] = useState(initialCoach ?? '');
@@ -80,9 +83,10 @@ export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmai
   }
 
   return (
-    <div className={`card ${styles.card}`}>
+    <div className={embedded ? styles.embedded : `card ${styles.card}`}>
       <div className={styles.head}>
-        <UserCog size={16} aria-hidden />
+        {/* Embedded: the wrapping <summary> row already carries the UserCog icon. */}
+        {!embedded && <UserCog size={16} aria-hidden />}
         <p className={styles.intro}>
           Set who coaches this team for this event. The contact email is where acceptance, payment,
           and schedule updates are sent — leave it blank to use your registration email.

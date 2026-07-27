@@ -70,48 +70,8 @@
   color: var(--white);
 }
 
-.resources {
-  margin-top: 1.1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border);
-}
-
-.resourcesLabel {
-  display: block;
-  font-family: var(--font-data, monospace);
-  font-size: 0.62rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--white-40);
-  margin-bottom: 0.55rem;
-}
-
-.resourceLinks {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.resourceLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.45rem 0.75rem;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--white);
-  background: var(--bg-2, rgba(255, 255, 255, 0.04));
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  text-decoration: none;
-  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
-}
-.resourceLink:hover {
-  color: var(--logic-lime);
-  border-color: rgba(var(--logic-lime-rgb), 0.4);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-}
+/* A3: the resources block moved to the record page's "From the Organizer" zone
+   (.resourcePill in CoachTournamentRecord.module.css carries the pill recipe now). */
 
 @media (max-width: 600px) {
   .banner {

@@ -9,6 +9,14 @@
   padding: 1rem;
 }
 
+/* A3: rendered inside the record page's merged "Your Team" entry card (a <details>
+   body) — same internal layout, no card chrome of its own. */
+.embedded {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
 .head {
   display: flex;
   align-items: flex-start;

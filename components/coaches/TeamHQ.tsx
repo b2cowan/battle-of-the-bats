@@ -1,9 +1,8 @@
-import { CalendarClock, CheckCircle2, Circle, CircleDollarSign, Clock, Megaphone, TriangleAlert, Trophy, Users, XCircle } from 'lucide-react';
-import type { CSSProperties } from 'react';
+import { CalendarClock, CircleDollarSign, Megaphone, Trophy, Users } from 'lucide-react';
+import type { CSSProperties, ReactNode } from 'react';
 import LocalDateTime from './LocalDateTime';
 import Countdown from '@/components/public/Countdown';
 import { teamColor, teamInitials } from '@/lib/team-color';
-import type { CoachTournamentStatus } from '@/lib/coach-status-model';
 import type { CoachTournamentPhase } from '@/lib/coach-tournament-phase';
 import type { BasicCoachRegistrationGame } from '@/lib/basic-coach-teams';
 import styles from './TeamHQ.module.css';
@@ -51,27 +50,16 @@ type TournamentTeamHQProps = {
   /** YYYY-MM-DD start date, for the accepted-prep countdown / headline. */
   startDate: string | null;
   dateRangeLabel: string | null;
-  /** Organizer contact (mailto) — shown on rejected + as the accepted "questions?" line. */
-  contactEmail: string | null;
-  /** 5b status model — present for accepted teams; drives the checklist Fee/Roster/Check-in rows. */
-  status: CoachTournamentStatus | null;
-  /** Show the check-in milestone (game day onward only). */
-  showCheckIn: boolean;
-  /** Formatted "registered on" date for the first checklist milestone. */
-  registeredDateLabel: string | null;
-  /** Organizer requires an event roster (5f) → show the Roster milestone even before
-   *  submission (as "Not submitted"). The actionable submit UI is the 5k card below. */
-  rosterRequired?: boolean;
   /** 5m afterglow (result phase only) — final W-L-T from the team's completed games. */
   record?: { wins: number; losses: number; ties: number } | null;
   /** 5m afterglow — public standings link, present only when the tournament is public. */
   standingsHref?: string | null;
-  /** Theme 1 (5h) pending entry-fee preview — the organizer's fee schedule amount, shown
-   *  on the pending phase as "$N · due if accepted". Null when no fee schedule is set. */
-  pendingFeeAmount?: number | null;
-  /** Theme 1 (5i) game-day Today card — games happening today, server-derived (no poll
-   *  in the hero; the live scorebug lives in CoachLiveSchedule below). */
+  /** A3: the game-day hero keeps ONE next-game line (the countdown's game-day analogue);
+   *  the full today detail lives in the Schedule zone beside the live scorebug. */
   todayGames?: HeroTodayGame[];
+  /** A3 (result phase): the share action rendered inside the result card — the record page
+   *  passes SharePageButton so "how we finished" and "share it" live together. */
+  shareSlot?: ReactNode;
 };
 
 /** Minimal shape the game-day Today card needs (a server-derived slice of the schedule). */
@@ -92,16 +80,6 @@ function formatMoney(amount: number): string {
     currency: 'CAD',
     maximumFractionDigits: 2,
   }).format(amount);
-}
-
-// Date-only (YYYY-MM-DD) due dates render as the literal calendar day (T00:00:00),
-// matching TournamentStatusBlock so the glance strip + detail block agree.
-function formatDateOnly(value: string | null): string | null {
-  if (!value) return null;
-  const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
-  const date = dateOnly ? new Date(value + 'T00:00:00') : new Date(value);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function StandaloneTeamHQ({
@@ -129,8 +107,10 @@ function StandaloneTeamHQ({
         regGame.tournamentName ? `from ${regGame.tournamentName}` : null,
       ].filter(Boolean).join(' · ')
     : null;
+  // A3.2: named "At a glance" (the visible h2 lives in the Overview page). Never "HQ" —
+  // that's the Premium tier's word (companion vs HQ framing).
   return (
-    <section className={styles.hqStrip} aria-label="Team HQ">
+    <section className={styles.hqStrip} aria-label="At a glance">
       <div className={styles.hqItem}>
         <div className={styles.hqIcon}><Users size={17} aria-hidden /></div>
         <div>
@@ -214,46 +194,6 @@ function StandaloneTeamHQ({
   );
 }
 
-type ChecklistItem = {
-  key: string;
-  label: string;
-  state: string;
-  done: boolean;
-  /** Renders the clock (awaiting) icon instead of the empty circle when not done. */
-  awaiting?: boolean;
-  /** Colours the (plain, right-aligned) state text — e.g. past-due Fee → danger. The
-   *  row stays uniform with its siblings (no pill, no second line); the red fee glance
-   *  strip above owns the alarm + the "Was due" date, so it's never duplicated here. */
-  stateTone?: 'danger';
-};
-
-function Checklist({ items }: { items: ChecklistItem[] }) {
-  return (
-    <ul className={styles.checklist}>
-      {items.map(item => (
-        <li
-          key={item.key}
-          className={`${styles.checkItem} ${item.done ? styles.checkItemDone : item.awaiting ? styles.checkItemAwaiting : ''}`}
-        >
-          <span className={styles.checkIcon}>
-            {item.done ? (
-              <CheckCircle2 size={16} aria-hidden />
-            ) : item.awaiting ? (
-              <Clock size={16} aria-hidden />
-            ) : (
-              <Circle size={16} aria-hidden />
-            )}
-          </span>
-          <span className={styles.checkLabel}>{item.label}</span>
-          <span className={`${styles.checkState}${item.stateTone === 'danger' ? ` ${styles.checkStateDanger}` : ''}`}>
-            {item.state}
-          </span>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 function TournamentTeamHQ(props: TournamentTeamHQProps) {
   const {
     phase,
@@ -265,15 +205,10 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     orgName,
     startDate,
     dateRangeLabel,
-    contactEmail,
-    status,
-    showCheckIn,
-    registeredDateLabel,
-    rosterRequired,
     record,
     standingsHref,
-    pendingFeeAmount,
     todayGames,
+    shareSlot,
   } = props;
 
   const heroStyle = { '--team-color': teamColor(teamName) } as CSSProperties;
@@ -295,16 +230,11 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
           ? styles.heroAccentSuccess
           : styles.heroAccentLime; // accepted_prep / schedule_live / result
 
-  // Fee glance strip (accepted, fee scheduled + unpaid). The amount/due/contact live
-  // here as the GLANCE layer; the process note ("organizer records payment manually")
-  // stays in the detail status block below — never duplicated here.
-  const feeDueLabel = formatDateOnly(status?.fee.dueDate ?? null);
-  const feeAmountLabel = status?.fee.amountDue != null ? formatMoney(status.fee.amountDue) : null;
-  const showFeeStrip = Boolean(accepted && status?.fee.hasSchedule && !status?.fee.isPaid);
-  const feePastDue = status?.fee.state === 'past-due';
-
   // Headline + sub per phase. Pending/waitlist/rejected reuse the existing
   // registration-status copy (statusDesc); accepted gets the prep narrative.
+  // A3: the hero is status + countdown ONLY — fee, checklist, contact, and the
+  // today detail all moved into the record page's four zones (approved mockups
+  // 2026-07-26); game day earns its own headline now that the hero is this lean.
   let headline: string;
   // accepted / result split the identity onto two stacked lines (tournament over org);
   // pending / rejected use the status-description sentence as a single sub line.
@@ -317,6 +247,8 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
     sub = statusDesc || null;
   } else if (phase === 'result') {
     headline = "That's a wrap!";
+  } else if (phase === 'game_day') {
+    headline = 'Game day!';
   } else {
     headline = "You're in!";
   }
@@ -326,58 +258,6 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
   // static, honest line (no live scores until 5i / no afterglow until 5m).
   const today = tournamentToday();
   const beforeStart = Boolean(startDate) && (today < (startDate as string));
-
-  const checklist: ChecklistItem[] = [];
-  if (phase === 'pending') {
-    checklist.push({ key: 'registered', label: 'Registered', state: registeredDateLabel ? `Submitted ${registeredDateLabel}` : 'Submitted', done: true });
-    checklist.push({ key: 'decision', label: 'Decision', state: 'Awaiting organizer', done: false, awaiting: true });
-  } else if (accepted && phase !== 'result') {
-    // Result phase collapses the prep checklist (the event is over) — the afterglow block below
-    // shows the final record + standings link instead (5m, J5-052).
-    checklist.push({ key: 'registered', label: 'Registered', state: registeredDateLabel ?? 'Submitted', done: true });
-    checklist.push({ key: 'accepted', label: 'Accepted', state: 'Confirmed', done: true });
-    // Fee — only when the organizer set a fee schedule; read-only state, no amount
-    // (the detailed amount/due/contact lives in the status block below).
-    if (status?.fee.hasSchedule) {
-      // Past-due (J5-034): plain red "Past due" state text, uniform with the other rows.
-      // The red fee glance strip above owns the alarm + amount + "Was due" date, so the
-      // checklist no longer repeats it as a pill + a second red line. Merely owed → plain
-      // "Owed". Binary by design (no third state) — mirrors the locked fee vocabulary.
-      const feePastDueRow = !status.fee.isPaid && status.fee.state === 'past-due';
-      checklist.push({
-        key: 'fee',
-        label: 'Fee',
-        state: status.fee.isPaid ? 'Paid' : feePastDueRow ? 'Past due' : 'Owed',
-        done: status.fee.isPaid,
-        stateTone: feePastDueRow ? 'danger' : undefined,
-      });
-    }
-    // Roster — shown when the organizer requires one (5f) OR once the coach has
-    // submitted. "Not submitted" (awaiting) → "Submitted" → "Confirmed". The actionable
-    // submit UI is the 5k card below the hero — this row is the read-only milestone.
-    if (status) {
-      const rosterDone = status.roster.state !== 'none';
-      if (rosterRequired || rosterDone) {
-        checklist.push({
-          key: 'roster',
-          label: 'Roster',
-          state: status.roster.state === 'confirmed' ? 'Confirmed' : rosterDone ? 'Submitted' : 'Not submitted',
-          done: rosterDone,
-          awaiting: !rosterDone,
-        });
-      }
-    }
-    // Check-in — game day onward only (default 'not_arrived' reads as a problem otherwise).
-    if (showCheckIn && status) {
-      const checkedIn = status.checkIn.state === 'checked_in';
-      checklist.push({
-        key: 'checkin',
-        label: 'Check-in',
-        state: checkedIn ? 'Checked in' : status.checkIn.state === 'no_show' ? 'No-show' : 'Not arrived',
-        done: checkedIn,
-      });
-    }
-  }
 
   const todayGameCount = todayGames?.length ?? 0;
   const nextTodayGame = todayGames?.[0] ?? null;
@@ -410,41 +290,6 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
         </div>
       </div>
 
-      {/* Pending entry-fee preview (5h) — only when the organizer set a fee schedule.
-          "due if accepted" keeps it honest: nothing is owed until the team is in. */}
-      {phase === 'pending' && pendingFeeAmount != null && pendingFeeAmount > 0 && (
-        <div className={styles.heroFeePreview}>
-          <span className={styles.heroFeePreviewLabel}>Entry fee preview</span>
-          <span className={styles.heroFeePreviewAmount}>{formatMoney(pendingFeeAmount)} · due if accepted</span>
-        </div>
-      )}
-
-      {/* Fee glance strip (5h) — accepted + fee scheduled + unpaid. Owed (amber) vs
-          past-due (red, role=alert). Process note stays in the detail block below. */}
-      {showFeeStrip && (
-        <div
-          className={`${styles.heroFeeStrip} ${feePastDue ? styles.heroFeeStripDanger : styles.heroFeeStripWarn}`}
-          role={feePastDue ? 'alert' : undefined}
-        >
-          <span className={styles.heroFeeStripIcon}>
-            {feePastDue ? <XCircle size={15} aria-hidden /> : <TriangleAlert size={15} aria-hidden />}
-          </span>
-          <div className={styles.heroFeeStripText}>
-            <span className={styles.heroFeeStripHead}>
-              {feePastDue
-                ? `Fee past due${feeAmountLabel ? ` · ${feeAmountLabel}` : ''}`
-                : `Fee owed${feeAmountLabel ? ` · ${feeAmountLabel}` : ''}${!feePastDue && feeDueLabel ? ` · due ${feeDueLabel}` : ''}`}
-            </span>
-            {feePastDue && feeDueLabel && <span className={styles.heroFeeStripSub}>Was due {feeDueLabel}</span>}
-            {contactEmail && (
-              <span className={styles.heroFeeStripSub}>
-                Contact <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
       {accepted && beforeStart && startDate && (
         <p className={styles.heroCountdown}>
           {/* Before a schedule exists (accepted_prep) there's no "first game" to count to — count
@@ -457,24 +302,17 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
         </p>
       )}
 
-      {/* Game-day Today card (5i) — a server-derived summary that points DOWN to the
-          CoachLiveSchedule scorebug below (it does NOT poll). Falls back to the plain
-          "Event underway" line when no games are scheduled for today. */}
+      {/* Game-day line (A3) — the countdown's game-day analogue: ONE line pointing at the
+          next game; the full today detail (location, home/away, scorebug) lives in the
+          Schedule zone below. Falls back to "Event underway" when nothing is on today. */}
       {phase === 'game_day' && (
-        todayGameCount > 0 ? (
-          <div className={styles.heroTodayCard}>
-            <span className={styles.heroTodayLabel}>Today</span>
-            <span className={styles.heroTodayCount}>
-              {todayGameCount === 1 ? '1 game today' : `${todayGameCount} games today`}
-            </span>
-            {nextTodayGame && (
-              <span className={styles.heroTodayNext}>
-                Next: {nextTodayGame.timeLabel ?? 'TBD'}
-                {nextTodayGame.location ? ` · ${nextTodayGame.location}` : ''} · vs {nextTodayGame.opponentName}{' '}
-                <span className={styles.heroTodaySide}>({nextTodayGame.isHome ? 'Home' : 'Away'})</span>
-              </span>
-            )}
-          </div>
+        nextTodayGame ? (
+          <p className={styles.heroCountdown}>
+            {todayGameCount > 1 ? `${todayGameCount} games today · next ` : 'Next game today · '}
+            <strong>
+              {nextTodayGame.timeLabel ?? 'TBD'} vs {nextTodayGame.opponentName}
+            </strong>
+          </p>
         ) : (
           <p className={styles.heroCountdown}><strong>Event underway</strong></p>
         )
@@ -499,24 +337,11 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
           {standingsHref && (
             <a className={styles.heroResultLink} href={standingsHref}>View final standings →</a>
           )}
+          {shareSlot}
         </div>
       )}
 
       {dateRangeLabel && <p className={styles.heroDates}>{dateRangeLabel}</p>}
-
-      {checklist.length > 0 && <Checklist items={checklist} />}
-
-      {phase === 'rejected' && contactEmail && (
-        <p className={styles.heroContact}>
-          Interested in another division or a future event? Reach out to{' '}
-          <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
-        </p>
-      )}
-      {accepted && contactEmail && (
-        <p className={styles.heroContact}>
-          Questions? <a href={`mailto:${contactEmail}`}>{contactEmail}</a>
-        </p>
-      )}
     </div>
   );
 }

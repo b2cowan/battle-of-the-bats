@@ -41,12 +41,18 @@ export default function ConsumerNav({
   signedIn: signedInProp = false,
   isCoach = false,
   variant = 'consumer',
+  chatBackPath = null,
 }: {
   signedIn?: boolean;
   /** Account has a coach context (Basic or Premium) — surfaces the coaches hub
    *  in the desktop utility area (Phase 3). Mobile stays four tabs; the Account
    *  tab carries the same door there. */
   isCoach?: boolean;
+  /** A3 QA (2026-07-27): the coach shell passes its CURRENT portal path here so the
+   *  Chat tab deep-links `/chat?back=…` — the Chat surface then offers a "back to
+   *  your Coaches Portal" return to the exact page the coach left. Null (all other
+   *  mounts) keeps the plain `/chat` href — fans never see the affordance. */
+  chatBackPath?: string | null;
   /** 'consumer' (default): the warm shell nav (top bar + bottom bar) mounted by the
    *  (consumer) layout, identity SSR'd via the `signedIn` prop. 'tournament' (Phase 5):
    *  the persistent bottom bar ONLY, root-mounted + self-gating on public tournament
@@ -91,6 +97,10 @@ export default function ConsumerNav({
   if (variant === 'tournament' && !onTournamentRoute) return null;
 
   const cap = (n: number) => (n > 9 ? '9+' : String(n));
+  // Chat carries the coach return path when the coach shell provides one (tab-active
+  // matching keys off `pathname`, so the query never affects highlight state).
+  const tabHref = (href: string) =>
+    href === '/chat' && chatBackPath ? `/chat?back=${encodeURIComponent(chatBackPath)}` : href;
   const badges: Record<string, string | null> = {
     '/discover': pendingInvites > 0 ? cap(pendingInvites) : null,
     '/chat': chatUnread > 0 ? cap(chatUnread) : null,
@@ -109,7 +119,7 @@ export default function ConsumerNav({
     return (
       <Link
         key={href}
-        href={href}
+        href={tabHref(href)}
         className={`${styles.tab} ${active ? styles.active : ''}`}
         aria-current={active ? 'page' : undefined}
       >
@@ -133,7 +143,7 @@ export default function ConsumerNav({
     return (
       <Link
         key={href}
-        href={href}
+        href={tabHref(href)}
         className={`${styles.topLink} ${active ? styles.active : ''}`}
         aria-current={active ? 'page' : undefined}
       >

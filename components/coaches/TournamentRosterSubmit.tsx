@@ -290,7 +290,9 @@ export default function TournamentRosterSubmit({ teamId }: { teamId: string }) {
 
       {orgAddedCount > 0 && (
         <p className={styles.muted}>
-          {orgAddedCount === 1 ? '1 player was added by the organizer' : `${orgAddedCount} players were added by the organizer`} and isn&apos;t shown here — your submission won&apos;t remove them.
+          {orgAddedCount === 1
+            ? '1 player was added by the organizer and isn’t shown here'
+            : `${orgAddedCount} players were added by the organizer and aren’t shown here`} — your submission won&apos;t remove them.
         </p>
       )}
 

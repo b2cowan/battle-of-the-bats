@@ -23,13 +23,12 @@
  * Single-poll by design: the live game renders inline as a prominent broadcast row
  * (mirroring the public ScheduleContent), so there's no second polling surface.
  */
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Pin } from 'lucide-react';
 import RollingNumber from '@/components/public/RollingNumber';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import { usePublicTournamentLive } from '@/lib/hooks/usePublicTournamentLive';
-import { useFollowedTeam } from '@/lib/follow';
+import { readFollowedTeamId, useFollowedTeam } from '@/lib/follow';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import type { CSSProperties } from 'react';
 import type { GameStatus } from '@/lib/types';
@@ -114,8 +113,28 @@ export default function CoachLiveSchedule({
     },
   });
 
-  const { followedTeamId, follow, unfollow } = useFollowedTeam(orgSlug, tournamentSlug);
-  const isFollowing = followedTeamId === teamId;
+  const { follow } = useFollowedTeam(orgSlug, tournamentSlug);
+
+  // A3 QA (owner call 2026-07-27): the coach's own team is highlighted on the public
+  // schedule/scorebug automatically — the "Highlight my team" button is gone. Seeded
+  // ONCE per device+tournament (localStorage flag), reading the store directly (the
+  // hook's state hasn't hydrated in this first effect pass): never overrides an
+  // existing highlight, and never re-pins after the coach un-stars on the public site.
+  useEffect(() => {
+    if (!live) return;
+    let seedKey: string;
+    try {
+      seedKey = `fl-coach-autopin:${orgSlug}/${tournamentSlug}`;
+      if (window.localStorage.getItem(seedKey)) return;
+      if (readFollowedTeamId(orgSlug, tournamentSlug)) return;
+    } catch {
+      return; // storage unavailable → no seeding
+    }
+    follow({ id: teamId, name: teamName, divisionId: teamDivisionId ?? '' });
+    try {
+      window.localStorage.setItem(seedKey, '1');
+    } catch { /* highlight still applied for this visit */ }
+  }, [live, orgSlug, tournamentSlug, teamId, teamName, teamDivisionId, follow]);
 
   // UTC today, matching the page's server `today` + the phase derivation + the
   // public ScheduleContent LIVE check (consistent across the app).
@@ -135,32 +154,6 @@ export default function CoachLiveSchedule({
               subtitle="Add it to your home screen for live game updates."
             />
           )}
-          {/* N3a: this is the anonymous DEVICE highlight, not alerts — a coach reading
-              "Follow this team" reasonably believed they'd enabled notifications. The
-              label + hint now say exactly what it does; own-team alerts live in the
-              account sheet on the public page (N3b). */}
-          <div className={styles.controls}>
-            <button
-              type="button"
-              className={isFollowing ? styles.followActive : styles.followBtn}
-              onClick={() =>
-                isFollowing
-                  ? unfollow()
-                  : follow({ id: teamId, name: teamName, divisionId: teamDivisionId ?? '' })
-              }
-              aria-pressed={isFollowing}
-            >
-              <Pin size={14} fill={isFollowing ? 'currentColor' : 'none'} aria-hidden />
-              {isFollowing ? 'Highlighted' : 'Highlight my team'}
-            </button>
-            <span className={styles.followHint}>
-              {isResult
-                ? 'Highlighted on the public schedule on this device.'
-                : isFollowing
-                  ? 'Pinned on this device’s public schedule & live scorebug.'
-                  : 'Pins your team on this device’s public schedule & live scorebug — it doesn’t send alerts.'}
-            </span>
-          </div>
         </>
       )}
 

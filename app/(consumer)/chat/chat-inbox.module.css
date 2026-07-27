@@ -12,6 +12,29 @@
   width: 100%;
 }
 
+/* A3 QA (2026-07-27): the coach's way home — a slim return bar shown only when the
+   coach shell's Chat tab passed a portal path (`?back=`). Quiet by design: it's an
+   exit, not a header. */
+.coachReturn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 42px;
+  padding: 0.5rem 1.1rem;
+  border-bottom: 1px solid var(--home-line);
+  color: var(--home-ink-soft);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.12s;
+}
+
+.coachReturn:hover {
+  color: var(--home-ink);
+}
+
 /* ── Loading / error center states ─────────────────────────────────────── */
 .centerState {
   flex: 1 1 auto;
