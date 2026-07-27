@@ -44,6 +44,48 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-26',
+    title: 'The free Coach Portal gets a warmer new look',
+    highlights: [
+      {
+        category: 'new',
+        text: 'The free Coach Portal now looks and navigates like the rest of your FieldLogicHQ account, instead of feeling like a separate app.',
+      },
+      {
+        category: 'improved',
+        text: 'Polished the mobile top and bottom bars in the Coach Portal to match its new look.',
+      },
+      {
+        category: 'improved',
+        text: 'Billing cancellations and downgrades now only affect the organization you\'re actually working in.',
+      },
+      {
+        category: 'improved',
+        text: 'Added safeguards so an organization can\'t end up with two active portals by accident.',
+      },
+      {
+        category: 'improved',
+        text: 'Strengthened account security behind the scenes.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a couple of visual glitches in the Coach Portal where headings and text could land on the wrong background color.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed an issue where some coaches could get stuck part-way through signing in to the Coach Portal with no way forward.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed an issue that could block some coaches from setting up their first organization.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed edge cases in league creation, account reinstatement, and cross-organization coaching that could leave an account in an inconsistent state.',
+      },
+    ],
+  },
+  {
     date: '2026-07-24',
     title: 'A cleaner sign-in, and a smoother coach invite',
     highlights: [
