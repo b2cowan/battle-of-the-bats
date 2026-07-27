@@ -2,10 +2,25 @@
    screens on the platform-neutral surface follow the user theme; warm is the
    platform default). These render OUTSIDE any consumer warmTab surface, so each
    screen's wrapper wears warmTheme `.warmVars` (the --home-* tokens, no ground)
-   alongside `.page`. Every rule below is gated on html[data-user-theme="warm"] —
-   under an explicit Dark preference nothing fires and the dark HUD screens stay
-   byte-identical (the Tailwind utilities on the elements are untouched; these
-   gated selectors simply outspecify them under Warm). */
+   alongside `.page`.
+
+   ORIGINALLY every rule here was gated on html[data-user-theme="warm"], so Dark stayed
+   byte-identical. That is no longer true: the 2026-07-27 legibility pass added a small set of
+   UNGATED base rules, because several defects were present in BOTH themes — borders that drew
+   nothing (preflight is off), an eyebrow that resolved blue instead of red, and an error block
+   that only scrolled sideways. Gated rules still handle everything that is warm-SPECIFIC. */
+
+/* Tailwind's `border` utility only emits `border-width` — preflight (which normally supplies
+   `border-style: solid` on `*`) is disabled project-wide, so every bordered element on these
+   screens was computing border-style:none and drawing NOTHING. That is why the crash card,
+   the Retry control and the Return-to-Root link all rendered edgeless. Supplied locally rather
+   than in the global reset, where a blanket `border-style: solid` would need a matching
+   `border-width: 0` and could disturb modules that set style or colour alone. */
+.card,
+.errBlock,
+.retryBtn,
+.quietLink,
+.cta { border-style: solid; }
 
 :global(html[data-user-theme="warm"]) .page {
   background-color: var(--home-paper);
@@ -13,13 +28,32 @@
   color: var(--home-ink);
 }
 
-:global(html[data-user-theme="warm"]) .page :global(.hud-label) { color: var(--home-dim); }
+/* --home-dim is the *meta* ink (#8A8177) and only reaches 3.3:1 on paper — under AA for a
+   10px label. --home-ink-soft is the paper body ink; the eyebrow stays visually quiet through
+   size/mono/tracking rather than through low contrast. */
+:global(html[data-user-theme="warm"]) .page :global(.hud-label) { color: var(--home-ink-soft); }
+
+/* ── Crash-screen eyebrow ──────────────────────────────────────────────────────
+   Two-class selector on purpose. `.errLabel` alone (0,1,0) ties with the global
+   `.hud-label` (0,1,0), and globals.css is emitted after @tailwind utilities, so the
+   blueprint eyebrow colour was winning and this screen's label rendered blue, never red —
+   in dark. Under Warm it lost again, this time to `.page .hud-label` (0,3,0) above. Scoping
+   to `.page .errLabel` outranks both, deterministically. */
+.page .errLabel { color: var(--danger); }
+
+:global(html[data-user-theme="warm"]) .page .errLabel {
+  /* --home-live (#D9482B) is 3.9:1 on paper — just under AA at this size. Darkened toward
+     ink keeps the same hue and clears 5.3:1, with no new token. */
+  color: color-mix(in srgb, var(--home-live) 78%, var(--home-ink));
+}
 
 /* The oversized "404" watermark digit — a quiet ink wash instead of navy tint. */
 :global(html[data-user-theme="warm"]) .bigCode { color: rgba(var(--home-line-rgb), 0.45); }
 
 :global(html[data-user-theme="warm"]) .title { color: var(--home-ink); }
-:global(html[data-user-theme="warm"]) .body { color: var(--home-dim); }
+/* Body copy takes the paper BODY ink, not --home-dim (3.3:1). This is the screen's primary
+   explanation of what went wrong — it is not meta text. */
+:global(html[data-user-theme="warm"]) .body { color: var(--home-ink-soft); }
 
 /* Outline CTA: lime-as-text darkens to olive (E3); hover = olive-soft wash
    (the warm .btn-outline language), replacing the dark screen's lime-fill hover. */
@@ -33,9 +67,36 @@
   color: var(--home-olive);
 }
 
-/* Crash screen: the red family reads on both grounds — only the light red-400
-   label deepens to the warm live red; the red-tint card border/wash stays. */
-:global(html[data-user-theme="warm"]) .errLabel { color: var(--home-live); }
+/* The crash card's `bg-red-500/5` wash is invisible over cream and its red-500/40 edge fades
+   to pale pink there, so on paper the screen lost every signal that it was an error at all.
+   White card + a real red hairline restores the frame in the warm language. */
+:global(html[data-user-theme="warm"]) .card {
+  background-color: var(--home-card);
+  border-color: rgba(var(--home-live-rgb), 0.45);
+}
+
+/* ── Crash-screen error detail ─────────────────────────────────────────────────
+   Dev-only block (the raw exception message). It wraps instead of scrolling sideways —
+   an error string you have to drag horizontally to finish reading is the least usable
+   form it can take, and stack-ish text has no natural break points, so `anywhere`. */
+.errBlock {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  color: rgba(var(--danger-rgb), 0.92);
+}
+
+/* This was the one element with no warm rule: `bg-black/40` punched a near-black slab
+   through the cream page, with red ink at ~3:1 inside it. On paper it becomes a card. */
+:global(html[data-user-theme="warm"]) .errBlock {
+  background-color: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: color-mix(in srgb, var(--home-live) 78%, var(--home-ink));
+}
+
+/* Retry: the outline was --blueprint-blue at 1.8:1 on black — below the 3:1 floor for a
+   control boundary, so the button had no visible edge. Border and label now share the
+   theme-aware --blueprint-light. */
+.retryBtn { border-color: var(--blueprint-light); }
 
 :global(html[data-user-theme="warm"]) .retryBtn {
   border-color: var(--home-olive);
@@ -44,9 +105,15 @@
 
 :global(html[data-user-theme="warm"]) .retryBtn:hover { background-color: var(--home-olive-soft); }
 
+/* "Return to Root" read as stray text next to a button: white/10 is ~1.3:1 against the
+   ground, i.e. no perceptible edge. --white-40 composites to 3.7:1 — enough to read as a
+   control while staying clearly quieter than Retry. */
+.quietLink { border-color: var(--white-40); }
+.quietLink:hover { border-color: var(--white-60); }
+
 :global(html[data-user-theme="warm"]) .quietLink {
-  color: var(--home-dim);
-  border-color: var(--home-line);
+  color: var(--home-ink-soft);
+  border-color: var(--home-dim);
 }
 
-:global(html[data-user-theme="warm"]) .quietLink:hover { border-color: var(--home-line-strong); }
+:global(html[data-user-theme="warm"]) .quietLink:hover { border-color: var(--home-ink-soft); }

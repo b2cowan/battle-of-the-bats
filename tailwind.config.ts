@@ -12,7 +12,11 @@ const config: Config = {
         // FieldLogic Platform Palette
         'pitch-black':      '#0A0A0A',
         'blueprint-blue':   '#1E3A8A',
-        'blueprint-light':  '#3B5FC4',
+        // Points at the CSS token rather than freezing a copy: --blueprint-light is
+        // theme-aware (lightened on dark grounds, deepened on light), and a frozen literal
+        // here would silently keep the dark-failing value. No consumer uses an opacity
+        // modifier on it, which is the one thing a var() colour can't support.
+        'blueprint-light':  'var(--blueprint-light)',
         'logic-lime':       '#D9F99D',
         'structural-slate': '#0F172A',
         'data-gray':        '#94A3B8',

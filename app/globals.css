@@ -341,14 +341,34 @@ body:has([data-chat-fullbleed]) {
      --platform-primary (top of globals.css) moves this and the default --primary together. */
   --blueprint-blue:      var(--platform-primary);
   --blueprint-blue-rgb:  var(--platform-primary-rgb);
-  /* Lighter blueprint tone for small labels sitting ON a --blueprint-blue-bordered surface
-     (the archives table header). Component code already referenced --blueprint-light by name
-     but it was never declared, so it silently rendered its frozen fallback and would NOT have
-     moved in a rebrand. Declared 2026-07-26 at that exact value — not a derivation of
-     --platform-primary, so a rebrand edits this line too. */
-  --blueprint-light:     #3B5FC4;
+  /* Lighter blueprint tone for small labels sitting ON a dark ground or a --blueprint-blue-
+     bordered surface (the archives table header, .hud-label eyebrows, the crash-screen Retry
+     control). Component code already referenced --blueprint-light by name but it was never
+     declared, so it silently rendered its frozen fallback and would NOT have moved in a
+     rebrand. Declared 2026-07-26 — not a derivation of --platform-primary, so a rebrand edits
+     these lines too.
+       THEME-AWARE (2026-07-27): the original single value #3B5FC4 was tuned for a WHITE
+     ground (5.9:1) and carried onto dark grounds unchanged, where it is only 3.4:1 on
+     --pitch-black and 3.0:1 on --structural-slate — under AA for the 10px labels that use
+     it. Dark now gets a lightened blueprint tint (same hue/sat, L 33%→68%) at 6.4–7.2:1;
+     the light block below restores #3B5FC4, which is correct on white. */
+  --blueprint-light:     #859BD5;
   --logic-lime:          #D9F99D;
   --logic-lime-rgb:      217, 249, 157;
+  /* THE SAME lime, declared as a token no theme gate is allowed to remap — the single
+     source for lime-as-FILL that must survive a warm/olive remap (E3: lime-as-TEXT
+     darkens to olive on paper; lime-as-FILL never does).
+       Why it must exist: --logic-lime IS remapped to olive under the coach warm gate, so
+       a "captured" definition like `--home-lime: var(--logic-lime)` re-resolves to OLIVE
+       for any class composed onto an element INSIDE that gate — which is exactly how the
+       three coach upsell CTAs shipped as banned olive fills (fixed 2026-07-27). Pointing
+       the warm blocks at THIS token instead makes that failure structurally impossible
+       rather than avoided by convention.
+       USE ONLY as the source for a warm/theme block's own lime-fill token. Never reach
+       for it in a component to dodge the olive remap — a lime that should darken on paper
+       must keep using --logic-lime. Pair with --on-lime / --home-lime-ink for the ink. */
+  --logic-lime-fixed:     #D9F99D;
+  --logic-lime-fixed-rgb: 217, 249, 157;
   /* Dark ink for TEXT/GLYPHS on a bright fill (lime / gold / amber chips + the
      .btn-lime CTA) — the on-fill counterpart to --on-primary (text on --primary).
      Consolidates the hand-copied #0f1123 "dark text on lime" literal across the
@@ -417,6 +437,9 @@ body:has([data-chat-fullbleed]) {
    --gold / --gold-rgb (fills, borders, tints) are unchanged — only the TEXT/GLYPH value. */
 [data-color-mode="light"] {
   --gold-strong: #856611;
+  /* Restore the original dark-blue label tone — the :root value is lightened for dark
+     grounds and would only reach 2.8:1 on white. */
+  --blueprint-light: #3B5FC4;
   /* Status TEXT/GLYPH values deepened for light surfaces (~4.5:1+ on white);
      base --success/--warning/--danger/--info (fills/tints/borders) unchanged. */
   --success-strong: #15803D;
@@ -464,10 +487,10 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-line-rgb:    70, 55, 30;
   --home-paper-rgb:   248, 244, 237;
   /* True lime kept for the few LIME FILLS that survive on paper (CTAs / "on" toggles) with
-     dark ink on top — the ratified ink-on-lime CTA. A literal (not var(--logic-lime), which
-     this block remaps to olive) so it stays true lime here. */
-  --home-lime:        #D9F99D;
-  --home-lime-rgb:    217, 249, 157;
+     dark ink on top — the ratified ink-on-lime CTA. Sourced from --logic-lime-fixed, NOT
+     var(--logic-lime), which this very block remaps to olive. */
+  --home-lime:        var(--logic-lime-fixed);
+  --home-lime-rgb:    var(--logic-lime-fixed-rgb);
   --home-lime-ink:    #241E15;
   /* Warm geometry (theme-agnostic; mirrors warmTheme.module.css). Needed so the shared ChatPanel
      `.panelWarm` recipe — which the coach portal now reuses via the marker — resolves its
@@ -646,13 +669,17 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .card:hover {
   box-shadow: var(--glow-lime);
 }
 
+/* HUD eyebrow. Ink is --blueprint-light, NOT --blueprint-blue: this label is 10px and always
+   sits on a dark ground (--pitch-black / --hud-surface / --structural-slate), where the deep
+   navy lands at ~1.5–1.8:1 and is effectively unreadable. --blueprint-light is theme-aware
+   (lightened on dark, deepened under [data-color-mode="light"]), so both modes clear AA. */
 .hud-label {
   font-family: var(--font-data);
   font-size: 0.625rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--blueprint-blue);
+  color: var(--blueprint-light);
 }
 
 .data-mono {
@@ -678,7 +705,12 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .card:hover {
    `.live-dot` glyph lives beside the badge family below.) */
 
 a { color: inherit; text-decoration: none; }
-button { cursor: pointer; font-family: inherit; }
+/* `background: transparent` is what Tailwind's preflight would give us — preflight is disabled
+   (see the top of this file), and its absence meant any <button> that styled only its border +
+   text rendered the UA's opaque ButtonFace chip instead. That shipped on the crash screen's
+   "Retry Request" control: a white box on a near-black HUD. Buttons that set their own
+   background are unaffected; the only ones this changes are ones that were already wrong. */
+button { cursor: pointer; font-family: inherit; background: transparent; }
 img { max-width: 100%; display: block; }
 input, textarea, select { font-family: inherit; }
 ul, ol { list-style: none; }

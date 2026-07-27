@@ -321,7 +321,8 @@
       "Bash(node scripts/db-query.mjs --dev -q \"select relname, indexrelname, idx_scan from pg_stat_user_indexes where indexrelname in \\('idx_platform_metric_snapshots_date','platform_metric_snapshots_snapshot_date_key','rep_team_lineups_event_idx','rep_team_lineups_event_id_key'\\) order by relname, indexrelname;\")",
       "Bash(node scripts/db-query.mjs --prod -q \"select count\\(*\\) as null_invited_email_pending from organization_members where status='invited' and invited_email is null;\")",
       "Bash(git --no-pager diff --name-only -- \"app/platform-admin/customer-users/CustomerUsersClient.tsx\" \"lib/team-ownership-transfer.ts\")",
-      "Bash(git --no-pager diff --cached --name-only)"
+      "Bash(git --no-pager diff --cached --name-only)",
+      "PowerShell(aws amplify list-jobs --app-id d3ld0l2bgmmlga --branch-name dev --max-results 2 --region us-east-2)"
     ],
     "additionalDirectories": [
       "\\tmp",
