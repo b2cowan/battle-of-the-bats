@@ -137,10 +137,14 @@ export const wrap = (content: string) => `
  * CLAIM link: a coach WITH access lands on their team; a coach WITHOUT creates an account and
  * the registration links automatically (the email half of the claim-by-email gap fix).
  */
-export function coachPortalUrl(p: { registrationId?: string; email?: string }): string {
+export function coachPortalUrl(p: { registrationId?: string; email?: string; registered?: boolean }): string {
   const params = new URLSearchParams();
   if (p.registrationId) params.set('registrationId', p.registrationId);
   if (p.email) params.set('email', p.email);
+  // A4.1: `/coaches/join` greets a just-registered coach differently (`fromReg`), so the
+  // confirmation email must keep this flag when it adopts the helper — dropping it would
+  // silently downgrade the welcome for the one coach who most needs it.
+  if (p.registered) params.set('registered', '1');
   // A3.3: the shared constant, not string literals — a route change can't silently strand
   // the 8+ coach email templates that funnel through here.
   params.set('next', p.registrationId ? `${COACHES_TOURNAMENTS_PATH}/${p.registrationId}` : COACHES_TOURNAMENTS_PATH);
@@ -168,8 +172,12 @@ export function registrationConfirmationHtml(p: {
   // Carry the registrationId so the portal link is a CLAIM link: a coach who clicks it
   // (signed out, or on another device) lands on /coaches/join with this exact registration
   // pre-selected and links it on sign-in — the email half of the claim-by-email gap fix.
+  // A4.1: this used to hand-build the URL and hard-code `next` to the LIST even though it
+  // holds the registrationId, so the one email every new coach opens was the only one that
+  // didn't deep-link to the registration it's about. Now it uses the shared helper like its
+  // 8 siblings (which resolves `next` to the record when an id is present).
   const joinUrl = p.coachEmail
-    ? `${SITE_URL}/coaches/join?${p.registrationId ? `registrationId=${encodeURIComponent(p.registrationId)}&` : ''}email=${encodeURIComponent(p.coachEmail)}&next=${encodeURIComponent(COACHES_TOURNAMENTS_PATH)}&registered=1`
+    ? coachPortalUrl({ registrationId: p.registrationId, email: p.coachEmail, registered: true })
     : `${SITE_URL}/coaches/join`;
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received!</h2>

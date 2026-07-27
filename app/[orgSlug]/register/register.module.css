@@ -557,3 +557,11 @@
   line-height: 1.5;
   color: var(--white-40);
 }
+
+/* CSS-Modules keyframe scoping fix (2026-07-27) — see the note in app/[orgSlug]/Home.module.css.
+   `fadeInUp` lives in globals.css; a module's animation reference is scoped, so it never matched
+   and the animation silently no-oped. Local definition makes it resolve. */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}

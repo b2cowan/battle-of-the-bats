@@ -1552,3 +1552,15 @@
   background: rgba(var(--primary-rgb), 0.14);
   border-color: rgba(var(--primary-rgb), 0.5);
 }
+
+/* CSS-Modules keyframe scoping fix (2026-07-27) — see the note in app/[orgSlug]/Home.module.css.
+   This file referenced BOTH globals' `fadeInUp` and `fadeIn`; neither resolved once scoped. */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

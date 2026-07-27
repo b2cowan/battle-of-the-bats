@@ -394,7 +394,16 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           // Returning coach — treat the password as a sign-in to their existing account.
           const { error: signInErr } = await signIn(emailNorm, form.password);
           if (signInErr) {
-            setErrorMsg("This email already has a FieldLogicHQ account, and that password didn't match. Enter your existing password, or reset it from the sign-in page.");
+            // A4.3 (review finding): this branch is ALSO reached on the retry after a
+            // just-created account failed to sign in, where "that password didn't match"
+            // is incoherent — the account was made with this exact password seconds ago
+            // (coach-signup sets email_confirm, so there's no pending-confirmation state
+            // to blame either). Asserting a wrong password there can push a coach with the
+            // RIGHT password into a needless reset. State the outcome, offer the likely
+            // cause, and — like every other failure branch — say the team isn't registered.
+            setErrorMsg(
+              "This email already has a FieldLogicHQ account and we couldn't sign you in, so your team has NOT been registered yet. If that password isn't the one on your account, enter the right one (or reset it from the sign-in page) and submit again."
+            );
             setStep('error');
             return;
           }
@@ -403,9 +412,24 @@ export default function RegisterContent({ isPreview = false, initialData = null 
           // existing-team selector + signed-in state).
           const teams = await loadCoachTeams();
           if (teams.length > 0) {
-            setNoticeMsg("You already have an account — you're now signed in. Choose which team this registration is for below (or create a new one), then submit again.");
+            // A4.4 (owner call 2026-07-27): KEEP the team choice — auto-submitting would
+            // silently attach this registration to a guessed team, which is worse than one
+            // extra tap and messy to unpick. What was wrong was the framing: the old notice
+            // never said the registration hadn't been submitted, and we dumped the coach at
+            // the top of the form instead of at the one control they came back for.
+            setNoticeMsg("You already have a FieldLogicHQ account, so we've signed you in — but your registration hasn't been submitted yet. Pick which of your teams this is for (or create a new one), then finish submitting. Everything you entered is still here.");
             setStep('form');
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Defer past the re-render that mounts the picker (it only exists once
+            // loadCoachTeams has flipped on the signed-in state).
+            requestAnimationFrame(() => {
+              const picker = document.getElementById('coach-team-picker');
+              if (!picker) {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                return;
+              }
+              const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              picker.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' });
+            });
             return;
           }
           // No existing teams — fall through and create one via /api/register.
@@ -417,7 +441,25 @@ export default function RegisterContent({ isPreview = false, initialData = null 
         } else {
           const { error: signInErr } = await signIn(emailNorm, form.password);
           if (signInErr) {
-            setErrorMsg('Account created, but sign-in failed. Please sign in from the login page to finish.');
+            // A4.3: the old copy ("Account created, but sign-in failed — sign in to finish")
+            // read as "you're nearly done", but /api/register has NOT run at this point: the
+            // team is NOT registered and the organizer has no record of it. A coach who
+            // followed that advice signed in to an empty portal and assumed they were in.
+            // Say so plainly — the Try Again button below returns to the form with every
+            // answer still filled in, and the account now exists so the retry signs itself
+            // in via the 409 path (no manual sign-in needed unless that fails too).
+            //
+            // Review finding: "your answers are still here" is NOT true for file uploads.
+            // React keeps the File in state, but the form step unmounts on the way to the
+            // error card and a remounted <input type="file"> always renders empty — and if
+            // that field is `required`, native browser validation then blocks the retry
+            // until the coach re-picks it. Only promise what survives.
+            const needsFileReselect = registrationFields.some(
+              f => f.fieldType === 'file' && (f.required || customFiles[f.id])
+            );
+            setErrorMsg(
+              `Your account was created, but we couldn’t sign you in — so your team has NOT been registered yet and the organizer hasn’t received anything. Nothing is lost: choose Try Again below to finish submitting — your answers are still filled in${needsFileReselect ? ', though you’ll need to choose your uploaded file again' : ''}. If it keeps failing, sign in at the login page with this email and password, then register.`
+            );
             setStep('error');
             return;
           }
@@ -880,7 +922,11 @@ export default function RegisterContent({ isPreview = false, initialData = null 
 
                 <form onSubmit={handleReview}>
                   {signedInCoachEmail && basicCoachTeams.length > 0 && (
-                    <div className="form-group" style={{ marginBottom: '1rem' }}>
+                    /* A4.4: the returning-coach path (409 → signed in) scrolls HERE rather than
+                       to the top of the form — this picker is the only thing they came back to
+                       do, and burying it under a full form re-read is what made the round trip
+                       feel like being sent to the back of the queue. */
+                    <div className="form-group" style={{ marginBottom: '1rem' }} id="coach-team-picker">
                       <label className="form-label">Coaches Portal Team</label>
                       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <button

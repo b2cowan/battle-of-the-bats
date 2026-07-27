@@ -507,6 +507,11 @@ export default async function TournamentHomeContent({
               {registration.cta === 'waitlist' ? 'Join Waitlist' : 'Register a Team'}
             </Link>
             <span className={styles.preCtaDetail}>{registration.label} · {registration.detail}</span>
+            <span className={styles.preCtaNote}>
+              {registration.cta === 'waitlist' ? 'Joining the waitlist' : 'Registering'} also sets up your free
+              Coaches Portal — schedule, status, and organizer updates in one place.{' '}
+              <span className={styles.preCtaNoteQuiet}>Just here to follow along? You don&apos;t need an account.</span>
+            </span>
           </div>
         )}
         {!isPreview && !registration.cta && (
@@ -1013,11 +1018,18 @@ export default async function TournamentHomeContent({
           {/* The one conversion CTA lives on the hero (not in the persistent
               header, which stays logo + name + share). Lifecycle-gated. */}
           {!isPreview && registration.cta && (
-            <div className={styles.heroCta}>
-              <Link href={`${primaryBase}/register`} className="btn btn-primary btn-lg" id="hero-register-btn">
-                {registration.cta === 'waitlist' ? 'Join Waitlist' : 'Register'}
-              </Link>
-            </div>
+            <>
+              <div className={styles.heroCta}>
+                <Link href={`${primaryBase}/register`} className="btn btn-primary btn-lg" id="hero-register-btn">
+                  {registration.cta === 'waitlist' ? 'Join Waitlist' : 'Register'}
+                </Link>
+              </div>
+              <p className={styles.heroCtaNote}>
+                {registration.cta === 'waitlist' ? 'Joining the waitlist' : 'Registering'} also sets up your free
+                Coaches Portal — your team&apos;s schedule, status, and updates from the organizer in one place.{' '}
+                <span className={styles.heroCtaNoteQuiet}>Just here to follow along? You don&apos;t need an account.</span>
+              </p>
+            </>
           )}
 
           {!isInProgress && !isFinished && (

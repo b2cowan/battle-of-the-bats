@@ -273,6 +273,24 @@
   animation: fadeInUp 0.7s ease 0.3s both;
 }
 
+/* A4.2/A4.5 — the desktop CTA carried NO supporting text, so the first mention that
+   registering creates an account was a password field halfway down the form (the point a
+   cautious volunteer bails). One line sets the expectation; the quiet half is the
+   follow-only off-ramp, so a parent who just wants scores never starts a registration. */
+.heroCtaNote {
+  max-width: 34rem;
+  margin: 0 auto 0.25rem;
+  text-align: center;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--white-60);
+  animation: fadeInUp 0.7s ease 0.35s both;
+}
+
+.heroCtaNoteQuiet {
+  color: var(--white-45);
+}
+
 /* Stats */
 .stats {
   display: flex;
@@ -1613,6 +1631,20 @@
   text-align: center;
 }
 
+/* A4.2/A4.5 mobile twin of .heroCtaNote — deliberately NOT the mono/uppercase register of
+   .preCtaDetail above it: that line is event status, this is a sentence to read. */
+.preCtaNote {
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--white-60);
+  text-align: center;
+  text-wrap: pretty;
+}
+
+.preCtaNoteQuiet {
+  color: var(--white-45);
+}
+
 .preFactLink {
   color: var(--primary-light);
   text-decoration: none;
@@ -1688,4 +1720,17 @@
   justify-content: flex-end;
   margin-top: 1rem;
   margin-bottom: 0.25rem;
+}
+
+/* CSS-Modules keyframe scoping fix (2026-07-27). The 7 `animation: fadeInUp ...` rules in
+   this file referenced the GLOBAL @keyframes in globals.css. Turbopack rewrites animation
+   names in a module to the module-scoped identifier, so those references resolved to a
+   keyframe that was never defined — every hero entrance animation (badge, title, sub, CTA,
+   the new CTA note, stats, game cards) silently no-oped. Nothing looked broken because an
+   unmatched animation-name simply doesn't run (the `both` fill never applies, so no element
+   was stuck invisible). Defining it locally makes the scoped reference resolve. Value is
+   identical to the global one; the global stays for non-module consumers. */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }

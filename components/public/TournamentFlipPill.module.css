@@ -8,3 +8,10 @@
 @media (prefers-reduced-motion: reduce) {
   .enter { animation: none; }
 }
+
+/* CSS-Modules keyframe scoping fix (2026-07-27) — see the note in app/[orgSlug]/Home.module.css.
+   `.enter` referenced globals' `fadeIn`, which never matched once scoped. */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
