@@ -46,6 +46,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
+# pnpm — NEVER commit this file. Local pnpm 10/11 auto-creates it to record which packages may
+# run install scripts (sharp, unrs-resolver), but amplify.yml builds with pnpm@9, which reads the
+# same filename strictly as a MONOREPO config and aborts the build ("packages field missing or
+# empty") before installing anything. It broke the Amplify build once already (ad9dc668,
+# 2026-06-08) and reappeared, because "remember not to commit it" is not a real safeguard.
+# It is also redundant: the native-dep build allowlist already lives in .npmrc.
+pnpm-workspace.yaml
+
 # env files (can opt-in for committing if needed)
 .env*
 

@@ -441,7 +441,9 @@ export const POST = withObservability(async (req: Request) => {
       // no games FK at all (added in migration 203) and dev has cascaded since day one behind
       // this unguarded endpoint. The FK makes the deletion coherent; this guard makes it consented.
       // Mirrors the TEAM_HAS_GAMES guard on DELETE /api/admin/teams (migration 200).
-      if (!force) {
+      // Strict `!== true`: only a literal boolean confirmation skips the guard, so a stray truthy
+      // value from a malformed client ("no", 0-length string, 1) can never silently bypass it.
+      if (force !== true) {
         const [{ data: linkedGames }, { count: teamCount }] = await Promise.all([
           supabaseAdmin
             .from('games')

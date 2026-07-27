@@ -701,7 +701,9 @@ export const DELETE = withObservability(async (req: Request) => {
         .or(`home_team_id.in.(${idList}),away_team_id.in.(${idList})`);
 
       const affected = linkedGames ?? [];
-      if (affected.length > 0 && !force) {
+      // Strict `!== true` — only a literal boolean confirmation skips the guard (see the divisions
+      // guard for the same reasoning); a stray truthy value must never bypass a data-loss prompt.
+      if (affected.length > 0 && force !== true) {
         const scored = affected.filter(g => g.home_score !== null || g.away_score !== null).length;
         return new Response(
           JSON.stringify({

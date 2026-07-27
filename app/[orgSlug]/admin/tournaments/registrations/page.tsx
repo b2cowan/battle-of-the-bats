@@ -519,29 +519,50 @@ export default function UnifiedTeamsPage() {
   }
 
   async function handleDelete(id: string, name: string) {
+    // Two-step when the team has history. The API refuses to delete a team that still appears in
+    // a game (409 TEAM_HAS_GAMES) unless `force` is passed — the guard added alongside migration
+    // 200, when deleting a team stopped DESTROYING its games and started stranding them instead.
+    // Without this branch the refusal surfaced as a bare "Delete failed" with no counts and no way
+    // to proceed, which made every team that had ever played undeletable through the UI.
+    const doDelete = async (force: boolean) => {
+      setWorking(id);
+      try {
+        const res = await fetch(`/api/admin/teams${orgQuery}`, {
+          credentials: 'same-origin',
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [id], force }),
+        });
+        if (res.status === 409) {
+          const info = await res.json().catch(() => null);
+          if (info?.error === 'TEAM_HAS_GAMES') {
+            setFeedback({
+              isOpen: true,
+              title: 'This team has games',
+              message: info.message,
+              type: 'danger',
+              onConfirm: () => doDelete(true),
+            });
+            return;
+          }
+          throw new Error(info?.message || info?.error || 'Delete failed');
+        }
+        if (!res.ok) throw new Error('Delete failed');
+        setRegs(prev => prev.filter(r => r.id !== id));
+        await Promise.all([load(), loadPoolSlots()]);
+      } catch (e: any) {
+        setFeedback({ isOpen: true, title: 'Delete Error', message: e.message, type: 'danger' });
+      } finally {
+        setWorking(null);
+      }
+    };
+
     setFeedback({
       isOpen: true,
       title: 'Delete Registration?',
       message: `Permanently delete the registration for "${name}"? This cannot be undone.`,
       type: 'danger',
-      onConfirm: async () => {
-        setWorking(id);
-        try {
-          const res = await fetch(`/api/admin/teams${orgQuery}`, {
-            credentials: 'same-origin',
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: [id] }),
-          });
-          if (!res.ok) throw new Error('Delete failed');
-          setRegs(prev => prev.filter(r => r.id !== id));
-          await Promise.all([load(), loadPoolSlots()]);
-        } catch (e: any) {
-          setFeedback({ isOpen: true, title: 'Delete Error', message: e.message, type: 'danger' });
-        } finally {
-          setWorking(null);
-        }
-      }
+      onConfirm: () => doDelete(false),
     });
   }
 
