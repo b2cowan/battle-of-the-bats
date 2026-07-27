@@ -11,6 +11,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
+import { tournamentToday } from '@/lib/timezone';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -58,7 +59,7 @@ export const PATCH = withObservability(async (_req: Request,
   const entry = await createEntry(
     ledger.id,
     {
-      entryDate: new Date().toISOString().slice(0, 10),
+      entryDate: tournamentToday(),
       description: `Player dues installment #${installment.installmentNumber}`,
       amount: installment.amount,
       entryType: 'income',

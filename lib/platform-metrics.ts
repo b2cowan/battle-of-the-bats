@@ -1,6 +1,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
+import { tournamentToday } from './timezone';
 
 type OrgMetricRow = {
   id: string;
@@ -387,7 +388,7 @@ export async function getLatestPlatformMetricSnapshot() {
 
 export async function writeTodayPlatformMetricSnapshot(actorEmail: string, source = 'manual') {
   const metrics = await getCommandCenterStats();
-  const snapshotDate = new Date().toISOString().slice(0, 10);
+  const snapshotDate = tournamentToday();
   const { data, error } = await supabaseAdmin
     .from('platform_metric_snapshots')
     .upsert({

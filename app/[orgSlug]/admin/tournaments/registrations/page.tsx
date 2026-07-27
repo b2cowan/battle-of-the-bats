@@ -19,7 +19,7 @@ import {
   type RegistrationAttentionKey,
 } from '@/lib/registration-attention';
 import { buildRegistrationHealth, type RegistrationHealthCapacityGap } from '@/lib/registration-health';
-import { calendarDaysBetween } from '@/lib/timezone';
+import { calendarDaysBetween, tournamentToday } from '@/lib/timezone';
 import { Division } from '@/lib/types';
 import { buildFilename, downloadPDF, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
@@ -1130,7 +1130,7 @@ export default function UnifiedTeamsPage() {
     }
   }
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const selectedGroup = divisions.find(g => g.id === selectedDivisionId);
   const slotConfigured = poolSlots.length > 0;
   // Manual pool assignment applies to pool-enabled divisions that are NOT running the

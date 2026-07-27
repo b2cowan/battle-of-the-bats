@@ -4,6 +4,7 @@ import { FOUNDING_SEASON_END } from '@/lib/plan-config';
 import { getPlatformAdminContext, requirePlatformAreaView } from '@/lib/platform-auth';
 import { getMarketingAudienceCounts, MARKETING_EMAIL_AUDIENCE } from '@/lib/email-sender';
 import EmailDashboardClient from './EmailDashboardClient';
+import { tournamentToday } from '@/lib/timezone';
 
 export const metadata: Metadata = {
   title: 'Email Dashboard — Platform Admin',
@@ -102,7 +103,7 @@ async function getInitialData() {
     recipientCounts,
     schedule,
     // Today as a wall-clock date (server-stable) for upcoming/past-due classification.
-    todayISO: new Date().toISOString().slice(0, 10),
+    todayISO: tournamentToday(),
   };
 }
 

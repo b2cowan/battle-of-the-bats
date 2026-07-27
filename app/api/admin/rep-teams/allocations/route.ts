@@ -12,6 +12,7 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -65,7 +66,7 @@ export const GET = withObservability(async (_req: Request) => {
       const outstanding = installments
         .filter((i: any) => !i.paid_at)
         .reduce((sum: number, i: any) => sum + Number(i.amount), 0);
-      const now = new Date().toISOString().slice(0, 10);
+      const now = tournamentToday();
       const overdueCount = installments.filter(
         (i: any) => !i.paid_at && i.due_date < now,
       ).length;

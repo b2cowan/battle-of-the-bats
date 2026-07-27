@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 type DivisionAgeConfig = {
   min: number | null;
@@ -77,7 +78,7 @@ function getTodayDateValue() {
   const year = parts.find(part => part.type === 'year')?.value;
   const month = parts.find(part => part.type === 'month')?.value;
   const day = parts.find(part => part.type === 'day')?.value;
-  return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10);
+  return year && month && day ? `${year}-${month}-${day}` : tournamentToday();
 }
 
 function normalizeTournamentName(name: string) {
@@ -385,7 +386,7 @@ export const POST = withObservability(async (req: Request) => {
             const turnover = scheduleParams?.turnoverTime || 15;
             const gamesPerTeam = scheduleParams?.gamesPerTeam || 3;
             
-            const scheduleStartStr = scheduleParams?.startDate || tournament.startDate || new Date().toISOString().split('T')[0];
+            const scheduleStartStr = scheduleParams?.startDate || tournament.startDate || tournamentToday();
             const dayStartStr = scheduleParams?.startTime || '08:00';
             const dayEndStr = scheduleParams?.endTime || '20:30';
 

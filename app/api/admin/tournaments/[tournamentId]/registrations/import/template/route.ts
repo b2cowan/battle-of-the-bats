@@ -13,6 +13,7 @@ import {
   type RouteParams,
 } from '../shared';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 export const runtime = 'nodejs';
 
@@ -94,7 +95,7 @@ export const GET = withObservability(async (req: Request, { params }: RouteParam
     const rows = mode === 'current'
       ? formatTournamentTeamTemplateRows({ divisions: context.divisions, teams: context.existingTeams })
       : [];
-    const date = new Date().toISOString().slice(0, 10);
+    const date = tournamentToday();
     const filename = `${slugify(auth.tournament.name)}-teams-import-${mode}-${date}.${format}`;
 
     if (format === 'csv') {

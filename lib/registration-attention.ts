@@ -1,3 +1,4 @@
+import { tournamentToday } from './timezone';
 export type RegistrationAttentionKey =
   | 'pending_review'
   | 'waitlist'
@@ -221,7 +222,7 @@ export function teamMatchesRegistrationAttentionKey(
   context: RegistrationAttentionContext,
 ): boolean {
   const status = team.status ?? '';
-  const today = context.today ?? new Date().toISOString().split('T')[0];
+  const today = context.today ?? tournamentToday();
   const slotConfiguredDivisionIds = new Set(context.slotConfiguredDivisionIds ?? []);
 
   if (key === 'pending_review') return status === 'pending';

@@ -10,6 +10,7 @@ import {
 } from '@/lib/db';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -175,7 +176,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
     ...fields.map(field => field.label),
   ];
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const rows = typedTeams.map(team => {
     const fee = effectiveFee(team, tournament, groupFeeMap);
     const due = paymentDue(team, fee);
@@ -210,7 +211,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
 
   const format = req.nextUrl.searchParams.get('format') ?? 'xlsx';
   const slug = tournament.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'tournament';
-  const date = new Date().toISOString().split('T')[0];
+  const date = tournamentToday();
 
   if (format === 'xlsx') {
     const workbook = new ExcelJS.Workbook();

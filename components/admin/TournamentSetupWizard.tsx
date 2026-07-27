@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AlertCircle, ArrowRight, Copy, Plus, Trash2, X } from 'lucide-react';
 import type { TournamentFormat } from '@/lib/types';
 import styles from './TournamentSetupWizard.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 const WIZARD_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'review'] as const;
 const CANADIAN_PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
@@ -367,7 +368,7 @@ function getTodayDateValue() {
   const year = parts.find(part => part.type === 'year')?.value;
   const month = parts.find(part => part.type === 'month')?.value;
   const day = parts.find(part => part.type === 'day')?.value;
-  return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10);
+  return year && month && day ? `${year}-${month}-${day}` : tournamentToday();
 }
 
 function addDaysToDateValue(value: string, days: number) {

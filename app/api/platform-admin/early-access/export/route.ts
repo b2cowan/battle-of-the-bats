@@ -12,6 +12,7 @@ import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 type LeadExportRow = {
   created_at: string;
@@ -92,7 +93,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     'internal_notes',
   ];
 
-  const date = new Date().toISOString().slice(0, 10);
+  const date = tournamentToday();
   const format = searchParams.get('format') ?? 'xlsx';
 
   function buildCellValues(row: LeadExportRow): (string | null)[] {

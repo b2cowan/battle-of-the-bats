@@ -3,6 +3,7 @@ import { requirePlatformAdmin } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 const EXPORT_LIMIT = 2000;
 
@@ -78,7 +79,7 @@ export const GET = withObservability(async (req: NextRequest) => {
     });
 
   const header = ['id', 'created_at', 'actor_email', 'org_id', 'org_name', 'action', 'field', 'old_value', 'new_value'];
-  const date   = new Date().toISOString().slice(0, 10);
+  const date   = tournamentToday();
   const format = sp.get('format') ?? 'csv';
 
   function rowValues(row: (typeof rows)[number]): (string | null)[] {

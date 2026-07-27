@@ -14,5 +14,12 @@
 # "prepare" script on `npm install`).
 set -f  # disable globbing — guarded paths contain [orgSlug] / (consumer) etc.
 files=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(module\.css|tsx)$')
-[ -z "$files" ] && exit 0
-node scripts/check-public-tokens.mjs --staged $files
+[ -n "$files" ] && { node scripts/check-public-tokens.mjs --staged $files || exit 1; }
+
+# Date-correctness guardrail — block calendar-day logic taken from the runtime timezone.
+# Production runs UTC while orgs schedule in Toronto, so it reads a day late every evening,
+# and a dev machine (on Toronto time) never sees it. Helpers live in lib/timezone.ts.
+datefiles=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.tsx?$')
+[ -n "$datefiles" ] && { node scripts/check-date-correctness.mjs --staged $datefiles || exit 1; }
+
+exit 0

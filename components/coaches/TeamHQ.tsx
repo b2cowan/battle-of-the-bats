@@ -7,6 +7,7 @@ import type { CoachTournamentStatus } from '@/lib/coach-status-model';
 import type { CoachTournamentPhase } from '@/lib/coach-tournament-phase';
 import type { BasicCoachRegistrationGame } from '@/lib/basic-coach-teams';
 import styles from './TeamHQ.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 // Shared Team HQ shell (slice 5g). Source-agnostic: callers pass already-computed
 // counts/values — this component never re-fetches.
@@ -323,7 +324,7 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
 
   // Accepted countdown: future start → live "First game in N days"; otherwise a
   // static, honest line (no live scores until 5i / no afterglow until 5m).
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const beforeStart = Boolean(startDate) && (today < (startDate as string));
 
   const checklist: ChecklistItem[] = [];

@@ -5,6 +5,7 @@ import { Trophy } from 'lucide-react';
 import { deriveCoachLifecycleChip } from '@/lib/coach-tournament-lifecycle';
 import FanViewLink from '@/components/shared/FanViewLink';
 import styles from '../../../coaches.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 interface TournamentHistoryEntry {
   registration: { id: string; name: string; status: string; registeredAt: string };
@@ -50,7 +51,7 @@ export default function PremiumTeamTournamentsPage({
 
   useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
 
   return (
     <div className={styles.page}>

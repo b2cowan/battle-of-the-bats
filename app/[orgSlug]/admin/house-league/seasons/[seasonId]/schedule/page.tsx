@@ -4,7 +4,7 @@ import { useParams } from 'next/navigation';
 import { Calendar, ChevronLeft, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
-import { ORG_TIME_ZONE, utcToZonedInputs } from '@/lib/timezone';
+import { ORG_TIME_ZONE, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -297,7 +297,7 @@ function GenerateModal({
   onSave: (cfg: GenerateConfig) => Promise<void>;
   onClose: () => void;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = tournamentToday();
   const [config, setConfig] = useState<GenerateConfig>({
     startDate: today, gamesPerWeek: 1, gameTime: '18:00', location: '',
   });
@@ -421,7 +421,7 @@ function PracticeModal({
   onSave: (form: PracticeForm) => Promise<void>;
   onClose: () => void;
 }) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = tournamentToday();
   const [form, setForm] = useState<PracticeForm>({
     recurring: false,
     scheduledDate: today,

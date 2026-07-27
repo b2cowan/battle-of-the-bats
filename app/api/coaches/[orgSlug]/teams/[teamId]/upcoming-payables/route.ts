@@ -8,6 +8,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, denyUnless } from '@/lib/coach-capabilities';
+import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -31,11 +32,10 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
+// Calendar days in the ORG timezone. Deriving "today" from the runtime (UTC in production)
+// made dues read a day sooner from ~8 PM Toronto — flagged overdue the evening before.
 function daysUntil(dueDateStr: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dueDateStr + 'T00:00:00');
-  return Math.round((due.getTime() - today.getTime()) / 86400000);
+  return daysBetweenDateStrings(tournamentToday(), dueDateStr);
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/upcoming-payables?days=90
@@ -51,11 +51,8 @@ export const GET = withObservability(async (req: Request,
   const url = new URL(req.url);
   const days = Math.min(Math.max(parseInt(url.searchParams.get('days') ?? '90', 10), 1), 365);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const cutoff = new Date(today);
-  cutoff.setDate(cutoff.getDate() + days);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const todayStr = tournamentToday();
+  const cutoffStr = addCalendarDays(todayStr, days);
 
   // ── Lane 1: player dues installments ────────────────────────────────────
   const { data: schedules } = await supabaseAdmin

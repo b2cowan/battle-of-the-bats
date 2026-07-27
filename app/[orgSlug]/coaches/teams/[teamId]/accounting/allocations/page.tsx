@@ -5,6 +5,8 @@ import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ArrowLe
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../../coaches.module.css';
 import type { RepAllocationInstallment } from '@/lib/types';
+import { tournamentToday } from '@/lib/timezone';
+import { isInstallmentOverdue } from '@/lib/dues-status';
 
 interface SplitWithInstallments {
   id: string;
@@ -25,11 +27,6 @@ function fmtDate(s: string) {
   if (!s) return '—';
   const d = new Date(s.length === 10 ? s + 'T00:00:00' : s);
   return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function isOverdue(dueDate: string, paidAt: string | null) {
-  if (paidAt) return false;
-  return dueDate < new Date().toISOString().slice(0, 10);
 }
 
 export default function CoachesAllocationsPage({
@@ -105,7 +102,7 @@ export default function CoachesAllocationsPage({
   const collected = allInstallments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
   const outstanding = allInstallments.filter(i => !i.paidAt).reduce((s, i) => s + i.amount, 0);
   const totalAllocated = splits.reduce((s, sp) => s + sp.amount, 0);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = tournamentToday();
   const overdueCount = allInstallments.filter(i => !i.paidAt && i.dueDate < today).length;
 
   return (
@@ -218,7 +215,7 @@ export default function CoachesAllocationsPage({
                         </thead>
                         <tbody>
                           {split.installments.map(inst => {
-                            const overdue = isOverdue(inst.dueDate, inst.paidAt);
+                            const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
                             return (
                               <tr key={inst.id} className={styles.tr}>
                                 <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>

@@ -16,6 +16,7 @@
  */
 
 import type { TournamentFormat } from './types';
+import { tournamentToday } from './timezone';
 
 export type TournamentPhase = 'draft' | 'open' | 'gameday' | 'completed' | 'archived';
 
@@ -37,7 +38,7 @@ export function isPlayoffOnly(
 export function isWithinEventDates(
   startDate?: string | null,
   endDate?: string | null,
-  today: string = new Date().toISOString().split('T')[0],
+  today: string = tournamentToday(),
 ): boolean {
   if (!startDate || !endDate) return false;
   return today >= startDate && today <= endDate;

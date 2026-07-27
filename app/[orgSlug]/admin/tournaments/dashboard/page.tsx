@@ -33,6 +33,7 @@ import { getGuidance, getStageShortcuts, type GuidanceStage } from '@/lib/tourna
 import styles from './dashboard.module.css';
 import { copiedSummary } from '@/lib/utils';
 import type { CloneCopiedCounts } from '@/lib/types';
+import { tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 
 // ── Domain types ────────────────────────────────────────────────────────────
 
@@ -434,12 +435,11 @@ function fmtDateRange(start?: string, end?: string): string | null {
     : `${s.toLocaleDateString('en-CA', full)} – ${e.toLocaleDateString('en-CA', full)}`;
 }
 
+// Counted in the ORG timezone, not the viewer's device — otherwise an out-of-province organizer
+// sees a different countdown than the host org for the same tournament.
 function computeDaysUntil(startDate: string | null | undefined): number | null {
   if (!startDate) return null;
-  const start = new Date(startDate + 'T00:00:00');
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return Math.ceil((start.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+  return daysBetweenDateStrings(tournamentToday(), startDate);
 }
 
 function Sparkline({ data }: { data: number[] }) {

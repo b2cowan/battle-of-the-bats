@@ -4,7 +4,7 @@ import { isPlatformAdminEmail } from './platform-auth';
 import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 import { buildCoachTournamentStatus } from './coach-status-model';
 import { excludeActivePremiumUpgrades } from './coach-team-page';
-import { tournamentNow } from './timezone';
+import { tournamentNow, tournamentToday } from './timezone';
 
 export type BasicCoachTeam = {
   id: string;
@@ -724,7 +724,7 @@ export async function getCoachTeamContextsForUser(params: {
   today?: string;
 }): Promise<CoachTeamContext[]> {
   const teams = await getBasicCoachTournamentTeamsForUser({ userId: params.userId, email: params.email });
-  const today = params.today ?? new Date().toISOString().split('T')[0];
+  const today = params.today ?? tournamentToday();
 
   // One tournament lookup for every tournament referenced by any registration — dates for the
   // lifecycle chips PLUS identity (name/slug/status/org) for the shell's event-context header (A2).

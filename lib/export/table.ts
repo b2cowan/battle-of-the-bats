@@ -1,3 +1,4 @@
+import { tournamentToday } from '../timezone';
 /**
  * lib/export/table.ts
  * Core types and utilities shared by all export formats.
@@ -38,7 +39,7 @@ export function buildFilename(
   const segs = [parts.org ?? parts.tournament, parts.dataset, parts.scope]
     .filter(Boolean)
     .map((s) => s!.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''));
-  const date = new Date().toISOString().split('T')[0];
+  const date = tournamentToday();
   return `${segs.join('-')}-${date}.${ext}`;
 }
 

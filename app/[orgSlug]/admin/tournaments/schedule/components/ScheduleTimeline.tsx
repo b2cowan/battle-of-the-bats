@@ -22,6 +22,7 @@ import { teamAvatarHue } from '@/lib/team-color';
 import { formatTime } from '@/lib/utils';
 import BottomSheet from '@/components/admin/BottomSheet';
 import styles from './ScheduleTimeline.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 /** SSR-safe `max-width` media-query hook — drives the touch (single-field) layout. */
 function useIsMobile(maxWidth = 768): boolean {
@@ -351,7 +352,7 @@ export default function ScheduleTimeline({
     () => Array.from(new Set(games.map(g => g.date).filter(Boolean) as string[])).sort(),
     [games],
   );
-  const todayISO = new Date().toISOString().split('T')[0];
+  const todayISO = tournamentToday();
   const [day, setDay] = useState<string>(() => (days.includes(todayISO) ? todayISO : days[0] ?? todayISO));
   const [extraColumns, setExtraColumns] = useState<Set<string>>(new Set());
   const [showConflicts, setShowConflicts] = useState(true);

@@ -13,6 +13,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { tournamentToday } from '@/lib/timezone';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -74,7 +75,7 @@ export const PATCH = withObservability(async (_req: Request,
     p_to_ledger_id: orgLedger.id,
     p_amount: installment.amount,
     p_description: `Rep allocation payment — installment #${installment.installmentNumber}`,
-    p_entry_date: new Date().toISOString().slice(0, 10),
+    p_entry_date: tournamentToday(),
     p_category: 'rep_allocation',
     p_created_by: ctx.user.id,
   });

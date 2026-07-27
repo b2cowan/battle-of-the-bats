@@ -13,6 +13,7 @@ import {
 } from '@/lib/early-access-admin';
 import { fmtAbsoluteDate } from '@/lib/format-date';
 import styles from './early-access.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 type Lead = {
   id: string;
@@ -96,7 +97,7 @@ function applyTemplate(template: string, lead: Lead) {
 }
 
 function todayDate() {
-  return new Date().toISOString().slice(0, 10);
+  return tournamentToday();
 }
 
 function conversionBreakdown(

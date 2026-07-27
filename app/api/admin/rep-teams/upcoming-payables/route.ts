@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday, addCalendarDays, daysBetweenDateStrings } from '@/lib/timezone';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -12,11 +13,11 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   return null;
 }
 
+// Calendar days, counted in the ORG timezone. Deriving "today" from the runtime (UTC in
+// production) made everything read a day sooner from ~8 PM Toronto — payables flagged overdue
+// the evening before they were actually due.
 function daysUntil(dueDateStr: string): number {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const due = new Date(dueDateStr + 'T00:00:00');
-  return Math.round((due.getTime() - today.getTime()) / 86400000);
+  return daysBetweenDateStrings(tournamentToday(), dueDateStr);
 }
 
 // GET /api/admin/rep-teams/upcoming-payables?days=90
@@ -39,11 +40,8 @@ export const GET = withObservability(async (req: Request) => {
     scopedTeamIds = (scopedTeams ?? []).map((t: any) => t.id as string);
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const cutoff = new Date(today);
-  cutoff.setDate(cutoff.getDate() + days);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const todayStr = tournamentToday();
+  const cutoffStr = addCalendarDays(todayStr, days);
 
   // ── Lane 1: allocation installments coming due across all teams ──────────
   let splitsQuery = supabaseAdmin

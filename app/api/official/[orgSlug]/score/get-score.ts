@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
+import { tournamentToday } from '@/lib/timezone';
 
 type Params = { params: Promise<{ orgSlug: string }> };
 
@@ -210,7 +211,7 @@ export async function getScore(req: Request, { params }: Params) {
   }
 
   const requestedDate = new URL(req.url).searchParams.get('date')?.trim();
-  const date = requestedDate || new Date().toISOString().slice(0, 10);
+  const date = requestedDate || tournamentToday();
   if (!DATE_RE.test(date)) {
     return NextResponse.json({ error: 'Invalid scorekeeper date.' }, { status: 400 });
   }

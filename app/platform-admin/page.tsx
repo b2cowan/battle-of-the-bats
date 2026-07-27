@@ -36,6 +36,7 @@ import MetricSnapshotButton from './MetricSnapshotButton';
 import OverviewTabs from './OverviewTabs';
 import MetricCard from '@/components/platform-admin/MetricCard';
 import styles from './overview.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 function BarRow({
   label,
@@ -134,7 +135,7 @@ const fmtDateTime = (iso: string) => fmtAbsoluteDateTime(iso);
  * Uses the SAME classification as the Email Dashboard so the two never disagree.
  */
 async function getMarketingCampaignAlerts(): Promise<{ pastDue: number; dueSoon: number }> {
-  const todayISO = new Date().toISOString().slice(0, 10);
+  const todayISO = tournamentToday();
   const [tmplRes, batchRes] = await Promise.all([
     supabaseAdmin
       .from('platform_email_templates')

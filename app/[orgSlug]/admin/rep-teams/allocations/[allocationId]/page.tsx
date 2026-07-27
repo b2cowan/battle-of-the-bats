@@ -7,6 +7,8 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from '../../rep-teams.module.css';
+import { tournamentToday } from '@/lib/timezone';
+import { isInstallmentOverdue } from '@/lib/dues-status';
 
 interface Installment {
   id: string;
@@ -45,11 +47,6 @@ function fmtDate(s: string) {
   if (!s) return '—';
   const d = new Date(s);
   return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-}
-
-function isOverdue(dueDate: string, paidAt: string | null) {
-  if (paidAt) return false;
-  return dueDate < new Date().toISOString().slice(0, 10);
 }
 
 // Resolve team names from the teams API (cached in-component)
@@ -165,7 +162,7 @@ export default function AllocationDetailPage() {
   const collected = allInstallments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
   const outstanding = allInstallments.filter(i => !i.paidAt).reduce((s, i) => s + i.amount, 0);
   const totalAllocated = splits.reduce((s, sp) => s + sp.amount, 0);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = tournamentToday();
   const overdueCount = allInstallments.filter(i => !i.paidAt && i.dueDate < today).length;
 
   return (
@@ -281,7 +278,7 @@ export default function AllocationDetailPage() {
                     </thead>
                     <tbody>
                       {split.installments.map(inst => {
-                        const overdue = isOverdue(inst.dueDate, inst.paidAt);
+                        const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
                         return (
                           <tr key={inst.id} className={styles.tr}>
                             <td className={styles.td} style={{ color: 'var(--white-40)' }}>{inst.installmentNumber}</td>

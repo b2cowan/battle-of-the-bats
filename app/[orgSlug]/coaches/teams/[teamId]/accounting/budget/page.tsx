@@ -12,13 +12,14 @@ import type {
 } from '@/lib/types';
 import styles from './budget.module.css';
 import shared from '../../../../coaches.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 function fmt(n: number) {
   return `$${Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function today() {
-  return new Date().toISOString().slice(0, 10);
+  return tournamentToday();
 }
 
 interface PeriodRow { label: string; date: string; amount: string }

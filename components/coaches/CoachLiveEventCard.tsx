@@ -2,6 +2,7 @@ import FanViewLink from '@/components/shared/FanViewLink';
 import { deriveCoachLifecycleChip } from '@/lib/coach-tournament-lifecycle';
 import type { FanViewRegistration } from '@/lib/coach-alert-registration';
 import styles from './CoachLiveEventCard.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 /**
  * CoachLiveEventCard — the overview's compact "your tournament" block ("The Flip" P3, owner call
@@ -22,7 +23,7 @@ function formatRange(start: string | null, end: string | null): string | null {
 }
 
 export default function CoachLiveEventCard({ event }: { event: FanViewRegistration }) {
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const chip = deriveCoachLifecycleChip(event.startDate, event.endDate, today);
   const live = chip.state === 'live' || chip.state === 'game_day';
   const upcoming = chip.state === 'upcoming' || chip.state === 'future';

@@ -3,6 +3,7 @@ import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import ExcelJS from 'exceljs';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 // Gated to viewers of the feedback area (super_admin / product / support / billing) — same as the
 // page, stricter than a generic platform-admin check so growth/read_only can't pull the export.
@@ -90,7 +91,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   }));
 
   const header = ['id', 'created_at', 'type', 'category', 'status', 'severity', 'escalated_at', 'org_id', 'org_name', 'user_email', 'submitter_name', 'title', 'body'];
-  const date = new Date().toISOString().slice(0, 10);
+  const date = tournamentToday();
   const format = sp.get('format') ?? 'csv';
 
   function rowValues(row: (typeof rows)[number]): (string | null)[] {

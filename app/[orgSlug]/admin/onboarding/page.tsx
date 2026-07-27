@@ -21,6 +21,7 @@ import { FACILITY_TYPE_LABELS } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
 import PricingSection from '@/components/PricingSection';
 import styles from './onboarding.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 const STARTUP_ORDER = ['tournament', 'divisions', 'welcome', 'venues'] as const;
@@ -219,7 +220,7 @@ function getTodayDateValue() {
   const year = parts.find(part => part.type === 'year')?.value;
   const month = parts.find(part => part.type === 'month')?.value;
   const day = parts.find(part => part.type === 'day')?.value;
-  return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10);
+  return year && month && day ? `${year}-${month}-${day}` : tournamentToday();
 }
 
 function addDaysToDateValue(value: string, days: number) {

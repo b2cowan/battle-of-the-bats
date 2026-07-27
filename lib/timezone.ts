@@ -173,6 +173,20 @@ export function calendarDaysBetween(
  * returns 0 if either string is malformed. No timezone: both inputs are already calendar
  * dates, so this is plain UTC-midnight arithmetic — safe to call from client code.
  */
+/**
+ * `date` (a `YYYY-MM-DD` string) shifted by `days` calendar days, returned as `YYYY-MM-DD`.
+ * The counterpart to {@link daysBetweenDateStrings}: anchor on {@link tournamentToday} and step
+ * from there, rather than `new Date(Date.now() + n * 86_400_000).toISOString()`, which derives
+ * both ends from the RUNTIME zone and so lands a day early every evening on a UTC server.
+ * Pure date arithmetic on UTC midnights — no zone involved, safe on the client.
+ */
+export function addCalendarDays(date: string, days: number): string {
+  const [y, m, d] = date.split('-').map(Number);
+  if (!y || !m || !d) return date;
+  const shifted = new Date(Date.UTC(y, m - 1, d + days));
+  return shifted.toISOString().slice(0, 10);
+}
+
 export function daysBetweenDateStrings(from: string, to: string): number {
   const [ay, am, ad] = from.split('-').map(Number);
   const [by, bm, bd] = to.split('-').map(Number);

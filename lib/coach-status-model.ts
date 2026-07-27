@@ -9,6 +9,8 @@
  * No payment is ever collected here (manual fee tracking only): the coach is shown
  * where they stand and told to contact the organizer.
  */
+
+import { tournamentToday } from './timezone';
 import {
   getRegistrationAttentionFee,
   computeRegistrationAttentionPaymentStatus,
@@ -82,7 +84,7 @@ function num(value: number | string | null | undefined): number {
 }
 
 export function buildCoachTournamentStatus(input: CoachTournamentStatusInput): CoachTournamentStatus {
-  const today = input.today ?? new Date().toISOString().split('T')[0];
+  const today = input.today ?? tournamentToday();
 
   // teams.payment_status is prod-NULLABLE with a column default of 'paid', so a
   // registration that was never touched must NOT read as Paid. Coerce anything that

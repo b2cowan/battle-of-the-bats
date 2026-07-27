@@ -12,6 +12,7 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -63,7 +64,7 @@ export const PATCH = withObservability(async (_req: Request,
     p_to_ledger_id: orgLedger.id,
     p_amount: installment.amount,
     p_description: `Rep allocation payment — installment #${installment.installmentNumber}`,
-    p_entry_date: new Date().toISOString().slice(0, 10),
+    p_entry_date: tournamentToday(),
     p_category: 'rep_allocation',
     p_created_by: ctx!.user.id,
   });

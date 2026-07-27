@@ -1,3 +1,4 @@
+import { tournamentToday } from './timezone';
 /**
  * lib/coach-tournament-lifecycle.ts
  *
@@ -40,7 +41,7 @@ function daysBetween(fromISO: string, toISO: string): number {
 export function deriveCoachLifecycleChip(
   startDate: string | null,
   endDate: string | null,
-  today: string = new Date().toISOString().split('T')[0],
+  today: string = tournamentToday(),
 ): CoachLifecycleChip {
   if (!startDate) return { state: 'unknown', label: '', rank: 5 };
 

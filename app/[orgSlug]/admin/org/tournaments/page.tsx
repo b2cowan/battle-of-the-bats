@@ -34,7 +34,7 @@ function getTodayDateValue() {
   const year = parts.find(part => part.type === 'year')?.value;
   const month = parts.find(part => part.type === 'month')?.value;
   const day = parts.find(part => part.type === 'day')?.value;
-  return year && month && day ? `${year}-${month}-${day}` : new Date().toISOString().slice(0, 10);
+  return year && month && day ? `${year}-${month}-${day}` : tournamentToday();
 }
 
 async function getAdminArchives(orgSlug?: string): Promise<TournamentArchive[]> {
@@ -53,6 +53,7 @@ import HelpCallout from '@/components/help/HelpCallout';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import styles from './tournaments-admin.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 type ModalMode = 'add' | 'edit' | null;
 type DivisionPreset = 'youth' | 'adult' | 'custom';

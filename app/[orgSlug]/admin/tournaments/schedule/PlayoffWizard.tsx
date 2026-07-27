@@ -31,6 +31,7 @@ import BracketColumns, { buildBracketColumns } from './components/BracketColumns
 import BracketHealthPanel from './components/BracketHealthPanel';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './schedule-admin.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 interface Props {
   divisions: Division[];
@@ -543,7 +544,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
   // health read, filling a default date the same way the old editable canvas did,
   // so the Generate/save path stays byte-for-byte unchanged.
   useEffect(() => {
-    const fallbackDate = tournament?.endDate || new Date().toISOString().split('T')[0];
+    const fallbackDate = tournament?.endDate || tournamentToday();
     setPreview((templatePreview ?? []).map(p => ({
       round: p.round,
       home: p.home,
@@ -985,7 +986,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
       const existing = preview.find(p => p.code === g.code && p.pool === g.pool);
       // Prioritize tournament end date, fallback to today ONLY if we have no tournament info at all
       const tournamentEnd = tournament?.endDate;
-      const today = new Date().toISOString().split('T')[0];
+      const today = tournamentToday();
       const defaultDate = autoSchedule ? (tournamentEnd || today) : '';
 
       return { 

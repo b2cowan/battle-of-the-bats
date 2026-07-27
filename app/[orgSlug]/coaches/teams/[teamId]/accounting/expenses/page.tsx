@@ -9,6 +9,7 @@ import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
+import { isInstallmentOverdue } from '@/lib/dues-status';
 
 function fmt(n: number) {
   return `$${n.toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -18,11 +19,6 @@ function fmtDate(s: string | null) {
   if (!s) return '—';
   const d = new Date(s.length === 10 ? s + 'T00:00:00' : s);
   return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function isOverdue(dueDate: string | null, paidAt: string | null) {
-  if (paidAt || !dueDate) return false;
-  return dueDate < new Date().toISOString().slice(0, 10);
 }
 
 type ExpenseTab = 'expenses' | 'payables';
@@ -500,8 +496,8 @@ export default function CoachesExpensesPage({
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {tournamentPayables.map(e => {
-              const depositOverdue = isOverdue(e.depositDueDate, e.depositPaidAt);
-              const balanceOverdue = isOverdue(e.balanceDueDate, e.balancePaidAt);
+              const depositOverdue = isInstallmentOverdue(e.depositDueDate, e.depositPaidAt);
+              const balanceOverdue = isInstallmentOverdue(e.balanceDueDate, e.balancePaidAt);
               return (
                 <div key={e.id} className={styles.detailSection}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>

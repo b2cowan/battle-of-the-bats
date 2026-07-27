@@ -14,6 +14,8 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../../coaches.module.css';
+import { tournamentToday } from '@/lib/timezone';
+import { isInstallmentOverdue } from '@/lib/dues-status';
 import type {
   RepRosterPlayer,
   RepPlayerDuesSchedule,
@@ -52,11 +54,6 @@ function fmtDate(s: string) {
   return new Date(s + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function isOverdue(dueDate: string, paidAt: string | null) {
-  if (paidAt) return false;
-  return dueDate < new Date().toISOString().slice(0, 10);
-}
-
 function balanceColor(b: number): string {
   if (b < -0.005) return 'var(--success-light)'; // in credit (good)
   if (b > 0.005)  return 'var(--warning)'; // still owes
@@ -90,7 +87,7 @@ const BLANK_CREDIT_FORM = {
   amount:     '',
   description:'',
   creditType: 'contribution' as DuesCreditType,
-  creditDate: new Date().toISOString().slice(0, 10),
+  creditDate: tournamentToday(),
   notes:      '',
 };
 
@@ -1002,7 +999,7 @@ export default function CoachesDuesPage({
                           </thead>
                           <tbody>
                             {selected.installments.map(inst => {
-                              const overdue = isOverdue(inst.dueDate, inst.paidAt);
+                              const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
                               return (
                                 <tr key={inst.id} className={styles.tr}>
                                   <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>

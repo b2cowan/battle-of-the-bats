@@ -1,3 +1,4 @@
+import { tournamentToday } from './timezone';
 /**
  * lib/coach-tournament-phase.ts
  *
@@ -41,7 +42,7 @@ export type DeriveCoachTournamentPhaseInput = {
 };
 
 export function deriveCoachTournamentPhase(input: DeriveCoachTournamentPhaseInput): CoachTournamentPhase {
-  const today = input.today ?? new Date().toISOString().split('T')[0];
+  const today = input.today ?? tournamentToday();
   const status = (input.registrationStatus ?? '').toLowerCase();
 
   if (status === 'rejected') return 'rejected';

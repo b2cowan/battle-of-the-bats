@@ -34,6 +34,7 @@ import { teamColor, teamInitials } from '@/lib/team-color';
 import type { CSSProperties } from 'react';
 import type { GameStatus } from '@/lib/types';
 import styles from './CoachLiveSchedule.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 export type CoachScheduleGame = {
   id: string;
@@ -118,7 +119,7 @@ export default function CoachLiveSchedule({
 
   // UTC today, matching the page's server `today` + the phase derivation + the
   // public ScheduleContent LIVE check (consistent across the app).
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const myColor = teamColor(teamName);
   const myInitials = teamInitials(teamName);
 

@@ -10,6 +10,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney, canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { tournamentToday } from '@/lib/timezone';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -219,7 +220,7 @@ export const POST = withObservability(async (req: Request,
 
   const rebatePct    = Number(fundraiser.player_rebate_percent);
   const rebateAmount = Math.round(raised * rebatePct / 100 * 100) / 100;
-  const today        = new Date().toISOString().slice(0, 10);
+  const today        = tournamentToday();
   const playerName   = [player.player_first_name, player.player_last_name].filter(Boolean).join(' ');
 
   // 1 — Create team ledger income entry

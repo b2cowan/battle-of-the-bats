@@ -34,6 +34,7 @@ import { parseRosterRequirements } from '@/lib/roster-requirements';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import type { GameStatus, TournamentSettings } from '@/lib/types';
 import styles from './CoachTournamentRecord.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 // Empty-slot sentinel some games use instead of NULL for an unassigned team
 // (matches the public game page / opengraph image resolution).
@@ -260,7 +261,7 @@ export default async function CoachTournamentRecord({
   const statusLabel = registrationStatusLabel(team.status);
   const statusDesc  = registrationStatusDesc(team.status);
 
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   // Check-in only matters from game day onward; default 'not_arrived' otherwise reads as a
   // problem all season. (5h/5i derive a richer phase; this is the simple gate for 5b.)
   const isGameDayOrLater = Boolean(tournament?.start_date && today >= tournament.start_date);

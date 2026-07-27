@@ -39,6 +39,11 @@ frontend:
         # coverage assertion, so a scope or a stylesheet added later is guarded here with
         # no edit to this file. Baselines let existing debt through, block only NEW literals.
         - node scripts/check-public-tokens.mjs --scope=all
+        # Date-correctness guardrail. Production runs UTC while orgs schedule in Toronto, so
+        # any "what day is it / overdue / days until" answer taken from the runtime zone is a
+        # day late every evening — and invisible on a dev box, which runs on Toronto time.
+        # Baseline is ZERO: every occurrence was fixed 2026-07-26, so any new one fails here.
+        - node scripts/check-date-correctness.mjs
         # Webpack production build (next build --webpack) uses far more heap than the
         # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
         # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.

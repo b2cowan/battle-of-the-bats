@@ -6,6 +6,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { decidedFinalFor, type ChampionGameInput } from '@/lib/champions';
+import { tournamentToday } from '@/lib/timezone';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -281,7 +282,7 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
   const typedGames = (games ?? []) as GameRow[];
   const divisionMap = new Map(typedDivisions.map(group => [group.id, group]));
   const teamNames = new Map(typedTeams.map(team => [team.id, team.name]));
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
 
   const registrationTotals = {
     total: typedTeams.length,

@@ -10,6 +10,7 @@ import { scoreSubmissionSummary } from '@/lib/tournament-score-audit';
 import { Pool } from '@/lib/types';
 import s from '../../../admin-common.module.css';
 import styles from '../schedule-admin.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 interface GameListProps {
   games: Game[];
@@ -242,7 +243,7 @@ export default function GameList({
     return 5; // Custom/manually-added rounds appear after standard rounds
   };
 
-  const today = useMemo(() => new Date().toISOString().split('T')[0], []);
+  const today = useMemo(() => tournamentToday(), []);
 
   // ── Conflict maps ─────────────────────────────────────────────────────────
   // Read-mode badges: which saved games already conflict with each other,

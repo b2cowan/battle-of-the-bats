@@ -10,6 +10,24 @@
  * anything yet" panel run this same predicate over the same `/dues` response, so the
  * count on the tile and the length of the named list can never drift apart.
  */
+import { tournamentToday } from './timezone';
+
+/**
+ * Is an unpaid installment past its due date?
+ *
+ * "Overdue" is a CALENDAR question, so it is answered in the org's timezone — never from the
+ * runtime's, which is UTC in production and rolls over at ~8 PM Toronto, and never from the
+ * viewer's device, which differs by province. Both would flag an installment late the evening
+ * before it was actually due.
+ *
+ * This lived as four near-identical copies (org allocations, coach allocations, dues, expenses)
+ * which is exactly how they drifted; one definition means one place to be right.
+ */
+export function isInstallmentOverdue(dueDate: string | null | undefined, paidAt: string | null): boolean {
+  if (paidAt || !dueDate) return false;
+  return dueDate < tournamentToday();
+}
+
 export interface DuesInstallmentLike {
   paidAt: string | null;
 }

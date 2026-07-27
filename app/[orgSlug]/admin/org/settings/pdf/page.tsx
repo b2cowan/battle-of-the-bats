@@ -7,6 +7,7 @@ import { DEFAULT_PDF_SETTINGS, downloadPDF, type OrgPdfSettings } from '@/lib/ex
 import HelpCallout from '@/components/help/HelpCallout';
 import FeedbackModal from '@/components/FeedbackModal';
 import s from '@/app/[orgSlug]/admin/admin-common.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 // ── Placeholder data for the preview PDF ─────────────────────────────────────
 const PREVIEW_HEADERS = ['Team', 'Division', 'Coach', 'Status', 'Payment'];
@@ -120,7 +121,7 @@ export default function PdfSettingsPage() {
     currentOrg?.slug ?? 'org',
     'dataset',
     'scope',
-    new Date().toISOString().split('T')[0],
+    tournamentToday(),
   ].join('-') + '.pdf';
 
   if (orgLoading || !form) {

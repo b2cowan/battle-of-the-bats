@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTeamEvent, RepEventType } from '@/lib/types';
+import { tournamentToday } from '@/lib/timezone';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -131,7 +132,7 @@ export default function AdminSchedulePage({
   const [yearName, setYearName] = useState('');
 
   const [view, setView] = useState<ViewMode>('list');
-  const [cursorDate, setCursorDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [cursorDate, setCursorDate] = useState(() => tournamentToday());
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
 
@@ -228,7 +229,7 @@ export default function AdminSchedulePage({
           if (!day) return <div key={i} className={styles.calMonthCell} />;
           const key = day.toISOString().slice(0, 10);
           const dayEvents = events.filter(e => e.startsAt?.slice(0, 10) === key);
-          const isToday = key === new Date().toISOString().slice(0, 10);
+          const isToday = key === tournamentToday();
           return (
             <div key={key} className={`${styles.calMonthCell} ${isToday ? styles.calMonthCellToday : ''}`}>
               <span className={styles.calMonthDayNum}>{day.getDate()}</span>

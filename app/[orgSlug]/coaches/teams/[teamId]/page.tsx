@@ -9,7 +9,7 @@ import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
 import { pickFanViewRegistration, type FanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import { deriveRepPhase } from '@/lib/coach-rep-phase';
-import { calendarDaysBetween } from '@/lib/timezone';
+import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
@@ -193,16 +193,18 @@ export default function TeamOverviewPage({
       setWeekSummary({ games: wkGames, practices: wkPractices, other: thisWeek.length - wkGames - wkPractices, total: thisWeek.length });
 
       // Player birthdays in the next 7 days (active roster).
-      const today0 = new Date(); today0.setHours(0, 0, 0, 0);
+      // Dated in the ORG timezone, not the viewer's device, so a coach travelling out of
+      // province sees the same "birthday in 3 days" as everyone else on the team.
+      const todayStr = tournamentToday();
+      const thisYear = Number(todayStr.slice(0, 4));
       const upcomingBdays = activePlayers
         .map(p => {
           const dob = p.playerDateOfBirth;
-          if (!dob) return null;
-          const d = new Date(`${dob}T00:00:00`);
-          if (Number.isNaN(d.getTime())) return null;
-          const next = new Date(today0.getFullYear(), d.getMonth(), d.getDate());
-          if (next.getTime() < today0.getTime()) next.setFullYear(today0.getFullYear() + 1);
-          const inDays = Math.round((next.getTime() - today0.getTime()) / 86400000);
+          if (!dob || !/^\d{4}-\d{2}-\d{2}/.test(dob)) return null;
+          const monthDay = dob.slice(5, 10);
+          let next = `${thisYear}-${monthDay}`;
+          if (next < todayStr) next = `${thisYear + 1}-${monthDay}`;
+          const inDays = daysBetweenDateStrings(todayStr, next);
           return inDays >= 0 && inDays <= 7 ? { name: (p.playerFirstName || 'Player').trim(), inDays } : null;
         })
         .filter((b): b is { name: string; inDays: number } => b !== null)
@@ -214,8 +216,10 @@ export default function TeamOverviewPage({
         const duesData: { players?: Array<{ outstanding?: number; installments?: Array<{ paidAt: string | null; dueDate: string }> }> } = await duesRes.json();
         const players = duesData.players ?? [];
         const totalOutstanding = players.reduce((s, p) => s + (p.outstanding ?? 0), 0);
-        const today = new Date(); today.setHours(0, 0, 0, 0);
-        const overdue = players.reduce((n, p) => n + (p.installments ?? []).filter(i => !i.paidAt && new Date(`${i.dueDate}T00:00:00`) < today).length, 0);
+        // Overdue is a CALENDAR question in the org's timezone — comparing date strings avoids
+        // the device-zone skew that flagged dues late the evening before they were due.
+        const orgToday = tournamentToday();
+        const overdue = players.reduce((n, p) => n + (p.installments ?? []).filter(i => !i.paidAt && i.dueDate < orgToday).length, 0);
         // "Who's paid nothing" — a player who owes dues but has zero payments recorded.
         // Distinct from "overdue" (a specific installment past its due date): a coach wants
         // to know who hasn't started paying at all, not just which instalments slipped.
@@ -336,7 +340,7 @@ export default function TeamOverviewPage({
           tournament: { slug?: string | null; status?: string | null; name?: string | null; startDate: string | null; endDate: string | null } | null;
           amountDue?: number | null;
         }[];
-        const todayStr = new Date().toISOString().slice(0, 10);
+        const todayStr = tournamentToday();
         let count = 0; let pending = 0; let liveNow = false; let nextDate: string | null = null;
         let owed = 0; let owingCount = 0;
         for (const h of hist) {

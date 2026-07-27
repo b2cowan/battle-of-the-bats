@@ -8,6 +8,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
+import { tournamentToday } from '@/lib/timezone';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -89,7 +90,7 @@ export const PATCH = withObservability(async (req: Request,
       updates.credit_id = null;
     } else if (!entry.credit_id && rebateAmount > 0) {
       // No credit existed but now one is needed (rebate was 0 before, amount changed)
-      const today = new Date().toISOString().slice(0, 10);
+      const today = tournamentToday();
       const { data: newCredit } = await supabaseAdmin
         .from('rep_dues_credits')
         .insert({

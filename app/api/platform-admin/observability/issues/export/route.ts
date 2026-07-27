@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requirePlatformAreaApi } from '@/lib/platform-auth';
 import { getErrorGroupsForExport, type IssueFilters } from '@/lib/observability/dashboard';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 const SEVERITY_OPTIONS = ['critical', 'error', 'warning', 'info'];
 const STATUS_OPTIONS = ['open', 'resolved', 'ignored', 'snoozed'];
@@ -32,7 +33,7 @@ export const GET = withObservability(async (req: NextRequest) => {
   };
 
   const rows = await getErrorGroupsForExport(filters);
-  const date = new Date().toISOString().slice(0, 10);
+  const date = tournamentToday();
   const format = sp.get('format') ?? 'csv';
 
   function rowValues(r: (typeof rows)[number]): (string | number)[] {

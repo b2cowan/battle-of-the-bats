@@ -11,6 +11,7 @@ import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
 import { generateOfferToken, hashOfferToken } from './tryout-offer-token';
 import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
+import { tournamentToday, addCalendarDays } from './timezone';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -3034,7 +3035,7 @@ export async function createLeagueRegistrationFeeEntry(
     .from('accounting_entries')
     .insert({
       ledger_id:        ledger.id,
-      entry_date:       new Date().toISOString().slice(0, 10),
+      entry_date:       tournamentToday(),
       description:      `${playerName} — registration fee`,
       amount,
       entry_type:       'income',
@@ -3762,7 +3763,7 @@ async function getCoachingBadges(
   if (programYearIds.length === 0) return result;
   for (const id of programYearIds) result.set(id, { overdueInstallments: 0, upcomingEventsCount: 0 });
 
-  const today      = new Date().toISOString().split('T')[0];
+  const today      = tournamentToday();
   const sevenDays  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
 
   // Overdue allocation installments (org→team splits)
@@ -5045,7 +5046,7 @@ export async function getRepPlayerDuesSummary(
   const totalAssessed = schedule?.totalAmount ?? 0;
   const totalPaid = installments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
   const totalCredits = (creditRows ?? []).reduce((s, c: any) => s + Number(c.amount), 0);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = tournamentToday();
   return {
     hasSchedule: !!schedule,
     totalAssessed: round2(totalAssessed),
@@ -7838,8 +7839,10 @@ export async function getDueReminderCandidates(
   const today = new Date();
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() + daysAhead);
-  const todayStr = today.toISOString().slice(0, 10);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  // Reminder window is a CALENDAR question — anchor on the org timezone, not the
+  // runtime's, which is UTC in production and rolls over at ~8 PM Toronto.
+  const todayStr = tournamentToday();
+  const cutoffStr = addCalendarDays(todayStr, daysAhead);
   const sevenDaysAgo = new Date(today);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -8007,8 +8010,10 @@ export async function getAllocationReminderCandidates(
   const today = new Date();
   const cutoff = new Date(today);
   cutoff.setDate(cutoff.getDate() + daysAhead);
-  const todayStr = today.toISOString().slice(0, 10);
-  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  // Reminder window is a CALENDAR question — anchor on the org timezone, not the
+  // runtime's, which is UTC in production and rolls over at ~8 PM Toronto.
+  const todayStr = tournamentToday();
+  const cutoffStr = addCalendarDays(todayStr, daysAhead);
   const sevenDaysAgo = new Date(today);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 

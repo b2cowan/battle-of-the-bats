@@ -1,3 +1,4 @@
+import { tournamentToday } from '../timezone';
 /**
  * lib/export/pdf.ts
  * PDF report builder — jsPDF + jspdf-autotable, lazy-loaded client-side.
@@ -206,7 +207,7 @@ export function buildTablePDF(
     const parts: string[] = [];
     if (settings.footerText) parts.push(settings.footerText);
     if (settings.showDateStamp) {
-      parts.push(`Exported: ${new Date().toISOString().split('T')[0]}`);
+      parts.push(`Exported: ${tournamentToday()}`);
     }
     if (settings.showBranding) parts.push(BRANDING_TEXT);
 

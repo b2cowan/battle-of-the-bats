@@ -16,6 +16,7 @@ import { Trophy } from 'lucide-react';
 import FanViewLink from '@/components/shared/FanViewLink';
 import portalStyles from '../../../coaches-portal.module.css';
 import styles from './tournaments.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 type RouteParams = { params: Promise<{ basicTeamId: string }> };
 
@@ -32,7 +33,7 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
   const { basicTeamId } = await params;
   const { team } = await resolveCoachTeamPage(basicTeamId, '/tournaments');
   const history = await getBasicCoachTournamentHistoryForTeam(basicTeamId);
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
 
   return (
     <TeamSectionShell

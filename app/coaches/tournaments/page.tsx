@@ -20,6 +20,7 @@ import {
 import FanViewLink from '@/components/shared/FanViewLink';
 import portalStyles from '../coaches-portal.module.css';
 import styles from './tournaments.module.css';
+import { tournamentToday } from '@/lib/timezone';
 
 export const metadata = { title: 'Tournaments - Coaches Portal' };
 
@@ -53,7 +54,7 @@ type CoachTeamGroup = BasicCoachTournamentTeam & {
 
 function isActive(tournament: TournamentRow | null): boolean {
   if (!tournament) return false;
-  const now = new Date().toISOString().split('T')[0];
+  const now = tournamentToday();
   // A single-day event (no end_date) ends on its start_date — otherwise it would
   // sit in "Active & Upcoming" forever while its lifecycle chip reads "Complete"
   // (deriveCoachLifecycleChip uses `end = endDate ?? startDate`). Keep them aligned.
@@ -141,7 +142,7 @@ export default async function CoachTournamentRecordsPage() {
   // (live → game-day → upcoming → future), so a coach opening the portal on game day
   // sees today's event first, not buried under later registrations. Ties keep the
   // soonest start date first. The chip itself is rendered per card below.
-  const today = new Date().toISOString().split('T')[0];
+  const today = tournamentToday();
   const chipFor = (r: Registration): CoachLifecycleChip =>
     deriveCoachLifecycleChip(r.tournament?.start_date ?? null, r.tournament?.end_date ?? null, today);
 

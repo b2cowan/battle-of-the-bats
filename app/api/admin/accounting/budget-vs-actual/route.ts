@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { tournamentToday } from '@/lib/timezone';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -106,7 +107,7 @@ export const GET = withObservability(async (req: Request) => {
 
     const allSplitIds = allSplitRows.map(s => s.id);
     if (allSplitIds.length > 0) {
-      const now = new Date().toISOString().slice(0, 10);
+      const now = tournamentToday();
       const { data: allInsts } = await supabaseAdmin
         .from('rep_allocation_installments')
         .select('id, split_id, amount, paid_at, due_date')
@@ -260,7 +261,7 @@ export const GET = withObservability(async (req: Request) => {
     }));
 
   // ── Team health ───────────────────────────────────────────────────────────
-  const now = new Date().toISOString().slice(0, 10);
+  const now = tournamentToday();
 
   const teamHealth = Array.from(teamIds).map(teamId => {
     const splits      = allSplitRows.filter((s: any) => s.team_id === teamId);

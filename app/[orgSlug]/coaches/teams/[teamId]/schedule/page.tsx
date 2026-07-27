@@ -21,6 +21,7 @@ import TagManagerModal from '@/components/coaches/TagManagerModal';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import styles from '../../../coaches.module.css';
+import { tournamentToday } from '@/lib/timezone';
 import type {
   RepAttendanceStatus,
   RepLineupMode,
@@ -570,7 +571,7 @@ export default function CoachesSchedulePage({
   const [error, setError] = useState('');
 
   const [view, setView] = useState<ViewMode>('list');
-  const [cursorDate, setCursorDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [cursorDate, setCursorDate] = useState(() => tournamentToday());
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
   // Mobile month view: a tapped day with >1 event opens this bottom-sheet day list (a single
@@ -1571,7 +1572,7 @@ export default function CoachesSchedulePage({
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
           const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
           const dayGames = tournamentGames.filter(g => g.gameDate === key);
-          const isToday = key === new Date().toISOString().slice(0, 10);
+          const isToday = key === tournamentToday();
           return (
             <div key={key} className={`${styles.calMonthCell} ${isToday ? styles.calMonthCellToday : ''}`}>
               <span className={styles.calMonthDayNum}>{day.getDate()}</span>
