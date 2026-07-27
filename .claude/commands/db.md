@@ -48,7 +48,10 @@ After reading, briefly confirm: _"DB context loaded — [N] tables in schema."_
 - Billing: `stripe_customer_id`, `stripe_subscription_id`, `subscription_status` on `organizations`; price IDs in `stripe_prices` table (migration 048)
 - Plan overrides: `org_overrides` table (type, value, expires_at) — used by platform admin
 - Audit trails: `org_audit_log` (org-scoped), `platform_audit_log` (platform-scoped)
-- Tables that do NOT exist (common mistakes): `league_practices`, `rule_sections`
+- Tables that do NOT exist (common mistakes): `rule_sections`
+- ⚠ `league_practices` **DOES exist** (13 columns, dev + prod) — corrected 2026-07-27. It was
+  listed here as non-existent, which is precisely the failure rule 1 guards against: decide
+  existence from the snapshots / `information_schema`, never from a doc or from memory.
 
 ---
 

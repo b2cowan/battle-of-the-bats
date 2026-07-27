@@ -44,6 +44,12 @@ frontend:
         # day late every evening — and invisible on a dev box, which runs on Toronto time.
         # Baseline is ZERO: every occurrence was fixed 2026-07-26, so any new one fails here.
         - node scripts/check-date-correctness.mjs
+        # Schema-parity gate. check-prod-migration-drift.mjs compares only whether tables and
+        # columns EXIST — it cannot see defaults, nullability, constraints or indexes, and so
+        # reported "in sync" while prod defaulted new tournaments to `completed`, hid them from
+        # the directory, and lacked the games→division foreign key. This runs offline against
+        # the committed snapshots and fails when dev/prod diverge in a NEW way.
+        - node scripts/check-schema-parity.mjs
         # Webpack production build (next build --webpack) uses far more heap than the
         # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
         # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.

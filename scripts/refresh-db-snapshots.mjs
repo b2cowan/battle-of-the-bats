@@ -267,7 +267,9 @@ function diffSets(devSet, prodSet) {
   return { onlyDev, onlyProd };
 }
 
-function buildDrift(raw) {
+// Exported so the OFFLINE parity gate (scripts/check-schema-parity.mjs) reuses this exact
+// definition of "drift" against the committed snapshots — one definition, no second opinion.
+export function buildDrift(raw) {
   const date = new Date().toISOString().slice(0, 10);
   const dev = raw.dev;
   const prod = raw.prod;
@@ -335,6 +337,28 @@ function buildDrift(raw) {
   };
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
 
+  // Machine-readable divergence list — one stable key per item, plus a signature so a
+  // divergence that CHANGES SHAPE (e.g. prod's default moves again) reads as a new item
+  // rather than silently matching an accepted baseline entry. Consumed by
+  // scripts/check-schema-parity.mjs, which ratchets on it offline (no network, no creds)
+  // so the parity gate can run in verify:changed and the deploy build.
+  const items = [];
+  const add = (key, sig = '') => items.push({ key, sig });
+  for (const t of tbl.onlyDev) add(`table:only-dev:${t}`);
+  for (const t of tbl.onlyProd) add(`table:only-prod:${t}`);
+  for (const c of col.onlyDev) add(`column:only-dev:${c}`);
+  for (const c of col.onlyProd) add(`column:only-prod:${c}`);
+  for (const c of colChanged) add(`column:changed:${c.key}`, `${c.dev} :: ${c.prod}`);
+  for (const i of idx.onlyDev) add(`index:only-dev:${i}`);
+  for (const i of idx.onlyProd) add(`index:only-prod:${i}`);
+  for (const i of idxChanged) add(`index:changed:${i.key}`, `${i.dev} :: ${i.prod}`);
+  for (const c of con.onlyDev) add(`constraint:only-dev:${c}`);
+  for (const c of con.onlyProd) add(`constraint:only-prod:${c}`);
+  for (const r of rlsChanged) add(`rls:changed:${r.key}`, `${r.dev} :: ${r.prod}`);
+  for (const c of chk.onlyDev) add(`check:only-dev:${c}`);
+  for (const c of chk.onlyProd) add(`check:only-prod:${c}`);
+  items.sort((a, b) => a.key.localeCompare(b.key));
+
   // markdown
   const L = [];
   L.push(`# Dev vs Prod — structural drift`);
@@ -382,7 +406,7 @@ function buildDrift(raw) {
   section('CHECK only in DEV', chk.onlyDev);
   section('CHECK only in PROD', chk.onlyProd);
 
-  return { md: L.join('\n') + '\n', total, counts };
+  return { md: L.join('\n') + '\n', total, counts, items };
 }
 
 // ── main ──────────────────────────────────────────────────────────────────────
@@ -450,7 +474,15 @@ async function main() {
 
     const drift = buildDrift(raw);
     fs.writeFileSync(path.join(SNAP_DIR, 'DRIFT_dev_vs_prod.md'), drift.md, 'utf8');
-    console.log(`Wrote DRIFT_dev_vs_prod.md — ${drift.total} divergence(s): ${JSON.stringify(drift.counts)}`);
+    // Structured twin of the markdown, so the offline parity gate never has to re-derive
+    // "what counts as drift" — one definition, two renderings.
+    writeJson('DRIFT_dev_vs_prod.json', {
+      generated: new Date().toISOString().slice(0, 10),
+      total: drift.total,
+      counts: drift.counts,
+      items: drift.items,
+    });
+    console.log(`Wrote DRIFT_dev_vs_prod.md + .json — ${drift.total} divergence(s): ${JSON.stringify(drift.counts)}`);
 
     if (FAIL_ON_DRIFT && drift.total > 0) {
       console.error(`--fail-on-drift: ${drift.total} dev/prod divergence(s) found.`);
@@ -494,7 +526,12 @@ async function main() {
   console.log('Done.');
 }
 
-main().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// Only refresh when run directly. buildDrift is imported by the offline parity gate, and an
+// import must never fire the Management API calls in main().
+const isEntrypoint = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isEntrypoint) {
+  main().catch((e) => {
+    console.error(e);
+    process.exit(1);
+  });
+}
