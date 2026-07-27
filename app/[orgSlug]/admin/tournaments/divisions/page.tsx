@@ -93,6 +93,9 @@ export default function DivisionsPage() {
     bufferMinutes: '',
   });
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteBlock, setDeleteBlock] = useState<
+    { message: string; gameCount: number; scoredGameCount: number; teamCount: number } | null
+  >(null);
   const [advancedOpen, setAdvancedOpen] = useState(false);
 
   async function refresh() {
@@ -242,17 +245,32 @@ export default function DivisionsPage() {
     }
   }
 
-  async function handleDelete() {
+  function closeDelete() {
+    setDeleteId(null);
+    setDeleteBlock(null);
+  }
+
+  // Two-step by design. The first attempt goes in unforced; if the division still holds games or
+  // teams the API answers 409 DIVISION_HAS_GAMES with the real counts, and only then do we offer
+  // to proceed. Deleting a division CASCADES to its games (scores included) and its teams — this
+  // dialog used to claim the opposite, so an organizer could destroy a schedule believing the
+  // rows would merely be unlinked.
+  async function handleDelete(force = false) {
     if (!deleteId) return;
     try {
       const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
       const res = await fetch(`/api/admin/divisions${orgQuery}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'delete', id: deleteId })
+        body: JSON.stringify({ action: 'delete', id: deleteId, force })
       });
+      if (res.status === 409) {
+        const info = await res.json().catch(() => null);
+        if (info?.error === 'DIVISION_HAS_GAMES') { setDeleteBlock(info); return; }
+        throw new Error(info?.error || 'Failed to delete');
+      }
       if (!res.ok) throw new Error('Failed to delete');
-      setDeleteId(null);
+      closeDelete();
       refresh();
     } catch (err: unknown) {
       alert('Error deleting: ' + getErrorMessage(err, 'Unknown error'));
@@ -709,18 +727,33 @@ export default function DivisionsPage() {
 
       {/* Delete Confirm */}
       {deleteId && (
-        <div className="modal-overlay" onClick={() => setDeleteId(null)}>
+        <div className="modal-overlay" onClick={closeDelete}>
           <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>Delete Division?</h3>
-              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
+              <h3>{deleteBlock ? 'This division is not empty' : 'Delete Division?'}</h3>
+              <button className="btn btn-ghost btn-data" onClick={closeDelete}><X size={16} /></button>
             </div>
-            <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
-              This will permanently delete this division. Teams, games, and results in this division will remain but lose their division link.
-            </p>
+            {deleteBlock ? (
+              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
+                {deleteBlock.message}
+              </p>
+            ) : (
+              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
+                This will permanently delete this division, along with every game and registered team in it.
+                Recorded scores go with them. This cannot be undone.
+              </p>
+            )}
             <div className="modal-footer">
-              <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="btn btn-danger btn-data" onClick={handleDelete} id="confirm-delete-division"><Trash2 size={14} /> Delete</button>
+              <button className="btn btn-ghost btn-data" onClick={closeDelete}>Cancel</button>
+              {deleteBlock ? (
+                <button className="btn btn-danger btn-data" onClick={() => handleDelete(true)} id="confirm-delete-division-force">
+                  <Trash2 size={14} /> Delete anyway
+                </button>
+              ) : (
+                <button className="btn btn-danger btn-data" onClick={() => handleDelete()} id="confirm-delete-division">
+                  <Trash2 size={14} /> Delete
+                </button>
+              )}
             </div>
           </div>
         </div>

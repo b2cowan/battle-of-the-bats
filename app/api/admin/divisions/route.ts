@@ -162,7 +162,7 @@ export const POST = withObservability(async (req: Request) => {
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   try {
-    const { action, id, data } = await req.json();
+    const { action, id, data, force } = await req.json();
 
     if (action === 'save') {
       const denied = scopeGuard(ctx, data.tournamentId);
@@ -433,6 +433,47 @@ export const POST = withObservability(async (req: Request) => {
         const wrongOrg = await requireTournamentInOrg(ctx, ag.tournament_id);
         if (wrongOrg) return wrongOrg;
         if (await isTournamentLocked(ag.tournament_id)) return tournamentLockedResponse();
+      }
+
+      // Deleting a division is destructive well beyond the division row: games.division_id and
+      // teams.division_id both CASCADE, so this removes the division's ENTIRE SCHEDULE — scores
+      // included — and every team registered into it. That happened silently until now; prod had
+      // no games FK at all (added in migration 203) and dev has cascaded since day one behind
+      // this unguarded endpoint. The FK makes the deletion coherent; this guard makes it consented.
+      // Mirrors the TEAM_HAS_GAMES guard on DELETE /api/admin/teams (migration 200).
+      if (!force) {
+        const [{ data: linkedGames }, { count: teamCount }] = await Promise.all([
+          supabaseAdmin
+            .from('games')
+            .select('id, home_score, away_score')
+            .eq('division_id', id),
+          supabaseAdmin
+            .from('teams')
+            .select('id', { count: 'exact', head: true })
+            .eq('division_id', id),
+        ]);
+
+        const games = linkedGames ?? [];
+        const teams = teamCount ?? 0;
+        if (games.length > 0 || teams > 0) {
+          const scored = games.filter(g => g.home_score !== null || g.away_score !== null).length;
+          const parts: string[] = [];
+          if (games.length) parts.push(`${games.length} game${games.length === 1 ? '' : 's'}${scored > 0 ? ` (${scored} with a recorded score)` : ''}`);
+          if (teams) parts.push(`${teams} registered team${teams === 1 ? '' : 's'}`);
+          return Response.json(
+            {
+              error: 'DIVISION_HAS_GAMES',
+              message:
+                `This division still holds ${parts.join(' and ')}. Deleting it removes ${games.length ? 'those games and their scores' : 'them'}` +
+                `${games.length && teams ? ' along with the teams' : ''} permanently. ` +
+                `Move them to another division first, or confirm to continue.`,
+              gameCount: games.length,
+              scoredGameCount: scored,
+              teamCount: teams,
+            },
+            { status: 409 },
+          );
+        }
       }
 
       const { error } = await supabaseAdmin.from('divisions').delete().eq('id', id);

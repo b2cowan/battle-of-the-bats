@@ -265,7 +265,7 @@
     "column_name": "body",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "ordinal_position": 4
   },
@@ -2264,7 +2264,7 @@
     "data_type": "integer",
     "udt_name": "int4",
     "is_nullable": "YES",
-    "column_default": null,
+    "column_default": "1",
     "ordinal_position": 10
   },
   {
@@ -12879,6 +12879,15 @@
     "ordinal_position": 5
   },
   {
+    "table_name": "resources",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "ordinal_position": 6
+  },
+  {
     "table_name": "rule_items",
     "column_name": "id",
     "data_type": "uuid",
@@ -12913,6 +12922,15 @@
     "is_nullable": "NO",
     "column_default": "0",
     "ordinal_position": 4
+  },
+  {
+    "table_name": "rule_items",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "ordinal_position": 5
   },
   {
     "table_name": "rules",
@@ -12956,7 +12974,7 @@
     "data_type": "text",
     "udt_name": "text",
     "is_nullable": "YES",
-    "column_default": null,
+    "column_default": "'Shield'::text",
     "ordinal_position": 5
   },
   {
@@ -12967,6 +12985,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 6
+  },
+  {
+    "table_name": "rules",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": "now()",
+    "ordinal_position": 7
   },
   {
     "table_name": "schedule_facility_lanes",
@@ -14359,7 +14386,7 @@
     "column_name": "slug",
     "data_type": "text",
     "udt_name": "text",
-    "is_nullable": "YES",
+    "is_nullable": "NO",
     "column_default": null,
     "ordinal_position": 4
   },

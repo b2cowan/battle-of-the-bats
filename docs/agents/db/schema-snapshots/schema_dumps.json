@@ -268,7 +268,7 @@
         "column_name": "body",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": null
       },
       {
@@ -2267,7 +2267,7 @@
         "data_type": "integer",
         "udt_name": "int4",
         "is_nullable": "YES",
-        "column_default": null
+        "column_default": "1"
       },
       {
         "table_name": "divisions",
@@ -12881,6 +12881,15 @@
         "column_default": "0"
       },
       {
+        "table_name": "resources",
+        "pos": 6,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rule_items",
         "pos": 1,
         "column_name": "id",
@@ -12915,6 +12924,15 @@
         "udt_name": "int4",
         "is_nullable": "NO",
         "column_default": "0"
+      },
+      {
+        "table_name": "rule_items",
+        "pos": 5,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": "now()"
       },
       {
         "table_name": "rules",
@@ -12959,7 +12977,7 @@
         "data_type": "text",
         "udt_name": "text",
         "is_nullable": "YES",
-        "column_default": null
+        "column_default": "'Shield'::text"
       },
       {
         "table_name": "rules",
@@ -12969,6 +12987,15 @@
         "udt_name": "_uuid",
         "is_nullable": "YES",
         "column_default": null
+      },
+      {
+        "table_name": "rules",
+        "pos": 7,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": "now()"
       },
       {
         "table_name": "schedule_facility_lanes",
@@ -14362,7 +14389,7 @@
         "column_name": "slug",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": null
       },
       {
@@ -16090,14 +16117,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -16118,14 +16145,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -16160,21 +16187,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -16186,10 +16206,10 @@
       },
       {
         "table_name": "rep_player_continuity_links",
-        "column_name": "prior_roster_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
@@ -16200,9 +16220,9 @@
       },
       {
         "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
+        "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -16210,6 +16230,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -16384,20 +16411,13 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
@@ -16406,6 +16426,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -21633,6 +21660,12 @@
         "check_clause": "(notify_mode = ANY (ARRAY['all'::text, 'assigned'::text]))"
       },
       {
+        "kind": "CHECK",
+        "table_name": "tournaments",
+        "detail": "tournaments_status_check",
+        "check_clause": "(status = ANY (ARRAY['draft'::text, 'active'::text, 'completed'::text, 'archived'::text]))"
+      },
+      {
         "kind": "RLS",
         "table_name": "tournaments",
         "detail": "ENABLED",
@@ -21946,7 +21979,7 @@
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "NO",
-        "column_default": null
+        "column_default": "now()"
       },
       {
         "table_name": "announcements",
@@ -23835,7 +23868,7 @@
         "column_name": "address",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -23908,7 +23941,7 @@
         "data_type": "integer",
         "udt_name": "int4",
         "is_nullable": "NO",
-        "column_default": null
+        "column_default": "0"
       },
       {
         "table_name": "divisions",
@@ -23952,7 +23985,7 @@
         "column_name": "requires_pool_selection",
         "data_type": "boolean",
         "udt_name": "bool",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": "false"
       },
       {
@@ -23971,7 +24004,7 @@
         "data_type": "jsonb",
         "udt_name": "jsonb",
         "is_nullable": "YES",
-        "column_default": "'{\"type\": \"single\", \"crossover\": \"standard\", \"hasThirdPlace\": false}'::jsonb"
+        "column_default": null
       },
       {
         "table_name": "divisions",
@@ -25293,7 +25326,7 @@
         "column_name": "location",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -25347,7 +25380,7 @@
         "column_name": "is_playoff",
         "data_type": "boolean",
         "udt_name": "bool",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": "false"
       },
       {
@@ -34519,7 +34552,7 @@
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "NO",
-        "column_default": "uuid_generate_v4()"
+        "column_default": "gen_random_uuid()"
       },
       {
         "table_name": "resources",
@@ -34554,7 +34587,7 @@
         "column_name": "display_order",
         "data_type": "integer",
         "udt_name": "int4",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": "0"
       },
       {
@@ -34573,7 +34606,7 @@
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "NO",
-        "column_default": "uuid_generate_v4()"
+        "column_default": "gen_random_uuid()"
       },
       {
         "table_name": "rule_items",
@@ -34581,7 +34614,7 @@
         "column_name": "rule_id",
         "data_type": "uuid",
         "udt_name": "uuid",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": null
       },
       {
@@ -34599,7 +34632,7 @@
         "column_name": "display_order",
         "data_type": "integer",
         "udt_name": "int4",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": "0"
       },
       {
@@ -34618,7 +34651,7 @@
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "NO",
-        "column_default": "uuid_generate_v4()"
+        "column_default": "gen_random_uuid()"
       },
       {
         "table_name": "rules",
@@ -34653,7 +34686,7 @@
         "column_name": "display_order",
         "data_type": "integer",
         "udt_name": "int4",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": "0"
       },
       {
@@ -35382,7 +35415,7 @@
         "column_name": "coach",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "NO",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -35409,7 +35442,7 @@
         "column_name": "status",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": "'accepted'::text"
       },
       {
@@ -35418,7 +35451,7 @@
         "column_name": "payment_status",
         "data_type": "text",
         "udt_name": "text",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": "'paid'::text"
       },
       {
@@ -35427,7 +35460,7 @@
         "column_name": "registered_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
-        "is_nullable": "YES",
+        "is_nullable": "NO",
         "column_default": "now()"
       },
       {
@@ -36094,7 +36127,7 @@
         "data_type": "text",
         "udt_name": "text",
         "is_nullable": "NO",
-        "column_default": "'completed'::text"
+        "column_default": "'draft'::text"
       },
       {
         "table_name": "tournaments",
@@ -36391,7 +36424,7 @@
         "data_type": "boolean",
         "udt_name": "bool",
         "is_nullable": "NO",
-        "column_default": "false"
+        "column_default": "true"
       },
       {
         "table_name": "tournaments",
@@ -36633,7 +36666,7 @@
         "column_name": "tournament_id",
         "foreign_table": "tournaments",
         "foreign_column": "id",
-        "constraint_name": "fk_announcements_tournament"
+        "constraint_name": "announcements_tournament_id_fkey"
       },
       {
         "table_name": "assistant_invite_tokens",
@@ -36934,7 +36967,7 @@
         "column_name": "tournament_id",
         "foreign_table": "tournaments",
         "foreign_column": "id",
-        "constraint_name": "fk_diamonds_tournament"
+        "constraint_name": "diamonds_tournament_id_fkey"
       },
       {
         "table_name": "divisions",
@@ -36948,7 +36981,7 @@
         "column_name": "tournament_id",
         "foreign_table": "tournaments",
         "foreign_column": "id",
-        "constraint_name": "fk_age_groups_tournament"
+        "constraint_name": "age_groups_tournament_id_fkey"
       },
       {
         "table_name": "early_access_leads",
@@ -37022,17 +37055,10 @@
       },
       {
         "table_name": "games",
-        "column_name": "diamond_id",
-        "foreign_table": "diamonds",
+        "column_name": "division_id",
+        "foreign_table": "divisions",
         "foreign_column": "id",
-        "constraint_name": "fk_games_diamond"
-      },
-      {
-        "table_name": "games",
-        "column_name": "tournament_id",
-        "foreign_table": "tournaments",
-        "foreign_column": "id",
-        "constraint_name": "fk_games_tournament"
+        "constraint_name": "games_age_group_id_fkey"
       },
       {
         "table_name": "games",
@@ -37082,6 +37108,13 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "games_score_submitted_by_user_id_fkey"
+      },
+      {
+        "table_name": "games",
+        "column_name": "tournament_id",
+        "foreign_table": "tournaments",
+        "foreign_column": "id",
+        "constraint_name": "games_tournament_id_fkey"
       },
       {
         "table_name": "games",
@@ -37864,14 +37897,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -38999,20 +39032,6 @@
         "column_name": "division_id",
         "foreign_table": "divisions",
         "foreign_column": "id",
-        "constraint_name": "fk_teams_age_group"
-      },
-      {
-        "table_name": "teams",
-        "column_name": "tournament_id",
-        "foreign_table": "tournaments",
-        "foreign_column": "id",
-        "constraint_name": "fk_teams_tournament"
-      },
-      {
-        "table_name": "teams",
-        "column_name": "division_id",
-        "foreign_table": "divisions",
-        "foreign_column": "id",
         "constraint_name": "teams_age_group_id_fkey"
       },
       {
@@ -39028,6 +39047,13 @@
         "foreign_table": "pool_slots",
         "foreign_column": "id",
         "constraint_name": "teams_slot_id_fkey"
+      },
+      {
+        "table_name": "teams",
+        "column_name": "tournament_id",
+        "foreign_table": "tournaments",
+        "foreign_column": "id",
+        "constraint_name": "teams_tournament_id_fkey"
       },
       {
         "table_name": "tournament_archives",
@@ -39867,18 +39893,23 @@
       },
       {
         "tablename": "league_practices",
-        "indexname": "league_practices_recurrence_group_id_idx",
-        "indexdef": "CREATE INDEX league_practices_recurrence_group_id_idx ON public.league_practices USING btree (recurrence_group_id)"
+        "indexname": "league_practices_recurrence_idx",
+        "indexdef": "CREATE INDEX league_practices_recurrence_idx ON public.league_practices USING btree (recurrence_group_id) WHERE (recurrence_group_id IS NOT NULL)"
       },
       {
         "tablename": "league_practices",
-        "indexname": "league_practices_season_id_idx",
-        "indexdef": "CREATE INDEX league_practices_season_id_idx ON public.league_practices USING btree (season_id)"
+        "indexname": "league_practices_schedule_idx",
+        "indexdef": "CREATE INDEX league_practices_schedule_idx ON public.league_practices USING btree (season_id, scheduled_at)"
       },
       {
         "tablename": "league_practices",
-        "indexname": "league_practices_team_id_idx",
-        "indexdef": "CREATE INDEX league_practices_team_id_idx ON public.league_practices USING btree (team_id)"
+        "indexname": "league_practices_season_idx",
+        "indexdef": "CREATE INDEX league_practices_season_idx ON public.league_practices USING btree (season_id)"
+      },
+      {
+        "tablename": "league_practices",
+        "indexname": "league_practices_team_idx",
+        "indexdef": "CREATE INDEX league_practices_team_idx ON public.league_practices USING btree (team_id)"
       },
       {
         "tablename": "league_registrations",

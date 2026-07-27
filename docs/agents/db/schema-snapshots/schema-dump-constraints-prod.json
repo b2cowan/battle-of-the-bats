@@ -111,7 +111,7 @@
   },
   {
     "table_name": "announcements",
-    "constraint_name": "fk_announcements_tournament",
+    "constraint_name": "announcements_tournament_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "tournament_id",
     "foreign_table": "tournaments",
@@ -811,7 +811,7 @@
   },
   {
     "table_name": "diamonds",
-    "constraint_name": "fk_diamonds_tournament",
+    "constraint_name": "diamonds_tournament_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "tournament_id",
     "foreign_table": "tournaments",
@@ -841,7 +841,7 @@
   },
   {
     "table_name": "divisions",
-    "constraint_name": "fk_age_groups_tournament",
+    "constraint_name": "age_groups_tournament_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "tournament_id",
     "foreign_table": "tournaments",
@@ -1081,20 +1081,10 @@
   },
   {
     "table_name": "games",
-    "constraint_name": "fk_games_diamond",
+    "constraint_name": "games_age_group_id_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "diamond_id",
-    "foreign_table": "diamonds",
-    "foreign_column": "id",
-    "delete_rule": "SET NULL",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "games",
-    "constraint_name": "fk_games_tournament",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
+    "column_name": "division_id",
+    "foreign_table": "divisions",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
@@ -1177,6 +1167,16 @@
     "foreign_table": null,
     "foreign_column": null,
     "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "games",
+    "constraint_name": "games_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
   {
@@ -3115,7 +3115,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3125,7 +3125,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -5491,26 +5491,6 @@
   },
   {
     "table_name": "teams",
-    "constraint_name": "fk_teams_age_group",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "division_id",
-    "foreign_table": "divisions",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "teams",
-    "constraint_name": "fk_teams_tournament",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "tournament_id",
-    "foreign_table": "tournaments",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "teams",
     "constraint_name": "teams_age_group_id_fkey",
     "constraint_type": "FOREIGN KEY",
     "column_name": "division_id",
@@ -5547,6 +5527,16 @@
     "foreign_table": "pool_slots",
     "foreign_column": "id",
     "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "teams",
+    "constraint_name": "teams_tournament_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "tournament_id",
+    "foreign_table": "tournaments",
+    "foreign_column": "id",
+    "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
   {

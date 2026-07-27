@@ -681,18 +681,23 @@
   },
   {
     "tablename": "league_practices",
-    "indexname": "league_practices_recurrence_group_id_idx",
-    "indexdef": "CREATE INDEX league_practices_recurrence_group_id_idx ON public.league_practices USING btree (recurrence_group_id)"
+    "indexname": "league_practices_recurrence_idx",
+    "indexdef": "CREATE INDEX league_practices_recurrence_idx ON public.league_practices USING btree (recurrence_group_id) WHERE (recurrence_group_id IS NOT NULL)"
   },
   {
     "tablename": "league_practices",
-    "indexname": "league_practices_season_id_idx",
-    "indexdef": "CREATE INDEX league_practices_season_id_idx ON public.league_practices USING btree (season_id)"
+    "indexname": "league_practices_schedule_idx",
+    "indexdef": "CREATE INDEX league_practices_schedule_idx ON public.league_practices USING btree (season_id, scheduled_at)"
   },
   {
     "tablename": "league_practices",
-    "indexname": "league_practices_team_id_idx",
-    "indexdef": "CREATE INDEX league_practices_team_id_idx ON public.league_practices USING btree (team_id)"
+    "indexname": "league_practices_season_idx",
+    "indexdef": "CREATE INDEX league_practices_season_idx ON public.league_practices USING btree (season_id)"
+  },
+  {
+    "tablename": "league_practices",
+    "indexname": "league_practices_team_idx",
+    "indexdef": "CREATE INDEX league_practices_team_idx ON public.league_practices USING btree (team_id)"
   },
   {
     "tablename": "league_registrations",

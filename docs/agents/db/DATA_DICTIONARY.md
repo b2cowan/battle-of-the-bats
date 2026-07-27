@@ -13,6 +13,9 @@
 2. **Schema change ⇒ dictionary change in the same unit of work.** Adding/renaming/dropping a column, or changing a field's *meaning*, requires updating this file alongside the code/migration.
 3. **Snapshots refreshed after every migration — dev AND prod** via `node scripts/refresh-db-snapshots.mjs`.
 4. **Drift watch.** The refresh command emits `DRIFT_dev_vs_prod.md` (+ `.json`); this doc notes any field where dev ≠ prod. **Since 2026-07-27 drift is also GATED:** `scripts/check-schema-parity.mjs` runs offline against the committed snapshots (no network, no credentials) in `verify:changed` and the deploy build, and fails when dev/prod diverge in a way `scripts/.schema-parity-baseline.json` does not already accept — including when an *accepted* divergence changes shape. The 51 divergences catalogued on 2026-07-27 are the starting baseline; **every entry is debt, and the target is an empty baseline.** Reconciling one is reported so the baseline can be lowered.
+   - **Progress: 51 → 48 (migration 200) → 40 → ✅ ZERO.** Migrations 201–203 applied to **dev AND prod 2026-07-27**; `check:parity` reports **0 accepted divergences** and the baseline is now an empty object, so **any** future dev↔prod divergence fails the gate immediately. The two schemas are byte-identical on columns, constraints, indexes, CHECKs and FK actions (143 tables / 1657 columns / 590 constraint-rows / 464 indexes each). Staging and the live-prod audit behind each decision: [SCHEMA_PARITY_PLAN.md](../../projects/active/SCHEMA_PARITY_PLAN.md).
+   - **Root cause, for the record:** the nine original tables (`announcements`, `diamonds`, `divisions`, `games`, `resources`, `rule_items`, `rules`, `teams`, `tournaments`) were hand-created in the Supabase dashboard **separately per environment** between 2026-04-22 and 2026-05-02. Migration 001 only ever ALTERed an existing schema — **not one of those nine is created by any migration.** Every column/constraint divergence traces to that ten-day gap. (`league_practices` is the lone exception: created by migration, but its indexes were named differently per env.)
+   - **Convergence is not "make prod match dev".** For `announcements.body`, `tournaments.slug`, `tournaments_status_check`, `rules.icon` and `divisions.pool_count`, **prod was the correct side** and dev was tightened instead. Decide direction per column from what the app actually writes, not from which environment is "the reference".
    - ⚠ **`check:migrations` is NOT a parity gate.** `check-prod-migration-drift.mjs` compares table + column *existence* only. It cannot see defaults, nullability, constraints, indexes or CHECKs — it reported "prod is in sync with dev" while prod defaulted new tournaments to `completed`, hid them from the directory, lacked the `games`→`divisions` foreign key, and was missing a practice-schedule index. Use both gates: `check:migrations` answers "did a migration reach prod", `check:parity` answers "do the two schemas actually agree".
 5. **Ownership:** `/db` + `/dba` keep it current; `DB_ARCHITECTURE_REVIEW.md` cross-references it.
 6. **Code is branch-relative; schema is not.** A column exists in the *database*; the code that reads it can differ by branch. `file:line` refs name a commit. When behavior is branch-dependent, say so.
@@ -393,8 +396,8 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 
 **Gotchas (read first):**
 1. **`public_hidden_pages` gates registration, not just nav.** When the array includes `'register'`, `POST /api/register` returns **403** ([app/api/register/route.ts:75](../../../app/api/register/route.ts#L75), [:260](../../../app/api/register/route.ts#L260)), in addition to hiding the nav page via `isPublicPageEnabled` ([lib/public-pages.ts:23](../../../lib/public-pages.ts#L23)).
-2. **`status` drifts dev↔prod (Finding #25).** Dev default `'draft'`, **no** CHECK; prod default `'completed'` **with** `tournaments_status_check` (`draft|active|completed|archived`). An INSERT omitting `status` becomes `'draft'` on dev but `'completed'` on prod, and dev silently accepts unknown values prod rejects. Value domain is **4** values (`TournamentStatus`, [lib/types.ts:14](../../../lib/types.ts#L14)).
-3. **`slug` nullability drifts** — nullable on dev, NOT NULL on prod (DRIFT line 53). A clone/insert leaving `slug` null works on dev, throws on prod. `mapTournament` masks reads (`null → ''`) but not writes.
+2. **`status` drift — half fixed.** `tournaments_status_check` (`draft|active|completed|archived`) was prod-only; **migration 202 added it to dev** (2026-07-27), so dev no longer accepts values prod rejects. The **default** still differs — dev `'draft'`, prod `'completed'`, so an INSERT omitting `status` is born FINISHED on prod — and migration 202 converges it on `'draft'` **applied to BOTH envs 2026-07-27**. Latent, not live: every code path writes `status` explicitly. Value domain is **4** values (`TournamentStatus`, [lib/types.ts:14](../../../lib/types.ts#L14)).
+3. ~~**`slug` nullability drifts**~~ — **RESOLVED (migration 202, dev 2026-07-27):** dev tightened to NOT NULL to match prod. Prod was the correct one here (it's the URL key, always written explicitly, and dev held zero nulls), so dev converged *upward* rather than prod being loosened. `mapTournament` still masks reads (`null → ''`).
 4. **`org_id` is the rename of `organization_id`**, but `mapTournament` reads `r.organization_id` ([lib/db.ts:2482](../../../lib/db.ts#L2482)) — a raw `select('*')` feeding it without aliasing `org_id AS organization_id` yields `organizationId: undefined`. Latent footgun.
 5. **`fee_schedule_mode` is shadowed by `settings.fee_scope`.** The column (`tournament|division`; legacy `age_group`→`division` in mig 093) is what `resolveFeeSchedule` reads, but admin UI edits `settings.fee_scope` and syncs back via `feeScopeToScheduleMode` on save ([settings/event/page.tsx:329](../../../app/[orgSlug]/admin/tournaments/settings/event/page.tsx#L329)). Change one without the other and they desync.
 
@@ -501,7 +504,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **Gotchas (read first):**
 1. **Renamed from `age_groups`, incompletely.** FK constraint is `age_groups_tournament_id_fkey` (dev) / `fk_age_groups_tournament` (prod); code vars are `g`/`ag`. Don't assume a clean rename across envs.
 2. **`contact_id` was DROPPED → use `contact_member_id`** (FK `organization_members`). `contact_id` is absent from both snapshots; there's a dropped-column hole where it sat (ordinal **7 in dev, 6 in prod**).
-3. **Four real dev/prod drift columns** — `display_order` (dev default 0 / prod no default, both NOT NULL → a raw insert omitting it **fails on prod**), `playoff_config` (prod has a default JSON, dev none — Finding #25), `pool_count` (prod default 1, dev none; code papers over with `|| 1`), `requires_pool_selection` (dev NOT NULL / prod nullable). Plus many columns differ only in **ordinal position** — never `SELECT *` on column order.
+3. **Four real dev/prod drift columns — one fixed, three pending prod.** `pool_count` is **RESOLVED (migration 203, dev 2026-07-27)**: dev adopted prod's default of 1, since the code already papers over with `|| 1` and the schema should state what the app believes. Still pending the prod apply: `display_order` (dev default 0 / prod no default, both NOT NULL → a raw insert omitting it **fails on prod**; 203 adds the default to prod), `playoff_config` (prod has a default JSON, dev none; 203 **drops prod's** so an unconfigured division reads as unconfigured rather than silently looking deliberately configured), `requires_pool_selection` (dev NOT NULL / prod nullable; 203 tightens prod — 0 NULLs at audit). Plus many columns differ only in **ordinal position** — never `SELECT *` on column order.
 4. **`pool_names` is a comma-string, not JSON** — despite the plural; parsed `.split(',')`. The `pools` table is the real per-pool store.
 5. **`schedule_visibility` is a 2-state enum, not a boolean** (`unpublished|published`) — was 3-state until mig 129 removed `published_generic` (placeholder publishing) and renamed `published_teams`→`published`.
 6. **Division-level fees apply only when the parent's `fee_schedule_mode='division'`.**
@@ -582,7 +585,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`name`** (text, NOT NULL) — team name; only NOT NULL business column. Drives duplicate detection per `(tournament_id, division_id)`.
 
 <!-- dict:col:teams.coach -->
-**`coach`** (text) — coach **display name** (gotcha 6). _Dev/prod drift:_ dev nullable / **prod NOT NULL** (gotcha 5).
+**`coach`** (text) — coach **display name** (gotcha 6). _Dev/prod:_ prod's NOT NULL is a **live failure path** — the registration bulk-import writes `coach: string | null` ([import/shared.ts:116](../../../app/api/admin/tournaments/[tournamentId]/registrations/import/shared.ts#L116)), so an import with a blank coach column **fails on prod** and succeeds on dev (49/229 dev rows are null). Migration 202 loosens prod — **applied to BOTH envs 2026-07-27**. ⚠ **Two encodings of "no coach" exist in live data:** the interactive admin path coerces to `''` ([admin/teams/route.ts:321](../../../app/api/admin/teams/route.ts#L321)) rather than failing, which is why **17 of prod's 21 teams carry `coach=''`** while dev uses `NULL`. Readers must treat both as absent. Migration 202 deliberately does **not** rewrite that data — normalizing it is an open decision.
 
 <!-- dict:col:teams.email -->
 **`email`** (text) — coach/contact email, **lowercased at insert** ([register/route.ts:202](../../../app/api/register/route.ts#L202)); the team-facing address for confirmation/acceptance/payment emails. **Not** the coach-identity key (gotcha 2). Stays the **portal access / claim key** (claim-by-email, mig 092) — never overwritten by coach reassignment.
@@ -649,15 +652,16 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 3. **Playoff advancement is literal string-matching.** `advancePlayoffs` fills a downstream slot whose `home_placeholder`/`away_placeholder` equals `'Winner '+bracket_code` or `'Loser '+bracket_code` ([lib/db.ts:1909](../../../lib/db.ts#L1909)). Placeholder text must match the convention exactly. `GF`/`GF2` are special-cased for the double-elim "if necessary" reset ([lib/db.ts:1924](../../../lib/db.ts#L1924)). Separately, a completed `FIN` game seals the tournament — that logic lives in [seal-tournament/route.ts:167](../../../app/api/admin/seal-tournament/route.ts#L167), **not** in `advancePlayoffs`.
 4. **`diamond_id` ↔ `Game.venueId` naming mismatch** — the column is `diamond_id` (legacy softball term) but the app field is `venueId`. Easy to mis-map. Conflict detection prefers `venue_facility_id` (specific surface), then falls back to `diamond_id`.
 5. **The slot system auto-fills teams.** `home_slot_id`/`away_slot_id` (FK `pool_slots`) → when a pool slot is (un)assigned, the API bulk-updates `home_team_id`/`away_team_id` for matching games. A game can hold a slot ref + a placeholder while team ids stay NULL until the pool is fully assigned.
-6. **Dev/prod drift:** `location` (dev nullable / **prod NOT NULL**) and `is_playoff` (dev NOT NULL / prod nullable). FK constraint **names** differ — ⚠ **cosmetic is not a safe assumption, see gotcha 7.** `game_time` text-vs-time drift is **resolved** (both `time without time zone` now).
-7. **⚠ `home_team_id`/`away_team_id` were ON DELETE CASCADE on PROD and SET NULL on DEV — deleting a team DESTROYED its games on prod (mig 200 fixes it).** Both environments carried a constraint named `games_home_team_id_fkey`, so every existing check — the drift report, `check:migrations`, and the first cut of `check:parity` — compared names and called it parity. Prod additionally had duplicate `fk_games_home_team`/`fk_games_away_team` (also CASCADE). The admin team-delete endpoint had **no guard**, so removing one team silently deleted its whole schedule *and the opponent's record of those fixtures and scores*. **A foreign key's name says nothing about what it does** — `delete_rule`/`update_rule` are now captured in the snapshots and compared by `check:parity`. Migration 200 converges both environments on `games_home_team_id_fkey` / `games_away_team_id_fkey`, both `ON DELETE SET NULL`, and drops the duplicates; `DELETE /api/admin/teams` now returns **409 `TEAM_HAS_GAMES`** (with game + scored-game counts) unless `force: true` is passed. Verified on dev inside a rolled-back transaction: deleting a team blanked its game's team reference and the total game count did not move. _Dev/prod:_ mig 200 **applied to DEV 2026-07-27; PROD PENDING owner approval** — until it lands, prod team deletion is still destructive.
-7. **`score_submitted_at` is a domain audit timestamp, not a row-mtime** — it only moves when a score is written. The `score_submitted_*` fields are written *only* via `updateGame`/the scoring service, never in the insert.
+6. **Dev/prod drift:** `location` (dev nullable / **prod NOT NULL** — a live prod failure, see the `location` field note) and `is_playoff` (dev NOT NULL / prod nullable; migration 203 tightens prod). FK constraint **names** differ — ⚠ **cosmetic is not a safe assumption, see gotcha 7.** `game_time` text-vs-time drift is **resolved** (both `time without time zone` now).
+7. **⚠ `home_team_id`/`away_team_id` were ON DELETE CASCADE on PROD and SET NULL on DEV — deleting a team DESTROYED its games on prod (mig 200 fixes it).** Both environments carried a constraint named `games_home_team_id_fkey`, so every existing check — the drift report, `check:migrations`, and the first cut of `check:parity` — compared names and called it parity. Prod additionally had duplicate `fk_games_home_team`/`fk_games_away_team` (also CASCADE). The admin team-delete endpoint had **no guard**, so removing one team silently deleted its whole schedule *and the opponent's record of those fixtures and scores*. **A foreign key's name says nothing about what it does** — `delete_rule`/`update_rule` are now captured in the snapshots and compared by `check:parity`. Migration 200 converges both environments on `games_home_team_id_fkey` / `games_away_team_id_fkey`, both `ON DELETE SET NULL`, and drops the duplicates; `DELETE /api/admin/teams` now returns **409 `TEAM_HAS_GAMES`** (with game + scored-game counts) unless `force: true` is passed. Verified on dev inside a rolled-back transaction: deleting a team blanked its game's team reference and the total game count did not move. _Dev/prod:_ mig 200 is **applied to BOTH environments** (verified live 2026-07-27: both keys `SET NULL`, no `fk_games_*` duplicates remain on prod).
+8. **⚠ The SAME trap, one level up: `division_id`.** Dev has `games_age_group_id_fkey` (→ `divisions.id`, **CASCADE**); **prod has no key on that column at all**, so deleting a division orphans its games there while destroying them on dev. `POST /api/admin/divisions {action:'delete'}` had **no guard** either — and its confirmation dialog actively claimed *"Teams, games, and results in this division will remain but lose their division link"*, which is the **opposite** of what CASCADE does. Migration 203 adds the key to prod as **CASCADE** (audited: 0 orphans, 0 null `division_id` of 53 prod games) and ships a **409 `DIVISION_HAS_GAMES`** guard with game/scored/team counts unless `force: true`, plus corrected dialog copy. **CASCADE here, SET NULL for teams (gotcha 7), is deliberate:** a game references *two* teams, so cascading from one destroys the opponent's record — but a division *owns* its games and teams outright (`teams.division_id` already CASCADEs in both envs), so SET NULL would strand games belonging to no division **and** no team. The fix was consent, not the action. _Dev/prod:_ 203 **applied to DEV + PROD 2026-07-27** — verified live: the key is present on prod as CASCADE and the guard ships with it.
+9. **`score_submitted_at` is a domain audit timestamp, not a row-mtime** — it only moves when a score is written. The `score_submitted_*` fields are written *only* via `updateGame`/the scoring service, never in the insert.
 
 **Fields** (boilerplate `id` omitted):
 
 <!-- dict:col:games.tournament_id -->
 <!-- dict:col:games.division_id -->
-**`tournament_id`** (FK → `tournaments.id`) / **`division_id`** (FK → `divisions.id`) — scope + standings grouping + timing inheritance. _Dev/prod:_ FK constraint names differ; dev has a legacy `games_age_group_id_fkey`.
+**`tournament_id`** (FK → `tournaments.id`, CASCADE) / **`division_id`** (FK → `divisions.id`, CASCADE) — scope + standings grouping + timing inheritance. _Dev/prod:_ `tournament_id`'s key was `fk_games_tournament` on prod and `games_tournament_id_fkey` on dev — **name converged by migration 201** (both were already CASCADE; verified before renaming). `division_id`'s key is the legacy-named `games_age_group_id_fkey` and **existed on dev only** until migration 203 added it to prod — see gotcha 8.
 
 <!-- dict:col:games.home_team_id -->
 <!-- dict:col:games.away_team_id -->
@@ -671,7 +675,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`duration_minutes`** (int, nullable, mig 112) — per-game length override; null/0 → cascade. Write paths clamp 1..600 ([games/route.ts:429](../../../app/api/admin/games/route.ts#L429)). The override consumed by `resolveGameTiming` (gotcha 1).
 
 <!-- dict:col:games.location -->
-**`location`** (text) — free-text venue display fallback when no structured venue is set (then conflict detection skips — nothing to clash on). _Dev/prod drift:_ dev nullable / **prod NOT NULL** (gotcha 6).
+**`location`** (text) — free-text venue display fallback when no structured venue is set (then conflict detection skips — nothing to clash on). _Dev/prod:_ prod's NOT NULL is a **live failure path** — `clearVenueFromGames` writes `location: null` when a venue is deleted ([venues/route.ts:105](../../../app/api/admin/venues/route.ts#L105)), as does `clearFacilityFromGames` ([:131](../../../app/api/admin/venues/route.ts#L131)), so **deleting a venue currently fails on prod** (dev holds 60/378 null rows). Migration 202 loosens prod — **applied to BOTH envs 2026-07-27**.
 
 <!-- dict:col:games.diamond_id -->
 <!-- dict:col:games.venue_facility_id -->
@@ -785,9 +789,9 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **Purpose:** the public rules-page content. `rules` = one card per section (icon + title); `rule_items` = the bullet lines under each card (parent `rule_id`). Loaded via the nested select `rules.select('*, rule_items(*)')`.
 
 **Gotchas (read first):**
-1. **`created_at` is MISSING from dev on BOTH tables** (present in prod — Finding #25). Any query that explicitly selects/orders by it works on prod and **errors on dev**. The app never touches it (`select('*')` + order by `display_order`), so it's gone unnoticed — but don't rely on it against dev.
+1. ~~**`created_at` is MISSING from dev on BOTH tables**~~ — **RESOLVED (migration 201, dev 2026-07-27).** Added to dev on all three legacy tables (`rules`, `rule_items`, `resources`) matching prod exactly (`timestamptz NULL DEFAULT now()`). Added to dev rather than dropped from prod because prod's column holds real timestamps. The app still never touches it (`select('*')` + order by `display_order`), but it is now safe to select/order by in either environment.
 2. **Layout is NOT a column here** — it lives in `tournaments.settings.rulesLayout` (`columns|single`) and `resourcesLayout`, read on the public page ([rules/page.tsx:86](../../../app/[orgSlug]/[tournamentSlug]/rules/page.tsx#L86)).
-3. **`rules.icon` stores a Lucide key string, not a path**; null/empty/unknown all degrade to `'Shield'` ([rules/page.tsx:129](../../../app/[orgSlug]/[tournamentSlug]/rules/page.tsx#L129)). _Dev/prod:_ prod column defaults to `'Shield'`, dev has no default — UI identical, raw values differ.
+3. **`rules.icon` stores a Lucide key string, not a path**; null/empty/unknown all degrade to `'Shield'` ([rules/page.tsx:129](../../../app/[orgSlug]/[tournamentSlug]/rules/page.tsx#L129)). _Dev/prod:_ **converged on prod's `'Shield'` default (migration 203, dev 2026-07-27)** — prod's value was the better one, since it makes the schema state the fallback the UI already applies.
 4. **More Finding-#25 drift:** `id` default fn (`gen_random_uuid()` dev / `uuid_generate_v4()` prod) on both tables; `display_order` NOT NULL (dev) / nullable (prod); `rule_items.rule_id` NOT NULL (dev) / nullable (prod) — an orphan item is possible on prod, so defend against null `rule_id` and null `display_order` (the JS `a.order - b.order` re-sort yields NaN on null).
 
 **`rules` fields** (boilerplate `id` omitted):
@@ -802,13 +806,13 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`icon`** (text) — Lucide key (gotcha 3).
 
 <!-- dict:col:rules.display_order -->
-**`display_order`** (int, default 0) — card sort order. _Dev/prod drift:_ NOT NULL (dev) / nullable (prod).
+**`display_order`** (int, NOT NULL, default 0) — card sort order. _Dev/prod:_ prod tightened to match dev by migration 203 (0 NULLs on prod at audit) — **applied to BOTH envs 2026-07-27**.
 
 <!-- dict:col:rules.division_ids -->
 **`division_ids`** (`uuid[]`, nullable) — optional division-targeting; when set, the section shows only to viewers whose preferred division matches (untagged always shows). Written null when empty. (Tournament Plus targeting feature.)
 
 <!-- dict:col:rules.created_at -->
-**`created_at`** (timestamptz, **prod only**) — see gotcha 1; no code reads/writes it.
+**`created_at`** (timestamptz, nullable, default `now()`) — present in BOTH envs since migration 201 (gotcha 1); no code reads/writes it.
 
 **`rule_items` fields** (boilerplate `id` omitted):
 
@@ -819,10 +823,10 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`content`** (text, NOT NULL) — the bullet text (`<li>`).
 
 <!-- dict:col:rule_items.display_order -->
-**`display_order`** (int, default 0) — order within the section; also re-sorted client-side. _Dev/prod drift:_ NOT NULL (dev) / nullable (prod).
+**`display_order`** (int, NOT NULL, default 0) — order within the section; also re-sorted client-side. _Dev/prod:_ prod tightened by migration 203 — **applied to BOTH envs 2026-07-27**.
 
 <!-- dict:col:rule_items.created_at -->
-**`created_at`** (timestamptz, **prod only**) — gotcha 1.
+**`created_at`** (timestamptz, nullable, default `now()`) — both envs since migration 201 (gotcha 1).
 
 ---
 
@@ -849,10 +853,10 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`url`** (text, NOT NULL) — link target with magic-substring routing + storage side-effect (gotcha 2).
 
 <!-- dict:col:resources.display_order -->
-**`display_order`** (int, default 0) — list order. _Dev/prod drift:_ NOT NULL (dev) / nullable (prod).
+**`display_order`** (int, NOT NULL, default 0) — list order. _Dev/prod:_ prod tightened by migration 203 — **applied to BOTH envs 2026-07-27**.
 
 <!-- dict:col:resources.created_at -->
-**`created_at`** (timestamptz, **prod only**) — gotcha 1.
+**`created_at`** (timestamptz, nullable, default `now()`) — both envs since migration 201 (gotcha 1).
 
 ---
 
@@ -878,7 +882,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`title`** (text, NOT NULL) — post title / email subject. **`'Welcome!'` is a magic value** — the auto-seeded welcome post cloned with a tournament.
 
 <!-- dict:col:announcements.body -->
-**`body`** (text) — post/email content. _Dev/prod drift:_ dev nullable / prod NOT NULL (gotcha 5).
+**`body`** (text, NOT NULL) — post/email content. _Dev/prod:_ **RESOLVED (migration 202, dev 2026-07-27)** — dev tightened to match prod. Prod was correct: the endpoint already 400s on a blank body ([communications/route.ts:155](../../../app/api/admin/communications/route.ts#L155)) and every insert writes `data.body.trim()`, so there is no null-writing path and dev held zero nulls.
 
 <!-- dict:col:announcements.published_at -->
 **`published_at`** (timestamptz, NOT NULL) — post date; primary sort (after `pinned`). _Dev/prod drift:_ default differs (gotcha 5).
@@ -997,7 +1001,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 **`name`** (text, NOT NULL) — venue display name; composed into `games.location` as `${venue.name} - ${facility.name}`.
 
 <!-- dict:col:diamonds.address -->
-**`address`** (text) — street address. _Dev/prod drift:_ dev nullable / **prod NOT NULL** (gotcha 2).
+**`address`** (text) — street address. _Dev/prod:_ prod's NOT NULL is a **live failure path** — venue create writes `address ?? null` ([venues/route.ts:449](../../../app/api/admin/venues/route.ts#L449)) and the form treats address as optional, so **creating an address-less venue fails on prod**. Migration 202 loosens prod — **applied to BOTH envs 2026-07-27**.
 
 <!-- dict:col:diamonds.notes -->
 **`notes`** (text) — admin notes.
