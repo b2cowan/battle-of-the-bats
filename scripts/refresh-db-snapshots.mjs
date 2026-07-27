@@ -80,8 +80,13 @@ function loadEnv() {
 }
 loadEnv();
 
+// buildDrift is imported by the offline parity gate (check-schema-parity.mjs), which must run
+// credential-free (no network) — so the token is only required when this file is the entrypoint,
+// never merely on import.
+const isEntrypoint = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
-if (!TOKEN) {
+if (isEntrypoint && !TOKEN) {
   console.error('SUPABASE_ACCESS_TOKEN not set in .env.local');
   process.exit(1);
 }
@@ -558,7 +563,6 @@ async function main() {
 
 // Only refresh when run directly. buildDrift is imported by the offline parity gate, and an
 // import must never fire the Management API calls in main().
-const isEntrypoint = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isEntrypoint) {
   main().catch((e) => {
     console.error(e);
