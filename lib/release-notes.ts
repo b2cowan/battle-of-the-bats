@@ -44,6 +44,48 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-27',
+    title: 'A clearer tournament record page for coaches, plus registration and scheduling fixes',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Your tournament record page now shows your live standing once games start, and previews who else is registered before the schedule is out.',
+      },
+      {
+        category: 'new',
+        text: 'Add your whole schedule to your calendar in one tap — a snapshot, not a live sync, so re-tap it if the organizer reschedules a game.',
+      },
+      {
+        category: 'new',
+        text: 'Schedules now show the organization\'s real logo and let you tap a venue name for directions.',
+      },
+      {
+        category: 'improved',
+        text: 'Registration now tells you upfront that a free Coaches Portal account comes with it, with an easy opt-out if you\'re just there to follow along — and if something goes wrong partway through, the error message now tells you exactly what happened instead of implying it worked.',
+      },
+      {
+        category: 'improved',
+        text: 'Your tournament record page is now organized into four clear sections — status and payment, schedule, your team, and messages from the organizer — instead of one long scrolling list.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed the confirmation email so it links straight to your registration instead of a general list.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a timezone bug where tournament status and payment due dates could be off by a few hours in the evening.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a bug that silently blocked deleting a team once it had played a game.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed low-contrast text and missing borders on the error and page-not-found screens.',
+      },
+    ],
+  },
+  {
     date: '2026-07-26',
     title: 'The free Coach Portal gets a warmer new look',
     highlights: [
