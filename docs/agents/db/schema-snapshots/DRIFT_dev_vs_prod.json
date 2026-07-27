@@ -1,0 +1,205 @@
+{
+  "generated": "2026-07-27",
+  "total": 48,
+  "counts": {
+    "tables": 0,
+    "columns": 27,
+    "indexes": 7,
+    "constraints": 13,
+    "rls": 1
+  },
+  "items": [
+    {
+      "key": "check:only-prod:tournaments.tournaments_status_check",
+      "sig": ""
+    },
+    {
+      "key": "column:changed:announcements.body",
+      "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:changed:announcements.published_at",
+      "sig": "timestamp with time zone|timestamptz|NO|now() :: timestamp with time zone|timestamptz|NO|"
+    },
+    {
+      "key": "column:changed:diamonds.address",
+      "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:changed:divisions.display_order",
+      "sig": "integer|int4|NO|0 :: integer|int4|NO|"
+    },
+    {
+      "key": "column:changed:divisions.playoff_config",
+      "sig": "jsonb|jsonb|YES| :: jsonb|jsonb|YES|'{\"type\": \"single\", \"crossover\": \"standard\", \"hasThirdPlace\": false}'::jsonb"
+    },
+    {
+      "key": "column:changed:divisions.pool_count",
+      "sig": "integer|int4|YES| :: integer|int4|YES|1"
+    },
+    {
+      "key": "column:changed:divisions.requires_pool_selection",
+      "sig": "boolean|bool|NO|false :: boolean|bool|YES|false"
+    },
+    {
+      "key": "column:changed:games.is_playoff",
+      "sig": "boolean|bool|NO|false :: boolean|bool|YES|false"
+    },
+    {
+      "key": "column:changed:games.location",
+      "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:changed:resources.display_order",
+      "sig": "integer|int4|NO|0 :: integer|int4|YES|0"
+    },
+    {
+      "key": "column:changed:resources.id",
+      "sig": "uuid|uuid|NO|gen_random_uuid() :: uuid|uuid|NO|uuid_generate_v4()"
+    },
+    {
+      "key": "column:changed:rule_items.display_order",
+      "sig": "integer|int4|NO|0 :: integer|int4|YES|0"
+    },
+    {
+      "key": "column:changed:rule_items.id",
+      "sig": "uuid|uuid|NO|gen_random_uuid() :: uuid|uuid|NO|uuid_generate_v4()"
+    },
+    {
+      "key": "column:changed:rule_items.rule_id",
+      "sig": "uuid|uuid|NO| :: uuid|uuid|YES|"
+    },
+    {
+      "key": "column:changed:rules.display_order",
+      "sig": "integer|int4|NO|0 :: integer|int4|YES|0"
+    },
+    {
+      "key": "column:changed:rules.icon",
+      "sig": "text|text|YES| :: text|text|YES|'Shield'::text"
+    },
+    {
+      "key": "column:changed:rules.id",
+      "sig": "uuid|uuid|NO|gen_random_uuid() :: uuid|uuid|NO|uuid_generate_v4()"
+    },
+    {
+      "key": "column:changed:teams.coach",
+      "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:changed:teams.payment_status",
+      "sig": "text|text|NO|'paid'::text :: text|text|YES|'paid'::text"
+    },
+    {
+      "key": "column:changed:teams.registered_at",
+      "sig": "timestamp with time zone|timestamptz|NO|now() :: timestamp with time zone|timestamptz|YES|now()"
+    },
+    {
+      "key": "column:changed:teams.status",
+      "sig": "text|text|NO|'accepted'::text :: text|text|YES|'accepted'::text"
+    },
+    {
+      "key": "column:changed:tournaments.list_in_directory",
+      "sig": "boolean|bool|NO|true :: boolean|bool|NO|false"
+    },
+    {
+      "key": "column:changed:tournaments.slug",
+      "sig": "text|text|YES| :: text|text|NO|"
+    },
+    {
+      "key": "column:changed:tournaments.status",
+      "sig": "text|text|NO|'draft'::text :: text|text|NO|'completed'::text"
+    },
+    {
+      "key": "column:only-prod:resources.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rule_items.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-prod:rules.created_at",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:announcements.announcements_tournament_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:diamonds.diamonds_tournament_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:divisions.age_groups_tournament_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:games.games_age_group_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:games.games_tournament_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:teams.teams_tournament_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:announcements.fk_announcements_tournament",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:diamonds.fk_diamonds_tournament",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:divisions.fk_age_groups_tournament",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:games.fk_games_diamond",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:games.fk_games_tournament",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:teams.fk_teams_age_group",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-prod:teams.fk_teams_tournament",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practices_recurrence_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practices_schedule_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practices_season_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:league_practices_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:league_practices_recurrence_group_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:league_practices_season_id_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-prod:league_practices_team_id_idx",
+      "sig": ""
+    }
+  ]
+}

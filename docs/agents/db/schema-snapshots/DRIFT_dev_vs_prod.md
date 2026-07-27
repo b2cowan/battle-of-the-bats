@@ -2,14 +2,14 @@
 
 **Generated:** 2026-07-27 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 51 divergence(s)** across dev/prod.
+**⚠️ 48 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
 | Columns | 0 | 3 | 24 |
 | Indexes | 4 | 3 | 0 |
-| Constraints | 7 | 9 | — |
+| Constraints | 6 | 7 | — |
 | RLS / CHECK | 0 | 1 | 0 (RLS state) |
 
 ## Tables
@@ -70,22 +70,19 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (7)
+### Only in DEV (6)
 - `announcements.announcements_tournament_id_fkey`
 - `diamonds.diamonds_tournament_id_fkey`
 - `divisions.age_groups_tournament_id_fkey`
 - `games.games_age_group_id_fkey`
-- `games.games_away_team_id_fkey`
 - `games.games_tournament_id_fkey`
 - `teams.teams_tournament_id_fkey`
 
-### Only in PROD (9)
+### Only in PROD (7)
 - `announcements.fk_announcements_tournament`
 - `diamonds.fk_diamonds_tournament`
 - `divisions.fk_age_groups_tournament`
-- `games.fk_games_away_team`
 - `games.fk_games_diamond`
-- `games.fk_games_home_team`
 - `games.fk_games_tournament`
 - `teams.fk_teams_age_group`
 - `teams.fk_teams_tournament`

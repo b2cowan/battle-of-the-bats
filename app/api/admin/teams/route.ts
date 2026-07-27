@@ -656,7 +656,7 @@ export const DELETE = withObservability(async (req: Request) => {
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   try {
-    const { ids } = await req.json();
+    const { ids, force } = await req.json();
 
     // Look up the teams to verify org ownership (always — incl. owners) and tournament scope (scoped users)
     if (ids?.length) {
@@ -675,6 +675,47 @@ export const DELETE = withObservability(async (req: Request) => {
           const denied = scopeGuard(ctx, team.tournament_id);
           if (denied) return denied;
         }
+      }
+    }
+
+    // Deleting a team is destructive to SCHEDULE history, not just the roster row: every game
+    // the team played references it, and those rows are the OPPONENT's record of the fixture
+    // (and its score) too. Prod's FK was ON DELETE CASCADE until migration 200, so this
+    // endpoint silently destroyed scored games; the FK is now SET NULL in both environments,
+    // which preserves the game but strands it with an empty side. Neither outcome should be a
+    // surprise, so a team with games requires an explicit acknowledgement.
+    if (ids?.length) {
+      // ids reach a PostgREST filter STRING, so they are validated as UUIDs first — an
+      // unvalidated value here would be filter injection, not just a bad query.
+      const safeIds = (ids as unknown[]).filter(
+        (id): id is string =>
+          typeof id === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id),
+      );
+      if (safeIds.length !== ids.length) {
+        return new Response(JSON.stringify({ error: 'Invalid team id' }), { status: 400 });
+      }
+      const idList = safeIds.join(',');
+      const { data: linkedGames } = await supabaseAdmin
+        .from('games')
+        .select('id, home_team_id, away_team_id, home_score, away_score')
+        .or(`home_team_id.in.(${idList}),away_team_id.in.(${idList})`);
+
+      const affected = linkedGames ?? [];
+      if (affected.length > 0 && !force) {
+        const scored = affected.filter(g => g.home_score !== null || g.away_score !== null).length;
+        return new Response(
+          JSON.stringify({
+            error: 'TEAM_HAS_GAMES',
+            message:
+              `This team appears in ${affected.length} game${affected.length === 1 ? '' : 's'}` +
+              `${scored > 0 ? ` (${scored} with a recorded score)` : ''}. ` +
+              `Deleting it leaves those games without that side — the opponent's record and score are kept. ` +
+              `Remove or reassign the games first, or confirm to continue.`,
+            gameCount: affected.length,
+            scoredGameCount: scored,
+          }),
+          { status: 409, headers: { 'Content-Type': 'application/json' } },
+        );
       }
     }
 

@@ -37022,24 +37022,10 @@
       },
       {
         "table_name": "games",
-        "column_name": "away_team_id",
-        "foreign_table": "teams",
-        "foreign_column": "id",
-        "constraint_name": "fk_games_away_team"
-      },
-      {
-        "table_name": "games",
         "column_name": "diamond_id",
         "foreign_table": "diamonds",
         "foreign_column": "id",
         "constraint_name": "fk_games_diamond"
-      },
-      {
-        "table_name": "games",
-        "column_name": "home_team_id",
-        "foreign_table": "teams",
-        "foreign_column": "id",
-        "constraint_name": "fk_games_home_team"
       },
       {
         "table_name": "games",
@@ -37054,6 +37040,13 @@
         "foreign_table": "pool_slots",
         "foreign_column": "id",
         "constraint_name": "games_away_slot_id_fkey"
+      },
+      {
+        "table_name": "games",
+        "column_name": "away_team_id",
+        "foreign_table": "teams",
+        "foreign_column": "id",
+        "constraint_name": "games_away_team_id_fkey"
       },
       {
         "table_name": "games",
@@ -37871,14 +37864,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {

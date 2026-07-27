@@ -138,16 +138,24 @@ const SQL = {
     WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
     ORDER BY t.table_name, c.ordinal_position
   `,
+  // delete_rule / update_rule are captured because a foreign key's NAME says nothing about
+  // what it DOES. Found 2026-07-27: dev and prod both had `games_home_team_id_fkey`, but dev
+  // was SET NULL and prod was CASCADE — so deleting a team preserved its games on dev and
+  // silently DELETED them on prod. Identical names, opposite behaviour, and completely
+  // invisible to every check until these two columns were added.
   constraints: `
     SELECT tc.table_name, tc.constraint_name, tc.constraint_type, kcu.column_name,
            ccu.table_name  AS foreign_table,
-           ccu.column_name AS foreign_column
+           ccu.column_name AS foreign_column,
+           rc.delete_rule, rc.update_rule
     FROM information_schema.table_constraints tc
     LEFT JOIN information_schema.key_column_usage kcu
       ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
     LEFT JOIN information_schema.constraint_column_usage ccu
       ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
      AND tc.constraint_type = 'FOREIGN KEY'
+    LEFT JOIN information_schema.referential_constraints rc
+      ON rc.constraint_name = tc.constraint_name AND rc.constraint_schema = tc.table_schema
     WHERE tc.table_schema = 'public'
       AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'FOREIGN KEY')
     ORDER BY tc.table_name, tc.constraint_name, kcu.ordinal_position
@@ -207,6 +215,8 @@ function shapeConstraintsSplit(rows) {
     column_name: r.column_name,
     foreign_table: r.foreign_table ?? null,
     foreign_column: r.foreign_column ?? null,
+    delete_rule: r.delete_rule ?? null,
+    update_rule: r.update_rule ?? null,
   }));
 }
 function shapeForeignKeysCombined(rows) {
@@ -311,6 +321,25 @@ export function buildDrift(raw) {
   const prodCon = new Set(prod.constraints.map(conKey));
   const con = diffSets(devCon, prodCon);
 
+  // A foreign key's NAME says nothing about what it DOES. Compare the referential ACTION for
+  // every FK present in both under the same name — dev and prod both had
+  // `games_home_team_id_fkey`, but dev was SET NULL and prod CASCADE, so deleting a team kept
+  // its games on dev and silently DELETED them on prod. Name-only comparison called that parity.
+  const fkAction = (rows) =>
+    new Map(
+      rows
+        .filter((c) => c.constraint_type === 'FOREIGN KEY' && c.delete_rule)
+        .map((c) => [conKey(c), `on delete ${c.delete_rule} / on update ${c.update_rule}`]),
+    );
+  const devFk = fkAction(dev.constraints);
+  const prodFk = fkAction(prod.constraints);
+  const fkChanged = [];
+  for (const [k, d] of devFk) {
+    const p = prodFk.get(k);
+    if (p !== undefined && p !== d) fkChanged.push({ key: k, dev: d, prod: p });
+  }
+  fkChanged.sort((a, b) => a.key.localeCompare(b.key));
+
   // rls: RLS state per table + CHECK clauses
   const rlsState = (rows) =>
     new Map(rows.filter((r) => r.kind === 'RLS').map((r) => [r.table_name, r.detail]));
@@ -332,7 +361,7 @@ export function buildDrift(raw) {
     tables: tbl.onlyDev.length + tbl.onlyProd.length,
     columns: col.onlyDev.length + col.onlyProd.length + colChanged.length,
     indexes: idx.onlyDev.length + idx.onlyProd.length + idxChanged.length,
-    constraints: con.onlyDev.length + con.onlyProd.length,
+    constraints: con.onlyDev.length + con.onlyProd.length + fkChanged.length,
     rls: rlsChanged.length + chk.onlyDev.length + chk.onlyProd.length,
   };
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
@@ -354,6 +383,7 @@ export function buildDrift(raw) {
   for (const i of idxChanged) add(`index:changed:${i.key}`, `${i.dev} :: ${i.prod}`);
   for (const c of con.onlyDev) add(`constraint:only-dev:${c}`);
   for (const c of con.onlyProd) add(`constraint:only-prod:${c}`);
+  for (const f of fkChanged) add(`fk-action:changed:${f.key}`, `${f.dev} :: ${f.prod}`);
   for (const r of rlsChanged) add(`rls:changed:${r.key}`, `${r.dev} :: ${r.prod}`);
   for (const c of chk.onlyDev) add(`check:only-dev:${c}`);
   for (const c of chk.onlyProd) add(`check:only-prod:${c}`);
