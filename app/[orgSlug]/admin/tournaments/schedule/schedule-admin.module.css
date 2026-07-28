@@ -2973,6 +2973,16 @@
   color: var(--logic-lime);
 }
 
+/* Deliberate duplicate of the keyframes in ../../admin-common.module.css.
+   CSS Modules scope @keyframes per file and rewrite animation-name to the
+   local scoped identifier, so a cross-module reference resolves to nothing
+   and the animation silently no-ops. `composes` is non-transitive and there
+   is no shared non-module stylesheet both files reach — duplicating is the fix. */
+@keyframes adminSlideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 /* Slim action bar — appears below the row when editing is active */
 .scoreActionBar {
   display: flex;
