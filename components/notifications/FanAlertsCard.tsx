@@ -29,11 +29,22 @@ export interface FanCardData {
   eventNews: boolean;
   /** Names of followed events whose plan doesn't offer fan alerts (the honest gate). */
   noAlertEvents: string[];
+  /** Followed teams the reader also COACHES (B2.2) — drives the lead line. Empty for a pure fan. */
+  coached: { teamName: string; tournamentName: string }[];
+}
+
+/** "A", "A and B", "A, B and C" — plain English, not a comma-spliced machine list. */
+function nameList(names: string[]): string {
+  if (names.length <= 1) return names[0] ?? '';
+  if (names.length === 2) return `${names[0]} and ${names[1]}`;
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
 const ROWS: { key: keyof FanAlertPrefs; label: string; blurb: string }[] = [
   { key: 'gameAlerts', label: 'Game alerts', blurb: 'Live scores and finals for your teams' },
-  { key: 'eventNews', label: 'Event news', blurb: 'Announcements from their events' },
+  // B2.3: schedule changes ride this switch (Business Decisions Log 2026-07-27 ◆Q). The old
+  // blurb — "Announcements from their events" — undersold what turning it off costs you.
+  { key: 'eventNews', label: 'Event news', blurb: 'Schedule changes, cancellations and announcements' },
 ];
 
 export default function FanAlertsCard({ data }: { data: FanCardData }) {
@@ -78,6 +89,32 @@ export default function FanAlertsCard({ data }: { data: FanCardData }) {
       </div>
       <div className={cardStyles.cardBody}>
         {error && <div className={cardStyles.errorBanner}><AlertCircle size={14} />{error}</div>}
+        {/* B2.2 — a coach reading a card headed "the teams you follow" has no way to know their
+            OWN team is in that list, or why they never switched it on. Name the team, name the
+            event, and stop; the mechanism is not their problem. */}
+        {data.coached.length > 0 && (
+          <p className={styles.coachLead}>
+            <span className={styles.coachDot} aria-hidden />
+            {/* States the RULE, not a history. An earlier draft said "you were followed
+                automatically when your team was accepted" — but the follow is seeded when the
+                coach opens an accepted record, and a coach who had already followed their own
+                team by hand would have been told it was automatic. Neither claim is one the
+                card can vouch for; the rule is true either way. */}
+            {data.coached.length === 1 ? (
+              <span>
+                Includes <strong>{data.coached[0].teamName}</strong> at{' '}
+                <strong>{data.coached[0].tournamentName}</strong> — your own team. Coaches are
+                followed to their own team automatically, so there was nothing to switch on.
+              </span>
+            ) : (
+              <span>
+                Includes your own teams — <strong>{nameList(data.coached.map(c => c.teamName))}</strong>.
+                Coaches are followed to their own team automatically, so there was nothing to
+                switch on.
+              </span>
+            )}
+          </p>
+        )}
         {ROWS.map(row => (
           <div key={row.key} className={styles.row}>
             <div className={styles.rowText}>
@@ -101,8 +138,8 @@ export default function FanAlertsCard({ data }: { data: FanCardData }) {
             <AlertCircle size={13} aria-hidden />
             <span>
               <strong>{data.noAlertEvents.join(', ')}</strong>
-              {data.noAlertEvents.length === 1 ? ' doesn’t' : ' don’t'} offer alerts — following and
-              live scores still work there.
+              {data.noAlertEvents.length === 1 ? ' doesn’t' : ' don’t'} send phone alerts — following,
+              live scores and schedule updates in the app all still work there.
             </span>
           </p>
         )}

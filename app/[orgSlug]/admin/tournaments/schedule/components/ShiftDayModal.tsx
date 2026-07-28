@@ -192,6 +192,10 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
   const [notifyOn, setNotifyOn] = useState(true);
   const [posting, setPosting] = useState(false);
   const [postError, setPostError] = useState<string | null>(null);
+  // B2.3: the automatic "your game moved" notices this shift queued. If the organizer completes
+  // the announce step, those stand down — their own words reach the teams instead, so a rain
+  // delay is one buzz and not two. Skipping the step leaves the automatic notices to send.
+  const [noticeIds, setNoticeIds] = useState<string[]>([]);
 
   const shiftIds = useMemo(() => [...included].filter((id) => !cancelling.has(id)), [included, cancelling]);
   const cancelIds = useMemo(() => [...included].filter((id) => cancelling.has(id)), [included, cancelling]);
@@ -269,6 +273,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
       if (!res.ok) throw new Error(data?.error ?? 'Could not adjust the games.');
       const r = { shifted: data.shifted ?? shiftIds.length, cancelled: data.cancelled ?? cancelIds.length };
       setResult(r);
+      setNoticeIds(Array.isArray(data.noticeIds) ? data.noticeIds : []);
       const draft = buildAnnouncementDraft(r.shifted, r.cancelled, shiftMinutes, dayContextPhrase(selectedDay, today));
       setAnnTitle(draft.title);
       setAnnBody(draft.body);
@@ -300,6 +305,9 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
             // Notify intent → fan push (Plus only) + staff/coach push (all tiers, free operational).
             channelPush: notifyOn && canPushFans,
             notifyStaff: notifyOn,
+            // Only a message that actually reaches phones replaces ours. A site-only post
+            // (notify off) leaves the automatic notice to do its job.
+            supersedeNoticeIds: notifyOn ? noticeIds : [],
           },
         }),
       });

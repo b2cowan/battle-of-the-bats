@@ -19,7 +19,8 @@ import { ArrowLeft, BookOpen, CalendarClock, CalendarDays, ChevronDown, Clipboar
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import TournamentStatusBlock from '@/components/coaches/TournamentStatusBlock';
 import TeamHQ from '@/components/coaches/TeamHQ';
-import CoachLiveSchedule, { type CoachScheduleGame } from '@/components/coaches/CoachLiveSchedule';
+import CoachLiveSchedule, { type CoachScheduleGame, SCHEDULE_ALERT_SLOT_ID } from '@/components/coaches/CoachLiveSchedule';
+import CoachTeamAutoFollow from '@/components/coaches/CoachTeamAutoFollow';
 import TournamentRosterSubmit from '@/components/coaches/TournamentRosterSubmit';
 import HeadCoachEditor from '@/components/coaches/HeadCoachEditor';
 import ScopeCeilingInterest from '@/components/coaches/ScopeCeilingInterest';
@@ -554,6 +555,21 @@ export default async function CoachTournamentRecord({
 
   return (
     <>
+      {/* B2.2 ◆V1 — an accepted coach becomes a RECIPIENT here, not when the event goes live.
+          Renders nothing; it only seeds the follow that puts them on the schedule-alert list.
+          Mounted independently of the live schedule on purpose — tying the two together is what
+          left coaches unreachable during the run-up, when most rearranging happens. */}
+      {team.status === 'accepted' && org?.slug && tournament?.slug && (
+        <CoachTeamAutoFollow
+          orgSlug={org.slug}
+          tournamentSlug={tournament.slug}
+          teamId={teamId}
+          teamName={team.name}
+          teamDivisionId={team.division_id}
+          enabled
+        />
+      )}
+
       {/* A3 quick-jump: folded into the sticky chrome directly under the A2 tab row. */}
       {hideHeader && !isRejected && <CoachRecordJumpNav items={jumpItems} />}
 
@@ -674,6 +690,14 @@ export default async function CoachTournamentRecord({
             pending). The old second Schedule section + hero today-card merged here. ──── */}
         {!isRejected && (
           <section id="schedule" className={`${styles.section} ${styles.zone}`}>
+            {/* B2.1 (owner ruling 2026-07-28, mockup option B): the "Schedule updated" bar is
+                hoisted ABOVE the zone heading so a change is the first thing in the coach's
+                path on game day, rather than sitting under the standings snapshot and the
+                calendar button. CoachLiveSchedule portals into this slot and keeps sole
+                ownership of the 30s poll. Empty div = zero height (the zone is block flow,
+                not a gapped flex container), so nothing shifts when there is no change. */}
+            {showLiveBridge && <div id={SCHEDULE_ALERT_SLOT_ID} />}
+
             <ZoneHead icon={<CalendarDays size={12} aria-hidden />} eyebrow="Your Games" title="Schedule" />
 
             {/* B1.6 (◆H1) — "Where you stand" leads the zone once there's something to
@@ -699,9 +723,20 @@ export default async function CoachTournamentRecord({
                 tournamentSlug={tournament?.slug ?? ''}
                 teamId={teamId}
                 teamName={team.name}
-                teamDivisionId={team.division_id}
                 live={canLinkPublic}
-                pollEnabled={canLinkPublic && coachPhase === 'game_day'}
+                // B2.1 window (owner ruling 2026-07-28): detection starts at SCHEDULE
+                // PUBLICATION, not game day. This whole branch already requires a published
+                // division schedule (showLiveBridge), so the only extra gate is "the event
+                // isn't over" — a finished event can't be rescheduled and must not poll.
+                // The run-up used to be silent in-app: a game moved the night before simply
+                // rendered correctly on next load, with no "was 2:00" comparison.
+                pollEnabled={canLinkPublic && !isResultPhase}
+                // Game day keeps 30s. The run-up polls at 2 minutes: widening the window
+                // multiplies this across every coach's record page for every day before the
+                // event, and a schedule change during the run-up is not a seconds-matter
+                // event the way a game-day move is.
+                pollIntervalMs={coachPhase === 'game_day' ? 30_000 : 120_000}
+                alertSlotId={SCHEDULE_ALERT_SLOT_ID}
                 isResult={isResultPhase}
                 initialGames={initialGames}
               />

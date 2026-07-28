@@ -267,7 +267,7 @@ export default function FanNotificationBell({ variant = 'icon' }: { variant?: 'i
                   />
                   <Row
                     label="Event news"
-                    desc="Rain delays & day-of updates"
+                    desc="Schedule changes, rain delays & day-of updates"
                     on={optimistic.eventNews ?? (ready && prefs.prefs.eventNews)}
                     disabled={busy || !ready}
                     onToggle={() => ready && applyPref('eventNews', !prefs.prefs.eventNews)}

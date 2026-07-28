@@ -2,6 +2,7 @@ import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { getOrganizationBySlug } from './db';
 import { getFollowedTeamsForUser } from './fan-follows';
+import { getCoachedRegistrationTeamIds } from './basic-coach-teams';
 import { hasPlanFeature } from './plan-features';
 
 /**
@@ -71,17 +72,34 @@ export async function filterUsersWithCategoryOn(
   return userIds.filter(id => !off.has(id));
 }
 
+/** A followed team the user also COACHES — drives the card's coach-aware lead line (B2.2). */
+export interface CoachedFollowedTeam {
+  teamName: string;
+  tournamentName: string;
+}
+
 /**
  * Everything the "Followed teams" card needs, in one call: the user's prefs,
  * how many teams they follow, and which followed events don't offer alerts
  * (the honest-gate line — free-tier orgs lack `fan_score_alerts`). Domain
  * logic lives here, not in the page, so future surfaces (bell, emails) don't
  * re-derive it. Returns null when the user follows nothing (no card to show).
+ *
+ * B2.2: also reports which of those follows are the user's OWN teams. A coach reading a card
+ * headed "all the teams you follow" has no way to know their own team is in the list, how it
+ * got there, or why they can't find a switch they never touched — the follow is seeded for them
+ * on acceptance.
+ *
+ * "Coached" is decided by the LINK TABLE alone (an explicit basic-coach → registration link).
+ * An email-matched but unclaimed registration is deliberately NOT counted: it is not yet the
+ * reader's team, and the auto-follow can only ever fire on a record they already have linked
+ * access to, so the two agree by construction.
  */
 export async function getFanAlertOverview(userId: string): Promise<{
   teamCount: number;
   prefs: FanAlertPrefs;
   noAlertEvents: string[];
+  coached: CoachedFollowedTeam[];
 } | null> {
   const [follows, prefs] = await Promise.all([
     getFollowedTeamsForUser(userId),
@@ -90,7 +108,15 @@ export async function getFanAlertOverview(userId: string): Promise<{
   if (follows.length === 0) return null;
 
   const uniqueOrgSlugs = Array.from(new Set(follows.map(f => f.orgSlug)));
-  const orgs = await Promise.all(uniqueOrgSlugs.map(slug => getOrganizationBySlug(slug)));
+  const [orgs, coachedIds] = await Promise.all([
+    Promise.all(uniqueOrgSlugs.map(slug => getOrganizationBySlug(slug))),
+    // Never let a coach-lookup failure blank the whole card — the switches and the honest gate
+    // line matter more than the lead line. Degrade to "no coached teams", not to no card.
+    getCoachedRegistrationTeamIds({ userId }).catch(err => {
+      console.error('[fan-alert-prefs] coached-team lookup failed; omitting the lead line:', err);
+      return new Set<string>();
+    }),
+  ]);
   const gatedOrgs = new Set(
     orgs
       .filter((org): org is NonNullable<typeof org> => !!org && !hasPlanFeature(org.planId, 'fan_score_alerts'))
@@ -100,9 +126,19 @@ export async function getFanAlertOverview(userId: string): Promise<{
     new Set(follows.filter(f => gatedOrgs.has(f.orgSlug)).map(f => f.tournamentName)),
   );
 
+  // De-duped by team id: one team appears once even if the follow list ever repeats it.
+  const seenCoached = new Set<string>();
+  const coached: CoachedFollowedTeam[] = [];
+  for (const f of follows) {
+    if (!coachedIds.has(f.teamId) || seenCoached.has(f.teamId)) continue;
+    seenCoached.add(f.teamId);
+    coached.push({ teamName: f.teamName, tournamentName: f.tournamentName });
+  }
+
   return {
     teamCount: new Set(follows.map(f => f.teamId)).size,
     prefs,
     noAlertEvents,
+    coached,
   };
 }

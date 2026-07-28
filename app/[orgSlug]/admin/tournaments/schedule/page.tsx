@@ -188,6 +188,8 @@ export default function AdminSchedulePage() {
   const canNotify = currentOrg ? hasPlanFeature(currentOrg.planId, 'schedule_notification') : false;
   // Bulk "shift the day" (Rain delay) is a Tournament Plus automation (2026-07-07 decision).
   const canRainDelay = currentOrg ? hasPlanFeature(currentOrg.planId, 'bulk_reschedule') : false;
+  // B2.3: whether moving a published game actually reaches anyone's phone.
+  const canAlertFollowers = currentOrg ? hasPlanFeature(currentOrg.planId, 'fan_score_alerts') : false;
   const scheduleToday = tournamentToday();
   // Rain delay lives in the Tools menu whenever the event has upcoming (still-scheduled) games.
   const hasUpcomingGames = games.some(g => g.status === 'scheduled' && !!g.date && g.date >= scheduleToday);
@@ -2229,6 +2231,44 @@ export default function AdminSchedulePage() {
                   </div>
                 </div>
               )}
+
+              {/* B2.3 — moving a PUBLISHED game is an outward-facing act, so say so before
+                  they save. Edit only (a new game announces nothing), scheduled only (a played
+                  game is bookkeeping), published only (a draft schedule has told nobody
+                  anything yet). The free-plan variant states the limit plainly; this is the one
+                  surface where a plan sentence belongs, because the organizer IS the party who
+                  could buy it — the alert itself never carries an ask. */}
+              {(() => {
+                if (modal !== 'edit' || !editing) return null;
+                if (editing.status && editing.status !== 'scheduled') return null;
+                const division = divisions.find(d => d.id === form.divisionId);
+                if (division?.scheduleVisibility !== 'published') return null;
+
+                const named = [form.homeTeamId, form.awayTeamId]
+                  .map(tid => (tid ? teams.find(t => t.id === tid)?.name : null))
+                  .filter((n): n is string => !!n);
+                const who = named.length === 2 ? `${named[0]} and ${named[1]}` : named[0] ?? 'the teams in this game';
+
+                return (
+                  <div style={{
+                    display: 'flex', gap: '0.55rem', alignItems: 'flex-start',
+                    margin: '0 0 1rem', padding: '0.7rem 0.875rem', borderRadius: '2px',
+                    fontSize: '0.8rem', lineHeight: 1.45, color: 'var(--white-60)',
+                    background: canAlertFollowers ? 'rgba(var(--warning-rgb), 0.10)' : 'var(--white-5)',
+                    borderLeft: `2px solid ${canAlertFollowers ? 'var(--warning)' : 'var(--white-20)'}`,
+                  }}>
+                    <span aria-hidden style={{
+                      width: '6px', height: '6px', borderRadius: '50%', marginTop: '0.45rem', flex: 'none',
+                      background: canAlertFollowers ? 'var(--warning)' : 'var(--white-30)',
+                    }} />
+                    {canAlertFollowers ? (
+                      <span>This schedule is published. Saving alerts <strong style={{ color: 'var(--white-85)' }}>{who}</strong> followers.</span>
+                    ) : (
+                      <span>Teams see this change in the app. <strong style={{ color: 'var(--white-85)' }}>Phone alerts are a Tournament Plus feature</strong> — on this plan, nobody gets a notification.</span>
+                    )}
+                  </div>
+                );
+              })()}
 
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost btn-data" onClick={() => setModal(null)}>Cancel</button>

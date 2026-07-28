@@ -358,6 +358,47 @@ export async function notifyFansForChampions(tournamentId: string, headline?: st
 }
 
 /**
+ * Fan push fan-out for a SCHEDULE CHANGE to one team's game(s) — Free Coach Portal B2.3.
+ * Scoped to the followers of ONE team (coach and families alike: a free coach's own team is
+ * auto-followed at the account level, so they ride this same pipeline rather than a parallel
+ * coach-only channel — Business Decisions Log 2026-07-27 ◆Q).
+ *
+ * Rides the event-news category ("rain delays & day-of updates" — the switch already promises
+ * exactly this) and the existing `fan_score_alerts` plan gate inside fanPushContext, so a free
+ * organizer's event sends nothing at all. That is stated honestly to the follower elsewhere; it
+ * is NEVER an upgrade prompt, because the recipient is not the party who could buy it.
+ *
+ * `title`/`body` are composed by the caller (lib/schedule-change-notices.ts) from the batched
+ * queue; the deep link is built here from the tournament/org slugs the gate already resolved —
+ * a single change opens that game, a batch opens the schedule. Fire-and-forget: never throws.
+ */
+export async function notifyFansForScheduleChange(
+  tournamentId: string,
+  teamId: string,
+  message: { title: string; body: string; gameId?: string | null },
+): Promise<{ sent: number; failed: number }> {
+  try {
+    const ctx = await fanPushContext(tournamentId);
+    if (!ctx) return { sent: 0, failed: 0 };
+
+    const targets = await mergedTargets(ctx.tournament.id, 'event_news', [teamId]);
+    if (targets.length === 0) return { sent: 0, failed: 0 };
+
+    const base = `/${ctx.org.slug}/${ctx.tournament.slug}/schedule`;
+    const link = message.gameId ? `${base}/${message.gameId}` : base;
+
+    return await sendToTargets(
+      targets,
+      { title: message.title, body: message.body, link, icon: ctx.icon },
+      'schedule-change',
+    );
+  } catch (err) {
+    console.error('[fan-notify] notifyFansForScheduleChange error:', err);
+    return { sent: 0, failed: 0 };
+  }
+}
+
+/**
  * Fan push fan-out for an organizer ANNOUNCEMENT (e.g. a rain-delay / day-of notice) —
  * one push to every fan following ANY team in the tournament. Fired when an organizer
  * posts an announcement with the "push to fans" channel selected

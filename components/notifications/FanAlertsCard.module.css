@@ -12,6 +12,33 @@
   border: 1px solid rgba(var(--home-olive-rgb), 0.35);
 }
 
+/* ── Coach lead line (B2.2) ──────────────────────────────────────────────────────
+   Sits ABOVE the switches: it answers "why am I getting these?" before the reader
+   reaches the controls. Full ink (not the dim note register) because it is the
+   card's most load-bearing sentence for a coach, not a footnote. */
+
+.coachLead {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid var(--home-line);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+}
+.coachLead strong { color: var(--home-ink); font-weight: 650; }
+
+.coachDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  margin-top: 0.45rem;
+  border-radius: 50%;
+  background: var(--home-olive);
+}
+
 /* ── Switch rows ─────────────────────────────────────────────────────────────── */
 
 .row {

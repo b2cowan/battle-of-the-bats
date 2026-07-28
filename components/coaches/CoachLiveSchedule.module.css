@@ -13,6 +13,57 @@
 /* (The "Highlight my team" follow controls were removed 2026-07-27 — the coach's team
    is auto-highlighted on the public schedule; see the seeding effect in the component.) */
 
+/* ── B2.1 schedule-change notice ──────────────────────────────────────────────
+   A SERVICE message: what changed, and nothing else. No CTA, no upgrade prompt, on
+   any plan (pressure ladder, BUSINESS_DECISIONS.md 2026-07-27). Amber via --warning,
+   which the coach warm gate already remaps to --home-amber, so this is theme-correct
+   in both skins without a single literal. The whole bar is the dismiss target. */
+.changeBar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  width: 100%;
+  margin: 0;
+  padding: 0.7rem 0.9rem;
+  text-align: left;
+  color: var(--white);
+  background: rgba(var(--warning-rgb), 0.10);
+  border: 1px solid rgba(var(--warning-rgb), 0.55);
+  border-radius: var(--radius);
+  cursor: pointer;
+  font: inherit;
+  transition: background 0.15s;
+}
+
+.changeBar:hover {
+  background: rgba(var(--warning-rgb), 0.16);
+}
+
+.changeTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--warning);
+  font-family: var(--font-data, monospace);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.changeBody {
+  color: var(--white);
+  font-size: 0.88rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.changeMeta {
+  color: var(--white-45);
+  font-size: 0.72rem;
+}
+
 /* ── Game list ────────────────────────────────────────────────────────────── */
 .list {
   display: flex;
@@ -31,6 +82,22 @@
   border-radius: var(--radius);
   box-shadow: var(--highlight-top);
   font-size: 0.85rem;
+}
+
+/* B2.1 — the row that moved. Border only (never a fill): the row still has to read as a
+   normal game a coach can tap through to, just one carrying a correction. */
+.rowChanged {
+  border-color: rgba(var(--warning-rgb), 0.55);
+}
+
+/* "was 2:00 p.m. at Diamond 2" — outlives dismissing the bar. The bar is the
+   interruption; this is the record, and it's what a coach checks twice. */
+.rowWas {
+  flex: 1 0 100%;
+  margin: 0;
+  color: var(--warning);
+  font-size: 0.74rem;
+  font-weight: 600;
 }
 
 /* (B1.2 retired `a.rowLink` — the row card is no longer an anchor. Its hover/active

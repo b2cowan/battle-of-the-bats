@@ -8,6 +8,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { Communication } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { notifyFansForAnnouncement } from '@/lib/fan-notify';
+import { supersedeScheduleChangeNotices } from '@/lib/schedule-change-notices';
 import { notify } from '@/lib/notify';
 
 // Free-tier email volume guard (ratified 2026-06-22). Basic all-team announcements are
@@ -292,6 +293,20 @@ export const POST = withObservability(async (req: Request) => {
           link: pushTournament?.slug ? `/${ctx.org.slug}/${pushTournament.slug}` : undefined,
           excludeUserIds: [ctx.user.id],
         });
+      }
+
+      // B2.3 — the rain-delay hand-off passes the notice ids its shift just queued. The
+      // organizer has now said it in their own words, so the automatic "your game moved" push
+      // for those same games stands down: one buzz for one rain delay, not two. Only ids the
+      // reschedule itself created are touched, so an unrelated pending change can't be swallowed.
+      // The tournament id is passed so the update is scoped to it: the id list is
+      // client-supplied, and only `data.tournamentId` has been scope-checked against this
+      // caller's org above. Ids belonging to another org's tournament must not match.
+      if (Array.isArray(data.supersedeNoticeIds) && data.supersedeNoticeIds.length > 0) {
+        await supersedeScheduleChangeNotices(
+          data.tournamentId,
+          data.supersedeNoticeIds.filter((v: unknown): v is string => typeof v === 'string'),
+        );
       }
 
       // Send emails if the email channel is selected

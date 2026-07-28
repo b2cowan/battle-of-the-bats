@@ -7,6 +7,11 @@ import { notify } from '@/lib/notify';
 import { notifyFansForPlayoff } from '@/lib/fan-notify';
 import { planBulkReschedule } from '@/lib/schedule-shift';
 import { syncGameDayRemindersAfterReschedule } from '@/lib/game-day-reminders';
+import {
+  recordGameScheduleChanges,
+  ORGANIZER_ANNOUNCE_HOLD_MINUTES,
+  type GameScheduleSnapshot,
+} from '@/lib/schedule-change-notices';
 import { captureError, withObservability } from '@/lib/observability';
 import {
   applyDivisionRoundRobinDeleteScope,
@@ -46,6 +51,91 @@ async function isTournamentLocked(tournamentId: string): Promise<boolean> {
  * now()), so a later bracket edit / regenerate / concurrent save never re-blasts. Only
  * the write that wins the flip sends. Fire-and-forget — never throws.
  */
+/**
+ * The columns a schedule change is measured on, plus what it takes to decide who hears about
+ * it. Read immediately before and after a single-game mutation so the diff is against what was
+ * actually in the row, never against what the client believed.
+ */
+const SCHEDULE_SNAPSHOT_COLUMNS =
+  'game_date, game_time, location, status, division_id, home_team_id, away_team_id';
+
+interface ScheduleSnapshotRow {
+  game_date: string | null;
+  game_time: string | null;
+  location: string | null;
+  status: string | null;
+  division_id: string | null;
+  home_team_id: string | null;
+  away_team_id: string | null;
+}
+
+async function readScheduleSnapshot(gameId: string): Promise<ScheduleSnapshotRow | null> {
+  const { data } = await supabaseAdmin
+    .from('games')
+    .select(SCHEDULE_SNAPSHOT_COLUMNS)
+    .eq('id', gameId)
+    .maybeSingle();
+  return (data as ScheduleSnapshotRow | null) ?? null;
+}
+
+const toSnapshot = (row: ScheduleSnapshotRow): GameScheduleSnapshot => ({
+  date: row.game_date, time: row.game_time, location: row.location, status: row.status,
+});
+
+/**
+ * B2.3 — a single-game schedule edit used to notify NOBODY: not the coach, not the family who
+ * deliberately followed the team and turned alerts on. Queue the change for the batched
+ * per-team push, and (◆S1) bring the "your first game is tomorrow" reminder email in line with
+ * the new time — it already existed but was only ever called from the bulk tool, so a
+ * hand-moved game left it announcing a time that was no longer true.
+ *
+ * Both halves inherit the publish gate inside recordGameScheduleChanges: a draft schedule tells
+ * nobody anything, because nobody has been shown those times yet. Fire-and-forget — a
+ * notification hiccup must never affect the edit that already succeeded.
+ */
+async function announceScheduleChange(
+  org: { id: string; contactEmail?: string | null },
+  tournamentId: string,
+  gameId: string,
+  before: ScheduleSnapshotRow,
+): Promise<void> {
+  try {
+    // Read the committed state, not the requested one — the message must describe what is
+    // actually in the row. Inside this try/catch on purpose: the edit has already committed, so
+    // nothing after this point may turn a successful save into a 500.
+    const after = await readScheduleSnapshot(gameId);
+    if (!after) return;
+
+    const { affectedTeamIds } = await recordGameScheduleChanges({
+      orgId: org.id,
+      tournamentId,
+      changes: [{
+        gameId,
+        divisionId: after.division_id ?? before.division_id,
+        homeTeamId: after.home_team_id,
+        awayTeamId: after.away_team_id,
+        beforeHomeTeamId: before.home_team_id,
+        beforeAwayTeamId: before.away_team_id,
+        before: toSnapshot(before),
+        after: toSnapshot(after),
+      }],
+    });
+    if (affectedTeamIds.length === 0) return;
+
+    // ◆S1 — fire-and-forget, matching the bulk path. This makes per-team Resend round trips
+    // with no client-side timeout; awaiting it would hang an ordinary "Save game" on a third
+    // party's response time. The queue write above IS awaited, because that is the feature.
+    void syncGameDayRemindersAfterReschedule({
+      orgId: org.id,
+      orgContactEmail: org.contactEmail ?? null,
+      tournamentId,
+      affectedTeamIds,
+    }).catch((e) => console.error('[games] game-day reminder re-sync failed (non-fatal):', e));
+  } catch (err) {
+    console.error('[games] schedule-change announce failed (non-fatal):', err);
+  }
+}
+
 async function announcePlayoffsIfFirstTime(
   tournamentId: string,
   org: { id: string; slug: string },
@@ -676,7 +766,7 @@ export const PATCH = withObservability(async (req: Request) => {
 
       const { data: gameRows, error: loadErr } = await supabaseAdmin
         .from('games')
-        .select('id, status, game_date, game_time, is_playoff, bracket_code, home_placeholder, away_placeholder, home_team_id, away_team_id')
+        .select('id, status, game_date, game_time, is_playoff, bracket_code, home_placeholder, away_placeholder, home_team_id, away_team_id, division_id')
         .eq('tournament_id', bulkTournamentId);
       if (loadErr) throw loadErr;
 
@@ -740,6 +830,58 @@ export const PATCH = withObservability(async (req: Request) => {
         affectedTeamIds,
       }).catch((e) => console.error('[games] game-day reminder re-sync failed (non-fatal):', e));
 
+      // B2.3 — queue the same per-team schedule-change notices the single-game path raises, so a
+      // shift the organizer never announces still reaches the teams. The ids go back to the
+      // caller: if they DO complete the announce step, those notices stand down (their words
+      // win) and a rain delay stays one buzz instead of two.
+      // Compose from the COMMITTED state, not the planned one. The reschedule RPC guards each
+      // row on `status = 'scheduled'`, so a game scored by a volunteer between the plan and the
+      // write is silently skipped — announcing the planned time would tell a team a game moved
+      // when the database says it never did.
+      const { data: settledRows } = await supabaseAdmin
+        .from('games')
+        .select('id, game_date, game_time, status, division_id, home_team_id, away_team_id')
+        .in('id', Array.from(changedGameIds));
+      const settled = new Map(
+        ((settledRows ?? []) as Array<{
+          id: string; game_date: string | null; game_time: string | null; status: string | null;
+          division_id: string | null; home_team_id: string | null; away_team_id: string | null;
+        }>).map((g) => [g.id, g]),
+      );
+
+      const { noticeIds } = await recordGameScheduleChanges({
+        orgId: ctx.org.id,
+        tournamentId: bulkTournamentId,
+        // Reserve the organizer's announce window. Without it the urgent lane can fire during a
+        // same-day rain delay before they finish composing, and a follower gets two messages
+        // about one delay — the automatic notice AND the organizer's own.
+        holdMinutes: ORGANIZER_ANNOUNCE_HOLD_MINUTES,
+        changes: allGames
+          .filter((g) => changedGameIds.has(g.id))
+          .flatMap((g) => {
+            const now = settled.get(g.id);
+            if (!now) return [];
+            const before: GameScheduleSnapshot = {
+              date: g.date, time: g.time, location: null, status: g.status,
+            };
+            return [{
+              gameId: g.id,
+              divisionId: now.division_id,
+              homeTeamId: now.home_team_id,
+              awayTeamId: now.away_team_id,
+              before,
+              after: {
+                date: now.game_date,
+                time: now.game_time,
+                // Location is untouched by a bulk shift; passing the same value on both sides
+                // keeps the diff honest (a shift is a time change, never a venue change).
+                location: null,
+                status: now.status,
+              },
+            }];
+          }),
+      });
+
       return new Response(JSON.stringify({
         ok: true,
         shifted,
@@ -747,6 +889,7 @@ export const PATCH = withObservability(async (req: Request) => {
         shiftMinutes,
         shifts: plan.shifts,
         skipped: plan.skipped,
+        noticeIds,
       }), { status: 200, headers: { 'Content-Type': 'application/json' } });
     }
 
@@ -767,9 +910,14 @@ export const PATCH = withObservability(async (req: Request) => {
 
     if (await isTournamentLocked(gameRow.tournamentId)) return tournamentLockedResponse();
 
+    // B2.3: the pre-change state for the three actions that can move a game in a way a person
+    // has to act on. Null on every other action — score paths pay no extra read.
+    let scheduleBefore: ScheduleSnapshotRow | null = null;
+
     // ── update (time / diamond / location) ───────────────────────────────────
     if (action === 'update') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      scheduleBefore = await readScheduleSnapshot(id);
 
       const updates: Record<string, unknown> = {};
       if (body.date             !== undefined) updates.game_date          = body.date;
@@ -799,13 +947,17 @@ export const PATCH = withObservability(async (req: Request) => {
     // ── cancel (scheduled → cancelled) ───────────────────────────────────────
     else if (action === 'cancel') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      scheduleBefore = await readScheduleSnapshot(id);
       const { error } = await supabase.from('games').update({ status: 'cancelled' }).eq('id', id);
       if (error) throw error;
     }
 
     // ── revert-to-scheduled (cancelled → scheduled) ──────────────────────────
+    // A follower told the game was off has to be told it is back on, or the cancellation
+    // notice becomes the last thing they heard.
     else if (action === 'revert-to-scheduled') {
       if (!hasCapability(ctx.role, ctx.capabilities, 'update_schedule')) return forbidden();
+      scheduleBefore = await readScheduleSnapshot(id);
       const { error } = await supabase.from('games').update({ status: 'scheduled' }).eq('id', id);
       if (error) throw error;
     }
@@ -900,6 +1052,12 @@ export const PATCH = withObservability(async (req: Request) => {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
+    }
+
+    // B2.3 — tell the people whose plans just changed. Fully self-contained: the write above has
+    // already committed, so this can never turn a successful edit into a 500.
+    if (scheduleBefore) {
+      await announceScheduleChange(ctx.org, gameRow.tournamentId, id, scheduleBefore);
     }
 
     return new Response(JSON.stringify({ success: true }), {

@@ -128,6 +128,7 @@ export default async function AccountNotificationsPage({
         gameAlerts: overview.prefs.gameAlerts,
         eventNews: overview.prefs.eventNews,
         noAlertEvents: overview.noAlertEvents,
+        coached: overview.coached,
       }
     : null;
 
