@@ -11,10 +11,7 @@ import {
   COACHES_HOME_PATH,
   COACHES_TOURNAMENTS_PATH,
 } from '@/lib/coaches-portal-routes';
-import {
-  deriveCoachLifecycleChip,
-  type CoachLifecycleChip,
-} from '@/lib/coach-tournament-lifecycle';
+import { sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import styles from './tournaments.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -140,8 +137,6 @@ export default async function CoachTournamentRecordsPage() {
   // sees today's event first, not buried under later registrations. Ties keep the
   // soonest start date first. The chip itself is rendered per card below.
   const today = tournamentToday();
-  const chipFor = (r: Registration): CoachLifecycleChip =>
-    deriveCoachLifecycleChip(r.tournament?.start_date ?? null, r.tournament?.end_date ?? null, today);
 
   const teamGroups: CoachTeamGroup[] = coachTeams
     .map(team => {
@@ -149,16 +144,12 @@ export default async function CoachTournamentRecordsPage() {
         .map(registration => registrationMap.get(registration.id))
         .filter(Boolean) as Registration[];
 
-      const active = registrations
-        .filter(r => isActive(r.tournament))
-        .sort((a, b) => {
-          const rankDiff = chipFor(a).rank - chipFor(b).rank;
-          if (rankDiff !== 0) return rankDiff;
-          // Same lifecycle bucket → soonest start first (null dates sort last).
-          const aStart = a.tournament?.start_date ?? '9999-12-31';
-          const bStart = b.tournament?.start_date ?? '9999-12-31';
-          return aStart.localeCompare(bStart);
-        });
+      const active = sortByCoachLifecycle(
+        registrations.filter(r => isActive(r.tournament)),
+        r => r.tournament?.start_date ?? null,
+        r => r.tournament?.end_date ?? null,
+        today,
+      );
 
       return {
         ...team,

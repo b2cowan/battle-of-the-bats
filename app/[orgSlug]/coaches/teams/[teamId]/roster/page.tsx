@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, ChevronRight, Plus, X, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck } from 'lucide-react';
+import { Users, ChevronRight, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -12,13 +12,14 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import PositionSelect from '@/components/coaches/PositionSelect';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import DepthChartBoard from '@/components/coaches/DepthChartBoard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { teamInitials, teamColorFromName } from '@/lib/teamBadge';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -126,6 +127,7 @@ export default function RosterPage({
   const [programYear, setProgramYear] = useState<RepProgramYear | null>(null);
   const [fetching, setFetching] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
+  useOverlayOpen(addOpen);
   const [addForm, setAddForm] = useState<AddForm>(BLANK);
   const [adding, setAdding] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
@@ -579,10 +581,7 @@ export default function RosterPage({
       {addOpen && (
         <div className={styles.modalOverlay} onClick={requestCloseAdd}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Player</h3>
-              <button className={styles.modalCloseBtn} onClick={requestCloseAdd}><X size={16} /></button>
-            </div>
+            <CoachModalHeader title="Add Player" onClose={requestCloseAdd} />
 
             {/* Legend for the per-field <span className={styles.labelRequired}>*</span> markers below —
                 most fields on this form are optional, so only the few that block Save are flagged. */}
@@ -767,9 +766,6 @@ function SortableRow({
       </td>
       <td className={`${styles.td} ${styles.playerCellTd}`} data-label="Player">
         <span className={styles.playerCell}>
-          <span className={styles.avatar} style={{ background: teamColorFromName(fullName) }} aria-hidden>
-            {teamInitials(fullName)}
-          </span>
           <Link href={`${base}/roster/${p.id}`} className={styles.playerNameLink}>{fullName}</Link>
           {/* Mobile only: jersey # + status fold into the header row (their own rows are hidden). */}
           <span className={styles.playerCellMeta}>

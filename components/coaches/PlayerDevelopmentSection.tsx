@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, X, Check, Settings2, Printer } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
 import TestTypesManager, { NewTypeFields } from '@/components/coaches/TestTypesManager';
@@ -92,6 +93,9 @@ export default function PlayerDevelopmentSection({
   const [newTypeUnit, setNewTypeUnit] = useState('');
 
   const [manageOpen, setManageOpen] = useState(false);
+  // data/showMeasurables referenced via `data?.` here — canWrite alias isn't declared until
+  // after the `if (!data) return` below, but this hook must run before any early return.
+  useOverlayOpen(!!data?.canWrite && manageOpen && !!data?.showMeasurables);
 
   const [expandedTypeId, setExpandedTypeId] = useState<string | null>(null);
 
@@ -892,7 +896,7 @@ export default function PlayerDevelopmentSection({
 
       {/* ── Manage test types (M3) — a centered dialog hosting the ONE shared manager ── */}
       {canWrite && manageOpen && data.showMeasurables && (
-        <div className={styles.modalOverlay}>
+        <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Test types</h3>

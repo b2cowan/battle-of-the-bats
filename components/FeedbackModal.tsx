@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef } from 'react';
 import { AlertCircle, X, CheckCircle, Info } from 'lucide-react';
+import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
 
 interface FeedbackModalProps {
   isOpen: boolean;
@@ -32,6 +33,10 @@ export default function FeedbackModal({
   type = 'primary'
 }: FeedbackModalProps) {
   const titleId = useId();
+  // Inside the coaches portal this registers with the shared overlay signal (nav hides +
+  // scroll locks while a confirm/feedback dialog is up — the layout's documented contract);
+  // everywhere else (admin, scorekeeper, consumer) the tolerant variant no-ops.
+  useOverlayOpenIfAvailable(isOpen);
   const cancelRef = useRef<HTMLButtonElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   // Latest-ref for onClose so the focus/Escape effect can key on `isOpen` ALONE.

@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Upload, Download, Trash2, X } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepDocumentType } from '@/lib/types';
 
 const DOC_TYPE_LABELS: Record<RepDocumentType, string> = {
@@ -39,6 +40,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
   const [uploadError, setUploadError] = useState('');
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  useOverlayOpen(uploadOpen);
 
   async function load() {
     setLoading(true);
@@ -179,7 +181,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
       )}
 
       {uploadOpen && (
-        <div className={styles.modalOverlay}>
+        <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Upload Document</h3>

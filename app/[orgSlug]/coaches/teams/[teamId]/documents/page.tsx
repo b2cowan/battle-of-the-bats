@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, use } from 'react';
 import Link from 'next/link';
 import { ChevronRight, Download, Upload, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import HelpCallout from '@/components/help/HelpCallout';
 import styles from '../../../coaches.module.css';
 import type { RepDocumentType } from '@/lib/types';
@@ -41,6 +42,7 @@ export default function TeamDocumentsPage({
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadOpen, setUploadOpen] = useState(false);
+  useOverlayOpen(uploadOpen);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadName, setUploadName] = useState('');
   const [uploadType, setUploadType] = useState<RepDocumentType>('other');
@@ -211,7 +213,7 @@ export default function TeamDocumentsPage({
 
       {/* Upload modal */}
       {uploadOpen && (
-        <div className={styles.modalOverlay}>
+        <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h3 className={styles.modalTitle}>Upload Team Template</h3>

@@ -1,6 +1,6 @@
 # Public Tournament Discovery Directory (Web) — Implementation Plan
 
-> **Status:** Planning
+> **Status:** ✅ **SHIPPED — LIVE ON PROD since 2026-07-22** (trued up 2026-07-28; previously said "Planning"). Live at `/discover` (SSR-first, SEO metadata, sitemap + robots), tournament-keyed (`lib/directory.ts`), Event Settings toggle live. One deliberate departure from this plan: **listing is now opt-OUT** (default true for new tournaments, mig 197, owner 2026-07-22) — supersedes this plan's default-off decision; public-status gate unchanged. Remaining: reconcile phase checkboxes below against shipped reality + move to archive (own pass).
 > **Created:** 2026-06-28
 > **Branch:** dev
 > **Strategy source:** `docs/agents/strategy/BUSINESS_DECISIONS.md` — entry **2026-06-28 "Mobile app + public tournament discovery"** (Status: Proposed). This plan is the **first concrete piece** of that direction: the opt-in public discovery directory on web. Native store-wrap, surface-unification, and the notification-reliability pass are **later, separate phases — out of scope here** (noted at the bottom only).

@@ -1,9 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { X, Pencil, Trash2, GitMerge } from 'lucide-react';
+import { Pencil, Trash2, GitMerge } from 'lucide-react';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTeamTag } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 /**
  * Rename / merge / delete manager for a team's game-tag library (Coach Tags & Player Awards
@@ -34,6 +36,8 @@ export default function TagManagerModal({
 }) {
   const confirm = useConfirm();
   const base = basePath ?? `/api/coaches/${orgSlug}/teams/${teamId}/tags`;
+  // Parent conditionally mounts this component only while open — one unit for the whole mount.
+  useOverlayOpen(true);
 
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
@@ -142,10 +146,7 @@ export default function TagManagerModal({
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={`${styles.modal} ${styles.sheetOnMobile}`} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>{title}</h3>
-          <button className={styles.modalCloseBtn} onClick={onClose}><X size={16} /></button>
-        </div>
+        <CoachModalHeader title={title} onClose={onClose} />
 
         <div className={styles.formBody}>
           {sorted.length === 0 ? (

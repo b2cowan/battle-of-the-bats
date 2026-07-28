@@ -1,9 +1,10 @@
 'use client';
 import { useState } from 'react';
-import { X } from 'lucide-react';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTeamAwardType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 /**
  * "Give an award" moment (Coach Tags & Player Awards Phase 2) — opened either from a specific
@@ -33,6 +34,8 @@ export default function GiveAwardModal({
   onChanged: () => void;
 }) {
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/awards`;
+  // Parent conditionally mounts this component only while open — one unit for the whole mount.
+  useOverlayOpen(true);
 
   const [localTypes, setLocalTypes] = useState(awardTypes.filter(t => t.isActive));
   const [playerId, setPlayerId] = useState('');
@@ -106,10 +109,7 @@ export default function GiveAwardModal({
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={`${styles.modal} ${styles.sheetOnMobile}`} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Give an award</h3>
-          <button className={styles.modalCloseBtn} onClick={onClose}><X size={16} /></button>
-        </div>
+        <CoachModalHeader title="Give an award" onClose={onClose} />
 
         <div className={styles.formBody}>
           {eventContext ? (

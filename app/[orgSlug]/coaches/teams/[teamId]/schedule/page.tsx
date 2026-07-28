@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHel
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -19,6 +20,7 @@ import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resourc
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import styles from '../../../coaches.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -709,15 +711,12 @@ export default function CoachesSchedulePage({
     } catch { /* ignore malformed params */ }
   }, [loading, events]);
 
-  // Lock background scroll while a full-screen modal (detail or add/edit) is open on
-  // mobile, so only the modal scrolls.
+  // Nav-hide + body-scroll-lock while a full-screen modal (detail, add/edit, or the day-list
+  // sheet) is open — folded onto the shared CoachesOverlayProvider (Coach Portal Batch 1,
+  // Phase 1.2-1.6 sweep) so this page's lock travels with the same lifecycle as every other
+  // sheet-owning surface instead of a bespoke local effect.
   const anyModalOpen = !!selectedEvent || showAddForm || !!daySheet;
-  useEffect(() => {
-    if (!anyModalOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
-  }, [anyModalOpen]);
+  useOverlayOpen(anyModalOpen);
 
   const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note]));
   const attendanceSigRef = useRef('');
@@ -2244,11 +2243,7 @@ export default function CoachesSchedulePage({
       {showAddForm && (
         <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={requestCloseForm}>
           <div className={`${styles.modal} ${styles.eventFormModal}`} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseForm}><ArrowLeft size={20} /></button>
-              <h3 className={styles.modalTitle}>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</h3>
-              <button className={styles.modalCloseBtn} onClick={requestCloseForm}><X size={16} /></button>
-            </div>
+            <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestCloseForm} />
 
             <div className={styles.formBody}>
               {/* Legend for the per-field <span className={styles.labelRequired}>*</span> markers below —

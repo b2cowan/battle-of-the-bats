@@ -1,10 +1,12 @@
 'use client';
 import { useState } from 'react';
-import { X, Pencil, RotateCcw, Archive } from 'lucide-react';
+import { Pencil, RotateCcw, Archive } from 'lucide-react';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTeamAwardType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 const MAX_AWARD_TYPES = 30;
 
@@ -29,6 +31,8 @@ export default function AwardTypeManagerModal({
 }) {
   const confirm = useConfirm();
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/award-types`;
+  // Parent conditionally mounts this component only while open — one unit for the whole mount.
+  useOverlayOpen(true);
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
@@ -126,10 +130,7 @@ export default function AwardTypeManagerModal({
   return (
     <div className={styles.modalOverlay} onClick={onClose}>
       <div className={`${styles.modal} ${styles.sheetOnMobile}`} onClick={e => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Manage award types</h3>
-          <button className={styles.modalCloseBtn} onClick={onClose}><X size={16} /></button>
-        </div>
+        <CoachModalHeader title="Manage award types" onClose={onClose} />
 
         <div className={styles.formBody}>
           {active.length === 0 ? (

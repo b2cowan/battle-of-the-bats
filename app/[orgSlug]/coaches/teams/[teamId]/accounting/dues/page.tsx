@@ -12,7 +12,9 @@ import {
 } from '@/lib/export';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import ExportMenu from '@/components/admin/ExportMenu';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import styles from '../../../../coaches.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -162,6 +164,9 @@ export default function CoachesDuesPage({
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+
+  useOverlayOpen(!!selected);
+  useOverlayOpen(applyAllOpen);
 
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
@@ -931,6 +936,9 @@ export default function CoachesDuesPage({
         <div className={styles.modalOverlay} onClick={() => { setSelected(null); setEditingSchedule(false); setAddingCredit(false); }}>
           <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
+              <button className={styles.modalBackBtn} aria-label="Back" onClick={() => { setSelected(null); setEditingSchedule(false); setAddingCredit(false); }}>
+                <ArrowLeft size={20} />
+              </button>
               <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))' }}>
                 {[selected.player.playerFirstName, selected.player.playerLastName].filter(Boolean).join(' ')}
               </span>
@@ -1207,10 +1215,7 @@ export default function CoachesDuesPage({
       {applyAllOpen && (
         <div className={styles.modalOverlay} onClick={() => setApplyAllOpen(false)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Set dues for all players</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setApplyAllOpen(false)}><X size={16} /></button>
-            </div>
+            <CoachModalHeader title="Set dues for all players" onClose={() => setApplyAllOpen(false)} />
             <p className={styles.muted} style={{ fontSize: '0.82rem', marginBottom: '1rem' }}>
               This will create or replace the dues schedule for every active roster player ({players.length} players).
             </p>

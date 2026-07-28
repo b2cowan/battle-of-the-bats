@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Receipt, Plus, X, CheckCircle2, AlertTriangle, ArrowLeft, Tag, Settings2 } from 'lucide-react';
+import { Receipt, Plus, CheckCircle2, AlertTriangle, ArrowLeft, Tag, Settings2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -84,6 +86,10 @@ export default function CoachesExpensesPage({
   const [editingTagsFor, setEditingTagsFor] = useState<string | null>(null);
   const [editTagIds, setEditTagIds] = useState<string[]>([]);
   const [savingTags, setSavingTags] = useState(false);
+
+  // Nav-hide + body-scroll-lock registration for the two Add modals (mobile sheet default).
+  useOverlayOpen(showAddExpense);
+  useOverlayOpen(showAddPayable);
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -600,10 +606,7 @@ export default function CoachesExpensesPage({
       {showAddExpense && (
         <div className={styles.modalOverlay} onClick={() => setShowAddExpense(false)}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Expense</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setShowAddExpense(false)}><X size={16} /></button>
-            </div>
+            <CoachModalHeader title="Add Expense" onClose={() => setShowAddExpense(false)} />
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Description *</label>
@@ -649,10 +652,7 @@ export default function CoachesExpensesPage({
       {showAddPayable && (
         <div className={styles.modalOverlay} onClick={() => setShowAddPayable(false)}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Add Tournament Payable</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setShowAddPayable(false)}><X size={16} /></button>
-            </div>
+            <CoachModalHeader title="Add Tournament Payable" onClose={() => setShowAddPayable(false)} />
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Description *</label>

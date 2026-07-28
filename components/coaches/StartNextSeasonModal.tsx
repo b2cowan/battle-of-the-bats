@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 
 /** Local mirror of the parts of RepSeasonRolloverSummary this modal renders (the source type lives
  *  in the server-only lib/rep-season-rollover.ts). */
@@ -40,6 +41,10 @@ export default function StartNextSeasonModal({
   const [error, setError] = useState('');
   const [summary, setSummary] = useState<RolloverSummary | null>(null);
 
+  // This component only exists while the parent has it open (mount/unmount, no internal open
+  // flag) — register for the whole mounted lifetime; the hook auto-unregisters on unmount.
+  useOverlayOpen(true);
+
   // Escape closes the form (not the success view — that only exits via "Go to ...").
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -73,7 +78,7 @@ export default function StartNextSeasonModal({
   }
 
   return (
-    <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget && !submitting) { if (summary) onDone(); else onClose(); } }}>
+    <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`} onMouseDown={e => { if (e.target === e.currentTarget && !submitting) { if (summary) onDone(); else onClose(); } }}>
       <div className={styles.modal} role="dialog" aria-modal="true" aria-label="Start next season">
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{summary ? 'New season started' : 'Start next season'}</h2>

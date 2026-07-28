@@ -12,6 +12,7 @@ import { useOrg } from '@/lib/org-context';
 import { useCoaches } from '@/lib/coaches-context';
 import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
 import styles from './CoachesBottomNav.module.css';
 
 // The four primary tabs (owner-picked 2026-06-29). Everything else lives in More.
@@ -65,6 +66,10 @@ export default function CoachesBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const chatUnread = useChatUnread();
+  // Safety net (Coach Portal Batch 1, D3): while any sheet/modal is open, the bar hides itself
+  // (no layout shift — visibility, not display) so a mis-tap can never land on a nav tab
+  // underneath a full-height mobile sheet, even for a modal the CSS sweep hasn't reached yet.
+  const anyOverlayOpen = useAnyOverlayOpen();
 
   // The portal is team-scoped: use the team in the URL, otherwise default to the
   // coach's (only / first) team so the bar always points somewhere sensible. The
@@ -120,7 +125,10 @@ export default function CoachesBottomNav() {
   }
 
   return (
-    <nav className={styles.bottomNav} aria-label="Coaches mobile navigation">
+    <nav
+      className={`${styles.bottomNav}${anyOverlayOpen ? ` ${styles.navHidden}` : ''}`}
+      aria-label="Coaches mobile navigation"
+    >
       {/* Four primary team tabs */}
       {teamBase && TEAM_TABS.filter(({ label }) => navVisible(label)).map(({ key, icon: Icon, label }) => {
         const active = tabIsActive(key);

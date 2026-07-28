@@ -3838,25 +3838,41 @@ async function getCoachingNavSignals(
   const programYearIds = [...new Set(keys.map(k => k.programYearId))];
   const teamIds = [...new Set(keys.map(k => k.teamId))];
 
-  // Tryouts: a tryout workspace exists for this season (rep_tryouts is 1:1 with a program year;
-  // the row is created the first time a coach opens the tryouts area — so the item graduates from
-  // Explore into Squad once they've used it once).
-  const { data: tryoutRows, error: tryoutErr } = await supabaseAdmin
-    .from('rep_tryouts')
-    .select('program_year_id')
-    .in('program_year_id', programYearIds);
+  // Tryouts, workspace-bridge, and admin-link are all independent of one another (none depends on
+  // another's result) — run them in parallel. Only the basic-registrations lookup below depends on
+  // the workspace query's output (basicIds), so it stays sequential after this batch.
+  const [
+    { data: tryoutRows, error: tryoutErr },
+    { data: wsRows, error: wsErr },
+    { data: repLinkRows, error: repLinkErr },
+  ] = await Promise.all([
+    // Tryouts: a tryout workspace exists for this season (rep_tryouts is 1:1 with a program year;
+    // the row is created the first time a coach opens the tryouts area — so the item graduates from
+    // Explore into Squad once they've used it once).
+    supabaseAdmin
+      .from('rep_tryouts')
+      .select('program_year_id')
+      .in('program_year_id', programYearIds),
+    // Tournaments: rep team → team workspace → basic-coach team → any tournament registration.
+    // We read the already-linked basic_coach_team_id only (no lazy source_tournament_team_id repair
+    // here — this stays a read-only nav-load path). If a workspace's link hasn't been backfilled yet,
+    // the signal is false and Tournaments stays under "Explore" (still reachable, not a dead end); it
+    // self-heals on the coach's next load after the Tournaments page visit writes the link back.
+    supabaseAdmin
+      .from('team_workspaces')
+      .select('rep_team_id, basic_coach_team_id')
+      .in('rep_team_id', teamIds),
+    // Admin-link bridge (rep_team_tournament_registrations, mig 196) — an org-created rep team with
+    // no workspace at all still graduates Tournaments out of Explore once an admin links it directly.
+    // One batched query, same cheap-read-path rule as the lookups above.
+    supabaseAdmin
+      .from('rep_team_tournament_registrations')
+      .select('rep_team_id')
+      .in('rep_team_id', teamIds),
+  ]);
   if (tryoutErr) console.error('[getCoachingNavSignals] tryout signal query failed (defaulting Tryouts to Explore):', tryoutErr.message);
   const tryoutYears = new Set((tryoutRows ?? []).map((r: any) => r.program_year_id as string));
 
-  // Tournaments: rep team → team workspace → basic-coach team → any tournament registration.
-  // We read the already-linked basic_coach_team_id only (no lazy source_tournament_team_id repair
-  // here — this stays a read-only nav-load path). If a workspace's link hasn't been backfilled yet,
-  // the signal is false and Tournaments stays under "Explore" (still reachable, not a dead end); it
-  // self-heals on the coach's next load after the Tournaments page visit writes the link back.
-  const { data: wsRows, error: wsErr } = await supabaseAdmin
-    .from('team_workspaces')
-    .select('rep_team_id, basic_coach_team_id')
-    .in('rep_team_id', teamIds);
   if (wsErr) console.error('[getCoachingNavSignals] workspace lookup failed (defaulting Tournaments to Explore):', wsErr.message);
   const basicIdByTeam = new Map<string, string>();
   for (const w of (wsRows ?? []) as { rep_team_id: string | null; basic_coach_team_id: string | null }[]) {
@@ -3873,11 +3889,14 @@ async function getCoachingNavSignals(
     registeredBasicIds = new Set((regRows ?? []).map((r: any) => r.basic_coach_team_id as string));
   }
 
+  if (repLinkErr) console.error('[getCoachingNavSignals] admin-link lookup failed (defaulting Tournaments to Explore):', repLinkErr.message);
+  const adminLinkedTeamIds = new Set((repLinkRows ?? []).map((r: any) => r.rep_team_id as string));
+
   for (const k of keys) {
     const basicId = basicIdByTeam.get(k.teamId);
     result.set(k.teamId, {
       hasTryoutSignal: tryoutYears.has(k.programYearId),
-      hasTournamentHistory: !!basicId && registeredBasicIds.has(basicId),
+      hasTournamentHistory: (!!basicId && registeredBasicIds.has(basicId)) || adminLinkedTeamIds.has(k.teamId),
     });
   }
   return result;

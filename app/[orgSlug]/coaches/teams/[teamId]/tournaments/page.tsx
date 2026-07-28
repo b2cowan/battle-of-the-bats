@@ -1,10 +1,15 @@
 'use client';
-import { use, useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trophy } from 'lucide-react';
-import { deriveCoachLifecycleChip } from '@/lib/coach-tournament-lifecycle';
-import FanViewLink from '@/components/shared/FanViewLink';
+import { sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { useOrg } from '@/lib/org-context';
+import { useHelpDrawer } from '@/components/help/help-drawer-context';
+import HelpButton from '@/components/help/HelpButton';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import styles from '../../../coaches.module.css';
+import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
 interface TournamentHistoryEntry {
@@ -13,19 +18,13 @@ interface TournamentHistoryEntry {
   org: { id: string; slug: string; name: string } | null;
 }
 
-const REG_STATUS_LABEL: Record<string, string> = {
-  accepted: 'Accepted', pending: 'Pending', waitlist: 'Waitlisted', rejected: 'Not accepted',
-};
-const REG_STATUS_CSS: Record<string, string> = {
-  accepted: styles.badgeActive, pending: styles.badgeUpcoming, waitlist: styles.badgeManual, rejected: styles.badgeOverdue,
-};
+type Linkage = 'workspace' | 'admin-link' | 'none';
 
-function formatRange(start: string | null, end: string | null): string | null {
-  if (!start) return null;
-  const s = new Date(start).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
-  if (!end || end === start) return new Date(start).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' });
-  return `${s} - ${new Date(end).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-}
+type TournamentHistoryData = {
+  history: TournamentHistoryEntry[];
+  basicCoachTeamId: string | null;
+  linkage: Linkage;
+};
 
 export default function PremiumTeamTournamentsPage({
   params,
@@ -34,16 +33,31 @@ export default function PremiumTeamTournamentsPage({
 }) {
   const { orgSlug, teamId } = use(params);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  const [entries, setEntries] = useState<TournamentHistoryEntry[] | null>(null);
+  const { currentOrg } = useOrg();
+  const { openHelp } = useHelpDrawer();
+  const [data, setData] = useState<TournamentHistoryData | null>(null);
   const [error, setError] = useState('');
+
+  const helpRequest = {
+    module: 'coaches' as const,
+    sectionIds: ['tournaments', 'faq-premium-tournaments-where'],
+    label: 'Tournaments',
+    fullGuideHref: `/${orgSlug}/coaches/help#tournaments`,
+  };
 
   const load = useCallback(async () => {
     setError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-history`);
       if (!res.ok) throw new Error('Tournaments could not be loaded');
-      const data: { history?: TournamentHistoryEntry[] } = await res.json();
-      setEntries(data.history ?? []);
+      const json: Partial<TournamentHistoryData> = await res.json();
+      setData({
+        history: json.history ?? [],
+        basicCoachTeamId: json.basicCoachTeamId ?? null,
+        // Defensive default — the API's `linkage` field lands in a parallel change; until it
+        // does, 'none' keeps this page's state logic honest rather than mis-reading State A/B.
+        linkage: json.linkage ?? 'none',
+      });
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Tournaments could not be loaded');
     }
@@ -52,6 +66,20 @@ export default function PremiumTeamTournamentsPage({
   useEffect(() => { void Promise.resolve().then(load); }, [load]);
 
   const today = tournamentToday();
+
+  const isTeamWorkspace = isTeamWorkspaceOrg(currentOrg);
+
+  const sorted = useMemo(
+    () => data
+      ? sortByCoachLifecycle(
+          data.history,
+          entry => entry.tournament?.startDate ?? null,
+          entry => entry.tournament?.endDate ?? null,
+          today,
+        )
+      : [],
+    [data, today],
+  );
 
   return (
     <div className={styles.page}>
@@ -62,64 +90,86 @@ export default function PremiumTeamTournamentsPage({
             <p className={styles.pageSub}>Every tournament your team is entered in — live status, schedule, and results.</p>
           </div>
         </div>
+        <HelpButton iconOnly label="Tournaments" help={helpRequest} />
       </div>
 
       {error && <p className={styles.errorText}>{error}</p>}
 
-      {entries === null ? (
+      {data === null ? (
         <div className={styles.loadingState}>Loading tournaments…</div>
-      ) : entries.length === 0 ? (
-        <div className={styles.emptyState}>
-          <Trophy size={32} style={{ opacity: 0.25, marginBottom: '0.75rem' }} />
-          <p className={styles.emptyStateTitle}>No tournaments yet</p>
-          <p className={styles.emptyStateSub}>
-            When your team registers for a tournament, it shows up here with its live schedule and scores.
-          </p>
-        </div>
-      ) : (
-        <div className={styles.tournamentHistoryList}>
-          {entries.map(entry => {
-            const chip = deriveCoachLifecycleChip(entry.tournament?.startDate ?? null, entry.tournament?.endDate ?? null, today);
-            // Live/game-day → loud lifecycle chip; otherwise the registration standing
-            // (Accepted / Pending …) is the more useful at-a-glance label for the list.
-            const isLive = chip.state === 'live' || chip.state === 'game_day';
-            const statusLabel = REG_STATUS_LABEL[entry.registration.status] ?? entry.registration.status;
-            const statusClass = REG_STATUS_CSS[entry.registration.status] ?? styles.badgeManual;
-            const range = formatRange(entry.tournament?.startDate ?? null, entry.tournament?.endDate ?? null);
-            // ⇄ Fan view ("The Flip" P3): per-row flip door for publicly-visible lifecycles
-            // (the shared FanViewLink resolves the target so it can't drift from the pill).
-            const canFanView = Boolean(entry.org?.slug && entry.tournament?.slug &&
-              (entry.tournament.status === 'active' || entry.tournament.status === 'completed'));
+      ) : sorted.length > 0 ? (
+        <>
+          <div className={flow.panelIntro}>
+            <p className={flow.panelIntroText}>Live and upcoming first — tap an entry for schedule, roster submission, and organizer updates.</p>
+          </div>
+          <div className={styles.tournamentHistoryList}>
+            {sorted.map(entry => {
+              const canFanView = Boolean(entry.org?.slug && entry.tournament?.slug &&
+                (entry.tournament.status === 'active' || entry.tournament.status === 'completed'));
 
-            return (
-              <div key={entry.registration.id} className={styles.tournamentHistoryEntry}>
-                <Link
+              return (
+                <CoachRegistrationCard
+                  key={entry.registration.id}
                   href={`${base}/tournaments/${entry.registration.id}`}
-                  className={styles.tournamentHistoryItem}
-                >
-                  <span className={styles.tournamentHistoryMain}>
-                    <span className={styles.tournamentHistoryName}>
-                      {entry.tournament?.name ?? entry.registration.name}
-                    </span>
-                    <span className={styles.tournamentHistoryMeta}>
-                      {entry.org?.name && <span>{entry.org.name}</span>}
-                      {range && <span>{range}</span>}
-                      <span>{entry.registration.name}</span>
-                    </span>
-                  </span>
-                  {isLive ? (
-                    <span className={`${styles.badge} ${styles.badgeActive}`}>{chip.label}</span>
-                  ) : (
-                    <span className={`${styles.badge} ${statusClass}`}>{statusLabel}</span>
-                  )}
-                </Link>
-                {canFanView && (
-                  <FanViewLink orgSlug={entry.org!.slug} tournamentSlug={entry.tournament!.slug!} />
-                )}
-              </div>
-            );
-          })}
-        </div>
+                  title={entry.tournament?.name ?? entry.registration.name}
+                  registrationStatus={entry.registration.status}
+                  startDate={entry.tournament?.startDate ?? null}
+                  endDate={entry.tournament?.endDate ?? null}
+                  today={today}
+                  metaParts={[entry.org?.name, entry.registration.name]}
+                  fanView={canFanView ? { orgSlug: entry.org!.slug, tournamentSlug: entry.tournament!.slug! } : null}
+                />
+              );
+            })}
+          </div>
+        </>
+      ) : data.linkage !== 'none' ? (
+        // State C — linked (workspace or admin-link), just nothing recorded yet this season.
+        // Checked first: a bridged team with zero entries is "no tournaments yet", never the
+        // "nothing linked" copy below, regardless of which linkage produced the bridge.
+        <CoachEmptyState
+          compact
+          icon={<Trophy size={20} aria-hidden />}
+          headline="No tournaments yet this season"
+          description="Your past and upcoming tournament entries appear here the moment you're registered."
+        />
+      ) : isTeamWorkspace ? (
+        // State A — standalone/workspace team, never bridged: registration is self-serve by account email,
+        // no org admin has to link anything. Point at /discover (Decision D4) to find an event.
+        <CoachEmptyState
+          icon={<Trophy size={22} aria-hidden />}
+          headline="Your tournament season lives here"
+          description={
+            <>
+              Register for any tournament on the organizer&apos;s public page using{' '}
+              <strong>this account&apos;s email</strong> — the entry appears here automatically with schedule, scores, and status.
+            </>
+          }
+          primaryAction={{
+            label: 'How registering works',
+            onClick: () => openHelp(helpRequest),
+          }}
+          secondaryAction={{ label: 'Browse public tournaments', href: '/discover' }}
+        />
+      ) : (
+        // State B — org-owned rep team, nothing linked yet (linkage === 'none', not a
+        // team-workspace org): only the org admin can create the connection (mig-196
+        // "Link to rep team" bridge), so no self-serve CTA is offered here.
+        <CoachEmptyState
+          icon={<Trophy size={22} aria-hidden />}
+          headline="No tournaments linked yet"
+          description={
+            <>
+              When {currentOrg?.name ?? 'your organization'} registers this team for a tournament, they link the entry to your team and it shows up here automatically — with the live schedule and scores.
+              <br />
+              <span style={{ color: 'var(--white-40)' }}>Expecting one? Ask your organization to link your registration.</span>
+            </>
+          }
+          primaryAction={{
+            label: 'How linking works',
+            onClick: () => openHelp(helpRequest),
+          }}
+        />
       )}
     </div>
   );

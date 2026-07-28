@@ -71,6 +71,35 @@ export function deriveCoachLifecycleChip(
   return { state: 'future', label: monthYear, rank: 3 };
 }
 
+/**
+ * Live-first sort (§3c/§3d): order a list of tournament-bearing items by lifecycle chip rank
+ * (live → game-day → upcoming → future → complete → unknown). Within a bucket: soonest start
+ * first for anything still ahead, but the COMPLETE bucket reads as history — most recent first
+ * (a flat premium list would otherwise open its "Complete" tail with the oldest season).
+ * Null start dates sort last in either direction. Derives each item's chip exactly once (not
+ * per comparison) via a decorate-sort-undecorate pass. `getStart`/`getEnd` let callers pass
+ * either camelCase or snake_case date fields without remapping their data first.
+ */
+export function sortByCoachLifecycle<T>(
+  items: T[],
+  getStart: (item: T) => string | null,
+  getEnd: (item: T) => string | null,
+  today: string = tournamentToday(),
+): T[] {
+  return items
+    .map(item => ({ item, chip: deriveCoachLifecycleChip(getStart(item), getEnd(item), today) }))
+    .sort((a, b) => {
+      const rankDiff = a.chip.rank - b.chip.rank;
+      if (rankDiff !== 0) return rankDiff;
+      const desc = a.chip.state === 'complete';
+      const sentinel = desc ? '0000-01-01' : '9999-12-31';
+      const aStart = getStart(a.item) ?? sentinel;
+      const bStart = getStart(b.item) ?? sentinel;
+      return desc ? bStart.localeCompare(aStart) : aStart.localeCompare(bStart);
+    })
+    .map(({ item }) => item);
+}
+
 /** Map a lifecycle state to the CSS-module class suffix (PascalCase modifier). */
 export function lifecycleChipClassKey(state: CoachLifecycleState): string {
   switch (state) {

@@ -4,6 +4,11 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-07-28 — Premium roster rows drop the per-player initials avatars (owner call); reinforces "no circular monograms"
+**Decision (owner: "do we need those initial images next to the names? I thought we were getting rid of those"):** the premium roster list's colored initials chip next to each player name is REMOVED (desktop table + mobile cards — one shared cell renders both). Rationale: it encoded nothing real (the color is a name-hash, not team or player identity), it spent ~40px of a ~361px mobile card row, and it was the coach portal's only **circular** monogram — violating the standing 2026-06-03 rule (monograms are rounded-squares, NEVER circles). Verified single call site in the portal before removal; chat message avatars and consumer account avatars are separate systems and are untouched.
+**Rule going forward:** roster/list rows identify players by NAME + jersey-number chip only — do not reintroduce per-player initials chips on list surfaces. If a future surface genuinely needs a player identity mark (e.g. player photos), it follows the rounded-square monogram rule.
+**Applies to:** `app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx` (avatar span + `lib/teamBadge` import removed — teamBadge now has public-only consumers, relevant to cleanup finding B29), `app/[orgSlug]/coaches/coaches.module.css` (`.avatar` rule deleted). Built on dev 2026-07-28 inside Coach Portal Launch Batch 1 (uncommitted). [[design-system]]
+
 ### 2026-07-27 — System screens (404 / crash) legibility pass — and TWO global cascade traps that were failing silently app-wide
 **Decision (owner-flagged: "these error screens are hard to read, both light and dark"):** the root 404 + root crash boundary were repaired in both themes. Two of the six findings were **not screen-local** — they are project-wide cascade traps that this screen merely exposed, and both were fixed at the source:
 

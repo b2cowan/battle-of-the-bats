@@ -1,6 +1,5 @@
 .page {
   max-width: 960px;
-  --budget-panel-bg: #1a1f2e; /* token-exempt: local charcoal, no global surface match */
 }
 
 .pageHeader {
@@ -301,67 +300,6 @@
 
 .emptyHint { font-size: 0.85rem; margin: 0.3rem 0 0; }
 
-/* ── Modal ───────────────────────────────────────────────────────────────── */
-.modalOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.65);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 200;
-  padding: 1rem;
-  overflow-y: auto;
-}
-
-.modal {
-  background: var(--budget-panel-bg);
-  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
-  border-radius: 14px;
-  width: 100%;
-  max-width: 520px;
-  padding: 1.5rem;
-  max-height: 90vh;
-  overflow-y: auto;
-  position: relative;
-}
-
-.modalLg { max-width: 620px; }
-
-.modalHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 1.25rem;
-}
-
-.modalTitle {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--white-90);
-  margin: 0;
-}
-
-.modalCloseBtn {
-  background: none;
-  border: none;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  cursor: pointer;
-  padding: 0.25rem;
-  display: flex;
-  align-items: center;
-}
-.modalCloseBtn:hover { color: var(--white-80, rgba(255,255,255,0.8)); }
-
-.modalFooter {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--home-line, rgba(255,255,255,0.07));
-}
-
 /* ── Form fields ─────────────────────────────────────────────────────────── */
 .field { margin-bottom: 1rem; }
 .field:last-child { margin-bottom: 0; }
@@ -566,10 +504,3 @@
   font-weight: 600;
   font-size: 0.95rem;
 }
-
-/* ── Warm theme override ─────────────────────────────────────────────────── */
-/* --budget-panel-bg is a local custom property pinned to a dark charcoal on
-   .page (line 3) — the global token flip can't reach it. Under warm, the
-   modal panel becomes a white card instead. Additive only; dark output is
-   byte-identical without [data-user-theme="warm"]. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .page { --budget-panel-bg: var(--home-card); }

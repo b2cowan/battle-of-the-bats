@@ -1,9 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, ArrowDownLeft, X, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../coaches.module.css';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 interface PaymentRequest {
   id: string;
@@ -103,6 +105,8 @@ export default function PaymentRequestsPage({
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+
+  useOverlayOpen(showForm);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -312,10 +316,7 @@ export default function PaymentRequestsPage({
       {showForm && (
         <div className={styles.modalOverlay} onClick={() => setShowForm(false)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>New Payment Request</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setShowForm(false)}><X size={16} /></button>
-            </div>
+            <CoachModalHeader title="New Payment Request" onClose={() => setShowForm(false)} />
 
             <div className={styles.formGrid}>
               {/* Type picker */}

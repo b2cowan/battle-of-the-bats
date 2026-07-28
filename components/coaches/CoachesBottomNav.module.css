@@ -23,6 +23,11 @@
     align-items: flex-start;
   }
 
+  /* Safety net (Coach Portal Batch 1, D3): hidden while any modal/sheet is open
+     (useAnyOverlayOpen, lib/coaches-overlay.tsx) — visibility, not display, so the bar keeps
+     its layout box and nothing reflows underneath when it reappears. */
+  .navHidden { visibility: hidden; }
+
   /* ── Tab button ────────────────────────────────────── */
   .tab {
     display: flex;
@@ -100,7 +105,13 @@
     border: 1px solid rgba(79, 163, 224, 0.25);
     border-radius: 16px;
     box-shadow: 0 -8px 32px rgba(0,0,0,0.65), 0 0 24px rgba(79,163,224,0.1);
-    overflow: hidden;
+    /* Caps the menu so it can never grow past the top of a short viewport (was unbounded —
+       worst case ~500-700px of rows pushed the FIRST items, team switcher + Squad, off-screen
+       with no scroll cue). overflow-y:auto still clips to the rounded corners on the same
+       element (modern browsers respect border-radius with a scrolling overflow axis). */
+    max-height: min(70vh, calc(100dvh - 5.5rem - env(safe-area-inset-bottom, 0px)));
+    overflow-y: auto;
+    overscroll-behavior: contain;
     animation: slideUpMenu 0.18s ease;
   }
 

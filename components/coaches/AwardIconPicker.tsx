@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import { useOverlayOpenIfAvailable } from '@/lib/coaches-overlay';
 
 // Curated sport/achievement set (Coach Tags & Player Awards Phase 2 — owner caught in mockup
 // review that a bare text field for an emoji is a bad ask on desktop). "Type your own" stays
@@ -26,8 +27,13 @@ export default function AwardIconPicker({
 }) {
   const [custom, setCustom] = useState('');
 
+  // Mount/unmount pattern (no internal open flag) — register for the whole mounted lifetime.
+  // Tolerant variant: this modal also renders from admin/rep-teams/shared-library, outside the
+  // coaches portal's CoachesOverlayProvider, where a throwing hook would crash the page.
+  useOverlayOpenIfAvailable(true);
+
   return (
-    <div className={styles.modalOverlay} onClick={onClose}>
+    <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`} onClick={onClose}>
       <div className={styles.modal} style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
         <div className={styles.modalHeader}>
           <h3 className={styles.modalTitle}>Choose an icon</h3>

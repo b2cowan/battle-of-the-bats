@@ -7,9 +7,11 @@ import {
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 // Games-tab scope filter chips — a chip only renders when the team actually has games of that
@@ -73,6 +75,9 @@ export default function CoachesLineupsPage({
   // The template whose "apply to a game" picker is open (null = closed).
   const [applyTemplate, setApplyTemplate] = useState<RepTeamLineupTemplate | null>(null);
   const [applyBusyGameId, setApplyBusyGameId] = useState<string | null>(null);
+  // Nav-hide + body-scroll-lock while the apply-template picker is open (Coach Portal Batch 1,
+  // Phase 1.2-1.6 sweep) — this page had no scroll lock at all before; the hook adds one.
+  useOverlayOpen(!!applyTemplate);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -516,10 +521,7 @@ export default function CoachesLineupsPage({
       {applyTemplate && (
         <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={() => applyBusyGameId ? null : setApplyTemplate(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Apply “{applyTemplate.name}” to…</h3>
-              <button className={styles.modalCloseBtn} aria-label="Close" onClick={() => setApplyTemplate(null)}><X size={18} /></button>
-            </div>
+            <CoachModalHeader title={<>Apply &ldquo;{applyTemplate.name}&rdquo; to&hellip;</>} onClose={() => setApplyTemplate(null)} closeIconSize={18} closeAriaLabel="Close" />
             <p className={styles.pageSub} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>
             <div className={styles.lineupFrontList}>
               {pickerGames.map(g => (

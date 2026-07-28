@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { TrendingUp, ChevronDown, ChevronRight, X, ArrowLeft, Tag } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import ExportMenu from '@/components/admin/ExportMenu';
 import {
@@ -197,6 +198,7 @@ export default function BudgetVsActualPage({
   // Recategorize fix-it for unbudgeted expenses (money-write only)
   const [taxonomy, setTaxonomy] = useState<BudgetCategoryWithItems[]>([]);
   const [recatTarget, setRecatTarget] = useState<UnbudgetedActual | null>(null);
+  useOverlayOpen(!!recatTarget);
   const [recatCategory, setRecatCategory] = useState('');
   const [recatSaving, setRecatSaving] = useState(false);
   const [recatError, setRecatError] = useState('');
@@ -674,7 +676,7 @@ export default function BudgetVsActualPage({
       {/* Recategorize modal — moves an unbudgeted expense onto a real category so it
           matches (or deliberately doesn't match) the budget plan. */}
       {recatTarget && (
-        <div className={shared.modalOverlay} onClick={() => setRecatTarget(null)}>
+        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={() => setRecatTarget(null)}>
           <div className={shared.modal} style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>Recategorize Expense</h3>

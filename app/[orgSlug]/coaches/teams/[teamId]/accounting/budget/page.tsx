@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef, use } from 'react';
 import Link from 'next/link';
 import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import type {
   RepBudgetPlan,
@@ -12,6 +13,7 @@ import type {
 } from '@/lib/types';
 import styles from './budget.module.css';
 import shared from '../../../../coaches.module.css';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { tournamentToday } from '@/lib/timezone';
 
 function fmt(n: number) {
@@ -99,6 +101,11 @@ export default function BudgetPlannerPage({
   const [generating,       setGenerating]       = useState(false);
   const [generateError,    setGenerateError]    = useState('');
   const [generateSuccess,  setGenerateSuccess]  = useState(false);
+
+  // Nav-hide + body-scroll-lock registration for the three modals (mobile sheet default).
+  useOverlayOpen(modalOpen);
+  useOverlayOpen(!!deletingId);
+  useOverlayOpen(genOpen);
 
   const assignment = assignments.find(a => a.teamId === teamId);
 
@@ -689,12 +696,9 @@ export default function BudgetPlannerPage({
 
       {/* ── Add / Edit Line Modal ───────────────────────────────────────────── */}
       {modalOpen && (
-        <div className={styles.modalOverlay} onClick={() => setModalOpen(false)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>{editingLine ? 'Edit Budget Line' : 'Add Budget Line'}</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setModalOpen(false)}><X size={16} /></button>
-            </div>
+        <div className={shared.modalOverlay} onClick={() => setModalOpen(false)}>
+          <div className={shared.modal} onClick={e => e.stopPropagation()}>
+            <CoachModalHeader title={editingLine ? 'Edit Budget Line' : 'Add Budget Line'} onClose={() => setModalOpen(false)} />
 
             <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
 
@@ -882,7 +886,7 @@ export default function BudgetPlannerPage({
             </div>
 
             {saveError && <p className={styles.errorText}>{saveError}</p>}
-            <div className={styles.modalFooter}>
+            <div className={shared.modalFooter}>
               <button type="button" className={shared.btnGhost} onClick={() => setModalOpen(false)}>Cancel</button>
               <button type="button" className={shared.btnPrimary} onClick={handleSaveLine} disabled={saving}>
                 {saving ? 'Saving…' : editingLine ? 'Save Changes' : 'Add Line'}
@@ -892,18 +896,18 @@ export default function BudgetPlannerPage({
         </div>
       )}
 
-      {/* ── Delete Confirm ───────────────────────────────────────────────────── */}
+      {/* ── Delete Confirm — short dialog, opts out of the mobile sheet default ────── */}
       {deletingId && (
-        <div className={styles.modalOverlay} onClick={() => setDeletingId(null)}>
-          <div className={styles.modal} style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Delete Budget Line?</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setDeletingId(null)}><X size={16} /></button>
+        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={() => setDeletingId(null)}>
+          <div className={shared.modal} style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
+            <div className={shared.modalHeader}>
+              <h3 className={shared.modalTitle}>Delete Budget Line?</h3>
+              <button className={shared.modalCloseBtn} onClick={() => setDeletingId(null)}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
               This will also remove any period breakdown for this line. This cannot be undone.
             </p>
-            <div className={styles.modalFooter}>
+            <div className={shared.modalFooter}>
               <button type="button" className={shared.btnGhost} onClick={() => setDeletingId(null)}>Cancel</button>
               <button
                 type="button"
@@ -920,12 +924,9 @@ export default function BudgetPlannerPage({
 
       {/* ── Generate Installments Modal ──────────────────────────────────────── */}
       {genOpen && (
-        <div className={styles.modalOverlay} onClick={() => setGenOpen(false)}>
-          <div className={`${styles.modal} ${styles.modalLg}`} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Generate Player Installments</h3>
-              <button className={styles.modalCloseBtn} onClick={() => setGenOpen(false)}><X size={16} /></button>
-            </div>
+        <div className={shared.modalOverlay} onClick={() => setGenOpen(false)}>
+          <div className={shared.modal} style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
+            <CoachModalHeader title="Generate Player Installments" onClose={() => setGenOpen(false)} />
 
             {generateSuccess ? (
               <div className={styles.successState}>
@@ -987,7 +988,7 @@ export default function BudgetPlannerPage({
                 {previewError && <p className={styles.errorText}>{previewError}</p>}
 
                 {!preview ? (
-                  <div className={styles.modalFooter}>
+                  <div className={shared.modalFooter}>
                     <button type="button" className={shared.btnGhost} onClick={() => setGenOpen(false)}>Cancel</button>
                     <button type="button" className={shared.btnSecondary} onClick={loadPreview} disabled={previewLoading}>
                       {previewLoading ? 'Loading preview…' : 'Preview'}
@@ -1020,7 +1021,7 @@ export default function BudgetPlannerPage({
 
                     {generateError && <p className={styles.errorText}>{generateError}</p>}
 
-                    <div className={styles.modalFooter}>
+                    <div className={shared.modalFooter}>
                       <button type="button" className={shared.btnGhost} onClick={() => setPreview(null)}>Back</button>
                       <button type="button" className={shared.btnPrimary} onClick={handleGenerate} disabled={generating}>
                         {generating ? 'Generating…' : `Confirm & Generate for ${preview.length} Players`}

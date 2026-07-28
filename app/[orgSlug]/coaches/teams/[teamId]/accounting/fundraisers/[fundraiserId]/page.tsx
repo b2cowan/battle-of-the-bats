@@ -3,7 +3,9 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Gift, Settings, X, Check, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../../coaches.module.css';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 interface FundraiserDetail {
   id: string;
@@ -80,6 +82,8 @@ export default function FundraiserDetailPage({
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+
+  useOverlayOpen(showSettings);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -391,10 +395,7 @@ export default function FundraiserDetailPage({
       {showSettings && fundraiser && (
         <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setShowSettings(false); }}>
           <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h2 className={styles.modalTitle}>Fundraiser Settings</h2>
-              <button className={styles.modalCloseBtn} onClick={() => setShowSettings(false)}><X size={18} /></button>
-            </div>
+            <CoachModalHeader title="Fundraiser Settings" onClose={() => setShowSettings(false)} titleTag="h2" closeIconSize={18} />
             <form onSubmit={saveSettings}>
               <div className={styles.formGrid}>
                 <div className={`${styles.field} ${styles.formGridFull}`}>

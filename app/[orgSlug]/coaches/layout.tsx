@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgRole } from '@/lib/types';
 import { OrgProvider } from '@/lib/org-context';
 import { CoachesProvider } from '@/lib/coaches-context';
+import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
@@ -104,13 +105,18 @@ export default async function CoachesLayout({
           <CoachThemeColor />
           <HelpDrawerProvider>
             <ConfirmProvider>
-              <div className={styles.coachesShell}>
-                <CoachesSidebar orgSlug={orgSlug} />
-                <main className={styles.coachesMain}>
-                  {children}
-                </main>
-              </div>
-              <CoachesBottomNav />
+              {/* Shared "any modal/sheet open" signal (Coach Portal Batch 1, D3): wraps BOTH the
+                  sidebar and the bottom nav so useOverlayOpen()/useAnyOverlayOpen() reach every
+                  team page and the nav that needs to hide under them. */}
+              <CoachesOverlayProvider>
+                <div className={styles.coachesShell}>
+                  <CoachesSidebar orgSlug={orgSlug} />
+                  <main className={styles.coachesMain}>
+                    {children}
+                  </main>
+                </div>
+                <CoachesBottomNav />
+              </CoachesOverlayProvider>
             </ConfirmProvider>
             <InstallAppPrompt
               appName="FieldLogicHQ"

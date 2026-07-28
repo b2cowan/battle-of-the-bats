@@ -12,7 +12,9 @@
      • .tableAsCards            list-table → stacked cards @640 (Roster idiom)
      • .scrollX / .scrollXSticky genuine 2-D grid: x-scroll + sticky first column
                                (never silent sideways scroll — pair with a hint)
-     • .sheetOnMobile          overlay → bottom-sheet @640 (add to .modalOverlay)
+     • .sheetOnMobile          PRE-FLIP name, now a no-op alias — full-height bottom-sheet
+                               is the DEFAULT .modalOverlay presentation @640 (Coach Portal
+                               Batch 1 D1, 2026-07-28). Opt OUT with .centeredOnMobile.
      • .stickyActionBar        safe-area sticky footer (env(safe-area-inset-bottom))
    Existing instances that already embody these: .lineupTableWrap (scrollX),
    .rosterTable reflow (tableAsCards), .modalFooter/.attendanceFooter/.editScope/
@@ -1309,58 +1311,6 @@
   gap: 0.5rem;
 }
 
-/* "The Flip" P3: row card + its ⇄ Fan view door stacked (shared FanViewLink component) — the
-   card keeps its whole-surface click (opens the record); the flip link sits on its own line
-   just beneath, mirroring the free portal's list treatment. */
-.tournamentHistoryEntry {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.tournamentHistoryItem {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 58px;
-  padding: 0.7rem 0.8rem;
-  background: var(--home-olive-soft, rgba(255,255,255,0.028));
-  border: 1px solid var(--border-2);
-  border-radius: 8px;
-  text-decoration: none;
-  transition: border-color 0.12s, background 0.12s;
-}
-
-.tournamentHistoryItem:hover {
-  background: var(--home-olive-soft, rgba(255,255,255,0.052));
-  border-color: rgba(var(--blueprint-blue-rgb),0.28);
-}
-
-.tournamentHistoryMain {
-  display: flex;
-  flex-direction: column;
-  gap: 0.18rem;
-  min-width: 0;
-}
-
-.tournamentHistoryName {
-  color: var(--white-90);
-  font-size: 0.9rem;
-  font-weight: 800;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.tournamentHistoryMeta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.7rem;
-  color: var(--home-dim, rgba(255,255,255,0.38));
-  font-size: 0.76rem;
-}
-
 .badge {
   font-size: 0.72rem;
   font-weight: 600;
@@ -1462,7 +1412,7 @@
 
 .playerName { font-weight: 600; font-size: 0.92rem; }
 
-/* ── Roster: meta line, avatars, merged cells, mobile cards ─────────────── */
+/* ── Roster: meta line, merged cells, mobile cards ──────────────────────── */
 .rosterMeta {
   display: flex;
   align-items: center;
@@ -1493,22 +1443,10 @@
 
 .cellEmpty { opacity: 0.3; }
 
-/* Player cell: colored initials avatar + clickable name */
-.playerCell { display: inline-flex; align-items: center; gap: 0.6rem; min-width: 0; }
-.avatar {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  color: var(--on-team-color); /* stay light on the theme-stable name-hash avatar colour */
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.16));
-}
+/* Player cell: clickable name (+ folded jersey/status meta on mobile). Initials
+   avatars removed 2026-07-28 (owner) — they encoded nothing (name-hash colour),
+   ate card width, and were the portal's only circular monogram. */
+.playerCell { display: inline-flex; align-items: center; min-width: 0; }
 .playerNameLink {
   font-weight: 600;
   font-size: 0.92rem;
@@ -1678,8 +1616,8 @@
 }
 .modalCloseBtn:hover { color: var(--home-ink, rgba(255,255,255,0.8)); }
 
-/* Mobile back arrow — replaces the X when a modal goes full-screen (see the
-   sheetOnMobile @640 block). Hidden on desktop. */
+/* Mobile back arrow — replaces the X when a modal goes full-screen (see the default-sheet
+   @640 block below; .centeredOnMobile opts out and keeps this hidden). Hidden on desktop. */
 .modalBackBtn {
   display: none;
   background: none;
@@ -1749,6 +1687,12 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.875rem;
+}
+/* One column on phones: half-width columns force long uppercase labels to wrap,
+   which staggers adjacent inputs (readiness-review P1, pulled into Batch 1
+   2026-07-28 at owner request). */
+@media (max-width: 640px) {
+  .formGrid { grid-template-columns: 1fr; }
 }
 
 .formGridFull { grid-column: 1 / -1; }
@@ -2609,7 +2553,9 @@
 }
 
 /* Day list (mobile month-cell tap) — centered card on desktop, bottom-sheet on phones.
-   z-index clears the mobile bottom nav (300), matching the detail slide-over. */
+   z-index clears the mobile bottom nav (300), matching the detail slide-over. The default-sheet
+   @640 block below (polarity flip, D1) explicitly excludes .daySheetOverlay via :not() — this
+   bespoke partial-height (80vh) sheet keeps its own layout and is never stretched full-screen. */
 .daySheetOverlay { z-index: 400; }
 .daySheet {
   background: var(--card-bg);
@@ -2680,18 +2626,31 @@
 .slideOverMapLink:hover { text-decoration: underline; }
 .slideOverNotes { margin: 0 0 0.25rem; font-size: 0.85rem; color: var(--white-55); line-height: 1.45; white-space: pre-wrap; }
 
-/* sheetOnMobile — overlay → full-width bottom sheet @640. The generic modifier
-   (.sheetOnMobile on the .modalOverlay) targets its single panel child, so any
-   overlay opts in (event detail slide-over + the add/edit event form modal).
-   .slideOverScrim is the legacy alias kept for the detail panel. Migrated 600→640. */
+/* Full-height bottom sheet is the DEFAULT .modalOverlay presentation @640 (Coach Portal
+   Batch 1 — polarity flip, D1, 2026-07-28). Before this, a modal had to opt IN via
+   .sheetOnMobile/.slideOverScrim to sit above the bottom nav — that "safety is opt-in" shape
+   is exactly how modals shipped unsafe. Every .modalOverlay now gets the full-screen, safe
+   treatment automatically; .sheetOnMobile/.slideOverScrim are kept as NO-OP aliases so none
+   of their existing adopters need to change (nothing below keys off those two class names
+   any more — they do nothing, but removing them isn't required either).
+   Two opt-OUTs, both still forced to z-index 400 so neither can ever sit under the nav:
+     • .centeredOnMobile — new modifier for short dialogs that should stay a small centered
+       card (confirms, icon pickers, upload dialogs). Falls through to the base .modalOverlay/
+       .modal/.modalHeader rules unchanged (centered, max-height 90vh, rounded, 1.5rem padding,
+       X-close visible).
+     • .daySheetOverlay — the existing bespoke partial-height (80vh) bottom sheet just above.
+       It must NOT be stretched into a full-screen panel, so it's excluded here too and keeps
+       its own @640 rules (align-items:flex-end, .daySheet's own max-height:80vh). */
 @media (max-width: 640px) {
   /* Full-screen modal: the panel covers the viewport edge-to-edge (no rounded sheet),
-     scrolls internally, and the page behind is scroll-locked in JS. z-index sits ABOVE
-     the bottom nav (300) so the sticky Save bar isn't hidden behind it. */
-  .modalOverlay.sheetOnMobile,
-  .modalOverlay.slideOverScrim { align-items: stretch; padding: 0; z-index: 400; }
-  .sheetOnMobile > *,
-  .slideOverScrim .slideOver {
+     scrolls internally, and the page behind is scroll-locked (useOverlayOpen,
+     lib/coaches-overlay.tsx). z-index sits ABOVE the bottom nav (300) so the sticky Save bar
+     isn't hidden behind it. */
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) { align-items: stretch; padding: 0; }
+  /* Every overlay clears the nav's z-index — including the opt-outs above; a centered dialog
+     or the day sheet must never sit UNDER the nav, they just keep their own smaller footprint. */
+  .modalOverlay { z-index: 400; }
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) > * {
     max-width: 100%;
     width: 100%;
     height: 100dvh;
@@ -2701,26 +2660,44 @@
     /* Trim the side gutters (was 24px) so content uses the width; keep top/bottom. */
     padding-left: 0.9rem;
     padding-right: 0.9rem;
+    /* Flex column so a short form's action bar still pins to the screen bottom
+       (approved mockup) instead of floating mid-sheet under the last field —
+       matches the modalScrollBody pattern's proven layout. */
+    display: flex;
+    flex-direction: column;
   }
-  /* Sticky footers/scope bars re-bleed to the tighter 0.9rem side edges (vertical
-     bleed unchanged). */
-  .slideOverScrim .attendanceFooter,
-  .sheetOnMobile .modalFooter,
-  .slideOverScrim .editScope,
-  .sheetOnMobile .editScope {
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) .modalFooter {
+    margin-top: auto;
+  }
+  /* Sticky footers/scope bars re-bleed to the tighter 0.9rem side edges. The desktop
+     -1.5rem BOTTOM bleed is zeroed here: with a sticky footer it shortens the scroll
+     extent by 24px, permanently hiding the last 24px of the form (Notes) at max scroll.
+     Flushness comes from the panel dropping its own bottom padding instead (below). */
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) .attendanceFooter,
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) .modalFooter,
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) .editScope {
     margin-left: -0.9rem;
     margin-right: -0.9rem;
+    margin-bottom: 0;
     padding-left: 0.9rem;
     padding-right: 0.9rem;
   }
-  /* Back arrow replaces the X; header reads left → right. */
-  .modalBackBtn { display: inline-flex; }
-  .sheetOnMobile .modalCloseBtn,
-  .slideOverScrim .modalCloseBtn { display: none; }
-  .sheetOnMobile .modalHeader,
-  .slideOverScrim .modalHeader { justify-content: flex-start; gap: 0.6rem; }
+  /* Only panels that HAVE a sticky action bar go flush — footer-less sheets (pickers,
+     tag manager) keep their normal bottom padding. */
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) > *:has(.modalFooter, .attendanceFooter, .editScope) {
+    padding-bottom: 0;
+  }
+  /* Back arrow replaces the X by default; header reads left → right. .centeredOnMobile keeps
+     the pre-flip X-close header (base .modalHeader's space-between, untouched below).
+     Behavior table: centered dialogs keep the X (even if a back btn is in the DOM — the
+     :not(.centeredOnMobile) guard below means a centered modal can never lose its only close
+     affordance); sheet modals WITH a back btn hide the X; sheet modals WITHOUT a back btn
+     (not yet given one) keep the X. Hide only when a back button is actually present. */
+  .modalOverlay:not(.centeredOnMobile) .modalBackBtn { display: inline-flex; }
+  .modalOverlay:not(.centeredOnMobile) .modalHeader:has(.modalBackBtn) .modalCloseBtn { display: none; }
+  .modalOverlay:not(.centeredOnMobile) .modalHeader { justify-content: flex-start; gap: 0.6rem; }
   /* A sticky footer (Save) clears the home indicator. */
-  .sheetOnMobile .modalFooter {
+  .modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile) .modalFooter {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   }
 }

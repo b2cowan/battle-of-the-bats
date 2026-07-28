@@ -116,6 +116,18 @@ export async function unlinkRepTeamFromRegistration(registrationId: string): Pro
   if (error) throw error;
 }
 
+/** All registration ids explicitly linked to a rep team (Layer 2) — the paid-portal Tournaments
+ *  history route reads these directly, per rep team rather than per tournament. Caller MUST have
+ *  already proved the viewer has access to this rep team (the route uses getTeamScopedRepTeamAccess). */
+export async function getLinkedRegistrationIdsForRepTeam(repTeamId: string): Promise<string[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tournament_registrations')
+    .select('tournament_team_id')
+    .eq('rep_team_id', repTeamId);
+  if (error) throw error;
+  return [...new Set((data ?? []).map(row => row.tournament_team_id as string))];
+}
+
 /** Whether a rep team belongs to the given org — the cross-tenant guard the link endpoint
  *  runs before writing (a registration can only ever link to a rep team in its own org). */
 export async function repTeamBelongsToOrg(repTeamId: string, orgId: string): Promise<boolean> {

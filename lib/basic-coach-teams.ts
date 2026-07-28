@@ -5,6 +5,8 @@ import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 import { buildCoachTournamentStatus } from './coach-status-model';
 import { excludeActivePremiumUpgrades } from './coach-team-page';
 import { tournamentNow, tournamentToday } from './timezone';
+import { getTeamWorkspaceForRepTeam } from './team-workspace-entitlements';
+import { getLinkedRegistrationIdsForRepTeam } from './rep-team-tournament-links';
 
 export type BasicCoachTeam = {
   id: string;
@@ -871,6 +873,21 @@ export async function getBasicCoachTournamentHistoryForTeam(
   if (linkError) throw linkError;
 
   const registrationIds = [...new Set((links ?? []).map(link => link.tournament_team_id).filter(Boolean))];
+  return getBasicCoachTournamentHistoryForRegistrationIds(registrationIds, basicCoachTeamId);
+}
+
+/**
+ * Same entry shape as `getBasicCoachTournamentHistoryForTeam`, but driven directly by a set of
+ * `teams` (tournament registration) ids rather than resolved through the `basic_coach_team_registrations`
+ * bridge. Lets the paid-portal side (Phase 2, `rep_team_tournament_registrations` — mig 196) build
+ * history entries for admin-linked registrations that have no basic-coach-team backing at all
+ * (`basicCoachTeamId` is then null on every entry). Extracted so both bridges produce byte-identical
+ * shapes — never duplicate the tournament/org/division/fee-status assembly below.
+ */
+export async function getBasicCoachTournamentHistoryForRegistrationIds(
+  registrationIds: string[],
+  basicCoachTeamId: string | null,
+): Promise<BasicCoachTournamentHistoryEntry[]> {
   if (registrationIds.length === 0) return [];
 
   const { data: registrations, error: registrationError } = await supabaseAdmin
@@ -1299,6 +1316,49 @@ export async function resolveBasicCoachTeamIdForWorkspace(teamWorkspace: {
   });
 
   return basicCoachTeamId;
+}
+
+/**
+ * Merged tournament history for a rep team (paid-portal side) across BOTH bridges to a tournament
+ * registration: the workspace bridge (`team_workspaces.basic_coach_team_id`, the free-portal-upgrade
+ * path) and the admin-link bridge (`rep_team_tournament_registrations`, mig 196 — org-created rep
+ * teams with no workspace). Dedupes by registration id with the workspace entry winning (it already
+ * carries a real `basicCoachTeamId`; an admin-link entry for the same registration would only ever be
+ * a redundant shadow of it). The two bridge lookups are independent, so they run concurrently; the
+ * workspace-dependent resolve + history fetch continues after.
+ *
+ * ⚠ nav signal in lib/db.ts `getCoachingNavSignals` derives bridge EXISTENCE separately — keep the
+ * two in mind together when adding a bridge.
+ */
+export async function getMergedTournamentHistoryForRepTeam(repTeamId: string): Promise<{
+  history: BasicCoachTournamentHistoryEntry[];
+  basicCoachTeamId: string | null;
+  linkage: 'workspace' | 'admin-link' | 'none';
+}> {
+  const [workspace, linkedRegistrationIds] = await Promise.all([
+    getTeamWorkspaceForRepTeam(repTeamId),
+    getLinkedRegistrationIdsForRepTeam(repTeamId),
+  ]);
+
+  const basicCoachTeamId = workspace ? await resolveBasicCoachTeamIdForWorkspace(workspace) : null;
+  const workspaceHistory = basicCoachTeamId
+    ? await getBasicCoachTournamentHistoryForTeam(basicCoachTeamId)
+    : [];
+
+  const workspaceRegIds = new Set(workspaceHistory.map(entry => entry.registration.id));
+  const adminOnlyRegistrationIds = linkedRegistrationIds.filter(id => !workspaceRegIds.has(id));
+  const adminLinkHistory = adminOnlyRegistrationIds.length > 0
+    ? await getBasicCoachTournamentHistoryForRegistrationIds(adminOnlyRegistrationIds, basicCoachTeamId)
+    : [];
+
+  const history = [...workspaceHistory, ...adminLinkHistory];
+  const linkage: 'workspace' | 'admin-link' | 'none' = basicCoachTeamId
+    ? 'workspace'
+    : linkedRegistrationIds.length > 0
+      ? 'admin-link'
+      : 'none';
+
+  return { history, basicCoachTeamId, linkage };
 }
 
 export async function getBasicCoachTournamentSummary(params: {
