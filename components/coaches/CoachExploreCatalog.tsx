@@ -29,6 +29,11 @@ const FEATURES: Array<{ key: FeatureKey; label: string; desc: string; icon: type
 const PREMIUM_FEATURES = [
   'Game lineups',
   'Attendance tracking',
+  // B3.4 (◆M1): a free team is ONE person's sign-in — the free model has no assistant-coach
+  // concept at all, and this list is the only place in the portal a coach could learn that
+  // Premium does. (Relocated here from the plan's Chat placement: the coach's chat is now the
+  // app-wide Chat tab, shared with fans and with paying coaches, where an upsell must not go.)
+  'Assistant coaches with their own sign-in',
   'Team documents',
   'Dues schedules & automatic reminders',
   'A season budget',

@@ -322,6 +322,51 @@
   padding: 1.1rem 1.25rem;
 }
 
+/* Share control inside the hero's result card. The shared SharePageButton's default is a
+   full-bleed block; here it must read as one small action beside the record, so it takes a
+   fit-content pill instead. Same component, same behaviour — presentation only. */
+.resultShareBtn {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  gap: 0.4rem;
+  margin-top: 0.15rem;
+  padding: 0.34rem 0.7rem;
+  color: var(--white);
+  background: transparent;
+  border: 1px solid var(--white-20);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.resultShareBtn:hover:not(:disabled) {
+  border-color: rgba(var(--logic-lime-rgb), 0.45);
+  background: rgba(var(--logic-lime-rgb), 0.08);
+}
+
+.resultShareBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* B3.1 lead line — full-strength ink, one register above the supporting sentence, so the
+   strip opens on the season claim rather than on housekeeping copy. */
+.afterglowLede {
+  margin: 0 0 -0.45rem;
+  color: var(--white);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.afterglowLede strong {
+  font-weight: 800;
+}
+
 .afterglowText {
   margin: 0;
   color: var(--white-60);

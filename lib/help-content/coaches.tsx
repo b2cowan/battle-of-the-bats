@@ -90,8 +90,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'How to turn on the tools you need',
       summary: 'Roster, Schedule, Fees, and Announcements are free but off by default — turn them on from Explore.',
-      keywords: ['explore', 'turn on', 'activate', 'enable tools', 'roster schedule fees announcements', 'sections missing'],
-      searchText: 'explore turn on activate enable team tools roster schedule fees announcements free progressive disclosure where is my roster tab missing section premium all tools already on no explore step sidebar',
+      keywords: ['explore', 'turn on', 'activate', 'enable tools', 'roster schedule fees announcements', 'sections missing', 'what premium adds', 'assistant coaches'],
+      searchText: 'explore turn on activate enable team tools roster schedule fees announcements free progressive disclosure where is my roster tab missing section premium all tools already on no explore step sidebar what does premium add list of premium tools assistant coaches with their own sign in second coach help running the team lineups attendance documents dues automation season budget carry roster into next season see what upgrading gets you',
       content: (
         <>
           <p><em>This applies to the free portal.</em> On <strong>Premium Coaches Portal</strong> every tool is already in your sidebar, so there&apos;s nothing to turn on — you can skip this section.</p>
@@ -104,6 +104,7 @@ const coachesHelp: HelpPageContent = {
           </ul>
           <p>Each shows a <strong>Free</strong> tag. Click <strong>Turn on</strong> and the tool appears as a new tab and opens for you. Ignore the ones you don&apos;t need — nothing is forced on you, and you can turn a tool on any time from Explore.</p>
           <p>If you can&apos;t find your Roster or Schedule tab, it&apos;s almost always because it hasn&apos;t been turned on yet. Open Explore and turn it on.</p>
+          <p>Explore is also the one place that lists <strong>what the Premium Coaches Portal adds</strong>, if you ever want to look: game lineups, attendance tracking, <strong>assistant coaches with their own sign-in</strong> (a free team is a single login — there&apos;s no way to give another coach their own access), team documents, dues schedules with automatic reminders, a season budget, and carrying your roster into next season. Everything above stays free either way.</p>
         </>
       ),
     },
@@ -251,8 +252,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Your team tools',
       heading: 'How to track team fees',
       summary: 'Charge everyone or one player, then mark each fee paid as money comes in.',
-      keywords: ['fees', 'team fees', 'dues', 'charge everyone', 'one player', 'mark paid', 'payment tracking'],
-      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid unpaid owed payment tracking ledger no online payment collection installments reminders budget premium haven\'t paid anything yet who hasn\'t paid never paid chase unpaid list remind remind all send reminder nudge families first payment generate installments from budget plan automatic dues reminders toggle 30 day 7 day',
+      keywords: ['fees', 'team fees', 'dues', 'charge everyone', 'one player', 'mark paid', 'payment tracking', 'players still owe', 'unpaid count'],
+      searchText: 'fees team fees dues charge everyone all players one player bulk mark paid unpaid owed payment tracking ledger no online payment collection installments reminders budget premium haven\'t paid anything yet who hasn\'t paid never paid chase unpaid list remind remind all send reminder nudge families first payment generate installments from budget plan automatic dues reminders toggle 30 day 7 day players still owe reminders to send by hand unpaid count different numbers counts people not fees why do the numbers differ two numbers unpaid fees across players',
       content: (
         <>
           <p>Turn on <strong>Fees</strong> from Explore. Fees is a simple way to track who has paid — it records what each player owes and what they&apos;ve paid; it does not collect money online.</p>
@@ -273,6 +274,19 @@ const coachesHelp: HelpPageContent = {
           keywords: ['online payment', 'collect fees', 'pay online', 'e-transfer'],
           answer: (
             <p>Not in the free Fees tool. It tracks who owes and who has paid — you collect payment your usual way (e-transfer, cash, cheque) and click <strong>Mark paid</strong>. You can charge everyone at once or one player at a time.</p>
+          ),
+        },
+        {
+          id: 'faq-fees-two-counts',
+          question: 'Why does my Fees page show two different unpaid numbers?',
+          answerText: 'Because they count different things, and both are right. The count beside the Fees heading counts unpaid FEES — every individual charge still outstanding. Once five or more people still owe you, a line lower down counts PEOPLE instead, because that is the number of families you actually have to chase: "9 players still owe — that is 9 reminders to send by hand." If one player is carrying more than one unpaid fee the two numbers will not match, and in that case the line spells out both, for example "12 unpaid fees across 9 players". The people line only appears once five or more players owe — with a couple of stragglers there is nothing worth pointing out.',
+          keywords: ['two numbers', 'unpaid count', 'numbers do not match', 'players still owe', 'reminders to send by hand', 'why different', 'unpaid fees across players'],
+          answer: (
+            <>
+              <p>Because they count different things, and both are right. The count beside the <strong>Fees</strong> heading counts unpaid <strong>fees</strong> — every individual charge still outstanding.</p>
+              <p>Once five or more people still owe you, a line lower down counts <strong>people</strong> instead, because that&apos;s the number of families you actually have to chase: <em>&ldquo;9 players still owe — that&rsquo;s 9 reminders to send by hand.&rdquo;</em> If one player is carrying more than one unpaid fee the two numbers won&rsquo;t match, and the line spells out both — for example <em>&ldquo;12 unpaid fees across 9 players&rdquo;</em>.</p>
+              <p>That line only appears once <strong>five or more</strong> players owe. With a couple of stragglers there&rsquo;s nothing worth pointing out.</p>
+            </>
           ),
         },
         {
@@ -334,8 +348,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Tournaments',
       heading: 'Your tournament records',
       summary: 'Every tournament you’ve entered — and how each record reads: Status & Payment, Schedule, Your Team, From the Organizer.',
-      keywords: ['tournaments', 'registration', 'tournament records', 'status & payment', 'schedule', 'your team', 'from the organizer', 'zones', 'accepted', 'payment', 'how to pay', 'entry fee', 'live', 'premium tournaments', 'score alerts', 'get alerts', 'highlight my team', 'fan view', 'flip', 'public site pill'],
-      searchText: 'tournaments tournament records registrations status schedule history across organizations bracket standings my registrations accepted four zones sections status and payment your registration your games roster and coach news and resources from the organizer your team zone quick jump row jump links hop between sections what happens next checklist gone payment how to pay entry fee deposit due date instructions pay the organizer e-transfer schedule published announcements rules tournament home resource links premium tournaments sidebar section live status today scores full record inside portal never leave free portal score alerts own team push notification get alerts for your team highlight my team automatic pin public schedule scorebug fan view public site flip pill top right corner back to coach view same tab',
+      keywords: ['tournaments', 'registration', 'tournament records', 'status & payment', 'schedule', 'your team', 'from the organizer', 'zones', 'accepted', 'payment', 'how to pay', 'entry fee', 'live', 'premium tournaments', 'score alerts', 'get alerts', 'highlight my team', 'fan view', 'flip', 'public site pill', 'final record', 'after the tournament', 'event complete', 'share your team', 'final standings'],
+      searchText: 'tournaments tournament records registrations status schedule history across organizations bracket standings my registrations accepted four zones sections status and payment your registration your games roster and coach news and resources from the organizer your team zone quick jump row jump links hop between sections what happens next checklist gone payment how to pay entry fee deposit due date instructions pay the organizer e-transfer schedule published announcements rules tournament home resource links premium tournaments sidebar section live status today scores full record inside portal never leave free portal score alerts own team push notification get alerts for your team highlight my team automatic pin public schedule scorebug fan view public site flip pill top right corner back to coach view same tab after the tournament ends event over event complete final record won lost tied wins losses ties result card view final standings share your team share result what happens after my tournament wrap up',
       content: (
         <>
           <p>The <strong>Tournaments</strong> section lists every tournament you&apos;ve registered the team for — across any organization — with its registration status and schedule.</p>
@@ -350,6 +364,7 @@ const coachesHelp: HelpPageContent = {
           </ul>
           <p>In the free portal on a phone, a small row of <strong>jump links</strong> sits just under the tabs so you can hop straight to any of the four without scrolling. The record adapts as your event progresses — an accepted team picks up roster status, your check-in state appears once the event starts, and game day leads with your next game — but the four sections stay put, so what you learned before the event still applies during it. (A team the organizer couldn&apos;t fit in keeps a shorter record: your status and a note from the organizer.)</p>
           <p>Everything you need is stated <strong>once</strong>: the fee only in Status &amp; Payment, your games only in Schedule. Your games appear automatically once the organizer publishes the schedule; you don&apos;t have to dig back through your acceptance email for payment details.</p>
+          <p><strong>Once the event is over</strong>, the top of the record becomes a single result card: <strong>Event complete</strong> with the tournament dates, your <strong>final record</strong> (wins&ndash;losses&ndash;ties from the games that were scored), a link to the <strong>final standings</strong> on the public site, and a <strong>Share your team</strong> button that sends a link anyone can open. If no scores were recorded for your team, it says so rather than showing a made-up 0&ndash;0. The four sections stay exactly where they were, so you can still look back at what you paid, who you played, and what the organizer told you. This is the same on both tiers.</p>
           <p>Every tournament record carries a <strong>⇄ Public site</strong> pill in its top-right corner — one tap flips to that event&apos;s public site in the same tab, and the public page&apos;s own pill then reads <strong>⇄ Back to Coach view</strong> so the return trip is one tap too. A quiet <strong>⇄ Fan view</strong> link on each list entry (and on your team Overview while an event is live) makes the same jump to the event&apos;s public site.</p>
         </>
       ),
@@ -375,6 +390,20 @@ const coachesHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>On <strong>Premium Coaches Portal</strong>, open the <strong>Tournaments</strong> item in your sidebar. It lists every tournament your team is entered in with live status (a live event shows <strong>Live</strong> or <strong>Today</strong>). Open one to see the full record inside your portal — the same four sections free coaches get (<strong>Status &amp; Payment</strong>, <strong>Schedule</strong>, <strong>Your Team</strong>, <strong>From the Organizer</strong>), with live scores on game day. You&apos;re never sent back to the free portal, and the tournament experience is the same on both tiers.</p>
+          ),
+        },
+        {
+          id: 'faq-after-tournament-ends',
+          question: 'What happens to my tournament record after the event is over?',
+          answerText: 'It stays put — nothing is deleted and nothing is archived away. The top of the record turns into a result card: Event complete with the dates, your final record (wins-losses-ties from the games that were scored), a link to the final standings on the tournament’s public site, and a Share your team button that sends a link anyone can open, including families who do not have an account. If no scores were recorded for your team, the card says that instead of showing a false 0-0. All four sections stay exactly where they were, so you can still check what you paid, who you played, and what the organizer posted. Free coaches also see a short note underneath about what carries forward if you move to the Premium Coaches Portal — season history, playing time and awards — because on the free portal those live with the event rather than with your team. That note is the only place the portal mentions upgrading during a tournament: nothing is shown before or during your event, deliberately.',
+          keywords: ['after the tournament', 'event over', 'tournament finished', 'final record', 'event complete', 'result card', 'share your team', 'final standings', 'what happens next', 'record deleted', 'archived', 'wrap up', 'season history'],
+          popular: true,
+          answer: (
+            <>
+              <p>It stays put — nothing is deleted or archived away. The top of the record turns into a <strong>result card</strong>: <strong>Event complete</strong> with the dates, your <strong>final record</strong> (wins&ndash;losses&ndash;ties from the games that were scored), a link to the <strong>final standings</strong> on the tournament&apos;s public site, and a <strong>Share your team</strong> button that sends a link anyone can open — including families without an account. If no scores were recorded for your team, the card says so rather than showing a false 0&ndash;0.</p>
+              <p>All four sections stay exactly where they were, so you can still check what you paid, who you played, and what the organizer posted.</p>
+              <p>On the free portal you&apos;ll also see a short note underneath about what carries forward if you move to the <strong>Premium Coaches Portal</strong> — season history, playing time and awards — because on the free portal those stay with the event rather than with your team. That note is the <em>only</em> place the portal mentions upgrading during a tournament: nothing is shown before or during your event, deliberately.</p>
+            </>
           ),
         },
         {

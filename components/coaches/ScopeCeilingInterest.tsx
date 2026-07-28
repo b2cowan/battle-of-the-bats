@@ -77,9 +77,14 @@ export default function ScopeCeilingInterest({ basicTeamId, checkoutOpen = false
     return (
       <div className={styles.panel}>
         <div className={styles.copy}>
-          <h3>Ready for the full toolkit?</h3>
+          {/* B3.1: this panel's ONLY call site is the post-event afterglow, so it argues from
+              the moment the coach is in — the weekend is over and everything about it is about
+              to stop being visible. The generic "full toolkit" framing lives on Explore. */}
+          <p className={styles.eyebrow}>Premium Coaches Portal</p>
+          <h3>Keep the season, not just the weekend</h3>
           {/* Price stated before the tap on every pitch surface (conversion sweep C3). */}
-          <p>Upgrade this team to the Premium Coaches Portal — your season operations HQ: lineups, attendance, documents, dues automation, and a season budget. {promoActive
+          <p>Season history across every event, playing time, attendance and team awards — plus
+            lineups, dues automation, documents and a season budget. {promoActive
             ? 'Free until Jan 1, 2027 — then $29/month per team. No credit card required.'
             : '$29/month per team, cancel anytime.'}</p>
         </div>

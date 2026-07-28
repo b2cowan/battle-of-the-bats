@@ -71,7 +71,7 @@ export const GET = withObservability(async (req: NextRequest) => {
       ...(wantContext ? { teamContexts } : {}),
       pendingRegistration,
       // Already linked to this account → the join page skips the "choose team" interstitial.
-      alreadyLinked: access === 'explicit',
+      alreadyLinked: Boolean(access),
     });
   } catch (error) {
     console.error('[coaches basic-teams GET] error:', error);

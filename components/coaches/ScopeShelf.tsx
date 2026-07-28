@@ -19,8 +19,12 @@ import styles from './ScopeShelf.module.css';
 
 type ContentSection = 'roster' | 'schedule' | 'fees' | 'announcements';
 /** 'overview' (conversion sweep C4) = the team-level catch-all on the Overview page —
- *  one whole-team line instead of a per-section value phrase. Same shelf, same gate. */
-type Section = ContentSection | 'overview';
+ *  one whole-team line instead of a per-section value phrase.
+ *  'tournaments' (B3.2 / ◆N1) = the team-scoped Tournaments list, gated by the CALLER on a
+ *  second entry — a coach entering their second event has just re-typed a roster they already
+ *  had, which is the one moment the carry-forward argument is a fact rather than a pitch.
+ *  Both are the same shelf under the same checkout gate — no new pitch surface. */
+type Section = ContentSection | 'overview' | 'tournaments';
 
 // Per-section value phrase + a whole-team teaser (de-duped per section so nothing repeats).
 const COPY: Record<ContentSection, { value: string; teaser: string }> = {
@@ -49,7 +53,20 @@ const SECTION_LABEL: Record<ContentSection, string> = {
   announcements: 'announcements',
 };
 
-export default async function ScopeShelf({ basicTeamId, section }: { basicTeamId: string; section: Section }) {
+export default async function ScopeShelf({
+  basicTeamId,
+  section,
+  lead,
+}: {
+  basicTeamId: string;
+  section: Section;
+  /**
+   * B3.5 (◆O1): an optional statement of fact about THIS coach's own workload, rendered above
+   * the eyebrow. Only for a page that can measure real toil (the fees page counts players who
+   * still owe); the caller owns the threshold so the shelf never invents a problem.
+   */
+  lead?: string;
+}) {
   // The upgrade link follows the SAME server-side checkout gate as /coaches/start: open in dev
   // (team plan ungated) → the real checkout; gated in prod → the info/express-interest explainer.
   // The gate lives in each environment's own DB and fails closed, so a prod deploy can never flip it.
@@ -64,10 +81,19 @@ export default async function ScopeShelf({ basicTeamId, section }: { basicTeamId
     : 'See everything it includes →';
   return (
     <footer className={styles.footer}>
+      {lead && <p className={styles.footerLead}>{lead}</p>}
       <p className={styles.footerEyebrow}>Premium Coaches Portal</p>
       <p className={styles.footerBody}>
         {section === 'overview' ? (
           <>For this team: game lineups, attendance, dues automation, documents &amp; a season budget.</>
+        ) : section === 'tournaments' ? (
+          /* "results" deliberately NOT grouped with the carry-forward claim (review finding):
+             roster and staff really do roll into a new season, but a completed season's results
+             are kept read-only rather than merged forward. Results are stated as "in one place",
+             which is what Insights actually does. */
+          <>Second event, same roster. Premium carries your roster and staff from one tournament
+            to the next — and into next season — and keeps every event&apos;s results in one
+            place, instead of starting from a blank list each time.</>
         ) : (
           <>On {SECTION_LABEL[section]}: {COPY[section].value} — {COPY[section].teaser}.</>
         )}

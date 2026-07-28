@@ -267,13 +267,23 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
   const todayGameCount = todayGames?.length ?? 0;
   const nextTodayGame = todayGames?.[0] ?? null;
 
+  /* B3 (owner call 2026-07-27): the RESULT hero is the result card and nothing else.
+     Everything the head carried is already stated immediately above it in BOTH shells —
+     the free portal's persistent header (tournament · org eyebrow, team name, dates) and
+     Premium's in-page header ("{team}" + "{tournament} ({year}) - {org}") — so the phase
+     headline, the status chip, the tournament/org lines AND the trailing date line were
+     the same facts a third and fourth time, stacked. The status itself still has exactly
+     one home: the Status & Payment zone below. */
+  const resultOnly = phase === 'result';
+
   return (
     <div
-      className={`${styles.hero} ${phaseAccentClass}${celebration ? ` ${styles.heroCelebration}` : ''}`}
+      className={`${styles.hero} ${phaseAccentClass}${celebration ? ` ${styles.heroCelebration}` : ''}${resultOnly ? ` ${styles.heroResultOnly}` : ''}`}
       style={heroStyle}
       aria-label="Tournament status"
     >
       {celebration && <p className={styles.heroWatermark} aria-hidden>{monogram}</p>}
+      {!resultOnly && (
       <div className={styles.heroHead}>
         {/* B1.4 — the organizer's own mark. This is a REAL uploaded logo, which is why it
             survived the 2026-07-27 removal of the auto-generated team-initial squares: an
@@ -313,6 +323,7 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
           )}
         </div>
       </div>
+      )}
 
       {accepted && beforeStart && startDate && (
         <p className={styles.heroCountdown}>
@@ -365,7 +376,8 @@ function TournamentTeamHQ(props: TournamentTeamHQProps) {
         </div>
       )}
 
-      {dateRangeLabel && <p className={styles.heroDates}>{dateRangeLabel}</p>}
+      {/* Result phase states the range once, inside the card's lead row — no trailing repeat. */}
+      {dateRangeLabel && !resultOnly && <p className={styles.heroDates}>{dateRangeLabel}</p>}
     </div>
   );
 }

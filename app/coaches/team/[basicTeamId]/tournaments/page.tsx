@@ -8,6 +8,7 @@ import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
+import ScopeShelf from '@/components/coaches/ScopeShelf';
 import TeamSectionShell from '@/components/coaches/TeamSectionShell';
 import { Trophy } from 'lucide-react';
 import styles from './tournaments.module.css';
@@ -29,6 +30,9 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
   const { team } = await resolveCoachTeamPage(basicTeamId, '/tournaments');
   const history = await getBasicCoachTournamentHistoryForTeam(basicTeamId);
   const today = tournamentToday();
+  // Entries that actually put this team in an event. Used only to gate the B3.2 shelf — the
+  // list itself still shows every entry, rejections included, because that IS their record.
+  const liveEntryCount = history.filter(({ registration }) => registration.status !== 'rejected').length;
 
   return (
     <TeamSectionShell
@@ -67,6 +71,15 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
           ))}
         </div>
       )}
+
+      {/* B3.2 (◆N1): the shelf this portal already runs on roster / schedule / fees /
+          announcements, reused verbatim — no new pitch anatomy. Held back until a SECOND
+          entry exists: a coach with one tournament hasn't repeated anything yet, so the
+          carry-forward argument would be a guess about them rather than an observation.
+          REJECTED entries don't count (review finding) — `getBasicCoachTournamentHistoryForTeam`
+          applies no status filter, so a coach turned away from event A and accepted to event B
+          would otherwise be told "second event, same roster" with no first event behind them. */}
+      {liveEntryCount >= 2 && <ScopeShelf basicTeamId={basicTeamId} section="tournaments" />}
     </TeamSectionShell>
   );
 }

@@ -1,6 +1,6 @@
 # Free Coach Portal Experience — PM Brief
 
-**Date:** 2026-07-25 · **Status:** A1 (fixes) built pending owner QA; A2+ ratified direction, not started
+**Date:** 2026-07-25 (B3 section added 2026-07-27) · **Status:** Tranche A + B1 built and committed on dev, none on production yet; **B3 (premium bridges) built 2026-07-27, awaiting owner QA**; B2 (coach alerts) is the last piece and needs a design decision first
 **Companion plan:** `FREE_COACH_PORTAL_EXPERIENCE_PLAN.md`
 
 ## Ratified direction (2026-07-25): two families, one app
@@ -35,6 +35,27 @@ The good news the audit confirmed: the signup itself is already excellent — on
 - **Premium discovered at honest moments, not via banners:** after the tournament ends, their real record ("finished 3–1") with a line about Premium keeping season history; a nudge when they register a second tournament; a lineup-builder mention only on multi-game days; a "coaching solo?" line in Chat (free has no assistant-coach concept at all). All copy carries the Founding Season "free until Jan 1, 2027" framing. Today the most common coach — one team, one tournament — literally never sees any premium messaging.
 
 **Why it matters:** the wow items are almost all reuse of things already built for fans, so the cost is low relative to how much they change the "this is a real ops tool" impression — and the premium bridges convert at moments of felt need instead of ad fatigue.
+
+## B3 — Premium bridges: what we decided to offer, and where (built 2026-07-27)
+
+B3 is the phase that decides *when a free coach is asked to pay*. The short version: **four moments, none of them during the tournament.**
+
+**The rule we chose to keep.** This product has a standing promise — the pressure ladder — that the portal stays pitch-free before and during an event, and that the one earned ask comes after it. The plan's own B3 section proposed breaking that with a lineup pitch on multi-game days. We dropped it. The moment it targeted is the hour a coach is least able to act on anything, and the weekend being clean is a large part of why the free portal feels like a tool rather than a funnel. If we ever want that moment, it should be a deliberate change to the promise, not a quiet exception.
+
+**What a coach now encounters:**
+
+1. **After the tournament ends.** Their result is already on screen. Beneath it, the portal now says what happens to that weekend next — *"That's the first line of Riverside U13's season history"* — and that the record, who played, and who earned an award all leave with the event unless they keep them. The upgrade panel below was retitled from a generic "ready for the full toolkit?" to **"Keep the season, not just the weekend"**, because at that exact moment the coach isn't shopping for a toolkit, they're watching something disappear. Founding Season framing ("free until Jan 1, 2027, then $29/month") unchanged.
+2. **When they enter a second tournament.** Their Tournaments list — which has never said anything at all — grows the same quiet footer their Roster, Schedule, Fees and Announcements pages already carry: two lines about carrying a roster, staff and results forward instead of retyping them each time. It appears only from the second entry onward, because before that the argument is a guess about the coach rather than an observation about them.
+3. **When they browse Explore.** The list of what Premium adds gains one true item it was missing: **assistant coaches with their own sign-in**. A free team is one person's login, and there was nowhere in the product a coach could learn otherwise. (The plan wanted this in Chat. Chat is now shared with fans and paying coaches, so it moved.)
+4. **When they're chasing team dues.** One line above the shelf that's already there: *"9 players still owe — that's 9 reminders to send by hand."* It counts people, not invoices, and appears only at five or more — a coach with two stragglers is never told they have a problem.
+
+**Who does NOT see any of it:** paying coaches. The tournament record is one screen serving both tiers by standing rule, and everything B3 adds to it is suppressed on the paid side. The other three moments live on free-portal-only pages.
+
+**Expected customer impact.** The honest count, and a correction to how we were measuring: a coach who registers, plays, and never opens the team tools meets Premium **once** — at the afterglow — with Explore permanently one tap away if they go looking. We had written a success target of "two or more moments per tournament"; that target and the pitch-free promise can't both be true, so the target changed. What we're actually optimising for is that the one ask lands at the moment of felt need, in language about what the coach just did rather than what we sell.
+
+**Tradeoff taken.** Fewer impressions than the plan originally imagined, in exchange for a game weekend that never sells to anyone. Founding Season runs to Jan 1, 2027, so the cost of a quieter funnel this season is a season of feedback rather than a season of revenue — which is the strategy we already chose.
+
+**Success criteria for B3:** the afterglow reads as being about the coach's team rather than about our product; no paying coach ever sees an upsell on the tournament record; no upsell appears on any pre-event or game-day surface; every price and date on every new surface comes from the live Founding Season configuration, so nothing can drift.
 
 ## Priority & sequencing (resequenced 2026-07-25)
 

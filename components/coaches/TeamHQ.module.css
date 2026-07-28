@@ -336,6 +336,21 @@
    were removed in A3 (approved mockups 2026-07-26): the hero is status + countdown only —
    every fact they carried now lives exactly once in its owning zone on the record page. */
 
+/* B3 (owner call 2026-07-27): in the result phase the hero IS this card — the head, the
+   status chip and the trailing date line are suppressed as duplicates of the shell/in-page
+   header directly above. Tighten the shell around it so the wrap-up reads as one compact
+   object rather than a mostly-empty panel. */
+.heroResultOnly {
+  padding: 0.9rem 1rem;
+  margin-bottom: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .heroResultOnly {
+    padding: 1rem 1.15rem;
+  }
+}
+
 /* Result trophy / record card (5m — replaces the old .afterglow). */
 .heroResultCard {
   display: flex;
@@ -348,6 +363,12 @@
   border: 1px solid color-mix(in srgb, var(--logic-lime) 20%, transparent);
 }
 
+/* Sole child of the hero → the hero's own padding is the card's breathing room. */
+.heroResultOnly .heroResultCard {
+  gap: 0.35rem;
+  margin: 0;
+}
+
 .heroResultLead {
   display: flex;
   align-items: center;
@@ -358,8 +379,18 @@
   font-weight: 800;
 }
 
+/* Demoted to a caption once the card leads the hero: the RECORD is the headline here,
+   and "Event complete · {dates}" is the timestamp under it, not a title competing with it. */
+.heroResultOnly .heroResultLead {
+  color: var(--white-60);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
 .heroResultLead svg {
   color: var(--logic-lime);
+  flex-shrink: 0;
 }
 
 .heroResultRecord {
@@ -385,6 +416,13 @@
   font-size: 1.1rem;
 }
 
+/* The one number the coach came back for. */
+.heroResultOnly .heroResultRecord strong {
+  font-size: 1.6rem;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
 .heroResultNote {
   margin: 0;
   color: var(--white-60);
@@ -397,6 +435,10 @@
   font-size: 0.85rem;
   font-weight: 700;
   text-decoration: none;
+}
+
+.heroResultOnly .heroResultLink {
+  font-size: 0.8rem;
 }
 
 .heroResultLink:hover {

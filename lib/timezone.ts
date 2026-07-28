@@ -193,3 +193,41 @@ export function daysBetweenDateStrings(from: string, to: string): number {
   if (!ay || !by) return 0;
   return Math.round((Date.UTC(by, bm - 1, bd) - Date.UTC(ay, am - 1, ad)) / 86_400_000);
 }
+
+const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+/** Split a `YYYY-MM-DD` (or the date half of a timestamp) into calendar parts.
+ *  MANUAL parse on purpose — `new Date('2026-07-16')` is UTC midnight, and rendering that
+ *  through `toLocaleDateString` in a behind-UTC zone silently prints the PREVIOUS day. */
+export function parseDateOnlyParts(value: string | null | undefined): { y: number; m: number; d: number } | null {
+  if (!value) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (!m) return null;
+  return { y: Number(m[1]), m: Number(m[2]), d: Number(m[3]) };
+}
+
+/**
+ * "Aug 14–16" / "Aug 30 – Sep 1" / single-day "Aug 14" (+ ", 2026" when `withYear`).
+ * A range crossing a year boundary always shows BOTH years ("Dec 30, 2026 – Jan 2, 2027")
+ * so the start year is never silently dropped.
+ *
+ * The ONE formatter for an event's date range. Lifted out of CoachPortalShell (2026-07-27)
+ * because the coach tournament record hand-rolled its own with `new Date(dateOnly)`, which
+ * shifted a day behind the shell header on the SAME screen — the portal told a coach two
+ * different sets of dates for one tournament. Anything showing an event range calls this.
+ */
+export function formatEventDateRange(
+  start: string | null | undefined,
+  end: string | null | undefined,
+  withYear: boolean,
+): string | null {
+  const s = parseDateOnlyParts(start);
+  if (!s) return null;
+  const e = parseDateOnlyParts(end);
+  const year = withYear ? `, ${(e ?? s).y}` : '';
+  const sTxt = `${SHORT_MONTHS[s.m - 1]} ${s.d}`;
+  if (!e || (e.y === s.y && e.m === s.m && e.d === s.d)) return `${sTxt}${year}`;
+  if (e.y !== s.y) return `${sTxt}, ${s.y} – ${SHORT_MONTHS[e.m - 1]} ${e.d}, ${e.y}`;
+  if (e.m === s.m) return `${SHORT_MONTHS[s.m - 1]} ${s.d}–${e.d}${year}`;
+  return `${sTxt} – ${SHORT_MONTHS[e.m - 1]} ${e.d}${year}`;
+}

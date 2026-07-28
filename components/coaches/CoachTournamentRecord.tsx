@@ -4,7 +4,6 @@ import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail, getStandings } from '@/lib/db';
 import {
   canUserAccessTournamentRegistration,
-  findLinkedBasicTeamForRegistration,
   formatGameDateLabel,
   formatGameTimeLabel,
 } from '@/lib/basic-coach-teams';
@@ -38,7 +37,7 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import type { GameStatus, TournamentSettings, PlayoffConfig } from '@/lib/types';
 import { isPublicPageEnabled, type PublicPageKey } from '@/lib/public-pages';
 import styles from './CoachTournamentRecord.module.css';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, formatEventDateRange } from '@/lib/timezone';
 
 // Empty-slot sentinel some games use instead of NULL for an unassigned team
 // (matches the public game page / opengraph image resolution).
@@ -87,13 +86,17 @@ export default async function CoachTournamentRecord({
    */
   hideHeader?: boolean;
 }) {
-  const access = await canUserAccessTournamentRegistration({
+  // Returns the linked Basic coach team id — access and team identity are the same fact, so
+  // this ONE lookup gates the page and (below) resolves the afterglow's team. B3 re-base:
+  // the record can only render for a coach who owns that link, so the afterglow ask can never
+  // silently vanish; the plan's "reliability fix" was for a state that isn't reachable.
+  const linkedBasicTeamId = await canUserAccessTournamentRegistration({
     userId,
     email: email.toLowerCase(),
     registrationId,
   });
 
-  if (!access) {
+  if (!linkedBasicTeamId) {
     notFound();
   }
 
@@ -325,11 +328,11 @@ export default async function CoachTournamentRecord({
     };
   }
 
-  const dateRange = tournament?.start_date
-    ? tournament.end_date
-      ? `${new Date(tournament.start_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} - ${new Date(tournament.end_date).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`
-      : new Date(tournament.start_date).toLocaleDateString('en-CA', { month: 'long', day: 'numeric', year: 'numeric' })
-    : null;
+  // ONE formatter, shared with the free shell's header (lib/timezone.ts). The old hand-rolled
+  // version did `new Date('2026-07-16').toLocaleDateString(...)` — UTC midnight rendered in a
+  // behind-UTC zone, so the hero printed "Jul 15 - Jul 17" directly under a header reading
+  // "Jul 16–18". Same tournament, two answers, on one screen.
+  const dateRange = formatEventDateRange(tournament?.start_date, tournament?.end_date, true);
 
   // 5h phase-adaptive hero. Pending/waitlist/rejected reuse the existing status copy;
   // accepted gets the prep narrative + countdown + a read-only checklist HUD.
@@ -388,15 +391,16 @@ export default async function CoachTournamentRecord({
         { wins: 0, losses: 0, ties: 0 },
       )
     : null;
+  // Did the coach actually finish with a result? Drives BOTH the hero's result card and the
+  // afterglow's lead line, so the two can never disagree about whether a record exists.
+  const hasFinalRecord = Boolean(record && record.wins + record.losses + record.ties > 0);
   // Standings link + team-profile share exist only when the tournament is public (active|completed).
   const canShareAfterglow = Boolean(isResultPhase && publicCtx);
   const standingsHref = canShareAfterglow ? publicHref(publicCtx!, 'standings') : null;
   const shareUrl = canShareAfterglow ? publicTeamPageHref(publicCtx!, teamId) : null;
-  // The own-team express-interest ask is a FREE-tier nudge — never resolve it (or render it)
-  // for a paying Premium coach (suppressUpsell).
-  const afterglowBasicTeamId = isResultPhase && !suppressUpsell
-    ? await findLinkedBasicTeamForRegistration(userId, teamId)
-    : null;
+  // The own-team upgrade ask is a FREE-tier nudge — never render it for a paying Premium coach
+  // (suppressUpsell). Reuses the access gate's team id: no second lookup.
+  const afterglowBasicTeamId = isResultPhase && !suppressUpsell ? linkedBasicTeamId : null;
   const upgradeCheckoutOpen = afterglowBasicTeamId ? !(await getPlanGatingMap()).team : false;
 
   // First-run onboarding banner (free register flow only — Premium passes welcome=false).
@@ -529,6 +533,9 @@ export default async function CoachTournamentRecord({
       title={`${team.name} — ${tournament?.name ?? 'Tournament'}`}
       text={`See how ${team.name} finished at ${tournament?.name ?? 'the tournament'}.`}
       label="Share your team"
+      /* Compact pill, not the default full-bleed share block — inside the result card it
+         sits beside the record, and a button as wide as the card outweighed the score. */
+      className={styles.resultShareBtn}
     />
   ) : null;
 
@@ -612,9 +619,19 @@ export default async function CoachTournamentRecord({
             carries the record + share, and a paying coach is past these asks. */}
         {isResultPhase && !suppressUpsell && (
           <div className={`card ${styles.afterglow}`}>
+            {/* B3.1 (◆K1): the strip does NOT restate the record — the hero card directly above
+                owns that number. Its job is to name what happens to the weekend next. Falls back
+                to a neutral line when no completed scores were recorded (the hero says so too;
+                claiming "the first line of season history" would be a small lie there). */}
+            <p className={styles.afterglowLede}>
+              {hasFinalRecord
+                ? <>That&apos;s the first line of <strong>{possessive(team.name)}</strong> season history.</>
+                : <>That&apos;s a wrap for <strong>{team.name}</strong>.</>}
+            </p>
             <p className={styles.afterglowText}>
-              Thanks for a great event with {team.name} — tell us which tools you&apos;d want next.
-              Your Coaches Portal stays free between tournaments.
+              Your Coaches Portal stays free between tournaments — {hasFinalRecord
+                ? 'but the record, who played and who earned an award go with the event unless you keep them.'
+                : 'but who played and who earned an award go with the event unless you keep them.'}
             </p>
             {afterglowBasicTeamId && (
               <ScopeCeilingInterest basicTeamId={afterglowBasicTeamId} checkoutOpen={upgradeCheckoutOpen} />
@@ -821,6 +838,12 @@ function ZoneHead({ icon, eyebrow, title }: { icon: React.ReactNode; eyebrow: st
       <h2 className={styles.zoneTitle}>{title}</h2>
     </div>
   );
+}
+
+/** "Riverside U13" → "Riverside U13's"; "Riverside Reds" → "Riverside Reds'". Team names are
+ *  coach-entered, so a naive `name + "'s"` produces "Reds's" often enough to notice. */
+function possessive(name: string): string {
+  return /s$/i.test(name) ? `${name}’` : `${name}’s`;
 }
 
 /** Resource-pill icons (the welcome banner's label-regex idiom, relocated with the pills). */

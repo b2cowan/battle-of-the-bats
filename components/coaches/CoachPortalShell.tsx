@@ -21,6 +21,7 @@ import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdPr
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
+import { formatEventDateRange } from '@/lib/timezone';
 import styles from './CoachPortalShell.module.css';
 
 /** Rich per-team context from /api/coaches/basic-teams?context=1 (lib/basic-coach-teams CoachTeamContext). */
@@ -62,30 +63,9 @@ const TIER2 = [
   { key: 'announcements', label: 'Announcements', icon: Megaphone, sub: '/announcements' },
 ] as const;
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-function parseDateOnly(value: string | null | undefined): { y: number; m: number; d: number } | null {
-  if (!value) return null;
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
-  if (!m) return null;
-  return { y: Number(m[1]), m: Number(m[2]), d: Number(m[3]) };
-}
-
-/** "Aug 14–16" / "Aug 30 – Sep 1" / single-day "Aug 14" (+ ", 2026" when withYear).
- *  A range crossing a year boundary always shows BOTH years ("Dec 30, 2026 – Jan 2, 2027")
- *  so the start year is never silently dropped. Manual YYYY-MM-DD parse — never
- *  `new Date('YYYY-MM-DD')` (UTC shift gotcha). */
-function formatEventRange(start: string | null, end: string | null, withYear: boolean): string | null {
-  const s = parseDateOnly(start);
-  if (!s) return null;
-  const e = parseDateOnly(end);
-  const year = withYear ? `, ${(e ?? s).y}` : '';
-  const sTxt = `${MONTHS[s.m - 1]} ${s.d}`;
-  if (!e || (e.y === s.y && e.m === s.m && e.d === s.d)) return `${sTxt}${year}`;
-  if (e.y !== s.y) return `${sTxt}, ${s.y} – ${MONTHS[e.m - 1]} ${e.d}, ${e.y}`;
-  if (e.m === s.m) return `${MONTHS[s.m - 1]} ${s.d}–${e.d}${year}`;
-  return `${sTxt} – ${MONTHS[e.m - 1]} ${e.d}${year}`;
-}
+/** Moved to lib/timezone.ts (2026-07-27) so the record page's hero renders the SAME range
+ *  as this header — it hand-rolled a `new Date(dateOnly)` version that printed a day early. */
+const formatEventRange = formatEventDateRange;
 
 /** Lifecycle chip → pill class. live/game-day = true-lime fill; everything else info-tinted.
  *  ('complete' never renders — gated at the call sites, per the shipped A1 rule.) */

@@ -21,6 +21,17 @@
   gap: 0.25rem;
 }
 
+/* Matches the ScopeShelf eyebrow exactly — the two upsell surfaces share one register. */
+.eyebrow {
+  margin: 0 0 0.1rem;
+  color: var(--home-olive);
+  font-family: var(--font-data, monospace);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .copy h3 {
   margin: 0;
   color: var(--home-ink);

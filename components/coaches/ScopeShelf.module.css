@@ -20,6 +20,16 @@
   color: var(--home-ink);
 }
 
+/* B3.5 lead — the coach's own numbers, stated as fact above the pitch. Full ink so it reads
+   as a page observation rather than as the first line of an ad. */
+.footerLead {
+  margin: 0;
+  color: var(--home-ink);
+  font-size: 0.86rem;
+  font-weight: 650;
+  line-height: 1.45;
+}
+
 .footerEyebrow {
   margin: 0;
   color: var(--home-olive);

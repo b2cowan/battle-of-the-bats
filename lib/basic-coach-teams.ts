@@ -1357,14 +1357,21 @@ export async function getCoachedRegistrationTeamIds(params: {
   return ids;
 }
 
+/**
+ * The access gate for a tournament registration record: a user may see it iff they own the
+ * Basic coach team the registration is linked to.
+ *
+ * Returns the LINKED BASIC TEAM ID (truthy) rather than a bare marker, because access and
+ * team-identity are the same fact resolved by the same query — the record page previously ran
+ * this lookup twice (once to gate, once to resolve the afterglow's team). Callers that only
+ * need a yes/no should read it as truthy; never re-query for the id after calling this.
+ */
 export async function canUserAccessTournamentRegistration(params: {
   userId: string;
   email?: string | null;
   registrationId: string;
-}): Promise<'explicit' | null> {
-  const ownedLink = await findLinkedBasicTeamForRegistration(params.userId, params.registrationId);
-  if (ownedLink) return 'explicit';
-  return null;
+}): Promise<string | null> {
+  return await findLinkedBasicTeamForRegistration(params.userId, params.registrationId);
 }
 
 export async function findBasicCoachTeamIdForTournamentRegistration(registrationId: string | null | undefined) {
