@@ -40,6 +40,13 @@
   background: rgba(var(--warning-rgb), 0.16);
 }
 
+/* B2.1 hoist: portalled above the Schedule zone heading, the bar leaves this block's
+   flex `gap` behind and sits in the record page's normal block flow — so it carries its
+   own separation from the heading below it. */
+.changeBarHoisted {
+  margin-bottom: 0.85rem;
+}
+
 .changeTitle {
   display: inline-flex;
   align-items: center;
