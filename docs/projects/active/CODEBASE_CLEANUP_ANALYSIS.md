@@ -1514,7 +1514,7 @@ git log --follow: 1 commit ever each, no recent activity.
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** duplicate | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 1
 - **Where:** TODO.md:10; TODO.md:279
-- **Evidence (finder):** Line 10 and line 279 are both titled '**Unified Home IA Redesign**' and both link docs/projects/active/UNIFIED_HOME_IA_REDESIGN_PLAN.md. Line 279 only describes Phases 0+1 (2026-07-18 state) with no mention of Phases 2-5 or Phase 6 that line 10 (and reality) already cover — a stale duplicate left behind, not consolidated.
+- **Evidence (finder):** Line 10 and line 279 are both titled '**Unified Home IA Redesign**' and both link docs/projects/archive/UNIFIED_HOME_IA_REDESIGN_PLAN.md. Line 279 only describes Phases 0+1 (2026-07-18 state) with no mention of Phases 2-5 or Phase 6 that line 10 (and reality) already cover — a stale duplicate left behind, not consolidated.
 - **Verification:** TODO.md has two 'Unified Home IA Redesign' entries: line 10 (current, Phases 0-5) and line 280 (claimed 279, off-by-one only) under 'Active Tasks' section, stuck at 'Phases 0+1 BUILT... Next: P2/P3/P4/P5' — confirmed stale duplicate of the same project.
 
 ### G12. MEMORY.md index summary for prod-release-history is ~2 weeks stale (topic file body itself is current)

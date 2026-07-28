@@ -1,6 +1,9 @@
 # PM Brief — Schema Parity (dev↔prod)
 
-**Plan:** [SCHEMA_PARITY_PLAN.md](SCHEMA_PARITY_PLAN.md) · **Priority:** High · **Status:** Stages 2–4 awaiting owner decisions
+**Plan:** [SCHEMA_PARITY_PLAN.md](SCHEMA_PARITY_PLAN.md) · **Priority:** High · **Status:** ✅ **COMPLETE
+2026-07-27 — 51 → 0 divergences.** Stages 2–4 (migrations 201/202/203) are applied to dev AND prod and
+`check:parity` runs against an empty baseline. (Header previously said "Stages 2–4 awaiting owner
+decisions"; trued up 2026-07-28 during the `active/` archive sweep, matching the plan's own status.)
 
 ## The problem in one line
 

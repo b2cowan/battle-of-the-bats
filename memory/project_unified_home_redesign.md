@@ -77,7 +77,7 @@
 - Next: BUILD in a NEW chat via `docs/projects/active/UNIFIED_HOME_PHASE6_BUILD_PROMPT.md` (owner chose new-chat kickoff 2026-07-20; Phase 6 completes BEFORE Tournament Nav Unification starts building — owner-confirmed) per `docs/projects/active/UNIFIED_HOME_PHASE6_FOLLOWS_PLAN.md` (+ PM brief; TODO.md linked) — phases 6a data/API → 6b event+org affordances → 6c Home/All-following → 6d Scores → 6e polish+metrics+/docs; per-phase discipline (verify:changed / typecheck on shared modules, /simplify, /review, /docs, restart rule, per-action commit OKs; explicit pathspecs only). ⚠ Sequencing: shares public-tournament + Home surfaces with Tournament Nav Unification — never run simultaneously. ⚠ Promotion: rides AFTER the Phases 0–5 prod bundle (mig 193 first); Phase 6 itself expects NO migration (re-verify CHECK live at build start) but touches dictionary TEXT (entity_type "Slice 1 writes only team" note) in the same unit of work as the first tournament/org writer.
 
 **Status: PLANNED (2026-07-18). Direction + 6 decisions owner-ratified; mockup rounds NOT started.**
-Plan: docs/projects/active/UNIFIED_HOME_IA_REDESIGN_PLAN.md (+ PM brief). Successor design round to Unified App Consumer Layer (its deferred §8 item, expanded).
+Plan: docs/projects/archive/UNIFIED_HOME_IA_REDESIGN_PLAN.md (+ PM brief). Successor design round to Unified App Consumer Layer (its deferred §8 item, expanded).
 
 ## Ratified direction (owner, 2026-07-18)
 - Nav → **Home / Scores / Chat / Account** (same shape signed-in/out). Discover + Following tabs retired; routes survive (`/discover` stays the canonical SEO URL behind Home; `/home` → permanent redirect; `/following` = "All following" overflow).

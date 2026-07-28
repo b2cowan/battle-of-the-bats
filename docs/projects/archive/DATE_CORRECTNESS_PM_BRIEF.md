@@ -1,6 +1,8 @@
 # Date Correctness — PM Brief
 
-**Status:** In progress, started 2026-07-26 · **Priority:** High — live, recurring, customer-facing
+**Status:** ✅ **COMPLETE 2026-07-26** — every unsafe site fixed, guardrail baseline at ZERO (header
+previously said "In progress"; trued up 2026-07-28 during the `active/` archive sweep, matching the
+plan's own COMPLETE status). · **Priority:** High — live, recurring, customer-facing
 **Plan:** [DATE_CORRECTNESS_PLAN.md](DATE_CORRECTNESS_PLAN.md)
 
 ## What's wrong today

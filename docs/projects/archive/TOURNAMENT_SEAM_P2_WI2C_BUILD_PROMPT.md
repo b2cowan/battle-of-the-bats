@@ -14,7 +14,7 @@ All the big decisions are already made — **do not re-litigate them**:
 1. `docs/projects/active/TOURNAMENT_SEAM_P2_PLAN.md` — the **WI-2C section** (Layer 1/Layer 2, the
    "Concrete design (scoped 2026-07-22)" block, and the finalized build sequence). This is your spec.
 2. `docs/projects/active/TOURNAMENT_SEAM_P2_PM_BRIEF.md` — the coach-recognition tradeoff + outcome.
-3. `docs/projects/active/TOURNAMENT_SEAM_UX_REVIEW.md` — **only** finding A6 (grep for it; the doc is
+3. `docs/projects/archive/TOURNAMENT_SEAM_UX_REVIEW.md` — **only** finding A6 (grep for it; the doc is
    ~150KB, never read it whole).
 4. Memory: `reference_coach_portal_arch_decision.md` (basic vs rep coach models stay SEPARATE — this
    is "bridge better," not "unify"), `reference_supabase_rls_grants.md` + `reference_prod_supabase.md`

@@ -1,6 +1,9 @@
 # PM Brief — Unified Home Redesign (GameChanger-Style Front Door)
 
-**Date:** 2026-07-18 · **Status:** Direction ratified, mockup rounds next · **Plan:** UNIFIED_HOME_IA_REDESIGN_PLAN.md
+**Date:** 2026-07-18 · **Status:** ✅ **SHIPPED — Phases 0–6 LIVE ON PROD since the 2026-07-22 promote**
+(`c743c276`, mig 193). Only tail: platform ToS/Privacy pages, owned by /marketing + legal and tracked in
+`TODO.md`. (Header previously said "Direction ratified, mockup rounds next"; trued up 2026-07-28 during
+the `active/` archive sweep.) · **Plan:** UNIFIED_HOME_IA_REDESIGN_PLAN.md
 
 ## What changes for users
 

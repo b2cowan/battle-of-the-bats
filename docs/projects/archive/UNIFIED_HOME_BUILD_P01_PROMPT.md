@@ -10,7 +10,7 @@ Build **Phases 0 and 1** of the Unified Home IA Redesign as ONE unit of work: th
 
 ## Read before writing any code
 
-1. `docs/projects/active/UNIFIED_HOME_IA_REDESIGN_PLAN.md` — the plan. Phases 0+1 scope is §4; target IA §3a–§3c; URL/redirect architecture §3b (LOAD-BEARING); constraints §9; risk register §10.
+1. `docs/projects/archive/UNIFIED_HOME_IA_REDESIGN_PLAN.md` — the plan. Phases 0+1 scope is §4; target IA §3a–§3c; URL/redirect architecture §3b (LOAD-BEARING); constraints §9; risk register §10.
 2. `memory/design_decisions.md` — the four 2026-07-18 "Unified Home Round …" entries. These are the BINDING visual specs: Round 1 (warm-light theme tokens/values, Home composition, All-following page, tap→tournament-home), plus the theme-scope rules. Rounds 2–3 are later phases — do not build them, but do not contradict them.
 3. `memory/project_unified_home_redesign.md` — project state + decided rounds.
 4. `AGENTS.md` + `AGENCY_RULES.md` + `CLAUDE.md` — house rules (Next.js 16 `proxy.ts` convention, one shared `dev` branch, explicit pathspecs, NO commit/push without per-action owner OK, dev-server restart rule, verification workflow).

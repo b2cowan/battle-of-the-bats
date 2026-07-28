@@ -19,7 +19,7 @@ Where this prompt and the plan disagree, **the plan wins**. Do not re-litigate d
    with a fresh Read before editing it**; treat drift as expected, not alarming.
 2. `docs/projects/active/TOURNAMENT_SEAM_P1_PM_BRIEF.md` — the UX outcomes + the owner's 8
    tap-through success criteria (your definition of done mirrors these).
-3. `docs/projects/active/TOURNAMENT_SEAM_UX_REVIEW.md` — **only** the appendix entries backing
+3. `docs/projects/archive/TOURNAMENT_SEAM_UX_REVIEW.md` — **only** the appendix entries backing
    each WI (the doc is ~150KB; never read it whole). The exec summary + themes give context fast.
 4. Per-WI key files (read the ones for the WI you're building, not all upfront):
    - WI-1/WI-2 chat: `lib/chat-service.ts` (inbox mapper ~1717-1799 + notify calls ~965-987),
