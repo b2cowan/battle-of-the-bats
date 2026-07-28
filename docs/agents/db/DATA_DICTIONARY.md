@@ -5246,10 +5246,61 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 **`game_alerts`** (bool, NN, DEFAULT true) — push when a followed team's game goes live / finishes, plus the playoffs-set / champions moments (parity with the anonymous path's `notify_scores` semantics).
 
 <!-- dict:col:fan_alert_prefs.event_news -->
-**`event_news`** (bool, NN, DEFAULT true) — push for announcements from events the user's followed teams are in (parity with the anonymous path's `notify_messages`).
+**`event_news`** (bool, NN, DEFAULT true) — push for announcements from events the user's followed teams are in (parity with the anonymous path's `notify_messages`) **and, since B2.3 (mig 205), automatic schedule-change alerts** — the switch's own copy has always described this ("rain delays & day-of updates"), so the 2026-07-06 three-category plan (a separate "Schedule changes" switch) is **superseded**: it was written against the anonymous `fan_push_subscriptions` shape, before account-level prefs replaced it. Do not add a third column without re-opening that decision.
 
 <!-- dict:col:fan_alert_prefs.updated_at -->
 **`updated_at`** (tstz, NN, DEFAULT now()) — bumped on upsert; code-maintained.
+
+### `game_change_notices`
+<!-- dict:table:game_change_notices -->
+
+**Purpose:** the **schedule-change alert queue** (Free Coach Portal B2.3, mig 205). One row per (person-visible change, affected team). Before this existed, a single-game schedule edit notified **nobody** — not the coach, not a fan who deliberately followed the team and opted in; `notifyFansForGame` only ever fired on a score. Written by [lib/schedule-change-notices.ts](../../../lib/schedule-change-notices.ts) from `PATCH /api/admin/games` (`update` / `cancel` / `revert-to-scheduled` / `bulk-reschedule`); drained by `sweepScheduleChangeNotices()` behind the `*/5` pg_cron job `schedule-change-notices` → [/api/platform-admin/schedule-change-notices](../../../app/api/platform-admin/schedule-change-notices/route.ts), which sends ONE batched push per team via `notifyFansForScheduleChange`. **EMPTY in dev AND prod** (new).
+
+**Gotchas (read first):**
+1. **Service-role only** — RLS enabled with ZERO policies (same posture as `fan_alert_prefs` / `fan_follows`); grants revoked from anon/authenticated. Verify RLS live, not from the migration comment.
+2. **A row is only ever written for a PUBLISHED division** (`divisions.schedule_visibility = 'published'`). That gate — not the batching window — is what keeps volume sane: the "organizer moves twenty games in ten minutes" case is the schedule-*building* phase, and it is silent by construction because nobody has been shown those times. A game with no `division_id` is treated the same way.
+3. **The queue is not the message.** Kind, opponent and current time are re-read from `games` at sweep time, so a move-then-cancel sends a cancellation and a move-then-move-back sends nothing at all. Only `was_*` comes from the row — deliberately the EARLIEST baseline, so two edits in one sitting read as one correction rather than a history.
+4. **Claim-then-send, not send-then-stamp.** The sweep stamps `sent_at` with a conditional update and sends only the rows it won. Two overlapping runs therefore cannot double-buzz a follower; the cost is that a crash between claim and send loses one message. That trade is deliberate for a service notification.
+5. **`superseded_at` is the rain-delay hand-off, not a soft delete.** When the organizer completes the bulk tool's announce step *with notify on*, the ids that shift created are superseded — their words reach the teams instead, so a rain delay is one buzz and not two. A site-only post (notify off) supersedes nothing. **The supersede update is scoped by `tournament_id`, not id alone** — the id list is client-supplied and only the tournament is scope-checked by the route, so without that predicate one org could suppress another's alerts.
+6. **The publish gate is tested TWICE** — at enqueue (`divisions.schedule_visibility`) and again at send time from the game's current division. An organizer who pulls a schedule back to draft after making a change must not have those times announced by an already-queued notice.
+7. **A repeat send to the same (tournament, team) is suppressed for 15 minutes**, urgent or not — that cooldown, not the quiet window, is what stops the urgency bypass from firing on every 5-minute tick during a game-day editing session. The `MAX_HOLD_MINUTES` ceiling is the escape hatch so nothing waits forever.
+8. **An edit that also REASSIGNS a team is deliberately silent.** No true "your game moved" sentence exists for a restructured matchup: the incoming team was never scheduled at the old time, and the outgoing team is no longer in the game. Better nothing than a false time.
+9. **Rows are never pruned today.** Sent/superseded rows accumulate; the partial indexes split pending vs sent, so reads stay cheap. Add a retention sweep if volume ever justifies it.
+
+**Fields** (boilerplate `id` + `created_at` omitted — DB-default-only):
+
+<!-- dict:col:game_change_notices.org_id -->
+**`org_id`** (uuid, NN; FK→`organizations(id)` ON DELETE CASCADE) — the owning org; carried for scoping and observability, not used as a dispatch filter.
+
+<!-- dict:col:game_change_notices.tournament_id -->
+**`tournament_id`** (uuid, NN; FK→`tournaments(id)` ON DELETE CASCADE) — half of the batching key. The plan gate (`fan_score_alerts`, Tournament Plus) is resolved from this at send time inside `fanPushContext`, never stored.
+
+<!-- dict:col:game_change_notices.team_id -->
+**`team_id`** (uuid, NN; FK→`teams(id)` ON DELETE CASCADE) — the other half of the batching key: **one message per team**, however many of their games moved. Recipients are the followers of this team (`fan_follows`), which is how a free coach is reached — their own team is auto-followed at account level, so no coach-only channel exists.
+
+<!-- dict:col:game_change_notices.game_id -->
+**`game_id`** (uuid, NN; FK→`games(id)` ON DELETE CASCADE) — the changed game. Two teams on one game produce two rows.
+
+<!-- dict:col:game_change_notices.kind -->
+**`kind`** (text, NN; CHECK in `moved|cancelled|restored`) — what happened when the row was written. `restored` (cancelled → scheduled) exists because a follower told the game was off must be told it is back on. Advisory only at send time — see gotcha 3.
+
+<!-- dict:col:game_change_notices.was_date -->
+**`was_date`** (date, nullable) — the date the follower last had reason to believe.
+
+<!-- dict:col:game_change_notices.was_time -->
+**`was_time`** (time, nullable) — the wall-clock time (America/Toronto, like `games.game_time`) the follower last had reason to believe; drives the "your 2:00 p.m. vs …" phrasing.
+
+<!-- dict:col:game_change_notices.was_location -->
+**`was_location`** (text, nullable) — the previous `games.location` string. Venue is diffed on this human-readable value rather than the structured venue ids, so the message can always name the new place.
+
+<!-- dict:col:game_change_notices.hold_until -->
+**`hold_until`** (tstz, nullable) — NULL = eligible immediately (every single-game edit). Set to ~10 minutes ahead by the **bulk rain-delay tool** to reserve a window in which the organizer can post their own announcement; the sweep skips rows whose hold has not expired. Without it the urgency bypass can fire mid-composition on a same-day delay and the follower gets two messages about one event.
+
+<!-- dict:col:game_change_notices.sent_at -->
+**`sent_at`** (tstz, nullable) — NULL = pending. Stamped by the sweep's atomic claim BEFORE the push; see gotcha 4. Also the source of the 15-minute per-team repeat cooldown (gotcha 7), which is why `game_change_notices_recent_sent_idx` indexes the sent side.
+
+<!-- dict:col:game_change_notices.superseded_at -->
+**`superseded_at`** (tstz, nullable) — NULL = still eligible. Set when the organizer's own announcement covered these games; see gotcha 5.
 
 ## Email (Resend)
 
