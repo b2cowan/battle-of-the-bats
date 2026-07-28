@@ -96,7 +96,7 @@ async function computeStandingsByDivision(
   const entries = await Promise.all(
     divisions.map(async group => [
       group.id,
-      await getStandings(group.id, group.playoffConfig, { admin: true }, tournament.settings),
+      await getStandings(tournament.id, group.id, group.playoffConfig, { admin: true }, tournament.settings),
     ] as const),
   );
   return Object.fromEntries(entries);

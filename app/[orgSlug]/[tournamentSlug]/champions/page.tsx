@@ -98,7 +98,7 @@ export default async function ChampionsPage({
   const standingsEntries = await Promise.all(
     sortedDivisions.map(async d => [
       d.id,
-      await getStandings(d.id, d.playoffConfig, readOptions, tournament.settings),
+      await getStandings(tournament.id, d.id, d.playoffConfig, readOptions, tournament.settings),
     ] as const),
   );
   const standingsByDivision = Object.fromEntries(standingsEntries) as Record<string, DivisionStandingRow[]>;

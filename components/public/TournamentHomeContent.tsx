@@ -76,7 +76,7 @@ export default async function TournamentHomeContent({
     ? await Promise.all(
         divisions.map(async division => [
           division.id,
-          await getStandings(division.id, division.playoffConfig, readOptions, tournament.settings),
+          await getStandings(tournament.id, division.id, division.playoffConfig, readOptions, tournament.settings),
         ] as const)
       )
     : [];

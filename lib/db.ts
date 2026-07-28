@@ -1391,10 +1391,23 @@ export async function updateGame(id: string, g: Partial<Game>, options: ReadOpti
   }
 }
 
-/** Async wrapper: fetch teams+games (filtered inside) then rank one division. */
-export async function getStandings(divisionId: string, config?: PlayoffConfig, options: ReadOptions = {}, tournamentSettings?: import('./types').TournamentSettings): Promise<DivisionStandingRow[]> {
-  const games = await getGames(undefined, options);
-  const teams = await getTeams(undefined, options);
+/** Async wrapper: fetch this tournament's teams+games, then rank one division.
+ *
+ *  `tournamentId` is REQUIRED and must be the tournament that OWNS `divisionId`.
+ *  It used to be absent, so both reads pulled every game and every team on the
+ *  platform and narrowed in memory — cost that grew with every tournament ever
+ *  created, on a page-load path. An optional filter would silently reintroduce
+ *  that the first time a caller forgot it, so it sits first and mandatory.
+ *
+ *  Narrowing the input set cannot change a result: computeTournamentStandings
+ *  reads teams/games only through its own `divisionId` filters (including the
+ *  h2h breaker, which reads the already division-scoped set), and division ids
+ *  are globally unique — so rows from other tournaments were never eligible. */
+export async function getStandings(tournamentId: string, divisionId: string, config?: PlayoffConfig, options: ReadOptions = {}, tournamentSettings?: import('./types').TournamentSettings): Promise<DivisionStandingRow[]> {
+  const [games, teams] = await Promise.all([
+    getGames(tournamentId, options),
+    getTeams(tournamentId, options),
+  ]);
   return computeTournamentStandings(divisionId, teams, games, config, tournamentSettings);
 }
 
@@ -1525,7 +1538,7 @@ export async function resolveAndFillPlayoffSeeds(
   // apply to playoff SEEDING (not just the public standings view). Division-level
   // playoffConfig still takes priority inside getStandings.
   const tournament = await getTournament(tournamentId);
-  const standings = await getStandings(divisionId, division?.playoffConfig, options, tournament?.settings);
+  const standings = await getStandings(tournamentId, divisionId, division?.playoffConfig, options, tournament?.settings);
   const pools = division?.pools || [];
 
   for (const pg of playoffGames) {

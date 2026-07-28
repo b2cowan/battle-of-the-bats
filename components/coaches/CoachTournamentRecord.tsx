@@ -487,8 +487,12 @@ export default async function CoachTournamentRecord({
     rank: number; wins: number; losses: number; ties: number;
     runDiff: number | null; groupLabel: string | null; gamesRemaining: number;
   } | null = null;
-  if (team.status === 'accepted' && team.division_id && standingsPublicallyOn && showLiveBridge) {
+  if (team.status === 'accepted' && team.tournament_id && team.division_id && standingsPublicallyOn && showLiveBridge) {
     const rows = await getStandings(
+      // Scope the read to THIS tournament. Both ids come from the SAME `teams` row,
+      // and a team's division always belongs to that team's tournament — so this id
+      // owns the division below, which is what getStandings requires.
+      team.tournament_id,
       team.division_id,
       // Same config every other standings caller passes — see the divisions select above.
       (division?.playoff_config as PlayoffConfig | null) ?? undefined,
