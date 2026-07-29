@@ -12,6 +12,7 @@ import { DEFAULT_SPORT } from './sports';
 import { generateOfferToken, hashOfferToken } from './tryout-offer-token';
 import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
 import { tournamentToday, addCalendarDays } from './timezone';
+import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
 export type { DivisionStandingRow } from './tie-breakers';
@@ -3990,20 +3991,41 @@ async function getCoachingNavSignals(
   return result;
 }
 
-export async function getCoachingAssignmentsForUser(
+/** Options shared by the two assignment lookups. `isTeamWorkspace` lets a caller that
+ *  already resolved the org (getAuthContext has account_kind/plan_id in hand) skip the
+ *  redundant organizations round-trip these functions otherwise make. */
+export interface CoachAssignmentLookupOpts {
+  isTeamWorkspace?: boolean;
+}
+
+type CoachAssignmentBaseRow = CoachingAssignmentRow & {
+  rep_program_years?: { name?: string | null; status?: RepProgramYearStatus | null; year?: number | null } | null;
+};
+
+/**
+ * Shared base of the active + closed assignment lookups: org entitlement posture, the
+ * rep_team_coaches join, the status filter, and (for standalone workspaces) the
+ * entitled-team filter. The two public functions diverge only in which statuses they
+ * accept and what they decorate on top (badges/nav signals vs sort/dedupe).
+ */
+async function loadCoachAssignmentRows(
   orgId: string,
   userId: string,
-): Promise<CoachingAssignment[]> {
-  const { data: orgAccessRow, error: orgAccessError } = await supabaseAdmin
-    .from('organizations')
-    .select('account_kind, plan_id')
-    .eq('id', orgId)
-    .maybeSingle();
-
-  if (orgAccessError) throw orgAccessError;
-  const isTeamWorkspace =
-    orgAccessRow?.account_kind === 'team_workspace' ||
-    orgAccessRow?.plan_id === 'team';
+  statuses: RepProgramYearStatus[],
+  opts?: CoachAssignmentLookupOpts,
+): Promise<CoachAssignmentBaseRow[]> {
+  let isTeamWorkspace = opts?.isTeamWorkspace;
+  if (isTeamWorkspace === undefined) {
+    const { data: orgAccessRow, error: orgAccessError } = await supabaseAdmin
+      .from('organizations')
+      .select('account_kind, plan_id')
+      .eq('id', orgId)
+      .maybeSingle();
+    if (orgAccessError) throw orgAccessError;
+    isTeamWorkspace =
+      orgAccessRow?.account_kind === 'team_workspace' ||
+      orgAccessRow?.plan_id === 'team';
+  }
 
   const { data, error } = await supabaseAdmin
     .from('rep_team_coaches')
@@ -4014,24 +4036,34 @@ export async function getCoachingAssignmentsForUser(
       coach_role,
       capabilities,
       rep_teams!team_id ( name, slug, color, sport ),
-      rep_program_years!program_year_id ( name, status )
+      rep_program_years!program_year_id ( name, status, year )
     `)
     .eq('org_id', orgId)
     .eq('user_id', userId);
   if (error) throw error;
 
-  const rows = (data ?? []) as CoachingAssignmentRow[];
+  const rows = (data ?? []) as CoachAssignmentBaseRow[];
   const filtered = rows.filter(r => {
     const s = r.rep_program_years?.status;
-    return s === 'draft' || s === 'active';
+    return !!s && statuses.includes(s);
   });
 
+  // Same entitlement posture for both lookups: a lapsed standalone workspace doesn't keep
+  // serving its portal — not for live seasons, and not through the back door of closed ones.
   const entitledTeamIds = isTeamWorkspace
     ? await getActiveTeamEntitledRepTeamIds(orgId)
     : null;
-  const accessible = entitledTeamIds
+  return entitledTeamIds
     ? filtered.filter(r => entitledTeamIds.has(r.team_id))
     : filtered;
+}
+
+export async function getCoachingAssignmentsForUser(
+  orgId: string,
+  userId: string,
+  opts?: CoachAssignmentLookupOpts,
+): Promise<CoachingAssignment[]> {
+  const accessible = await loadCoachAssignmentRows(orgId, userId, ['draft', 'active'], opts);
 
   const programYearIds = accessible.map(r => r.program_year_id);
   const badges = await getCoachingBadges(programYearIds);
@@ -4061,12 +4093,75 @@ export async function getCoachingAssignmentsForUser(
   }));
 }
 
+/**
+ * A coaching assignment on a CLOSED (completed/archived) program year — the Season's End
+ * access model (Coach Portal Batch 3, P0 #1). Deliberately a SEPARATE lookup from
+ * `getCoachingAssignmentsForUser`: the active list feeds ~49 write-capable routes that all
+ * assume "visible = writable", so closed seasons must never flow through it. Closed
+ * assignments grant READ-ONLY surfaces only (Season's End, Wrapped, the Insights archive).
+ */
+export interface ClosedCoachingAssignment {
+  teamId: string;
+  teamName: string;
+  teamColor: string | null;
+  teamSport: string;
+  programYearId: string;
+  programYearName: string;
+  programYearYear: number | null;
+  programYearStatus: RepProgramYearStatus;
+  coachRole: 'head_coach' | 'assistant_coach';
+  capabilities: CoachCapabilities;
+}
+
+export async function getClosedCoachingAssignmentsForUser(
+  orgId: string,
+  userId: string,
+  opts?: CoachAssignmentLookupOpts,
+): Promise<ClosedCoachingAssignment[]> {
+  const accessible = await loadCoachAssignmentRows(orgId, userId, ['completed', 'archived'], opts);
+
+  return accessible
+    .map(r => ({
+      teamId: r.team_id,
+      teamName: r.rep_teams?.name ?? '',
+      teamColor: r.rep_teams?.color ?? null,
+      teamSport: r.rep_teams?.sport ?? DEFAULT_SPORT,
+      programYearId: r.program_year_id,
+      programYearName: r.rep_program_years?.name ?? '',
+      programYearYear: r.rep_program_years?.year ?? null,
+      programYearStatus: (r.rep_program_years?.status ?? 'completed') as RepProgramYearStatus,
+      coachRole: r.coach_role as 'head_coach' | 'assistant_coach',
+      capabilities: resolveCoachCapabilities(
+        r.coach_role as 'head_coach' | 'assistant_coach',
+        r.capabilities ?? null,
+      ),
+    }))
+    // Newest season first — per team, the first entry is "the season that just ended".
+    .sort((a, b) => (b.programYearYear ?? 0) - (a.programYearYear ?? 0));
+}
+
 export async function getActiveRepProgramYear(teamId: string): Promise<RepProgramYear | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_program_years')
     .select('*')
     .eq('team_id', teamId)
     .in('status', ['draft', 'active'])
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) return null;
+  if (!data) return null;
+  return mapRepProgramYear(data);
+}
+
+/** The team's most recently closed (completed/archived) season — the Season's End default year. */
+export async function getLatestClosedRepProgramYear(teamId: string): Promise<RepProgramYear | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('*')
+    .eq('team_id', teamId)
+    .in('status', ['completed', 'archived'])
+    .order('year', { ascending: false })
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -8296,7 +8391,10 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
       .from('rep_team_events')
       .select('program_year_id, result')
       .in('program_year_id', yearIds)
-      .in('event_type', ['league_game', 'scrimmage', 'external_tournament'])
+      // The CANONICAL record rule (lib/season-wrapped.ts): league + tournament + legacy
+      // external_tournament, scrimmage excluded. This tally previously used its own set
+      // (scrimmage in, tournament_game out) and could disagree with the Overview/Wrapped.
+      .in('event_type', WRAPPED_RECORD_EVENT_TYPES)
       .not('result', 'is', null),
     supabaseAdmin
       .from('rep_tryout_registrations')
@@ -8378,7 +8476,8 @@ export async function getRepCurrentSeasonSummary(teamId: string): Promise<RepCur
       .from('rep_team_events')
       .select('result')
       .eq('program_year_id', py.id)
-      .in('event_type', ['league_game', 'scrimmage', 'external_tournament'])
+      // Same canonical record rule as getRepTeamHistory/Wrapped (lib/season-wrapped.ts).
+      .in('event_type', WRAPPED_RECORD_EVENT_TYPES)
       .not('result', 'is', null),
     supabaseAdmin.from('rep_tryout_registrations').select('status').eq('program_year_id', py.id),
   ]);

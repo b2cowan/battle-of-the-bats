@@ -1,6 +1,18 @@
 import type { CoachCapabilities } from './coach-capabilities';
 
 /**
+ * The CLOSED-season nav set (Batch 3, P0 #1) — read-only doors only, shared by
+ * CoachesSidebar and CoachesBottomNav for the same no-drift reason as the gate below.
+ * Insights points straight at the results ARCHIVE: the hub's live-season tiles read as
+ * errors for a team with no active year. Icons are resolved per component (lucide imports
+ * stay component-side); a new door added here reaches both navs at once.
+ */
+export const CLOSED_TEAM_NAV_ITEMS: { label: string; href: string }[] = [
+  { label: "Season's End", href: '/season-end' },
+  { label: 'Insights', href: '/history/results' },
+];
+
+/**
  * Whether a coach nav item (keyed by its display label) is visible for the given capabilities.
  *
  * SHARED by CoachesSidebar and CoachesBottomNav so the assistant-coach gate is a SINGLE source of

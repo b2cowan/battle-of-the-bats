@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Archive, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import { WRAPPED_RECORD_EVENT_TYPES } from '@/lib/season-wrapped';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
@@ -120,9 +121,9 @@ export default function PastYearDetailPage({
     );
   }
 
-  const gameEvents = events.filter(e =>
-    e.eventType === 'league_game' || e.eventType === 'scrimmage' || e.eventType === 'external_tournament',
-  );
+  // The CANONICAL record rule (lib/season-wrapped.ts) — same set as getRepTeamHistory, so
+  // this detail view can never disagree with the history list one click away.
+  const gameEvents = events.filter(e => WRAPPED_RECORD_EVENT_TYPES.includes(e.eventType));
   const wins = gameEvents.filter(e => e.result === 'win').length;
   const losses = gameEvents.filter(e => e.result === 'loss').length;
   const ties = gameEvents.filter(e => e.result === 'tie').length;

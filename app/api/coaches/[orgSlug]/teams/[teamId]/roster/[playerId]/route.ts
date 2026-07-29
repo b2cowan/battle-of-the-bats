@@ -86,6 +86,13 @@ export const PATCH = withObservability(async (req: Request,
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  // Year-scope guard (Batch 3 rider): a roster row from a PAST season must never be editable
+  // just because the team currently has an open year — "read-only past season" has to hold
+  // per-row, not only per-team. (The season-end verification found this hole: the fetch
+  // above checks team/org but not which season the row belongs to.)
+  if (player.programYearId !== resolved.programYear.id) {
+    return NextResponse.json({ error: 'This player belongs to a past season, which is read-only.' }, { status: 409 });
+  }
 
   const body = await req.json();
 

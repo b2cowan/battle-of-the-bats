@@ -130,6 +130,15 @@ export default function StartNextSeasonModal({
             )}
 
             <div className={styles.modalFooter}>
+              {/* D4: the just-closed season's ceremony is one tap away from the moment it
+                  closes. Deliberately a FULL navigation (plain <a>, not <Link>): the rollover
+                  just changed which season is active, and only a hard load re-seeds the
+                  coaches context — a client-side hop here would land on Season's End with the
+                  old season still reported as active (adversarial review; same reason the
+                  Settings call site uses window.location.assign for its onDone). */}
+              <a href={`/${orgSlug}/coaches/teams/${teamId}/season-end`} className={styles.btnSecondary}>
+                See {currentSeasonName}&apos;s Season Wrapped
+              </a>
               <button type="button" className={styles.btnPrimary} onClick={onDone}>
                 Go to {summary.newSeason.name}
               </button>
@@ -166,6 +175,18 @@ export default function StartNextSeasonModal({
               </label>
             </div>
 
+            {/* What ISN'T a choice — the two things families ask about that this dialog used to
+                omit (readiness review f5-7): development history and awards. */}
+            <ul style={{ margin: '1rem 0 0', paddingLeft: '1.1rem', display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.85rem', color: 'var(--white-70)' }}>
+              <li>
+                <strong>Development history</strong> stays with this season. Each returning player&apos;s profile
+                will offer to bring their open goals forward — measurements always start fresh.
+              </li>
+              <li>
+                <strong>Awards</strong> stay on the team&apos;s all-time record — nothing to carry.
+              </li>
+            </ul>
+
             {/* Clear, unmissable caution — starting a season is a one-way lock (no reopen). */}
             <div style={{
               display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginTop: '1rem',
@@ -174,8 +195,9 @@ export default function StartNextSeasonModal({
             }}>
               <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
               <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>
-                Once you start, <strong>{currentSeasonName}</strong> is locked as read-only. You can always look
-                back at its roster, schedule, and finances — but you won&apos;t be able to change them.
+                Once you start, <strong>{currentSeasonName}</strong> locks as read-only. You can always look
+                back — its <strong>Season&apos;s End</strong> page keeps the wrap-up, and the Insights archive
+                keeps every result and money record.
               </span>
             </div>
 

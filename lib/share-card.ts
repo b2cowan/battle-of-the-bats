@@ -26,7 +26,8 @@ const SIZE = 1080;
 const PAD = 84;
 const SANS = 'system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
 
-function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+/** Shared canvas helpers — also used by the Season Wrapped card (lib/wrapped-share-card.ts). */
+export function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
   ctx.moveTo(x + radius, y);
@@ -38,7 +39,7 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
 }
 
 /** Truncate a string to fit `maxWidth` at the current ctx font, adding an ellipsis. */
-function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
+export function fitText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string {
   if (ctx.measureText(text).width <= maxWidth) return text;
   let t = text;
   while (t.length > 1 && ctx.measureText(`${t}…`).width > maxWidth) t = t.slice(0, -1);

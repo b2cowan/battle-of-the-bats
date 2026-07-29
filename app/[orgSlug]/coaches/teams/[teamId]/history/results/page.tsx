@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Trophy, Archive, ChevronDown, Check } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamHistoryYear, RepTeamTag } from '@/lib/types';
@@ -46,10 +46,15 @@ export default function CoachesResultsReportPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const { orgSlug, teamId } = use(paramsPromise);
-  const { assignments, loading: ctxLoading } = useCoaches();
+  const { assignments, closedAssignments, loading: ctxLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);
+  // Closed-season access (Batch 3, P0 #1): this archive is one of the read-only surfaces a
+  // coach keeps after their season closes — the /history API admits closed assignments too.
+  // Shared closed-state predicate (lib/coaches-context.tsx), same rule as the navs.
+  const closedAssignment = resolveClosedAssignment(assignments, closedAssignments, teamId);
+  const isClosedOnly = !assignment && !!closedAssignment;
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
+  const sportPack = getSportPack(assignment?.teamSport ?? closedAssignment?.teamSport ?? DEFAULT_SPORT);
   const scoreUnit = sportPack.score.unit.toLowerCase();
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
@@ -72,11 +77,20 @@ export default function CoachesResultsReportPage({
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/history`),
       ]);
-      if (!evRes.ok) throw new Error();
-      const ev = await evRes.json();
-      setEvents(ev.events ?? []);
-      setTeamTags(ev.tags ?? []);
-      setTagsByEventId(ev.tagsByEventId ?? {});
+      // A team with NO active season 403/404s on /events (that route is active-year-scoped
+      // by design) — that's the closed-season state, not a failure: the past-seasons archive
+      // below is the whole point of this page then. Any OTHER events failure (a 500 on an
+      // active team) is still a real error — swallowing it would render a misleading
+      // "No results yet" over a team that has played games (adversarial review).
+      const eventsClosedOut = !evRes.ok && (evRes.status === 403 || evRes.status === 404);
+      if (!evRes.ok && !eventsClosedOut) throw new Error();
+      if (!hiRes.ok && !evRes.ok) throw new Error();
+      if (evRes.ok) {
+        const ev = await evRes.json();
+        setEvents(ev.events ?? []);
+        setTeamTags(ev.tags ?? []);
+        setTagsByEventId(ev.tagsByEventId ?? {});
+      }
       if (hiRes.ok) {
         const hi = await hiRes.json();
         setHistory(hi.history ?? []);
@@ -95,7 +109,7 @@ export default function CoachesResultsReportPage({
   }, [ctxLoading, load]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
-  if (!assignment) {
+  if (!assignment && !closedAssignment) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -142,13 +156,16 @@ export default function CoachesResultsReportPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/history`} className={styles.lineupBackLink}>← Insights</Link>
+      {/* A closed-only team's Insights hub is season-live — its back door goes to Season's End. */}
+      <Link href={isClosedOnly ? `${base}/season-end` : `${base}/history`} className={styles.lineupBackLink}>
+        ← {isClosedOnly ? "Season's End" : 'Insights'}
+      </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Trophy size={22} /></div>
           <div>
             <h1 className={styles.pageTitle}>How are we doing?</h1>
-            <p className={styles.pageSub}>Every result this season, plus your past seasons</p>
+            <p className={styles.pageSub}>{isClosedOnly ? 'Your seasons, kept for good' : 'Every result this season, plus your past seasons'}</p>
           </div>
         </div>
       </div>
@@ -159,7 +176,7 @@ export default function CoachesResultsReportPage({
         <p className={styles.errorText}>{error}</p>
       ) : (
         <>
-          {finalized.length === 0 ? (
+          {isClosedOnly ? null : finalized.length === 0 ? (
             <div className={styles.emptyState}>
               <Trophy size={26} style={{ opacity: 0.3, margin: '0 auto 0.6rem', display: 'block' }} />
               <p className={styles.emptyStateTitle}>No results yet</p>
@@ -239,7 +256,7 @@ export default function CoachesResultsReportPage({
             </>
           )}
 
-          <section style={{ marginTop: '1.75rem' }}>
+          <section style={{ marginTop: isClosedOnly ? 0 : '1.75rem' }}>
             <p className={styles.sectionKicker}>Past seasons</p>
             {history.length === 0 ? (
               <p className={styles.insightsQuietText}>
@@ -293,6 +310,12 @@ export default function CoachesResultsReportPage({
                           </div>
                         </>
                       )}
+                      {/* D4: every closed season's ceremony stays reachable, not just the newest. */}
+                      <div style={{ flexBasis: '100%' }}>
+                        <Link href={`${base}/season-end?year=${y.id}`} style={{ fontSize: '0.82rem', fontWeight: 600 }}>
+                          Season Wrapped →
+                        </Link>
+                      </div>
                     </div>
                   </details>
                 );

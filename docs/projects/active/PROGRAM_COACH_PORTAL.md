@@ -64,19 +64,67 @@ that makes the guardian model correct, consistent, plural, and honestly describe
 Note: CP-3 ("guardian optional on the Premium add form") is effectively satisfied — Batch 2 collapsed
 guardian contact behind a disclosure, so it no longer reads as required.
 
-### 1.5 Coach Portal Growth — Phases 2+
+### 1.5 Past-season read-only DETAIL views for coaches — NOT BUILT (owner-requested 2026-07-29, at Batch 3 QA)
+
+**The ask (owner):** on a standalone team the coach *is* the admin — when they want to look
+something up from a past season (who was on the roster, what the schedule looked like, what a
+specific game was), they should get read-only detail views of that season, not only the
+summaries-and-Wrapped archive Batch 3 shipped. Today the coach-side archive (Insights →
+results report → Past seasons) shows every score + per-season record/roster-count/money
+summaries + Season Wrapped; club ADMINS additionally have full read-only past-year detail
+pages (roster / schedule / coaches tabs) that standalone coaches have no equivalent of.
+
+**Scope — OWNER-DECIDED 2026-07-29 (supersedes the earlier "decisions to bring to build"):**
+a past season stays **as if it were live, but read-only** — the full portal view of that
+season, not a curated subset. The governing rules:
+
+1. **Same access as when it was live, for everyone who had it.** Every coach on that
+   season's staff — head or assistant, org-owned or standalone — keeps read access to
+   exactly what their capabilities showed them then. An assistant who couldn't see money
+   during the season can't see it in the archive either; one who could, still can (read-only).
+   Capabilities are already stored per season, so "what they had then" is the recorded truth,
+   not a reconstruction.
+2. **Everything is read-only** — every section they could reach renders view-only; no
+   writes anywhere in a closed season...
+3. **...except staff/entitlement management, which stays live — but now only governs
+   READ access.** The head coach (and, for club teams, the org admin) can still manage the
+   closed season's staff list at any time: revoking an assistant removes their read access
+   to that past season; capability changes narrow/widen what of it they can see. This is
+   the one deliberate write surface on a closed season, and it writes only to who-can-see.
+
+**What Batch 3 already shipped (the interim + the rails):** Season's End + Wrapped + the
+results archive as the closed-season surface; the season-READ resolver
+(`lib/coach-season-read.ts`, GET-only, closed assignments admitted, capabilities resolved
+from the SEASON'S OWN assignment row — rule 1 falls out of this design); the `?year=`
+pattern (`/wrapped`, `/season-end?year=`); per-row "past season is read-only" write guards.
+
+**Build outline (follow-up project, own plan + mockups when picked up):**
+year-parameterized READ routes for the sectioned data (roster, schedule/results, lineups,
+attendance, money records, documents, awards/development, staff) + a portal-wide read-only
+rendering mode for the section pages (controls hidden/disabled, "read-only — season
+complete" chrome) + the staff page kept operative on closed seasons with its revoke/caps
+writes re-pointed at the closed year (a scoped exception to the write guards) + nav that
+opens the full section set for a closed season instead of the current two doors. Larger
+than the earlier "three detail tabs" cut — it is the full frozen portal — but every write
+guard and access rail it needs already exists. No migration expected.
+
+**Sizing/priority:** medium; natural slot right after Batch 4 (tournament-game tools). Not
+a launch blocker — the lockout is fixed and records are readable today; this deepens the
+archive into the full frozen season.
+
+### 1.6 Coach Portal Growth — Phases 2+
 Phase 1 (per-page education strip, cross-shell brand continuity) shipped. Open:
 - Phases 2–4 — brand-chrome continuity + education depth.
 - Phase 5 — **self-serve checkout** (flipping the existing upsell CTAs from "express interest" to real checkout is a *label change*; the infrastructure is already built). Not blocked by 2–4.
 - Phase 6 — modal-layer admin inside the coach shell. **Large, deferred.**
 
-### 1.6 Lineup — deferred sport-neutrality gaps
+### 1.7 Lineup — deferred sport-neutrality gaps
 Lineup Intelligence P0–P5 and the Lineup Builder Phases 1–4 are built and live. Known gap carried
 forward: parts of the lineup surface assume diamond sports. Benign while only softball/baseball are
 offered and Multi-Sport Phase 2 is paused — **must be swept before any non-diamond sport is enabled**.
 Cross-reference: `PROGRAM_TOURNAMENT_ENGINE.md` §Multi-Sport.
 
-### 1.7 Free-coach removal safeguard — Phase 4 tail
+### 1.8 Free-coach removal safeguard — Phase 4 tail
 Phases 1–2 (preserve a free Coaches Portal when removing an org admin who is also a free coach) are
 built and live. Phase 4 — the same informed-consent warning on the **platform-admin customer-user
 delete** path — was owner-approved 2026-06-27; confirm at pickup whether it landed.

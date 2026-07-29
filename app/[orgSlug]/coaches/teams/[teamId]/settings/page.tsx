@@ -215,7 +215,8 @@ export default function TeamSettingsPage({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
             <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--white-70)' }}>
               When this season wraps, roll your team into the next one. Your active roster carries forward;
-              the schedule starts fresh; and {season.name} moves to read-only Past Seasons.
+              the schedule starts fresh; and {season.name} moves to its read-only <strong>Season&apos;s End</strong> page —
+              the season wrap-up, plus every result and money record in the Insights archive.
             </p>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button type="button" className={styles.btnPrimary} onClick={() => setModalOpen(true)}>

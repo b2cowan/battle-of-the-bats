@@ -682,6 +682,44 @@ const coachesHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'premium-season-end',
+      group: 'Premium Coaches Portal',
+      heading: 'When a season ends: Season’s End, your wrap-up, and what carries forward',
+      summary: 'A closed season stays yours — a Season Wrapped highlight card you can share, plus read-only access to every result and money record.',
+      keywords: ['season over', 'season ended', 'season complete', 'end of season', 'season wrapped', 'wrapped', 'share season', 'season recap', 'highlight card', 'locked out', 'lost access', 'not assigned', 'read only', 'past seasons', 'season history', 'close season', 'close out the season', 'start next season', 'rollover', 'new season', 'what carries over', 'winding down', 'awards carry', 'development carry'],
+      searchText: 'season over ended complete end of season seasons end page season wrapped highlight card share your season image final record longest streak closest game attendance rate most awarded lineup fact read only past seasons results archive locked out lost access team disappeared not assigned any teams club admin closes season reappears next season start next season close out the season winding down quiet nothing scheduled what carries over roster staff budget fee plan development history bring forward measurements start fresh awards all time record',
+      content: (
+        <>
+          <p>When your season is marked complete, your team doesn&apos;t disappear — it moves to its <strong>Season&apos;s End</strong> page. You&apos;ll find it in your team switcher (the dropdown in the sidebar, or the team list on your phone&apos;s More menu) under <strong>Season complete</strong> — and if it&apos;s your only team, the portal opens straight onto it.</p>
+          <p><strong>Season Wrapped</strong> leads the page: your final record, longest win streak, closest game, attendance rate, top award-winner, and a standout lineup fact — built from the season you actually ran. <strong>Share your season</strong> turns it into a picture and opens your phone&apos;s share sheet, so it goes wherever you choose (the family group chat is the usual first stop). A short season simply gets a smaller card — no padded stats.</p>
+          <p>Below it, <strong>Look back any time</strong> opens your read-only archive: every result, season by season, plus roster size and money summaries. Nothing you built is deleted — it&apos;s just no longer editable, because the season is over.</p>
+          <p><strong>Getting to next season:</strong> on a standalone Premium team, the head coach starts it from Season&apos;s End (or Settings) — the roster and coaching staff carry forward. On a club-owned team, your club admin runs seasons; when you&apos;re on next season&apos;s coaching staff, the team moves back up into your active list automatically.</p>
+          <p>And before any of that: once games stop and nothing new is scheduled for a couple of quiet weeks, your Overview shows a gentle <strong>Season check</strong> note so the season never just… stops. Dismiss it once and it stays quiet.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-season-end-what-carries',
+          question: 'What carries into the new season, and what stays behind?',
+          answer: (
+            <>
+              <p><strong>Carries:</strong> your active roster and your coaching staff, plus — your choice at rollover — the planned budget (projected buckets only) and the fee plan (amounts and installments, with due dates shifted forward; paid history stays behind).</p>
+              <p><strong>Stays with the old season:</strong> the schedule, results, payments, and spending — all still readable in the archive. <strong>Development history</strong> stays too: each returning player&apos;s profile offers to bring their open goals forward, and measurements always start fresh. <strong>Awards</strong> never need carrying — they live on the team&apos;s all-time record.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-season-end-locked-out',
+          question: 'My season ended and my team vanished — where did it go?',
+          answer: (
+            <>
+              <p>It&apos;s under <strong>Season complete</strong> in your team list (the switcher in the sidebar, or the team menu on your phone), and its Season&apos;s End page has your wrap-up and archive. If you coach one team only, the portal opens straight onto it. You&apos;re never locked out of a finished season&apos;s records.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'premium-portal-tour',
       group: 'Premium Coaches Portal',
       heading: 'Getting around your Premium portal',

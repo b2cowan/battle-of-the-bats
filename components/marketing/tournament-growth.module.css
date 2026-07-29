@@ -153,6 +153,41 @@
   background: rgba(255,255,255,0.08);
 }
 
+/* ── Warm coaches portal (Batch 3 QA, owner-flagged) ─────────────────────────
+   The coach-portal impression of this banner renders INSIDE the warm gate, where the
+   dark-surface styling above breaks two ways: `.bannerCta`'s raw --logic-lime fill remaps
+   to OLIVE (banned as a button fill — the warm primary is ink-on-lime), and the raw white
+   rgba body/dismiss inks wash out on cream. Warm-gated here (the marker only exists in the
+   coach shells, so the public/tournament dark impressions are untouched). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachBanner {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--home-ink-soft);
+  backdrop-filter: none;
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachBanner .bannerBody strong {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachBanner .bannerBody span {
+  color: var(--home-ink-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachBanner .bannerCta {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachBanner .bannerIcon {
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border-color: rgba(var(--home-olive-rgb), 0.28);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachBanner .dismissBtn {
+  color: var(--home-dim);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .coachBanner .dismissBtn:hover {
+  color: var(--home-ink);
+  background: var(--home-olive-soft);
+}
+
 @media (max-width: 720px) {
   .poweredBy {
     left: 1rem;

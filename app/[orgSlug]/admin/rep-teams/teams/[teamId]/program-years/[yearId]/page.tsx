@@ -70,6 +70,10 @@ export default function ProgramYearOverviewPage({
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger' | 'info'>('success');
   const [feedbackMsg, setFeedbackMsg] = useState('');
+  // Marking a season completed changes what every coach on the team can do — it gets an
+  // explicit confirmation naming that impact (Coach Portal Batch 3, D2). Other transitions
+  // (activate, archive) stay one-click.
+  const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
@@ -233,11 +237,42 @@ export default function ProgramYearOverviewPage({
           <button
             type="button"
             className="btn btn-secondary"
-            onClick={() => handleTransition(nextStatus)}
+            onClick={() => (nextStatus === 'completed' ? setConfirmCompleteOpen(true) : handleTransition(nextStatus))}
             disabled={transitioning}
           >
             {transitioning ? 'Updating…' : NEXT_LABEL[programYear.status]}
           </button>
+        </div>
+      )}
+
+      {/* Completing a season is the one transition that changes COACH access — confirm it,
+          and tell the truth about what happens (Batch 3, D2; approved mockups = spec). */}
+      {confirmCompleteOpen && (
+        <div className={styles.modalOverlay} onMouseDown={e => { if (e.target === e.currentTarget) setConfirmCompleteOpen(false); }}>
+          <div className={styles.modal} role="dialog" aria-modal="true" aria-label={`Mark ${programYear.name} completed`}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Mark {programYear.name} completed?</h2>
+            </div>
+            <ul style={{ margin: '0 0 1.1rem', paddingLeft: '1.15rem', display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
+              <li>The season locks as <strong style={{ color: 'var(--white-90)' }}>read-only</strong> — scores, roster, and money records are kept; nothing can be edited.</li>
+              <li>Coaches keep access: they&apos;ll see a <strong style={{ color: 'var(--white-90)' }}>Season&apos;s End</strong> wrap-up and their season history — they are not locked out.</li>
+              <li>The next season starts with an <strong style={{ color: 'var(--white-90)' }}>empty coach list</strong> — re-add your coaches when you create it.</li>
+              <li>A completed season can be archived, but not reopened.</li>
+            </ul>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <button type="button" className="btn btn-secondary" onClick={() => setConfirmCompleteOpen(false)} disabled={transitioning}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={async () => { setConfirmCompleteOpen(false); await handleTransition('completed'); }}
+                disabled={transitioning}
+              >
+                Mark completed
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

@@ -9,8 +9,8 @@ import {
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
-import { useCoaches } from '@/lib/coaches-context';
-import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
+import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
+import { isCoachNavItemVisible, CLOSED_TEAM_NAV_ITEMS } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
 import styles from './CoachesBottomNav.module.css';
@@ -22,6 +22,13 @@ const TEAM_TABS = [
   { key: '/chat',     icon: MessageSquare,   label: 'Chat'     },
   { key: '/roster',   icon: Users,           label: 'Roster'   },
 ];
+
+// A CLOSED season's tabs (Batch 3, P0 #1): the shared door list lives in
+// lib/coach-nav-visibility.ts (one source for both navs); icons resolve here.
+const CLOSED_TAB_ICON: Record<string, typeof Users> = { "Season's End": Trophy, Insights: BarChart3 };
+const CLOSED_TEAM_TABS = CLOSED_TEAM_NAV_ITEMS.map(item => ({
+  key: item.href, icon: CLOSED_TAB_ICON[item.label] ?? Trophy, label: item.label,
+}));
 
 // Remaining team sections — surfaced under More, each beneath a plain-language section header that
 // mirrors the desktop sidebar groups (design rule: every More item sits under a section header).
@@ -56,7 +63,7 @@ export default function CoachesBottomNav() {
   const pathname = usePathname();
   const router   = useRouter();
   const { currentOrg, userRole } = useOrg();
-  const { assignments } = useCoaches();
+  const { assignments, closedAssignments } = useCoaches();
   const orgSlug  = currentOrg?.slug ?? '';
   const base     = `/${orgSlug}/coaches`;
   // "Back to admin" — only for a coach who also administers this org (seeded from the layout's
@@ -76,11 +83,14 @@ export default function CoachesBottomNav() {
   // team switcher in More lets multi-team coaches change it.
   const teamMatch     = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const urlTeamId     = teamMatch?.[1] ?? null;
-  const currentTeamId = urlTeamId ?? assignments[0]?.teamId ?? null;
+  const currentTeamId = urlTeamId ?? assignments[0]?.teamId ?? closedAssignments[0]?.teamId ?? null;
   const teamBase      = currentTeamId ? `${base}/teams/${currentTeamId}` : null;
 
   // Assistant Coaches: hide nav areas the current coach isn't cleared for (head coaches see all).
   const currentAssignment = currentTeamId ? assignments.find(a => a.teamId === currentTeamId) : null;
+  // Closed-season access (Batch 3, P0 #1): the bar collapses to the read-only door set.
+  // Same shared predicate as the sidebar/Overview (lib/coaches-context.tsx).
+  const currentClosed = resolveClosedAssignment(assignments, closedAssignments, currentTeamId);
   const caps = currentAssignment?.capabilities;
   // Shared with the desktop sidebar (lib/coach-nav-visibility.ts) — one source of truth for gating.
   const navVisible = (label: string): boolean => isCoachNavItemVisible(caps, label);
@@ -95,7 +105,7 @@ export default function CoachesBottomNav() {
     return 'primary';
   };
 
-  const isOnTeamMore = teamBase
+  const isOnTeamMore = teamBase && !currentClosed
     ? ALL_MORE_KEYS.some(key => pathname.startsWith(`${teamBase}${key}`))
     : false;
 
@@ -129,8 +139,8 @@ export default function CoachesBottomNav() {
       className={`${styles.bottomNav}${anyOverlayOpen ? ` ${styles.navHidden}` : ''}`}
       aria-label="Coaches mobile navigation"
     >
-      {/* Four primary team tabs */}
-      {teamBase && TEAM_TABS.filter(({ label }) => navVisible(label)).map(({ key, icon: Icon, label }) => {
+      {/* Four primary team tabs (closed seasons: the two read-only doors) */}
+      {teamBase && (currentClosed ? CLOSED_TEAM_TABS : TEAM_TABS.filter(({ label }) => navVisible(label))).map(({ key, icon: Icon, label }) => {
         const active = tabIsActive(key);
         const isChat = key === '/chat';
         return (
@@ -179,8 +189,9 @@ export default function CoachesBottomNav() {
 
         {moreOpen && (
           <div className={styles.dropdown} role="menu">
-            {/* Team switcher — only earns its place with 2+ teams (mirrors the tournament switcher) */}
-            {assignments.length > 1 && (
+            {/* Team switcher — only earns its place with 2+ entries (mirrors the tournament
+                switcher). Closed-season teams get a quiet group instead of vanishing. */}
+            {assignments.length + closedAssignments.length > 1 && (
               <>
                 <div className={styles.dropSectionLabel}>Your teams</div>
                 {assignments.map(a => {
@@ -200,12 +211,32 @@ export default function CoachesBottomNav() {
                     </Link>
                   );
                 })}
+                {closedAssignments.length > 0 && (
+                  <>
+                    <div className={styles.dropSectionLabel}>Season complete</div>
+                    {closedAssignments.map(a => (
+                      <Link
+                        key={a.teamId}
+                        href={`${base}/teams/${a.teamId}/season-end`}
+                        className={`${styles.dropItem} ${currentTeamId === a.teamId ? styles.dropActive : ''}`}
+                        role="menuitem"
+                      >
+                        {a.teamColor && (
+                          <span style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0, opacity: 0.7 }} />
+                        )}
+                        <span>{a.teamName}</span>
+                        <ChevronRight size={14} className={styles.dropChevron} />
+                      </Link>
+                    ))}
+                  </>
+                )}
                 <div className={styles.dropDivider} />
               </>
             )}
 
-            {/* Remaining team sections — each under a plain-language header mirroring the sidebar. */}
-            {teamBase && (() => {
+            {/* Remaining team sections — each under a plain-language header mirroring the
+                sidebar. A closed season has no "more" sections — its two doors ARE the tabs. */}
+            {teamBase && !currentClosed && (() => {
               const renderMoreItem = ({ key, icon: Icon, label }: MoreItem) => {
                 const href   = `${teamBase}${key}`;
                 const active = pathname.startsWith(href);

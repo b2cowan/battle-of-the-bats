@@ -54,7 +54,13 @@ export function useCurrentOrgCoachAccess(
           setResult({
             orgSlug,
             access: {
-              hasRepAccess: Array.isArray(data?.assignments) && data.assignments.length > 0,
+              // Closed-season assignments count (Batch 3, P0 #1): an owner-coach whose season
+              // was just completed keeps read-only Season's End access, so the admin shell's
+              // "Coaches Portal" door must not vanish the moment the season closes — the
+              // coaches layout itself admits exactly this coach.
+              hasRepAccess:
+                (Array.isArray(data?.assignments) && data.assignments.length > 0)
+                || (Array.isArray(data?.closedAssignments) && data.closedAssignments.length > 0),
               hasBasicCoachTeam: Boolean(data?.hasBasicCoachTeam),
             },
           });

@@ -26,6 +26,14 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
     return { error: NextResponse.json({ error: 'Player not found' }, { status: 404 }) };
   }
 
+  // Year-scope guard (Batch 3 rider): a measurable attaches to a roster ROW, which is
+  // season-scoped — only the ACTIVE season's rows may take new readings ("read-only past
+  // season" must hold per-row, not just per-team). The assignment already names the active
+  // year (draft|active-filtered lookup) — no extra query. Cross-season carry has its own route.
+  if (player.programYearId !== assignment.programYearId) {
+    return { error: NextResponse.json({ error: 'This player belongs to a past season, which is read-only.' }, { status: 409 }) };
+  }
+
   return { ctx, player, assignment };
 }
 

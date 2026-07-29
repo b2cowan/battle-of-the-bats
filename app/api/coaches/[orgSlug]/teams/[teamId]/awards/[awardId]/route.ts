@@ -32,6 +32,9 @@ async function resolveAwardContext(orgSlug: string, teamId: string) {
 // Undo a mis-click — a hard delete of the record itself (distinct from retiring an award
 // TYPE, which never deletes). Scoped by team_id, so an award can only be removed by a coach
 // of its own team.
+// DELIBERATELY not year-scoped (Batch 3 verification flagged this as a possible hole; it is
+// intent): awards are the team's ALL-TIME history — the Awards page lists every season and
+// the current head coach curates that record, including fixing a past season's mis-award.
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; awardId: string }> },) => {
   const { orgSlug, teamId, awardId } = await params;

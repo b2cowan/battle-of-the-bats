@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
-  getRepTeam,
-  getCoachingAssignmentsForUser,
   getRepTeamHistory,
   getRepCurrentSeasonSummary,
   getRepPlayerDuesSchedules,
   getRepPlayerDuesInstallments,
   getRepTeamExpenses,
 } from '@/lib/db';
+import { resolveCoachSeasonReadContext } from '@/lib/coach-season-read';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney } from '@/lib/coach-capabilities';
 
@@ -35,33 +33,18 @@ async function accountingForYear(yearId: string): Promise<SeasonAccounting> {
   return { duesCollected, duesOutstanding, totalExpenses };
 }
 
-async function resolveCoachContext(orgSlug: string, teamId: string) {
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return { error: unauthorized() };
-  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
-
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) {
-    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
-  }
-
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
-
-  return { ctx, team, assignment };
-}
-
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { assignment } = resolved;
+  // Season-READ resolver (not the standard active-only context): history is the one surface a
+  // coach explicitly keeps after their season closes (Batch 3, P0 #1) — and this route is
+  // GET-only, so admitting closed assignments opens no write path.
+  const resolved = await resolveCoachSeasonReadContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved.error;
 
   // Record / roster / tryout data is open to any assigned coach; the money rows (dues + expenses)
   // are layered on only when the caller can view finances (tri-state money capability).
-  const canMoney = canViewMoney(assignment.capabilities);
+  const canMoney = canViewMoney(resolved.capabilities);
 
   const [history, current] = await Promise.all([
     getRepTeamHistory(teamId),

@@ -1,11 +1,11 @@
 'use client';
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
+import { Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
 import { signOut } from '@/lib/auth';
-import { useCoaches } from '@/lib/coaches-context';
-import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
+import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
+import { isCoachNavItemVisible, CLOSED_TEAM_NAV_ITEMS } from '@/lib/coach-nav-visibility';
 import { useOrg } from '@/lib/org-context';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { teamWorkspaceDisplayName } from '@/lib/coaches-portal-routes';
@@ -51,10 +51,15 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   ] },
 ];
 
+// A CLOSED season's nav (Batch 3, P0 #1): the shared door list lives in
+// lib/coach-nav-visibility.ts (one source for both navs); icons resolve here.
+const CLOSED_NAV_ICON: Record<string, typeof Users> = { "Season's End": Trophy, Insights: BarChart3 };
+const CLOSED_TEAM_NAV = CLOSED_TEAM_NAV_ITEMS.map(item => ({ ...item, icon: CLOSED_NAV_ICON[item.label] ?? Trophy }));
+
 export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { assignments } = useCoaches();
+  const { assignments, closedAssignments } = useCoaches();
   const { currentOrg, userRole } = useOrg();
   // "Back to admin" — only for a coach who also administers this org (seeded from the layout's
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
@@ -69,9 +74,19 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const teamMatch = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const currentTeamId = teamMatch?.[1] ?? null;
 
+  // Remember the last team the coach was in (per org) — the /coaches entry point lands
+  // there on the next visit (owner call, Batch 3 QA 2026-07-29). Best-effort only.
+  useEffect(() => {
+    if (!currentTeamId) return;
+    try { localStorage.setItem(`flhq-coach-last-team:${orgSlug}`, currentTeamId); } catch { /* ignore */ }
+  }, [currentTeamId, orgSlug]);
+
   const currentAssignment = currentTeamId
     ? assignments.find(a => a.teamId === currentTeamId)
     : null;
+  // Closed-season access — ONE shared predicate (lib/coaches-context.tsx) with the nav,
+  // Overview, and the read-only pages, so no surface can drift on what "closed" means.
+  const currentClosed = resolveClosedAssignment(assignments, closedAssignments, currentTeamId);
 
   // Assistant Coaches: hide nav areas the current coach isn't cleared for. The gate is shared with
   // the mobile bottom nav (lib/coach-nav-visibility.ts) so it's one source of truth. Head coaches
@@ -127,40 +142,54 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         <p className={styles.sidebarOrgName}>
           {isTeamWorkspace ? teamWorkspaceDisplayName(currentOrg?.name) : (currentOrg?.name ?? orgSlug)}
         </p>
-        {/* A standalone workspace IS the Coaches Portal — there's no separate org to go
-            "back" to, so the link only appears for real orgs (league/club). */}
-        {!isTeamWorkspace && (
-          <Link href={`/${orgSlug}`} className={styles.sidebarBackLink}>
-            <ArrowLeft size={12} />
-            Back to {currentOrg?.name ?? 'org page'}
-          </Link>
-        )}
+        {/* The old "Back to {org}" link (→ the org's PUBLIC page) was removed here (owner
+            call, Batch 3 QA 2026-07-29): the portal is a workspace, not a public sub-page —
+            public surfaces are reached through the Flip doors, and admin-coaches keep their
+            "Back to admin" door below. */}
       </div>
 
-      {/* Team list — a switcher, so it only earns its place with 2+ teams. With a single
-          team (always the case for a standalone Premium workspace) the team name is already
-          the sidebar label, so the list would just repeat it. */}
-      {assignments.length > 1 && (
+      {/* Team switcher — a DROPDOWN, matching the admin shell's tournament switcher (owner
+          call, Batch 3 QA 2026-07-29; replaces the old row list). Only earns its place with
+          2+ entries. Closed-season teams sit in a "Season complete" group and open on their
+          read-only Season's End. */}
+      {assignments.length + closedAssignments.length > 1 && (
         <div className={styles.sidebarSection}>
-          <p className={styles.sidebarSectionLabel}>My Teams</p>
-          {assignments.map(a => (
-            <Link
-              key={a.teamId}
-              href={`${base}/teams/${a.teamId}`}
-              className={`${styles.sidebarItem}${currentTeamId === a.teamId ? ` ${styles.sidebarItemActive}` : ''}`}
-            >
-              {a.teamColor && (
-                <span
-                  style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0, marginTop: 2 }}
-                />
-              )}
-              <span className={styles.sidebarTeamInfo}>
-                <span>{a.teamName}</span>
-                <span className={styles.sidebarTeamYear}>{a.programYearName}</span>
-              </span>
-            </Link>
-          ))}
+          <label className={styles.sidebarSectionLabel} htmlFor="coach-team-select">My Teams</label>
+          <select
+            id="coach-team-select"
+            className={styles.teamSwitcherSelect}
+            value={currentTeamId ?? ''}
+            onChange={e => {
+              const id = e.target.value;
+              if (!id || id === currentTeamId) return;
+              const isClosed = closedAssignments.some(a => a.teamId === id);
+              router.push(`${base}/teams/${id}${isClosed ? '/season-end' : ''}`);
+            }}
+          >
+            {!currentTeamId && <option value="">Choose a team…</option>}
+            {assignments.map(a => (
+              <option key={a.teamId} value={a.teamId}>{a.teamName}</option>
+            ))}
+            {closedAssignments.length > 0 && (
+              <optgroup label="Season complete">
+                {closedAssignments.map(a => (
+                  <option key={a.teamId} value={a.teamId}>{a.teamName} · {a.programYearName}</option>
+                ))}
+              </optgroup>
+            )}
+          </select>
         </div>
+      )}
+
+      {/* CLOSED-season team nav — the read-only door set (Batch 3, P0 #1). */}
+      {currentTeamId && currentClosed && (
+        <>
+          <div className={styles.sidebarDivider} />
+          <div className={styles.sidebarSection}>
+            {/* No team-name heading — the switcher dropdown above already names the team. */}
+            {CLOSED_TEAM_NAV.map(renderNavItem)}
+          </div>
+        </>
       )}
 
       {/* Team-scoped nav — only when inside a team */}
@@ -168,10 +197,8 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         <>
           <div className={styles.sidebarDivider} />
           <div className={styles.sidebarSection}>
-            {/* With one team the header already names it, so this label would just repeat. */}
-            {assignments.length > 1 && (
-              <p className={styles.sidebarSectionLabel}>{currentAssignment.teamName}</p>
-            )}
+            {/* No team-name heading — with one team the header names it, and with several
+                the switcher dropdown above already shows the current team. */}
             {currentAssignment.coachRole === 'assistant_coach' && (
               <p className={styles.sidebarSectionLabel}>Assistant Coach</p>
             )}

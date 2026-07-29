@@ -1,10 +1,13 @@
 'use client';
-import { use, useCallback, useEffect, useState } from 'react';
+import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { useCoaches } from '@/lib/coaches-context';
+import { useRouter } from 'next/navigation';
+import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { Archive, ArrowRight, Building2, Cake, Calendar, CheckCircle2, Circle, DollarSign, MinusCircle, TriangleAlert, Trophy, Users, Wallet } from 'lucide-react';
+import { Archive, ArrowRight, Building2, Cake, Calendar, CheckCircle2, ChevronDown, Circle, DollarSign, MinusCircle, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
+import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
+import CoachTournamentAwarenessBanner from '@/components/marketing/CoachTournamentAwarenessBanner';
 import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
 import { pickFanViewRegistration, type FanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
@@ -20,6 +23,21 @@ import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
+
+/**
+ * Coach-scoped (NOT team-scoped) onboarding preferences — a coach with three teams decides once.
+ * Deliberately keyless of teamId, unlike the per-team `coach-setup-skipped:` / `coach-season-cue:`
+ * keys below, which record facts about a season rather than a preference.
+ *
+ * ⚠ Phase C seam: both of these move to account-level `user_preferences` columns so they follow the
+ * coach across devices. These two constants and the four call sites below are the whole surface.
+ */
+const HINTS_OFF_KEY = 'coach-setup-hints-off';
+const TOUR_SEEN_KEY = 'coach-portal-tour-seen';
+
+/** Setup-chip progress ring geometry — derived, so resizing the ring can't desync the arc. */
+const RING_R = 8;
+const RING_CIRCUMFERENCE = 2 * Math.PI * RING_R;
 
 const STATUS_LABEL: Record<string, string> = {
   draft: 'Draft',
@@ -69,7 +87,7 @@ interface SetupItem {
   action: string;
   href: string;
   complete: boolean;
-  /** 'core' counts toward setup %; 'optional' sits in its own group, no nag. */
+  /** 'core' gates "you're ready"; 'optional' is skippable and never nags. */
   group: 'core' | 'optional';
   /**
    * Whether this coach can act on the step at all. Computed straight from `capabilities` at
@@ -77,10 +95,17 @@ interface SetupItem {
    * complete — not even for the moment before an async fetch lands.
    */
   visible?: boolean;
+  /**
+   * Administrative context rather than a step: always complete, nothing to act on. Kept in the
+   * list because `requiredDone` depends on it, but never rendered as a checklist row and never
+   * counted — a row that can only ever say "Done" is noise. Declared here, on the item that knows
+   * why, so every consumer gets the exclusion instead of each one re-deriving it from the key.
+   */
+  contextOnly?: boolean;
   help: { title: string; body: string };
   /**
-   * The five "first week" steps render as the momentum ring instead of as a checklist row
-   * (Batch 2, P0 #6 + wow #1) — one list, two renderings, so no step can appear twice or drift.
+   * The headline steps ("Essentials"). Carries the short label + live value the milestone
+   * rendering uses; steps without one fall into the "When you're ready" group.
    */
   milestone?: { order: number; short: string; value: string };
 }
@@ -115,10 +140,17 @@ export default function TeamOverviewPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const { orgSlug, teamId } = use(params);
-  const { assignments, loading } = useCoaches();
+  const { assignments, closedAssignments, loading, refresh: refreshAssignments } = useCoaches();
   const { currentOrg } = useOrg();
   const { openHelp } = useHelpDrawer();
+  const router = useRouter();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  // Season's End access (Batch 3, P0 #1): a team whose only season is CLOSED has no live
+  // Overview — its landing is the read-only Season's End page (redirect below, never a
+  // wall). Computed HERE, above the data effects, so they can skip their fetches: every
+  // endpoint this page reads is active-year-scoped and would just 403/404 for a closed
+  // team. Shared predicate with the navs (lib/coaches-context.tsx).
+  const isClosedTeam = !loading && !!resolveClosedAssignment(assignments, closedAssignments, teamId);
   const [setupStats, setSetupStats] = useState<SetupStats | null>(null);
   const [setupLoading, setSetupLoading] = useState(true);
   const [setupError, setSetupError] = useState('');
@@ -138,8 +170,13 @@ export default function TeamOverviewPage({
   const [duesOverdueCount, setDuesOverdueCount] = useState(0);
   // Players who have paid NOTHING toward their dues (zero-paid) — distinct from "overdue".
   const [duesUnpaidCount, setDuesUnpaidCount] = useState(0);
-  // The receding setup strip can expand back to the full checklist ("Review →").
-  const [setupExpanded, setSetupExpanded] = useState(false);
+  // Season setup lives in a header chip now, not a full-width panel — this is its popover.
+  const [setupOpen, setSetupOpen] = useState(false);
+  // "Turn off setup hints" — silences the next-action line and the chip's count everywhere this
+  // coach works. Deliberately NOT team-scoped: a coach with three teams dismisses once.
+  const [hintsOff, setHintsOff] = useState(false);
+  // Whether this coach has already been offered the portal tour (the offer is one-time).
+  const [tourSeen, setTourSeen] = useState(true);
   // Paid vs total dues installments → the Dues snapshot mini-gauge.
   const [duesProgress, setDuesProgress] = useState<{ paid: number; total: number } | null>(null);
   // Season budget vs actual spend → Budget tile.
@@ -166,6 +203,12 @@ export default function TeamOverviewPage({
   // Safety-tier Insights bridge: the ONE finding category that shouldn't wait for a couch
   // session (a pitcher over their arm-care cap) echoes as a single quiet line here.
   const [armCareFlag, setArmCareFlag] = useState<{ name: string; overCapGames: number } | null>(null);
+  // Winding-down cue (Batch 3, P1 f5-1): when the season quietly stops, say so — once.
+  const [lastPastEventAt, setLastPastEventAt] = useState<string | null>(null);
+  const [seasonCueDismissed, setSeasonCueDismissed] = useState(false);
+  // Season year + who may close it — from the team GET this page already makes for division.
+  const [seasonMeta, setSeasonMeta] = useState<{ year: number | null; canManageSeasons: boolean }>({ year: null, canManageSeasons: false });
+  const [rolloverOpen, setRolloverOpen] = useState(false);
 
   const loadSetup = useCallback(async () => {
     setSetupLoading(true);
@@ -223,6 +266,13 @@ export default function TeamOverviewPage({
       // Calendar-day gap in the org timezone (Toronto), not a rolling-24h count — so a game
       // later *today* reads 0 ("Today"), not 1 ("Tomorrow"), and game-day can actually fire.
       setNextEventDays(nextUp ? Math.max(0, calendarDaysBetween(new Date(), new Date(nextUp.startsAt))) : null);
+
+      // Most recent PAST activity of any kind (practices count — a team still practicing is
+      // not winding down). Feeds the season winding-down cue's quiet-days floor (f5-1).
+      const lastPast = events
+        .filter(e => e.status !== 'cancelled' && new Date(e.startsAt).getTime() < now)
+        .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())[0] ?? null;
+      setLastPastEventAt(lastPast?.startsAt ?? null);
 
       // Events in the next 7 days, grouped for the "This week" line.
       const weekAhead = now + 7 * 86400000;
@@ -289,9 +339,11 @@ export default function TeamOverviewPage({
     }
   }, [orgSlug, teamId, assignments]);
 
+  // Every fetch on this page is active-year-scoped — skip the whole fan-out for a closed
+  // team (it's mid-redirect to Season's End; the requests would only 403/404 into the logs).
   useEffect(() => {
-    if (!loading) void Promise.resolve().then(loadSetup);
-  }, [loading, loadSetup]);
+    if (!loading && !isClosedTeam) void Promise.resolve().then(loadSetup);
+  }, [loading, isClosedTeam, loadSetup]);
 
   // Hydrate skipped optional steps (per team). Best-effort — never breaks the page.
   const skipStorageKey = `coach-setup-skipped:${teamId}`;
@@ -304,6 +356,60 @@ export default function TeamOverviewPage({
     });
   }, [skipStorageKey]);
 
+  // Until the Phase C account-level store lands, a browser profile stands in for the coach —
+  // true for every real single-user device.
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      try {
+        setHintsOff(localStorage.getItem(HINTS_OFF_KEY) === '1');
+        setTourSeen(localStorage.getItem(TOUR_SEEN_KEY) === '1');
+      } catch { /* ignore */ }
+    });
+  }, []);
+
+  const turnOffHints = useCallback(() => {
+    setHintsOff(true);
+    setSetupOpen(false);
+    try { localStorage.setItem(HINTS_OFF_KEY, '1'); } catch { /* ignore */ }
+  }, []);
+
+  const turnOnHints = useCallback(() => {
+    setHintsOff(false);
+    try { localStorage.removeItem(HINTS_OFF_KEY); } catch { /* ignore */ }
+  }, []);
+
+  // Interim tour door (Phase A): opens the existing "Getting around your Premium portal" guide in
+  // the help drawer, and retires the one-time offer. Phase C replaces the target with the
+  // paginated four-card tour; the entry points and the offer-once rule stay exactly as they are.
+  const openPortalTour = useCallback(() => {
+    setTourSeen(true);
+    try { localStorage.setItem(TOUR_SEEN_KEY, '1'); } catch { /* ignore */ }
+    setSetupOpen(false);
+    openHelp({
+      module: 'coaches',
+      sectionIds: ['premium-portal-tour', 'premium'],
+      label: 'Portal tour',
+      fullGuideHref: `/${orgSlug}/coaches/help#premium-portal-tour`,
+    });
+  }, [openHelp, orgSlug]);
+
+  // Close the setup popover on outside click / Escape — it sits in the page header, so an
+  // un-closable popover would sit over the page title.
+  const setupChipRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!setupOpen) return;
+    const onPointer = (e: MouseEvent) => {
+      if (setupChipRef.current && !setupChipRef.current.contains(e.target as Node)) setSetupOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSetupOpen(false); };
+    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [setupOpen]);
+
   const toggleSkip = useCallback((key: string) => {
     setSkippedSteps(prev => {
       const next = new Set(prev);
@@ -314,26 +420,50 @@ export default function TeamOverviewPage({
   }, [skipStorageKey]);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading || isClosedTeam) return;
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}`)
       .then(res => (res.ok ? res.json() : null))
-      .then(json => { if (!cancelled && json?.team) setTeamDivision(json.team.division ?? null); })
+      .then(json => {
+        if (cancelled || !json?.team) return;
+        setTeamDivision(json.team.division ?? null);
+        // Same response carries the season + the caller's season-management scope — the
+        // winding-down cue needs both (year → default for "next season"; scope → which
+        // cue variant renders). No extra request.
+        setSeasonMeta({
+          year: json.season?.year ?? null,
+          canManageSeasons: !!json.scope?.canManageSeasons,
+        });
+      })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, orgSlug, teamId]);
+  }, [loading, isClosedTeam, orgSlug, teamId]);
+
+  // Winding-down cue dismissal — per team + season, remembered locally (same pattern as
+  // setup-step skips). Any newly scheduled event clears the trigger anyway; the stored
+  // dismissal just keeps a quiet season quiet after one "Not yet".
+  const cueStorageKey = `coach-season-cue:${teamId}:${assignments.find(a => a.teamId === teamId)?.programYearId ?? ''}`;
+  useEffect(() => {
+    void Promise.resolve().then(() => {
+      try { setSeasonCueDismissed(localStorage.getItem(cueStorageKey) === '1'); } catch { /* ignore */ }
+    });
+  }, [cueStorageKey]);
+  const dismissSeasonCue = useCallback(() => {
+    setSeasonCueDismissed(true);
+    try { localStorage.setItem(cueStorageKey, '1'); } catch { /* ignore */ }
+  }, [cueStorageKey]);
 
   // First-week milestones. Fail-silent: the trail simply doesn't render if this can't load —
   // Overview never blocks on onboarding data.
   useEffect(() => {
-    if (loading) return;
+    if (loading || isClosedTeam) return;
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/milestones`)
       .then(res => (res.ok ? res.json() : null))
       .then(json => { if (!cancelled && json?.milestones) setMilestones(json.milestones as Milestones); })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, orgSlug, teamId]);
+  }, [loading, isClosedTeam, orgSlug, teamId]);
 
   // Next-game lineup readiness for the "Next up" tile — only when the next event is a game.
   // "Ready" = at least one player has a position assigned in the saved lineup.
@@ -382,7 +512,7 @@ export default function TeamOverviewPage({
 
   // Tournament registrations summary (count, next date, pending, live today) → Tournaments tile.
   useEffect(() => {
-    if (loading) return;
+    if (loading || isClosedTeam) return;
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-history`)
       .then(res => (res.ok ? res.json() : null))
@@ -411,12 +541,12 @@ export default function TeamOverviewPage({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, orgSlug, teamId]);
+  }, [loading, isClosedTeam, orgSlug, teamId]);
 
   // Last season at a glance — newest completed/archived season (record + dues + expenses). Money-
   // gated (mirrors the History/Season Review nav gate) so a no-money assistant never sees dues.
   useEffect(() => {
-    if (loading) return;
+    if (loading || isClosedTeam) return;
     const a = assignments.find(x => x.teamId === teamId);
     if (!a || a.capabilities.money === 'off') { setLastSeason(null); return; }
     let cancelled = false;
@@ -436,12 +566,12 @@ export default function TeamOverviewPage({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, orgSlug, teamId, assignments]);
+  }, [loading, isClosedTeam, orgSlug, teamId, assignments]);
 
   // Safety bridge (design log 2026-07-09): surface an over-cap pitcher as one quiet line
   // linking into Insights. Lineups-gated; fail-silent (Overview never blocks on analytics).
   useEffect(() => {
-    if (loading) return;
+    if (loading || isClosedTeam) return;
     const a = assignments.find(x => x.teamId === teamId);
     if (!a || !a.capabilities.lineups) return; // never fetched ⇒ flag stays null
     let cancelled = false;
@@ -454,13 +584,13 @@ export default function TeamOverviewPage({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, orgSlug, teamId, assignments]);
+  }, [loading, isClosedTeam, orgSlug, teamId, assignments]);
 
   // Org-invite banner — show only when an organization has actually invited this team
   // to connect (org-initiated). Self-serve linking lives quietly in Settings otherwise.
   const isWorkspaceOrg = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
   useEffect(() => {
-    if (loading || !isWorkspaceOrg) return;
+    if (loading || isClosedTeam || !isWorkspaceOrg) return;
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/team-links`, { cache: 'no-store' })
       .then(res => (res.ok ? res.json() : null))
@@ -471,9 +601,14 @@ export default function TeamOverviewPage({
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, isWorkspaceOrg, orgSlug]);
+  }, [loading, isClosedTeam, isWorkspaceOrg, orgSlug]);
+
+  useEffect(() => {
+    if (isClosedTeam) router.replace(`${base}/season-end`);
+  }, [isClosedTeam, router, base]);
 
   if (loading) return <p className={styles.muted}>Loading...</p>;
+  if (isClosedTeam) return <p className={styles.muted}>Opening Season&apos;s End…</p>;
 
   const assignment = assignments.find(a => a.teamId === teamId);
 
@@ -509,7 +644,7 @@ export default function TeamOverviewPage({
     : yearNameTrim;
   // Required = the spine of a team (season is automatic, roster is the one true must).
   // Everything else is OPTIONAL: pointed to, auto-checks when done, skippable, and never
-  // blocks reaching 100% / retiring the panel.
+  // blocks the header chip from going quiet.
   const setupItems: SetupItem[] = [
     {
       key: 'season',
@@ -520,6 +655,7 @@ export default function TeamOverviewPage({
       href: base,
       complete: true,
       group: 'core',
+      contextOnly: true,
       help: { title: 'Season', body: 'A season groups your roster, schedule, dues, and budget for one year. When the year ends you start a new season from Settings and last year becomes read-only history.' },
     },
     {
@@ -636,25 +772,21 @@ export default function TeamOverviewPage({
   // from capabilities rather than inferred from an async response's nulls.
   const visibleSetupItems = setupItems.filter(item => item.visible ?? true);
   const coreItems = visibleSetupItems.filter(item => item.group === 'core');
-  // Required (roster) gates "you're ready"; the panel itself retires only once EVERY
-  // step is done-or-skipped, so the coach explicitly clears each optional step.
+  // Required (roster) gates "you're ready"; the chip only goes quiet once EVERY step is
+  // done-or-skipped, so the coach explicitly clears each optional step.
   const requiredDone = coreItems.every(item => item.complete);
-  // The five headline steps become the trail; everything else stays a checklist row. Same list,
-  // two renderings — no step can appear twice, and the counts can never disagree.
+  // The headline steps — rendered as "Essentials" and counted by the header chip. Everything else
+  // (bar the context-only season row) falls into "When you're ready".
   const ringItems = [...visibleSetupItems]
     .filter((item): item is SetupItem & { milestone: NonNullable<SetupItem['milestone']> } => Boolean(item.milestone))
     .sort((a, b) => a.milestone.order - b.milestone.order);
-  // Everything not on the trail. There is no separate "required steps" list any more: the roster
-  // step IS trail step 1 (with the panel's own "Next:" line and lime CTA driving it), so rendering
-  // it a second time as a required row just said the same thing twice.
+  // There is no separate "required steps" list: the roster step IS essentials step 1, driven by the
+  // next-action line's single lime CTA, so rendering it again as a required row said it twice.
   const rowItems = visibleSetupItems.filter(item => !item.milestone);
-  // A step counts toward the status bar when it's done OR (for optional steps) skipped —
-  // so the bar reflects EVERY setup decision, and skipping a step "checks it off".
+  // A step is settled when it's done OR (for optional steps) deliberately skipped — skipping IS
+  // a decision, so it clears the step rather than leaving it to nag forever.
   const isSkipped = (item: SetupItem) => item.group === 'optional' && !item.complete && skippedSteps.has(item.key);
   const isSatisfied = (item: SetupItem) => item.complete || isSkipped(item);
-  const satisfiedCount = visibleSetupItems.filter(isSatisfied).length;
-  const totalCount = visibleSetupItems.length;
-  const allSatisfied = visibleSetupItems.every(isSatisfied);
 
   // While the roster is missing, lead with the "build your roster" guidance; after that
   // the remaining items are all optional, so the header just labels them as such.
@@ -842,29 +974,19 @@ export default function TeamOverviewPage({
     hasFinalizedGame,
     hasUpcomingTournament,
   });
-  // Season record for the afterglow headline — default categories (league + tournament,
-  // scrimmage excluded), matching SeasonRecordWidget's default so the two never disagree.
-  const recordGames = finalizedGames.filter(e => e.eventType !== 'scrimmage');
-  const resultRecord = {
-    w: recordGames.filter(e => e.result === 'win').length,
-    l: recordGames.filter(e => e.result === 'loss').length,
-    t: recordGames.filter(e => e.result === 'tie').length,
-  };
-  const lastFinalized = [...finalizedGames].sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())[0] ?? null;
-  const resultLetter = (r?: string | null) => (r === 'win' ? 'W' : r === 'loss' ? 'L' : 'T');
   const resultWord = (r?: string | null) => (r === 'win' ? 'Win' : r === 'loss' ? 'Loss' : r === 'tie' ? 'Tie' : '');
-  const formatResultLine = (e: RepTeamEvent) => {
-    const score = e.teamScore != null && e.opponentScore != null ? ` ${e.teamScore}–${e.opponentScore}` : '';
-    const opp = e.opponent ? ` ${e.homeAway === 'away' ? '@' : 'vs'} ${e.opponent}` : '';
-    return `${resultLetter(e.result)}${score}${opp}`;
-  };
 
   // The first still-open setup step, for the pre-season anchor's single next action. Ring steps
   // come first so "Next:" names a first-week milestone before a config chore.
   const nextSetupItem = [...ringItems, ...coreItems, ...rowItems].find(i => !i.complete && !isSkipped(i)) ?? null;
-  const optionalLeft = totalCount - satisfiedCount;
   const ringSatisfied = ringItems.filter(isSatisfied).length;
-  const firstWeekDone = ringItems.length > 0 && ringSatisfied === ringItems.length;
+  // One ratio drives both the chip's arc and "are the essentials done" — an empty essentials list
+  // (a capability-restricted assistant) reads as complete rather than as 0%.
+  const ringRatio = ringItems.length ? ringSatisfied / ringItems.length : 1;
+  const essentialsDone = ringRatio === 1;
+  const whenReadyItems = rowItems.filter(item => !item.contextOnly);
+  const actionableItems = [...ringItems, ...whenReadyItems];
+  const everythingSatisfied = actionableItems.every(isSatisfied);
   // Chips route through the SAME visibility rule as the sidebar, so a coach can never be pointed
   // at a section their capabilities hide. Tryouts additionally waits for the conditional nav signal
   // rather than advertising a seasonal area a team hasn't opened.
@@ -873,19 +995,154 @@ export default function TeamOverviewPage({
     && (section.needs !== 'tryouts' || assignment.hasTryoutSignal),
   );
 
-  // Roster missing → the FULL setup panel is the top surface. It now ALSO stays up while any
-  // first-week milestone is open (D4): the old rule receded it as soon as one player existed, which
-  // would have made the trail visible only at 0 of 5. Every step is still skippable and "Hide"
-  // still works, so a coach who won't send an announcement isn't nagged forever.
-  // `milestones === null` means the trail's data is still in flight. Without that guard, a coach
-  // who finished their first week weeks ago sees the full panel flash back for a beat on every
-  // Overview load (every milestone reads incomplete until the fetch lands).
-  const showFullSetupPanel = !setupLoading && (!requiredDone || (milestones !== null && !firstWeekDone));
+  // Setup guidance no longer owns the canvas: progress lives in a header chip and, while the
+  // essentials are open, ONE next-action line under the header. The chip's count can't be trusted
+  // until the milestone read lands (every milestone reads incomplete until then), so wait for it —
+  // except when the roster is empty, which is knowable from the roster fetch alone and is the one
+  // case worth guiding immediately.
+  const setupDecided = !setupLoading && (!requiredDone || milestones !== null);
+  // A coach whose capabilities leave them nothing to do gets no chip at all — a progress meter
+  // over steps you can't complete is a nag, not guidance.
+  const showSetupChip = setupDecided && actionableItems.length > 0 && !everythingSatisfied;
+  // Quiet = the chip is a doorway, not a counter: essentials cleared, or hints turned off.
+  const setupChipQuiet = essentialsDone || hintsOff;
+  const showSetupLine = setupDecided && !hintsOff && !essentialsDone && !!nextSetupItem;
+  // One branch, not four: while the roster is missing the line speaks in the roster guidance's
+  // voice, after that it speaks for the next open step. Splitting this across four inline ternaries
+  // let the headline/body pair and the CTA pair guard on subtly different conditions.
+  const setupLine = nextSetupItem && (!requiredDone
+    ? {
+        head: guidance.headline,
+        desc: guidance.context,
+        href: guidance.cta?.href ?? nextSetupItem.href,
+        label: guidance.cta?.label ?? nextSetupItem.action,
+      }
+    : {
+        head: nextSetupItem.label,
+        desc: nextSetupItem.desc,
+        href: nextSetupItem.href,
+        label: nextSetupItem.action,
+      });
   const showAnchor = !setupLoading && requiredDone;
-  const showSetupStrip = !setupLoading && requiredDone && firstWeekDone && !allSatisfied && phase !== 'preseason';
-  const renderSetupPanel = showFullSetupPanel || (showSetupStrip && setupExpanded);
-  // The preseason anchor says the same sentence as the panel's "Next:" line — never both.
-  const showPreseasonAnchor = showAnchor && phase === 'preseason' && !renderSetupPanel;
+  // The preseason anchor says the same sentence as the next-action line — never both.
+  const showPreseasonAnchor = showAnchor && phase === 'preseason' && !showSetupLine;
+
+  // Season setup — progress as a header control, not a panel. It opens on demand and never
+  // occupies the canvas; the canvas belongs to the coach's team. Kept out of the header JSX so
+  // the header still reads as title + subtitle + controls at a glance.
+  const renderSetupChip = () => {
+    if (!showSetupChip) return null;
+    return (
+      <div className={styles.setupChipWrap} ref={setupChipRef}>
+        <button
+          type="button"
+          className={styles.setupChip}
+          data-quiet={setupChipQuiet ? 'true' : 'false'}
+          aria-expanded={setupOpen}
+          aria-haspopup="dialog"
+          onClick={() => setSetupOpen(open => !open)}
+        >
+          <svg className={styles.setupChipRing} viewBox="0 0 20 20" aria-hidden>
+            <circle cx="10" cy="10" r={RING_R} className={styles.setupChipRingTrack} />
+            <circle
+              cx="10" cy="10" r={RING_R}
+              className={styles.setupChipRingFill}
+              strokeDasharray={`${ringRatio * RING_CIRCUMFERENCE} ${RING_CIRCUMFERENCE}`}
+            />
+          </svg>
+          <span className={styles.setupChipLabel}>Season setup</span>
+          {!setupChipQuiet && <span className={styles.setupChipCount}>{ringSatisfied}/{ringItems.length}</span>}
+          <ChevronDown size={13} aria-hidden />
+        </button>
+
+        {setupOpen && (
+          <div className={styles.setupPop} role="dialog" aria-label="Season setup">
+            <div className={styles.setupPopHead}>
+              <p className={styles.setupPopKicker}>Season setup · {ringSatisfied} of {ringItems.length}</p>
+              <button type="button" className={styles.setupPopClose} onClick={() => setSetupOpen(false)} aria-label="Close season setup">
+                <X size={15} aria-hidden />
+              </button>
+            </div>
+
+            {/* Progress only — the labelled steps are the rows below, so these dots carry no
+                text and no step can read as listed twice. */}
+            <div className={styles.setupPopTrail} aria-hidden>
+              {ringItems.map(item => (
+                <span key={item.key} className={styles.setupPopDot} data-state={item.complete ? 'done' : isSkipped(item) ? 'skipped' : 'open'} />
+              ))}
+            </div>
+
+            {ringItems.length > 0 && (
+              <>
+                <p className={styles.setupGroupLabel}>Essentials</p>
+                <div className={styles.setupList}>{ringItems.map(renderSetupRow)}</div>
+              </>
+            )}
+
+            {whenReadyItems.length > 0 && (
+              <>
+                <p className={styles.setupGroupLabel}>When you&apos;re ready</p>
+                <div className={styles.setupList}>{whenReadyItems.map(renderSetupRow)}</div>
+              </>
+            )}
+
+            {setupError && <p className={styles.errorText}>{setupError}</p>}
+
+            {/* The sections with no honest "done" state still get named, so a coach can't finish
+                setup without learning they exist. Phase B replaces these with real teaching at
+                each section's own empty state. */}
+            {discoverySections.length > 0 && (
+              <div className={styles.discoverRow}>
+                <p className={styles.discoverLabel}>Also in your portal</p>
+                <div className={styles.discoverChips}>
+                  {discoverySections.map(section => (
+                    <Link key={section.key} href={`${base}${section.href}`} className={styles.discoverChip} title={section.title}>
+                      {section.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className={styles.setupPopFoot}>
+              <button type="button" className={styles.setupGuideLink} onClick={openPortalTour}>
+                Take the 2-minute portal tour →
+              </button>
+              {hintsOff ? (
+                <button type="button" className={styles.setupPopMuted} onClick={turnOnHints}>Turn setup hints back on</button>
+              ) : (
+                <button type="button" className={styles.setupPopMuted} onClick={turnOffHints}>Turn off setup hints</button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // ── Winding-down cue (Batch 3, P1 f5-1; D5 thresholds owner-ratified) ─────
+  // Renders ONLY when the evidence is strong: a real game was played, nothing is scheduled
+  // ahead, no registered tournament is coming, and the team has been quiet ≥14 days (a
+  // mid-season break or tournament gap stays silent). One dismiss ends it for the season;
+  // any newly scheduled event clears the trigger automatically.
+  const daysSinceLastEvent = lastPastEventAt
+    ? Math.max(0, calendarDaysBetween(new Date(lastPastEventAt), new Date()))
+    : null;
+  // A scrimmage-only season would satisfy hasFinalizedGame but produce an empty Wrapped
+  // (scrimmages are excluded from the canonical record) — the cue's "unlocks your Season
+  // Wrapped" promise must only be made when a real-competition game was played.
+  const hasRealFinalizedGame = finalizedGames.some(e => e.eventType !== 'scrimmage');
+  const showSeasonCue = showAnchor
+    && phase === 'in_season'
+    && !nextEvent
+    && hasRealFinalizedGame
+    && !hasUpcomingTournament
+    && daysSinceLastEvent != null
+    && daysSinceLastEvent >= 14
+    && !seasonCueDismissed;
+  // Which variant: the coach who can actually close the season gets the door; everyone else
+  // gets the honest expectation (club seasons are closed by the org admin).
+  const cueCanClose = seasonMeta.canManageSeasons;
 
   const attendanceTotal = nextAttendance ? nextAttendance.in + nextAttendance.late + nextAttendance.out + nextAttendance.noReply : 0;
   const fieldOrLoc = nextEvent ? (nextEvent.fieldNumber || nextEvent.location || null) : null;
@@ -943,6 +1200,7 @@ export default function TeamOverviewPage({
           </div>
         </div>
         <div className={styles.identityHelp}>
+          {renderSetupChip()}
           <HelpButton
             iconOnly
             label="Premium Coaches Portal"
@@ -951,9 +1209,30 @@ export default function TeamOverviewPage({
         </div>
       </div>
 
-      {/* Get set up — the status bar tracks EVERY step (required + optional); a step is
-          "checked off" when it's done OR skipped, so the bar reads 100% only once the coach
-          has decided on each. The panel retires at 100% (page flips to run-mode). */}
+      {/* One line, not a panel. Names the single next action, offers the tour once, and its ✕
+          ends all setup prompting for this coach on every team they hold. */}
+      {showSetupLine && setupLine && (
+        <div className={styles.setupLine}>
+          <span className={styles.setupLineBody}>
+            <span className={styles.setupLineHead}>{setupLine.head}</span>
+            <span className={styles.setupLineDesc}>{setupLine.desc}</span>
+          </span>
+          <span className={styles.setupLineActions}>
+            <Link href={setupLine.href} className="btn btn-lime btn-sm">
+              {setupLine.label} <ArrowRight size={14} />
+            </Link>
+            {!tourSeen && (
+              <button type="button" className={styles.setupLineTour} onClick={openPortalTour}>
+                New here? Take the 2-minute tour
+              </button>
+            )}
+          </span>
+          <button type="button" className={styles.setupLineDismiss} onClick={turnOffHints} aria-label="Turn off setup hints">
+            <X size={15} aria-hidden />
+          </button>
+        </div>
+      )}
+
       {/* ── "Right now" anchor — the phase-adaptive "what matters now" surface.
           Ports the TeamHQ phase LOGIC into the operating-tool card language (no hero). */}
       {showAnchor && phase === 'game_day' && nextEvent && (
@@ -1038,155 +1317,53 @@ export default function TeamOverviewPage({
         </div>
       )}
 
-      {showAnchor && phase === 'result' && (
-        <div className={`${styles.nowCard} ${styles.nowResult}`}>
-          <p className={styles.nowEyebrow}><Trophy size={13} aria-hidden /> Season complete <span className={styles.nowEyebrowCount}>{seasonLabel}</span></p>
-          {recordGames.length > 0 ? (
-            <p className={`${styles.nowHeadline} ${styles.nowRecord}`}>{resultRecord.w} – {resultRecord.l}{resultRecord.t > 0 ? ` – ${resultRecord.t}` : ''}</p>
+      {/* Winding-down cue (f5-1) — one quiet, dismissible card; never a modal or toast. */}
+      {showSeasonCue && (
+        <div className={styles.seasonCue} role="status">
+          <p className={styles.seasonCueEyebrow}>Season check</p>
+          {cueCanClose ? (
+            <>
+              <p className={styles.seasonCueBody}>
+                No games in {daysSinceLastEvent === null ? 'a while' : `${Math.floor((daysSinceLastEvent ?? 0) / 7)} weeks`} and
+                nothing scheduled — looks like the season may be winding down. Closing it out
+                unlocks your <strong>Season Wrapped</strong>.
+              </p>
+              <div className={styles.seasonCueActions}>
+                <button type="button" className="btn btn-lime btn-sm" onClick={() => setRolloverOpen(true)}>
+                  Close out the season
+                </button>
+                <button type="button" className={styles.seasonCueDismiss} onClick={dismissSeasonCue}>Not yet</button>
+              </div>
+            </>
           ) : (
-            <p className={styles.nowHeadline}>That&apos;s a wrap</p>
-          )}
-          {lastFinalized && <p className={styles.nowMeta}>Last: {formatResultLine(lastFinalized)}</p>}
-          <div className={styles.nowActions}>
-            {isTeamWorkspace && assignment.coachRole === 'head_coach'
-              ? <Link href={`${base}/settings`} className="btn btn-lime btn-sm">Start next season <ArrowRight size={14} /></Link>
-              : <Link href={`${base}/history`} className="btn btn-lime btn-sm">Season history <ArrowRight size={14} /></Link>}
-            <Link href={`${base}/history`} className={styles.nowSecondary}>Season Review <ArrowRight size={13} /></Link>
-          </div>
-          {isTeamWorkspace && (
-            <p className={styles.nowBridge}>Your team&apos;s records are saved for next season. Clubs on FieldLogicHQ keep every team&apos;s records in one shared place — <Link href="/for-coaches?source=coach_afterglow">see how it works →</Link></p>
+            <>
+              <p className={styles.seasonCueBody}>
+                No games in {daysSinceLastEvent === null ? 'a while' : `${Math.floor((daysSinceLastEvent ?? 0) / 7)} weeks`} and
+                nothing scheduled — the season may be winding down. When {currentOrg?.name ?? 'your club'} closes
+                it, your <strong>Season Wrapped</strong> appears here.
+              </p>
+              <div className={styles.seasonCueActions}>
+                <button type="button" className={styles.seasonCueDismiss} onClick={dismissSeasonCue}>Got it</button>
+              </div>
+            </>
           )}
         </div>
       )}
 
+      {/* The old `result`-phase afterglow card was removed in Batch 3: it was unreachable
+          (assignments are draft|active-filtered, so `phase` can never be 'result' here) and
+          its job now belongs to the Season's End page this page redirects closed teams to. */}
+
       {showPreseasonAnchor && (
         <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
-          <p className={styles.nowEyebrow}>Your roster&apos;s ready{!allSatisfied && <span className={styles.nowEyebrowCount}>{satisfiedCount} of {totalCount}</span>}</p>
+          {/* No progress count here any more — the header chip is the single place setup progress
+              is reported, so the two can't disagree. */}
+          <p className={styles.nowEyebrow}>Your roster&apos;s ready</p>
           <p className={styles.nowHeadline}>{nextSetupItem ? nextSetupItem.label : 'Add your first game'}</p>
           <p className={styles.nowMeta}>{nextSetupItem ? nextSetupItem.desc : 'Put a game or practice on the schedule to start tracking attendance, lineups, and your season record.'}</p>
           <div className={styles.nowActions}>
             <Link href={nextSetupItem ? nextSetupItem.href : `${base}/schedule`} className="btn btn-lime btn-sm">{nextSetupItem ? nextSetupItem.action : 'Add an event'} <ArrowRight size={14} /></Link>
           </div>
-        </div>
-      )}
-
-      {renderSetupPanel && (
-        <section className={styles.setupPanel} aria-labelledby="season-setup-title">
-          <div className={styles.setupHeader}>
-            <div>
-              <p className={styles.setupKicker}>Your first week · {ringSatisfied} of {ringItems.length}</p>
-              <h2 id="season-setup-title" className={styles.setupTitle}>
-                {!requiredDone ? guidance.headline : firstWeekDone ? 'Finish your setup' : 'Nice — you’re running'}
-              </h2>
-            </div>
-            {showSetupStrip && setupExpanded ? (
-              <button type="button" className={styles.setupStripLink} onClick={() => setSetupExpanded(false)}>Hide</button>
-            ) : (
-              <span className={styles.setupProgress}>{Math.round((satisfiedCount / totalCount) * 100)}%</span>
-            )}
-          </div>
-
-          {/* The five headline steps as a trail. Each dot lights from real data, and an open step
-              is a live door into the section it names — which is how Chat/Staff/Documents stop
-              being invisible (readiness review #6). */}
-          <div className={styles.ring} role="list" aria-label={`First week: ${ringSatisfied} of ${ringItems.length} done`}>
-            {ringItems.map((item, i) => {
-              const skipped = isSkipped(item);
-              const state = item.complete ? 'done' : skipped ? 'skipped' : item.key === nextSetupItem?.key ? 'next' : 'open';
-              const body = (
-                <div className={styles.ringStep} data-state={state}>
-                  <span className={styles.ringDot} aria-hidden>
-                    {item.complete ? '✓' : skipped ? '–' : i + 1}
-                  </span>
-                  <span className={styles.ringLabel}>{item.milestone.short}</span>
-                  <span className={styles.ringValue}>
-                    {item.complete ? (item.milestone.value || 'Done') : skipped ? 'Undo skip' : '—'}
-                  </span>
-                </div>
-              );
-              // A skipped step becomes its own undo control — skipping is one tap from the "Next:"
-              // line, so un-skipping has to be one tap back or a mis-tap would be permanent.
-              return skipped ? (
-                <button key={item.key} type="button" className={styles.ringLink} role="listitem"
-                  aria-label={`Undo skipping ${item.label}`} onClick={() => toggleSkip(item.key)}>
-                  {body}
-                </button>
-              ) : (
-                <Link key={item.key} href={item.href} className={styles.ringLink} role="listitem"
-                  title={item.complete ? item.detail : item.desc}>
-                  {body}
-                </Link>
-              );
-            })}
-          </div>
-
-          <p className={styles.setupNext}>
-            {!requiredDone
-              ? guidance.context
-              : nextSetupItem
-                ? nextSetupItem.desc
-                : "Your team is ready to run. Tick off or skip each remaining step below — skipping counts, so you can clear setup with the tools you'll actually use."}
-          </p>
-          {!requiredDone && guidance.cta ? (
-            <Link href={guidance.cta.href} className={`btn btn-lime btn-sm ${styles.setupNextCta}`}>
-              {guidance.cta.label} <ArrowRight size={14} />
-            </Link>
-          ) : nextSetupItem ? (
-            <span className={styles.setupNextActions}>
-              <Link href={nextSetupItem.href} className={`btn btn-lime btn-sm ${styles.setupNextCta}`}>
-                {nextSetupItem.action} <ArrowRight size={14} />
-              </Link>
-              {/* Trail steps render as dots, which have no room for a per-step Skip — without this
-                  the four optional milestones could never be skipped and the panel could never
-                  retire for a coach who won't use, say, announcements or a budget (D4). */}
-              {nextSetupItem.group === 'optional' && (
-                <button type="button" className={styles.setupItemSkip} onClick={() => toggleSkip(nextSetupItem.key)}>
-                  Skip this step
-                </button>
-              )}
-            </span>
-          ) : null}
-          {setupError && <p className={styles.errorText}>{setupError}</p>}
-
-          {/* The steps that aren't on the trail — set up or skip, exactly as before */}
-          {rowItems.length > 0 && (
-            <>
-              <p className={styles.setupGroupLabel}>Finish setting up</p>
-              <div className={styles.setupList}>
-                {rowItems.map(renderSetupRow)}
-              </div>
-            </>
-          )}
-
-          {/* The sections with no honest "done" state still get named here, so a coach can't
-              finish setup without learning they exist. */}
-          {discoverySections.length > 0 && (
-            <div className={styles.discoverRow}>
-              <p className={styles.discoverLabel}>Also in your portal</p>
-              <div className={styles.discoverChips}>
-                {discoverySections.map(section => (
-                  <Link key={section.key} href={`${base}${section.href}`} className={styles.discoverChip} title={section.title}>
-                    {section.label}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <p className={styles.setupGuideFooter}>
-            <button type="button" className={styles.setupGuideLink} onClick={() => openHelp({ module: 'coaches', sectionIds: ['premium-portal-tour', 'premium'], label: 'Setup guide', fullGuideHref: `${helpHref}#premium-portal-tour` })}>
-              Open the setup guide →
-            </button>
-          </p>
-        </section>
-      )}
-
-      {/* Setup receded to a thin strip once the roster is in but optional steps remain. */}
-      {showSetupStrip && !setupExpanded && (
-        <div className={styles.setupStripCollapsed}>
-          <CheckCircle2 size={15} className={styles.setupStripIcon} aria-hidden />
-          <span>First week done — <strong>{optionalLeft}</strong> optional {optionalLeft === 1 ? 'step' : 'steps'} left.</span>
-          <button type="button" className={styles.setupStripLink} onClick={() => setSetupExpanded(true)}>Review →</button>
         </div>
       )}
 
@@ -1302,6 +1479,32 @@ export default function TeamOverviewPage({
             </span>
           )}
         </div>
+      )}
+
+      {/* Tournament-acquisition awareness — moved here from the retired My Teams hub (its
+          only surface; the hub is now a pure redirector). Quiet, below all content, self-
+          gating (only orgs with the entitlement and no tournaments yet) and dismissible. */}
+      <div style={{ marginTop: '1.25rem' }}>
+        <CoachTournamentAwarenessBanner orgSlug={orgSlug} isTeamWorkspace={isTeamWorkspace} />
+      </div>
+
+      {/* "Close out the season" from the winding-down cue — the SAME rollover sheet Settings
+          opens (closing and starting next season are one honest action). */}
+      {rolloverOpen && (
+        <StartNextSeasonModal
+          orgSlug={orgSlug}
+          teamId={teamId}
+          currentSeasonName={assignment.programYearName}
+          defaultNextYear={(seasonMeta.year ?? new Date().getFullYear()) + 1}
+          onClose={() => setRolloverOpen(false)}
+          onDone={async () => {
+            setRolloverOpen(false);
+            // refreshAssignments changes the assignments identity, which re-keys loadSetup
+            // and re-fires its effect with a FRESH closure — calling loadSetup here too
+            // would run a second, stale-closured copy in parallel (adversarial review).
+            await refreshAssignments();
+          }}
+        />
       )}
     </div>
   );

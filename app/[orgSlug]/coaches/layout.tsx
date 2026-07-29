@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getAuthContext } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser } from '@/lib/db';
+import { getCoachingAssignmentsForUser, getClosedCoachingAssignmentsForUser } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgRole } from '@/lib/types';
 import { OrgProvider } from '@/lib/org-context';
@@ -57,9 +57,26 @@ export default async function CoachesLayout({
     .maybeSingle();
   const initialUserRole = (membership?.role as OrgRole | undefined) ?? null;
 
-  const assignments = await getCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id);
+  // Season's End access model (Batch 3, P0 #1): a coach whose season(s) were closed is NOT
+  // "not assigned" — they keep the portal shell with read-only access to what they built.
+  // The wall below is now only for coaches with no assignment on ANY season, ever. Both
+  // lookups run here once and SEED CoachesProvider (mirroring OrgProvider's initialOrg), so
+  // the client doesn't immediately re-fetch the identical data on mount.
+  const lookupOpts = { isTeamWorkspace: isTeamWorkspaceOrg(authCtx.org) };
+  const [assignments, closedAll] = await Promise.all([
+    getCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id, lookupOpts),
+    getClosedCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id, lookupOpts),
+  ]);
+  // Same shaping as the assignments API: one entry per team, only teams with no active year.
+  const activeTeamIds = new Set(assignments.map(a => a.teamId));
+  const seenClosedTeams = new Set<string>();
+  const closedAssignments = closedAll.filter(a => {
+    if (activeTeamIds.has(a.teamId) || seenClosedTeams.has(a.teamId)) return false;
+    seenClosedTeams.add(a.teamId);
+    return true;
+  });
 
-  if (assignments.length === 0) {
+  if (assignments.length === 0 && closedAssignments.length === 0) {
     const { name: orgName, contactEmail } = authCtx.org;
     const isTeamWorkspace = isTeamWorkspaceOrg(authCtx.org);
     return (
@@ -92,7 +109,11 @@ export default async function CoachesLayout({
     // user resolves to their DEFAULT org, not this team workspace — which mislabeled the sidebar
     // and scoped the notification bell to the wrong org (found 2026-07-13).
     <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole}>
-      <CoachesProvider orgSlug={orgSlug}>
+      <CoachesProvider
+        orgSlug={orgSlug}
+        initialAssignments={assignments}
+        initialClosedAssignments={closedAssignments}
+      >
         {/* Hosts the in-context "?" help slide-over for the team work pages (drawer +
             guide content load lazily on first click — no bundle cost until used). */}
         {/* Warm-portal preview gate: the marker sits on a display:contents wrapper (no box,
