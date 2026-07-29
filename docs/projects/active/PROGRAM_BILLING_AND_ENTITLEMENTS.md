@@ -9,9 +9,23 @@
 
 ## 0. Ground truth (verified 2026-07-28)
 
-Stripe **Phases A–F are complete** (checkout, full-lifecycle webhook, customer portal, billing UI,
-per-team billing). Only **Phase G — the live-account cutover** remains. Everything else in this
-program is either a deferred slice of a shipped engine or a scoped-but-unstarted audit follow-up.
+**Stripe is live.** ⚠ *Corrected 2026-07-28 — an earlier draft of this doc said the live cutover was
+still outstanding. It isn't, and it hasn't been for some time.* Verified against the live
+configuration: a live Stripe account with live products and prices, the production webhook endpoint,
+the Customer Portal branded and configured for live mode, all 12 live price IDs entered, production
+carrying live keys, and the billing audit passing with zero failures and zero warnings. Real money
+can move today.
+
+**Two separate things were being confused, and that's what made this look unfinished:**
+
+1. **Is Stripe ready?** Yes — done.
+2. **Which plans can a customer actually buy?** That's a *product* gate, not a Stripe one. Right now
+   **Tournament and Tournament Plus are open** for real self-serve purchase. **The Premium Coaches
+   Portal, League, Club and Club Large are held in early access** — deliberately, because the coach
+   portal is free until January and League/Club are pre-launch.
+
+Everything else in this program is either a deferred slice of a shipped engine or a
+scoped-but-unstarted audit follow-up.
 
 The commercial context has changed since most of these plans were written: **Tournament Plus is free
 through 2026-12-31** for founding orgs and the **Premium Coaches Portal is $0 until 2027-01-01**. That
@@ -22,13 +36,20 @@ simultaneously due in **January 2027**. That concentration is the main risk this
 
 ## 1. Outstanding work
 
-### 1.1 Stripe Phase G — go live ⚠ gates everything paid
-Production Stripe is configured and the automated audit passes. Deliberately deferred so the small
-non-refundable live-card fee is only incurred near launch. **Must complete before** paid self-serve
-subscriptions open or founding-season conversion billing runs. The full live-card smoke test is a
-43-step checklist covering checkout, webhook delivery, portal, refund and cancellation.
+### 1.1 Live-card smoke test — the only Stripe item left
+Seven of the ten cutover steps are done. Three remain, and none of them block anything from being live:
 
-### 1.2 January 2027 conversion — the concentration risk
+- **The live-card smoke test** — a 43-step run covering a real checkout, webhook delivery, the
+  customer portal, a refund and a cancellation, using an actual card. Deliberately deferred so the
+  small non-refundable processing fee is only incurred near real revenue.
+- **Watching the first real transactions** land in Stripe and confirming webhooks deliver.
+- Trial-lifecycle reminder emails for the League and Club trial windows (deferred to a later slice).
+
+**When to run it:** before the January conversion, not before "going live" — that's already happened.
+The conversion is when charges begin at volume, and it's the first moment a broken payment path would
+hurt many customers at once rather than one.
+
+### 1.2 January 2027 conversion — the real concentration risk
 Three separate commitments all land at once:
 - Founding-season orgs convert off free Tournament Plus (2026-12-31).
 - Premium Coaches Portal converts off $0 (2027-01-01).
@@ -36,7 +57,8 @@ Three separate commitments all land at once:
   runbook** — mass email → card on file → flip or cancel per account.
 
 The manual runbook exists in outline only. **It needs to be written and rehearsed well before
-December**, and it depends on Phase G being live.
+December.** With Stripe already live, this is now the single largest piece of unmanaged risk in the
+program — the dependency isn't technical any more, it's preparation time.
 
 ### 1.3 Stripe price-configuration validation — Phase 3
 Phases 1–2 shipped (shared validator + server hard-block on a mis-wired price). **Phase 3 — the
@@ -90,8 +112,8 @@ by enforcement. Copy-side items route to `/marketing`.
 
 | # | Decision | Recommendation |
 |---|----------|----------------|
-| BL-1 | **When does Stripe Phase G go live?** Everything paid queues behind it, and the January conversion cannot run without it. | Pick a date now and work backwards — target Phase G complete by **2026-10-31**, giving two months of buffer before conversion. |
-| BL-2 | **Club self-serve availability** — if Phase G is not live by the Club promotion window, do Club customers go through a manual provisioning path (contact form → platform-admin comp period)? | Yes, manual path. Don't let Phase G timing block the segment. |
+| BL-1 | **When do the held plan gates open?** Premium Coaches Portal, League, Club and Club Large are all in early access. Each has a different trigger — the coach portal at the January conversion, League at its launch, Club at repackaging. | Open League first (it's built and free), coach portal in January, Club last. Track each against its own program doc rather than as one billing event. |
+| BL-2 | **When is the live-card smoke test run?** It costs a small non-refundable fee and it's the last unverified link in the payment chain. | Before the January conversion. Running it on a quiet day beats discovering a broken refund path mid-conversion. |
 | BL-3 | **Finalise the pending-purge review policy** so hard purge can be built. Who reviews, what window, what's exportable first? | 30-day pending-purge review, owner-notified, export-before-purge. |
 | BL-4 | **Does a tier trial lift plan-derived *limits* (tournament limit, team caps), or only feature/module gating?** | Lift them — a trial that hits caps isn't a faithful trial. |
 | BL-5 | **Is Plan/Tier Trial still wanted?** It's been Proposed/deferred since June with no demand signal. | Drop it until a sales conversation actually needs it. The surgical grant covers today's cases. |
@@ -111,7 +133,7 @@ by enforcement. Copy-side items route to `/marketing`.
 
 ## 4. Shipped — reference only
 
-- **Stripe A–F** — checkout, full-lifecycle webhook, customer portal, billing UI, per-team billing.
+- **Stripe, end to end and live** — checkout, full-lifecycle webhook, customer portal, billing UI, per-team billing, and the production cutover itself: live account, live products and prices, production webhook endpoint, branded live customer portal, 12 live price IDs, production keys, billing audit clean. Tournament and Tournament Plus are purchasable today.
 - **Price-configuration validation P1–P2** — shared validator + server hard-block on missing / inactive / one-time / wrong-interval / wrong-currency / wrong-environment prices; warns on amount mismatch, reuse, wrong product.
 - **Timed entitlement grants** — `org_overrides`-based grant engine (no new table), request-time evaluation, Active Overrides operator surface, auto-revert at expiry.
 - **Retention lifecycle** — retention windows, 14-day owner warning, `pending_purge` transition, notice emails.
@@ -131,4 +153,4 @@ by enforcement. Copy-side items route to `/marketing`.
 `FOUNDING_SEASON_COACHES_FREE_PLAN.md` · `FOUNDING_SEASON_COACHES_FREE_PM_BRIEF.md`
 
 > **Note:** `STRIPE_PRODUCTION_SMOKE_TEST_TODO.md` contains the 43-step live-card checklist and is the
-> only source file with operational content that must survive. **Keep it active** until Phase G is done.
+> only source file with operational content that must survive. **Keep it active** until that test is run.

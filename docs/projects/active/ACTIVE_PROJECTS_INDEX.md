@@ -14,8 +14,10 @@
 |------|-----------|----------|
 | **In-flight projects** | Touched in the last two days; actively being built | 12 |
 | **Program docs** (`PROGRAM_*.md`) + this index | Consolidated backlogs — outstanding work only, grouped by domain | 12 |
-| **Retained specs** | Individual plans for unstarted work whose plan *is* the build spec | 8 |
-| **Archive candidates** | Superseded by a program doc; ready to move | 143 |
+| **Retained specs** | Individual plans for unstarted work whose plan *is* the build spec | 10 |
+
+**34 files total** (was 175). 153 files moved to `archive/` on 2026-07-28: 12 build prompts, then
+141 plans and briefs superseded by a program doc.
 
 **Build prompts are gone.** All 12 were archived 2026-07-28 by owner instruction — a build prompt is
 single-use, and every one of them had been executed except the Flip P4 prompt, whose full scope was
@@ -50,7 +52,7 @@ completed** on 2026-07-28, so that prompt was archived with the rest.
 | `PROGRAM_COACH_PORTAL.md` | Free + premium coaches portal (35 source files) | Readiness P0 #1 season-end lockout, #2 tournament lineup tools |
 | `PROGRAM_COACH_CHAT.md` | Chat engine + 4 surfaces (19 files) | Projects 2–4 never started; **is this program still wanted?** |
 | `PROGRAM_HELP_AND_ONBOARDING.md` | Help system, in-context help, onboarding (13 files) | Cross-device dismissals need a server column |
-| `PROGRAM_BILLING_AND_ENTITLEMENTS.md` | Stripe, plans, grants, retention (17 files) | **Stripe Phase G** + the January 2027 conversion concentration |
+| `PROGRAM_BILLING_AND_ENTITLEMENTS.md` | Stripe, plans, grants, retention (17 files) | The January 2027 conversion runbook (Stripe itself is **live** — see the correction note in that doc) |
 | `PROGRAM_TOURNAMENT_ENGINE.md` | Brackets, playoffs, standings, schedule, multi-sport (22 files) | **Standings Remodel — not started** |
 | `PROGRAM_ORGANIZER_EXPERIENCE.md` | Org-admin dashboard, admin IA, roles (14 files) | Admin IA multi-module nav — the League/Club skew |
 | `PROGRAM_ACCOUNTS_AND_ACCESS.md` | Identity, invites, follows (9 files) | **`/api/league/create` has no one-org guard** |
@@ -77,10 +79,16 @@ its share of them into a single "verification debt" line.
 
 ## 5. Archive candidates
 
-**12 build prompts were archived 2026-07-28.** A further **143 files** are consolidated into the
-program docs and ready to move. Each program doc's final section lists exactly which files it absorbed.
+**Done 2026-07-28.** 12 build prompts, then 141 superseded plans and briefs, moved to
+`docs/projects/archive/`. Each program doc's final section lists exactly which files it absorbed —
+nothing was deleted, and the two moves were made as separate steps so either can be reversed alone.
 
-**8 files stay active** because the project is unstarted and the plan is the build spec, not history:
+One name collided: an auto-generated public-token report existed in both folders. The archived copy
+was a June snapshot showing 22 defects; the active one was the current all-clear. Both were kept —
+the newer one landed as a date-suffixed file rather than overwriting history.
+
+**10 files stay active** because the project is unstarted (or mid-execution) and the plan is the
+build spec, not history:
 
 - `STANDINGS_REMODEL_PLAN.md` + `STANDINGS_REMODEL_PM_BRIEF.md`
 - `ADMIN_IA_MULTIMODULE_NAV_PLAN.md`
@@ -89,6 +97,7 @@ program docs and ready to move. Each program doc's final section lists exactly w
 - `INLINE_TSX_TOKEN_DEBT.md`
 - `STRIPE_PRODUCTION_SMOKE_TEST_TODO.md`
 - `PUSH_DELIVERY_TEST_PLAN.md`
+- `CODEBASE_CLEANUP_PLAN.md` (mid-execution — T0–T3 done, T4–T5 open)
 
 The Flip P4 build prompt was archived with the others; its scope now lives in
 `PROGRAM_PLATFORM_SURFACES.md` §1.1, which is the build spec for that phase.
@@ -110,7 +119,7 @@ reference behind a ratified business decision with an unfinished build-out — i
 | **Assistant coaches: scoped in two places.** `IN_ORG_COACH_CHAT_PLAN.md` claims to "introduce the assistant-coach concept", but assistant coaches were built and shipped independently. | The chat plan is out of date. Re-scope Project 2 against the shipped model before building. |
 | **Multi-sport paused, debt accruing.** The sport picker is paused, but a Title-case-vs-lowercase sport-id mismatch between coach signup and admin is live, and the lineup surfaces carry diamond-sport assumptions. | **Decision TE-7** — stay paused on the feature, fix the casing now while it's cheap. |
 | **Post-event story split across two programs.** The wrap-up "Next steps" row sits in the help program; the completed-dashboard/summary IA sits in the organizer program. | Build them in one pass — noted in both docs. |
-| **January 2027 concentration.** Founding-season org conversion, coach-portal $0 expiry, and the manual comp-cohort runbook all land within 48 hours of each other, and all depend on Stripe Phase G. | **Decision BL-1** — set a Phase G date and work backwards. |
+| **January 2027 concentration.** Founding-season org conversion, coach-portal $0 expiry, and the manual comp-cohort runbook all land within 48 hours of each other. | Stripe is live, so this is no longer a technical dependency — it's a preparation-time one. The runbook exists in outline only and needs writing and rehearsing before December. |
 
 ---
 
@@ -120,8 +129,8 @@ Each program doc carries its own decision table. Counting across all 11: **48 op
 The ones that block other work, in priority order:
 
 1. **AA-1 / LC-1** — fix the `/api/league/create` one-org guard (blocks the League launch).
-2. **BL-1** — set the Stripe Phase G date (blocks everything paid, including January conversion).
-3. **PS-1** — run the push-delivery diagnostic (Android push is dead on production).
+2. **PS-1** — run the push-delivery diagnostic (Android push is dead on production).
+3. **BL-2** — schedule the live-card smoke test ahead of the January conversion.
 4. **CH-8** — is the Coach Chat program (Projects 2–4) still wanted? Answering "no" closes 7 other decisions.
 5. **CP-1** — retire the Coach Nav Rebuild plan.
 6. **LC-2** — re-commit to an early-access date, or shelve the managed cohort.
