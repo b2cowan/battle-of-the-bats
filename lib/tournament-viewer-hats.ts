@@ -9,6 +9,7 @@ import { getLinkedRepTeamsForTournament } from './rep-team-tournament-links';
 import { getActivePremiumPortal } from './coach-team-page';
 import { coachTeamPath, COACHES_TOURNAMENTS_PATH } from './coaches-portal-routes';
 import { getUserDisplayName, getUserInitials } from './user-display';
+import { allowedAdminScreens } from './flip-twins';
 
 /**
  * lib/tournament-viewer-hats.ts — Phase 3 "one-home connective tissue."
@@ -49,6 +50,11 @@ export interface ViewerHat {
   /** Coach hats only: the tournament registration (`teams.id`) on THIS event, when unambiguous.
    *  Never derive it from `href` (an upgraded team's href points at a Premium slug + rep team id). */
   teamId?: string;
+  /** Admin hats only ("The Flip" P4/WI-2): the admin screens this staffer may actually open, so the
+   *  public→admin flip lands on their nearest permitted screen instead of bouncing off a redirect on
+   *  arrival. `undefined` = unrestricted (owner/admin) → exact page-matched twin. Grants nothing —
+   *  the destination still re-authorises. */
+  allowedScreens?: string[];
 }
 
 export interface TournamentViewer {
@@ -235,6 +241,9 @@ export async function getTournamentViewer(params: {
         kind: 'admin',
         label: params.orgName,
         href: `/${params.orgSlug}/admin/tournaments/dashboard?tournamentId=${params.tournamentId}`,
+        // P4/WI-2: carry the staffer's reachable screens so the public→admin flip page-matches
+        // WITHIN their scope. Owners/admins have null capabilities → undefined → exact twin.
+        allowedScreens: allowedAdminScreens(staffCtx.capabilities),
       });
     }
   }

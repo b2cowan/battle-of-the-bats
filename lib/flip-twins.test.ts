@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import {
   resolveFlip,
   resolveScorekeeperFlip,
+  allowedAdminScreens,
   primaryTarget,
   parseReturnMemory,
   flipOriginLabel,
@@ -298,4 +299,75 @@ test('parseReturnMemory rejects null, malformed JSON, missing fields, and stale 
   assert.equal(parseReturnMemory(JSON.stringify({ originUrl: '/a', label: 'x' }), now), null); // no ts
   const stale = JSON.stringify({ originUrl: '/a', label: 'x', ts: now - 60 * 60 * 1000 });
   assert.equal(parseReturnMemory(stale, now), null); // an hour old → stale
+});
+
+// ── P4/WI-2: staff scoping on the public→admin flip ──────────────────────────────────────────────
+
+test('allowedAdminScreens: unrestricted operator (null capabilities) → undefined (exact twin)', () => {
+  assert.equal(allowedAdminScreens(null), undefined);
+  assert.equal(allowedAdminScreens(undefined), undefined);
+});
+
+test('allowedAdminScreens: a scores-only official reaches results + dashboard, nothing else', () => {
+  const allowed = allowedAdminScreens({ submit_scores: true });
+  assert.deepEqual(allowed, ['dashboard', 'results']);
+});
+
+test('allowedAdminScreens: dashboard is the floor — a staffer with zero action caps still lands somewhere', () => {
+  assert.deepEqual(allowedAdminScreens({}), ['dashboard']);
+  assert.deepEqual(allowedAdminScreens({ submit_scores: false }), ['dashboard']);
+});
+
+test('allowedAdminScreens: either capability opens a screen (any-of, not all-of)', () => {
+  assert.ok(allowedAdminScreens({ update_schedule: true })?.includes('schedule'));
+  assert.ok(allowedAdminScreens({ manage_schedule_structure: true })?.includes('schedule'));
+  assert.ok(allowedAdminScreens({ check_in_teams: true })?.includes('registrations'));
+});
+
+test('public→admin flip: a scores-only staffer on public Teams never lands on registrations', () => {
+  const res = resolveFlip({
+    pathname: '/acme/summer-slam/teams',
+    direction: 'to-role',
+    hat: 'admin',
+    ctx: {
+      orgSlug: 'acme',
+      tournamentSlug: 'summer-slam',
+      adminTournamentId: 't1',
+      allowedAdminScreens: allowedAdminScreens({ submit_scores: true }),
+    },
+  });
+  const href = primaryTarget(res).href;
+  // The preferred twin for Teams is `registrations` — out of scope for this staffer, so the
+  // resolver falls back WITHIN scope. Per the shipped fallback order, that's `dashboard` (first
+  // permitted), not `results`. The acceptance bar is "never a screen they'd bounce off", not
+  // "the most topically useful screen" — re-ranking the fallback order is a separate question.
+  assert.doesNotMatch(href, /registrations/);
+  assert.match(href, /\/admin\/tournaments\/dashboard/);
+});
+
+test('public→admin flip: a scores-only staffer on a public GAME still lands on results (in scope)', () => {
+  const res = resolveFlip({
+    pathname: '/acme/summer-slam/schedule/g1',
+    direction: 'to-role',
+    hat: 'admin',
+    ctx: {
+      orgSlug: 'acme',
+      tournamentSlug: 'summer-slam',
+      adminTournamentId: 't1',
+      gameId: 'g1',
+      allowedAdminScreens: allowedAdminScreens({ submit_scores: true }),
+    },
+  });
+  // Game context prefers `results`, which this staffer CAN open — so the exact twin survives scoping.
+  assert.match(primaryTarget(res).href, /\/admin\/tournaments\/results/);
+});
+
+test('public→admin flip: an unrestricted operator still gets the exact page-matched twin', () => {
+  const res = resolveFlip({
+    pathname: '/acme/summer-slam/teams',
+    direction: 'to-role',
+    hat: 'admin',
+    ctx: { orgSlug: 'acme', tournamentSlug: 'summer-slam', adminTournamentId: 't1', allowedAdminScreens: allowedAdminScreens(null) },
+  });
+  assert.match(primaryTarget(res).href, /\/admin\/tournaments\/registrations/);
 });

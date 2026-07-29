@@ -90,6 +90,43 @@ export const HAT_LABEL: Record<FlipHat, string> = {
 /** Preference order when a staffer can't open the exact twin — land on the nearest screen, never 403. */
 const ADMIN_SCREEN_FALLBACK_ORDER = ['dashboard', 'schedule', 'results', 'registrations', 'communication', 'rules'];
 
+/**
+ * Admin screen → the capabilities that let a staffer open it (ANY one suffices). Kept beside
+ * `ADMIN_SCREEN` so adding a screen surfaces both questions at once — where does it flip, and who
+ * may open it — rather than silently defaulting to "everyone".
+ *
+ * `dashboard` is deliberately absent: it's the read-only landing every staffer with an admin door
+ * can reach, and it's first in the fallback order, so it must always remain a valid destination.
+ */
+const ADMIN_SCREEN_CAPABILITIES: Record<string, string[]> = {
+  schedule:      ['update_schedule', 'manage_schedule_structure'],
+  results:       ['submit_scores'],
+  registrations: ['manage_registrations', 'check_in_teams'],
+  communication: ['send_communications', 'post_announcements'],
+  rules:         ['post_rules'],
+};
+
+/**
+ * The admin screens this staffer may actually open, for `FlipContext.allowedAdminScreens`.
+ *
+ * Returns `undefined` for an unrestricted operator (owner/admin — `capabilities` is null), which the
+ * resolver reads as "no scoping, use the exact twin". Absence-means-unrestricted matches the
+ * `assignedTournamentIds` convention and the downstream scope guard.
+ *
+ * This does NOT grant anything: it only stops the flip aiming someone at a door they'd bounce off.
+ * The destination still re-authorises on arrival.
+ */
+export function allowedAdminScreens(capabilities: Record<string, boolean> | null | undefined): string[] | undefined {
+  if (!capabilities) return undefined; // unrestricted → exact twin
+  const allowed = ADMIN_SCREEN_FALLBACK_ORDER.filter(screen => {
+    const needed = ADMIN_SCREEN_CAPABILITIES[screen];
+    if (!needed) return true; // dashboard — always reachable
+    return needed.some(cap => capabilities[cap] === true);
+  });
+  // Never return an empty set: dashboard is the floor, so a flip always has somewhere honest to land.
+  return allowed.length > 0 ? allowed : ['dashboard'];
+}
+
 const STANDINGS_SUBLABEL = 'Standings come from these scores';
 
 // ── Path helpers ─────────────────────────────────────────────────────────────────────────────────

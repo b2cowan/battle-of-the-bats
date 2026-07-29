@@ -61,11 +61,20 @@ export function usePublicFlip(): FlipResolution | null {
     if (hat.kind === 'admin') {
       // Page-match through the SAME resolver the admin side uses (single source of truth), carrying
       // the event id + any game context so the flip lands on the matching admin screen for THIS event.
+      // P4/WI-2: `allowedAdminScreens` is what makes a capability-limited staffer land on their
+      // nearest permitted screen instead of bouncing off a redirect on arrival. Undefined for
+      // owners/admins → exact twin, exactly as before.
       const res = resolveFlip({
         pathname,
         direction: 'to-role',
         hat: 'admin',
-        ctx: { orgSlug: org, tournamentSlug: tourn, adminTournamentId: tournamentId ?? undefined, gameId },
+        ctx: {
+          orgSlug: org,
+          tournamentSlug: tourn,
+          adminTournamentId: tournamentId ?? undefined,
+          gameId,
+          allowedAdminScreens: hat.allowedScreens,
+        },
       });
       return primaryTarget(res);
     }
