@@ -5,7 +5,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { resolveFlip, primaryTarget, HAT_LABEL, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
 import { isPublicPageEnabled, PUBLIC_PAGE_OPTIONS, type PublicPageKey } from '@/lib/public-pages';
-import { useAdminLateralHats } from '@/lib/use-admin-lateral-hats';
+import { useEventRoleHats } from '@/lib/use-event-role-hats';
 
 /**
  * The admin shell's FlipPill target for the current screen — consumed by the shared AdminEventHeader
@@ -19,18 +19,20 @@ import { useAdminLateralHats } from '@/lib/use-admin-lateral-hats';
 export function useAdminFlip(): FlipResolution | null {
   const pathname = usePathname();
   const { currentOrg } = useOrg();
-  const { currentTournament } = useTournament();
+  const { currentTournament, loading: tournamentLoading } = useTournament();
 
   // P4/WI-1 — the OTHER roles this person holds on this event, for the lateral rows. Resolved
   // unconditionally (hooks can't sit behind branches); passing nulls off a tournament screen makes
-  // it a no-op, so non-tournament admin screens never fetch. See use-admin-lateral-hats for why
+  // it a no-op, so non-tournament admin screens never fetch. See use-event-role-hats for why
   // this is a cached client fetch rather than the server resolve the P4 plan first proposed.
   const onTournamentScreen =
     pathname.includes('/admin/tournaments') && !pathname.includes('/admin/tournaments/preview');
-  const lateralHats = useAdminLateralHats(
+  const roles = useEventRoleHats(
     onTournamentScreen ? currentOrg?.slug : null,
     onTournamentScreen ? currentTournament?.slug : null,
   );
+  // Drop the admin hat — you're already standing in it. Everything else is a genuine lateral.
+  const lateralHats = roles.hats.filter(hat => hat.kind !== 'admin');
 
   if (!currentOrg?.slug) return null;
   // The draft preview shell has its own Exit-preview control — no flip pill there.
@@ -64,6 +66,11 @@ export function useAdminFlip(): FlipResolution | null {
       },
     });
 
+    // Roles not resolved yet → PENDING. The control holds its space and shows nothing until it
+    // knows whether it's a plain link or a chooser. Painting a stand-in and rewriting it is what
+    // made the control look broken on arrival; an empty corner that fills in just reads as loading.
+    if (!roles.ready) return { ...toPublic, pending: true };
+
     // Single-role users get EXACTLY today's control — a plain page-matched link. That's the
     // acceptance bar for this work item; the chooser only appears for someone who genuinely wears
     // another hat on THIS event.
@@ -83,5 +90,16 @@ export function useAdminFlip(): FlipResolution | null {
   }
 
   // Every other admin screen → the org's main public site.
-  return { kind: 'single', target: { href: `/${currentOrg.slug}`, label: 'Public site' } };
+  //
+  // One nuance on tournament screens: which event is in context loads CLIENT-side, so for a moment
+  // after arrival there is no tournament yet and we land here. That window is PENDING too — without
+  // it the control paints "Back to Coach view", then the event arrives, then the roles arrive, and
+  // it rewrites itself twice on the way to "Roles". Once loading finishes and there's still no event
+  // (the tournaments LIST page), that's a settled answer and the control renders normally.
+  const settlingIntoEvent = onTournamentScreen && tournamentLoading;
+  return {
+    kind: 'single',
+    target: { href: `/${currentOrg.slug}`, label: 'Public site' },
+    ...(settlingIntoEvent ? { pending: true } : {}),
+  };
 }

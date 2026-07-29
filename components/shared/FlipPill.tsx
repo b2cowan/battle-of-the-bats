@@ -20,7 +20,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
-import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipOriginLabel, type FlipResolution } from '@/lib/flip-twins';
+import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipOriginLabel, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
 import styles from './FlipPill.module.css';
 
 interface FlipPillProps {
@@ -103,8 +103,23 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
     </span>
   );
 
-  // Return-memory (when present) always wins as a direct one-tap return.
-  if (back) {
+  // Not yet known what this control is (the admin shell resolves its event + roles in the browser).
+  // Hold the space and show NOTHING rather than paint a stand-in that gets replaced a moment later —
+  // an empty corner that fills in reads as loading; a label that rewrites itself reads as a bug.
+  // aria-hidden + inert so a screen reader never announces a placeholder.
+  if (resolution.pending) {
+    return (
+      <div className={rootClass} aria-hidden>
+        <span className={`${pillClass} ${styles.pendingPlaceholder}`}>{inner('Public site')}</span>
+      </div>
+    );
+  }
+
+  // Return-memory on a SINGLE resolution wins outright as a direct one-tap return (ratified P2).
+  // On a MULTI resolution it must NOT take over: doing so strands a multi-hat user in a two-way
+  // admin⇄coach toggle with no way back to their other roles or the public site until they navigate
+  // away to spend the memory. So there it becomes the first ROW of the chooser instead (P4 fix).
+  if (back && resolution.kind === 'single') {
     return (
       <div className={rootClass}>
         <Link href={back.href} className={pillClass} aria-label={ariaLabel ?? back.label} onClick={stampReturn}>
@@ -124,7 +139,15 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
     );
   }
 
-  // multi → button + anchored popover of same-tab rows
+  // multi → button + anchored popover of same-tab rows.
+  //
+  // A CHOOSER SHOWS THE SAME NAMED DESTINATIONS EVERY TIME (owner ruling 2026-07-28). Return-memory
+  // is deliberately ignored here: rewriting one row to "Back to …" made the list shift under people
+  // depending on how they arrived, and the destination is already in the list under its own name —
+  // so returning is still one row away, just labelled by WHERE it goes rather than how you got here.
+  // (Single-target pills keep the ratified one-tap "Back to …" behaviour above — nothing to shift.)
+  const rows: FlipTarget[] = resolution.targets;
+
   return (
     <div className={rootClass} ref={wrapRef}>
       <button
@@ -140,7 +163,7 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
       </button>
       {open && (
         <div className={styles.popover} role="menu">
-          {resolution.targets.map(target => (
+          {rows.map(target => (
             <Link
               key={target.href}
               href={target.href}

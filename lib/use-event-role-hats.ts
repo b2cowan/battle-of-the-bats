@@ -4,11 +4,16 @@ import { useEffect, useState } from 'react';
 import type { TournamentViewer, ViewerHat } from '@/lib/tournament-viewer-hats';
 
 /**
- * lib/use-admin-lateral-hats.ts — the OTHER roles this user holds on the event in admin context
- * ("The Flip", P4/WI-1).
+ * lib/use-event-role-hats.ts — every role this user holds on one event ("The Flip", P4/WI-1).
  *
- * Feeds the admin shell's flip control its lateral rows, so a person who both runs an event and
- * coaches in it can jump straight across instead of detouring Admin → public → Coach.
+ * Feeds the lateral rows on BOTH operator-side flip controls — the admin shell and the coach
+ * tournament record — so a person who both runs an event and coaches in it can jump straight across
+ * instead of detouring through the public site.
+ *
+ * Returns the hats UNFILTERED. Each caller drops the one it's currently standing in, because
+ * "where am I?" differs by surface: the admin shell excludes by KIND (you're in the admin area), the
+ * coach record excludes by DESTINATION (so a coach of two teams in one event still sees their other
+ * team as a row).
  *
  * WHY A CLIENT FETCH (the P4 plan first proposed a server resolve in the admin layout):
  * the admin layout is a server component, but WHICH tournament is in context is resolved
@@ -30,9 +35,23 @@ const cache = new Map<string, ViewerHat[]>();
 /** In-flight requests, so concurrent consumers of the same key share one network call. */
 const inflight = new Map<string, Promise<ViewerHat[]>>();
 
+// DELIBERATELY memory-only — no sessionStorage/localStorage mirror.
+//
+// An earlier pass persisted this to survive full page loads. That was a mistake: these hats name the
+// signed-in user's teams, and browser storage outlives a sign-out. Someone signing in after a
+// colleague on the same browser would have been shown the previous user's team on the control until
+// something invalidated it. The flicker that persistence was solving is now handled honestly by the
+// pending placeholder instead, so the risk buys nothing.
+//
+// In-memory still covers the case that matters most: client-side navigation between admin screens
+// resolves once and stays resolved.
+function peek(key: string): ViewerHat[] | null {
+  return cache.get(key) ?? null;
+}
+
 async function loadHats(orgSlug: string, tournamentSlug: string): Promise<ViewerHat[]> {
   const key = `${orgSlug}/${tournamentSlug}`;
-  const cached = cache.get(key);
+  const cached = peek(key);
   if (cached) return cached;
   const pending = inflight.get(key);
   if (pending) return pending;
@@ -43,12 +62,13 @@ async function loadHats(orgSlug: string, tournamentSlug: string): Promise<Viewer
         `/api/public/tournament-viewer?org=${encodeURIComponent(orgSlug)}&tournament=${encodeURIComponent(tournamentSlug)}`,
       );
       const body = res.ok ? ((await res.json()) as { viewer?: TournamentViewer | null }) : null;
-      // Drop the admin hat: the user is already standing in it. Only genuinely OTHER roles are lateral.
-      const hats = (body?.viewer?.hats ?? []).filter(hat => hat.kind !== 'admin');
+      const hats = body?.viewer?.hats ?? [];
       cache.set(key, hats);
+
       return hats;
     } catch {
       cache.set(key, []); // negative-cache so a flaky call doesn't retry on every navigation
+
       return [];
     } finally {
       inflight.delete(key);
@@ -59,11 +79,19 @@ async function loadHats(orgSlug: string, tournamentSlug: string): Promise<Viewer
   return request;
 }
 
-/**
- * The user's non-admin roles on this event, or `[]` while resolving / when they hold none.
- * Callers must treat `[]` as "no lateral rows" — never as an error state.
- */
-export function useAdminLateralHats(orgSlug: string | null | undefined, tournamentSlug: string | null | undefined): ViewerHat[] {
+export interface EventRoleHats {
+  hats: ViewerHat[];
+  /**
+   * `false` while the answer is genuinely unknown (a fetch is in flight). Callers must NOT render a
+   * label they'd have to take back — showing "Back to Coach view" and swapping it for "Roles" a
+   * moment later is the exact flicker this flag exists to prevent. `true` also covers "resolved,
+   * holds no other roles", which is a real answer.
+   */
+  ready: boolean;
+}
+
+/** Every role this user holds on the event. See `EventRoleHats.ready` before trusting `hats`. */
+export function useEventRoleHats(orgSlug: string | null | undefined, tournamentSlug: string | null | undefined): EventRoleHats {
   const key = orgSlug && tournamentSlug ? `${orgSlug}/${tournamentSlug}` : null;
   // State holds the RESOLVED result keyed by the event it belongs to, so a tournament switch can
   // never show the previous event's rows. Everything else is derived during render — the cache is
@@ -72,7 +100,7 @@ export function useAdminLateralHats(orgSlug: string | null | undefined, tourname
 
   useEffect(() => {
     if (!key || !orgSlug || !tournamentSlug) return;
-    if (cache.has(key)) return; // already known — render reads it directly
+    if (peek(key)) return; // already known (memory or session) — render reads it directly
     let cancelled = false;
     loadHats(orgSlug, tournamentSlug).then(hats => {
       if (!cancelled) setResolved({ key, hats });
@@ -80,10 +108,13 @@ export function useAdminLateralHats(orgSlug: string | null | undefined, tourname
     return () => { cancelled = true; };
   }, [key, orgSlug, tournamentSlug]);
 
-  if (!key) return EMPTY;
-  // Cache first (a repeat visit renders rows on first paint — no flash of the single-link pill),
-  // then this render's own resolution, else nothing yet.
-  return cache.get(key) ?? (resolved?.key === key ? resolved.hats : EMPTY);
+  // No event in context is a settled answer, not a pending one — there is nothing to wait for.
+  if (!key) return { hats: EMPTY, ready: true };
+
+  // Cache first (memory, then this session's storage) so a repeat arrival paints the final control
+  // immediately; otherwise this render's own resolution; otherwise we genuinely don't know yet.
+  const known = peek(key) ?? (resolved?.key === key ? resolved.hats : null);
+  return known ? { hats: known, ready: true } : { hats: EMPTY, ready: false };
 }
 
 /** Stable identity so consumers don't see a new array every render. */

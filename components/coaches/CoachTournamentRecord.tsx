@@ -32,7 +32,8 @@ import CoachStandingsSnapshot from '@/components/coaches/CoachStandingsSnapshot'
 import SharePageButton from '@/components/public/SharePageButton';
 import type { ICSEventInput } from '@/lib/export/ics';
 import FlipPill from '@/components/shared/FlipPill';
-import { resolveFlip, publicHref, publicGamePageHref, publicTeamPageHref } from '@/lib/flip-twins';
+import { resolveFlip, primaryTarget, HAT_LABEL, publicHref, publicGamePageHref, publicTeamPageHref } from '@/lib/flip-twins';
+import { getTournamentViewer } from '@/lib/tournament-viewer-hats';
 import { parseRosterRequirements } from '@/lib/roster-requirements';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import type { GameStatus, TournamentSettings, PlayoffConfig } from '@/lib/types';
@@ -241,6 +242,25 @@ export default async function CoachTournamentRecord({
     ? { orgSlug: org.slug, tournamentSlug: tournament.slug }
     : null;
   const canLinkPublic = Boolean(scheduleVisible && publicCtx);
+
+  // P4/WI-1: the OTHER roles this person holds on THIS event, for the header control's lateral rows
+  // — so an organizer who also coaches here jumps straight to their admin screens instead of
+  // detouring through the public site. Resolved SERVER-side (this page already knows its one event,
+  // unlike the admin shell where the tournament is chosen client-side), so there's no extra fetch.
+  // Excluded: the coach hat for THIS registration — you're standing in it. A coach of two teams in
+  // the same event still sees their other team, which is why this excludes by destination and not
+  // by role kind.
+  const otherRoleHats =
+    publicCtx && org && tournament?.org_id && tournament?.id
+      ? ((await getTournamentViewer({
+          orgSlug: org.slug,
+          orgId: tournament.org_id,
+          orgName: org.name,
+          tournamentId: tournament.id,
+        }).catch(() => null))?.hats ?? []).filter(
+          hat => !(hat.kind === 'coach' && hat.teamId === teamId),
+        )
+      : [];
 
   const initialGames: CoachScheduleGame[] = teamGames.map(g => {
     const isHome = g.home_team_id === teamId;
@@ -606,7 +626,26 @@ export default async function CoachTournamentRecord({
             {/* "The Flip" P3: this page IS one event, so it carries the coach corner pill — the
                 "check my fees ↔ see us live" loop (landing is context-driven, not page-matched). */}
             {publicCtx && (
-              <FlipPill resolution={resolveFlip({ direction: 'to-public', hat: 'coach', ctx: publicCtx })} />
+              <FlipPill
+                resolution={(() => {
+                  const toPublic = resolveFlip({ direction: 'to-public', hat: 'coach', ctx: publicCtx });
+                  // One role here → exactly today's plain "Public site" link. The chooser only
+                  // appears for someone genuinely wearing another hat on this event.
+                  if (otherRoleHats.length === 0) return toPublic;
+                  return {
+                    kind: 'multi' as const,
+                    label: 'Roles',
+                    targets: [
+                      primaryTarget(toPublic),
+                      ...otherRoleHats.map(hat => ({
+                        href: hat.href,
+                        label: HAT_LABEL[hat.kind],
+                        sublabel: hat.label,
+                      })),
+                    ],
+                  };
+                })()}
+              />
             )}
           </div>
         )}

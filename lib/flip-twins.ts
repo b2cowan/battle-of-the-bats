@@ -59,10 +59,16 @@ export interface FlipTarget {
   sublabel?: string;
 }
 
-/** A direct flip (single) or a small chooser (multi) — e.g. admin Results → Public Schedule/Standings. */
+/**
+ * A direct flip (single) or a small chooser (multi) — e.g. admin Results → Public Schedule/Standings.
+ *
+ * `pending` means "this surface does not yet know what the control is" — the pill then reserves its
+ * space but renders nothing visible, rather than painting a stand-in label it would have to replace.
+ * Only surfaces that resolve asynchronously ever set it; anything resolved server-side never does.
+ */
 export type FlipResolution =
-  | { kind: 'single'; target: FlipTarget }
-  | { kind: 'multi'; label: string; targets: FlipTarget[] };
+  | { kind: 'single'; target: FlipTarget; pending?: boolean }
+  | { kind: 'multi'; label: string; targets: FlipTarget[]; pending?: boolean };
 
 // ── Mapping tables (the ONE place the twin map lives) ────────────────────────────────────────────
 

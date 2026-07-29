@@ -164,3 +164,11 @@
     font-size: 0.95rem; /* a touch larger so the lone glyph reads clearly */
   }
 }
+
+/* Pending: the control's identity isn't known yet (admin resolves its event + roles client-side).
+   Occupy the space so the header doesn't jump when the real control lands, but show nothing —
+   a corner that fills in reads as loading; a label that rewrites itself reads as broken. */
+.pendingPlaceholder {
+  visibility: hidden;
+  pointer-events: none;
+}
