@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, forbidden, unauthorized } from '@/lib/api-auth';
 import { getMergedTournamentHistoryForRepTeam } from '@/lib/basic-coach-teams';
-import { getTeamScopedRepTeamAccess } from '@/lib/team-workspace-entitlements';
+import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
 import { isMoneyRedactedForTeam } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
@@ -19,6 +19,7 @@ export const GET = withObservability(async (_req: Request,
       repTeamId: teamId,
       userId: ctx.user.id,
       requireCoach: true,
+      skipEntitlementCheck: !isTeamWorkspaceOrg(ctx.org),
     });
 
     if (!access.allowed) return forbidden();

@@ -396,7 +396,11 @@
      on a short window a 70vh popover opening ~150px down would run off the bottom with its footer
      (the tour link and the hints off-switch) unreachable. The floor keeps it usable instead of
      collapsing to a sliver on very small screens. */
-  max-height: max(240px, calc(100vh - 12rem));
+  /* useViewportFit (Phase C0) measures the real available space and supplies these; the static
+     values stay as the pre-measurement fallback so the first paint is never wrong. The shift keeps
+     the panel inside the viewport on a narrow window instead of clipping past the right edge. */
+  max-height: var(--panel-max-h, max(240px, calc(100vh - 12rem)));
+  transform: translateX(var(--panel-shift-x, 0px));
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 0.85rem;
@@ -1444,24 +1448,9 @@
 /* A skipped optional step reads as backgrounded, not failed */
 .setupItem[data-skipped="true"] { opacity: 0.6; }
 
-/* "Also in your portal" — the sections that have no honest "done" state but must still be named
-   somewhere (readiness review #6: 5 of 11 sections were invisible). Now lives in the setup popover;
-   Phase B replaces it with real teaching at each section's own empty state. */
-.discoverRow {
-  display: flex; flex-direction: column; gap: 0.4rem;
-  border-top: 1px solid var(--border-subtle); padding-top: 0.7rem;
-}
-.discoverLabel { margin: 0; font-size: 0.75rem; color: var(--white-45); }
-.discoverChips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
-.discoverChip {
-  display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.26rem 0.6rem; border-radius: 999px;
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
-  background: var(--card-bg);
-  color: var(--white-70); font-size: 0.76rem; font-weight: 560;
-  text-decoration: none;
-}
-.discoverChip:hover { border-color: var(--logic-lime); color: var(--white-90); }
+/* The "Also in your portal" chip row (.discoverRow/.discoverLabel/.discoverChips/.discoverChip)
+   was removed with the chips themselves in Quiet Mode Phase B — each section now teaches at its
+   own empty state instead. */
 
 /* "Optional" group divider under the core season-setup list */
 .setupGroupLabel {

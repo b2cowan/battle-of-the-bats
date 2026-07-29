@@ -56,6 +56,6 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
   const raw = new URL(req.url).searchParams.get('messageIds') ?? '';
   const messageIds = raw.split(',').map((s) => s.trim()).filter(Boolean).slice(0, MAX_IDS);
 
-  const tallies = await getPollTallies(roomId, messageIds, user.id);
+  const tallies = await getPollTallies(roomId, messageIds, user.id, membership.history_visible_from);
   return NextResponse.json({ tallies });
 }, { route: '/api/chat/rooms/[roomId]/polls' });

@@ -15,13 +15,18 @@ import {
   resolveTournamentChatParticipants,
   resolveTournamentsForCoach,
   isTournamentChatParticipant,
+  resolveStaffRoomParticipants,
+  resolveStaffTeamsForCoach,
   type PendingChatCoach,
+  type StaffTeamForCoach,
 } from './chat-resolvers';
 import { roomDisplayName, divisionScopeLabel } from './chat-display';
 // F4: room organizer membership is decided by the SAME capability + assignment scope the admin
 // chat routes enforce, so a seat in a room can never disagree with what the routes allow.
 import { hasCapability } from './roles';
-import type { OrgRole } from './types';
+import type { OrgPlan, OrgRole } from './types';
+import { hasPlanFeature, type PlanFeature } from './plan-features';
+import { getActiveTeamEntitlement } from './team-workspace-entitlements';
 
 /**
  * lib/chat-service.ts — server-side service layer for Tournament Chat.
@@ -41,6 +46,28 @@ import type { OrgRole } from './types';
  */
 
 export const CHAT_SURFACE_TOURNAMENT = 'tournament';
+
+/**
+ * Project 2A — team STAFF rooms (surface reserved in the mig-141 CHECK since day one).
+ * Shape: ref_id = the org that owns the rep team (rep_teams.org_id — the workspace org for a
+ * standalone Premium team, the club org for an org-native team), ref_sub_id = the rep_team id.
+ * The mig-150 dedupe index therefore yields one staff room per team; ref_sub_id NULL stays free
+ * for a future org-wide room (deliverable 2B, held for the Club evaluation).
+ */
+export const CHAT_SURFACE_COACH_PEER = 'coach_peer';
+
+/** A team staff room: coach_peer surface scoped to one rep team. For the TEAM-specific bits only
+ *  (team-name kicker, invite nudge, staff sync) — surface-level rules belong on isCoachPeerRoom. */
+export function isStaffRoom(room: Pick<ChatRoom, 'surface' | 'refSubId'>): boolean {
+  return room.surface === CHAT_SURFACE_COACH_PEER && room.refSubId != null;
+}
+
+/** ANY coach_peer room — the staff room today, the org-wide 2B room later. Use THIS for
+ *  surface-level rules (member-route moderation, notify scope): keying them on isStaffRoom would
+ *  silently forbid the org-wide room's moderator the day 2B ships (its ref_sub_id is NULL). */
+export function isCoachPeerRoom(room: Pick<ChatRoom, 'surface'>): boolean {
+  return room.surface === CHAT_SURFACE_COACH_PEER;
+}
 
 /** Max mute duration the surface allows (owner decision: ≤72h). */
 export const MAX_MUTE_HOURS = 72;
@@ -73,8 +100,10 @@ export type ChatRoom = {
 };
 
 /** A server-derived quote of the message being replied to (rebuilt from the real row — never trusted
- *  from the client — so a reply can't fake what someone said). Rides chat_messages.metadata jsonb. */
-export type ReplyRef = { id: string; name: string; snippet: string };
+ *  from the client — so a reply can't fake what someone said). Rides chat_messages.metadata jsonb.
+ *  `hidden` (never persisted — stamped per-viewer at read time) means the quoted message predates
+ *  this viewer's history watermark: the client shows a "Not visible to you" stub, never the text. */
+export type ReplyRef = { id: string; name: string; snippet: string; hidden?: boolean };
 
 /** A resolved @mention (server-derived name from the real member row). Rides metadata.mentions. */
 export type MentionRef = { userId: string; name: string };
@@ -133,6 +162,17 @@ export type ChatRoomListItem = {
    *  All-coaches room (nothing to disambiguate). An EMPTY array means the room is division-scoped
    *  but its divisions were since deleted — surfaces show a "Division room" fallback, not a blank. */
   divisionNames?: string[] | null;
+  // ── Staff rooms (Project 2A) — absent/false on tournament rooms ───────────
+  /** this is a team staff room (coach_peer surface) — pins first in the portal list. */
+  isStaffRoom?: boolean;
+  /** the rep team's name (staff rooms only) — the consumer inbox's group kicker. */
+  staffTeamName?: string | null;
+  /** the rep team id (staff rooms only) — builds the portal's Staff-page invite link. */
+  staffTeamId?: string | null;
+  /** the owning org's slug (staff rooms only) — same link; null degrades to no invite CTA. */
+  staffOrgSlug?: string | null;
+  /** active seats (staff rooms only) — 1 drives the "it's just you in here" first-run nudge. */
+  staffMemberCount?: number | null;
 };
 
 type RoomRow = {
@@ -415,9 +455,12 @@ type MemberRow = {
   muted_until: string | null;
   last_read_at: string | null;
   joined_at: string;
+  /** mig 208 (CH-5 as amended): messages before this instant are invisible to THIS member. NULL =
+   *  full history — every tournament-room row, always (only the staff-room sync ever sets it). */
+  history_visible_from: string | null;
 };
 
-const MEMBER_COLS = 'user_id, member_role, status, muted_until, last_read_at, joined_at';
+const MEMBER_COLS = 'user_id, member_role, status, muted_until, last_read_at, joined_at, history_visible_from';
 
 export async function getMembership(roomId: string, userId: string): Promise<MemberRow | null> {
   const { data, error } = await supabaseAdmin
@@ -439,6 +482,32 @@ export async function getActiveMemberUserIds(roomId: string): Promise<string[]> 
     .eq('status', 'active');
   if (error) throw error;
   return (data ?? []).map(r => r.user_id as string);
+}
+
+/** A room's membership rows as user_id → {role, status} — the shared read half of the two
+ *  membership syncs (tournament + staff), so the row shape is fetched one way. */
+async function fetchExistingMemberRows(roomId: string): Promise<Map<string, { role: string; status: string }>> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_room_members')
+    .select('user_id, member_role, status')
+    .eq('room_id', roomId);
+  if (error) throw error;
+  return new Map(
+    (data ?? []).map(r => [r.user_id as string, { role: r.member_role as string, status: r.status as string }]),
+  );
+}
+
+/** Batch-insert membership rows, tolerating a concurrent sync winning the unique-violation race —
+ *  the shared write half of both membership syncs. Upsert-ignore rather than plain insert: a
+ *  multi-row INSERT is atomic, so ONE conflicting row (a racer seated user X first) would silently
+ *  discard the whole batch including unrelated new seats (review finding). ON CONFLICT DO NOTHING
+ *  drops only the colliding row; existing rows are never modified. */
+async function insertMemberRows(rows: Array<Record<string, unknown>>): Promise<void> {
+  if (rows.length === 0) return;
+  const { error } = await supabaseAdmin
+    .from('chat_room_members')
+    .upsert(rows, { onConflict: 'room_id,user_id', ignoreDuplicates: true });
+  if (error) throw error;
 }
 
 /** Active member ids + the subset who self-muted, in ONE query — for the post hot path (recipients +
@@ -543,14 +612,7 @@ export async function syncTournamentChatRoom(params: {
   );
   const moderatorIds = await getHostModeratorUserIds(room.orgId, room.refId);
 
-  const { data: existingRows, error: exErr } = await supabaseAdmin
-    .from('chat_room_members')
-    .select('user_id, member_role, status')
-    .eq('room_id', room.id);
-  if (exErr) throw exErr;
-  const existing = new Map(
-    (existingRows ?? []).map(r => [r.user_id as string, { role: r.member_role as string, status: r.status as string }]),
-  );
+  const existing = await fetchExistingMemberRows(room.id);
 
   const toInsert: Array<{ room_id: string; user_id: string; member_role: string; status: string }> = [];
 
@@ -610,11 +672,7 @@ export async function syncTournamentChatRoom(params: {
     }
   }
 
-  if (toInsert.length > 0) {
-    // Ignore unique-violation races (a concurrent sync inserted the same row).
-    const { error: insErr } = await supabaseAdmin.from('chat_room_members').insert(toInsert);
-    if (insErr && (insErr as { code?: string }).code !== '23505') throw insErr;
-  }
+  await insertMemberRows(toInsert);
 
   const activeCount = await getActiveMemberUserIds(room.id).then(ids => ids.length);
   return { activeCount, pending };
@@ -756,12 +814,190 @@ export async function revokeStaleChatMembershipsForCoach(userId: string): Promis
   return revoked;
 }
 
+// ── Staff rooms (Project 2A — one coach_peer room per premium rep team) ─────
+// Spec: artifact 50a9d5aa v2 + IN_ORG_COACH_CHAT_RESCOPE_PLAN.md §5 (owner-approved 2026-07-29).
+// Auto-created on first chat read by any of the team's current coaches; undeletable (no delete path
+// exists); membership is DERIVED from the staff assignment — there is no organizer and no
+// membership moderation here, so unlike tournament sync this one both removes a departed coach and
+// re-activates a returning one (with a FRESH history watermark: CH-5 as amended, nobody inherits).
+
+/** The staff room for a rep team, or null. Same duplicate-tolerant shape as the tournament lookup. */
+export async function getStaffChatRoom(orgId: string, repTeamId: string): Promise<ChatRoom | null> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_rooms')
+    .select(ROOM_COLS)
+    .eq('surface', CHAT_SURFACE_COACH_PEER)
+    .eq('ref_id', orgId)
+    .eq('ref_sub_id', repTeamId)
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle<RoomRow>();
+  if (error) throw error;
+  return data ? mapRoom(data) : null;
+}
+
+/**
+ * Does this team qualify for a staff room? The org's plan must include `coach_peer_chat` (Club
+ * tiers by rank; the standalone Premium Coaches Portal by explicit grant) — and a standalone
+ * workspace additionally needs a LIVE team entitlement, mirroring getTeamScopedRepTeamAccess
+ * (a club-tier org entitles its own teams; only the 'team' plan carries per-team billing).
+ */
+async function staffRoomQualifies(org: { id: string; plan: OrgPlan }, repTeamId: string): Promise<boolean> {
+  if (!hasPlanFeature(org.plan, 'coach_peer_chat')) return false;
+  if (org.plan === 'team') return Boolean(await getActiveTeamEntitlement(org.id, repTeamId));
+  return true;
+}
+
+async function getOrgPlanForStaffRoom(orgId: string): Promise<{ id: string; plan: OrgPlan } | null> {
+  const { data, error } = await supabaseAdmin
+    .from('organizations')
+    .select('id, plan_id')
+    .eq('id', orgId)
+    .maybeSingle<{ id: string; plan_id: OrgPlan }>();
+  if (error) throw error;
+  return data ? { id: data.id, plan: data.plan_id } : null;
+}
+
+/** Create the team's staff room if absent AND the team qualifies (idempotent; race-tolerant). */
+export async function ensureStaffChatRoom(team: StaffTeamForCoach): Promise<ChatRoom | null> {
+  const existing = await getStaffChatRoom(team.orgId, team.repTeamId);
+  if (existing) return existing; // qualification changes are handled by sync (archive), not delete
+  const org = await getOrgPlanForStaffRoom(team.orgId);
+  if (!org || !(await staffRoomQualifies(org, team.repTeamId))) return null;
+  const { data, error } = await supabaseAdmin
+    .from('chat_rooms')
+    .insert({
+      org_id: team.orgId,
+      surface: CHAT_SURFACE_COACH_PEER,
+      ref_id: team.orgId,
+      ref_sub_id: team.repTeamId,
+      // Approved naming rule: "<Team name> staff" — the team name keys the avatar colour/initials
+      // and keeps two staff rooms tellable-apart for a multi-team coach (the F2 lesson).
+      name: `${team.teamName} staff`,
+    })
+    .select(ROOM_COLS)
+    .single<RoomRow>();
+  if (error) {
+    // The mig-150 dedupe index makes a concurrent create lose cleanly — re-fetch the winner.
+    const raced = await getStaffChatRoom(team.orgId, team.repTeamId);
+    if (raced) return raced;
+    throw error;
+  }
+  return mapRoom(data);
+}
+
+/**
+ * Reconcile a staff room against the team's CURRENT staff. Derivations, per the approved spec:
+ *   • head coach → active moderator; assistants → active members (chat is NOT a capability toggle);
+ *   • a departed coach's seat is removed (derived membership — this is not a moderation decision);
+ *   • a returning coach is re-activated with a FRESH history watermark (sees from the newest join);
+ *   • a NEW seat is stamped history_visible_from = now (CH-5 as amended: nobody inherits);
+ *   • no current staff (season completed/archived) or a lapsed entitlement → the room goes
+ *     READ-ONLY (archived) with seats untouched, and reopens by itself when a season/entitlement
+ *     returns — the CH-1 read-only-persistence ruling applied to staff rooms.
+ */
+export async function syncStaffChatRoom(room: ChatRoom): Promise<{ activeCount: number }> {
+  if (!isStaffRoom(room)) return { activeCount: 0 };
+  const repTeamId = room.refSubId as string;
+
+  // The org row and the membership rows are independent — fetch them together (one round-trip of
+  // serial latency off every chat-list load; the rare no-staff path below still uses the map).
+  const [org, existing] = await Promise.all([
+    getOrgPlanForStaffRoom(room.orgId),
+    fetchExistingMemberRows(room.id),
+  ]);
+  const qualifies = org ? await staffRoomQualifies(org, repTeamId) : false;
+  const staff = qualifies ? await resolveStaffRoomParticipants(repTeamId) : [];
+
+  if (staff.length === 0) {
+    if (!room.isArchived) await setRoomArchived({ roomId: room.id, archived: true });
+    let activeCount = 0;
+    for (const cur of existing.values()) if (cur.status === 'active') activeCount += 1;
+    return { activeCount };
+  }
+  if (room.isArchived) await setRoomArchived({ roomId: room.id, archived: false });
+
+  const nowIso = new Date().toISOString();
+  const staffByUser = new Map(staff.map(s => [s.userId, s.isHead]));
+  const toInsert: Array<Record<string, unknown>> = [];
+
+  for (const s of staff) {
+    const role = s.isHead ? 'moderator' : 'member';
+    const cur = existing.get(s.userId);
+    if (!cur) {
+      toInsert.push({
+        room_id: room.id, user_id: s.userId, member_role: role, status: 'active',
+        history_visible_from: nowIso,
+      });
+    } else if (cur.status !== 'active') {
+      // Returning staff member: the seat revives, the history does not (fresh watermark).
+      await supabaseAdmin
+        .from('chat_room_members')
+        .update({ status: 'active', member_role: role, muted_until: null, history_visible_from: nowIso })
+        .eq('room_id', room.id)
+        .eq('user_id', s.userId);
+    } else if (cur.role !== role) {
+      // Head↔assistant change: standing is derived from the CURRENT coach_role (F4 invariant).
+      await supabaseAdmin
+        .from('chat_room_members')
+        .update({ member_role: role })
+        .eq('room_id', room.id)
+        .eq('user_id', s.userId);
+    }
+  }
+
+  for (const [userId, cur] of existing) {
+    if (staffByUser.has(userId) || cur.status === 'removed') continue;
+    await supabaseAdmin
+      .from('chat_room_members')
+      .update({ member_role: 'member', status: 'removed' })
+      .eq('room_id', room.id)
+      .eq('user_id', userId);
+  }
+
+  await insertMemberRows(toInsert);
+
+  // After reconcile the active set IS the current staff — every staff seat was inserted,
+  // reactivated, or already active, and every non-staff row was just removed. No re-query.
+  return { activeCount: staff.length };
+}
+
+/** Self-heal every staff room this coach belongs to (ensure + sync). Best-effort per team. */
+async function healCoachStaffRooms(userId: string): Promise<void> {
+  let teams: StaffTeamForCoach[] = [];
+  try {
+    teams = await resolveStaffTeamsForCoach(userId);
+  } catch (err) {
+    console.error('[chat-service] staff-team resolve failed (non-fatal):', err);
+    return;
+  }
+  await Promise.all(teams.map(async (team) => {
+    try {
+      const room = await ensureStaffChatRoom(team);
+      if (room) await syncStaffChatRoom(room);
+    } catch (err) {
+      console.error('[chat-service] staff-room self-heal failed (non-fatal):', err);
+    }
+  }));
+}
+
+/** Which notification scope a room's messages carry: staff rooms have no tournament and gate on the
+ *  coach_peer_chat feature; tournament rooms keep their shipped shape. */
+function notifyScopeForRoom(room: ChatRoom): { tournamentId?: string; requiredFeature: PlanFeature } {
+  return room.surface === CHAT_SURFACE_COACH_PEER
+    ? { requiredFeature: 'coach_peer_chat' }
+    : { tournamentId: room.refId, requiredFeature: 'tournament_chat' };
+}
+
 // ── Room list (coach-facing) ────────────────────────────────────────────────
 
 async function unreadCountForMember(
   roomId: string,
   lastReadAt: string | null,
   userId: string,
+  /** mig 208: the member's history watermark — pre-join messages are never "unread" (they are
+   *  invisible), so a freshly-seated coach doesn't land on a badge counting things they can't see. */
+  visibleFrom?: string | null,
 ): Promise<number> {
   let q = supabaseAdmin
     .from('chat_messages')
@@ -772,6 +1008,7 @@ async function unreadCountForMember(
     // self-badge. Keep system messages (null sender) counted.
     .or(`sender_user_id.is.null,sender_user_id.neq.${userId}`);
   if (lastReadAt) q = q.gt('sent_at', lastReadAt);
+  if (visibleFrom) q = q.gte('sent_at', visibleFrom);
   const { count, error } = await q;
   if (error) throw error;
   return count ?? 0;
@@ -779,13 +1016,18 @@ async function unreadCountForMember(
 
 async function lastMessageFor(
   roomId: string,
+  /** mig 208: clamp the preview to the viewer's history watermark — the room list must never leak a
+   *  pre-join message's text ("No messages yet" is the honest read for that member). */
+  visibleFrom?: string | null,
 ): Promise<{ at: string; preview: string; senderUserId: string | null } | null> {
-  const { data, error } = await supabaseAdmin
+  let q = supabaseAdmin
     .from('chat_messages')
     .select('body, sent_at, deleted_at, sender_user_id')
     .eq('room_id', roomId)
     .order('sent_at', { ascending: false })
-    .limit(1)
+    .limit(1);
+  if (visibleFrom) q = q.gte('sent_at', visibleFrom);
+  const { data, error } = await q
     .maybeSingle<{ body: string; sent_at: string; deleted_at: string | null; sender_user_id: string | null }>();
   if (error) throw error;
   if (!data) return null;
@@ -803,18 +1045,23 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
   // tournamentIds are already participation-confirmed by resolveTournamentsForCoach (so the All-coaches
   // heal is cheap); division rooms are gated by the scoped resolver inside the helper.
   const tournamentIds = await resolveTournamentsForCoach(userId);
-  await Promise.all(tournamentIds.map(async (tid) => {
-    try {
-      await healCoachTournamentMemberships(userId, tid, { participationConfirmed: true });
-    } catch (err) {
-      console.error('[chat-service] membership self-heal failed (non-fatal):', err);
-    }
-  }));
+  await Promise.all([
+    ...tournamentIds.map(async (tid) => {
+      try {
+        await healCoachTournamentMemberships(userId, tid, { participationConfirmed: true });
+      } catch (err) {
+        console.error('[chat-service] membership self-heal failed (non-fatal):', err);
+      }
+    }),
+    // Project 2A: the same read also ensures + reconciles the coach's team STAFF rooms (this is the
+    // "auto-created on first chat visit" moment; qualification is checked inside).
+    healCoachStaffRooms(userId),
+  ]);
 
   // List from the membership table (covers both freshly-healed + previously-existing rooms).
   const { data: memberships, error } = await supabaseAdmin
     .from('chat_room_members')
-    .select('room_id, member_role, status, muted_until, last_read_at, notifications_muted_at')
+    .select('room_id, member_role, status, muted_until, last_read_at, notifications_muted_at, history_visible_from')
     .eq('user_id', userId)
     .neq('status', 'removed');
   if (error) throw error;
@@ -825,13 +1072,15 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
     .from('chat_rooms')
     .select(ROOM_COLS)
     .in('id', roomIds)
-    .eq('surface', CHAT_SURFACE_TOURNAMENT);
+    .in('surface', [CHAT_SURFACE_TOURNAMENT, CHAT_SURFACE_COACH_PEER]);
   if (roomErr) throw roomErr;
   const roomById = new Map((roomRows ?? []).map(r => [r.id, mapRoom(r as RoomRow)]));
 
   // Tournament names + slugs for the rooms' subjects → a per-room context label (WI-1: and the
   // return-path slug) from ONE batched lookup — no separate slug query on the inbox path.
-  const tournamentIdsForRooms = [...new Set([...roomById.values()].map((r) => r.refId))];
+  const tournamentIdsForRooms = [...new Set(
+    [...roomById.values()].filter((r) => r.surface === CHAT_SURFACE_TOURNAMENT).map((r) => r.refId),
+  )];
   const tournamentNameById = new Map<string, string>();
   const tournamentSlugById = new Map<string, string>();
   // WI-1: only a PUBLISHED tournament (active|completed) has a public home; a draft would 404. Track
@@ -874,15 +1123,44 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
     return ids.map(id => divisionNameById.get(id)).filter((n): n is string => Boolean(n));
   }
 
+  // Project 2A: staff-room enrichment — the team's name (inbox kicker), the org slug + team id (the
+  // portal's "Invite an assistant" link), and the active seat count (the staff-of-one nudge). Three
+  // BATCHED lookups across all staff rooms; each is non-fatal (a failure only drops its label/CTA).
+  const staffRooms = [...roomById.values()].filter(isStaffRoom);
+  const staffTeamNameById = new Map<string, string>();
+  const staffOrgSlugById = new Map<string, string>();
+  const staffCountByRoomId = new Map<string, number>();
+  if (staffRooms.length > 0) {
+    const teamIds = [...new Set(staffRooms.map(r => r.refSubId as string))];
+    const orgIds = [...new Set(staffRooms.map(r => r.orgId))];
+    const [teamRes, orgRes, seatRes] = await Promise.all([
+      supabaseAdmin.from('rep_teams').select('id, name').in('id', teamIds),
+      supabaseAdmin.from('organizations').select('id, slug').in('id', orgIds),
+      supabaseAdmin.from('chat_room_members').select('room_id')
+        .in('room_id', staffRooms.map(r => r.id)).eq('status', 'active'),
+    ]);
+    if (teamRes.error) console.error('[chat-service] staff team-name lookup failed (non-fatal):', teamRes.error);
+    for (const t of teamRes.data ?? []) if (t.name) staffTeamNameById.set(t.id as string, t.name as string);
+    if (orgRes.error) console.error('[chat-service] staff org-slug lookup failed (non-fatal):', orgRes.error);
+    for (const o of orgRes.data ?? []) if (o.slug) staffOrgSlugById.set(o.id as string, o.slug as string);
+    if (seatRes.error) console.error('[chat-service] staff seat-count lookup failed (non-fatal):', seatRes.error);
+    for (const s of seatRes.data ?? []) {
+      const rid = s.room_id as string;
+      staffCountByRoomId.set(rid, (staffCountByRoomId.get(rid) ?? 0) + 1);
+    }
+  }
+
   // Per-room last-message + unread in parallel (was O(rooms) sequential round-trips).
   const items = (await Promise.all(memberships.map(async (m) => {
     const room = roomById.get(m.room_id as string);
     if (!room) return null;
+    const visibleFrom = m.history_visible_from as string | null;
     const [last, unreadCount] = await Promise.all([
-      lastMessageFor(room.id),
-      unreadCountForMember(room.id, m.last_read_at as string | null, userId),
+      lastMessageFor(room.id, visibleFrom),
+      unreadCountForMember(room.id, m.last_read_at as string | null, userId, visibleFrom),
     ]);
     const mutedUntil = m.muted_until as string | null;
+    const staff = isStaffRoom(room);
     return {
       room,
       unreadCount,
@@ -893,10 +1171,15 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
       selfMutedUntil: mutedUntil && new Date(mutedUntil) > new Date() ? mutedUntil : null,
       selfNotifMuted: Boolean(m.notifications_muted_at),
       readOnly: room.isArchived,
-      contextLabel: tournamentNameById.get(room.refId) ?? null,
-      tournamentSlug: tournamentSlugById.get(room.refId) ?? null,
-      tournamentIsPublic: tournamentPublicById.get(room.refId) ?? false,
-      divisionNames: divisionNamesFor(room),
+      contextLabel: staff ? null : tournamentNameById.get(room.refId) ?? null,
+      tournamentSlug: staff ? null : tournamentSlugById.get(room.refId) ?? null,
+      tournamentIsPublic: staff ? false : tournamentPublicById.get(room.refId) ?? false,
+      divisionNames: staff ? null : divisionNamesFor(room),
+      isStaffRoom: staff,
+      staffTeamName: staff ? staffTeamNameById.get(room.refSubId as string) ?? null : null,
+      staffTeamId: staff ? room.refSubId : null,
+      staffOrgSlug: staff ? staffOrgSlugById.get(room.orgId) ?? null : null,
+      staffMemberCount: staff ? staffCountByRoomId.get(room.id) ?? null : null,
     } as ChatRoomListItem;
   }))).filter((x): x is ChatRoomListItem => x !== null);
 
@@ -916,6 +1199,16 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
     if (mine.localeCompare(cur) > 0) clusterActivity.set(it.room.refId, mine);
   }
   items.sort((a, b) => {
+    // Project 2A: staff rooms pin ABOVE the event clusters (approved mockup) — a standing room
+    // beats transient event rooms. Among several staff rooms (multi-team coach): recency, id
+    // tie-break for determinism.
+    const aStaff = Boolean(a.isStaffRoom);
+    const bStaff = Boolean(b.isStaffRoom);
+    if (aStaff !== bStaff) return aStaff ? -1 : 1;
+    if (aStaff && bStaff) {
+      const byActivity = (b.lastMessageAt ?? '').localeCompare(a.lastMessageAt ?? '');
+      return byActivity !== 0 ? byActivity : a.room.id.localeCompare(b.room.id);
+    }
     if (a.room.refId !== b.room.refId) {
       const byActivity = (clusterActivity.get(b.room.refId) ?? '').localeCompare(clusterActivity.get(a.room.refId) ?? '');
       // Tie-break on the id so clusters stay CONTIGUOUS when several tournaments are equally silent
@@ -938,13 +1231,14 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
 export async function getUnreadTotalForUser(userId: string): Promise<number> {
   const { data: memberships, error } = await supabaseAdmin
     .from('chat_room_members')
-    .select('room_id, last_read_at')
+    .select('room_id, last_read_at, history_visible_from')
     .eq('user_id', userId)
     .eq('status', 'active')
     .is('notifications_muted_at', null);
   if (error) throw error;
   const counts = await Promise.all((memberships ?? []).map(m =>
-    unreadCountForMember(m.room_id as string, m.last_read_at as string | null, userId)));
+    unreadCountForMember(m.room_id as string, m.last_read_at as string | null, userId,
+      m.history_visible_from as string | null)));
   return counts.reduce((sum, c) => sum + c, 0);
 }
 
@@ -995,17 +1289,98 @@ export async function getRoomMemberDirectory(roomId: string): Promise<MentionRef
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-/** Build an authoritative reply snippet from the REAL referenced message (same room, not deleted). */
-async function buildReplyRef(roomId: string, messageId: string): Promise<ReplyRef | null> {
+/**
+ * Resolve each window row's reply-quote FOR THIS VIEWER (mig 208 review). Two jobs, one batched
+ * fetch of the referenced messages:
+ *   • id-only quotes (coach_peer rooms persist `{ id }`, never text) are hydrated from the real
+ *     target — name + snippet built server-side, exactly like buildReplyRef at send time;
+ *   • when the viewer is watermarked, a quote whose target predates the watermark (or is missing)
+ *     becomes an anonymous hidden stub — id BLANKED too, because the raw id was the oracle key
+ *     that let a watermarked member interrogate other endpoints about the hidden message.
+ * Tournament rows (denormalized quotes, no watermark) skip the fetch entirely and pass through.
+ * Returns a map keyed by the REPLY message's id; absent key = that row has no (usable) quote.
+ */
+async function resolveReplyRefsForViewer(
+  rows: MessageRow[],
+  visibleFrom: string | null | undefined,
+): Promise<Map<string, ReplyRef>> {
+  const out = new Map<string, ReplyRef>();
+  const entries: Array<{ rowId: string; ref: ReplyRef }> = [];
+  for (const r of rows) {
+    if (r.deleted_at) continue;
+    const ref = extractReplyTo(r.metadata);
+    if (ref) entries.push({ rowId: r.id, ref });
+  }
+  if (entries.length === 0) return out;
+
+  const needsFetch = Boolean(visibleFrom) || entries.some(e => !e.ref.snippet);
+  if (!needsFetch) {
+    for (const e of entries) out.set(e.rowId, e.ref);
+    return out;
+  }
+
+  const targetIds = [...new Set(entries.map(e => e.ref.id))];
+  const { data, error } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id, sender_user_id, body, deleted_at, sent_at')
+    .in('id', targetIds);
+  if (error) throw error;
+  const targetById = new Map((data ?? []).map(t => [t.id as string, t as {
+    id: string; sender_user_id: string | null; body: string; deleted_at: string | null; sent_at: string;
+  }]));
+
+  const cutoff = visibleFrom ? new Date(visibleFrom).getTime() : null;
+  const hydrateIds = [...new Set(entries
+    .filter(e => !e.ref.snippet)
+    .map(e => targetById.get(e.ref.id)?.sender_user_id)
+    .filter((v): v is string => Boolean(v)))];
+  const display = hydrateIds.length > 0 ? await hydrateUserDisplay(hydrateIds) : new Map<string, { name: string; email: string | null }>();
+
+  for (const e of entries) {
+    const target = targetById.get(e.ref.id);
+    if (cutoff !== null && (!target || new Date(target.sent_at).getTime() < cutoff)) {
+      // Fail closed: a missing target is treated as hidden, never as "show what the metadata says".
+      out.set(e.rowId, { id: '', name: '', snippet: '', hidden: true });
+    } else if (!e.ref.snippet) {
+      // id-only quote → hydrate from the real row; a deleted/missing target degrades to the
+      // client's generic "Message" fallback (empty snippet), matching the shipped deleted-quote UX.
+      const usable = target && !target.deleted_at;
+      const name = usable && target.sender_user_id
+        ? display.get(target.sender_user_id)?.name ?? 'Coach'
+        : 'Coach';
+      out.set(e.rowId, {
+        id: e.ref.id,
+        name,
+        snippet: usable ? target.body.slice(0, REPLY_SNIPPET_MAX) : '',
+      });
+    } else {
+      out.set(e.rowId, e.ref);
+    }
+  }
+  return out;
+}
+
+/** Build an authoritative reply snippet from the REAL referenced message (same room, not deleted).
+ *  `senderVisibleFrom` (mig 208 review): a WATERMARKED sender may not quote a message they cannot
+ *  see — without this, the send response was a one-request oracle returning a pre-join message's
+ *  author + snippet. Invisible target → the quote is silently dropped, like any other invalid ref. */
+async function buildReplyRef(
+  roomId: string,
+  messageId: string,
+  senderVisibleFrom?: string | null,
+): Promise<ReplyRef | null> {
   if (!UUID_RE.test(messageId)) return null; // malformed id → drop the quote (don't fail the send)
   const { data, error } = await supabaseAdmin
     .from('chat_messages')
-    .select('id, sender_user_id, body, deleted_at')
+    .select('id, sender_user_id, body, deleted_at, sent_at')
     .eq('id', messageId)
     .eq('room_id', roomId)
-    .maybeSingle<{ id: string; sender_user_id: string | null; body: string; deleted_at: string | null }>();
+    .maybeSingle<{ id: string; sender_user_id: string | null; body: string; deleted_at: string | null; sent_at: string }>();
   if (error) throw error;
   if (!data || data.deleted_at) return null; // don't quote a missing / removed / cross-room message
+  if (senderVisibleFrom && new Date(data.sent_at).getTime() < new Date(senderVisibleFrom).getTime()) {
+    return null;
+  }
   const name = data.sender_user_id
     ? (await hydrateUserDisplay([data.sender_user_id])).get(data.sender_user_id)?.name ?? 'Coach'
     : 'Coach';
@@ -1019,7 +1394,14 @@ async function buildReplyRef(roomId: string, messageId: string): Promise<ReplyRe
  */
 export async function getRoomMessages(
   roomId: string,
-  opts: { before?: string | null; limit?: number } = {},
+  opts: {
+    before?: string | null;
+    limit?: number;
+    /** mig 208: the CALLER's history watermark (chat_room_members.history_visible_from). The app
+     *  reads via the service role, so the RLS predicate doesn't apply here — pass the membership's
+     *  value so a watermarked member never receives a pre-join message (or a quote of one). */
+    visibleFrom?: string | null;
+  } = {},
 ): Promise<{ messages: ChatMessageView[]; participants: Record<string, string>; hasMore: boolean }> {
   const limit = Math.min(Math.max(opts.limit ?? 50, 1), 100);
   let q = supabaseAdmin
@@ -1029,6 +1411,7 @@ export async function getRoomMessages(
     .order('sent_at', { ascending: false })
     .limit(limit + 1);
   if (opts.before) q = q.lt('sent_at', opts.before);
+  if (opts.visibleFrom) q = q.gte('sent_at', opts.visibleFrom);
   const { data, error } = await q;
   if (error) throw error;
 
@@ -1041,6 +1424,11 @@ export async function getRoomMessages(
   const participants: Record<string, string> = {};
   for (const [id, info] of display) participants[id] = info.name;
 
+  // Per-viewer quote resolution (mig 208 review): hydrates id-only coach_peer quotes and replaces
+  // quotes of pre-watermark targets with an anonymous hidden stub. One batched fetch, and a no-op
+  // pass-through for the common tournament case.
+  const replyRefs = await resolveReplyRefsForViewer(windowRows, opts.visibleFrom);
+
   const messages: ChatMessageView[] = windowRows
     .slice()
     .reverse() // oldest-first for append-friendly rendering
@@ -1052,7 +1440,7 @@ export async function getRoomMessages(
       body: r.deleted_at ? '' : r.body,
       deletedAt: r.deleted_at,
       sentAt: r.sent_at,
-      replyTo: r.deleted_at ? null : extractReplyTo(r.metadata),
+      replyTo: r.deleted_at ? null : replyRefs.get(r.id) ?? null,
       mentions: r.deleted_at ? [] : extractMentions(r.metadata),
       pinnedAt: r.pinned_at,
       poll: r.deleted_at ? null : extractPoll(r.metadata),
@@ -1089,8 +1477,11 @@ export async function postChatMessage(params: {
     throw new ChatError('muted', 'You are muted in this conversation.', 403);
   }
 
-  // Reply: rebuild the quote from the real referenced message (anti-spoof); drop it if invalid.
-  const replyTo = params.replyToId ? await buildReplyRef(params.roomId, params.replyToId) : null;
+  // Reply: rebuild the quote from the real referenced message (anti-spoof); drop it if invalid —
+  // including a target the SENDER's own history watermark hides (mig 208 review).
+  const replyTo = params.replyToId
+    ? await buildReplyRef(params.roomId, params.replyToId, membership.history_visible_from)
+    : null;
 
   // Mentions: keep only ids that are REAL active members; resolve display names server-side (anti-spoof).
   // One query yields both the recipient set AND who self-muted (for push suppression below).
@@ -1106,7 +1497,12 @@ export async function postChatMessage(params: {
   }
 
   const metadata: Record<string, unknown> = {};
-  if (replyTo) metadata.replyTo = replyTo;
+  // coach_peer rooms persist the quote as a REFERENCE only ({ id }) — never the quoted text/name.
+  // The denormalized snippet is readable by ANY member who can see the reply (direct select, the
+  // realtime payload), and a member seated between the target and the reply must not see it
+  // (mig 208 review, Critical). Readers get quotes hydrated per-viewer in resolveReplyRefsForViewer;
+  // tournament rooms keep the shipped denormalized shape (no watermarks exist there).
+  if (replyTo) metadata.replyTo = isCoachPeerRoom(room) ? { id: replyTo.id } : replyTo;
   if (mentions.length > 0) metadata.mentions = mentions;
   const hasMetadata = Object.keys(metadata).length > 0;
 
@@ -1135,16 +1531,18 @@ export async function postChatMessage(params: {
     const general = activeIds.filter(
       id => id !== params.senderUserId && !mentionedIds.has(id) && !mutedIds.has(id),
     );
+    // Staff rooms notify without a tournament scope + gate on coach_peer_chat (Project 2A);
+    // tournament rooms keep their shipped scope. Same events, same bell/push — no new infra.
+    const scope = notifyScopeForRoom(room);
     if (general.length > 0) {
       await notify({
         orgId: room.orgId,
-        tournamentId: room.refId,
+        ...scope,
         eventType: 'chat_message',
         title: room.name,
         body: `${senderName}: ${body.slice(0, 140)}`,
         userIds: general,
         excludeUserIds: [params.senderUserId],
-        requiredFeature: 'tournament_chat',
         // WI-2: land the push in the room itself (sw.js opens payload.link; was falling back to '/').
         link: `/chat?room=${params.roomId}`,
       });
@@ -1152,13 +1550,12 @@ export async function postChatMessage(params: {
     if (mentionedIds.size > 0) {
       await notify({
         orgId: room.orgId,
-        tournamentId: room.refId,
+        ...scope,
         eventType: 'chat_mention',
         title: room.name,
         body: `${senderName} mentioned you: ${body.slice(0, 120)}`,
         userIds: [...mentionedIds],
         excludeUserIds: [params.senderUserId],
-        requiredFeature: 'tournament_chat',
         // WI-2: land the push in the conversation itself.
         link: `/chat?room=${params.roomId}`,
       });
@@ -1287,6 +1684,59 @@ export async function deleteOwnMessage(params: {
   return 'ok';
 }
 
+/**
+ * mig 208: does this message exist in the room, and does the member's history watermark allow them
+ * to see it? 'not_found' = no such message in this room; a NULL/absent watermark = always visible.
+ * Route-facing (the coach_peer moderation routes gate pin/remove on it — "moderate only what you
+ * can see"), so the chat_messages access stays in this module.
+ */
+export async function isMessageVisibleToMember(
+  roomId: string,
+  messageId: string,
+  visibleFrom: string | null | undefined,
+): Promise<boolean | 'not_found'> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_messages')
+    .select('sent_at')
+    .eq('id', messageId)
+    .eq('room_id', roomId)
+    .maybeSingle<{ sent_at: string }>();
+  if (error) throw error;
+  if (!data) return 'not_found';
+  if (!visibleFrom) return true;
+  return new Date(data.sent_at).getTime() >= new Date(visibleFrom).getTime();
+}
+
+/** mig 208 review hardening: interactions (react, vote, close, quote) may only target a message the
+ *  member can SEE. No-op for unwatermarked members — one extra query only when a watermark exists. */
+async function assertMessageVisible(
+  roomId: string,
+  messageId: string,
+  visibleFrom: string | null | undefined,
+): Promise<void> {
+  if (!visibleFrom) return;
+  const visible = await isMessageVisibleToMember(roomId, messageId, visibleFrom);
+  if (visible !== true) throw new ChatError('forbidden', 'That message is not available to you.', 403);
+}
+
+/** mig 208 review hardening: clamp a client-supplied messageIds list to the caller's watermark —
+ *  without this, reaction/vote summary endpoints were an oracle for pre-join message metadata. */
+async function filterVisibleMessageIds(
+  roomId: string,
+  ids: string[],
+  visibleFrom: string | null | undefined,
+): Promise<string[]> {
+  if (!visibleFrom || ids.length === 0) return ids;
+  const { data, error } = await supabaseAdmin
+    .from('chat_messages')
+    .select('id')
+    .eq('room_id', roomId)
+    .in('id', ids)
+    .gte('sent_at', visibleFrom);
+  if (error) throw error;
+  return (data ?? []).map(r => r.id as string);
+}
+
 /** Pin or unpin a message (moderator). Pin/unpin is an UPDATE → propagates live on the realtime
  *  publication. Won't pin a deleted message. Service-role only (browsers can't write pinned_*). */
 export async function setPinned(params: {
@@ -1307,9 +1757,11 @@ export async function setPinned(params: {
   if (error) throw error;
 }
 
-/** The room's currently-pinned messages (newest pin first), for the pinned banner. Excludes deleted. */
-export async function getPinnedMessages(roomId: string): Promise<ChatMessageView[]> {
-  const { data, error } = await supabaseAdmin
+/** The room's currently-pinned messages (newest pin first), for the pinned banner. Excludes deleted.
+ *  `visibleFrom` (mig 208): a pin whose message predates the viewer's watermark is HIDDEN from them
+ *  — a pin is a spotlight on a message, and this viewer cannot see the message. */
+export async function getPinnedMessages(roomId: string, visibleFrom?: string | null): Promise<ChatMessageView[]> {
+  let q = supabaseAdmin
     .from('chat_messages')
     .select('id, room_id, sender_user_id, body, deleted_at, sent_at, metadata, pinned_at')
     .eq('room_id', roomId)
@@ -1317,10 +1769,17 @@ export async function getPinnedMessages(roomId: string): Promise<ChatMessageView
     .is('deleted_at', null)
     .order('pinned_at', { ascending: false })
     .limit(20);
+  if (visibleFrom) q = q.gte('sent_at', visibleFrom);
+  const { data, error } = await q;
   if (error) throw error;
   const rows = (data ?? []) as MessageRow[];
   const senderIds = rows.map(r => r.sender_user_id).filter((v): v is string => Boolean(v));
-  const display = await hydrateUserDisplay(senderIds);
+  // Same per-viewer quote rules as history (mig 208 review): a VISIBLE pinned message can still
+  // quote a pre-watermark target, and coach_peer pins carry id-only quotes needing hydration.
+  const [display, replyRefs] = await Promise.all([
+    hydrateUserDisplay(senderIds),
+    resolveReplyRefsForViewer(rows, visibleFrom),
+  ]);
   return rows.map(r => ({
     id: r.id,
     roomId: r.room_id,
@@ -1329,7 +1788,7 @@ export async function getPinnedMessages(roomId: string): Promise<ChatMessageView
     body: r.body,
     deletedAt: r.deleted_at,
     sentAt: r.sent_at,
-    replyTo: extractReplyTo(r.metadata),
+    replyTo: replyRefs.get(r.id) ?? null,
     mentions: extractMentions(r.metadata),
     pinnedAt: r.pinned_at,
     poll: extractPoll(r.metadata),
@@ -1356,8 +1815,10 @@ export async function getReactionsForMessages(
   roomId: string,
   messageIds: string[],
   selfUserId: string,
+  /** mig 208 review: clamp to the caller's watermark — pre-join messageIds yield nothing. */
+  visibleFrom?: string | null,
 ): Promise<MessageReactionsMap> {
-  const ids = [...new Set(messageIds.filter(Boolean))];
+  const ids = await filterVisibleMessageIds(roomId, [...new Set(messageIds.filter(Boolean))], visibleFrom);
   if (ids.length === 0) return {};
   const { data, error } = await supabaseAdmin
     .from('chat_message_reactions')
@@ -1405,7 +1866,9 @@ export async function toggleReaction(params: {
     throw new ChatError('muted', 'You are muted in this conversation.', 403);
   }
 
-  // The reacted-to message must exist in THIS room and not be deleted.
+  // The reacted-to message must exist in THIS room, not be deleted, and be VISIBLE to the caller
+  // (mig 208 review: reacting to a pre-watermark message is interacting with hidden history).
+  await assertMessageVisible(params.roomId, params.messageId, membership.history_visible_from);
   const { data: msg, error: msgErr } = await supabaseAdmin
     .from('chat_messages')
     .select('id, deleted_at')
@@ -1464,8 +1927,14 @@ export async function getReactionReactors(params: {
   roomId: string;
   messageId: string;
   emoji: string;
+  /** mig 208 review: a watermarked caller gets nothing for a pre-join message. */
+  visibleFrom?: string | null;
 }): Promise<MentionRef[]> {
   if (!isReactionEmoji(params.emoji)) return [];
+  if (params.visibleFrom) {
+    const visible = await isMessageVisibleToMember(params.roomId, params.messageId, params.visibleFrom);
+    if (visible !== true) return [];
+  }
   const { data, error } = await supabaseAdmin
     .from('chat_message_reactions')
     .select('user_id')
@@ -1496,8 +1965,10 @@ export async function getPollTallies(
   roomId: string,
   messageIds: string[],
   selfUserId: string,
+  /** mig 208 review: clamp to the caller's watermark — pre-join poll ids yield nothing. */
+  visibleFrom?: string | null,
 ): Promise<PollTalliesMap> {
-  const ids = [...new Set(messageIds.filter(Boolean))];
+  const ids = await filterVisibleMessageIds(roomId, [...new Set(messageIds.filter(Boolean))], visibleFrom);
   if (ids.length === 0) return {};
   const { data, error } = await supabaseAdmin
     .from('chat_poll_votes')
@@ -1521,7 +1992,13 @@ export async function getPollVoters(params: {
   roomId: string;
   messageId: string;
   optionId: string;
+  /** mig 208 review: a watermarked caller gets nothing for a pre-join poll. */
+  visibleFrom?: string | null;
 }): Promise<MentionRef[]> {
+  if (params.visibleFrom) {
+    const visible = await isMessageVisibleToMember(params.roomId, params.messageId, params.visibleFrom);
+    if (visible !== true) return [];
+  }
   const { data, error } = await supabaseAdmin
     .from('chat_poll_votes')
     .select('user_id')
@@ -1586,13 +2063,12 @@ export async function createPoll(params: {
     if (recipients.length > 0) {
       await notify({
         orgId: room.orgId,
-        tournamentId: room.refId,
+        ...notifyScopeForRoom(room),
         eventType: 'chat_message',
         title: room.name,
         body: `${senderName} posted a poll: ${valid.question.slice(0, 120)}`,
         userIds: recipients,
         excludeUserIds: [params.byUserId],
-        requiredFeature: 'tournament_chat',
       });
     }
   } catch (err) {
@@ -1628,6 +2104,8 @@ export async function castVote(params: {
   if (membership.muted_until && new Date(membership.muted_until) > new Date()) {
     throw new ChatError('muted', 'You are muted in this conversation.', 403);
   }
+  // mig 208 review: voting on a pre-watermark poll is interacting with hidden history.
+  await assertMessageVisible(params.roomId, params.messageId, membership.history_visible_from);
 
   // Load the poll message; it must be a non-deleted, open poll in THIS room, and the option must exist.
   const { data: msg, error: msgErr } = await supabaseAdmin
@@ -1714,6 +2192,8 @@ export async function setPollClosed(params: {
   if (!membership || membership.status === 'removed' || membership.member_role !== 'moderator') {
     throw new ChatError('forbidden', 'Only organizers can change a poll.', 403);
   }
+  // mig 208 review: a watermarked moderator moderates only what they can see.
+  await assertMessageVisible(params.roomId, params.messageId, membership.history_visible_from);
   const { data: msg, error: msgErr } = await supabaseAdmin
     .from('chat_messages')
     .select('id, metadata, deleted_at')
@@ -1911,6 +2391,9 @@ export type ChatInboxRoom = {
   tournamentIsPublic: boolean;
   /** WI-1: the caller moderates this room (org owner/admin) — gates the "Event admin" header link. */
   isModerator: boolean;
+  /** Project 2A: a team staff room. The header's "Event admin" link must NOT render for these —
+   *  their moderator is the head coach (no admin surface exists), and eventId is not a tournament. */
+  isStaffRoom: boolean;
   /** F2: the divisions this room covers, comma-joined ("9U, 10U"); null for the All-coaches room.
    *  "Division room" when the room is division-scoped but those divisions have been deleted. */
   divisionLabel?: string | null;
@@ -1981,21 +2464,25 @@ export async function getChatInboxForUser(userId: string): Promise<ChatInbox> {
         preview = `You: ${preview}`;
       } else {
         const role = roleByRoomUser.get(`${i.room.id}:${sid}`);
-        const label = role === 'moderator' ? 'Organizer' : (display.get(sid)?.name ?? 'Coach');
+        // A staff room's moderator is the head coach, not an organizer — always use their name there.
+        const label = role === 'moderator' && !i.isStaffRoom ? 'Organizer' : (display.get(sid)?.name ?? 'Coach');
         preview = `${label}: ${preview}`;
       }
     }
     return {
       roomId: i.room.id,
       roomName: roomDisplayName(i.room),
-      eventId: i.room.refId,
+      // Staff rooms group per-ROOM (their ref_id is the org — two teams in one club must not share
+      // a kicker), labelled with the team's name (approved mockup 4).
+      eventId: i.isStaffRoom ? `staff:${i.room.id}` : i.room.refId,
       // Only the real tournament name is an event label; if the name lookup failed (contextLabel null),
       // leave it null so the client renders its generic "Conversations" kicker — never a lone room's name.
-      eventName: i.contextLabel,
+      eventName: i.isStaffRoom ? i.staffTeamName ?? null : i.contextLabel,
       orgSlug: orgSlugById.get(i.room.orgId) ?? null,
       tournamentSlug: i.tournamentSlug,
       tournamentIsPublic: i.tournamentIsPublic,
       isModerator: i.isModerator,
+      isStaffRoom: Boolean(i.isStaffRoom),
       unreadCount: muted ? 0 : i.unreadCount,
       selfNotifMuted: muted,
       readOnly: i.readOnly,

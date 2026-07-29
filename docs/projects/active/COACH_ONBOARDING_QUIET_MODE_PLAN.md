@@ -1,6 +1,6 @@
 # Coach Onboarding — Quiet Mode
 
-**Status:** Active · **Phases A + B BUILT on dev 2026-07-29 (uncommitted, owner QA pending)** · Phase C open
+**Status:** Active · **Phase A + B COMMITTED on dev 2026-07-29** (B's chip removal held back — see §B4) · **Phase C BUILT on dev 2026-07-29 (mig 209 applied to DEV only; ⚠ PROD-PENDING)** · owner QA pending on all three
 **Owner decision date:** 2026-07-29
 **Surfaces:** Premium coach team Overview, every coach portal section, help drawer
 **Related:** `PREMIUM_COACHES_PORTAL_WALKTHROUGH_PM_BRIEF.md` (archived), `COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`, `HELP_SYSTEM_REDESIGN_PLAN.md` (archived)
@@ -465,6 +465,147 @@ to prod 2026-07-22. Verify against live prod `information_schema` before writing
 migration, and correct whichever record is wrong.
 
 Once C2 lands, Phase A's interim device-local hints preference migrates to `coach_setup_hints_off`.
+
+---
+
+## Phase C build outcome (2026-07-29)
+
+**Doc-drift note RESOLVED first, as instructed.** The dictionary marked migration 195
+(`user_preferences`) "⚠ PROD-PENDING"; the live prod column snapshot carries all four of its
+columns, so **the table has been on prod since the theming bundle shipped 2026-07-22** and project
+memory was right. The dictionary entry is corrected. This mattered: writing `ALTER TABLE` against a
+table that didn't exist on prod would have failed at release, not at authoring time.
+
+### C2 — account-level preferences (migration 209)
+
+Two columns added to the existing `user_preferences` table, per the plan's "join as columns, not new
+tables" contract:
+
+- `coach_tour_dismissed_at` (tstz, NULL = never decided). A **timestamp, not a bool**, so "skipped in
+  week one" stays distinguishable from "skipped a year later" without a second column.
+- `coach_setup_hints_off` (bool NN default false). No third "unset" meaning exists here, unlike
+  `theme`'s nullable tri-state, so the read path needs no null-coalescing.
+
+Both are identity-scoped — never forked per org or per team. Per-team **step skips stay device-local**:
+they record a fact about a season, not a preference about a coach.
+
+Read/write goes through `lib/user-preferences.ts` → `/api/coaches/onboarding-preferences`, which is
+deliberately **not** under `/api/coaches/[orgSlug]/…`: neither preference is about a team, and a
+coach with three teams must dismiss once. The read **fails toward showing guidance** on any error —
+including a missing column, i.e. an environment where mig 209 hasn't been applied. That is the same
+direction the Phase A review had to fix device-side, where a storage exception permanently
+suppressed the tour for anyone in a locked-down browser.
+
+**Migration status: applied to DEV only.** `check-prod-migration-drift` correctly reports both
+columns as prod-pending. Apply to prod BEFORE promoting this code to master, or the write path 500s
+there (the read path degrades to re-offering the tour, which is survivable but wrong).
+
+### C0 — the shared primitive (scope: coach portal only, owner call 2026-07-29)
+
+`useDismissable(open, ref, onDismiss)` — outside pointer-down + Escape, listeners only while open.
+A **hook, not a wrapper component**: the two consumers render completely different chrome (an
+anchored popover vs. a full-height side drawer) and share only the behaviour. A component would have
+had to own their markup too, which is exactly what let the earlier copies diverge.
+
+`useViewportFit(open, ref)` carries the capability the plan demanded and the hand-rolled version
+lacked: it measures real available space and publishes `--panel-shift-x` / `--panel-max-h` for CSS
+to apply, so a panel can no longer open with its footer — including the hints off-switch — below the
+fold. The static CSS values remain as the pre-measurement fallback, so first paint is never wrong.
+
+First consumers: the season-setup popover (converted) and the tour drawer. **The three copies in the
+admin-tournament bundle and the export menu are deliberately NOT converted** — owner chose to keep
+this pass inside the coach portal so an admin regression can't muddy the still-outstanding QA of
+Phases A and B. The design rationale ("designed against two real requirements, not guessed from
+one") is satisfied by the two coach-side consumers. Follow-up remains logged in the cleanup backlog.
+
+### C1 — the offered tour
+
+A **non-modal right-edge drawer**: no dimming backdrop, no focus trap, no `aria-modal`. The tour's
+job is to describe the sidebar, so the sidebar has to stay visible and reachable behind it — a
+centre modal would re-commit the exact interruption this project exists to remove. Focus moves into
+the panel on open; Escape and outside-click dismiss.
+
+Four cards keyed to the sidebar groups (Squad → Season → Money → Communication), each filtered
+through the SAME `isCoachNavItemVisible` gate the sidebar uses, and the progress dots count the
+**filtered** set — a coach without money access sees three dots, never a phantom fourth step. A
+coach whose capabilities filter every card away gets no tour rather than an empty shell.
+
+Card copy is the Phase B empty-state copy, per the plan's "written once, surfaced twice".
+
+**What retires the offer — a correction made during the build.** The plan says skip is permanent.
+Implemented as: **Skip** and **Done** record the decision; **opening** the tour does not (a coach who
+opens it and hits Escape is still offered it); and **following a card's deep link does not either**.
+Killing the tour when someone taps "Open Roster" on card 1 would mean they never learn cards 2–4
+exist — going to look at the thing a card describes is engagement, not completion.
+
+The setup popover footer now carries both doors permanently: the tour AND "Open the full guide",
+so a coach who skipped the tour can still reach the written version.
+
+### C3 — `/simplify` + `/review` outcome (2026-07-29)
+
+`/simplify` (4 lenses) then `/review` (high-risk tier, 4 lenses: correctness, security/multi-tenant,
+regression/blast-radius, migration-safety).
+
+**`/simplify` — 6 fixed.** The one that mattered:
+
+1. **The prefs are now SSR-seeded, not client-fetched.** They were read by the Overview page on
+   mount — an extra round-trip on every visit AND an identical repeat on every team switch, for
+   data that cannot differ by team. They now ride the coaches layout's existing parallel lookup
+   (the same place assignments are seeded) and reach the page through the coaches context. Zero
+   added latency, no loading flash, no per-team repeat.
+2. PATCH returns **204** instead of re-SELECTing the row to echo a body its only caller never read.
+3. `useViewportFit` no longer write-resets the DOM then re-reads it (a forced layout on every
+   pass) — it backs the applied shift out arithmetically — and coalesces scroll/resize through
+   `requestAnimationFrame`. The capture-phase scroll listener also sees scrolls *inside* the
+   popover, which is exactly the interaction the height cap creates on a phone.
+4. **`useDismissable`'s comment claimed a ref it didn't have.** It kept listeners stable by omitting
+   a dependency instead, which means a consumer whose `onDismiss` reads current-render state would
+   silently get a stale closure — while the docstring told them it was safe. Now genuinely
+   ref-based, so the comment and the code agree and the next consumer isn't misled.
+5. `useMemo` over a 4-item static array removed; file renamed `overlay-hooks.ts` since it holds two
+   hooks, and `useViewportFit`'s doc no longer implies it has the two consumers `useDismissable`
+   has (it has one — the tour drawer is fixed-height and needs no fit math).
+6. **The C0 follow-up was under-scoped and is now documented as such.** The three remaining
+   hand-rolled copies (two admin-tournament menus, the export menu) compute *trigger-relative
+   fixed positioning with an above/below flip*. `useViewportFit` only nudges a CSS-anchored panel.
+   Retiring them needs the hook extended or a second one — it is not a drop-in, and the hook's
+   header now says so.
+
+**`/review` — 2 High + 2 Medium + 1 Low confirmed, 0 refuted:**
+
+- **[High] The tour never registered with the portal's shared overlay signal.** Every other coach
+  sheet calls `useOverlayOpen`. Without it the fixed bottom nav (z-index 300) renders *on top of*
+  the drawer (z-index 60) on a phone — covering Skip / Back / Next / Done, i.e. the coach's only
+  way forward or out — and the page behind kept scrolling. Fixed by registering, which is what
+  hides the nav and locks body scroll. Being non-modal about *focus* is deliberate; being
+  non-modal about the nav bar was not.
+- **[High] Release-ordering hazard, confirmed accurate rather than fixed.** With mig 209 unapplied
+  on prod the READ path degrades safely (the layout still renders; the tour is just re-offered),
+  but the WRITE path 500s and the client swallows it — a coach sees their choice "take" and is
+  silently reverted on next load. This is why the migration must reach prod BEFORE the code.
+- **[Medium] The migration's own header contained a false claim** — that `check:migrations` can't
+  detect missing *columns*. It can: the drift script diffs `information_schema.columns` per table
+  and fails on them. A future engineer trusting that comment would have skipped the one gate that
+  does catch this. Corrected, with the read/write asymmetry above spelled out.
+- **[Medium] The fail-open read logged with `console.error`, not `captureError`** — so it never
+  reached the error store or the alert pipeline, exactly the blindness the comment claimed to be
+  preventing. A real ongoing fault would have surfaced only as "everyone keeps getting offered the
+  tour". Now captured as a warning.
+- **[Low] The lazily-imported tour was rendered unconditionally**, so `next/dynamic` fetched the
+  chunk for every coach anyway — silently defeating the optimization the comment described. Now
+  render-gated, matching how the help drawer does it.
+- **[Low] The migration had no rollback note.** Dropping either column erases every coach's
+  dismissal choice. Stated in the file now.
+
+Correctness and security/multi-tenant lenses returned **no findings**. Worth recording from them:
+a partial upsert cannot null the sibling column, a first write still satisfies the NOT NULL default,
+the SSR seed cannot leak between users (the org layout is already `force-dynamic` and the auth
+context reads cookies), and the request body cannot smuggle extra columns into the write.
+
+**Gate after all fixes:** typecheck clean · focused lint 0 errors · 482/482 tests · all token and
+date ratchets at zero · dictionary coverage OK · dev server clean-restarted and serving the route.
+`check:migrations` reads RED by design until mig 209 reaches prod — that is the guardrail working,
+not a regression.
 
 ---
 

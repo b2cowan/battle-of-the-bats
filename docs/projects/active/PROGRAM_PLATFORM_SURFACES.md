@@ -47,16 +47,21 @@ emerges, stop and mock it up first. Four work items:
   Then sweep the edges with evidence: finished/archived tournaments round-trip read-only, drafts still
   route to preview, a failed viewer fetch leaves the public header clean, and the scorekeeper control's
   org-root fallback holds.
-- **WI-4 — Close-out.** Sync the admin help guide to the P1-era chrome changes (bell moved to More,
-  View Site retired, the flip itself) — the tournament and coach guides were already synced. Then run
-  the owner QA script end-to-end, **including the PWA return-memory check on production** (installed
-  app, Android and iOS). If "Back to…" proves flaky on a real device, the ratified fallback is
-  stateless-only — flag it rather than shipping something flaky.
+- **WI-4 — Close-out. ✅ DONE 2026-07-29.** Owner QA walked the build and found four defects, all
+  fixed (coach side had no chooser · return memory ate the chooser · chooser rows must stay stable ·
+  the control rewrote itself on arrival). Help guides updated on both sides. **The PWA
+  return-memory device check was CLOSED by the owner** rather than run — the behaviour was exercised
+  during QA and accepted; the stateless-only fallback was not needed.
 
-**Definition of done:** a two-role user jumps laterally in one tap from any portal; a
-capability-limited staffer lands on their nearest permitted screen; no flip can land on a hidden
-public page; the admin guide matches the shipped chrome; the device return-memory verdict is recorded.
-That closes The Flip completely.
+**✅ THE FLIP IS COMPLETE (2026-07-29).** A two-role user jumps laterally in one tap from either
+portal; a capability-limited staffer lands on their nearest permitted screen; no flip can land on a
+hidden public page; both guides match the shipped chrome. Single-role users see exactly what they
+always did — that was the acceptance bar and it held.
+
+**One thing deliberately left as-is:** when a staffer's ideal destination is out of scope, the
+fallback prefers the dashboard over the most topically-related screen they *can* open. That's the
+shipped ranking, not something this phase introduced. Re-ranking it would change behaviour for every
+existing staffer, so it stays a separate question.
 
 ### 1.2 Push delivery — ✅ CLEARED 2026-07-28
 ⚠ *Corrected: an earlier draft of this doc said Android push was dead on production and the

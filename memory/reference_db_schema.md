@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-07-27 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-07-29 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-07-27
+# DB Schema Reference — 2026-07-29
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -70,7 +70,7 @@ id (uuid), tournament_id (uuid) → tournaments.id NOT NULL, org_id (uuid) → o
 - Indexes: tournament_registration_fields_org_idx, tournament_registration_fields_tournament_idx
 
 ### tournaments
-id (uuid), year (integer) NOT NULL, name NOT NULL, slug NOT NULL, status, is_active (boolean), start_date, end_date, contact_email, fee_schedule_mode, deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, require_score_finalization (boolean), color_mode, created_at, notify_teams_on_complete (boolean), results_notified_at, results_notification_sent_count (integer), org_id (uuid) → organizations.id NOT NULL, settings (jsonb), default_contact_member_id (uuid) → organization_members.id, notify_mode, public_hidden_pages (jsonb), contact_show_on_public (boolean), contact_show_to_coaches (boolean), sport, coach_names_show_on_public (boolean), icon_bg_color, app_name, app_icon_scale, list_in_directory (boolean), directory_province, playoffs_published_at, champions_crowned_at
+id (uuid), year (integer) NOT NULL, name NOT NULL, slug NOT NULL, status, is_active (boolean), start_date, end_date, contact_email, fee_schedule_mode, deposit_amount (numeric), deposit_due_date, total_fee_amount (numeric), total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, theme_accent, theme_font, theme_card_style, require_score_finalization (boolean), color_mode, created_at, notify_teams_on_complete (boolean), results_notified_at, results_notification_sent_count (integer), org_id (uuid) → organizations.id NOT NULL, settings (jsonb), default_contact_member_id (uuid) → organization_members.id, notify_mode, public_hidden_pages (jsonb), contact_show_on_public (boolean), contact_show_to_coaches (boolean), sport, coach_names_show_on_public (boolean), icon_bg_color, app_name, app_icon_scale, list_in_directory (boolean), directory_province, playoffs_published_at, champions_crowned_at, chat_reminder_last_sent_at, chat_reminder_last_sent_by (uuid), chat_reminder_last_sent_count (integer)
 - Indexes: idx_tournaments_created_at, idx_tournaments_results_notified_at, tournaments_list_in_directory_idx, tournaments_org_id_idx, tournaments_org_slug_live_unique
 
 ### venue_facilities
@@ -149,7 +149,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_player_awards_event_idx, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
 ### rep_player_continuity_links
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.id NOT NULL, current_roster_id (uuid) → rep_roster_players.id, current_registration_id (uuid) → rep_tryout_registrations.team_id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.team_id NOT NULL, current_roster_id (uuid) → rep_roster_players.id, current_registration_id (uuid) → rep_tryout_registrations.id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
 - Indexes: rep_player_continuity_links_confirmed_uniq, rep_player_continuity_links_org_idx, rep_player_continuity_links_pair_uniq, rep_player_continuity_links_prior_idx, rep_player_continuity_links_team_idx
 
 ### rep_player_development_goals
@@ -169,7 +169,7 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (
 - Indexes: rep_player_dues_schedules_program_year_id_player_id_key
 
 ### rep_player_measurables
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.team_id
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.id
 - Indexes: rep_player_measurables_org_idx, rep_player_measurables_player_idx, rep_player_measurables_session_entry_uniq, rep_player_measurables_session_idx, rep_player_measurables_team_idx, rep_player_measurables_type_idx
 
 ### rep_program_years
@@ -209,8 +209,8 @@ event_id (uuid) → rep_team_events.id NOT NULL, tag_id (uuid) → rep_team_tags
 - Indexes: rep_team_event_tags_tag_idx
 
 ### rep_team_events
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb)
-- Indexes: rep_team_events_parent_idx, rep_team_events_src_basic_event_uq, rep_team_events_year_idx
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid)
+- Indexes: rep_team_events_parent_idx, rep_team_events_src_basic_event_uq, rep_team_events_src_tournament_game_uq, rep_team_events_year_idx
 
 ### rep_team_expense_tags
 expense_id (uuid) → rep_team_expenses.id NOT NULL, tag_id (uuid) → rep_team_tags.id NOT NULL, created_at
@@ -519,7 +519,7 @@ id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, message_id (uuid) → chat
 - Indexes: chat_poll_votes_message_idx, chat_poll_votes_room_idx, chat_poll_votes_unique
 
 ### chat_room_members
-id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, user_id (uuid) NOT NULL, member_role, status, muted_until, joined_at, last_read_at, notifications_muted_at
+id (uuid), room_id (uuid) → chat_rooms.id NOT NULL, user_id (uuid) NOT NULL, member_role, status, muted_until, joined_at, last_read_at, notifications_muted_at, history_visible_from
 - Indexes: chat_room_members_room_idx, chat_room_members_room_user_key, chat_room_members_user_idx
 
 ### chat_rooms
@@ -548,6 +548,10 @@ id (uuid), endpoint NOT NULL, keys_p256dh NOT NULL, keys_auth NOT NULL, tourname
 ### feedback_submissions
 id (uuid), org_id (uuid) → organizations.id, user_id (uuid), user_email, submitter_name, type, category, title, body NOT NULL, status, severity, context (jsonb), triaged_by, triaged_at, created_at, updated_at, escalated_at, escalated_by
 - Indexes: idx_feedback_submissions_org_time, idx_feedback_submissions_status_time, idx_feedback_submissions_type
+
+### game_change_notices
+id (uuid), org_id (uuid) → organizations.id NOT NULL, tournament_id (uuid) → tournaments.id NOT NULL, team_id (uuid) → teams.id NOT NULL, game_id (uuid) → games.id NOT NULL, kind NOT NULL, was_date, was_time (time without time zone), was_location, created_at, sent_at, superseded_at, hold_until
+- Indexes: game_change_notices_game_idx, game_change_notices_pending_idx, game_change_notices_recent_sent_idx
 
 ### import_batch_rows
 id (uuid), batch_id (uuid) → import_batches.id NOT NULL, row_number (integer) NOT NULL, operation NOT NULL, target_id (uuid), raw_json (jsonb), normalized_json (jsonb), before_json (jsonb), after_json (jsonb), warnings_json (jsonb), errors_json (jsonb), status, created_at
@@ -583,13 +587,13 @@ user_id (uuid) NOT NULL, opted_out_at
 user_id (uuid) NOT NULL, notifications_paused_at, updated_at
 
 ### user_preferences
-user_id (uuid) NOT NULL, theme, created_at, updated_at
+user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at, coach_setup_hints_off (boolean)
 
 ---
 
 ## Tables by count
 
-Total: **143 tables** across 10 modules.
+Total: **144 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
@@ -600,4 +604,4 @@ Total: **143 tables** across 10 modules.
 - Organization / Platform Core: 8 tables
 - Platform Admin: 20 tables
 - CRM / Leads: 3 tables
-- Other: 28 tables
+- Other: 29 tables

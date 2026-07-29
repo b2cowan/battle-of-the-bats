@@ -46,7 +46,9 @@ export default function ChatConversation({
       <span className={styles.headerLinkLabel}>{room.eventName ?? 'Tournament'}</span>
     </Link>
   ) : null;
-  const adminLink = room.isModerator && room.orgSlug ? (
+  // Project 2A: never for a staff room — its moderator is the HEAD COACH, there is no admin chat
+  // surface behind this door, and its eventId is not a tournament id (the href would be garbage).
+  const adminLink = room.isModerator && room.orgSlug && !room.isStaffRoom ? (
     <Link
       href={`/${room.orgSlug}/admin/tournaments/chat?tournamentId=${room.eventId}`}
       className={styles.adminLink}

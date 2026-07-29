@@ -2045,6 +2045,15 @@
         "column_default": null
       },
       {
+        "table_name": "chat_room_members",
+        "pos": 10,
+        "column_name": "history_visible_from",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "chat_rooms",
         "pos": 1,
         "column_name": "id",
@@ -14976,6 +14985,24 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "user_preferences",
+        "pos": 5,
+        "column_name": "coach_tour_dismissed_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "user_preferences",
+        "pos": 6,
+        "column_name": "coach_setup_hints_off",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
       },
       {
         "table_name": "venue_facilities",

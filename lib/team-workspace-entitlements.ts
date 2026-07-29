@@ -69,7 +69,7 @@ export type TeamEntitlement = {
 };
 
 export type TeamScopedAccessResult =
-  | { allowed: true; entitlement: TeamEntitlement }
+  | { allowed: true; entitlement: TeamEntitlement | null }
   | { allowed: false; reason: 'team_not_found' | 'no_team_entitlement' | 'not_team_coach' };
 
 const ACTIVE_TEAM_ENTITLEMENT_STATUSES: TeamEntitlementStatus[] = ['active', 'trialing', 'past_due'];
@@ -238,6 +238,9 @@ export async function getTeamScopedRepTeamAccess(params: {
   repTeamId: string;
   userId?: string | null;
   requireCoach?: boolean;
+  /** Skip the standalone-Coaches-Portal per-team entitlement check for org-native rep teams —
+   *  a paying League/Club org entitles its own teams; only isTeamWorkspaceOrg orgs need this gate. */
+  skipEntitlementCheck?: boolean;
 }): Promise<TeamScopedAccessResult> {
   const { data: team, error: teamError } = await supabaseAdmin
     .from('rep_teams')
@@ -248,8 +251,11 @@ export async function getTeamScopedRepTeamAccess(params: {
   if (teamError) throw teamError;
   if (!team || team.org_id !== params.orgId) return { allowed: false, reason: 'team_not_found' };
 
-  const entitlement = await getActiveTeamEntitlement(params.orgId, params.repTeamId);
-  if (!entitlement) return { allowed: false, reason: 'no_team_entitlement' };
+  let entitlement: TeamEntitlement | null = null;
+  if (!params.skipEntitlementCheck) {
+    entitlement = await getActiveTeamEntitlement(params.orgId, params.repTeamId);
+    if (!entitlement) return { allowed: false, reason: 'no_team_entitlement' };
+  }
 
   if (params.requireCoach) {
     if (!params.userId) return { allowed: false, reason: 'not_team_coach' };

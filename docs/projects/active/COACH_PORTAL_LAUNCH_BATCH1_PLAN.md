@@ -1,6 +1,7 @@
 # Coach Portal Launch Batch 1 — Mobile Overlay Safety + Tournaments Revival — Implementation Plan
 
-> **Status:** ✅ **BUILT ON DEV 2026-07-28 (uncommitted)** — mockups approved (artifact = binding spec) + D1–D4 ratified; 11-agent build complete (foundation + 10 sweeps, 0 failures); `npm run typecheck` + `npm run verify:changed` GREEN (0 errors; all ratchets/parity/dictionary/org-guard pass); clean dev-server restart done (Ready, login 200, no EACCES). **Remaining:** owner phone QA (checklist below) → commit (per-action OK) ; Playwright overlap probes NOT yet run (residual — candidate for /uat); /review + /simplify offered.
+> **Status:** ✅ **COMMITTED TO DEV 2026-07-28 — `934e5275` (41 files, owner-approved; foreign-file audit clean; TODO.md rides with the concurrent session's commit).** NOT on prod. Residual: owner phone QA on committed state (fresh restart recommended), /uat probe adoption. Earlier build record follows:
+> **(build record)** BUILT ON DEV 2026-07-28 — mockups approved (artifact = binding spec) + D1–D4 ratified; 11-agent build complete (foundation + 10 sweeps, 0 failures); `npm run typecheck` + `npm run verify:changed` GREEN (0 errors; all ratchets/parity/dictionary/org-guard pass); clean dev-server restart done (Ready, login 200, no EACCES). **Remaining:** owner phone QA (checklist below) → commit (per-action OK) ; Playwright overlap probes NOT yet run (residual — candidate for /uat); /review + /simplify offered.
 >
 > **Build deviations & notes (2026-07-28):**
 > - Overlay provider lives in `app/[orgSlug]/coaches/layout.tsx` — the build confirmed `CoachPortalShell.tsx` is the FREE portal's shell, not the premium one. Correct per this plan's 1.7 intent.

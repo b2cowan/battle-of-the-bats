@@ -545,6 +545,10 @@
   overflow: hidden;
 }
 .quote:hover { background: rgba(0, 0, 0, 0.28); }
+/* mig 208: stub for a quoted message outside the viewer's history — inert, dimmed, no jump. */
+.quoteHidden { cursor: default; }
+.quoteHidden:hover { background: rgba(0, 0, 0, 0.18); }
+.quoteHidden .quoteSnippet { font-style: italic; color: var(--white-40); }
 .quoteName { font-size: 0.66rem; font-weight: 700; color: var(--white-80); }
 .quoteSnippet {
   max-width: 100%;

@@ -1,6 +1,6 @@
 # PM Brief — Coach Onboarding: Quiet Mode
 
-**Status:** Approved 2026-07-29 · Phases A + B built on `dev`, owner QA pending · Phase C open
+**Status:** Approved 2026-07-29 · **All three phases built.** A + B committed on `dev`; C built with its database change applied to the test environment only. Owner QA pending on all three.
 **Full plan:** `COACH_ONBOARDING_QUIET_MODE_PLAN.md`
 
 ---
@@ -185,6 +185,37 @@ week" trail Phase A removed, and the chip row Phase B just removed.
 
 ---
 
+## Phase C — what shipped (2026-07-29)
+
+**The tour.** A coach who has never taken it sees one line offering it. Take it and a panel slides
+in from the **side** — never the middle of the screen, because the tour's whole job is to point at
+the sidebar, and a centre popup would cover the thing it's describing. Four cards: your squad, your
+season, your money, talking to families. Each explains what lives there and links straight into it.
+
+**Skip now genuinely means skip.** It was remembered by the browser, so dismissing it on a laptop
+still left it waiting on a phone. It's now remembered by the **account** — every team, every device,
+permanently. Same for "turn off setup hints". The tour stays available forever from the Help button
+and the setup chip for anyone who changes their mind.
+
+**Role-aware.** A coach with no money access doesn't get the Money card, and the progress dots show
+three, not four — no phantom step for a section they can't open.
+
+**Two judgment calls worth knowing:**
+- **Opening the tour doesn't count as taking it.** Open it, hit Escape, and you'll still be offered
+  it — only Skip or reaching the end is a decision.
+- **Tapping a card's link doesn't end the tour either.** Someone who taps "Open Roster" on card 1 is
+  going to look at the thing, not declining the rest. Ending it there would mean they never learn
+  cards 2–4 exist.
+
+**Fixed along the way:** the setup panel could open with its own off-switch below the bottom of the
+screen on a short window. The panel now measures the space it has.
+
+⚠ **Not on production yet.** Phase C adds two account settings to the database. They're live on the
+test environment; production needs your go-ahead, and that has to happen *before* the code ships or
+saving a preference would error there.
+
+---
+
 ## How to test it
 
 1. **Open a team with an empty roster.** The dashboard tiles should be visible without scrolling.
@@ -222,6 +253,25 @@ week" trail Phase A removed, and the chip row Phase B just removed.
     yourself.
 14. **Open Documents.** The "Upload Template" button should be gone; the empty state should say
     your organization publishes the templates.
+
+### Phase C specifically
+
+15. **On a team you've never toured, open the setup chip and take the tour.** A panel should slide
+    in from the right, with the sidebar still visible beside it. Step through all four cards.
+16. **Hit "Skip tour" on card 1. Then open a *different* team you coach.** The offer should be gone
+    there too — that's the account-level part working.
+17. **Then sign in on your phone (or another browser).** The offer should still be gone. This is the
+    thing that was broken before and the main reason Phase C exists.
+18. **Open the tour again from the setup chip.** It should still be reachable on demand even after
+    skipping — skipping kills the *offer*, not the *feature*.
+19. **Open the tour and press Escape.** You should still be offered it afterwards.
+20. **Tap a card's link (e.g. "Open Roster").** It should take you there and close the tour — but
+    still offer it next time, since you didn't finish or skip it.
+21. **Turn off setup hints on one team, then open another.** Should be off there too.
+22. **As an assistant with no money access, take the tour.** No Money card, and three progress dots
+    rather than four.
+23. **Shrink your browser window until it's short, then open the setup chip.** The panel should stay
+    inside the window with its footer reachable, not run off the bottom.
 
 ---
 

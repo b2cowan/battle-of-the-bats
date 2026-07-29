@@ -1,5 +1,6 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
@@ -9,6 +10,11 @@ import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import CoachTournamentAwarenessBanner from '@/components/marketing/CoachTournamentAwarenessBanner';
 import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
+// Loaded on demand, mirroring HelpDrawerProvider's treatment of the help drawer: the tour is a
+// one-time offer most returning coaches have already dismissed, so it shouldn't sit in the
+// Overview bundle (already one of the portal's heaviest) for everyone who never opens it.
+const CoachPortalTour = dynamic(() => import('@/components/coaches/CoachPortalTour'), { ssr: false });
+import { useDismissable, useViewportFit } from '@/components/coaches/overlay-hooks';
 import { pickFanViewRegistration, type FanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import { deriveRepPhase } from '@/lib/coach-rep-phase';
@@ -17,7 +23,6 @@ import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
-import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
 import styles from '../../coaches.module.css';
@@ -30,11 +35,12 @@ const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
  * Deliberately keyless of teamId, unlike the per-team `coach-setup-skipped:` / `coach-season-cue:`
  * keys below, which record facts about a season rather than a preference.
  *
- * ⚠ Phase C seam: both of these move to account-level `user_preferences` columns so they follow the
- * coach across devices. These two constants and the four call sites below are the whole surface.
+ * ✅ Phase C2 (migration 209): the two COACH preferences — setup hints off, tour dismissed — now
+ * live on the account (`user_preferences`), read and written through
+ * /api/coaches/onboarding-preferences. They follow the coach across every team AND every device,
+ * which is what "skip ends the tour permanently" always required. The device-local keys are gone;
+ * only the per-TEAM step skips below remain local, because those are season facts, not preferences.
  */
-const HINTS_OFF_KEY = 'coach-setup-hints-off';
-const TOUR_SEEN_KEY = 'coach-portal-tour-seen';
 
 /** Setup-chip progress ring geometry — derived, so resizing the ring can't desync the arc. */
 const RING_R = 8;
@@ -111,17 +117,10 @@ interface SetupItem {
   milestone?: { order: number; short: string; value: string };
 }
 
-/**
- * Sections with no honest "done" state, named on Overview so a coach doesn't finish setup without
- * learning they exist (readiness review #6 — five of eleven sections were invisible). Chat's copy
- * is deliberately honest that it's tournament-scoped rather than promising a populated room.
- */
-const DISCOVERY_SECTIONS: { key: string; label: string; href: string; title: string; needs?: 'tryouts' }[] = [
-  { key: 'chat', label: 'Chat', href: '/chat', title: 'Message organizers and other coaches during a tournament' },
-  { key: 'development', label: 'Development', href: '/development', title: 'Player goals, skills tests, and awards' },
-  { key: 'insights', label: 'Insights', href: '/history', title: 'Playing time, attendance, and season reports — they fill in on their own' },
-  { key: 'tryouts', label: 'Tryouts', href: '/tryouts', title: 'Run tryouts and pick your team', needs: 'tryouts' },
-];
+/* The "Also in your portal" chips are RETIRED (Quiet Mode Phase B, 2026-07-29). A chip could name
+   a section but never explain it — the job now belongs to each section's own empty state, which
+   teaches at the moment the coach is actually curious. Removed only once every section in scope
+   carried its teaching copy, so no discovery window opened in between. */
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
@@ -141,7 +140,7 @@ export default function TeamOverviewPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const { orgSlug, teamId } = use(params);
-  const { assignments, closedAssignments, loading, refresh: refreshAssignments } = useCoaches();
+  const { assignments, closedAssignments, loading, refresh: refreshAssignments, onboardingPrefs, setOnboardingPrefs } = useCoaches();
   const { currentOrg } = useOrg();
   const { openHelp } = useHelpDrawer();
   const router = useRouter();
@@ -173,11 +172,10 @@ export default function TeamOverviewPage({
   const [duesUnpaidCount, setDuesUnpaidCount] = useState(0);
   // Season setup lives in a header chip now, not a full-width panel — this is its popover.
   const [setupOpen, setSetupOpen] = useState(false);
-  // "Turn off setup hints" — silences the next-action line and the chip's count everywhere this
-  // coach works. Deliberately NOT team-scoped: a coach with three teams dismisses once.
-  const [hintsOff, setHintsOff] = useState(false);
-  // Whether this coach has already been offered the portal tour (the offer is one-time).
-  const [tourSeen, setTourSeen] = useState(true);
+  // "Turn off setup hints" and "tour already offered" are account-scoped and SSR-seeded — they live
+  // on the coaches context, not in local state here (see `hintsOff` / `tourSeen` below). Only the
+  // drawer's open/closed is genuine local UI state.
+  const [tourOpen, setTourOpen] = useState(false);
   // Paid vs total dues installments → the Dues snapshot mini-gauge.
   const [duesProgress, setDuesProgress] = useState<{ paid: number; total: number } | null>(null);
   // Season budget vs actual spend → Budget tile.
@@ -370,43 +368,37 @@ export default function TeamOverviewPage({
     });
   }, [skipStorageKey]);
 
-  // Until the Phase C account-level store lands, a browser profile stands in for the coach —
-  // true for every real single-user device.
-  useEffect(() => {
-    void Promise.resolve().then(() => {
-      // `tourSeen` starts true so the offer can't flash in and vanish for a coach who has already
-      // taken it. That default must NOT survive a storage failure, though: blocked localStorage
-      // (locked-down or private-mode browsers) would then suppress the one-time tour forever. Both
-      // prefs are resolved into locals first and written unconditionally, so an unreadable store
-      // fails toward offering help rather than silently withholding it.
-      let hints = false;
-      let seen = false;
-      try {
-        hints = localStorage.getItem(HINTS_OFF_KEY) === '1';
-        seen = localStorage.getItem(TOUR_SEEN_KEY) === '1';
-      } catch { /* storage unavailable — fall through with the show-guidance defaults */ }
-      setHintsOff(hints);
-      setTourSeen(seen);
-    });
-  }, []);
+  // Account-level preferences (Phase C2) come SSR-seeded through the coaches context — read once
+  // by the layout for the whole portal, so there's no client round-trip here, no loading flash,
+  // and no identical re-fetch when the coach switches teams.
+  const hintsOff = onboardingPrefs.hintsOff;
+  const tourSeen = onboardingPrefs.tourDismissed;
 
   const turnOffHints = useCallback(() => {
-    setHintsOff(true);
     setSetupOpen(false);
-    try { localStorage.setItem(HINTS_OFF_KEY, '1'); } catch { /* ignore */ }
-  }, []);
+    setOnboardingPrefs({ hintsOff: true });
+  }, [setOnboardingPrefs]);
 
   const turnOnHints = useCallback(() => {
-    setHintsOff(false);
-    try { localStorage.removeItem(HINTS_OFF_KEY); } catch { /* ignore */ }
+    setOnboardingPrefs({ hintsOff: false });
+  }, [setOnboardingPrefs]);
+
+  // Open the tour drawer. Opening does NOT retire the offer — only finishing or skipping does
+  // (`finishPortalTour`), so a coach who opens it and immediately hits Escape still gets offered it.
+  const openPortalTour = useCallback(() => {
+    setSetupOpen(false);
+    setTourOpen(true);
   }, []);
 
-  // Interim tour door (Phase A): opens the existing "Getting around your Premium portal" guide in
-  // the help drawer, and retires the one-time offer. Phase C replaces the target with the
-  // paginated four-card tour; the entry points and the offer-once rule stay exactly as they are.
-  const openPortalTour = useCallback(() => {
-    setTourSeen(true);
-    try { localStorage.setItem(TOUR_SEEN_KEY, '1'); } catch { /* ignore */ }
+  /** Skip or Done — the permanent, account-level decision. NOT fired by merely opening the tour,
+   *  nor by following a card's deep link (see CoachPortalTour). */
+  const finishPortalTour = useCallback(() => {
+    setTourOpen(false);
+    setOnboardingPrefs({ tourDismissed: true });
+  }, [setOnboardingPrefs]);
+
+  // The full guide stays reachable forever, independent of the tour's one-time offer.
+  const openPortalGuide = useCallback(() => {
     setSetupOpen(false);
     openHelp({
       module: 'coaches',
@@ -418,20 +410,13 @@ export default function TeamOverviewPage({
 
   // Close the setup popover on outside click / Escape — it sits in the page header, so an
   // un-closable popover would sit over the page title.
+  // Dismiss behaviour + viewport fit now come from the shared primitives (Phase C0). The fit hook
+  // is the capability the hand-rolled version lacked: on a short window the popover could open with
+  // its footer — including the off-switch — below the fold.
   const setupChipRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    if (!setupOpen) return;
-    const onPointer = (e: MouseEvent) => {
-      if (setupChipRef.current && !setupChipRef.current.contains(e.target as Node)) setSetupOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSetupOpen(false); };
-    document.addEventListener('mousedown', onPointer);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onPointer);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [setupOpen]);
+  const setupPopRef = useRef<HTMLDivElement | null>(null);
+  useDismissable(setupOpen, setupChipRef, () => setSetupOpen(false));
+  useViewportFit(setupOpen, setupPopRef);
 
   const toggleSkip = useCallback((key: string) => {
     setSkippedSteps(prev => {
@@ -1037,13 +1022,6 @@ export default function TeamOverviewPage({
   const whenReadyItems = rowItems.filter(item => !item.contextOnly);
   const actionableItems = [...ringItems, ...whenReadyItems];
   const everythingSatisfied = actionableItems.every(isSatisfied);
-  // Chips route through the SAME visibility rule as the sidebar, so a coach can never be pointed
-  // at a section their capabilities hide. Tryouts additionally waits for the conditional nav signal
-  // rather than advertising a seasonal area a team hasn't opened.
-  const discoverySections = DISCOVERY_SECTIONS.filter(section =>
-    isCoachNavItemVisible(assignment.capabilities, section.label)
-    && (section.needs !== 'tryouts' || assignment.hasTryoutSignal),
-  );
 
   // Setup guidance no longer owns the canvas: progress lives in a header chip and, while the
   // essentials are open, ONE next-action line under the header. The chip's count can't be trusted
@@ -1115,7 +1093,7 @@ export default function TeamOverviewPage({
             claim dialog semantics a screen reader would then enforce. The button's aria-expanded
             plus a labelled group is the honest description of what this actually is. */}
         {setupOpen && (
-          <div className={styles.setupPop} role="group" aria-label="Season setup">
+          <div className={styles.setupPop} ref={setupPopRef} role="group" aria-label="Season setup">
             <div className={styles.setupPopHead}>
               <p className={styles.setupPopKicker}>Season setup · {ringSatisfied} of {ringItems.length}</p>
               <button type="button" className={styles.setupPopClose} onClick={() => setSetupOpen(false)} aria-label="Close season setup">
@@ -1147,25 +1125,14 @@ export default function TeamOverviewPage({
 
             {setupError && <p className={styles.errorText}>{setupError}</p>}
 
-            {/* The sections with no honest "done" state still get named, so a coach can't finish
-                setup without learning they exist. Phase B replaces these with real teaching at
-                each section's own empty state. */}
-            {discoverySections.length > 0 && (
-              <div className={styles.discoverRow}>
-                <p className={styles.discoverLabel}>Also in your portal</p>
-                <div className={styles.discoverChips}>
-                  {discoverySections.map(section => (
-                    <Link key={section.key} href={`${base}${section.href}`} className={styles.discoverChip} title={section.title}>
-                      {section.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className={styles.setupPopFoot}>
+              {/* Permanently available here, whether or not the one-time offer has been used —
+                  a coach who skipped the tour must still be able to go find it. */}
               <button type="button" className={styles.setupGuideLink} onClick={openPortalTour}>
                 Take the 2-minute portal tour →
+              </button>
+              <button type="button" className={styles.setupPopMuted} onClick={openPortalGuide}>
+                Open the full guide
               </button>
               {hintsOff ? (
                 <button type="button" className={styles.setupPopMuted} onClick={turnOnHints}>Turn setup hints back on</button>
@@ -1586,6 +1553,22 @@ export default function TeamOverviewPage({
             // would run a second, stale-closured copy in parallel (adversarial review).
             await refreshAssignments();
           }}
+        />
+      )}
+
+      {/* The offered portal tour (Phase C1). Non-modal side drawer — the sidebar it describes stays
+          visible behind it. Never auto-opens: `tourOpen` only goes true from an explicit link.
+          Render-GATED, not just prop-gated: `next/dynamic` fetches the chunk as soon as the element
+          is mounted, so mounting it always would have loaded the tour for every coach who never
+          opens it — defeating the whole point of the lazy import (same gate HelpDrawerProvider
+          uses on its drawer). */}
+      {tourOpen && (
+        <CoachPortalTour
+          open
+          basePath={base}
+          capabilities={assignment.capabilities}
+          onClose={() => setTourOpen(false)}
+          onFinish={finishPortalTour}
         />
       )}
     </div>

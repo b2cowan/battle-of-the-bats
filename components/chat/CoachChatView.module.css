@@ -185,6 +185,60 @@
   padding: 0.05rem 0.3rem;
 }
 
+/* ── Staff room (Project 2A, approved mockup 1) ──────────────────────────────
+   The standing team room pins first and reads as "yours": a quiet lime edge + a STAFF tag, with the
+   fixed "Your coaching staff" sub-line in the accent tier. Token-only, so the warm remap carries it. */
+.roomRowStaff { border-color: rgba(var(--logic-lime-rgb), 0.32); }
+.staffTag {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 800;
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  border-radius: 4px;
+  padding: 0.05rem 0.3rem;
+}
+.roomContextStaff { color: var(--logic-lime); }
+
+/* First-run nudge for a staff of one — rendered by ChatPanel's topBanner slot, styled here (the
+   host owns it). Dashed border marks it as a temporary teaching card, not a message. */
+.staffNudge {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  margin: 0.75rem 0.9rem 0;
+  padding: 0.8rem 0.9rem;
+  border: 1px dashed rgba(var(--logic-lime-rgb), 0.4);
+  border-radius: var(--radius);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+}
+.staffNudgeIcon { flex: 0 0 auto; color: var(--logic-lime); margin-top: 0.1rem; }
+.staffNudgeMain {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  min-width: 0;
+}
+.staffNudgeMain strong { color: var(--white-90); font-size: 0.84rem; }
+.staffNudgeMain p { margin: 0; color: var(--white-60); font-size: 0.78rem; line-height: 1.45; }
+.staffNudgeBtn {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.15rem;
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+  font-size: 0.76rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  padding: 0.4rem 0.7rem;
+  text-decoration: none;
+}
+.staffNudgeBtn:hover { filter: brightness(1.05); }
+.staffNudgeBtn:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
 .unread {
   flex: 0 0 auto;
   min-width: 20px;
@@ -249,6 +303,11 @@
    convention. Restore the bright ink-on-lime badge (matches the ChatPanel .sendBtn / consumer unread).
    Never edits a dark declaration → dark byte-identical. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .unread {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+/* Same ink-on-lime rule for the staff-nudge CTA (a filled lime button, like the badge). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .staffNudgeBtn {
   background: var(--home-lime);
   color: var(--home-lime-ink);
 }

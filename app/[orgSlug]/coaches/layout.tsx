@@ -7,6 +7,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgRole } from '@/lib/types';
 import { OrgProvider } from '@/lib/org-context';
 import { CoachesProvider } from '@/lib/coaches-context';
+import { getCoachOnboardingPrefs } from '@/lib/user-preferences';
 import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
@@ -62,10 +63,15 @@ export default async function CoachesLayout({
   // The wall below is now only for coaches with no assignment on ANY season, ever. Both
   // lookups run here once and SEED CoachesProvider (mirroring OrgProvider's initialOrg), so
   // the client doesn't immediately re-fetch the identical data on mount.
+  // The onboarding prefs ride this SAME parallel lookup (Quiet Mode Phase C2). They're
+  // account-scoped, so fetching them from the team Overview instead would repeat an identical
+  // request on every team switch for data that cannot differ by team — and would flash the wrong
+  // state while it resolved. Reading them here costs no extra latency.
   const lookupOpts = { isTeamWorkspace: isTeamWorkspaceOrg(authCtx.org) };
-  const [assignments, closedAll] = await Promise.all([
+  const [assignments, closedAll, onboardingPrefs] = await Promise.all([
     getCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id, lookupOpts),
     getClosedCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id, lookupOpts),
+    getCoachOnboardingPrefs(authCtx.user.id),
   ]);
   // Same shaping as the assignments API: one entry per team, only teams with no active year.
   const activeTeamIds = new Set(assignments.map(a => a.teamId));
@@ -113,6 +119,7 @@ export default async function CoachesLayout({
         orgSlug={orgSlug}
         initialAssignments={assignments}
         initialClosedAssignments={closedAssignments}
+        initialOnboardingPrefs={onboardingPrefs}
       >
         {/* Hosts the in-context "?" help slide-over for the team work pages (drawer +
             guide content load lazily on first click — no bundle cost until used). */}

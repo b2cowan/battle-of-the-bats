@@ -2,12 +2,12 @@
 
 **Generated:** 2026-07-29 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 30 divergence(s)** across dev/prod.
+**⚠️ 33 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 1 | 0 | — |
-| Columns | 17 | 0 | 0 |
+| Columns | 20 | 0 | 0 |
 | Indexes | 5 | 0 | 0 |
 | Constraints | 6 | 0 | — |
 | RLS / CHECK | 1 | 0 | 0 (RLS state) |
@@ -20,7 +20,8 @@
 _none_
 
 ## Columns
-### Only in DEV (17)
+### Only in DEV (20)
+- `chat_room_members.history_visible_from`
 - `game_change_notices.created_at`
 - `game_change_notices.game_id`
 - `game_change_notices.hold_until`
@@ -38,6 +39,8 @@ _none_
 - `tournaments.chat_reminder_last_sent_at`
 - `tournaments.chat_reminder_last_sent_by`
 - `tournaments.chat_reminder_last_sent_count`
+- `user_preferences.coach_setup_hints_off`
+- `user_preferences.coach_tour_dismissed_at`
 
 ### Only in PROD (0)
 _none_

@@ -529,6 +529,50 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'recipe-staff-room',
+      group: 'Premium Coaches Portal',
+      heading: 'Your team’s staff room',
+      summary: 'A standing chat for your coaching staff — head coach and assistants — open all season, not tied to any tournament.',
+      keywords: ['staff room', 'staff chat', 'team chat', 'coach chat', 'assistant chat', 'coaching staff', 'private chat', 'team staff', 'chat with assistants', 'staff messages', 'history', 'older messages', 'new assistant', 'pinned', 'season ended chat', 'read only chat'],
+      searchText: 'staff room standing chat for your coaching staff head coach and assistants all season not tied to a tournament pinned at the top of your chats staff tag your coaching staff automatically added no setup invite an assistant staff page new members see messages from the day they join older messages hidden not visible to you privacy head coach runs the room pin remove messages polls season ends read only reopens next season cannot delete undeletable premium coaches portal club notifications same as tournament chat team name in chat tab',
+      content: (
+        <>
+          <p>With <strong>Premium Coaches Portal</strong>, your team gets a <strong>staff room</strong> — a standing chat for your coaching staff, open all season. It&rsquo;s pinned at the top of <strong>Your chats</strong> with a <strong>Staff</strong> tag, named after your team, and it also appears on the app&rsquo;s <strong>Chat</strong> tab grouped under your team&rsquo;s name. There&rsquo;s nothing to create or configure: the room exists as soon as any of your coaches opens Chat, and it can&rsquo;t be deleted.</p>
+          <p><strong>Your whole staff is in automatically.</strong> Assistants get a seat the moment they join your team and lose it if they leave — there&rsquo;s no separate chat permission to manage. If it&rsquo;s just you so far, the room points you at your <strong>Staff</strong> page to invite an assistant; each one you add appears here on their own.</p>
+          <p><strong>New members see the room from the day they join.</strong> Messages sent before someone was on your staff stay private to the people who were there — a reply that quotes an older message simply shows &ldquo;Not visible to you&rdquo; to them. That&rsquo;s deliberate: staff talk is candid, and joining the team doesn&rsquo;t open its past. (This is different from tournament chat, where a coach joining an event sees the room&rsquo;s history.)</p>
+          <p><strong>The head coach runs the room</strong> with the same tools organizers have in tournament chat: <strong>pin</strong> important messages, <strong>remove</strong> a message, and post <strong>polls</strong>. Everything else works exactly like the chat you know — replies, mentions, emoji, search, phone notifications with an unread badge, no email.</p>
+          <p>When your season ends, the room goes <strong>read-only</strong> — everything stays readable, and it reopens by itself when the next season starts.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-staff-room-history',
+          question: 'Why can’t my new assistant see older staff-room messages?',
+          answerText: 'That is deliberate. In the staff room, every member sees messages only from the day they joined your staff — earlier messages stay private to the people who were in the room when they were sent. A reply that quotes an older message shows Not visible to you instead of the text. This applies to everyone, including a new head coach taking over the team. Tournament chat is different: there, a coach joining an event sees the full room history. If something needs to outlive coaching changes, keep it in your notes, documents, or announcements rather than chat.',
+          keywords: ['new assistant', 'older messages', 'history', 'cannot see messages', 'not visible to you', 'staff room history', 'privacy', 'replacement coach', 'new head coach'],
+          popular: true,
+          answer: (
+            <>
+              <p>That&rsquo;s deliberate. In the staff room, every member sees messages <strong>only from the day they joined your staff</strong> — earlier messages stay private to the people who were in the room when they were sent, and a reply that quotes an older message shows &ldquo;Not visible to you&rdquo; instead of the text. This applies to everyone, including a new head coach taking over the team.</p>
+              <p>(Tournament chat is different — there, a coach joining an event sees the room&rsquo;s history.) If something needs to outlive coaching changes, keep it in your notes, documents, or announcements rather than chat.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-staff-room-manage',
+          question: 'Who runs the staff room — and can I close or delete it?',
+          answerText: 'The head coach runs it: pin messages, remove a message, and post polls, right in the conversation — there is no separate management screen. Membership manages itself from your Staff page: add or remove an assistant there and their chat seat follows. The room cannot be deleted. When your season ends it becomes read-only — everything stays readable — and it reopens automatically when the next season starts.',
+          keywords: ['head coach', 'moderate', 'pin', 'remove message', 'delete staff room', 'close staff room', 'season ended', 'read only', 'polls', 'manage staff room'],
+          answer: (
+            <>
+              <p><strong>The head coach runs it</strong> — pin messages, remove a message, and post polls, right in the conversation. There&rsquo;s no separate management screen: membership manages itself from your <strong>Staff</strong> page, so adding or removing an assistant there moves their chat seat too.</p>
+              <p>The room can&rsquo;t be deleted. When your season ends it becomes <strong>read-only</strong> — everything stays readable — and it reopens automatically when the next season starts.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'premium',
       group: 'Premium Coaches Portal',
       heading: 'What Premium Coaches Portal adds',

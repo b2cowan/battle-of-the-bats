@@ -315,3 +315,68 @@ export async function isTournamentChatParticipant(userId: string, tournamentId: 
   const ids = await resolveTournamentsForCoach(userId);
   return ids.includes(tournamentId);
 }
+
+// ── Staff rooms (Project 2A — coach_peer surface) ───────────────────────────
+// A staff room's population is far simpler than a tournament's: it is exactly the team's
+// `rep_team_coaches` rows on a draft/active program year — the same current-season filter every
+// other rep path here applies (those rows are permanent; the year's status is what ends a season).
+
+/** One current-season staff seat: who, and whether they hold the head-coach role. */
+export type StaffRoomParticipant = { userId: string; isHead: boolean };
+
+/**
+ * The current staff of a rep team: deduped user_ids across the team's draft/active program years,
+ * head-first. A user with BOTH a head and an assistant row (e.g. across two overlapping years)
+ * resolves as head — the stronger standing wins, mirroring how capability resolution treats the
+ * head role.
+ */
+export async function resolveStaffRoomParticipants(repTeamId: string): Promise<StaffRoomParticipant[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select('user_id, coach_role, program_year_id')
+    .eq('team_id', repTeamId);
+  if (error) throw error;
+  const rows = data ?? [];
+  const activeYears = await activeProgramYearIds(rows.map(r => r.program_year_id as string));
+  const byUser = new Map<string, boolean>();
+  for (const r of rows) {
+    const userId = r.user_id as string | null;
+    if (!userId || !activeYears.has(r.program_year_id as string)) continue;
+    byUser.set(userId, (byUser.get(userId) ?? false) || r.coach_role === 'head_coach');
+  }
+  return [...byUser].map(([userId, isHead]) => ({ userId, isHead }));
+}
+
+/** A rep team this user currently coaches, with the org that would own its staff room. */
+export type StaffTeamForCoach = { repTeamId: string; orgId: string; teamName: string };
+
+/**
+ * Inverse resolver for staff-room self-heal: every rep team on which this user holds a
+ * current-season (draft/active year) coaching assignment. Entitlement/plan gating is NOT applied
+ * here — the caller (chat-service) decides whether each team qualifies for a room, so the "does the
+ * org's plan include staff chat" question lives in one place.
+ */
+export async function resolveStaffTeamsForCoach(userId: string): Promise<StaffTeamForCoach[]> {
+  const { data: repCoaches, error } = await supabaseAdmin
+    .from('rep_team_coaches')
+    .select('team_id, program_year_id')
+    .eq('user_id', userId);
+  if (error) throw error;
+  const rows = repCoaches ?? [];
+  const activeYears = await activeProgramYearIds(rows.map(r => r.program_year_id as string));
+  const teamIds = [...new Set(rows
+    .filter(r => activeYears.has(r.program_year_id as string))
+    .map(r => r.team_id as string | null)
+    .filter((v): v is string => Boolean(v)))];
+  if (teamIds.length === 0) return [];
+  const { data: teams, error: tErr } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, org_id, name')
+    .in('id', teamIds);
+  if (tErr) throw tErr;
+  return (teams ?? []).map(t => ({
+    repTeamId: t.id as string,
+    orgId: t.org_id as string,
+    teamName: (t.name as string | null) ?? 'Team',
+  }));
+}

@@ -23,6 +23,6 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
   const optionId = new URL(req.url).searchParams.get('optionId') ?? '';
   if (!optionId) return NextResponse.json({ voters: [] });
 
-  const voters = await getPollVoters({ roomId, messageId, optionId });
+  const voters = await getPollVoters({ roomId, messageId, optionId, visibleFrom: membership.history_visible_from });
   return NextResponse.json({ voters });
 }, { route: '/api/chat/rooms/[roomId]/polls/[messageId]/voters' });

@@ -8,6 +8,27 @@
 
 ---
 
+### 2026-07-29 — Budget starter for first-season coaches: PROPOSED. Structure and a worked example, not invented dollar figures
+**Status:** **Proposed** (owner raised the direction in conversation 2026-07-29 and asked for it to be written up; explicitly **not ratified** — logged so it is discoverable, not so it is binding)
+**Proposal:** Build a **first-season budget starter** in the premium Coaches Portal. A coach answers a few plain questions (how many tournaments, roughly what each costs, any off-season training block) and lands on a real, editable starting budget — plus a clearly-labelled **sample** budget and sample budget-vs-actual so they can see what a finished one looks like before building their own. Tracked as **chunk G** in `docs/projects/active/PROGRAM_COACH_PORTAL.md` §1.1.
+**Two constraints proposed as part of it:**
+1. **Structure before numbers.** The volunteer coach's real question is *"what am I forgetting?"* — a missed umpire-fee or tournament-deposit line wrecks a season; being 10% off on a line does not. A checklist of what comparable teams budget for, with amounts left blank, is most of the value.
+2. **Do NOT ship invented dollar figures.** Anchoring a coach low means they under-collect and finish the season short — a real harm to a real family, not a UX blemish. Real costs swing hard by region, sport, age group and competitive level.
+**Rationale:** Budget is a **paid-tier feature** (the free Basic portal has a manual fee ledger only; a season budget, dues automation and budget-vs-actual are Premium). Making the paid tier's most intimidating surface approachable is an **activation and retention** play on a tier customers have already bought — not an acquisition claim, and not a reason to change what is sold. The gap is narrower than it first appears and that is what makes it buildable: **season rollover already carries a planned budget and fee template into year 2+**, so the coach facing a blank page is specifically the first-season one. It also extends two patterns the 2026-07-28 readiness review named as strengths to protect — the Money hub's always-name-one-next-action flow (which the review called the single best answer in the portal to feeling overwhelmed) and the Tryouts stage-by-stage flow (named the reference for explaining yourself to a first-timer) — rather than introducing a new idiom.
+**⚠ THE DECISION THIS IS GATED ON — where suggested amounts come from.** Two honest options; the owner picks before any build:
+- **(a) Structure only.** Ship the line-item scaffold with amounts blank. Zero risk of anchoring, ships soonest, leaves the "is this normal?" question unanswered.
+- **(b) Ground suggestions in the platform's own data.** Tournament entry fees are real figures already in the system, so *"teams entering tournaments like yours typically pay $X–$Y per event"* is defensible, specific, and something no spreadsheet can tell a coach — a genuine differentiator. Costs more work and needs enough real data before it can say anything true.
+A third option — inventing plausible-looking figures — is **rejected in this proposal** for the harm reason above, and should not be reintroduced without a new entry.
+**Affects:** roadmap sequencing within the Coach Portal program (proposed slot: **after chunk A**, same surfaces, which should be good on a phone first). **No price, plan-name, capacity-band, gate, or SKU change proposed.** `PLAN_PRICING_FACTS.md` untouched — no pricing fact is involved, and none may be asserted by any starter copy. **Nothing customer-facing changes until ratified.**
+**Handoff (all conditional on ratification — do nothing yet):**
+HANDOFF → owner — rule on the gating decision (a) or (b) above. Nothing proceeds without it.
+HANDOFF → `/plan` — **do not** write an implementation plan yet. Chunk G's shape is recorded in `PROGRAM_COACH_PORTAL.md` §1.1; it needs the gating decision, its own plan + PM brief, and approved mockups.
+HANDOFF → `/marketing` — **no public copy may promise budget templates, suggested costs, or benchmarks** until this is ratified and built. If option (b) is ever chosen, any benchmark claim needs its own accuracy review before it appears in customer-facing copy.
+HANDOFF → `/billing` — none. Budget stays where it is; this proposes no new gate.
+**Relates to:** 2026-07-20 D2 Coaches Portal self-serve acquisition (the tier this would improve retention on); the 2026-07-28 premium portal readiness review (this is **not** one of its 85 findings — it is an owner-raised addition, recorded as such so a future reader does not go looking for it there).
+
+---
+
 ### 2026-07-28 — Native mobile app: KILLED. The installed web app is the mobile strategy; no store build, no companion app
 **Status:** Decided (ratified by owner 2026-07-28 in conversation — "go ahead and kill the native mobile app and log it")
 **Decision:** The **native/companion mobile app is killed.** The strategy brief (mission, level-of-effort, store path, MVP scope of Home-Today / scorekeeper view / alerts) is retired — **no implementation plan will be written and none is wanted.** The **installed web app (PWA) is the mobile strategy**, full stop. Revisit only via a *new* decision entry, not by anyone re-reading the old brief.

@@ -57,10 +57,10 @@ export default function AdminHelpHubPage() {
       },
       {
         title: 'Coaches Portal',
-        desc:  'Help coaches manage rosters, schedules, dues, expenses, player documents, and tournament chat.',
+        desc:  'Help coaches manage rosters, schedules, dues, expenses, player documents, and chat.',
         href:  `${helpBase}/coaches`,
-        topicCount: 8,
-        keywords: ['coach', 'coaches portal', 'roster', 'dues', 'documents', 'schedule', 'chat', 'tournament chat'],
+        topicCount: 9,
+        keywords: ['coach', 'coaches portal', 'roster', 'dues', 'documents', 'schedule', 'chat', 'tournament chat', 'staff room', 'staff chat'],
       },
     ] : []),
     ...(canAccounting ? [{

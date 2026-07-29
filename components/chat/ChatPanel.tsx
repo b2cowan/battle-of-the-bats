@@ -31,7 +31,10 @@ import styles from './ChatPanel.module.css';
  * pill, and scroll-position anchoring. The engine logic above is unchanged.
  */
 
-type ReplyRef = { id: string; name: string; snippet: string };
+/** `hidden` (mig 208): the quoted message predates this viewer's history watermark — render a
+ *  "Not visible to you" stub, never the snippet. Stamped server-side (history) or client-side
+ *  (conservative realtime check); never persisted. */
+type ReplyRef = { id: string; name: string; snippet: string; hidden?: boolean };
 type MentionRef = { userId: string; name: string };
 
 type Message = {
@@ -47,7 +50,14 @@ type Message = {
   poll?: PollDefinition | null;
 };
 
-type Self = { userId: string; isModerator: boolean; mutedUntil: string | null };
+type Self = {
+  userId: string;
+  isModerator: boolean;
+  mutedUntil: string | null;
+  /** mig 208: the caller's history watermark (staff rooms). Only used to conservatively hide live
+   *  reply-quotes whose target isn't in the (already watermark-filtered) loaded history. */
+  historyVisibleFrom?: string | null;
+};
 
 type Props = {
   roomId: string;
@@ -75,6 +85,9 @@ type Props = {
   /** Present only on the consumer surface — a long-press / right-click on a message opens the caller's
    *  safety sheet (Report to organizers + Mute this room; Unified Home R3-2). The host owns the sheet. */
   onLongPressMessage?: (msg: { id: string; senderName: string; sentAt: string; mine: boolean; deleted: boolean }) => void;
+  /** Optional host-owned notice rendered between the header and the conversation — e.g. the staff
+   *  room's "it's just you in here" first-run nudge (Project 2A). Purely presentational. */
+  topBanner?: ReactNode;
 };
 
 function prefersReducedMotion(): boolean {
@@ -200,7 +213,7 @@ type RenderItem =
 
 export default function ChatPanel({
   roomId, roomName, roomSubtitle, onModerateDelete, onDeleteOwn, onPin, headerRight, iconBefore, unreadCount, className,
-  variant = 'default', onLongPressMessage,
+  variant = 'default', onLongPressMessage, topBanner,
 }: Props) {
   const instanceId = useId();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -531,6 +544,9 @@ export default function ChatPanel({
               pinnedAt: (row?.pinned_at as string | null) ?? null,
               poll: extractPoll(row?.metadata as Record<string, unknown> | null),
             };
+            // mig 208 note: no watermark handling needed here — a coach_peer room's realtime
+            // payload carries an id-only quote (never text; persisted that way at send), and the
+            // quote view is resolved at RENDER time against loaded history + the viewer's watermark.
             setMessages((prev) => (prev.some((m) => m.id === id) ? prev : [...prev, incoming]));
 
             // Mark read for an incoming message from someone else, throttled, when visible.
@@ -1339,6 +1355,7 @@ export default function ChatPanel({
           {headerRight && <span className={styles.headerRight}>{headerRight}</span>}
         </div>
       )}
+      {topBanner}
       {searchOpen && (
         <div className={styles.searchBar} role="search" id={`${instanceId}-search`}>
           <Search size={15} aria-hidden className={styles.searchBarIcon} />
@@ -1491,6 +1508,21 @@ export default function ChatPanel({
               const pollMax = poll ? poll.options.reduce((mx, o) => Math.max(mx, pollTally[o.id]?.count ?? 0), 0) : 0;
               const pollClosed = Boolean(poll?.closedAt);
               const canVote = Boolean(poll) && canReactRoom && !pollClosed;
+              // Reply-quote view (mig 208). Three shapes reach the client:
+              //   • a server-resolved quote (name+snippet, or a hidden stub) — render as-is;
+              //   • an id-only realtime quote (coach_peer rooms never put text on the wire) —
+              //     resolve against loaded history at RENDER time, so it self-corrects as pages
+              //     load and as `self` arrives. Unresolvable + (watermarked OR self still unknown)
+              //     → the hidden stub, privacy-first; unresolvable + full-history viewer → the
+              //     generic "Message" label (target is just on an unloaded page).
+              const rawQuote = deleted ? null : m.replyTo ?? null;
+              const quoteTarget = rawQuote && !rawQuote.hidden && !rawQuote.snippet
+                ? messages.find((x) => x.id === rawQuote.id && !x.deletedAt) ?? null
+                : null;
+              const quoteHidden = Boolean(rawQuote && (rawQuote.hidden ||
+                (!rawQuote.snippet && !quoteTarget && (self === null || Boolean(self.historyVisibleFrom)))));
+              const quoteName = rawQuote ? (quoteTarget ? nameFor(quoteTarget) : rawQuote.name) : '';
+              const quoteSnippet = rawQuote ? (quoteTarget ? quoteTarget.body.slice(0, 140) : rawQuote.snippet) : '';
               return (
                 <div key={item.key} className={`${styles.row}${mine ? ` ${styles.rowMine}` : ''}${styles[`row_${pos}`] ? ` ${styles[`row_${pos}`]}` : ''}`}>
                   {showAvatar && (
@@ -1523,17 +1555,23 @@ export default function ChatPanel({
                       } : undefined}
                       {...longPressHandlers({ id: m.id, senderName: nameFor(m), sentAt: m.sentAt, mine, deleted })}
                     >
-                      {m.replyTo && (
+                      {rawQuote && (quoteHidden ? (
+                        // mig 208: the quoted message predates this viewer's history (or can't be
+                        // verified yet) — a stub, never the text, and no jump to what they can't see.
+                        <span className={`${styles.quote} ${styles.quoteHidden}`} aria-disabled="true">
+                          <span className={styles.quoteSnippet}>Not visible to you</span>
+                        </span>
+                      ) : (
                         <button
                           type="button"
                           className={styles.quote}
-                          onClick={(e) => { e.stopPropagation(); jumpToMessage(m.replyTo!.id); }}
-                          title={`Reply to ${m.replyTo.name}`}
+                          onClick={(e) => { e.stopPropagation(); jumpToMessage(rawQuote.id); }}
+                          title={`Reply to ${quoteName}`}
                         >
-                          <span className={styles.quoteName}>{m.replyTo.name}</span>
-                          <span className={styles.quoteSnippet}>{m.replyTo.snippet || 'Message'}</span>
+                          <span className={styles.quoteName}>{quoteName}</span>
+                          <span className={styles.quoteSnippet}>{quoteSnippet || 'Message'}</span>
                         </button>
-                      )}
+                      ))}
                       {deleted ? (
                         <em>Message removed</em>
                       ) : poll ? (

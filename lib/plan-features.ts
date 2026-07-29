@@ -53,7 +53,13 @@ export type PlanFeature =
   // ── Coach Chat (Project 1 — Tournament Chat) ─────────────────────────────
   /** Live group chat between the host org and all participating coaches — tournament_plus and above.
    *  Gates the HOST org only; participating coaches need no plan of their own. */
-  | 'tournament_chat';
+  | 'tournament_chat'
+  // ── Coach Chat (Project 2A — Team staff rooms) ───────────────────────────
+  /** A team's standing coach↔coach staff room (head + assistants, no tournament). Club tiers via the
+   *  rank ladder + an explicit grant to the standalone Premium Coaches Portal ('team'). League is
+   *  deliberately excluded — it has no rep teams, so it has no coaching staffs to chat. Gates room
+   *  CREATION only; reading/posting stays membership-gated, mirroring tournament_chat. */
+  | 'coach_peer_chat';
 
 export const PLAN_RANK: Record<OrgPlan, number> = {
   tournament:      0,
@@ -100,6 +106,7 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   fan_score_alerts:                  'tournament_plus',
   // ── Coach Chat ───────────────────────────────────────────────────────────
   tournament_chat:                   'tournament_plus',
+  coach_peer_chat:                   'club',
 };
 
 /**
@@ -109,7 +116,7 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
  * (roster, schedule, lineup cards, etc.).
  */
 const PLAN_FEATURE_GRANTS: Partial<Record<OrgPlan, PlanFeature[]>> = {
-  team: ['pdf_exports'],
+  team: ['pdf_exports', 'coach_peer_chat'],
 };
 
 export function hasPlanFeature(planId: OrgPlan, feature: PlanFeature): boolean {
@@ -149,6 +156,10 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       return 'Live score alerts to fans who follow a team are included with Tournament Plus, League Plus, and Club.';
     case 'tournament_chat':
       return 'Tournament Chat — a live group chat with all your participating coaches — is included with Tournament Plus, League Plus, and Club.';
+    case 'coach_peer_chat':
+      // Explicit case REQUIRED: both copy helpers forward unknown features to each other, so a
+      // missing case here would recurse forever.
+      return 'A team staff room — a standing chat for the head coach and assistants — is included with the Premium Coaches Portal and Club.';
     case 'live_score_refresh':
     case 'fan_following':
     case 'pwa_install':

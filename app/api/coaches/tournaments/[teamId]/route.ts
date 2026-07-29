@@ -15,7 +15,11 @@ import { withObservability } from '@/lib/observability';
  * `requireCoachRegistrationAccess` (explicit-link ownership; 403 for an unclaimed/foreign reg).
  *
  * Invariants:
- *   • `teams.coach` is NOT NULL on prod — NEVER write null/'' (an empty submitted name → 400).
+ *   • `teams.coach` is NULLABLE in both envs (migration 202 dropped prod's NOT NULL; migration 204
+ *     normalized the 17 legacy `''` rows to NULL). This route still REJECTS an empty submitted
+ *     name with a 400 — but that is now a product rule, not a schema constraint: a coach editing
+ *     their own team should not be able to blank the name. If absence ever needs storing here,
+ *     write NULL — never `''`.
  *   • `teams.email` is the portal access/claim key and is NEVER touched here. The new contact email
  *     lives in the separate `teams.coach_email` (mig 124); coach-facing emails prefer
  *     `coach_email ?? email` (see `resolveCoachRecipient` in lib/email.ts). Clearing the contact

@@ -62,6 +62,6 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
   const emoji = new URL(req.url).searchParams.get('emoji') ?? '';
   if (!isReactionEmoji(emoji)) return NextResponse.json({ reactors: [] });
 
-  const reactors = await getReactionReactors({ roomId, messageId, emoji });
+  const reactors = await getReactionReactors({ roomId, messageId, emoji, visibleFrom: membership.history_visible_from });
   return NextResponse.json({ reactors });
 }, { route: '/api/chat/rooms/[roomId]/messages/[messageId]/reactions' });

@@ -2,6 +2,14 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import type { CoachingAssignment, ClosedCoachingAssignment } from './db';
 
+/** The two account-scoped coach onboarding preferences (Quiet Mode Phase C2). */
+export interface CoachOnboardingPrefsState {
+  /** Coach finished or skipped the portal tour ⇒ never offer it again. */
+  tourDismissed: boolean;
+  /** Coach turned off season-setup guidance. */
+  hintsOff: boolean;
+}
+
 interface CoachesContextType {
   assignments: CoachingAssignment[];
   /** Teams whose ONLY season(s) are closed — read-only Season's End access (Batch 3, P0 #1).
@@ -9,13 +17,25 @@ interface CoachesContextType {
   closedAssignments: ClosedCoachingAssignment[];
   loading: boolean;
   refresh: () => Promise<void>;
+  /**
+   * Account-scoped onboarding preferences, SSR-seeded by the coaches layout. They live here rather
+   * than in the team Overview because they are facts about the COACH, not the team: fetching them
+   * per page would repeat an identical request on every team switch for data that cannot differ.
+   */
+  onboardingPrefs: CoachOnboardingPrefsState;
+  /** Optimistically apply + persist a preference change. */
+  setOnboardingPrefs: (patch: Partial<CoachOnboardingPrefsState>) => void;
 }
+
+const DEFAULT_PREFS: CoachOnboardingPrefsState = { tourDismissed: false, hintsOff: false };
 
 const CoachesContext = createContext<CoachesContextType>({
   assignments: [],
   closedAssignments: [],
   loading: true,
   refresh: async () => {},
+  onboardingPrefs: DEFAULT_PREFS,
+  setOnboardingPrefs: () => {},
 });
 
 /**
@@ -40,6 +60,7 @@ export function CoachesProvider({
   orgSlug,
   initialAssignments,
   initialClosedAssignments,
+  initialOnboardingPrefs,
 }: {
   children: ReactNode;
   orgSlug: string;
@@ -48,11 +69,27 @@ export function CoachesProvider({
    *  the identical data on every mount. Provide BOTH or NEITHER. */
   initialAssignments?: CoachingAssignment[];
   initialClosedAssignments?: ClosedCoachingAssignment[];
+  /** SSR seed for the account-scoped onboarding preferences — read in the layout's existing
+   *  parallel lookup, so no client round-trip and no flash of the wrong state. Absent = the
+   *  show-guidance defaults, which is the correct fail-open direction. */
+  initialOnboardingPrefs?: CoachOnboardingPrefsState;
 }) {
   const seeded = initialAssignments !== undefined && initialClosedAssignments !== undefined;
   const [assignments, setAssignments] = useState<CoachingAssignment[]>(initialAssignments ?? []);
   const [closedAssignments, setClosedAssignments] = useState<ClosedCoachingAssignment[]>(initialClosedAssignments ?? []);
   const [loading, setLoading] = useState(!seeded);
+  const [onboardingPrefs, setPrefsState] = useState<CoachOnboardingPrefsState>(initialOnboardingPrefs ?? DEFAULT_PREFS);
+
+  /** Optimistic: the UI has already moved. A failed write only means the choice doesn't follow the
+   *  coach to their next device — not worth an error banner over a UI preference. */
+  const setOnboardingPrefs = useCallback((patch: Partial<CoachOnboardingPrefsState>) => {
+    setPrefsState(prev => ({ ...prev, ...patch }));
+    void fetch('/api/coaches/onboarding-preferences', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch),
+    }).catch(() => { /* preference-only; local state already reflects the choice */ });
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -74,7 +111,7 @@ export function CoachesProvider({
   }, [seeded, load]);
 
   return (
-    <CoachesContext.Provider value={{ assignments, closedAssignments, loading, refresh: load }}>
+    <CoachesContext.Provider value={{ assignments, closedAssignments, loading, refresh: load, onboardingPrefs, setOnboardingPrefs }}>
       {children}
     </CoachesContext.Provider>
   );

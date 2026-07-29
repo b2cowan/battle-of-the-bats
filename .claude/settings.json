@@ -322,7 +322,11 @@
       "Bash(node scripts/db-query.mjs --prod -q \"select count\\(*\\) as null_invited_email_pending from organization_members where status='invited' and invited_email is null;\")",
       "Bash(git --no-pager diff --name-only -- \"app/platform-admin/customer-users/CustomerUsersClient.tsx\" \"lib/team-ownership-transfer.ts\")",
       "Bash(git --no-pager diff --cached --name-only)",
-      "PowerShell(aws amplify list-jobs --app-id d3ld0l2bgmmlga --branch-name dev --max-results 2 --region us-east-2)"
+      "PowerShell(aws amplify list-jobs --app-id d3ld0l2bgmmlga --branch-name dev --max-results 2 --region us-east-2)",
+      "Bash(aws amplify *)",
+      "Bash(aws logs *)",
+      "Bash(awk '{ print length, NR }' TODO.md)",
+      "PowerShell(Get-ChildItem \"docs\\\\projects\\\\active\" -File | Sort-Object LastWriteTime -Descending | Select-Object Name, LastWriteTime, @{n='KB';e={[math]::Round\\($_.Length/1KB,1\\)}} | Format-Table -AutoSize)"
     ],
     "additionalDirectories": [
       "\\tmp",

@@ -119,16 +119,69 @@ tab (a passive read; no sync is triggered from the dashboard), so it can read 0 
 up. Needs a different fix than the five above. **The funnel also blends free-portal and paid coaches
 into one number** — judged not worth splitting, since the organizer pays for chat either way.
 
-### 1.3 In-Org Coach-to-Coach Chat (Project 2) — NOT STARTED · **NEXT (Step 3): RE-SCOPE, don't build**
+### 1.3 In-Org Coach-to-Coach Chat (Project 2) — ✅ 2A (team staff rooms) COMPLETE 2026-07-29; 2B (org-wide room) HELD for the Club evaluation
 
-Paid coaches inside ONE org talking to each other: an org-wide room plus optional per-team rooms,
-League/Club gated, reusing the Project-1 engine.
+**2A closed 2026-07-29:** re-scoped → ruled → built → /simplify + 5-lens /review (all findings
+fixed) → help docs synced (`recipe-staff-room` + FAQs in the coaches guide; hub cards updated) →
+owner released it (commit/release run by the owner in a separate session; migs 205–209 ride that
+release — `check:migrations` gates it). Plan pair archived. **Remaining in Project 2: only 2B**,
+which re-enters with the League/Club evaluation.
 
-> **Handoff written 2026-07-29** after Steps 1 and 2, for whoever picks this up in a fresh chat.
-> Start here, not at the archived plan. **Step 3's deliverable is a re-scope, not code** — and the
-> owner's standing rule applies to every step: **PM brief + mockups of every changed screen and
-> state, approved, before any code.** If a step needs no visual change, say so explicitly and get
-> that confirmed rather than skipping the gate.
+Paid coaches inside ONE org talking to each other, reusing the Project-1 engine.
+
+> **Step 3 done.** The re-scope lives at `IN_ORG_COACH_CHAT_RESCOPE_PLAN.md` +
+> `_PM_BRIEF.md` (**docs/projects/archive/** — moved 2026-07-29 when 2A shipped) — **that pair
+> supersedes both the original archived plan AND the engine-facts summary below.** Three corrections it established (by file-content sweeps):
+> 1. **The old plan's centerpiece shipped without it** — assistant coaches are live AND already
+>    seated in tournament chat (membership never checks coach role). That workstream is deleted.
+> 2. **Market correction:** rep teams (paid coaches) are **Club-only** — League Plus has no
+>    `module_rep_teams`. And the standalone Premium Coaches Portal (post-dates the old plan) means
+>    the *per-team staff room* is the only piece with a purchasable market today; the org-wide
+>    room's market (Club) is parked.
+> 3. **The engine is readier than the handoff below feared:** `chat_rooms` has NO tournament
+>    column — the `coach_peer` surface has been reserved in the schema since mig 141, and
+>    RLS/moderation/notify are all room-generic. The "no tournament to hang off" problem is
+>    app-layer only (resolver, moderator rule, list filter/self-heal, roster branch, admin routes +
+>    missing `coach_peer_chat` PlanFeature, portal UI home). Enumerated in the re-scope §2.
+>
+> **✅ RULED 2026-07-29 (owner):** CH-2 revised = **per-team staff rooms ONLY, build NOW** (org-wide
+> room held for the Club evaluation); CH-5 = **AMENDED same day: nobody inherits staff-room
+> history** — every member, replacement head coach included, sees only from their own join date
+> (per-member watermark; tournament chat untouched). Project 2
+> is greenlit as deliverable **2A** of the re-scope. Build brief + mockups APPROVED 2026-07-29
+> (artifact `50a9d5aa` v2 = binding spec; V1 behavior spec in the re-scope §5).
+>
+> **✅ 2A BUILT ON DEV 2026-07-29 (uncommitted; owner QA pending).** Mig 208 (per-member history
+> watermark + RLS predicate) applied to dev; `coach_peer_chat` PlanFeature (team + club tiers);
+> staff resolvers + derived-membership sync (head=moderator, fresh watermark on seat
+> create/reactivate, season-end/entitlement-lapse → read-only, reopens itself); room list + global
+> inbox + unread/preview/pins/reply-quotes all watermark-clamped (quotes of pre-join messages render
+> "Not visible to you", incl. a conservative live-message guard); head-coach pin + remove-message on
+> member-authorized routes (coach_peer only — never a side door around the tournament admin gate);
+> portal list reads "Your chats" with the staff room pinned + STAFF tag + staff-of-one invite nudge.
+> Typecheck ✅ · lint (changed files) 0/0 ✅ · 482/482 tests ✅ · dictionary + snapshots refreshed.
+>
+> **/simplify + /review (5-lens adversarial) RUN 2026-07-29; all confirmed findings FIXED same day.**
+> Review verdicts: tournament chat proven byte-identical (app + RLS level). Fixed: **[Critical]**
+> reply-at-send was a one-request oracle for a pre-join message's author+snippet (watermarked sender
+> can no longer quote an invisible target) · **[Critical]** reaction/poll-vote metadata of pre-join
+> messages was readable via API, direct PostgREST, and realtime — **mig 209** extends the watermark
+> predicate to both tables' RLS + all summary/reactor/voter reads + react/vote/close writes ·
+> **[High]** the deeper fix: **coach_peer rooms now persist reply-quotes as `{ id }` only** (never
+> text — the denormalized snippet was readable by members seated between target and reply; readers
+> get quotes hydrated per-viewer server-side; hidden stubs carry a blanked id, closing the id-oracle)
+> · **[High]** consumer inbox no longer offers a staff-room head coach the broken "Event admin" link
+> · **[High]** seat-insert race (one conflicting row silently discarded the whole batch → upsert-
+> ignore) · **[Med]** pinned-quote leak, membership-first route ordering, active+archived+404
+> consistency on the moderation routes, nudge gated to the head coach, render-time quote resolution
+> (fixes both the mount-race leak and stuck-hidden legit quotes). Accepted (noted, no fix):
+> read-state count oracle (pre-existing, counts only), post-vs-archive TOCTOU (pre-existing
+> pattern), ms-scale moderator-swap window, stale nudge count until reload.
+> Post-fix: typecheck ✅ · lint 0/0 ✅ · 482/482 ✅ · snapshots at watermark **#209** · clean dev
+> restart, login 200. ⚠ **Release gate: migs 205–209 must reach prod before this promotes** —
+> schema-parity lists the expected dev-ahead drift.
+
+<details><summary>Original Step-3 handoff (superseded by the re-scope — kept for the audit trail)</summary>
 
 **Why the old plan is stale — verified, not assumed.** `docs/projects/archive/IN_ORG_COACH_CHAT_PLAN.md`
 §2 argues this project is *"the natural place to introduce **assistant coaches**, which in-org chat
@@ -172,6 +225,8 @@ currently cannot buy.** That does not forbid scoping it — but the re-scope mus
 is for and when, and must not assume a League launch date. Confirm with the owner before assuming
 this is worth building now rather than after the League evaluation.
 
+</details>
+
 ### 1.4 Cross-Org Coach Messaging (Project 3) — NOT STARTED
 A coach in one org messages a coach in another (e.g. to arrange a scrimmage). Locked constraints:
 free coaches excluded; **both sides need a paid coaching entitlement**; start with invite-by-link,
@@ -201,10 +256,10 @@ These have been open since June and **block Projects 2–4 from being scoped**:
 | # | Decision | Recommendation |
 |---|----------|----------------|
 | ~~CH-1~~ | ~~**Does a tournament's chat room stay readable after the tournament archives, or close at archival?**~~ | ✅ **RESOLVED 2026-07-29 — read-only persistence.** Ratified by the owner with the Step 1 brief. Built: a `completed`/`archived` event keeps its room readable but **stops chasing sign-ups** — the reminder button retires and the send route refuses (409). |
-| CH-2 | **Coach peer chat (Project 2): one org-wide room, per-team rooms, or both?** | Design the room-list UX first; lean org-wide only at launch. |
+| ~~CH-2~~ | ~~**Coach peer chat (Project 2): one org-wide room, per-team rooms, or both?**~~ | ✅ **RESOLVED 2026-07-29 — per-team staff rooms ONLY, build now.** The re-scope revised the old "lean org-wide only" rec (rep teams are Club-only and Club is parked; staff rooms serve the live Premium Coaches Portal market). Org-wide room held for the Club evaluation. See `IN_ORG_COACH_CHAT_RESCOPE_PLAN.md` §4. |
 | CH-3 | **Which paid entitlements qualify for cross-org messaging** — paid Coaches Portal only, or also Premium coaches inside League/Club, and does a Tournament Plus admin who also coaches count? | Paid Coaches Portal + Premium-in-org; exclude admin-who-coaches. |
 | CH-4 | **Do cross-org threads persist indefinitely, or auto-archive after inactivity?** | Auto-archive after inactivity — reduces PII surface. |
-| CH-5 | **When a coach is replaced mid-season, does the new coach inherit prior message history?** | No, for coach↔parent. Yes, for coach↔coach team rooms. Privacy asymmetry is deliberate. |
+| ~~CH-5~~ | ~~**When a coach is replaced mid-season, does the new coach inherit prior message history?**~~ | ✅ **RESOLVED 2026-07-29 — NOBODY inherits staff-room history** (amended same day from an initial "yes-inherit" ruling, after weighing a new assistant walking into candid staff talk). Every member sees only from their own join date; no role exception, no toggle. Tournament chat keeps full-history-on-join (shipped). Coach↔parent history stays open in Project 4. |
 | CH-6 | **Coach↔parent MVP: rep teams only, or also free-tier basic-coach teams?** | Rep teams only — free-tier doubles resolver + dedup complexity for no revenue. |
 | CH-7 | **Parent invite TTL — expire-and-resend, or valid indefinitely?** | Expire and resend. |
 | ~~CH-8~~ | ~~Is Project 2/3/4 still wanted at all?~~ | ✅ **RESOLVED 2026-07-29 — YES, the program is KEPT and GREENLIT to start.** Owner considered retiring it (including the live Tournament Chat surface) and explicitly declined: *"don't kill it."* CH-1…CH-7 are therefore live decisions again. |
@@ -222,10 +277,12 @@ active front, and cross-org messaging carries a legal dependency. Ratified order
    there is an honest adoption read, and the reminder that drives it can no longer spam a coach.
 2. **Close division rooms** — built and shipped; needs a walkthrough, not a build. **Walkthrough
    ISSUED 2026-07-29** (artifact `9a2ed199`); awaiting the owner pass + a ruling on finding **F4**.
-3. **Re-scope Project 2 (in-org coach-to-coach)** against the shipped assistant-coach model — its plan
-   predates that work and is stale. **← NEXT. Handoff for a fresh chat is in §1.3;** start there, not
-   at the archived plan. Deliverable is a re-scope, not code. Note that League/Club — this project's
-   whole market — is currently parked and non-purchasable.
+3. ~~**Re-scope Project 2 (in-org coach-to-coach)**~~ — ✅ **DELIVERED 2026-07-29** as
+   `IN_ORG_COACH_CHAT_RESCOPE_PLAN.md` + `_PM_BRIEF.md`. Scope shrank as predicted (assistant-coach
+   workstream deleted; engine readier than feared) and the market inverted: the per-team staff room
+   is the only piece with live buyers (Premium Coaches Portal); the org-wide room is Club-only and
+   Club is parked. **← NOW BLOCKED on 3 owner rulings: CH-2 (revised), CH-5, build timing.** No
+   code until ruled + the PM-brief-and-mockups gate.
 4. **Hold Projects 3 and 4** — cross-org needs real standalone paid coaches to exist first, and its
    directory is blocked on a privacy-law review; coach↔parent is entirely unscoped and carries the
    heaviest privacy load in the program.

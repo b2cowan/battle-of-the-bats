@@ -18,6 +18,9 @@ export type InboxRoom = {
   /** WI-1: false for a draft tournament (no public home) → the event chip is hidden. */
   tournamentIsPublic: boolean;
   isModerator: boolean;
+  /** Project 2A: a team staff room — suppresses the Event-admin shortcut (its moderator is the
+   *  head coach; no admin surface exists and eventId is not a tournament id). */
+  isStaffRoom?: boolean;
   unreadCount: number;
   selfNotifMuted: boolean;
   readOnly: boolean;

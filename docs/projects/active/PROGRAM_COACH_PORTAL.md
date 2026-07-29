@@ -2,18 +2,25 @@
 
 > **Consolidated 2026-07-28.** Replaces 32 separate coach-portal plan/brief files (listed in §5).
 > **Scope of this doc:** outstanding work only. Shipped work appears as one-line reference in §4.
-> **NOT in this doc:** the three in-flight coach projects — `FREE_COACH_PORTAL_EXPERIENCE_PLAN.md`,
-> `COACH_PORTAL_LAUNCH_BATCH1_PLAN.md`, `COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`. Those are current and
-> stay as their own files. This doc holds everything *they don't cover*.
+> **NOT in this doc:** the in-flight coach projects, which stay as their own files —
+> `FREE_COACH_PORTAL_EXPERIENCE_PLAN.md` and the launch batches
+> (`COACH_PORTAL_LAUNCH_BATCH1/2/3_PLAN.md` shipped; `..._BATCH4_BUILD_PROMPT.md` in flight).
+> This doc holds everything *they don't cover* — and **§1.1 is the ledger that says which is which.**
+> **Start at §1.1.** "All P0s done" is NOT "program done"; 12 P1s, ~24 polish items and 6 wow ideas
+> remain, grouped into pickable chunks at the end of §1.1.
 
 ---
 
-## 0. Ground truth (verified 2026-07-28)
+## 0. Ground truth (verified 2026-07-28; release state re-checked 2026-07-29)
 
-`origin/master` is at `6afa1429` (2026-07-27); `dev` is **8 commits ahead**, all dated 07-27/07-28.
-Therefore **every coach-portal build recorded as "BUILT on dev" before 2026-07-27 is live in
-production.** Migration watermark is **205**; all `⚠ prod-pending mig NNN` markers in the retired
-source files (135–198) were resolved and are applied to prod.
+`origin/master` is at `6afa1429` (2026-07-27). Therefore **every coach-portal build recorded as
+"BUILT on dev" before 2026-07-27 is live in production.** Migration watermark is **205**; all
+`⚠ prod-pending mig NNN` markers in the retired source files (135–198) were resolved and are
+applied to prod.
+
+⚠ **`dev` is now 21 commits ahead of `origin/dev` and NOTHING from launch Batches 1–3 is on prod**
+(re-checked 2026-07-29 — it was 8 ahead when this doc was written). The unreleased queue is growing
+into one large promote; **whether Batches 1–3 ship before Batch 4 lands is an open owner call.**
 
 Practical consequence: the large "awaiting owner browser verification" tail across the June coach
 plans is **not blocking work** — it shipped and has been in customers' hands for weeks. It is
@@ -23,14 +30,158 @@ folded into §3 as a single verification-debt item, not carried as N separate op
 
 ## 1. Outstanding work
 
-### 1.1 Premium portal — readiness P0s not yet batched
-Owned by the 18-agent readiness review (`docs/agents/design/PREMIUM_COACH_PORTAL_UX_READINESS_REVIEW.md`).
-Batches 1 and 2 cover P0 #3–#8. **Still open:**
+### 1.1 Readiness review — THE LEDGER (status of all 85 findings)
 
-| # | Item | Why it matters |
-|---|------|----------------|
-| P0 #1 | **Season-end lockout** — a coach hitting season end loses access to their own team's data | Highest-severity trust failure in the paid product |
-| P0 #2 | **Tournament games have no lineup/attendance tools** — the premium coach's tournament games are second-class vs league games | The paid pitch is "run your team"; tournaments are where they need it most |
+Source of findings: `docs/agents/design/PREMIUM_COACH_PORTAL_UX_READINESS_REVIEW.md`. That doc is a
+**review, not a backlog** — it has no status and never learns what shipped. **This section is the
+backlog.** Ledger opened 2026-07-29 because several items had already been silently absorbed into
+batches and a future reader would have re-planned shipped work.
+
+**Rule: when a batch absorbs a review item, tick it HERE in the same unit of work.**
+
+#### P0 — go-to-market blockers (8): ✅ ALL 8 SHIPPED
+
+| # | Item | Status |
+|---|------|--------|
+| #3 | Tournaments page dead end | ✅ Batch 1 (`934e5275`) |
+| #4 | Mobile Save/Add buttons under the bottom nav | ✅ Batch 1 |
+| #5 | Mobile More menu has no scroll cap | ✅ Batch 1 |
+| #6 | Onboarding never mentions half the product | ✅ Batch 2 (`8040f4e6`) |
+| #7 | No fast way to add a roster | ✅ Batch 2 |
+| #8 | Heavy forms — 10–13 fields, no progressive disclosure | ✅ Batch 2 |
+| #1 | Season-end lockout | ✅ Batch 3 (`85d2a015`) |
+| #2 | Real tournament games have no attendance/lineup tools | ✅ Batch 4 (`13e2c021`) |
+
+**The P0 list is CLEAR as of 2026-07-29 (Batch 4, `13e2c021`). That does NOT mean this program is
+finished — everything below is still open.**
+
+#### P1 — high value, soon after launch (17): 6 resolved, 11 open
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | Chat vs Announcements are indistinguishable in the nav | **OPEN** |
+| 2 | Chat has no honest empty state outside a tournament | **OPEN** |
+| 3 | Attendance has no home in the nav (×2 reviewers) | ✅ **Batch 4** — own Squad item, gated on attendance + roster; page opens on "take attendance for {next event}" |
+| 4 | No notification bell anywhere on mobile | **OPEN** |
+| 5 | Unsaved-changes guard missing on Accounting + Tryout-setup forms | **OPEN** |
+| 6 | Weekly recurrence locks every game to one opponent | **OPEN** — pairs with #7 |
+| 7 | No schedule import | **OPEN** — deliberately excluded from Batch 2; belongs with #6 |
+| 8 | Game-day card downgrades on the actual game day | ✅ **Batch 4** — game day now offers the same one-tap lineup + attendance the in-season card does. The *fuller* card (wow #2: arm-care warning, richer chips) is still open |
+| 9 | Lineup touch targets under the standard (×2 reviewers) | **OPEN** — ⚠ lineups; do with/after Batch 4 |
+| 10 | Money's reports have zero mobile adaptation (×2 reviewers) | **OPEN** — see chunk A below |
+| 11 | Forms don't reflow to one column on phones | ✅ **absorbed into Batch 1** (verified 2026-07-29: reaches Player Detail too) |
+| 12 | No orientation for coaches who never had a free team | **OPEN, narrowed** — Batch 2's first-week trail covers the guidance half; the *welcome* moment for cold signups is still missing |
+| 13 | Guardian fields are contact-only, unexplained | ➡️ **moved to §1.4** (guardian model) |
+| 14 | Tournaments list unsorted, no in-context help | ✅ **absorbed into Batch 1** |
+| 15 | Season winding-down gives no cue | ✅ **absorbed into Batch 3** |
+| 16 | Tryout scoring hidden behind an evaluator detour | **OPEN** |
+| 17 | Help "?" icons promised everywhere, present on 3 of ~25 pages | **OPEN** |
+
+#### P2 — polish (~30, prose paragraph in the review): mostly open
+
+Not enumerated here — the review's paragraph stays the source. **Absorbed so far:**
+- Native `window.confirm` for removing an assistant → ✅ Batch 2 (portal dialog)
+- Native `alert()` on budget-delete failure → **still OPEN** (see chunk A below)
+- "Save & add another" on the one-player flow → ✅ Batch 2
+- Live duplicate-jersey check → ⚠️ **PARTIAL** — Batch 2 flags clashes in the *bulk preview*; the
+  single Add Player form still only reports them after saving
+- Two position-editing UIs → ✅ Batch 2 (owner call: one "Best Position" on the add form)
+- Settings rollover copy omits development history/awards → ✅ Batch 3
+
+#### Wow shortlist (8): 2 shipped, 6 open
+
+| # | Idea | Status |
+|---|------|--------|
+| 1 | First-10-minutes setup momentum ring | ✅ Batch 2 |
+| 7 | Season Wrapped | ✅ Batch 3 |
+| 2 | Real game-day card for regular-season games | **PARTIAL** — the downgrade half shipped in Batch 4 (P1 #8); the arm-care warning + richer chips remain open |
+| 3 | One-tap postgame recap draft into Announcements | **OPEN** |
+| 4 | No-login "follow this game" link for parents | **OPEN** — review's pick for most likely to spread |
+| 5 | Shareable player trading card | **OPEN** |
+| 6 | Per-player season recap | **OPEN** |
+| 8 | Printable award certificates | **OPEN** |
+
+#### What's left, grouped into pickable chunks
+
+The open items above are not a to-do list to work top-down — they cluster into seven coherent pieces.
+Sized so one chat can plan → mock → build → review each. **Chunk A is the recommended next build**
+(collision-free while Batch 4 runs; every other chunk overlaps something in flight or needs a decision).
+
+**A · Money on a phone** — *recommended next; medium; no dependencies*
+P1 #10 (reports have zero mobile adaptation, ×2 reviewers) + the remaining mobile-pass tables from
+§1.3 (expenses, allocations, budget-vs-actual, fundraiser detail — "mechanical, follows the Dues
+exemplar") + P1 #5 (unsaved-changes guard on accounting forms — a hand-built budget split is the
+worst thing in the product to retype) + the P2 native `alert()` on budget-delete failure.
+*Why it hangs together:* one area, one proven pattern, one QA pass. A treasurer-coach can do dues on
+a phone today but cannot read their own budget report on one. **Accounting is untouched by every
+other active stream** — verified 2026-07-29.
+
+**B · Findability & portal chrome** — *small–medium; UNBLOCKED 2026-07-29 (Batch 4 landed)*
+P1 #1 (Chat vs Announcements), #2 (Chat's honest empty state), #4 (mobile notification bell),
+#17 (the help-icon promise), #12 (welcome moment for cold signups). Batch 4 has landed, so the nav
+collision is gone — but note the concurrent Coach Onboarding Quiet Mode stream is also editing empty
+states and page headers; check its state before starting #2 and #17.
+
+**C · Schedule intelligence** — *medium; UNBLOCKED 2026-07-29 (Batch 4 landed)*
+P1 #6 (weekly recurrence locks one opponent — currently *more* clicks than not using it) + #7
+(schedule import) + #9 (lineup touch targets) + the remainder of wow #2 (arm-care warning and richer
+chips on the game-day card — its *downgrade* half shipped in Batch 4). ⚠ Recurrence and import both
+write events; Batch 4 made the schedule carry organizer-owned mirrored games that must never be
+touched by a bulk path — any new write path must respect `isMirroredEvent`.
+
+**D · The parent-facing set** — *large; the commercial upside; needs an owner decision first*
+Wow #4 (no-login "follow this game" link — the review's pick for most likely to spread), #5 (player
+trading card), #6 (per-player season recap), #3 (postgame recap draft), #8 (printable certificates).
+The review's judgement: the ingredients already exist server-side, so this is presentation work — but
+**verify that before promising it.** Decide first whether this is a *retention* play or an
+*acquisition* play; that changes what gets built and whether it's gated.
+
+**E · Tryouts + Development tidy-up** — *small; independent of everything*
+P1 #16 (tryout scoring hidden behind an evaluator detour) + the Development-hub polish (two
+overlapping "coverage" doors, a permanent "coming later" placeholder on brand-new teams, a blank
+award picker). Good filler work; collision-free.
+
+**F · The frozen past season** — *medium; owner-DECIDED, no decision outstanding; collision-free*
+Promoted from §1.5 to a first-class chunk (owner call, 2026-07-29) — it was being tracked as a
+footnote and kept getting deferred. Full scope and the governing rules stay in §1.5.
+*What it accomplishes:* a closed season becomes the whole portal again, read-only — roster,
+schedule and results, lineups, attendance, money records, documents, awards — instead of the two
+doors Batch 3 shipped (Season's End + the results archive). Every coach who was on that season's
+staff keeps exactly the access their capabilities gave them at the time; staff management stays the
+one live write surface and governs read access only.
+*Why it hangs together:* every rail it needs already exists — the season-read resolver, the
+per-season capability rule, the year-parameterised pattern and the read-only write guards all
+shipped in Batch 3. This is the section pages learning a read-only mode, not new plumbing.
+*Not a launch blocker* — the lockout is fixed and records are readable today.
+
+**G · The budget starter** — *owner-raised 2026-07-29; medium; NOT from the readiness review; gated on a decision*
+*The gap:* a first-season coach opens Budget and gets a blank page. The Money hub names a next
+action, but the action is "set a budget" and there is nothing behind it — no structure, no example,
+no sense of what finished looks like. Coaches are volunteers, not accountants.
+*Framing that narrows it (verified 2026-07-29):* this is a **first-season** problem, not a budgeting
+problem. Season rollover already carries a planned budget and fee template into year 2+, so the coach
+staring at a blank page is specifically the one starting out.
+*What it accomplishes:* a coach answers a few plain questions (how many tournaments, roughly what
+each costs, any off-season training block) and lands on a real starting budget they can edit — plus a
+clearly-labelled **sample** budget and sample budget-vs-actual so they can see what they are building
+toward before they build it.
+*Two things the build must respect:*
+1. **Structure beats numbers.** The real question is "what am I forgetting?" — forgetting umpire fees
+   or tournament deposits wrecks a season; being 10% off on a line does not. A checklist of what teams
+   like theirs budget for, with amounts blank, is most of the value at a fraction of the risk.
+2. **⚠ Do NOT ship invented dollar figures.** Anchoring a coach low means they under-collect and end
+   the season short — a real harm to a real family. Costs swing hard by region, sport, age and level.
+   See the gating decision below.
+*Cheapest high-value slice:* the sample/preview. Presentation only, asserts no number is right for
+them, and answers most of the reassurance need on its own. Good candidate to ship first and alone.
+*Sequencing:* **after chunk A** — same surfaces, and they should be good on a phone first. Chunk A
+must not paint the empty budget state into a corner.
+*Gated on:* where suggested amounts come from — ship structure-only with blank amounts, or ground
+suggestions in the platform's own real tournament entry fees. Logged as **Proposed** in
+ (2026-07-29); not decided.
+
+**Not in any chunk, tracked separately:** the guardian model (§1.4, gated on CP-7), assistant-coach
+first-run and inline roster quick-edit (§1.2 below).
 
 ### 1.2 Premium portal — walkthrough findings left open
 From the owner-driven premium walkthrough (2026-06-26 → 06-28). These were explicitly deferred, not fixed:

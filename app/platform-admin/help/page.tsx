@@ -32,10 +32,10 @@ export default function PlatformAdminHelpPage() {
     },
     {
       title: 'Coaches Portal',
-      desc: 'Customer-facing guide coaches can use for rosters, schedules, dues, expenses, player documents, and tournament chat.',
+      desc: 'Customer-facing guide coaches can use for rosters, schedules, dues, expenses, player documents, and chat.',
       href: '/platform-admin/help/coaches',
-      topicCount: 8,
-      keywords: ['customer', 'coach', 'coaches portal', 'roster', 'schedule', 'dues', 'documents', 'chat', 'tournament chat'],
+      topicCount: 9,
+      keywords: ['customer', 'coach', 'coaches portal', 'roster', 'schedule', 'dues', 'documents', 'chat', 'tournament chat', 'staff room', 'staff chat'],
     },
     {
       title: 'Accounting',
@@ -147,6 +147,7 @@ export default function PlatformAdminHelpPage() {
         { label: 'Help a coach get started', href: '/platform-admin/help/coaches#recipe-first-login' },
         { label: 'Track team fees', href: '/platform-admin/help/coaches#recipe-track-dues' },
         { label: 'Coach tournament chat', href: '/platform-admin/help/coaches#recipe-tournament-chat' },
+        { label: 'Team staff room (Premium)', href: '/platform-admin/help/coaches#recipe-staff-room' },
       ],
     },
     {

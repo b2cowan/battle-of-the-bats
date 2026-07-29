@@ -45,7 +45,10 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
   const url = new URL(req.url);
   const before = url.searchParams.get('before');
   const limit = Number(url.searchParams.get('limit')) || 50;
-  const { messages, participants, hasMore } = await getRoomMessages(roomId, { before, limit });
+  // mig 208: the caller's own history watermark bounds what they receive (staff rooms; NULL elsewhere).
+  const { messages, participants, hasMore } = await getRoomMessages(roomId, {
+    before, limit, visibleFrom: membership.history_visible_from,
+  });
 
   // Reaction summaries for the window, so reactions paint with the first render (no flash). Keyed by
   // message id; only messages with ≥1 active reaction appear. NON-FATAL: a reactions-table problem
@@ -75,6 +78,8 @@ export const GET = withObservability(async (req: NextRequest, { params }: Params
       userId: user.id,
       isModerator: membership.member_role === 'moderator',
       mutedUntil: mutedNow(membership.muted_until),
+      // mig 208: lets the client hide live reply-quotes of pre-watermark messages (staff rooms).
+      historyVisibleFrom: membership.history_visible_from,
     },
     messages,
     participants,

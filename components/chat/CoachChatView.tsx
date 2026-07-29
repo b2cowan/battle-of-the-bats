@@ -2,7 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
-import { MessageSquare, ChevronLeft, Loader2 } from 'lucide-react';
+import { MessageSquare, ChevronLeft, Loader2, UserPlus, Users } from 'lucide-react';
+import Link from 'next/link';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { divisionScopeLabel } from '@/lib/chat-display';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -15,10 +16,15 @@ import styles from './CoachChatView.module.css';
  * was retired in A2 — that route now redirects to the global consumer Chat tab — so this component
  * has a single consumer, and its empty state is written to the premium onboarding family.
  * Self-sizing full-height host — fills the portal content area so the conversation reads like a real
- * messaging app. Portal-agnostic: lists every tournament chat room the signed-in coach belongs to
- * (per-user, not per-team) via /api/chat/rooms, then opens the shared ChatPanel for the selected
- * room. Master-detail: a single room auto-opens; with several, the header carries a "Rooms" switcher
- * back to the list (room-switcher-ready for future per-division rooms).
+ * messaging app. Portal-agnostic: lists every chat room the signed-in coach belongs to (per-user,
+ * not per-team) via /api/chat/rooms, then opens the shared ChatPanel for the selected room.
+ * Master-detail: a single room auto-opens; with several, the header carries a "Rooms" switcher back
+ * to the list.
+ *
+ * Project 2A (approved spec, artifact 50a9d5aa v2): the list now also carries the coach's team STAFF
+ * room(s) — pinned first with a STAFF tag — so the heading reads "Your chats", not "Your tournament
+ * chats". The head coach (room moderator) gets pin + remove-message wired to the member-authorized
+ * routes; a staff of one sees an invite nudge instead of an empty room.
  */
 
 type RoomListItem = {
@@ -35,6 +41,11 @@ type RoomListItem = {
   /** F2: divisions this room covers. null = the All-coaches room (nothing to disambiguate);
    *  [] = division-scoped but those divisions were since deleted. */
   divisionNames?: string[] | null;
+  // ── Staff rooms (Project 2A) ──────────────────────────────────────────────
+  isStaffRoom?: boolean;
+  staffTeamId?: string | null;
+  staffOrgSlug?: string | null;
+  staffMemberCount?: number | null;
 };
 
 /**
@@ -45,8 +56,11 @@ type RoomListItem = {
  * here, never substituted for it: two concurrent events can each have a "Championship" room
  * covering a "U11", and dropping the event name would make them indistinguishable (their avatars
  * derive from the room name too, so there'd be no other tell).
+ *
+ * Staff rooms carry the fixed "Your coaching staff" line instead (approved mockup 1).
  */
 function roomSubLabel(r: RoomListItem): string | null {
+  if (r.isStaffRoom) return 'Your coaching staff';
   const divisions = divisionScopeLabel(r.divisionNames);
   const event = r.contextLabel && !r.room.name.startsWith(r.contextLabel) ? r.contextLabel : null;
   return [divisions, event].filter(Boolean).join(' · ') || null;
@@ -58,6 +72,16 @@ function roomSubLabel(r: RoomListItem): string | null {
 async function requestDeleteOwnMessage(roomId: string, messageId: string): Promise<void> {
   const res = await fetch(`/api/chat/rooms/${roomId}/messages/${messageId}`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Delete failed');
+}
+
+/** Pin/unpin as the staff room's own moderator (head coach) — the member-authorized pinned route. */
+async function requestPin(roomId: string, messageId: string, pinned: boolean): Promise<void> {
+  const res = await fetch(`/api/chat/rooms/${roomId}/pinned`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messageId, pinned }),
+  });
+  if (!res.ok) throw new Error('Pin failed');
 }
 
 export default function CoachChatView() {
@@ -114,6 +138,9 @@ export default function CoachChatView() {
       </div>
     );
   } else if (rooms.length === 0) {
+    // With staff rooms auto-created for every entitled premium team, a premium coach should no
+    // longer land here (the list is never empty) — this remains only for the edge where the team's
+    // entitlement is not live. Copy unchanged: the honest action is still the tournament path.
     const tournamentsPath = pathname.replace(/\/chat$/, '/tournaments');
     content = (
       <div className={styles.empty}>
@@ -140,15 +167,15 @@ export default function CoachChatView() {
     const multi = rooms.length > 1;
 
     const roomList = (
-      <div className={styles.sidebar} aria-label="Your tournament chats">
-        <p className={styles.sidebarHead}>Your tournament chats</p>
+      <div className={styles.sidebar} aria-label="Your chats">
+        <p className={styles.sidebarHead}>Your chats</p>
         {rooms.map((r) => {
           const active = r.room.id === selected;
           return (
             <button
               key={r.room.id}
               type="button"
-              className={`${styles.roomRow}${active ? ` ${styles.roomRowActive}` : ''}`}
+              className={`${styles.roomRow}${active ? ` ${styles.roomRowActive}` : ''}${r.isStaffRoom ? ` ${styles.roomRowStaff}` : ''}`}
               onClick={() => setSelected(r.room.id)}
               aria-current={active ? 'true' : undefined}
             >
@@ -158,10 +185,13 @@ export default function CoachChatView() {
               <div className={styles.roomMain}>
                 <span className={styles.roomName}>
                   {r.room.name}
+                  {r.isStaffRoom && <span className={styles.staffTag}>Staff</span>}
                   {r.readOnly && <span className={styles.roTag}>Closed</span>}
                 </span>
                 {roomSubLabel(r) && (
-                  <span className={styles.roomContext}>{roomSubLabel(r)}</span>
+                  <span className={`${styles.roomContext}${r.isStaffRoom ? ` ${styles.roomContextStaff}` : ''}`}>
+                    {roomSubLabel(r)}
+                  </span>
                 )}
                 <span className={styles.roomPreview}>{r.lastMessagePreview ?? 'No messages yet'}</span>
               </div>
@@ -176,6 +206,36 @@ export default function CoachChatView() {
       </div>
     );
 
+    // Project 2A: a staff of one gets a reason to come back, not an empty box. The invite lives on
+    // the Staff page (the existing assistant-invite flow) — chat only points at it. HEAD COACH only
+    // (review fix): a solo assistant (departed head, nobody promoted) would hit "Only the head
+    // coach manages staff" — never offer a CTA that dead-ends. Link parts are null-guarded:
+    // without both slugs the nudge still renders, minus the CTA.
+    const soloStaff =
+      selectedRoom?.isStaffRoom && selectedRoom.isModerator &&
+      selectedRoom.staffMemberCount === 1 && !selectedRoom.readOnly;
+    const staffHref =
+      selectedRoom?.staffOrgSlug && selectedRoom.staffTeamId
+        ? `/${selectedRoom.staffOrgSlug}/coaches/teams/${selectedRoom.staffTeamId}/staff`
+        : null;
+    const nudge = soloStaff ? (
+      <div className={styles.staffNudge}>
+        <Users size={16} aria-hidden className={styles.staffNudgeIcon} />
+        <div className={styles.staffNudgeMain}>
+          <strong>It’s just you in here so far</strong>
+          <p>
+            Staff chat comes alive when your assistants join. Invites live on your Staff page — each
+            assistant you add gets a seat here automatically.
+          </p>
+          {staffHref && (
+            <Link href={staffHref} className={styles.staffNudgeBtn}>
+              <UserPlus size={14} aria-hidden /> Invite an assistant
+            </Link>
+          )}
+        </div>
+      </div>
+    ) : null;
+
     const detail = (
       <div className={styles.detail}>
         {selectedRoom ? (
@@ -186,6 +246,20 @@ export default function CoachChatView() {
               roomSubtitle={roomSubLabel(selectedRoom)}
               unreadCount={selectedRoom.unreadCount}
               onDeleteOwn={(messageId) => requestDeleteOwnMessage(selectedRoom.room.id, messageId)}
+              // Head coach = the staff room's moderator: pin + remove-any-message ride the
+              // member-authorized routes (staff rooms have no admin surface). Tournament rooms
+              // never wire these here — organizer moderation stays on the admin surface.
+              onModerateDelete={
+                selectedRoom.isStaffRoom && selectedRoom.isModerator
+                  ? (messageId) => requestDeleteOwnMessage(selectedRoom.room.id, messageId)
+                  : undefined
+              }
+              onPin={
+                selectedRoom.isStaffRoom && selectedRoom.isModerator
+                  ? (messageId, pinned) => requestPin(selectedRoom.room.id, messageId, pinned)
+                  : undefined
+              }
+              topBanner={nudge}
               iconBefore={<MessageSquare size={14} aria-hidden />}
               headerRight={
                 multi && !isDesktop ? (
@@ -193,7 +267,7 @@ export default function CoachChatView() {
                     type="button"
                     className={styles.backBtn}
                     onClick={() => setSelected(null)}
-                    aria-label="Back to your tournament chats"
+                    aria-label="Back to your chats"
                   >
                     <ChevronLeft size={18} aria-hidden /> <span className={styles.backBtnLabel}>Rooms</span>
                   </button>
