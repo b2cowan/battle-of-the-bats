@@ -49,7 +49,11 @@ frontend:
         # reported "in sync" while prod defaulted new tournaments to `completed`, hid them from
         # the directory, and lacked the games→division foreign key. This runs offline against
         # the committed snapshots and fails when dev/prod diverge in a NEW way.
-        - node scripts/check-schema-parity.mjs
+        # Master-only enforcement, same split as check:migrations in the release flow: dev is
+        # SUPPOSED to run ahead of prod between "migrate dev, test" and "promote + migrate prod"
+        # — that gap is the staging workflow, not drift. Failing dev builds on it blocked every
+        # release with a pending migration (2026-07-29). Report-only off master; hard gate on it.
+        - if [ "$AWS_BRANCH" = "master" ]; then node scripts/check-schema-parity.mjs; else node scripts/check-schema-parity.mjs --list || true; fi
         # Webpack production build (next build --webpack) uses far more heap than the
         # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
         # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.
