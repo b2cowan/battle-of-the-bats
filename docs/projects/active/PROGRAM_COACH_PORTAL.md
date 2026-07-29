@@ -45,10 +45,24 @@ Schedule, and the Accounting **Dues** exemplar are done. **Remaining:** convert 
 tables to the shared card pattern — **expenses, allocations, budget-vs-actual, fundraiser detail**.
 Mechanical, follows the Dues exemplar exactly.
 
-### 1.4 Consistent player / guardian names — NOT BUILT
+### 1.4 Get the guardian model right — NOT BUILT
 The only fully unbuilt item in this program. Free portal stores player + guardian as a **single name
 box**; Premium stores **first and last separately**. On upgrade we have to guess where the first name
 ends. Owner-decided in principle 2026-06-24; never built. **Decisions still open — see §2.**
+
+**Scope widened 2026-07-28 (owner raised it at Batch 2 QA): a player can hold only ONE parent/guardian.**
+Separated parents, two working parents, a grandparent doing the driving — all common, none supported.
+The emergency contact is the only second person we store and it's name + phone, never messaged.
+**Do this WITH the name split, not as its own project:** both reshape the same guardian fields, and
+every surface they touch is the same one — the add-player form, bulk-import columns, the spreadsheet
+template, exports, the PDF, the player profile, and the announcement / dues-reminder recipient logic.
+Shipping them apart means disturbing all of that twice, including two rounds of owner QA.
+Also fold in the readiness review's P1 *"clarify what guardian fields actually do"* (today they're
+contact-only — no parent login or account link — and support fields the question); one piece of work
+that makes the guardian model correct, consistent, plural, and honestly described.
+⚠ **The decision that gates it is a money decision, not a UI one — see CP-7.**
+Note: CP-3 ("guardian optional on the Premium add form") is effectively satisfied — Batch 2 collapsed
+guardian contact behind a disclosure, so it no longer reads as required.
 
 ### 1.5 Coach Portal Growth — Phases 2+
 Phase 1 (per-page education strip, cross-shell brand continuity) shipped. Open:
@@ -79,6 +93,7 @@ delete** path — was owner-approved 2026-06-27; confirm at pickup whether it la
 | CP-4 | **Tournament registration rosters in scope** for the name split? | Yes if they capture a single name field; first build step verifies. |
 | CP-5 | **Coach Portal Growth Phase 5 — flip self-serve checkout to live?** Infrastructure is ready; it's a label change. Gated by the Premium-$0-until-2027-01-01 founding decision. | Hold until the January 2027 conversion runbook is scheduled — flipping now sells something you're currently giving away. |
 | CP-6 | **Premium getting-started help rewrite** — schedule now or bundle with the next `/docs` sweep? | Bundle with the next `/docs` sweep. |
+| CP-7 | **When a player has two guardians, who gets the dues reminder — both, or one nominated payer?** (raised 2026-07-28; gates §1.4's multi-contact scope.) The same question decides whether announcements go to every contact, which changes what the pre-send recipient count means. Getting it wrong means a household is chased twice for one payment, or one parent silently never hears anything. | **Needs an owner ruling before build** — it's a money/messaging call, not a UI one. Leaning: announcements → all contacts; dues → one nominated **billing contact** per player, defaulting to the first, so money has exactly one addressee and no family is double-chased. |
 
 ---
 
