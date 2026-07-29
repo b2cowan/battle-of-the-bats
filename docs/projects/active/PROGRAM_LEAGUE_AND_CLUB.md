@@ -25,9 +25,13 @@ The launch itself is small: flip `LEAGUE_STARTER_BETA`, complete the branding re
 (free house-league floor = "League"; the paid $89 tier = "League Plus", mirroring Tournament /
 Tournament Plus — internal keys unchanged), and open the entry page.
 
-**⚠ Blocker — `/api/league/create` has no one-org guard.** Today it is held shut only by the flag being
-off in production (it is **on** in dev). Flipping the flag without the guard opens unrestricted org
-creation. See `PROGRAM_ACCOUNTS_AND_ACCESS.md` §AA-1. **Do not launch before this is fixed.**
+**⚠ Correction 2026-07-28 — this was previously written up as a launch blocker. It isn't.** The
+one-org guard on league creation was added by the account-model hardening bundle on 2026-07-24 and is
+live in production. League creation already refuses anyone who belongs to another organization.
+
+**What genuinely remains is one small parity gap:** league creation doesn't check for a pending
+invitation the way organization creation does. Half a day, no database change. See
+`PROGRAM_ACCOUNTS_AND_ACCESS.md` §AA-1. **Worth doing before launch, but it does not gate the flag.**
 
 Smaller open items carried in the plan:
 - Founding-comp parity on league create (confirmed harmless by red-team; lean: mirror `/api/org/create`).
@@ -64,7 +68,7 @@ started, and best folded in here rather than run standalone — see
 
 | # | Decision | Recommendation |
 |---|----------|----------------|
-| LC-1 | **⚠ Fix the `/api/league/create` one-org guard before flipping the League flag?** | Yes — blocking, non-negotiable. |
+| LC-1 | **Close the pending-invitation parity gap before flipping the League flag?** (The one-org guard is already live — this is the smaller remaining piece.) | Yes. It's half a day and it prevents an invited person locking themselves out of the org that invited them. |
 | LC-2 | **The ~Aug 2026 early-access cohort date has passed with the readiness checklist unstarted. Re-commit to a date, or shelve the managed cohort?** | Re-commit to a date. League Starter being built-but-invisible is the most expensive state it can be in. |
 | LC-3 | **Do League and Club open at the same time, or League first?** League has fewer dependencies. | League first, staggered — don't let Club repackaging hold League. |
 | LC-4 | **How is the founding-season comp represented for cohort orgs** — the existing comp/override path, or something new? → routes to `/billing`. | Existing comp/override path. |

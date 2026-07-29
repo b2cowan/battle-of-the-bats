@@ -30,9 +30,16 @@ fixes on the league / reinstate / head-coach paths, reactivation race fixes.
 **Not built:**
 - The **verification step itself** — the "tell us you actually run more than one organization" gate on
   owning a second paid thing. During the free period this is just a form; nothing is blocked yet.
-- **⚠ `/api/league/create` has no one-org guard at all.** It is currently held shut only by the
-  `LEAGUE_STARTER_BETA` flag being off in production — and **on in dev**. When League Starter launches,
-  this becomes an open door. Cross-reference `PROGRAM_LEAGUE_AND_CLUB.md` §1.1. **Treat as a launch blocker.**
+- **~~`/api/league/create` has no one-org guard~~ — ✅ FIXED and IN PRODUCTION.** ⚠ *Corrected
+  2026-07-28: the account-model analysis said this route was ungated, and this doc repeated it. That
+  was true when the analysis was written and was closed days later by the hardening bundle
+  (`c36ac94c`, 2026-07-24, confirmed on `origin/master`). League creation now runs the same
+  membership check as organization creation.*
+- **The one real gap left is smaller: league creation doesn't check for a pending invitation.**
+  Organization creation does — if you've been invited somewhere and haven't accepted yet, it stops you
+  and sends you to accept first. League creation has no equivalent, so an invited person can spin up a
+  league, and that league then blocks the invitation they were actually there to accept. Same
+  stray-org trap the sign-up guard was built to prevent, just via a different door.
 - **Scorekeeper / official cross-org exemption** — officials are blocked like admins, so a person can't
   officiate in two orgs at once. Named in the analysis as a real gap; no decision taken.
 
@@ -70,7 +77,7 @@ non-blocking). **Nothing outstanding beyond confirming the `/review` pass ran.**
 
 | # | Decision | Recommendation |
 |---|----------|----------------|
-| AA-1 | **⚠ `/api/league/create` one-org guard — build before League Starter launches?** | **Yes, blocking.** The flag is the only thing holding it shut and the flag is on in dev. |
+| AA-1 | **Add the pending-invitation check to league creation before League launches?** The one-org guard is already live; this is the remaining half-day of parity work. | Yes — it's small, and without it an invited person can lock themselves out of the org that invited them. |
 | AA-2 | **Cross-org accept guard** — should accepting an invite be refused (or warned) when the user already has an active membership elsewhere? | Warn, don't refuse. Verified Network deliberately opens the membership axis. |
 | AA-3 | **What counts as an "empty junk org" eligible for cleanup?** Blocks invite-reconciliation Phase 4. | No tournaments, no seasons, no members beyond the creating owner, no activity for 90 days. |
 | AA-4 | **Scorekeeper / official cross-org exemption** — should an official be able to work in two orgs? | Yes. Officials are the most obviously cross-org role in amateur sport. |

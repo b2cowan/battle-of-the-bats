@@ -55,7 +55,7 @@ completed** on 2026-07-28, so that prompt was archived with the rest.
 | `PROGRAM_BILLING_AND_ENTITLEMENTS.md` | Stripe, plans, grants, retention (17 files) | The January 2027 conversion runbook (Stripe itself is **live** — see the correction note in that doc) |
 | `PROGRAM_TOURNAMENT_ENGINE.md` | Brackets, playoffs, standings, schedule, multi-sport (22 files) | **Standings Remodel — not started** |
 | `PROGRAM_ORGANIZER_EXPERIENCE.md` | Org-admin dashboard, admin IA, roles (14 files) | Admin IA multi-module nav — the League/Club skew |
-| `PROGRAM_ACCOUNTS_AND_ACCESS.md` | Identity, invites, follows (9 files) | **`/api/league/create` has no one-org guard** |
+| `PROGRAM_ACCOUNTS_AND_ACCESS.md` | Identity, invites, follows (9 files) | Multi-org creation for existing users (the visible half of Verified Network) |
 | `PROGRAM_LEAGUE_AND_CLUB.md` | League Starter launch, early access, in-season trust (7 files) | Phase 9 launch — blocked by the guard above |
 | `PROGRAM_PLATFORM_ADMIN_CONSOLE.md` | Operator console QA (1 large file) | No per-org team-cap control |
 | `PROGRAM_TECH_DEBT_AND_QA.md` | Cleanup tranches, token debt, QA/UAT (8 files) | Inline-TSX colour sweep (52 defects) |
@@ -114,7 +114,7 @@ reference behind a ratified business decision with an unfinished build-out — i
 |----------|-----------------|
 | **Coach shell: two incompatible designs.** `COACH_NAV_REBUILD_PLAN.md` (June) specifies a team-scoped rail for the free portal with 7 unanswered design questions. The in-flight Free Coach Portal Experience rebuilt that same shell on a *different* model (consumer-family chrome, ratified 2026-07-25). | The in-flight version won and shipped. **Decision CP-1** — retire the old plan, carry forward only OQ-7 (how to persist per-team activated capabilities). |
 | **Premium portal: two evaluations.** The June premium walkthrough and the July 18-agent readiness review both catalogue premium portal defects, with partial overlap. | The readiness review is newer, verified, and drives the current batches. The walkthrough's three genuinely-unaddressed items are carried in `PROGRAM_COACH_PORTAL.md` §1.2; the rest is superseded. |
-| **League launch vs. account model.** `PROGRAM_LEAGUE_AND_CLUB.md` wants to flip the League flag; `PROGRAM_ACCOUNTS_AND_ACCESS.md` records that the league-create route has no one-org guard and is held shut *only* by that flag. | **Hard dependency. Decisions AA-1 / LC-1 — fix the guard first.** |
+| **League launch vs. account model.** ⚠ *Corrected 2026-07-28 — originally logged here as a hard blocker on a missing one-org guard.* That guard shipped to production on 2026-07-24. | Not a blocker. What remains is a small parity gap — league creation doesn't check for a pending invitation the way org creation does. **Decisions AA-1 / LC-1**, half a day. |
 | **Admin IA nav: owned twice.** Scoped as its own project, but it's the same customer problem as the League/Club tournament-first skew. | **Decision OE-6** — fold it into League/Club so it ships once. |
 | **Assistant coaches: scoped in two places.** `IN_ORG_COACH_CHAT_PLAN.md` claims to "introduce the assistant-coach concept", but assistant coaches were built and shipped independently. | The chat plan is out of date. Re-scope Project 2 against the shipped model before building. |
 | **Multi-sport paused, debt accruing.** The sport picker is paused, but a Title-case-vs-lowercase sport-id mismatch between coach signup and admin is live, and the lineup surfaces carry diamond-sport assumptions. | **Decision TE-7** — stay paused on the feature, fix the casing now while it's cheap. |
@@ -128,12 +128,12 @@ reference behind a ratified business decision with an unfinished build-out — i
 Each program doc carries its own decision table. Counting across all 11: **48 open decisions.**
 The ones that block other work, in priority order:
 
-1. **AA-1 / LC-1** — fix the `/api/league/create` one-org guard (blocks the League launch).
+1. **LC-2** — re-commit to an early-access date, or shelve the managed cohort. League Starter is finished and invisible; that's the real cost, not any missing guard.
 2. **PS-1** — run the push-delivery diagnostic (Android push is dead on production).
-3. **BL-2** — schedule the live-card smoke test ahead of the January conversion.
-4. **CH-8** — is the Coach Chat program (Projects 2–4) still wanted? Answering "no" closes 7 other decisions.
-5. **CP-1** — retire the Coach Nav Rebuild plan.
-6. **LC-2** — re-commit to an early-access date, or shelve the managed cohort.
+3. **AA-1 / LC-1** — close the pending-invitation parity gap on league creation (half a day, pre-launch).
+4. **BL-2** — schedule the live-card smoke test ahead of the January conversion.
+5. **CH-8** — is the Coach Chat program (Projects 2–4) still wanted? Answering "no" closes 7 other decisions.
+6. **CP-1** — retire the Coach Nav Rebuild plan.
 7. **TE-8** — schedule the Standings Remodel, the largest unbuilt fan-facing item.
 8. **TD-1** — green-light the inline-TSX colour sweep.
 
