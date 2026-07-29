@@ -35,11 +35,13 @@ fixes on the league / reinstate / head-coach paths, reactivation race fixes.
   was true when the analysis was written and was closed days later by the hardening bundle
   (`c36ac94c`, 2026-07-24, confirmed on `origin/master`). League creation now runs the same
   membership check as organization creation.*
-- **The one real gap left is smaller: league creation doesn't check for a pending invitation.**
-  Organization creation does — if you've been invited somewhere and haven't accepted yet, it stops you
-  and sends you to accept first. League creation has no equivalent, so an invited person can spin up a
-  league, and that league then blocks the invitation they were actually there to accept. Same
-  stray-org trap the sign-up guard was built to prevent, just via a different door.
+- **~~League creation doesn't check for a pending invitation~~ — ✅ BUILT on `dev` 2026-07-28**
+  (uncommitted; typecheck + focused lint clean; no migration). An invited person could previously
+  create a league, and that league then blocked the invitation they were there to accept — the same
+  stray-org trap the sign-up guard prevents, reached through a different door. Now closed at both
+  layers, matching how organization creation already behaves: the league start page redirects them to
+  the pending-invite card, and the create route refuses with a clear message for anyone who bypasses
+  the page. **Remaining: owner browser check (see §3).**
 - **Scorekeeper / official cross-org exemption** — officials are blocked like admins, so a person can't
   officiate in two orgs at once. Named in the analysis as a real gap; no decision taken.
 
@@ -77,7 +79,7 @@ non-blocking). **Nothing outstanding beyond confirming the `/review` pass ran.**
 
 | # | Decision | Recommendation |
 |---|----------|----------------|
-| AA-1 | **Add the pending-invitation check to league creation before League launches?** The one-org guard is already live; this is the remaining half-day of parity work. | Yes — it's small, and without it an invited person can lock themselves out of the org that invited them. |
+| ~~AA-1~~ | ~~Add the pending-invitation check to league creation?~~ | ✅ **Resolved 2026-07-28 — built.** Ships with the League launch bundle. |
 | AA-2 | **Cross-org accept guard** — should accepting an invite be refused (or warned) when the user already has an active membership elsewhere? | Warn, don't refuse. Verified Network deliberately opens the membership axis. |
 | AA-3 | **What counts as an "empty junk org" eligible for cleanup?** Blocks invite-reconciliation Phase 4. | No tournaments, no seasons, no members beyond the creating owner, no activity for 90 days. |
 | AA-4 | **Scorekeeper / official cross-org exemption** — should an official be able to work in two orgs? | Yes. Officials are the most obviously cross-org role in amateur sport. |

@@ -7,9 +7,12 @@
 
 ## 0. Ground truth (verified 2026-07-28)
 
-Everything in this program is **built and live in production**. What remains is almost entirely
-**owner device-testing and one polish phase** — plus one genuinely open strategic question (a native
-mobile app) that has never progressed past a brief.
+Everything in this program is **built and live in production**. After the 2026-07-28 sweep, what
+remains is **one build phase (The Flip P4)**, one small owner check (the app-icon slider), and one
+low-priority idea (per-user theme).
+
+**Closed 2026-07-28:** push delivery confirmed working · changelog confirmed live and in active use ·
+notification pause switch closed at owner request · native mobile app killed and logged.
 
 ---
 
@@ -55,36 +58,24 @@ capability-limited staffer lands on their nearest permitted screen; no flip can 
 public page; the admin guide matches the shipped chrome; the device return-memory verdict is recorded.
 That closes The Flip completely.
 
-### 1.2 Push delivery — diagnosis unfinished, tool is waiting for you
-Android PWA push notifications are **not arriving on production**. Likely cause: a VAPID key mismatch
-between environments. A **"Test this device" diagnostic tool is live on production** and the
-interpretation guide is written — but nobody has run it. This is a one-sitting task that unblocks a
-whole notification channel.
+### 1.2 Push delivery — ✅ CLEARED 2026-07-28
+⚠ *Corrected: an earlier draft of this doc said Android push was dead on production and the
+diagnostic unrun. Both were true on 2026-07-04 and stopped being true on 2026-07-28.*
 
-### 1.3 Notification pause master switch — device test
-Shipped to production 2026-07-22 with migration 194. Pausing silences all org / staff / coach / chat
-notifications, the weekly coach digest, and account-routed fan score/news pushes — while deliberately
-letting **failed-payment and @mention** through. Fail-open by design. **Remaining: your device test.**
+Android installed-PWA push delivered nothing on production from 2026-07-04. The owner ran the
+self-serve **"Test this device"** diagnostic on production and it **delivered successfully** — the
+channel works end-to-end from a real device. The 2026-07-04 diagnosis put the break between server
+send and device delivery (i.e. configuration); whatever resolved it, push is confirmed working.
 
-### 1.4 Release Notes & Changelog — built, never turned on
-P1–P3 are built: a public `/changelog` (shipped items plus an undated "On the horizon"), an in-app
-"What's New" button with a seen-dot for admins and coaches, and `npm run draft:notes` — a
-draft-then-approve generator wired into the release flow. No email in V1; the standalone coaches hub
-was deferred.
+**Standing caution:** re-test before any release that depends on push, rather than assuming this
+result holds. The channel broke silently once and reported success while doing so.
 
-**Remaining:** your browser test, and a call on cadence — see **PS-2**.
-
-### 1.5 App icon logo size — close-out
+### 1.3 App icon logo size — close-out
 A "Logo size" slider (Small ↔ Large, continuous, with a Default mark) in Public Site → Advanced
 Branding → App Icon, Tournament Plus and above, with a live preview. Built. **Remaining:** owner check
 that the preview tracks the slider and that the generated icon routes render correctly.
 
-### 1.6 Native mobile app — strategy brief only, no plan
-A PM brief exists comparing a focused companion app against mobile web, with level of effort, release
-path, store considerations and MVP scope (Home/Today, scorekeeper view, etc.). **No technical
-implementation plan was ever written.** The PWA has since absorbed much of the intended scope. See **PS-3**.
-
-### 1.7 Per-user light/dark theme preference — not started
+### 1.4 Per-user light/dark theme preference — not started
 Each user toggles their own theme from their own settings (org admins in org settings, coaches in the
 coach portal), stored per-user not per-org, plus a light/dark toggle on public org and tournament sites.
 The theming program shipped warm-as-default and a toggle mechanism, so the infrastructure exists.
@@ -95,9 +86,9 @@ The theming program shipped warm-as-default and a toggle mechanism, so the infra
 
 | # | Decision | Recommendation |
 |---|----------|----------------|
-| PS-1 | **Run the push-delivery diagnostic.** Not really a decision — but Android push has been broken on production for weeks and the tool is sitting there. | Do it this week. A dead notification channel undermines every feature that depends on it. |
-| PS-2 | **Changelog cadence** — publish per release, weekly, or only for notable changes? And does "On the horizon" stay public? | Per release, and keep "On the horizon" — it's cheap credibility for an early product. |
-| PS-3 | **Native mobile app — kill the brief, or commission a real plan?** It has sat as a brief since early June while the PWA absorbed the use cases. | Kill it for now and revisit after early access. Record the decision via `/strategy` so it stops resurfacing. |
+| ~~PS-1~~ | ~~Run the push-delivery diagnostic~~ | ✅ **Resolved 2026-07-28 — owner ran it on production, push delivered.** Re-test before any push-dependent release; don't assume it holds. |
+| ~~PS-2~~ | ~~Changelog cadence~~ | ✅ **Resolved in practice** — running per-release at ~20 entries; "On the horizon" retained. |
+| ~~PS-3~~ | ~~Native mobile app — kill or commission a plan?~~ | ✅ **KILLED 2026-07-28 (owner).** Logged in `BUSINESS_DECISIONS.md`. Do not resurface without a new decision. |
 | PS-4 | **Per-user theme preference — build it?** | Low priority. Warm-as-default already resolved the complaint that motivated it. |
 
 ---
@@ -109,10 +100,10 @@ The theming program shipped warm-as-default and a toggle mechanism, so the infra
 - **Notification pause master switch** — account-level pause enforced at the single notify chokepoint plus fan-notify account targets; failed-payment and @mentions always get through.
 - **Platform-wide notification settings** — one "All your notification settings" page, weekly-digest off-switch, mute-only tournaments, grouped view with tri-state rollups, assistant filtering, per-coach unsubscribe fix.
 - **Scheduled jobs** — Sunday digest and daily dues cron jobs active on production.
-- **Release notes & changelog P1–P3** — public `/changelog`, in-app "What's New" with seen-dot, `npm run draft:notes` generator wired into the release flow.
+- **Release notes & changelog — LIVE and in active use** (⚠ *corrected 2026-07-28: an earlier draft of this doc said "built, never turned on." Wrong — it's on and being maintained*): public `/changelog` linked from the site footer, **20 entries with the latest dated 2026-07-27**, the undated "On the horizon" section retained, a "new" dot in **both** the admin and coaches sidebars, a link in from the help hub, seen-state marked on visit, and the draft-then-approve generator wired into the release flow. The original plan's separate "What's New" button + portaled panel was superseded in build by this simpler shape (sidebar dot → help link → the public page).
 - **App icon logo size** — continuous slider with live preview in Advanced Branding.
 - **Theming program** — warm as the platform default, theme toggle, branding cleanup (Stages 1–6).
-- **Push diagnostics** — "Test this device" tool live on production.
+- **Push diagnostics** — "Test this device" tool live on production; **used 2026-07-28 to confirm Android production push is delivering again** after the 2026-07-04 outage.
 
 ---
 
@@ -127,4 +118,6 @@ The theming program shipped warm-as-default and a toggle mechanism, so the infra
 the only unexecuted prompt in the repository; its full scope is preserved in §1.1 above, which is now
 the build spec for The Flip P4.
 
-> **Keep active:** `PUSH_DELIVERY_TEST_PLAN.md` — the guide you'll read while running the diagnostic.
+> **Keep active:** `PUSH_DELIVERY_TEST_PLAN.md` — the interpretation guide for the "Test this device"
+> tool. Still useful as a standing re-test procedure before push-dependent releases, even though the
+> 2026-07-04 outage is resolved.
