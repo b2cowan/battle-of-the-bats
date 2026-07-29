@@ -6,7 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
 import PlayerDevelopmentSection from '@/components/coaches/PlayerDevelopmentSection';
-import { canViewDevelopmentGoals, canViewMeasurables } from '@/lib/coach-capabilities';
+import { canViewDevelopmentGoals, canViewMeasurables, canManageDocuments } from '@/lib/coach-capabilities';
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -532,6 +532,7 @@ export default function PlayerDetailPage({
           orgSlug={orgSlug}
           teamId={teamId}
           playerId={playerId}
+          canManage={assignment ? canManageDocuments(assignment.capabilities) : true}
         />
       </div>
 

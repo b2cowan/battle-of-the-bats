@@ -1,7 +1,10 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { ClipboardList, UserCheck, ArrowRight } from 'lucide-react';
+import { useCoaches } from '@/lib/coaches-context';
+import { canManageTryouts } from '@/lib/coach-capabilities';
 import FeedbackModal from '@/components/FeedbackModal';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import TryoutDayCard from '@/components/rep-teams/TryoutDayCard';
 import TryoutRubricCard from '@/components/rep-teams/TryoutRubricCard';
@@ -33,6 +36,14 @@ export default function CoachTryoutsPage({
   const base = `/api/coaches/${orgSlug}/teams/${teamId}`;
   const checkInHref = `/${orgSlug}/coaches/teams/${teamId}/tryouts/check-in`;
   const rosterHref = `/${orgSlug}/coaches/teams/${teamId}/roster`;
+  const { assignments, loading: ctxLoading } = useCoaches();
+  const assignment = assignments.find(a => a.teamId === teamId);
+  // The sidebar already hides Tryouts without this grant and every tryout route enforces it — this
+  // is the direct-URL case. Fail OPEN while assignments resolve so a real coach never flickers into
+  // a "no access" wall; the server is the gate either way.
+  const canTryouts = assignment ? canManageTryouts(assignment.capabilities) : true;
+  // No `label` — HelpButton falls back to its own `label` prop, so the string lives in one place.
+  const helpRequest = { module: 'coaches' as const, sectionIds: ['recipe-run-tryouts'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-run-tryouts` };
 
   const [overview, setOverview] = useState<TryoutOverview | null>(null);
   const [activeTab, setActiveTab] = useState<TabKey>('setup');
@@ -45,6 +56,7 @@ export default function CoachTryoutsPage({
   // On the FIRST successful load, land the coach on the stage they should be working — but never yank
   // them off a tab they've since chosen.
   const loadOverview = useCallback(async () => {
+    if (!canTryouts) return;
     try {
       const res = await fetch(`${base}/tryout-overview`);
       if (!res.ok) return;
@@ -52,7 +64,7 @@ export default function CoachTryoutsPage({
       setOverview(data);
       if (!didAutoSelect.current) { setActiveTab(phaseToTab(data.phase)); didAutoSelect.current = true; }
     } catch { /* non-blocking */ }
-  }, [base]);
+  }, [base, canTryouts]);
   useEffect(() => {
     loadOverview();
     const onFocus = () => loadOverview();
@@ -63,22 +75,40 @@ export default function CoachTryoutsPage({
   const hidden = (tab: TabKey) => (activeTab === tab ? '' : flow.panelHidden);
   const s = overview?.stats;
 
-  return (
-    <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><ClipboardList size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Tryouts</h1>
-            <p className={styles.pageSub}>Run your whole tryout here — set up, score, decide, and build your team.</p>
-          </div>
+  const header = (
+    <div className={styles.pageHeader}>
+      <div className={styles.pageHeaderLeft}>
+        <div className={styles.headerIcon}><ClipboardList size={20} /></div>
+        <div>
+          <h1 className={styles.pageTitle}>Tryouts</h1>
+          <p className={styles.pageSub}>Run your whole tryout here — set up, score, decide, and build your team.</p>
         </div>
-        <HelpButton
-          iconOnly
-          label="Tryouts"
-          help={{ module: 'coaches', sectionIds: ['recipe-run-tryouts'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-run-tryouts` }}
+      </div>
+      <HelpButton iconOnly label="Tryouts" help={helpRequest} />
+    </div>
+  );
+
+  if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
+
+  if (!canTryouts) {
+    return (
+      <div className={styles.page}>
+        {header}
+        <CoachEmptyState
+          quiet
+          icon={<ClipboardList size={20} aria-hidden />}
+          headline="Tryouts aren't turned on for you"
+          description="Tryouts runs the whole selection day from a phone — check-in, a shared scorecard, a live ranked board, and Offer / Waitlist decisions."
+          payoff="Players you accept land straight on the roster with their fees already set, so the season starts without re-typing a single name."
+          blocker="Tryouts involve candidate contact details and selection decisions, so it stays with the head coach unless they grant it to you."
         />
       </div>
+    );
+  }
+
+  return (
+    <div className={styles.page}>
+      {header}
 
       <TryoutFlowHeader overview={overview} rosterHref={rosterHref} activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -121,7 +151,11 @@ export default function CoachTryoutsPage({
               <a className={flow.rosterLink} href={rosterHref}>View your team roster <ArrowRight size={15} /></a>
             </>
           ) : (
-            <p className={flow.resultEmpty}>Once you accept players from the decision board, they&apos;ll appear on your <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>team roster</a> — ready for lineups.</p>
+            <p className={flow.resultEmpty}>
+              Once you accept players from the decision board, they land on your{' '}
+              <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>team roster</a> with their fees already
+              set — so lineups, attendance, dues and announcements all work from day one, with no name re-typed.
+            </p>
           )}
         </div>
       </div>

@@ -1,8 +1,10 @@
 'use client';
 import { use } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Users } from 'lucide-react';
+import { ChevronRight, Users, ShieldCheck } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import HelpButton from '@/components/help/HelpButton';
 import CoachStaffPanel from '@/components/coaches/CoachStaffPanel';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -45,15 +47,24 @@ export default function CoachStaffPage({
             <p className={styles.pageSub}>{assignment.teamName}</p>
           </div>
         </div>
+        <HelpButton
+          iconOnly
+          label="Coaching staff"
+          help={{ module: 'coaches', sectionIds: ['premium-staff'], fullGuideHref: `/${orgSlug}/coaches/help#premium-staff` }}
+        />
       </div>
 
       {isHeadCoach ? (
         <CoachStaffPanel orgSlug={orgSlug} teamId={teamId} />
       ) : (
-        <div className={styles.notAssigned}>
-          <h2>Head coach only</h2>
-          <p>Only the head coach can invite and manage assistant coaches for this team.</p>
-        </div>
+        <CoachEmptyState
+          quiet
+          icon={<ShieldCheck size={20} aria-hidden />}
+          headline="Only the head coach manages staff"
+          description="This is where a team's assistant coaches are invited and their access is set, one area at a time."
+          payoff="It's what gives each assistant their own sign-in rather than a shared password — which is why your own access is set here too."
+          blocker="Ask your head coach if you need more areas turned on for you."
+        />
       )}
     </div>
   );

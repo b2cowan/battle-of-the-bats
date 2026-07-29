@@ -1,6 +1,6 @@
 # PM Brief — Coach Onboarding: Quiet Mode
 
-**Status:** Approved 2026-07-29 · Phase A in build
+**Status:** Approved 2026-07-29 · Phases A + B built on `dev`, owner QA pending · Phase C open
 **Full plan:** `COACH_ONBOARDING_QUIET_MODE_PLAN.md`
 
 ---
@@ -144,6 +144,47 @@ rewritten keep what they have, so there's no half-finished state.
 
 ---
 
+## Phase B — what shipped (2026-07-29)
+
+All twelve sections now explain themselves at their own empty state, in three beats: what this is,
+what it makes easier elsewhere, and what has to happen first. Then one button, and a quiet link
+into the guide.
+
+The second beat is the point. A chip could say "Development"; it could never say *"this is what
+lets Insights tell you whether every player is getting attention."* That sentence is now a
+first-class part of every empty state rather than something a copy edit can quietly drop.
+
+**Nine sections gained a permanent Help control in their header** — Lineups, Development,
+Insights, Roster, Schedule, Money, Announcements, Documents and Staff had none, so a coach with a
+question had to leave the page to find one.
+
+**Four guides had to be written from scratch,** because Lineups, Development, Insights and
+Coaching staff had nowhere to link. Lineups was the worst case: "How does Auto-fill decide who
+plays where?" was filed under *Taking attendance*, so a coach browsing the guide would never find
+it. Those answers have been moved to where they belong.
+
+**Five places were quietly promising things a coach couldn't do,** all found while checking that
+every button matches the permission that lets you *finish* the job:
+
+- An assistant with lineups but Schedule turned off was told to "Add a game" — and sent to a page
+  they can only read. Same on the Schedule's own empty state.
+- An assistant allowed to send announcements was told to go add guardian emails to the roster.
+  Editing the roster is the head coach's job, so that was a dead end.
+- **Tryouts had no permission check on the page at all** — anyone reaching it by link saw the full
+  set of write controls, which then failed at the server.
+- **The Documents "Upload Template" button never worked for anyone.** There is no upload feature
+  behind it; every coach who filled the form in got "Upload failed". Removed, with your approval —
+  Documents is honestly download-only now (your organization publishes the templates; signed
+  copies attach to each player on the roster). It can come back when the feature is built.
+
+**The "Also in your portal" chips are gone,** as planned — and only now that every section teaches
+itself, so no discovery gap opened in between.
+
+**Two help answers were out of date** and are fixed: one still described the five-step "Your first
+week" trail Phase A removed, and the chip row Phase B just removed.
+
+---
+
 ## How to test it
 
 1. **Open a team with an empty roster.** The dashboard tiles should be visible without scrolling.
@@ -160,6 +201,27 @@ rewritten keep what they have, so there's no half-finished state.
    appear, and the count should reflect the smaller list.
 7. **(Phase C) Skip the tour, then open a different team, then a different browser.** It should
    never offer itself again, but should still be reachable from the help button.
+
+### Phase B specifically
+
+8. **Open Lineups on a team with no games.** It should explain what a lineup is, say that game
+   sheets, attendance and Insights read from it, and tell you a game has to exist first — with
+   one button to the Schedule and a "How lineups work" link that opens the guide in a slide-over.
+9. **Open Development, Insights, Chat, Documents and Staff on a fresh team.** Each should explain
+   itself rather than showing a bare "nothing here". Insights and Chat should offer no button —
+   there is genuinely nothing to do on either until data or an organizer arrives.
+10. **Tap the Help (?) control in each section header.** It should open that section's guide
+    without leaving the page.
+11. **Open the Season setup chip on your Overview.** The "Also in your portal" chip row should be
+    gone; the tour link and the off-switch should still be there.
+12. **Sign in as an assistant with Schedule turned off, then open Lineups.** It should say a game
+    is needed and that adding games needs schedule access — and should *not* offer an "Add a game"
+    button.
+13. **Sign in as an assistant who can send announcements but can't edit the roster.** With no
+    guardian emails on file, it should tell you to ask your head coach, not to go add them
+    yourself.
+14. **Open Documents.** The "Upload Template" button should be gone; the empty state should say
+    your organization publishes the templates.
 
 ---
 

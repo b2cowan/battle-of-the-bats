@@ -6,6 +6,7 @@ import {
   ArrowLeftRight, ArrowRight, ChevronRight, AlertTriangle,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import HelpButton from '@/components/help/HelpButton';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import styles from '../../../coaches.module.css';
 
@@ -106,13 +107,21 @@ export default function CoachesAccountingPage({
             Estimate the season&apos;s costs, turn them into player dues in one click, then track
             every dollar against the plan. Plan → Collect → Spend → Review.
           </p>
+          <p className={styles.nowMeta}>
+            Dues you set here drive the automatic payment reminders families receive, show up on your
+            Overview and in Insights as &ldquo;Where&apos;s the money?&rdquo;, and are prefilled when you accept
+            a player from tryouts — so you never chase a spreadsheet.
+          </p>
           {canWrite ? (
             <div className={styles.nowActions}>
               <Link href={`${base}/accounting/budget`} className="btn btn-lime btn-sm">Build your budget <ArrowRight size={14} /></Link>
               <Link href={`${base}/accounting/dues`} className={styles.nowSecondary}>Skip — set dues directly <ArrowRight size={13} /></Link>
             </div>
           ) : (
-            <p className={styles.nowMeta}>No budget or dues have been set up for this team yet.</p>
+            <p className={styles.nowMeta}>
+              No budget or dues have been set up for this team yet. Building the budget and setting dues
+              is the head coach&apos;s job — you&apos;ll see the numbers here once they do.
+            </p>
           )}
         </div>
       );
@@ -257,6 +266,11 @@ export default function CoachesAccountingPage({
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
         </div>
+        <HelpButton
+          iconOnly
+          label="Money"
+          help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+        />
       </div>
 
       {loading ? (

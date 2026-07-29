@@ -26,9 +26,15 @@ interface Props {
   orgSlug: string;
   teamId: string;
   playerId: string;
+  /**
+   * Whether THIS coach may upload/delete. Mirrors `canManageDocuments` — the POST and DELETE routes
+   * both 403 without it, and an assistant's documents default is view-only, so an ungated Upload
+   * button was an action they could never complete. Fails OPEN (the routes are the real gate).
+   */
+  canManage?: boolean;
 }
 
-export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Props) {
+export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canManage = true }: Props) {
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}/documents`;
 
   const [docs, setDocs] = useState<DocRow[]>([]);
@@ -109,6 +115,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
     <>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
         <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Documents</p>
+        {canManage && (
         <button
           type="button"
           className="btn btn-ghost"
@@ -117,6 +124,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
         >
           <Upload size={13} /> Upload
         </button>
+        )}
       </div>
 
       {loading ? (
@@ -162,6 +170,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
                     >
                       <Download size={13} />
                     </button>
+                    {canManage && (
                     <button
                       type="button"
                       className="btn btn-ghost"
@@ -172,6 +181,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId }: Pr
                     >
                       <Trash2 size={13} />
                     </button>
+                    )}
                   </td>
                 </tr>
               ))}

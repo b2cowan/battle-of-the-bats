@@ -13,6 +13,12 @@ import styles from './AnnouncementEditor.module.css';
 type Props = {
   orgSlug: string;
   teamId: string;
+  /**
+   * Whether THIS coach can add the guardian emails the recipient list is built from. Roster write
+   * is head-coach-only in V1, so an assistant granted "send announcements" would otherwise be told
+   * to go fix a roster they can only read. Fails OPEN (assume they can) — the roster page enforces.
+   */
+  canEditRoster?: boolean;
 };
 
 type ApiResponse = {
@@ -52,7 +58,7 @@ function statusLabel(announcement: RepTeamAnnouncement): string {
   return `${announcement.recipientCount} sent`;
 }
 
-export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
+export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster = true }: Props) {
   const [announcements, setAnnouncements] = useState<RepTeamAnnouncement[]>([]);
   const [recipientSummary, setRecipientSummary] =
     useState<RepTeamAnnouncementRecipientSummary>(EMPTY_SUMMARY);
@@ -200,7 +206,9 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
             {missingEmailCount === 1
               ? '1 player has no guardian email on file'
               : `${missingEmailCount} players have no guardian email on file`}{' '}
-            — add one on your Roster to include them.
+            {canEditRoster
+              ? '— add one on your Roster to include them.'
+              : '— ask your head coach to add one on the roster to include them.'}
           </span>
         </p>
       )}
@@ -208,7 +216,12 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
       {!hasRecipients && (
         <div className={styles.recipientsWarn} role="status">
           <TriangleAlert size={16} className={styles.recipientsWarnIcon} aria-hidden />
-          <span>No one to email yet. Add a guardian email to a player on your Roster, then refresh.</span>
+          <span>
+            No one to email yet — announcements go to the guardian emails on your roster.{' '}
+            {canEditRoster
+              ? 'Add one to a player on your Roster, then refresh.'
+              : 'Ask your head coach to add guardian emails to the roster, then refresh.'}
+          </span>
           <button
             type="button"
             className={styles.recipientsWarnAction}
@@ -240,7 +253,11 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
         />
         <div className={styles.formActions}>
           {!hasRecipients && (
-            <span className={styles.formHint}>Add a guardian email on your Roster to send.</span>
+            <span className={styles.formHint}>
+              {canEditRoster
+                ? 'Add a guardian email on your Roster to send.'
+                : 'Needs a guardian email on the roster before this can send.'}
+            </span>
           )}
           <button
             type="button"
@@ -260,7 +277,11 @@ export default function RepAnnouncementEditor({ orgSlug, teamId }: Props) {
         </div>
 
         {announcements.length === 0 ? (
-          <p className={styles.logNote}>No announcements sent yet.</p>
+          <p className={styles.logNote}>
+            No announcements sent yet. Every one you send is kept here with who received it and
+            whether it landed — so you can prove the rain-out notice went out, and reuse the wording
+            next time by copying it.
+          </p>
         ) : (
           <ul className={styles.list}>
             {announcements.map(announcement => {

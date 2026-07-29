@@ -1,10 +1,10 @@
 'use client';
-import { useState, useEffect, useRef, use } from 'react';
+import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { ChevronRight, Download, Upload, X } from 'lucide-react';
+import { ChevronRight, Download, FileText } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
-import HelpCallout from '@/components/help/HelpCallout';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import HelpButton from '@/components/help/HelpButton';
 import styles from '../../../coaches.module.css';
 import type { RepDocumentType } from '@/lib/types';
 
@@ -41,14 +41,13 @@ export default function TeamDocumentsPage({
 
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploadOpen, setUploadOpen] = useState(false);
-  useOverlayOpen(uploadOpen);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadName, setUploadName] = useState('');
-  const [uploadType, setUploadType] = useState<RepDocumentType>('other');
-  const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
+
+  // No `label` — HelpButton falls back to its own `label` prop, so the string lives in one place.
+  const documentsHelpRequest = {
+    module: 'coaches' as const,
+    sectionIds: ['recipe-track-documents'],
+    fullGuideHref: `/${params.orgSlug}/coaches/help#recipe-track-documents`,
+  };
 
   async function load() {
     setLoading(true);
@@ -67,30 +66,6 @@ export default function TeamDocumentsPage({
 
   const orgWide = templates.filter(t => t.teamId === null);
   const teamSpecific = templates.filter(t => t.teamId !== null);
-
-  async function handleUpload() {
-    if (!uploadFile || !uploadName.trim()) return;
-    setUploading(true);
-    setUploadError('');
-    try {
-      const form = new FormData();
-      form.append('file', uploadFile);
-      form.append('name', uploadName.trim());
-      form.append('documentType', uploadType);
-      const res = await fetch(apiBase, { method: 'POST', body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-      await load();
-      setUploadOpen(false);
-      setUploadFile(null);
-      setUploadName('');
-      if (fileRef.current) fileRef.current.value = '';
-    } catch (e: any) {
-      setUploadError(e.message ?? 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  }
 
   function formatBytes(n: number) {
     if (n < 1024) return `${n} B`;
@@ -181,21 +156,24 @@ export default function TeamDocumentsPage({
             <p className={styles.pageSub}>{assignment.teamName} — {assignment.programYearName}</p>
           </div>
         </div>
-        <button
-          type="button"
-          className="btn btn-lime"
-          style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem' }}
-          onClick={() => { setUploadOpen(true); setUploadError(''); }}
-        >
-          <Upload size={14} /> Upload Template
-        </button>
+        <HelpButton
+          iconOnly
+          label="Documents"
+          help={documentsHelpRequest}
+        />
       </div>
 
       {orgWide.length === 0 && teamSpecific.length === 0 && (
-        <HelpCallout
-          variant="info"
-          title="No document templates yet"
-          body="Your org admin publishes document templates here (waivers, medical consent forms, codes of conduct). Once available, you can download them to share with players and families, or upload team-specific templates using the button above."
+        // No-action empty: coaches DOWNLOAD templates here, they don't publish them (the org admin
+        // does). Signed forms are collected per player from the roster, not on this page — so this
+        // carries no CTA rather than pointing at a door the coach can't open.
+        <CoachEmptyState
+          quiet
+          icon={<FileText size={20} aria-hidden />}
+          headline="No document templates yet"
+          description="This is where the blank forms your families need to sign live — waivers, medical consent, codes of conduct — ready to download and hand out."
+          payoff="Once a family returns a signed copy, you attach it to that player on your Roster, so the paperwork sits with the player it belongs to instead of in your inbox."
+          blocker="Your organization publishes these templates, so nothing appears here until they do — ask your org admin if you're expecting one."
         />
       )}
 
@@ -211,83 +189,6 @@ export default function TeamDocumentsPage({
         <TemplateTable rows={teamSpecific} />
       </div>
 
-      {/* Upload modal */}
-      {uploadOpen && (
-        <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Upload Team Template</h3>
-              <button
-                type="button"
-                className={styles.modalCloseBtn}
-                onClick={() => { setUploadOpen(false); setUploadFile(null); setUploadName(''); setUploadError(''); if (fileRef.current) fileRef.current.value = ''; }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div className={styles.field}>
-                <label className={styles.label}>Template Name</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={uploadName}
-                  onChange={e => setUploadName(e.target.value)}
-                  placeholder="e.g. Photo Permission Form"
-                  maxLength={120}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>Document Type</label>
-                <select
-                  className={styles.select}
-                  value={uploadType}
-                  onChange={e => setUploadType(e.target.value as RepDocumentType)}
-                >
-                  {(Object.entries(DOC_TYPE_LABELS) as [RepDocumentType, string][]).map(([v, l]) => (
-                    <option key={v} value={v}>{l}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>File <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '0.75rem' }}>(PDF, JPG, PNG, DOCX — max 10 MB)</span></label>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.docx"
-                  className={styles.input}
-                  onChange={e => setUploadFile(e.target.files?.[0] ?? null)}
-                />
-              </div>
-
-              {uploadError && (
-                <p style={{ color: 'var(--danger-light)', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
-              )}
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => { setUploadOpen(false); setUploadFile(null); setUploadName(''); setUploadError(''); if (fileRef.current) fileRef.current.value = ''; }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-lime"
-                disabled={!uploadFile || !uploadName.trim() || uploading}
-                onClick={handleUpload}
-              >
-                {uploading ? 'Uploading…' : 'Upload'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

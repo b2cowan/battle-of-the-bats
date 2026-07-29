@@ -108,6 +108,14 @@ box-shadow: 0 0 24px rgba(217,249,157,0.15);
 display: grid; place-items: center;
 ```
 - Eyebrow `--font-data` 0.7rem 700 0.12em uppercase `--white-40`; headline 1.1rem 800 `--white`; description 0.88rem `--white-60` max-42ch.
+- **Body copy is three ordered slots, not one blob** (Coach Onboarding Quiet Mode Phase B, 2026-07-29). A **section-level** empty state answers three things, each its own prop and its own `<p>`:
+  - `description` — **what this section is**, one plain sentence. `0.88rem` / `--white-60` / max-42ch.
+  - `payoff` — **what it unlocks elsewhere**, the cross-section sentence. **Same type scale and colour as `description`** (they share one rule in the stylesheet — the payoff is the sentence that sells the section, never a footnote); differs only by a `-0.2rem` top margin so the two read as one block.
+  - `blocker` — **the honest prerequisite**, if any. Steps back: `0.83rem` / `--white-40` / `1.5`.
+
+  All three are optional — a sub-empty inside an editor needs only `description`. They are **separate props on purpose**: the three-part contract applies uniformly across every portal section, and splitting it structurally stops a later copy rewrite from silently collapsing a teaching empty back into a feature blurb. Do not merge them into one composed node.
+- **`quiet` + `blocker` is the correct pairing for a no-action empty** — the blocker line explains *why* the coach can do nothing here (waiting on the organizer, or a capability they lack), which is exactly the quiet tier's job. This is not an exception to the no-CTA rule below: `blocker` is prose, not an action.
+- **Where the guide link goes.** The contract also calls for one quiet link into the fuller guide. When the empty state has a primary CTA, that link is the `secondaryAction` (`btn-ghost`, `HelpCircle` icon, opens the help drawer — never navigates away). When the empty state is `quiet` and therefore action-free, the link is the page header's `HelpButton` instead — **never** smuggled into a quiet card as a secondaryAction.
 - **Primary CTA is always `btn btn-lime`** — never `.inlineLink`, blueprint-blue `.btnPrimary`, `btn-primary`, `btn-sm`-as-primary, or a bare hex anchor. Secondary → `btn-ghost`.
 - **Tournament-mode glow option:** swap the container/medallion lime tints to `color-mix(in srgb, var(--team-color, var(--logic-lime)) 8%/12%/30%/20%, transparent)` for the radial/medallion — **the medallion icon stays `--logic-lime` always.** (Never `rgba(var(--team-color-rgb),…)` — that token doesn't exist.)
 

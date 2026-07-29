@@ -21,6 +21,15 @@ import styles from './CoachEmptyState.module.css';
  *
  * Primary CTA is ALWAYS `btn btn-lime`; secondary → `btn btn-ghost`. Never
  * `btn-outline`, `btn-primary`, a `btn-sm` primary, or a bare hex anchor.
+ *
+ * Teaching contract (Coach Onboarding Quiet Mode, Phase B): a SECTION-level empty
+ * state answers three things, in this order, one per prop —
+ *   description → what this section IS, in one plain sentence.
+ *   payoff      → what it unlocks ELSEWHERE. The cross-section sentence is the one
+ *                 that makes a coach care; it is a distinct prop precisely so a
+ *                 rewrite can't quietly drop it back to a feature blurb.
+ *   blocker     → the honest prerequisite, if any ("You'll need a game first").
+ * All three are optional — a sub-empty inside an editor needs only `description`.
  */
 
 type EmptyAction = {
@@ -40,6 +49,10 @@ type CoachEmptyStateProps = {
   eyebrow?: string;
   headline: string;
   description?: ReactNode;
+  /** What this section unlocks elsewhere — the cross-section payoff sentence. */
+  payoff?: ReactNode;
+  /** The honest prerequisite blocking this section, if any. Rendered dimmer. */
+  blocker?: ReactNode;
   /** The ONE most-important action — rendered btn-lime by default. */
   primaryAction?: EmptyAction;
   /** Optional quieter action — rendered btn-ghost by default. */
@@ -94,6 +107,8 @@ export default function CoachEmptyState({
   eyebrow,
   headline,
   description,
+  payoff,
+  blocker,
   primaryAction,
   secondaryAction,
   compact = false,
@@ -116,6 +131,8 @@ export default function CoachEmptyState({
       {eyebrow ? <div className={styles.eyebrow}>{eyebrow}</div> : null}
       <h3 className={styles.headline}>{headline}</h3>
       {description ? <p className={styles.description}>{description}</p> : null}
+      {payoff ? <p className={styles.payoff}>{payoff}</p> : null}
+      {blocker ? <p className={styles.blocker}>{blocker}</p> : null}
       {primaryAction || secondaryAction || children ? (
         <div className={styles.actions}>
           {primaryAction ? <ActionButton action={primaryAction} role="primary" /> : null}

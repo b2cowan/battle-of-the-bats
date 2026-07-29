@@ -40,7 +40,10 @@ export default function PremiumTeamTournamentsPage({
 
   const helpRequest = {
     module: 'coaches' as const,
-    sectionIds: ['tournaments', 'faq-premium-tournaments-where'],
+    // Section ids ONLY — getHelpSections never walks faqs, so a faq id here silently resolves to
+    // nothing and the drawer opens a section short. ('faq-premium-tournaments-where' lives inside
+    // the 'tournaments' section, which is already listed, so nothing is lost by dropping it.)
+    sectionIds: ['tournaments'],
     label: 'Tournaments',
     fullGuideHref: `/${orgSlug}/coaches/help#tournaments`,
   };
@@ -132,6 +135,7 @@ export default function PremiumTeamTournamentsPage({
           icon={<Trophy size={20} aria-hidden />}
           headline="No tournaments yet this season"
           description="Your past and upcoming tournament entries appear here the moment you're registered."
+          payoff="Once one lands, its games drop straight into your Schedule, its chat room opens under Chat, and its results count toward your season record in Insights."
         />
       ) : isTeamWorkspace ? (
         // State A — standalone/workspace team, never bridged: registration is self-serve by account email,
@@ -145,6 +149,7 @@ export default function PremiumTeamTournamentsPage({
               <strong>this account&apos;s email</strong> — the entry appears here automatically with schedule, scores, and status.
             </>
           }
+          payoff="From there its games appear on your Schedule ready for lineups, the organizer's chat room opens under Chat, and results count toward your season record in Insights."
           primaryAction={{
             label: 'How registering works',
             onClick: () => openHelp(helpRequest),
@@ -161,10 +166,10 @@ export default function PremiumTeamTournamentsPage({
           description={
             <>
               When {currentOrg?.name ?? 'your organization'} registers this team for a tournament, they link the entry to your team and it shows up here automatically — with the live schedule and scores.
-              <br />
-              <span style={{ color: 'var(--white-40)' }}>Expecting one? Ask your organization to link your registration.</span>
             </>
           }
+          payoff="Once linked, its games appear on your Schedule ready for lineups, the organizer's chat room opens under Chat, and results count toward your season record in Insights."
+          blocker="Only your organization can make that link — ask them if you're expecting one."
           primaryAction={{
             label: 'How linking works',
             onClick: () => openHelp(helpRequest),

@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, ChevronRight, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck, ClipboardPaste } from 'lucide-react';
+import { Users, ChevronRight, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck, ClipboardPaste, HelpCircle } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -21,6 +21,8 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import HelpButton from '@/components/help/HelpButton';
+import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
@@ -113,6 +115,7 @@ export default function RosterPage({
   const { orgSlug, teamId } = use(params);
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const { currentOrg } = useOrg();
+  const { openHelp } = useHelpDrawer();
   const assignment = assignments.find(a => a.teamId === teamId);
   // Quick-add position dropdowns offer the sport's assignable FIELD positions (the ones auto-fill
   // uses) — not the OF catch-all or DH. PositionSelect keeps a "Custom…" escape for edge cases.
@@ -454,6 +457,14 @@ export default function RosterPage({
   // just keep the UI honest (no broken buttons, no blank sensitive columns).
   const canWriteRoster = assignment.capabilities.rosterWrite;
   const canSeePii = assignment.capabilities.rosterPii;
+  // `label` is required here — this object also goes straight to openHelp() from the empty state,
+  // where there is no HelpButton label to fall back to.
+  const rosterHelpRequest = {
+    module: 'coaches' as const,
+    sectionIds: ['recipe-add-player', 'premium-bulk-roster'],
+    label: 'Roster',
+    fullGuideHref: `/${orgSlug}/coaches/help#recipe-add-player`,
+  };
 
   // Jersey numbers worn by more than one player (flagged inline, not blocked).
   const dupNumbers = (() => {
@@ -498,8 +509,12 @@ export default function RosterPage({
             </p>
           </div>
         </div>
-        {view === 'list' && (
+        {/* ONE trailing group, always. `.pageHeader` pins only its LAST child right (margin-left:auto),
+            so Help must live INSIDE this wrapper — as a third sibling it would steal that pin and
+            drop the Attendance/Export/Add Player cluster back beside the title. */}
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+          {view === 'list' && (
+          <>
           <Link
             href={`${base}/attendance`}
             className={styles.btnSecondary}
@@ -530,8 +545,10 @@ export default function RosterPage({
             <Plus size={15} /> <span className={styles.addPlayerLabel}>Add Player</span>
           </button>
           )}
+          </>
+          )}
+          <HelpButton iconOnly label="Roster" help={rosterHelpRequest} />
         </div>
-        )}
       </div>
 
       {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live here) */}
@@ -557,13 +574,15 @@ export default function RosterPage({
           headline="Your roster is empty"
           description={canWriteRoster
             ? 'Paste your team list and add everyone at once — names and numbers are enough to start. Players accepted from tryouts arrive here automatically.'
-            : 'Players accepted from tryouts arrive here automatically. Ask your head coach or org admin if someone is missing.'}
+            : 'This is every player on the team, with their numbers, positions and contacts. Players accepted from tryouts arrive here automatically.'}
+          payoff="Almost everything else reads from it: lineups, attendance, dues, who your announcements reach, and every player report in Insights. It's the one thing worth doing first."
+          blocker={canWriteRoster ? undefined : 'Adding and editing players is the head coach’s job — ask them if someone is missing.'}
           primaryAction={canWriteRoster
             ? { label: 'Paste your roster', icon: <ClipboardPaste size={15} aria-hidden />, onClick: () => setBulkOpen(true) }
             : undefined}
           secondaryAction={canWriteRoster
             ? { label: 'Add one player', icon: <Plus size={15} aria-hidden />, onClick: openAdd }
-            : undefined}
+            : { label: 'How the roster works', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(rosterHelpRequest) }}
         />
       ) : (
         <>

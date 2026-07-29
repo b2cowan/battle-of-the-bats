@@ -2,14 +2,28 @@
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, Plus, X } from 'lucide-react';
+import { TrendingUp, Plus, X, HelpCircle } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import HelpButton from '@/components/help/HelpButton';
+import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import TestTypesManager from '@/components/coaches/TestTypesManager';
 import { todayLocal } from '@/lib/measurable-format';
 import { canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
+
+/**
+ * The honest prerequisite for the sessions empty state, in priority order: a missing test list
+ * blocks EVERYONE (a session with nothing to measure records nothing), and only then does it matter
+ * that writes are head-coach-only. Sequential guards rather than a nested ternary in the JSX.
+ */
+function sessionsBlocker(noTypes: boolean, canWrite: boolean): string | undefined {
+  if (noTypes) return 'Add at least one test to your list below first — that’s what a session records.';
+  if (!canWrite) return 'Only the head coach can start a session and record readings.';
+  return undefined;
+}
 
 function formatSessionDate(iso: string): string {
   const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
@@ -29,6 +43,7 @@ export default function DevelopmentHubPage({
 function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const router = useRouter();
   const confirm = useConfirm();
+  const { openHelp } = useHelpDrawer();
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === teamId);
   const caps = assignment?.capabilities;
@@ -42,6 +57,15 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   // ONE source for the write flag, resilient to the sessions GET 404'ing (no active program
   // year must not silently lock the Test types card for a legit head coach).
   const canWrite = caps ? canWriteDevelopment(caps) : false;
+
+  // `label` is required here — this object also goes straight to openHelp() from the empty state,
+  // where there is no HelpButton label to fall back to.
+  const helpRequest = {
+    module: 'coaches' as const,
+    sectionIds: ['premium-development'],
+    label: 'Development',
+    fullGuideHref: `/${orgSlug}/coaches/help#premium-development`,
+  };
 
   // ONE fetch: the sessions GET carries sessions + types + canWrite (board-route precedent —
   // two separate GETs doubled the auth/capability resolution per hub load).
@@ -113,7 +137,14 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   if (!assignmentsLoading && assignment && caps && !canViewDevelopmentGoals(caps) && !canViewMeasurables(caps)) {
     return (
       <div className={styles.page}>
-        <p className={styles.detailPlaceholder}>You do not have access to player development on this team.</p>
+        <CoachEmptyState
+          quiet
+          icon={<TrendingUp size={20} aria-hidden />}
+          headline="Development isn't turned on for you"
+          description="Development records what each player is working on and the results of the tests you run through the season."
+          payoff="It's what lets Insights answer “Is everyone getting attention?” — one row per player, so nobody quietly gets overlooked."
+          blocker="Ask your head coach for player notes or roster access on this team."
+        />
       </div>
     );
   }
@@ -130,6 +161,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
             <p className={styles.pageSub}>{assignment?.teamName ?? ''} — evaluation sessions, the team board, and your test list</p>
           </div>
         </div>
+        <HelpButton iconOnly label="Development" help={helpRequest} />
       </div>
 
       {error && <p className={styles.errorText} role="alert">{error}</p>}
@@ -148,13 +180,22 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
                 </button>
               )}
             </div>
-            <p className={styles.devCardNote} style={{ marginBottom: '0.5rem' }}>
-              Run your tests for the whole roster in one go — a few sessions a season is what makes the trend lines real.
-            </p>
-            {sessions.length === 0 ? (
-              <p className={styles.detailPlaceholder}>
-                {canWrite ? 'No sessions yet — start one at your next practice.' : 'No sessions yet.'}
+            {sessions.length > 0 && (
+              <p className={styles.devCardNote} style={{ marginBottom: '0.5rem' }}>
+                Run your tests for the whole roster in one go — a few sessions a season is what makes the trend lines real.
               </p>
+            )}
+            {sessions.length === 0 ? (
+              // The card header already owns the ONE lime action ("New session"), so this empty
+              // teaches and links to the guide rather than repeating the button.
+              <CoachEmptyState
+                compact
+                headline={canWrite ? 'No sessions yet' : 'No sessions have been run yet'}
+                description="An evaluation session runs your tests across the whole roster in one go, usually at a practice."
+                payoff="A few a season is what turns single readings into a trend — and it's what fills the team board and the “Is everyone getting attention?” report in Insights."
+                blocker={sessionsBlocker(types.length === 0, canWrite)}
+                secondaryAction={{ label: 'How development works', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
+              />
             ) : (
               /* While a delete is in flight the rows go inert — tapping into a session
                  that's mid-delete would land on a jarring 404. */

@@ -370,10 +370,10 @@ const coachesHelp: HelpPageContent = {
             <li><strong>In the app, on every plan.</strong> While your event is under way, your Schedule raises an amber <strong>Schedule updated</strong> bar naming what changed — &ldquo;Your 2:00 p.m. vs Northside Thunder moved to 3:15 p.m. at Diamond 4&rdquo; — and the affected game keeps a <strong>was 2:00 p.m. at Diamond 2</strong> line underneath it. Tap the bar to dismiss it; the line on the game stays, because that&apos;s the bit you&apos;ll want to check twice. If more than one game changed, the bar gives you the count and marks the rows.</li>
             <li><strong>On your phone, when the organizer&apos;s event is on Tournament Plus.</strong> A notification names the change the same way. Several changes in one sitting arrive as <strong>one</strong> message with a count rather than a string of buzzes, and a cancellation is always called out. Tapping it opens that game.</li>
           </ul>
-          <p>You don&apos;t have to follow your own team to get this — that already happened when your event went live. The switch that controls it is <strong>Event news</strong> under <strong>Account → Notifications</strong> (on the <strong>Followed teams</strong> card), and it&apos;s on unless you turn it off. There is no separate schedule-alerts switch to find.</p>
+          <p>You don&apos;t have to follow your own team to get this — <strong>coaches are followed to their own team automatically</strong>, from the moment the organizer accepts your entry. That means you&apos;re covered for the run-up too, when schedules are published and times get shuffled, not just on game day. The switch that controls it is <strong>Event news</strong> under <strong>Account → Notifications</strong> (on the <strong>Followed teams</strong> card, where your own team is named), and it&apos;s on unless you turn it off. There is no separate schedule-alerts switch to find.</p>
           <p><strong>On a free event, nothing buzzes your phone</strong> — phone alerts are a Tournament Plus feature the organizer chooses. The change still reaches you: your Schedule updates, and the <strong>Schedule updated</strong> bar still appears during the event. Knowing your game moved is never the paid part.</p>
           <p><strong>Once the event is over</strong>, the top of the record becomes a single result card: <strong>Event complete</strong> with the tournament dates, your <strong>final record</strong> (wins&ndash;losses&ndash;ties from the games that were scored), a link to the <strong>final standings</strong> on the public site, and a <strong>Share your team</strong> button that sends a link anyone can open. If no scores were recorded for your team, it says so rather than showing a made-up 0&ndash;0. The four sections stay exactly where they were, so you can still look back at what you paid, who you played, and what the organizer told you. This is the same on both tiers.</p>
-          <p>Every tournament record carries a <strong>⇄ Public site</strong> pill in its top-right corner — one tap flips to that event&apos;s public site in the same tab, and the public page&apos;s own pill then reads <strong>⇄ Back to Coach view</strong> so the return trip is one tap too. A quiet <strong>⇄ Fan view</strong> link on each list entry (and on your team Overview while an event is live) makes the same jump to the event&apos;s public site.</p>
+          <p>Every tournament record carries a <strong>⇄ Public site</strong> pill in its top-right corner — one tap flips to that event&apos;s public site in the same tab, and the public page&apos;s own pill then reads <strong>⇄ Back to Coach view</strong> so the return trip is one tap too. <strong>If you also help run this event</strong> — you&apos;re on the organizer&apos;s staff, or you scorekeep — that pill reads <strong>Roles</strong> instead and opens a short list: the public site, plus a row for each of your other roles on this event. One tap takes you straight to your admin screens without going out through the public site first. If you only coach, nothing changes. A quiet <strong>⇄ Fan view</strong> link on each list entry (and on your team Overview while an event is live) makes the same jump to the event&apos;s public site.</p>
         </>
       ),
       faqs: [
@@ -394,15 +394,15 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-schedule-change-alert',
           question: 'Will I know if the organizer moves or cancels one of my games?',
-          answerText: 'Yes, and you do not have to set anything up. In the app, on every plan: while your event is under way your Schedule raises an amber "Schedule updated" bar naming the change — "Your 2:00 p.m. vs Northside Thunder moved to 3:15 p.m. at Diamond 4" — and the affected game keeps a "was 2:00 p.m. at Diamond 2" line underneath. Tapping the bar dismisses it; the line on the game stays. On your phone, when the organizer’s event is on Tournament Plus, you also get a notification saying the same thing, and tapping it opens that game. Several changes made in one sitting arrive as ONE message with a count, not one buzz per game, and a cancellation is always called out. Messages are held for a few minutes so a busy editing session does not buzz you repeatedly, but a change to a game starting shortly is sent straight away. A game that has already started or already been played never triggers an alert. You do not need to follow your own team first — that happened automatically when your event went live. The switch is Event news under Account → Notifications on the Followed teams card (also in the bell on the tournament’s public site), and it is on unless you turn it off; there is no separate schedule-alerts switch. On a free event nothing buzzes your phone — phone alerts are a Tournament Plus feature the organizer chooses — but the schedule still updates and the Schedule updated bar still appears. Knowing your game moved is never the paid part. Families following your team get the same message you do.',
-          keywords: ['schedule change', 'game moved', 'game time changed', 'game cancelled', 'cancelled game', 'schedule updated', 'schedule updated bar', 'moved to', 'field changed', 'diamond changed', 'venue changed', 'notified of schedule change', 'alert when game moves', 'rain delay alert', 'event news', 'schedule alerts', 'was 2:00', 'how do i know if my game moved', 'why did i not get a notification', 'no notification', 'free event no alerts', 'one message not many', 'parents notified'],
+          answerText: 'Yes, and you do not have to set anything up. In the app, on every plan: while your event is under way your Schedule raises an amber "Schedule updated" bar naming the change — "Your 2:00 p.m. vs Northside Thunder moved to 3:15 p.m. at Diamond 4" — and the affected game keeps a "was 2:00 p.m. at Diamond 2" line underneath. Tapping the bar dismisses it; the line on the game stays. On your phone, when the organizer’s event is on Tournament Plus, you also get a notification saying the same thing, and tapping it opens that game. Several changes made in one sitting arrive as ONE message with a count, not one buzz per game, and a cancellation is always called out. Messages are held for a few minutes so a busy editing session does not buzz you repeatedly, but a change to a game starting shortly is sent straight away. A game that has already started or already been played never triggers an alert. You do not need to follow your own team first — coaches are followed to their own team automatically, from the moment the organizer accepts your entry, so you are covered during the run-up (when schedules are published and times shuffle) as well as on game day. The switch is Event news under Account → Notifications on the Followed teams card, which names your own team and the event (also in the bell on the tournament’s public site), and it is on unless you turn it off; there is no separate schedule-alerts switch. On a free event nothing buzzes your phone — phone alerts are a Tournament Plus feature the organizer chooses — but the schedule still updates and the Schedule updated bar still appears. Knowing your game moved is never the paid part. Families following your team get the same message you do.',
+          keywords: ['schedule change', 'game moved', 'game time changed', 'game cancelled', 'cancelled game', 'schedule updated', 'schedule updated bar', 'moved to', 'field changed', 'diamond changed', 'venue changed', 'notified of schedule change', 'alert when game moves', 'rain delay alert', 'event news', 'schedule alerts', 'was 2:00', 'how do i know if my game moved', 'why did i not get a notification', 'no notification', 'free event no alerts', 'one message not many', 'parents notified', 'followed automatically', 'why am i following my own team', 'do i have to follow my own team', 'when do alerts start', 'before the tournament', 'run-up', 'accepted entry', 'my own team on the notifications page'],
           popular: true,
           answer: (
             <>
               <p>Yes — and there&apos;s nothing to set up.</p>
               <p><strong>In the app, on every plan.</strong> While your event is under way, your <strong>Schedule</strong> raises an amber <strong>Schedule updated</strong> bar naming the change, and the affected game keeps a <strong>was 2:00 p.m. at Diamond 2</strong> line underneath it. Tapping the bar dismisses it; the line on the game stays.</p>
               <p><strong>On your phone, when the organizer&apos;s event is on Tournament Plus.</strong> A notification says the same thing, and tapping it opens that game. Several changes made in one sitting arrive as <strong>one</strong> message with a count rather than one buzz per game, and a cancellation is always called out. Messages are held briefly so a busy editing session doesn&apos;t buzz you over and over — but a change to a game starting shortly goes straight through. A game that has already started or been played never triggers an alert.</p>
-              <p>You don&apos;t need to follow your own team first — that happened automatically when your event went live. The switch is <strong>Event news</strong> under <strong>Account → Notifications</strong> (on the <strong>Followed teams</strong> card, and in the bell on the tournament&apos;s public site). It&apos;s on unless you turn it off, and there&apos;s no separate schedule-alerts switch.</p>
+              <p>You don&apos;t need to follow your own team first — <strong>coaches are followed to their own team automatically</strong>, from the moment your entry is accepted, so you&apos;re covered through the run-up as well as game day. The switch is <strong>Event news</strong> under <strong>Account → Notifications</strong> (on the <strong>Followed teams</strong> card, which names your own team, and in the bell on the tournament&apos;s public site). It&apos;s on unless you turn it off, and there&apos;s no separate schedule-alerts switch.</p>
               <p><strong>On a free event nothing buzzes your phone</strong>, because phone alerts are a Tournament Plus feature the organizer chooses. Your schedule still updates and the bar still appears. <strong>Families following your team get the same message you do</strong>, so you don&apos;t have to relay it.</p>
             </>
           ),
@@ -724,11 +724,11 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Getting around your Premium portal',
       summary: 'Where everything lives on Premium: the sidebar sections, the notification bell, the setup dashboard, and the at-a-glance snapshot.',
-      keywords: ['premium portal', 'sidebar', 'navigation', 'dashboard', 'overview', 'season setup', 'at a glance', 'snapshot', 'tooltips', 'help button', 'where is', 'required', 'optional', 'skip', 'skip step', 'progress bar', 'depth chart', 'squad', 'grouped menu', 'staff', 'tryouts', 'menu sections', 'money', 'season review', 'lineups', 'find lineups', 'where are lineups', 'explore', 'team admin', 'last season', 'accounting renamed', 'history renamed', 'notifications', 'notification bell', 'bell', 'needs attention', 'activity feed', 'unread', 'see all notifications', 'notification centre', 'insights', 'season insights', 'where is season review', 'season review renamed', 'reports', 'stats', 'team stats', 'analytics hub', 'games tab', 'templates tab', 'filter games', 'needs lineup', 'what stands out', 'findings', 'scoreboard', 'close games', 'is playing time fair', 'who shows up', 'week in review', 'weekly digest', 'weekly summary', 'sunday summary', 'weekly insights', 'notification settings', 'turn off notifications', 'turn off digest', 'turn off weekly summary', 'stop weekly notification', 'manage notifications', 'change notifications', 'my notification settings', 'notification preferences', 'push settings', 'opt out'],
+      keywords: ['premium portal', 'sidebar', 'navigation', 'dashboard', 'overview', 'season setup', 'at a glance', 'snapshot', 'tooltips', 'help button', 'where is', 'required', 'optional', 'skip', 'skip step', 'progress bar', 'depth chart', 'squad', 'grouped menu', 'staff', 'tryouts', 'menu sections', 'attendance', 'where is attendance', 'attendance report', 'take attendance', 'season attendance', 'money', 'season review', 'lineups', 'find lineups', 'where are lineups', 'explore', 'team admin', 'last season', 'accounting renamed', 'history renamed', 'notifications', 'notification bell', 'bell', 'needs attention', 'activity feed', 'unread', 'see all notifications', 'notification centre', 'insights', 'season insights', 'where is season review', 'season review renamed', 'reports', 'stats', 'team stats', 'analytics hub', 'games tab', 'templates tab', 'filter games', 'needs lineup', 'what stands out', 'findings', 'scoreboard', 'close games', 'is playing time fair', 'who shows up', 'week in review', 'weekly digest', 'weekly summary', 'sunday summary', 'weekly insights', 'notification settings', 'turn off notifications', 'turn off digest', 'turn off weekly summary', 'stop weekly notification', 'manage notifications', 'change notifications', 'my notification settings', 'notification preferences', 'push settings', 'opt out'],
       searchText: 'premium portal layout sidebar navigation sections grouped menu squad season money communication team admin explore overview roster lineups tryouts schedule tournaments chat announcements money accounting documents season review history staff settings where are my lineups find lineups build lineup lineup front door menu where is accounting renamed money where is history now season review hide tryouts tournaments until used explore heading last season tile depth chart inside roster list depth chart toggle season setup checklist onboarding dashboard your team at a glance snapshot roster size next event dues outstanding budget spent remaining set tile who is coming next game headcount in out no reply attendance lineup ready not set nudge missing guardian email flag season record recent form scored allowed differential current streak won lost win loss this week what is coming up birthdays next game question mark tooltips help button getting around find required optional skip skip step mark complete progress bar status only required step is roster optional jerseys positions schedule lineups budget skip the ones you wont use done or skipped open the setup guide drawer notification bell notifications centre needs attention activity feed today yesterday earlier unread all see all full notifications page bundled repeats chat tab unread badge not in bell your week in review weekly digest sunday evening summary push phone top findings quiet week nothing sent insights hub season insights where is season review now renamed insights season menu results playing time attendance past seasons reports stats analytics one place lineups games templates tabs filter games league tournament scrimmage needs lineup toggle count notification settings turn off notifications turn off the weekly digest weekly summary off switch change how i am notified manage notifications my notification settings notification preferences push settings bell push email one page for every team and organization you are part of coach card weekly summary at the top opt out',
       content: (
         <>
-          <p>On Premium, every tool is in the left sidebar — no turning anything on. It&apos;s <strong>grouped</strong> so related tools sit together: <strong>Overview</strong> at the top, then <strong>Squad</strong> (Roster and <strong>Lineups</strong>), <strong>Season</strong> (Schedule and <strong>Insights</strong> — a season scoreboard, a &ldquo;What stands out&rdquo; list that flags what&apos;s worth your attention, and reports on results, playing time and attendance; this was called <em>Season Review</em>, and <em>History</em> before that), <strong>Money</strong> (your budget, dues, and expenses — this was called <em>Accounting</em>; it opens with a guide card showing your next step and your four money numbers), <strong>Communication</strong> (Chat, Announcements), and <strong>Team&nbsp;admin</strong> (Staff, Documents, and Settings). Your <strong>Depth chart</strong> isn&apos;t a separate item — it&apos;s a view inside <strong>Roster</strong> (a <strong>List&nbsp;/&nbsp;Depth chart</strong> toggle at the top).</p>
+          <p>On Premium, every tool is in the left sidebar — no turning anything on. It&apos;s <strong>grouped</strong> so related tools sit together: <strong>Overview</strong> at the top, then <strong>Squad</strong> (Roster, <strong>Attendance</strong> — your season attendance report, which also opens with a one-tap way to take attendance for your next game — and <strong>Lineups</strong>), <strong>Season</strong> (Schedule and <strong>Insights</strong> — a season scoreboard, a &ldquo;What stands out&rdquo; list that flags what&apos;s worth your attention, and reports on results, playing time and attendance; this was called <em>Season Review</em>, and <em>History</em> before that), <strong>Money</strong> (your budget, dues, and expenses — this was called <em>Accounting</em>; it opens with a guide card showing your next step and your four money numbers), <strong>Communication</strong> (Chat, Announcements), and <strong>Team&nbsp;admin</strong> (Staff, Documents, and Settings). Your <strong>Depth chart</strong> isn&apos;t a separate item — it&apos;s a view inside <strong>Roster</strong> (a <strong>List&nbsp;/&nbsp;Depth chart</strong> toggle at the top).</p>
           <p><strong>Lineups</strong> has its own spot under Squad and opens on a <strong>Games</strong> tab — your upcoming and recent games, each flagged <strong>Lineup set / Not set</strong>, with a filter row (<strong>All / League / Tournament / Scrimmage</strong>, plus a <strong>⚠ Needs lineup</strong> toggle with a live count) and the bright <strong>Build lineup</strong> button on the next game that needs one. The <strong>Templates</strong> tab beside it manages your reusable lineups (you can still open a game straight from the Schedule too). Tools you aren&apos;t using yet stay out of the way: <strong>Tryouts</strong> and <strong>Tournaments</strong> wait under a small <strong>Explore</strong> heading and move up into Squad and Season automatically once your team runs a tryout or registers for a tournament.</p>
           <p>Up in the sidebar header, the <strong>bell</strong> is your notification centre. Anything that needs you — like a schedule change or an assistant-coach request — is pinned at the top under <strong>Needs attention</strong> and clears as you handle it; everything else sits below as an <strong>Activity</strong> feed grouped by <strong>Today</strong>, <strong>Yesterday</strong>, and <strong>Earlier</strong>, with repeats bundled into a single line you can open in a tap. The bell opens on <strong>Unread</strong>, so reading something clears it from view — flip to <strong>All</strong> to see everything, or tap <strong>See all</strong> for your full notifications page. Team <strong>chat</strong> stays on the <strong>Chat</strong> tab with its own unread badge, not in the bell. Once your season is rolling, the bell — and your phone, if you&apos;ve allowed notifications — also brings a weekly <strong>&ldquo;Your week in review&rdquo;</strong>: your team&apos;s top Insights findings in one short note, sent only when something actually stood out (a quiet week sends nothing). Tap it to open <strong>Insights</strong>. To change how you&apos;re notified — or switch that weekly review off — open <strong>Notification settings</strong> from the bell (or the link at the top of your notifications page): it opens <strong>one page for every team and organization you&apos;re part of</strong>, with the weekly review right at the top of your coach card.</p>
           <p>Your <strong>Overview</strong> is built to get you going:</p>
@@ -785,24 +785,25 @@ const coachesHelp: HelpPageContent = {
           id: 'faq-setup-required-optional',
           question: 'Do I have to finish every setup step on Premium?',
           answer: (
-            <p>No. Only <strong>adding your roster</strong> is required. Everything else — the rest of your first week, plus jersey numbers and positions, assistant coaches, and team documents — is <strong>optional</strong>. Set up the ones you want, and hit <strong>Skip</strong> on any you won&apos;t use. Skipping ticks the step off just like finishing it, so once every step is done or skipped the panel shrinks to a single line and then disappears on its own. You can always come back to a skipped step later from the sidebar.</p>
+            <p>No. Only <strong>adding your roster</strong> is genuinely required — almost everything else reads from it. The rest of the essentials, plus jersey numbers and positions, assistant coaches, and team documents, are <strong>optional</strong>. Set up the ones you want and hit <strong>Skip</strong> on any you won&apos;t use; skipping ticks the step off just like finishing it, and once every step is done or skipped the <strong>Season setup</strong> chip disappears from your header on its own. If you&apos;d rather it stopped prompting you right now, open the chip and choose <strong>Turn off setup hints</strong> — one click, reversible, and it applies to every team you coach. You can return to a skipped step any time from the sidebar.</p>
           ),
-          answerText: 'No. Only adding your roster is required on Premium. Everything else — the rest of your first week, plus jersey numbers and positions, assistant coaches, and team documents — is optional. Set up the ones you want and hit Skip on any you will not use; skipping ticks the step off just like finishing it, so once every step is done or skipped the panel shrinks to one line and then disappears. You can return to a skipped step later from the sidebar.',
-          keywords: ['skip setup step', 'required step', 'optional step', 'finish setup', 'do i have to', 'budget optional', 'positions optional', 'schedule optional', 'mark complete'],
+          answerText: 'No. Only adding your roster is genuinely required on Premium — almost everything else reads from it. The rest of the essentials, plus jersey numbers and positions, assistant coaches, and team documents, are optional. Set up the ones you want and hit Skip on any you will not use; skipping ticks the step off just like finishing it, and once every step is done or skipped the Season setup chip disappears from your header on its own. To stop it prompting you immediately, open the chip and choose Turn off setup hints — one click, reversible, and it applies to every team you coach. You can return to a skipped step later from the sidebar.',
+          keywords: ['skip setup step', 'required step', 'optional step', 'finish setup', 'do i have to', 'budget optional', 'positions optional', 'schedule optional', 'mark complete', 'turn off setup hints', 'stop the prompts', 'hide setup'],
           popular: true,
         },
         {
           id: 'faq-first-week-trail',
-          question: 'What is the “Your first week” trail on my Overview?',
+          question: 'What is the “Season setup” chip in my Overview header?',
           answer: (
             <>
-              <p>It&apos;s a five-step progress trail across the top of your setup panel — <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Lineup</strong>, <strong>Families</strong>, <strong>Money</strong> — and each one lights up on its own from your real data: as soon as you add a player, put a game on the calendar, save a lineup, send your first announcement, or set a budget or dues. Every step is also a link into the section it names, so you can start one straight from the trail.</p>
-              <p>Underneath it are the steps that aren&apos;t part of the trail (confirming your season, jersey numbers and positions, inviting assistant coaches, adding team documents), and a short <strong>&ldquo;Also in your portal&rdquo;</strong> row naming the sections that don&apos;t have a finish line — <strong>Chat</strong>, <strong>Development</strong>, <strong>Insights</strong>, and <strong>Tryouts</strong> when you&apos;re running them.</p>
-              <p>The panel stays put while any of the five is still open, so you can see the trail fill in. Once all five are done or skipped it shrinks to a single line, and it disappears entirely once every remaining step is settled. A game happening today always sits <em>above</em> it — the trail never gets in the way of game day. You&apos;ll only see steps you can actually do: an assistant without money access won&apos;t be shown the Money step.</p>
+              <p>It&apos;s a small control beside the <strong>?</strong> button at the top of your team Overview, showing how many setup essentials are still open — <em>Season setup · 1 of 5</em>. Tap it and a panel drops down with the full list: <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Lineup</strong>, <strong>Families</strong> (your first announcement) and <strong>Money</strong>, then a second group of things to do <strong>when you&apos;re ready</strong> — jersey numbers and positions, assistant coaches, team documents. Every step links into the section it names, and every optional step has its own <strong>Skip</strong>.</p>
+              <p>Steps tick themselves off from your real data — add a player, put a game on the calendar, save a lineup, send an announcement, set a budget or dues. Nothing to mark complete by hand.</p>
+              <p>While any essential is still open, <strong>one line</strong> under the header names the single next thing worth doing, with a button straight to it. Once the essentials are done the line goes away and the chip goes quiet; once everything is done or skipped the chip disappears too. A game happening today always sits <em>above</em> all of it — setup never gets in the way of game day.</p>
+              <p><strong>It&apos;s not the only way to find things.</strong> Every section of the portal explains itself the first time you open it — what it&apos;s for, what it makes easier elsewhere, and what needs doing first — so you can explore straight from the sidebar and never touch this chip. And you only ever see steps your access lets you complete: an assistant without money access isn&apos;t shown the Money step.</p>
             </>
           ),
-          answerText: 'The "Your first week" trail is a five-step progress bar on your Premium Overview: Roster, Schedule, Lineup, Families (your first announcement), and Money. Each lights up automatically from your real data and links into that section. Below it are the remaining setup steps — confirm season, jerseys and positions, invite assistant coaches, add team documents — and an "Also in your portal" row naming Chat, Development, Insights, and Tryouts, which have no finish line. The panel stays while any of the five is open, shrinks to one line once they are all done or skipped, and disappears once everything is settled. A game today always shows above it. You only see steps your access lets you do.',
-          keywords: ['first week', 'your first week', 'progress trail', 'progress ring', 'momentum', 'five steps', 'setup panel', 'overview panel', 'lights up', 'dots', 'also in your portal', 'what else is there', 'sections i have not used', 'discover', 'chat development insights', 'panel wont go away', 'hide setup', 'when does setup disappear'],
+          answerText: 'The Season setup chip sits beside the ? button at the top of your team Overview and shows how many setup essentials are still open, for example "Season setup 1 of 5". Tapping it opens a panel with the essentials — Roster, Schedule, Lineup, Families (your first announcement) and Money — plus a "when you are ready" group covering jersey numbers and positions, assistant coaches and team documents. Every step links into its section and every optional step has its own Skip. Steps tick off automatically from your real data; there is nothing to mark complete by hand. While an essential is open, one line under the header names the next thing to do with a button to it; once the essentials are done that line goes and the chip goes quiet, and once everything is done or skipped the chip disappears. A game today always shows above it. You do not need the chip to find things: every section explains itself at its own empty state the first time you open it. You only see steps your access lets you complete.',
+          keywords: ['season setup', 'setup chip', 'first week', 'your first week', 'progress trail', 'five steps', 'setup panel', 'overview panel', 'header chip', 'next action line', 'what else is there', 'sections i have not used', 'discover', 'also in your portal', 'chip wont go away', 'hide setup', 'turn off setup hints', 'when does setup disappear'],
           popular: true,
         },
         {
@@ -1088,6 +1089,76 @@ const coachesHelp: HelpPageContent = {
             </>
           ),
         },
+      ],
+    },
+    {
+      id: 'premium-tournament-games',
+      group: 'Premium Coaches Portal',
+      heading: 'Tournament games on your team calendar (Premium)',
+      summary: 'Your real tournament games sit on your schedule like any other game — attendance, lineups, and your season record — while the organizer keeps the time and score true.',
+      keywords: ['tournament game', 'tournament games', 'attendance on tournament game', 'lineup for tournament game', 'tournament game attendance', 'game moved', 'organizer moved my game', 'rescheduled', 'cant edit game', 'cannot delete game', 'why is this game read only', 'duplicate game', 'two games', 'added it myself', 'record changed', 'tournament games count'],
+      searchText: 'tournament games attendance lineups real tournament games on my schedule take attendance for a tournament game build a lineup for a tournament game organizer moved the game rescheduled changed time cannot edit cannot delete read-only game arrival time uniform duplicate game i added it myself remove my copy season record changed tournament games count toward my record bracket to be scheduled tbd',
+      content: (
+        <>
+          <p>When your team plays in a FieldLogicHQ tournament, those games land on your <strong>Schedule</strong> automatically, alongside your practices and league games. They&rsquo;re real games: open one and you get <strong>Attendance</strong> and the <strong>Lineup</strong> builder, exactly like any other game, and they count toward your season record and Insights.</p>
+          <p><strong>The organizer keeps the facts true.</strong> The date, time, opponent, field and final score come from the tournament and stay in step on their own — if the organizer reschedules a game or a bracket resolves, your calendar has already moved by the time you look. That&rsquo;s also why you can&rsquo;t edit or delete those details: your calendar can never disagree with the tournament you&rsquo;re playing in.</p>
+          <p><strong>What&rsquo;s yours stays yours.</strong> Arrival time, uniform, field notes, links, tags — plus your attendance and your lineup — are yours to set, and nothing the organizer does overwrites them.</p>
+          <p><strong>Games with no time yet</strong> (an unresolved bracket slot) wait in a <strong>To be scheduled</strong> group at the bottom of the list and join the calendar the moment the organizer sets a time.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-tournament-game-moved',
+          question: 'I built my lineup and the organizer moved the game — do I have to redo it?',
+          answerText: 'No. Your lineup and your attendance are attached to the game itself, not to the time slot it was in, so they move with it. Open the game at its new time and everything is exactly as you left it. You will see a Moved marker on that game in your Schedule, and inside it a line saying what it moved from — for example "Moved from Sat May 16, 9:00 a.m." The marker clears once you have opened the game. If the game moved to a different DAY, the line adds a reminder that your attendance was taken for the old time and is worth re-checking — your replies are never wiped, but people who said yes to a Saturday morning may not be free on Sunday afternoon. Some organizers reschedule by deleting a game and creating a new one, and regenerating a bracket does this to every game at once. Your work follows the game to its new identity in that case too, as long as it is recognisable — same tournament, same opponent. If it genuinely cannot be matched, the old game is kept and marked cancelled with your attendance and lineup intact rather than being thrown away.',
+          keywords: ['game moved', 'rescheduled', 'organizer changed the time', 'lineup lost', 'do i have to redo my lineup', 'moved marker', 'moved from', 'attendance after reschedule', 'different day', 'recheck attendance', 'bracket regenerated', 'game deleted and recreated'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>No.</strong> Your lineup and your attendance are attached to the <em>game</em>, not to the time slot it was in — so they move with it. Open the game at its new time and everything is exactly as you left it.</p>
+              <p>You&rsquo;ll see a <strong>Moved</strong> marker on that game in your Schedule, and inside it a line saying what it moved from (&ldquo;Moved from Sat May 16, 9:00 a.m.&rdquo;). The marker clears once you&rsquo;ve opened the game.</p>
+              <p>If it moved to a <strong>different day</strong>, that line adds a nudge to re-check your attendance. Nothing is wiped — but people who said yes to a Saturday morning may not be free on Sunday afternoon.</p>
+              <p>Some organizers reschedule by deleting a game and creating a new one, and regenerating a bracket does that to every game at once. Your work follows the game to its new identity in that case too, as long as it&rsquo;s recognisable (same tournament, same opponent). If it genuinely can&rsquo;t be matched, the old game is <strong>kept and marked cancelled</strong> with your attendance and lineup intact, rather than thrown away.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tournament-game-duplicate',
+          question: 'I typed my tournament games in by hand — now there are two of each',
+          answerText: 'That is expected, and there is a one-tap fix. Before tournament games arrived on your schedule automatically, adding them yourself was the only way to take attendance or build a lineup for them, so plenty of coaches did. Now that the real ones show up on their own, you have two rows for the same game — and both count toward your season record. Your Schedule shows a note naming the pair, with two choices. Remove my copy deletes only the game you added; it asks first and tells you exactly what goes with it, such as its attendance and its saved lineup, so nothing disappears by surprise. The tournament version stays and you can take attendance and build the lineup on that one instead. Keep both leaves everything alone and remembers your answer for that pair. Nothing is ever merged or deleted automatically — your copy may hold real work, and guessing wrong would throw it away. Separately, expect your displayed record to change once when tournament games start counting: that is the correction, but it is worth knowing before you notice it.',
+          keywords: ['duplicate game', 'two games', 'same game twice', 'i added it myself', 'remove my copy', 'keep both', 'record changed', 'record wrong', 'counted twice', 'double counted'],
+          answer: (
+            <>
+              <p>Expected — and there&rsquo;s a one-tap fix. Before tournament games arrived automatically, typing them in yourself was the only way to take attendance or build a lineup for them, so plenty of coaches did. Now that the real ones show up on their own, you have two rows for one game — and <strong>both count toward your record</strong>.</p>
+              <p>Your Schedule shows a note naming the pair, with two choices:</p>
+              <ul>
+                <li><strong>Remove my copy</strong> — deletes only the game <em>you</em> added. It asks first and names exactly what goes with it (its attendance, its saved lineup), so nothing disappears by surprise. The tournament&rsquo;s version stays, and you take attendance and build the lineup on that one instead.</li>
+                <li><strong>Keep both</strong> — leaves everything alone and remembers your answer for that pair.</li>
+              </ul>
+              <p>Nothing is ever merged or deleted automatically: your copy may hold real work, and guessing wrong would throw it away.</p>
+              <p>Separately — expect your displayed <strong>record to change once</strong> when tournament games start counting. That&rsquo;s the correction, but it&rsquo;s worth knowing before you notice it.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'premium-lineups',
+      group: 'Premium Coaches Portal',
+      heading: 'Building lineups & reusable templates (Premium)',
+      summary: 'Set who plays where once, then reuse it game to game — and let game sheets, attendance and Insights read from it.',
+      keywords: ['lineups', 'lineup', 'build lineup', 'playing order', 'batting order', 'field positions', 'who plays where', 'templates', 'auto-fill', 'game sheet', 'needs lineup'],
+      searchText: 'lineups lineup build a lineup playing order batting order field positions who plays where period by period inning by inning game sheet print attendance insights playing time fairness templates reusable base lineup apply template auto-fill generate lineup needs lineup not set games tab templates tab no games yet add a game schedule first assistant coach lineup access',
+      content: (
+        <>
+          <p>A <strong>lineup</strong> is your playing order and field positions for one game, set period by period. Open <strong>Lineups</strong> in the Squad menu — the <strong>Games</strong> tab lists every game on your schedule, each marked <strong>Lineup set</strong> or <strong>Not set</strong>, so you can see at a glance what still needs doing before the weekend.</p>
+          <p><strong>Why it&rsquo;s worth doing once.</strong> A saved lineup isn&rsquo;t just a game-day sheet. Your game sheet and attendance read from it instead of asking you again, and <strong>Insights</strong> uses it to answer <em>&ldquo;Is playing time fair?&rdquo;</em> — innings on the field versus the bench, positions each player has covered, and pitching against your arm-care caps.</p>
+          <p><strong>You need a game before you can build a lineup.</strong> If the Games tab is empty, add a practice or game on your <strong>Schedule</strong> first. Lineups are always attached to a real game — there&rsquo;s nowhere to put one otherwise.</p>
+          <p><strong>Templates</strong> (the second tab) are reusable base lineups you apply to any game in one tap — your usual order, a rain-day rotation, a tournament arrangement. Build one from scratch, or save a game&rsquo;s lineup as a template once you like it.</p>
+          <p><strong>Filters:</strong> the Games tab has scope chips (League / Tournament / Scrimmage) and a <strong>Needs lineup</strong> toggle that narrows the list to the games still missing one.</p>
+        </>
+      ),
+      faqs: [
         {
           id: 'faq-lineup-autofill-positions',
           question: 'How does Auto-fill decide who plays where?',
@@ -1155,6 +1226,50 @@ const coachesHelp: HelpPageContent = {
             </>
           ),
         },
+      ],
+    },
+    {
+      id: 'premium-development',
+      group: 'Premium Coaches Portal',
+      heading: 'Player Development: focus areas, tests & evaluation sessions (Premium)',
+      summary: 'Track what each player is working on and how they are progressing — a coverage picture, never a ranking.',
+      keywords: ['development', 'player development', 'evaluation session', 'measurables', 'test types', 'focus area', 'goals', 'team board', 'progress', 'skills test'],
+      searchText: 'player development focus areas goals what each player is working on measurables tests test types test list evaluation session run tests whole roster team board coverage who is getting attention progress trend lines season insights development report head coach only assistant notes capability no sessions yet add a test type first not a ranking',
+      content: (
+        <>
+          <p><strong>Development</strong> is where you record what each player is working on and how they&rsquo;re coming along. It has two halves that work together:</p>
+          <ul>
+            <li><strong>Focus areas</strong> — the one or two things a player is currently working on, in your words.</li>
+            <li><strong>Tests</strong> — the repeatable measurements you take (your <strong>test list</strong> defines them, and you decide what&rsquo;s on it).</li>
+          </ul>
+          <p>An <strong>evaluation session</strong> runs your tests across the whole roster in one go, at a practice. A few sessions a season is what turns single readings into a trend you can actually coach from.</p>
+          <p><strong>What it feeds.</strong> The <strong>team board</strong> shows every player&rsquo;s focus areas and latest numbers in roster order, and <strong>Insights</strong> answers <em>&ldquo;Is everyone getting attention?&rdquo;</em> — one row per player, so the quiet kid at the end of the bench doesn&rsquo;t get overlooked. It&rsquo;s deliberately a coverage view, not a leaderboard.</p>
+          <p><strong>Before your first session,</strong> put at least one test on your test list — a session with nothing to measure has nothing to record. You&rsquo;ll also need players on your roster.</p>
+          <p><strong>Who can do what:</strong> every coach with player access can read the board. <strong>Writing</strong> — starting sessions, recording readings, editing the test list and focus areas — is head-coach only, because it&rsquo;s coach judgment written about a minor.</p>
+        </>
+      ),
+    },
+    {
+      id: 'premium-insights',
+      group: 'Premium Coaches Portal',
+      heading: 'Insights: how your season is going (Premium)',
+      summary: 'Your season read back to you — record and form, playing time, attendance, dues and development — built entirely from what you have already entered.',
+      keywords: ['insights', 'season insights', 'reports', 'what stands out', 'scoreboard', 'record', 'form', 'playing time', 'fair', 'attendance report', 'season review', 'history'],
+      searchText: 'insights season insights how is my season going scoreboard band record form streak run differential close games attendance percentage dues collected what stands out findings flags reports doorways is playing time fair who shows up where is the money who is earning it is everyone getting attention nothing to show yet empty insights fills in on its own no numbers invented read only derived',
+      content: (
+        <>
+          <p><strong>Insights</strong> (in the Season menu) is your season read back to you. You never enter anything here — every number is built from the games, lineups, attendance and dues you&rsquo;ve already recorded elsewhere in the portal.</p>
+          <p>It has three parts, top to bottom:</p>
+          <ul>
+            <li><strong>The scoreboard band</strong> — the figures you&rsquo;d recite out loud: record, recent form, scoring difference, close games, attendance rate, dues collected. A block only appears once it has real data behind it.</li>
+            <li><strong>What stands out</strong> — the reports read <em>for</em> you. A pitcher over their arm-care cap, a player who&rsquo;s sat the bench most, dues going overdue. Each one links straight to the report it came from.</li>
+            <li><strong>Report doorways</strong> — question-titled tiles (<em>&ldquo;Is playing time fair?&rdquo;</em>, <em>&ldquo;Who shows up?&rdquo;</em>) that open the full report.</li>
+          </ul>
+          <p><strong>Why it may look empty.</strong> Insights fills in on its own as the season runs — nothing is invented to make the page look busy. Enter a game result, save a lineup, or take attendance once, and the matching part appears. A brand-new season is legitimately blank here.</p>
+          <p><strong>What you see depends on your access.</strong> The money report only appears for coaches with money access, playing time needs lineup access, and attendance needs player access — so two coaches on the same team can honestly see different tiles.</p>
+        </>
+      ),
+      faqs: [
         {
           id: 'faq-lineup-season-analytics',
           question: 'What does “Is playing time fair?” in Insights show?',
@@ -1169,6 +1284,22 @@ const coachesHelp: HelpPageContent = {
           ),
         },
       ],
+    },
+    {
+      id: 'premium-staff',
+      group: 'Premium Coaches Portal',
+      heading: 'Adding assistant coaches (Premium)',
+      summary: 'Give another coach their own sign-in, with exactly the areas you choose — and nothing else.',
+      keywords: ['staff', 'assistant coach', 'invite coach', 'second coach', 'permissions', 'capabilities', 'duty grid', 'access', 'head coach'],
+      searchText: 'coaching staff assistant coaches invite an assistant second coach their own login sign in permissions capabilities what each assistant can see duties grid schedule attendance lineups roster guardian contacts notes money documents announcements tryouts least privilege default head coach only remove an assistant no assistant coaches yet',
+      content: (
+        <>
+          <p><strong>Staff</strong> is where you give another coach their own sign-in to this team. They get their own account — you never share a password — and they see the team through whatever access you grant.</p>
+          <p><strong>Why bother.</strong> An assistant with schedule access can add the games you&rsquo;re both chasing; one with lineup access can build the lineup while you run the practice; one with attendance can take the roll at the diamond. Everything they do lands in the same team, so the roster, schedule and Insights everyone else sees stay in step.</p>
+          <p><strong>New assistants start with the least access that is still useful</strong> — schedule, attendance and lineups, plus a view of the roster basics. Everything sensitive is off until you switch it on: guardian contacts and dates of birth, private player notes, team money, sending announcements to families, and tryouts.</p>
+          <p><strong>Only the head coach</strong> can invite, adjust, or remove assistant coaches. Assistants never receive roster editing in this version — adding and editing players stays with you.</p>
+        </>
+      ),
     },
     {
       id: 'recipe-start-next-season',
@@ -1255,20 +1386,46 @@ const coachesHelp: HelpPageContent = {
       id: 'recipe-track-documents',
       group: 'Premium Coaches Portal',
       heading: 'Player documents (Premium)',
-      summary: 'Track waivers and forms with org-wide and team templates — available in the Premium team workspace.',
-      keywords: ['documents', 'waiver', 'medical form', 'templates', 'completion', 'premium'],
-      searchText: 'documents player documents waiver medical consent code of conduct org templates team templates track completion upload premium team workspace organization',
+      summary: 'Download the blank forms your organization publishes, then keep each family’s signed copy on the player it belongs to.',
+      keywords: ['documents', 'waiver', 'medical form', 'templates', 'completion', 'premium', 'signed form', 'upload document', 'where do documents go'],
+      searchText: 'documents player documents waiver medical consent code of conduct org templates team templates blank forms download hand out signed copy upload a document to a player player profile roster attach paperwork cannot upload my own team template add team form no upload button assistant coach view only documents premium team workspace organization org admin publishes',
       content: (
         <>
-          <p>Document tracking is part of the <strong>Premium team workspace</strong> (the richer workspace coaches get when their team runs under a FieldLogicHQ organization). The free standalone portal doesn&apos;t include a Documents area.</p>
-          <p>In the Premium workspace, the Documents page has two parts:</p>
+          <p>Documents are part of the <strong>Premium team workspace</strong> (the richer workspace coaches get when their team runs under a FieldLogicHQ organization). The free standalone portal doesn&apos;t include a Documents area.</p>
+          <p>There are <strong>two different places</strong> paperwork lives, and it&apos;s worth knowing which is which:</p>
           <ul>
-            <li><strong>Org-wide templates</strong> — waivers, medical consent, and codes of conduct published by your organization. You can download these to share with families.</li>
-            <li><strong>Team templates</strong> — forms you add yourself for your own team.</li>
+            <li><strong>The Documents page — blank forms to hand out.</strong> Your organization publishes waivers, medical consent forms and codes of conduct here. You <strong>download</strong> them and share them with your families. This page is read-only for coaches: your org admin decides what appears on it, so if you&apos;re expecting a form and don&apos;t see it, ask them.</li>
+            <li><strong>The player&apos;s profile — the signed copy that comes back.</strong> Once a family returns a completed form, open that player on your <strong>Roster</strong> and upload it in their <strong>Documents</strong> section. That way the paperwork sits with the player it belongs to, instead of in your inbox — and anyone else with document access can see it&apos;s been handed in.</li>
           </ul>
-          <p>If you expect an organization form and don&apos;t see it, ask your org admin — they decide which org-wide templates exist.</p>
+          <p>Files can be PDF, JPG, PNG or DOCX, up to 10&nbsp;MB each.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-documents-upload-own-template',
+          question: 'Can I add my own blank form for my team?',
+          answerText: 'Not from the Documents page — it shows the blank templates your organization publishes, and coaches can download from it but not add to it. Ask your org admin to publish the form if the whole club needs it. If it is just for your team, hand the form out yourself (email, group chat, on paper) and upload each signed copy to that player on your Roster, in their Documents section. That is where the completed paperwork is meant to live anyway, and it is the part that matters for knowing who has handed in what.',
+          keywords: ['upload template', 'add my own form', 'team template', 'no upload button', 'cant upload', 'where is upload', 'add a document', 'photo permission form', 'publish a form'],
+          answer: (
+            <>
+              <p>Not from the <strong>Documents</strong> page. That page holds the blank templates your <strong>organization</strong> publishes — coaches download from it, but don&apos;t add to it. If the whole club needs the form, ask your org admin to publish it there.</p>
+              <p>If it&apos;s just for your team, hand the form out yourself (email, group chat, on paper) and upload each <strong>signed copy to that player</strong> on your Roster, in their <strong>Documents</strong> section. That&apos;s where completed paperwork is meant to live anyway — and it&apos;s the part that actually tells you who has handed in what.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-documents-assistant-access',
+          question: 'Why can’t my assistant coach upload a signed form?',
+          answerText: 'Document access is one of the per-assistant settings on the Staff page, and it has three levels: off, view, and manage. New assistants start at view — they can open and download what is there, but the Upload and delete controls do not appear for them. Switch that assistant to manage on the Staff page if you want them handling paperwork. Head coaches always have manage.',
+          keywords: ['assistant documents', 'assistant cannot upload', 'document permission', 'view only documents', 'manage documents', 'staff permissions documents'],
+          answer: (
+            <>
+              <p>Document access is one of the per-assistant settings on the <strong>Staff</strong> page, with three levels: <strong>off</strong>, <strong>view</strong>, and <strong>manage</strong>. New assistants start at <strong>view</strong> — they can open and download what&apos;s there, but the Upload and delete controls simply don&apos;t appear for them.</p>
+              <p>Switch that assistant to <strong>manage</strong> on the Staff page if you want them handling paperwork. Head coaches always have manage.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-link-parent-org',

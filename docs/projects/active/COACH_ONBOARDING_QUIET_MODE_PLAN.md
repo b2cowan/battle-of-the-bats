@@ -1,6 +1,6 @@
 # Coach Onboarding — Quiet Mode
 
-**Status:** Active · **Phase A BUILT on dev 2026-07-29 (uncommitted, owner QA pending)** · Phases B and C open
+**Status:** Active · **Phases A + B BUILT on dev 2026-07-29 (uncommitted, owner QA pending)** · Phase C open
 **Owner decision date:** 2026-07-29
 **Surfaces:** Premium coach team Overview, every coach portal section, help drawer
 **Related:** `PREMIUM_COACHES_PORTAL_WALKTHROUGH_PM_BRIEF.md` (archived), `COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`, `HELP_SYSTEM_REDESIGN_PLAN.md` (archived)
@@ -243,6 +243,148 @@ Ship in two tranches so the highest-confusion sections land first:
 
 Sections not yet rewritten keep their current empty states; there is no intermediate broken
 state.
+
+### B2 — Build outcome (2026-07-29)
+
+Both tranches shipped together after the audit showed every section could be done in one pass.
+
+**The contract became structure, not convention.** `CoachEmptyState` gained two optional props —
+`payoff` (what it unlocks elsewhere) and `blocker` (the honest prerequisite) — so a later copy
+rewrite cannot quietly collapse a teaching empty back into a feature blurb. `description` keeps
+its old meaning (what this is).
+
+**Help destinations had to be written first.** Four of the twelve sections had no guide to link
+to. New sections in `lib/help-content/coaches.tsx`: `premium-lineups`, `premium-development`,
+`premium-insights`, `premium-staff`. The five lineup FAQs were **moved** out of
+`recipe-attendance` — where "How does Auto-fill decide who plays where?" had been filed under
+*Taking attendance* — into the new Lineups section, with the season-analytics one going to
+Insights. Search is unaffected (keywords/`searchText` travel with the FAQ).
+
+**A permanent Help control was added to the 9 headers that had none** — Lineups, Development,
+Insights, Roster, Schedule, Money, Announcements, Documents, Staff. This is what lets the
+no-action sections (Insights, Chat, and every "not turned on for you" state) satisfy the
+"one quiet link into the guide" half of the contract without violating the addendum's rule that
+the `quiet` variant carries no CTA.
+
+**Capability defects found and fixed while gating the CTAs** — the same class Phase A's review paid
+for, in five more places:
+
+1. **Lineups → "Add a game"** was ungated. Creating an event is the `schedule` grant (the events
+   POST 403s without it), and Lineups is visible on its own `lineups` grant — so an assistant with
+   lineups but Schedule turned off was sent to a page they cannot act on.
+2. **Schedule → "Add Event"** in the empty state, same grant, same shape.
+3. **Announcements** told every coach to "add a guardian email on your Roster" when the recipient
+   list was empty. Roster write is head-coach-only in V1, so an assistant granted
+   `announcementsSend` was pointed at a read-only roster. Now the copy forks on `rosterWrite`
+   (new `canEditRoster` prop, fails open).
+4. **Tryouts had no client capability gate at all** — `canWrite` was hard-coded `true` and the
+   page fetched unconditionally. The sidebar hides Tryouts without the grant, so this was the
+   direct-URL case; it now shows a quiet teaching empty instead of write controls that 403.
+5. **Documents' "Upload Template" button and its whole modal were dead** — there is no `POST`
+   handler on `documents/templates`, so every coach who filled it in got "Upload failed"
+   regardless of role. **Owner-approved removal 2026-07-29**; the page is now honestly
+   download-only (org admins publish templates; signed copies attach per player on the roster).
+   Restore the button the day the endpoint exists.
+
+**Sport-neutrality.** Lineups copy takes its period word from the Sport Pack
+(`periodLabel` → "inning by inning"). The plan's own mockup said "batting order"; there is no
+Sport Pack field for that vocabulary, so real copy says "playing order and field positions".
+"Batting order" survives only in help **keywords**, where a coach searching their own sport's word
+should still find the page.
+
+**Chips retired.** `DISCOVERY_SECTIONS`, the "Also in your portal" row, and the four
+`.discover*` CSS rules are gone, plus the now-unused `isCoachNavItemVisible` import on Overview.
+Removed only after every section carried its teaching copy, so no discovery window opened.
+
+**Help-docs drift fixed as part of the same unit of work.** `faq-first-week-trail` still described
+the five-step trail and the chip row that Phase A and Phase B respectively removed; it is now
+"What is the Season setup chip in my Overview header?" and names the fact that every section
+explains itself. `faq-setup-required-optional` lost its "the panel shrinks to a single line".
+
+**Gate:** typecheck clean, focused lint 0 errors (16 pre-existing `set-state-in-effect` warnings),
+472/472 tests, all token and date ratchets at zero. `check-schema-parity` fails on another
+session's in-flight `game_change_notices` / `rep_team_events.source_tournament_game_id` dev-only
+drift — no migration in this phase.
+
+### B3 — `/simplify` + `/review` outcome (2026-07-29)
+
+`/simplify` (4 lenses: reuse, simplification, efficiency, altitude) then `/review` (high-risk tier,
+4 lenses: correctness, security/capability, regression/blast-radius, data/contract).
+
+**`/simplify` — 5 fixed:**
+1. **Named the "can COMPLETE the action" predicates.** `canManageSchedule` / `canManageTryouts`
+   added to `lib/coach-capabilities.ts`; lineups, schedule and tryouts now call them instead of
+   reading `caps.schedule` / `caps.tryouts` raw in four places. This is the open-vs-complete
+   distinction Phase A's review paid for, expressed once instead of per page. `rosterWrite`
+   deliberately gets NO wrapper (its name already says "write" — no ambiguity to resolve), and the
+   module comment records that as a decision rather than an oversight.
+2. **Redundant `label` dropped from 6 help requests** — `HelpButton` already falls back to its own
+   `label` prop, so the string was typed twice per page. The 4 pages whose request object ALSO goes
+   straight to `openHelp()` keep it (no button to fall back to) and now carry a comment saying so,
+   so the next cleanup pass doesn't "fix" it into a generic "Help" drawer header.
+3. **`.payoff` no longer hand-copies `.description`'s type scale** — they share one grouped rule
+   (they are meant to read at identical weight); only margins differ. `.blocker` keeps its own rule
+   since it genuinely differs on 3 of 4 properties. `composes` deliberately avoided — CSS-module
+   composition has burned this repo before.
+4. **Development's 3-level nested `blocker` ternary** → a named `sessionsBlocker()` with sequential
+   guards, so the priority (no tests beats no write access) is readable.
+5. **The design addendum §iii now documents the teaching contract** — the three ordered body slots
+   and their type scales, that `quiet` + `blocker` is a correct pairing (prose, not a CTA, so it is
+   not an exception to the no-CTA rule), and where the guide link goes in each tier. The addendum is
+   what `/design` loads as canonical; the props existed without it knowing.
+
+Efficiency lens found nothing: the ~110 lines of new guide content stay inside the dynamically
+imported help-drawer chunk (verified against the repo's deliberate lazy-load split), and no empty
+state added a fetch to decide its copy.
+
+**`/review` — 1 High + 1 Medium confirmed and fixed, 0 refuted:**
+
+- **[High] Roster header layout broke.** `.pageHeader > *:last-child:not(.pageHeaderLeft)` pins only
+  the LAST child right. Adding `HelpButton` as a third sibling stole that pin, so the
+  Attendance / Export / Add Player cluster dropped from the header's right edge to sitting beside the
+  title — on the DEFAULT list view, i.e. every coach. Fixed by wrapping the toolbar and the Help
+  button in one trailing group. **Roster was the only 3-child header**; the other 8 were verified to
+  have exactly 2, and schedule already nested Help inside its toolbar.
+- **[Medium] Sport-neutrality violation in new copy** — the staff empty state said "take attendance
+  at the diamond". `CoachStaffPanel` has no Sport Pack context, so it now says "on game day".
+- **[Advisory] Orphaned chat CSS** — `.emptyIcon`/`.emptyTitle`/`.emptyBody`/`.emptyLink` died with
+  the hand-rolled chat empty state; removed. `.empty` stays (still centres error + loading).
+
+Correctness and security lenses returned **no findings**. Two useful confirmations from them worth
+recording: (a) the coaches layout seeds assignments server-side, so `loading` is already false on
+first render — the fail-CLOSED CTA defaults cannot flash a wrong "no access" state; (b) every client
+gate was checked against its route's `denyUnless` and they agree, and tryouts' hard-coded
+`canWrite` on its child cards is now unreachable behind the new page-level gate.
+
+**Two pre-existing defects fixed because this phase made them visible/contradictory:**
+- The schedule toolbar's persistent **"Add Event" button was never capability-gated** — a button that
+  could only ever 403. Left alone it would now sit directly above an empty state saying "adding
+  events needs schedule access". Gated on the same grant.
+- The tournaments page passed a **FAQ id in `sectionIds`**, which `getHelpSections` silently drops
+  (it only walks top-level sections), so that drawer always opened one section short. The FAQ lives
+  inside the `tournaments` section already listed, so the dead entry was simply removed.
+
+**Gate after all fixes:** typecheck clean · focused lint 0 errors · 473/473 tests · all token and
+date ratchets at zero · dev server clean-restarted and serving 200s.
+
+### B4 — Commit split (concurrent-session hazard, 2026-07-29)
+
+Phase B was committed **in two parts**, because three files carrying Phase B edits were also carrying
+another session's in-flight tournament-game-mirroring / game-change-notice work in the same working
+copy, and `AGENCY_RULES` forbids sweeping that into this commit:
+
+- `app/[orgSlug]/coaches/teams/[teamId]/page.tsx` — the chip removal (file also holds a foreign
+  `isMirroredEvent` import + usages)
+- `app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx` — the schedule teaching copy + the
+  "Add Event" capability gate (file is ~64 lines of foreign tournament-game rendering)
+- `app/[orgSlug]/coaches/coaches.module.css` — deletion of the `.discover*` chip rules (file holds
+  foreign `.sourceNote` / `.movedNote` / `.dupeNotice` rules)
+- `TODO.md` — heavily edited by other sessions this same day
+
+**The held-back set is internally consistent**: the chips and their CSS stay together, so nothing is
+half-removed. Everything else — the teaching empty states, the four new guides, the capability
+predicates, the addendum — landed. The chips come out with the second commit, once those files can
+be separated or their owner lands their work.
 
 ---
 

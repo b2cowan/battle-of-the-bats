@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { BarChart3 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import HelpButton from '@/components/help/HelpButton';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   computeInsightFindings, summarizeDuesForFindings, ATTENDANCE_MIN_KNOWN, ATTENDANCE_FLAG_BELOW,
@@ -311,6 +313,11 @@ export default function CoachesInsightsPage({
             <p className={styles.pageSub}>{assignment.teamName} — how your season is going</p>
           </div>
         </div>
+        <HelpButton
+          iconOnly
+          label="Insights"
+          help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
+        />
       </div>
 
       {loading || loadedFor !== teamId ? (
@@ -374,7 +381,17 @@ export default function CoachesInsightsPage({
               )}
             </div>
           ) : (
-            <p className={styles.insightsCalm}>Play a few games and your season scoreboard shows up here — record, form, {scoreUnitWord} difference and more.</p>
+            // Insights is DERIVED — there is nothing to do here, so this teaches (quiet variant,
+            // no CTA) and points at the sections that feed it. The report doorways below are the
+            // real actions and stay visible.
+            <CoachEmptyState
+              quiet
+              icon={<BarChart3 size={20} aria-hidden />}
+              headline="Your season hasn't started filling in yet"
+              description="Insights is your season read back to you — record and form, playing time, attendance and dues. You never enter anything on this page."
+              payoff={`Every figure is built from what you record elsewhere in the portal. Enter one game result, save one lineup, or take attendance once, and the matching part of this page appears — record, form, ${scoreUnitWord} difference and more.`}
+              blocker="Nothing is invented to fill the space, so a brand-new season is honestly blank here."
+            />
           )}
 
           {/* ── 2 · What stands out ── */}

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { UserPlus, Trash2, ShieldCheck } from 'lucide-react';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -264,7 +265,15 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
       {!staff && !loadError && <p className={styles.muted}>Loading staff…</p>}
 
       {staff && assistants.length === 0 && (
-        <p className={styles.muted} style={{ marginTop: '0.4rem' }}>No assistant coaches yet — invite one above.</p>
+        // The invite form directly above is the ONE action, so this teaches rather than repeating it.
+        <CoachEmptyState
+          compact
+          icon={<UserPlus size={20} aria-hidden />}
+          headline="No assistant coaches yet"
+          description="An assistant gets their own sign-in to this team — you never share a password — and sees only the areas you switch on for them."
+          payoff="They can add games while you run practice, build the lineup, or take attendance on game day, and it all lands in the same team — so the roster, schedule and Insights everyone sees stay in step."
+          blocker="New assistants start with the least access that's still useful. Guardian contacts, private notes, team money, sending announcements and tryouts are all off until you turn them on."
+        />
       )}
 
       {/* Assistant cards */}

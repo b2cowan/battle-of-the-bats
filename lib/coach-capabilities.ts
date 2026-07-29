@@ -149,6 +149,25 @@ export const canViewDevelopmentGoals = (c: CoachCapabilities) => c.notes;
 export const canViewMeasurables = canViewRoster;
 export const canWriteDevelopment = (c: CoachCapabilities) => c.isHeadCoach;
 
+// ── "Can this coach COMPLETE the action?" ─────────────────────────────────────
+/**
+ * The CTA gate, deliberately distinct from the "can this coach SEE the section" gate in
+ * `lib/coach-nav-visibility.ts`. Quiet Mode Phase A's review paid for the distinction once: setup
+ * steps gated on page visibility told assistant coaches to "Add players" and sent them to a
+ * read-only roster. Phase B then needed the same call four more times for empty-state CTAs.
+ *
+ * Route them all through here so a change to the capability model (e.g. `schedule` gaining a
+ * read/manage split) is a one-file diff instead of a grep across pages. Each predicate mirrors the
+ * `denyUnless` gate on the matching API route — change one, change both.
+ *
+ * `rosterWrite` deliberately has NO wrapper: unlike `schedule`/`tryouts`, its name already says
+ * "write", so there is no view-vs-manage ambiguity for a caller to get wrong.
+ */
+/** Create/edit events. The events POST 403s without it, and the sidebar hides Schedule too. */
+export const canManageSchedule = (c: CoachCapabilities) => c.schedule;
+/** Run tryout day (sessions, scorecard, decisions). Head-coach-only in V1 — candidate PII. */
+export const canManageTryouts = (c: CoachCapabilities) => c.tryouts;
+
 const MONEY_VALUES: MoneyAccess[] = ['off', 'read', 'write'];
 const DOCS_VALUES: DocsAccess[] = ['off', 'view', 'manage'];
 const ROSTER_VALUES: RosterAccess[] = ['off', 'view'];

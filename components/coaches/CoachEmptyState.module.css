@@ -85,12 +85,35 @@
   line-height: 1.2;
 }
 
-.description {
-  margin: 0;
+/* The description and the payoff sentence are ONE reading voice at ONE weight — the payoff is the
+   sentence that sells the section, not a footnote — so they share their type scale here rather than
+   hand-copying it. Only the margins differ (see below). `.blocker` deliberately steps back and
+   keeps its own rule. */
+.description,
+.payoff {
   max-width: 42ch;
   color: var(--white-60);
   font-size: 0.88rem;
   line-height: 1.55;
+}
+
+.description {
+  margin: 0;
+}
+
+/* Its own paragraph so the two ideas don't run together, pulled up slightly so they still read as
+   one block rather than two unrelated statements. */
+.payoff {
+  margin: -0.2rem 0 0;
+}
+
+/* The honest prerequisite. Steps back so it reads as a condition, not a scolding. */
+.blocker {
+  margin: -0.25rem 0 0;
+  max-width: 42ch;
+  color: var(--white-40);
+  font-size: 0.83rem;
+  line-height: 1.5;
 }
 
 .actions {

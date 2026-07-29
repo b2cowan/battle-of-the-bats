@@ -3,12 +3,16 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import {
   ListOrdered, ArrowRight, CheckCircle2, TriangleAlert, CalendarPlus,
-  Plus, Pencil, Trash2, Check, X, ClipboardCheck,
+  Plus, Pencil, Trash2, Check, X, ClipboardCheck, HelpCircle,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { canManageSchedule } from '@/lib/coach-capabilities';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import HelpButton from '@/components/help/HelpButton';
+import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -44,11 +48,25 @@ export default function CoachesLineupsPage({
   const initialSearch = use(searchParamsPromise);
   const { assignments, loading: ctxLoading } = useCoaches();
   const confirm = useConfirm();
+  const { openHelp } = useHelpDrawer();
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
   // Fail-open like the nav — the server still enforces on every lineup route.
   const canLineups = assignment ? assignment.capabilities.lineups : true;
+  // Adding a game is a SCHEDULE grant, not a lineup one — so a coach with lineups but no schedule
+  // must never be handed an "Add a game" button they can't use. Fails CLOSED.
+  const canAddGames = assignment ? canManageSchedule(assignment.capabilities) : false;
+  const periodWord = sportPack.periodLabel.toLowerCase();
+  // `label` is required here (unlike the HelpButton-only pages, which fall back to the button's own
+  // label): this object also goes straight to openHelp() from the empty states, where there is no
+  // button to fall back to. Don't "de-duplicate" it away.
+  const helpRequest = {
+    module: 'coaches' as const,
+    sectionIds: ['premium-lineups'],
+    label: 'Lineups',
+    fullGuideHref: `/${orgSlug}/coaches/help#premium-lineups`,
+  };
 
   const [upcoming, setUpcoming] = useState<RepTeamEvent[]>([]);
   const [recent, setRecent] = useState<RepTeamEvent[]>([]);
@@ -277,6 +295,7 @@ export default function CoachesLineupsPage({
           <p className={styles.pageSub}>Build game lineups and reusable templates for your team.</p>
         </div>
       </div>
+      <HelpButton iconOnly label="Lineups" help={helpRequest} />
     </div>
   );
 
@@ -284,11 +303,16 @@ export default function CoachesLineupsPage({
     return (
       <div className={styles.page}>
         {header}
-        <div className={styles.emptyState}>
-          <ListOrdered size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
-          <p className={styles.emptyStateTitle}>Lineups aren&apos;t enabled for you</p>
-          <p className={styles.emptyStateSub}>Ask your head coach to grant lineup access.</p>
-        </div>
+        {/* No-action empty → the quiet variant. Still teaches what lineups do, so a coach knows
+            what they'd be asking for rather than just being told "no". */}
+        <CoachEmptyState
+          quiet
+          icon={<ListOrdered size={20} aria-hidden />}
+          headline="Lineups aren't turned on for you"
+          description={`A lineup sets your playing order and field positions for one game, ${periodWord} by ${periodWord}.`}
+          payoff="Whoever builds them here feeds the game sheet, attendance, and the playing-time report in Insights — so the team's numbers stay in one place."
+          blocker="Ask your head coach to turn on lineup access for you."
+        />
       </div>
     );
   }
@@ -370,14 +394,20 @@ export default function CoachesLineupsPage({
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : noGames ? (
-        <div className={styles.emptyState}>
-          <CalendarPlus size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
-          <p className={styles.emptyStateTitle}>No games yet</p>
-          <p className={styles.emptyStateSub}>Add a game to your schedule, then build its lineup here.</p>
-          <Link href={`${base}/schedule`} className="btn btn-outline btn-sm" style={{ marginTop: '0.9rem' }}>
-            Add a game <ArrowRight size={14} />
-          </Link>
-        </div>
+        <CoachEmptyState
+          icon={<CalendarPlus size={22} aria-hidden />}
+          eyebrow="Lineups"
+          headline="Set who plays where, once"
+          description={`A lineup is your playing order and field positions for a single game, ${periodWord} by ${periodWord} — build it in advance, then reuse it as a template all season.`}
+          payoff="Your game sheet and attendance fill in from it instead of asking you again, and Insights uses it to answer whether playing time has been fair across the season."
+          blocker={canAddGames
+            ? 'A lineup attaches to a real game, so add one to your schedule first.'
+            : 'A lineup attaches to a real game, and none are on the schedule yet. Adding games needs schedule access — ask your head coach.'}
+          primaryAction={canAddGames
+            ? { label: 'Add a game', icon: <CalendarPlus size={15} aria-hidden />, href: `${base}/schedule` }
+            : undefined}
+          secondaryAction={{ label: 'How lineups work', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
+        />
       ) : (
         <>
           <div className={styles.lineupFilterBar} role="group" aria-label="Filter games">
@@ -451,14 +481,15 @@ export default function CoachesLineupsPage({
           ) : templatesError ? (
             <p className={styles.errorText}>{templatesError}</p>
           ) : templates.length === 0 ? (
-            <div className={styles.emptyState}>
-              <ClipboardCheck size={26} style={{ opacity: 0.3, margin: '0 auto 0.6rem', display: 'block' }} />
-              <p className={styles.emptyStateTitle}>No templates yet</p>
-              <p className={styles.emptyStateSub}>Build a reusable “base” lineup — like a gold-medal order or a rain-day rotation — then apply it to any game in one tap.</p>
-              <Link href={`${base}/lineups/templates/new`} className="btn btn-lime btn-sm" style={{ marginTop: '0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                <Plus size={14} /> New template
-              </Link>
-            </div>
+            <CoachEmptyState
+              compact
+              icon={<ClipboardCheck size={20} aria-hidden />}
+              headline="No templates yet"
+              description="A template is a reusable “base” lineup with no game attached — your usual order, a rain-day rotation, the arrangement you run at tournaments."
+              payoff="Apply one to any game in a tap and it maps onto that game’s current roster, quietly skipping anyone who has left the team — so you’re not rebuilding the same lineup every week."
+              primaryAction={{ label: 'New template', icon: <Plus size={15} aria-hidden />, href: `${base}/lineups/templates/new` }}
+              secondaryAction={{ label: 'How templates work', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
+            />
           ) : (
             <>
               <div className={styles.lineupTplHeader}>

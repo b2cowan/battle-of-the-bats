@@ -3,6 +3,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import HelpButton from '@/components/help/HelpButton';
 import RepAnnouncementEditor from '@/components/coaches/RepAnnouncementEditor';
 import styles from '../../../coaches.module.css';
 
@@ -42,9 +43,24 @@ export default function TeamAnnouncementsPage({
             <p className={styles.pageSub}>{assignment.teamName} — {assignment.programYearName}</p>
           </div>
         </div>
+        <HelpButton
+          iconOnly
+          label="Announcements"
+          help={{ module: 'coaches', sectionIds: ['recipe-announcements'], fullGuideHref: `/${params.orgSlug}/coaches/help#recipe-announcements` }}
+        />
       </div>
 
-      <RepAnnouncementEditor orgSlug={params.orgSlug} teamId={params.teamId} />
+      <p className={styles.pageSub} style={{ marginBottom: '1rem' }}>
+        One email to every family at once — a rain-out, a time change, what to bring on Saturday.
+        It goes to the guardian emails already on your roster, so there&apos;s no second list to keep,
+        and every send is logged with who received it.
+      </p>
+
+      <RepAnnouncementEditor
+        orgSlug={params.orgSlug}
+        teamId={params.teamId}
+        canEditRoster={assignment.capabilities.rosterWrite}
+      />
     </div>
   );
 }

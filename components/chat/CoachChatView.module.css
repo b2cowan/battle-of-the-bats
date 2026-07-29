@@ -43,17 +43,9 @@
   color: var(--white-45);
   padding: 2.5rem 1.25rem;
 }
-.emptyIcon { color: var(--blueprint-blue); opacity: 0.7; }
-.emptyTitle { color: var(--white-90); font-weight: 700; font-size: 0.95rem; margin: 0; }
-.emptyBody { font-size: 0.82rem; max-width: 360px; margin: 0; }
-.emptyLink {
-  margin-top: 0.35rem;
-  color: var(--logic-lime);
-  font-size: 0.82rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.emptyLink:hover { text-decoration: underline; }
+/* The hand-rolled empty-state pieces (.emptyIcon/.emptyTitle/.emptyBody/.emptyLink) were removed
+   with Quiet Mode Phase B — the no-rooms state is now a shared CoachEmptyState card. `.empty`
+   itself stays: it still centres the error and loading states above. */
 
 /* Multi-room: full-swap list↔detail on mobile; persistent sidebar + detail on desktop. */
 .split {
