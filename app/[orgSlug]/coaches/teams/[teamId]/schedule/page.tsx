@@ -1,14 +1,17 @@
 'use client';
-import { use, useState, useEffect, useCallback, useRef } from 'react';
+import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import HelpButton from '@/components/help/HelpButton';
+import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { canManageSchedule } from '@/lib/coach-capabilities';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders,
@@ -23,6 +26,12 @@ import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
+import {
+  COACH_GAME_EVENT_TYPES, isMirroredEvent, opponentSuffix,
+  diffSeenTimes, readSeenTimes, writeSeenTimes, acknowledgeSeen,
+  findDuplicateSelfEntries, readDismissedDuplicates, dismissDuplicate,
+  type MovedGame, type DuplicateGamePair,
+} from '@/lib/coach-tournament-games';
 import styles from '../../../coaches.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import type {
@@ -77,6 +86,21 @@ function resultColor(result: string): string {
   return result === 'win' ? 'var(--success)' : result === 'loss' ? 'var(--danger)' : 'var(--warning)';
 }
 
+/** The played-game scoreline + W/L/T badge. One fragment, shared by the editable (self-entered)
+ *  and read-only (organizer-owned) score lines so they can never drift apart visually. */
+function scoreline(event: RepTeamEvent) {
+  return (
+    <>
+      <span className={styles.eventScoreValue}>{event.teamScore} – {event.opponentScore}</span>
+      {event.result && (
+        <span className={styles.resultBadge} style={{ color: resultColor(event.result) }}>
+          {event.result.toUpperCase()}
+        </span>
+      )}
+    </>
+  );
+}
+
 const EVENT_LABELS: Record<RepEventType, string> = {
   external_tournament: 'Tournament',
   tournament_game:     'Game (Tournament)',
@@ -129,7 +153,7 @@ const ADD_MENU: { type: RepEventType; nested?: boolean }[] = [
 // carries one if the form is *already* that type (opened via the nested add-menu / editing).
 const EVENT_TYPE_PILLS: RepEventType[] = ['external_tournament', 'league_game', 'scrimmage', 'practice', 'team_event'];
 
-const GAME_EVENT_TYPES: RepEventType[] = ['league_game', 'tournament_game', 'scrimmage'];
+const GAME_EVENT_TYPES = COACH_GAME_EVENT_TYPES as RepEventType[];
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -483,7 +507,7 @@ function TournamentGameChip({ game, dayKey }: { game: CoachScheduleTournamentGam
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -505,10 +529,9 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount }: { event: Re
       : '';
   }
   // Opponent safety-net: games auto-name "League Game vs Lady Jays" (opponent already in the name),
-  // so only append "vs/@ {opp}" when the opponent is set but NOT already in the name.
-  const opp = event.opponent?.trim();
-  const showOpp = !!opp && !event.name.toLowerCase().includes(opp.toLowerCase());
-  const oppSuffix = showOpp ? ` · ${event.homeAway === 'away' ? '@' : 'vs'} ${opp}` : '';
+  // so only append "vs/@ {opp}" when the opponent is set but NOT already in the name. One shared
+  // rule (lib/coach-tournament-games) — the Attendance page names events the same way.
+  const oppSuffix = opponentSuffix(event);
   // Final score (team-relative: your team first) for a played game.
   const hasScore = !span && event.teamScore != null && event.opponentScore != null;
   return (
@@ -523,6 +546,11 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount }: { event: Re
         {event.name}{oppSuffix && <span className={styles.eventChipOpp}>{oppSuffix}</span>}
       </span>
       <span className={styles.eventChipTrail}>
+        {/* Batch 4: the organizer rescheduled this since the coach last looked here. Their lineup
+            and attendance came with it — this only exists so they know the time changed. */}
+        {moved && !cancelled && (
+          <span className={styles.eventChipMoved} title="The organizer moved this game">Moved</span>
+        )}
         {mismatch && !cancelled && (
           <TriangleAlert size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
         )}
@@ -568,8 +596,18 @@ export default function CoachesSchedulePage({
   // Lineups front door and the Overview "Build lineup" button link here). One-shot per mount.
   const deepLinkHandledRef = useRef(false);
   const [tryoutSessions, setTryoutSessions] = useState<RepTryoutSession[]>([]);
-  // WI-2B: the rep team's real tournament games, folded into every view read-only.
+  // WI-2B: the rep team's real tournament games. Batch 4 mirrors every DATED one into a real event
+  // (so attendance/lineups work), so what this list still uniquely carries is the undated bracket
+  // slots — plus the public game links. Anything already held as a mirrored event is filtered out
+  // below so nothing renders twice.
   const [tournamentGames, setTournamentGames] = useState<CoachScheduleTournamentGame[]>([]);
+  // Batch 4: mirrored games the organizer has moved since THIS DEVICE last showed them, and the
+  // coach's own hand-entered games that look like a duplicate of a mirrored one.
+  const [movedGames, setMovedGames] = useState<MovedGame[]>([]);
+  /** Moved games the coach has opened during THIS view — their chip retires immediately rather
+   *  than lingering until the next refetch. */
+  const [acknowledgedMoves, setAcknowledgedMoves] = useState<Set<string>>(new Set());
+  const [dismissedDupes, setDismissedDupes] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -586,6 +624,8 @@ export default function CoachesSchedulePage({
   // Whether the event being edited belongs to a recurring series (drives the "this / future / all"
   // save scope chooser) and whether that chooser is currently shown.
   const [editingRecurring, setEditingRecurring] = useState(false);
+  /** Batch 4: the event being edited is an organizer-owned mirrored tournament game. */
+  const [editingMirrored, setEditingMirrored] = useState(false);
   const [editScopeOpen, setEditScopeOpen] = useState(false);
   const [formBaseline, setFormBaseline] = useState('');
   const [addTypeMenuOpen, setAddTypeMenuOpen] = useState(false);
@@ -629,10 +669,22 @@ export default function CoachesSchedulePage({
   const [awardCountByEventId, setAwardCountByEventId] = useState<Record<string, number>>({});
   const [giveAwardOpen, setGiveAwardOpen] = useState(false);
   const confirm = useConfirm();
+  const { openHelp } = useHelpDrawer();
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const assignment = assignments.find(a => a.teamId === teamId);
+  // An assistant who reaches this page read-only must not be handed an "Add Event" button. Fails
+  // CLOSED while the assignment resolves — the empty state only renders past the !assignment guard.
+  const canAddEvents = assignment ? canManageSchedule(assignment.capabilities) : false;
+  // `label` is required here — this object also goes straight to openHelp() from the empty state,
+  // where there is no HelpButton label to fall back to.
+  const scheduleHelpRequest = {
+    module: 'coaches' as const,
+    sectionIds: ['recipe-premium-schedule', 'recipe-game-day-details'],
+    label: 'Schedule',
+    fullGuideHref: `/${orgSlug}/coaches/help#recipe-premium-schedule`,
+  };
 
   const fetchEvents = useCallback(async () => {
     setLoading(true);
@@ -641,7 +693,17 @@ export default function CoachesSchedulePage({
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
-      setEvents(data.events ?? []);
+      const nextEvents: RepTeamEvent[] = data.events ?? [];
+      setEvents(nextEvents);
+      // Batch 4: compare the mirrored games against what this device last showed the coach. A
+      // reschedule keeps their lineup and attendance (those attach to the game, not its time
+      // slot) — this is purely so they KNOW. First sight is recorded silently; a flagged move
+      // stays up until the coach opens the game.
+      const { moved, nextSeen } = diffSeenTimes(nextEvents, readSeenTimes(teamId));
+      setMovedGames(moved);
+      setAcknowledgedMoves(new Set());
+      writeSeenTimes(teamId, nextSeen);
+      setDismissedDupes(readDismissedDuplicates(teamId));
       setMismatchIds(new Set<string>(data.lineupMismatchEventIds ?? []));
       setTeamTags(data.tags ?? []);
       setTagsByEventId(data.tagsByEventId ?? {});
@@ -694,6 +756,33 @@ export default function CoachesSchedulePage({
   // synced into state) so a Tag Manager delete/merge while the form is open can never leave a
   // selected chip silently pointing at a vanished tag, without a setState-in-effect anti-pattern.
   const validFormTagIds = form.tagIds.filter(id => teamTags.some(t => t.id === id));
+
+  // ── Batch 4 derived collections ─────────────────────────────────────────────
+  // Every DATED tournament game is now a real event on this calendar, so the read-only chip must
+  // only render what could NOT be mirrored — an unresolved bracket slot with no start time.
+  // Filtering on the mirrored ids (rather than "has a date") also keeps a game visible as a chip
+  // in the window between the organizer scheduling it and the next sync landing.
+  // Memoised, and declared HERE with the other hooks (above this component's early returns —
+  // hooks must run in the same order every render): this component also owns the event FORM's
+  // state, so without memos every keystroke while editing would rebuild all four.
+  const unmirroredGames = useMemo(() => {
+    const mirroredSourceIds = new Set(
+      events.map(e => e.sourceTournamentGameId).filter(Boolean) as string[],
+    );
+    return tournamentGames.filter(g => !mirroredSourceIds.has(g.id));
+  }, [events, tournamentGames]);
+  const movedEventIds = useMemo(
+    () => new Set(movedGames.map(m => m.eventId).filter(id => !acknowledgedMoves.has(id))),
+    [movedGames, acknowledgedMoves],
+  );
+  // The coach's own hand-entered copies of games that now arrive automatically — derived from
+  // `events` rather than mirrored into state, so the two can never fall out of step. "Keep both"
+  // is remembered, and a pair drops out the moment either side stops existing.
+  const duplicatePairs = useMemo(() => findDuplicateSelfEntries(events), [events]);
+  const liveDuplicates = useMemo(
+    () => duplicatePairs.filter(p => !dismissedDupes.has(p.key)),
+    [duplicatePairs, dismissedDupes],
+  );
 
   // Open a deep-linked event once events have loaded (client-only param read — no Suspense needed).
   // Runs once; the coach can freely close or switch events afterwards.
@@ -820,6 +909,7 @@ export default function CoachesSchedulePage({
     setForm(blank);
     setFormBaseline(JSON.stringify(blank));
     setEditingEventId(null);
+    setEditingMirrored(false);
     setEditingRecurring(false);
     setEditScopeOpen(false);
     setSaveError('');
@@ -920,6 +1010,9 @@ export default function CoachesSchedulePage({
     setForm(f);
     setFormBaseline(JSON.stringify(f));
     setEditingEventId(event.id);
+    // Batch 4: editing a mirrored tournament game opens the form in restricted mode — the
+    // organizer's facts render as context, only the coach's own fields are editable.
+    setEditingMirrored(isMirroredEvent(event));
     setEditingRecurring(event.isRecurring);
     setEditScopeOpen(false);
     setSaveError('');
@@ -984,6 +1077,18 @@ export default function CoachesSchedulePage({
   // Tabs for the event slide-over (keeps it short instead of one long stack)
   const isGameEvent = !!selectedEvent &&
     ['league_game', 'tournament_game', 'scrimmage'].includes(selectedEvent.eventType);
+  // Batch 4: a MIRRORED tournament game. The organizer owns its time, opponent, venue, score,
+  // result and whether it happened; the coach owns arrival time, uniform, field, notes, links,
+  // tags — and attendance + the lineup, which is the entire point. The API enforces the same
+  // split, so hiding these controls is honesty, not the guard.
+  const mirroredGame = isMirroredEvent(selectedEvent);
+  const selectedMoved = selectedEvent
+    ? movedGames.find(m => m.eventId === selectedEvent.id) ?? null
+    : null;
+  /** The public game page for a mirrored game, when the tournament is publicly visible. */
+  const mirroredGameHref = selectedEvent?.sourceTournamentGameId
+    ? tournamentGames.find(g => g.id === selectedEvent.sourceTournamentGameId)?.href ?? null
+    : null;
   const slideTabs: { key: 'attendance' | 'lineup'; label: string }[] = [{ key: 'attendance', label: 'Attendance' }];
   if (isLineupEvent(selectedEvent)) slideTabs.push({ key: 'lineup', label: 'Lineup' });
   const activeSlideTab = slideTabs.some(t => t.key === slideTab) ? slideTab : 'attendance';
@@ -1041,6 +1146,14 @@ export default function CoachesSchedulePage({
     setRsvpEditId(null);
     setDaySheet(null);
     setSelectedEvent(event);
+    // Opening a moved game IS the acknowledgement — the coach has now seen the new time, so this
+    // device stops flagging it. The row's "Moved" chip has to clear in the same breath: writing
+    // only to storage would leave it on the calendar until some unrelated action refetched.
+    // `selectedMoved` reads from a snapshot taken here, so the detail line still shows this time.
+    if (isMirroredEvent(event) && movedGames.some(m => m.eventId === event.id)) {
+      acknowledgeSeen(teamId, event.id, event.startsAt);
+      setAcknowledgedMoves(prev => new Set(prev).add(event.id));
+    }
     // Defensive: a stale true here would pop GiveAwardModal back open on the newly-opened
     // event, uninvited (not reachable via normal clicks today since the modal blocks
     // interaction with the slide-over underneath it, but cheap to guard against directly).
@@ -1075,23 +1188,29 @@ export default function CoachesSchedulePage({
     setSaveError('');
     setSaving(true);
     try {
+      // Batch 4: on a MIRRORED tournament game only the coach-owned fields are sent. The route
+      // rejects an organizer-owned field with a 409 (and the next sync would overwrite it anyway),
+      // so sending the whole form would fail a save whose visible fields were all legitimate.
+      const coachOwned = {
+        description: form.description.trim() || null,
+        arrivalTime: form.arrivalTime || null,
+        fieldNumber: form.fieldNumber.trim() || null,
+        uniform: form.uniform.trim() || null,
+        resources: form.resources,
+        tagIds: needsOpponent(form.eventType) ? validFormTagIds : undefined,
+      };
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${editingEventId}?scope=${scope}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+        body: JSON.stringify(editingMirrored ? coachOwned : {
+          ...coachOwned,
           name: eventNameForSave(form),
-          description: form.description.trim() || null,
           startsAt: form.startsAt || null,
           endsAt: form.endsAt || null,
           location: form.location.trim() || null,
           locationAddress: form.locationAddress.trim() || null,
-          arrivalTime: form.arrivalTime || null,
-          fieldNumber: form.fieldNumber.trim() || null,
-          uniform: form.uniform.trim() || null,
-          resources: form.resources,
           opponent: form.opponent.trim() || null,
           homeAway: form.homeAway || null,
-          tagIds: needsOpponent(form.eventType) ? validFormTagIds : undefined,
         }),
       });
       if (!res.ok) {
@@ -1105,6 +1224,65 @@ export default function CoachesSchedulePage({
       await fetchEvents();
     } catch (e: unknown) {
       setSaveError(errorMessage(e, 'Save failed'));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /**
+   * Batch 4 — remove the coach's own hand-entered copy of a game that now arrives from the
+   * tournament automatically. Their copy may carry real attendance and a real lineup, so the
+   * confirm counts them out loud before anything is deleted; nothing here touches the mirrored
+   * game (which isn't theirs to delete anyway).
+   */
+  async function handleRemoveDuplicate(pair: DuplicateGamePair) {
+    const own = events.find(e => e.id === pair.ownId);
+    // `saving` is set BEFORE the count fetch below, not after the confirm: the counts take a round
+    // trip, and an un-disabled button in that window lets a second click open a second confirm —
+    // which hijacks the shared dialog's single resolver slot and leaves the first click hung.
+    if (!own || saving) return;
+    setSaving(true);
+    // Count what goes with it, so the confirm can be specific rather than vaguely ominous.
+    let attendanceCount = 0;
+    let hasLineup = false;
+    try {
+      const [attRes, lineupRes] = await Promise.allSettled([
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/attendance`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/lineup`),
+      ]);
+      if (attRes.status === 'fulfilled' && attRes.value.ok) {
+        const d = await attRes.value.json();
+        attendanceCount = ((d.attendance ?? []) as RepTeamEventAttendance[])
+          .filter(a => a.status !== 'unknown').length;
+      }
+      if (lineupRes.status === 'fulfilled' && lineupRes.value.ok) {
+        const d = await lineupRes.value.json();
+        hasLineup = Boolean(d.lineup);
+      }
+    } catch { /* the confirm just stays general — never block the action on a count */ }
+
+    const carried = [
+      attendanceCount > 0 ? `its attendance (${attendanceCount} player${attendanceCount === 1 ? '' : 's'})` : null,
+      hasLineup ? 'its saved lineup' : null,
+    ].filter(Boolean);
+    const tail = 'The tournament’s version stays, and you can take attendance and build the lineup on that one instead.';
+    const message = carried.length > 0
+      ? `${carried.join(' and ')} ${carried.length > 1 ? 'go' : 'goes'} with it. ${tail}`
+      : tail;
+
+    try {
+      if (!(await confirm({
+        title: `Remove your copy of “${own.name}”?`,
+        message,
+        confirmText: 'Remove it',
+        cancelText: 'Cancel',
+        tone: 'danger',
+      }))) return;
+      await deleteEventRequest(pair.ownId, 'one');
+      await fetchEvents();
+    } catch (e: unknown) {
+      // Surfaced on the page (beside the duplicate notice), not in the slide-over.
+      setError(errorMessage(e, 'Could not remove the event'));
     } finally {
       setSaving(false);
     }
@@ -1263,14 +1441,23 @@ export default function CoachesSchedulePage({
 
   // ── Delete ──────────────────────────────────────────────────────────────────
 
+  /** DELETE one event. Shared by the slide-over's Delete and the duplicate-game "Remove my copy"
+   *  flow, which surface the error in different places. Refreshing is the CALLER's job — the
+   *  slide-over must close the instant the delete succeeds, not sit open through a full refetch. */
+  async function deleteEventRequest(eventId: string, scope: 'one' | 'remaining' | 'all') {
+    const res = await fetch(
+      `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}?scope=${scope}`,
+      { method: 'DELETE' },
+    );
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Delete failed');
+  }
+
   async function handleDelete(eventId: string, scope: 'one' | 'remaining' | 'all') {
     setSaving(true);
     try {
-      const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}?scope=${scope}`,
-        { method: 'DELETE' },
-      );
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Delete failed');
+      // Closing happens only on success — a failure must leave the slide-over up, since that is
+      // where `saveError` renders — and immediately, with the refresh trailing behind it.
+      await deleteEventRequest(eventId, scope);
       setDeleteConfirm(null);
       setSelectedEvent(null);
       await fetchEvents();
@@ -1439,17 +1626,26 @@ export default function CoachesSchedulePage({
   const curWeek  = weekKey(cursorDate + 'T00:00:00');
 
   function renderListView() {
-    if (!events.length && !tryoutSessions.length && !tournamentGames.length) {
+    if (!events.length && !tryoutSessions.length && !unmirroredGames.length) {
       return (
         <CoachEmptyState
           icon={<Calendar size={22} aria-hidden />}
           eyebrow="Schedule"
           headline="No events scheduled yet"
-          description="Add games, practices, meetings, and tournaments to your team calendar. Events are visible to you and your org admin."
-          primaryAction={{
+          description="One calendar for games, practices, meetings and tournaments — with arrival times, field numbers and a tap-to-open map on each one."
+          payoff="It's what the rest of the portal builds on: lineups attach to these games, attendance is taken from them, your Overview shows the next one, and families see the same dates you do."
+          blocker={canAddEvents
+            ? undefined
+            : 'Adding events needs schedule access — ask your head coach to turn it on.'}
+          primaryAction={canAddEvents ? {
             label: 'Add Event',
             icon: <Plus size={15} aria-hidden />,
             onClick: () => setAddTypeMenuOpen(true),
+          } : undefined}
+          secondaryAction={{
+            label: 'How the schedule works',
+            icon: <CircleHelp size={15} aria-hidden />,
+            onClick: () => openHelp(scheduleHelpRequest),
           }}
         />
       );
@@ -1470,7 +1666,7 @@ export default function CoachesSchedulePage({
     // silently dropping them, matching the free-portal Schedule.
     const gamesByMonth: Record<string, CoachScheduleTournamentGame[]> = {};
     const tbdGames: CoachScheduleTournamentGame[] = [];
-    for (const g of tournamentGames) {
+    for (const g of unmirroredGames) {
       const mk = (g.gameDate ?? '').slice(0, 7);
       if (mk) (gamesByMonth[mk] ??= []).push(g);
       else tbdGames.push(g);
@@ -1487,7 +1683,7 @@ export default function CoachesSchedulePage({
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
             {(grouped[mk] ?? []).map(e => (
-              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} />
+              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} />
             ))}
             {games.map(g => (
               <TournamentGameChip key={`g-${g.id}`} game={g} />
@@ -1529,7 +1725,7 @@ export default function CoachesSchedulePage({
           const key = day.toISOString().slice(0, 10);
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
           const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
-          const dayGames = tournamentGames
+          const dayGames = unmirroredGames
             .filter(g => g.gameDate === key)
             .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
           return (
@@ -1543,7 +1739,7 @@ export default function CoachesSchedulePage({
                   : (
                     <>
                       {dayEvents.map(e => (
-                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} />
+                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} />
                       ))}
                       {dayGames.map(g => (
                         <TournamentGameChip key={`g-${g.id}`} game={g} dayKey={key} />
@@ -1583,7 +1779,7 @@ export default function CoachesSchedulePage({
           const key = day.toISOString().slice(0, 10);
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
           const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
-          const dayGames = tournamentGames.filter(g => g.gameDate === key);
+          const dayGames = unmirroredGames.filter(g => g.gameDate === key);
           const isToday = key === tournamentToday();
           return (
             <div key={key} className={`${styles.calMonthCell} ${isToday ? styles.calMonthCellToday : ''}`}>
@@ -1697,8 +1893,13 @@ export default function CoachesSchedulePage({
               onExportICS={handleExportICS}
               disabled={events.length === 0}
             />
+            <HelpButton iconOnly label="Schedule" help={scheduleHelpRequest} />
           {/* Add event — coach-portal primary actions are btn-lime (CP-1), not the
-              shared blueprint-blue .btnPrimary used by in-modal save buttons. */}
+              shared blueprint-blue .btnPrimary used by in-modal save buttons.
+              Gated on the same grant as the empty state's CTA: without it the events POST 403s, so
+              this was a button that could only ever fail — and once the empty state started saying
+              "adding events needs schedule access", leaving it here contradicted that outright. */}
+          {canAddEvents && (
           <div className={styles.addEventWrap}>
             <button
               className={`btn btn-lime ${styles.addEventBtn}`}
@@ -1726,6 +1927,7 @@ export default function CoachesSchedulePage({
               </div>
             )}
           </div>
+          )}
           </div>
         </div>
       </div>
@@ -1746,6 +1948,42 @@ export default function CoachesSchedulePage({
             }
           </span>
           <button className={styles.calNavBtn} onClick={() => navigate(1)}><ChevronRight size={16} /></button>
+        </div>
+      )}
+
+      {/* Batch 4 — the hand-entered duplicates. Coaches worked around the missing tools by typing
+          their tournament games in themselves; now the real ones arrive automatically, those teams
+          have two rows for one game and BOTH count toward the record. We name the collision and
+          offer a one-tap fix — never a silent merge, because their copy may hold real attendance
+          and a real lineup. "Keep both" is a genuine answer and is remembered. */}
+      {!loading && liveDuplicates.length > 0 && (
+        <div className={styles.dupeNotice} role="status">
+          {liveDuplicates.slice(0, 1).map(pair => {
+            const mirror = events.find(e => e.id === pair.mirrorId);
+            const own = events.find(e => e.id === pair.ownId);
+            if (!mirror || !own) return null;
+            return (
+              <div key={pair.key} className={styles.dupeNoticeBody}>
+                <p className={styles.dupeNoticeHead}>
+                  This game now comes from {mirror.name} automatically
+                </p>
+                <p className={styles.dupeNoticeText}>
+                  You also added &ldquo;{own.name}&rdquo; yourself on {fmtDate(own.startsAt)}. Keeping both counts it twice in your record.
+                  {liveDuplicates.length > 1 && ` (${liveDuplicates.length - 1} more like this.)`}
+                </p>
+                <div className={styles.dupeNoticeActions}>
+                  <button type="button" className={styles.btnPrimary} disabled={saving} onClick={() => void handleRemoveDuplicate(pair)}>Remove my copy</button>
+                  <button
+                    type="button"
+                    className={styles.btnGhost}
+                    onClick={() => { dismissDuplicate(teamId, pair.key); setDismissedDupes(readDismissedDuplicates(teamId)); }}
+                  >
+                    Keep both
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
@@ -1773,7 +2011,7 @@ export default function CoachesSchedulePage({
             </div>
             <div className={styles.calEventList}>
               {sortDayEvents(daySheet.events).map(e => (
-                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} />
+                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} />
               ))}
             </div>
           </div>
@@ -1803,6 +2041,38 @@ export default function CoachesSchedulePage({
 
             {eventMeta.length > 0 && (
               <p className={styles.slideOverMeta}>{eventMeta.join('  ·  ')}</p>
+            )}
+
+            {/* Batch 4 — where this game came from. Its time, opponent, venue and score are the
+                organizer's; attendance and the lineup below are entirely the coach's. */}
+            {mirroredGame && (
+              <div className={`${styles.infoBanner} ${styles.sourceNote}`}>
+                <Trophy size={13} aria-hidden style={{ flexShrink: 0 }} />
+                <span>
+                  From <strong>{selectedEvent.name}</strong> · organizer’s schedule
+                  {mirroredGameHref && (
+                    <>
+                      {' '}
+                      <a href={mirroredGameHref} target="_blank" rel="noopener noreferrer" className={styles.sourceNoteLink}>
+                        View on the tournament page <ExternalLink size={11} aria-hidden />
+                      </a>
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* The organizer moved it since this device last showed it. Nothing was lost — the
+                point is that the coach knows. Attendance is only worth re-checking when the DAY
+                changed; a clock nudge doesn't invalidate anyone's reply. */}
+            {selectedMoved && (
+              <div className={`${styles.infoBanner} ${styles.movedNote}`} role="status">
+                <strong>Moved from {fmtDate(selectedMoved.previous)} · {fmtTime(selectedMoved.previous)}.</strong>{' '}
+                Your lineup and attendance moved with it — nothing to rebuild.
+                {selectedMoved.dayChanged && (
+                  <span className={styles.movedNoteWarn}> Attendance was taken for the old time — worth re-checking.</span>
+                )}
+              </div>
             )}
             {(locationLabel || selectedEvent.uniform) && (
               <p className={styles.slideOverMeta}>
@@ -1839,8 +2109,19 @@ export default function CoachesSchedulePage({
             )}
 
             {/* Final score — the headline fact of a played game lives in the header, not behind a
-                tab. W/L/T is always derived from the two numbers (no manual override). */}
-            {isGameEvent && (
+                tab. W/L/T is always derived from the two numbers (no manual override).
+                On a MIRRORED game the score is the organizer's: shown, never editable (the API
+                refuses it, and the next sync would overwrite a local edit anyway). */}
+            {isGameEvent && mirroredGame && (
+              <div className={styles.eventScoreLine}>
+                {selectedEvent.teamScore != null ? (
+                  <div className={styles.eventScore}>{scoreline(selectedEvent)}</div>
+                ) : (
+                  <p className={styles.formHint}>The final score arrives from the tournament once it’s posted.</p>
+                )}
+              </div>
+            )}
+            {isGameEvent && !mirroredGame && (
               <div className={styles.eventScoreLine}>
                 {scoreForm ? (
                   <div className={styles.scoreForm}>
@@ -1873,12 +2154,7 @@ export default function CoachesSchedulePage({
                   </div>
                 ) : selectedEvent.teamScore != null ? (
                   <div className={styles.eventScore}>
-                    <span className={styles.eventScoreValue}>{selectedEvent.teamScore} – {selectedEvent.opponentScore}</span>
-                    {selectedEvent.result && (
-                      <span className={styles.resultBadge} style={{ color: resultColor(selectedEvent.result) }}>
-                        {selectedEvent.result.toUpperCase()}
-                      </span>
-                    )}
+                    {scoreline(selectedEvent)}
                     <button className={styles.eventScoreEdit} onClick={() => setScoreForm({ teamScore: String(selectedEvent.teamScore ?? ''), opponentScore: String(selectedEvent.opponentScore ?? '') })}>
                       Edit score
                     </button>
@@ -1978,14 +2254,23 @@ export default function CoachesSchedulePage({
                       + Add game
                     </button>
                   )}
-                  <div className={styles.slideOverActionsRight}>
-                    <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
-                      {selectedEvent.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
-                    </button>
-                    <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
-                      Delete
-                    </button>
-                  </div>
+                  {/* A mirrored game isn't the coach's to cancel or delete — and it wouldn't
+                      stick: the next sync would restore it from the organizer's schedule, minus
+                      the attendance and lineup a delete would have cascaded away. */}
+                  {mirroredGame ? (
+                    <span className={styles.slideOverActionsRight}>
+                      <span className={styles.formHint}>Only {selectedEvent.name} can cancel or remove this game.</span>
+                    </span>
+                  ) : (
+                    <div className={styles.slideOverActionsRight}>
+                      <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
+                        {selectedEvent.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
+                      </button>
+                      <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
+                        Delete
+                      </button>
+                    </div>
+                  )}
                 </>
               ) : (
                 <div className={styles.deleteConfirm}>
@@ -2066,6 +2351,11 @@ export default function CoachesSchedulePage({
                   >
                     <CircleHelp size={14} /> Reset
                   </button>
+                  {/* Batch 4 (f8-2): the season report and the place attendance is recorded had
+                      no link between them in either direction. This is the return trip. */}
+                  <Link href={`${base}/attendance`} className={styles.btnGhost}>
+                    Season attendance
+                  </Link>
                 </div>
               </div>
 
@@ -2326,7 +2616,7 @@ export default function CoachesSchedulePage({
               )}
 
               {/* Editing an existing tournament game: show which tournament it belongs to. */}
-              {form.eventType === 'tournament_game' && editingEventId && (
+              {form.eventType === 'tournament_game' && editingEventId && !editingMirrored && (
                 <section className={styles.formSection}>
                   <h4 className={styles.formSectionTitle}>Tournament</h4>
                   <p className={styles.formHint}>
@@ -2335,6 +2625,37 @@ export default function CoachesSchedulePage({
                 </section>
               )}
 
+              {/* Batch 4 — RESTRICTED MODE for a mirrored tournament game. The organizer's facts
+                  render as context, never as fields: a coach must not be able to make their own
+                  calendar disagree with the tournament they're playing in, and the next sync would
+                  overwrite an edit anyway. Arrival time sits here (not in the details fold) because
+                  it is THE thing a coach sets on a tournament game. */}
+              {editingMirrored ? (
+                <>
+                  <section className={styles.formSection}>
+                    <h4 className={styles.formSectionTitle}>From the organizer</h4>
+                    <p className={styles.formHint} style={{ marginTop: 0 }}>
+                      Time, opponent and venue come from {form.name || 'the tournament'} and update themselves.
+                    </p>
+                    <dl className={styles.sourceFacts}>
+                      <div><dt>When</dt><dd>{form.startsAt ? `${fmtDate(form.startsAt)} · ${fmtTime(form.startsAt)}` : 'To be scheduled'}</dd></div>
+                      {form.opponent && (
+                        <div><dt>Opponent</dt><dd>{form.opponent}{form.homeAway ? ` (${form.homeAway})` : ''}</dd></div>
+                      )}
+                      {form.location && <div><dt>Where</dt><dd>{form.location}</dd></div>}
+                    </dl>
+                  </section>
+                  <section className={styles.formSection}>
+                    <h4 className={styles.formSectionTitle}>Your game-day plan</h4>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Arrival / call time</label>
+                      <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
+                      <p className={styles.formHint}>A &ldquo;be there by&rdquo; time before the start — shows on the event and the calendar export.</p>
+                    </div>
+                  </section>
+                </>
+              ) : (
+              <>
               {/* WHEN */}
               <section className={styles.formSection}>
                 <h4 className={styles.formSectionTitle}>When</h4>
@@ -2469,6 +2790,8 @@ export default function CoachesSchedulePage({
                   </div>
                 </section>
               )}
+              </>
+              )}
 
               {/* EVERYTHING OPTIONAL — one disclosure instead of four always-open sections
                   (Batch 2, P0 #8). Children stay mounted while collapsed, so link validation still
@@ -2504,15 +2827,18 @@ export default function CoachesSchedulePage({
                     </div>
                   )}
                 </div>
-                <div className={styles.field}>
-                  <label className={styles.label}>Address</label>
-                  <input
-                    className={styles.input}
-                    value={form.locationAddress}
-                    onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
-                    placeholder="Street address — powers the “open in Maps” link"
-                  />
-                </div>
+                {/* Address is part of WHERE, which the organizer owns on a mirrored game. */}
+                {!editingMirrored && (
+                  <div className={styles.field}>
+                    <label className={styles.label}>Address</label>
+                    <input
+                      className={styles.input}
+                      value={form.locationAddress}
+                      onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
+                      placeholder="Street address — powers the “open in Maps” link"
+                    />
+                  </div>
+                )}
 
                 {/* TAGS — a coach's own vocabulary ("Rivalry", "Top in the province"); games only.
                     Autocomplete-or-create: type to filter existing tags, tap to toggle, or create a
@@ -2614,21 +2940,24 @@ export default function CoachesSchedulePage({
                 </section>
 
                 {/* NAME — demoted from the headline: games (and the rest) auto-name from their
-                    type + opponent, so a custom label is an optional override, not a title field. */}
-                <div className={styles.field}>
-                  <label className={styles.label}>Name</label>
-                  <input
-                    className={styles.input}
-                    value={form.name}
-                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                    placeholder={needsOpponent(form.eventType) ? `Auto: ${EVENT_NAME_PREFIX[form.eventType]} vs opponent` : `Auto: ${EVENT_NAME_PREFIX[form.eventType]}`}
-                  />
-                  <p className={styles.formHint}>
-                    {needsOpponent(form.eventType)
-                      ? 'Leave blank to name it from the opponent (e.g. “Scrimmage vs Lady Jays”).'
-                      : 'Leave blank to use the default name.'}
-                  </p>
-                </div>
+                    type + opponent, so a custom label is an optional override, not a title field.
+                    A mirrored game is named for its tournament and keeps that name. */}
+                {!editingMirrored && (
+                  <div className={styles.field}>
+                    <label className={styles.label}>Name</label>
+                    <input
+                      className={styles.input}
+                      value={form.name}
+                      onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                      placeholder={needsOpponent(form.eventType) ? `Auto: ${EVENT_NAME_PREFIX[form.eventType]} vs opponent` : `Auto: ${EVENT_NAME_PREFIX[form.eventType]}`}
+                    />
+                    <p className={styles.formHint}>
+                      {needsOpponent(form.eventType)
+                        ? 'Leave blank to name it from the opponent (e.g. “Scrimmage vs Lady Jays”).'
+                        : 'Leave blank to use the default name.'}
+                    </p>
+                  </div>
+                )}
 
                 {/* NOTES */}
                 <div className={styles.field}>

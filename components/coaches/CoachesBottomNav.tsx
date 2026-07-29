@@ -3,7 +3,7 @@ import { useState, useRef, useEffect, Fragment } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  LayoutDashboard, Calendar, MessageSquare, Trophy,
+  LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Trophy,
   Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
   MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered, TrendingUp, Shield,
 } from 'lucide-react';
@@ -37,6 +37,9 @@ const CLOSED_TEAM_TABS = CLOSED_TEAM_NAV_ITEMS.map(item => ({
 type MoreItem = { key: string; icon: typeof Users; label: string; conditional?: 'tryouts' | 'tournaments' };
 const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   { header: 'Squad', items: [
+    // Batch 4: Attendance had no door in either nav. Placed ahead of Lineups to mirror the
+    // sidebar's Roster → Attendance → Lineups order.
+    { key: '/attendance',    icon: CalendarCheck, label: 'Attendance' },
     { key: '/lineups',       icon: ListOrdered,   label: 'Lineups' },
     { key: '/development',   icon: TrendingUp,    label: 'Development' },
     { key: '/tryouts',       icon: ClipboardList, label: 'Tryouts', conditional: 'tryouts' },

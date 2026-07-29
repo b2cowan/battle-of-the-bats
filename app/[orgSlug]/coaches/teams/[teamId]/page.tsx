@@ -18,6 +18,7 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
 import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
+import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
@@ -258,7 +259,12 @@ export default function TeamOverviewPage({
         positionedRosterCount: activePlayers.filter(player => (
           Boolean(player.playerNumber) && (Boolean(player.primaryPosition) || Boolean(player.secondaryPosition))
         )).length,
-        eventCount: events.length,
+        // Batch 4: COACH-CREATED events only. Real tournament games are now mirrored onto the
+        // calendar automatically, and counting them here would tick the "Build your schedule"
+        // setup step — a step whose whole copy is "Add practices, games, and team events" — for a
+        // coach who has never opened Schedule. A milestone that lies about work not done is the
+        // same false-"done" Batch 2's review removed from the lineup step.
+        eventCount: events.filter(e => !isMirroredEvent(e)).length,
         gameCount: games.length,
         budgetSet: budgetData.budgetAmount != null,
       });
@@ -1302,7 +1308,13 @@ export default function TeamOverviewPage({
         <div className={`${styles.nowCard} ${styles.nowGameDay}`}>
           <p className={styles.nowEyebrow}><span className={styles.nowLiveDot} aria-hidden>●</span> Game day <span className={styles.nowEyebrowCount}>Today</span></p>
           <p className={styles.nowHeadline}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Game day')}</p>
-          {(nextTimeLabel || fieldOrLoc) && <p className={styles.nowMeta}>{[nextTimeLabel, fieldOrLoc].filter(Boolean).join(' · ')}</p>}
+          {/* On a mirrored tournament game the event's name IS the tournament, and the headline has
+              already taken the opponent — so name the tournament here or it disappears entirely. */}
+          {(nextTimeLabel || fieldOrLoc || isMirroredEvent(nextEvent)) && (
+            <p className={styles.nowMeta}>
+              {[isMirroredEvent(nextEvent) ? nextEvent.name : null, nextTimeLabel, fieldOrLoc].filter(Boolean).join(' · ')}
+            </p>
+          )}
           {nextEvent.teamScore != null && nextEvent.opponentScore != null && (
             <p className={styles.nowScoreline}>{nextEvent.teamScore} – {nextEvent.opponentScore}{nextEvent.result ? <span className={styles.nowScoreResult}> · {resultWord(nextEvent.result)}</span> : null}</p>
           )}
@@ -1316,8 +1328,13 @@ export default function TeamOverviewPage({
               </div>
             </>
           )}
+          {/* Batch 4 (f2-3): game day used to offer ONE generic link while three days earlier the
+              coach got one-tap lineup and attendance — backwards, since game day is the moment with
+              the least patience. Kept structurally identical to the in-season card's action row
+              below (same hrefs, same gates, same inline-ternary shape) so they can't diverge. */}
           <div className={styles.nowActions}>
-            <Link href={`${base}/schedule`} className="btn btn-lime btn-sm">Open game day <ArrowRight size={14} /></Link>
+            <Link href={nextIsGame && canViewLineup ? `${base}/lineups/${nextEvent.id}` : `${base}/schedule`} className="btn btn-lime btn-sm">{nextIsGame && canViewLineup ? 'Build lineup' : 'Open game day'} <ArrowRight size={14} /></Link>
+            {nextIsGame && <Link href={canSchedule ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`} className={styles.nowSecondary}>Take attendance <ArrowRight size={13} /></Link>}
           </div>
         </div>
       )}

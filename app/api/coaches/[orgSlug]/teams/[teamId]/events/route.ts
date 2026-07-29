@@ -20,6 +20,7 @@ import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
+import { syncTournamentGameMirrorSafely } from '@/lib/rep-tournament-game-mirror';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -82,6 +83,19 @@ export const GET = withObservability(async (req: Request,
   const from = url.searchParams.get('from') ?? undefined;
   const to   = url.searchParams.get('to')   ?? undefined;
   const type = url.searchParams.get('type') as RepEventType | undefined ?? undefined;
+
+  // Batch 4 (P0 #2): keep the team's REAL tournament games in step before reading the calendar.
+  // This route is the single read behind Schedule, Lineups AND Overview, so syncing here means a
+  // coach never opens a stale time, and a reschedule or a resolved bracket has already landed by
+  // the time they look. Awaited deliberately — `after()` has no waitUntil bridge on Amplify, so a
+  // fire-and-forget side-write can silently never run. Debounced per season inside the lib, and
+  // never fatal: a tournament-side read failing must not cost the coach their schedule.
+  await syncTournamentGameMirrorSafely({
+    repTeamId: teamId,
+    programYearId: programYear.id,
+    programYearCreatedAt: programYear.createdAt,
+    orgId: ctx!.org.id,
+  });
 
   const events = await getRepTeamEvents(programYear.id, { from, to, type });
   // Lineup flags, only for coaches who can see lineups (they're only actionable for them):

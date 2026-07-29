@@ -5307,6 +5307,7 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     recurrenceRule: r.recurrence_rule ?? null,
     recurrenceParentId: r.recurrence_parent_id ?? null,
     status: r.status ?? 'scheduled',
+    sourceTournamentGameId: r.source_tournament_game_id ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };

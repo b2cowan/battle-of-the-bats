@@ -1,9 +1,18 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { CalendarCheck } from 'lucide-react';
+import { CalendarCheck, ArrowRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import {
+  COACH_GAME_EVENT_TYPES, eventDisplayTitle, formatEventWhen, pickNextOrMostRecent,
+} from '@/lib/coach-tournament-games';
+import type { RepTeamEvent } from '@/lib/types';
 import styles from '../../../coaches.module.css';
+
+/** Event types attendance is taken on — the games plus practices and multi-day tournaments,
+ *  matching the server-side reliability rollup's buckets. */
+const ATTENDANCE_EVENT_TYPES = [...COACH_GAME_EVENT_TYPES, 'external_tournament', 'practice'];
 
 interface CategoryStat {
   attended: number;
@@ -51,23 +60,52 @@ export default function CoachesAttendancePage({
   const [rows, setRows] = useState<AttendanceRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  // Batch 4 (f8-2): the report explained what it WOULD show but never said where attendance is
+  // actually recorded. This is the event it points at — the next one coming up, or failing that
+  // the most recent one played, so the answer to "where do I do this?" is a live link, not prose.
+  const [markTarget, setMarkTarget] = useState<RepTeamEvent | null>(null);
 
-  const load = useCallback(async () => {
+  const load = useCallback(async (isStale: () => boolean = () => false) => {
     setLoading(true);
     setError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
-      setRows(data.players ?? []);
+      if (!isStale()) setRows(data.players ?? []);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : 'Failed to load attendance.');
+      if (!isStale()) setError(e instanceof Error ? e.message : 'Failed to load attendance.');
     } finally {
-      setLoading(false);
+      if (!isStale()) setLoading(false);
     }
   }, [orgSlug, teamId]);
 
-  useEffect(() => { load(); }, [load]);
+  // Non-fatal: the report stands on its own if this fails — it just loses the shortcut.
+  const loadMarkTarget = useCallback(async (isStale: () => boolean = () => false) => {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
+      if (!res.ok) return;
+      const data: { events?: RepTeamEvent[] } = await res.json();
+      if (isStale()) return;
+      setMarkTarget(pickNextOrMostRecent(data.events ?? [], {
+        types: ATTENDANCE_EVENT_TYPES,
+        now: Date.now(),
+      }));
+    } catch { /* the shortcut is a convenience, never a dependency */ }
+  }, [orgSlug, teamId]);
+
+  // Both loads are keyed on teamId, and a coach with several assignments can switch teams without
+  // this page unmounting — so a slow response for the previous team must not land on the new one.
+  useEffect(() => {
+    let cancelled = false;
+    void load(() => cancelled);
+    return () => { cancelled = true; };
+  }, [load]);
+  useEffect(() => {
+    let cancelled = false;
+    void loadMarkTarget(() => cancelled);
+    return () => { cancelled = true; };
+  }, [loadMarkTarget]);
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
   if (!assignment) {
@@ -100,7 +138,33 @@ export default function CoachesAttendancePage({
         </div>
       </div>
 
-      <p className={styles.muted} style={{ fontSize: '0.85rem', margin: '0 0 1.25rem', maxWidth: 640 }}>
+      {/* Batch 4 — record first, review second. The review found this page explained what it would
+          show but never linked to where attendance is actually taken; the round trip back from the
+          game panel is the matching half. */}
+      {markTarget ? (
+        // Reuses the Overview "Right now" anchor-card family rather than a parallel set of
+        // classes — same eyebrow / headline / meta / CTA shape, so the two read as one pattern.
+        <div className={styles.nowCard}>
+          <p className={styles.nowEyebrow}>Take attendance</p>
+          <p className={styles.nowHeadline}>{eventDisplayTitle(markTarget)}</p>
+          <p className={styles.nowMeta}>{formatEventWhen(markTarget.startsAt)}</p>
+          <div className={styles.nowActions}>
+            <Link href={`${base}/schedule?event=${markTarget.id}&tab=attendance`} className="btn btn-lime btn-sm">
+              Take attendance <ArrowRight size={14} aria-hidden />
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <CoachEmptyState
+          icon={<CalendarCheck size={22} aria-hidden />}
+          eyebrow="Attendance"
+          headline="Nothing to take attendance for yet"
+          description="Attendance is marked on a game or practice. Add one to your schedule and it'll be one tap from here."
+          primaryAction={{ label: 'Open schedule', href: `${base}/schedule` }}
+        />
+      )}
+
+      <p className={styles.muted} style={{ fontSize: '0.85rem', margin: '1.25rem 0', maxWidth: 640 }}>
         A season view to support fair playing-time and spot when someone&apos;s drifting away — not a ranking.
         Each figure counts games or practices where you recorded attendance; a player is &ldquo;present&rdquo;
         when marked attending or late, and events with no reply aren&apos;t counted against anyone.

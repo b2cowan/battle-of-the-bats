@@ -901,31 +901,36 @@ export async function getBasicCoachTournamentHistoryForRegistrationIds(
     .map(row => row.tournament_id)
     .filter(Boolean))] as string[];
 
-  const { data: tournaments, error: tournamentError } = tournamentIds.length > 0
-    ? await supabaseAdmin
-        .from('tournaments')
-        .select('id, name, slug, year, start_date, end_date, org_id, status, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
-        .in('id', tournamentIds)
-    : { data: [], error: null };
-
-  if (tournamentError) throw tournamentError;
-
-  const tournamentRows = (tournaments ?? []) as TournamentRow[];
-  const tournamentMap = new Map(tournamentRows.map(tournament => [tournament.id, tournament]));
-
   // Division-level fee schedules (a division fee overrides the tournament fee — resolved inside
-  // buildCoachTournamentStatus). Only fetched for the divisions actually referenced.
+  // buildCoachTournamentStatus). Only fetched for the divisions actually referenced. Both id sets
+  // come from `registrations`, so neither query waits on the other.
   const divisionIds = [...new Set(((registrations ?? []) as TournamentTeamRow[])
     .map(row => row.division_id)
     .filter(Boolean))] as string[];
-  const { data: divisions, error: divisionError } = divisionIds.length > 0
-    ? await supabaseAdmin
-        .from('divisions')
-        .select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
-        .in('id', divisionIds)
-    : { data: [], error: null };
 
+  const [
+    { data: tournaments, error: tournamentError },
+    { data: divisions, error: divisionError },
+  ] = await Promise.all([
+    tournamentIds.length > 0
+      ? supabaseAdmin
+          .from('tournaments')
+          .select('id, name, slug, year, start_date, end_date, org_id, status, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+          .in('id', tournamentIds)
+      : Promise.resolve({ data: [], error: null }),
+    divisionIds.length > 0
+      ? supabaseAdmin
+          .from('divisions')
+          .select('id, name, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+          .in('id', divisionIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  if (tournamentError) throw tournamentError;
   if (divisionError) throw divisionError;
+
+  const tournamentRows = (tournaments ?? []) as TournamentRow[];
+  const tournamentMap = new Map(tournamentRows.map(tournament => [tournament.id, tournament]));
 
   const divisionMap = new Map(((divisions ?? []) as DivisionFeeRow[]).map(d => [d.id, d]));
 
@@ -1200,6 +1205,8 @@ export type CoachScheduleTournamentGame = {
   dateLabel: string;
   timeLabel: string | null;
   opponentName: string;
+  /** Team-relative side (Batch 4): the mirror carries it onto the coach's calendar as game context. */
+  homeAway: 'home' | 'away';
   location: string | null;
   myScore: number | null;
   oppScore: number | null;
@@ -1277,6 +1284,7 @@ export async function getRegistrationGamesForTeam(
       dateLabel: game.game_date === today ? 'Today' : formatGameDateLabel(game.game_date),
       timeLabel: formatGameTimeLabel(game.game_time),
       opponentName,
+      homeAway: isHome ? 'home' : 'away',
       location: game.location,
       myScore,
       oppScore,

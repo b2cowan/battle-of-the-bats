@@ -5,10 +5,12 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import {
   getRepTeam,
   getRepProgramYear,
+  getActiveRepProgramYear,
   getRepTeamEvents,
 } from '@/lib/db';
 import type { RepEventType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { syncTournamentGameMirrorSafely } from '@/lib/rep-tournament-game-mirror';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -40,6 +42,20 @@ export const GET = withObservability(async (req: Request,
   const from = url.searchParams.get('from') ?? undefined;
   const to   = url.searchParams.get('to')   ?? undefined;
   const type = url.searchParams.get('type') as RepEventType | undefined ?? undefined;
+
+  // Batch 4: an org admin looking at a team's CURRENT schedule must see the same games its coach
+  // does. The mirror only ever targets the active season, so this runs only when the year being
+  // viewed IS that season — a past-year view is a record, not a live calendar. Debounced and
+  // non-fatal inside the lib; a past-year view pays one extra indexed read to establish that.
+  const activeYear = await getActiveRepProgramYear(team.id);
+  if (activeYear?.id === programYear.id) {
+    await syncTournamentGameMirrorSafely({
+      repTeamId: team.id,
+      programYearId: programYear.id,
+      programYearCreatedAt: programYear.createdAt,
+      orgId: ctx!.org.id,
+    });
+  }
 
   const events = await getRepTeamEvents(programYear.id, { from, to, type });
   return NextResponse.json({ events, programYear });

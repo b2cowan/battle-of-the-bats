@@ -28,6 +28,12 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
   if (!caps) return true;
   switch (label) {
     case 'Roster':        return caps.roster !== 'off';
+    // Batch 4 (P1 f2-6 / f6-0 ×2 / f8-2): the season attendance report had no home in either nav —
+    // its only door was a secondary button on Roster that disappears in the depth-chart view.
+    // Needs BOTH: the report lists players by name (the route gates on roster visibility) and the
+    // page leads with "take attendance for {next event}". Granting one without the other is a
+    // legitimate assistant setup, and gating on only `attendance` would show a door that 403s.
+    case 'Attendance':    return caps.attendance && caps.roster !== 'off';
     case 'Lineups':       return caps.lineups;
     case 'Schedule':      return caps.schedule;
     case 'Tryouts':       return caps.tryouts;

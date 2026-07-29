@@ -1313,6 +1313,14 @@ export interface RepTeamEvent {
   recurrenceRule: Record<string, unknown> | null;
   recurrenceParentId: string | null;
   status: 'scheduled' | 'cancelled';
+  /**
+   * Batch 4 (mig 207): the tournament-side `games.id` this event MIRRORS, or null for an ordinary
+   * coach-created event. Non-null means the ORGANIZER owns its facts — time, opponent, home/away,
+   * venue, score, result and whether it happened at all are kept in step by
+   * `lib/rep-tournament-game-mirror.ts` and are refused by the events PATCH/DELETE. The coach still
+   * owns arrival time, uniform, field, notes, links, tags, attendance and the lineup.
+   */
+  sourceTournamentGameId: string | null;
   createdAt: string;
   updatedAt: string;
 }

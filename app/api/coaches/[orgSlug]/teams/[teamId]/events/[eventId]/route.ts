@@ -15,6 +15,8 @@ import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
+import { isMirroredEvent } from '@/lib/coach-tournament-games';
+import { ORGANIZER_OWNED_API_FIELDS } from '@/lib/tournament-game-mirror';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -53,6 +55,25 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   const body = await req.json();
+
+  // Batch 4: a MIRRORED tournament game's facts belong to the organizer. The coach still owns
+  // arrival time, uniform, field, notes, links and tags (and attendance + the lineup, which are
+  // different routes entirely and stay fully open) — but the time, opponent, venue, score, result
+  // and whether the game happened at all are the tournament's, and the next sync would overwrite
+  // them anyway. Refusing here rather than silently accepting-then-reverting is the honest answer.
+  // The UI already hides these fields on a mirrored game; this is the server-side guarantee.
+  if (isMirroredEvent(event)) {
+    const attempted = ORGANIZER_OWNED_API_FIELDS.filter(field => body[field] !== undefined);
+    if (attempted.length > 0) {
+      return NextResponse.json(
+        {
+          error: `This game comes from ${event.name} and is kept in step with the organizer’s schedule. You can still set arrival time, uniform, field, notes, links and tags — and take attendance or build the lineup.`,
+          organizerOwnedFields: attempted,
+        },
+        { status: 409 },
+      );
+    }
+  }
 
   // Series edit: when a recurring event is saved with scope 'remaining' (this + future) or 'all',
   // bulk-apply the shared fields + time-of-day across the series (each occurrence keeps its date).
@@ -156,6 +177,15 @@ export const DELETE = withObservability(async (req: Request,
   const event = await getRepTeamEventById(eventId);
   if (!event || event.programYearId !== programYear.id) {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+  }
+
+  // Batch 4: a mirrored tournament game isn't the coach's to delete — and a delete wouldn't stick
+  // (the next sync would recreate it, minus their attendance and lineup, which cascade away).
+  if (isMirroredEvent(event)) {
+    return NextResponse.json(
+      { error: `This game comes from ${event.name}. Ask the organizer to remove it from the tournament schedule.` },
+      { status: 409 },
+    );
   }
 
   const url = new URL(req.url);

@@ -2,7 +2,7 @@
 import { Fragment, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Users, UserCog, Calendar, ClipboardList, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
+import { Users, UserCog, Calendar, CalendarCheck, ClipboardList, Megaphone, DollarSign, FileText, BarChart3, LayoutDashboard, HelpCircle, Settings, MessageSquare, Trophy, LogOut, ListOrdered, TrendingUp, Shield } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, CLOSED_TEAM_NAV_ITEMS } from '@/lib/coach-nav-visibility';
@@ -26,6 +26,9 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   ] },
   { label: 'Squad', items: [
     { label: 'Roster',      href: '/roster',      icon: Users },
+    // Between Roster and Lineups — the order a coach actually works in on game day (who's here,
+    // then who's batting). Batch 4: it had no nav entry at all before.
+    { label: 'Attendance',  href: '/attendance',  icon: CalendarCheck },
     { label: 'Lineups',     href: '/lineups',     icon: ListOrdered },
     // Primary (not Explore) by design decision 2026-07-17 — a growth pillar whose
     // evaluation-sessions job exists before any usage signal could accrue.
