@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore, Fragment } from 'react';
 import CountUp from '@/components/admin/CountUp';
 import { useRouter } from 'next/navigation';
 import {
@@ -162,6 +162,10 @@ type ChatAdoptionStats = {
   inChat: number;
   /** upgrade copy when !eligible, else null */
   upsellCopy: string | null;
+  /** ISO stamp of the last reminder batch; null = never sent (S1-A/S1-B, owner 2026-07-29) */
+  reminderLastSentAt: string | null;
+  /** CH-1 — event has finished; the room stays readable but no longer chases sign-ups */
+  reminderRetired: boolean;
 };
 
 type DashboardStats = {
@@ -332,6 +336,23 @@ const EMPTY_GAME_DAY: GameDayStats = {
   needsScoreGames: [],
   needsScoreTotal: 0,
 };
+
+/* ── Minute clock (external store) ───────────────────────────────────────────
+   Backs the chat reminder's cooldown countdown. Defined at module scope so the three function
+   identities are stable across renders — passing inline closures to useSyncExternalStore would
+   re-subscribe on every render. */
+function subscribeToMinuteTick(onChange: () => void): () => void {
+  const id = window.setInterval(onChange, 60_000);
+  return () => window.clearInterval(id);
+}
+/** Quantized to the minute so repeat calls compare equal and React doesn't spin. */
+function getMinuteNow(): number {
+  return Math.floor(Date.now() / 60_000) * 60_000;
+}
+/** No clock during SSR; 0 reads as "still cooling down", the safe default for an email gate. */
+function getMinuteNowServer(): number {
+  return 0;
+}
 
 const EMPTY_STATS: DashboardStats = {
   divisions: 0,
@@ -625,6 +646,17 @@ export default function AdminDashboard() {
   // ── Core stats ────────────────────────────────────────────────────────────
   const [stats, setStats] = useState<DashboardStats>(EMPTY_STATS);
   const [statsError, setStatsError] = useState('');
+  /** Bumped by a panel-level "Try again" so the stats effect re-runs without a page reload. */
+  const [statsReloadKey, setStatsReloadKey] = useState(0);
+  /**
+   * Which fetch attempt has settled, as `${tournamentId}:${reloadKey}`. Compared against the
+   * current attempt rather than reset on change, so switching tournaments (or hitting Try again)
+   * returns to LOADING without setting state inside the effect body.
+   *
+   * Before it settles a panel is LOADING; after it settles with an error it has genuinely FAILED.
+   * Previously both rendered the same sentence, so a slow connection looked like an outage.
+   */
+  const [statsSettledFor, setStatsSettledFor] = useState<string | null>(null);
 
   // ── Activate / archive ────────────────────────────────────────────────────
   const [activating, setActivating] = useState(false);
@@ -641,8 +673,35 @@ export default function AdminDashboard() {
   const [completeError, setCompleteError] = useState('');
 
   // ── Chat adoption: one-click "remind not-yet-joined teams" ────────────────
-  const [remindingChat, setRemindingChat] = useState(false);
-  const [chatRemindResult, setChatRemindResult] = useState<string | null>(null);
+  /**
+   * Which tournament has a reminder send in flight, or null. Deliberately an id rather than a
+   * boolean: a bare flag made a click on a DIFFERENT event silently do nothing while a long batch
+   * was still running elsewhere — the button looked enabled and simply ignored you.
+   */
+  const [remindingChatFor, setRemindingChatFor] = useState<string | null>(null);
+  /**
+   * The outcome of a reminder sent in THIS session, tagged with the tournament it belongs to so
+   * switching events drops it without an effect having to clear it.
+   *
+   * `sentAt` is held locally as well as polled (S1-A) so the cooldown lands the instant a send
+   * returns, rather than up to 30s later on the next poll — otherwise the button re-enables and
+   * invites exactly the double-send it exists to prevent.
+   */
+  const [chatRemindSession, setChatRemindSession] = useState<
+    { tournamentId: string; message: string | null; failed: boolean; sentAt: string | null } | null
+  >(null);
+  /**
+   * Ticking clock for the reminder cooldown countdown — the wall clock is genuinely an external
+   * store, so this is `useSyncExternalStore` rather than `Date.now()` during render (impure, and
+   * only advances when something else happens to re-render).
+   *
+   * The snapshot is QUANTIZED to the minute deliberately: `getSnapshot` runs on every render and
+   * React compares results, so returning a raw `Date.now()` would never compare equal and would
+   * spin. Minute granularity is ample for an hours-granularity countdown. Server snapshot is 0,
+   * which reads as "cooldown still running" rather than "send away" — the safe direction for an
+   * email gate.
+   */
+  const nowMs = useSyncExternalStore(subscribeToMinuteTick, getMinuteNow, getMinuteNowServer);
 
   // ── Now Playing one-row fit ───────────────────────────────────────────────
   // Measure the live-games strip and show exactly as many tiles as fit in ONE row
@@ -769,6 +828,7 @@ export default function AdminDashboard() {
     const tournamentId = currentTournament?.id;
     if (!tournamentId) return;
     const controller = new AbortController();
+    const attemptKey = `${tournamentId}:${statsReloadKey}`;
     async function fetchStats(id: string) {
       try {
         const res = await fetch(`/api/admin/tournament-dashboard?tournamentId=${encodeURIComponent(id)}${orgParam}`, { signal: controller.signal });
@@ -815,10 +875,12 @@ export default function AdminDashboard() {
           registrationAttention: data?.registrationAttention ?? EMPTY_STATS.registrationAttention,
         });
         setStatsError('');
+        setStatsSettledFor(attemptKey);
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return;
         setStats(EMPTY_STATS);
         setStatsError(err instanceof Error ? err.message : 'Unable to load dashboard stats.');
+        setStatsSettledFor(attemptKey);
       }
     }
     void fetchStats(tournamentId);
@@ -839,7 +901,7 @@ export default function AdminDashboard() {
       window.clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [currentTournament?.id, orgParam]);
+  }, [currentTournament?.id, orgParam, statsReloadKey]);
 
   // Fetch other tournaments for populate-from
   useEffect(() => {
@@ -1203,49 +1265,128 @@ export default function AdminDashboard() {
   }
 
   // ── Panel renderers ───────────────────────────────────────────────────────
+  /**
+   * S1-A (owner, 2026-07-29): the chat sign-up reminder stands down for 24h per tournament.
+   * Must match REMINDER_COOLDOWN_MS in the send route — the server is authoritative; this only
+   * decides whether the button is offered.
+   */
+  const CHAT_REMIND_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+
+  /** "Reminded just now" / "Reminded 3 hours ago" — the disabled button's own label. */
+  function formatRemindedAgo(sentMs: number, now: number): string {
+    const mins = Math.floor(Math.max(0, now - sentMs) / 60_000);
+    if (mins < 1)  return 'Reminded just now';
+    if (mins < 60) return `Reminded ${mins} minute${mins !== 1 ? 's' : ''} ago`;
+    const hrs = Math.floor(mins / 60);
+    return `Reminded ${hrs} hour${hrs !== 1 ? 's' : ''} ago`;
+  }
+
   function fmtShortDate(iso: string): string {
     const [y, m, d] = iso.split('T')[0].split('-').map(Number);
     return new Date(y, m - 1, d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
   async function sendChatSignupReminders() {
-    if (!currentTournament?.id || remindingChat) return;
-    setRemindingChat(true);
-    setChatRemindResult(null);
+    const tid = currentTournament?.id;
+    // Only block a repeat click on the SAME event; a different event's send is its own business.
+    if (!tid || remindingChatFor === tid) return;
+    setRemindingChatFor(tid);
+    setChatRemindSession({ tournamentId: tid, message: null, failed: false, sentAt: null });
     try {
-      const res = await fetch(`/api/admin/tournaments/${currentTournament.id}/chat/remind-signups${orgQuery}`, { method: 'POST' });
-      const data = await res.json().catch(() => null) as { sent?: number; failed?: number; error?: string } | null;
+      const res = await fetch(`/api/admin/tournaments/${tid}/chat/remind-signups${orgQuery}`, { method: 'POST' });
+      const data = await res.json().catch(() => null) as
+        { sent?: number; failed?: number; userMessage?: string; cooldown?: boolean; reminderLastSentAt?: string | null } | null;
       if (!res.ok) {
-        setChatRemindResult(data?.error ?? 'Could not send reminders. Please try again.');
+        // Show ONLY `userMessage` — the server's explicit "safe to show a person" channel (cooldown,
+        // finished event). Everything else, including raw driver errors and bare status words like
+        // "Forbidden", falls back to the generic line.
+        const safe = typeof data?.userMessage === 'string' ? data.userMessage.trim() : '';
+        setChatRemindSession({
+          tournamentId: tid,
+          message: safe || 'Could not send reminders. Please try again.',
+          failed: true,
+          // A cooldown rejection carries the stamp that caused it — adopt it so the button settles
+          // into its stood-down state immediately instead of staying clickable.
+          sentAt: data?.cooldown ? data.reminderLastSentAt ?? null : null,
+        });
         return;
       }
       const sent = data?.sent ?? 0;
       const failed = data?.failed ?? 0;
-      if (sent === 0 && failed === 0) {
-        setChatRemindResult('No teams to remind right now.');
-      } else {
-        setChatRemindResult(`Reminder sent to ${sent} team${sent !== 1 ? 's' : ''}${failed ? ` · ${failed} couldn't be sent` : ''}.`);
-      }
+      setChatRemindSession({
+        tournamentId: tid,
+        message: sent === 0 && failed === 0
+          ? 'No teams to remind right now.'
+          : `Reminder sent to ${sent} team${sent !== 1 ? 's' : ''}${failed ? ` · ${failed} couldn't be sent` : ''}.`,
+        failed: failed > 0,
+        sentAt: data?.reminderLastSentAt ?? null,
+      });
     } catch {
-      setChatRemindResult('Could not send reminders. Please try again.');
+      setChatRemindSession({
+        tournamentId: tid,
+        message: 'Could not send reminders. Please try again.',
+        failed: true,
+        sentAt: null,
+      });
     } finally {
-      setRemindingChat(false);
+      // Clear only if this send is still the one in flight — a later send for another event owns
+      // the flag now and must not be cancelled by this one finishing.
+      setRemindingChatFor(prev => (prev === tid ? null : prev));
     }
   }
 
   function renderTournamentChatPanel() {
     const ca = visibleStats.chatAdoption;
+    const statsSettled = statsSettledFor === `${currentTournament?.id}:${statsReloadKey}`;
+    // Reminder outcome from this session, but only if it belongs to the tournament on screen.
+    const remindSession = chatRemindSession?.tournamentId === currentTournament?.id ? chatRemindSession : null;
+    // In-flight only counts for the event that started it.
+    const sending = remindingChatFor != null && remindingChatFor === currentTournament?.id;
 
-    // Data unavailable (loading / compute failure) — keep a labelled shell so customize mode
-    // still shows a draggable box, but say nothing misleading.
+    // STILL LOADING — this tournament's fetch hasn't settled. Deliberately NOT `!ca && !settled`:
+    // `stats` keeps the previous tournament's numbers until the new fetch lands, so gating on `ca`
+    // alone would show one event's sign-up figures under another event's name.
+    if (!statsSettled) {
+      return (
+        <section className={styles.analyticsPanel}>
+          <div className={styles.panelHeader}>
+            <MessageCircle size={16} style={{ color: 'var(--data-gray)' }} />
+            <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
+          </div>
+          <div className={styles.chatSkeleton} aria-busy="true" aria-label="Loading coach sign-up figures">
+            <span className={`${styles.chatSkelBar} ${styles.chatSkelNum}`} />
+            <span className={`${styles.chatSkelBar} ${styles.chatSkelGauge}`} />
+            <span className={`${styles.chatSkelBar} ${styles.chatSkelLine}`} />
+            <span className={`${styles.chatSkelBar} ${styles.chatSkelLineShort}`} />
+          </div>
+        </section>
+      );
+    }
+
+    // GENUINELY FAILED — always render the card, never `return null`.
+    //
+    // An earlier revision suppressed this whenever the page-level error banner was showing, to
+    // avoid saying it twice. That was wrong: the banner fires for ANY failure of the combined
+    // stats endpoint, which is the common case, so the panel simply vanished — and in Customize
+    // mode left an unlabelled drag box behind. A duplicated sentence is a far smaller problem
+    // than a panel that disappears, and this is the only place offering a retry.
     if (!ca) {
       return (
         <section className={styles.analyticsPanel}>
           <div className={styles.panelHeader}>
-            <MessageCircle size={16} style={{ color: 'var(--logic-lime)' }} />
+            <MessageCircle size={16} style={{ color: 'var(--data-gray)' }} />
             <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
           </div>
-          <div className={styles.emptyPanel}><span>Chat insights are unavailable right now.</span></div>
+          <div className={styles.emptyPanel}>
+            <span>Couldn&rsquo;t load coach sign-up figures. Your coaches and the chat room are unaffected.</span>
+            <button
+              type="button"
+              className={styles.chatRetryBtn}
+              onClick={() => setStatsReloadKey(k => k + 1)}
+            >
+              Try again
+            </button>
+          </div>
         </section>
       );
     }
@@ -1269,6 +1410,24 @@ export default function AdminDashboard() {
 
     const denom = ca.teamsTotal;
     const teamsNoEmail = Math.max(0, ca.teamsTotal - ca.teamsWithEmail);
+
+    // Who may actually send. Mirrors the send route's own guard exactly, so nobody is offered a
+    // button that will bounce — the server check stays authoritative either way.
+    const canRemind =
+      hasCapability(userRole ?? 'official', userCapabilities, 'manage_registrations') ||
+      hasCapability(userRole ?? 'official', userCapabilities, 'create_tournaments');
+
+    // S1-A — 24h per-tournament stand-down. Prefer the stamp this session just produced over the
+    // polled one so the button stands down immediately rather than on the next 30s refresh.
+    const lastSentIso = remindSession?.sentAt ?? ca.reminderLastSentAt;
+    const lastSentMs = lastSentIso ? Date.parse(lastSentIso) : NaN;
+    const cooledUntil = Number.isFinite(lastSentMs) ? lastSentMs + CHAT_REMIND_COOLDOWN_MS : 0;
+    const inCooldown = cooledUntil > nowMs;
+    // Clamped to 24: `nowMs` is floored to the minute, so a fresh send would otherwise round up to
+    // "25 hours" — an hour longer than the cooldown actually is.
+    const hoursLeft = inCooldown
+      ? Math.min(24, Math.max(1, Math.ceil((cooledUntil - nowMs) / 3_600_000)))
+      : 0;
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
@@ -1316,19 +1475,47 @@ export default function AdminDashboard() {
             ) : (
               <>
                 <p className={styles.chatExplain}>Signed-up coaches get a live group chat with you, plus their schedule, scores, and your announcements.</p>
-                {ca.notJoinedRemindable > 0 ? (
-                  <button type="button" className={styles.chatRemindBtn} onClick={sendChatSignupReminders} disabled={remindingChat}>
-                    {remindingChat ? 'Sending…' : `Remind ${ca.notJoinedRemindable} team${ca.notJoinedRemindable !== 1 ? 's' : ''} to sign up →`}
-                  </button>
-                ) : ca.notJoined === 0 ? (
+
+                {remindSession?.message && (
+                  <p className={`${styles.chatRemindResult} ${remindSession.failed ? styles.chatRemindResultBad : styles.chatRemindResultOk}`}>
+                    {remindSession.message}
+                  </p>
+                )}
+
+                {ca.notJoined === 0 ? (
                   <span className={styles.chatAllIn}>Every team&rsquo;s coach is signed up 🎉</span>
-                ) : (
+                ) : ca.reminderRetired ? (
+                  /* CH-1 — the event has finished. The room stays readable; the chase stops. */
+                  <span className={styles.chatExplain}>
+                    This tournament has finished — the chat stays open to read, but sign-up reminders are no longer sent.
+                  </span>
+                ) : !canRemind ? (
+                  /* Fix 02 — no button they cannot use, and no bare "Forbidden" when they try. */
+                  <span className={styles.chatExplain}>
+                    {ca.notJoined} team{ca.notJoined !== 1 ? 's' : ''} haven&rsquo;t signed up yet. An organizer with registration access can send them a reminder.
+                  </span>
+                ) : ca.notJoinedRemindable === 0 ? (
                   <span className={styles.chatExplain}>
                     The teams not yet joined have no email on file to remind —{' '}
                     <Link href={`${base}/registrations?attention=missing_email`} className={styles.chatExplainLink}>add one →</Link>
                   </span>
+                ) : inCooldown ? (
+                  /* Fix 01 — stood down so the same coaches can't be mailed again on a second click. */
+                  <>
+                    <button type="button" className={styles.chatRemindBtn} disabled>
+                      {formatRemindedAgo(cooledUntil - CHAT_REMIND_COOLDOWN_MS, nowMs)}
+                    </button>
+                    <p className={styles.chatExplain}>
+                      You can send another reminder in {hoursLeft} hour{hoursLeft !== 1 ? 's' : ''}.
+                    </p>
+                  </>
+                ) : (
+                  /* `sending` is scoped to this tournament: a send in flight for a DIFFERENT event
+                     must not disable the button here. */
+                  <button type="button" className={styles.chatRemindBtn} onClick={sendChatSignupReminders} disabled={sending}>
+                    {sending ? 'Sending…' : `Remind ${ca.notJoinedRemindable} team${ca.notJoinedRemindable !== 1 ? 's' : ''} to sign up →`}
+                  </button>
                 )}
-                {chatRemindResult && <p className={styles.chatRemindResult}>{chatRemindResult}</p>}
               </>
             )}
           </>

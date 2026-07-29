@@ -524,12 +524,20 @@ export function coachAccessReminderHtml(p: {
   tournamentName: string;
   joinUrl: string;
   loginUrl: string;
+  /**
+   * Set when the nudge comes from the dashboard's chat-adoption panel — the organizer is chasing
+   * this coach specifically so they can reach the group chat, so the email says a room is waiting.
+   * Off by default: the single-team resend-access flow uses the same template on events that may
+   * have no chat at all, and must not promise one.
+   */
+  mentionsChat?: boolean;
 }) {
   const coachName = p.coachName.trim() ? p.coachName : 'Coach';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your Registration Dashboard</h2>
     <p>Hi <strong>${escapeEmailHtml(coachName)}</strong>,</p>
     <p>Here's your access link for <strong>${escapeEmailHtml(p.teamName)}</strong> in <strong>${escapeEmailHtml(p.tournamentName)}</strong>. Your dashboard shows your registration status, game schedule, and any announcements from the organizer.</p>
+    ${p.mentionsChat ? `<p>The organizer has also opened a group chat for this event's coaches — you'll join it automatically once you're signed in.</p>` : ''}
     <a href="${escapeEmailHtml(p.joinUrl)}" style="display:inline-block;background:#D9F99D;color:#0b0f14;text-decoration:none;font-weight:800;padding:0.75rem 1rem;border-radius:2px;font-size:0.82rem;letter-spacing:0.06em;margin:1rem 0;">Create Account &amp; View Dashboard →</a>
     <p style="color:rgba(241,245,249,0.55);font-size:0.85rem;">Already have an account? <a href="${escapeEmailHtml(p.loginUrl)}" style="color:#D9F99D;">Sign in instead →</a></p>
     <p style="color:rgba(241,245,249,0.4);font-size:0.82rem;">If you did not register for this tournament, you can ignore this email.</p>

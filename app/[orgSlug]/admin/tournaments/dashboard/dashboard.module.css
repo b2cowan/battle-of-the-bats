@@ -1846,6 +1846,69 @@
   margin: 0;
 }
 
+/* A send that worked should read as success, and one that didn't as something to look at —
+   previously both were the same grey line (Step 1 fix, owner-approved 2026-07-29). */
+.chatRemindResultOk  { color: var(--success); }
+.chatRemindResultBad { color: var(--danger); }
+
+/* Panel-level retry so a failed funnel doesn't cost a full page reload. Quiet by design — this is
+   a recovery affordance, not an action to draw the eye. */
+.chatRetryBtn {
+  align-self: flex-start;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  background: transparent;
+  border: 1px solid var(--border-2);
+  padding: 0.4rem 0.65rem;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.chatRetryBtn:hover {
+  color: var(--logic-lime);
+  border-color: var(--logic-lime);
+}
+
+/* Loading placeholder — the SHAPE of the funnel, so a slow load never reads as an outage. */
+.chatSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 0.2rem 0 0.1rem;
+}
+
+.chatSkelBar {
+  display: block;
+  border-radius: 3px;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.11) 50%,
+    rgba(255, 255, 255, 0.05) 100%
+  );
+  background-size: 200% 100%;
+  animation: chatSkelShimmer 1.4s ease-in-out infinite;
+}
+
+.chatSkelNum       { height: 1.6rem;  width: 58%; }
+.chatSkelGauge     { height: 0.35rem; width: 100%; }
+.chatSkelLine      { height: 0.6rem;  width: 74%; }
+.chatSkelLineShort { height: 0.6rem;  width: 46%; }
+
+@keyframes chatSkelShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chatSkelBar { animation: none; }
+}
+
 /* Post-event banner */
 .postEventBanner {
   display: flex;

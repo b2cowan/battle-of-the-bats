@@ -3548,6 +3548,123 @@
         "column_default": null
       },
       {
+        "table_name": "game_change_notices",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 3,
+        "column_name": "tournament_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 4,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 5,
+        "column_name": "game_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 6,
+        "column_name": "kind",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 7,
+        "column_name": "was_date",
+        "data_type": "date",
+        "udt_name": "date",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 8,
+        "column_name": "was_time",
+        "data_type": "time without time zone",
+        "udt_name": "time",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 9,
+        "column_name": "was_location",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 11,
+        "column_name": "sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 12,
+        "column_name": "superseded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "game_change_notices",
+        "pos": 13,
+        "column_name": "hold_until",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "games",
         "pos": 1,
         "column_name": "id",
@@ -10883,6 +11000,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_events",
+        "pos": 29,
+        "column_name": "source_tournament_game_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_expense_tags",
         "pos": 1,
         "column_name": "expense_id",
@@ -14744,6 +14870,33 @@
         "column_default": null
       },
       {
+        "table_name": "tournaments",
+        "pos": 46,
+        "column_name": "chat_reminder_last_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournaments",
+        "pos": 47,
+        "column_name": "chat_reminder_last_sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "tournaments",
+        "pos": 48,
+        "column_name": "chat_reminder_last_sent_count",
+        "data_type": "integer",
+        "udt_name": "int4",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "user_marketing_opt_outs",
         "pos": 1,
         "column_name": "user_id",
@@ -15342,6 +15495,34 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "feedback_submissions_org_id_fkey"
+      },
+      {
+        "table_name": "game_change_notices",
+        "column_name": "game_id",
+        "foreign_table": "games",
+        "foreign_column": "id",
+        "constraint_name": "game_change_notices_game_id_fkey"
+      },
+      {
+        "table_name": "game_change_notices",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "game_change_notices_org_id_fkey"
+      },
+      {
+        "table_name": "game_change_notices",
+        "column_name": "team_id",
+        "foreign_table": "teams",
+        "foreign_column": "id",
+        "constraint_name": "game_change_notices_team_id_fkey"
+      },
+      {
+        "table_name": "game_change_notices",
+        "column_name": "tournament_id",
+        "foreign_table": "tournaments",
+        "foreign_column": "id",
+        "constraint_name": "game_change_notices_tournament_id_fkey"
       },
       {
         "table_name": "games",
@@ -16117,21 +16298,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -16139,6 +16313,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -16201,14 +16382,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -16229,14 +16410,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -16411,20 +16592,13 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
@@ -16433,6 +16607,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -17445,6 +17626,13 @@
       },
       {
         "table_name": "tournaments",
+        "column_name": "chat_reminder_last_sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "tournaments_chat_reminder_last_sent_by_fkey"
+      },
+      {
+        "table_name": "tournaments",
         "column_name": "default_contact_member_id",
         "foreign_table": "organization_members",
         "foreign_column": "id",
@@ -18070,6 +18258,26 @@
         "tablename": "feedback_submissions",
         "indexname": "idx_feedback_submissions_type",
         "indexdef": "CREATE INDEX idx_feedback_submissions_type ON public.feedback_submissions USING btree (type)"
+      },
+      {
+        "tablename": "game_change_notices",
+        "indexname": "game_change_notices_game_idx",
+        "indexdef": "CREATE INDEX game_change_notices_game_idx ON public.game_change_notices USING btree (game_id) WHERE ((sent_at IS NULL) AND (superseded_at IS NULL))"
+      },
+      {
+        "tablename": "game_change_notices",
+        "indexname": "game_change_notices_pending_idx",
+        "indexdef": "CREATE INDEX game_change_notices_pending_idx ON public.game_change_notices USING btree (tournament_id, team_id, created_at) WHERE ((sent_at IS NULL) AND (superseded_at IS NULL))"
+      },
+      {
+        "tablename": "game_change_notices",
+        "indexname": "game_change_notices_pkey",
+        "indexdef": "CREATE UNIQUE INDEX game_change_notices_pkey ON public.game_change_notices USING btree (id)"
+      },
+      {
+        "tablename": "game_change_notices",
+        "indexname": "game_change_notices_recent_sent_idx",
+        "indexdef": "CREATE INDEX game_change_notices_recent_sent_idx ON public.game_change_notices USING btree (tournament_id, team_id, sent_at) WHERE (sent_at IS NOT NULL)"
       },
       {
         "tablename": "games",
@@ -19145,6 +19353,11 @@
         "tablename": "rep_team_events",
         "indexname": "rep_team_events_src_basic_event_uq",
         "indexdef": "CREATE UNIQUE INDEX rep_team_events_src_basic_event_uq ON public.rep_team_events USING btree (program_year_id, source_basic_event_id) WHERE (source_basic_event_id IS NOT NULL)"
+      },
+      {
+        "tablename": "rep_team_events",
+        "indexname": "rep_team_events_src_tournament_game_uq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_events_src_tournament_game_uq ON public.rep_team_events USING btree (program_year_id, source_tournament_game_id) WHERE (source_tournament_game_id IS NOT NULL)"
       },
       {
         "tablename": "rep_team_events",
@@ -20252,6 +20465,18 @@
       {
         "kind": "RLS",
         "table_name": "feedback_submissions",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "game_change_notices",
+        "detail": "game_change_notices_kind_check",
+        "check_clause": "(kind = ANY (ARRAY['moved'::text, 'cancelled'::text, 'restored'::text]))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "game_change_notices",
         "detail": "ENABLED",
         "check_clause": null
       },

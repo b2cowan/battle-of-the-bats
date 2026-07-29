@@ -135,7 +135,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status, notify_teams_on_complete, results_notified_at')
+    .select('start_date, end_date, contact_email, default_contact_member_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, logo_url, hero_banner_url, theme_preset, theme_primary, settings, status, notify_teams_on_complete, results_notified_at, chat_reminder_last_sent_at')
     .eq('id', tournamentId)
     .eq('org_id', ctx.org.id)
     .maybeSingle();
@@ -696,6 +696,10 @@ export const GET = withObservability(async (req: Request) => {
     notJoinedRemindable: number;
     inChat: number;
     upsellCopy: string | null;
+    /** ISO stamp of the last reminder batch, or null if never sent (S1-A/S1-B, 2026-07-29). */
+    reminderLastSentAt: string | null;
+    /** CH-1 — a finished event keeps its room readable but stops chasing sign-ups. */
+    reminderRetired: boolean;
   };
   let chatAdoption: ChatAdoption | null = null;
   if (hasPlanFeature(ctx.org.planId, 'tournament_chat')) {
@@ -737,6 +741,10 @@ export const GET = withObservability(async (req: Request) => {
         notJoinedRemindable,
         inChat,
         upsellCopy: null,
+        reminderLastSentAt: (tournament?.chat_reminder_last_sent_at as string | null) ?? null,
+        // CH-1 (owner, 2026-07-29): the room stays readable after the event, but a finished
+        // tournament stops recruiting — the send route refuses these too.
+        reminderRetired: tournament?.status === 'completed' || tournament?.status === 'archived',
       };
     } catch (e) {
       // Funnel compute failed entirely — leave chatAdoption null so the panel simply omits itself
@@ -755,6 +763,8 @@ export const GET = withObservability(async (req: Request) => {
       notJoinedRemindable: 0,
       inChat: 0,
       upsellCopy: requiresPlanCopy('tournament_chat'),
+      reminderLastSentAt: null,
+      reminderRetired: false,
     };
   }
 
