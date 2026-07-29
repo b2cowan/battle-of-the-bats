@@ -2043,6 +2043,15 @@
     "ordinal_position": 9
   },
   {
+    "table_name": "chat_room_members",
+    "column_name": "history_visible_from",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
     "table_name": "chat_rooms",
     "column_name": "id",
     "data_type": "uuid",
@@ -3544,6 +3553,123 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 18
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "tournament_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "game_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "kind",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "was_date",
+    "data_type": "date",
+    "udt_name": "date",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "was_time",
+    "data_type": "time without time zone",
+    "udt_name": "time",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "was_location",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "hold_until",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 12
+  },
+  {
+    "table_name": "game_change_notices",
+    "column_name": "superseded_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 13
   },
   {
     "table_name": "games",
@@ -10881,6 +11007,15 @@
     "ordinal_position": 28
   },
   {
+    "table_name": "rep_team_events",
+    "column_name": "source_tournament_game_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 29
+  },
+  {
     "table_name": "rep_team_expense_tags",
     "column_name": "expense_id",
     "data_type": "uuid",
@@ -14742,6 +14877,33 @@
     "ordinal_position": 44
   },
   {
+    "table_name": "tournaments",
+    "column_name": "chat_reminder_last_sent_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 45
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "chat_reminder_last_sent_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 46
+  },
+  {
+    "table_name": "tournaments",
+    "column_name": "chat_reminder_last_sent_count",
+    "data_type": "integer",
+    "udt_name": "int4",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 47
+  },
+  {
     "table_name": "user_marketing_opt_outs",
     "column_name": "user_id",
     "data_type": "uuid",
@@ -14821,6 +14983,24 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 4
+  },
+  {
+    "table_name": "user_preferences",
+    "column_name": "coach_tour_dismissed_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "user_preferences",
+    "column_name": "coach_setup_hints_off",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 6
   },
   {
     "table_name": "venue_facilities",
