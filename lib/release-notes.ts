@@ -44,6 +44,80 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-29',
+    title: 'Season\'s End, real tournament tools, and faster role switching for coaches',
+    highlights: [
+      {
+        category: 'new',
+        text: 'A one-time, 2-minute guided tour for coaches new to the portal — four quick stops (Squad, Season, Money, Communication). It\'s offered once and never pushed again after you skip it, but it\'s always sitting in Help if you want it later.',
+      },
+      {
+        category: 'new',
+        text: 'Every section of your portal now explains itself. Open Lineups, Insights, Documents, or any other empty section and it tells you what it does, what it unlocks elsewhere, and what you need first — right where you are, instead of a generic "nothing here."',
+      },
+      {
+        category: 'new',
+        text: 'Tournament games finally get real tools. A game from a real FieldLogicHQ tournament now works like any other game on your schedule — attendance, lineup builder, and it counts toward your season record. If the organizer moves or cancels it, your calendar and your saved lineup/attendance follow automatically — nothing to redo.',
+      },
+      {
+        category: 'new',
+        text: 'Attendance has a real home now — its own item in your sidebar and phone menu, opening straight to "take attendance for your next game."',
+      },
+      {
+        category: 'new',
+        text: 'Add your whole roster at once. Paste your team list or upload a spreadsheet, review it in a table, fix anything, and add everyone in one tap — instead of one player at a time.',
+      },
+      {
+        category: 'new',
+        text: 'The Tournaments page now works for club/league-owned teams — tournaments your organization registers you for show up automatically, in a sensible order.',
+      },
+      {
+        category: 'new',
+        text: 'Season\'s End: when your season wraps up, you keep everything — final record, results, money — as a read-only lookback, never a locked door. It leads with a shareable Season Wrapped card (record, win streak, closest game, attendance, top award) you can send or post in one tap. You\'ll also get a gentle nudge once your season looks finished, pointing you toward closing it out.',
+      },
+      {
+        category: 'new',
+        text: 'Holding two roles at one event (say, admin and coach)? The role-switch button now jumps straight to your other role in one tap, instead of routing you through the public site first.',
+      },
+      {
+        category: 'new',
+        text: 'When an organizer moves or cancels one of your games, you — and any family following your team — now get notified, instead of finding out at the field.',
+      },
+      {
+        category: 'improved',
+        text: 'Forms are lighter. "Add player" and "Add game" now open with just the essentials; extra fields sit behind an optional "add more details" step.',
+      },
+      {
+        category: 'improved',
+        text: 'Save buttons on mobile forms always stay above your phone\'s own navigation bar, so a tap never lands on the wrong control, and the mobile "More" menu always fits your screen.',
+      },
+      {
+        category: 'improved',
+        text: 'Standings pages load faster, especially on busy events with lots of teams and games.',
+      },
+      {
+        category: 'improved',
+        text: 'The role-switch button never sends you to a page the organizer has taken down, or to an admin screen you don\'t have permission to open.',
+      },
+      {
+        category: 'improved',
+        text: 'Free-tier coaches occasionally see a low-key note about what the Premium Coaches Portal offers — timed to natural moments like season\'s end, never during game day.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a chat permissions issue so restricted staff can no longer read or moderate chat for events they aren\'t assigned to, and staff who leave or lose access no longer keep a seat in chat.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed the tournament chat sign-up reminder so repeat clicks can\'t re-email the same coaches, and it now tells you clearly whether it actually sent.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed schedule dropdown menus so they animate open smoothly instead of snapping into place.',
+      },
+    ],
+  },
+  {
     date: '2026-07-27',
     title: 'A clearer tournament record page for coaches, plus registration and scheduling fixes',
     highlights: [
