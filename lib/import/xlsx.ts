@@ -47,14 +47,26 @@ export async function parseXLSX(buffer: ArrayBuffer, maxRows: number): Promise<P
 
   if (!worksheet) throw new Error('The workbook has no worksheets.');
 
+  // Bound the sweep by the sheet's DECLARED extent, not just its byte size. A tiny .xlsx can
+  // declare a cell at the far corner of the grid (1,048,576 × 16,384), and iterating that costs
+  // billions of reads before `matrixToParsedRows` ever gets to truncate. Real import sheets are a
+  // few hundred rows and a few dozen columns, so a generous cap is invisible to legitimate files.
+  const maxCols = Math.min(worksheet.columnCount, 256);
+  const rowCeiling = maxRows * 2 + 100;
+
   const matrix: string[][] = [];
+  let truncated = false;
   worksheet.eachRow({ includeEmpty: true }, row => {
+    if (matrix.length >= rowCeiling) { truncated = true; return; }
     const values: string[] = [];
-    for (let col = 1; col <= worksheet.columnCount; col += 1) {
+    for (let col = 1; col <= maxCols; col += 1) {
       values.push(cellToString(row.getCell(col).value).trim());
     }
     matrix.push(values);
   });
+  if (truncated) {
+    console.warn(`[parseXLSX] sheet exceeded ${rowCeiling} rows — only the first ${rowCeiling} were scanned.`);
+  }
 
   return matrixToParsedRows(matrix, maxRows, { format: 'xlsx', metadata });
 }

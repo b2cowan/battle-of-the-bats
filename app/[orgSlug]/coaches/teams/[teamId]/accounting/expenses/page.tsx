@@ -9,6 +9,7 @@ import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -83,6 +84,15 @@ export default function CoachesExpensesPage({
   const [payableFormTags, setPayableFormTags] = useState<string[]>([]);
   const [filterTagId, setFilterTagId] = useState<string | null>(null);
   const [tagManagerOpen, setTagManagerOpen] = useState(false);
+
+  // Drives the two "Add Payable" disclosures (Batch 2, P0 #8). Read on mount by the group, so a
+  // payable form pre-filled with a schedule or bookkeeping detail opens that group by itself.
+  const payableScheduleSet = Boolean(
+    payableForm.depositAmount || payableForm.depositDueDate || payableForm.balanceAmount || payableForm.balanceDueDate,
+  );
+  const payableDetailsSet = Boolean(
+    payableForm.paymentMethod || payableForm.notes || payablePayee || payableFormTags.length,
+  );
   const [editingTagsFor, setEditingTagsFor] = useState<string | null>(null);
   const [editTagIds, setEditTagIds] = useState<string[]>([]);
   const [savingTags, setSavingTags] = useState(false);
@@ -663,42 +673,70 @@ export default function CoachesExpensesPage({
                 <label className={styles.label}>Total Amount *</label>
                 <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.amount} onChange={e => setPayableForm(f => ({ ...f, amount: e.target.value }))} placeholder="0.00" />
               </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Deposit Amount</label>
-                <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.depositAmount} onChange={e => setPayableForm(f => ({ ...f, depositAmount: e.target.value }))} placeholder="0.00" />
+
+              {/* The eleven-field payable (readiness review #8) opens as three: what it's for,
+                  what kind, and how much. The deposit/balance split and the bookkeeping fields
+                  open on demand; both groups open by themselves when they already hold a value. */}
+              <div className={styles.formGridFull}>
+                <CoachFormDisclosure
+                  label="Split into a deposit and a balance"
+                  title="Payment schedule"
+                  note="Tournament fees are often billed as a deposit now and a balance later. Leave this closed to record one amount due."
+                  meta={payableScheduleSet ? 'Set' : undefined}
+                  defaultOpen={payableScheduleSet}
+                >
+                  <div className={styles.formSectionGrid}>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Deposit Amount</label>
+                      <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.depositAmount} onChange={e => setPayableForm(f => ({ ...f, depositAmount: e.target.value }))} placeholder="0.00" />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Deposit Due Date</label>
+                      <input className={styles.input} type="date" value={payableForm.depositDueDate} onChange={e => setPayableForm(f => ({ ...f, depositDueDate: e.target.value }))} />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Balance Amount</label>
+                      <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.balanceAmount} onChange={e => setPayableForm(f => ({ ...f, balanceAmount: e.target.value }))} placeholder="0.00" />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Balance Due Date</label>
+                      <input className={styles.input} type="date" value={payableForm.balanceDueDate} onChange={e => setPayableForm(f => ({ ...f, balanceDueDate: e.target.value }))} />
+                    </div>
+                  </div>
+                </CoachFormDisclosure>
               </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Deposit Due Date</label>
-                <input className={styles.input} type="date" value={payableForm.depositDueDate} onChange={e => setPayableForm(f => ({ ...f, depositDueDate: e.target.value }))} />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Balance Amount</label>
-                <input className={styles.input} type="number" min={0} step="0.01" value={payableForm.balanceAmount} onChange={e => setPayableForm(f => ({ ...f, balanceAmount: e.target.value }))} placeholder="0.00" />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Balance Due Date</label>
-                <input className={styles.input} type="date" value={payableForm.balanceDueDate} onChange={e => setPayableForm(f => ({ ...f, balanceDueDate: e.target.value }))} />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Payment Method</label>
-                <input className={styles.input} value={payableForm.paymentMethod} onChange={e => setPayableForm(f => ({ ...f, paymentMethod: e.target.value }))} placeholder="e.g. E-transfer, Cash" />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label}>Payee</label>
-                <PayeeCombobox
-                  payeesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payees`}
-                  value={payablePayee}
-                  onChange={setPayablePayee}
-                  saveScope="team"
-                />
-              </div>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Notes</label>
-                <textarea className={styles.textarea} rows={2} value={payableForm.notes} onChange={e => setPayableForm(f => ({ ...f, notes: e.target.value }))} />
-              </div>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label}>Tags</label>
-                <TagSearchCombobox library={expenseTags} selectedIds={payableFormTags} onChange={setPayableFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
+
+              <div className={styles.formGridFull}>
+                <CoachFormDisclosure
+                  label="Add details (optional)"
+                  title="Details"
+                  meta={payableDetailsSet ? 'Set' : undefined}
+                  defaultOpen={payableDetailsSet}
+                >
+                  <div className={styles.formSectionGrid}>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Payment Method</label>
+                      <input className={styles.input} value={payableForm.paymentMethod} onChange={e => setPayableForm(f => ({ ...f, paymentMethod: e.target.value }))} placeholder="e.g. E-transfer, Cash" />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label}>Payee</label>
+                      <PayeeCombobox
+                        payeesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/payees`}
+                        value={payablePayee}
+                        onChange={setPayablePayee}
+                        saveScope="team"
+                      />
+                    </div>
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Notes</label>
+                    <textarea className={styles.textarea} rows={2} value={payableForm.notes} onChange={e => setPayableForm(f => ({ ...f, notes: e.target.value }))} />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Tags</label>
+                    <TagSearchCombobox library={expenseTags} selectedIds={payableFormTags} onChange={setPayableFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" />
+                  </div>
+                </CoachFormDisclosure>
               </div>
             </div>
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}

@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, ChevronRight, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck } from 'lucide-react';
+import { Users, ChevronRight, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck, ClipboardPaste } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -14,12 +14,14 @@ import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import FeedbackModal from '@/components/FeedbackModal';
-import HelpCallout from '@/components/help/HelpCallout';
 import PositionSelect from '@/components/coaches/PositionSelect';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import DepthChartBoard from '@/components/coaches/DepthChartBoard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -55,7 +57,9 @@ const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
 interface AddForm {
   playerFirstName: string; playerLastName: string;
   playerDateOfBirth: string; playerNumber: string;
-  primaryPosition: string; secondaryPosition: string;
+  // One position on this form — see the "Best Position" field. Further ranks, Okay/Never,
+  // pitching and A-squad are set on the player's profile.
+  primaryPosition: string;
   guardianFirstName: string; guardianLastName: string;
   guardianEmail: string; guardianPhone: string;
   notes: string;
@@ -63,7 +67,7 @@ interface AddForm {
 
 const BLANK: AddForm = {
   playerFirstName: '', playerLastName: '', playerDateOfBirth: '',
-  playerNumber: '', primaryPosition: '', secondaryPosition: '',
+  playerNumber: '', primaryPosition: '',
   guardianFirstName: '', guardianLastName: '',
   guardianEmail: '', guardianPhone: '', notes: '',
 };
@@ -128,8 +132,13 @@ export default function RosterPage({
   const [fetching, setFetching] = useState(true);
   const [addOpen, setAddOpen] = useState(false);
   useOverlayOpen(addOpen);
+  // Bulk intake (Batch 2 P0 #7) — its own sheet; it registers with the overlay counter itself.
+  const [bulkOpen, setBulkOpen] = useState(false);
   const [addForm, setAddForm] = useState<AddForm>(BLANK);
   const [adding, setAdding] = useState(false);
+  // Running count for "Save & add another", so a coach entering a few in a row can see progress
+  // without the sheet closing between each one.
+  const [addedInRun, setAddedInRun] = useState(0);
   const [togglingId, setTogglingId] = useState<string | null>(null);
 
   const sensors = useSensors(
@@ -246,7 +255,7 @@ export default function RosterPage({
     await persistOrder(arrayMove(players, index, target), players);
   }
 
-  async function handleAdd() {
+  async function handleAdd(keepOpen = false) {
     if (!addForm.playerFirstName.trim()) return; // first name required; last + guardian optional
 
     setAdding(true);
@@ -262,7 +271,7 @@ export default function RosterPage({
             playerDateOfBirth: addForm.playerDateOfBirth || null,
             playerNumber:      addForm.playerNumber.trim() || null,
             primaryPosition:   addForm.primaryPosition.trim() || null,
-            secondaryPosition: addForm.secondaryPosition.trim() || null,
+            secondaryPosition: null, // set on the player's profile, not at add-time
             guardianFirstName: addForm.guardianFirstName.trim() || null,
             guardianLastName:  addForm.guardianLastName.trim() || null,
             guardianEmail:     addForm.guardianEmail.trim() || null,
@@ -273,12 +282,26 @@ export default function RosterPage({
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to add player');
-      setAddOpen(false);
+      const addedName = [addForm.playerFirstName.trim(), addForm.playerLastName.trim()].filter(Boolean).join(' ');
       setAddForm(BLANK);
       // Append the created player to local state (it appends server-side too) rather than refetching —
       // a refetch here could stomp an in-flight reorder's optimistic state.
       if (data.player) setPlayers(prev => [...prev, data.player]);
-      showFeedback('success', `${[addForm.playerFirstName.trim(), addForm.playerLastName.trim()].filter(Boolean).join(' ')} added to roster.`);
+      if (keepOpen) {
+        // Stay put with a cleared form so the next player can be typed straight away — the
+        // one-at-a-time companion to bulk add. No modal feedback: the running count in the
+        // header is the acknowledgement, and a dialog here would break the typing rhythm.
+        setAddedInRun(n => n + 1);
+      } else {
+        setAddOpen(false);
+        // Include anyone already saved via "Save & add another" this session — otherwise finishing
+        // a run of five with the primary button would report only the last player.
+        const total = addedInRun + 1;
+        setAddedInRun(0);
+        showFeedback('success', total > 1
+          ? `${total} players added to roster.`
+          : `${addedName} added to roster.`);
+      }
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to add player.'));
     } finally {
@@ -290,6 +313,12 @@ export default function RosterPage({
   const confirm = useConfirm();
 
   const addDirty = addOpen && JSON.stringify(addForm) !== JSON.stringify(BLANK);
+  function openAdd() {
+    setAddForm(BLANK);
+    setAddedInRun(0);
+    setBulkOpen(false);
+    setAddOpen(true);
+  }
   async function requestCloseAdd() {
     if (addDirty && !(await confirm({
       title: 'Discard new player?',
@@ -299,6 +328,12 @@ export default function RosterPage({
       tone: 'danger',
     }))) return;
     setAddOpen(false);
+    // Acknowledge a "save & add another" run on the way out — each individual save stayed quiet
+    // on purpose, so without this the coach would never get a confirmation for the batch.
+    if (addedInRun > 0) {
+      showFeedback('success', `${addedInRun} ${addedInRun === 1 ? 'player' : 'players'} added to roster.`);
+      setAddedInRun(0);
+    }
   }
 
   // ── Export helpers ───────────────────────────────────────────────────────────
@@ -489,7 +524,7 @@ export default function RosterPage({
             type="button"
             className={`btn btn-lime ${styles.addPlayerBtn}`}
             style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
-            onClick={() => { setAddForm(BLANK); setAddOpen(true); }}
+            onClick={openAdd}
             aria-label="Add player"
           >
             <Plus size={15} /> <span className={styles.addPlayerLabel}>Add Player</span>
@@ -514,10 +549,21 @@ export default function RosterPage({
       ) : fetching ? (
         <p className={styles.muted}>Loading…</p>
       ) : players.length === 0 ? (
-        <HelpCallout
-          variant="info"
-          title="Your roster is empty"
-          body="Players are added after tryout acceptance — contact your org admin if expected players are missing. You can also add players directly using the Add Player button above."
+        // Lead with the fast path: a coach's team list already exists somewhere as text, and
+        // pasting it is the difference between two minutes and fifteen modal round trips.
+        <CoachEmptyState
+          icon={<Users size={22} aria-hidden />}
+          eyebrow="Roster"
+          headline="Your roster is empty"
+          description={canWriteRoster
+            ? 'Paste your team list and add everyone at once — names and numbers are enough to start. Players accepted from tryouts arrive here automatically.'
+            : 'Players accepted from tryouts arrive here automatically. Ask your head coach or org admin if someone is missing.'}
+          primaryAction={canWriteRoster
+            ? { label: 'Paste your roster', icon: <ClipboardPaste size={15} aria-hidden />, onClick: () => setBulkOpen(true) }
+            : undefined}
+          secondaryAction={canWriteRoster
+            ? { label: 'Add one player', icon: <Plus size={15} aria-hidden />, onClick: openAdd }
+            : undefined}
         />
       ) : (
         <>
@@ -581,11 +627,22 @@ export default function RosterPage({
       {addOpen && (
         <div className={styles.modalOverlay} onClick={requestCloseAdd}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="Add Player" onClose={requestCloseAdd} />
+            <CoachModalHeader title="Add Player" onClose={requestCloseAdd}>
+              {addedInRun > 0 && <span className={styles.discToggleMeta}>{addedInRun} added</span>}
+            </CoachModalHeader>
 
             {/* Legend for the per-field <span className={styles.labelRequired}>*</span> markers below —
                 most fields on this form are optional, so only the few that block Save are flagged. */}
-            <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
+            <p className={styles.formHint}>
+              <span className={styles.labelRequired}>*</span> Required ·{' '}
+              <button
+                type="button"
+                className={`${styles.linkBtn} ${styles.linkBtnAccent}`}
+                onClick={() => { setAddOpen(false); setAddedInRun(0); setBulkOpen(true); }}
+              >
+                Adding several? Paste a list →
+              </button>
+            </p>
 
             <div className={styles.formGrid}>
               <div className={styles.field}>
@@ -607,82 +664,105 @@ export default function RosterPage({
                   maxLength={60} />
               </div>
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="add-dob">Date of Birth</label>
-                <input id="add-dob" className={styles.input} type="date"
-                  value={addForm.playerDateOfBirth}
-                  onChange={e => setAddForm(f => ({ ...f, playerDateOfBirth: e.target.value }))} />
-              </div>
-              <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-num">Jersey #</label>
                 <input id="add-num" className={styles.input} type="text"
                   value={addForm.playerNumber}
                   onChange={e => setAddForm(f => ({ ...f, playerNumber: e.target.value }))}
                   maxLength={10} />
               </div>
+              {/* ONE position at add-time — the player's first "Best" pick. It's the same setting
+                  the profile's tap-to-rank grid edits, which is the better place to add further
+                  choices, Okay/Never, pitching and A-squad. Two dropdowns here gave one setting two
+                  vocabularies (readiness review f1-5); owner call 2026-07-28 to drop the second. */}
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="add-primary-position">Primary Position</label>
+                <label className={styles.label} htmlFor="add-primary-position">Best Position</label>
                 <PositionSelect id="add-primary-position" positions={rosterPositions}
                   selectClass={styles.select} inputClass={styles.input}
                   value={addForm.primaryPosition}
                   onChange={v => setAddForm(f => ({ ...f, primaryPosition: v }))} />
+                <p className={styles.formHint}>Rank more positions on the player&apos;s profile after adding.</p>
               </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="add-secondary-position">Secondary Position</label>
-                <PositionSelect id="add-secondary-position" positions={rosterPositions}
-                  selectClass={styles.select} inputClass={styles.input}
-                  value={addForm.secondaryPosition}
-                  onChange={v => setAddForm(f => ({ ...f, secondaryPosition: v }))} />
+
+              {/* Everything below opens on demand (Batch 2, P0 #8 — D2 Variant A). Jersey + primary
+                  position stay visible because lineups, the depth chart, and game sheets fill
+                  themselves in from them. `defaultOpen` is mount-only, so re-renders can never
+                  re-collapse a group the coach opened. */}
+              <div className={styles.formGridFull}>
+                <CoachFormDisclosure
+                  label="Add parent / guardian contact"
+                  title="Parent / guardian contact"
+                  note="Dues reminders and announcements are sent to this address."
+                  defaultOpen={Boolean(addForm.guardianFirstName || addForm.guardianLastName || addForm.guardianEmail || addForm.guardianPhone)}
+                >
+                  <div className={styles.formSectionGrid}>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="add-gfn">Guardian First Name</label>
+                      <input id="add-gfn" className={styles.input} type="text"
+                        value={addForm.guardianFirstName}
+                        onChange={e => setAddForm(f => ({ ...f, guardianFirstName: e.target.value }))}
+                        maxLength={60} />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="add-gln">Guardian Last Name</label>
+                      <input id="add-gln" className={styles.input} type="text"
+                        value={addForm.guardianLastName}
+                        onChange={e => setAddForm(f => ({ ...f, guardianLastName: e.target.value }))}
+                        maxLength={60} />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="add-gem">Guardian Email</label>
+                      <input id="add-gem" className={styles.input} type="email"
+                        value={addForm.guardianEmail}
+                        onChange={e => setAddForm(f => ({ ...f, guardianEmail: e.target.value }))}
+                        maxLength={120} />
+                    </div>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="add-gph">Guardian Phone</label>
+                      <input id="add-gph" className={styles.input} type="tel"
+                        value={addForm.guardianPhone}
+                        onChange={e => setAddForm(f => ({ ...f, guardianPhone: e.target.value }))}
+                        maxLength={20} />
+                    </div>
+                  </div>
+                </CoachFormDisclosure>
               </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="add-gfn">
-                  Guardian First Name
-                </label>
-                <input id="add-gfn" className={styles.input} type="text"
-                  value={addForm.guardianFirstName}
-                  onChange={e => setAddForm(f => ({ ...f, guardianFirstName: e.target.value }))}
-                  maxLength={60} />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="add-gln">
-                  Guardian Last Name
-                </label>
-                <input id="add-gln" className={styles.input} type="text"
-                  value={addForm.guardianLastName}
-                  onChange={e => setAddForm(f => ({ ...f, guardianLastName: e.target.value }))}
-                  maxLength={60} />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="add-gem">
-                  Guardian Email
-                </label>
-                <input id="add-gem" className={styles.input} type="email"
-                  value={addForm.guardianEmail}
-                  onChange={e => setAddForm(f => ({ ...f, guardianEmail: e.target.value }))}
-                  maxLength={120} />
-              </div>
-              <div className={styles.field}>
-                <label className={styles.label} htmlFor="add-gph">Guardian Phone</label>
-                <input id="add-gph" className={styles.input} type="tel"
-                  value={addForm.guardianPhone}
-                  onChange={e => setAddForm(f => ({ ...f, guardianPhone: e.target.value }))}
-                  maxLength={20} />
-              </div>
-              <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="add-notes">Notes</label>
-                <textarea id="add-notes" className={styles.textarea} rows={2}
-                  value={addForm.notes}
-                  onChange={e => setAddForm(f => ({ ...f, notes: e.target.value }))}
-                  placeholder="Position, experience, etc."
-                  maxLength={500} />
+
+              <div className={styles.formGridFull}>
+                <CoachFormDisclosure
+                  label="More details"
+                  defaultOpen={Boolean(addForm.playerDateOfBirth || addForm.notes)}
+                >
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="add-dob">Date of Birth</label>
+                    <input id="add-dob" className={styles.input} type="date"
+                      value={addForm.playerDateOfBirth}
+                      onChange={e => setAddForm(f => ({ ...f, playerDateOfBirth: e.target.value }))} />
+                  </div>
+                  <div className={styles.field}>
+                    <label className={styles.label} htmlFor="add-notes">Notes</label>
+                    <textarea id="add-notes" className={styles.textarea} rows={2}
+                      value={addForm.notes}
+                      onChange={e => setAddForm(f => ({ ...f, notes: e.target.value }))}
+                      placeholder="Experience, availability, anything worth remembering."
+                      maxLength={500} />
+                  </div>
+                </CoachFormDisclosure>
               </div>
             </div>
 
             <div className={styles.modalFooter}>
-              <button type="button" className="btn btn-ghost" onClick={requestCloseAdd}>Cancel</button>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => handleAdd(true)}
+                disabled={adding || !addForm.playerFirstName.trim()}
+              >
+                Save &amp; add another
+              </button>
               <button
                 type="button"
                 className="btn btn-lime"
-                onClick={handleAdd}
+                onClick={() => handleAdd(false)}
                 disabled={adding || !addForm.playerFirstName.trim()}
               >
                 {adding ? 'Adding…' : 'Add Player'}
@@ -690,6 +770,23 @@ export default function RosterPage({
             </div>
           </div>
         </div>
+      )}
+
+      {bulkOpen && (
+        <RosterBulkAddSheet
+          orgSlug={orgSlug}
+          teamId={teamId}
+          teamName={assignment.teamName}
+          existingPlayers={players}
+          onClose={() => setBulkOpen(false)}
+          onAdded={(created, message) => {
+            setBulkOpen(false);
+            // Append rather than refetch, same reason as the single-player add: a refetch could
+            // stomp an in-flight reorder's optimistic state.
+            if (created.length) setPlayers(prev => [...prev, ...created]);
+            showFeedback('success', message);
+          }}
+        />
       )}
 
       <FeedbackModal

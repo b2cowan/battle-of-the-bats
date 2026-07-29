@@ -1127,28 +1127,8 @@
   font-weight: 800;
 }
 
-/* Segmented setup progress — one block per core step, lime once complete. The bar
-   maps 1:1 to the checklist below it, so it reads as a status graph not a duplicate %. */
-.setupSegments {
-  display: flex;
-  gap: 0.3rem;
-  margin: 0 0 0.95rem;
-}
-.setupSegment {
-  flex: 1;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--border-2);
-  transition: background 0.3s ease;
-}
-.setupSegmentDone {
-  background: var(--logic-lime);
-}
-/* A skipped step is "checked off" but visually distinct from a real completion —
-   a muted grey fill so the bar honestly reads "done vs skipped vs still to decide". */
-.setupSegmentSkipped {
-  background: var(--white-45);
-}
+/* (The segmented progress bar that lived here was replaced by the momentum ring in Batch 2 —
+   the ring occupies the same slot and carries the same done/skipped/open states with labels.) */
 
 /* Single-column flat list (mirrors the admin .checklistList) — full-width rows so
    labels don't wrap, descriptions sit on one line, and DONE rows stay compact. */
@@ -1271,6 +1251,89 @@
 
 /* A skipped optional step reads as backgrounded, not failed */
 .setupItem[data-skipped="true"] { opacity: 0.6; }
+
+/* The panel's single next action, plus a Skip for the current trail step (trail dots have no room
+   for their own per-step control, and without this the four optional milestones could never be
+   skipped and the panel could never retire). */
+.setupNextActions { display: inline-flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+/* ── First-week momentum ring (Batch 2, P0 #6 + wow #1) ────────────────────
+   The setup checklist's five headline steps, drawn as a trail. Not a second widget — same
+   SetupItem list, second rendering. Five columns at every width (a five-step trail that scrolls
+   sideways stops being a trail), so labels stay short and wrap rather than overflow. */
+.ring {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding-top: 0.15rem;
+}
+.ringStep {
+  position: relative;
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  min-width: 0;
+}
+/* The connector runs leftward from each dot, so the first step has none. */
+.ringStep::before {
+  content: "";
+  position: absolute; top: 11px; left: -50%;
+  width: 100%; height: 2px;
+  background: var(--home-line-strong, rgba(255,255,255,0.14));
+  z-index: 0;
+}
+.ringStep:first-child::before { display: none; }
+.ringStep[data-state="done"]::before { background: var(--logic-lime); }
+
+.ringDot {
+  position: relative; z-index: 1;
+  width: 22px; height: 22px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--card-bg);
+  font-size: 0.66rem; font-weight: 700;
+  border: 2px solid var(--home-line-strong, rgba(255,255,255,0.18));
+  color: var(--white-40);
+}
+.ringStep[data-state="done"] .ringDot {
+  background: var(--logic-lime); border-color: var(--logic-lime); color: var(--pitch-black);
+}
+.ringStep[data-state="next"] .ringDot { border-color: var(--logic-lime); color: var(--logic-lime); }
+.ringStep[data-state="skipped"] .ringDot { border-style: dashed; }
+
+.ringLabel {
+  font-size: 0.68rem; font-weight: 620; line-height: 1.15; text-align: center;
+  color: var(--white-70); max-width: 100%; overflow-wrap: anywhere;
+}
+.ringStep[data-state="done"] .ringLabel { color: var(--white-90); }
+.ringStep[data-state="next"] .ringLabel { color: var(--logic-lime); }
+.ringValue {
+  font-size: 0.62rem; line-height: 1.2; text-align: center;
+  color: var(--white-40); font-family: var(--font-data);
+}
+/* A milestone the coach can act on right now — the whole column is the target. Used on both a
+   <Link> (open/done steps) and a <button> (a skipped step, which undoes the skip), so it carries a
+   button reset; `display: contents` means the element's own box never renders either way. */
+.ringLink {
+  display: contents;
+  text-decoration: none;
+  background: none; border: none; padding: 0; font: inherit; cursor: pointer; text-align: inherit;
+}
+.ringLink:hover .ringLabel { text-decoration: underline; }
+
+/* "Also in your portal" — the sections that have no honest "done" state but must still be named
+   somewhere on Overview (readiness review #6: 5 of 11 sections were invisible). */
+.discoverRow {
+  display: flex; flex-direction: column; gap: 0.4rem;
+  border-top: 1px solid var(--border-subtle); padding-top: 0.7rem;
+}
+.discoverLabel { margin: 0; font-size: 0.75rem; color: var(--white-45); }
+.discoverChips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.discoverChip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.26rem 0.6rem; border-radius: 999px;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
+  background: var(--card-bg);
+  color: var(--white-70); font-size: 0.76rem; font-weight: 560;
+  text-decoration: none;
+}
+.discoverChip:hover { border-color: var(--logic-lime); color: var(--white-90); }
 
 /* "Optional" group divider under the core season-setup list */
 .setupGroupLabel {
@@ -1752,6 +1815,97 @@
   color: var(--white-45);
 }
 .formSectionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
+/* A labelled sub-group INSIDE an already-boxed section (e.g. Tags/Links within the event form's
+   "Add details" disclosure). Same heading language as .formSection, no second border — nesting one
+   bordered card inside another reads as a mistake. */
+.formSubGroup { display: flex; flex-direction: column; gap: 0.7rem; }
+
+/* ── Progressive disclosure (CoachFormDisclosure) ──────────────────────────
+   The premium twin of the free portal's "+ Add … (optional)" panels. Collapsed it is a dashed
+   accent line; open it is a .formSection with a title, an optional one-line "why", and a Hide
+   control. Children stay mounted either way, so form state and dirty-tracking are untouched. */
+.discToggle {
+  display: flex; align-items: center; gap: 0.45rem;
+  width: 100%; text-align: left;
+  padding: 0.55rem 0.7rem;
+  background: transparent;
+  border: 1px dashed var(--home-line-strong, rgba(255,255,255,0.16));
+  border-radius: 8px;
+  color: var(--logic-lime);
+  font-size: 0.84rem; font-weight: 600;
+  cursor: pointer;
+}
+.discToggle:hover { border-color: var(--logic-lime); background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
+.discToggle:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.discToggleIcon { flex: 0 0 auto; line-height: 0; }
+/* Live summary of what's inside, so a collapsed group never hides a value the coach set. */
+.discToggleMeta { margin-left: auto; font-size: 0.74rem; font-weight: 600; color: var(--white-45); }
+
+.discHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
+/* Bare-button reset for text that acts like a link. `.discHide` is the quiet grey variant used by
+   the disclosure's own Hide control; `.linkBtnAccent` is the accent variant for in-form shortcuts
+   ("Paste a list →", "Download a template") — previously hand-overridden inline at each call site. */
+.linkBtn, .discHide {
+  background: none; border: none; padding: 0; cursor: pointer;
+  font-size: 0.76rem;
+}
+.discHide { color: var(--white-45); }
+.discHide:hover { color: var(--white-70); text-decoration: underline; }
+.linkBtnAccent {
+  color: var(--logic-lime); font-weight: 600;
+  display: inline-flex; align-items: center; gap: 0.25rem;
+}
+.linkBtnAccent:hover { text-decoration: underline; }
+.discNote {
+  margin: -0.25rem 0 0;
+  font-size: 0.76rem; line-height: 1.45;
+  color: var(--white-55);
+}
+/* Collapsed children are hidden, not unmounted (see CoachFormDisclosure). */
+.discHidden { display: none; }
+
+/* ── Bulk roster intake (Add players sheet) ────────────────────────────────── */
+/* The Paste/Upload switch reuses the portal's own .segChoice segmented control — the same one the
+   Roster page's List/Depth-chart toggle uses, so the sheet opens with a control the coach just saw.
+   This modifier only makes it span the sheet's width. */
+.segChoiceFull { display: flex; width: 100%; }
+.segChoiceFull .segBtn { flex: 1; text-align: center; }
+
+.bulkPasteArea { min-height: 130px; font-family: var(--font-data); font-size: 0.82rem; line-height: 1.6; }
+
+.bulkPreview { display: flex; flex-direction: column; gap: 0.35rem; }
+.bulkPreviewHead {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem;
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--white-45);
+}
+/* # · first · last · remove. Same shape at every width — a roster preview must never become a
+   sideways-scrolling table on a phone. */
+.bulkRow { display: grid; grid-template-columns: 52px 1fr 1fr 28px; gap: 0.3rem; align-items: center; }
+.bulkRow .input { padding: 0.38rem 0.45rem; font-size: 0.85rem; }
+.bulkRowRemove {
+  background: none; border: none; cursor: pointer; padding: 0.2rem;
+  color: var(--white-40); line-height: 0;
+}
+.bulkRowRemove:hover { color: var(--danger); }
+.bulkFlag {
+  grid-column: 1 / -1;
+  display: flex; align-items: flex-start; gap: 0.3rem;
+  padding: 0.22rem 0.4rem; border-radius: 5px;
+  font-size: 0.73rem; line-height: 1.35;
+}
+.bulkFlagWarn { background: rgba(var(--home-amber-rgb, 161,98,7), 0.12); color: var(--warning-strong, var(--warning)); }
+.bulkFlagError { background: rgba(var(--home-live-rgb, 217,72,43), 0.12); color: var(--danger-strong, var(--danger)); }
+.bulkRowError .input { border-color: var(--danger); }
+
+.bulkDrop {
+  display: flex; flex-direction: column; align-items: center; gap: 0.35rem;
+  padding: 1.3rem 0.9rem; text-align: center;
+  border: 1.5px dashed var(--home-line-strong, rgba(255,255,255,0.16));
+  border-radius: 10px;
+}
+.bulkDropTitle { margin: 0; font-size: 0.9rem; font-weight: 650; color: var(--white-90); }
+.bulkDropSub { margin: 0; font-size: 0.78rem; color: var(--white-45); max-width: 28ch; line-height: 1.45; }
 
 /* Event-type picker — tap-to-choose colored pills that replace the type <select>. Each is an
    individually-rounded chip with its event-color dot; the active chip rings in its own color

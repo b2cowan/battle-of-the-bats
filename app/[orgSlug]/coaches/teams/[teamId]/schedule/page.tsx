@@ -21,6 +21,7 @@ import { playerDisplayName } from '@/lib/coach-roster-name';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import styles from '../../../coaches.module.css';
 import { tournamentToday } from '@/lib/timezone';
@@ -967,6 +968,18 @@ export default function CoachesSchedulePage({
   const recurrencePreview = recurringSeries && form.startDate && form.startTime
     ? `Adds a ${EVENT_LABELS[form.eventType].toLowerCase()} every ${DAYS_OF_WEEK[Number(form.dayOfWeek)] ?? ''}${form.endDate ? ` from ${form.startDate} through ${form.endDate}` : ` starting ${form.startDate}`} at ${form.startTime}.`
     : '';
+
+  // Drives the "Add details (optional)" disclosure (Batch 2, P0 #8). `hasEventDetails` is read on
+  // mount only, so editing an event that already carries any of these opens the group; the summary
+  // keeps a collapsed group honest about what's inside — especially a link error that blocks Save.
+  const eventDetailCount = [
+    form.fieldNumber.trim(), form.locationAddress.trim(), form.uniform.trim(),
+    form.name.trim(), form.description.trim(),
+  ].filter(Boolean).length + (form.tagIds.length ? 1 : 0) + (form.resources.length ? 1 : 0);
+  const hasEventDetails = eventDetailCount > 0;
+  const eventDetailsSummary = resourcesInvalid
+    ? 'Links need fixing'
+    : eventDetailCount > 0 ? `${eventDetailCount} set` : undefined;
 
   // Tabs for the event slide-over (keeps it short instead of one long stack)
   const isGameEvent = !!selectedEvent &&
@@ -2398,37 +2411,18 @@ export default function CoachesSchedulePage({
                 )}
               </section>
 
-              {/* WHERE — place NAME + field/diamond # side by side, an optional street ADDRESS
-                  (powers the map link) below, and tap-to-fill "recent" chips that refill both. */}
+              {/* WHERE — the place NAME plus tap-to-fill "recent" chips. The field/diamond # and
+                  street address moved into "Add details" (Batch 2, P0 #8): they matter on game day
+                  but they don't belong in the four things every event needs. */}
               <section className={styles.formSection}>
                 <h4 className={styles.formSectionTitle}>Where</h4>
-                <div className={styles.formSectionGrid}>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Location</label>
-                    <input
-                      className={styles.input}
-                      value={form.location}
-                      onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                      placeholder="e.g. Sherwood Park"
-                    />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Field / Diamond #</label>
-                    <input
-                      className={styles.input}
-                      value={form.fieldNumber}
-                      onChange={e => setForm(f => ({ ...f, fieldNumber: e.target.value }))}
-                      placeholder="e.g. Diamond 2"
-                    />
-                  </div>
-                </div>
                 <div className={styles.field}>
-                  <label className={styles.label}>Address</label>
+                  <label className={styles.label}>Location</label>
                   <input
                     className={styles.input}
-                    value={form.locationAddress}
-                    onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
-                    placeholder="Street address — powers the “open in Maps” link"
+                    value={form.location}
+                    onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
+                    placeholder="e.g. Sherwood Park"
                   />
                 </div>
                 {recentLocations.length > 0 && (
@@ -2473,139 +2467,175 @@ export default function CoachesSchedulePage({
                     </div>
                     <p className={styles.formHint}>Sets your dugout printout (&ldquo;@&rdquo; vs &ldquo;vs&rdquo;) and which side your win/loss counts on.</p>
                   </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Uniform</label>
-                    <input
-                      className={styles.input}
-                      value={form.uniform}
-                      onChange={e => setForm(f => ({ ...f, uniform: e.target.value }))}
-                      placeholder="e.g. Home whites"
-                    />
-                  </div>
                 </section>
               )}
 
-              {/* TAGS — a coach's own vocabulary ("Rivalry", "Top in the province"); games only.
-                  Autocomplete-or-create: type to filter existing tags, tap to toggle, or create a
-                  brand-new one on the spot. Pays off later in Season Review's "vs tag" report. */}
-              {needsOpponent(form.eventType) && (
-                <section className={styles.formSection}>
-                  <h4 className={styles.formSectionTitle}>Tags</h4>
-                  <div className={styles.tagPickerRow}>
+              {/* EVERYTHING OPTIONAL — one disclosure instead of four always-open sections
+                  (Batch 2, P0 #8). Children stay mounted while collapsed, so link validation still
+                  runs and `resourcesInvalid` still blocks Save; the toggle's summary says so, since
+                  a disabled Save with no visible reason is worse than a longer form. `defaultOpen`
+                  is mount-only, so editing an event that already carries any of these opens the
+                  group once and never fights the coach's own toggle afterwards. */}
+              <CoachFormDisclosure
+                label="Add details (optional)"
+                title="Details"
+                meta={eventDetailsSummary}
+                defaultOpen={hasEventDetails}
+              >
+                <div className={styles.formSectionGrid}>
+                  <div className={styles.field}>
+                    <label className={styles.label}>Field / Diamond #</label>
                     <input
                       className={styles.input}
-                      value={tagInput}
-                      onChange={e => setTagInput(e.target.value)}
-                      placeholder="e.g. Rivalry, Top in the province"
-                      maxLength={40}
-                      onKeyDown={e => {
-                        if (e.key !== 'Enter') return;
-                        e.preventDefault();
-                        const q = tagInput.trim();
-                        if (!q) return;
-                        const match = teamTags.find(t => t.name.toLowerCase() === q.toLowerCase());
-                        if (match) toggleFormTag(match.id);
-                        else void createAndApplyTag(q);
-                      }}
+                      value={form.fieldNumber}
+                      onChange={e => setForm(f => ({ ...f, fieldNumber: e.target.value }))}
+                      placeholder="e.g. Diamond 2"
                     />
                   </div>
-                  <div className={styles.tagChips}>
-                    {teamTags
-                      .filter(t => !tagInput.trim() || t.name.toLowerCase().includes(tagInput.trim().toLowerCase()))
-                      .map(t => (
+                  {needsOpponent(form.eventType) && (
+                    <div className={styles.field}>
+                      <label className={styles.label}>Uniform</label>
+                      <input
+                        className={styles.input}
+                        value={form.uniform}
+                        onChange={e => setForm(f => ({ ...f, uniform: e.target.value }))}
+                        placeholder="e.g. Home whites"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className={styles.field}>
+                  <label className={styles.label}>Address</label>
+                  <input
+                    className={styles.input}
+                    value={form.locationAddress}
+                    onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
+                    placeholder="Street address — powers the “open in Maps” link"
+                  />
+                </div>
+
+                {/* TAGS — a coach's own vocabulary ("Rivalry", "Top in the province"); games only.
+                    Autocomplete-or-create: type to filter existing tags, tap to toggle, or create a
+                    brand-new one on the spot. Pays off later in Season Review's "vs tag" report. */}
+                {needsOpponent(form.eventType) && (
+                  <section className={styles.formSubGroup}>
+                    <h4 className={styles.formSectionTitle}>Tags</h4>
+                    <div className={styles.tagPickerRow}>
+                      <input
+                        className={styles.input}
+                        value={tagInput}
+                        onChange={e => setTagInput(e.target.value)}
+                        placeholder="e.g. Rivalry, Top in the province"
+                        maxLength={40}
+                        onKeyDown={e => {
+                          if (e.key !== 'Enter') return;
+                          e.preventDefault();
+                          const q = tagInput.trim();
+                          if (!q) return;
+                          const match = teamTags.find(t => t.name.toLowerCase() === q.toLowerCase());
+                          if (match) toggleFormTag(match.id);
+                          else void createAndApplyTag(q);
+                        }}
+                      />
+                    </div>
+                    <div className={styles.tagChips}>
+                      {teamTags
+                        .filter(t => !tagInput.trim() || t.name.toLowerCase().includes(tagInput.trim().toLowerCase()))
+                        .map(t => (
+                          <button
+                            key={t.id}
+                            type="button"
+                            className={`${styles.tagChip} ${form.tagIds.includes(t.id) ? styles.tagChipActive : ''}`}
+                            onClick={() => toggleFormTag(t.id)}
+                          >
+                            {t.name}
+                          </button>
+                        ))}
+                      {tagInput.trim() && !teamTags.some(t => t.name.toLowerCase() === tagInput.trim().toLowerCase()) && (
                         <button
-                          key={t.id}
                           type="button"
-                          className={`${styles.tagChip} ${form.tagIds.includes(t.id) ? styles.tagChipActive : ''}`}
-                          onClick={() => toggleFormTag(t.id)}
+                          className={styles.tagChipCreate}
+                          disabled={tagCreating}
+                          onClick={() => void createAndApplyTag(tagInput.trim())}
                         >
-                          {t.name}
+                          + Create &ldquo;{tagInput.trim()}&rdquo;
                         </button>
-                      ))}
-                    {tagInput.trim() && !teamTags.some(t => t.name.toLowerCase() === tagInput.trim().toLowerCase()) && (
-                      <button
-                        type="button"
-                        className={styles.tagChipCreate}
-                        disabled={tagCreating}
-                        onClick={() => void createAndApplyTag(tagInput.trim())}
-                      >
-                        + Create &ldquo;{tagInput.trim()}&rdquo;
+                      )}
+                    </div>
+                    {tagError && <p className={styles.errorText}>{tagError}</p>}
+                    {teamTags.length > 0 && (
+                      <button type="button" className={styles.tagManageLink} onClick={() => setTagManagerOpen(true)}>
+                        Manage tags
                       </button>
                     )}
-                  </div>
-                  {tagError && <p className={styles.errorText}>{tagError}</p>}
-                  {teamTags.length > 0 && (
-                    <button type="button" className={styles.tagManageLink} onClick={() => setTagManagerOpen(true)}>
-                      Manage tags
-                    </button>
+                  </section>
+                )}
+
+                {/* LINKS / RESOURCES — labelled URLs (drill video, rules, field map, flyer). */}
+                <section className={styles.formSubGroup}>
+                  <h4 className={styles.formSectionTitle}>Links</h4>
+                  {form.resources.length === 0 && (
+                    <p className={styles.formHint}>Attach labelled links — a drill video, rules page, field map, or doc. They open in a new tab.</p>
+                  )}
+                  {form.resources.map((r, i) => {
+                    const hint = resourceHint(form.eventType);
+                    const badUrl = r.url.trim() !== '' && !isValidResourceUrl(r.url);
+                    return (
+                      <div key={i} className={styles.resourceRow}>
+                        <input
+                          className={styles.input}
+                          value={r.label}
+                          onChange={e => updateResource(i, { label: e.target.value })}
+                          placeholder={hint.label}
+                          maxLength={120}
+                          aria-label="Link label"
+                        />
+                        <input
+                          className={styles.input}
+                          style={badUrl ? { borderColor: 'var(--danger)' } : undefined}
+                          value={r.url}
+                          onChange={e => updateResource(i, { url: e.target.value })}
+                          placeholder={hint.url}
+                          inputMode="url"
+                          aria-label="Link URL"
+                        />
+                        <button type="button" className={styles.resourceRemove} onClick={() => removeResource(i)} aria-label="Remove link">
+                          <X size={15} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                  {resourcesInvalid && <p className={styles.errorText}>Each link needs a label and a valid web address (http/https).</p>}
+                  {form.resources.length < MAX_EVENT_RESOURCES ? (
+                    <button type="button" className={styles.btnSecondary} onClick={addResource}>+ Add link</button>
+                  ) : (
+                    <p className={styles.formHint}>Up to {MAX_EVENT_RESOURCES} links per event.</p>
                   )}
                 </section>
-              )}
 
-              {/* LINKS / RESOURCES — labelled URLs (drill video, rules, field map, flyer). */}
-              <section className={styles.formSection}>
-                <h4 className={styles.formSectionTitle}>Links</h4>
-                {form.resources.length === 0 && (
-                  <p className={styles.formHint}>Attach labelled links — a drill video, rules page, field map, or doc. They open in a new tab.</p>
-                )}
-                {form.resources.map((r, i) => {
-                  const hint = resourceHint(form.eventType);
-                  const badUrl = r.url.trim() !== '' && !isValidResourceUrl(r.url);
-                  return (
-                    <div key={i} className={styles.resourceRow}>
-                      <input
-                        className={styles.input}
-                        value={r.label}
-                        onChange={e => updateResource(i, { label: e.target.value })}
-                        placeholder={hint.label}
-                        maxLength={120}
-                        aria-label="Link label"
-                      />
-                      <input
-                        className={styles.input}
-                        style={badUrl ? { borderColor: 'var(--danger)' } : undefined}
-                        value={r.url}
-                        onChange={e => updateResource(i, { url: e.target.value })}
-                        placeholder={hint.url}
-                        inputMode="url"
-                        aria-label="Link URL"
-                      />
-                      <button type="button" className={styles.resourceRemove} onClick={() => removeResource(i)} aria-label="Remove link">
-                        <X size={15} />
-                      </button>
-                    </div>
-                  );
-                })}
-                {resourcesInvalid && <p className={styles.errorText}>Each link needs a label and a valid web address (http/https).</p>}
-                {form.resources.length < MAX_EVENT_RESOURCES ? (
-                  <button type="button" className={styles.btnSecondary} onClick={addResource}>+ Add link</button>
-                ) : (
-                  <p className={styles.formHint}>Up to {MAX_EVENT_RESOURCES} links per event.</p>
-                )}
-              </section>
+                {/* NAME — demoted from the headline: games (and the rest) auto-name from their
+                    type + opponent, so a custom label is an optional override, not a title field. */}
+                <div className={styles.field}>
+                  <label className={styles.label}>Name</label>
+                  <input
+                    className={styles.input}
+                    value={form.name}
+                    onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder={needsOpponent(form.eventType) ? `Auto: ${EVENT_NAME_PREFIX[form.eventType]} vs opponent` : `Auto: ${EVENT_NAME_PREFIX[form.eventType]}`}
+                  />
+                  <p className={styles.formHint}>
+                    {needsOpponent(form.eventType)
+                      ? 'Leave blank to name it from the opponent (e.g. “Scrimmage vs Lady Jays”).'
+                      : 'Leave blank to use the default name.'}
+                  </p>
+                </div>
 
-              {/* NAME — demoted from the headline: games (and the rest) auto-name from their
-                  type + opponent, so a custom label is an optional override, not a title field. */}
-              <div className={styles.field}>
-                <label className={styles.label}>Name</label>
-                <input
-                  className={styles.input}
-                  value={form.name}
-                  onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                  placeholder={needsOpponent(form.eventType) ? `Auto: ${EVENT_NAME_PREFIX[form.eventType]} vs opponent` : `Auto: ${EVENT_NAME_PREFIX[form.eventType]}`}
-                />
-                <p className={styles.formHint}>
-                  {needsOpponent(form.eventType)
-                    ? 'Leave blank to name it from the opponent (e.g. “Scrimmage vs Lady Jays”).'
-                    : 'Leave blank to use the default name.'}
-                </p>
-              </div>
-
-              {/* NOTES */}
-              <div className={styles.field}>
-                <label className={styles.label}>Notes</label>
-                <textarea className={styles.textarea} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Anything the team should know" />
-              </div>
+                {/* NOTES */}
+                <div className={styles.field}>
+                  <label className={styles.label}>Notes</label>
+                  <textarea className={styles.textarea} value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} rows={2} placeholder="Anything the team should know" />
+                </div>
+              </CoachFormDisclosure>
             </div>
 
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}

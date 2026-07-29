@@ -659,6 +659,29 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'premium-bulk-roster',
+      group: 'Premium Coaches Portal',
+      heading: 'Adding your whole roster at once (Premium)',
+      summary: 'Paste your team list or upload a spreadsheet, check the preview, and add everyone in one go.',
+      keywords: ['add whole roster', 'bulk add', 'bulk', 'add players', 'paste', 'paste a list', 'paste roster', 'import', 'import roster', 'csv', 'excel', 'xlsx', 'spreadsheet', 'upload roster', 'template', 'download template', 'many players', 'add 15 players', 'save and add another', 'duplicate jersey', 'same number twice', 'faster roster'],
+      searchText: 'add whole roster at once bulk add players paste a list paste roster import csv excel xlsx spreadsheet upload roster download template column headings first name last name jersey number position date of birth guardian email guardian phone notes preview table fix rows remove row duplicate jersey number already worn by same number twice already on your roster first name required skipped row save and add another add one player faster way to add players 15 players quickly',
+      content: (
+        <>
+          <p>On Premium, <strong>Add players</strong> gets your whole team in at once instead of one form at a time. It opens with two ways in.</p>
+          <p><strong>Paste a list.</strong> Put one player per line — your team list probably already exists in an email or a group chat, so paste it straight in. A number before or after the name becomes their jersey:</p>
+          <ul>
+            <li><code>12 Jordan Smith</code> and <code>Jordan Smith 12</code> both read as <strong>#12 Jordan Smith</strong>.</li>
+            <li><code>Riley Novak</code> with no number is fine.</li>
+            <li>Commas and tabs work as columns, so a copied spreadsheet row pastes cleanly too.</li>
+          </ul>
+          <p><strong>Upload a file.</strong> If your club handed you a spreadsheet, upload the Excel or CSV and the columns are matched by their headings — first name, last name, jersey, position, date of birth, guardian name, email and phone, and notes. Only a first name is required; anything else missing is just left blank. No spreadsheet? <strong>Download a template</strong> that already has the right headings.</p>
+          <p>Either way you get a <strong>preview</strong> before anything is saved. Every cell is editable, you can drop a row you didn&apos;t mean to include, and problems are flagged in advance rather than after the fact: a jersey number used twice in your list, a number <em>already worn</em> by someone on your roster (it names who), and a player who&apos;s already there. A row with no first name can&apos;t be added and says so — the rest still go in, and you&apos;re told what was skipped.</p>
+          <p><strong>Adding one player?</strong> The regular <strong>Add player</strong> form is still there and now has <strong>Save &amp; add another</strong> — it saves, clears itself, and keeps a running count in the header, so a few late signings don&apos;t mean reopening the form each time.</p>
+          <p>Pasting captures names and numbers only. Positions, birthdates, and parent contacts are added per player afterwards, or come in through the spreadsheet&apos;s labelled columns — we don&apos;t guess at family contact details from typed text.</p>
+        </>
+      ),
+    },
+    {
       id: 'premium-portal-tour',
       group: 'Premium Coaches Portal',
       heading: 'Getting around your Premium portal',
@@ -724,11 +747,50 @@ const coachesHelp: HelpPageContent = {
           id: 'faq-setup-required-optional',
           question: 'Do I have to finish every setup step on Premium?',
           answer: (
-            <p>No. Only <strong>adding your roster</strong> is required. The rest — jersey numbers and positions, your schedule, game lineups, and a budget — are <strong>optional</strong>. Set up the ones you want, and hit <strong>Skip</strong> on any you won&apos;t use. Skipping ticks the step off just like finishing it, so once every step is done or skipped the setup panel disappears on its own. You can always come back to a skipped step later from the sidebar.</p>
+            <p>No. Only <strong>adding your roster</strong> is required. Everything else — the rest of your first week, plus jersey numbers and positions, assistant coaches, and team documents — is <strong>optional</strong>. Set up the ones you want, and hit <strong>Skip</strong> on any you won&apos;t use. Skipping ticks the step off just like finishing it, so once every step is done or skipped the panel shrinks to a single line and then disappears on its own. You can always come back to a skipped step later from the sidebar.</p>
           ),
-          answerText: 'No. Only adding your roster is required on Premium. The other steps — jersey numbers and positions, your schedule, game lineups, and a budget — are optional. Set up the ones you want and hit Skip on any you will not use; skipping ticks the step off just like finishing it, so once every step is done or skipped the setup panel disappears. You can return to a skipped step later from the sidebar.',
+          answerText: 'No. Only adding your roster is required on Premium. Everything else — the rest of your first week, plus jersey numbers and positions, assistant coaches, and team documents — is optional. Set up the ones you want and hit Skip on any you will not use; skipping ticks the step off just like finishing it, so once every step is done or skipped the panel shrinks to one line and then disappears. You can return to a skipped step later from the sidebar.',
           keywords: ['skip setup step', 'required step', 'optional step', 'finish setup', 'do i have to', 'budget optional', 'positions optional', 'schedule optional', 'mark complete'],
           popular: true,
+        },
+        {
+          id: 'faq-first-week-trail',
+          question: 'What is the “Your first week” trail on my Overview?',
+          answer: (
+            <>
+              <p>It&apos;s a five-step progress trail across the top of your setup panel — <strong>Roster</strong>, <strong>Schedule</strong>, <strong>Lineup</strong>, <strong>Families</strong>, <strong>Money</strong> — and each one lights up on its own from your real data: as soon as you add a player, put a game on the calendar, save a lineup, send your first announcement, or set a budget or dues. Every step is also a link into the section it names, so you can start one straight from the trail.</p>
+              <p>Underneath it are the steps that aren&apos;t part of the trail (confirming your season, jersey numbers and positions, inviting assistant coaches, adding team documents), and a short <strong>&ldquo;Also in your portal&rdquo;</strong> row naming the sections that don&apos;t have a finish line — <strong>Chat</strong>, <strong>Development</strong>, <strong>Insights</strong>, and <strong>Tryouts</strong> when you&apos;re running them.</p>
+              <p>The panel stays put while any of the five is still open, so you can see the trail fill in. Once all five are done or skipped it shrinks to a single line, and it disappears entirely once every remaining step is settled. A game happening today always sits <em>above</em> it — the trail never gets in the way of game day. You&apos;ll only see steps you can actually do: an assistant without money access won&apos;t be shown the Money step.</p>
+            </>
+          ),
+          answerText: 'The "Your first week" trail is a five-step progress bar on your Premium Overview: Roster, Schedule, Lineup, Families (your first announcement), and Money. Each lights up automatically from your real data and links into that section. Below it are the remaining setup steps — confirm season, jerseys and positions, invite assistant coaches, add team documents — and an "Also in your portal" row naming Chat, Development, Insights, and Tryouts, which have no finish line. The panel stays while any of the five is open, shrinks to one line once they are all done or skipped, and disappears once everything is settled. A game today always shows above it. You only see steps your access lets you do.',
+          keywords: ['first week', 'your first week', 'progress trail', 'progress ring', 'momentum', 'five steps', 'setup panel', 'overview panel', 'lights up', 'dots', 'also in your portal', 'what else is there', 'sections i have not used', 'discover', 'chat development insights', 'panel wont go away', 'hide setup', 'when does setup disappear'],
+          popular: true,
+        },
+        {
+          id: 'faq-fewer-fields',
+          question: 'Where did the rest of the fields on Add player and Add event go?',
+          answer: (
+            <>
+            <p>They&apos;re behind the <strong>&ldquo;＋ Add …&rdquo;</strong> lines at the bottom of the form. The forms now open with just the handful of things most players and events need, and everything else — parent/guardian contact, date of birth, notes, and on events the arrival time, address, field number, uniform, tags, links and custom name — opens when you tap that line. If you&apos;re <em>editing</em> something that already has those details filled in, the group opens by itself so you never lose sight of what you entered, and it stays open once you open it.</p>
+            <p>One thing did move on purpose: <strong>Add player now asks for a single Best Position</strong> instead of a primary and a secondary. It&apos;s the same setting as the <strong>Positions</strong> picker on the player&apos;s profile — that picker just does it better, letting you rank as many spots as you like and mark Okay and Never. Add the player with their main spot, then rank the rest on their profile whenever you want.</p>
+            </>
+          ),
+          answerText: 'Add player and Add event now open with only the fields most players and events need; the rest sit behind a "+ Add ..." line at the bottom of the form — parent/guardian contact, date of birth, notes, and on events the arrival time, address, field number, uniform, tags, links and custom name. Editing something that already has those details opens the group automatically. One change on purpose: Add player asks for a single Best Position instead of a primary and secondary. It is the same setting as the Positions picker on the player profile, which lets you rank as many spots as you like and mark Okay and Never — add the player with their main spot and rank the rest on their profile later.',
+          keywords: ['missing fields', 'where did fields go', 'fewer fields', 'guardian email missing', 'add details', 'optional fields', 'shorter form', 'collapsed', 'expand fields', 'cant find notes', 'cant find address', 'field number missing', 'uniform missing', 'date of birth missing'],
+        },
+        {
+          id: 'faq-assistant-permissions',
+          question: 'How do I choose what an assistant coach can do?',
+          answer: (
+            <>
+              <p>Open <strong>Staff</strong> (head coach only) and invite them by email. Each assistant has their own card with two groups.</p>
+              <p><strong>Everyday coaching</strong> is up front — schedule, attendance, lineups, and viewing the roster. These are what an assistant is normally invited to do, and they save the moment you tap them.</p>
+              <p><strong>Sensitive access</strong> sits behind its own line and covers team money, documents, family contact details and player birthdates, internal notes, sending announcements, and tryouts. The line shows how many are currently granted, so nothing is ever hidden from you, and it opens by itself if anything is already on. Turning on <strong>team money</strong>, <strong>contacts &amp; birthdates</strong>, or <strong>send announcements</strong> asks you to confirm first — those three expose your team&apos;s finances, your families&apos; personal details, and the ability to email every parent. <strong>Taking access away is always instant</strong> and never asks.</p>
+            </>
+          ),
+          answerText: 'Open Staff (head coach only) and invite an assistant by email. Their card has two groups. Everyday coaching — schedule, attendance, lineups, viewing the roster — is up front and saves instantly. Sensitive access sits behind its own line and covers team money, documents, family contact details and birthdates, internal notes, sending announcements, and tryouts; the line shows how many are granted and opens automatically if any are on. Granting team money, contacts and birthdates, or send announcements asks you to confirm. Removing access is always instant and never asks.',
+          keywords: ['assistant coach', 'assistant permissions', 'what can my assistant do', 'staff permissions', 'grant access', 'money access', 'contacts and birthdates', 'send announcements', 'sensitive access', 'everyday coaching', 'confirm before granting', 'remove assistant', 'take access away', 'restrict assistant'],
         },
       ],
     },

@@ -14,6 +14,7 @@ import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
+import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
 import styles from '../../coaches.module.css';
 import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
@@ -42,6 +43,20 @@ interface SetupStats {
   budgetSet: boolean;
 }
 
+/**
+ * First-week signals from /milestones — only the ones the page can't already derive from the
+ * roster/events fetches it makes anyway. `null` = this coach's capabilities hide the area.
+ * Whether a STEP is shown is decided from `assignment.capabilities` (see `SetupItem.visible`),
+ * never from these nulls — that would flash ineligible steps until the fetch resolves.
+ */
+interface Milestones {
+  hasLineup: boolean | null;
+  hasSentAnnouncement: boolean | null;
+  moneyStarted: boolean | null;
+  assistants: number | null;
+  teamDocuments: number | null;
+}
+
 interface SetupItem {
   /** Stable id used for skip persistence. */
   key: string;
@@ -56,8 +71,31 @@ interface SetupItem {
   complete: boolean;
   /** 'core' counts toward setup %; 'optional' sits in its own group, no nag. */
   group: 'core' | 'optional';
+  /**
+   * Whether this coach can act on the step at all. Computed straight from `capabilities` at
+   * declaration time (defaults to shown) so a restricted assistant never sees a step they can't
+   * complete — not even for the moment before an async fetch lands.
+   */
+  visible?: boolean;
   help: { title: string; body: string };
+  /**
+   * The five "first week" steps render as the momentum ring instead of as a checklist row
+   * (Batch 2, P0 #6 + wow #1) — one list, two renderings, so no step can appear twice or drift.
+   */
+  milestone?: { order: number; short: string; value: string };
 }
+
+/**
+ * Sections with no honest "done" state, named on Overview so a coach doesn't finish setup without
+ * learning they exist (readiness review #6 — five of eleven sections were invisible). Chat's copy
+ * is deliberately honest that it's tournament-scoped rather than promising a populated room.
+ */
+const DISCOVERY_SECTIONS: { key: string; label: string; href: string; title: string; needs?: 'tryouts' }[] = [
+  { key: 'chat', label: 'Chat', href: '/chat', title: 'Message organizers and other coaches during a tournament' },
+  { key: 'development', label: 'Development', href: '/development', title: 'Player goals, skills tests, and awards' },
+  { key: 'insights', label: 'Insights', href: '/history', title: 'Playing time, attendance, and season reports — they fill in on their own' },
+  { key: 'tryouts', label: 'Tryouts', href: '/tryouts', title: 'Run tryouts and pick your team', needs: 'tryouts' },
+];
 
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
@@ -117,6 +155,10 @@ export default function TeamOverviewPage({
   const [overviewFanView, setOverviewFanView] = useState<FanViewRegistration | null>(null);
   // Optional setup steps the coach has chosen to skip (per-team, remembered locally).
   const [skippedSteps, setSkippedSteps] = useState<Set<string>>(new Set());
+  // First-week milestones — one capability-aware read that also fixes the lineup step's
+  // false negative (it used to ask "does the NEXT event have a lineup", which blanks out
+  // whenever the next event is a practice).
+  const [milestones, setMilestones] = useState<Milestones | null>(null);
   // Contextual org-invite banner (only when an org has actually invited this team)
   const [orgInvite, setOrgInvite] = useState<{ orgName: string } | null>(null);
   // Last-season preview tile (record + dues + expenses) — money-gated, links into Past Seasons.
@@ -277,6 +319,18 @@ export default function TeamOverviewPage({
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}`)
       .then(res => (res.ok ? res.json() : null))
       .then(json => { if (!cancelled && json?.team) setTeamDivision(json.team.division ?? null); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [loading, orgSlug, teamId]);
+
+  // First-week milestones. Fail-silent: the trail simply doesn't render if this can't load —
+  // Overview never blocks on onboarding data.
+  useEffect(() => {
+    if (loading) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/milestones`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => { if (!cancelled && json?.milestones) setMilestones(json.milestones as Milestones); })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [loading, orgSlug, teamId]);
@@ -477,7 +531,8 @@ export default function TeamOverviewPage({
       href: `${base}/roster`,
       complete: (setupStats?.activeRosterCount ?? 0) > 0,
       group: 'core',
-      help: { title: 'Roster', body: 'Your team list. Add each player once; you can include a jersey number, positions, and a parent/guardian contact email (needed for dues reminders and announcements).' },
+      help: { title: 'Roster', body: 'Your team list. Paste it in all at once, or add players one at a time with a jersey number, positions, and a parent/guardian contact email (needed for dues reminders and announcements).' },
+      milestone: { order: 1, short: 'Roster', value: setupStats ? `${setupStats.activeRosterCount} player${setupStats.activeRosterCount === 1 ? '' : 's'}` : '' },
     },
     {
       key: 'schedule',
@@ -489,6 +544,7 @@ export default function TeamOverviewPage({
       complete: (setupStats?.eventCount ?? 0) > 0,
       group: 'optional',
       help: { title: 'Schedule', body: 'One calendar for practices, games, and events. On Premium you can set repeating events and sync the calendar to your phone. Games here are what you take attendance and set lineups on.' },
+      milestone: { order: 2, short: 'Schedule', value: setupStats ? `${setupStats.eventCount} event${setupStats.eventCount === 1 ? '' : 's'}` : '' },
     },
     {
       key: 'positions',
@@ -504,49 +560,100 @@ export default function TeamOverviewPage({
     {
       key: 'lineups',
       label: 'Prepare game lineups',
-      // Honest completion: DONE only when a lineup is actually saved for the next game —
-      // not merely because a game exists on the calendar (the old `gameCount > 0` check read
-      // "Done" while no lineup was ever built, hiding the premium lineup builder). `nextLineupReady`
-      // is next-game-scoped (null when the next event isn't a game), so this can under-report if a
-      // later game has a lineup but the immediate next event is a practice — an acceptable, honest
-      // false-negative on a skippable step vs. the old false-positive.
-      detail: nextLineupReady === true
-        ? 'Lineup set for your next game'
+      // Completion now means "this team has saved a lineup this season" (from /milestones), not
+      // "the NEXT event has one" — the old next-game-scoped check read null whenever the next
+      // event was a practice, so a coach who HAD built lineups was shown an unfinished step.
+      // `nextLineupReady` still drives the Next-up tile's per-game flag; it just no longer decides
+      // whether this step is done.
+      detail: milestones?.hasLineup
+        ? 'Lineup saved'
         : (setupStats?.gameCount ?? 0) > 0 ? 'Your next game needs a lineup' : 'No games scheduled yet',
       desc: (setupStats?.gameCount ?? 0) > 0
         ? 'Set the batting order and field positions for your next game before game day.'
         : 'Add a game to your schedule, then set the batting order and field positions before game day.',
       action: (setupStats?.gameCount ?? 0) > 0 ? 'Set lineup' : 'Add a game',
       href: (setupStats?.gameCount ?? 0) > 0 ? `${base}/lineups` : `${base}/schedule`,
-      complete: nextLineupReady === true,
+      complete: milestones?.hasLineup === true,
       group: 'optional',
+      visible: canViewLineup,
       help: { title: 'Game lineups', body: 'Open a game from your Lineups page to set the batting order and positions per inning, then print or share the lineup card. Needs at least one game on the calendar first.' },
+      milestone: { order: 3, short: 'Lineup', value: milestones?.hasLineup ? 'Saved' : '' },
+    },
+    {
+      key: 'announcements',
+      label: 'Tell your families',
+      detail: 'First announcement sent',
+      desc: 'Announcements email every guardian on your roster at once — the season dates, the first practice, a rain-out.',
+      action: 'Write one',
+      href: `${base}/announcements`,
+      complete: milestones?.hasSentAnnouncement === true,
+      group: 'optional',
+      visible: assignment.capabilities.announcementsSend,
+      help: { title: 'Announcements', body: 'A one-way email to every guardian on your active roster. Different from Chat, which talks to tournament organizers and other coaches. Drafts stay private until you send.' },
+      milestone: { order: 4, short: 'Families', value: milestones?.hasSentAnnouncement ? 'Sent' : '' },
     },
     {
       key: 'budget',
       label: 'Set a budget',
-      detail: setupStats?.budgetSet ? 'Budget is set' : 'No budget yet',
+      detail: milestones?.moneyStarted ? 'Money is set up' : setupStats?.budgetSet ? 'Budget is set' : 'No budget yet',
       desc: 'Set a season budget and dues to track who has paid and send automatic reminders.',
       action: 'Set budget',
       href: `${base}/accounting`,
-      complete: Boolean(setupStats?.budgetSet),
+      complete: milestones?.moneyStarted === true || Boolean(setupStats?.budgetSet),
       group: 'optional',
+      visible: canViewMoney,
       help: { title: 'Budget & dues', body: 'Plan your season costs, charge dues per player (one-off or installments), and track payments. Premium can email overdue reminders automatically.' },
+      milestone: { order: 5, short: 'Money', value: milestones?.moneyStarted ? 'Started' : '' },
+    },
+    {
+      key: 'staff',
+      label: 'Invite assistant coaches',
+      detail: milestones?.assistants ? `${milestones.assistants} assistant${milestones.assistants === 1 ? '' : 's'}` : 'No assistants yet',
+      desc: 'Invite your assistants and choose exactly what each one can do — they start with the safe basics.',
+      action: 'Invite',
+      href: `${base}/staff`,
+      complete: (milestones?.assistants ?? 0) > 0,
+      group: 'optional',
+      visible: assignment.capabilities.isHeadCoach,
+      help: { title: 'Staff', body: 'Invite assistant coaches by email. Each one gets the everyday coaching tools; money, family contact details, and sending announcements are granted one at a time by you.' },
+    },
+    {
+      key: 'documents',
+      label: 'Add team documents',
+      detail: milestones?.teamDocuments ? `${milestones.teamDocuments} document${milestones.teamDocuments === 1 ? '' : 's'}` : 'No documents yet',
+      desc: 'Keep waivers, medical forms, and team info in one place your families can be pointed at.',
+      action: 'Upload',
+      href: `${base}/documents`,
+      complete: (milestones?.teamDocuments ?? 0) > 0,
+      group: 'optional',
+      // Uploading needs manage rights, not just the view access the nav gate checks.
+      visible: assignment.capabilities.documents === 'manage' || assignment.capabilities.isHeadCoach,
+      help: { title: 'Documents', body: 'Your team’s file library — waivers, medical forms, codes of conduct. You can also track which players have returned a signed copy from each player’s profile.' },
     },
   ];
-  // Drop the money-only setup step for coaches without finance access.
-  const visibleSetupItems = canViewMoney ? setupItems : setupItems.filter(item => item.key !== 'budget');
+  // A step nobody can complete is a nag, not guidance. Each item carries its own `visible`
+  // predicate, so adding a step means editing one place — and the answer is known synchronously
+  // from capabilities rather than inferred from an async response's nulls.
+  const visibleSetupItems = setupItems.filter(item => item.visible ?? true);
   const coreItems = visibleSetupItems.filter(item => item.group === 'core');
-  const optionalItems = visibleSetupItems.filter(item => item.group === 'optional');
+  // Required (roster) gates "you're ready"; the panel itself retires only once EVERY
+  // step is done-or-skipped, so the coach explicitly clears each optional step.
+  const requiredDone = coreItems.every(item => item.complete);
+  // The five headline steps become the trail; everything else stays a checklist row. Same list,
+  // two renderings — no step can appear twice, and the counts can never disagree.
+  const ringItems = [...visibleSetupItems]
+    .filter((item): item is SetupItem & { milestone: NonNullable<SetupItem['milestone']> } => Boolean(item.milestone))
+    .sort((a, b) => a.milestone.order - b.milestone.order);
+  // Everything not on the trail. There is no separate "required steps" list any more: the roster
+  // step IS trail step 1 (with the panel's own "Next:" line and lime CTA driving it), so rendering
+  // it a second time as a required row just said the same thing twice.
+  const rowItems = visibleSetupItems.filter(item => !item.milestone);
   // A step counts toward the status bar when it's done OR (for optional steps) skipped —
   // so the bar reflects EVERY setup decision, and skipping a step "checks it off".
   const isSkipped = (item: SetupItem) => item.group === 'optional' && !item.complete && skippedSteps.has(item.key);
   const isSatisfied = (item: SetupItem) => item.complete || isSkipped(item);
   const satisfiedCount = visibleSetupItems.filter(isSatisfied).length;
   const totalCount = visibleSetupItems.length;
-  // Required (roster) gates "you're ready"; the panel itself retires only once EVERY
-  // step is done-or-skipped, so the coach explicitly clears each optional step.
-  const requiredDone = coreItems.every(item => item.complete);
   const allSatisfied = visibleSetupItems.every(isSatisfied);
 
   // While the roster is missing, lead with the "build your roster" guidance; after that
@@ -752,15 +859,33 @@ export default function TeamOverviewPage({
     return `${resultLetter(e.result)}${score}${opp}`;
   };
 
-  // The first still-open setup step, for the pre-season anchor's single next action.
-  const nextSetupItem = [...coreItems, ...optionalItems].find(i => !i.complete && !isSkipped(i)) ?? null;
+  // The first still-open setup step, for the pre-season anchor's single next action. Ring steps
+  // come first so "Next:" names a first-week milestone before a config chore.
+  const nextSetupItem = [...ringItems, ...coreItems, ...rowItems].find(i => !i.complete && !isSkipped(i)) ?? null;
   const optionalLeft = totalCount - satisfiedCount;
-  // Roster missing → the FULL setup panel is the top surface (no anchor). Once the roster
-  // is in → the phase anchor takes over and setup recedes to a thin, expandable strip.
-  const showFullSetupPanel = !setupLoading && !requiredDone;
+  const ringSatisfied = ringItems.filter(isSatisfied).length;
+  const firstWeekDone = ringItems.length > 0 && ringSatisfied === ringItems.length;
+  // Chips route through the SAME visibility rule as the sidebar, so a coach can never be pointed
+  // at a section their capabilities hide. Tryouts additionally waits for the conditional nav signal
+  // rather than advertising a seasonal area a team hasn't opened.
+  const discoverySections = DISCOVERY_SECTIONS.filter(section =>
+    isCoachNavItemVisible(assignment.capabilities, section.label)
+    && (section.needs !== 'tryouts' || assignment.hasTryoutSignal),
+  );
+
+  // Roster missing → the FULL setup panel is the top surface. It now ALSO stays up while any
+  // first-week milestone is open (D4): the old rule receded it as soon as one player existed, which
+  // would have made the trail visible only at 0 of 5. Every step is still skippable and "Hide"
+  // still works, so a coach who won't send an announcement isn't nagged forever.
+  // `milestones === null` means the trail's data is still in flight. Without that guard, a coach
+  // who finished their first week weeks ago sees the full panel flash back for a beat on every
+  // Overview load (every milestone reads incomplete until the fetch lands).
+  const showFullSetupPanel = !setupLoading && (!requiredDone || (milestones !== null && !firstWeekDone));
   const showAnchor = !setupLoading && requiredDone;
-  const showSetupStrip = !setupLoading && requiredDone && !allSatisfied && phase !== 'preseason';
+  const showSetupStrip = !setupLoading && requiredDone && firstWeekDone && !allSatisfied && phase !== 'preseason';
   const renderSetupPanel = showFullSetupPanel || (showSetupStrip && setupExpanded);
+  // The preseason anchor says the same sentence as the panel's "Next:" line — never both.
+  const showPreseasonAnchor = showAnchor && phase === 'preseason' && !renderSetupPanel;
 
   const attendanceTotal = nextAttendance ? nextAttendance.in + nextAttendance.late + nextAttendance.out + nextAttendance.noReply : 0;
   const fieldOrLoc = nextEvent ? (nextEvent.fieldNumber || nextEvent.location || null) : null;
@@ -829,70 +954,6 @@ export default function TeamOverviewPage({
       {/* Get set up — the status bar tracks EVERY step (required + optional); a step is
           "checked off" when it's done OR skipped, so the bar reads 100% only once the coach
           has decided on each. The panel retires at 100% (page flips to run-mode). */}
-      {renderSetupPanel && (
-        <section className={styles.setupPanel} aria-labelledby="season-setup-title">
-          <div className={styles.setupHeader}>
-            <div>
-              <p className={styles.setupKicker}>Get set up · {satisfiedCount} of {totalCount}</p>
-              <h2 id="season-setup-title" className={styles.setupTitle}>
-                {requiredDone ? 'Finish your setup' : guidance.headline}
-              </h2>
-            </div>
-            {showSetupStrip && setupExpanded ? (
-              <button type="button" className={styles.setupStripLink} onClick={() => setSetupExpanded(false)}>Hide</button>
-            ) : (
-              <span className={styles.setupProgress}>{Math.round((satisfiedCount / totalCount) * 100)}%</span>
-            )}
-          </div>
-          <div
-            className={styles.setupSegments}
-            role="img"
-            aria-label={`${satisfiedCount} of ${totalCount} setup steps done or skipped`}
-          >
-            {visibleSetupItems.map(item => (
-              <span
-                key={item.key}
-                className={`${styles.setupSegment} ${item.complete ? styles.setupSegmentDone : isSkipped(item) ? styles.setupSegmentSkipped : ''}`}
-              />
-            ))}
-          </div>
-          <p className={styles.setupNext}>
-            {requiredDone
-              ? "Your team is ready to run. Tick off or skip each optional step below — skipping counts, so you can clear setup with the tools you'll actually use."
-              : guidance.context}
-          </p>
-          {!requiredDone && guidance.cta && (
-            <Link href={guidance.cta.href} className={`btn btn-lime btn-sm ${styles.setupNextCta}`}>
-              {guidance.cta.label} <ArrowRight size={14} />
-            </Link>
-          )}
-          {setupError && <p className={styles.errorText}>{setupError}</p>}
-
-          {/* Required steps — hidden once complete so the panel focuses on what's left */}
-          {!requiredDone && (
-            <div className={styles.setupList}>
-              {coreItems.map(renderSetupRow)}
-            </div>
-          )}
-
-          {/* Optional steps — pointed to, auto-checked when done, or skip to check off */}
-          {optionalItems.length > 0 && (
-            <>
-              <p className={styles.setupGroupLabel}>Optional — set up or skip</p>
-              <div className={styles.setupList}>
-                {optionalItems.map(renderSetupRow)}
-              </div>
-            </>
-          )}
-
-          <p className={styles.setupGuideFooter}>
-            <button type="button" className={styles.setupGuideLink} onClick={() => openHelp({ module: 'coaches', sectionIds: ['premium-portal-tour', 'premium'], label: 'Setup guide', fullGuideHref: `${helpHref}#premium-portal-tour` })}>
-              Open the setup guide →
-            </button>
-          </p>
-        </section>
-      )}
-
       {/* ── "Right now" anchor — the phase-adaptive "what matters now" surface.
           Ports the TeamHQ phase LOGIC into the operating-tool card language (no hero). */}
       {showAnchor && phase === 'game_day' && nextEvent && (
@@ -998,7 +1059,7 @@ export default function TeamOverviewPage({
         </div>
       )}
 
-      {showAnchor && phase === 'preseason' && (
+      {showPreseasonAnchor && (
         <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
           <p className={styles.nowEyebrow}>Your roster&apos;s ready{!allSatisfied && <span className={styles.nowEyebrowCount}>{satisfiedCount} of {totalCount}</span>}</p>
           <p className={styles.nowHeadline}>{nextSetupItem ? nextSetupItem.label : 'Add your first game'}</p>
@@ -1009,11 +1070,122 @@ export default function TeamOverviewPage({
         </div>
       )}
 
+      {renderSetupPanel && (
+        <section className={styles.setupPanel} aria-labelledby="season-setup-title">
+          <div className={styles.setupHeader}>
+            <div>
+              <p className={styles.setupKicker}>Your first week · {ringSatisfied} of {ringItems.length}</p>
+              <h2 id="season-setup-title" className={styles.setupTitle}>
+                {!requiredDone ? guidance.headline : firstWeekDone ? 'Finish your setup' : 'Nice — you’re running'}
+              </h2>
+            </div>
+            {showSetupStrip && setupExpanded ? (
+              <button type="button" className={styles.setupStripLink} onClick={() => setSetupExpanded(false)}>Hide</button>
+            ) : (
+              <span className={styles.setupProgress}>{Math.round((satisfiedCount / totalCount) * 100)}%</span>
+            )}
+          </div>
+
+          {/* The five headline steps as a trail. Each dot lights from real data, and an open step
+              is a live door into the section it names — which is how Chat/Staff/Documents stop
+              being invisible (readiness review #6). */}
+          <div className={styles.ring} role="list" aria-label={`First week: ${ringSatisfied} of ${ringItems.length} done`}>
+            {ringItems.map((item, i) => {
+              const skipped = isSkipped(item);
+              const state = item.complete ? 'done' : skipped ? 'skipped' : item.key === nextSetupItem?.key ? 'next' : 'open';
+              const body = (
+                <div className={styles.ringStep} data-state={state}>
+                  <span className={styles.ringDot} aria-hidden>
+                    {item.complete ? '✓' : skipped ? '–' : i + 1}
+                  </span>
+                  <span className={styles.ringLabel}>{item.milestone.short}</span>
+                  <span className={styles.ringValue}>
+                    {item.complete ? (item.milestone.value || 'Done') : skipped ? 'Undo skip' : '—'}
+                  </span>
+                </div>
+              );
+              // A skipped step becomes its own undo control — skipping is one tap from the "Next:"
+              // line, so un-skipping has to be one tap back or a mis-tap would be permanent.
+              return skipped ? (
+                <button key={item.key} type="button" className={styles.ringLink} role="listitem"
+                  aria-label={`Undo skipping ${item.label}`} onClick={() => toggleSkip(item.key)}>
+                  {body}
+                </button>
+              ) : (
+                <Link key={item.key} href={item.href} className={styles.ringLink} role="listitem"
+                  title={item.complete ? item.detail : item.desc}>
+                  {body}
+                </Link>
+              );
+            })}
+          </div>
+
+          <p className={styles.setupNext}>
+            {!requiredDone
+              ? guidance.context
+              : nextSetupItem
+                ? nextSetupItem.desc
+                : "Your team is ready to run. Tick off or skip each remaining step below — skipping counts, so you can clear setup with the tools you'll actually use."}
+          </p>
+          {!requiredDone && guidance.cta ? (
+            <Link href={guidance.cta.href} className={`btn btn-lime btn-sm ${styles.setupNextCta}`}>
+              {guidance.cta.label} <ArrowRight size={14} />
+            </Link>
+          ) : nextSetupItem ? (
+            <span className={styles.setupNextActions}>
+              <Link href={nextSetupItem.href} className={`btn btn-lime btn-sm ${styles.setupNextCta}`}>
+                {nextSetupItem.action} <ArrowRight size={14} />
+              </Link>
+              {/* Trail steps render as dots, which have no room for a per-step Skip — without this
+                  the four optional milestones could never be skipped and the panel could never
+                  retire for a coach who won't use, say, announcements or a budget (D4). */}
+              {nextSetupItem.group === 'optional' && (
+                <button type="button" className={styles.setupItemSkip} onClick={() => toggleSkip(nextSetupItem.key)}>
+                  Skip this step
+                </button>
+              )}
+            </span>
+          ) : null}
+          {setupError && <p className={styles.errorText}>{setupError}</p>}
+
+          {/* The steps that aren't on the trail — set up or skip, exactly as before */}
+          {rowItems.length > 0 && (
+            <>
+              <p className={styles.setupGroupLabel}>Finish setting up</p>
+              <div className={styles.setupList}>
+                {rowItems.map(renderSetupRow)}
+              </div>
+            </>
+          )}
+
+          {/* The sections with no honest "done" state still get named here, so a coach can't
+              finish setup without learning they exist. */}
+          {discoverySections.length > 0 && (
+            <div className={styles.discoverRow}>
+              <p className={styles.discoverLabel}>Also in your portal</p>
+              <div className={styles.discoverChips}>
+                {discoverySections.map(section => (
+                  <Link key={section.key} href={`${base}${section.href}`} className={styles.discoverChip} title={section.title}>
+                    {section.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          <p className={styles.setupGuideFooter}>
+            <button type="button" className={styles.setupGuideLink} onClick={() => openHelp({ module: 'coaches', sectionIds: ['premium-portal-tour', 'premium'], label: 'Setup guide', fullGuideHref: `${helpHref}#premium-portal-tour` })}>
+              Open the setup guide →
+            </button>
+          </p>
+        </section>
+      )}
+
       {/* Setup receded to a thin strip once the roster is in but optional steps remain. */}
       {showSetupStrip && !setupExpanded && (
         <div className={styles.setupStripCollapsed}>
           <CheckCircle2 size={15} className={styles.setupStripIcon} aria-hidden />
-          <span>Setup ready — <strong>{optionalLeft}</strong> optional {optionalLeft === 1 ? 'step' : 'steps'} left.</span>
+          <span>First week done — <strong>{optionalLeft}</strong> optional {optionalLeft === 1 ? 'step' : 'steps'} left.</span>
           <button type="button" className={styles.setupStripLink} onClick={() => setSetupExpanded(true)}>Review →</button>
         </div>
       )}

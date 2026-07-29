@@ -3836,6 +3836,81 @@ async function getCoachingBadges(
   return result;
 }
 
+export interface CoachTeamMilestones {
+  /** Any saved lineup this season — NOT "the next game has one". */
+  hasLineup: boolean;
+  /** An announcement that actually went out (drafts don't count). */
+  hasSentAnnouncement: boolean;
+  /** A season budget OR a dues schedule — either one means money is under way. */
+  moneyStarted: boolean;
+  assistants: number;
+  teamDocuments: number;
+}
+
+/**
+ * The "first week" milestones behind the Overview progress trail (Coach Portal Batch 2, P0 #6).
+ *
+ * Deliberately scoped to the signals the Overview CANNOT already derive — roster and event counts
+ * are omitted because that page fetches both anyway for other reasons, and a second count would be
+ * a duplicate source of the same truth.
+ *
+ * Fixes the one dishonest signal: the Overview used to decide "lineup done?" from whether the NEXT
+ * event had a lineup, which reads `null` whenever the next event is a practice — so a coach who
+ * had already built lineups was shown an unfinished step. Here it's "has this team ever saved a
+ * lineup this season", which is what the step actually claims.
+ *
+ * Read-only and fail-soft: any one query erroring leaves that milestone at its zero value rather
+ * than breaking a coach's landing page. Capability filtering happens in the route, not here.
+ */
+export async function getCoachTeamMilestones(
+  programYearId: string,
+  teamId: string,
+): Promise<CoachTeamMilestones> {
+  const countHead = { count: 'exact' as const, head: true };
+
+  const [
+    lineupEventIds, announcements, dues, programYear, assistants, documents,
+  ] = await Promise.all([
+    // Reuses the SAME definition of "has a lineup" as the Lineups page's readiness chips: a lineup
+    // row alone isn't enough, because opening the builder auto-seeds every player into the batting
+    // order with no positions and saving that writes a row. Counting rows would have marked the
+    // step done for a coach who never assigned a single position — the exact false "done" this
+    // milestone exists to avoid. Fails soft: an error here reads as "no lineup yet".
+    getRepTeamLineupSetEventIds(programYearId).catch(e => {
+      console.error('[getCoachTeamMilestones] lineup query failed (treated as not started):', e?.message);
+      return [] as string[];
+    }),
+    // `sent_at` is NOT NULL, so it can't distinguish a send from a draft (and there are no draft
+    // rows — drafts live in client state). `sent_count > 0` is the real "a family was told" signal:
+    // an announcement whose every recipient bounced should not tick this step.
+    supabaseAdmin.from('rep_team_announcements').select('id', countHead)
+      .eq('program_year_id', programYearId).gt('sent_count', 0),
+    supabaseAdmin.from('rep_player_dues_schedules').select('id', countHead)
+      .eq('program_year_id', programYearId),
+    supabaseAdmin.from('rep_program_years').select('budget_amount')
+      .eq('id', programYearId).maybeSingle(),
+    supabaseAdmin.from('rep_team_coaches').select('id', countHead)
+      .eq('program_year_id', programYearId).eq('coach_role', 'assistant_coach'),
+    // Team-owned templates only (the org's shared library isn't this team's doing), and only
+    // ACTIVE ones — the Documents page filters archived templates out, so counting them would
+    // report "1 document" over an empty page.
+    supabaseAdmin.from('rep_document_templates').select('id', countHead)
+      .eq('team_id', teamId).eq('is_active', true),
+  ]);
+
+  for (const [label, result] of Object.entries({ announcements, dues, programYear, assistants, documents })) {
+    if (result.error) console.error(`[getCoachTeamMilestones] ${label} query failed (treated as not started):`, result.error.message);
+  }
+
+  return {
+    hasLineup: lineupEventIds.length > 0,
+    hasSentAnnouncement: (announcements.count ?? 0) > 0,
+    moneyStarted: (dues.count ?? 0) > 0 || (programYear.data as { budget_amount?: number | null } | null)?.budget_amount != null,
+    assistants: assistants.count ?? 0,
+    teamDocuments: documents.count ?? 0,
+  };
+}
+
 /**
  * Cheap, read-only "is this area in use yet?" signals for the coach nav. Lets the sidebar and
  * bottom-nav keep optional areas (Tryouts, Tournaments) out of the primary groups until a team
@@ -4815,6 +4890,24 @@ export async function getRepRosterPlayer(playerId: string): Promise<RepRosterPla
   return mapRepRosterPlayer(data);
 }
 
+/**
+ * The next free append position on a team's manual roster order. Extracted so a bulk add can read
+ * it ONCE for the whole batch — the per-player read this replaces meant a 200-player paste issued
+ * 200 extra queries before a single row was written.
+ */
+export async function getNextRepRosterDisplayOrder(programYearId: string, teamId: string): Promise<number> {
+  const { data: top, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('display_order')
+    .eq('program_year_id', programYearId)
+    .eq('team_id', teamId)
+    .order('display_order', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw error; // fail loud rather than silently appending at position 0
+  return ((top?.display_order as number | null | undefined) ?? -1) + 1;
+}
+
 export async function createRepRosterPlayer(fields: {
   programYearId: string;
   teamId: string;
@@ -4841,20 +4934,15 @@ export async function createRepRosterPlayer(fields: {
   jerseySize?: string | null;
   lineupProfile?: LineupProfile | null;
   sourceBasicPlayerId?: string | null;
+  /** Explicit append position. Omit for a single add; supply it when creating a batch. */
+  displayOrder?: number;
 }): Promise<RepRosterPlayer> {
   // Append new players at the end of the manual roster order (parity with the Basic roster — a coach
   // can drag-reorder afterward). mig 142 added rep_roster_players.display_order; sequential creates
   // (manual add, upgrade migration, season rollover) each append, preserving source order.
-  const { data: top, error: topError } = await supabaseAdmin
-    .from('rep_roster_players')
-    .select('display_order')
-    .eq('program_year_id', fields.programYearId)
-    .eq('team_id', fields.teamId)
-    .order('display_order', { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (topError) throw topError; // fail loud rather than silently appending at position 0
-  const nextDisplayOrder = ((top?.display_order as number | null | undefined) ?? -1) + 1;
+  // A caller adding MANY players at once passes an explicit `displayOrder` so the append position is
+  // read once for the batch instead of re-queried per player (see getNextRepRosterDisplayOrder).
+  const nextDisplayOrder = fields.displayOrder ?? await getNextRepRosterDisplayOrder(fields.programYearId, fields.teamId);
 
   const { data, error } = await supabaseAdmin
     .from('rep_roster_players')

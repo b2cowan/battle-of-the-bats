@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { UserPlus, Trash2, ShieldCheck } from 'lucide-react';
+import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 type MoneyAccess = 'off' | 'read' | 'write';
@@ -32,25 +34,67 @@ interface StaffMember {
   isSelf: boolean;
 }
 
-// The head coach's duty grid. Grants are stored per-assistant; head coaches always have full access.
-const SEGMENTS: { key: keyof Caps; label: string; hint: string; options: { value: string; label: string }[] }[] = [
-  { key: 'money', label: 'Team money', hint: 'Budget, dues, expenses', options: [
-    { value: 'off', label: 'Hidden' }, { value: 'read', label: 'View' }, { value: 'write', label: 'View + edit' } ] },
-  { key: 'documents', label: 'Documents', hint: 'Waivers & team files', options: [
-    { value: 'off', label: 'Hidden' }, { value: 'view', label: 'View' }, { value: 'manage', label: 'Manage' } ] },
+type Segment = { key: keyof Caps; label: string; hint: string; options: { value: string; label: string }[] };
+type Toggle = { key: keyof Caps; label: string; hint: string };
+
+/**
+ * The head coach's duty grid. Grants are stored per-assistant; head coaches always have full access.
+ *
+ * Split into EVERYDAY (the four things an assistant is invited to do) and SENSITIVE (money, family
+ * contact details, and anything that speaks to parents), which sits behind a disclosure — ten flat
+ * access decisions in one grid was readiness-review finding #8. Every grant still saves instantly;
+ * only *granting* something in the sensitive group asks first (D3, 2026-07-28).
+ */
+const EVERYDAY_SEGMENTS: Segment[] = [
   { key: 'roster', label: 'Roster', hint: 'Player list', options: [
     { value: 'off', label: 'Hidden' }, { value: 'view', label: 'View' } ] },
 ];
 
-const TOGGLES: { key: keyof Caps; label: string; hint: string }[] = [
+const EVERYDAY_TOGGLES: Toggle[] = [
   { key: 'schedule', label: 'Schedule', hint: 'View + manage events' },
   { key: 'attendance', label: 'Attendance', hint: 'Record attendance' },
   { key: 'lineups', label: 'Lineups', hint: 'Build game lineups' },
+];
+
+const SENSITIVE_SEGMENTS: Segment[] = [
+  { key: 'money', label: 'Team money', hint: 'Budget, dues, expenses', options: [
+    { value: 'off', label: 'Hidden' }, { value: 'read', label: 'View' }, { value: 'write', label: 'View + edit' } ] },
+  { key: 'documents', label: 'Documents', hint: 'Waivers & team files', options: [
+    { value: 'off', label: 'Hidden' }, { value: 'view', label: 'View' }, { value: 'manage', label: 'Manage' } ] },
+];
+
+const SENSITIVE_TOGGLES: Toggle[] = [
   { key: 'rosterPii', label: 'Contacts & birthdates', hint: 'Guardian contact + player DOB' },
   { key: 'notes', label: 'Internal notes', hint: 'Private staff notes' },
   { key: 'announcementsSend', label: 'Send announcements', hint: 'Email parents (off = draft only)' },
   { key: 'tryouts', label: 'Tryouts', hint: 'Candidates + decisions' },
 ];
+
+/**
+ * The three grants worth a speed bump: money, family contact details, and the ability to email
+ * parents. Revoking is never confirmed — a head coach taking access back is always in a hurry.
+ */
+const CONFIRM_ON_GRANT: Partial<Record<keyof Caps, (who: string) => { title: string; message: string }>> = {
+  money: who => ({
+    title: `Give ${who} access to team money?`,
+    message: `${who} will be able to see the budget, dues, and every payment on this team. You can take this back any time.`,
+  }),
+  rosterPii: who => ({
+    title: `Share family contact details with ${who}?`,
+    message: `${who} will see guardian names, emails, phone numbers, and player birthdates for the whole roster.`,
+  }),
+  announcementsSend: who => ({
+    title: `Let ${who} email your families?`,
+    message: `${who} will be able to send announcements to every guardian on the roster, not just draft them.`,
+  }),
+};
+
+/** Count of sensitive grants currently in effect — shown on the collapsed group so it never hides one. */
+function sensitiveGrantCount(c: Caps): number {
+  return (c.money !== 'off' ? 1 : 0)
+    + (c.documents !== 'off' ? 1 : 0)
+    + SENSITIVE_TOGGLES.filter(t => Boolean(c[t.key])).length;
+}
 
 function grantsFrom(c: Caps) {
   return {
@@ -74,6 +118,7 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
   const [inviteMsg, setInviteMsg] = useState('');
   const [inviteError, setInviteError] = useState('');
 
+  const confirm = useConfirm();
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/staff`;
 
   const load = useCallback(async () => {
@@ -113,8 +158,39 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
     }
   }
 
+  /**
+   * Apply one capability change. Escalations into the sensitive group ask first; everything else
+   * — including every revoke — saves the instant it's tapped, as it always has.
+   */
+  async function requestSetCap(member: StaffMember, patch: Partial<Caps>) {
+    const [key, value] = Object.entries(patch)[0] as [keyof Caps, Caps[keyof Caps]];
+    const current = member.capabilities[key];
+    // Any WIDENING counts as a grant, not just off→on. Money read→write ("View" → "View + edit")
+    // is the bigger of the two money grants, so confirming only the smaller one had it backwards.
+    const RANK: Record<string, number> = { off: 0, view: 1, read: 1, manage: 2, write: 2 };
+    const isGrant = typeof value === 'boolean'
+      ? value && !current
+      : (RANK[String(value)] ?? 0) > (RANK[String(current)] ?? 0);
+    const prompt = CONFIRM_ON_GRANT[key];
+    if (isGrant && prompt) {
+      const { title, message } = prompt(member.displayName || member.email || 'this assistant');
+      const ok = await confirm({ title, message, confirmText: 'Give access', cancelText: 'Cancel', tone: 'warning' });
+      if (!ok) return;
+    }
+    await saveCaps(member, { ...member.capabilities, ...patch });
+  }
+
   async function removeAssistant(member: StaffMember) {
-    if (!window.confirm(`Remove ${member.displayName || member.email || 'this assistant'} from the team? They lose access immediately.`)) return;
+    // Was a native window.confirm() — the one dialog in the portal that broke from the app's own
+    // styled confirmations (readiness-review finding f7-5).
+    const ok = await confirm({
+      title: 'Remove this assistant?',
+      message: `${member.displayName || member.email || 'This assistant'} loses access to this team immediately. You can invite them again later.`,
+      confirmText: 'Remove',
+      cancelText: 'Keep them',
+      tone: 'danger',
+    });
+    if (!ok) return;
     setRemovingId(member.coachId);
     try {
       const res = await fetch(`${base}/${member.coachId}`, { method: 'DELETE' });
@@ -195,7 +271,40 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', marginTop: '0.6rem' }}>
         {assistants.map(member => {
           const c = member.capabilities;
-          const setCap = (patch: Partial<Caps>) => saveCaps(member, { ...c, ...patch });
+          const setCap = (patch: Partial<Caps>) => { void requestSetCap(member, patch); };
+          const renderSegment = (seg: Segment) => (
+            <div key={String(seg.key)} style={{ minWidth: 170 }}>
+              <p style={{ margin: '0 0 0.2rem', fontSize: '0.8rem', color: 'var(--white-70)' }}>{seg.label}</p>
+              <div style={{ display: 'inline-flex', border: '1px solid var(--border-2)', borderRadius: 8, overflow: 'hidden' }}>
+                {seg.options.map(opt => {
+                  const active = String(c[seg.key]) === opt.value;
+                  return (
+                    <button key={opt.value} type="button"
+                      onClick={() => setCap({ [seg.key]: opt.value } as Partial<Caps>)}
+                      style={{
+                        border: 'none', cursor: 'pointer', fontSize: '0.76rem', padding: '0.3rem 0.6rem',
+                        background: active ? 'var(--logic-lime)' : 'transparent',
+                        color: active ? 'var(--pitch-black)' : 'var(--white-70)',
+                        fontWeight: active ? 700 : 500,
+                      }}>
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.72rem', color: 'var(--white-45)' }}>{seg.hint}</p>
+            </div>
+          );
+          const renderToggle = (t: Toggle) => (
+            <label key={String(t.key)} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
+              <input type="checkbox" checked={Boolean(c[t.key])} onChange={e => setCap({ [t.key]: e.target.checked } as Partial<Caps>)} style={{ marginTop: 2 }} />
+              <span>
+                <span style={{ fontSize: '0.83rem', color: 'var(--white-90)' }}>{t.label}</span>
+                <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--white-45)' }}>{t.hint}</span>
+              </span>
+            </label>
+          );
+          const granted = sensitiveGrantCount(c);
           return (
             <div key={member.coachId} style={{ border: '1px solid var(--border-2)', borderRadius: 10, padding: '0.85rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -214,47 +323,33 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
                 </div>
               </div>
 
-              {/* Segmented (multi-state) controls */}
+              {/* Everyday coaching — what an assistant is invited to do, always visible. */}
+              <p className={styles.formSectionTitle} style={{ marginTop: '0.7rem' }}>Everyday coaching</p>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem 1rem', marginTop: '0.4rem' }}>
+                {EVERYDAY_TOGGLES.map(renderToggle)}
+              </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.9rem', marginTop: '0.7rem' }}>
-                {SEGMENTS.map(seg => (
-                  <div key={String(seg.key)} style={{ minWidth: 170 }}>
-                    <p style={{ margin: '0 0 0.2rem', fontSize: '0.8rem', color: 'var(--white-70)' }}>{seg.label}</p>
-                    <div style={{ display: 'inline-flex', border: '1px solid var(--border-2)', borderRadius: 8, overflow: 'hidden' }}>
-                      {seg.options.map(opt => {
-                        const active = String(c[seg.key]) === opt.value;
-                        return (
-                          <button key={opt.value} type="button"
-                            onClick={() => setCap({ [seg.key]: opt.value } as Partial<Caps>)}
-                            style={{
-                              border: 'none', cursor: 'pointer', fontSize: '0.76rem', padding: '0.3rem 0.6rem',
-                              background: active ? 'var(--logic-lime)' : 'transparent',
-                              color: active ? 'var(--pitch-black)' : 'var(--white-70)',
-                              fontWeight: active ? 700 : 500,
-                            }}>
-                            {opt.label}
-                          </button>
-                        );
-                      })}
-                    </div>
-                    <p style={{ margin: '0.15rem 0 0', fontSize: '0.72rem', color: 'var(--white-45)' }}>{seg.hint}</p>
-                  </div>
-                ))}
+                {EVERYDAY_SEGMENTS.map(renderSegment)}
               </div>
 
-              {/* On/off toggles */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem 1rem', marginTop: '0.8rem' }}>
-                {TOGGLES.map(t => {
-                  const on = Boolean(c[t.key]);
-                  return (
-                    <label key={String(t.key)} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
-                      <input type="checkbox" checked={on} onChange={e => setCap({ [t.key]: e.target.checked } as Partial<Caps>)} style={{ marginTop: 2 }} />
-                      <span>
-                        <span style={{ fontSize: '0.83rem', color: 'var(--white-90)' }}>{t.label}</span>
-                        <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--white-45)' }}>{t.hint}</span>
-                      </span>
-                    </label>
-                  );
-                })}
+              {/* Sensitive access — money, family contact details, and anything that emails parents.
+                  The count on the collapsed toggle means a granted permission is never out of sight,
+                  and the group opens by default whenever something is already granted. */}
+              <div style={{ marginTop: '0.9rem' }}>
+                <CoachFormDisclosure
+                  label="Sensitive access"
+                  title="Sensitive access"
+                  note="Money, family contact details, and anything that emails your parents. You'll be asked to confirm before granting these."
+                  meta={granted > 0 ? `${granted} granted` : undefined}
+                  defaultOpen={granted > 0}
+                >
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.9rem' }}>
+                    {SENSITIVE_SEGMENTS.map(renderSegment)}
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem 1rem' }}>
+                    {SENSITIVE_TOGGLES.map(renderToggle)}
+                  </div>
+                </CoachFormDisclosure>
               </div>
             </div>
           );
