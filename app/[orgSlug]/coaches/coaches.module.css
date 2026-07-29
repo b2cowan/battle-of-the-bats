@@ -1035,6 +1035,33 @@
 .nowBridge a { color: var(--blueprint-blue); text-decoration: none; }
 .nowBridge a:hover { text-decoration: underline; }
 
+/* A dashboard read that failed says so on the page, above the tiles it affects — never only
+   inside the setup popover, which a coach may never open (and which sometimes isn't there). */
+.loadErrorLine {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--radius);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--white-70);
+  font-size: 0.82rem;
+}
+.loadErrorLine svg { color: var(--warning); flex-shrink: 0; }
+.loadErrorRetry {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  color: var(--blueprint-blue);
+}
+.loadErrorRetry:hover { text-decoration: underline; }
+
 /* ── Season setup: the one next-action line ────────────────────────────────
    Replaces the full-width setup panel (Coach Onboarding Quiet Mode, Phase A). Deliberately NOT
    a card: no panel background and only a left rule, so it reads as a note above the dashboard
@@ -1417,13 +1444,9 @@
 /* A skipped optional step reads as backgrounded, not failed */
 .setupItem[data-skipped="true"] { opacity: 0.6; }
 
-/* The panel's single next action, plus a Skip for the current trail step (trail dots have no room
-   for their own per-step control, and without this the four optional milestones could never be
-   skipped and the panel could never retire). */
-.setupNextActions { display: inline-flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
-
 /* "Also in your portal" — the sections that have no honest "done" state but must still be named
-   somewhere on Overview (readiness review #6: 5 of 11 sections were invisible). */
+   somewhere (readiness review #6: 5 of 11 sections were invisible). Now lives in the setup popover;
+   Phase B replaces it with real teaching at each section's own empty state. */
 .discoverRow {
   display: flex; flex-direction: column; gap: 0.4rem;
   border-top: 1px solid var(--border-subtle); padding-top: 0.7rem;

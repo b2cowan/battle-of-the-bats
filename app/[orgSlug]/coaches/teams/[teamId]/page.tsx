@@ -224,19 +224,27 @@ export default function TeamOverviewPage({
       // rosterPii grant. Without it, guardianEmail/DOB come back null — so a "missing email" count
       // or birthday list computed from them would be false. Gate both on canPii (head coaches: on).
       const canPii = !!a && a.capabilities.rosterPii;
+      // Same rule as the money guard above, which roster and schedule never got: an assistant whose
+      // head coach hid Roster or turned Schedule off had those (correct) 403s counted as a total
+      // failure, so the whole dashboard reported "Setup status could not be loaded" — and every
+      // tile then read empty, telling a coach with a full squad and a full season that they had
+      // "0 players" and "Nothing scheduled". Don't ask for what this coach isn't allowed to see;
+      // the tiles that depend on the answer hide themselves (see `visible` on the snapshot cards).
+      const canRoster = !!a && a.capabilities.roster !== 'off';
+      const canSchedule = !!a && a.capabilities.schedule;
       const [rosterRes, eventsRes, budgetRes, duesRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`),
+        canRoster ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`) : Promise.resolve(null),
+        canSchedule ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`) : Promise.resolve(null),
         canMoney ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget`) : Promise.resolve(null),
         canMoney ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`) : Promise.resolve(null),
       ]);
 
-      if (!rosterRes.ok || !eventsRes.ok || (canMoney && !budgetRes!.ok)) {
+      if ((canRoster && !rosterRes!.ok) || (canSchedule && !eventsRes!.ok) || (canMoney && !budgetRes!.ok)) {
         throw new Error('Setup status could not be loaded');
       }
 
-      const rosterData: { players?: RepRosterPlayer[] } = await rosterRes.json();
-      const eventsData: { events?: RepTeamEvent[] } = await eventsRes.json();
+      const rosterData: { players?: RepRosterPlayer[] } = canRoster ? await rosterRes!.json() : {};
+      const eventsData: { events?: RepTeamEvent[] } = canSchedule ? await eventsRes!.json() : {};
       const budgetData: { budgetAmount?: number | null; totalExpenses?: number } =
         canMoney && budgetRes!.ok ? await budgetRes!.json() : { budgetAmount: null, totalExpenses: 0 };
       const activePlayers = (rosterData.players ?? []).filter(player => player.status === 'active');
@@ -360,10 +368,19 @@ export default function TeamOverviewPage({
   // true for every real single-user device.
   useEffect(() => {
     void Promise.resolve().then(() => {
+      // `tourSeen` starts true so the offer can't flash in and vanish for a coach who has already
+      // taken it. That default must NOT survive a storage failure, though: blocked localStorage
+      // (locked-down or private-mode browsers) would then suppress the one-time tour forever. Both
+      // prefs are resolved into locals first and written unconditionally, so an unreadable store
+      // fails toward offering help rather than silently withholding it.
+      let hints = false;
+      let seen = false;
       try {
-        setHintsOff(localStorage.getItem(HINTS_OFF_KEY) === '1');
-        setTourSeen(localStorage.getItem(TOUR_SEEN_KEY) === '1');
-      } catch { /* ignore */ }
+        hints = localStorage.getItem(HINTS_OFF_KEY) === '1';
+        seen = localStorage.getItem(TOUR_SEEN_KEY) === '1';
+      } catch { /* storage unavailable — fall through with the show-guidance defaults */ }
+      setHintsOff(hints);
+      setTourSeen(seen);
     });
   }, []);
 
@@ -629,6 +646,9 @@ export default function TeamOverviewPage({
   // builder / schedule tab they can't use (mirrors the nav hiding those items). Both default ON.
   const canViewLineup = assignment.capabilities.lineups;
   const canSchedule = assignment.capabilities.schedule;
+  // Roster visibility gates both the roster fetch and every roster-derived tile — the same rule
+  // the sidebar uses to hide the Roster item.
+  const canViewRoster = assignment.capabilities.roster !== 'off';
   const helpHref = `/${orgSlug}/coaches/help`;
   // The season label drops a leading copy of the team name so the subtitle doesn't repeat the
   // title — orgs often name a program year "<Team> <Year>" (e.g. "Blue Jays 2026").
@@ -667,6 +687,11 @@ export default function TeamOverviewPage({
       href: `${base}/roster`,
       complete: (setupStats?.activeRosterCount ?? 0) > 0,
       group: 'core',
+      // Gated on the capability that lets you COMPLETE the step, not merely see the page.
+      // Assistants never get roster write in V1, so "Add players" was a nag they could never
+      // clear — and because roster is `core` it carried no per-step Skip either, leaving the
+      // global off-switch as an assistant's only escape from a step meant for the head coach.
+      visible: assignment.capabilities.rosterWrite,
       help: { title: 'Roster', body: 'Your team list. Paste it in all at once, or add players one at a time with a jersey number, positions, and a parent/guardian contact email (needed for dues reminders and announcements).' },
       milestone: { order: 1, short: 'Roster', value: setupStats ? `${setupStats.activeRosterCount} player${setupStats.activeRosterCount === 1 ? '' : 's'}` : '' },
     },
@@ -679,6 +704,9 @@ export default function TeamOverviewPage({
       href: `${base}/schedule`,
       complete: (setupStats?.eventCount ?? 0) > 0,
       group: 'optional',
+      // The sidebar already hides Schedule without this grant, and the events API 403s — so an
+      // ungated step pointed a schedule-restricted assistant at a door that bounces them.
+      visible: canSchedule,
       help: { title: 'Schedule', body: 'One calendar for practices, games, and events. On Premium you can set repeating events and sync the calendar to your phone. Games here are what you take attendance and set lineups on.' },
       milestone: { order: 2, short: 'Schedule', value: setupStats ? `${setupStats.eventCount} event${setupStats.eventCount === 1 ? '' : 's'}` : '' },
     },
@@ -691,6 +719,8 @@ export default function TeamOverviewPage({
       href: `${base}/roster`,
       complete: Boolean(setupStats && setupStats.activeRosterCount > 0 && setupStats.positionedRosterCount === setupStats.activeRosterCount),
       group: 'optional',
+      // Same reason as the roster step — editing jersey/position is a roster write.
+      visible: assignment.capabilities.rosterWrite,
       help: { title: 'Jerseys & positions', body: 'A jersey number and one or two positions per player. They flow into your game-day lineups and batting order so you are not retyping them each game.' },
     },
     {
@@ -795,6 +825,11 @@ export default function TeamOverviewPage({
   // Snapshot ("Your team at a glance") cards — real data, link into each section.
   // While the first load is in flight, show a neutral "…" rather than flashing a
   // misleading "Nothing scheduled" / "—" before the data arrives.
+  //
+  // Each card declares its own `visible` predicate for the same reason the setup steps do: a tile
+  // whose source data this coach isn't allowed to fetch must HIDE, never render a confident zero.
+  // "0 active players" to an assistant whose head coach hid the roster is worse than no tile — it
+  // isn't a permission message, it's a wrong answer.
   const snapshotCards = [
     {
       key: 'roster',
@@ -803,6 +838,7 @@ export default function TeamOverviewPage({
       value: setupLoading ? '…' : String(setupStats?.activeRosterCount ?? 0),
       sub: 'active players',
       href: `${base}/roster`,
+      visible: canViewRoster,
       tone: 'default' as const,
       flag: (!setupLoading && missingEmailCount > 0)
         ? { text: `${missingEmailCount} missing email`, tone: 'warn' as 'ok' | 'warn' }
@@ -826,6 +862,7 @@ export default function TeamOverviewPage({
       value: setupLoading ? '…' : nextEvent ? formatEventDate(nextEvent.startsAt) : 'Nothing scheduled',
       sub: nextEvent ? (nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Upcoming event')) : 'Add an event',
       href: `${base}/schedule`,
+      visible: canSchedule,
       tone: 'default' as const,
       flag: (nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType) && nextLineupReady !== null)
         ? (nextLineupReady
@@ -846,6 +883,7 @@ export default function TeamOverviewPage({
           ? `${duesOverdueCount} overdue`
           : duesOutstanding > 0 ? 'outstanding' : 'nothing owed',
       href: `${base}/accounting`,
+      visible: canViewMoney,
       tone: (duesOverdueCount > 0 ? 'danger' : 'default') as 'default' | 'danger',
       // "N unpaid" = players who've paid nothing at all — the coach's real "who do I chase"
       // question, surfaced on the tile (separate from the overdue count in the sub line).
@@ -875,6 +913,7 @@ export default function TeamOverviewPage({
         ? 'Set a budget'
         : `${formatMoney(budget.spent)} of ${formatMoney(budget.amount)} spent`,
       href: `${base}/accounting/budget-vs-actual`,
+      visible: canViewMoney,
       tone: (budget && budget.amount != null && budget.spent > budget.amount ? 'danger' : 'default') as 'default' | 'danger',
       flag: null as { text: string; tone: 'ok' | 'warn' } | null,
       headcount: null as { in: number; late: number; out: number; noReply: number } | null,
@@ -902,6 +941,7 @@ export default function TeamOverviewPage({
         ? `${tournaments.count} registered${tournaments.pending > 0 ? ` · ${tournaments.pending} pending` : ''}`
         : 'Register for a tournament',
       href: `${base}/tournaments`,
+      visible: true,
       tone: 'default' as const,
       // Tournament fees owed are a money figure — gate on money view (the tournaments tile itself
       // isn't in the dues/budget money filter, so this flag needs its own guard).
@@ -968,7 +1008,11 @@ export default function TeamOverviewPage({
   const hasUpcomingTournament = Boolean(tournaments?.nextDate || tournaments?.liveNow);
   const phase = deriveRepPhase({
     programYearStatus: assignment.programYearStatus,
-    rosterCount: setupStats?.activeRosterCount ?? 0,
+    // An UNKNOWN roster is not an EMPTY one. A zero count short-circuits the phase straight to
+    // pre-season, so a coach who simply isn't permitted to see the roster would be shown "set up
+    // your team" on a game day. Where the roster is hidden, hand the phase a non-zero count so it
+    // falls through to the schedule-driven branches it can actually answer from.
+    rosterCount: canViewRoster ? (setupStats?.activeRosterCount ?? 0) : 1,
     nextEvent: nextEvent ? { eventType: nextEvent.eventType, startsAt: nextEvent.startsAt } : null,
     nextEventDays,
     hasFinalizedGame,
@@ -1023,9 +1067,16 @@ export default function TeamOverviewPage({
         href: nextSetupItem.href,
         label: nextSetupItem.action,
       });
-  const showAnchor = !setupLoading && requiredDone;
-  // The preseason anchor says the same sentence as the next-action line — never both.
-  const showPreseasonAnchor = showAnchor && phase === 'preseason' && !showSetupLine;
+  // Every "Right now" anchor variant (game day, next event, in-season lull, the winding-down cue)
+  // is schedule-derived. A coach without schedule access has no event data, so those cards would
+  // confidently announce "Nothing on your schedule" to someone simply not permitted to see it.
+  const showAnchor = !setupLoading && requiredDone && canSchedule;
+  // The preseason anchor says the same sentence as the next-action line — never both, and never
+  // one then the other. `showAnchor` clears as soon as the roster/events read lands, but
+  // `showSetupLine` additionally waits on the separate milestones read; without `setupDecided`
+  // here, a returning coach in preseason saw the anchor card render and then get swapped out for
+  // the line milliseconds later. Waiting for both reads costs a beat of blank space instead.
+  const showPreseasonAnchor = setupDecided && showAnchor && phase === 'preseason' && !showSetupLine;
 
   // Season setup — progress as a header control, not a panel. It opens on demand and never
   // occupies the canvas; the canvas belongs to the coach's team. Kept out of the header JSX so
@@ -1039,7 +1090,6 @@ export default function TeamOverviewPage({
           className={styles.setupChip}
           data-quiet={setupChipQuiet ? 'true' : 'false'}
           aria-expanded={setupOpen}
-          aria-haspopup="dialog"
           onClick={() => setSetupOpen(open => !open)}
         >
           <svg className={styles.setupChipRing} viewBox="0 0 20 20" aria-hidden>
@@ -1055,8 +1105,11 @@ export default function TeamOverviewPage({
           <ChevronDown size={13} aria-hidden />
         </button>
 
+        {/* A disclosure, not a modal: it doesn't trap focus or inert the page, so it must not
+            claim dialog semantics a screen reader would then enforce. The button's aria-expanded
+            plus a labelled group is the honest description of what this actually is. */}
         {setupOpen && (
-          <div className={styles.setupPop} role="dialog" aria-label="Season setup">
+          <div className={styles.setupPop} role="group" aria-label="Season setup">
             <div className={styles.setupPopHead}>
               <p className={styles.setupPopKicker}>Season setup · {ringSatisfied} of {ringItems.length}</p>
               <button type="button" className={styles.setupPopClose} onClick={() => setSetupOpen(false)} aria-label="Close season setup">
@@ -1208,6 +1261,16 @@ export default function TeamOverviewPage({
           />
         </div>
       </div>
+
+      {/* A failed dashboard read has to say so ON the page. Moving setup into the popover left this
+          message behind a click — and for a coach whose chip is hidden, behind nothing at all. The
+          tiles below would then quietly show zeros for data that simply failed to load. */}
+      {!setupLoading && setupError && (
+        <p className={styles.loadErrorLine} role="status">
+          <TriangleAlert size={15} aria-hidden /> {setupError} — some figures below may be
+          incomplete. <button type="button" className={styles.loadErrorRetry} onClick={() => void loadSetup()}>Try again</button>
+        </p>
+      )}
 
       {/* One line, not a panel. Names the single next action, offers the tour once, and its ✕
           ends all setup prompting for this coach on every team they hold. */}
@@ -1378,8 +1441,10 @@ export default function TeamOverviewPage({
       )}
 
       {/* Season record — moved UP to sit under the anchor (was stranded at page bottom).
-          Self-hides until a finalized game exists (pre-season shows nothing). */}
-      <SeasonRecordWidget events={seasonGames} teamId={teamId} insightsHref={`${base}/history`} />
+          Self-hides until a finalized game exists (pre-season shows nothing). Schedule-gated:
+          without event access the games list is empty, which would read as "no record" rather
+          than "not yours to see". */}
+      {canSchedule && <SeasonRecordWidget events={seasonGames} teamId={teamId} insightsHref={`${base}/history`} />}
 
       {/* Safety-tier bridge from Insights — the only finding category that crosses over (CP-1
           safe: a quiet blueprint link, never lime). */}
@@ -1396,7 +1461,7 @@ export default function TeamOverviewPage({
       <section aria-labelledby="snapshot-title">
         <p className={styles.sectionKicker} id="snapshot-title">Your team at a glance</p>
         <div className={styles.snapshotGrid}>
-          {orderedCards.filter(card => canViewMoney || (card.key !== 'dues' && card.key !== 'budget')).map(card => {
+          {orderedCards.filter(card => card.visible).map(card => {
             const Icon = card.icon;
             return (
               <Link
