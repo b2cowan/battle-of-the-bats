@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { CalendarDays } from 'lucide-react';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { createClient } from '@/lib/supabase-server';
+import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { getAuthDestination } from '@/lib/auth-destination';
@@ -36,6 +37,21 @@ export default async function StartLeaguePage() {
     if (user?.id && (await userBelongsToOtherRealOrg(user.id))) {
       redirect(await getAuthDestination());
     }
+
+    // A pending invite means they already have somewhere to go — send them to Home's pending-invite
+    // card instead of creating a stray league that would then block the accept. Mirrors
+    // /start/tournament; the API enforces the same rule for anyone who bypasses this page.
+    if (user?.id) {
+      const { count: pendingInvites } = await supabaseAdmin
+        .from('organization_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'invited');
+      if ((pendingInvites ?? 0) > 0) {
+        redirect('/discover');
+      }
+    }
+
     return <StartLeagueForm isLoggedIn={Boolean(user?.email)} email={user?.email ?? null} />;
   }
 
