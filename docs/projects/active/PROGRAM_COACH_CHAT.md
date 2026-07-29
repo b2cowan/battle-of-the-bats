@@ -119,11 +119,58 @@ tab (a passive read; no sync is triggered from the dashboard), so it can read 0 
 up. Needs a different fix than the five above. **The funnel also blends free-portal and paid coaches
 into one number** — judged not worth splitting, since the organizer pays for chat either way.
 
-### 1.3 In-Org Coach-to-Coach Chat (Project 2) — NOT STARTED
+### 1.3 In-Org Coach-to-Coach Chat (Project 2) — NOT STARTED · **NEXT (Step 3): RE-SCOPE, don't build**
+
 Paid coaches inside ONE org talking to each other: an org-wide room plus optional per-team rooms,
-League/Club gated, reusing the Project-1 engine. **This project is where the assistant-coach concept
-was originally introduced** — but assistant coaches have since been built and shipped independently,
-so re-scope before building.
+League/Club gated, reusing the Project-1 engine.
+
+> **Handoff written 2026-07-29** after Steps 1 and 2, for whoever picks this up in a fresh chat.
+> Start here, not at the archived plan. **Step 3's deliverable is a re-scope, not code** — and the
+> owner's standing rule applies to every step: **PM brief + mockups of every changed screen and
+> state, approved, before any code.** If a step needs no visual change, say so explicitly and get
+> that confirmed rather than skipping the gate.
+
+**Why the old plan is stale — verified, not assumed.** `docs/projects/archive/IN_ORG_COACH_CHAT_PLAN.md`
+§2 argues this project is *"the natural place to introduce **assistant coaches**, which in-org chat
+depends on to be useful."* **That building block shipped independently and is live** — a full
+per-assistant capability model exists (invites, capability toggles, nav visibility, money redaction,
+and a completed assistant permission sweep). The plan's own stated reason for its shape is gone.
+**Expect the scope to shrink; re-derive it from what shipped rather than editing the old plan.**
+
+**Two traps this program has already sprung twice — do not skip:**
+1. **Status headers in this repo lie.** §1.2's "half-built on dev" described something that had been
+   live in production for three weeks. Establish ground truth from file content and commit ancestry.
+2. **Commit counts are not evidence about a feature.** §0's original "8 commits ahead, therefore
+   live" was stale by 12 commits within a day. Check the actual files.
+
+**Engine facts that constrain the design** (verified 2026-07-29; re-verify before relying on them):
+- Rooms are **tournament-shaped**: a room hangs off a tournament, and membership is resolved from
+  *teams in that tournament* (optionally narrowed to divisions). **An org-wide coaches' room has no
+  tournament to hang off** — that is the central design problem, not a detail. Decide it before
+  anything else.
+- **Who counts as an organizer in a room** is now capability-driven and **tournament-scoped** (the
+  F4 change above). An org-wide room has no tournament to scope against, so that rule does not
+  transfer as-is — it needs an explicit answer.
+- Coach membership self-heals on read; **organizer standing revokes** when role/capability/assignment
+  changes. A removed coach stays removed (moderation decision) — do not break that invariant.
+- Everything rides the existing notification/bell/push infrastructure. **No new notification
+  infrastructure has ever been needed for chat — don't add any.**
+- Moderation is **per room** (mute, close, reports, pins). An org-wide room inherits that, which may
+  or may not be what you want for a standing, season-long channel.
+
+**Decisions this step actually depends on — surface these two, not all seven:**
+- **CH-2** — one org-wide room, per-team rooms, or both? *(Standing recommendation: design the
+  room-list UX first; lean org-wide only at launch.)*
+- **CH-5** — does a replacement coach inherit prior message history? *(Standing recommendation: yes
+  for coach↔coach team rooms; the "no" half of that recommendation applies to coach↔parent, which is
+  Project 4 and out of scope here.)*
+  **A recommendation is not a ruling — get them ratified.**
+
+**Commercial context, binding:** League and Club are **parked** (`/strategy`, 2026-07-28) and
+non-purchasable pending a full League capability evaluation. **This project's entire target market
+currently cannot buy.** That does not forbid scoping it — but the re-scope must say plainly what it
+is for and when, and must not assume a League launch date. Confirm with the owner before assuming
+this is worth building now rather than after the League evaluation.
 
 ### 1.4 Cross-Org Coach Messaging (Project 3) — NOT STARTED
 A coach in one org messages a coach in another (e.g. to arrange a scrimmage). Locked constraints:
@@ -176,7 +223,9 @@ active front, and cross-org messaging carries a legal dependency. Ratified order
 2. **Close division rooms** — built and shipped; needs a walkthrough, not a build. **Walkthrough
    ISSUED 2026-07-29** (artifact `9a2ed199`); awaiting the owner pass + a ruling on finding **F4**.
 3. **Re-scope Project 2 (in-org coach-to-coach)** against the shipped assistant-coach model — its plan
-   predates that work and is stale.
+   predates that work and is stale. **← NEXT. Handoff for a fresh chat is in §1.3;** start there, not
+   at the archived plan. Deliverable is a re-scope, not code. Note that League/Club — this project's
+   whole market — is currently parked and non-purchasable.
 4. **Hold Projects 3 and 4** — cross-org needs real standalone paid coaches to exist first, and its
    directory is blocked on a privacy-law review; coach↔parent is entirely unscoped and carries the
    heaviest privacy load in the program.
