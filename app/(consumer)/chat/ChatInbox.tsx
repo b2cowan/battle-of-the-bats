@@ -23,6 +23,8 @@ export type InboxRoom = {
   readOnly: boolean;
   lastMessageAt: string | null;
   preview: string | null;
+  /** F2: divisions this room covers ("9U, 10U"); null for the All-coaches room. */
+  divisionLabel?: string | null;
 };
 
 /** Compact relative time for a row ("now" / "5m" / "3h" / "2d" / "Jul 14"). */
@@ -139,6 +141,9 @@ export default function ChatInbox({
                       </span>
                       <span className={styles.rowTime}>{relTime(r.lastMessageAt)}</span>
                     </span>
+                    {r.divisionLabel && (
+                      <span className={styles.rowDivisions}>{r.divisionLabel}</span>
+                    )}
                     <span className={`${styles.rowPreview}${showUnread ? ` ${styles.rowPreviewUnread}` : ''}`}>
                       {r.preview ?? 'No messages yet'}
                     </span>

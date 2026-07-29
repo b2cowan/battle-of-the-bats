@@ -30,6 +30,31 @@
   align-items: center;
   color: var(--white-40);
 }
+/* F2 — two-line title block (name + divisions). Takes over .headerTitle's flex role so the leading
+   icon and trailing buttons stay vertically centred against a taller title; the header itself is
+   height-driven by its padding, so it grows by exactly the subtitle's line-height. Only rendered
+   when a subtitle is supplied — every other call site keeps the single-line header untouched. */
+.headerTitles {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.05rem;
+}
+
+.headerTitles .headerTitle { flex: 0 0 auto; }
+
+.headerSubtitle {
+  font-family: var(--font-data, ui-monospace, monospace);
+  font-size: 0.62rem;
+  letter-spacing: 0.03em;
+  color: var(--white-50, rgba(255, 255, 255, 0.5));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .headerTitle {
   flex: 1 1 auto;
   min-width: 0;

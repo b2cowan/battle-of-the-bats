@@ -37,17 +37,48 @@ divisions + finished · `/free-test-org/free-cup` free-tier lock). Note: **dev c
 chat rooms**, so the walkthrough exercises a true cold start. **Remaining: owner pass, then close.**
 
 **Seven findings surfaced by mapping the shipped behaviour** (8-agent map + adversarial verify —
-these are NOT the original 7 design decisions; they are new, and none blocks sign-off):
+these are NOT the original 7 design decisions; they are new). **Owner ratified the recommendations
+2026-07-29; F2–F6 BUILT the same day** (brief + mockups = binding spec, artifact `b7209f2e`).
 
-| # | Finding | Recommendation |
-|---|---------|----------------|
-| **F4** | **A staff-role member can moderate a room they cannot read or post in** — capability grants create/delete/mute/close, but auto-sync only makes owners/admins members. They see "Couldn't load this conversation" and "You are not a member of this conversation" while still holding full moderation power. | **Real defect — needs an owner ruling.** Prefer putting staff in the rooms they moderate. |
-| F1 | A room's **divisions can never be changed after creation** (rename only); recovery = delete while empty, else close and recreate | Leave; record as a known limitation |
-| F2 | Coaches get **no division label** — the organizer's free-text room name is the only signal | Small fix, bundle with F3/F5 |
-| F3 | **"All coaches" is pinned on the admin side but sorts by recency for coaches**, so it can sink below a busy division room | Pin it for coaches too |
-| F5 | **No duplicate-name check** — two identically-named rooms are indistinguishable to a coach (compounds F2) | Cheap warning; bundle |
-| F6 | **Membership only re-syncs when someone opens a chat surface** — same root cause as the Step 1 "in the chat" staleness | Fix once, for both |
-| F7 | A failed rename reports only a generic error (rename box has no length cap; server rejects) | Trivial; fold into any future chat touch |
+| # | Finding | Outcome |
+|---|---------|---------|
+| **F4** | **A staff-role member could moderate a room they could not read or post in** — capability granted create/delete/mute/close, but membership sync only covered owners/admins. | ✅ **BUILT.** Room organizer membership is now **capability-driven + tournament-scoped**, matching what the admin chat routes already enforce. See the access gap below — fixing F4 properly closed two live bugs it was sitting on top of. |
+| F2 | Coaches got **no division label** — the organizer's free-text room name was the only signal | ✅ BUILT. Both coach surfaces + the conversation header. Admin header unchanged. |
+| F3 | **"All coaches" pinned on the admin side but sorted by recency for coaches** | ✅ BUILT. Rooms cluster by event (clusters by recency, id tie-break); All-coaches pins within its own event. Single-event coaches see only the pinning. |
+| F5 | **No duplicate-name check** — two identically-named rooms are indistinguishable to a coach | ✅ BUILT. Warns (never blocks) on create AND rename; case/whitespace-insensitive; compares display names. Admin-side — the walkthrough mis-filed it as coach-facing. |
+| F6 | **Membership only re-synced when someone opened a chat surface** — same root cause as the Step 1 "in the chat" staleness | ✅ BUILT. Refreshes at the WRITE (accept/reject/waitlist, division/status change, roster import). Deliberately **not** from a coach read: that would let a coach's page load create a room, contradicting the portal's own "only the organizer can open a chat". |
+| F1 | A room's **divisions can never be changed after creation** | Left, per ratification. Known limitation. |
+| F7 | A failed rename reports only a generic error | Left; fold into a future chat touch. |
+
+#### ⚠ A live access gap found while building F4 — closed in the same change
+
+The chat decided who counted as an organizer from a hardcoded `role IN ('owner','admin')` list that
+**ignored tournament assignments entirely**. Two consequences, both live in production and neither
+introduced by this program:
+
+1. **A member restricted to one tournament could read every tournament's coach chat.** The members
+   screen showed the restriction; chat disregarded it and seated them in every event's rooms, with
+   notifications. `scopeGuard` would have 403'd them at the route layer — membership disagreed with
+   the routes.
+2. **Demoting, restricting or removing someone did not revoke their chat seat.** Sync only *demoted*
+   an ex-organizer who still resolved as a coach and otherwise left the row untouched — so a departed
+   admin kept a live, notification-receiving seat indefinitely, and could not even be muted (the
+   moderate route refuses to mute a `moderator`).
+
+Entitlement now asks the same question the routes ask (`module_tournaments` + assignment scope), and
+a seat whose holder is no longer entitled is demoted to member if they independently resolve as a
+coach, else removed. **Coach membership rules are untouched** — a removed coach stays removed,
+because that is a moderation decision; organizer standing is a derived permission, so it revokes and
+returns with the member's actual role. Verified against dev: on the test org, 2 staff gained the
+access they were already exercising, 0 members lost access, coach/official correctly excluded.
+
+**Review caught and fixed before commit:** the refresh was originally fire-and-forget, which this
+repo has documented as silently droppable on Amplify (no `waitUntil` bridge) — now awaited at all
+three write points, and gated in the roster path so a rename or payment edit doesn't reconcile every
+room for nothing. Also fixed: the division label was *replacing* the event name in the coach
+portal's flat cross-event switcher (two concurrent events could show two identical "Championship /
+U11" rows), a non-deterministic sort tie-break when several events are silent, a duplicated label
+rule, and a colour token that never existed.
 
 ### 1.2 Chat Adoption Dashboard — ✅ SHIPPED (was never "half-built"); Step 1 hardening built 2026-07-29
 A "Coach sign-ups & chat" panel on the admin tournament dashboard showing the adoption funnel —

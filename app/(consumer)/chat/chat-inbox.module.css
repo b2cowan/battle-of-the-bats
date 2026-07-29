@@ -176,6 +176,22 @@
 }
 .rowPreviewUnread { color: var(--home-ink); font-weight: 600; }
 
+/* F2 — which divisions this room covers. Quiet, above the preview: the inbox groups by event, so
+   divisions are the disambiguating detail a coach was missing inside one tournament. Truncates
+   rather than wrapping, so a room covering many divisions can't grow the row. */
+.rowDivisions {
+  font-family: var(--font-data, ui-monospace, monospace);
+  font-size: 0.68rem;
+  letter-spacing: 0.02em;
+  /* --home-ink-soft, not a made-up accent token: this is a quiet secondary line, and it must sit
+     between the room name and the preview in weight. An earlier revision referenced a
+     --home-accent that does not exist, so it silently rendered as plain dim text. */
+  color: var(--home-ink-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .unread {
   flex: 0 0 auto;
   display: inline-flex;

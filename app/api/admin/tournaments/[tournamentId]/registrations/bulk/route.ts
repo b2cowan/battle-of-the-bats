@@ -16,6 +16,7 @@ import { notify } from '@/lib/notify';
 import { withObservability } from '@/lib/observability';
 import { markPaidInFullPatch } from '@/lib/mark-paid';
 import { claimNextOpenSlot } from '@/lib/slot-claim';
+import { refreshTournamentChatMembership } from '@/lib/chat-service';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -376,6 +377,16 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     selectedCount: ids.length,
     status: 'completed',
   });
+
+  // F6 (owner-ratified 2026-07-29) — accepting, rejecting or waitlisting teams changes who belongs
+  // in this event's chat rooms. Refresh at the write, rather than leaving membership and the
+  // dashboard's "in the chat" count stale until somebody happens to open the admin chat screen.
+  //
+  // AWAITED, not fire-and-forget. Amplify has no waitUntil bridge wired, so a detached promise can
+  // be frozen the instant the response goes out and silently never run — which would leave exactly
+  // the staleness this exists to fix, with no error anywhere. `refreshTournamentChatMembership`
+  // swallows its own failures by contract, so awaiting it can never fail a registration decision.
+  await refreshTournamentChatMembership(tournamentId);
 
   return json({ success: true, count: selectedTeams.length, action: bulkAction });
 }, { route: '/api/admin/tournaments/[tournamentId]/registrations/bulk' });

@@ -10,6 +10,7 @@ import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { resolveTournamentContactEmail } from '@/lib/db';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { captureError, withObservability } from '@/lib/observability';
+import { refreshTournamentChatMembership } from '@/lib/chat-service';
 
 function tournamentLockedResponse() {
   return new Response(
@@ -318,7 +319,12 @@ export const POST = withObservability(async (req: Request) => {
         tournament_id: team.tournamentId,
         division_id: team.divisionId,
         name: team.name.trim(),
-        coach: team.coach?.trim() ?? '',
+        // `|| null`, not `?? ''`: "no coach" must be stored as NULL, the same way every other
+        // write path records it. This line wrote '' to satisfy prod's old NOT NULL (dropped in
+        // migration 202) and was the sole source of a two-encodings-of-absent split — 17 of prod's
+        // 21 teams held '' while dev held NULL. `||` (not `??`) so a whitespace-only name, which
+        // trims to '', also normalizes to NULL rather than slipping through.
+        coach: team.coach?.trim() || null,
         email: team.email?.trim() ?? '',
         status: team.status ?? 'accepted',
         payment_status: paymentStatus,
@@ -521,6 +527,29 @@ export const POST = withObservability(async (req: Request) => {
         .update(item.updates)
         .eq('id', item.id);
       if (updateErr) throw updateErr;
+    }
+
+    // F6 (owner-ratified 2026-07-29) — this loop is where a team changes DIVISION or status, both
+    // of which change who belongs in that event's chat rooms. Refresh here, at the write, instead
+    // of leaving room membership (and the dashboard's "in the chat" count) stale until somebody
+    // opens the admin chat screen.
+    //
+    // Only for edits that can actually move someone: a rename or a payment update touches no room,
+    // and this reconciles every room of the tournament, so firing it unconditionally would do real
+    // work on every roster edit for nothing.
+    //
+    // AWAITED, not fire-and-forget — Amplify has no waitUntil bridge, so a detached promise can be
+    // frozen the moment the response is sent and silently never run, reintroducing the exact
+    // staleness this closes. The helper swallows its own failures, so it can't fail a roster edit.
+    const chatRelevantTournamentIds = new Set(
+      updateData
+        .filter(u => 'division_id' in u.updates || 'status' in u.updates)
+        .map(u => (currents as Array<{ id: string; tournament_id: string | null }>)
+          .find(c => c.id === u.id)?.tournament_id)
+        .filter(Boolean) as string[],
+    );
+    for (const tId of chatRelevantTournamentIds) {
+      await refreshTournamentChatMembership(tId);
     }
 
     // Release slots for teams being rejected

@@ -187,12 +187,37 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
     }
   }
 
+  /**
+   * F5 (owner-ratified 2026-07-29) — WARN, never block, when a room name is already taken in this
+   * tournament. Two identically-named rooms are indistinguishable to a coach, which matters more
+   * now that the coach's only other signal is the division label (F2).
+   *
+   * Compares DISPLAY names: the All-coaches room is stored as "{Tournament} — Coaches" but shows as
+   * "All coaches", so a raw-name comparison would miss someone typing "All coaches" verbatim.
+   * Case- and whitespace-insensitive — an exact-bytes check would miss the very confusions this
+   * exists to prevent. Excludes the room being renamed BY ID, so re-casing its own name never warns
+   * against itself. Fails open if the list hasn't loaded: a missing comparison set must never gate
+   * the action.
+   */
+  function confirmDuplicateName(name: string, excludeRoomId?: string): boolean {
+    if (typeof window === 'undefined') return true;
+    const key = name.trim().toLowerCase();
+    const clash = (list?.rooms ?? []).some(
+      (r) => r.id !== excludeRoomId && roomDisplayName(r).trim().toLowerCase() === key,
+    );
+    if (!clash) return true;
+    return window.confirm(
+      `A room named “${name.trim()}” already exists in this tournament. ${excludeRoomId ? 'Rename' : 'Create'} anyway?`,
+    );
+  }
+
   function handleRename() {
     if (!selected || typeof window === 'undefined') return;
     const next = window.prompt('Rename room', selected.name);
     if (next == null) return;
     const trimmed = next.trim();
     if (!trimmed || trimmed === selected.name) return;
+    if (!confirmDuplicateName(trimmed, selected.id)) return;
     void (async () => {
       setBusy(true);
       try {
@@ -229,6 +254,9 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
   }
 
   function handleCreate(name: string, divisionIds: string[]) {
+    // F5 — flag a name already in use before firing the request; declining leaves the composer
+    // open with the typed name intact so the organizer can just edit it.
+    if (!confirmDuplicateName(name)) return;
     setCreating(true);
     setComposerError(null);
     void (async () => {

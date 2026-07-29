@@ -69,6 +69,7 @@ export default function ChatConversation({
         variant="warm"
         roomId={room.roomId}
         roomName={room.roomName}
+        roomSubtitle={room.divisionLabel ?? null}
         unreadCount={room.unreadCount}
         onDeleteOwn={(messageId) => requestDeleteOwn(room.roomId, messageId)}
         onLongPressMessage={(m) => setSheet(m)}

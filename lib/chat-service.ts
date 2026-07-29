@@ -17,7 +17,11 @@ import {
   isTournamentChatParticipant,
   type PendingChatCoach,
 } from './chat-resolvers';
-import { roomDisplayName } from './chat-display';
+import { roomDisplayName, divisionScopeLabel } from './chat-display';
+// F4: room organizer membership is decided by the SAME capability + assignment scope the admin
+// chat routes enforce, so a seat in a room can never disagree with what the routes allow.
+import { hasCapability } from './roles';
+import type { OrgRole } from './types';
 
 /**
  * lib/chat-service.ts — server-side service layer for Tournament Chat.
@@ -125,6 +129,10 @@ export type ChatRoomListItem = {
   /** the member's OWN "Mute this room" state (notifications_muted_at set; mig 193). A muted room is
    *  excluded from every unread count and dimmed in the consumer inbox. Coaches can't self-mute today. */
   selfNotifMuted?: boolean;
+  /** F2: names of the divisions this room covers, in the room's own stored order. `null` for the
+   *  All-coaches room (nothing to disambiguate). An EMPTY array means the room is division-scoped
+   *  but its divisions were since deleted — surfaces show a "Division room" fallback, not a blank. */
+  divisionNames?: string[] | null;
 };
 
 type RoomRow = {
@@ -452,16 +460,67 @@ async function getActiveMembersWithMute(roomId: string): Promise<{ activeIds: st
   return { activeIds, mutedIds };
 }
 
-/** Org owners + admins, who become moderators of the room. */
-async function getHostModeratorUserIds(orgId: string): Promise<string[]> {
+/**
+ * The org members entitled to moderate THIS tournament's rooms — and therefore to be in them.
+ *
+ * Was a hardcoded `role IN ('owner','admin')` list, which was wrong twice over (owner ruling F4,
+ * 2026-07-29):
+ *
+ *  1. It excluded `staff`, who carry `module_tournaments` by default and so already pass every
+ *     admin chat route's guard. They could create rooms, delete messages, mute coaches and close
+ *     rooms while never being a member — so the room's history 403'd for them and posting 403'd.
+ *     They could moderate a conversation they could not read.
+ *  2. It ignored tournament ASSIGNMENTS entirely. A member restricted to one tournament in the
+ *     members UI was still made a moderator of every tournament's rooms in the org — reading and
+ *     being notified about events they are explicitly scoped out of, and that `scopeGuard` would
+ *     403 them from at the route layer. The members screen showed the restriction; chat ignored it.
+ *
+ * Entitlement is now the same question the routes ask: does this member hold `module_tournaments`,
+ * and does their assignment scope include this tournament? Absence of assignment rows means
+ * unrestricted, matching `getAuthContextWithScope`. Owners are always unrestricted and always pass.
+ */
+async function getHostModeratorUserIds(orgId: string, tournamentId: string): Promise<string[]> {
   const { data, error } = await supabaseAdmin
     .from('organization_members')
-    .select('user_id, role')
+    .select('id, user_id, role, capabilities')
     .eq('organization_id', orgId)
-    .eq('status', 'active')
-    .in('role', ['owner', 'admin']);
+    .eq('status', 'active');
   if (error) throw error;
-  return [...new Set((data ?? []).map(r => r.user_id as string).filter(Boolean))];
+
+  const rows = (data ?? []).filter(r => r.user_id) as Array<{
+    id: string;
+    user_id: string;
+    role: OrgRole;
+    capabilities: Record<string, boolean> | null;
+  }>;
+
+  // Only members who could moderate this tournament's chat at all.
+  const capable = rows.filter(r => hasCapability(r.role, r.capabilities, 'module_tournaments'));
+  if (capable.length === 0) return [];
+
+  // Owners can never hold assignment rows (the assignments route blocks it) — no need to check.
+  const scopable = capable.filter(r => r.role !== 'owner');
+  const assignedByMember = new Map<string, Set<string>>();
+  if (scopable.length > 0) {
+    const { data: assignments, error: aErr } = await supabaseAdmin
+      .from('org_member_tournament_assignments')
+      .select('org_member_id, tournament_id')
+      .in('org_member_id', scopable.map(r => r.id));
+    if (aErr) throw aErr;
+    for (const a of assignments ?? []) {
+      const key = a.org_member_id as string;
+      if (!assignedByMember.has(key)) assignedByMember.set(key, new Set());
+      assignedByMember.get(key)!.add(a.tournament_id as string);
+    }
+  }
+
+  const entitled = capable.filter(r => {
+    if (r.role === 'owner') return true;
+    const assigned = assignedByMember.get(r.id);
+    return !assigned || assigned.size === 0 || assigned.has(tournamentId); // absence = unrestricted
+  });
+
+  return [...new Set(entitled.map(r => r.user_id))];
 }
 
 /**
@@ -482,7 +541,7 @@ export async function syncTournamentChatRoom(params: {
     room.refId,
     roomDivisionIds(room),
   );
-  const moderatorIds = await getHostModeratorUserIds(room.orgId);
+  const moderatorIds = await getHostModeratorUserIds(room.orgId, room.refId);
 
   const { data: existingRows, error: exErr } = await supabaseAdmin
     .from('chat_room_members')
@@ -513,15 +572,32 @@ export async function syncTournamentChatRoom(params: {
   // Coaches: insert missing as active members; never touch an existing (possibly-moderated) row.
   const moderatorSet = new Set(moderatorIds);
 
-  // Demote stale organizers: a 'moderator' row whose user is no longer an active org owner/admin
-  // is an ex-admin (there is no coach→moderator promotion path). If they still resolve as a coach,
-  // drop them to 'member'; otherwise leave the row alone (admin may have removed them deliberately).
+  // Revoke stale organizers (F4, owner-ratified 2026-07-29). A 'moderator' row whose user is no
+  // longer entitled — demoted, restricted to other tournaments, suspended, or gone from the org —
+  // must lose the seat. Previously they were only demoted IF they also resolved as a coach, and
+  // otherwise left alone entirely: an ex-admin kept a live, notification-receiving seat forever,
+  // and because the moderate route refuses to mute a 'moderator', nobody could even silence them.
+  //
+  // Deliberate asymmetry with coach membership, which is LEFT ALONE when non-active: a removed
+  // coach is a MODERATION decision and sync must never undo it. Organizer standing is a DERIVED
+  // permission — it tracks current role/capability/assignment, so it revokes here and comes back
+  // by itself when the member is re-entitled.
   const coachSet = new Set(coachIds);
   for (const [userId, cur] of existing) {
-    if (cur.role === 'moderator' && !moderatorSet.has(userId) && coachSet.has(userId)) {
+    if (cur.role !== 'moderator' || moderatorSet.has(userId)) continue;
+    if (cur.status === 'removed') continue; // already gone; stay idempotent
+    if (coachSet.has(userId)) {
+      // Still a legitimate participant — drop the elevated standing, keep ordinary access.
       await supabaseAdmin
         .from('chat_room_members')
         .update({ member_role: 'member' })
+        .eq('room_id', room.id)
+        .eq('user_id', userId);
+    } else {
+      // No independent claim to the room at all.
+      await supabaseAdmin
+        .from('chat_room_members')
+        .update({ member_role: 'member', status: 'removed' })
         .eq('room_id', room.id)
         .eq('user_id', userId);
     }
@@ -542,6 +618,35 @@ export async function syncTournamentChatRoom(params: {
 
   const activeCount = await getActiveMemberUserIds(room.id).then(ids => ids.length);
   return { activeCount, pending };
+}
+
+/**
+ * Re-reconcile every EXISTING room of a tournament. Best-effort and never throws — call it beside
+ * the writes that change who belongs in a room (a team accepted, rejected, or moved between
+ * divisions), so membership and the dashboard's "in the chat" count stop waiting for someone to
+ * open the admin chat screen before they become true (F6, owner-ratified 2026-07-29).
+ *
+ * Uses the read-only room lookup ON PURPOSE. `ensureTournamentChatRoom` would CREATE the
+ * "All coaches" room, and a registration edit must never conjure a chat room into existence —
+ * the coach portal tells coaches "only the organizer can open a chat", and this would quietly
+ * make that untrue. No rooms yet ⇒ nothing to do.
+ *
+ * Fire-and-forget at the call site: a chat-membership refresh must never fail a registration.
+ */
+export async function refreshTournamentChatMembership(tournamentId: string): Promise<void> {
+  try {
+    const rooms = await listTournamentChatRooms(tournamentId);
+    if (rooms.length === 0) return;
+    for (const room of rooms) {
+      try {
+        await syncTournamentChatRoom({ room });
+      } catch (err) {
+        console.error(`[chat] membership refresh failed for room ${room.id}:`, err);
+      }
+    }
+  } catch (err) {
+    console.error(`[chat] membership refresh failed for tournament ${tournamentId}:`, err);
+  }
 }
 
 /** Insert an active member row if absent; respect a removed/existing row. NO participation check. */
@@ -746,6 +851,29 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
     }
   }
 
+  // F2 (owner-ratified 2026-07-29) — a coach had NO signal of which divisions a room covered; the
+  // organizer's free-text room name was the only clue, so "Championship" was a guess. Resolve the
+  // covered division names in ONE batched lookup across every division room (never per room — this
+  // function was deliberately refactored away from that pattern; see the note below).
+  const allDivisionIds = [...new Set([...roomById.values()].flatMap(r => roomDivisionIds(r) ?? []))];
+  const divisionNameById = new Map<string, string>();
+  if (allDivisionIds.length > 0) {
+    const { data: dRows, error: dErr } = await supabaseAdmin
+      .from('divisions')
+      .select('id, name')
+      .in('id', allDivisionIds);
+    // Non-fatal, like the context-label lookup: a failure just drops the label.
+    if (dErr) console.error('[chat-service] room division-label lookup failed (non-fatal):', dErr);
+    for (const d of dRows ?? []) divisionNameById.set(d.id as string, d.name as string);
+  }
+
+  /** Covered division names for a room, in the room's OWN stored order; null for All-coaches. */
+  function divisionNamesFor(room: ChatRoom): string[] | null {
+    const ids = roomDivisionIds(room);
+    if (!ids || ids.length === 0) return null; // All-coaches — its name already says everything
+    return ids.map(id => divisionNameById.get(id)).filter((n): n is string => Boolean(n));
+  }
+
   // Per-room last-message + unread in parallel (was O(rooms) sequential round-trips).
   const items = (await Promise.all(memberships.map(async (m) => {
     const room = roomById.get(m.room_id as string);
@@ -768,10 +896,39 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
       contextLabel: tournamentNameById.get(room.refId) ?? null,
       tournamentSlug: tournamentSlugById.get(room.refId) ?? null,
       tournamentIsPublic: tournamentPublicById.get(room.refId) ?? false,
+      divisionNames: divisionNamesFor(room),
     } as ChatRoomListItem;
   }))).filter((x): x is ChatRoomListItem => x !== null);
-  // Most-recently-active room first; rooms with no messages sink to the bottom.
-  items.sort((a, b) => (b.lastMessageAt ?? '').localeCompare(a.lastMessageAt ?? ''));
+
+  // F3 (owner-ratified 2026-07-29) — "All coaches" pins to the top for coaches, as it already did
+  // for organizers. It is the one room everyone in the event belongs to, and under a plain recency
+  // sort it sank below whichever division room happened to be chatty.
+  //
+  // Pinning is only meaningful WITHIN a tournament, so rooms cluster by event first — otherwise a
+  // dormant All-coaches room from a finished event would outrank a live conversation in the event
+  // being played today. Clusters order by their most recent activity, so the busy event still
+  // surfaces first. For a coach in ONE event (the common case) this reduces exactly to
+  // "All coaches first, then by recency".
+  const clusterActivity = new Map<string, string>();
+  for (const it of items) {
+    const cur = clusterActivity.get(it.room.refId) ?? '';
+    const mine = it.lastMessageAt ?? '';
+    if (mine.localeCompare(cur) > 0) clusterActivity.set(it.room.refId, mine);
+  }
+  items.sort((a, b) => {
+    if (a.room.refId !== b.room.refId) {
+      const byActivity = (clusterActivity.get(b.room.refId) ?? '').localeCompare(clusterActivity.get(a.room.refId) ?? '');
+      // Tie-break on the id so clusters stay CONTIGUOUS when several tournaments are equally silent
+      // (a coach freshly added to two events — both '' activity). Without it the sort is stable but
+      // the rows keep their arbitrary DB order, so one event's rooms can interleave with another's
+      // and the inbox's group-by-first-seen ordering becomes incidental rather than the stated rule.
+      return byActivity !== 0 ? byActivity : a.room.refId.localeCompare(b.room.refId);
+    }
+    const aAll = (roomDivisionIds(a.room) ?? []).length === 0;
+    const bAll = (roomDivisionIds(b.room) ?? []).length === 0;
+    if (aAll !== bAll) return aAll ? -1 : 1; // All-coaches first inside its own event
+    return (b.lastMessageAt ?? '').localeCompare(a.lastMessageAt ?? '');
+  });
   return items;
 }
 
@@ -1754,6 +1911,9 @@ export type ChatInboxRoom = {
   tournamentIsPublic: boolean;
   /** WI-1: the caller moderates this room (org owner/admin) — gates the "Event admin" header link. */
   isModerator: boolean;
+  /** F2: the divisions this room covers, comma-joined ("9U, 10U"); null for the All-coaches room.
+   *  "Division room" when the room is division-scoped but those divisions have been deleted. */
+  divisionLabel?: string | null;
   /** unread for the caller — forced to 0 when self-muted (a muted room never badges). */
   unreadCount: number;
   selfNotifMuted: boolean;
@@ -1841,6 +2001,10 @@ export async function getChatInboxForUser(userId: string): Promise<ChatInbox> {
       readOnly: i.readOnly,
       lastMessageAt: i.lastMessageAt,
       preview,
+      // F2: which divisions this room covers. The inbox already groups by event, so the tournament
+      // name is carried by the group kicker — divisions are the piece a coach was missing. Shared
+      // helper so this and the coach-portal switcher can never word the fallback differently.
+      divisionLabel: divisionScopeLabel(i.divisionNames),
     };
   });
   // `listRoomsForUser` already sorted newest-activity first; keep that order (the client groups by event,

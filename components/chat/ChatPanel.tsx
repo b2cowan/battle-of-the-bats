@@ -52,6 +52,9 @@ type Self = { userId: string; isModerator: boolean; mutedUntil: string | null };
 type Props = {
   roomId: string;
   roomName?: string;
+  /** F2: optional quiet second line under the title (the room's divisions, e.g. "9U, 10U"). Coach
+   *  surfaces only — the admin chat page omits it, so its header stays a single line. */
+  roomSubtitle?: string | null;
   /** Present only on the organizer surface — enables per-message moderator soft-delete (any message). */
   onModerateDelete?: (messageId: string) => Promise<void>;
   /** Present on the coach surfaces — lets a member retract THEIR OWN message (soft-delete). */
@@ -196,7 +199,7 @@ type RenderItem =
     };
 
 export default function ChatPanel({
-  roomId, roomName, onModerateDelete, onDeleteOwn, onPin, headerRight, iconBefore, unreadCount, className,
+  roomId, roomName, roomSubtitle, onModerateDelete, onDeleteOwn, onPin, headerRight, iconBefore, unreadCount, className,
   variant = 'default', onLongPressMessage,
 }: Props) {
   const instanceId = useId();
@@ -1309,7 +1312,17 @@ export default function ChatPanel({
       {(roomName || headerRight || iconBefore) && (
         <div className={styles.header}>
           {iconBefore && <span className={styles.headerIcon}>{iconBefore}</span>}
-          <span className={styles.headerTitle}>{roomName ?? 'Chat'}</span>
+          {/* F2: an optional second line naming the room's divisions. Only the coach-facing call
+              sites pass it — the admin chat page never does, so its header is unchanged. When
+              absent this collapses to exactly the single-line title it has always been. */}
+          {roomSubtitle ? (
+            <span className={styles.headerTitles}>
+              <span className={styles.headerTitle}>{roomName ?? 'Chat'}</span>
+              <span className={styles.headerSubtitle}>{roomSubtitle}</span>
+            </span>
+          ) : (
+            <span className={styles.headerTitle}>{roomName ?? 'Chat'}</span>
+          )}
           {!loading && !loadError && messages.length > 0 && (
             <button
               type="button"

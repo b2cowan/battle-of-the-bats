@@ -19,6 +19,7 @@ import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { manualTeamRegistrationHtml, sendEmail } from '@/lib/email';
+import { refreshTournamentChatMembership } from '@/lib/chat-service';
 import {
   authorizeTournamentTeamImport,
   json,
@@ -430,6 +431,13 @@ export const POST = withObservability(async (req: Request, { params }: RoutePara
         unchanged: commitSummary.unchanged,
       },
     });
+
+    // F6 (owner-ratified 2026-07-29) — a roster import creates and updates teams, including their
+    // division, so it moves who belongs in this event's chat rooms just as an accept or a manual
+    // division change does. Awaited, not detached: Amplify has no waitUntil bridge, so post-response
+    // work can be frozen and silently dropped. The helper swallows its own failures, so it cannot
+    // fail an import that has already been written.
+    await refreshTournamentChatMembership(tournamentId);
 
     return NextResponse.json({
       result: {
