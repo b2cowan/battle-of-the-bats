@@ -371,3 +371,71 @@ test('public→admin flip: an unrestricted operator still gets the exact page-ma
   });
   assert.match(primaryTarget(res).href, /\/admin\/tournaments\/registrations/);
 });
+
+// ── P4/WI-3: never flip onto a public page the organizer hid ─────────────────────────────────────
+
+const HIDDEN_CTX: FlipContext = {
+  orgSlug: 'acme',
+  tournamentSlug: 'summer-slam',
+  hiddenPublicPages: ['news'],
+};
+
+test('admin→public: a hidden twin falls back to the event front page', () => {
+  const res = resolveFlip({ pathname: '/acme/admin/tournaments/communication', direction: 'to-public', hat: 'admin', ctx: HIDDEN_CTX });
+  assert.equal(primaryTarget(res).href, '/acme/summer-slam');
+});
+
+test('admin→public: a VISIBLE twin is unaffected by an unrelated hidden page', () => {
+  const res = resolveFlip({ pathname: '/acme/admin/tournaments/schedule', direction: 'to-public', hat: 'admin', ctx: HIDDEN_CTX });
+  assert.equal(primaryTarget(res).href, '/acme/summer-slam/schedule');
+});
+
+test('admin→public: no hidden set at all behaves exactly as before', () => {
+  const res = resolveFlip({
+    pathname: '/acme/admin/tournaments/communication',
+    direction: 'to-public',
+    hat: 'admin',
+    ctx: { orgSlug: 'acme', tournamentSlug: 'summer-slam' },
+  });
+  assert.equal(primaryTarget(res).href, '/acme/summer-slam/news');
+});
+
+test('admin→public: the official hat falls back when Schedule itself is hidden', () => {
+  const res = resolveFlip({
+    pathname: '/acme/scorekeeper',
+    direction: 'to-public',
+    hat: 'official',
+    ctx: { orgSlug: 'acme', tournamentSlug: 'summer-slam', hiddenPublicPages: ['schedule'] },
+  });
+  assert.equal(primaryTarget(res).href, '/acme/summer-slam');
+});
+
+test('admin→public: hiding standings (e.g. playoff-only) redirects the Results twin to the front page', () => {
+  const res = resolveFlip({
+    pathname: '/acme/admin/tournaments/results',
+    direction: 'to-public',
+    hat: 'admin',
+    // Results twins to `schedule`, so hiding standings must NOT affect it...
+    ctx: { orgSlug: 'acme', tournamentSlug: 'summer-slam', hiddenPublicPages: ['standings'] },
+  });
+  assert.equal(primaryTarget(res).href, '/acme/summer-slam/schedule');
+});
+
+test('admin→public: a game deep-link is preserved when Schedule is visible, dropped when hidden', () => {
+  const visible = resolveFlip({
+    pathname: '/acme/admin/tournaments/results',
+    direction: 'to-public',
+    hat: 'admin',
+    ctx: { orgSlug: 'acme', tournamentSlug: 'summer-slam', gameId: 'g1' },
+  });
+  assert.equal(primaryTarget(visible).href, '/acme/summer-slam/schedule?highlightGameId=g1');
+
+  const hidden = resolveFlip({
+    pathname: '/acme/admin/tournaments/results',
+    direction: 'to-public',
+    hat: 'admin',
+    ctx: { orgSlug: 'acme', tournamentSlug: 'summer-slam', gameId: 'g1', hiddenPublicPages: ['schedule'] },
+  });
+  // Falls back to the front page — and must NOT smuggle the game id onto it.
+  assert.equal(primaryTarget(hidden).href, '/acme/summer-slam');
+});

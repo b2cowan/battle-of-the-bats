@@ -39,6 +39,14 @@ export interface FlipContext {
    * screen instead of a 403. Omit (or leave empty) to allow all — the owner/admin case.
    */
   allowedAdminScreens?: string[];
+  /**
+   * Role → public (`to-public`): public pages the organizer has HIDDEN on this event (plus any
+   * page that's structurally absent, e.g. standings on a playoff-only event). A twin that lands on
+   * a hidden page falls back to the event front page — never absent, never a wrong guess. Compute
+   * with `visiblePublicPages`/`isPublicPageEnabled` so the flip and the public nav can't disagree.
+   * `overview` is not hideable, so the fallback always terminates on a real page.
+   */
+  hiddenPublicPages?: PublicTwinKey[];
 }
 
 export interface FlipTarget {
@@ -214,6 +222,11 @@ function nearestPermittedScreen(preferred: string, allowed?: string[]): string {
 function resolveToPublic(pathname: string, hat: FlipHat, ctx: FlipContext): FlipResolution {
   const label = siteLabel(ctx);
 
+  /** Never hand out a page the organizer deliberately hid — fall back to the event front page.
+   *  `overview` is not a hideable page, so this always terminates on something real. */
+  const visibleTwin = (twin: PublicTwinKey): PublicTwinKey =>
+    twin !== 'overview' && ctx.hiddenPublicPages?.includes(twin) ? 'overview' : twin;
+
   // Coach doors land on the event's public FRONT PAGE (owner call 2026-07-23 — the Overview is
   // the natural "see it as fans do" landing, and where the pre-Flip Fan-view links pointed);
   // the scorekeeper's job is scores, so the official hat lands on the Schedule. With no
@@ -223,12 +236,14 @@ function resolveToPublic(pathname: string, hat: FlipHat, ctx: FlipContext): Flip
     if (!ctx.tournamentSlug) {
       return { kind: 'single', target: { href: `/${ctx.orgSlug}`, label } };
     }
-    return { kind: 'single', target: { href: publicHref(ctx, hat === 'coach' ? 'overview' : 'schedule'), label } };
+    const twin = visibleTwin(hat === 'coach' ? 'overview' : 'schedule');
+    return { kind: 'single', target: { href: publicHref(ctx, twin), label } };
   }
 
   const screen = adminScreenFromPath(pathname);
   // Everything maps to its twin; unmapped screens fall back to Overview (never absent, never wrong).
-  const twin: PublicTwinKey = (screen ? ADMIN_SCREEN[screen]?.twin : undefined) ?? 'overview';
+  const preferred: PublicTwinKey = (screen ? ADMIN_SCREEN[screen]?.twin : undefined) ?? 'overview';
+  const twin = visibleTwin(preferred);
   return {
     kind: 'single',
     target: {
