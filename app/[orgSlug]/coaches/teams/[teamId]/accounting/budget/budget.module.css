@@ -621,6 +621,18 @@
 }
 .sampleLink:hover { color: var(--home-ink-soft, rgba(255,255,255,0.7)); text-decoration: underline; }
 
+/* What an import actually did, said once above the plan it changed (chunk H2). Deliberately a
+   quiet line rather than a toast: the coach's next move is to look at the lines below it. */
+.importedNote {
+  margin: -0.5rem 0 1.25rem;
+  padding: 0.5rem 0.75rem;
+  border-left: 3px solid var(--success);
+  background: rgba(var(--success-rgb), 0.08);
+  border-radius: 0 8px 8px 0;
+  font-size: 0.82rem;
+  color: var(--home-ink-soft, rgba(255,255,255,0.7));
+}
+
 /* ════════════════════════════════════════════════════════════════════════════
    CONTENT REFLOW — 640px (Chunk A, 2026-07-29). This file previously had NO media
    query: the page had no phone handling, and because its form uses .formRow rather

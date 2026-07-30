@@ -56,7 +56,42 @@
 > new CSS module joined the guardrail at zero literals, 205→206) · Playwright Money suite extended
 > to **26 tests** (10 new + the renamed-payables fix), 30/30 green including auth setup.
 >
-> **Remaining:** clean dev restart → owner QA → commit with per-action OK.
+> ---
+>
+> ## H2 (import) — BUILT ON DEV 2026-07-30, uncommitted
+>
+> Built against the same approved mockups (frame 6). **All three templates shipped** (D-H8), on the
+> roster-bulk pattern: paste **and** file, one editable preview, a verdict per row, nothing written
+> until confirmed, and an honest failure when nothing lands.
+>
+> **Deviations / decisions taken during the build:**
+> - **No change to the public lines POST.** The plan proposed adding a client-supplied `sortOrder`
+>   there; the commit route writes `sort_order` directly instead, continuing from the plan's current
+>   end. Less public API surface for the same guarantee.
+> - **Payables always ADD.** A commitment has no stable identity in a spreadsheet (two deposits to
+>   one tournament are two real rows), so an update path would destroy records. A look-alike
+>   description is flagged as a warning, never merged.
+> - **The month-grid reader also re-reads our OWN export** — combined "Category / line" column,
+>   indented line rows, derived prior/Total columns, and the Total / Money in / Running balance rows
+>   skipped as derived. This is what makes the round trip real rather than claimed.
+> - **Bare month names carry a rolling year** (Sep…Jan rolls forward), anchored on the season year,
+>   which the budget-plan GET now returns so the paste path (browser) and the file path (server)
+>   use the same anchor.
+> - **Ambiguous dates are refused, not guessed** (`03/04/2026` → blocked with a reason).
+> - **Writes go sequentially, not concurrently** — deliberately, unlike the roster importer. This is
+>   money, imports are rare, and correctness beats throughput; `MAX_IMPORT_ROWS` (300) bounds it.
+> - **An imported month becomes a readable period label** ("Mar '26"), not a machine key.
+>
+> **`/review` on the write path found four things, all fixed:** the payable insert bypassed the
+> shared writer (so payee was being folded into notes and the author wasn't recorded) · the period
+> label was a machine key · two dead re-exports · one placeholder-derived type.
+>
+> **Gate:** typecheck 0 errors · `npm test` **533/533** (27 new for the importer) · focused lint 0
+> errors · `verify:changed` green (**all six colour baselines unchanged**; 206→207 modules at zero
+> literals) · Money probe suite **35/35**, including a probe that downloads every template and
+> asserts no cell contains a digit (D-G1).
+>
+> **Remaining (both halves):** clean dev restart → owner QA → commit with per-action OK.
 >
 > Original planning header follows:
 > **Mockups (approval = binding visual spec):** `claude.ai/code/artifact/ab72877e-c0e7-4a46-a1ce-89e6982c104e` rev 1 — 7 frames, every element labelled NEW / RESTYLED / UNCHANGED.

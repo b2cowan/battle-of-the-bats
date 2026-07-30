@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Receipt, Plus, CheckCircle2, AlertTriangle, ArrowLeft, Tag, Settings2 } from 'lucide-react';
+import { Receipt, Plus, CheckCircle2, AlertTriangle, ArrowLeft, Tag, Settings2, Upload } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
@@ -11,6 +11,7 @@ import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
+import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import styles from '../../../../coaches.module.css';
@@ -113,6 +114,11 @@ export default function CoachesExpensesPage({
   const [scheduleError, setScheduleError] = useState('');
   const [scheduleFilter, setScheduleFilter] = useState<ScheduleFilter>('unpaid');
 
+  // Chunk H2 — a season of commitments arrives as a schedule far more often than one at a time.
+  const [importOpen, setImportOpen] = useState(false);
+  const [importMessage, setImportMessage] = useState('');
+  const [seasonYear, setSeasonYear] = useState<number>(() => new Date().getFullYear());
+
   // Nav-hide + body-scroll-lock registration for the two Add modals (mobile sheet default).
   useOverlayOpen(showAddExpense);
   useOverlayOpen(showAddPayable);
@@ -167,6 +173,7 @@ export default function CoachesExpensesPage({
         );
         setBudgetedCategories(budgeted);
         setHasBudgetPlan((plan?.lines.length ?? 0) > 0);
+        if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
       }
     } catch (e: any) {
       setError(e.message ?? 'Failed to load expenses.');
@@ -460,6 +467,13 @@ export default function CoachesExpensesPage({
               <Plus size={14} /> Add Payable
             </button>
           )}
+          {/* Chunk H2 — a whole season's commitments usually arrive as a schedule, not one at
+              a time. Same importer as the budget, pointed at the payables shape. */}
+          {canWriteMoney && (
+            <button className={styles.btnGhost} onClick={() => setImportOpen(true)}>
+              <Upload size={14} /> Import payables
+            </button>
+          )}
           {canWriteMoney && ownMoneyTags.length > 0 && (
             <button className={styles.btnGhost} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
               <Settings2 size={14} /> Manage tags
@@ -467,6 +481,10 @@ export default function CoachesExpensesPage({
           )}
         </div>
       </div>
+
+      {importMessage && (
+        <p className={styles.moneyTagSummary} role="status" style={{ marginBottom: '1rem' }}>{importMessage}</p>
+      )}
 
       {/* Tab toggle */}
       <div className={styles.viewToggle} style={{ marginBottom: '1.5rem' }}>
@@ -935,6 +953,28 @@ export default function CoachesExpensesPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* ── Chunk H2 — the payables importer (write-gated, like every other write door) ── */}
+      {importOpen && canWriteMoney && (
+        <BudgetImportSheet
+          orgSlug={orgSlug}
+          teamId={teamId}
+          categories={categories.map(c => ({ id: c.id, name: c.name, items: c.items.map(i => ({ id: i.id, name: i.name })) }))}
+          existingLines={[]}
+          existingPayableDescriptions={expenses.map(e => e.description)}
+          seasonYear={seasonYear}
+          gridMonths={[]}
+          todayMonth={new Date().toISOString().slice(0, 7)}
+          initialShape="payables"
+          onClose={() => setImportOpen(false)}
+          onImported={message => {
+            setImportOpen(false);
+            setImportMessage(message);
+            void load();
+            if (tab === 'schedule') void loadSchedule();
+          }}
+        />
       )}
 
       {/* Money-tag manager (rename / merge / delete the team's OWN money tags) */}

@@ -1,12 +1,14 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
 import Link from 'next/link';
-import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, ArrowLeft } from 'lucide-react';
+import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, ArrowLeft, Upload } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
+import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
+import { monthKeyOf } from '@/lib/coach-budget-months';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import type {
   RepBudgetPlan,
@@ -118,6 +120,7 @@ export default function BudgetPlannerPage({
   // Optional single "season total" (owner decision 2026-07-08: both budget styles
   // coexist — a total above the itemized sum shows as a non-itemized buffer).
   const [seasonTotal,   setSeasonTotal]   = useState<number | null>(null);
+  const [seasonYear,    setSeasonYear]    = useState<number>(() => Number(tournamentToday().slice(0, 4)));
   const [editingSeason, setEditingSeason] = useState(false);
   const [seasonInput,   setSeasonInput]   = useState('');
   const [seasonSaving,  setSeasonSaving]  = useState(false);
@@ -145,6 +148,9 @@ export default function BudgetPlannerPage({
   // (mockups artifact 77f5175e = binding). The sheets register their own overlay
   // state on mount; the checklist needs no storage at all — see the memo below.
   const [starterOpen,        setStarterOpen]        = useState(false);
+  // Chunk H2 — bringing a budget in from a spreadsheet.
+  const [importOpen,         setImportOpen]         = useState(false);
+  const [importMessage,      setImportMessage]      = useState('');
   const [sampleOpen,         setSampleOpen]         = useState(false);
   const [checklistExpanded,  setChecklistExpanded]  = useState(false);
   const [dismissedChecklist, setDismissedChecklist] = useState<string[]>([]);
@@ -250,6 +256,19 @@ export default function BudgetPlannerPage({
     return out;
   }, [plan, categories, dismissedChecklist]);
 
+  /** The months this plan's own payment dates already span — the import template follows them
+   *  rather than assuming a season shape the platform doesn't store. */
+  const planMonths = useMemo(() => {
+    const set = new Set<string>();
+    for (const line of plan?.lines ?? []) {
+      for (const period of line.periods) {
+        const m = monthKeyOf(period.periodDate);
+        if (m) set.add(m);
+      }
+    }
+    return [...set].sort();
+  }, [plan]);
+
   function dismissChecklistItem(itemId: string) {
     setDismissedChecklist(prev => {
       const next = prev.includes(itemId) ? prev : [...prev, itemId];
@@ -274,6 +293,7 @@ export default function BudgetPlannerPage({
       setPlan(planData.plan);
       setSeasonTotal(planData.seasonBudgetAmount ?? null);
       setSeasonInput(planData.seasonBudgetAmount != null ? String(planData.seasonBudgetAmount) : '');
+      if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
       setCategories(catData.categories ?? []);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : 'Failed to load');
@@ -672,11 +692,22 @@ export default function BudgetPlannerPage({
           </div>
         </div>
         {moneyCanWrite && (
-          <button type="button" className={shared.btnSecondary} onClick={openAdd}>
-            <Plus size={15} /> Add Line
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {/* Chunk H2 — available at every page state, not only on a blank plan: a coach
+                topping up an existing budget from a sheet is the same job. */}
+            <button type="button" className={shared.btnGhost} onClick={() => setImportOpen(true)}>
+              <Upload size={15} /> Import
+            </button>
+            <button type="button" className={shared.btnSecondary} onClick={openAdd}>
+              <Plus size={15} /> Add Line
+            </button>
+          </div>
         )}
       </div>
+
+      {importMessage && (
+        <p className={styles.importedNote} role="status">{importMessage}</p>
+      )}
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>
@@ -788,6 +819,11 @@ export default function BudgetPlannerPage({
                       (the actions row's default is stretch). */}
                   <button type="button" className={styles.sampleLink} style={{ alignSelf: 'center' }} onClick={openAdd}>
                     Or add lines yourself
+                  </button>
+                  {/* Chunk H2: the fourth door. A coach arriving with a season already in a
+                      spreadsheet shouldn't have to retype it to get started. */}
+                  <button type="button" className={styles.sampleLink} style={{ alignSelf: 'center' }} onClick={() => setImportOpen(true)}>
+                    Import a spreadsheet
                   </button>
                   <button type="button" className={styles.sampleLink} style={{ alignSelf: 'center' }} onClick={() => setEditingSeason(true)}>
                     Set a season total instead
@@ -1409,6 +1445,28 @@ export default function BudgetPlannerPage({
       )}
       {sampleOpen && (
         <SampleBudgetSheet onClose={() => setSampleOpen(false)} />
+      )}
+
+      {/* ── Chunk H2 — the spreadsheet importer (write-gated, like every other write door) ── */}
+      {importOpen && moneyCanWrite && (
+        <BudgetImportSheet
+          orgSlug={orgSlug}
+          teamId={teamId}
+          categories={categories.map(c => ({ id: c.id, name: c.name, items: c.items.map(i => ({ id: i.id, name: i.name })) }))}
+          existingLines={(plan?.lines ?? []).map(l => ({
+            id: l.id, description: l.description, categoryName: l.categoryName, totalAmount: l.totalAmount,
+          }))}
+          existingPayableDescriptions={[]}
+          seasonYear={seasonYear}
+          gridMonths={planMonths}
+          todayMonth={today().slice(0, 7)}
+          onClose={() => setImportOpen(false)}
+          onImported={message => {
+            setImportOpen(false);
+            setImportMessage(message);
+            void load();
+          }}
+        />
       )}
 
       {/* The discard guards cover dismissing a sheet; this covers walking away from one. */}

@@ -1,0 +1,314 @@
+import { NextResponse } from 'next/server';
+import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
+import {
+  getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear, createRepTeamExpense,
+} from '@/lib/db';
+import { supabaseAdmin } from '@/lib/supabase-admin';
+import { withObservability } from '@/lib/observability';
+import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
+import { formatMonthLabel } from '@/lib/coach-budget-months';
+import {
+  reviewBudgetRows, reviewPayableRows, moneyValue,
+  MAX_IMPORT_ROWS,
+  type DraftBudgetRow, type DraftPayableRow, type KnownCategory, type ExistingBudgetLine,
+} from '@/lib/coach-budget-import';
+
+/**
+ * Commit a reviewed budget/payables import (chunk H2).
+ *
+ * Contracts this route keeps, all of them hard-won elsewhere in the portal:
+ *
+ *  • **Preview first, never all-or-nothing.** Rows are written one at a time and a failure does
+ *    NOT abort the rest; the response names what landed and what didn't. A coach importing forty
+ *    lines with one bad row gets thirty-nine lines plus an honest error.
+ *  • **Never dress a total failure as success.** Zero writes returns an error, not "0 imported".
+ *  • **The sheet's order is the budget's order.** `sort_order` is written explicitly, continuing
+ *    from the plan's current end — display order has no other tiebreaker.
+ *  • **The server reviews independently.** The client's preview may be stale if another coach
+ *    edited the plan while the sheet was open, so the outcome is recomputed here against live data
+ *    and a row the client called an "add" can become an "update" (or be refused) at this point.
+ *  • **Taxonomy ownership is checked**, exactly as the single-line POST does: a category or item
+ *    must be a platform default or belong to THIS org.
+ */
+
+const NAME_MAX = 200;
+const NOTE_MAX = 500;
+
+function str(value: unknown, max: number): string {
+  return typeof value === 'string' ? value.trim().slice(0, max) : '';
+}
+
+function toBudgetDraft(raw: unknown, index: number): DraftBudgetRow {
+  const source = (raw ?? {}) as Record<string, unknown>;
+  const periods = Array.isArray(source.periods) ? source.periods : [];
+  return {
+    rowNumber: typeof source.rowNumber === 'number' ? source.rowNumber : index + 1,
+    categoryName: str(source.categoryName, NAME_MAX),
+    lineName: str(source.lineName, NAME_MAX),
+    amount: str(source.amount, 40),
+    notes: str(source.notes, NOTE_MAX),
+    periods: periods.slice(0, 36).map(p => {
+      const period = (p ?? {}) as Record<string, unknown>;
+      return { month: str(period.month, 7), amount: str(period.amount, 40) };
+    }).filter(p => /^\d{4}-\d{2}$/.test(p.month)),
+  };
+}
+
+function toPayableDraft(raw: unknown, index: number): DraftPayableRow {
+  const source = (raw ?? {}) as Record<string, unknown>;
+  return {
+    rowNumber: typeof source.rowNumber === 'number' ? source.rowNumber : index + 1,
+    payee: str(source.payee, NAME_MAX),
+    description: str(source.description, NAME_MAX),
+    categoryName: str(source.categoryName, NAME_MAX),
+    amount: str(source.amount, 40),
+    depositAmount: str(source.depositAmount, 40),
+    depositDueDate: str(source.depositDueDate, 10),
+    balanceAmount: str(source.balanceAmount, 40),
+    balanceDueDate: str(source.balanceDueDate, 10),
+  };
+}
+
+async function resolveCoachContext(orgSlug: string, teamId: string) {
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  if (!ctx) return { error: unauthorized() };
+  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
+
+  const team = await getRepTeam(teamId);
+  if (!team || team.orgId !== ctx.org.id) {
+    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
+  }
+
+  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
+  const assignment = assignments.find(a => a.teamId === teamId);
+  if (!assignment) return { error: forbidden() };
+
+  const programYear = await getActiveRepProgramYear(teamId);
+  if (!programYear) {
+    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
+  }
+
+  return { ctx, team, assignment, programYear };
+}
+
+export const POST = withObservability(async (req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
+  const { orgSlug, teamId } = await params;
+  const resolved = await resolveCoachContext(orgSlug, teamId);
+  if ('error' in resolved) return resolved.error!;
+  const { ctx, team, assignment, programYear } = resolved;
+  const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
+  if (denied) return denied;
+
+  const body = await req.json().catch(() => ({}));
+  const shape = body?.shape === 'payables' ? 'payables' : 'budget';
+  const incoming: unknown[] = Array.isArray(body?.rows) ? body.rows : [];
+
+  if (incoming.length === 0) {
+    return NextResponse.json({ error: 'No rows were sent.' }, { status: 400 });
+  }
+  if (incoming.length > MAX_IMPORT_ROWS) {
+    return NextResponse.json(
+      { error: `You can import up to ${MAX_IMPORT_ROWS} rows at a time.` },
+      { status: 400 },
+    );
+  }
+
+  // The taxonomy this org may link to: platform defaults + its own custom entries.
+  const { data: categoryRows } = await supabaseAdmin
+    .from('budget_categories')
+    .select('id, name, budget_items(id, name)')
+    .or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
+    // Team-visible categories only — the same filter the coach's own picker applies, so an
+    // imported sheet can never link a team budget to an org-admin-only category.
+    .in('scope', ['team', 'both']);
+
+  const categories: KnownCategory[] = (categoryRows ?? [])
+    .map((c: Record<string, unknown>) => ({
+      id: c.id as string,
+      name: c.name as string,
+      items: ((c.budget_items ?? []) as Array<Record<string, unknown>>)
+        .map(i => ({ id: i.id as string, name: i.name as string })),
+    }));
+  const categoryByName = new Map(categories.map(c => [c.name.trim().toLowerCase(), c]));
+
+  const created: Array<{ rowNumber: number; name: string }> = [];
+  const updated: Array<{ rowNumber: number; name: string }> = [];
+  const failed: Array<{ rowNumber: number; name: string; error: string }> = [];
+  const skipped: Array<{ rowNumber: number; name: string; reason: string }> = [];
+
+  if (shape === 'payables') {
+    // ── payables ─────────────────────────────────────────────────────────
+    const { data: existingRows } = await supabaseAdmin
+      .from('rep_team_expenses')
+      .select('description')
+      .eq('program_year_id', programYear.id);
+
+    const reviewed = reviewPayableRows(
+      incoming.map(toPayableDraft),
+      categories,
+      (existingRows ?? []).map((e: { description: string }) => e.description),
+    );
+
+    for (const row of reviewed) {
+      if (row.outcome === 'blocked') {
+        skipped.push({ rowNumber: row.rowNumber, name: row.description || `Row ${row.rowNumber}`, reason: row.reason ?? 'Could not be read' });
+        continue;
+      }
+      const deposit = moneyValue(row.depositAmount);
+      const balance = moneyValue(row.balanceAmount);
+      try {
+        // The SAME writer the Add Payable form uses — so an imported payable carries its payee
+        // and its author in the columns that hold them, rather than a second shape of the row.
+        await createRepTeamExpense({
+          orgId: ctx!.org.id,
+          teamId: team.id,
+          programYearId: programYear.id,
+          // The stored type is unchanged — chunk H generalised the WORDS, not the data.
+          expenseType: 'tournament_payable',
+          description: row.description,
+          category: row.categoryName || null,
+          amount: row.total,
+          depositAmount: deposit && deposit > 0 ? deposit : null,
+          depositDueDate: row.depositDueDate || null,
+          balanceAmount: balance && balance > 0 ? balance : null,
+          balanceDueDate: row.balanceDueDate || null,
+          payeePayer: row.payee || null,
+          createdBy: ctx!.user.id,
+        });
+        created.push({ rowNumber: row.rowNumber, name: row.description });
+      } catch (e: unknown) {
+        failed.push({
+          rowNumber: row.rowNumber,
+          name: row.description,
+          error: e instanceof Error ? e.message : 'Could not be saved',
+        });
+      }
+    }
+  } else {
+    // ── budget lines ─────────────────────────────────────────────────────
+    const { data: lineRows } = await supabaseAdmin
+      .from('rep_budget_lines')
+      .select('id, description, total_amount, sort_order, budget_categories(name)')
+      .eq('program_year_id', programYear.id)
+      .order('sort_order');
+
+    const existing: ExistingBudgetLine[] = (lineRows ?? []).map((l: Record<string, unknown>) => ({
+      id: l.id as string,
+      description: l.description as string,
+      categoryName: ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? null,
+      totalAmount: (l.total_amount as number) ?? 0,
+    }));
+
+    // Continue the plan's existing order rather than restarting at 0 — write order IS display
+    // order, and an import must land after what the coach already has, in sheet order.
+    let nextSortOrder = (lineRows ?? []).reduce(
+      (max: number, l: Record<string, unknown>) => Math.max(max, (l.sort_order as number) ?? 0), -1,
+    ) + 1;
+
+    const reviewed = reviewBudgetRows(incoming.map(toBudgetDraft), categories, existing);
+
+    for (const row of reviewed) {
+      const label = row.lineName || `Row ${row.rowNumber}`;
+      if (row.outcome === 'blocked') {
+        skipped.push({ rowNumber: row.rowNumber, name: label, reason: row.reason ?? 'Could not be read' });
+        continue;
+      }
+
+      const category = categoryByName.get(row.categoryName.trim().toLowerCase());
+      // Reviewed rows always carry a known category; this is belt-and-braces against a client
+      // that posted something the review didn't see.
+      if (!category) {
+        skipped.push({ rowNumber: row.rowNumber, name: label, reason: 'Category not found' });
+        continue;
+      }
+      const item = category.items.find(i => i.name.trim().toLowerCase() === row.lineName.trim().toLowerCase());
+
+      let lineId = row.matchedLineId;
+      if (row.outcome === 'update' && lineId) {
+        const { error } = await supabaseAdmin
+          .from('rep_budget_lines')
+          .update({
+            total_amount: row.total,
+            notes: row.notes || null,
+            category_id: category.id,
+            item_id: item?.id ?? null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', lineId)
+          .eq('program_year_id', programYear.id);
+        if (error) { failed.push({ rowNumber: row.rowNumber, name: label, error: error.message }); continue; }
+        updated.push({ rowNumber: row.rowNumber, name: label });
+      } else {
+        const { data, error } = await supabaseAdmin
+          .from('rep_budget_lines')
+          .insert({
+            org_id: ctx!.org.id,
+            team_id: team.id,
+            program_year_id: programYear.id,
+            category_id: category.id,
+            item_id: item?.id ?? null,
+            description: row.lineName,
+            total_amount: row.total,
+            notes: row.notes || null,
+            sort_order: nextSortOrder,
+          })
+          .select('id')
+          .single();
+        if (error || !data) { failed.push({ rowNumber: row.rowNumber, name: label, error: error?.message ?? 'Could not be saved' }); continue; }
+        lineId = data.id as string;
+        nextSortOrder += 1;
+        created.push({ rowNumber: row.rowNumber, name: label });
+      }
+
+      // Payment periods, when the sheet had month columns. A full replace, matching the periods
+      // endpoint's own contract: the sheet is the coach's statement of when this line is paid.
+      if (!lineId) continue;
+      const periods = row.periods
+        .map(p => ({ month: p.month, amount: moneyValue(p.amount) ?? 0 }))
+        .filter(p => p.amount > 0);
+
+      if (periods.length === 0) continue;
+      const periodSum = Math.round(periods.reduce((s, p) => s + p.amount, 0) * 100) / 100;
+      // Periods must sum to the line total (±2¢) or the DB's own invariant is broken. The review
+      // computes the total FROM the periods, so this only fires if a client edited one and not
+      // the other — in which case the line still lands, without a schedule it can't honour.
+      if (Math.abs(periodSum - row.total) > 0.02) {
+        skipped.push({
+          rowNumber: row.rowNumber,
+          name: label,
+          reason: 'Saved as a single amount — its month figures didn’t add up to the total.',
+        });
+        continue;
+      }
+
+      await supabaseAdmin.from('rep_budget_periods').delete().eq('budget_line_id', lineId);
+      const { error: perErr } = await supabaseAdmin.from('rep_budget_periods').insert(
+        periods.map((p, i) => ({
+          budget_line_id: lineId,
+          // What the coach will actually read on the line form — "Mar '26", not a month key.
+          period_label: formatMonthLabel(p.month),
+          // A month column means "this is due in this month" — the 1st is the only honest day to
+          // pick, and the coach can move it on the line's own form.
+          period_date: `${p.month}-01`,
+          amount: p.amount,
+          sort_order: i,
+        })),
+      );
+      if (perErr) {
+        skipped.push({ rowNumber: row.rowNumber, name: label, reason: 'Saved, but its month split could not be stored.' });
+      }
+    }
+  }
+
+  if (created.length === 0 && updated.length === 0) {
+    // Every row failed. The request succeeded but the coach got nothing — never dress that up.
+    const first = failed[0]?.error ?? skipped[0]?.reason;
+    return NextResponse.json(
+      { error: first ? `Nothing was imported. ${first}` : 'Nothing could be imported.', created, updated, failed, skipped },
+      { status: 400 },
+    );
+  }
+
+  return NextResponse.json({ created, updated, failed, skipped });
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan/import' });

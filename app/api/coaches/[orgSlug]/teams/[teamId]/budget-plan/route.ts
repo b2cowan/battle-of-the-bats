@@ -114,5 +114,12 @@ export const GET = withObservability(async (_req: Request,
 
   // The optional single "season total" (rep_program_years.budget_amount) rides along so
   // the planner can reconcile it against the itemized sum (non-itemized buffer display).
-  return NextResponse.json({ plan, seasonBudgetAmount: programYear.budgetAmount ?? null });
+  // The season YEAR rides along too (chunk H2): it anchors bare month names in an imported
+  // sheet ("Sep" with no year), and the paste path parses in the browser — so the client needs
+  // the same anchor the server's file path already has, or the two would disagree.
+  return NextResponse.json({
+    plan,
+    seasonBudgetAmount: programYear.budgetAmount ?? null,
+    seasonYear: programYear.year,
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/budget-plan' });

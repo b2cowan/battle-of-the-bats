@@ -179,6 +179,18 @@ test.beforeAll(async () => {
   ]);
   if (perErr) throw perErr;
 
+  // Chunk H2: the first line gets a real category link, so the importer has something to MATCH
+  // and the update path is exercised end to end (an unlinked line can only ever be an "add").
+  // 'Tournaments' is a platform default (mig 027) and is team-visible.
+  const { data: tournamentsCat, error: tcErr } = await admin.from('budget_categories')
+    .select('id').eq('name', 'Tournaments').is('org_id', null).maybeSingle();
+  if (tcErr) throw tcErr;
+  if (tournamentsCat) {
+    const { error: linkErr } = await admin.from('rep_budget_lines')
+      .update({ category_id: tournamentsCat.id }).eq('id', lines![0].id);
+    if (linkErr) throw linkErr;
+  }
+
   // ── Chunk H: a PRIOR season with its own lines, so the comparison column has something to
   // compare. 'Umpire fees' matches this season's line by name; 'Banquet' has no match at all,
   // which is the whole point of the "in last season's plan, not in this one" list. No coach
@@ -991,5 +1003,155 @@ test.describe('Money by month on a desktop', () => {
       return footer ? parseFloat(getComputedStyle(footer).marginBottom) : null;
     });
     expect(marginBottom, 'the sticky footer still bleeds below the panel').toBeGreaterThanOrEqual(0);
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════════════
+// Chunk H2 — bringing a budget in from a spreadsheet. Preview-first, a verdict per row, and
+// templates that never carry a figure.
+// ═══════════════════════════════════════════════════════════════════════════════════════
+
+const LINE_ONE = 'Provincial championship entry fee including umpire assessment';
+
+test.describe('Importing a budget @360x740', () => {
+  test.use({ viewport: PHONE });
+  test.beforeEach(async ({ page }) => { await signIn(page, WRITE_EMAIL); });
+
+  test('a pasted sheet previews with a verdict per row, writes nothing until confirmed, then lands', async ({ page }) => {
+    await open(page, `${base()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+    await main.getByRole('button', { name: /^import$/i }).click();
+
+    // Step 1 — which shape.
+    await page.getByRole('button', { name: /simple list/i }).click();
+
+    // Step 2 — paste. One row updates an existing line, one adds, one can't be read at all.
+    await page.getByLabel(/paste your rows/i).fill(
+      [
+        'Category,Line,Amount,Notes',
+        `Tournaments,${LINE_ONE},5000,`,
+        'Officials,Umpire fees,1150,',
+        'misc stuff we always forget,Something,400,',
+      ].join('\n'),
+    );
+    await page.getByRole('button', { name: /review rows/i }).click();
+
+    // Step 3 — the verdicts. This is the whole point of preview-first.
+    await expect(page.getByText(/nothing has been saved yet/i)).toBeVisible();
+    const dialog = page.locator('[class*="modal"]').filter({ hasText: /nothing has been saved yet/i }).first();
+    await expect(dialog.getByText('Updates', { exact: true })).toHaveCount(1);
+    await expect(dialog.getByText('Adds', { exact: true })).toHaveCount(1);
+    await expect(dialog.getByText(/can.t import/i)).toHaveCount(1);
+    await expect(dialog.getByText(/No category called/i)).toBeVisible();
+
+    // The blocked row is counted out loud rather than silently dropped.
+    await expect(dialog.getByText(/1 row can.t be imported yet/i)).toBeVisible();
+
+    // Nothing is written before the confirm — the budget still has its two original lines.
+    const beforeCount = await page.evaluate(async ({ orgSlug, teamId }) => {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`, { cache: 'no-store' });
+      return (await res.json())?.plan?.lines?.length ?? -1;
+    }, { orgSlug: ORG_SLUG, teamId: repTeamId });
+    expect(beforeCount, 'the preview must not have written anything').toBe(2);
+
+    await dialog.getByRole('button', { name: /import 2 rows/i }).click();
+
+    // The result names what happened, and the plan reflects it: one added, one updated.
+    await expect(main.getByText(/1 added, 1 updated/i)).toBeVisible({ timeout: 20_000 });
+    const after = await page.evaluate(async ({ orgSlug, teamId }) => {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`, { cache: 'no-store' });
+      const plan = (await res.json())?.plan;
+      return {
+        count: plan?.lines?.length ?? -1,
+        updated: plan?.lines?.find((l: { description: string }) => l.description.startsWith('Provincial'))?.totalAmount,
+      };
+    }, { orgSlug: ORG_SLUG, teamId: repTeamId });
+    expect(after.count).toBe(3);
+    expect(after.updated, 'the matched line took the sheet’s amount').toBe(5000);
+  });
+
+  test('a sheet where nothing can be read reports failure — never a quiet "0 imported"', async ({ page }) => {
+    await open(page, `${base()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+    await main.getByRole('button', { name: /^import$/i }).click();
+    await page.getByRole('button', { name: /simple list/i }).click();
+    await page.getByLabel(/paste your rows/i).fill(
+      ['Category,Line,Amount', 'Nowhere,Mystery cost,100'].join('\n'),
+    );
+    await page.getByRole('button', { name: /review rows/i }).click();
+
+    const dialog = page.locator('[class*="modal"]').filter({ hasText: /nothing has been saved yet/i }).first();
+    await expect(dialog.getByText(/can.t import/i)).toHaveCount(1);
+    // With every row blocked there is nothing to import, and the button says so by being dead.
+    await expect(dialog.getByRole('button', { name: /import 0 rows/i })).toBeDisabled();
+  });
+
+  test('a coach can fix a blocked row in the preview and watch its verdict change', async ({ page }) => {
+    await open(page, `${base()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+    await main.getByRole('button', { name: /^import$/i }).click();
+    await page.getByRole('button', { name: /simple list/i }).click();
+    await page.getByLabel(/paste your rows/i).fill(
+      ['Category,Line,Amount', 'Nowhere,Team hoodies,650'].join('\n'),
+    );
+    await page.getByRole('button', { name: /review rows/i }).click();
+
+    const dialog = page.locator('[class*="modal"]').filter({ hasText: /nothing has been saved yet/i }).first();
+    await expect(dialog.getByText(/can.t import/i)).toHaveCount(1);
+
+    // Correcting the category in place clears the block immediately — the preview re-reviews
+    // against the plan it already holds rather than round-tripping to the server.
+    await dialog.getByLabel(/^category, row 1$/i).selectOption('Team Gear');
+    await expect(dialog.getByText('Adds', { exact: true })).toHaveCount(1);
+    await expect(dialog.getByRole('button', { name: /import 1 row/i })).toBeEnabled();
+  });
+
+  test('a read-only money coach is offered no way to import', async ({ page }) => {
+    await signIn(page, READ_EMAIL);
+    await open(page, `${base()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+    expect(await main.getByRole('button', { name: /^import$/i }).count()).toBe(0);
+
+    await open(page, `${base()}/accounting/expenses`);
+    const expensesMain = page.locator('main[class*="coachesMain"]');
+    expect(await expensesMain.getByRole('button', { name: /import payables/i }).count()).toBe(0);
+  });
+});
+
+test.describe('Import templates (D-G1: structure, never amounts)', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('every downloadable template ships with its amount cells EMPTY', async ({ page }) => {
+    await signIn(page, WRITE_EMAIL);
+    await open(page, `${base()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+    await main.getByRole('button', { name: /^import$/i }).click();
+
+    // Every shape, one at a time — a template that leaked an example dollar would be the
+    // product proposing a figure, which is forbidden across all of Money.
+    for (const shape of [/month grid/i, /simple list/i, /payables schedule/i]) {
+      const sheet = page.locator('[class*="modal"]').filter({ hasText: /import a spreadsheet/i }).first();
+      await sheet.getByRole('button', { name: shape }).click();
+
+      const [download] = await Promise.all([
+        page.waitForEvent('download'),
+        sheet.getByRole('button', { name: /^csv$/i }).click(),
+      ]);
+      const path = await download.path();
+      const csv = fs.readFileSync(path!, 'utf8').trim();
+      const [header, ...rows] = csv.split(/\r?\n/);
+      expect(rows.length, `${shape} template should carry example structure`).toBeGreaterThan(0);
+
+      for (const row of rows) {
+        const cells = row.split(',').map(c => c.replace(/^"|"$/g, '').trim());
+        // Columns 0 and 1 are the category and the line name — structure. EVERY other cell
+        // must be blank, and no cell anywhere may contain a digit.
+        expect(cells.slice(2).join(''), `${shape}: a template row carried a value`).toBe('');
+        expect(/\d/.test(row), `${shape}: a template row carried a number`).toBe(false);
+      }
+      expect(header.length).toBeGreaterThan(0);
+
+      await sheet.getByRole('button', { name: /choose a different shape/i }).click();
+    }
   });
 });
