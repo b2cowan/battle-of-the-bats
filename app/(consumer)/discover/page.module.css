@@ -361,6 +361,15 @@
 .listInfo .cardOrgName { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .listInfo .cardTournamentName { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .listMeta { display: flex; align-items: center; gap: 1rem; flex-shrink: 0; }
+/* The facts strip is content-sized and never shrinks, so it took 593px of a 948px row and
+   left the tournament name 227px — every name ellipsed on a screen with room to spare (and
+   between 901–1023px, where the strip appears but the column hadn't widened yet, the name
+   column measured ZERO). Region and division count are the two least load-bearing facts when
+   you're scanning for your event, so the LIST row drops them and the name gets ~430px back.
+   Both still show on the grid card and on the tournament page itself; the whole strip already
+   hides ≤900px, so this is the same rule applied one step earlier. Owner call 2026-07-30. */
+.listMeta .metaItem[data-meta='region'],
+.listMeta .metaItem[data-meta='divisions'] { display: none; }
 .listArrow { color: var(--home-dim); flex-shrink: 0; }
 
 /* ── Load more ───────────────────────────────────────────────────────────── */
@@ -587,7 +596,23 @@
 .resultArrow { color: var(--home-dim); flex-shrink: 0; }
 
 /* ── Responsive ──────────────────────────────────────────────────────────── */
-@media (max-width: 900px) {
+
+/* Desktop widening (WI-7). The ChatPanel pattern: page CHROME stays full-bleed — the
+   sticky .filterBar still spans the viewport — while the reading column inside it grows
+   to --app-col. Only the two centered columns change, so the sticky bar's background,
+   blur and border are all untouched. .grid is already auto-fill/minmax(300px), so the
+   wider column earns its third card column for free (948px of inner width fits 3×300 +
+   2 gaps; the old 680px column fitted exactly 2 — unchanged below this breakpoint). */
+@media (min-width: 1024px) {
+  .homeInner,
+  .controls { max-width: var(--app-col, 980px); }
+}
+
+/* The facts strip needs the widened column to earn its keep. It used to hide only ≤900px,
+   which left 901–1023px — small laptops and landscape tablets — showing a 593px strip inside
+   a 648px row, i.e. a name column of 0–113px. Same rule, one breakpoint later: below the
+   widened column a list row is just crest + name, exactly as on a phone. ≤900px unchanged. */
+@media (max-width: 1023px) {
   .listMeta { display: none; }
 }
 

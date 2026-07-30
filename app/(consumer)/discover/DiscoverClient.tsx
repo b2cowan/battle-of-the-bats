@@ -82,28 +82,31 @@ function OrgLogo({ item, small }: { item: DirectoryItem; small?: boolean }) {
 function MetaRow({ item }: { item: DirectoryItem }) {
   return (
     <>
-      <span className={styles.metaItem}>
+      {/* data-meta lets the LIST row drop its two least load-bearing facts without touching
+          the grid card, which has room for all five. The facts are conditionally rendered,
+          so positional CSS would target the wrong ones. */}
+      <span className={styles.metaItem} data-meta="dates">
         <Calendar size={13} />
         {formatDateRange(item.startDate, item.endDate)}
       </span>
-      <span className={styles.metaItem}>
+      <span className={styles.metaItem} data-meta="sport">
         <Trophy size={13} />
         {item.sportLabel}
       </span>
       {item.provinceName && (
-        <span className={styles.metaItem}>
+        <span className={styles.metaItem} data-meta="region">
           <MapPin size={13} />
           {item.provinceName}
         </span>
       )}
       {item.divisionCount > 0 && (
-        <span className={styles.metaItem}>
+        <span className={styles.metaItem} data-meta="divisions">
           <Layers size={13} />
           {item.divisionCount} division{item.divisionCount !== 1 ? 's' : ''}
         </span>
       )}
       {item.teamCount > 0 && (
-        <span className={styles.metaItem}>
+        <span className={styles.metaItem} data-meta="teams">
           <Users size={13} />
           {item.teamCount} team{item.teamCount !== 1 ? 's' : ''}
         </span>

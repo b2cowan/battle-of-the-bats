@@ -4,9 +4,11 @@
 
 .page {
   width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 1.25rem 1rem 2.5rem;
+  /* Full-bleed warm ground, content centred inside it — see the matching note in
+     ScoresClient.module.css. A max-width cap here painted the paper only under the column and
+     let the dark app shell show as black gutters at any viewport wider than 640px. The column
+     measure is unchanged; only the gutter colour is. */
+  padding: 1.25rem max(1rem, calc((100% - 640px) / 2)) 2.5rem;
   min-height: 100%;
 }
 
@@ -169,10 +171,13 @@
 .alertsLink:hover { text-decoration: underline; }
 
 /* ── Claim device-follows offer (signed-in, shared-device safeguard) ─────── */
+/* Plain white card — see the matching note in ScoresClient.module.css. The olive tint put the
+   primary button on a ground of its own colour family. Owner call 2026-07-30. */
 .claim {
-  border: 1px solid rgba(var(--home-olive-rgb), 0.3);
+  border: 1px solid var(--home-line);
   border-radius: var(--home-radius);
-  background: var(--home-olive-soft);
+  background: var(--home-card);
+  box-shadow: var(--home-shadow-sm);
   padding: 1rem 1.1rem 1.1rem;
   margin-bottom: 1.25rem;
 }
@@ -215,8 +220,9 @@
   border: 1px solid transparent;
   transition: filter 0.15s ease, border-color 0.15s ease;
 }
-.btnPrimary { background: var(--home-olive); color: var(--home-paper); }
-.btnPrimary:hover { filter: brightness(1.08); }
+/* INK CHIP — main action in-context (see the ruling note in ScoresClient.module.css). */
+.btnPrimary { background: var(--home-ink); color: var(--home-paper); }
+.btnPrimary:hover { background: var(--home-ink-soft); }
 .btnPrimary:disabled { opacity: 0.6; cursor: default; }
 .btnGhost { background: transparent; border-color: var(--home-line-strong); color: var(--home-ink); }
 .btnGhost:hover { border-color: var(--home-ink); }
@@ -257,7 +263,8 @@
   gap: 0.4rem;
   padding: 0.6rem 1.1rem;
   border-radius: var(--home-radius-pill);
-  background: var(--home-olive);
+  /* INK CHIP — main action in-context (see the ruling note in ScoresClient.module.css). */
+  background: var(--home-ink);
   color: var(--home-paper);
   font-family: var(--font-data);
   font-weight: 700;
@@ -265,4 +272,24 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
   text-decoration: none;
+  transition: background 0.15s ease;
+}
+.emptyCta:hover { background: var(--home-ink-soft); }
+
+/* ── Desktop widening (WI-7) — this file's FIRST breakpoint ───────────────── */
+/* The column grows to the shared --app-col measure. A follow row is a short card
+   (monogram · name/event/status · unfollow star), so at 980px it pairs up instead of
+   stretching one action across the full width: minmax(340px) resolves to exactly two
+   columns inside the widened column and can never drop to one. Everything below
+   1024px — including every phone and tablet width — is untouched. */
+@media (min-width: 1024px) {
+  /* Full-bleed paper + centred column (see the matching note in ScoresClient.module.css):
+     a max-width cap here painted the warm ground only under the column and let the dark app
+     shell show as black bars either side in light mode. */
+  .page { padding-inline: max(1rem, calc((100% - var(--app-col, 980px)) / 2)); }
+  .list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    align-items: start;
+  }
 }

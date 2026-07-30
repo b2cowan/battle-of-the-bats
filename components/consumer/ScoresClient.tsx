@@ -200,22 +200,25 @@ const itemKey = (i: GridItem) => (i.type === 'event' ? i.event.key : i.org.key);
 const itemLive = (i: GridItem) => (i.type === 'event' ? i.event.liveCount > 0 : i.org.live);
 
 function EventsGrid({ items, expanded, onToggle }: { items: GridItem[]; expanded: boolean; onToggle: () => void }) {
-  const CAP = 4; // 2 columns × 2 rows
+  const CAP = 4; // 2 columns × 2 rows — the NARROW-screen cap only (see below)
   const overflow = items.length > CAP;
-  // Collapsed with overflow: 3 tiles + a "+N more" tile fills the 4th cell (2 rows).
-  const visible = overflow && !expanded ? items.slice(0, CAP - 1) : items;
   const hiddenCount = items.length - (CAP - 1);
 
+  // WI-8: every tile is always rendered. Whether the 2×2 cap applies is a presentation
+  // question — at ≥1024px the widened three-column grid fits everything, so the cap and
+  // the "+N more" tile both retire in CSS. Below that, `.eventsGridCapped` hides the tiles
+  // past the third so the "+N more" tile fills the fourth cell, exactly as before. Doing
+  // it this way keeps ONE render path: no viewport state in JS, no hydration mismatch,
+  // and nothing about the phone layout changes.
   return (
-    <div className={styles.eventsGrid}>
-      {visible.map(i => i.type === 'event'
+    <div className={`${styles.eventsGrid}${overflow && !expanded ? ` ${styles.eventsGridCapped}` : ''}`}>
+      {items.map(i => i.type === 'event'
         ? <EventTile key={itemKey(i)} event={i.event} />
         : <OrgTile key={itemKey(i)} org={i.org} />)}
-      {overflow && !expanded && (
-        <button type="button" className={styles.moreTile} onClick={onToggle}>+{hiddenCount} more</button>
-      )}
-      {overflow && expanded && (
-        <button type="button" className={styles.moreTile} onClick={onToggle}>Show fewer</button>
+      {overflow && (
+        <button type="button" className={styles.moreTile} onClick={onToggle}>
+          {expanded ? 'Show fewer' : `+${hiddenCount} more`}
+        </button>
       )}
     </div>
   );
@@ -227,8 +230,11 @@ function OrgTile({ org }: { org: ScoresOrgTile }) {
   return (
     <Link href={org.href} className={styles.eventTile}>
       {org.logoUrl ? (
+        // lazy: WI-8 keeps every tile mounted and hides the capped ones in CSS, but
+        // `display:none` does NOT stop an image fetch — without this a phone would download
+        // all 6+ logos where the old render-time slice only ever downloaded 3.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={org.logoUrl} alt="" className={`${styles.eventLogo} ${styles.orgLogoRound}`} />
+        <img src={org.logoUrl} alt="" loading="lazy" className={`${styles.eventLogo} ${styles.orgLogoRound}`} />
       ) : (
         <span className={`${styles.eventLogo} ${styles.orgLogoRound}`} style={{ background: teamColor(org.orgName, 55, 42) }} aria-hidden>
           {teamInitials(org.orgName)}
@@ -256,8 +262,10 @@ function EventTile({ event }: { event: ScoresEvent }) {
       className={`${styles.eventTile} ${event.group === 'completed' ? styles.eventTileCompleted : ''}`}
     >
       {event.logoUrl ? (
+        // lazy — see the note in OrgTile: capped tiles stay mounted, so without this their
+        // logos would still be fetched on a phone.
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={event.logoUrl} alt="" className={styles.eventLogo} />
+        <img src={event.logoUrl} alt="" loading="lazy" className={styles.eventLogo} />
       ) : (
         <span className={styles.eventLogo} style={{ background: teamColor(event.name, 55, 42) }} aria-hidden>
           {teamInitials(event.name)}

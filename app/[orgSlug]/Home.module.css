@@ -1734,3 +1734,25 @@
   from { opacity: 0; transform: translateY(16px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Desktop text-block widening (Desktop Public UX Phase 1, WI-9) ──────────────────
+   These blocks were capped at 520–680px and centered, so on a 1440px tournament page —
+   where the rail already takes 248px — a registration banner or a champion card sat as a
+   narrow ribbon inside a very wide column. The approved mockup widens them to ~880px, in
+   proportion to the content area beside the rail.
+
+   Scoped to ≥1024px on purpose. Below that the caps still bind on tablet widths (a 600px
+   viewport genuinely wants a 520px measure), so phone and tablet rendering is unchanged.
+   .annGrid is left alone — at 900px it is already wider than the mockup's 880. */
+@media (min-width: 1024px) {
+  /* Centered hero prose — widened, but kept short of the banners: a subtitle set to the
+     full 880px runs past a comfortable reading measure. */
+  .heroSub { max-width: 760px; }
+  .recordHeader p { max-width: 760px; }
+
+  /* Full-width blocks: status ribbons and the champion card are chrome, not prose. */
+  .draftPublicNotice,
+  .previewBanner,
+  .registrationStatus,
+  .championSingle { max-width: 880px; }
+}

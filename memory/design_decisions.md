@@ -4,6 +4,23 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-07-30 — The consumer primary CTA is the INK chip; lime is now RESERVED for conversion (owner ruling on mockups `claude.ai/code/artifact/387ba6a1-6e93-415f-b486-b1e8817e4a59`)
+
+**Trigger (owner, looking at Scores in light mode): "I don't like the olive button."** Diagnosis found two causes and only one was the colour: (1) the button sat **on an olive-tinted panel** (`--home-olive-soft`) — its own hue, 5.8:1 apart — so it never separated from its own ground; (2) the treatment had **split from Account**, which uses the lime chip. Third fact worth keeping: under an explicit Dark preference `--home-olive` resolves to `--primary-light` (true lime), so **olive-fill and lime-fill are the same button in dark mode** — this was only ever a warm-LIGHT question.
+
+**BINDING — three roles, no overlap:**
+1. **Ink chip** (`--home-ink` fill / `--home-paper` text) — the main action on a screen the user is already using (browse, claim, apply). This is the emphasis device the warm screens ALREADY use for the active filter pill, so it introduces no new vocabulary. Flips to a white chip under Dark. Measured 15.1:1 light / 19.8:1 dark, and 16.5:1 against its panel.
+2. **Lime chip** (`--home-lime` fill / `--home-lime-ink` text) — **reserved** for the moments that grow the business: create an account, upgrade, start a tournament, chat Send. Identical in both themes (14.2:1). Account's "Create free account" is deliberately UNCHANGED.
+3. **Olive** — unchanged where it always belonged: links, active tabs, the followed star.
+
+The point is not that ink looks better than olive — it is that **two primary treatments must mean different things or they are drift**. After this ruling the difference carries information, so both survive.
+
+**Also decided:** the Scores nudge and Following claim panels lose their `--home-olive-soft` tint for a plain `--home-card` white card + hairline. The tint is what made *any* green CTA read muddy; those panels are noticed on border + copy alone. **Generalises: never put a filled CTA on a panel tinted with the CTA's own hue.**
+
+**Rejected — a new deep-forest green.** It looked good and cleared contrast, but a dark green cannot flip with the theme, so it needed a **second permanent non-flipping ink token** purely to keep one button's label legible under Dark. Real permanent weight for a hue used nowhere else in the system.
+
+**Applies to:** `ScoresClient.module.css` (`.nudge`, `.nudgePrimary`), `FollowingList.module.css` (`.claim`, `.btnPrimary`, `.emptyCta`). Hover moved off `filter: brightness()` — invisible on a near-black fill — to `--home-ink-soft`. Contrast + panel separation verified live in both themes; all six colour-token baselines still ZERO.
+
 ### 2026-07-30 — Coach Portal Chunk H (view half): the month grid NAVIGATES and never edits; undated budget gets a column, never a smear; "Scheduled" is a lens that never merges into the plan (mockups `claude.ai/code/artifact/ab72877e-c0e7-4a46-a1ce-89e6982c104e` rev 1 = binding; D-H1–D-H10 + the sequencing call ratified at the recommendations)
 **Decision (owner ratified all ten plus the split, 2026-07-30 — "agree with your recommendations"):** six binding rules from the Money-by-Month chunk. Import (the H2 half) is planned and mocked but deliberately not in this pass, so the new write path gets its own undivided review.
 

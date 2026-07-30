@@ -186,3 +186,13 @@
   white-space: nowrap;
 }
 .pinLink:hover { text-decoration: underline; }
+
+/* ── Desktop widening (WI-7) — this file's FIRST breakpoint ─────────────────────── */
+/* Deliberately NOT the full --app-col (980px) the browse/scores/following columns take.
+   Every child here is a single-action bar (one label, one chevron); at 980px the chevron
+   ends up a screen away from its label. 720px is the widest this shape reads well at, and
+   the real desktop answer — the two-column settings screen (section list left, content
+   right) — is the chartered Phase 2 item, not this CSS-only pass. Below 1024px: untouched. */
+@media (min-width: 1024px) {
+  .page { max-width: 720px; }
+}

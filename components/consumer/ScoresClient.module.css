@@ -5,9 +5,14 @@
 
 .page {
   width: 100%;
-  max-width: 640px;
-  margin: 0 auto;
-  padding: 1.25rem 1rem 2.5rem;
+  /* Full-bleed warm ground with the content centred inside it (the ChatPanel gutter pattern).
+     A max-width + auto margins painted the paper ONLY under the column, so the dark app shell
+     showed through as black bars either side of it at any viewport wider than the column —
+     obvious in light mode, invisible in dark, which is why it went unnoticed. This is the same
+     defect Account's .accountFill wrapper exists to avoid; the max() gutter gets the same
+     result without a second element. The COLUMN measure is unchanged at every width — only the
+     previously-dark gutters become paper. */
+  padding: 1.25rem max(1rem, calc((100% - 640px) / 2)) 2.5rem;
   min-height: 100%;
 }
 
@@ -75,6 +80,9 @@
   margin: 0 0 0.7rem;
 }
 /* ── My Events grid (2 columns; capped at 2 rows unless expanded) ───────────── */
+/* WI-8: the grid now always RENDERS every tile; the 2×2 cap is a presentation rule that
+   lives here, not a render cap in the component — which is what lets it retire at desktop
+   widths without changing a single thing on a phone. See .eventsGridCapped below. */
 .eventsGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -396,12 +404,16 @@
 }
 .boardLiveDot { width: 7px; height: 7px; border-radius: 50%; background: var(--home-live); }
 
+/* Plain white card, not the olive tint it used to wear. The tint put the primary button on a
+   ground of its own colour family, which is what made any green CTA read muddy; the panel is
+   noticed perfectly well on its own border + copy. Owner call 2026-07-30. */
 .nudge {
   margin-top: 1.5rem;
   padding: 1rem 1.1rem;
-  border: 1px solid rgba(var(--home-olive-rgb), 0.3);
+  border: 1px solid var(--home-line);
   border-radius: var(--home-radius);
-  background: var(--home-olive-soft);
+  background: var(--home-card);
+  box-shadow: var(--home-shadow-sm);
 }
 .nudgeText {
   font-family: var(--font-sans, system-ui, sans-serif);
@@ -425,10 +437,17 @@
   text-decoration: none;
   cursor: pointer;
   border: 1px solid transparent;
-  transition: filter 0.15s ease, border-color 0.15s ease;
+  transition: background 0.15s ease, border-color 0.15s ease;
 }
-.nudgePrimary { background: var(--home-olive); color: var(--home-paper); }
-.nudgePrimary:hover { filter: brightness(1.08); }
+/* INK CHIP — the primary action on a screen you're already using. Owner ruling 2026-07-30:
+   ink = main action in-context; lime = the brand/conversion moment (sign-up, upgrade, start a
+   tournament, Send); olive stays on links, active tabs and the followed star. This is the same
+   emphasis device the warm screens already use for the active filter pill, and it's the only
+   fill that fully separates from any tinted panel. Under Dark the ink/paper pair flips to a
+   white chip on the dark ground — still the strongest thing on screen. */
+.nudgePrimary { background: var(--home-ink); color: var(--home-paper); }
+/* Not brightness() — on a near-black fill that barely moves. Step to the softer ink instead. */
+.nudgePrimary:hover { background: var(--home-ink-soft); }
 .nudgeGhost { background: transparent; border-color: var(--home-line-strong); color: var(--home-ink); }
 .nudgeGhost:hover { border-color: var(--home-ink); }
 
@@ -448,4 +467,33 @@
   font-size: 1rem;
   color: var(--home-ink);
   margin: 0 0 0.4rem;
+}
+
+/* ── Desktop widening + responsive My Events grid (WI-7 / WI-8) ─────────────── */
+/* This file's FIRST breakpoints. Everything ≤1023px — every phone and tablet width —
+   renders exactly as it did before: the 2-column grid, the 3-tiles-plus-"+N more" cap,
+   and the 640px column are all still the base rules. */
+
+/* ≤1023px: the 2×2 cap. The component renders every tile and marks the grid capped when
+   there are more than four and the fan hasn't expanded; the tiles past the third hide so
+   the "+N more" tile fills the fourth cell — byte-identical to the old render-time slice.
+   :nth-of-type counts the <a> tiles only, so the trailing <button> never shifts it. */
+@media (max-width: 1023px) {
+  .eventsGridCapped .eventTile:nth-of-type(n + 4) { display: none; }
+}
+
+@media (min-width: 1024px) {
+  /* Full-bleed paper + centred column — the ChatPanel gutter pattern, properly applied.
+     Capping .page with max-width painted the warm ground ONLY under the column, so the dark
+     app shell showed through as black bars either side (very visible in light mode, invisible
+     in dark, which is why it survived). Letting .page span the viewport and pushing content in
+     with a max() gutter keeps the column at --app-col AND the paper edge-to-edge — the same
+     two-layer result Account gets from its .accountFill wrapper, with no extra element. */
+  .page { padding-inline: max(1rem, calc((100% - var(--app-col, 980px)) / 2)); }
+
+  /* A true responsive grid inside the widened column: 948px of inner width fits three
+     280px tracks. A fan following six events sees all six — no cap, so the "+N more"
+     click-through has nothing left to reveal and retires with it. */
+  .eventsGrid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+  .moreTile { display: none; }
 }

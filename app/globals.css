@@ -127,6 +127,13 @@
   --nav-height:  72px;
   --transition:  all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
+  /* Desktop content column for the consumer app screens (Desktop Public UX Phase 1,
+     WI-7/WI-8 — approved mockup: "content widens to ~980px"). ONE home for the number so
+     Home/Discover, Scores and Following can't drift apart. Only ever read inside a
+     `@media (min-width: 1024px)` block: below that every screen keeps the narrow cap it
+     ships with today, so mobile and tablet stay untouched. */
+  --app-col: 980px;
+
   /* Themeable nav backgrounds — overridden in light mode */
   --nav-bg-scrolled:  rgba(13, 11, 20, 0.92);
   --nav-mobile-bg:    rgba(13, 11, 20, 0.97);
