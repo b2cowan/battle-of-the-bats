@@ -1,0 +1,153 @@
+/* Chunk G — sample budget sheet. Warm-gate safe: tokens only. --logic-lime appears only
+   as TEXT / dashed-border accent (E3: the warm gate remaps it to olive — correct here).
+   The fence must read as "another team's page", so it is the one dashed frame in Money. */
+
+/* Same desktop sticky-footer fix as the starter sheet: no bottom bleed, panel drops
+   its bottom padding inline — the last content must scroll clear of the bar. */
+.footerFlush.footerFlush { margin-bottom: 0; }
+
+.fence {
+  border: 1.5px dashed var(--logic-lime);
+  border-radius: 12px;
+  padding: 0.9rem 1rem;
+  background: var(--home-olive-soft, rgba(255,255,255,0.03));
+}
+
+.fenceEyebrow {
+  display: inline-block;
+  margin: 0 0 0.5rem;
+  font-size: 0.64rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.13em;
+  color: var(--logic-lime);
+}
+
+.fenceTeam {
+  margin: 0 0 0.25rem;
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--home-ink, rgba(255,255,255,0.92));
+}
+
+.fenceTeamMeta {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+}
+
+.fenceDisclaimer {
+  margin: 0 0 0.8rem;
+  font-size: 0.78rem;
+  font-style: italic;
+  line-height: 1.45;
+  color: var(--home-ink-soft, rgba(255,255,255,0.55));
+}
+
+.tabRow { margin-bottom: 0.8rem; }
+
+/* ── Budget tab ── */
+.cat {
+  margin: 0.7rem 0 0.15rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--home-dim, rgba(255,255,255,0.4));
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.28rem 0.1rem;
+  font-size: 0.88rem;
+}
+
+.rowName {
+  font-weight: 600;
+  color: var(--home-ink, rgba(255,255,255,0.85));
+}
+
+.rowAmt {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--home-ink, rgba(255,255,255,0.85));
+  white-space: nowrap;
+}
+
+.rowNote {
+  margin: -0.1rem 0 0.15rem;
+  padding-left: 0.85rem;
+  font-size: 0.74rem;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+}
+
+.total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-top: 0.7rem;
+  padding: 0.55rem 0.1rem 0.1rem;
+  border-top: 2px solid var(--logic-lime);
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--home-ink, rgba(255,255,255,0.9));
+}
+
+.totalAmt {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Budget-vs-actual tab (the comparison stays a grid — Chunk A D1) ── */
+.bvaGrid {
+  min-width: 420px;
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.bvaHead,
+.bvaRow {
+  display: grid;
+  grid-template-columns: minmax(130px, 1fr) 78px 78px 84px;
+  align-items: center;
+  --scrollx-pin-gutter: 0.1rem;
+}
+
+.bvaHead {
+  font-size: 0.62rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--home-dim, rgba(255,255,255,0.4));
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.1));
+}
+
+.bvaRow {
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
+}
+.bvaRow:last-child { border-bottom: none; }
+
+.bvaName {
+  padding: 0.42rem 0.5rem 0.42rem 0.1rem;
+  font-weight: 600;
+  text-align: left;
+  color: var(--home-ink, rgba(255,255,255,0.85));
+  /* The pinned cell needs its own opaque ground so scrolled columns can't read
+     through it (CoachScrollX contract) — the fence tint is translucent, so this
+     uses the card token the shared pin background derives from. */
+  --scrollx-pin-bg: var(--card-bg);
+}
+
+.bvaCell {
+  padding: 0.42rem 0.35rem;
+  text-align: right;
+  white-space: nowrap;
+  color: var(--home-ink-soft, rgba(255,255,255,0.7));
+}
+
+.bvaOver { color: var(--danger-light); font-weight: 700; }
+.bvaOk   { color: var(--success-light); }

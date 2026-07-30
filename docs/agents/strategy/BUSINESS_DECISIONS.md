@@ -8,8 +8,32 @@
 
 ---
 
+### 2026-07-30 — Paid-tier public tournament pages carry a subtle "Built on FieldLogicHQ" credit
+**Status:** Decided (ratified by owner 2026-07-30 in the Desktop Public UX Phase 1 conversation — "built for fieldlogichq is good but should be subtle")
+**Decision:** Public tournament pages on **paid org tiers** (Tournament Plus, League Plus, Club incl. Club · Association) — which today carry **zero** FieldLogicHQ presence — get a **quiet, text-only credit** in the page-footer region: "Built on FieldLogicHQ" (final wording via `/marketing`), at most a quiet link onward. **Binding constraint: SUBTLE** — no banner, no badge, no CTA block, small type, rendered in the org's own theme tokens so it defers to the org's branding. **Free-plan events are unchanged:** they keep the existing richer Powered-by badge + dismissible acquisition banner. The plain org home page (no tournament in URL) is in scope for the same treatment.
+**Rationale:** Paid-tier tournaments are the platform's busiest, best-looking public surfaces and the 2026-07-30 desktop UX audit verified they are the only surface class with zero path back to FieldLogicHQ — inverting the funnel (the weakest events do all the selling). This trades a small slice of the paid "your brand only" feel for baseline acquisition presence, consistent with `BRAND_STRATEGY.md` §9's intent that a tournament "must feel like it belongs to a bigger platform." Pre-revenue, desktop web is the only acquisition surface — leaving the busiest pages unlinked is the costlier error.
+**Affects:** Public tournament + org home page presentation on paid tiers only. **No price, plan-name, capacity-band, gate, or SKU change.** `PLAN_PRICING_FACTS.md` untouched — reconciled: nothing there (or in the inclusions log) records "no platform branding" as a sold paid inclusion, and this is compatible with `advanced_tournament_branding` (2026-07-11 G1 reframe), whose theming/custom-appName/branded-space inclusions are undiminished (the credit renders inside the org's theme).
+**Handoff:**
+HANDOFF → `/marketing` — final credit wording + ruling on whether it carries a quiet "Run your own tournament →" link or stands bare; verify no public copy (pricing, `/for-*`, branding feature page) promises "your brand only / white-label" in words that this credit would contradict (none found in the Facts doc during this log's reconciliation).
+HANDOFF → `/billing` — **none.** No gate or plan-config change; plan-conditional presentation only.
+HANDOFF → `/plan` — none needed; already scoped as WI-10 (Chunk C) in `docs/projects/active/DESKTOP_PUBLIC_UX_PHASE1_PLAN.md` — **now unblocked** by this entry.
+
+---
+
+### 2026-07-30 — Budget starter: DECIDED. Structure only — the product never proposes a dollar figure; the full starter ships in one chunk
+**Status:** **Decided** (owner, 2026-07-30 — ratifies the 2026-07-29 Proposed entry below; built as Coach Portal **chunk G** the same day)
+**The two rulings:**
+1. **D-G1 — STRUCTURE ONLY. The product never proposes a dollar figure.** The starter tells a coach **what** to budget for, never **how much**. The line, precisely: a number the **coach types** is their own and is fine — asking "roughly what does an entry fee cost you?" is legitimate, because they answer it. A number **the product supplies, prefills, or suggests** is not. Option (b) of the proposal — grounding suggestions in the platform's real tournament entry fees — was **considered and rejected**: costs swing hard by region, sport, age and level, and anchoring a coach low means they under-collect and a real family ends the season short. This binds ALL of Money: `budget_items.suggested_amount` stays NULL for every platform default, no numeric placeholders, no benchmark copy anywhere (including help docs). Reintroducing product-supplied figures requires a new entry here.
+2. **D-G2 — the FULL starter in one chunk**, not the cheapest slice: the guided questions producing a real, editable starting budget **and** the clearly-labelled sample (a named fictional team, fenced, uncopyable — its invented numbers are the one sanctioned place dollars appear, ratified as build decision D1). The "ship the sample alone first" option was offered and declined.
+**Build decisions ratified with it (owner, 2026-07-30, "I agree with all of your recommendations"):** sample carries fictional numbers behind a fence (D1) · five tap-only questions + the coach's-own-numbers ×N calculator (D2) · worksheet-as-preview, nothing writes until confirmed (D3) · lives on the empty Budget page + the Money hub anchor deep-links in (D4) · questionnaire retires once a budget exists, the derived "not in your plan yet" checklist is the permanent mid-season door (D5) · the sample is a permanent quiet reference (D6).
+**Affects:** activation/retention on the paid tier only. **No price, plan-name, capacity-band, gate, or SKU change.** `PLAN_PRICING_FACTS.md` untouched; no pricing fact asserted by any starter or sample copy.
+**Handoff:** `/marketing` — public copy may now say the Budget tool includes a guided starter, a standard checklist of what teams budget for, and a worked example; it may **never** promise suggested costs or benchmarks. `/billing` — none. `/plan` — chunk H (month-grid view, generalized payables, import/export templates) is the agreed follow-on, tracked in `PROGRAM_COACH_PORTAL.md` §1.1.
+**Relates to:** the 2026-07-29 Proposed entry directly below (ratified as written, option (a) chosen).
+
+---
+
 ### 2026-07-29 — Budget starter for first-season coaches: PROPOSED. Structure and a worked example, not invented dollar figures
-**Status:** **Proposed** (owner raised the direction in conversation 2026-07-29 and asked for it to be written up; explicitly **not ratified** — logged so it is discoverable, not so it is binding)
+**Status:** ~~Proposed~~ → **ratified 2026-07-30 at option (a) — see the Decided entry above** (kept for history per the no-delete rule)
 **Proposal:** Build a **first-season budget starter** in the premium Coaches Portal. A coach answers a few plain questions (how many tournaments, roughly what each costs, any off-season training block) and lands on a real, editable starting budget — plus a clearly-labelled **sample** budget and sample budget-vs-actual so they can see what a finished one looks like before building their own. Tracked as **chunk G** in `docs/projects/active/PROGRAM_COACH_PORTAL.md` §1.1.
 **Two constraints proposed as part of it:**
 1. **Structure before numbers.** The volunteer coach's real question is *"what am I forgetting?"* — a missed umpire-fee or tournament-deposit line wrecks a season; being 10% off on a line does not. A checklist of what comparable teams budget for, with amounts left blank, is most of the value.

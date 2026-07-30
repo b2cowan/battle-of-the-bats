@@ -1,0 +1,244 @@
+/* Chunk G — budget starter sheet. Warm-gate safe: tokens only (the --home-* family with
+   the portal's standard dark fallbacks; --logic-lime appears only as TEXT/border accent,
+   which the warm gate correctly remaps to olive — E3). No colour literals. */
+
+/* The shared sticky footer's desktop -1.5rem bottom bleed shortens the scroll extent,
+   hiding the last ~1.5rem of a TALL modal under the bar (the Batch-1 round-2 sheet bug,
+   fixed then only at ≤640). Local mirror of that fix: footer keeps no bottom margin and
+   the panel drops its bottom padding (inline on the panel). Doubled class beats the
+   shared rule at equal specificity regardless of bundler emission order. */
+.footerFlush.footerFlush { margin-bottom: 0; }
+
+.stepLine {
+  margin: 0 0 0.2rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--logic-lime);
+}
+
+.intro {
+  margin: 0 0 1.1rem;
+  font-size: 0.85rem;
+  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+  line-height: 1.45;
+}
+
+.question { margin: 0 0 1.05rem; }
+
+.questionText {
+  margin: 0 0 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--home-ink, rgba(255,255,255,0.9));
+  line-height: 1.3;
+}
+
+.questionHint {
+  margin: 0.35rem 0 0;
+  font-size: 0.76rem;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+}
+
+.noneNote {
+  margin: 0 0 1rem;
+  font-size: 0.84rem;
+  color: var(--home-dim, rgba(255,255,255,0.5));
+}
+
+/* ── Worksheet ── */
+.wsGroup {
+  margin: 0.9rem 0 0.4rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.11em;
+  color: var(--home-dim, rgba(255,255,255,0.4));
+}
+
+.wsRow {
+  background: var(--home-card, rgba(255,255,255,0.03));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.1));
+  border-radius: 10px;
+  padding: 0.7rem 0.8rem;
+  margin: 0 0 0.55rem;
+}
+
+.wsRowSaved { opacity: 0.75; }
+
+.wsTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.wsName {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--home-ink, rgba(255,255,255,0.88));
+}
+
+.wsRemove {
+  background: none;
+  border: none;
+  color: var(--home-dim, rgba(255,255,255,0.35));
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0.35rem;
+  border-radius: 6px;
+}
+.wsRemove:hover { color: var(--danger-light); }
+
+.wsSaved {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--success-light);
+}
+
+.amtLabel {
+  display: block;
+  margin: 0.5rem 0 0.25rem;
+  font-size: 0.78rem;
+  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+}
+
+.amtRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.45rem;
+}
+
+.cur {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+}
+
+/* Deliberately no placeholder text on these inputs — a numeric placeholder is a
+   suggestion, and the product never proposes a figure (D-G1). */
+.amtInput {
+  width: 120px;
+  background: var(--home-card, rgba(255,255,255,0.05));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
+  border-radius: 8px;
+  padding: 0.5rem 0.65rem;
+  color: var(--home-ink, rgba(255,255,255,0.9));
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+}
+.amtInput:focus { outline: none; border-color: var(--blueprint-blue); }
+
+.mathNote {
+  font-size: 0.8rem;
+  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+}
+.mathNote strong { color: var(--home-ink, rgba(255,255,255,0.9)); }
+
+.blankNote {
+  margin: 0.35rem 0 0;
+  font-size: 0.72rem;
+  color: var(--home-dim, rgba(255,255,255,0.4));
+}
+
+.leaveBlank {
+  font-size: 0.76rem;
+  color: var(--home-dim, rgba(255,255,255,0.4));
+}
+
+.rowError {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  color: var(--danger-light);
+}
+
+/* ── "Also worth checking" ── */
+.alsoLabel {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.8rem;
+  color: var(--home-ink-soft, rgba(255,255,255,0.55));
+}
+
+.alsoRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.alsoChip {
+  background: transparent;
+  border: 1px dashed var(--home-line-strong, rgba(255,255,255,0.2));
+  border-radius: 999px;
+  padding: 0.32rem 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  cursor: pointer;
+  transition: border-color 0.12s;
+}
+.alsoChip:hover { border-color: var(--logic-lime); }
+
+/* ── Done ── */
+.doneWrap {
+  text-align: center;
+  /* Real bottom padding of its own — the panel's is dropped for the sticky-footer fix. */
+  padding: 1.5rem 0.5rem 1.5rem;
+}
+
+/* Rounded SQUARE, never a circle — the portal's standing medallion rule. */
+.doneTick {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--success-light) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--success-light) 35%, transparent);
+  color: var(--success-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 0.9rem;
+}
+
+.doneHead {
+  margin: 0 0 0.4rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--home-ink, rgba(255,255,255,0.92));
+}
+
+.doneMeta {
+  margin: 0 auto;
+  max-width: 34ch;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+}
+.doneMeta strong { color: var(--home-ink, rgba(255,255,255,0.9)); }
+
+.doneActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 1.2rem;
+}
+
+.doneSampleLink {
+  background: none;
+  border: none;
+  padding: 0.3rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  cursor: pointer;
+}
+.doneSampleLink:hover { text-decoration: underline; }

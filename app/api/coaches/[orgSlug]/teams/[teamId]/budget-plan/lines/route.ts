@@ -53,6 +53,25 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'totalAmount must be a positive number' }, { status: 400 });
   }
 
+  // The FK payload must belong to this org's taxonomy (platform defaults are org_id
+  // NULL) — the same ownership check the budget-items POST performs. Without it a
+  // crafted request could link a line to, and echo back the name of, another org's
+  // custom category/item. Pre-existing gap, hardened during the Chunk G review.
+  if (categoryId) {
+    const { data: cat } = await supabaseAdmin
+      .from('budget_categories').select('id')
+      .eq('id', categoryId).or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
+      .maybeSingle();
+    if (!cat) return NextResponse.json({ error: 'Category not found' }, { status: 400 });
+  }
+  if (itemId) {
+    const { data: item } = await supabaseAdmin
+      .from('budget_items').select('id')
+      .eq('id', itemId).or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
+      .maybeSingle();
+    if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 400 });
+  }
+
   const { data, error } = await supabaseAdmin
     .from('rep_budget_lines')
     .insert({

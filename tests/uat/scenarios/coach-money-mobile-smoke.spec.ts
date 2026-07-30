@@ -60,6 +60,10 @@ let repTeamId = '';
 let programYearId = '';
 let fundraiserId = '';
 let allocationId = '';
+// Chunk G — a SECOND team with NO budget data: the first-season state the starter exists for.
+// The main team above is provisioned WITH lines, so the two must never share a team.
+let starterTeamId = '';
+let starterYearId = '';
 
 function day(offset: number): string {
   const d = new Date();
@@ -212,6 +216,30 @@ test.beforeAll(async () => {
     { split_id: split!.id, installment_number: 3, amount: 800, due_date: day(45), org_id: orgId, team_id: repTeamId },
   ]);
   if (iErr) throw iErr;
+
+  // ── Chunk G: the starter team — same two coaches, deliberately NOTHING else. No budget
+  // lines and no season envelope, so the page renders the true-empty first-run state.
+  const { data: sTeam, error: stErr } = await admin.from('rep_teams')
+    .insert({ org_id: orgId, name: `${MARK} Starter 12U`, slug: `${MARK}-starter-12u`, sport: 'softball' })
+    .select('id').single();
+  if (stErr) throw stErr;
+  starterTeamId = sTeam!.id;
+  const { data: sYear, error: syErr } = await admin.from('rep_program_years')
+    .insert({ team_id: starterTeamId, org_id: orgId, name: `${MARK} Starter 2026`, year: 2026, status: 'active' })
+    .select('id').single();
+  if (syErr) throw syErr;
+  starterYearId = sYear!.id;
+  const { error: shcErr } = await admin.from('rep_team_coaches').insert({
+    program_year_id: starterYearId, team_id: starterTeamId, org_id: orgId,
+    user_id: writeUserId, coach_role: 'head_coach',
+  });
+  if (shcErr) throw shcErr;
+  const { error: sacErr } = await admin.from('rep_team_coaches').insert({
+    program_year_id: starterYearId, team_id: starterTeamId, org_id: orgId,
+    user_id: readUserId, coach_role: 'assistant_coach',
+    capabilities: { money: 'read', roster: true, schedule: true },
+  });
+  if (sacErr) throw sacErr;
 });
 
 test.afterAll(async () => {
@@ -461,7 +489,7 @@ test.describe('Money on a phone @360x740', () => {
       const main = page.locator('main[class*="coachesMain"]');
       await expect(
         main.getByRole('button', {
-          name: /mark paid|mark deposit paid|mark balance paid|add line|add expense|add payable|recategorize|new request|new fundraiser|settings|log amount|edit amount|generate installments/i,
+          name: /mark paid|mark deposit paid|mark balance paid|add line|add expense|add payable|recategorize|new request|new fundraiser|settings|log amount|edit amount|generate installments|start — about a minute/i,
         }),
         `${label} (read-only): a write affordance the server would refuse`,
       ).toHaveCount(0);
@@ -530,5 +558,211 @@ test.describe('Money forms on a desktop', () => {
     }));
     expect(metrics.scrollWidth - metrics.clientWidth, 'no internal scroll on a wide monitor').toBeLessThanOrEqual(1);
     await expect(page.getByTestId('coach-scrollx-hint')).toHaveCount(0);
+  });
+
+  test('a tall sheet\'s last content scrolls clear of the sticky footer (Chunk G fix)', async ({ page }) => {
+    // Owner QA finding: the shared footer's desktop bottom bleed shortened the scroll
+    // extent, pinning the sample/starter's last row under the button bar forever.
+    await signIn(page, WRITE_EMAIL);
+    await open(page, `${base()}/accounting/budget`);
+    await page.locator('main[class*="coachesMain"]').getByRole('button', { name: /see a sample budget/i }).click();
+    const fence = page.getByTestId('sample-budget-fence');
+    await expect(fence).toBeVisible();
+    const clear = await page.evaluate(() => {
+      const fenceEl = document.querySelector('[data-testid="sample-budget-fence"]') as HTMLElement;
+      const panel = fenceEl.closest('[class*="modal"]:not([class*="Overlay"])') as HTMLElement;
+      const footer = panel.querySelector('[class*="modalFooter"]') as HTMLElement;
+      panel.scrollTop = panel.scrollHeight; // max scroll
+      const f = fenceEl.getBoundingClientRect();
+      const bar = footer.getBoundingClientRect();
+      return { fenceBottom: f.bottom, barTop: bar.top };
+    });
+    expect(clear.fenceBottom, 'last content should clear the sticky footer at max scroll')
+      .toBeLessThanOrEqual(clear.barTop + 1);
+  });
+});
+
+test.describe('The budget starter @360x740 (Chunk G)', () => {
+  // These five tests are ORDERED (workers: 1, in-file order): the team starts empty, the
+  // guard test discards, the flow test writes the first real lines, and everything after
+  // runs against a budget that now exists. Reordering them changes what they prove.
+  test.use({ viewport: PHONE });
+
+  const sBase = () => `/${ORG_SLUG}/coaches/teams/${starterTeamId}`;
+
+  test('the blank page becomes three doors, and a dirty starter guards its dismiss', async ({ page }) => {
+    await signIn(page, WRITE_EMAIL);
+    await open(page, `${sBase()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+
+    // The first-run surface leads: starter, sample, and the never-walled manual path.
+    // The $0.00 summary banner is suppressed on the true-empty state.
+    await expect(page.getByTestId('budget-first-run')).toBeVisible();
+    await expect(main.getByRole('button', { name: /start — about a minute/i })).toBeVisible();
+    await expect(main.getByRole('button', { name: /see a finished example/i })).toBeVisible();
+    await expect(main.getByRole('button', { name: /or add lines yourself/i })).toBeVisible();
+    await expect(main.getByText('Total Planned Budget')).toHaveCount(0);
+    await expectNoPageScroll(page, 'budget first-run surface');
+
+    // One answered question makes the sheet worth protecting; the phone's dangerous
+    // dismiss is the BACK ARROW (the sheet has no backdrop at ≤640 — Chunk A rule).
+    await main.getByRole('button', { name: /start — about a minute/i }).click();
+    const sheet = page.locator('[class*="modalOverlay"]').first();
+    await expect(sheet.getByText(/step 1 of 2/i)).toBeVisible();
+    await sheet.getByRole('button', { name: '3', exact: true }).click();
+    await page.getByRole('button', { name: /^back$/i }).click();
+    await expect(page.getByText(/discard this starting budget/i)).toBeVisible();
+    await expect(page.getByText(/1 answer/i)).toBeVisible();
+
+    // "Keep editing" loses nothing…
+    await page.getByRole('button', { name: /keep editing/i }).click();
+    await expect(sheet.getByRole('button', { name: '3', exact: true })).toHaveClass(/segBtnActive/);
+    // …and a deliberate discard actually closes it, leaving the team still empty.
+    await page.getByRole('button', { name: /^back$/i }).click();
+    await page.getByRole('button', { name: /^discard$/i }).click();
+    await expect(page.getByText(/step 1 of 2/i)).toHaveCount(0);
+  });
+
+  test('a read-only assistant meets education, never an offer', async ({ page }) => {
+    await signIn(page, READ_EMAIL);
+    await open(page, `${sBase()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+
+    // Honest empty state: whose job it is, what they will see — and NO write doors.
+    await expect(page.getByTestId('budget-first-run')).toHaveCount(0);
+    await expect(main.getByText(/no budget yet/i)).toBeVisible();
+    await expect(main.getByText(/head coach/i).first()).toBeVisible();
+    await expect(main.getByRole('button', { name: /start — about a minute|add line/i })).toHaveCount(0);
+
+    // The sample door IS allowed — it is education, not a write.
+    await main.getByRole('button', { name: /see a finished example/i }).click();
+    await expect(page.getByTestId('sample-budget-fence')).toBeVisible();
+    await expect(page.getByText(/riverdale is invented/i)).toBeVisible();
+    await page.getByRole('button', { name: /^close$/i }).click();
+
+    // Budget vs. Actual's empty state opens the same sample ON ITS BvA TAB (D4) —
+    // the coach on that page came asking what the report becomes.
+    await open(page, `${sBase()}/accounting/budget-vs-actual`);
+    await page.locator('main[class*="coachesMain"]').getByRole('button', { name: /see a finished example/i }).click();
+    await expect(page.getByTestId('sample-budget-fence')).toBeVisible();
+    await expect(page.getByText(/3 of 4 tournaments paid/i)).toBeVisible();
+  });
+
+  test('the starter turns answers into real lines holding only coach-typed numbers', async ({ page }) => {
+    test.setTimeout(120_000);
+    await signIn(page, WRITE_EMAIL);
+    // The Money hub's plan anchor carries ?starter=1 — the deep link opens the questions
+    // directly (write-capable + still-empty only).
+    await open(page, `${sBase()}/accounting/budget?starter=1`);
+    const sheet = page.locator('[class*="modalOverlay"]').first();
+    await expect(sheet.getByText(/step 1 of 2/i)).toBeVisible();
+
+    await sheet.getByRole('button', { name: '4', exact: true }).click();
+    const yes = sheet.getByRole('button', { name: 'Yes', exact: true });
+    const no = sheet.getByRole('button', { name: 'No', exact: true });
+    await yes.nth(0).click(); // hotels / real travel
+    await yes.nth(1).click(); // pays officials directly
+    await no.nth(2).click();  // no off-season block
+    await yes.nth(3).click(); // provides uniforms
+    await sheet.getByRole('button', { name: /next — your lines/i }).click();
+    await expect(sheet.getByText(/step 2 of 2/i)).toBeVisible();
+
+    // D-G1 at the DOM level: no input in the sheet may carry a numeric placeholder —
+    // a placeholder that reads as a figure is a suggestion.
+    const numericPlaceholders = await sheet.locator('input[placeholder]').evaluateAll(
+      (els: HTMLInputElement[]) => els.filter(e => /\d/.test(e.placeholder)).length);
+    expect(numericPlaceholders, 'a numeric placeholder is a product-supplied figure').toBe(0);
+
+    // Entry fees: the coach's own per-event figure × their own count, arithmetic shown.
+    await sheet.getByLabel(/about what does one entry cost you/i).fill('600');
+    await expect(sheet.getByText(/= \$2,400\.00/)).toBeVisible();
+    await sheet.getByLabel('Uniforms amount').fill('980');
+
+    // The CTA counts honestly: 2 priced (Entry Fees, Uniforms) · 2 blank (Travel, Umpire Fees).
+    await sheet.getByRole('button', { name: /add 2 priced lines · keep 2 on checklist/i }).click();
+    await expect(sheet.getByText(/your starting budget is in/i)).toBeVisible({ timeout: 30_000 });
+    await expect(sheet.getByText(/\$3,380\.00/)).toBeVisible();
+    await sheet.getByRole('button', { name: /see my budget/i }).click();
+
+    // The page behind refreshed: real lines, the coach's arithmetic kept visible on the
+    // line, and the checklist strip carrying what they left blank.
+    const main = page.locator('main[class*="coachesMain"]');
+    await expect(main.getByText('Entry Fees')).toBeVisible();
+    await expect(main.getByText('4 × $600')).toBeVisible();
+    await expect(main.getByText('Uniforms')).toBeVisible();
+    await expect(page.getByTestId('budget-checklist')).toBeVisible();
+    await expect(page.getByTestId('budget-checklist')).toContainText('Travel');
+    await expectNoPageScroll(page, 'budget page after the starter');
+
+    // The database agrees: exactly the two priced lines with the coach's totals — and no
+    // platform-default item gained a suggested amount (D-G1 at the data level).
+    const { data: lines } = await admin.from('rep_budget_lines')
+      .select('description, total_amount').eq('program_year_id', starterYearId);
+    expect((lines ?? []).map(l => `${l.description}:${Number(l.total_amount)}`).sort())
+      .toEqual(['Entry Fees:2400', 'Uniforms:980']);
+    const { count } = await admin.from('budget_items')
+      .select('id', { count: 'exact', head: true })
+      .is('org_id', null).not('suggested_amount', 'is', null);
+    expect(count ?? 0, 'a platform-default budget item gained a suggested_amount').toBe(0);
+  });
+
+  test('a checklist chip opens Add Line prefilled with the amount EMPTY, and a dismiss is remembered', async ({ page }) => {
+    await signIn(page, WRITE_EMAIL);
+    await open(page, `${sBase()}/accounting/budget`);
+    const strip = page.getByTestId('budget-checklist');
+    await strip.getByRole('button', { name: /review/i }).click();
+
+    // + opens the NORMAL Add Line modal: category+item prefilled, amount empty — the
+    // coach types the number.
+    await strip.getByRole('button', { name: '+ Travel', exact: true }).click();
+    await expect(page.getByText(/add budget line/i)).toBeVisible();
+    await expect(page.getByLabel(/total amount/i)).toHaveValue('');
+    await expect(page.getByPlaceholder('Travel')).toBeVisible();
+
+    // An untouched prefilled form closes SILENTLY — our prefill is not the coach's work,
+    // so the discard guard has nothing to protect.
+    await page.getByRole('button', { name: /^back$/i }).click();
+    await expect(page.getByText(/discard this budget line/i)).toHaveCount(0);
+    await expect(page.getByText(/add budget line/i)).toHaveCount(0);
+
+    // ✕ dismisses an item this team doesn't pay for — and the device remembers.
+    await strip.getByRole('button', { name: /we don't pay for plate fees/i }).click();
+    await expect(strip.getByRole('button', { name: '+ Plate Fees', exact: true })).toHaveCount(0);
+    await page.reload();
+    await expect(page.locator('main[class*="coachesMain"]').getByText('Loading…')).toHaveCount(0, { timeout: 45_000 });
+    const strip2 = page.getByTestId('budget-checklist');
+    await strip2.getByRole('button', { name: /review/i }).click();
+    await expect(strip2.getByRole('button', { name: '+ Plate Fees', exact: true })).toHaveCount(0);
+    await expect(strip2.getByRole('button', { name: '+ Umpire Fees', exact: true })).toBeVisible();
+  });
+
+  test('the sample is fenced and uncopyable, and its BvA tab teaches what "over" looks like', async ({ page }) => {
+    await signIn(page, READ_EMAIL);
+    await open(page, `${sBase()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+
+    // With a budget present, the read-only coach sees the lines — but never the strip
+    // (a write invitation) and never an add door. The quiet sample link IS allowed.
+    await expect(page.getByTestId('budget-checklist')).toHaveCount(0);
+    await expect(main.getByRole('button', { name: /add line/i })).toHaveCount(0);
+    await main.getByRole('button', { name: /see a sample budget/i }).click();
+
+    const fence = page.getByTestId('sample-budget-fence');
+    await expect(fence).toBeVisible();
+    await expect(fence.getByText(/sample — a made-up team/i)).toBeVisible();
+    await expect(fence.getByText('Riverdale 12U')).toBeVisible();
+
+    // Uncopyable by construction: nothing inside the fence is an input, and no button
+    // offers to use the numbers (the only fence buttons are the two view tabs).
+    expect(await fence.locator('input, select, textarea').count()).toBe(0);
+    expect(await fence.getByRole('button', { name: /use|copy|apply|add|create|import/i }).count()).toBe(0);
+
+    // The BvA tab renders the real comparison idiom — honest swipe hint, and the
+    // over-budget line visibly over.
+    await fence.getByRole('button', { name: /budget vs\. actual/i }).click();
+    await expect(page.getByTestId('coach-scrollx-hint')).toBeVisible();
+    await expect(fence.getByText('-$130')).toBeVisible();
+    await expect(fence.getByText(/gone over on purpose/i)).toBeVisible();
+    await expectNoPageScroll(page, 'sample sheet — BvA tab');
   });
 });

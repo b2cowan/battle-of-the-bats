@@ -6,6 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import ExportMenu from '@/components/admin/ExportMenu';
 import {
@@ -189,6 +190,9 @@ export default function BudgetVsActualPage({
   const [data,    setData]    = useState<BvaData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  // Chunk G — the sample sheet, opened from the empty state on its BvA tab so a coach
+  // two pages from home can see the destination before building the budget (D4).
+  const [sampleOpen, setSampleOpen] = useState(false);
 
   const [expandedCats,  setExpandedCats]  = useState<Set<string>>(new Set());
   const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
@@ -385,13 +389,17 @@ export default function BudgetVsActualPage({
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : !data || data.effectiveBudget === 0 ? (
-        <CoachEmptyState
-          icon={<TrendingUp size={22} aria-hidden />}
-          eyebrow="Budget vs. actual"
-          headline="No budget plan yet"
-          description="Create a budget plan to start tracking estimated spend against your actual ledger."
-          primaryAction={{ label: 'Create a budget plan', href: `${base}/accounting/budget` }}
-        />
+        <>
+          <CoachEmptyState
+            icon={<TrendingUp size={22} aria-hidden />}
+            eyebrow="Budget vs. actual"
+            headline="No budget plan yet"
+            description="Create a budget plan to start tracking estimated spend against your actual ledger."
+            primaryAction={{ label: 'Create a budget plan', href: `${base}/accounting/budget` }}
+            secondaryAction={{ label: 'See a finished example', onClick: () => setSampleOpen(true) }}
+          />
+          {sampleOpen && <SampleBudgetSheet initialTab="bva" onClose={() => setSampleOpen(false)} />}
+        </>
       ) : (
         <>
           {/* Money-tag filter chip row — scopes the actuals to one tag's spending (self-hides at

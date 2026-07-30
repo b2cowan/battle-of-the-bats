@@ -114,7 +114,9 @@ export default function CoachesAccountingPage({
           </p>
           {canWrite ? (
             <div className={styles.nowActions}>
-              <Link href={`${base}/accounting/budget`} className="btn btn-lime btn-sm">Build your budget <ArrowRight size={14} /></Link>
+              {/* Deep-links into the budget starter (Chunk G) — same copy, but the coach
+                  lands in the questions instead of on a blank page. */}
+              <Link href={`${base}/accounting/budget?starter=1`} className="btn btn-lime btn-sm">Build your budget <ArrowRight size={14} /></Link>
               <Link href={`${base}/accounting/dues`} className={styles.nowSecondary}>Skip — set dues directly <ArrowRight size={13} /></Link>
             </div>
           ) : (

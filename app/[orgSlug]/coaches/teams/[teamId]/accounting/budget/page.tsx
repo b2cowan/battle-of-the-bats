@@ -5,6 +5,9 @@ import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, ArrowLef
 import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
+import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
+import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import type {
   RepBudgetPlan,
   RepBudgetLineWithPeriods,
@@ -138,6 +141,18 @@ export default function BudgetPlannerPage({
   const [deleting,    setDeleting]    = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  // Chunk G — the budget starter, the sample sheet, and the derived checklist
+  // (mockups artifact 77f5175e = binding). The sheets register their own overlay
+  // state on mount; the checklist needs no storage at all — see the memo below.
+  const [starterOpen,        setStarterOpen]        = useState(false);
+  const [sampleOpen,         setSampleOpen]         = useState(false);
+  const [checklistExpanded,  setChecklistExpanded]  = useState(false);
+  const [dismissedChecklist, setDismissedChecklist] = useState<string[]>([]);
+  // The Add-Line dirty baseline: BLANK for a plain add, the prefilled form for a
+  // checklist-chip add — otherwise the guard would count OUR prefill as the coach's
+  // work and nag on an untouched form (the one-mapping rule, Chunk A).
+  const [addBaseline,        setAddBaseline]        = useState<LineForm>(BLANK_FORM);
+
   // Generate installments modal
   const [genOpen,          setGenOpen]          = useState(false);
   const [genInstallments,  setGenInstallments]  = useState<InstallmentRow[]>([{ ...DEFAULT_INSTALLMENT }]);
@@ -156,13 +171,14 @@ export default function BudgetPlannerPage({
   // ── Discard guards (review f7-3/f7-7) ────────────────────────────────────────────
   // The budget line with a period split is the worst thing in the product to retype, and
   // it used to vanish on a backdrop tap. `editingLine` is a pre-filled EDIT baseline, so
-  // dirtiness compares against the line as loaded; adding compares against BLANK_FORM.
+  // dirtiness compares against the line as loaded; adding compares against addBaseline
+  // (BLANK for a plain add, the prefilled form for a checklist-chip add).
   // Memoised on the line being edited: `editingLine` is never cleared on close, so an
   // unmemoised baseline would re-map the periods array on EVERY render of this page for
   // the rest of the session — including keystrokes in unrelated modals.
   const lineBaseline = useMemo(
-    () => (editingLine ? formFromLine(editingLine) : BLANK_FORM),
-    [editingLine],
+    () => (editingLine ? formFromLine(editingLine) : addBaseline),
+    [editingLine, addBaseline],
   );
   const lineDirty = modalOpen && !sameLineForm(form, lineBaseline);
   const filledPeriods = modalOpen && form.usePeriods
@@ -194,6 +210,61 @@ export default function BudgetPlannerPage({
   const closeDelete = useCallback(() => { setDeletingId(null); setDeleteError(''); }, []);
 
   const assignment = assignments.find(a => a.teamId === teamId);
+
+  // Checklist dismissals ("we don't pay for this") are DEVICE memory — localStorage per
+  // team+season, the shipped pattern for quiet per-coach state (winding-down dismiss,
+  // Moved markers). Worst case cross-device: a dismissed chip quietly reappears.
+  const checklistKey = assignment
+    ? `flhq-coach-budget-checklist:${teamId}:${assignment.programYearId}`
+    : null;
+  useEffect(() => {
+    if (!checklistKey) return;
+    try {
+      const raw = localStorage.getItem(checklistKey);
+      const parsed: unknown = raw ? JSON.parse(raw) : [];
+      // Shape-check, not just parse-check: a corrupt value must reset, never crash.
+      setDismissedChecklist(Array.isArray(parsed) ? parsed.filter((x): x is string => typeof x === 'string') : []);
+    } catch {
+      setDismissedChecklist([]);
+    }
+  }, [checklistKey]);
+
+  // The permanent "what am I forgetting?" — DERIVED, never stored: standard team-scope
+  // default items minus what the plan already covers (by item link, or by name for
+  // free-text lines) minus what this coach dismissed. A budget line cannot exist
+  // without an amount (DB CHECK > 0), which is exactly why "still to price" is a
+  // computed checklist rather than $0 sentinel rows.
+  const checklistItems = useMemo(() => {
+    if (!plan || plan.lines.length === 0) return [];
+    const linkedIds = new Set(plan.lines.map(l => l.itemId).filter((id): id is string => !!id));
+    const usedNames = new Set(
+      plan.lines
+        .flatMap(l => [l.description, l.itemName])
+        .filter((s): s is string => !!s)
+        .map(s => s.toLowerCase()),
+    );
+    const out: Array<{ id: string; name: string; categoryId: string; categoryName: string }> = [];
+    for (const c of categories) {
+      if (!c.isDefault) continue;
+      for (const it of c.items) {
+        if (!it.isDefault || it.isMisc) continue;
+        if (linkedIds.has(it.id) || usedNames.has(it.name.toLowerCase())) continue;
+        if (dismissedChecklist.includes(it.id)) continue;
+        out.push({ id: it.id, name: it.name, categoryId: c.id, categoryName: c.name });
+      }
+    }
+    return out;
+  }, [plan, categories, dismissedChecklist]);
+
+  function dismissChecklistItem(itemId: string) {
+    setDismissedChecklist(prev => {
+      const next = prev.includes(itemId) ? prev : [...prev, itemId];
+      if (checklistKey) {
+        try { localStorage.setItem(checklistKey, JSON.stringify(next)); } catch { /* device memory only */ }
+      }
+      return next;
+    });
+  }
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -239,6 +310,20 @@ export default function BudgetPlannerPage({
     }
   }, [loading, plan, assignments, teamId]);
 
+  // Deep link from the Money hub's plan anchor: ?starter=1 opens the budget starter
+  // directly (one-shot; write-capable + still-empty plan only — the ?generate=1 recipe).
+  const starterDeepLinkDone = useRef(false);
+  useEffect(() => {
+    if (starterDeepLinkDone.current || loading || !plan) return;
+    const a = assignments.find(x => x.teamId === teamId);
+    if (!a) return; // assignments still loading — try again next render
+    starterDeepLinkDone.current = true;
+    if (a.capabilities.money !== 'write') return;
+    const wantsStarter = typeof window !== 'undefined'
+      && new URLSearchParams(window.location.search).get('starter') === '1';
+    if (wantsStarter && plan.lines.length === 0) setStarterOpen(true);
+  }, [loading, plan, assignments, teamId]);
+
   async function saveSeasonTotal() {
     setSeasonError('');
     setSeasonSaving(true);
@@ -263,6 +348,25 @@ export default function BudgetPlannerPage({
   function openAdd() {
     setEditingLine(null);
     setForm(BLANK_FORM);
+    setAddBaseline(BLANK_FORM);
+    setSaveError('');
+    setModalOpen(true);
+  }
+
+  /** A checklist chip opens the normal Add Line modal with the category + item filled
+   *  in and the amount EMPTY — the coach types the number (D-G1). The prefill is also
+   *  the dirty baseline, so closing an untouched prefilled form stays silent. */
+  function openAddFromChecklist(item: { id: string; name: string; categoryId: string; categoryName: string }) {
+    const prefilled: LineForm = {
+      ...BLANK_FORM,
+      categoryId:   item.categoryId,
+      categoryName: item.categoryName,
+      itemId:       item.id,
+      itemName:     item.name,
+    };
+    setEditingLine(null);
+    setForm(prefilled);
+    setAddBaseline(prefilled);
     setSaveError('');
     setModalOpen(true);
   }
@@ -520,6 +624,13 @@ export default function BudgetPlannerPage({
   const effectiveTotal = Math.max(totalBudget, seasonTotal ?? 0);
   const buffer         = seasonTotal != null && seasonTotal > totalBudget ? seasonTotal - totalBudget : 0;
   const overItemized   = seasonTotal != null && seasonTotal > 0 && totalBudget > seasonTotal;
+  // The genuinely-blank first visit: no lines AND no season total. The $0 summary
+  // banner is suppressed so the first-run surface leads; it returns the moment
+  // anything exists (mockups frame 1, RESTYLED). ⚠ The banner is also the only UI
+  // that SETS a season total, so "set a season total instead" (a first-run door)
+  // flips editingSeason and the banner comes back — a season-total-only budget must
+  // stay reachable from a cold start (review finding).
+  const trueEmpty      = groups.length === 0 && seasonTotal == null && !editingSeason;
 
   return (
     <div className={styles.page}>
@@ -550,6 +661,8 @@ export default function BudgetPlannerPage({
         <>
           {/* Budget summary banner — reconciles the optional season total with the
               itemized sum (buffer / over-itemized / sum-of-lines states). */}
+          {!trueEmpty && (
+          <>
           <div className={`${styles.summaryBanner} ${shared.stack640}`}>
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Total Planned Budget</span>
@@ -624,19 +737,47 @@ export default function BudgetPlannerPage({
               {fmt(buffer)} of your season total isn&apos;t itemized yet — it shows as a buffer until you add line items for it.
             </p>
           )}
+          </>
+          )}
 
           {/* Line items grouped by category */}
           {groups.length === 0 ? (
-            <div className={styles.emptyState}>
-              <BarChart3 size={32} style={{ opacity: 0.3, marginBottom: '0.75rem' }} />
-              <p>No budget lines yet.</p>
-              <p className={styles.emptyHint}>Add cost lines to build your season budget estimate.</p>
-              {moneyCanWrite && (
-                <button type="button" className={shared.btnPrimary} style={{ marginTop: '1rem' }} onClick={openAdd}>
-                  + Add First Line
-                </button>
-              )}
-            </div>
+            // Chunk G: the first-run surface replaces the bare empty state Chunk A left
+            // minimal on purpose. Three doors for a write coach — the starter, the sample,
+            // and the never-walled manual path. A read-only coach gets the honest version:
+            // whose job this is, plus the sample (education, not a write).
+            moneyCanWrite ? (
+              // The shared empty-state full card — its own contract names "first-run
+              // banner" as an intended use; hand-rolling a parallel card here would be
+              // the one empty state in the portal a global tweak couldn't reach.
+              <div data-testid="budget-first-run">
+                <CoachEmptyState
+                  icon={<BarChart3 size={22} aria-hidden />}
+                  eyebrow="Getting started"
+                  headline="Build your starting budget"
+                  description="Answer a few quick questions and get the right cost lines for your season. You fill in only the numbers you know — nothing is guessed for you."
+                  primaryAction={{ label: 'Start — about a minute', onClick: () => setStarterOpen(true) }}
+                  secondaryAction={{ label: 'See a finished example', onClick: () => setSampleOpen(true) }}
+                >
+                  {/* alignSelf keeps these quiet links from stretching to the .btn height
+                      (the actions row's default is stretch). */}
+                  <button type="button" className={styles.sampleLink} style={{ alignSelf: 'center' }} onClick={openAdd}>
+                    Or add lines yourself
+                  </button>
+                  <button type="button" className={styles.sampleLink} style={{ alignSelf: 'center' }} onClick={() => setEditingSeason(true)}>
+                    Set a season total instead
+                  </button>
+                </CoachEmptyState>
+              </div>
+            ) : (
+              <CoachEmptyState
+                icon={<BarChart3 size={22} aria-hidden />}
+                eyebrow="Season budget"
+                headline="No budget yet"
+                description="Building the budget is the head coach's job — every line will show here once they do."
+                secondaryAction={{ label: 'See a finished example →', onClick: () => setSampleOpen(true) }}
+              />
+            )
           ) : (
             <div className={styles.linesContainer}>
               {groups.map(([catName, lines]) => (
@@ -718,6 +859,60 @@ export default function BudgetPlannerPage({
                 </div>
               ))}
 
+              {/* Chunk G — the permanent "what am I forgetting?" strip. Derived from the
+                  standard taxonomy minus what's budgeted minus this device's dismissals;
+                  write-gated (it is a write invitation) and self-hides when complete. */}
+              {moneyCanWrite && checklistItems.length > 0 && (
+                <div className={styles.checklistStrip} data-testid="budget-checklist">
+                  <div className={styles.checklistHead}>
+                    <span className={styles.checklistLabel}>Not in your plan yet</span>
+                    {!checklistExpanded && (
+                      <span className={styles.checklistSummary}>
+                        {checklistItems.slice(0, 2).map(i => i.name).join(' · ')}
+                        {checklistItems.length > 2 ? ` · +${checklistItems.length - 2} more` : ''}
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      className={styles.checklistToggle}
+                      onClick={() => setChecklistExpanded(v => !v)}
+                    >
+                      {checklistExpanded ? 'Hide' : 'Review'}
+                    </button>
+                  </div>
+                  {checklistExpanded && (
+                    <>
+                      <div className={styles.checklistChips}>
+                        {checklistItems.map(item => (
+                          <span key={item.id} className={styles.checklistChip}>
+                            <button
+                              type="button"
+                              className={styles.checklistAdd}
+                              title={item.categoryName}
+                              onClick={() => openAddFromChecklist(item)}
+                            >
+                              + {item.name}
+                            </button>
+                            <button
+                              type="button"
+                              className={styles.checklistDismiss}
+                              aria-label={`We don't pay for ${item.name} — hide it`}
+                              onClick={() => dismissChecklistItem(item.id)}
+                            >
+                              <X size={11} aria-hidden />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                      <p className={styles.checklistFoot}>
+                        + adds it to your budget — you type the amount. ✕ hides one your team
+                        doesn&apos;t pay for.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
+
               {/* Non-itemized buffer pseudo-row — the slice of the season total not
                   yet covered by line items. */}
               {buffer > 0 && (
@@ -761,10 +956,15 @@ export default function BudgetPlannerPage({
           )}
 
           {effectiveTotal > 0 && (
-            <div style={{ marginTop: '1rem', textAlign: 'right' }}>
+            <div className={styles.quietLinks}>
               <Link href={`${base}/accounting/budget-vs-actual`} className={styles.inlineLink}>
                 View Budget vs. Actual →
               </Link>
+              {/* The sample is a PERMANENT quiet reference (D6) — the moment BvA starts
+                  mattering is mid-season, not first-run. */}
+              <button type="button" className={styles.sampleLink} onClick={() => setSampleOpen(true)}>
+                See a sample budget
+              </button>
             </div>
           )}
         </>
@@ -1169,6 +1369,21 @@ export default function BudgetPlannerPage({
             )}
           </div>
         </div>
+      )}
+
+      {/* ── Chunk G sheets — the starter (write-gated) and the sample (education) ── */}
+      {starterOpen && moneyCanWrite && (
+        <BudgetStarterSheet
+          orgSlug={orgSlug}
+          teamId={teamId}
+          categories={categories}
+          onClose={() => setStarterOpen(false)}
+          onOpenSample={() => { setStarterOpen(false); setSampleOpen(true); }}
+          onCreated={load}
+        />
+      )}
+      {sampleOpen && (
+        <SampleBudgetSheet onClose={() => setSampleOpen(false)} />
       )}
 
       {/* The discard guards cover dismissing a sheet; this covers walking away from one. */}

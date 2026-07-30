@@ -168,7 +168,8 @@ per-season capability rule, the year-parameterised pattern and the read-only wri
 shipped in Batch 3. This is the section pages learning a read-only mode, not new plumbing.
 *Not a launch blocker* — the lockout is fixed and records are readable today.
 
-**G · The budget starter** — *owner-raised 2026-07-29; medium; NOT from the readiness review; gated on a decision*
+**G · The budget starter** — ✅ **BUILT ON DEV 2026-07-30 (uncommitted)** — plan + PM brief `COACH_PORTAL_CHUNK_G_BUDGET_STARTER_{PLAN,PM_BRIEF}.md`; mockups artifact `77f5175e-7e5b-4f18-ba24-0a0eabc46729` rev 1 (approved = binding); **D1–D6 ALL RATIFIED at the recommendations 2026-07-30** ("I agree with all of your recommendations"). NO migration, as predicted. What shipped: first-run surface with three doors (starter / sample / manual) replacing the empty state · five tap-only questions → worksheet-as-preview → real lines through the existing write route with per-row outcomes · the derived "Not in your plan yet" checklist strip (taxonomy minus plan minus device-remembered dismissals — zero storage; the DB's `total_amount > 0` CHECK is why it is derived) · the fenced Riverdale 12U sample (budget + BvA tabs, uncopyable by construction) · `?starter=1` deep-link from the Money hub anchor · honest read-only empty state. Probes: full Money suite **18/18** @360×740 + desktop, incl. a data-level D-G1 assertion (no default item ever gains a `suggested_amount`). Remaining: owner phone QA → commit with per-action OK. *(original scope below)*
+*Original entry (decided + built as above):*
 *The gap:* a first-season coach opens Budget and gets a blank page. The Money hub names a next
 action, but the action is "set a budget" and there is nothing behind it — no structure, no example,
 no sense of what finished looks like. Coaches are volunteers, not accountants.
@@ -207,6 +208,27 @@ checklist already exists in the database** (mig 027 seeds a global taxonomy — 
 Facilities / Officials / Training / Events with default items, **names only, not one carrying an
 amount**), and season rollover already carries a planned budget forward — which is what makes this
 a genuinely first-season-only problem.
+
+**H · Money by month (the treasurer's ledger)** — *owner-raised 2026-07-30 at Chunk G approval; medium-large; AGREED IN DIRECTION ("I agree with all of your recommendations"), needs its own plan + mockups before build*
+*What it accomplishes:* the month-grid view of the budget the owner runs in a spreadsheet today —
+rows = category/line, columns = the season's months, cells = amounts, totals both ways — as a
+desktop-first view on Budget vs. Actual (which already computes the monthly series for its
+cumulative chart), with a **Budget · Scheduled · Actual · Difference** lens toggle and cell
+drill-ins (budget cells edit that line's periods; actual cells list the month's paid expenses)
+through the EXISTING forms. Payables generalize beyond tournaments (the machinery is already
+category-aware; the "Tournament" framing is the only tournament-specific part — single-amount
+payables already work) + one full payment-schedule view (every commitment by due date, paid
+filterable). **Import/export templates** (owner-raised 2026-07-30): month-grid template (rows ×
+month columns → lines + dated periods), simple list template (lump-sum lines), payables-schedule
+template — all round-trippable with export, preview-first with per-row outcomes (roster-importer
+pattern), and **amount cells ship EMPTY** (a template with example dollars is a product-supplied
+figure — D-G1 applies). Chunk G's first-run surface gains an "Import a spreadsheet" door when H
+ships. *Key ruled call:* **Scheduled is a separate LENS, not a write into the budget column** —
+payables never merge into the estimate, so nothing double-counts and no payable↔line link
+migration is needed for v1 (revisit linking only if lens-flipping proves annoying). *Ideas
+accepted for the plan round:* cash-flow projection (dues in vs payables+periods out by month —
+"do we run dry in July?"), a "last season" comparison column for year-2+ teams (rollover already
+carries the data), month-grid export. *Sequencing:* after G (G creates the budget; H displays it).
 
 **Not in any chunk, tracked separately:** the guardian model (§1.4, gated on CP-7), assistant-coach
 first-run and inline roster quick-edit (§1.2 below).

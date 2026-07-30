@@ -291,15 +291,6 @@
 }
 .inlineLink:hover { text-decoration: underline; }
 
-/* ── Empty state ─────────────────────────────────────────────────────────── */
-.emptyState {
-  text-align: center;
-  padding: 3rem 1rem;
-  color: var(--white-40, rgba(255,255,255,0.4));
-}
-
-.emptyHint { font-size: 0.85rem; margin: 0.3rem 0 0; }
-
 /* ── Form fields ─────────────────────────────────────────────────────────── */
 .field { margin-bottom: 1rem; }
 .field:last-child { margin-bottom: 0; }
@@ -525,6 +516,110 @@
   font-weight: 600;
   font-size: 0.95rem;
 }
+
+/* ── Chunk G — checklist strip + sample doors (first-run card = shared CoachEmptyState) ──────────────
+   Reflow comes entirely from the shared primitives (.stack640/.block640 on the
+   elements) — no page-level @640 rules were needed, per the primitives header. */
+.checklistStrip {
+  border: 1px dashed var(--home-line-strong, rgba(255,255,255,0.18));
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  background: var(--home-olive-soft, rgba(255,255,255,0.02));
+}
+
+.checklistHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+}
+
+.checklistLabel {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: var(--home-ink, rgba(255,255,255,0.85));
+}
+
+.checklistSummary {
+  font-size: 0.78rem;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+  min-width: 0;
+}
+
+.checklistToggle {
+  margin-left: auto;
+  background: none;
+  border: none;
+  padding: 0.3rem 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--logic-lime);
+  cursor: pointer;
+}
+.checklistToggle:hover { text-decoration: underline; }
+
+.checklistChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.55rem;
+}
+
+.checklistChip {
+  display: inline-flex;
+  align-items: center;
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.checklistAdd {
+  background: none;
+  border: none;
+  padding: 0.32rem 0.2rem 0.32rem 0.65rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--home-ink, rgba(255,255,255,0.85));
+  cursor: pointer;
+}
+.checklistAdd:hover { color: var(--logic-lime); }
+
+.checklistDismiss {
+  background: none;
+  border: none;
+  display: flex;
+  align-items: center;
+  padding: 0.32rem 0.55rem 0.32rem 0.3rem;
+  color: var(--home-dim, rgba(255,255,255,0.35));
+  cursor: pointer;
+}
+.checklistDismiss:hover { color: var(--danger-light); }
+
+.checklistFoot {
+  margin: 0.5rem 0 0;
+  font-size: 0.72rem;
+  color: var(--home-dim, rgba(255,255,255,0.4));
+}
+
+.quietLinks {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.3rem;
+}
+
+.sampleLink {
+  background: none;
+  border: none;
+  padding: 0.2rem 0;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--home-dim, rgba(255,255,255,0.45));
+  cursor: pointer;
+}
+.sampleLink:hover { color: var(--home-ink-soft, rgba(255,255,255,0.7)); text-decoration: underline; }
 
 /* ════════════════════════════════════════════════════════════════════════════
    CONTENT REFLOW — 640px (Chunk A, 2026-07-29). This file previously had NO media
