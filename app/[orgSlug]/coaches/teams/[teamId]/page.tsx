@@ -14,7 +14,7 @@ import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
 // one-time offer most returning coaches have already dismissed, so it shouldn't sit in the
 // Overview bundle (already one of the portal's heaviest) for everyone who never opens it.
 const CoachPortalTour = dynamic(() => import('@/components/coaches/CoachPortalTour'), { ssr: false });
-import { useDismissable, useViewportFit } from '@/components/coaches/overlay-hooks';
+import { useDismissable, useViewportFit } from '@/lib/overlay-hooks';
 import { pickFanViewRegistration, type FanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import { deriveRepPhase } from '@/lib/coach-rep-phase';

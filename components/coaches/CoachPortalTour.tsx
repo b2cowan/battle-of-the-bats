@@ -6,7 +6,7 @@ import { ArrowRight, X } from 'lucide-react';
 import type { CoachCapabilities } from '@/lib/coach-capabilities';
 import { isCoachNavItemVisible } from '@/lib/coach-nav-visibility';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
-import { useDismissable } from './overlay-hooks';
+import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './CoachPortalTour.module.css';
 
 /**
