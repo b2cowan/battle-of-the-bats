@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../../coaches.module.css';
 import type { RepAllocationInstallment } from '@/lib/types';
@@ -47,6 +47,10 @@ export default function CoachesAllocationsPage({
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  // Money is three-state (off|read|write). The server already refuses a read-only coach's
+  // mark-paid, but offering the button and failing at submit is the same broken affordance
+  // this chunk fixed on Expenses and Payment Requests.
+  const canWriteMoney = assignment?.capabilities.money === 'write';
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -160,16 +164,20 @@ export default function CoachesAllocationsPage({
 
             return (
               <div key={split.id} className={styles.detailSection} style={{ marginBottom: '0.75rem', padding: 0 }}>
+                {/* Title on the left, the two money chips on the right — until a phone, where
+                    the row stacks so neither the allocation name nor the paid/due figures get
+                    squeezed off the edge. */}
                 <button
                   type="button"
+                  className={styles.stack640}
                   style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem',
                     width: '100%', background: 'none', border: 'none', cursor: 'pointer',
                     padding: '1rem 1.25rem', textAlign: 'left',
                   }}
                   onClick={() => setExpanded(prev => ({ ...prev, [split.id]: !prev[split.id] }))}
                 >
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', minWidth: 0 }}>
                     <span style={{ fontWeight: 700, color: 'var(--home-ink, rgba(255,255,255,0.9))', fontSize: '0.95rem' }}>
                       {split.allocationDescription}
                     </span>
@@ -183,7 +191,7 @@ export default function CoachesAllocationsPage({
                       )}
                     </span>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                     <span style={{ fontSize: '0.82rem', color: 'var(--success-light)' }}>{fmt(splitCollected)} paid</span>
                     {splitOutstanding > 0 && (
                       <span style={{ fontSize: '0.82rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{fmt(splitOutstanding)} due</span>
@@ -202,7 +210,9 @@ export default function CoachesAllocationsPage({
                         {split.notes}
                       </p>
                     )}
-                    <div className={styles.tableWrap}>
+                    {/* One installment per row: a list, so it stacks into cards at 640 (the
+                        Dues exemplar) rather than scrolling sideways. */}
+                    <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
                       <table className={styles.table}>
                         <thead>
                           <tr>
@@ -218,13 +228,13 @@ export default function CoachesAllocationsPage({
                             const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
                             return (
                               <tr key={inst.id} className={styles.tr}>
-                                <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
-                                <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
-                                <td className={styles.td} style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
+                                <td className={styles.td} data-label="Installment" style={{ color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>{inst.installmentNumber}</td>
+                                <td className={styles.td} data-label="Amount" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
+                                <td className={styles.td} data-label="Due date" style={{ color: overdue ? 'var(--danger-light)' : 'var(--home-ink-soft, rgba(255,255,255,0.65))' }}>
                                   {fmtDate(inst.dueDate)}
                                   {overdue && <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />}
                                 </td>
-                                <td className={styles.td}>
+                                <td className={styles.td} data-label="Status">
                                   {inst.paidAt ? (
                                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
                                       <CheckCircle2 size={13} /> Paid {fmtDate(inst.paidAt)}
@@ -235,12 +245,11 @@ export default function CoachesAllocationsPage({
                                     </span>
                                   )}
                                 </td>
-                                <td className={styles.td}>
-                                  {!inst.paidAt && (
+                                <td className={`${styles.td} ${styles.cardActionCell}`}>
+                                  {!inst.paidAt && canWriteMoney && (
                                     <button
                                       type="button"
-                                      className={styles.btnSecondary}
-                                      style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem' }}
+                                      className={`${styles.btnSecondary} ${styles.compactAction}`}
                                       disabled={!!marking[inst.id]}
                                       onClick={() => markPaid(split, inst)}
                                     >
@@ -260,6 +269,18 @@ export default function CoachesAllocationsPage({
             );
           })}
         </>
+      )}
+
+      {/* Cross-link (review f4-7). Both org-money pages were reachable only from the Money
+          hub and neither mentioned the other, so a coach looking at what they owe had no
+          route to the page that pays it. */}
+      {!loading && !error && (
+        <p className={styles.muted} style={{ fontSize: '0.8rem', marginTop: '1.25rem' }}>
+          Paying the org back, or claiming a reimbursement?{' '}
+          <Link href={`${base}/accounting/payment-requests`} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
+            Open Payment Requests <ArrowRight size={12} aria-hidden />
+          </Link>
+        </p>
       )}
     </div>
   );

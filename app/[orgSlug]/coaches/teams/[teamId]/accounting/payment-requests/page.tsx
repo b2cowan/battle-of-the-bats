@@ -1,11 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, ArrowLeft } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
+import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 
 interface PaymentRequest {
   id: string;
@@ -108,6 +110,16 @@ export default function PaymentRequestsPage({
 
   useOverlayOpen(showForm);
 
+  // Discard guard (review f7-3/f7-7) — the form's fields are separate state rather than one
+  // BLANK_* object, so dirtiness is read off them directly; the type picker doesn't count
+  // (it always has a value, so it can never be "entered").
+  const formDirty = Boolean(formAmount || formDesc || formMethod || formNotes);
+  const closeForm = useDiscardGuard({
+    dirty: formDirty,
+    close: () => setShowForm(false),
+    noun: 'payment request',
+  });
+
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
@@ -189,6 +201,7 @@ export default function PaymentRequestsPage({
     );
   }
 
+  const canWriteMoney = assignment.capabilities.money === 'write';
   const pending  = requests.filter(r => r.status === 'pending').length;
   const approved = requests.filter(r => r.status === 'approved').length;
   const denied   = requests.filter(r => r.status === 'denied').length;
@@ -206,10 +219,22 @@ export default function PaymentRequestsPage({
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
         </div>
-        <button type="button" className={styles.btnPrimary} onClick={openForm}>
-          + New Request
-        </button>
+        {/* Same gap the Expenses page had: this page never checked the money capability at all,
+            so a read-only assistant was offered a form the server would refuse. */}
+        {canWriteMoney && (
+          <button type="button" className={styles.btnPrimary} onClick={openForm}>
+            + New Request
+          </button>
+        )}
       </div>
+
+      {/* Cross-link (review f4-7) — the other half of the org-money pair. */}
+      <p className={styles.muted} style={{ fontSize: '0.8rem', margin: '-0.75rem 0 1.25rem' }}>
+        Looking for what the org has billed this team?{' '}
+        <Link href={`${base}/accounting/allocations`} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
+          Open Org Allocations <ArrowRight size={12} aria-hidden />
+        </Link>
+      </p>
 
       {/* Summary row */}
       {requests.length > 0 && (
@@ -314,9 +339,9 @@ export default function PaymentRequestsPage({
 
       {/* New Request form */}
       {showForm && (
-        <div className={styles.modalOverlay} onClick={() => setShowForm(false)}>
+        <div className={styles.modalOverlay} onClick={closeForm}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="New Payment Request" onClose={() => setShowForm(false)} />
+            <CoachModalHeader title="New Payment Request" onClose={closeForm} />
 
             <div className={styles.formGrid}>
               {/* Type picker */}
@@ -425,7 +450,7 @@ export default function PaymentRequestsPage({
             </div>
 
             <div className={styles.modalFooter}>
-              <button type="button" className={styles.btnGhost} onClick={() => setShowForm(false)}>Cancel</button>
+              <button type="button" className={styles.btnGhost} onClick={closeForm}>Cancel</button>
               <button
                 type="button"
                 className={styles.btnPrimary}
@@ -438,6 +463,11 @@ export default function PaymentRequestsPage({
           </div>
         </div>
       )}
+
+      <UnsavedChangesGuard
+        active={showForm && formDirty}
+        message="You haven't submitted this payment request. Leave without saving it?"
+      />
     </div>
   );
 }

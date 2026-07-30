@@ -63,12 +63,12 @@ finished — everything below is still open.**
 | 2 | Chat has no honest empty state outside a tournament | **OPEN** |
 | 3 | Attendance has no home in the nav (×2 reviewers) | ✅ **Batch 4** — own Squad item, gated on attendance + roster; page opens on "take attendance for {next event}" |
 | 4 | No notification bell anywhere on mobile | **OPEN** |
-| 5 | Unsaved-changes guard missing on Accounting + Tryout-setup forms | **OPEN** |
+| 5 | Unsaved-changes guard missing on Accounting + Tryout-setup forms | ⚠️ **PARTIAL — Chunk A** — every multi-field Money form now asks before discarding (`useDiscardGuard`, a NEW primitive: the shipped guard only covers route changes, and Money's forms are all modals). **Tryout-setup forms remain OPEN** — deferred to chunk E by owner ruling D3 |
 | 6 | Weekly recurrence locks every game to one opponent | **OPEN** — pairs with #7 |
 | 7 | No schedule import | **OPEN** — deliberately excluded from Batch 2; belongs with #6 |
 | 8 | Game-day card downgrades on the actual game day | ✅ **Batch 4** — game day now offers the same one-tap lineup + attendance the in-season card does. The *fuller* card (wow #2: arm-care warning, richer chips) is still open |
 | 9 | Lineup touch targets under the standard (×2 reviewers) | **OPEN** — ⚠ lineups; do with/after Batch 4 |
-| 10 | Money's reports have zero mobile adaptation (×2 reviewers) | **OPEN** — see chunk A below |
+| 10 | Money's reports have zero mobile adaptation (×2 reviewers) | ✅ **Chunk A** (built on dev 2026-07-30) — lists became cards, Budget vs. Actual stayed a comparison grid that scrolls with the line name pinned + a visible swipe hint; `budget.module.css` and `bva.module.css` gained their first-ever media queries |
 | 11 | Forms don't reflow to one column on phones | ✅ **absorbed into Batch 1** (verified 2026-07-29: reaches Player Detail too) |
 | 12 | No orientation for coaches who never had a free team | **OPEN, narrowed** — Batch 2's first-week trail covers the guidance half; the *welcome* moment for cold signups is still missing |
 | 13 | Guardian fields are contact-only, unexplained | ➡️ **moved to §1.4** (guardian model) |
@@ -81,7 +81,10 @@ finished — everything below is still open.**
 
 Not enumerated here — the review's paragraph stays the source. **Absorbed so far:**
 - Native `window.confirm` for removing an assistant → ✅ Batch 2 (portal dialog)
-- Native `alert()` on budget-delete failure → **still OPEN** (see chunk A below)
+- Native `alert()` on budget-delete failure → ✅ **Chunk A** — the reason now appears inside the delete dialog, which is still open when the failure lands. **This was the LAST native browser dialog anywhere under `app/[orgSlug]/coaches/`**; a probe now asserts none fires
+- Inconsistent "(paid only)" caveats on Money's headline numbers (f4-6) → ✅ **Chunk A** — the cash basis is stated once above the row
+- No cross-link between Payment Requests and Org Allocations (f4-7) → ✅ **Chunk A** (both directions)
+- Desktop grids capped to a narrow column then scrolling internally (f9-2) → ⚠️ **PARTIAL — Chunk A** — Budget vs. Actual took the shipped `.pageWide` opt-in (the 960px cap is the portal's convention, NOT a Money bug, so the shared default was left alone). **The Depth Chart half remains OPEN** — different area, chunk E territory
 - "Save & add another" on the one-player flow → ✅ Batch 2
 - Live duplicate-jersey check → ⚠️ **PARTIAL** — Batch 2 flags clashes in the *bulk preview*; the
   single Add Player form still only reports them after saving
@@ -107,7 +110,7 @@ The open items above are not a to-do list to work top-down — they cluster into
 Sized so one chat can plan → mock → build → review each. **Chunk A is the recommended next build**
 (collision-free while Batch 4 runs; every other chunk overlaps something in flight or needs a decision).
 
-**A · Money on a phone** — *recommended next; medium; no dependencies*
+**A · Money on a phone** — ✅ **BUILT ON DEV 2026-07-30** (plan + PM brief: `COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`; mockups `claude.ai/code/artifact/dc2eb969-1f4d-4743-9bfc-d1cd55575e3d`). No migration, as predicted. Also caught and fixed **two pre-existing capability leaks** the mobile work had nothing to do with: the Expenses page's Add Expense/Add Payable buttons and the whole Payment Requests page offered write forms to a `read`-only money coach. Remaining: `/simplify` → `/review` → `/docs` → owner QA → commit. *(original scope below)*
 P1 #10 (reports have zero mobile adaptation, ×2 reviewers) + the remaining mobile-pass tables from
 §1.3 (expenses, allocations, budget-vs-actual, fundraiser detail — "mechanical, follows the Dues
 exemplar") + P1 #5 (unsaved-changes guard on accounting forms — a hand-built budget split is the
@@ -190,11 +193,18 @@ From the owner-driven premium walkthrough (2026-06-26 → 06-28). These were exp
 - **Assistant-coach first-run.** Team Overview shows head-coach rail/checklist to assistants who can't action it. → belongs with the assistant-capabilities work.
 - **Inline roster quick-edit.** Every jersey/position/contact change requires opening the full player profile — slow for first-time setup. Larger interaction change; deliberately deferred.
 
-### 1.3 Mobile pass — unfinished tail
+### 1.3 Mobile pass — ✅ COMPLETE (Chunk A, 2026-07-30)
 Conventions are LOCKED (2026-06-29, logged in `memory/design_decisions.md`). Overview, Roster,
-Schedule, and the Accounting **Dues** exemplar are done. **Remaining:** convert the other accounting
-tables to the shared card pattern — **expenses, allocations, budget-vs-actual, fundraiser detail**.
-Mechanical, follows the Dues exemplar exactly.
+Schedule and the Accounting **Dues** exemplar were done; **Chunk A finished the tail** —
+expenses, tournament payables, allocations, budget-vs-actual and fundraiser detail.
+
+⚠ **It was NOT "mechanical, follows the Dues exemplar exactly", and a future reader should not
+repeat that assumption elsewhere.** Two of the five surfaces were never tables at all: Budget and
+Budget vs. Actual are fixed-pixel CSS grids, and Budget vs. Actual is a **comparison** that would
+have been destroyed by card-stacking. The list-vs-grid ruling and the scroll-hint primitive that
+came out of it are binding (`memory/design_decisions.md`, 2026-07-30). Chunk A also fixed the
+Budget line form, which uses its own local layout and therefore never received Batch 1's shared
+one-column phone reflow at all.
 
 ### 1.4 Get the guardian model right — NOT BUILT
 The only fully unbuilt item in this program. Free portal stores player + guardian as a **single name

@@ -281,28 +281,38 @@ export default function CoachesAccountingPage({
         <>
           {renderAnchor(summary)}
 
-          {/* Cash-honest headline numbers — same paid-only basis as Budget vs. Actual. */}
+          {/* Cash-honest headline numbers — same paid-only basis as Budget vs. Actual.
+              The basis is stated ONCE above the row (review f4-6). It used to be bolted onto
+              Money Out alone as "(paid only)", while Money In carried no caveat despite being
+              equally collected-only and On Hand silently inherited both — so the row read as
+              "committed revenue vs. cash spent" when it is cash on both sides. */}
+          <p className={styles.moneySummaryBasis}>
+            Cash actually received and actually paid — not what&apos;s still owed.{' '}
+            <Link href={`${base}/accounting/dues`} className={`${styles.linkBtn} ${styles.linkBtnAccent}`}>
+              See what&apos;s outstanding <ArrowRight size={12} aria-hidden />
+            </Link>
+          </p>
           <div className={styles.summaryGrid} style={{ marginBottom: '1.5rem' }}>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>Money In</span>
               <span className={styles.summaryCardValue} style={{ color: summary.moneyIn.total > 0 ? 'var(--success)' : undefined }}>
                 {fmt(summary.moneyIn.total)}
               </span>
-              <span className={styles.moneySummarySub}>dues + fundraising{summary.moneyIn.orgFunding > 0 ? ' + org' : ''}</span>
+              <span className={styles.moneySummarySub}>dues + fundraising{summary.moneyIn.orgFunding > 0 ? ' + org' : ''} received</span>
             </div>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>Money Out</span>
               <span className={styles.summaryCardValue} style={{ color: summary.moneyOut.total > 0 ? 'var(--danger)' : undefined }}>
                 {fmt(summary.moneyOut.total)}
               </span>
-              <span className={styles.moneySummarySub}>expenses{summary.orgLinked ? ' + org payments' : ''} (paid only)</span>
+              <span className={styles.moneySummarySub}>expenses{summary.orgLinked ? ' + org payments' : ''} paid</span>
             </div>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>On Hand</span>
               <span className={styles.summaryCardValue} style={{ color: summary.onHand >= 0 ? 'var(--success)' : 'var(--danger)' }}>
                 {fmt(summary.onHand)}
               </span>
-              <span className={styles.moneySummarySub}>in − out</span>
+              <span className={styles.moneySummarySub}>received − paid</span>
             </div>
             <div className={styles.summaryCard}>
               <span className={styles.summaryCardLabel}>Budget Headroom</span>

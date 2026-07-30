@@ -1,6 +1,21 @@
+/* Wider than the portal's 960px reading column, on the same reasoning the Schedule's
+   week/month views already use `.pageWide` for: this is a structured comparison grid,
+   not a text column, and capping it forced an internal horizontal scroll on a wide
+   monitor (review f9-2). The SHARED default is deliberately left alone — widening every
+   Money page would make Money the only wide area in the portal. Chunk A D2. */
 .page {
-  max-width: 960px;
+  max-width: 1200px;
   --bva-unbudgeted: #f97316; /* token-exempt: distinct from schedule event accent */
+}
+
+/* The scrolling comparison grid's inner track. Below the content breakpoint the fixed
+   money columns (3 × 110px, plus 100px for the period date) no longer fit beside a
+   readable line name, so the track keeps its natural width and <CoachScrollX> scrolls
+   it — first column pinned, swipe hint shown. Above it, min-width: 100% means the grid
+   fills the page exactly as before and the scroller never engages. */
+.gridInner { min-width: 100%; }
+@media (max-width: 640px) {
+  .gridInner { min-width: 520px; }
 }
 
 .pageHeader {
@@ -457,6 +472,58 @@
 .notAssigned {
   padding: 2rem;
   color: var(--white-40, rgba(255,255,255,0.4));
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CONTENT REFLOW — 640px (Chunk A, 2026-07-29). This file previously had NO media
+   query at all: the page had no phone handling whatsoever, so the fixed money
+   columns pushed the WHOLE page sideways and Variance fell off the screen.
+   Two breakpoints only, portal-wide — 900 shell / 640 content. Do not add a third.
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Headroom / Total budget / Total actual read top-to-bottom rather than as a
+     three-across banner with a vertical rule squeezed between them. The axis flip
+     comes from the shared .stack640 on the element; only the page's own spacing and
+     its own divider live here. */
+  .summaryBanner {
+    gap: 0.75rem;
+    padding: 1rem 1.1rem;
+  }
+  .summaryDivider { display: none; }
+
+  /* The pinned first column owns its own leading gutter — see --scrollx-pin-gutter in the
+     shared primitive. Each row hands down what its left padding used to be, INCLUDING the
+     hierarchy indent (line rows sit inside categories, period rows inside lines), so the
+     nesting still reads while the label stays put through a swipe. */
+  .tableHeader,
+  .categoryHeader,
+  .lineMain,
+  .periodRow,
+  .grandTotal { padding-left: 0; padding-right: 0.7rem; }
+  .tableHeader,
+  .categoryHeader,
+  .grandTotal { --scrollx-pin-gutter: 0.7rem; }
+  .lineMain   { --scrollx-pin-gutter: 1.4rem; }
+  .periodRow  { --scrollx-pin-gutter: 2.1rem; }
+
+  /* (Long line and period names wrap rather than ellipse — shared .wrap640 on the
+     elements themselves, not a rule here.) */
+
+  /* Unbudgeted expenses are a LIST, so the row becomes a card (`.stack640` on the row
+     supplies the axis flip). Left-aligned, with the amount and the action on their own
+     lines instead of chased off the right edge by `margin-left: auto`. */
+  .unbudgetedRow {
+    align-items: flex-start;
+    gap: 0.3rem;
+    padding: 0.65rem 0;
+  }
+  .unbudgetedCat,
+  .unbudgetedDate { align-self: flex-start; }
+  .unbudgetedAmount {
+    margin-left: 0;
+    font-size: 1rem;
+  }
+  .unbudgetedTotal { gap: 0.75rem; }
 }
 
 /* ── Warm Coaches Portal — Stage 3 (dev-gated) ───────────────────────────────

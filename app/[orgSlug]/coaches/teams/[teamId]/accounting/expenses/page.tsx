@@ -10,6 +10,8 @@ import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
+import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -100,6 +102,21 @@ export default function CoachesExpensesPage({
   // Nav-hide + body-scroll-lock registration for the two Add modals (mobile sheet default).
   useOverlayOpen(showAddExpense);
   useOverlayOpen(showAddPayable);
+
+  // Discard guards (Chunk A, review f7-3/f7-7): a backdrop tap on a half-filled form used to
+  // bin it silently. Dirtiness covers the combobox/tag selections too, not just the text fields.
+  const expenseDirty = touched(expenseForm, BLANK_EXPENSE) || !!expensePayee || expenseFormTags.length > 0;
+  const payableDirty = touched(payableForm, BLANK_PAYABLE) || !!payablePayee || payableFormTags.length > 0;
+  const closeAddExpense = useDiscardGuard({
+    dirty: expenseDirty,
+    close: () => setShowAddExpense(false),
+    noun: 'expense',
+  });
+  const closeAddPayable = useDiscardGuard({
+    dirty: payableDirty,
+    close: () => setShowAddPayable(false),
+    noun: 'tournament payable',
+  });
 
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -375,12 +392,19 @@ export default function CoachesExpensesPage({
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>
-          <button className={styles.btnSecondary} onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); }}>
-            <Plus size={14} /> Add Expense
-          </button>
-          <button className={styles.btnSecondary} onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); }}>
-            <Plus size={14} /> Add Payable
-          </button>
+          {/* ⚠ These two were the ONLY ungated write affordances on the page — every other one
+              already checked canWriteMoney. A read-only money assistant could open either sheet,
+              fill it in and only then hit the server's refusal. Found by the Chunk A probe. */}
+          {canWriteMoney && (
+            <button className={styles.btnSecondary} onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); }}>
+              <Plus size={14} /> Add Expense
+            </button>
+          )}
+          {canWriteMoney && (
+            <button className={styles.btnSecondary} onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); }}>
+              <Plus size={14} /> Add Payable
+            </button>
+          )}
           {canWriteMoney && ownMoneyTags.length > 0 && (
             <button className={styles.btnGhost} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
               <Settings2 size={14} /> Manage tags
@@ -439,7 +463,7 @@ export default function CoachesExpensesPage({
         independentExpenses.length === 0 ? (
           <div className={styles.emptyState}>No expenses logged yet. Use "Add Expense" to get started.</div>
         ) : (
-          <div className={styles.tableWrap}>
+          <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -453,7 +477,7 @@ export default function CoachesExpensesPage({
               <tbody>
                 {independentExpenses.map(e => (
                   <tr key={e.id} className={styles.tr}>
-                    <td className={styles.td}>
+                    <td className={`${styles.td} ${styles.cardStackCell}`} data-label="Description">
                       {e.description}
                       {editingTagsFor === e.id ? (
                         <div style={{ marginTop: '0.45rem', maxWidth: 340 }}>
@@ -477,9 +501,9 @@ export default function CoachesExpensesPage({
                         </>
                       )}
                     </td>
-                    <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
-                    <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(e.amount)}</td>
-                    <td className={styles.td}>
+                    <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>{e.category ?? '—'}</td>
+                    <td className={styles.td} data-label="Amount" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(e.amount)}</td>
+                    <td className={styles.td} data-label="Status">
                       {e.expensePaidAt ? (
                         <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
                           <CheckCircle2 size={12} /> Paid {fmtDate(e.expensePaidAt)}
@@ -488,11 +512,13 @@ export default function CoachesExpensesPage({
                         <span className={`${styles.badge} ${styles.badgeDraft}`} style={{ fontSize: '0.75rem' }}>Unpaid</span>
                       )}
                     </td>
-                    <td className={styles.td}>
-                      {!e.expensePaidAt && (
+                    {/* Trailing action cell. Left unlabelled and always present so the table
+                        keeps square rows; card mode drops it when it renders nothing (a paid
+                        expense, or a read-only money coach) rather than drawing a blank line. */}
+                    <td className={`${styles.td} ${styles.cardActionCell}`}>
+                      {!e.expensePaidAt && canWriteMoney && (
                         <button
-                          className={styles.btnSecondary}
-                          style={{ fontSize: '0.75rem', padding: '0.2rem 0.55rem' }}
+                          className={`${styles.btnSecondary} ${styles.compactAction}`}
                           disabled={!!marking[e.id + 'markExpensePaid']}
                           onClick={() => doAction(e.id, 'markExpensePaid')}
                         >
@@ -524,9 +550,12 @@ export default function CoachesExpensesPage({
                     <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--home-ink, rgba(255,255,255,0.85))', flexShrink: 0 }}>{fmt(e.amount)}</span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                  {/* Deposit + balance share a row on a desktop and stack on a phone. Two
+                      ~150px boxes each holding an amount, a due date, an overdue warning and a
+                      button was the worst-value split in Money (Chunk A D5). */}
+                  <div className={styles.stack640} style={{ gap: '0.75rem' }}>
                     {/* Deposit */}
-                    <div style={{ background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
+                    <div style={{ flex: 1, minWidth: 0, background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
                       <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Deposit</p>
                       {e.depositAmount != null ? (
                         <>
@@ -541,12 +570,12 @@ export default function CoachesExpensesPage({
                             </span>
                           ) : (
                             <button
-                              className={styles.btnSecondary}
-                              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', marginTop: '0.4rem' }}
+                              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+                              style={{ marginTop: '0.4rem' }}
                               disabled={!!marking[e.id + 'markDepositPaid']}
                               onClick={() => doAction(e.id, 'markDepositPaid')}
                             >
-                              {marking[e.id + 'markDepositPaid'] ? '…' : 'Mark Paid'}
+                              {marking[e.id + 'markDepositPaid'] ? '…' : 'Mark deposit paid'}
                             </button>
                           )}
                         </>
@@ -554,7 +583,7 @@ export default function CoachesExpensesPage({
                     </div>
 
                     {/* Balance */}
-                    <div style={{ background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
+                    <div style={{ flex: 1, minWidth: 0, background: 'var(--home-card, rgba(255,255,255,0.04))', borderRadius: 6, padding: '0.65rem 0.85rem' }}>
                       <p style={{ margin: '0 0 0.25rem', fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.4))', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Balance</p>
                       {e.balanceAmount != null ? (
                         <>
@@ -569,12 +598,12 @@ export default function CoachesExpensesPage({
                             </span>
                           ) : (
                             <button
-                              className={styles.btnSecondary}
-                              style={{ fontSize: '0.72rem', padding: '0.2rem 0.5rem', marginTop: '0.4rem' }}
+                              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+                              style={{ marginTop: '0.4rem' }}
                               disabled={!!marking[e.id + 'markBalancePaid']}
                               onClick={() => doAction(e.id, 'markBalancePaid')}
                             >
-                              {marking[e.id + 'markBalancePaid'] ? '…' : 'Mark Paid'}
+                              {marking[e.id + 'markBalancePaid'] ? '…' : 'Mark balance paid'}
                             </button>
                           )}
                         </>
@@ -614,9 +643,9 @@ export default function CoachesExpensesPage({
 
       {/* Add Expense modal */}
       {showAddExpense && (
-        <div className={styles.modalOverlay} onClick={() => setShowAddExpense(false)}>
+        <div className={styles.modalOverlay} onClick={closeAddExpense}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="Add Expense" onClose={() => setShowAddExpense(false)} />
+            <CoachModalHeader title="Add Expense" onClose={closeAddExpense} />
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Description *</label>
@@ -651,7 +680,7 @@ export default function CoachesExpensesPage({
             </div>
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
             <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={() => setShowAddExpense(false)}>Cancel</button>
+              <button className={styles.btnGhost} onClick={closeAddExpense}>Cancel</button>
               <button className={styles.btnPrimary} disabled={saving} onClick={addExpense}>{saving ? 'Saving…' : 'Add Expense'}</button>
             </div>
           </div>
@@ -660,9 +689,9 @@ export default function CoachesExpensesPage({
 
       {/* Add Payable modal */}
       {showAddPayable && (
-        <div className={styles.modalOverlay} onClick={() => setShowAddPayable(false)}>
+        <div className={styles.modalOverlay} onClick={closeAddPayable}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="Add Tournament Payable" onClose={() => setShowAddPayable(false)} />
+            <CoachModalHeader title="Add Tournament Payable" onClose={closeAddPayable} />
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Description *</label>
@@ -741,7 +770,7 @@ export default function CoachesExpensesPage({
             </div>
             {saveError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{saveError}</p>}
             <div className={styles.modalFooter}>
-              <button className={styles.btnGhost} onClick={() => setShowAddPayable(false)}>Cancel</button>
+              <button className={styles.btnGhost} onClick={closeAddPayable}>Cancel</button>
               <button className={styles.btnPrimary} disabled={saving} onClick={addPayable}>{saving ? 'Saving…' : 'Add Payable'}</button>
             </div>
           </div>
@@ -761,6 +790,13 @@ export default function CoachesExpensesPage({
           onChanged={load}
         />
       )}
+
+      {/* The discard guard covers dismissing the sheet; this covers walking away from it —
+          a tap on the sidebar, the bottom nav, or a browser refresh mid-form. */}
+      <UnsavedChangesGuard
+        active={(showAddExpense && expenseDirty) || (showAddPayable && payableDirty)}
+        message="You haven't saved what you entered on this form. Leave without saving it?"
+      />
     </div>
   );
 }

@@ -6,6 +6,8 @@ import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
+import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 
 interface FundraiserDetail {
   id: string;
@@ -81,9 +83,28 @@ export default function FundraiserDetailPage({
   const [editError, setEditError]       = useState('');
 
   const assignment = assignments.find(a => a.teamId === teamId);
+  // Money is three-state (off|read|write). Settings and the per-player log form are both
+  // refused server-side for a read-only coach; don't offer them either.
+  const canWriteMoney = assignment?.capabilities.money === 'write';
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   useOverlayOpen(showSettings);
+
+  // Discard guard (review f7-3/f7-7). Settings is an EDIT form, so the baseline is the loaded
+  // fundraiser rather than a blank object — otherwise opening it would read as dirty at once.
+  const settingsDirty = !!fundraiser && (
+    editName !== fundraiser.name
+    || editDesc !== (fundraiser.description ?? '')
+    || editRebate !== String(fundraiser.playerRebatePercent)
+    || editStart !== (fundraiser.startDate ?? '')
+    || editEnd !== (fundraiser.endDate ?? '')
+    || editActive !== fundraiser.isActive
+  );
+  const closeSettings = useDiscardGuard({
+    dirty: settingsDirty,
+    close: () => setShowSettings(false),
+    noun: 'change to the fundraiser',
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -238,9 +259,11 @@ export default function FundraiserDetailPage({
               {fundraiser.isActive ? 'Active' : 'Closed'}
             </span>
           )}
-          <button className={styles.btnSecondary} onClick={openSettings} title="Edit fundraiser settings">
-            <Settings size={15} /> Settings
-          </button>
+          {canWriteMoney && (
+            <button className={styles.btnSecondary} onClick={openSettings} title="Edit fundraiser settings">
+              <Settings size={15} /> Settings
+            </button>
+          )}
         </div>
       </div>
 
@@ -285,7 +308,10 @@ export default function FundraiserDetailPage({
               <p className={styles.emptyStateSub}>Add active players to this team's roster to start logging fundraising amounts.</p>
             </div>
           ) : (
-            <div className={styles.tableWrap}>
+            // One player per row: a list, so it stacks into cards at 640 (the Dues exemplar).
+            // The trailing cell carries an inline form, so it stacks rather than trying to
+            // fit two inputs and two buttons into a label/value line.
+            <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
               <table className={styles.table}>
                 <thead>
                   <tr>
@@ -303,73 +329,77 @@ export default function FundraiserDetailPage({
                     const rank = player.entry ? idx + 1 : null;
                     return (
                       <tr key={player.playerId} className={styles.tr}>
-                        <td className={styles.td} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', width: '2.5rem' }}>
+                        <td className={styles.td} data-label="Rank" style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))', width: '2.5rem' }}>
                           {rank ?? '—'}
                         </td>
-                        <td className={styles.td}>
+                        <td className={styles.td} data-label="Player">
                           <span className={styles.playerName}>{player.playerName}</span>
                         </td>
-                        <td className={styles.td} style={{ textAlign: 'right' }}>
+                        <td className={styles.td} data-label="Raised" style={{ textAlign: 'right' }}>
                           {player.entry ? (
                             <span style={{ fontWeight: 700, color: 'var(--success-light)' }}>{fmt(player.entry.amountRaised)}</span>
                           ) : (
                             <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
                           )}
                         </td>
-                        <td className={styles.td} style={{ textAlign: 'right' }}>
+                        <td className={styles.td} data-label="Rebate" style={{ textAlign: 'right' }}>
                           {player.entry && player.entry.rebateAmount > 0 ? (
                             <span style={{ fontWeight: 600, color: 'var(--home-plum, #a855f7)' }}>{fmt(player.entry.rebateAmount)}</span>
                           ) : (
                             <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
                           )}
                         </td>
-                        <td className={styles.td} style={{ textAlign: 'right' }}>
+                        <td className={styles.td} data-label="Dues left" style={{ textAlign: 'right' }}>
                           <span style={{ color: player.remainingDues > 0 ? 'var(--home-amber, #f97316)' : 'var(--home-dim, rgba(255,255,255,0.4))' }}>
                             {player.remainingDues > 0 ? fmt(player.remainingDues) : '—'}
                           </span>
                         </td>
-                        <td className={styles.td} style={{ width: '1%', whiteSpace: 'nowrap' }}>
+                        <td
+                          className={`${styles.td} ${isLogging ? styles.cardStackCell : styles.cardActionCell}`}
+                          style={{ width: '1%', whiteSpace: 'nowrap' }}
+                        >
                           {isLogging ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                            <div className={styles.stack640} style={{ alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                               <input
-                                className={styles.input}
+                                className={`${styles.input} ${styles.inlineField}`}
+                                style={{ '--inline-field-w': '90px' } as React.CSSProperties}
                                 type="number"
                                 min={0}
                                 step="0.01"
                                 value={logAmount}
                                 onChange={e => setLogAmount(e.target.value)}
                                 placeholder="0.00"
-                                style={{ width: '90px' }}
+                                aria-label="Amount raised"
                                 autoFocus
                               />
                               <input
-                                className={styles.input}
+                                className={`${styles.input} ${styles.inlineField}`}
+                                style={{ '--inline-field-w': '120px' } as React.CSSProperties}
                                 type="text"
                                 value={logNotes}
                                 onChange={e => setLogNotes(e.target.value)}
                                 placeholder="Notes (optional)"
-                                style={{ width: '120px' }}
+                                aria-label="Notes"
                               />
                               {logError && <p className={styles.errorText} style={{ margin: 0, fontSize: '0.78rem' }}>{logError}</p>}
+                              {/* Named rather than icon-only: these were a bare tick and cross
+                                  with only a title attribute, which reads as nothing on a phone
+                                  and nothing to a screen reader. Full width once the row stacks. */}
                               <button
-                                className={styles.btnPrimary}
+                                className={`${styles.btnPrimary} ${styles.block640} ${styles.compactAction}`}
                                 disabled={logSaving}
                                 onClick={() => saveLog(player)}
-                                style={{ padding: '0.35rem 0.6rem' }}
-                                title="Save"
                               >
-                                <Check size={14} />
+                                <Check size={14} aria-hidden /> {logSaving ? 'Saving…' : 'Save'}
                               </button>
                               <button
-                                className={styles.btnGhost}
+                                className={`${styles.btnGhost} ${styles.block640} ${styles.compactAction}`}
                                 onClick={cancelLog}
-                                style={{ padding: '0.35rem 0.5rem' }}
-                                title="Cancel"
                               >
-                                <X size={14} />
+                                <X size={14} aria-hidden /> Cancel
                               </button>
                             </div>
-                          ) : (
+                          ) : canWriteMoney ? (
                             <button
                               className={styles.btnGhost}
                               onClick={() => startLog(player.playerId, player.entry)}
@@ -377,9 +407,9 @@ export default function FundraiserDetailPage({
                               disabled={!fundraiser?.isActive}
                               title={!fundraiser?.isActive ? 'Fundraiser is closed' : undefined}
                             >
-                              {player.entry ? 'Edit' : 'Log Amount'}
+                              {player.entry ? 'Edit amount' : 'Log amount'}
                             </button>
-                          )}
+                          ) : null}
                         </td>
                       </tr>
                     );
@@ -393,9 +423,9 @@ export default function FundraiserDetailPage({
 
       {/* Settings modal */}
       {showSettings && fundraiser && (
-        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setShowSettings(false); }}>
+        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) closeSettings(); }}>
           <div className={styles.modal}>
-            <CoachModalHeader title="Fundraiser Settings" onClose={() => setShowSettings(false)} titleTag="h2" closeIconSize={18} />
+            <CoachModalHeader title="Fundraiser Settings" onClose={closeSettings} titleTag="h2" closeIconSize={18} />
             <form onSubmit={saveSettings}>
               <div className={styles.formGrid}>
                 <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -464,7 +494,7 @@ export default function FundraiserDetailPage({
               </div>
               {editError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{editError}</p>}
               <div className={styles.modalFooter}>
-                <button type="button" className={styles.btnGhost} onClick={() => setShowSettings(false)}>Cancel</button>
+                <button type="button" className={styles.btnGhost} onClick={closeSettings}>Cancel</button>
                 <button type="submit" className={styles.btnPrimary} disabled={editSaving}>
                   {editSaving ? 'Saving…' : 'Save Changes'}
                 </button>
@@ -473,6 +503,11 @@ export default function FundraiserDetailPage({
           </div>
         </div>
       )}
+
+      <UnsavedChangesGuard
+        active={showSettings && settingsDirty}
+        message="You haven't saved your changes to this fundraiser. Leave without saving them?"
+      />
     </div>
   );
 }

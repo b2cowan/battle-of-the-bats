@@ -396,6 +396,27 @@
 }
 .periodInputRow:last-child { margin-bottom: 0; }
 
+/* Period field wrappers. On a desktop these are invisible — the <label> is just a flex
+   child sized like the bare <input> it replaced, and its text is hidden — so the row
+   still reads as one compact line. At ≤640 the text appears and each field becomes a
+   full-width row inside a labelled group (see the reflow block at the foot of this file). */
+.periodFieldLabel { display: flex; flex: 2; min-width: 0; }
+.periodFieldDate  { flex: 1.5; }
+.periodFieldAmount { flex: 1; }
+.periodFieldLabel > .input { width: 100%; }
+.periodFieldLabelText { display: none; }
+
+.periodGroupHead { display: none; }
+
+.periodPercentOut {
+  flex-shrink: 0;
+  min-width: 70px;
+  text-align: right;
+  font-size: 0.78rem;
+  color: var(--white-45, rgba(255,255,255,0.45));
+  font-variant-numeric: tabular-nums;
+}
+
 .removePeriodBtn {
   background: none;
   border: none;
@@ -503,4 +524,122 @@
   color: var(--success-light);
   font-weight: 600;
   font-size: 0.95rem;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   CONTENT REFLOW — 640px (Chunk A, 2026-07-29). This file previously had NO media
+   query: the page had no phone handling, and because its form uses .formRow rather
+   than the shared .formGrid, Batch 1's one-column reflow never reached it either.
+   Two breakpoints only, portal-wide — 900 shell / 640 content. Do not add a third.
+   ════════════════════════════════════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  /* Summary tiles read top-to-bottom instead of as a wrapping multi-column banner.
+     The axis flip comes from the shared .stack640 on the element; only the page's own
+     spacing lives here. */
+  .summaryBanner {
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+  }
+  .summaryItem { min-width: 0; }
+
+  /* (The amount field and the "split by period" checkbox stop sharing a row via the
+     shared .stack640 on .formRow — the page's own gap is all that's left here.) */
+  .formRow { gap: 0.5rem; }
+  .toggleLabel { padding-bottom: 0; }
+
+  /* ── The period split: a row of three shrunken inputs becomes a labelled group ──
+     This is the work a coach least wants to retype, so each field gets full width
+     and its own visible label, with the remove control at a real touch size in the
+     group heading (the trailing icon-only button hides — the CoachModalHeader idiom
+     of rendering both and letting CSS choose). */
+  .periodsSection { padding: 0.75rem; }
+  .periodsSectionHeader {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .periodInputRow {
+    display: block;
+    border: 1px solid var(--home-line, rgba(255,255,255,0.1));
+    border-radius: 9px;
+    padding: 0.65rem 0.7rem;
+    margin-bottom: 0.6rem;
+    background: var(--home-olive-soft, rgba(255,255,255,0.02));
+  }
+  .periodGroupHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+  .periodGroupNum {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--white-45, rgba(255,255,255,0.45));
+  }
+  .periodGroupRemove {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: none;
+    border: none;
+    padding: 0.3rem 0.1rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--white-45, rgba(255,255,255,0.45));
+    cursor: pointer;
+  }
+  .periodGroupRemove:hover { color: var(--danger-light); }
+
+  .periodFieldLabel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: none;
+    margin-bottom: 0.5rem;
+  }
+  .periodFieldLabel:last-of-type { margin-bottom: 0; }
+  .periodFieldLabelText {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--white-60, rgba(255,255,255,0.6));
+  }
+
+  /* The trailing icon-only remove and the desktop-only #n marker both give way to the
+     group heading. The percent readout becomes a left-aligned line under the fields. */
+  .periodInputRow > .removePeriodBtn,
+  .periodInputRow > .installmentNum { display: none; }
+  .periodPercentOut {
+    display: block;
+    min-width: 0;
+    text-align: left;
+    margin-top: 0.4rem;
+  }
+
+  /* (Long descriptions wrap rather than ellipse — shared .wrap640 on the elements
+     themselves, not a rule here.) …which means the amount can no longer be pinned by
+     `margin-left: auto` against a nowrap description; the row wraps and the amount
+     sits under the name. */
+  .lineMain { flex-wrap: wrap; }
+  .lineInfo { flex-basis: 100%; }
+
+  /* The "generate installments" CTA stacks its copy above its button. */
+  .generateSection { gap: 0.85rem; }
+  .generateSection > button { width: 100%; }
+
+  /* The preview grid keeps its fixed money columns and scrolls (CoachScrollX) rather
+     than crushing them; it just needs room to exceed the sheet. The player column hands
+     its left padding to the pinned cell so the name doesn't lurch on the first swipe
+     (see --scrollx-pin-gutter in coaches.module.css). */
+  .previewTable { min-width: 420px; }
+  .previewHeader,
+  .previewRow {
+    padding-left: 0;
+    --scrollx-pin-gutter: 0.75rem;
+  }
 }

@@ -6,6 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachScrollX from '@/components/coaches/CoachScrollX';
 import ExportMenu from '@/components/admin/ExportMenu';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -426,7 +427,7 @@ export default function BudgetVsActualPage({
           )}
 
           {/* Headroom summary */}
-          <div className={styles.summaryBanner}>
+          <div className={`${styles.summaryBanner} ${shared.stack640}`}>
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Headroom</span>
               <span
@@ -500,8 +501,15 @@ export default function BudgetVsActualPage({
           {/* Category breakdown */}
           {data.categories.length > 0 && (
             <div className={styles.section}>
+             {/* Budgeted / Actual / Variance side by side IS the report — card-stacking it
+                 would remove the sideways scroll and the comparison with it (Chunk A D1). So
+                 the grid keeps its shape, scrolls inside its own frame, pins the line name,
+                 and says out loud that it scrolls. Frameless: the category cards already have
+                 borders, and on a desktop this never overflows at all. */}
+             <CoachScrollX sticky frame={false} hint="Swipe the table to see Actual and Variance">
+              <div className={styles.gridInner}>
               <div className={styles.tableHeader}>
-                <span className={styles.colDesc}>Category / Line Item</span>
+                <span className={`${styles.colDesc} ${shared.scrollXStickyCell}`}>Category / Line Item</span>
                 <span className={styles.colNum}>Budgeted</span>
                 <span className={styles.colNum}>Actual</span>
                 <span className={styles.colNum}>Variance</span>
@@ -514,7 +522,7 @@ export default function BudgetVsActualPage({
                       className={styles.categoryHeader}
                       onClick={() => toggleCat(cat.categoryName)}
                     >
-                      <div className={styles.catHeaderInner}>
+                      <div className={`${styles.catHeaderInner} ${shared.scrollXStickyCell}`}>
                         <span className={styles.expandIcon}>
                           {expandedCats.has(cat.categoryName)
                             ? <ChevronDown size={14} />
@@ -538,7 +546,7 @@ export default function BudgetVsActualPage({
                         {cat.lines.map(line => (
                           <div key={line.budgetLineId} className={styles.lineRow}>
                             <div className={styles.lineMain}>
-                              <div className={styles.lineInner}>
+                              <div className={`${styles.lineInner} ${shared.scrollXStickyCell}`}>
                                 {line.hasPeriods ? (
                                   <button
                                     className={styles.expandBtn}
@@ -551,7 +559,7 @@ export default function BudgetVsActualPage({
                                 ) : (
                                   <span className={styles.expandSpacer} />
                                 )}
-                                <span className={styles.lineDesc}>{line.description}</span>
+                                <span className={`${styles.lineDesc} ${shared.wrap640}`}>{line.description}</span>
                               </div>
                               <span className={styles.lineNum}>{fmt(line.totalEstimated)}</span>
                               <span className={styles.lineNum} style={{ color: 'var(--home-dim, rgba(255,255,255,0.25))' }}>—</span>
@@ -564,7 +572,7 @@ export default function BudgetVsActualPage({
                                   const variance = p.estimated - p.actual;
                                   return (
                                     <div key={pi} className={styles.periodRow}>
-                                      <span className={styles.periodLabel}>{p.label}</span>
+                                      <span className={`${styles.periodLabel} ${shared.scrollXStickyCell} ${shared.wrap640}`}>{p.label}</span>
                                       <span className={styles.periodDate}>
                                         {p.periodDate
                                           ? new Date(p.periodDate + 'T12:00:00').toLocaleDateString('en-CA', {
@@ -604,7 +612,7 @@ export default function BudgetVsActualPage({
               {data.buffer > 0 && (
                 <div className={styles.categoryGroup}>
                   <div className={styles.categoryHeader} style={{ cursor: 'default' }}>
-                    <div className={styles.catHeaderInner}>
+                    <div className={`${styles.catHeaderInner} ${shared.scrollXStickyCell}`}>
                       <span className={styles.expandIcon} />
                       <span className={styles.categoryName}>Non-itemized buffer</span>
                     </div>
@@ -616,7 +624,7 @@ export default function BudgetVsActualPage({
               )}
 
               <div className={styles.grandTotal}>
-                <span>Total</span>
+                <span className={shared.scrollXStickyCell}>Total</span>
                 <span className={styles.grandNum}>{fmt(data.effectiveBudget)}</span>
                 <span className={styles.grandNum}>{fmt(data.totalActual - unbudgetedTotal)}</span>
                 <span
@@ -627,6 +635,8 @@ export default function BudgetVsActualPage({
                   {fmt(Math.abs(data.headroom + unbudgetedTotal))}
                 </span>
               </div>
+              </div>
+             </CoachScrollX>
             </div>
           )}
 
@@ -638,8 +648,10 @@ export default function BudgetVsActualPage({
                 These paid expenses don&apos;t match any budget category and reduce your headroom.
                 {moneyCanWrite ? ' Recategorize them to count against the right budget line.' : ''}
               </p>
+              {/* A list of one-off expenses, not a comparison — so this stacks into a card at
+                  640 rather than joining the scrolling grid above. */}
               {data.unbudgetedActuals.map(u => (
-                <div key={u.id} className={styles.unbudgetedRow}>
+                <div key={u.id} className={`${styles.unbudgetedRow} ${shared.stack640}`}>
                   <span className={styles.unbudgetedDesc}>{u.description}</span>
                   {u.category && (
                     <span className={styles.unbudgetedCat}>{u.category}</span>
@@ -655,8 +667,8 @@ export default function BudgetVsActualPage({
                   {moneyCanWrite && (
                     <button
                       type="button"
-                      className={shared.btnSecondary}
-                      style={{ fontSize: '0.72rem', padding: '0.2rem 0.55rem', flexShrink: 0 }}
+                      className={`${shared.btnSecondary} ${shared.block640} ${shared.compactAction}`}
+                      style={{ flexShrink: 0 }}
                       onClick={() => { setRecatTarget(u); setRecatCategory(''); setRecatError(''); }}
                     >
                       Recategorize

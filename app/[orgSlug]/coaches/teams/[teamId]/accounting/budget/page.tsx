@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, use } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
 import Link from 'next/link';
 import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -14,6 +14,9 @@ import type {
 import styles from './budget.module.css';
 import shared from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import CoachScrollX from '@/components/coaches/CoachScrollX';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
+import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { tournamentToday } from '@/lib/timezone';
 
 function fmt(n: number) {
@@ -56,6 +59,44 @@ const BLANK_FORM: LineForm = {
 interface InstallmentRow { date: string; amount: string }
 const DEFAULT_INSTALLMENT: InstallmentRow = { date: '', amount: '' };
 
+/** The saved line as form state. ONE mapping, shared by "open the edit modal" and by the
+ *  discard guard's dirty baseline — two copies would drift and the guard would either nag
+ *  on an untouched form or miss a real edit. */
+function formFromLine(line: RepBudgetLineWithPeriods): LineForm {
+  return {
+    description:  line.description,
+    categoryId:   line.categoryId ?? '',
+    itemId:       line.itemId,
+    categoryName: line.categoryName ?? '',
+    itemName:     line.itemName    ?? line.description,
+    totalAmount:  String(line.totalAmount),
+    notes:        line.notes ?? '',
+    usePeriods:   line.periods.length > 0,
+    periodMode:   'amount', // stored periods are always dollars
+    periods:      line.periods.length > 0
+      ? line.periods.map(p => ({ label: p.periodLabel, date: p.periodDate ?? '', amount: String(p.amount) }))
+      : [{ ...BLANK_PERIOD }],
+  };
+}
+
+/** Field-by-field equality for the discard guard. Periods are compared positionally, so
+ *  reordering or editing one counts as a change. `periodMode` is deliberately excluded:
+ *  switching $/% rewrites the period amounts anyway, and toggling it back and forth on an
+ *  untouched form must not read as work in progress. */
+function sameLineForm(a: LineForm, b: LineForm): boolean {
+  if (
+    a.description !== b.description
+    || a.categoryId !== b.categoryId
+    || a.itemId !== b.itemId
+    || a.totalAmount !== b.totalAmount
+    || a.notes !== b.notes
+    || a.usePeriods !== b.usePeriods
+    || a.periods.length !== b.periods.length
+  ) return false;
+  return a.periods.every((p, i) =>
+    p.label === b.periods[i].label && p.date === b.periods[i].date && p.amount === b.periods[i].amount);
+}
+
 export default function BudgetPlannerPage({
   params: paramsPromise,
 }: {
@@ -88,9 +129,14 @@ export default function BudgetPlannerPage({
   const [saving,      setSaving]      = useState(false);
   const [saveError,   setSaveError]   = useState('');
 
-  // Delete confirm
+  // Delete confirm. `deleteError` replaces a native alert() (review f7-6) — the last raw
+  // browser dialog anywhere in the portal. The confirm modal is STILL OPEN when a delete
+  // fails (setDeletingId(null) is only reached on success), so the reason belongs inside
+  // it, the same way every other Money form reports a save error. A second dialog on top
+  // of the first would be nonsense.
   const [deletingId,  setDeletingId]  = useState<string | null>(null);
   const [deleting,    setDeleting]    = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   // Generate installments modal
   const [genOpen,          setGenOpen]          = useState(false);
@@ -106,6 +152,46 @@ export default function BudgetPlannerPage({
   useOverlayOpen(modalOpen);
   useOverlayOpen(!!deletingId);
   useOverlayOpen(genOpen);
+
+  // ── Discard guards (review f7-3/f7-7) ────────────────────────────────────────────
+  // The budget line with a period split is the worst thing in the product to retype, and
+  // it used to vanish on a backdrop tap. `editingLine` is a pre-filled EDIT baseline, so
+  // dirtiness compares against the line as loaded; adding compares against BLANK_FORM.
+  // Memoised on the line being edited: `editingLine` is never cleared on close, so an
+  // unmemoised baseline would re-map the periods array on EVERY render of this page for
+  // the rest of the session — including keystrokes in unrelated modals.
+  const lineBaseline = useMemo(
+    () => (editingLine ? formFromLine(editingLine) : BLANK_FORM),
+    [editingLine],
+  );
+  const lineDirty = modalOpen && !sameLineForm(form, lineBaseline);
+  const filledPeriods = modalOpen && form.usePeriods
+    ? form.periods.filter(p => p.label || p.date || p.amount).length
+    : 0;
+  const closeLineModal = useDiscardGuard({
+    dirty: lineDirty,
+    close: () => setModalOpen(false),
+    noun: 'budget line',
+    // Names the work at stake rather than "unsaved changes" — the period split is the
+    // whole reason this guard exists, so it gets counted out loud.
+    detail: [
+      form.totalAmount && 'an amount',
+      form.description && 'a description',
+      filledPeriods > 0 && `${filledPeriods} payment period${filledPeriods === 1 ? '' : 's'}`,
+    ].filter(Boolean).join(' and ') || undefined,
+  });
+
+  const genDirty = genOpen && !generateSuccess
+    && genInstallments.some(i => i.date || i.amount);
+  const closeGenModal = useDiscardGuard({
+    dirty: genDirty,
+    close: () => setGenOpen(false),
+    noun: 'installment schedule',
+  });
+
+  // The delete confirm holds no typed work, so it closes silently — it just has to clear
+  // the failure message so reopening it doesn't show a stale reason.
+  const closeDelete = useCallback(() => { setDeletingId(null); setDeleteError(''); }, []);
 
   const assignment = assignments.find(a => a.teamId === teamId);
 
@@ -183,20 +269,7 @@ export default function BudgetPlannerPage({
 
   function openEdit(line: RepBudgetLineWithPeriods) {
     setEditingLine(line);
-    setForm({
-      description:  line.description,
-      categoryId:   line.categoryId ?? '',
-      itemId:       line.itemId,
-      categoryName: line.categoryName ?? '',
-      itemName:     line.itemName    ?? line.description,
-      totalAmount:  String(line.totalAmount),
-      notes:        line.notes ?? '',
-      usePeriods:   line.periods.length > 0,
-      periodMode:   'amount', // stored periods are always dollars
-      periods:      line.periods.length > 0
-        ? line.periods.map(p => ({ label: p.periodLabel, date: p.periodDate ?? '', amount: String(p.amount) }))
-        : [{ ...BLANK_PERIOD }],
-    });
+    setForm(formFromLine(line));
     setSaveError('');
     setModalOpen(true);
   }
@@ -351,6 +424,7 @@ export default function BudgetPlannerPage({
 
   async function handleDelete(lineId: string) {
     setDeleting(true);
+    setDeleteError('');
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines/${lineId}`, {
         method: 'DELETE',
@@ -362,7 +436,7 @@ export default function BudgetPlannerPage({
       setDeletingId(null);
       await load();
     } catch (e: unknown) {
-      alert(e instanceof Error ? e.message : 'Delete failed');
+      setDeleteError(e instanceof Error ? e.message : "Couldn't delete this line. Try again in a moment.");
     } finally {
       setDeleting(false);
     }
@@ -476,7 +550,7 @@ export default function BudgetPlannerPage({
         <>
           {/* Budget summary banner — reconciles the optional season total with the
               itemized sum (buffer / over-itemized / sum-of-lines states). */}
-          <div className={styles.summaryBanner}>
+          <div className={`${styles.summaryBanner} ${shared.stack640}`}>
             <div className={styles.summaryItem}>
               <span className={styles.summaryLabel}>Total Planned Budget</span>
               <span className={styles.summaryValue}>{fmt(effectiveTotal)}</span>
@@ -485,14 +559,16 @@ export default function BudgetPlannerPage({
               <span className={styles.summaryLabel}>Season Total</span>
               {editingSeason ? (
                 <span style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                  {/* Width in CSS, not inline: an inline width outranks any media query,
+                      which is what made the editor overflow its tile on a phone. */}
                   <input
-                    className={styles.input}
+                    className={`${styles.input} ${shared.inlineField}`}
+                    style={{ '--inline-field-w': '110px' } as React.CSSProperties}
                     type="number"
                     min={0}
                     step="0.01"
                     value={seasonInput}
                     onChange={e => setSeasonInput(e.target.value)}
-                    style={{ width: 110 }}
                     autoFocus
                   />
                   <button type="button" className={shared.btnPrimary} style={{ fontSize: '0.78rem', padding: '0.3rem 0.7rem' }} disabled={seasonSaving} onClick={saveSeasonTotal}>
@@ -592,8 +668,8 @@ export default function BudgetPlannerPage({
                           {line.periods.length === 0 && <span className={styles.expandSpacer} />}
 
                           <div className={styles.lineInfo}>
-                            <span className={styles.lineDesc}>{line.description}</span>
-                            {line.notes && <span className={styles.lineNotes}>{line.notes}</span>}
+                            <span className={`${styles.lineDesc} ${shared.wrap640}`}>{line.description}</span>
+                            {line.notes && <span className={`${styles.lineNotes} ${shared.wrap640}`}>{line.notes}</span>}
                           </div>
 
                           <span className={styles.lineAmount}>{fmt(line.totalAmount)}</span>
@@ -696,9 +772,9 @@ export default function BudgetPlannerPage({
 
       {/* ── Add / Edit Line Modal ───────────────────────────────────────────── */}
       {modalOpen && (
-        <div className={shared.modalOverlay} onClick={() => setModalOpen(false)}>
+        <div className={shared.modalOverlay} onClick={closeLineModal}>
           <div className={shared.modal} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title={editingLine ? 'Edit Budget Line' : 'Add Budget Line'} onClose={() => setModalOpen(false)} />
+            <CoachModalHeader title={editingLine ? 'Edit Budget Line' : 'Add Budget Line'} onClose={closeLineModal} />
 
             <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
 
@@ -743,11 +819,17 @@ export default function BudgetPlannerPage({
               />
             </div>
 
-            {/* Total amount + period toggle */}
-            <div className={styles.formRow}>
+            {/* Total amount + period toggle. This row uses the page's OWN .formRow, which is
+                why Batch 1's shared one-column-≤640 reflow never reached it: the amount field
+                and the checkbox stayed side by side on a phone, wrapping the label and
+                shrinking the input (Chunk A D5). The shared .stack640 supplies the flip. */}
+            <div className={`${styles.formRow} ${shared.stack640}`}>
               <div className={styles.field} style={{ flex: 1 }}>
-                <label className={styles.label}>Total Amount ($) <span className={styles.labelRequired}>*</span></label>
+                {/* Associated label — tapping it focuses the field, which matters most on the
+                    phone layout where label and input are now on separate lines. */}
+                <label className={styles.label} htmlFor="budget-line-total">Total Amount ($) <span className={styles.labelRequired}>*</span></label>
                 <input
+                  id="budget-line-total"
                   className={styles.input}
                   type="number"
                   min="0.01"
@@ -803,41 +885,67 @@ export default function BudgetPlannerPage({
                     </button>
                   </span>
                 </div>
+                {/* On a desktop this is one compact row per period. On a phone it becomes a
+                    labelled GROUP: three shrunken inputs in a row (label / date / amount)
+                    was the worst control in Money, and this is exactly the work the coach
+                    least wants to redo. The per-period heading and the field labels are
+                    rendered always and revealed by CSS at ≤640 — the CoachModalHeader
+                    precedent for a control that exists in one form on each side. */}
                 {form.periods.map((p, i) => (
                   <div key={i} className={styles.periodInputRow}>
-                    <input
-                      className={styles.input}
-                      style={{ flex: 2 }}
-                      type="text"
-                      placeholder="Label (e.g. May)"
-                      value={p.label}
-                      onChange={e => setForm(f => {
-                        const ps = [...f.periods]; ps[i] = { ...ps[i], label: e.target.value }; return { ...f, periods: ps };
-                      })}
-                    />
-                    <input
-                      className={styles.input}
-                      style={{ flex: 1.5 }}
-                      type="date"
-                      value={p.date}
-                      onChange={e => setForm(f => {
-                        const ps = [...f.periods]; ps[i] = { ...ps[i], date: e.target.value }; return { ...f, periods: ps };
-                      })}
-                    />
-                    <input
-                      className={styles.input}
-                      style={{ flex: 1 }}
-                      type="number"
-                      min="0.01"
-                      step="0.01"
-                      placeholder={form.periodMode === 'percent' ? '%' : '$'}
-                      value={p.amount}
-                      onChange={e => setForm(f => {
-                        const ps = [...f.periods]; ps[i] = { ...ps[i], amount: e.target.value }; return { ...f, periods: ps };
-                      })}
-                    />
+                    <div className={styles.periodGroupHead}>
+                      <span className={styles.periodGroupNum}>Period {i + 1}</span>
+                      {form.periods.length > 1 && (
+                        <button
+                          type="button"
+                          className={styles.periodGroupRemove}
+                          onClick={() => setForm(f => ({ ...f, periods: f.periods.filter((_, j) => j !== i) }))}
+                        >
+                          Remove <X size={12} aria-hidden />
+                        </button>
+                      )}
+                    </div>
+                    <label className={styles.periodFieldLabel}>
+                      <span className={styles.periodFieldLabelText}>Label</span>
+                      <input
+                        className={styles.input}
+                        type="text"
+                        placeholder="Label (e.g. May)"
+                        value={p.label}
+                        onChange={e => setForm(f => {
+                          const ps = [...f.periods]; ps[i] = { ...ps[i], label: e.target.value }; return { ...f, periods: ps };
+                        })}
+                      />
+                    </label>
+                    <label className={`${styles.periodFieldLabel} ${styles.periodFieldDate}`}>
+                      <span className={styles.periodFieldLabelText}>Date</span>
+                      <input
+                        className={styles.input}
+                        type="date"
+                        value={p.date}
+                        onChange={e => setForm(f => {
+                          const ps = [...f.periods]; ps[i] = { ...ps[i], date: e.target.value }; return { ...f, periods: ps };
+                        })}
+                      />
+                    </label>
+                    <label className={`${styles.periodFieldLabel} ${styles.periodFieldAmount}`}>
+                      <span className={styles.periodFieldLabelText}>
+                        {form.periodMode === 'percent' ? 'Share (%)' : 'Amount ($)'}
+                      </span>
+                      <input
+                        className={styles.input}
+                        type="number"
+                        min="0.01"
+                        step="0.01"
+                        placeholder={form.periodMode === 'percent' ? '%' : '$'}
+                        value={p.amount}
+                        onChange={e => setForm(f => {
+                          const ps = [...f.periods]; ps[i] = { ...ps[i], amount: e.target.value }; return { ...f, periods: ps };
+                        })}
+                      />
+                    </label>
                     {form.periodMode === 'percent' && (
-                      <span style={{ flexShrink: 0, minWidth: 70, textAlign: 'right', fontSize: '0.78rem', color: 'var(--home-dim, rgba(255,255,255,0.45))', fontVariantNumeric: 'tabular-nums' }}>
+                      <span className={styles.periodPercentOut}>
                         {(parseFloat(form.totalAmount) || 0) > 0 && parseFloat(p.amount) > 0
                           ? fmt(((parseFloat(form.totalAmount) || 0) * parseFloat(p.amount)) / 100)
                           : '—'}
@@ -847,6 +955,7 @@ export default function BudgetPlannerPage({
                       <button
                         type="button"
                         className={styles.removePeriodBtn}
+                        aria-label={`Remove period ${i + 1}`}
                         onClick={() => setForm(f => ({ ...f, periods: f.periods.filter((_, j) => j !== i) }))}
                       >
                         <X size={13} />
@@ -887,7 +996,7 @@ export default function BudgetPlannerPage({
 
             {saveError && <p className={styles.errorText}>{saveError}</p>}
             <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={() => setModalOpen(false)}>Cancel</button>
+              <button type="button" className={shared.btnGhost} onClick={closeLineModal}>Cancel</button>
               <button type="button" className={shared.btnPrimary} onClick={handleSaveLine} disabled={saving}>
                 {saving ? 'Saving…' : editingLine ? 'Save Changes' : 'Add Line'}
               </button>
@@ -898,17 +1007,20 @@ export default function BudgetPlannerPage({
 
       {/* ── Delete Confirm — short dialog, opts out of the mobile sheet default ────── */}
       {deletingId && (
-        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={() => setDeletingId(null)}>
+        <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onClick={closeDelete}>
           <div className={shared.modal} style={{ maxWidth: 380 }} onClick={e => e.stopPropagation()}>
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>Delete Budget Line?</h3>
-              <button className={shared.modalCloseBtn} onClick={() => setDeletingId(null)}><X size={16} /></button>
+              <button className={shared.modalCloseBtn} aria-label="Close" onClick={closeDelete}><X size={16} /></button>
             </div>
             <p style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.6))', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
               This will also remove any period breakdown for this line. This cannot be undone.
             </p>
+            {deleteError && (
+              <p className={shared.errorText} style={{ margin: '-0.75rem 0 1.25rem' }}>{deleteError}</p>
+            )}
             <div className={shared.modalFooter}>
-              <button type="button" className={shared.btnGhost} onClick={() => setDeletingId(null)}>Cancel</button>
+              <button type="button" className={shared.btnGhost} onClick={closeDelete}>Cancel</button>
               <button
                 type="button"
                 className={shared.btnDanger}
@@ -924,9 +1036,9 @@ export default function BudgetPlannerPage({
 
       {/* ── Generate Installments Modal ──────────────────────────────────────── */}
       {genOpen && (
-        <div className={shared.modalOverlay} onClick={() => setGenOpen(false)}>
+        <div className={shared.modalOverlay} onClick={closeGenModal}>
           <div className={shared.modal} style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="Generate Player Installments" onClose={() => setGenOpen(false)} />
+            <CoachModalHeader title="Generate Player Installments" onClose={closeGenModal} />
 
             {generateSuccess ? (
               <div className={styles.successState}>
@@ -955,27 +1067,46 @@ export default function BudgetPlannerPage({
                   </div>
                   {genInstallments.map((inst, i) => (
                     <div key={i} className={styles.periodInputRow}>
+                      <div className={styles.periodGroupHead}>
+                        <span className={styles.periodGroupNum}>Installment {i + 1}</span>
+                        {genInstallments.length > 1 && (
+                          <button
+                            type="button"
+                            className={styles.periodGroupRemove}
+                            onClick={() => { setGenInstallments(p => p.filter((_, j) => j !== i)); setPreview(null); }}
+                          >
+                            Remove <X size={12} aria-hidden />
+                          </button>
+                        )}
+                      </div>
                       <span className={styles.installmentNum}>#{i + 1}</span>
-                      <input
-                        className={styles.input}
-                        type="date"
-                        value={inst.date}
-                        min={today()}
-                        onChange={e => { setGenInstallments(p => { const n=[...p]; n[i]={...n[i],date:e.target.value}; return n; }); setPreview(null); }}
-                      />
-                      <input
-                        className={styles.input}
-                        type="number"
-                        min="0.01"
-                        step="0.01"
-                        placeholder="Amount per player ($)"
-                        value={inst.amount}
-                        onChange={e => { setGenInstallments(p => { const n=[...p]; n[i]={...n[i],amount:e.target.value}; return n; }); setPreview(null); }}
-                      />
+                      <label className={`${styles.periodFieldLabel} ${styles.periodFieldDate}`}>
+                        <span className={styles.periodFieldLabelText}>Due date</span>
+                        <input
+                          className={styles.input}
+                          type="date"
+                          value={inst.date}
+                          min={today()}
+                          onChange={e => { setGenInstallments(p => { const n=[...p]; n[i]={...n[i],date:e.target.value}; return n; }); setPreview(null); }}
+                        />
+                      </label>
+                      <label className={styles.periodFieldLabel}>
+                        <span className={styles.periodFieldLabelText}>Amount per player ($)</span>
+                        <input
+                          className={styles.input}
+                          type="number"
+                          min="0.01"
+                          step="0.01"
+                          placeholder="Amount per player ($)"
+                          value={inst.amount}
+                          onChange={e => { setGenInstallments(p => { const n=[...p]; n[i]={...n[i],amount:e.target.value}; return n; }); setPreview(null); }}
+                        />
+                      </label>
                       {genInstallments.length > 1 && (
                         <button
                           type="button"
                           className={styles.removePeriodBtn}
+                          aria-label={`Remove installment ${i + 1}`}
                           onClick={() => { setGenInstallments(p => p.filter((_, j) => j !== i)); setPreview(null); }}
                         >
                           <X size={13} />
@@ -989,7 +1120,7 @@ export default function BudgetPlannerPage({
 
                 {!preview ? (
                   <div className={shared.modalFooter}>
-                    <button type="button" className={shared.btnGhost} onClick={() => setGenOpen(false)}>Cancel</button>
+                    <button type="button" className={shared.btnGhost} onClick={closeGenModal}>Cancel</button>
                     <button type="button" className={shared.btnSecondary} onClick={loadPreview} disabled={previewLoading}>
                       {previewLoading ? 'Loading preview…' : 'Preview'}
                     </button>
@@ -998,25 +1129,30 @@ export default function BudgetPlannerPage({
                   <>
                     <div className={styles.previewSection}>
                       <div className={styles.label} style={{ marginBottom: '0.6rem' }}>Preview — {preview.length} players</div>
-                      <div className={styles.previewTable}>
-                        <div className={styles.previewHeader}>
-                          <span>Player</span>
-                          {preview[0]?.installments.map((_, i) => (
-                            <span key={i} style={{ textAlign: 'right' }}>#{i + 1}</span>
-                          ))}
-                        </div>
-                        {preview.slice(0, 10).map(row => (
-                          <div key={row.playerId} className={styles.previewRow}>
-                            <span>{[row.playerLastName, row.playerFirstName].filter(Boolean).join(', ')}</span>
-                            {row.installments.map((inst, i) => (
-                              <span key={i} style={{ textAlign: 'right' }}>{fmt(inst.amount)}</span>
+                      {/* Player × installment is a genuine 2-D grid with fixed 90px money
+                          columns, so four installments overflow a phone sheet. It scrolls
+                          with the player name pinned rather than crushing the amounts. */}
+                      <CoachScrollX sticky frame={false} hint="Swipe to see every installment">
+                        <div className={styles.previewTable}>
+                          <div className={styles.previewHeader}>
+                            <span className={shared.scrollXStickyCell}>Player</span>
+                            {preview[0]?.installments.map((_, i) => (
+                              <span key={i} style={{ textAlign: 'right' }}>#{i + 1}</span>
                             ))}
                           </div>
-                        ))}
-                        {preview.length > 10 && (
-                          <div className={styles.previewMore}>+{preview.length - 10} more players</div>
-                        )}
-                      </div>
+                          {preview.slice(0, 10).map(row => (
+                            <div key={row.playerId} className={styles.previewRow}>
+                              <span className={shared.scrollXStickyCell}>{[row.playerLastName, row.playerFirstName].filter(Boolean).join(', ')}</span>
+                              {row.installments.map((inst, i) => (
+                                <span key={i} style={{ textAlign: 'right' }}>{fmt(inst.amount)}</span>
+                              ))}
+                            </div>
+                          ))}
+                          {preview.length > 10 && (
+                            <div className={styles.previewMore}>+{preview.length - 10} more players</div>
+                          )}
+                        </div>
+                      </CoachScrollX>
                     </div>
 
                     {generateError && <p className={styles.errorText}>{generateError}</p>}
@@ -1034,6 +1170,12 @@ export default function BudgetPlannerPage({
           </div>
         </div>
       )}
+
+      {/* The discard guards cover dismissing a sheet; this covers walking away from one. */}
+      <UnsavedChangesGuard
+        active={lineDirty || genDirty}
+        message="You haven't saved what you entered on this form. Leave without saving it?"
+      />
     </div>
   );
 }

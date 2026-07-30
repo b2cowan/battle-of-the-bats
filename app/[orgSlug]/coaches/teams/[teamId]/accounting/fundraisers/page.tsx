@@ -6,6 +6,8 @@ import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
+import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 
 interface Fundraiser {
   id: string;
@@ -54,9 +56,21 @@ export default function FundraisersListPage({
   const [formError, setFormError]           = useState('');
 
   const assignment = assignments.find(a => a.teamId === teamId);
+  // Money is three-state (off|read|write); the create route already refuses a read-only
+  // coach, so offering the form and failing at submit is a broken affordance.
+  const canWriteMoney = assignment?.capabilities.money === 'write';
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   useOverlayOpen(showModal);
+
+  // Discard guard (review f7-3/f7-7). Rebate opens at '0', so it only counts as entered once
+  // the coach moves it off that default.
+  const formDirty = Boolean(formName || formDesc || formStart || formEnd || formRebate !== '0');
+  const closeModal = useDiscardGuard({
+    dirty: formDirty,
+    close: () => setShowModal(false),
+    noun: 'fundraiser',
+  });
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -140,9 +154,11 @@ export default function FundraisersListPage({
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
         </div>
-        <button className={styles.btnPrimary} onClick={openModal}>
-          <Plus size={16} /> New Fundraiser
-        </button>
+        {canWriteMoney && (
+          <button className={styles.btnPrimary} onClick={openModal}>
+            <Plus size={16} /> New Fundraiser
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -155,9 +171,11 @@ export default function FundraisersListPage({
           <p className={styles.emptyStateSub}>
             Create a fundraiser to track per-player amounts raised and automatically credit player dues.
           </p>
-          <button className={styles.btnPrimary} onClick={openModal} style={{ marginTop: '1.25rem' }}>
-            <Plus size={15} /> New Fundraiser
-          </button>
+          {canWriteMoney && (
+            <button className={styles.btnPrimary} onClick={openModal} style={{ marginTop: '1.25rem' }}>
+              <Plus size={15} /> New Fundraiser
+            </button>
+          )}
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -212,9 +230,9 @@ export default function FundraisersListPage({
       )}
 
       {showModal && (
-        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) setShowModal(false); }}>
+        <div className={styles.modalOverlay} onClick={e => { if (e.target === e.currentTarget) closeModal(); }}>
           <div className={styles.modal}>
-            <CoachModalHeader title="New Fundraiser" onClose={() => setShowModal(false)} titleTag="h2" closeIconSize={18} />
+            <CoachModalHeader title="New Fundraiser" onClose={closeModal} titleTag="h2" closeIconSize={18} />
             <form onSubmit={handleCreate}>
               <div className={styles.formGrid}>
                 <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -279,7 +297,7 @@ export default function FundraisersListPage({
               </div>
               {formError && <p className={styles.errorText} style={{ marginTop: '0.75rem' }}>{formError}</p>}
               <div className={styles.modalFooter}>
-                <button type="button" className={styles.btnGhost} onClick={() => setShowModal(false)}>Cancel</button>
+                <button type="button" className={styles.btnGhost} onClick={closeModal}>Cancel</button>
                 <button type="submit" className={styles.btnPrimary} disabled={saving}>
                   {saving ? 'Creating…' : 'Create Fundraiser'}
                 </button>
@@ -288,6 +306,11 @@ export default function FundraisersListPage({
           </div>
         </div>
       )}
+
+      <UnsavedChangesGuard
+        active={showModal && formDirty}
+        message="You haven't created this fundraiser yet. Leave without saving it?"
+      />
     </div>
   );
 }

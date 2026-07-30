@@ -8,10 +8,30 @@
      • 640px = CONTENT reflow (tables→cards, multi-col→1-col, overlay→sheet,
                                form-grid→1-col, segmented controls wrap)
 
-   Shared primitives (a surface opts in, so each sweep stays a small diff):
-     • .tableAsCards            list-table → stacked cards @640 (Roster idiom)
-     • .scrollX / .scrollXSticky genuine 2-D grid: x-scroll + sticky first column
-                               (never silent sideways scroll — pair with a hint)
+   Shared primitives (a surface opts in, so each sweep stays a small diff).
+   ⚠ CHECK THIS LIST BEFORE WRITING A BESPOKE @640 RULE IN A PAGE STYLESHEET —
+   Chunk A shipped three page-level rules that duplicated primitives added in the
+   same commit, precisely because this list wasn't updated alongside them:
+     • .tableAsCards            list-table → stacked cards @640 (Roster idiom).
+                               A LIST becomes cards; a COMPARISON does not — use
+                               <CoachScrollX> for a grid read ACROSS (Chunk A D1).
+     • .scrollX / .scrollXSticky genuine 2-D grid: x-scroll + sticky first column.
+                               ⚠ Don't use these directly — <CoachScrollX>
+                               (components/coaches) owns the scroller AND its
+                               mandatory swipe hint together. Rows mark their first
+                               cell .scrollXStickyCell and pass their own leading
+                               indent via --scrollx-pin-gutter.
+     • .stack640               flex ROW → COLUMN @640 (the axis flip only; bring
+                               your own gap). Replaces per-page `1fr 1fr` grids.
+     • .block640               compact inline control → full-width, full-touch
+                               button @640. The companion to .stack640.
+     • .wrap640                nowrap+ellipsis text → wraps @640, for a name whose
+                               truncation point arrives too early on a phone.
+     • .inlineField            fixed-width control in a dense row (width from
+                               --inline-field-w) → full width @640.
+     • .cardStackCell / .cardActionCell
+                               inside .tableAsCards: a cell too big for one
+                               label/value line, and the trailing action cell.
      • .sheetOnMobile          PRE-FLIP name, now a no-op alias — full-height bottom-sheet
                                is the DEFAULT .modalOverlay presentation @640 (Coach Portal
                                Batch 1 D1, 2026-07-28). Opt OUT with .centeredOnMobile.
@@ -59,12 +79,35 @@
     letter-spacing: 0.04em;
     color: var(--white-35);
   }
+  /* cardStackCell — for a cell whose content is too big for one label/value line: a
+     nested form, a tag editor, a description that must wrap. Label sits above, content
+     below, full width, left-aligned. Without this the flex row squeezes an embedded
+     form into whatever the value column has left (Chunk A: the expense tag editor and
+     the fundraiser log form both lived inside a table cell). Shares the axis flip with
+     .stack640 — see the combined rule below. */
+  .tableAsCards td.cardStackCell { text-align: left; }
+  /* A cell that renders nothing draws a blank line in card mode — most visibly for a
+     read-only money coach, whose every action cell is empty. The table keeps square rows
+     (the <td> is always present); the card just doesn't draw the empty ones. */
+  .tableAsCards td:empty { display: none; }
+  /* cardActionCell — the trailing action cell becomes a full-width button row at the
+     foot of the card it belongs to. Its control is styled by the shared .block640 rule
+     below (same treatment, one declaration block) so an author doesn't have to remember
+     to add the class inside a table. */
+  .tableAsCards td.cardActionCell {
+    padding-top: 0.6rem !important;
+  }
 }
 
 /* scrollX — controlled horizontal scroll for a genuine 2-D grid (lineup
    rows×innings, the 7-day week). .scrollXSticky additionally pins the first
    column so the row label stays visible. ALWAYS pair with a visible "swipe →"
-   affordance in the surface (a one-time hint) — never a silent sideways scroll. */
+   affordance in the surface (a one-time hint) — never a silent sideways scroll.
+
+   ⚠ Don't hand-roll the pairing: use <CoachScrollX> (components/coaches), which
+   owns the scroller AND its mandatory hint together. This primitive sat here with
+   ZERO adopters and no hint class to pair with from 2026-06-29 until Chunk A
+   (2026-07-29) — a contract nothing could satisfy. The component is the contract. */
 .scrollX {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
@@ -77,6 +120,119 @@
   left: 0;
   z-index: 1;
   background: var(--card-bg);
+}
+/* Grid-based adopters (rows are CSS-grid spans, not table cells) mark their first
+   column with .scrollXStickyCell. The pin background MUST be opaque — a translucent
+   row wash would let the scrolled money columns show through the pinned label. Both
+   themes resolve --card-bg to an opaque colour (#111827 dark / #FFFFFF warm); an
+   adopter whose rows sit on a different ground overrides --scrollx-pin-bg. */
+/* ⚠ Gated on .scrollXOverflowing, which <CoachScrollX> applies ONLY while the content
+   actually overflows. Pinning is meaningless without a scroll, and the opaque pin
+   background would otherwise paint a solid patch over the row's own translucent wash at
+   every viewport width — visible on a desktop where nothing scrolls at all. */
+.scrollXSticky.scrollXOverflowing .scrollXStickyCell {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  background: var(--scrollx-pin-bg, var(--card-bg));
+  /* The pinned cell must own its own leading gutter, because `left: 0` is measured from the
+     SCROLLER's edge, not the row's. A row that keeps its own padding-left makes the label
+     start inset and then snap flush on the first swipe — a visible lurch of exactly the
+     padding (11px on Budget vs. Actual before this). So the adopting row zeroes its
+     padding-left and passes the gutter — including any hierarchy indent — down through
+     --scrollx-pin-gutter, which the pinned cell then renders inside its own sticky box. */
+  padding-left: var(--scrollx-pin-gutter, 0);
+}
+
+/* scrollXBare — for content that already carries its own borders (a stack of bordered
+   category cards). Without this the scroller draws a second frame around everything,
+   which is a change on desktops that never overflow at all. */
+.scrollXBare { border: none; border-radius: 0; }
+
+/* scrollXHint — the affordance .scrollX has always required. Rendered by
+   <CoachScrollX> only while the content actually overflows and the coach hasn't
+   scrolled yet, so it never claims a swipe that does nothing. */
+.scrollXHint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.45rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.68rem;
+  font-weight: 650;
+  color: var(--home-olive, var(--white-60));
+  background: var(--home-olive-soft, rgba(255,255,255,0.05));
+  border: 1px solid var(--border-2);
+}
+.scrollXHintIcon { flex-shrink: 0; }
+
+/* stack640 — a flex row that becomes a column at the CONTENT breakpoint. Owns the
+   axis flip only; compose your own gap/alignment, and give children `flex: 1` when
+   they should share the row evenly. Replaces per-page `1fr 1fr` grids that had no
+   phone handling (Chunk A: tournament payables, the allocation split header, the
+   fundraiser log form). */
+.stack640 { display: flex; }
+@media (max-width: 640px) {
+  /* ONE axis flip, shared by the utility and by the in-card variant that adds
+     left-alignment on top of it. */
+  .stack640,
+  .tableAsCards td.cardStackCell { flex-direction: column; align-items: stretch; }
+}
+
+/* compactAction — the dense-row button size that was being written inline at a dozen
+   Money call sites (`style={{ fontSize:'0.72rem', padding:'0.2rem 0.5rem' }}`). In CSS
+   it can be overridden by .block640 at the content breakpoint; inline it could not,
+   which is what forced !important into the shared rule.
+   ⚠ MUST stay ABOVE .block640: both are single-class selectors, so equal specificity
+   resolves by SOURCE ORDER — declared after, it would silently defeat the very
+   touch-target sizing it is paired with. */
+.compactAction {
+  font-size: 0.72rem;
+  padding: 0.2rem 0.5rem;
+}
+
+/* block640 — a compact inline control that becomes a full-width, full-touch-target
+   button once its row has stacked. The companion to .stack640: stacking a row of
+   dense chips without this just leaves tiny buttons floating in a wide column.
+   The trailing control of a .cardActionCell gets the identical treatment, so both
+   selectors share ONE declaration block rather than restating it. */
+@media (max-width: 640px) {
+  .block640,
+  .tableAsCards td.cardActionCell > button,
+  .tableAsCards td.cardActionCell > a {
+    /* !important on display only: the button classes (.btnSecondary etc.) are declared
+       LATER in this file, so equal single-class specificity resolves by source order
+       against us. The padding/font-size need no override — the call sites keep their
+       sizing in CSS rather than inline styles, deliberately. */
+    display: flex !important;
+    width: 100%;
+    justify-content: center;
+    padding: 0.45rem 0.6rem;
+    font-size: 0.82rem;
+  }
+}
+
+/* wrap640 — a name that is nowrap+ellipsis on a desktop row but must WRAP on a phone,
+   because the truncation point arrives early enough to hide which record it is. Was
+   hand-copied into two page stylesheets before being promoted here (Chunk A). */
+@media (max-width: 640px) {
+  .wrap640 {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: clip;
+    line-height: 1.3;
+  }
+}
+
+
+/* inlineField — a compact fixed-width control inside a dense row (a table cell, a
+   toolbar); goes full width once that row stacks. Width comes from the caller:
+   style={{ '--inline-field-w': '90px' }}. Exists because inline `width: 90px` on an
+   input cannot be overridden by a media query. */
+.inlineField { width: var(--inline-field-w, 110px); }
+@media (max-width: 640px) {
+  .inlineField { width: 100%; }
 }
 
 /* stickyActionBar — generic safe-area sticky footer for action rows that must
@@ -4215,6 +4371,15 @@
   font-size: 0.72rem;
   color: var(--white-40);
   margin-top: 0.2rem;
+}
+
+/* The accounting basis for the headline row, stated once above it rather than bolted onto
+   whichever tile happened to get a caveat (review f4-6). */
+.moneySummaryBasis {
+  margin: 0 0 0.6rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--white-45);
 }
 
 @media (max-width: 640px) {
