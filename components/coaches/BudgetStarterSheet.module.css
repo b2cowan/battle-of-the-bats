@@ -2,12 +2,8 @@
    the portal's standard dark fallbacks; --logic-lime appears only as TEXT/border accent,
    which the warm gate correctly remaps to olive — E3). No colour literals. */
 
-/* The shared sticky footer's desktop -1.5rem bottom bleed shortens the scroll extent,
-   hiding the last ~1.5rem of a TALL modal under the bar (the Batch-1 round-2 sheet bug,
-   fixed then only at ≤640). Local mirror of that fix: footer keeps no bottom margin and
-   the panel drops its bottom padding (inline on the panel). Doubled class beats the
-   shared rule at equal specificity regardless of bundler emission order. */
-.footerFlush.footerFlush { margin-bottom: 0; }
+/* The desktop sticky-footer overlap this sheet used to patch locally is now fixed once,
+   for every tall modal in the portal: `.modalFlushFooter` in coaches.module.css (chunk H). */
 
 .stepLine {
   margin: 0 0 0.2rem;

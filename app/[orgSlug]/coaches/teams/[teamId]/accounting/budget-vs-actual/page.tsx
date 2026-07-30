@@ -8,6 +8,8 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import SampleBudgetSheet from '@/components/coaches/SampleBudgetSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
+import MoneyMonthGrid, { MONEY_LENSES, type MoneyLens, type MonthGridPayload } from '@/components/coaches/MoneyMonthGrid';
+import { formatMonthLabel, lensCell, lensTotal, lensReadsPlan } from '@/lib/coach-budget-months';
 import ExportMenu from '@/components/admin/ExportMenu';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -63,7 +65,7 @@ interface MonthlyPoint {
   cumActual: number;
 }
 
-interface BvaData {
+interface BvaData extends MonthGridPayload {
   headroom: number;
   totalBudget: number;      // itemized line-item sum
   seasonTotal: number | null;
@@ -74,9 +76,13 @@ interface BvaData {
   unbudgetedActuals: UnbudgetedActual[];
   duesCollection: DuesCollection;
   monthlyChart: MonthlyPoint[];
+  /** Plan money with no date on it — named so the chart can say what it isn't plotting. */
+  undatedBudget: number;
   expenseTags: RepTeamTag[];
   activeTagId: string | null;
 }
+
+type BvaView = 'categories' | 'months';
 
 const BVA_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Item',     key: 'item',     format: 'text' },
@@ -197,6 +203,13 @@ export default function BudgetVsActualPage({
   const [expandedCats,  setExpandedCats]  = useState<Set<string>>(new Set());
   const [expandedLines, setExpandedLines] = useState<Set<string>>(new Set());
 
+  // Chunk H — the month grid. Which view and which lens a coach reads in is DEVICE memory
+  // (localStorage per team+season, the shipped pattern for quiet per-coach state): a treasurer
+  // who lives in the month view should land there, and it is nobody else's business.
+  const [view, setView] = useState<BvaView>('categories');
+  const [lens, setLens] = useState<MoneyLens>('budget');
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+
   // Money-tag filter (Phase 3): scope the actuals to expenses carrying a tag (server-side).
   const [filterTagId, setFilterTagId] = useState<string | null>(null);
 
@@ -237,6 +250,26 @@ export default function BudgetVsActualPage({
 
   useEffect(() => { load(); }, [load]);
 
+  const prefsKey = assignment ? `flhq-coach-bva-view:${teamId}:${assignment.programYearId}` : null;
+  useEffect(() => {
+    if (!prefsKey) return;
+    try {
+      const raw = localStorage.getItem(prefsKey);
+      // Shape-check, not just parse-check: a corrupt value must fall back, never crash.
+      const parsed = raw ? JSON.parse(raw) as { view?: unknown; lens?: unknown } : {};
+      if (parsed.view === 'months' || parsed.view === 'categories') setView(parsed.view);
+      if (MONEY_LENSES.some(l => l.id === parsed.lens)) setLens(parsed.lens as MoneyLens);
+    } catch { /* device memory only */ }
+    setPrefsLoaded(true);
+  }, [prefsKey]);
+
+  useEffect(() => {
+    // Don't write back the defaults before the read has happened, or the first render would
+    // stomp a remembered preference.
+    if (!prefsKey || !prefsLoaded) return;
+    try { localStorage.setItem(prefsKey, JSON.stringify({ view, lens })); } catch { /* device memory only */ }
+  }, [prefsKey, prefsLoaded, view, lens]);
+
   useEffect(() => {
     fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`)
       .then(r => r.ok ? r.json() : {})
@@ -265,6 +298,72 @@ export default function BudgetVsActualPage({
   }
 
   // ── Export helpers ─────────────────────────────────────────────────────────
+  // The export always matches what is on screen. In the Months view that means the month grid
+  // in the SELECTED lens, with the months as columns — the same shape the import template will
+  // take, so today's export is tomorrow's import.
+  function monthExportColumns(): ExportColumnDef[] {
+    const g = data!.monthGrid;
+    const cols: ExportColumnDef[] = [{ label: 'Category / line', key: 'item', format: 'text' }];
+    if (data!.priorSeasonLabel) cols.push({ label: data!.priorSeasonLabel, key: 'prior', format: 'currency' });
+    if (g.totals.undatedBudget > 0.005) cols.push({ label: 'No date yet', key: 'undated', format: 'currency' });
+    for (const m of g.months) cols.push({ label: formatMonthLabel(m), key: `m_${m}`, format: 'currency' });
+    cols.push({ label: 'Total', key: 'total', format: 'currency' });
+    return cols;
+  }
+
+  // The export shares the grid's own lens maths (`lensCell`/`lensTotal`/`lensReadsPlan`), so a
+  // downloaded file can never disagree with the screen it was downloaded from.
+  function buildMonthExportRows(): Array<Record<string, string | number>> {
+    const g = data!.monthGrid;
+    const { todayMonth, priorSeasonLabel } = data!;
+    const undatedLive = lensReadsPlan(lens);
+    const rows: Array<Record<string, string | number>> = [];
+
+    /** A category or grand-total row: every lens has something to say about it. */
+    function aggregateRow(
+      item: string,
+      cells: typeof g.totals.cells,
+      total: typeof g.totals.total,
+      undatedBudget: number,
+      priorTotal: number | null,
+    ): Record<string, string | number> {
+      const row: Record<string, string | number> = { item };
+      if (priorSeasonLabel) row.prior = priorTotal ?? '';
+      row.undated = undatedLive ? undatedBudget : '';
+      g.months.forEach((m, i) => { row[`m_${m}`] = lensCell(cells[i], lens, m, todayMonth) ?? ''; });
+      row.total = lensTotal(total, lens);
+      return row;
+    }
+
+    for (const cat of g.categories) {
+      rows.push(aggregateRow(cat.categoryName, cat.cells, cat.total, cat.undatedBudget, cat.priorTotal));
+
+      // Only the BUDGET is known per line — actuals and commitments are matched to a category,
+      // not a line — so a line row is blank under every other lens, exactly as on screen.
+      for (const line of cat.lines) {
+        const lr: Record<string, string | number> = { item: `  — ${line.description}` };
+        if (priorSeasonLabel) lr.prior = line.priorTotal ?? '';
+        lr.undated = undatedLive ? line.undatedBudget : '';
+        g.months.forEach((m, i) => { lr[`m_${m}`] = lens === 'budget' ? line.cells[i].budget : ''; });
+        lr.total = lens === 'budget' ? line.total.budget : '';
+        rows.push(lr);
+      }
+    }
+
+    rows.push(aggregateRow('Total', g.totals.cells, g.totals.total, g.totals.undatedBudget, g.totals.priorTotal));
+    return rows;
+  }
+
+  const inMonthView = view === 'months' && !!data?.monthGrid;
+  const exportCols = inMonthView ? monthExportColumns() : BVA_EXPORT_COLS;
+  const exportTitle = inMonthView
+    ? `Budget by month — ${MONEY_LENSES.find(l => l.id === lens)?.label}`
+    : 'Budget vs. Actual';
+
+  function buildRows(): Array<Record<string, string | number>> {
+    return inMonthView ? buildMonthExportRows() : buildExportRows();
+  }
+
   function buildExportRows() {
     if (!data) return [];
     const rows: Array<{ item: string; budgeted: number | ''; actual: number | ''; variance: number | '' }> = [];
@@ -285,29 +384,34 @@ export default function BudgetVsActualPage({
   }
 
   function exportMeta() {
-    return { org: currentOrg?.slug ?? orgSlug, dataset: 'budget-vs-actual', scope: assignment?.programYearName ?? teamId };
+    return {
+      org: currentOrg?.slug ?? orgSlug,
+      dataset: inMonthView ? `budget-by-month-${lens}` : 'budget-vs-actual',
+      scope: assignment?.programYearName ?? teamId,
+    };
   }
 
   async function handleExportXLSX() {
-    const src = buildExportRows();
+    const src = buildRows();
     if (!src.length) return;
     await downloadXLSX(
       buildFilename(exportMeta(), 'xlsx'),
-      serializeHeaders(BVA_EXPORT_COLS), serializeRows(src, BVA_EXPORT_COLS), 'Budget vs Actual',
+      serializeHeaders(exportCols), serializeRows(src, exportCols),
+      inMonthView ? 'Budget by month' : 'Budget vs Actual',
     );
   }
 
   function handleExportCSV() {
-    const src = buildExportRows();
+    const src = buildRows();
     if (!src.length) return;
     downloadCSVBlob(
       buildFilename(exportMeta(), 'csv'),
-      generateCSV(serializeHeaders(BVA_EXPORT_COLS), serializeRows(src, BVA_EXPORT_COLS)),
+      generateCSV(serializeHeaders(exportCols), serializeRows(src, exportCols)),
     );
   }
 
   async function handleExportPDF() {
-    const src = buildExportRows();
+    const src = buildRows();
     if (!src.length) return;
     const settings: OrgPdfSettings = {
       ...DEFAULT_PDF_SETTINGS,
@@ -315,16 +419,17 @@ export default function BudgetVsActualPage({
     };
     const teamName = assignment?.teamName ?? teamId;
     const programYearName = assignment?.programYearName ?? '';
-    const pdfHeaders = ['Item', 'Budgeted', 'Actual', 'Variance'];
-    const pdfRows = src.map(r => [
-      r.item,
-      r.budgeted !== '' ? fmt(Number(r.budgeted)) : '—',
-      r.actual   !== '' ? fmt(Number(r.actual))   : '—',
-      r.variance !== '' ? fmt(Number(r.variance)) : '—',
-    ]);
+    // Built from the same column definitions as the sheet exports, so the three formats can't
+    // drift apart when the month range or the lens changes.
+    const pdfHeaders = exportCols.map(c => c.label);
+    const pdfRows = src.map(r => exportCols.map(c => {
+      const v = r[c.key];
+      if (c.format !== 'currency') return String(v ?? '');
+      return v === '' || v === undefined || v === null ? '—' : fmt(Number(v));
+    }));
     await downloadPDF(
       buildFilename(exportMeta(), 'pdf'),
-      'Budget vs. Actual',
+      exportTitle,
       `${teamName} — ${programYearName}`,
       pdfHeaders,
       pdfRows,
@@ -498,11 +603,78 @@ export default function BudgetVsActualPage({
             </div>
           )}
 
+          {/* Chunk H — how the coach wants to read the same report. Categories is the shipped
+              view and stays the default; Months is the treasurer's spreadsheet shape. */}
+          <div className={styles.viewBar}>
+            <span className={styles.viewBarLabel}>View</span>
+            <div className={shared.segChoice} role="group" aria-label="Report view">
+              <button
+                type="button"
+                className={`${shared.segBtn} ${view === 'categories' ? shared.segBtnActive : ''}`}
+                aria-pressed={view === 'categories'}
+                onClick={() => setView('categories')}
+              >
+                Categories
+              </button>
+              <button
+                type="button"
+                className={`${shared.segBtn} ${view === 'months' ? shared.segBtnActive : ''}`}
+                aria-pressed={view === 'months'}
+                onClick={() => setView('months')}
+              >
+                Months
+              </button>
+            </div>
+
+            {view === 'months' && (
+              <>
+                <span className={styles.viewBarLabel}>Showing</span>
+                <div className={shared.segChoice} role="group" aria-label="What each cell shows">
+                  {MONEY_LENSES.map(l => (
+                    <button
+                      key={l.id}
+                      type="button"
+                      className={`${shared.segBtn} ${lens === l.id ? shared.segBtnActive : ''}`}
+                      aria-pressed={lens === l.id}
+                      /* The visible label abbreviates on a phone ("Diff."); the accessible name
+                         must not — a screen reader should hear the whole word at every width. */
+                      aria-label={l.label}
+                      onClick={() => setLens(l.id)}
+                    >
+                      <span className={styles.lensFull}>{l.label}</span>
+                      <span className={styles.lensShort}>{l.short}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+
+          {view === 'months' ? (
+            <MoneyMonthGrid
+              data={data}
+              lens={lens}
+              base={base}
+              canWrite={moneyCanWrite}
+            />
+          ) : (
+          <>
           {/* Monthly cumulative chart */}
           {data.monthlyChart.length > 1 && (
             <div className={styles.chartCard}>
               <p className={styles.chartTitle}>Cumulative Spending vs. Budget</p>
               <CumulativeChart data={data.monthlyChart} />
+              {data.undatedBudget > 0.005 && (
+                /* Budget with no date used to be spread evenly across every month here, which
+                   put money in months the coach never chose. It is now named instead (D-H4) —
+                   and the Months view gives it a column of its own. */
+                <p className={styles.chartNote}>
+                  {fmt(data.undatedBudget)} of your plan has no date yet and isn&apos;t on this chart.{' '}
+                  <button type="button" className={styles.chartNoteLink} onClick={() => setView('months')}>
+                    See it by month
+                  </button>
+                </p>
+              )}
             </div>
           )}
 
@@ -689,6 +861,8 @@ export default function BudgetVsActualPage({
                 <span>{fmt(unbudgetedTotal)}</span>
               </div>
             </div>
+          )}
+          </>
           )}
         </>
       )}

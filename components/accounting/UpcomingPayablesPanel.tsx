@@ -11,6 +11,13 @@ export interface PayableItem {
   overdue: boolean;
   label: string | null;
   requestType?: string;
+  /** Settled rows only appear when the caller asked for them (`includePaid=1`). */
+  paid?: boolean;
+  category?: string | null;
+  /** For an expense half: the row it belongs to and which half it is, so a schedule can
+   *  mark it paid through the expense the coach already knows. */
+  expenseId?: string;
+  half?: string;
 }
 
 export interface PayableLane {
@@ -23,6 +30,9 @@ export interface PayableLane {
 interface Props {
   apiUrl: string;
   reviewQueueUrl?: string;
+  /** Where the full, unwindowed commitment list lives. This panel is a 30/60/90-day preview;
+   *  the schedule behind this link is the whole thing (chunk H). */
+  fullScheduleUrl?: string;
 }
 
 function fmt(n: number) {
@@ -113,7 +123,7 @@ function Lane({ lane, reviewQueueUrl }: { lane: PayableLane; reviewQueueUrl?: st
   );
 }
 
-export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl }: Props) {
+export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl, fullScheduleUrl }: Props) {
   const [days, setDays]   = useState<30 | 60 | 90>(30);
   const [lanes, setLanes] = useState<PayableLane[]>([]);
   const [loading, setLoading] = useState(true);
@@ -173,9 +183,15 @@ export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl }: Props)
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : totalItems === 0 ? (
-        <p className={styles.allClear}>
-          Nothing due in the next {days} days.
-        </p>
+        <>
+          <p className={styles.allClear}>
+            Nothing due in the next {days} days.
+          </p>
+          {/* "Nothing in 30 days" is exactly when a coach wonders what IS coming. */}
+          {fullScheduleUrl && (
+            <a href={fullScheduleUrl} className={styles.reviewLink}>See the full payment schedule →</a>
+          )}
+        </>
       ) : (
         <>
           {/* Desktop: columns */}
@@ -209,6 +225,9 @@ export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl }: Props)
               <Lane lane={lanes[activeTab]} reviewQueueUrl={reviewQueueUrl} />
             )}
           </div>
+          {fullScheduleUrl && (
+            <a href={fullScheduleUrl} className={styles.reviewLink}>See the full payment schedule →</a>
+          )}
         </>
       )}
     </div>

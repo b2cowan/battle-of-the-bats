@@ -7,6 +7,11 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
+import { tournamentToday } from '@/lib/timezone';
+import {
+  buildMonthGrid, monthKeyOf,
+  type CategoryEvent, type GridLine, type PriorLine,
+} from '@/lib/coach-budget-months';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -28,12 +33,6 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   }
 
   return { ctx, team, assignment, programYear };
-}
-
-// Derive YYYY-MM key from a date string or timestamp
-function toMonthKey(dateStr: string | null): string | null {
-  if (!dateStr) return null;
-  return dateStr.slice(0, 7);
 }
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
@@ -242,16 +241,20 @@ export const GET = withObservability(async (req: Request,
     (s: number, r: { total_amount: number }) => s + (r.total_amount ?? 0), 0,
   );
 
+  // Every installment, not just the paid ones: the paid side is the dues-collection card (below)
+  // and the money-in half of the month grid's cash-flow strip; the due dates are the SCHEDULED
+  // half of it ("what lands in July if everyone pays on time").
   let collectedDues = 0;
+  let duesInstallments: Array<{ amount: number; due_date: string | null; paid_at: string | null }> = [];
   if (scheduleIds.length > 0) {
-    const { data: paidInst } = await supabaseAdmin
+    const { data: inst } = await supabaseAdmin
       .from('rep_player_dues_installments')
-      .select('amount')
-      .in('schedule_id', scheduleIds)
-      .not('paid_at', 'is', null);
-    collectedDues = (paidInst ?? []).reduce(
-      (s: number, r: { amount: number }) => s + (r.amount ?? 0), 0,
-    );
+      .select('amount, due_date, paid_at')
+      .in('schedule_id', scheduleIds);
+    duesInstallments = (inst ?? []) as typeof duesInstallments;
+    collectedDues = duesInstallments
+      .filter(r => r.paid_at)
+      .reduce((s, r) => s + (r.amount ?? 0), 0);
   }
 
   const duesCollection = {
@@ -266,7 +269,7 @@ export const GET = withObservability(async (req: Request,
 
   for (const line of lines) {
     for (const p of (line.rep_budget_periods ?? []) as Array<Record<string, unknown>>) {
-      const m = toMonthKey(p.period_date as string | null);
+      const m = monthKeyOf(p.period_date as string | null);
       if (m) monthSet.add(m);
     }
   }
@@ -284,20 +287,18 @@ export const GET = withObservability(async (req: Request,
   const budgetByMonth = new Map<string, number>();
   for (const line of lines) {
     for (const p of (line.rep_budget_periods ?? []) as Array<Record<string, unknown>>) {
-      const m = toMonthKey(p.period_date as string | null);
+      const m = monthKeyOf(p.period_date as string | null);
       if (m) budgetByMonth.set(m, (budgetByMonth.get(m) ?? 0) + (p.amount as number));
     }
   }
 
-  // Lines without any period_date get distributed across months evenly
-  // (simplification: attribute to first available month or skip if no months)
+  // Budget with NO date stays OFF the monthly series (chunk H, owner decision D-H4). It used to be
+  // spread evenly across every month, which is invisible in a cumulative chart but a plain untruth
+  // in the month grid on the same page — a coach would read budget in months they never chose. The
+  // amount is reported instead, so the chart can say out loud what it is not showing.
   const totalBudget = lines.reduce((s, l) => s + (l.total_amount as number), 0);
   const periodedBudget = [...budgetByMonth.values()].reduce((s, v) => s + v, 0);
-  const unperiodedBudget = totalBudget - periodedBudget;
-  if (unperiodedBudget > 0 && months.length > 0) {
-    const share = unperiodedBudget / months.length;
-    for (const m of months) budgetByMonth.set(m, (budgetByMonth.get(m) ?? 0) + share);
-  }
+  const undatedBudget = Math.max(0, Math.round((totalBudget - periodedBudget) * 100) / 100);
 
   // Actual per month: sum of paid expenses by paid date month
   const actualByMonth = new Map<string, number>();
@@ -318,17 +319,133 @@ export const GET = withObservability(async (req: Request,
     return { month, budgetedForMonth: b, actualForMonth: a, cumBudget, cumActual };
   });
 
+  // ── 8b. The month grid (chunk H) ───────────────────────────────────────
+  // Rows = category → line, columns = the season's months, one payload serving all four lenses
+  // (Budget · Scheduled · Actual · Difference) so flipping a lens never refetches. The arithmetic
+  // lives in lib/coach-budget-months.ts and is unit-tested; this block is the assembly half.
+  const todayMonth = tournamentToday().slice(0, 7); // ORG timezone — never the runtime's UTC month
+
+  const gridLines: GridLine[] = lines.map(l => ({
+    id:            l.id as string,
+    description:   l.description as string,
+    categoryName:  ((l.budget_categories as Record<string, unknown> | null)?.name as string) ?? 'Uncategorized',
+    itemId:        (l.item_id as string | null) ?? null,
+    itemName:      null, // the grid's select doesn't join budget_items; description carries the name
+    totalAmount:   l.total_amount as number,
+    periods:       ((l.rep_budget_periods ?? []) as Array<Record<string, unknown>>)
+      .map(p => ({ date: p.period_date as string | null, amount: p.amount as number })),
+  }));
+
+  // Actuals: what was paid, on the day it was paid. A payable's deposit and balance are separate
+  // events — they land in different months and the grid must show them that way.
+  const gridActuals: CategoryEvent[] = [];
+  // Commitments: what the team has agreed to pay, on the day it falls due, paid or not.
+  const gridScheduled: CategoryEvent[] = [];
+  // Per-cell drill-in detail, keyed `${categoryKey}|${YYYY-MM}` — the read panels behind an
+  // Actual or Scheduled cell. Already-loaded rows, so no extra query.
+  const cellDetails: Record<string, Array<{ id: string; description: string; date: string | null; amount: number; paid: boolean }>> = {};
+  function pushDetail(kind: 'actual' | 'scheduled', category: string | null, date: string | null, item: { id: string; description: string; amount: number; paid: boolean }) {
+    const m = monthKeyOf(date);
+    if (!m) return;
+    const key = `${kind}|${(category ?? '').trim().toLowerCase()}|${m}`;
+    (cellDetails[key] ??= []).push({ ...item, date });
+  }
+
+  for (const exp of expenses) {
+    const cat = exp.category as string | null;
+    const id = exp.id as string;
+    const description = exp.description as string;
+
+    if (exp.expense_type === 'tournament_payable') {
+      const dep = (exp.deposit_amount as number | null) ?? 0;
+      const bal = (exp.balance_amount as number | null) ?? 0;
+      if (dep > 0 && exp.deposit_due_date) {
+        gridScheduled.push({ categoryName: cat, date: exp.deposit_due_date as string, amount: dep });
+        pushDetail('scheduled', cat, exp.deposit_due_date as string, { id: `${id}-deposit`, description: `${description} — deposit`, amount: dep, paid: !!exp.deposit_paid_at });
+      }
+      if (bal > 0 && exp.balance_due_date) {
+        gridScheduled.push({ categoryName: cat, date: exp.balance_due_date as string, amount: bal });
+        pushDetail('scheduled', cat, exp.balance_due_date as string, { id: `${id}-balance`, description: `${description} — balance`, amount: bal, paid: !!exp.balance_paid_at });
+      }
+      if (exp.deposit_paid_at && dep > 0) {
+        gridActuals.push({ categoryName: cat, date: exp.deposit_paid_at as string, amount: dep });
+        pushDetail('actual', cat, exp.deposit_paid_at as string, { id: `${id}-deposit`, description: `${description} — deposit`, amount: dep, paid: true });
+      }
+      if (exp.balance_paid_at && bal > 0) {
+        gridActuals.push({ categoryName: cat, date: exp.balance_paid_at as string, amount: bal });
+        pushDetail('actual', cat, exp.balance_paid_at as string, { id: `${id}-balance`, description: `${description} — balance`, amount: bal, paid: true });
+      }
+    } else if (exp.expense_paid_at) {
+      const amt = exp.amount as number;
+      gridActuals.push({ categoryName: cat, date: exp.expense_paid_at as string, amount: amt });
+      pushDetail('actual', cat, exp.expense_paid_at as string, { id, description, amount: amt, paid: true });
+    }
+  }
+
+  // Prior season — the comparison column. Only the most recent earlier year, and only when it
+  // actually has lines; rollover already carries lines + periods forward, so a year-2+ team has
+  // this for free and a first-season team correctly gets nothing.
+  const { data: priorYearRow } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('id, year, name')
+    .eq('team_id', teamId)
+    .lt('year', programYear.year)
+    .order('year', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  let priorLines: PriorLine[] = [];
+  if (priorYearRow) {
+    const { data: priorRows } = await supabaseAdmin
+      .from('rep_budget_lines')
+      .select('description, item_id, total_amount, budget_categories(name)')
+      .eq('program_year_id', priorYearRow.id as string);
+    priorLines = (priorRows ?? []).map((r: Record<string, unknown>) => ({
+      description:  r.description as string,
+      itemId:       (r.item_id as string | null) ?? null,
+      itemName:     null,
+      categoryName: ((r.budget_categories as Record<string, unknown> | null)?.name as string) ?? 'Uncategorized',
+      totalAmount:  r.total_amount as number,
+    }));
+  }
+
+  // The optional season total reconciled against the itemized sum: the larger wins, and anything
+  // above the lines is a non-itemized "buffer" (owner decision 2026-07-08). Computed HERE rather
+  // than with headroom below, because the month grid needs the buffer too — both views on this
+  // page must report the same budget total. `totalBudget` is the itemized sum, set above.
+  const seasonTotal = programYear.budgetAmount ?? null;
+  const effectiveBudget = Math.max(totalBudget, seasonTotal ?? 0);
+  const buffer = seasonTotal != null && seasonTotal > totalBudget ? seasonTotal - totalBudget : 0;
+
+  const monthGrid = buildMonthGrid({
+    lines: gridLines,
+    actuals: gridActuals,
+    scheduled: gridScheduled,
+    priorLines,
+    todayMonth,
+    bufferAmount: buffer,
+  });
+
+  // Money IN by month, both bases. The cash-flow strip pairs whichever of these matches the lens
+  // the coach is reading with that lens's money-out — never a blend of plan and commitment.
+  // Dues only, deliberately: fundraiser rebates CREDIT dues, so counting both would double-count
+  // the same dollar. The strip says so on screen.
+  const duesInScheduled: Record<string, number> = {};
+  const duesInActual: Record<string, number> = {};
+  for (const i of duesInstallments) {
+    const amt = i.amount ?? 0;
+    if (!amt) continue;
+    const due = monthKeyOf(i.due_date);
+    if (due) duesInScheduled[due] = Math.round(((duesInScheduled[due] ?? 0) + amt) * 100) / 100;
+    const paid = monthKeyOf(i.paid_at);
+    if (paid) duesInActual[paid] = Math.round(((duesInActual[paid] ?? 0) + amt) * 100) / 100;
+  }
+
   // ── 9. Headroom ───────────────────────────────────────────────────────
-  // Effective budget reconciles the optional season total (rep_program_years.
-  // budget_amount) with the itemized sum: the larger wins, and a season total above
-  // the itemized sum is exposed as a non-itemized "buffer" (owner decision 2026-07-08).
-  // Headroom is measured against the EFFECTIVE budget so this report, the Money hub,
-  // and the budget planner always agree.
+  // Measured against the EFFECTIVE budget (see above, where it is reconciled) so this report,
+  // the Money hub, and the budget planner always agree.
   const totalActual  = Math.round(categoryResults.reduce((s, c) => s + c.categoryActual, 0) * 100) / 100;
   const unbudgeted   = Math.round(unbudgetedActuals.reduce((s, u) => s + u.amount, 0) * 100) / 100;
-  const seasonTotal  = programYear.budgetAmount ?? null;
-  const effectiveBudget = Math.max(totalBudget, seasonTotal ?? 0);
-  const buffer       = seasonTotal != null && seasonTotal > totalBudget ? seasonTotal - totalBudget : 0;
   const headroom     = Math.round((effectiveBudget - totalActual - unbudgeted) * 100) / 100;
 
   return NextResponse.json({
@@ -342,6 +459,15 @@ export const GET = withObservability(async (req: Request,
     unbudgetedActuals,
     duesCollection,
     monthlyChart,
+    // Named so the chart can state what it is NOT plotting, rather than smearing it (D-H4).
+    undatedBudget,
+    // ── chunk H ──
+    monthGrid,
+    cellDetails,
+    moneyIn: { scheduled: duesInScheduled, actual: duesInActual },
+    todayMonth,
+    // Short enough to be a column header on a phone; the full season name is not.
+    priorSeasonLabel: priorLines.length > 0 && priorYearRow ? String(priorYearRow.year) : null,
     // Only tags actually used by this year's expenses head the filter row (not the whole library).
     expenseTags: expenseTags.filter(t => new Set(Object.values(tagsByExpenseId).flat()).has(t.id)),
     activeTagId: filterTagId,

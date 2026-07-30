@@ -148,10 +148,12 @@ export default function BudgetPlannerPage({
   const [sampleOpen,         setSampleOpen]         = useState(false);
   const [checklistExpanded,  setChecklistExpanded]  = useState(false);
   const [dismissedChecklist, setDismissedChecklist] = useState<string[]>([]);
-  // The Add-Line dirty baseline: BLANK for a plain add, the prefilled form for a
-  // checklist-chip add — otherwise the guard would count OUR prefill as the coach's
-  // work and nag on an untouched form (the one-mapping rule, Chunk A).
-  const [addBaseline,        setAddBaseline]        = useState<LineForm>(BLANK_FORM);
+  // The dirty baseline for whatever the line modal is currently showing: BLANK for a plain add,
+  // the prefilled form for a checklist-chip add, the loaded record for an edit. Set by every
+  // path that opens the modal, so the guard can never count OUR prefill as the coach's work and
+  // nag on an untouched form (the one-mapping rule, Chunk A — `formFromLine` stays the single
+  // form↔record mapping, this is just where its result is remembered).
+  const [formBaseline,       setFormBaseline]       = useState<LineForm>(BLANK_FORM);
 
   // Generate installments modal
   const [genOpen,          setGenOpen]          = useState(false);
@@ -169,18 +171,10 @@ export default function BudgetPlannerPage({
   useOverlayOpen(genOpen);
 
   // ── Discard guards (review f7-3/f7-7) ────────────────────────────────────────────
-  // The budget line with a period split is the worst thing in the product to retype, and
-  // it used to vanish on a backdrop tap. `editingLine` is a pre-filled EDIT baseline, so
-  // dirtiness compares against the line as loaded; adding compares against addBaseline
-  // (BLANK for a plain add, the prefilled form for a checklist-chip add).
-  // Memoised on the line being edited: `editingLine` is never cleared on close, so an
-  // unmemoised baseline would re-map the periods array on EVERY render of this page for
-  // the rest of the session — including keystrokes in unrelated modals.
-  const lineBaseline = useMemo(
-    () => (editingLine ? formFromLine(editingLine) : addBaseline),
-    [editingLine, addBaseline],
-  );
-  const lineDirty = modalOpen && !sameLineForm(form, lineBaseline);
+  // The budget line with a period split is the worst thing in the product to retype, and it
+  // used to vanish on a backdrop tap. Dirtiness compares the form against the baseline captured
+  // when the modal opened — see `formBaseline`.
+  const lineDirty = modalOpen && !sameLineForm(form, formBaseline);
   const filledPeriods = modalOpen && form.usePeriods
     ? form.periods.filter(p => p.label || p.date || p.amount).length
     : 0;
@@ -310,6 +304,35 @@ export default function BudgetPlannerPage({
     }
   }, [loading, plan, assignments, teamId]);
 
+  // Deep link from the month grid (chunk H): ?line=<id> opens THIS page's existing edit modal
+  // on that line, with its payment periods expanded. The grid is a way to REACH the form that
+  // already exists — it never grows an editor of its own. Same one-shot recipe as ?generate=1:
+  // write-capable only, silently ignored when the line has gone.
+  const lineDeepLinkDone = useRef(false);
+  useEffect(() => {
+    if (lineDeepLinkDone.current || loading || !plan) return;
+    const a = assignments.find(x => x.teamId === teamId);
+    if (!a) return; // assignments still loading — try again next render
+    lineDeepLinkDone.current = true;
+    if (a.capabilities.money !== 'write') return;
+    if (typeof window === 'undefined') return;
+    const q = new URLSearchParams(window.location.search);
+    const lineId = q.get('line');
+    if (!lineId) return;
+    const line = plan.lines.find(l => l.id === lineId);
+    if (!line) return;
+    const opened = formFromLine(line);
+    // ?periods=1 arrives from a month cell, where the coach was looking at dates — so the period
+    // split opens even on a line that is currently a lump sum. It becomes the BASELINE too: our
+    // opening the split is not the coach's work, so an untouched form must still close silently.
+    if (q.get('periods') === '1') opened.usePeriods = true;
+    setEditingLine(line);
+    setForm(opened);
+    setFormBaseline(opened);
+    setSaveError('');
+    setModalOpen(true);
+  }, [loading, plan, assignments, teamId]);
+
   // Deep link from the Money hub's plan anchor: ?starter=1 opens the budget starter
   // directly (one-shot; write-capable + still-empty plan only — the ?generate=1 recipe).
   const starterDeepLinkDone = useRef(false);
@@ -348,7 +371,7 @@ export default function BudgetPlannerPage({
   function openAdd() {
     setEditingLine(null);
     setForm(BLANK_FORM);
-    setAddBaseline(BLANK_FORM);
+    setFormBaseline(BLANK_FORM);
     setSaveError('');
     setModalOpen(true);
   }
@@ -366,14 +389,16 @@ export default function BudgetPlannerPage({
     };
     setEditingLine(null);
     setForm(prefilled);
-    setAddBaseline(prefilled);
+    setFormBaseline(prefilled);
     setSaveError('');
     setModalOpen(true);
   }
 
   function openEdit(line: RepBudgetLineWithPeriods) {
+    const loaded = formFromLine(line);
     setEditingLine(line);
-    setForm(formFromLine(line));
+    setForm(loaded);
+    setFormBaseline(loaded);
     setSaveError('');
     setModalOpen(true);
   }
@@ -973,7 +998,7 @@ export default function BudgetPlannerPage({
       {/* ── Add / Edit Line Modal ───────────────────────────────────────────── */}
       {modalOpen && (
         <div className={shared.modalOverlay} onClick={closeLineModal}>
-          <div className={shared.modal} onClick={e => e.stopPropagation()}>
+          <div className={`${shared.modal} ${shared.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title={editingLine ? 'Edit Budget Line' : 'Add Budget Line'} onClose={closeLineModal} />
 
             <p className={styles.formHint}><span className={styles.labelRequired}>*</span> Required</p>
@@ -1237,7 +1262,7 @@ export default function BudgetPlannerPage({
       {/* ── Generate Installments Modal ──────────────────────────────────────── */}
       {genOpen && (
         <div className={shared.modalOverlay} onClick={closeGenModal}>
-          <div className={shared.modal} style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
+          <div className={`${shared.modal} ${shared.modalFlushFooter}`} style={{ maxWidth: 620 }} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title="Generate Player Installments" onClose={closeGenModal} />
 
             {generateSuccess ? (

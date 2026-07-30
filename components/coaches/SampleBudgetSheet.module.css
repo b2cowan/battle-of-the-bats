@@ -2,9 +2,8 @@
    as TEXT / dashed-border accent (E3: the warm gate remaps it to olive — correct here).
    The fence must read as "another team's page", so it is the one dashed frame in Money. */
 
-/* Same desktop sticky-footer fix as the starter sheet: no bottom bleed, panel drops
-   its bottom padding inline — the last content must scroll clear of the bar. */
-.footerFlush.footerFlush { margin-bottom: 0; }
+/* The desktop sticky-footer overlap this sheet used to patch locally now comes from the
+   shared `.modalFlushFooter` in coaches.module.css (chunk H). */
 
 .fence {
   border: 1.5px dashed var(--logic-lime);

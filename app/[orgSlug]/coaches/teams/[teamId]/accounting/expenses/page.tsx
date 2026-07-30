@@ -6,6 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
+import type { PayableItem } from '@/components/accounting/UpcomingPayablesPanel';
 import TagSearchCombobox from '@/components/coaches/TagSearchCombobox';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -26,7 +27,13 @@ function fmtDate(s: string | null) {
   return d.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-type ExpenseTab = 'expenses' | 'payables';
+type ExpenseTab = 'expenses' | 'payables' | 'schedule';
+
+type ScheduleFilter = 'unpaid' | 'paid' | 'all';
+
+/** A commitment on the schedule tab: exactly what the payables API returns, plus which lane it
+ *  came from. Reuses `PayableItem` so the hub panel and this tab can't drift apart. */
+type ScheduleRow = PayableItem & { source: 'team' | 'org' };
 
 const BLANK_EXPENSE = {
   description: '',
@@ -99,6 +106,13 @@ export default function CoachesExpensesPage({
   const [editTagIds, setEditTagIds] = useState<string[]>([]);
   const [savingTags, setSavingTags] = useState(false);
 
+  // Chunk H — the payment schedule: every money-OUT commitment in one list, by due date.
+  // Player dues stay on the Dues page, where the reminders that chase them live.
+  const [schedule, setSchedule] = useState<ScheduleRow[] | null>(null);
+  const [scheduleLoading, setScheduleLoading] = useState(false);
+  const [scheduleError, setScheduleError] = useState('');
+  const [scheduleFilter, setScheduleFilter] = useState<ScheduleFilter>('unpaid');
+
   // Nav-hide + body-scroll-lock registration for the two Add modals (mobile sheet default).
   useOverlayOpen(showAddExpense);
   useOverlayOpen(showAddPayable);
@@ -115,7 +129,7 @@ export default function CoachesExpensesPage({
   const closeAddPayable = useDiscardGuard({
     dirty: payableDirty,
     close: () => setShowAddPayable(false),
-    noun: 'tournament payable',
+    noun: 'payable',
   });
 
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -162,6 +176,37 @@ export default function CoachesExpensesPage({
   }, [orgSlug, teamId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // The schedule is its own fetch (no window, paid rows included) and only runs when the coach
+  // opens that tab — the other two tabs shouldn't pay for a list they aren't showing.
+  const loadSchedule = useCallback(async () => {
+    setScheduleLoading(true);
+    setScheduleError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables?days=0&includePaid=1`);
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
+      const data = await res.json();
+      const lanes = (data.lanes ?? []) as Array<{ id: string; items: Omit<ScheduleRow, 'source'>[] }>;
+      const rows: ScheduleRow[] = [
+        ...(lanes.find(l => l.id === 'team_payables')?.items ?? []).map(i => ({ ...i, source: 'team' as const })),
+        ...(lanes.find(l => l.id === 'org_payables')?.items ?? []).map(i => ({ ...i, source: 'org' as const })),
+      ].sort((a, b) => (a.dueDate ?? '').localeCompare(b.dueDate ?? ''));
+      setSchedule(rows);
+    } catch (e: any) {
+      setScheduleError(e.message ?? 'Failed to load the payment schedule.');
+    } finally {
+      setScheduleLoading(false);
+    }
+  }, [orgSlug, teamId]);
+
+  useEffect(() => { if (tab === 'schedule') loadSchedule(); }, [tab, loadSchedule]);
+
+  // ?tab=schedule — where a Scheduled cell in the month grid lands. Read once on mount.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const wanted = new URLSearchParams(window.location.search).get('tab');
+    if (wanted === 'schedule' || wanted === 'payables' || wanted === 'expenses') setTab(wanted);
+  }, []);
 
   // Create a new money tag on the fly from the combobox; returns the new tag so the picker can
   // select it immediately. Adds it to the loaded library so it shows up without a full reload.
@@ -270,6 +315,9 @@ export default function CoachesExpensesPage({
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed');
       await load();
+      // Marking a payable paid changes the schedule too — refresh it so the row doesn't sit
+      // there still reading "unpaid" until the coach navigates away and back.
+      if (tab === 'schedule') await loadSchedule();
     } catch (e: any) {
       setError(e.message);
     } finally {
@@ -375,6 +423,10 @@ export default function CoachesExpensesPage({
     .filter((t): t is RepTeamTag => !!t)
     .sort((a, b) => a.name.localeCompare(b.name));
   const filteredActive = tab === 'expenses' ? independentExpenses : tournamentPayables;
+
+  const scheduleRows = (schedule ?? []).filter(r =>
+    scheduleFilter === 'all' ? true : scheduleFilter === 'paid' ? !!r.paid : !r.paid);
+  const summaryHasOrgRows = (schedule ?? []).some(r => r.source === 'org');
   const filterTotal = filterTagId ? filteredActive.reduce((s, e) => s + e.amount, 0) : 0;
   const filterTag = filterTagId ? tagById.get(filterTagId) : null;
 
@@ -387,7 +439,10 @@ export default function CoachesExpensesPage({
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Receipt size={22} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Expenses &amp; Tournament Payables</h1>
+            {/* "Tournament" retired (chunk H, D-H9): the same record has always handled a dome
+                booking or an equipment order just as well as a tournament entry — only the
+                words assumed otherwise. The stored type is unchanged. */}
+            <h1 className={styles.pageTitle}>Expenses &amp; Payables</h1>
             <p className={styles.pageSub}>{assignment.programYearName}</p>
           </div>
         </div>
@@ -419,12 +474,17 @@ export default function CoachesExpensesPage({
           Expenses ({allIndependent.length})
         </button>
         <button className={`${styles.viewToggleBtn} ${tab === 'payables' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('payables')}>
-          Tournament Payables ({allPayables.length})
+          Payables ({allPayables.length})
+        </button>
+        <button className={`${styles.viewToggleBtn} ${tab === 'schedule' ? styles.viewToggleBtnActive : ''}`} onClick={() => setTab('schedule')}>
+          Payment schedule
         </button>
       </div>
 
-      {/* Money-tag filter chip row (self-hides when the current tab has no tagged expenses) */}
-      {usedTagIds.length > 0 && (
+      {/* Money-tag filter chip row (self-hides when the current tab has no tagged expenses).
+          The schedule tab is a due-date list across two sources, so a tag filter has nothing
+          to narrow there. */}
+      {usedTagIds.length > 0 && tab !== 'schedule' && (
         <>
           <div className={styles.moneyFilterBar}>
             <Tag size={13} style={{ color: 'var(--white-40)' }} aria-hidden />
@@ -532,9 +592,9 @@ export default function CoachesExpensesPage({
             </table>
           </div>
         )
-      ) : (
+      ) : tab === 'payables' ? (
         tournamentPayables.length === 0 ? (
-          <div className={styles.emptyState}>No tournament payables logged yet. Use "Add Payable" to get started.</div>
+          <div className={styles.emptyState}>No payables logged yet. Use &ldquo;Add Payable&rdquo; to record something you&apos;ve agreed to pay.</div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
             {tournamentPayables.map(e => {
@@ -639,6 +699,106 @@ export default function CoachesExpensesPage({
             })}
           </div>
         )
+      ) : (
+        /* ── Payment schedule (chunk H) ────────────────────────────────────────────────
+           Every money-OUT commitment in one place, by due date: this team's payable
+           deposits and balances, plus the org's allocation instalments on a club-run team.
+           Player dues are money IN and stay on the Dues page, where the reminders live.
+           A LIST, one row per commitment — so it stacks into cards at 640 (Chunk A D1). */
+        scheduleLoading ? (
+          <p className={styles.muted}>Loading…</p>
+        ) : scheduleError ? (
+          <p className={styles.errorText}>{scheduleError}</p>
+        ) : (
+          <>
+            <div className={styles.viewToggle} style={{ marginBottom: '1rem' }}>
+              {(['unpaid', 'paid', 'all'] as const).map(f => (
+                <button
+                  key={f}
+                  className={`${styles.viewToggleBtn} ${scheduleFilter === f ? styles.viewToggleBtnActive : ''}`}
+                  onClick={() => setScheduleFilter(f)}
+                >
+                  {f === 'unpaid' ? 'Unpaid' : f === 'paid' ? 'Paid' : 'All'}
+                </button>
+              ))}
+            </div>
+            {scheduleRows.length === 0 ? (
+              <div className={styles.emptyState}>
+                {scheduleFilter === 'paid'
+                  ? 'Nothing has been paid off yet.'
+                  : scheduleFilter === 'unpaid'
+                    ? 'Nothing is outstanding — every commitment with a due date has been paid.'
+                    : 'No commitments with a due date yet. Add a payable to see it here.'}
+              </div>
+            ) : (
+              <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th className={styles.th}>Due</th>
+                      <th className={styles.th}>What</th>
+                      <th className={styles.th}>Category</th>
+                      <th className={styles.th}>Amount</th>
+                      <th className={styles.th}>Status</th>
+                      <th className={styles.th}></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {scheduleRows.map(row => (
+                      <tr key={row.id} className={styles.tr}>
+                        <td className={styles.td} data-label="Due">{fmtDate(row.dueDate)}</td>
+                        <td className={styles.td} data-label="What">
+                          {row.description}
+                          {row.label && <span className={styles.muted} style={{ display: 'block', fontSize: '0.75rem' }}>{row.label}</span>}
+                        </td>
+                        <td className={styles.td} data-label="Category" style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+                          {row.source === 'org' ? 'Org allocation' : (row.category ?? '—')}
+                        </td>
+                        <td className={styles.td} data-label="Amount" style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(row.amount)}</td>
+                        <td className={styles.td} data-label="Status">
+                          {row.paid ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--success-light)' }}>
+                              <CheckCircle2 size={12} /> Paid
+                            </span>
+                          ) : row.overdue ? (
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', color: 'var(--danger-light)' }}>
+                              <AlertTriangle size={12} /> {Math.abs(row.daysUntilDue ?? 0)} days overdue
+                            </span>
+                          ) : (
+                            <span className={styles.muted} style={{ fontSize: '0.8rem' }}>
+                              {row.daysUntilDue === 0 ? 'Due today' : `In ${row.daysUntilDue} days`}
+                            </span>
+                          )}
+                        </td>
+                        {/* Marking paid works on this team's OWN payables. An org allocation is
+                            settled through Org Allocations, which owns that conversation. */}
+                        <td className={`${styles.td} ${styles.cardActionCell}`}>
+                          {!row.paid && canWriteMoney && row.source === 'team' && row.expenseId && (
+                            <button
+                              className={`${styles.btnSecondary} ${styles.block640} ${styles.compactAction}`}
+                              disabled={!!marking[row.expenseId + (row.half === 'deposit' ? 'markDepositPaid' : 'markBalancePaid')]}
+                              onClick={() => doAction(row.expenseId!, row.half === 'deposit' ? 'markDepositPaid' : 'markBalancePaid')}
+                            >
+                              Mark paid
+                            </button>
+                          )}
+                          {row.source === 'org' && !row.paid && (
+                            <Link href={`${base}/accounting/allocations`} className={styles.linkBtn}>Open allocations</Link>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            <p className={styles.muted} style={{ fontSize: '0.78rem', marginTop: '0.75rem' }}>
+              Money going out only — payable deposits and balances{summaryHasOrgRows ? ', plus what your club has allocated to this team' : ''}.
+              Player dues are money coming in and live on{' '}
+              <Link href={`${base}/accounting/dues`} className={styles.linkBtn}>Player Dues</Link>.
+            </p>
+          </>
+        )
       )}
 
       {/* Add Expense modal */}
@@ -691,11 +851,11 @@ export default function CoachesExpensesPage({
       {showAddPayable && (
         <div className={styles.modalOverlay} onClick={closeAddPayable}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title="Add Tournament Payable" onClose={closeAddPayable} />
+            <CoachModalHeader title="Add Payable" onClose={closeAddPayable} />
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
                 <label className={styles.label}>Description *</label>
-                <input className={styles.input} value={payableForm.description} onChange={e => setPayableForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Spring Tournament 2025" />
+                <input className={styles.input} value={payableForm.description} onChange={e => setPayableForm(f => ({ ...f, description: e.target.value }))} placeholder="e.g. Spring tournament entry, summer dome block" />
               </div>
               {categoryField(payableForm.category, v => setPayableForm(f => ({ ...f, category: v })))}
               <div className={styles.field}>
@@ -710,7 +870,7 @@ export default function CoachesExpensesPage({
                 <CoachFormDisclosure
                   label="Split into a deposit and a balance"
                   title="Payment schedule"
-                  note="Tournament fees are often billed as a deposit now and a balance later. Leave this closed to record one amount due."
+                  note="Big-ticket costs are often billed as a deposit now and a balance later — tournament entries, dome blocks, uniform orders. Leave this closed to record one amount due on one date."
                   meta={payableScheduleSet ? 'Set' : undefined}
                   defaultOpen={payableScheduleSet}
                 >

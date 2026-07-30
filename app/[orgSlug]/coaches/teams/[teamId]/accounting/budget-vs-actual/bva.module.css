@@ -176,6 +176,49 @@
   margin: 0 0 0.75rem;
 }
 
+/* The chart's honesty line (chunk H, D-H4): undated plan money is no longer spread across
+   months it was never assigned to, so the chart names what it is not plotting. */
+.chartNote {
+  margin: 0 0 0.75rem;
+  font-size: 0.75rem;
+  color: var(--home-dim, var(--white-45));
+}
+.chartNoteLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--primary-light);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+/* ── View + lens toggles (chunk H) ───────────────────────────────────────── */
+.viewBar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.1rem;
+}
+
+.viewBarLabel {
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-40, rgba(255, 255, 255, 0.4));
+}
+
+/* Four lens names don't fit a phone at full length — the abbreviation is a swap, not a
+   truncation, so nothing is ever cut mid-word. */
+.lensShort { display: none; }
+@media (max-width: 640px) {
+  .lensFull { display: none; }
+  .lensShort { display: inline; }
+  .viewBar { gap: 0.4rem; }
+}
+
 /* ── Category breakdown ──────────────────────────────────────────────────── */
 .section { margin-bottom: 1.5rem; }
 

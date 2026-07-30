@@ -167,12 +167,32 @@ test.beforeAll(async () => {
     { org_id: orgId, team_id: repTeamId, program_year_id: programYearId, description: 'Umpire fees', total_amount: 1150, sort_order: 1 },
   ]).select('id');
   if (lErr) throw lErr;
+  // Four dated periods summing to the line total. The LAST one is ~3 months out on purpose
+  // (chunk H): the month grid needs a month strictly after today's in every run, or the
+  // "Difference shows nothing for a month that hasn't happened" assertion is date-dependent.
+  // The second line is deliberately left UNDATED — that is the "No date yet" column's case.
   const { error: perErr } = await admin.from('rep_budget_periods').insert([
-    { budget_line_id: lines![0].id, period_label: 'May', period_date: day(-40), amount: 1600, sort_order: 0 },
-    { budget_line_id: lines![0].id, period_label: 'June', period_date: day(-10), amount: 1600, sort_order: 1 },
-    { budget_line_id: lines![0].id, period_label: 'July', period_date: day(20), amount: 1600, sort_order: 2 },
+    { budget_line_id: lines![0].id, period_label: 'First', period_date: day(-40), amount: 1200, sort_order: 0 },
+    { budget_line_id: lines![0].id, period_label: 'Second', period_date: day(-10), amount: 1200, sort_order: 1 },
+    { budget_line_id: lines![0].id, period_label: 'Third', period_date: day(20), amount: 1200, sort_order: 2 },
+    { budget_line_id: lines![0].id, period_label: 'Fourth', period_date: day(80), amount: 1200, sort_order: 3 },
   ]);
   if (perErr) throw perErr;
+
+  // ── Chunk H: a PRIOR season with its own lines, so the comparison column has something to
+  // compare. 'Umpire fees' matches this season's line by name; 'Banquet' has no match at all,
+  // which is the whole point of the "in last season's plan, not in this one" list. No coach
+  // row for this year — a closed ASSIGNMENT would change the team switcher, and this fixture
+  // is only about the budget data rollover leaves behind.
+  const { data: priorYear, error: pyErr } = await admin.from('rep_program_years')
+    .insert({ team_id: repTeamId, org_id: orgId, name: `${MARK} 2025`, year: 2025, status: 'completed' })
+    .select('id').single();
+  if (pyErr) throw pyErr;
+  const { error: plErr } = await admin.from('rep_budget_lines').insert([
+    { org_id: orgId, team_id: repTeamId, program_year_id: priorYear!.id, description: 'Umpire fees', total_amount: 900, sort_order: 0 },
+    { org_id: orgId, team_id: repTeamId, program_year_id: priorYear!.id, description: 'Banquet', total_amount: 400, sort_order: 1 },
+  ]);
+  if (plErr) throw plErr;
 
   // ── Expenses: one paid (no action cell → must not draw a blank card line), one unpaid (action),
   // and a tournament payable with BOTH a deposit and a balance (the two-across split).
@@ -332,7 +352,8 @@ test.describe('Money on a phone @360x740', () => {
     // The payables tab is a separate render of the Expenses page (the two-across split).
     await open(page, `${base()}/accounting/expenses`);
     const main = page.locator('main[class*="coachesMain"]');
-    await main.getByRole('button', { name: /^tournament payables/i }).click();
+    // Renamed in chunk H: the same record always handled any commitment, not only a tournament.
+    await main.getByRole('button', { name: /^payables/i }).click();
     await expect(main.getByText('Provincials entry')).toBeVisible();
     // Both halves of the split are readable, not two ~150px boxes.
     await expect(main.getByText(/mark deposit paid/i)).toBeVisible();
@@ -764,5 +785,211 @@ test.describe('The budget starter @360x740 (Chunk G)', () => {
     await expect(fence.getByText('-$130')).toBeVisible();
     await expect(fence.getByText(/gone over on purpose/i)).toBeVisible();
     await expectNoPageScroll(page, 'sample sheet — BvA tab');
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════════════
+// Chunk H — Money by Month. The month grid, its four lenses, the drill-ins, the cash-flow
+// strip, the prior-season column, and the payment schedule.
+// ═══════════════════════════════════════════════════════════════════════════════════════
+
+/** Switch Budget vs. Actual into the month grid and (optionally) a lens. */
+async function openMonths(page: Page, lens?: 'Budget' | 'Scheduled' | 'Actual' | 'Difference') {
+  await open(page, `${base()}/accounting/budget-vs-actual`);
+  const main = page.locator('main[class*="coachesMain"]');
+  await main.getByRole('button', { name: 'Months', exact: true }).click();
+  await expect(page.getByRole('table')).toBeVisible();
+  if (lens) {
+    // Each lens button carries a full and an abbreviated label (only one shows at a given
+    // width), so match the accessible name rather than exact visible text.
+    await main.getByRole('button', { name: new RegExp(`^${lens}`, 'i') }).click();
+  }
+  return main;
+}
+
+test.describe('Money by month @360x740', () => {
+  test.use({ viewport: PHONE });
+  test.beforeEach(async ({ page }) => { await signIn(page, WRITE_EMAIL); });
+
+  test('the month grid keeps its comparison shape: scrolls in its own frame, first column pinned, page still', async ({ page }) => {
+    const main = await openMonths(page);
+
+    // A comparison is never card-stacked (Chunk A D1) — it scrolls, and it SAYS it scrolls.
+    await expect(page.getByTestId('coach-scrollx-hint')).toBeVisible();
+    const scroller = page.getByTestId('coach-scrollx');
+    const overflow = await scroller.evaluate(el => el.scrollWidth - el.clientWidth);
+    expect(overflow, 'the month grid should overflow its frame on a phone').toBeGreaterThan(1);
+
+    // The line name must not move when the money columns do.
+    const firstLabel = main.getByRole('table').locator('tbody th').first();
+    const before = await firstLabel.boundingBox();
+    await scroller.evaluate(el => { el.scrollLeft = 180; });
+    await page.waitForTimeout(120);
+    const after = await firstLabel.boundingBox();
+    expect(Math.abs((after?.x ?? 0) - (before?.x ?? 0)), 'pinned label drifted while scrolling').toBeLessThanOrEqual(1);
+
+    await expectNoPageScroll(page, 'budget-vs-actual — months view');
+    await expectNoClippedAmounts(page, 'budget-vs-actual — months view');
+  });
+
+  test('undated plan money gets its own column instead of being spread across months', async ({ page }) => {
+    const main = await openMonths(page);
+    // The second seeded line has no periods at all, so its whole total is undated.
+    await expect(main.getByRole('columnheader', { name: /no date yet/i })).toBeVisible();
+
+    // …and the chart on the Categories view names the same amount rather than smearing it.
+    await main.getByRole('button', { name: 'Categories', exact: true }).click();
+    await expect(main.getByText(/has no date yet and isn/i)).toBeVisible();
+  });
+
+  test('Difference says nothing about a month that has not happened yet', async ({ page }) => {
+    const main = await openMonths(page, 'Difference');
+    await expect(main.getByText(/isn.t a saving/i)).toBeVisible();
+
+    // The last seeded period is ~3 months out, so the grid always has a month strictly after
+    // today's. Its Difference cell must be an em dash — never a flattering "fully under".
+    const headerCount = await main.getByRole('table').locator('thead th').count();
+    const totalRow = main.getByRole('table').locator('tbody tr').filter({ hasText: /^Total/ }).first();
+    // Row cells are the <td>s after the row's own <th> label; the last td is the Total column.
+    const futureCell = totalRow.locator('td').nth(headerCount - 3);
+    await expect(futureCell).toHaveText('—');
+  });
+
+  test('the cash-flow strip runs a balance and names the month the team goes short', async ({ page }) => {
+    const main = await openMonths(page, 'Budget');
+    const table = main.getByRole('table');
+    await expect(table.locator('tbody tr').filter({ hasText: 'Money in' })).toHaveCount(1);
+    await expect(table.locator('tbody tr').filter({ hasText: 'Money out' })).toHaveCount(1);
+    await expect(table.locator('tbody tr').filter({ hasText: 'Running balance' })).toHaveCount(1);
+
+    // This fixture spends and has no dues schedules, so the balance must go negative — and the
+    // page must say so in words, naming the month.
+    await expect(main.getByText(/you go short in \w+ \d{4}/i)).toBeVisible();
+    // It must also state which lens it projected with, so "Budget" is never read as "committed".
+    await expect(main.getByText(/cash flow is projected with the/i)).toBeVisible();
+  });
+
+  test('last season shows up as a column, and what is missing from this season shows up as a list', async ({ page }) => {
+    const main = await openMonths(page);
+    await expect(main.getByRole('columnheader', { name: '2025' })).toBeVisible();
+    // 'Banquet' existed last season and has no line this season — the point of the column.
+    await expect(main.getByText(/not in this one/i)).toBeVisible();
+    await expect(main.getByText('Banquet')).toBeVisible();
+    // Last season's figures are reference, never a suggestion (D-G1 holds across chunk H too).
+    await expect(main.getByText(/not a suggestion for this one/i)).toBeVisible();
+  });
+
+  test('a budget cell opens the budget-line form that already exists — the grid never edits', async ({ page }) => {
+    const main = await openMonths(page, 'Budget');
+    // Expand the category so a LINE row (and therefore a line-level budget cell) is present.
+    await main.getByRole('table').locator('tbody th button').first().click();
+    const drill = main.getByRole('table').locator('a[href*="/accounting/budget?line="]').first();
+    await expect(drill).toBeVisible();
+    await drill.click();
+
+    await expect(page).toHaveURL(/\/accounting\/budget\?line=/);
+    const budgetMain = page.locator('main[class*="coachesMain"]');
+    await expect(budgetMain.getByText('Loading…')).toHaveCount(0, { timeout: 45_000 });
+    // The real edit modal, pre-filled — not a second editor built into the grid.
+    await expect(page.getByLabel(/total amount/i)).toHaveValue('4800');
+  });
+
+  test('an actual cell opens a read-only list of what made it up', async ({ page }) => {
+    const main = await openMonths(page, 'Actual');
+    await expect(main.getByText(/not to an individual line/i)).toBeVisible();
+    const cell = main.getByRole('table').locator('tbody button[title*="See what makes up"]').first();
+    await expect(cell).toBeVisible();
+    await cell.click();
+    const dialog = page.locator('[class*="modal"]').filter({ hasText: /paid in/i }).first();
+    await expect(dialog).toBeVisible();
+    // A read panel, not an editor.
+    expect(await dialog.locator('input, select, textarea').count()).toBe(0);
+  });
+});
+
+test.describe('The payment schedule (chunk H)', () => {
+  test.use({ viewport: PHONE });
+
+  test('every commitment in one list, by due date, with a filter that means what it says', async ({ page }) => {
+    await signIn(page, WRITE_EMAIL);
+    await open(page, `${base()}/accounting/expenses?tab=schedule`);
+    const main = page.locator('main[class*="coachesMain"]');
+
+    await expect(main.getByRole('heading', { name: /expenses & payables/i })).toBeVisible();
+    // The seeded payable's deposit was due 5 days ago and its balance is 30 days out; the org
+    // allocation adds another overdue instalment. Unpaid is the default view.
+    await expect(main.getByText(/provincials entry — deposit/i)).toBeVisible();
+    await expect(main.getByText(/days overdue/i).first()).toBeVisible();
+
+    // Paid drops the outstanding rows entirely.
+    await main.getByRole('button', { name: 'Paid', exact: true }).click();
+    await expect(main.getByText(/provincials entry — deposit/i)).toHaveCount(0);
+
+    await main.getByRole('button', { name: 'All', exact: true }).click();
+    await expect(main.getByText(/provincials entry — deposit/i)).toBeVisible();
+
+    // Dues are money IN and belong to the Dues page — the schedule says so rather than
+    // silently mixing the two directions.
+    await expect(main.getByText(/money going out only/i)).toBeVisible();
+    await expectNoPageScroll(page, 'payment schedule');
+  });
+
+  test('a read-only money coach reads the month grid and the schedule, and can change neither', async ({ page }) => {
+    await signIn(page, READ_EMAIL);
+
+    await open(page, `${base()}/accounting/budget-vs-actual`);
+    const main = page.locator('main[class*="coachesMain"]');
+    await main.getByRole('button', { name: 'Months', exact: true }).click();
+    await expect(page.getByRole('table')).toBeVisible();
+    // Reading is never gated on write — the whole grid and the cash-flow strip are present…
+    await expect(main.getByRole('table').locator('tbody tr').filter({ hasText: 'Running balance' })).toHaveCount(1);
+    // …but no cell offers a way into an editor.
+    expect(await main.locator('a[href*="/accounting/budget?line="]').count()).toBe(0);
+
+    await open(page, `${base()}/accounting/expenses?tab=schedule`);
+    const sched = page.locator('main[class*="coachesMain"]');
+    await expect(sched.getByText(/provincials entry — deposit/i)).toBeVisible();
+    expect(await sched.getByRole('button', { name: /mark paid/i }).count()).toBe(0);
+  });
+});
+
+test.describe('Money by month on a desktop', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+  test.beforeEach(async ({ page }) => { await signIn(page, WRITE_EMAIL); });
+
+  test('a budget line cannot be relinked to another org taxonomy', async ({ page }) => {
+    await open(page, `${base()}/accounting/budget`);
+    // The lines POST was hardened during the Chunk G review; its PATCH sibling was not, so a
+    // crafted request could relink a line to another org's custom category and echo its name.
+    const status = await page.evaluate(async ({ orgSlug, teamId }) => {
+      // `cache: 'no-store'` matters: earlier tests in this file add and remove budget lines, and
+      // a browser-cached plan would hand this probe a line id that no longer exists — which the
+      // route correctly answers 404, hiding whether the ownership check fired at all.
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`, { cache: 'no-store' });
+      const lineId = (await res.json())?.plan?.lines?.[0]?.id;
+      const bad = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan/lines/${lineId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        // A category id that is neither this org's nor a platform default.
+        body: JSON.stringify({ categoryId: '00000000-0000-4000-8000-000000000001' }),
+      });
+      return bad.status;
+    }, { orgSlug: ORG_SLUG, teamId: repTeamId });
+    expect(status, 'a foreign category id must be refused, not stored').toBe(400);
+  });
+
+  test('a tall Money form keeps its sticky footer flush instead of eating the last inch', async ({ page }) => {
+    await open(page, `${base()}/accounting/budget`);
+    const main = page.locator('main[class*="coachesMain"]');
+    await main.getByRole('button', { name: /add line/i }).first().click();
+
+    // The bug was a NEGATIVE bottom margin on a sticky footer: it shortens the panel's
+    // scrollable extent by exactly that much and hides the form's last inch for good. One
+    // shared rule now zeroes it for every tall modal (three private copies retired).
+    const marginBottom = await page.evaluate(() => {
+      const footer = document.querySelector<HTMLElement>('[class*="modalFooter"]');
+      return footer ? parseFloat(getComputedStyle(footer).marginBottom) : null;
+    });
+    expect(marginBottom, 'the sticky footer still bleeds below the panel').toBeGreaterThanOrEqual(0);
   });
 });

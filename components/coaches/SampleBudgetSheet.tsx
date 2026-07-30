@@ -79,7 +79,7 @@ export default function SampleBudgetSheet({
 
   return (
     <div className={shared.modalOverlay} onClick={onClose}>
-      <div className={shared.modal} style={{ paddingBottom: 0 }} onClick={e => e.stopPropagation()}>
+      <div className={`${shared.modal} ${shared.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
         <CoachModalHeader title="Sample season budget" onClose={onClose} />
 
         <div className={styles.fence} data-testid="sample-budget-fence">
@@ -172,7 +172,7 @@ export default function SampleBudgetSheet({
           )}
         </div>
 
-        <div className={`${shared.modalFooter} ${styles.footerFlush}`}>
+        <div className={shared.modalFooter}>
           <button type="button" className={shared.btnGhost} onClick={onClose}>Close</button>
         </div>
       </div>

@@ -34,7 +34,7 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId, lineId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
+  const { ctx, assignment, programYear } = resolved;
   const denied = denyUnless(canWriteMoney(assignment.capabilities), 'You do not have permission to change team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
@@ -73,8 +73,32 @@ export const PATCH = withObservability(async (req: Request,
     updates.notes = body.notes?.trim() || null;
   }
 
-  if ('categoryId' in body) updates.category_id = body.categoryId || null;
-  if ('itemId'     in body) updates.item_id      = body.itemId     || null;
+  // The FK payload must belong to this org's taxonomy (platform defaults are org_id NULL) — the
+  // same ownership check the lines POST performs. Without it a crafted PATCH could relink a line
+  // to, and echo back the name of, ANOTHER org's custom category or item. The POST was hardened
+  // during the Chunk G review; its PATCH sibling was not, and still had the gap (chunk H).
+  if ('categoryId' in body) {
+    const categoryId = body.categoryId || null;
+    if (categoryId) {
+      const { data: cat } = await supabaseAdmin
+        .from('budget_categories').select('id')
+        .eq('id', categoryId).or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
+        .maybeSingle();
+      if (!cat) return NextResponse.json({ error: 'Category not found' }, { status: 400 });
+    }
+    updates.category_id = categoryId;
+  }
+  if ('itemId' in body) {
+    const itemId = body.itemId || null;
+    if (itemId) {
+      const { data: item } = await supabaseAdmin
+        .from('budget_items').select('id')
+        .eq('id', itemId).or(`org_id.is.null,org_id.eq.${ctx!.org.id}`)
+        .maybeSingle();
+      if (!item) return NextResponse.json({ error: 'Item not found' }, { status: 400 });
+    }
+    updates.item_id = itemId;
+  }
 
   const { data, error } = await supabaseAdmin
     .from('rep_budget_lines')

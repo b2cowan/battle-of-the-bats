@@ -263,7 +263,7 @@ export default function BudgetStarterSheet({
 
   return (
     <div className={shared.modalOverlay} onClick={close}>
-      <div className={shared.modal} style={{ paddingBottom: 0 }} onClick={e => e.stopPropagation()}>
+      <div className={`${shared.modal} ${shared.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
         <CoachModalHeader title="Your starting budget" onClose={close} />
 
         {step === 1 && (
@@ -308,7 +308,7 @@ export default function BudgetStarterSheet({
               {yesNo('uniforms')}
             </div>
 
-            <div className={`${shared.modalFooter} ${styles.footerFlush}`}>
+            <div className={shared.modalFooter}>
               <button type="button" className={shared.btnGhost} onClick={close}>Cancel</button>
               <button type="button" className={shared.btnPrimary} onClick={() => { buildRows(); setStep(2); }}>
                 Next — your lines <ArrowRight size={14} />
@@ -420,7 +420,7 @@ export default function BudgetStarterSheet({
               </>
             )}
 
-            <div className={`${shared.modalFooter} ${styles.footerFlush}`}>
+            <div className={shared.modalFooter}>
               <button type="button" className={shared.btnGhost} onClick={() => setStep(1)}>Back</button>
               <button
                 type="button"

@@ -337,6 +337,8 @@ export default function CoachesAccountingPage({
           <div style={{ marginBottom: '1.5rem' }}>
             <UpcomingPayablesPanel
               apiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
+              /* This panel is a 30/60/90-day preview; the schedule tab is every commitment (chunk H). */
+              fullScheduleUrl={`${base}/accounting/expenses?tab=schedule`}
             />
           </div>
 
@@ -430,8 +432,8 @@ export default function CoachesAccountingPage({
               {card(
                 `${base}/accounting/expenses`,
                 <Receipt size={20} style={{ color: 'var(--home-rust, #f97316)' }} />,
-                'Expenses & Tournament Payables',
-                'Log spending by category, track tournament deposits and balances',
+                'Expenses & Payables',
+                'Log spending by category, track what you owe and when it falls due',
                 summary.expenses.loggedCount > 0 ? (
                   <>
                     <span className={styles.moneyCardStatValue}>{fmt(summary.expenses.paidTotal)} paid</span>

@@ -2545,7 +2545,7 @@ export default function CoachesSchedulePage({
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {showAddForm && (
         <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={requestCloseForm}>
-          <div className={`${styles.modal} ${styles.eventFormModal}`} onClick={e => e.stopPropagation()}>
+          <div className={`${styles.modal} ${styles.eventFormModal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestCloseForm} />
 
             <div className={styles.formBody}>

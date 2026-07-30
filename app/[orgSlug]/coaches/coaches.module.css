@@ -32,6 +32,9 @@
      • .cardStackCell / .cardActionCell
                                inside .tableAsCards: a cell too big for one
                                label/value line, and the trailing action cell.
+     • .modalFlushFooter       a modal tall enough to SCROLL: kills the sticky footer's bottom
+                               bleed (which otherwise hides the form's last ~1.5rem on a
+                               desktop) and drops the panel's own bottom padding to match.
      • .sheetOnMobile          PRE-FLIP name, now a no-op alias — full-height bottom-sheet
                                is the DEFAULT .modalOverlay presentation @640 (Coach Portal
                                Batch 1 D1, 2026-07-28). Opt OUT with .centeredOnMobile.
@@ -1981,14 +1984,25 @@
   background: var(--card-bg);
 }
 
-/* Event form modal — a touch wider so the date/time pickers have room. Drop the modal's
-   bottom padding so the sticky Save footer sits flush to the bottom edge (no gap showing
-   form content beneath the strip); zero the footer's own bottom bleed to match.
+/* modalFlushFooter — the DESKTOP half of the sticky-footer overlap, fixed once (chunk H).
+   `.modalFooter`'s -1.5rem bottom bleed exists so its background reaches the modal's edge, but
+   on a STICKY footer inside a scrolling `.modal` that negative margin also shortens the scroll
+   extent by 24px — so the last ~1.5rem of a tall form can never be scrolled into view. The @640
+   branch below already zeroes the bleed for exactly this reason; this is the same fix above it.
+   Flushness is restored the way `.eventFormModal` proved: the PANEL drops its own bottom padding.
+   Add to the `.modal` element of any modal tall enough to scroll. Retires three private copies
+   (the event modal's, and the two Chunk G sheets' `footerFlush`).
+   Descendant, not child: a footer rendered inside a conditional wrapper must still get the fix,
+   or this becomes another rule an adopter can silently fail to satisfy. */
+.modalFlushFooter { padding-bottom: 0; }
+.modalFlushFooter .modalFooter { margin-bottom: 0; }
+
+/* Event form modal — a touch wider so the date/time pickers have room. Its flush-footer
+   handling now comes from `.modalFlushFooter` above (it was the first surface to need it).
    Centered like every other dialog (owner decision 2026-07-13: all pop-up modals open
    centered for consistency — previously this one docked right to sit over the event detail
    slide-over, which read as modals "jumping" between center and right). */
-.eventFormModal { max-width: 600px; padding-bottom: 0; }
-.eventFormModal .modalFooter { margin-bottom: 0; }
+.eventFormModal { max-width: 600px; }
 /* Rounded (pill) footer actions — scoped to the event modal so the rest of the app's square
    buttons are untouched. */
 .eventFormModal .modalFooter .btnPrimary,

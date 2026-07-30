@@ -49,10 +49,18 @@ export const GET = withObservability(async (req: Request,
   if (denied) return denied;
 
   const url = new URL(req.url);
-  const days = Math.min(Math.max(parseInt(url.searchParams.get('days') ?? '90', 10), 1), 365);
+  // days=0 means "no window" — the full payment-schedule tab (chunk H) needs every commitment,
+  // not the hub panel's 90-day preview. includePaid=1 additionally keeps settled rows, so the
+  // schedule can offer Unpaid / Paid / All rather than only what is still owed.
+  const daysParam = parseInt(url.searchParams.get('days') ?? '90', 10);
+  const unbounded = daysParam === 0;
+  const days = unbounded ? 0 : Math.min(Math.max(isNaN(daysParam) ? 90 : daysParam, 1), 365);
+  const includePaid = url.searchParams.get('includePaid') === '1';
 
   const todayStr = tournamentToday();
-  const cutoffStr = addCalendarDays(todayStr, days);
+  // A date string that sorts after every real due date — simpler and safer than branching every
+  // comparison, and it keeps the window logic in exactly one shape.
+  const cutoffStr = unbounded ? '9999-12-31' : addCalendarDays(todayStr, days);
 
   // ── Lane 1: player dues installments ────────────────────────────────────
   const { data: schedules } = await supabaseAdmin
@@ -67,13 +75,14 @@ export const GET = withObservability(async (req: Request,
 
   let duesItems: any[] = [];
   if (scheduleIds.length > 0) {
-    const { data: installments } = await supabaseAdmin
+    let duesQuery = supabaseAdmin
       .from('rep_player_dues_installments')
-      .select('id, schedule_id, player_id, installment_number, amount, due_date')
+      .select('id, schedule_id, player_id, installment_number, amount, due_date, paid_at')
       .in('schedule_id', scheduleIds)
-      .is('paid_at', null)
       .lte('due_date', cutoffStr)
       .order('due_date', { ascending: true });
+    if (!includePaid) duesQuery = duesQuery.is('paid_at', null);
+    const { data: installments } = await duesQuery;
 
     const playerIds = [...new Set((installments ?? []).map((i: any) => i.player_id).filter(Boolean))];
     const nameMap = new Map<string, string>();
@@ -97,7 +106,8 @@ export const GET = withObservability(async (req: Request,
         amount:      Number(i.amount),
         dueDate:     i.due_date,
         daysUntilDue: d,
-        overdue:     d < 0,
+        overdue:     !i.paid_at && d < 0,
+        paid:        !!i.paid_at,
         label:       pid ? (nameMap.get(pid) ?? null) : null,
       };
     });
@@ -106,33 +116,34 @@ export const GET = withObservability(async (req: Request,
   // ── Lane 2: team expenses (deposit + balance due dates) ──────────────────
   const { data: expenses } = await supabaseAdmin
     .from('rep_team_expenses')
-    .select('id, description, deposit_amount, deposit_due_date, deposit_paid_at, balance_amount, balance_due_date, balance_paid_at')
+    .select('id, description, category, deposit_amount, deposit_due_date, deposit_paid_at, balance_amount, balance_due_date, balance_paid_at')
     .eq('team_id', teamId)
     .eq('program_year_id', programYear.id);
 
   const expenseItems: any[] = [];
   for (const e of expenses ?? []) {
-    if (e.deposit_due_date && !e.deposit_paid_at && e.deposit_due_date <= cutoffStr && Number(e.deposit_amount) > 0) {
-      const d = daysUntil(e.deposit_due_date);
+    // A payable's deposit and balance are separate commitments with their own dates and their own
+    // paid state — they belong on the schedule as separate rows, not as one blended entry.
+    const halves: Array<{ suffix: string; amount: unknown; due: string | null; paidAt: string | null }> = [
+      { suffix: 'deposit', amount: e.deposit_amount, due: e.deposit_due_date, paidAt: e.deposit_paid_at },
+      { suffix: 'balance', amount: e.balance_amount, due: e.balance_due_date, paidAt: e.balance_paid_at },
+    ];
+    for (const h of halves) {
+      if (!h.due || Number(h.amount) <= 0) continue;
+      if (h.paidAt && !includePaid) continue;
+      if (h.due > cutoffStr) continue;
+      const d = daysUntil(h.due);
       expenseItems.push({
-        id:          `${e.id}-deposit`,
-        description: `${e.description} — deposit`,
-        amount:      Number(e.deposit_amount),
-        dueDate:     e.deposit_due_date,
+        id:          `${e.id}-${h.suffix}`,
+        expenseId:   e.id,
+        half:        h.suffix,
+        description: `${e.description} — ${h.suffix}`,
+        category:    e.category ?? null,
+        amount:      Number(h.amount),
+        dueDate:     h.due,
         daysUntilDue: d,
-        overdue:     d < 0,
-        label:       null,
-      });
-    }
-    if (e.balance_due_date && !e.balance_paid_at && e.balance_due_date <= cutoffStr && Number(e.balance_amount) > 0) {
-      const d = daysUntil(e.balance_due_date);
-      expenseItems.push({
-        id:          `${e.id}-balance`,
-        description: `${e.description} — balance`,
-        amount:      Number(e.balance_amount),
-        dueDate:     e.balance_due_date,
-        daysUntilDue: d,
-        overdue:     d < 0,
+        overdue:     !h.paidAt && d < 0,
+        paid:        !!h.paidAt,
         label:       null,
       });
     }
@@ -156,13 +167,14 @@ export const GET = withObservability(async (req: Request,
 
   let allocItems: any[] = [];
   if (splitIds.length > 0) {
-    const { data: allocInst } = await supabaseAdmin
+    let allocQuery = supabaseAdmin
       .from('rep_allocation_installments')
-      .select('id, split_id, installment_number, amount, due_date')
+      .select('id, split_id, installment_number, amount, due_date, paid_at')
       .in('split_id', splitIds)
-      .is('paid_at', null)
       .lte('due_date', cutoffStr)
       .order('due_date', { ascending: true });
+    if (!includePaid) allocQuery = allocQuery.is('paid_at', null);
+    const { data: allocInst } = await allocQuery;
 
     allocItems = (allocInst ?? []).map((i: any) => {
       const d = daysUntil(i.due_date);
@@ -172,7 +184,8 @@ export const GET = withObservability(async (req: Request,
         amount:      Number(i.amount),
         dueDate:     i.due_date,
         daysUntilDue: d,
-        overdue:     d < 0,
+        overdue:     !i.paid_at && d < 0,
+        paid:        !!i.paid_at,
         label:       `Installment #${i.installment_number}`,
       };
     });
