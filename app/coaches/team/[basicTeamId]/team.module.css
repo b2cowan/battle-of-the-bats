@@ -119,39 +119,8 @@
   flex-shrink: 0;
 }
 
-/* First-run getting-started checklist (rendered inside CoachEmptyState). */
-.firstRunSteps {
-  width: 100%;
-  max-width: 42ch;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  text-align: left;
-}
-
-.firstRunStep {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  color: var(--white-70);
-  font-size: 0.88rem;
-  line-height: 1.4;
-}
-
-.firstRunStepIcon {
-  flex-shrink: 0;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
-}
+/* (The first-run checklist styles moved to components/coaches/CoachTeamSetupPanel.module.css —
+   the steps are now interactive and own their own card body.) */
 
 /* Tournament history rows — A3.3: the row anatomy retired in favour of the shared
    CoachRegistrationCard; this wrapper keeps only the list rhythm. */

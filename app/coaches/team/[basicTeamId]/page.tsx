@@ -23,10 +23,9 @@ import HelpButton from '@/components/help/HelpButton';
 import TeamHQ from '@/components/coaches/TeamHQ';
 import { pickFanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
-import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachTeamSetupPanel from '@/components/coaches/CoachTeamSetupPanel';
 import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
 import ScopeShelf from '@/components/coaches/ScopeShelf';
-import { Rocket, Users, CalendarDays, Megaphone } from 'lucide-react';
 import { registrationStatusLabel } from '@/lib/coaches-status';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import { tournamentToday } from '@/lib/timezone';
@@ -136,14 +135,22 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   // eligibility rule (live/upcoming public event, any registration status), same as premium.
   const fanViewEntry = pickFanViewRegistration(history);
 
-  // First-run banner: a brand-new team with nothing entered yet. Falls away on
-  // its own once the coach adds anything (no persisted dismiss state needed).
-  const isFirstRun =
-    players.length === 0 &&
-    events.length === 0 &&
-    fees.length === 0 &&
-    announcements.length === 0 &&
-    history.length === 0;
+  // Setup panel gate (owner decision 2026-07-29 — see FREE_COACH_ONBOARDING_PLAN.md §2):
+  // scratch teams only, and it survives partial progress so a finished step can actually
+  // render as finished. The old all-empty `isFirstRun` gate vanished the instant anything
+  // was entered, which made the completed-step state unreachable.
+  //   • history.length === 0 → a team that arrived via a tournament registration is NOT
+  //     shown a setup card; its Overview keeps the "beyond this tournament" divider + the
+  //     roster nudge, exactly as before.
+  //   • fees is deliberately NOT a signal — it isn't one of the three approved steps.
+  const setupStepsDone = {
+    roster: players.length > 0,
+    schedule: events.length > 0,
+    announcements: announcements.length > 0,
+  };
+  const isSettingUp =
+    history.length === 0 &&
+    !(setupStepsDone.roster && setupStepsDone.schedule && setupStepsDone.announcements);
 
   const today = tournamentToday();
 
@@ -245,8 +252,9 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
 
       {/* Discovery nudge (Variant A): a quiet, dismissible invite to turn on the persisted-roster
           wedge → degrades to a faint line on dismiss (never erased; Explore link stays in the rail).
-          Suppressed during first-run (the onboarding banner leads) and once roster is already on. */}
-      {!isFirstRun && (
+          Suppressed while the setup panel leads (its step 1 already owns the roster invitation, so
+          the two must never stack) and once roster is already on. */}
+      {!isSettingUp && (
         <section className={shared.section}>
           <CoachOverviewInvite
             basicTeamId={basicTeamId}
@@ -255,30 +263,16 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         </section>
       )}
 
-      {isFirstRun && (
+      {/* Setup panel: every step is honest about state and carries its own action — a tool that
+          isn't on yet is switched on FROM the step and opened, so no step can name a section the
+          coach has no way to reach (the defect this replaced). One click skips the whole thing. */}
+      {isSettingUp && (
         <section className={shared.section}>
-          <CoachEmptyState
-            icon={<Rocket size={22} aria-hidden />}
-            eyebrow="Get started"
-            headline="Let's set up your team"
-            description="Three quick steps and your team home is ready to share."
-            primaryAction={{ label: 'Add your first player', href: `${coachTeamPath(basicTeamId)}/roster` }}
-          >
-            <ol className={styles.firstRunSteps}>
-              <li className={styles.firstRunStep}>
-                <span className={styles.firstRunStepIcon}><Users size={15} aria-hidden /></span>{' '}
-                Add your players to build the roster
-              </li>
-              <li className={styles.firstRunStep}>
-                <span className={styles.firstRunStepIcon}><CalendarDays size={15} aria-hidden /></span>{' '}
-                Add practices and games to the schedule
-              </li>
-              <li className={styles.firstRunStep}>
-                <span className={styles.firstRunStepIcon}><Megaphone size={15} aria-hidden /></span>{' '}
-                Send your first announcement to parents
-              </li>
-            </ol>
-          </CoachEmptyState>
+          <CoachTeamSetupPanel
+            basicTeamId={basicTeamId}
+            activatedFeatures={team.activatedFeatures}
+            stepsDone={setupStepsDone}
+          />
         </section>
       )}
 

@@ -1,27 +1,23 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import {
-  Users, CalendarClock, CircleDollarSign, Megaphone, Check, ArrowUpRight, Loader2,
-} from 'lucide-react';
-import { coachTeamPath } from '@/lib/coaches-portal-routes';
+import { Check, ArrowUpRight, Loader2 } from 'lucide-react';
+import type { ActivatableFeature } from '@/lib/basic-coach-teams';
+import { activateCoachTeamFeature } from '@/lib/coach-feature-activation';
+import { COACH_TEAM_TOOLS, coachTeamToolPath } from '@/lib/coach-team-tools';
 import { isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import styles from './CoachExploreCatalog.module.css';
 
-type FeatureKey = 'roster' | 'schedule' | 'fees' | 'announcements';
-
-const FEATURES: Array<{ key: FeatureKey; label: string; desc: string; icon: typeof Users; sub: string }> = [
-  { key: 'roster', label: 'Roster', icon: Users, sub: '/roster',
-    desc: 'Enter your team once — keep it here and reuse it for your next tournament registration.' },
-  { key: 'schedule', label: 'Schedule', icon: CalendarClock, sub: '/schedule',
-    desc: 'Your tournament games plus your own practices, in one team calendar.' },
-  { key: 'fees', label: 'Fees', icon: CircleDollarSign, sub: '/fees',
-    desc: 'Track who has paid their team fees — no spreadsheet.' },
-  { key: 'announcements', label: 'Announcements', icon: Megaphone, sub: '/announcements',
-    desc: 'Send a note to your whole team at once.' },
-];
+/** Explore's own catalog blurb per tool — this page's voice. The tool's NAME, icon and path come
+ *  from the shared catalog (lib/coach-team-tools.ts); only the sales copy lives here. */
+const DESCRIPTIONS: Record<ActivatableFeature, string> = {
+  roster: 'Enter your team once — keep it here and reuse it for your next tournament registration.',
+  schedule: 'Your tournament games plus your own practices, in one team calendar.',
+  fees: 'Track who has paid their team fees — no spreadsheet.',
+  announcements: 'Send a note to your whole team at once.',
+};
 
 // What the paid Premium Coaches Portal adds, in the team's own words. Matches the verified
 // in-product upsell vocabulary (ScopeShelf / ScopeCeilingInterest) + the approved copy canon —
@@ -58,25 +54,29 @@ export default function CoachExploreCatalog({
 }) {
   const router = useRouter();
   const [active, setActive] = useState<Set<string>>(new Set(activatedFeatures));
-  const [busy, setBusy] = useState<FeatureKey | null>(null);
+  const [busy, setBusy] = useState<ActivatableFeature | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // The coach can leave (a card's "Open →", the rail, Back) while a write is in flight; the router
+  // outlives this component, so an unguarded push would yank them off the page they chose.
+  const aliveRef = useRef(true);
+  useEffect(() => () => { aliveRef.current = false; }, []);
 
-  async function turnOn(feature: FeatureKey, sub: string) {
+  async function turnOn(feature: ActivatableFeature) {
     if (busy) return;
     setBusy(feature);
     setError(null);
     try {
-      const res = await fetch(`/api/coaches/teams/${basicTeamId}/features`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ feature, active: true }),
-      });
-      const body = (await res.json().catch(() => ({}))) as { activatedFeatures?: string[]; error?: string };
-      if (!res.ok) throw new Error(body.error ?? 'Could not turn this on.');
-      setActive(new Set(body.activatedFeatures ?? [...active, feature]));
-      // Land the coach on the newly-activated section + refresh server state (rail nav).
+      const next = await activateCoachTeamFeature(basicTeamId, feature, [...active]);
+      if (!aliveRef.current) return; // they navigated elsewhere meanwhile — their latest intent wins
+      setActive(new Set(next));
+      // Clear `busy` before navigating: a stalled navigation must not leave every card disabled
+      // behind a spinner that only a reload can clear (the write already succeeded, and the card
+      // now honestly reads "Open →").
+      setBusy(null);
+      // Invalidate this page's cached payload (so returning here doesn't re-offer "Turn on" for a
+      // tool that's now on), then land the coach on the newly-activated section.
       router.refresh();
-      router.push(`${coachTeamPath(basicTeamId)}${sub}`);
+      router.push(coachTeamToolPath(basicTeamId, feature));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not turn this on.');
       setBusy(null);
@@ -101,7 +101,7 @@ export default function CoachExploreCatalog({
       </p>
 
       <div className={styles.grid}>
-        {FEATURES.map(({ key, label, desc, icon: Icon, sub }) => {
+        {COACH_TEAM_TOOLS.map(({ key, label, Icon }) => {
           const isOn = active.has(key);
           return (
             <div key={key} className={styles.card}>
@@ -110,17 +110,17 @@ export default function CoachExploreCatalog({
                 <span className={styles.title}>
                   {label}<span className={styles.free}>Free</span>
                 </span>
-                <span className={styles.desc}>{desc}</span>
+                <span className={styles.desc}>{DESCRIPTIONS[key]}</span>
               </div>
               {isOn ? (
-                <Link href={`${coachTeamPath(basicTeamId)}${sub}`} className={styles.openBtn}>
+                <Link href={coachTeamToolPath(basicTeamId, key)} className={styles.openBtn}>
                   Open →
                 </Link>
               ) : (
                 <button
                   type="button"
                   className={styles.turnOn}
-                  onClick={() => turnOn(key, sub)}
+                  onClick={() => turnOn(key)}
                   disabled={busy !== null}
                 >
                   {busy === key

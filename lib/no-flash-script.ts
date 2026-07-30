@@ -7,12 +7,19 @@
  * can't execute — dev warning + FOUC), so all no-flash attributes are consolidated here rather
  * than hand-copied per shell (this supersedes the dead DENSITY_NO_FLASH_SCRIPT in admin-density).
  *
- * Two attributes today:
+ * Three attributes today:
  *   - data-density     (fl_admin_density → 'comfortable' | 'compact'; coarse-pointer default)
  *   - data-user-theme  (fl_user_theme → 'dark' | 'warm'; WARM is the platform default — the
  *     attribute is always set to 'warm' unless the user explicitly stored 'dark')
+ *   - data-coach-setup-skipped  (set only on /coaches/team/{id} when THAT team's setup panel was
+ *     skipped). The skip lives on the device, so the server always renders the setup card; without
+ *     this a coach who opted out watched the full card paint and collapse to a one-line link on
+ *     EVERY Overview visit — permanently, since skipping means the steps never complete. The
+ *     attribute is removed at hydration by CoachPortalShell so it can never leak across a
+ *     client-side navigation to a different team (this script runs once per hard load only).
  *
- * The keys mirror STORAGE_KEY (lib/admin-density) and THEME_STORAGE_KEY (lib/user-theme). It is a
+ * The keys mirror STORAGE_KEY (lib/admin-density), THEME_STORAGE_KEY (lib/user-theme) and
+ * coachNudgeStorageKey/COACH_SETUP_NUDGE (components/coaches/useCoachNudgeDismiss). It is a
  * raw string (an inline script can't import modules), kept minimal + fully try/caught so blocked
  * storage never throws before hydration. The account theme (source of truth) reconciles after
  * fetch — one rare repaint, the accepted density-precedent tradeoff.
@@ -28,4 +35,10 @@ export const NO_FLASH_SCRIPT =
   // portal warms via its marker + this attribute, the consumer shell's dark override never fires.)
   "var tk='fl_user_theme',tv=null;try{tv=localStorage.getItem(tk);}catch(e){}" +
   "document.documentElement.setAttribute('data-user-theme',tv==='dark'?'dark':'warm');" +
+  // Free coach portal: hide the Overview setup card before first paint when THIS team's panel was
+  // already skipped. Team id comes from the path, so the flag is never applied to another team.
+  "var cm=location.pathname.match(/^\\/coaches\\/team\\/([^\\/]+)/);" +
+  "if(cm){var ck='fl_coach_nudge_dismissed:'+cm[1]+':first_run_setup',cv=null;" +
+  "try{cv=localStorage.getItem(ck);}catch(e){}" +
+  "if(cv==='1')document.documentElement.setAttribute('data-coach-setup-skipped','1');}" +
   "}catch(e){}})();";

@@ -1,4 +1,5 @@
-/* Variant-A discovery nudge + its dismissed faint-line state (team Overview). */
+/* Variant-A discovery nudge (team Overview). Its dismissed state renders the shared
+   CoachExploreFaintLine, which carries its own module. */
 
 .invite {
   display: flex;
@@ -45,18 +46,8 @@
 }
 .inviteDismiss:hover { color: var(--white); background: var(--white-8); }
 
-/* Degraded faint line — what dismissal leaves behind (thread not cut). */
-.faintLine {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.78rem;
-  color: var(--white-40);
-  text-decoration: none;
-}
-.faintLine svg { flex-shrink: 0; color: var(--white-40); }
-.faintLine:hover { color: var(--logic-lime); }
-.faintLine:hover svg { color: var(--logic-lime); }
+/* (The degraded faint line dismissal leaves behind now lives in
+   CoachExploreFaintLine.module.css — shared with the team setup panel.) */
 
 /* Warm coaches portal (dev-gated) — the dismiss hover is a faint white overlay the token remap
    can't reach (its --white-08 fallback is a literal); it would read as a white wash on cream.

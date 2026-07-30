@@ -834,32 +834,27 @@ export function isActivatableFeature(value: string): value is ActivatableFeature
  * (progressive disclosure). Idempotent: activating an already-active feature is a no-op.
  * Caller MUST have already verified ownership (the API guards with requireBasicCoachTeamOwner).
  * Returns the resulting activated_features set.
+ *
+ * The merge happens INSIDE one UPDATE, in the mig-211 function — deliberately NOT a
+ * select-then-update in app code. That earlier shape lost writes: two activations for the same
+ * team inside each other's read window (one coach, phone + laptop, or two tabs) both started from
+ * the pre-write set, so the second overwrote the first and a tool the coach had just switched on
+ * silently vanished from their nav. `UPDATE ... SET x = f(x)` re-reads under the row lock, so
+ * concurrent callers serialise. Do not "simplify" this back into a read-modify-write.
  */
 export async function setBasicCoachTeamFeature(
   basicCoachTeamId: string,
   feature: ActivatableFeature,
   active: boolean,
 ): Promise<string[]> {
-  const { data, error } = await supabaseAdmin
-    .from('basic_coach_teams')
-    .select('activated_features')
-    .eq('id', basicCoachTeamId)
-    .maybeSingle();
+  const { data, error } = await supabaseAdmin.rpc('set_basic_coach_team_feature', {
+    p_team_id: basicCoachTeamId,
+    p_feature: feature,
+    p_active: active,
+  });
   if (error) throw error;
 
-  const current = parseActivatedFeatures(data?.activated_features);
-  const set = new Set(current);
-  if (active) set.add(feature);
-  else set.delete(feature);
-  const next = [...set];
-
-  const { error: updErr } = await supabaseAdmin
-    .from('basic_coach_teams')
-    .update({ activated_features: next })
-    .eq('id', basicCoachTeamId);
-  if (updErr) throw updErr;
-
-  return next;
+  return parseActivatedFeatures(data);
 }
 
 export async function getBasicCoachTournamentHistoryForTeam(

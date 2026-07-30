@@ -50,14 +50,15 @@ const coachesHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'How to get into your portal',
       summary: 'Claim a team an organizer registered, or start a free team home from scratch.',
-      keywords: ['coach login', 'first login', 'claim team', 'start free team home', 'coach portal', 'get started'],
-      searchText: 'coach first login sign in coaches portal claim your team registered email start free team home organizer invited tournament registration get started access',
+      keywords: ['coach login', 'first login', 'claim team', 'start free team home', 'coach portal', 'get started', 'skip setup', 'hide welcome'],
+      searchText: 'coach first login sign in coaches portal claim your team registered email start free team home organizer invited tournament registration get started access three step starter set up your team let us set up your team welcome card skip all this skip setup hide the welcome card dismiss getting started steps turn on schedule from the steps turn on announcements from the welcome tick off checkmark completed step why is my step not ticked step still offers turn on after i used the tool',
       content: (
         <>
           <p>There are two ways your team shows up in the portal. Sign in with the email address you use for coaching, then look for one of these.</p>
           <p><strong>Claim a team an organizer registered.</strong> If a tournament organizer registered your team using your email, a <strong>Claim your team</strong> prompt appears on your portal home. Click <strong>Claim team</strong> to link it to your account — then its status, schedule, and updates show up in your portal.</p>
           <p><strong>Start a free team home.</strong> If you don&apos;t have a team yet, click <strong>Start free team home</strong>. You don&apos;t need an organization or an invite — it&apos;s free and yours to run.</p>
-          <p>A brand-new team home opens with a short three-step starter: add your first player, add practices and games, and send your first announcement. You can do them in any order, or skip straight to the tool you need.</p>
+          <p>A team home you started yourself opens with a short <strong>Let&rsquo;s set up your team</strong> card of three steps: add your players, add practices and games, and send a note to parents. Each step has its own button. Two of those tools start switched off (see <em>How to turn on the tools you need</em>) — where that&apos;s the case the button reads <strong>Turn on Schedule</strong> or <strong>Turn on Announcements</strong>, and pressing it switches the tool on <em>and</em> opens it, so it&apos;s also a new tab from then on. Once a tool is on and you&rsquo;ve done that step, it shows a <strong>checkmark</strong> and stops asking. If a tool isn&apos;t on yet, its step keeps offering to turn it on — even if you&rsquo;ve already put something in it — so there is always a way back to it.</p>
+          <p>Don&apos;t want any of it? <strong>Just here to enter a tournament? Skip all this</strong> at the bottom of the card clears it in one click. It leaves a single faint line back to <strong>Explore</strong>, and Explore stays in your tabs, so nothing is lost — you can set these up whenever you like. The card also goes away on its own once all three steps are done.</p>
         </>
       ),
       faqs: [
@@ -90,8 +91,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'How to turn on the tools you need',
       summary: 'Roster, Schedule, Fees, and Announcements are free but off by default — turn them on from Explore.',
-      keywords: ['explore', 'turn on', 'activate', 'enable tools', 'roster schedule fees announcements', 'sections missing', 'what premium adds', 'assistant coaches'],
-      searchText: 'explore turn on activate enable team tools roster schedule fees announcements free progressive disclosure where is my roster tab missing section premium all tools already on no explore step sidebar what does premium add list of premium tools assistant coaches with their own sign in second coach help running the team lineups attendance documents dues automation season budget carry roster into next season see what upgrading gets you',
+      keywords: ['explore', 'turn on', 'activate', 'enable tools', 'roster schedule fees announcements', 'sections missing', 'what premium adds', 'assistant coaches', 'turn on from the welcome steps'],
+      searchText: 'explore turn on activate enable team tools roster schedule fees announcements free progressive disclosure where is my roster tab missing section premium all tools already on no explore step sidebar what does premium add list of premium tools assistant coaches with their own sign in second coach help running the team lineups attendance documents dues automation season budget carry roster into next season see what upgrading gets you turn on from the setup card welcome steps two ways to turn a tool on new tab appears after turning on bookmark old link saved link opens a tool that is switched off used it but no tab appears data still there nothing lost step still says turn on instead of checkmark',
       content: (
         <>
           <p><em>This applies to the free portal.</em> On <strong>Premium Coaches Portal</strong> every tool is already in your sidebar, so there&apos;s nothing to turn on — you can skip this section.</p>
@@ -103,10 +104,27 @@ const coachesHelp: HelpPageContent = {
             <li><strong>Announcements</strong> — send a note to your whole team at once.</li>
           </ul>
           <p>Each shows a <strong>Free</strong> tag. Click <strong>Turn on</strong> and the tool appears as a new tab and opens for you. Ignore the ones you don&apos;t need — nothing is forced on you, and you can turn a tool on any time from Explore.</p>
+          <p><strong>There&apos;s a second way in.</strong> On a brand-new team you started yourself, the <strong>Let&rsquo;s set up your team</strong> card on your Overview has a <strong>Turn on</strong> button on each step, which does exactly the same thing — switches the tool on and opens it. Explore is still the place to browse all four and to turn one on later; the card is just a shortcut for the three it names.</p>
           <p>If you can&apos;t find your Roster or Schedule tab, it&apos;s almost always because it hasn&apos;t been turned on yet. Open Explore and turn it on.</p>
+          <p>A saved link or an old bookmark to one of these tools still opens and still works, even when the tool is switched off — but it stays out of your tabs until you turn it on. If you find yourself back in a tool you can&apos;t otherwise see, turn it on from Explore (or from its step on the setup card) so it&apos;s there next time.</p>
           <p>Explore is also the one place that lists <strong>what the Premium Coaches Portal adds</strong>, if you ever want to look: game lineups, attendance tracking, <strong>assistant coaches with their own sign-in</strong> (a free team is a single login — there&apos;s no way to give another coach their own access), team documents, dues schedules with automatic reminders, a season budget, and carrying your roster into next season. Everything above stays free either way.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-tool-used-but-no-tab',
+          question: 'I added things to my Schedule, so why isn’t there a Schedule tab?',
+          answerText: 'Because the tool itself is still switched off. A saved link or bookmark opens a tool and lets you use it even when it has never been turned on — but a tool only joins your tabs once you turn it on. Nothing you entered is lost or hidden; it is all waiting there. Open Explore (always the last tab) and press Turn on for that tool, or use its step on the Let us set up your team card, and it appears in your tabs from then on. If you have used a tool this way, its setup step keeps offering Turn on rather than showing a checkmark, precisely so you always have a way back to it.',
+          keywords: ['no schedule tab', 'no roster tab', 'tab missing', 'used it but no tab', 'bookmark', 'old link', 'saved link', 'cant find it again', 'where did my schedule go', 'entered data but tab gone', 'step still says turn on'],
+          answer: (
+            <>
+              <p>Because the tool itself is still switched off. A saved link or bookmark <strong>opens</strong> a tool and lets you use it even when it has never been turned on — but a tool only joins your <strong>tabs</strong> once you turn it on.</p>
+              <p><strong>Nothing you entered is lost or hidden</strong> — it&apos;s all waiting there. Open <strong>Explore</strong> (always the last tab) and press <strong>Turn on</strong> for that tool, or use its step on the <strong>Let&rsquo;s set up your team</strong> card. It appears in your tabs from then on.</p>
+              <p>That&rsquo;s also why, if you&rsquo;ve used a tool this way, its setup step keeps offering <strong>Turn on</strong> instead of showing a checkmark — so you always have a way back to it.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'recipe-add-player',

@@ -1,0 +1,14 @@
+/* The degraded faint line dismissal leaves behind on the free team Overview (thread not cut).
+   Shared by CoachOverviewInvite + CoachTeamSetupPanel. */
+
+.faintLine {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--white-40);
+  text-decoration: none;
+}
+.faintLine svg { flex-shrink: 0; color: var(--white-40); }
+.faintLine:hover { color: var(--logic-lime); }
+.faintLine:hover svg { color: var(--logic-lime); }

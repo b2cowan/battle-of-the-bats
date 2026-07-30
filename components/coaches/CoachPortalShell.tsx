@@ -2,10 +2,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import {
-  Home, Trophy, Users, CalendarClock, CircleDollarSign, Megaphone,
-  Compass, ChevronDown, Check,
-} from 'lucide-react';
+import { Home, Trophy, Compass, ChevronDown, Check } from 'lucide-react';
 import {
   COACHES_HOME_PATH,
   COACHES_HELP_PATH,
@@ -14,6 +11,8 @@ import {
   coachTeamPath,
   isCoachPortalShellPath,
 } from '@/lib/coaches-portal-routes';
+import { COACH_TEAM_TOOLS, coachTeamToolSub } from '@/lib/coach-team-tools';
+import { COACH_SETUP_SKIPPED_ATTR } from './useCoachNudgeDismiss';
 import { resolveFlip } from '@/lib/flip-twins';
 import FlipPill from '@/components/shared/FlipPill';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
@@ -55,13 +54,15 @@ const TIER1 = [
   { key: 'tournaments', label: 'Tournaments', icon: Trophy, sub: '/tournaments' },
 ] as const;
 
-/** Tier-2 sections — shown only when the coach has turned them on (activatedFeatures). */
-const TIER2 = [
-  { key: 'roster', label: 'Roster', icon: Users, sub: '/roster' },
-  { key: 'schedule', label: 'Schedule', icon: CalendarClock, sub: '/schedule' },
-  { key: 'fees', label: 'Fees', icon: CircleDollarSign, sub: '/fees' },
-  { key: 'announcements', label: 'Announcements', icon: Megaphone, sub: '/announcements' },
-] as const;
+/** Tier-2 sections — shown only when the coach has turned them on (activatedFeatures).
+ *  Names/icons/paths come from the ONE shared tool catalog (lib/coach-team-tools.ts) so the rail,
+ *  the Explore catalog and the Overview setup panel can't drift on what a section is called. */
+const TIER2 = COACH_TEAM_TOOLS.map(({ key, label, Icon }) => ({
+  key,
+  label,
+  icon: Icon,
+  sub: coachTeamToolSub(key),
+}));
 
 /** Moved to lib/timezone.ts (2026-07-27) so the record page's hero renders the SAME range
  *  as this header — it hand-rolled a `new Date(dateOnly)` version that printed a day early. */
@@ -124,6 +125,14 @@ export default function CoachPortalShell({
 
   const [lastPath, setLastPath] = useState(pathname);
   const closeSwitch = useCallback(() => setSwitchOpen(false), []);
+
+  // The no-flash script stamps [data-coach-setup-skipped] on <html> for the team in the URL at hard
+  // load, to keep a skipped Overview setup card from painting. It must not outlive that first paint:
+  // this shell survives client navigation, and a stale flag would hide the card on the NEXT team the
+  // coach opens. Cleared here (not in the panel) because the panel doesn't mount on every page.
+  useEffect(() => {
+    document.documentElement.removeAttribute(COACH_SETUP_SKIPPED_ATTR);
+  }, [pathname]);
 
   // Close the switcher on any route change (the shell persists across soft-nav). React's
   // endorsed "adjust state during render" pattern (guarded by the path-changed check).

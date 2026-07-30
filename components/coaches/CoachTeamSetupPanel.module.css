@@ -1,0 +1,191 @@
+/* Free team Overview — the setup panel's step rows, rendered inside CoachEmptyState's
+   `children` slot (the card chrome, medallion, headline and description stay owned by
+   CoachEmptyState; this module only styles what the steps add).
+
+   Companion voice → quiet rows, one light line each, no teaching blocks. Every colour is a
+   token; the lime tints go through --logic-lime-rgb so the warm theme remap reaches them. */
+
+/* Pre-paint skip gate. The skip lives on the device, so the SERVER always renders the card; the
+   root layout's no-flash script sets [data-coach-setup-skipped] before first paint when this team
+   was skipped, and this rule keeps the card from ever showing. At hydration React renders the faint
+   line instead and CoachPortalShell strips the attribute, so it cannot affect any later team. */
+:global(html[data-coach-setup-skipped]) .preHydrateGate {
+  display: none;
+}
+
+.body {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  text-align: left;
+}
+
+.steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.step {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.65rem;
+  background: var(--white-05);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+}
+
+/* A finished step steps back — it reports, it no longer asks. */
+.stepDone {
+  background: transparent;
+}
+
+.marker {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.22);
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  font-weight: 700;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.label {
+  color: var(--white);
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.stepDone .label {
+  color: var(--white-60);
+}
+
+.note {
+  color: var(--white-40);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+/* Actions — "Turn on X" is the committing one (filled), "Open X" is plain navigation (outlined).
+   ⚠ TWIN of CoachExploreCatalog.module.css `.turnOn`/`.openBtn` (same anatomy on purpose — the two
+   doors must read as the same mechanism). Kept as a local copy rather than `composes` because
+   CSS-modules `composes` is non-transitive under Turbopack and needs compiled-output verification;
+   if you retune one of these, retune BOTH — including the warm override at the bottom of this file. */
+.turnOn,
+.openBtn {
+  flex-shrink: 0;
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.turnOn {
+  cursor: pointer;
+  color: var(--on-lime);
+  background: var(--logic-lime);
+  border: 1px solid var(--logic-lime);
+  transition: filter 0.15s, opacity 0.15s;
+}
+.turnOn:hover:not(:disabled) { filter: brightness(1.05); }
+.turnOn:disabled { opacity: 0.55; cursor: default; }
+
+.openBtn {
+  color: var(--logic-lime);
+  background: transparent;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  transition: background 0.15s;
+}
+.openBtn:hover { background: rgba(var(--logic-lime-rgb), 0.08); }
+
+.spin { animation: coach-setup-spin 0.8s linear infinite; }
+@keyframes coach-setup-spin { to { transform: rotate(360deg); } }
+
+.error {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+  color: var(--danger);
+  background: rgba(var(--danger-rgb), 0.1);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+  border-radius: var(--radius-sm);
+}
+
+/* The real exit — one interaction clears the whole panel (it degrades to a faint Explore line). */
+.skip {
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.3rem 0.45rem;
+  border: none;
+  background: transparent;
+  border-radius: var(--radius-sm);
+  color: var(--white-40);
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.skip:hover { color: var(--white-70); background: var(--white-8); }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Warm coaches portal — the lime FILL must be TRUE lime + dark ink. Without this the accent remap
+   olive-ifies the fill and leaves near-black --on-lime text on dark olive (dark-on-dark, unreadable).
+   Mirrors CoachExploreCatalog.module.css's identical override (TH-5) and globals .btn-lime. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .turnOn {
+  background: var(--home-lime);
+  border-color: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+/* Narrow phones: the action drops to its own full-width line rather than squeezing the label
+   into two or three words per row. */
+@media (max-width: 520px) {
+  .turnOn,
+  .openBtn {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  .skip {
+    align-self: flex-start;
+  }
+}
