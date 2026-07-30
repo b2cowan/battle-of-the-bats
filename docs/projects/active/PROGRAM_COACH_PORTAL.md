@@ -188,11 +188,25 @@ toward before they build it.
    See the gating decision below.
 *Cheapest high-value slice:* the sample/preview. Presentation only, asserts no number is right for
 them, and answers most of the reassurance need on its own. Good candidate to ship first and alone.
-*Sequencing:* **after chunk A** — same surfaces, and they should be good on a phone first. Chunk A
-must not paint the empty budget state into a corner.
-*Gated on:* where suggested amounts come from — ship structure-only with blank amounts, or ground
-suggestions in the platform's own real tournament entry fees. Logged as **Proposed** in
- (2026-07-29); not decided.
+*Sequencing:* **after chunk A** — ✅ satisfied; Chunk A shipped 2026-07-30 (`a737acbf`) and
+deliberately left the Budget/BvA empty states minimal for this chunk to replace.
+*✅ OWNER-DECIDED 2026-07-30 — no longer gated:*
+1. **STRUCTURE ONLY. The product never proposes a dollar figure.** The starter says *what* to budget
+   for, never *how much*. A number the **coach types** is theirs and is fine; a number the product
+   supplies, prefills or suggests is not. Grounding suggestions in the platform's own real
+   tournament entry fees was **considered and rejected** — costs swing hard by region, sport, age
+   and level, and anchoring a coach low means they under-collect and a real family ends up short.
+   ⚠ `budget_items.suggested_amount` exists as a column and the budget-line form honours it, but is
+   NULL for every seeded default — **keep it that way.**
+2. **Build the FULL starter in one chunk** — the guided questions producing a real editable starting
+   budget **and** the clearly-labelled sample. (The "ship the sample slice alone first" option was
+   offered and declined.)
+*Handoff prompt ready:* `COACH_PORTAL_CHUNK_G_BUDGET_STARTER_BUILD_PROMPT.md` — **run in a FRESH
+chat.** It carries the verified ground truth, including the big one: **the "what am I forgetting?"
+checklist already exists in the database** (mig 027 seeds a global taxonomy — Tournaments /
+Facilities / Officials / Training / Events with default items, **names only, not one carrying an
+amount**), and season rollover already carries a planned budget forward — which is what makes this
+a genuinely first-season-only problem.
 
 **Not in any chunk, tracked separately:** the guardian model (§1.4, gated on CP-7), assistant-coach
 first-run and inline roster quick-edit (§1.2 below).
