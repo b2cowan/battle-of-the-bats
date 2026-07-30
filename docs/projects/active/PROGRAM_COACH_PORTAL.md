@@ -110,7 +110,7 @@ The open items above are not a to-do list to work top-down — they cluster into
 Sized so one chat can plan → mock → build → review each. **Chunk A is the recommended next build**
 (collision-free while Batch 4 runs; every other chunk overlaps something in flight or needs a decision).
 
-**A · Money on a phone** — ✅ **BUILT ON DEV 2026-07-30** (plan + PM brief: `COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`; mockups `claude.ai/code/artifact/dc2eb969-1f4d-4743-9bfc-d1cd55575e3d`). No migration, as predicted. Also caught and fixed **two pre-existing capability leaks** the mobile work had nothing to do with: the Expenses page's Add Expense/Add Payable buttons and the whole Payment Requests page offered write forms to a `read`-only money coach. Remaining: `/simplify` → `/review` → `/docs` → owner QA → commit. *(original scope below)*
+**A · Money on a phone** — ✅ **COMMITTED TO DEV 2026-07-30 (`a737acbf`)** (plan + PM brief: `COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`; mockups `claude.ai/code/artifact/dc2eb969-1f4d-4743-9bfc-d1cd55575e3d`). No migration, as predicted. Also caught and fixed **two pre-existing capability leaks** the mobile work had nothing to do with: the Expenses page's Add Expense/Add Payable buttons and the whole Payment Requests page offered write forms to a `read`-only money coach. Remaining: `/simplify` → `/review` → `/docs` → owner QA → commit. *(original scope below)*
 P1 #10 (reports have zero mobile adaptation, ×2 reviewers) + the remaining mobile-pass tables from
 §1.3 (expenses, allocations, budget-vs-actual, fundraiser detail — "mechanical, follows the Dues
 exemplar") + P1 #5 (unsaved-changes guard on accounting forms — a hand-built budget split is the
