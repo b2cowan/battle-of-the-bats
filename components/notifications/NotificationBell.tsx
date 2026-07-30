@@ -1,8 +1,9 @@
 'use client';
-import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
+import { useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { Bell, BellDot } from 'lucide-react';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import NotificationPanel from './NotificationPanel';
+import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './notifications.module.css';
 
 interface Props {
@@ -27,23 +28,15 @@ export default function NotificationBell({ orgId, settingsHref, seeAllHref, coun
   const setUnreadCount = count === undefined ? internal.setCount : (onCountChange ?? (() => {}));
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   // ── Click outside to close ────────────────────────────────────────────────
 
-  useEffect(() => {
-    if (!open) return;
-    function handleMouseDown(e: MouseEvent) {
-      const target = e.target as Element | null;
-      if (!target) return;
-      // Bell button / wrapper
-      if (wrapRef.current && wrapRef.current.contains(target)) return;
-      // Panel is portaled to <body>, so it's outside wrapRef — check it explicitly
-      if (target.closest('[data-notification-panel]')) return;
-      setOpen(false);
-    }
-    document.addEventListener('mousedown', handleMouseDown);
-    return () => document.removeEventListener('mousedown', handleMouseDown);
-  }, [open]);
+  // Two boundaries, not one: the panel is portaled to <body>, so it is NOT inside `wrapRef`.
+  // The hand-rolled version expressed that with a `closest('[data-notification-panel]')` lookup;
+  // a real ref on the panel says the same thing without a global selector query. Also gains
+  // Escape-to-close, which the bell never had — and it renders on nearly every screen.
+  useDismissable(open, [wrapRef, panelRef], () => setOpen(false));
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -69,6 +62,7 @@ export default function NotificationBell({ orgId, settingsHref, seeAllHref, coun
       {open && (
         <NotificationPanel
           orgId={orgId}
+          panelRef={panelRef}
           onClose={() => setOpen(false)}
           onUnreadChange={setUnreadCount}
           settingsHref={settingsHref}

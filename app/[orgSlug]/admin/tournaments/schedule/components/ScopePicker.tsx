@@ -11,8 +11,9 @@
  * `filterGroup` / scope logic is unchanged; the set only ever holds one id.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { ChevronDown, Check } from 'lucide-react';
+import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './ScopePicker.module.css';
 
 export type ScopeDivision = { id: string; name: string };
@@ -32,16 +33,7 @@ export default function ScopePicker({
   const [open, setOpen] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setOpen(false); }
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDown); document.removeEventListener('keydown', onKey); };
-  }, [open]);
+  useDismissable(open, wrapRef, () => setOpen(false));
 
   const isAll = value === null;
   const selectedId = value && value.size >= 1 ? [...value][0] : null;

@@ -21,6 +21,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
 import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipOriginLabel, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
+import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './FlipPill.module.css';
 
 interface FlipPillProps {
@@ -63,22 +64,7 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
     }
   }, [pathname]);
 
-  // Close the popover on outside-click / Escape (mirrors the admin More-menu pattern).
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  useDismissable(open, wrapRef, () => setOpen(false));
 
   // Stamp the return snapshot the instant a flip is taken — on EVERY hop, both directions — so the
   // arrival side's pill can read "⇄ Back to {this page}". The origin is the exact current URL

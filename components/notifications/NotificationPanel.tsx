@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useState, useCallback, type ReactNode } from 'react';
+import { useEffect, useState, useCallback, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { CheckCheck, BellOff, Settings, ChevronRight, List } from 'lucide-react';
@@ -17,12 +17,18 @@ interface Props {
   onClose: () => void;
   onUnreadChange: (count: number) => void;
   /** When provided, a subtle "Notification settings" link is shown in the panel footer. */
+  /**
+   * Attached to the panel's root. The panel is portaled to `<body>`, so it is NOT inside the bell's
+   * DOM subtree — the bell passes this alongside its own wrapper so `useDismissable` can treat the
+   * two as one boundary. Optional so nothing else that renders this panel has to care.
+   */
+  panelRef?: RefObject<HTMLDivElement | null>;
   settingsHref?: string;
   /** When provided, a "See all" link to the full notifications page is shown in the footer. */
   seeAllHref?: string;
 }
 
-export default function NotificationPanel({ orgId, onClose, onUnreadChange, settingsHref, seeAllHref }: Props) {
+export default function NotificationPanel({ orgId, onClose, onUnreadChange, panelRef, settingsHref, seeAllHref }: Props) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [markingAll,    setMarkingAll]    = useState(false);
@@ -185,7 +191,7 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, sett
   }
 
   const panel = (
-    <div className={styles.panel} role="dialog" aria-label="Notifications" data-notification-panel>
+    <div ref={panelRef} className={styles.panel} role="dialog" aria-label="Notifications" data-notification-panel>
       <div className={styles.panelHeader}>
         <p className={styles.panelTitle}>Notifications</p>
         {unreadCount > 0 && (

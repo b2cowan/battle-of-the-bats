@@ -23,6 +23,7 @@ import { formatTime } from '@/lib/utils';
 import BottomSheet from '@/components/admin/BottomSheet';
 import styles from './ScheduleTimeline.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import { useDismissable } from '@/lib/overlay-hooks';
 
 /** SSR-safe `max-width` media-query hook — drives the touch (single-field) layout. */
 function useIsMobile(maxWidth = 768): boolean {
@@ -170,12 +171,7 @@ function AddFieldMenu({ options, onAdd, onCreate }: {
 }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    function onDown(e: MouseEvent) { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); }
-    document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [open]);
+  useDismissable(open, ref, () => setOpen(false)); // also gains Escape-to-close
   return (
     <div className={styles.addFieldWrap} ref={ref}>
       <button type="button" className={styles.addFieldBtn} onClick={() => setOpen(o => !o)} title="Add a field column">

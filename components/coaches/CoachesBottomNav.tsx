@@ -14,6 +14,7 @@ import { isCoachNavItemVisible, CLOSED_TEAM_NAV_ITEMS } from '@/lib/coach-nav-vi
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
 import styles from './CoachesBottomNav.module.css';
+import { useDismissable } from '@/lib/overlay-hooks';
 
 // The four primary tabs (owner-picked 2026-06-29). Everything else lives in More.
 const TEAM_TABS = [
@@ -117,15 +118,7 @@ export default function CoachesBottomNav() {
     return key === '' ? pathname === teamBase : pathname.startsWith(`${teamBase}${key}`);
   }
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
-    }
-    if (moreOpen) document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [moreOpen]);
+  useDismissable(moreOpen, moreRef, () => setMoreOpen(false)); // also gains Escape-to-close
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setMoreOpen(false));

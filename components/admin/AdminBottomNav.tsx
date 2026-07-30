@@ -23,6 +23,7 @@ import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
 import AdminContextStrip from './AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import styles from './AdminBottomNav.module.css';
+import { useDismissable } from '@/lib/overlay-hooks';
 
 type NavItem = {
   key: string;
@@ -130,15 +131,7 @@ export default function AdminBottomNav({ notifUnread = 0 }: { notifUnread?: numb
     setIsStandalone(isStandalonePWA());
   }, []);
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (moreRef.current && !moreRef.current.contains(e.target as Node)) {
-        setMoreOpen(false);
-      }
-    }
-    if (moreOpen) document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [moreOpen]);
+  useDismissable(moreOpen, moreRef, () => setMoreOpen(false)); // also gains Escape-to-close
 
   useEffect(() => {
     const frame = window.requestAnimationFrame(() => setMoreOpen(false));

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronDown, KeyRound, MailCheck, Search, Trash2 } from 'lucide-react';
@@ -13,6 +13,7 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import styles from './customer-users.module.css';
+import { useDismissable } from '@/lib/overlay-hooks';
 
 // ── Export ────────────────────────────────────────────────────────────────────
 
@@ -119,16 +120,8 @@ export default function CustomerUsersClient({ initialRows, query, authStatusFilt
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!openMenuId) return;
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpenMenuId(null);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, [openMenuId]);
+  // `openMenuId` is which row's menu is open, so the boolean is "any menu open". Gains Escape.
+  useDismissable(openMenuId !== null, menuRef, () => setOpenMenuId(null));
 
   // ── Modals ────────────────────────────────────────────────────────────────
   const [confirmModal, setConfirmModal] = useState<ConfirmModal>(null);

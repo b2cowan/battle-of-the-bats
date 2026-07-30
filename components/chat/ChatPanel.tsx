@@ -9,6 +9,7 @@ import {
   Send, Trash2, Loader2, ChevronUp, ChevronDown, MessageSquare, X, Smile, SmilePlus, Search, Check, CheckCheck, Reply, Pin, BarChart3, Plus, Lock,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
+import { useDismissable } from '@/lib/overlay-hooks';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { REACTION_EMOJI, type MessageReactionsMap } from '@/lib/chat-reactions';
 import {
@@ -689,31 +690,25 @@ export default function ChatPanel({
     return () => clearTimeout(t);
   }, [banner]);
 
-  // Emoji picker: close on outside-click or Escape (return focus to the trigger on Escape).
-  useEffect(() => {
-    if (!emojiOpen) return;
-    function onDown(e: MouseEvent) {
-      const t = e.target as Node;
-      if (emojiPopRef.current?.contains(t) || emojiBtnRef.current?.contains(t)) return;
-      setEmojiOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.isComposing) return; // don't hijack Escape mid-IME-composition
-      if (e.key === 'Escape') {
-        setEmojiOpen(false);
-        emojiBtnRef.current?.focus();
-      }
-    }
-    document.addEventListener('mousedown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [emojiOpen]);
+  // Emoji picker: the popover and its trigger are separate boundaries, and Escape returns focus to
+  // the trigger while a click elsewhere does not — the user who clicked away has already moved on,
+  // and yanking focus back would fight them. The IME guard this used to carry now lives in the hook,
+  // where it protects every consumer.
+  useDismissable(
+    emojiOpen,
+    [emojiPopRef, emojiBtnRef],
+    () => setEmojiOpen(false),
+    () => { setEmojiOpen(false); emojiBtnRef.current?.focus(); },
+  );
 
   // Reaction picker + "who reacted" popover: close on any outside mousedown or Escape. The picker /
   // popover / their triggers stop mousedown propagation, so a click inside them doesn't self-close.
+  //
+  // ⚠ Deliberately NOT on `useDismissable`, unlike the emoji picker two hooks above — this is not an
+  // oversight. It closes THREE state slots together, and it has no container ref at all: containment
+  // is expressed by ~10 scattered `onMouseDown={e => e.stopPropagation()}` calls at the individual
+  // interactive elements. Converting means giving these a container and reshaping the state, which is
+  // a markup change rather than a dismiss swap. See docs/projects/active/DISMISS_BEHAVIOUR_SWEEP_PLAN.md.
   useEffect(() => {
     if (!reactionPickerFor && !reactorsPopover && !pollVotersPopover) return;
     function close() { setReactionPickerFor(null); setReactorsPopover(null); setPollVotersPopover(null); }

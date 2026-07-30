@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { X, ChevronDown } from 'lucide-react';
 import type { OrgPayee } from '@/lib/types';
 import styles from './PayeeCombobox.module.css';
+import { useDismissable } from '@/lib/overlay-hooks';
 
 export interface PayeeSelection {
   payeeId: string | null;
@@ -51,15 +52,11 @@ export default function PayeeCombobox({
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [inputVal, open, search]);
 
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClick);
-    return () => document.removeEventListener('mousedown', handleClick);
-  }, []);
+  // Gains Escape-to-close, and the listeners now exist only while the dropdown is open — the
+  // hand-rolled version attached on mount with `[]` deps, so it handled every click anywhere for as
+  // long as the form was mounted, open or not. No page renders two of these at once today, so this
+  // retires a latent cost rather than a measured one.
+  useDismissable(open, containerRef, () => setOpen(false));
 
   function openDropdown() {
     if (disabled) return;
@@ -147,7 +144,11 @@ export default function PayeeCombobox({
           className={styles.input}
           type="text"
           value={inputVal}
-          onChange={e => setInputVal(e.target.value)}
+          // Typing REOPENS the list, not just `onFocus`. Escape closes the list but leaves the
+          // caret here, and a payee is only committed by picking a listed option — so without this,
+          // Escape-then-keep-typing left no keyboard way back to the list and the typed name was
+          // silently dropped on submit while the field still looked filled in. Found by `/review`.
+          onChange={e => { setInputVal(e.target.value); if (!open) openDropdown(); }}
           onFocus={openDropdown}
           placeholder={placeholder}
           disabled={disabled}

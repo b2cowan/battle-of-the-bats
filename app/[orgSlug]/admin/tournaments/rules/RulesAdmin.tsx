@@ -36,6 +36,7 @@ import SamplesDrawer from './SamplesDrawer';
 import { SampleSection, SampleResource } from './rules-samples';
 import { TournamentAdminHeader } from '@/components/admin/tournament';
 import styles from '../../admin-common.module.css';
+import { useDismissable } from '@/lib/overlay-hooks';
 
 interface Props {
   tournament: Tournament;
@@ -105,14 +106,7 @@ function IconPicker({ value, onChange }: { value: string; onChange: (name: strin
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  useDismissable(open, ref, () => setOpen(false)); // also gains Escape-to-close
 
   const CurrentIcon = ICONS.find(i => i.name === value)?.Icon || Shield;
 

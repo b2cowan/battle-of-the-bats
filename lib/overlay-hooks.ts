@@ -41,26 +41,99 @@ import { useEffect, useRef, useState, type CSSProperties, type RefObject } from 
  * (b) matters for the next consumer: a deps-omission version would keep calling whatever closure was
  * captured when the panel opened, so anything reading current-render state inside `onDismiss` would
  * go silently stale for as long as the panel stayed open.
+ *
+ * The array-of-refs and `onEscape` parameters were added when the repo-wide sweep reached two
+ * consumers a single ref couldn't express (a portaled notification panel, and a picker that returns
+ * focus to its trigger on Escape only). Both are additive with backwards-compatible defaults — every
+ * prior call site keeps its exact behaviour and none of them changed.
  */
 export function useDismissable(
   open: boolean,
-  ref: RefObject<HTMLElement | null>,
+  /**
+   * The boundary: a pointer-down outside it dismisses. Pass an ARRAY when the panel isn't inside its
+   * own trigger's DOM subtree — a portaled panel's wrapper and panel are two disjoint boundaries, and
+   * "outside" means outside *both*. Single-ref callers are unaffected.
+   */
+  ref: RefObject<HTMLElement | null> | Array<RefObject<HTMLElement | null>>,
   onDismiss: () => void,
+  /**
+   * What Escape does, when it must differ from a click-away. Defaults to `onDismiss`.
+   * Exists because a consumer that returns focus to its trigger should do so on Escape (the user is
+   * still driving from the keyboard) but NOT on a click elsewhere (the user has already moved on, and
+   * yanking focus back would fight them).
+   *
+   * ⚠ It REPLACES `onDismiss` on the Escape path rather than running alongside it — so it must close
+   * the panel itself. If `onDismiss` ever grows side effects, an `onEscape` that forgets to mirror
+   * them will silently skip them.
+   */
+  onEscape?: () => void,
 ) {
   const onDismissRef = useRef(onDismiss);
+  const onEscapeRef = useRef(onEscape);
   useEffect(() => {
     onDismissRef.current = onDismiss;
-  }, [onDismiss]);
+    onEscapeRef.current = onEscape;
+  }, [onDismiss, onEscape]);
+
+  // Arrays are re-created every render by callers writing `[a, b]` inline. Depending on the array
+  // itself would tear the listeners down and re-add them on every render — the exact churn the
+  // `onDismiss` ref exists to avoid — so hold it in a ref and depend on nothing.
+  const refsRef = useRef(ref);
+  useEffect(() => {
+    refsRef.current = ref;
+  }, [ref]);
+
+  // Who had focus when this opened — so Escape can hand it back.
+  //
+  // Without this, Escape is a keyboard TRAP DOOR rather than an escape: the panel unmounts with focus
+  // still inside it, the browser falls back to <body>, and someone who tabbed into the panel to read
+  // it is dumped at the top of the document with no way back except tabbing the whole page again.
+  // That is arguably worse than having no Escape at all, which is what a `/review` accessibility pass
+  // found across six freshly-converted panels — the sweep that existed to CLOSE a keyboard gap had
+  // opened a different one.
+  //
+  // Captured on open (the trigger is focused by the click that opened it, so that's what comes back)
+  // and only restored on the Escape path: a user who clicked elsewhere has already chosen where they
+  // are going, and yanking focus back would fight them.
+  const restoreFocusRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (!open) return;
+    restoreFocusRef.current = document.activeElement as HTMLElement | null;
+    return () => { restoreFocusRef.current = null; };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
     // `mousedown`, not `click`: a gesture that starts inside and ends outside (a drag, or selecting
     // text that runs past the panel edge) must NOT read as "dismiss".
     const onPointer = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) onDismissRef.current();
+      const current = refsRef.current;
+      const boundaries = Array.isArray(current) ? current : [current];
+      // An unmounted boundary is not a reason to dismiss — it's absent, not "outside". Requiring at
+      // least one live boundary keeps a portaled panel from dismissing itself on the frame before its
+      // own node lands.
+      const live = boundaries.filter(r => r.current);
+      if (!live.length) return;
+      if (live.every(r => !r.current!.contains(e.target as Node))) onDismissRef.current();
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onDismissRef.current();
+      // Never hijack Escape mid-IME-composition: for someone typing Japanese/Chinese/Korean, that
+      // Escape is cancelling the composition, not asking to close the panel they're typing into.
+      // Came from the chat emoji picker, the only hand-rolled copy that got this right — it is
+      // correct for every consumer, so it lives here now rather than in one of them.
+      // (Costs an IME user one extra Escape: the first ends the composition, the second closes.)
+      if (e.isComposing) return;
+      if (e.key !== 'Escape') return;
+
+      // A caller that supplied `onEscape` owns focus itself — don't fight it.
+      const custom = onEscapeRef.current;
+      if (custom) { custom(); return; }
+
+      onDismissRef.current();
+      // Synchronously, BEFORE React unmounts the panel: the target is outside the panel, so moving
+      // focus there first means the unmount can't strand it on <body>.
+      const prev = restoreFocusRef.current;
+      if (prev?.isConnected) prev.focus();
     };
     document.addEventListener('mousedown', onPointer);
     document.addEventListener('keydown', onKey);
@@ -68,7 +141,7 @@ export function useDismissable(
       document.removeEventListener('mousedown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
-  }, [open, ref]);
+  }, [open]);
 }
 
 /**
