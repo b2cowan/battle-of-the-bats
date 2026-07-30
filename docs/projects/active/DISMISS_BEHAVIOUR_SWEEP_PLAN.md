@@ -158,6 +158,48 @@ shared code.
 
 ---
 
+## Follow-up: the iOS fix (owner-approved 2026-07-30, BUILT — separate commit)
+
+Taken as its own change, deliberately after the sweep landed, so it can be QA'd and reverted on its
+own. **19 of 21 implementations now share one dismissal contract.**
+
+**The one-line change:** `useDismissable` now listens on `pointerdown` instead of `mousedown`. The
+"not `click`" reasoning is unchanged (a gesture starting inside and ending outside must not dismiss);
+what changes is that a tap on inert background now registers on iOS Safari, where `mousedown` simply
+never fired.
+
+**The four hold-outs are now converted**, which was only safe once the hook stopped being the
+regression: the help tooltip, the public share-score button, the lineup auto-fill popover, and the
+lineup Templates/Print pair — the last of which is the two-boundary shape, so it collapsed onto the
+array form the sweep added.
+
+**Two behaviour changes worth naming.**
+
+1. **Accepted trade-off:** `pointerdown` also fires when a touch becomes a scroll, so starting a
+   scroll outside an open panel now dismisses it. Reads as correct — the user has moved on — and
+   matches mainstream UI libraries. **This is the thing to watch in QA**: if it feels twitchy, the
+   fallback is to distinguish tap from scroll via `pointercancel`, at real added complexity.
+2. **Side effect in chat, judged an improvement.** The reaction popovers keep their own `mousedown`
+   listener and their ~10 `stopPropagation` calls — which no longer shield the *emoji picker*, now on
+   `pointerdown`. So clicking a reaction while the emoji picker is open now closes the picker. It
+   previously stayed open, but only as an accident of event plumbing: the click was genuinely outside
+   it, so closing is the correct behaviour.
+
+**Audited and unaffected:** the two modal patterns that stop `mousedown` propagation
+(`LeagueCapUpgrade`, `EarlyAccessModalTrigger`) are self-contained backdrop handlers that never used
+the hook. The reaction popovers' and team switcher's own listeners stay on `mousedown`, so their
+guards still match.
+
+**Help tooltip note:** it also loses its local Escape handler, which only worked while the trigger had
+focus — Escape is now document-level, so a tooltip opened by *hover* is dismissable from the keyboard
+for the first time.
+
+⚠ **Unverifiable here.** Automated browser testing runs on Chromium, which does not reproduce Safari's
+behaviour. **The fix is unproven until someone taps blank space on a real iPhone.** Do not record this
+as verified on the strength of the gate passing.
+
+typecheck 0 · focused lint 0 errors · 482 tests · all ratchets zero · schema parity 0.
+
 ## `/simplify` outcome (4 lenses, 2026-07-30)
 
 **5 applied, 6 skipped with reasons, 1 escalated to an owner decision** (the `pointerdown` question

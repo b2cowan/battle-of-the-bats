@@ -104,9 +104,21 @@ export function useDismissable(
 
   useEffect(() => {
     if (!open) return;
-    // `mousedown`, not `click`: a gesture that starts inside and ends outside (a drag, or selecting
-    // text that runs past the panel edge) must NOT read as "dismiss".
-    const onPointer = (e: MouseEvent) => {
+    // `pointerdown`, for two independent reasons.
+    //
+    // NOT `click`: a gesture that starts inside and ends outside (a drag, or selecting text that runs
+    // past the panel edge) must NOT read as "dismiss". A "down" event is the correct signal.
+    //
+    // NOT `mousedown`: iOS Safari only synthesises mouse events for elements it considers clickable,
+    // so a tap on inert page background dispatches NO mousedown at all — leaving a panel that can
+    // only be closed by finding its trigger again. Four separate hand-rolled copies in this repo hit
+    // that and switched to `pointerdown` locally (one says outright it "left it stuck/unusable"); it
+    // could not be fixed for everyone until the copies were consolidated here.
+    //
+    // Accepted trade-off: `pointerdown` also fires when a touch turns into a SCROLL, so starting a
+    // scroll outside an open panel now dismisses it. That reads as correct — the user has moved on —
+    // and matches what mainstream UI libraries do.
+    const onPointer = (e: PointerEvent) => {
       const current = refsRef.current;
       const boundaries = Array.isArray(current) ? current : [current];
       // An unmounted boundary is not a reason to dismiss — it's absent, not "outside". Requiring at
@@ -135,10 +147,10 @@ export function useDismissable(
       const prev = restoreFocusRef.current;
       if (prev?.isConnected) prev.focus();
     };
-    document.addEventListener('mousedown', onPointer);
+    document.addEventListener('pointerdown', onPointer);
     document.addEventListener('keydown', onKey);
     return () => {
-      document.removeEventListener('mousedown', onPointer);
+      document.removeEventListener('pointerdown', onPointer);
       document.removeEventListener('keydown', onKey);
     };
   }, [open]);

@@ -6,6 +6,7 @@
 // editing itself — format/innings, auto-fill, Reshuffle, the grid, the playing-time view, add/remove
 // — lives here so it's written once and both surfaces stay in lock-step.
 import { useState, useRef, useEffect, type CSSProperties } from 'react';
+import { useDismissable } from '@/lib/overlay-hooks';
 import { X, ChevronUp, ChevronDown, GripVertical, Shuffle } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
@@ -140,14 +141,7 @@ export default function LineupEditor(props: LineupEditorProps) {
   }, [defaultPolicy]);
 
   const autoFillRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!autoFillOpen) return;
-    function onDown(e: PointerEvent) { if (!autoFillRef.current?.contains(e.target as Node)) setAutoFillOpen(false); }
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') setAutoFillOpen(false); }
-    document.addEventListener('pointerdown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
-  }, [autoFillOpen]);
+  useDismissable(autoFillOpen, autoFillRef, () => setAutoFillOpen(false));
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),

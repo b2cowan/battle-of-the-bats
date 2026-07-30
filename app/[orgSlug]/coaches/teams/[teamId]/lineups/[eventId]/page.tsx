@@ -1,6 +1,7 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useDismissable } from '@/lib/overlay-hooks';
 import { ListOrdered, ArrowLeft, CalendarDays, X, Undo2, Redo2, Printer, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
@@ -202,21 +203,14 @@ export default function CoachLineupBuilderPage({
 
   // Close the Templates / Print popovers on an outside tap or Escape (the auto-fill popover is
   // self-managed inside LineupEditor).
+  // Two popovers, two boundaries, one dismiss — a tap outside BOTH closes both.
   const templatesRef = useRef<HTMLDivElement>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!templatesOpen && !lineupPdfOpen) return;
-    function closeMenus() { setTemplatesOpen(false); setLineupPdfOpen(false); }
-    function onDown(e: PointerEvent) {
-      const t = e.target as Node;
-      if (templatesRef.current?.contains(t) || pdfRef.current?.contains(t)) return;
-      closeMenus();
-    }
-    function onKey(e: KeyboardEvent) { if (e.key === 'Escape') closeMenus(); }
-    document.addEventListener('pointerdown', onDown);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('pointerdown', onDown); document.removeEventListener('keydown', onKey); };
-  }, [templatesOpen, lineupPdfOpen]);
+  useDismissable(
+    templatesOpen || lineupPdfOpen,
+    [templatesRef, pdfRef],
+    () => { setTemplatesOpen(false); setLineupPdfOpen(false); },
+  );
 
   // Auto-save the lineup ~0.9s after the last change (debounced) — no Save button.
   useEffect(() => {

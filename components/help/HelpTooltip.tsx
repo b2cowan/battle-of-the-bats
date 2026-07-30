@@ -1,5 +1,6 @@
 'use client';
-import { useState, useRef, useEffect, useId, type ReactNode } from 'react';
+import { useState, useRef, useId, type ReactNode } from 'react';
+import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './help.module.css';
 
 interface HelpTooltipProps {
@@ -32,19 +33,11 @@ export default function HelpTooltip({ title, body, content, size = 'sm' }: HelpT
   // fight: a tap fires focus AND click, which would otherwise open-then-close.
   const pointerDriven = useRef(false);
 
-  // Close on outside tap/click. pointerdown fires for both mouse and touch,
-  // so a tap outside on a touch device reliably closes the popover — mousedown
-  // did not fire for taps on iOS Safari, which is what left it stuck/unusable.
-  useEffect(() => {
-    if (!open) return;
-    function onOutside(e: PointerEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('pointerdown', onOutside);
-    return () => document.removeEventListener('pointerdown', onOutside);
-  }, [open]);
+  // Outside tap/click + Escape. The shared hook now listens on `pointerdown` for the reason this
+  // component discovered first and carried alone: mousedown does not fire for taps on iOS Safari,
+  // which left this popover stuck. Escape also becomes document-level, so a popover opened by HOVER
+  // is now dismissable from the keyboard — it previously only responded while the trigger had focus.
+  useDismissable(open, wrapRef, () => setOpen(false));
 
   return (
     <span
@@ -65,7 +58,6 @@ export default function HelpTooltip({ title, body, content, size = 'sm' }: HelpT
         onClick={e => { e.stopPropagation(); if (open) setOpen(false); else show(); }}
         onFocus={() => { if (!pointerDriven.current) show(); }}
         onBlur={() => { setOpen(false); pointerDriven.current = false; }}
-        onKeyDown={e => { if (e.key === 'Escape') setOpen(false); }}
         aria-label={title}
         aria-describedby={open ? popoverId : undefined}
       >

@@ -12,7 +12,8 @@
  * both options. Placement is configurable so it opens away from screen edges
  * (e.g. upward inside the bottom dock).
  */
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
+import { useDismissable } from '@/lib/overlay-hooks';
 import { Share2, Link2, Image as ImageIcon, Check } from 'lucide-react';
 import { generateScoreCardBlob, shareScoreImage, shareLink, type ScoreCardData } from '@/lib/share-card';
 import styles from './ShareScoreButton.module.css';
@@ -45,21 +46,7 @@ export default function ShareScoreButton({
   const [img, setImg] = useState<'idle' | 'busy' | 'done'>('idle');
   const wrapRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    function onPointerDown(e: PointerEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [open]);
+  useDismissable(open, wrapRef, () => setOpen(false));
 
   async function handleShareLink() {
     if (link === 'busy') return;
