@@ -11,16 +11,27 @@
 
 ---
 
-## 0. Ground truth (verified 2026-07-28; release state re-checked 2026-07-29)
+## 0. Ground truth (release state re-verified against `origin/master` 2026-07-30)
 
-`origin/master` is at `6afa1429` (2026-07-27). Therefore **every coach-portal build recorded as
-"BUILT on dev" before 2026-07-27 is live in production.** Migration watermark is **205**; all
-`⚠ prod-pending mig NNN` markers in the retired source files (135–198) were resolved and are
-applied to prod.
+**`origin/master` is at `cf90d626` — the 2026-07-29 coach-portal launch release. ALL FOUR launch
+batches are LIVE IN PRODUCTION** (1 `934e5275` · 2 `8040f4e6` · 3 `85d2a015` · 4 `13e2c021`), along
+with the coach onboarding tour + chat quiet-mode work. Migrations **204–210 are on prod** and the
+dev↔prod drift report is **green (zero structural drift)**. **Therefore the readiness review's
+entire P0 list is not just closed — it is in customers' hands.**
 
-⚠ **`dev` is now 21 commits ahead of `origin/dev` and NOTHING from launch Batches 1–3 is on prod**
-(re-checked 2026-07-29 — it was 8 ahead when this doc was written). The unreleased queue is growing
-into one large promote; **whether Batches 1–3 ship before Batch 4 lands is an open owner call.**
+⚠ **Only 5 commits sit on `dev` ahead of prod:** the overlay-hooks relocation, the admin dropdown
+consolidation, the free-portal welcome (**which carries dev-only migration 211**), **Chunk A —
+Money on a phone (`a737acbf`)**, and its docs record. The unreleased queue is now SMALL — the
+opposite of the situation this section described before the release.
+
+⚠⚠ **Migration 211 is FUNCTION-only, and the drift gate is blind to it.** It replaces a stored
+function (an atomic fix for a lost-update race on a coach's activated-tools flag). The drift report
+compares tables, columns, indexes, constraints and RLS — **not functions** — so its "no drift"
+verdict proves nothing about 211. **Verify it against live prod before the next promote.**
+
+*(Superseded, kept so the correction is legible: this section previously stated `origin/master` was
+at `6afa1429` and that "NOTHING from launch Batches 1–3 is on prod". Both were true when written and
+are now wrong.)*
 
 Practical consequence: the large "awaiting owner browser verification" tail across the June coach
 plans is **not blocking work** — it shipped and has been in customers' hands for weeks. It is
