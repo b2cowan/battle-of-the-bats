@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState, type CSSProperties } from 'react';
+import React, { useRef, useState } from 'react';
 import { Check, ChevronDown, HelpCircle, Lock, MoreHorizontal, Search, X } from 'lucide-react';
 import clsx from 'clsx';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
+import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import styles from './TournamentAdminUI.module.css';
 
 type Option<T extends string> = {
@@ -231,88 +232,15 @@ export function ToolbarMenu({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const [panelStyle, setPanelStyle] = useState<CSSProperties | undefined>();
   const buttonLabel = typeof label === 'string' ? label : 'Toolbar menu';
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function updatePanelPosition() {
-      const trigger = rootRef.current;
-      const panel = panelRef.current;
-      if (!trigger || !panel) return;
-
-      const margin = 12;
-      const triggerRect = trigger.getBoundingClientRect();
-      const viewportWidth = document.documentElement.clientWidth;
-      const viewportHeight = document.documentElement.clientHeight;
-      const panelWidth = Math.min(
-        Math.max(panel.offsetWidth, 240),
-        Math.max(viewportWidth - margin * 2, 180),
-      );
-      const desiredLeft = align === 'start'
-        ? triggerRect.left
-        : triggerRect.right - panelWidth;
-      const left = Math.max(
-        margin,
-        Math.min(desiredLeft, viewportWidth - panelWidth - margin),
-      );
-      const panelHeight = panel.offsetHeight;
-      const minimumUsefulHeight = Math.min(panelHeight, 160);
-      let top = triggerRect.bottom + 6;
-      let maxHeight = viewportHeight - top - margin;
-
-      if (maxHeight < minimumUsefulHeight) {
-        const availableAbove = triggerRect.top - margin - 6;
-        if (availableAbove > maxHeight) {
-          const visibleHeight = Math.min(panelHeight, availableAbove);
-          top = Math.max(margin, triggerRect.top - visibleHeight - 6);
-          maxHeight = visibleHeight;
-        } else {
-          top = margin;
-          maxHeight = viewportHeight - margin * 2;
-        }
-      }
-
-      setPanelStyle({
-        position: 'fixed',
-        top,
-        left,
-        width: panelWidth,
-        maxHeight,
-        overflowY: 'auto',
-      });
-    }
-
-    const frame = window.requestAnimationFrame(updatePanelPosition);
-    window.addEventListener('resize', updatePanelPosition);
-    window.addEventListener('scroll', updatePanelPosition, true);
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener('resize', updatePanelPosition);
-      window.removeEventListener('scroll', updatePanelPosition, true);
-    };
-  }, [open, align]);
+  useDismissable(open, rootRef, () => setOpen(false));
+  // Anchored to whichever toolbar button this happens to be, so placement is measured, not CSS.
+  const panelStyle = useAnchoredMenu(open, rootRef, panelRef, {
+    minWidth: 240,
+    narrowMinWidth: 180,
+    align,
+  });
 
   return (
     <div ref={rootRef} className={clsx(styles.menuRoot, className)} data-keep-label={keepLabel || undefined}>
@@ -459,24 +387,8 @@ export function StatusLegendPopover({
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-
-    function handlePointerDown(event: MouseEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
-    }
-
-    document.addEventListener('mousedown', handlePointerDown);
-    document.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', handlePointerDown);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [open]);
+  // CSS anchors this panel to the trigger's edge, so dismissal is all it needs.
+  useDismissable(open, rootRef, () => setOpen(false));
 
   return (
     <div ref={rootRef} className={clsx(styles.legendRoot, className)}>

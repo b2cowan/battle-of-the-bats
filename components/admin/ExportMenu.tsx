@@ -14,8 +14,9 @@
  *  7. Disabled when no rows or disabled prop is true
  */
 
-import { useState, useRef, useEffect, type CSSProperties } from 'react';
+import { useState, useRef } from 'react';
 import { Download, ChevronDown, FileSpreadsheet, FileText, Calendar, Lock, Upload } from 'lucide-react';
+import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import type { OrgPlan } from '@/lib/types';
 import type { PlanFeature } from '@/lib/plan-features';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
@@ -128,87 +129,16 @@ export default function ExportMenu({
   const [loading, setLoading] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
-  const [menuStyle, setMenuStyle] = useState<CSSProperties | undefined>();
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    if (!open) return;
-    function handleOutside(e: MouseEvent) {
-      if (rootRef.current && !rootRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-
-    function updateMenuPosition() {
-      const trigger = rootRef.current;
-      const menu = menuRef.current;
-      if (!trigger || !menu) return;
-
-      const margin = 12;
-      const triggerRect = trigger.getBoundingClientRect();
-      const viewportWidth = document.documentElement.clientWidth;
-      const viewportHeight = document.documentElement.clientHeight;
-      const menuWidth = Math.min(
-        Math.max(menu.offsetWidth, 220),
-        Math.max(viewportWidth - margin * 2, 160),
-      );
-      const left = Math.max(
-        margin,
-        Math.min(triggerRect.right - menuWidth, viewportWidth - menuWidth - margin),
-      );
-      const menuHeight = menu.offsetHeight;
-      const minimumUsefulHeight = Math.min(menuHeight, 160);
-      let top = triggerRect.bottom + 6;
-      let maxHeight = viewportHeight - top - margin;
-
-      if (maxHeight < minimumUsefulHeight) {
-        const availableAbove = triggerRect.top - margin - 6;
-        if (availableAbove > maxHeight) {
-          const visibleHeight = Math.min(menuHeight, availableAbove);
-          top = Math.max(margin, triggerRect.top - visibleHeight - 6);
-          maxHeight = visibleHeight;
-        } else {
-          top = margin;
-          maxHeight = viewportHeight - margin * 2;
-        }
-      }
-
-      setMenuStyle({
-        position: 'fixed',
-        top,
-        left,
-        width: menuWidth,
-        maxHeight,
-        overflowY: 'auto',
-      });
-    }
-
-    const frame = window.requestAnimationFrame(updateMenuPosition);
-    window.addEventListener('resize', updateMenuPosition);
-    window.addEventListener('scroll', updateMenuPosition, true);
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.removeEventListener('resize', updateMenuPosition);
-      window.removeEventListener('scroll', updateMenuPosition, true);
-    };
-  }, [open]);
-
-  // Close on Escape
-  useEffect(() => {
-    if (!open) return;
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') setOpen(false);
-    }
-    document.addEventListener('keydown', handleKey);
-    return () => document.removeEventListener('keydown', handleKey);
-  }, [open]);
+  // Outside-click + Escape, and trigger-anchored placement with the above/below flip — both shared
+  // with the tournament toolbar menu, which used to carry a near-identical private copy.
+  useDismissable(open, rootRef, () => setOpen(false));
+  const menuStyle = useAnchoredMenu(open, rootRef, menuRef, {
+    minWidth: 220,
+    narrowMinWidth: 160,
+    // Always right-aligned: the chevron sits at the right end of a right-aligned button group.
+    align: 'end',
+  });
 
   const includesICS = formats.includes('ics');
   const includesPDF = formats.includes('pdf');

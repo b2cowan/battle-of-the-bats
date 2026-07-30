@@ -518,6 +518,151 @@ this pass inside the coach portal so an admin regression can't muddy the still-o
 Phases A and B. The design rationale ("designed against two real requirements, not guessed from
 one") is satisfied by the two coach-side consumers. Follow-up remains logged in the cleanup backlog.
 
+#### C0 remainder — the three admin copies, CLOSED 2026-07-29
+
+Executed once coach QA had passed, per the deliberate ordering above. Build prompt:
+`ADMIN_DROPDOWN_CONSOLIDATION_PROMPT.md`. Nothing user-visible changed.
+
+**The blocking pre-step was solved rather than worked around.** The hooks now live at
+`lib/overlay-hooks.ts`. Done as an isolated rename-only step with the two coach-side imports updated
+and typecheck green *before* any admin file was opened, so at no point did an admin file import from
+`components/coaches/`. The absence of that neutral home is exactly what deferred this twice; it is no
+longer a reason to defer anything.
+
+The first attempt put it in `components/shared/`, which the build prompt named as one of two options.
+`/simplify` overturned that with file-layout evidence (see the outcome section below): `lib/` is where
+this repo's hook modules already live, `components/shared/` holds cross-shell things you *render*, and
+`lib/coaches-overlay.tsx` — the "is any overlay open?" signal — is a near neighbour these hooks should
+be discoverable beside. Corrected before commit.
+
+**A second hook, not an extended `useViewportFit`.** `useAnchoredMenu(open, triggerRef, panelRef, opts)`
+returns the `CSSProperties` the two menus were each computing privately. The distinction now
+documented on both: `useViewportFit` *nudges* a panel CSS has already anchored; `useAnchoredMenu`
+*places* one relative to a trigger that could be anywhere on a wide toolbar, and flips it above when
+there's no room below. Those are different jobs and one hook doing both would have been worse.
+
+**The two copies were 85 duplicated lines that differed in three ways, not two.** The prompt named
+the minimum width (240 vs 220) and alignment. Diffing them surfaced a third: the floor applied once
+the *viewport* is narrower than the panel's minimum (180 vs 160). Only reachable under ~205px, but it
+is parameterised (`narrowMinWidth`) rather than silently normalised to one of the two — consolidating
+two copies is not the pass in which to change what either one did.
+
+The flip math is **transcribed, not rewritten**. Two known non-improvements are deliberate and
+commented in place: placement state is not cleared on close (both originals kept it, so a reopen
+paints at the last spot for one frame), and `scroll`/`resize` still re-place un-coalesced (unlike
+`useViewportFit`, which `/simplify` rAF-coalesced). Both are real candidates — for a pass whose
+premise isn't "nothing on screen moves".
+
+Result: `-92` lines in `ExportMenu.tsx`, `-110` in `TournamentAdminUI.tsx`, zero hand-rolled
+outside-click / Escape / positioning code left in either. Diff-audited for JSX, copy, and a11y
+changes: none — `aria-haspopup` / `aria-expanded` / `role="menu"` / `role="dialog"` / `aria-label` /
+`data-keep-label` / `data-align` all intact, and no CSS module was touched. Typecheck 0, focused lint
+0 errors, 482 tests, every token and date baseline at zero, schema parity 0.
+
+⚠ **The one thing owner QA has to cover: the above/below flip.** Open the tournament-admin ⋯ menu,
+the status legend, and an Export dropdown with the trigger low in the window — each should open
+*upward*. It is the single behaviour a careless consolidation drops and it is invisible from the top
+of a page.
+
+#### `/simplify` outcome on the C0 remainder (4 lenses, 2026-07-29)
+
+Reuse, simplification, efficiency, altitude. **4 applied, 4 skipped with reasons, 1 spun out.**
+
+**Applied — the one that mattered: the module was filed in the wrong drawer.** Reuse and altitude
+reached this independently, both from file-layout evidence rather than taste. `components/shared/`
+held three cross-shell **components** (JSX, default exports, always rendered); this would have been
+the first headless hook module in it. `lib/` already holds ~24 hook modules including a `lib/hooks/`
+subdirectory, `lib/use-visual-viewport-vars.ts` is the structural twin of `useViewportFit` (measure
+geometry → publish CSS custom properties), and `lib/coaches-overlay.tsx` already owns the word
+"overlay" for a multi-hook module. Moved to `lib/overlay-hooks.ts` with a cross-reference to that
+neighbour, since "is any overlay open" and "how does this overlay behave" are easy to confuse.
+
+Applied, all documentation: the `narrowMinWidth` doc stated two different thresholds as if they were
+one (it named the `minWidth + 2·margin` breakpoint, 264/244, then illustrated it with the
+`narrowMinWidth + 2·margin` figure, 204 — a reader doing the arithmetic would have found them
+irreconcilable); the "hook not component" rationale predated the admin consumers and now records that
+the convergence *was* re-checked and why it's still insufficient (the two menus diverge either side of
+the shared panel — single vs. split trigger, generic slot vs. plan-gated items, delegation vs. explicit
+close); and `minWidth` now warns that each panel's CSS module carries a second width for the same
+concept, with the toolbar menu's (288) already disagreeing with its 240 — pre-existing, harmless
+because CSS only governs the pre-measurement frame, but a trap for anyone treating the four hook
+numbers as the source of truth.
+
+**Skipped, with reasons.** Collapsing `minWidth`/`narrowMinWidth` into one knob via the `-60`
+relationship both call sites happen to share — it isn't `2·margin` or anything else principled, so
+that would bake a two-point coincidence in as policy. Merging `useDismissable` into `useAnchoredMenu`
+— they always co-occur at these two call sites but the module's other consumers use dismiss with no
+placement at all, so they are independent axes. Generalising the two fit hooks into one — the flip
+replaces what `top` *means* and needs the trigger's rect, which `useViewportFit` never reads, so a
+union would be a mode flag over two algorithms. And the un-coalesced scroll re-place, which efficiency
+confirmed byte-for-byte identical to both originals: a preserved status quo, not a regression, and out
+of bounds for a pass whose premise is that nothing moves.
+
+**Efficiency verdict worth recording:** no regression. Layout reads are batched before the single
+state write, the relocation changes no bundle behaviour (the coach page already imported this module
+statically, so the lazy tour never isolated it), and per-open work is unchanged for all three panels.
+The only new cost is one property write per render from `useDismissable`'s ref-sync — the price of the
+stale-closure fix a previous pass made deliberately.
+
+#### `/review` outcome on the C0 remainder (high-risk tier, 4 lenses, 2026-07-29)
+
+Tier = **high-risk** (the diff adds a shared `lib/**` module consumed across two shells; highest tier
+wins). Deterministic gate green first: `verify:changed` 0 errors, `typecheck` 0, focused lint 0 errors,
+482 tests, all token/date ratchets zero, schema parity 0, no migration in scope.
+
+Lenses: exact-transcription correctness · regression/blast-radius · concurrency/effect-lifecycle ·
+visible-behaviour preservation. **Security/multi-tenant and data/contract lenses were deliberately not
+run** — this diff touches no data, no auth, no org scoping and no migration, so they would have been
+paid confirmation of an empty set.
+
+**0 Critical · 0 High · 0 Medium · 1 Advisory · 4 pre-existing advisories. Nothing promoted to
+adversarial verification** (nothing reached the ≥High-or-uncertain bar).
+
+The transcription audit compared every expression against both originals token-for-token and
+specifically confirmed the flip threshold was **not** wired to `narrowMinWidth` — that mistake would
+have silently moved ToolbarMenu's flip point from 160 to 180 and is invisible to every test we have.
+It wasn't. Blast-radius walked all ~25 `ExportMenu` consumers plus both usages of each admin menu,
+confirmed the barrel's 13 exports intact, confirmed `useDismissable`/`useViewportFit` byte-identical so
+the already-shipped coach portal is untouched, and confirmed the abandoned `components/shared/` path
+left no orphan. Visible-behaviour confirmed from repo state (not from the diff) that neither CSS module
+is modified and every a11y attribute is byte-identical.
+
+**The one Advisory — worth recording because it makes "zero behavioural difference" imprecise by
+exactly one expression.** The old `ToolbarMenu`/`StatusLegendPopover` wrote
+`if (!rootRef.current?.contains(target))`, which **dismisses** when the ref is null; shared
+`useDismissable` writes `if (ref.current && !ref.current.contains(target))`, which does **not**. Two
+lenses independently failed to construct a reachable path: the root div renders unconditionally, so the
+ref is only null before the listener exists or after its cleanup ran, and in the one theoretical window
+(unmount mid-flush) the resulting `setOpen(false)` lands on an unmounting component and is discarded.
+`ExportMenu` already used the new form, so it has no change at all. **Deliberately not "fixed"** — the
+shared form is the safer of the two, and matching the old optional-chaining semantics would mean
+choosing to dismiss on a null ref, which is worse.
+
+**Pre-existing, verified against the originals, all left alone:** the stale-placement single-frame
+flash when reopening after a resize-while-closed; the missing equality check before the placement state
+write; the CSS-vs-JS width mismatch; and one genuine minor UX quirk — a **keyboard**-activated trigger
+fires `click` with no preceding `mousedown`, so tabbing to a second menu and pressing Enter can leave
+two menus open at once, after which one Escape closes both. All four are identical in the pre-change
+code. The keyboard quirk is folded into the spun-out sweep below, which is the right altitude to fix
+dismiss semantics repo-wide rather than in one panel.
+
+**Bonus coverage found:** an existing Playwright UAT spec already drives `ToolbarMenu` end-to-end
+(opens the Import menu, asserts its items, closes with Escape), so one of the three panels has
+automated regression cover for the dismiss path. It needs a dev server, so it stays in the owner's
+browser-testing lane.
+
+**Spun out, NOT done here: 12 more hand-rolled dismiss copies.** Seven are mechanically convertible
+(four menus in the tournament schedule page, the registrations filter, the schedule scope picker, and
+`components/shared/FlipPill.tsx` — whose own comment admits it mirrors the admin More-menu pattern).
+Five more are the same shape but **missing Escape-dismiss entirely**, so converting them would close a
+real keyboard gap rather than just deduplicate: both bottom navs, the platform-admin customer-users
+menu, the schedule timeline, and the accounting payee combobox. Four are not mechanical — the chat
+emoji picker refocuses its trigger and checks two refs, the chat reaction popovers have no container
+ref at all (they rely on ~10 scattered `stopPropagation` calls), the coach team switcher refocuses on
+every close, and the notification bell is portaled to `<body>` so "outside" needs a `closest()` test.
+Deliberately left alone: the approved scope was three named panels, and a 12-consumer sweep across
+chat, both bottom navs and platform admin is a different QA surface that deserves its own approval.
+
 ### C1 — the offered tour
 
 A **non-modal right-edge drawer**: no dimming backdrop, no focus trap, no `aria-modal`. The tour's
