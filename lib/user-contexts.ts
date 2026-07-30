@@ -609,3 +609,11 @@ export const getUserAccessContextsCached = cache(
 export function hasCoachAccess(contexts: UserAccessContext[]): boolean {
   return contexts.some(c => c.kind === 'coaches_basic' || c.kind === 'coaches_premium');
 }
+
+/** The one definition of "this account's primary org workspace" (Desktop Public UX
+ *  Phase 1, WI-3): contexts arrive pre-sorted (sortOrder, then title), so the first
+ *  organization context with a resolved destination IS the primary workspace. Drives
+ *  the persistent Admin Area door in the chrome. */
+export function getPrimaryOrgDestination(contexts: UserAccessContext[]): string | null {
+  return contexts.find(c => c.kind === 'organization' && c.destination)?.destination ?? null;
+}

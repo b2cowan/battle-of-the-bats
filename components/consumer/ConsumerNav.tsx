@@ -6,21 +6,24 @@
  * Renders an app-like top bar and a mobile bottom tab bar — the same responsive
  * pattern the rest of the site uses (top links ≥900px, bottom nav below).
  *
- * Tabs: Home / Scores / Chat / Account (identical shape signed-in vs signed-out).
+ * Tabs: Home / Scores / Chat / Account — STATE-BASED since Desktop Public UX Phase 1
+ * (WI-4/WI-5): anonymous visitors see the browsable tabs (Home, Scores) with Chat +
+ * Account collapsed into one Sign In door; the full four-tab row is signed-in chrome.
  * Home lives at /discover (the canonical, SEO-bearing directory URL — unchanged);
  * only its label/icon change. It absorbs the retired Discover + Following tabs and
  * the /home workspace launchpad. On desktop the header also carries the organizer
- * affordances (Run a tournament + coach pill + Sign in) so desktop visitors who
- * land here from search can still convert or sign in. The old "Your workspaces"
- * utility link is gone — Home now carries the workspaces list.
+ * affordances (Pricing + the "Run a tournament" persona menu + one operator pill +
+ * Sign in) so desktop visitors who land here from search can still convert or sign in.
  */
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
-import { Home, Radio, MessageCircle, User } from 'lucide-react';
+import { Home, Radio, MessageCircle, User, LogIn } from 'lucide-react';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { usePendingInviteCount } from '@/lib/use-pending-invites';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
+import { useRoleSummary, resolveOperatorPill } from '@/lib/use-role-summary';
 import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome } from '@/lib/consumer-routes';
+import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
 
@@ -40,6 +43,8 @@ const underPrefix = (path: string, p: string) => path === p || path.startsWith(p
 export default function ConsumerNav({
   signedIn: signedInProp = false,
   isCoach = false,
+  adminHref = null,
+  startMenu,
   variant = 'consumer',
   chatBackPath = null,
 }: {
@@ -48,6 +53,14 @@ export default function ConsumerNav({
    *  in the desktop utility area (Phase 3). Mobile stays four tabs; the Account
    *  tab carries the same door there. */
   isCoach?: boolean;
+  /** The account's primary org-workspace destination, SSR'd by dynamic mounts (the
+   *  consumer layout / coach journey chrome) from the access contexts. Drives the ONE
+   *  persistent operator pill (WI-3): Admin Area outranks the coaches pill. The
+   *  tournament variant resolves the same doors client-side via useRoleSummary. */
+  adminHref?: string | null;
+  /** Persona-menu gating resolved server-side (lib/start-menu.ts) by mounts that are
+   *  already dynamic. Omitted → StartMenu's safe defaults (chooser-routed, league hidden). */
+  startMenu?: { coachHref: string; showLeague: boolean };
   /** A3 QA (2026-07-27): the coach shell passes its CURRENT portal path here so the
    *  Chat tab deep-links `/chat?back=…` — the Chat surface then offers a "back to
    *  your Coaches Portal" return to the exact page the coach left. Null (all other
@@ -91,6 +104,11 @@ export default function ConsumerNav({
   const chatUnread = useChatUnread(signedIn);
   const pendingInvites = usePendingInviteCount(signedIn);
 
+  // WI-3/WI-4: the tournament strip resolves the operator doors + chat membership
+  // CLIENT-side (same rule as identity — never SSR'd into SW-cached tournament HTML).
+  // Inert everywhere else and for anonymous visitors (no network).
+  const roleSummary = useRoleSummary(variant === 'tournament' && signedIn);
+
   // The root-mounted tournament variant renders on every route; bail here — AFTER the
   // hooks (React-safe) but BEFORE building any badges/markup — so it's free off its own
   // routes.
@@ -108,12 +126,22 @@ export default function ConsumerNav({
   // Distinct screen-reader phrasing per badge so the count stays meaningful (invites vs unread).
   const badgeNoun: Record<string, string> = { '/discover': 'pending invitations', '/chat': 'unread' };
 
+  // State-based chrome (Phase 1, WI-5): anonymous visitors get the browsable tabs only —
+  // Chat and Account are sign-in walls for them, so both collapse into the single Sign In
+  // door appended below. The full four-tab row is signed-in chrome. (On the tournament
+  // variant `signedIn` is client-resolved, so SW-cached HTML correctly ships anonymous.)
+  const visibleTabs = signedIn
+    ? TABS
+    : TABS.filter(t => t.href === '/discover' || t.href === '/scores');
+  // Never a Sign In affordance ON the auth pages themselves (mirrors the utilCta rule).
+  const showSignInTab = !signedIn && !pathname.startsWith('/auth');
+
   // Shared bottom-tab items — identical in both variants (the tournament variant
   // renders ONLY these, neutral-skinned; the consumer variant pairs them with the
   // warm top bar). On a tournament route none of Home/Scores/Chat/Account is a path
   // prefix, so every tab renders NEUTRAL — signalling a nested context, never a false
   // "you are on Discover/Scores".
-  const bottomTabs = TABS.map(({ href, label, icon: Icon }) => {
+  const tabItems = visibleTabs.map(({ href, label, icon: Icon }) => {
     const active = isActive(href);
     const badge = badges[href];
     return (
@@ -132,12 +160,24 @@ export default function ConsumerNav({
       </Link>
     );
   });
+  const bottomTabs = (
+    <>
+      {tabItems}
+      {showSignInTab && (
+        <Link href="/auth/login" className={styles.tab}>
+          <span className={styles.iconWrap}>
+            <LogIn size={22} strokeWidth={1.8} />
+          </span>
+          <span className={styles.label}>Sign In</span>
+        </Link>
+      )}
+    </>
+  );
 
-  // Shared top-bar content — the wordmark, the four tab links, and the organizer utility
-  // cluster. Rendered by BOTH the consumer top bar (warm-skinned) and the Phase 3 desktop
-  // strip on tournament routes (neutral-skinned). isCoach is unresolved (false) on the
-  // tournament variant, so its Coaches Portal link naturally hides there.
-  const topLinks = TABS.map(({ href, label }) => {
+  // Shared top-bar content — the wordmark, the visible tab links, and the organizer
+  // utility cluster (consumer/coach variants only since WI-4 — the tournament strip
+  // builds its own state-based content below).
+  const topLinks = visibleTabs.map(({ href, label }) => {
     const active = isActive(href);
     const badge = badges[href];
     return (
@@ -152,22 +192,34 @@ export default function ConsumerNav({
       </Link>
     );
   });
+  // The one wordmark block — shared by the consumer top bar and the tournament strip.
+  const wordmark = (
+    <Link href="/discover" className={styles.wordmark} aria-label="FieldLogicHQ home">
+      <span className={styles.wm1}>FIELD</span>
+      <span className={styles.wm2}>LOGIC</span>
+      <span className={styles.wm3}>HQ</span>
+    </Link>
+  );
+  // ONE persistent operator pill (WI-3), via the shared precedence resolver (Admin Area
+  // outranks Coaches Portal). The coach shell (variant 'coach') IS the Coaches Portal —
+  // a self-referential door there is noise, so the coach door only feeds in outside it.
+  const operatorPill = signedIn
+    ? resolveOperatorPill(adminHref, isCoach && variant !== 'coach' ? '/coaches' : null)
+    : null;
+
   const topBarInner = (
     <>
       <div className={styles.topLeft}>
-        <Link href="/discover" className={styles.wordmark} aria-label="FieldLogicHQ home">
-          <span className={styles.wm1}>FIELD</span>
-          <span className={styles.wm2}>LOGIC</span>
-          <span className={styles.wm3}>HQ</span>
-        </Link>
+        {wordmark}
         <nav className={styles.topNav} aria-label="Primary">{topLinks}</nav>
       </div>
       <div className={styles.topUtil}>
-        <Link href="/start" className={styles.utilLink}>Run a tournament</Link>
-        {/* The coach shell (variant 'coach') IS the Coaches Portal — a self-referential
-            door there is noise, so the pill renders only outside it. */}
-        {signedIn && isCoach && variant !== 'coach' && (
-          <Link href="/coaches" className={styles.utilCoach}>Coaches Portal</Link>
+        {/* Standing Pricing link (WI-1) — always visible on desktop, signed in or out. */}
+        <Link href="/pricing" className={styles.utilLink}>Pricing</Link>
+        {/* The ratified CTA, now a persona menu (WI-2) — same label, all four paths named. */}
+        <StartMenu coachHref={startMenu?.coachHref} showLeague={startMenu?.showLeague} />
+        {operatorPill && (
+          <Link href={operatorPill.href} className={styles.utilCoach}>{operatorPill.label}</Link>
         )}
         {/* Signed-out visitors keep a "Sign in" affordance (never ON the sign-in pages). */}
         {!signedIn && !pathname.startsWith('/auth') && (
@@ -177,15 +229,55 @@ export default function ConsumerNav({
     </>
   );
 
-  // Tournament variant (Phase 5 + Phase 3): the persistent app nav in the neutral
+  // Tournament variant (Phase 5 + Phase 3, state-based since Phase 1 WI-4 — binding
+  // mockup: the fan-chrome addendum): the persistent app nav in the neutral
   // venue-following skin (no warm classes → the tournament :root override themes it).
-  //   • ≤900px — the bottom bar (the branded event header owns the top).
-  //   • >900px — a slim fixed top STRIP above the event's side rail (Phase 3), reusing the
-  //     shared top-bar content; the .bottomNav / .topbarStrip media queries pick by width.
+  //   • ≤900px — the bottom bar (the branded event header owns the top), state-based
+  //     like the consumer bar (anonymous = Home/Scores/Sign In).
+  //   • >900px — a slim fixed STRIP with NO tab row: the org's side rail owns section
+  //     nav, and dropping the platform "Home" link here kills the old Home-vs-Overview
+  //     double-home ambiguity outright. Anonymous = Discover/Sign in/Run a tournament;
+  //     a signed-in fan earns a chat door only with ≥1 real conversation, plus a compact
+  //     Account avatar; an operator gets the persistent role pill instead of the CTA.
   if (variant === 'tournament') {
+    const pill = resolveOperatorPill(roleSummary?.adminHref, roleSummary?.coachHref);
     return (
       <>
-        <header className={`${styles.topbar} ${styles.topbarStrip}`}>{topBarInner}</header>
+        <header className={`${styles.topbar} ${styles.topbarStrip}`}>
+          <div className={styles.topLeft}>
+            {wordmark}
+            <nav className={styles.topNav} aria-label="FieldLogicHQ">
+              <Link href="/discover" className={styles.topLink}>Discover</Link>
+            </nav>
+          </div>
+          <div className={styles.topUtil}>
+            {/* Membership-gated chat door — unread>0 also opens it, so a fan added to a
+                room AFTER the one-shot role-summary fetch never has live messages with
+                no visible way in (the unread hook is realtime; hasChat is not). */}
+            {signedIn && (roleSummary?.hasChat || chatUnread > 0) && (
+              <Link
+                href="/chat"
+                className={styles.stripIcon}
+                aria-label={chatUnread > 0 ? `Chat — ${cap(chatUnread)} unread` : 'Chat'}
+              >
+                <MessageCircle size={17} strokeWidth={1.8} />
+                {chatUnread > 0 && (
+                  <span className={`${styles.topBadge} ${styles.stripBadge}`} aria-hidden>{cap(chatUnread)}</span>
+                )}
+              </Link>
+            )}
+            {signedIn && (
+              <Link href="/account" className={styles.stripIcon} aria-label="Account">
+                <User size={17} strokeWidth={1.8} />
+              </Link>
+            )}
+            {!signedIn && <Link href="/auth/login" className={styles.utilCta}>Sign in</Link>}
+            {/* Operators get their door; everyone else keeps the acquisition CTA. */}
+            {pill
+              ? <Link href={pill.href} className={styles.utilCoach}>{pill.label}</Link>
+              : <StartMenu />}
+          </div>
+        </header>
         <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">
           {bottomTabs}
         </nav>

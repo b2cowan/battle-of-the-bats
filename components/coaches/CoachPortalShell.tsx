@@ -102,11 +102,17 @@ export default function CoachPortalShell({
   children,
   signedIn = false,
   isCoach = false,
+  adminHref = null,
+  startMenu,
 }: {
   children: React.ReactNode;
   /** SSR'd by app/coaches/layout.tsx for the global ConsumerNav (labels only — never gates content). */
   signedIn?: boolean;
   isCoach?: boolean;
+  /** WI-3: keeps a dual-role (admin + coach) account's Admin Area door inside the portal. */
+  adminHref?: string | null;
+  /** WI-2: persona-menu gating resolved by the layout (already dynamic). */
+  startMenu?: { coachHref: string; showLeague: boolean };
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -439,7 +445,14 @@ export default function CoachPortalShell({
           lights up inside the team space; the header says where you are), wordmark top bar
           ≥901px. Renders instantly — it needs no team context. chatBackPath (A3 QA): the
           Chat tab carries the coach's CURRENT page so /chat can offer the way back. */}
-      <ConsumerNav variant="coach" signedIn={signedIn} isCoach={isCoach} chatBackPath={pathname} />
+      <ConsumerNav
+        variant="coach"
+        signedIn={signedIn}
+        isCoach={isCoach}
+        adminHref={adminHref}
+        startMenu={startMenu}
+        chatBackPath={pathname}
+      />
 
       {/* Desktop left rail (≥901px) — team identity + the same section list as the tab row. */}
       <aside className={styles.rail} aria-label="Coaches Portal">

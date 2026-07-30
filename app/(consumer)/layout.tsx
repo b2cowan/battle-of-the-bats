@@ -4,8 +4,9 @@ import ConsumerThemeManager from '@/components/consumer/ConsumerThemeManager';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from '@/components/consumer/ConsumerShell.module.css';
 import { createClient } from '@/lib/supabase-server';
-import { getUserAccessContextsCached, hasCoachAccess } from '@/lib/user-contexts';
+import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination } from '@/lib/user-contexts';
 import { getUserTheme } from '@/lib/user-preferences';
+import { getStartMenuConfig } from '@/lib/start-menu';
 import type { UserTheme } from '@/lib/user-theme';
 
 /**
@@ -45,8 +46,14 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
   // One parallel pass: whether the account coaches (surfaces the coaches hub) AND its saved
   // Dark⇄Warm theme. The layout already resolved `user`, so reading the theme here (vs. a client
   // fetch from the theme manager) avoids a second auth round-trip; the manager reconciles it
-  // client-side. Signed-out visitors and crawlers pay for neither lookup.
+  // client-side. Signed-out visitors and crawlers skip these two identity lookups (they still
+  // pay the one plan-gating read below — the persona menu's gating matters most to them).
+  // Persona-menu gating (WI-2) — this layout is already dynamic (auth above), so the
+  // cookies+DB read inside is free of new rendering consequences. Kicked off BEFORE the
+  // identity lookups so it runs concurrently with them (it depends on neither).
+  const startMenuPromise = getStartMenuConfig().catch(() => undefined);
   let isCoach = false;
+  let adminHref: string | null = null;
   let accountTheme: UserTheme | null = null;
   if (user?.email) {
     const [contexts, theme] = await Promise.all([
@@ -54,13 +61,15 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
       getUserTheme(user.id).catch(() => null),
     ]);
     isCoach = hasCoachAccess(contexts);
+    adminHref = getPrimaryOrgDestination(contexts); // WI-3: the ONE persistent operator door
     accountTheme = theme;
   }
+  const startMenu = await startMenuPromise;
 
   return (
     <div className={styles.shell}>
       <ConsumerThemeManager accountTheme={accountTheme} />
-      <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} />
+      <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} startMenu={startMenu} />
       <div className={styles.content}>{children}</div>
       <InstallAppPrompt
         followsUserTheme

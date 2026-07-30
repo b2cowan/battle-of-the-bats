@@ -1228,6 +1228,22 @@ export async function listRoomsForUser(userId: string): Promise<ChatRoomListItem
 /** Total unread across all the coach's rooms (portal + consumer-nav badge). Does NOT self-heal (cheap).
  *  Self-muted rooms (notifications_muted_at set) are EXCLUDED — a muted room never contributes to any
  *  unread count (Unified Home R3-1). Coaches can't self-mute today, so this is a no-op for them. */
+/** Cheap "is this user in ANY chat room they'd see in /chat" — drives whether
+ *  client-resolved chrome (the tournament strip's fan state) shows a Chat door at all.
+ *  Membership, not unread: a fan with a silent team chat still gets the door; a fan with
+ *  no rooms never does. Liveness filter matches listRoomsForUser (`neq 'removed'`, the
+ *  file's what-the-inbox-shows convention) so the door can never disagree with the inbox. */
+export async function userHasChatMembership(userId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('chat_room_members')
+    .select('room_id')
+    .eq('user_id', userId)
+    .neq('status', 'removed')
+    .limit(1);
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
 export async function getUnreadTotalForUser(userId: string): Promise<number> {
   const { data: memberships, error } = await supabaseAdmin
     .from('chat_room_members')

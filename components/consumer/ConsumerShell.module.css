@@ -154,6 +154,103 @@
 @media (max-width: 900px) {
   .topUtil { display: none; }
 }
+/* ── "Run a tournament" persona menu (Desktop Public UX Phase 1, WI-2) ──────────
+   The CTA keeps its ratified label; on desktop it opens a small popover where
+   organizing leads and a quieter group names the other start paths. Semantic
+   tokens only, so the same menu themes correctly on the dark/neutral tournament
+   strip AND (via the .topbarWarm overrides below) the warm consumer bar. */
+.startWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+/* Button-reset only — StartMenu's trigger wears `.utilLink .startBtn` together, so the
+   quiet-utility typography (font, color, hover, warm-skin overrides) has ONE home in
+   .utilLink and can never drift between the link and button forms. */
+.startBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+.startCaret { transition: transform 0.15s ease; }
+.startCaretOpen { transform: rotate(180deg); }
+.startMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 290px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 6px;
+  z-index: 300;
+}
+.startItem {
+  display: block;
+  padding: 0.55rem 0.65rem;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+.startItem:hover { background: rgba(var(--primary-rgb), 0.14); }
+.startItemTitle {
+  display: block;
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+}
+.startItemSub {
+  display: block;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  color: var(--white-45);
+  margin-top: 0.1rem;
+}
+.startGroup {
+  font-family: var(--font-data, monospace);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  padding: 0.55rem 0.65rem 0.15rem;
+}
+
+/* ── Tournament-strip identity icons (state-based fan chrome, WI-4) ─────────────
+   The signed-in fan's compact Chat door (membership-gated) + Account avatar. */
+.stripIcon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--white-45);
+  border: 1px solid transparent;
+  transition: color 0.2s ease, border-color 0.2s ease;
+}
+.stripIcon:hover { color: var(--fl-text); border-color: var(--border); }
+/* Worn WITH .topBadge (the desktop unread pill owns the badge look in one place);
+   this only repositions it onto the icon's corner and tightens it one step. */
+.stripBadge {
+  position: absolute;
+  top: -5px;
+  right: -7px;
+  margin-left: 0;
+  min-width: 15px;
+  height: 15px;
+  font-size: 0.58rem;
+}
+
 .topLink {
   font-family: var(--font-data, monospace);
   font-size: 0.78rem;
@@ -364,6 +461,17 @@
 .topbarWarm .utilCta:hover { color: var(--home-olive); border-color: var(--home-olive); }
 .topbarWarm .utilCoach { color: var(--home-olive); border-color: rgba(var(--home-olive-rgb), 0.4); }
 .topbarWarm .utilCoach:hover { border-color: var(--home-olive); }
+/* Persona menu on the warm bar (WI-2): paper card, ink/olive vocabulary. (The trigger
+   itself is covered by the .utilLink warm rules above — it wears that class.) */
+.topbarWarm .startMenu {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  box-shadow: var(--home-shadow);
+}
+.topbarWarm .startItem:hover { background: var(--home-olive-soft); }
+.topbarWarm .startItemTitle { color: var(--home-ink); }
+.topbarWarm .startItemSub { color: var(--home-dim); }
+.topbarWarm .startGroup { color: var(--home-dim); }
 /* Red "needs you" badge: live-red fill, light glyph (--home-on-live stays light in both themes). */
 .topbarWarm .topBadge { background: var(--home-live); color: var(--home-on-live); }
 

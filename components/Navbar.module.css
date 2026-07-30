@@ -137,6 +137,55 @@
 .link.active::after { width: 60%; }
 
 /* Actions — equal flex share to the logo, content right-aligned. */
+/* ── Org-home action cluster (Desktop Public UX Phase 1, WI-6) ──
+   Quiet links + one bordered door, in the org's own token vocabulary so per-org
+   theming (and light mode's --white remap) carries through untouched. */
+.actionLink {
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--white-45);
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+.actionLink:hover { color: var(--white); }
+.actionCta {
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--white);
+  white-space: nowrap;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+.actionCta:hover {
+  border-color: rgba(var(--primary-rgb), 0.6);
+  color: var(--primary-light);
+}
+.actionPill {
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--primary-light);
+  white-space: nowrap;
+  padding: 0.35rem 0.85rem;
+  border: 1px solid rgba(var(--primary-rgb), 0.45);
+  border-radius: 999px;
+  transition: border-color 0.2s ease;
+}
+.actionPill:hover { border-color: var(--primary-light); }
+
 .actions {
   display: flex;
   align-items: center;
@@ -150,13 +199,9 @@
 .navStatusSlot {
   display: none;
 }
-.bellSlot {
-  display: inline-flex;
-  align-items: center;
-}
 
-/* ── Tournament actions cluster (bell · flip pill) ──
-   Nav-level absolute so the bell/pill portals + listeners mount exactly once across widths, and a
+/* ── Tournament actions cluster (flip pill) ──
+   Nav-level absolute so the pill's portals + listeners mount exactly once across widths, and a
    late-resolving pill never shifts the page: vertically centred in the 72px bar on tablet/desktop,
    pinned to the top-right of the mobile event header. */
 .navActions {
@@ -314,9 +359,7 @@
 
   /* ── Unified event header takes over the tournament bar (G3) ── */
   .hasEventHead { height: auto; min-height: var(--nav-height); }
-  /* Mobile notifications live with the alert prompts / Account tab — the header corner is the
-     flip pill (a hat-holder) or nothing (a fan). */
-  .bellSlot { display: none; }
+  /* The header corner is the flip pill (a hat-holder) or nothing (a fan). */
   .hasEventHead .inner { display: none; }
   .hasEventHead .eventHead {
     display: block;

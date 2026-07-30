@@ -4,11 +4,12 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useOrgNav } from './OrgNavContext';
+import { useClientSignedIn } from '@/lib/use-client-signed-in';
+import { useRoleSummary, resolveOperatorPill } from '@/lib/use-role-summary';
 import { cn } from '@/lib/utils';
 import { phaseOf, fmtRange, daysUntil } from '@/lib/tournament-phase-display';
 import { tournamentToday } from '@/lib/timezone';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
-import FanNotificationBell from '@/components/public/FanNotificationBell';
 import TournamentFlipPill from '@/components/public/TournamentFlipPill';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
@@ -41,9 +42,21 @@ export default function Navbar() {
   const params   = useParams();
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;
-  const { logoUrl, orgName, tournamentSlug, tournamentName, tournamentId, fanAlertsEnabled, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta } = useOrgNav();
+  const { logoUrl, orgName, tournamentSlug, tournamentName, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
+
+  // Hide on any /[orgSlug]/admin/* route (computed before the hooks below so their
+  // `enabled` gates can reference it — the early return itself stays after all hooks).
+  const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
+
+  // Org-home actions (Desktop Public UX Phase 1, WI-6): the plain org homepage's nav gains
+  // Sign In / Pricing / an operator door. Org pages are public — identity + role doors
+  // resolve CLIENT-side (same rule as the tournament chrome; never SSR'd). Both hooks are
+  // inert (`enabled=false`, no network) on marketing, tournament, and admin branches.
+  const onOrgHome = !!orgSlug && !urlTournamentSlug && !isAdmin && !isMarketingPath(pathname);
+  const orgHomeSignedIn = useClientSignedIn(onOrgHome);
+  const orgHomeRoles = useRoleSummary(onOrgHome && orgHomeSignedIn);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -94,8 +107,6 @@ export default function Navbar() {
     // down and republish, flashing the layout for nothing.
   }, [hasEventHead]);
 
-  // Hide on any /[orgSlug]/admin/* route
-  const isAdmin = /^\/[^/]+\/admin(\/|$)/.test(pathname) || pathname.startsWith('/admin');
   if (isAdmin) return null;
 
   const navClass = `${styles.nav} ${scrolled ? styles.scrolled : ''}`;
@@ -177,8 +188,12 @@ export default function Navbar() {
     );
   }
 
-  /* ── Org home nav (/{orgSlug}/* — no tournament in URL) ── */
+  /* ── Org home nav (/{orgSlug}/* — no tournament in URL) ──
+     WI-6: no longer a logo-only dead end. Pricing is always there; identity resolves
+     client-side, so anonymous fans get Sign In, signed-in fans get Account, and an
+     operator gets their one persistent door (Admin Area outranks Coaches Portal). */
   if (!urlTournamentSlug) {
+    const orgHomePill = resolveOperatorPill(orgHomeRoles?.adminHref, orgHomeRoles?.coachHref);
     return (
       <nav className={navClass}>
         <div className={`container ${styles.inner}`}>
@@ -189,7 +204,17 @@ export default function Navbar() {
             {orgName && <span className={styles.orgName}>{orgName}</span>}
           </Link>
 
-          <div className={styles.actions} />
+          <div className={styles.actions}>
+            <Link href="/pricing" className={styles.actionLink}>Pricing</Link>
+            {orgHomePill && (
+              <Link href={orgHomePill.href} className={styles.actionPill}>{orgHomePill.label}</Link>
+            )}
+            {orgHomeSignedIn ? (
+              <Link href="/account" className={styles.actionLink}>Account</Link>
+            ) : (
+              <Link href="/auth/login" className={styles.actionCta}>Sign In</Link>
+            )}
+          </div>
         </div>
       </nav>
     );
@@ -282,18 +307,16 @@ export default function Navbar() {
           automatically (ticker + sticky day-labels + page padding all clear it). */}
       <TournamentTopTabs />
 
-      {/* One actions cluster for every width — absolutely positioned so the bell and the
-          flip pill mount exactly once (portals + document listeners) and a late-resolving
-          pill never shifts the page. */}
+      {/* One actions cluster for every width — absolutely positioned so the flip pill mounts
+          exactly once (portals + document listeners) and a late-resolving pill never shifts
+          the page.
+
+          The desktop fan notification bell was REMOVED here 2026-07-29 (owner call). Score
+          alerts only ever fire for teams a fan follows, so a team-independent bell either had
+          no payoff (no team followed) or duplicated the alerts toggle already sitting on the
+          followed-team rail card and team pages. It never rendered ≤900px. Alerts remain
+          reachable from those toggles and from Account → Notifications. */}
       <div className={styles.navActions}>
-        {/* Team-independent notification opt-in — Plus tournaments only, hidden once
-            the event is over. DESKTOP-ONLY (the mobile bell lives with the alert prompts /
-            Account tab). */}
-        {tournamentSlug && tournamentId && fanAlertsEnabled && !tournamentFinished && (
-          <span className={styles.bellSlot}>
-            <FanNotificationBell />
-          </span>
-        )}
         {/* "The Flip" pill (Phase 2) — a signed-in hat-holder's one-tap door to their side of
             THIS event, page-matched. Self-gates: renders nothing for fans / signed-out visitors,
             so the header corner (and long event names) belong to fans again. Share moved into the

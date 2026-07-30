@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import CoachPortalShell from '@/components/coaches/CoachPortalShell';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import { createClient } from '@/lib/supabase-server';
-import { getUserAccessContextsCached, hasCoachAccess } from '@/lib/user-contexts';
+import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination } from '@/lib/user-contexts';
+import { getStartMenuConfig } from '@/lib/start-menu';
 
 /**
  * Wraps every /coaches route. The shell renders the portal chrome (A2 consumer chrome:
@@ -23,15 +24,25 @@ export default async function CoachesPortalLayout({ children }: { children: Reac
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
+  // Persona-menu gating (WI-2) — started before the contexts lookup so both resolve
+  // concurrently; this layout is already dynamic (auth above).
+  const startMenuPromise = getStartMenuConfig().catch(() => undefined);
   let isCoach = false;
+  let adminHref: string | null = null;
   if (user?.email) {
     const contexts = await getUserAccessContextsCached(user.id, user.email).catch(() => []);
     isCoach = hasCoachAccess(contexts);
+    // WI-3: an org admin who also coaches keeps their Admin Area door inside the portal
+    // (the coach pill itself stays hidden here — self-referential).
+    adminHref = getPrimaryOrgDestination(contexts);
   }
+  const startMenu = await startMenuPromise;
 
   return (
     <HelpDrawerProvider>
-      <CoachPortalShell signedIn={!!user?.email} isCoach={isCoach}>{children}</CoachPortalShell>
+      <CoachPortalShell signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} startMenu={startMenu}>
+        {children}
+      </CoachPortalShell>
     </HelpDrawerProvider>
   );
 }
