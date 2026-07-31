@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthenticatedUser, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
-import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination } from '@/lib/user-contexts';
+import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, workspaceDoorsFromContexts } from '@/lib/user-contexts';
 import { userHasChatMembership } from '@/lib/chat-service';
 
 export const runtime = 'nodejs';
@@ -24,9 +24,25 @@ export const GET = withObservability(async () => {
       : Promise.resolve([]),
     userHasChatMembership(user.id).catch(() => false),
   ]);
+  // Stage D.2 — one door per place, in Home's order: 2+ flips the chrome pill into the
+  // "Workspaces ▾" popover (client-resolved surfaces read this; SSR'd bars get the same
+  // list from the same resolver via their layouts).
+  const workspaces = workspaceDoorsFromContexts(contexts);
+
+  // Stage A instrumentation (NAV_UNIFICATION_PLAN §6): the multi-hat share of signed-in
+  // traffic is the single number that decides whether any visible cross-place control
+  // beyond the Workspaces popover ever gets built (<~10% → cancelled, not deferred).
+  // One greppable CloudWatch line on an already-authed hot path — anonymous requests
+  // 401 above and never reach it, so the anonymous baseline gains nothing. Counted off
+  // the DOORS list (places you can actually enter) — the same set the popover renders.
+  console.log(
+    `[metric] multi_hat user=${user.id} places=${workspaces.length} kinds=${workspaces.map(w => w.kind).join(',') || 'none'}`,
+  );
+
   return NextResponse.json({
     adminHref: getPrimaryOrgDestination(contexts),
     coachHref: hasCoachAccess(contexts) ? '/coaches' : null,
     hasChat,
+    workspaces,
   });
 }, { route: '/api/me/role-summary' });

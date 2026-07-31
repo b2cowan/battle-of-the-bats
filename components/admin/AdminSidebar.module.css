@@ -157,6 +157,10 @@
   align-items: center;
   gap: 0.6rem;
   min-width: 0;
+  /* Stage B.1: the lockup is now a Link to Home — keep it pixel-identical to the old div
+     (wordmark spans carry their own colors; no underline, no anchor tint). */
+  color: inherit;
+  text-decoration: none;
 }
 
 .brandLogo {

@@ -6,6 +6,7 @@ import {
   Building2, ClipboardCheck, Trophy, Users, Star, ChevronRight,
   RotateCcw, type LucideIcon,
 } from 'lucide-react';
+import { getSession } from '@/lib/auth';
 import { useAllFollowedTeams, useAllFollowedTournaments, useAllFollowedOrgs } from '@/lib/follow';
 import { useFollowFeed } from '@/lib/hooks/useFollowFeed';
 import { useDeviceEntityFollows } from '@/lib/hooks/useDeviceEntityFollows';
@@ -18,6 +19,7 @@ import {
   type OrgFollowCard,
 } from '@/lib/home-following';
 import type { UserAccessContext, UserAccessContextKind } from '@/lib/user-contexts';
+import { WORKSPACE_KIND_LABEL } from '@/lib/workspace-labels';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import PendingInvitationsCard from '@/components/home/PendingInvitationsCard';
 import styles from './HomePersonalization.module.css';
@@ -29,13 +31,9 @@ const KIND_ICON: Record<UserAccessContextKind, LucideIcon> = {
   coaches_premium: Users,
   fan: Star,
 };
-const KIND_LABEL: Record<UserAccessContextKind, string> = {
-  organization: 'Admin Area',
-  tournament_official: 'Tournament',
-  coaches_basic: 'Coaches Portal',
-  coaches_premium: 'Coaches Portal',
-  fan: 'Following',
-};
+// One shared kind→label vocabulary with the Workspaces popover doors (lib/workspace-labels)
+// — Home's cards and the popover can never disagree on what a place is called.
+const KIND_LABEL = WORKSPACE_KIND_LABEL;
 const KIND_ACCENT: Partial<Record<UserAccessContextKind, 'blue' | 'amber' | 'olive'>> = {
   organization: 'blue',
   tournament_official: 'amber',
@@ -60,16 +58,33 @@ export default function HomePersonalization() {
   useEffect(() => {
     let cancelled = false;
     const t0 = Date.now();
-    fetch('/api/consumer/home')
-      .then(r => (r.ok ? r.json() : null))
-      .then((data: ConsumerHomePayload | null) => {
+    // Anonymous visitors never hit the network for identity (Nav Unification Stage A):
+    // getSession is a LOCAL cookie read, and the server only ever answered signed-out
+    // callers with the EMPTY payload anyway — so they now skip /api/consumer/home entirely
+    // and fall straight through to the device-follows path (payload stays null; every
+    // accessor below already defaults). Deliberately NOT useClientSignedIn: this surface
+    // needs the third state that hook can't express — "resolved, and anonymous" — to flip
+    // `loaded` for the device-follows fallback without a network round-trip.
+    (async () => {
+      try {
+        const session = await getSession();
+        if (cancelled) return;
+        if (!session?.user) {
+          setLoaded(true);
+          // §6 metrics — the signed-out home_ready still fires (it doubles as the bounce
+          // baseline); `ms` now measures local session resolution, not a wasted round-trip.
+          fireConsumerEvent('home_ready', {
+            signedIn: false, workspaces: 0, follows: 0, invites: 0, ms: Date.now() - t0,
+          });
+          return;
+        }
+        const res = await fetch('/api/consumer/home');
+        const data: ConsumerHomePayload | null = res.ok ? await res.json() : null;
         if (cancelled) return;
         setPayload(data);
         setLoaded(true);
-        // §6 metrics — Home time-to-interactive (ms), composition, and auth split (the signed-out
-        // events double as the bounce baseline). Fire only on a REAL resolved payload: a non-OK
-        // response yields data=null and must NOT be recorded as a signed-out "ready" (that would
-        // pollute the bounce baseline with load failures). Signed-out is still a non-null EMPTY payload.
+        // Fire only on a REAL resolved payload: a non-OK response yields data=null and must
+        // NOT be recorded as a "ready" (that would pollute the baseline with load failures).
         if (data) {
           fireConsumerEvent('home_ready', {
             signedIn: data.signedIn ?? false,
@@ -79,8 +94,10 @@ export default function HomePersonalization() {
             ms: Date.now() - t0,
           });
         }
-      })
-      .catch(() => { if (!cancelled) setLoaded(true); });
+      } catch {
+        if (!cancelled) setLoaded(true);
+      }
+    })();
     return () => { cancelled = true; };
   }, []);
 

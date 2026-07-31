@@ -16,6 +16,7 @@ import { COACH_SETUP_SKIPPED_ATTR } from './useCoachNudgeDismiss';
 import { resolveFlip } from '@/lib/flip-twins';
 import FlipPill from '@/components/shared/FlipPill';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
+import type { WorkspaceDoor } from '@/lib/user-contexts';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
@@ -103,6 +104,7 @@ export default function CoachPortalShell({
   signedIn = false,
   isCoach = false,
   adminHref = null,
+  workspaces = [],
   startMenu,
 }: {
   children: React.ReactNode;
@@ -111,6 +113,8 @@ export default function CoachPortalShell({
   isCoach?: boolean;
   /** WI-3: keeps a dual-role (admin + coach) account's Admin Area door inside the portal. */
   adminHref?: string | null;
+  /** Stage D.2: the account's places, for the nav's Workspaces popover (2+ only). */
+  workspaces?: WorkspaceDoor[];
   /** WI-2: persona-menu gating resolved by the layout (already dynamic). */
   startMenu?: { coachHref: string; showLeague: boolean };
 }) {
@@ -450,6 +454,7 @@ export default function CoachPortalShell({
         signedIn={signedIn}
         isCoach={isCoach}
         adminHref={adminHref}
+        workspaces={workspaces}
         startMenu={startMenu}
         chatBackPath={pathname}
       />

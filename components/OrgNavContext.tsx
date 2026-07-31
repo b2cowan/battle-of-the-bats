@@ -7,6 +7,10 @@ type RegisterCta = 'register' | 'waitlist' | null;
 interface OrgNavValue {
   logoUrl: string | null;
   orgName: string;
+  /** Non-null when the org's public page is a real destination for this visitor's route
+   *  (public-site module or 2+ active events — Nav Unification Stage B.2). Turns the
+   *  event chrome's org name (phone eyebrow, desktop rail crumb) into a link up. */
+  orgHomeHref: string | null;
   tournamentSlug: string | null;
   tournamentName: string | null;
   /** Tournament id — powers the top-bar fan notification bell (needs an id to subscribe). */
@@ -23,7 +27,7 @@ interface OrgNavValue {
    *  no-bracket event played out past its end date) — keeps the top-bar phase pill in
    *  step with the finished overview body. */
   tournamentFinished: boolean;
-  setOrgNav: (logoUrl: string | null, orgName: string) => void;
+  setOrgNav: (logoUrl: string | null, orgName: string, orgHomeHref?: string | null) => void;
   setTournamentNav: (slug: string | null, name: string | null, colorMode?: 'dark' | 'light' | null, hiddenPages?: PublicPageKey[], registerCta?: RegisterCta, tournamentId?: string | null, fanAlertsEnabled?: boolean) => void;
   setTournamentStatus: (startDate: string | null, endDate: string | null, status: string | null, finished?: boolean) => void;
 }
@@ -31,6 +35,7 @@ interface OrgNavValue {
 const OrgNavContext = createContext<OrgNavValue>({
   logoUrl: null,
   orgName: '',
+  orgHomeHref: null,
   tournamentSlug: null,
   tournamentName: null,
   tournamentId: null,
@@ -50,6 +55,7 @@ const OrgNavContext = createContext<OrgNavValue>({
 export function OrgNavProvider({ children }: { children: React.ReactNode }) {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [orgName, setOrgName] = useState('');
+  const [orgHomeHref, setOrgHomeHref] = useState<string | null>(null);
   const [tournamentSlug, setTournamentSlug] = useState<string | null>(null);
   const [tournamentName, setTournamentName] = useState<string | null>(null);
   const [tournamentId, setTournamentId] = useState<string | null>(null);
@@ -62,9 +68,10 @@ export function OrgNavProvider({ children }: { children: React.ReactNode }) {
   const [tournamentStatus, setTournamentStatusState] = useState<string | null>(null);
   const [tournamentFinished, setTournamentFinished] = useState(false);
 
-  const setOrgNav = useCallback((url: string | null, name: string) => {
+  const setOrgNav = useCallback((url: string | null, name: string, homeHref: string | null = null) => {
     setLogoUrl(url);
     setOrgName(name);
+    setOrgHomeHref(homeHref);
   }, []);
 
   const setTournamentNav = useCallback((slug: string | null, name: string | null, colorMode: 'dark' | 'light' | null = null, hiddenPages: PublicPageKey[] = [], registerCta: RegisterCta = null, tId: string | null = null, fanAlerts = false) => {
@@ -85,7 +92,7 @@ export function OrgNavProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <OrgNavContext.Provider value={{ logoUrl, orgName, tournamentSlug, tournamentName, tournamentId, fanAlertsEnabled, tournamentColorMode, tournamentHiddenPages, tournamentRegisterCta, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentFinished, setOrgNav, setTournamentNav, setTournamentStatus }}>
+    <OrgNavContext.Provider value={{ logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentId, fanAlertsEnabled, tournamentColorMode, tournamentHiddenPages, tournamentRegisterCta, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentFinished, setOrgNav, setTournamentNav, setTournamentStatus }}>
       {children}
     </OrgNavContext.Provider>
   );

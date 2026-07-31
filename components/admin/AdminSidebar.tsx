@@ -248,10 +248,11 @@ export default function AdminSidebar({ notifCount, onNotifCountChange }: {
   return (
     <>
     <aside className={styles.sidebar}>
-      {/* Logo */}
+      {/* Logo — a real door since Nav Unification Stage B.1 (was a dead div): the wordmark
+          exits to Home on every surface (grammar Zone 1), identical pixels. */}
       <div className={styles.logo}>
         <div className={styles.logoTopRow}>
-          <div className={styles.logoLockup}>
+          <Link href="/discover" className={styles.logoLockup} aria-label="FieldLogicHQ Home">
             {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG logo */}
             <img className={styles.brandLogo} src="/favicon.svg" alt="" width={30} height={30} aria-hidden />
             <div className={styles.logoMain}>
@@ -259,7 +260,7 @@ export default function AdminSidebar({ notifCount, onNotifCountChange }: {
               <span className={styles.logoLogic}>Logic</span>
               <span className={styles.logoHq}>HQ</span>
             </div>
-          </div>
+          </Link>
           {currentOrg?.id && (
             <div className="flex items-center gap-1 ml-auto self-start shrink-0">
               <NotificationBell

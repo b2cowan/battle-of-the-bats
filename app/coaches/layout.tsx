@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import CoachPortalShell from '@/components/coaches/CoachPortalShell';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import { createClient } from '@/lib/supabase-server';
-import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination } from '@/lib/user-contexts';
+import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, workspaceDoorsFromContexts, type WorkspaceDoor } from '@/lib/user-contexts';
 import { getStartMenuConfig } from '@/lib/start-menu';
 
 /**
@@ -29,18 +29,20 @@ export default async function CoachesPortalLayout({ children }: { children: Reac
   const startMenuPromise = getStartMenuConfig().catch(() => undefined);
   let isCoach = false;
   let adminHref: string | null = null;
+  let workspaces: WorkspaceDoor[] = [];
   if (user?.email) {
     const contexts = await getUserAccessContextsCached(user.id, user.email).catch(() => []);
     isCoach = hasCoachAccess(contexts);
     // WI-3: an org admin who also coaches keeps their Admin Area door inside the portal
     // (the coach pill itself stays hidden here — self-referential).
     adminHref = getPrimaryOrgDestination(contexts);
+    workspaces = workspaceDoorsFromContexts(contexts); // Stage D.2: the popover's rows
   }
   const startMenu = await startMenuPromise;
 
   return (
     <HelpDrawerProvider>
-      <CoachPortalShell signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} startMenu={startMenu}>
+      <CoachPortalShell signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu}>
         {children}
       </CoachPortalShell>
     </HelpDrawerProvider>

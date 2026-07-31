@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import ConsumerNav from '@/components/consumer/ConsumerNav';
 import styles from '@/components/consumer/ConsumerShell.module.css';
 import { createClient } from '@/lib/supabase-server';
-import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination } from '@/lib/user-contexts';
+import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, workspaceDoorsFromContexts, type WorkspaceDoor } from '@/lib/user-contexts';
 import { getStartMenuConfig } from '@/lib/start-menu';
 
 /**
@@ -29,16 +29,18 @@ export default async function CoachJourneyChrome({ children }: { children: React
   const startMenuPromise = getStartMenuConfig().catch(() => undefined);
   let isCoach = false;
   let adminHref: string | null = null;
+  let workspaces: WorkspaceDoor[] = [];
   if (user?.email) {
     const contexts = await getUserAccessContextsCached(user.id, user.email).catch(() => []);
     isCoach = hasCoachAccess(contexts);
     adminHref = getPrimaryOrgDestination(contexts);
+    workspaces = workspaceDoorsFromContexts(contexts); // Stage D.2: the popover's rows
   }
   const startMenu = await startMenuPromise;
 
   return (
     <div className={styles.shell}>
-      <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} startMenu={startMenu} />
+      <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu} />
       <div className={styles.content}>{children}</div>
     </div>
   );

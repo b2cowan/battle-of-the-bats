@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { withObservability } from '@/lib/observability';
-import { getUserAccessContexts, getLapsedWorkspacesForUser } from '@/lib/user-contexts';
+import { getUserAccessContexts, getLapsedWorkspacesForUser, filterWorkspaceContexts } from '@/lib/user-contexts';
 import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgsForUser } from '@/lib/fan-follows';
 import { getFollowFeed } from '@/lib/follow-feed';
 import { rollupFollowFeedByTournament, mergeWholeEventIntoRollup, type ConsumerHomePayload } from '@/lib/home-following';
@@ -105,7 +105,7 @@ export const GET = withObservability(async () => {
       orgName: i.orgName,
       role: i.role,
     })),
-    workspaces: contexts.filter(c => c.kind !== 'fan'),
+    workspaces: filterWorkspaceContexts(contexts),
     lapsed,
     // Raw follow count (post coach-dedupe) — carried alongside the enriched cards so the client
     // can tell "follows nothing" apart from "follows teams whose game info dropped out" (a followed

@@ -1,0 +1,109 @@
+/**
+ * WorkspacesPill — trigger inherits the HOST bar's pill class; only the reset lives here.
+ * Popover: semantic HUD tokens by default (tournament strip, org-home nav — dark surfaces),
+ * with a `.warm` skin remapping onto the --home-* paper/ink set the warm consumer bar
+ * already defines in scope. Mirrors FlipPill's popover anatomy so the two choosers read
+ * as one control family.
+ */
+
+.wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* Reset ONLY what the host pill classes don't set (they were written for <a>): kill the
+   button UA background, keep the pointer. Font/border/color/padding come from the host. */
+.trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: none;
+  cursor: pointer;
+}
+
+.caret {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.caretOpen {
+  transform: rotate(180deg);
+}
+
+.popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 300;
+  min-width: 230px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.3rem;
+  background: var(--hud-surface);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+}
+
+.row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 7px;
+  color: var(--fl-text);
+  text-decoration: none;
+  transition: background 0.12s ease;
+}
+
+.row:hover {
+  background: color-mix(in srgb, var(--fl-text) 7%, transparent);
+}
+
+.rowCap {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+}
+
+.rowTitle {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.footerRow {
+  margin-top: 0.15rem;
+  padding: 0.45rem 0.65rem;
+  border-top: 1px solid var(--border-2);
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--data-gray);
+  text-decoration: none;
+  transition: color 0.12s ease;
+}
+
+.footerRow:hover {
+  color: var(--fl-text);
+}
+
+/* ── Warm consumer bar (paper card, ink/olive vocabulary — same set StartMenu uses) ── */
+.warm .popover {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  box-shadow: var(--home-shadow);
+}
+.warm .row { color: var(--home-ink); }
+.warm .row:hover { background: var(--home-olive-soft); }
+.warm .rowCap { color: var(--home-dim); }
+.warm .footerRow { color: var(--home-dim); border-top-color: var(--home-line-strong); }
+.warm .footerRow:hover { color: var(--home-ink); }

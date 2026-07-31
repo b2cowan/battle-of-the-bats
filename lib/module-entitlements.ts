@@ -22,3 +22,16 @@ export function hasModuleEntitlement(org: Organization, cap: Capability): boolea
   if (freeFloorModules(org.freeFloor).includes(cap)) return true;
   return org.enabledAddons.includes(cap);
 }
+
+/**
+ * The ONE statement of "is /{orgSlug} a REAL destination?" (Nav Unification Stage B.2 —
+ * binding rule). True when the org owns the public-site module (the page always renders)
+ * or runs 2+ active tournaments (the page is a genuine event selector). Otherwise the org
+ * page redirects straight into a lone event (a loop) or shows the platform "hasn't set up
+ * their public site yet" placeholder — and nothing may link a visitor there. Every consumer
+ * of this rule — the event chrome's org link today, the Stage E sitemap gate next — derives
+ * from here, never from its own re-statement.
+ */
+export function isOrgHomeRealDestination(org: Organization, activeTournamentCount: number): boolean {
+  return hasModuleEntitlement(org, 'module_public_site') || activeTournamentCount >= 2;
+}

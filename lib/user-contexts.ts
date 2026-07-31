@@ -5,6 +5,7 @@ import { getBasicCoachTournamentSummary, countClaimableRegistrationsForUser } fr
 import { getFanFollowSummary } from './fan-follows';
 import { COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
+import { WORKSPACE_KIND_LABEL } from './workspace-labels';
 import type { OrgAccountKind, OrgPlan } from './types';
 
 export type OrgRelation = {
@@ -615,5 +616,34 @@ export function hasCoachAccess(contexts: UserAccessContext[]): boolean {
  *  organization context with a resolved destination IS the primary workspace. Drives
  *  the persistent Admin Area door in the chrome. */
 export function getPrimaryOrgDestination(contexts: UserAccessContext[]): string | null {
-  return contexts.find(c => c.kind === 'organization' && c.destination)?.destination ?? null;
+  // Derived through the doors list (not a parallel find) so the primary door and the
+  // Workspaces popover's first Admin Area row are the same value by construction.
+  return workspaceDoorsFromContexts(contexts).find(d => d.kind === 'organization')?.href ?? null;
+}
+
+/** The one definition of "a workspace" (Nav Unification Stage A): every context kind
+ *  except the fan/Following card — exactly the set Home's Workspaces section renders.
+ *  Every door, gate, or count that asks "how many places does this account hold" must
+ *  derive from this filter, never from its own query, so no chrome can ever disagree
+ *  with Home's canonical list. */
+export function filterWorkspaceContexts(contexts: UserAccessContext[]): UserAccessContext[] {
+  return contexts.filter(c => c.kind !== 'fan');
+}
+
+/** One chrome door per workspace (Nav Unification Stage D.2) — the rows the Workspaces
+ *  popover renders. Serializable (crosses the RSC boundary as a plain prop) and derived
+ *  from the same filter as Home's cards, so the popover can never disagree with Home. */
+export interface WorkspaceDoor {
+  kind: UserAccessContextKind;
+  /** Family eyebrow, matching Home's card caps (Admin Area / Coaches Portal / Tournament). */
+  label: string;
+  /** The place's own name (org / team / portal). */
+  title: string;
+  href: string;
+}
+
+export function workspaceDoorsFromContexts(contexts: UserAccessContext[]): WorkspaceDoor[] {
+  return filterWorkspaceContexts(contexts)
+    .filter(c => c.destination)
+    .map(c => ({ kind: c.kind, label: WORKSPACE_KIND_LABEL[c.kind], title: c.title, href: c.destination }));
 }

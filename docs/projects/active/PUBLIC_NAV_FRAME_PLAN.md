@@ -1,6 +1,11 @@
 # Public Navigation Frame — org sites ⇄ event sites ⇄ the app
 
-**Date:** 2026-07-31 · **Status:** PROPOSED — one owner decision open (connectivity vs parity). No code written.
+> **⚠ SUPERSEDED (2026-07-31):** this plan's staged build was merged into
+> **`NAV_UNIFICATION_PLAN.md`**, the single execution plan for all navigation work. Do not execute
+> from this document; it remains as audit trail. The connectivity-vs-parity owner decision lives
+> there as D1.
+
+**Date:** 2026-07-31 · **Status:** SUPERSEDED by `NAV_UNIFICATION_PLAN.md`. No code written.
 **Mockups:** https://claude.ai/code/artifact/4f6dffa2-426f-4e42-b153-03d342f2c151
 **Companions:** `NAVIGATION_MODEL_{FINDINGS,PLAN,PM_BRIEF}.md`
 **Method:** 17-agent panel — 4 competing public-side frames, each judged on the anonymous lens, the

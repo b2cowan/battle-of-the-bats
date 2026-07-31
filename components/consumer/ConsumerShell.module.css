@@ -506,4 +506,10 @@
   --home-olive-soft:  rgba(var(--primary-rgb), 0.18);
   --home-olive-rgb:   var(--logic-lime-rgb);
   --home-live:        var(--danger);
+  /* Popover card ground+shadow (StartMenu + WorkspacesPill both paint on --home-card): without
+     these two, Dark preference remapped the INK to near-white but left the card pinned white —
+     an illegible white-on-white menu (latent for StartMenu; surfaced by /review 2026-07-31).
+     Values mirror warmTheme's own .warmTab dark set. */
+  --home-card:        var(--bg-card);
+  --home-shadow:      0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.45);
 }

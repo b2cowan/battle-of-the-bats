@@ -33,14 +33,46 @@
   }
 }
 
-/* Header — logo + tournament name; height matches the top nav so they align. */
+/* Header — identity block (org crumb above logo + event name); height matches the top
+   nav so they align. A column so the Stage B.2 breadcrumb stacks above the identity row. */
 .railHeader {
   display: flex;
-  align-items: center;
-  gap: 0.6rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.25rem;
   min-height: var(--nav-height);
   padding: 0.6rem 1rem;
   border-bottom: 1px solid var(--border-2);
+}
+
+/* The pre-crumb identity row (logo + name), exactly the old header layout. */
+.railIdentity {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Stage B.2 — the org breadcrumb up to /{orgSlug}: eyebrow-weight, quiet, unmistakably
+   secondary to the event name below it. Token-only color (tournament brand supplies it). */
+.railCrumb {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-70);
+  text-decoration: none;
+  align-self: flex-start;
+  /* One line, always: a long org name truncates rather than wrapping the crumb to two rows
+     and pushing the header past its --nav-height alignment budget (/review find). */
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.railCrumb:hover {
+  color: var(--white);
 }
 
 .railLogo {

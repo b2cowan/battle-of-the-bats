@@ -21,10 +21,12 @@ import { Home, Radio, MessageCircle, User, LogIn } from 'lucide-react';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { usePendingInviteCount } from '@/lib/use-pending-invites';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
-import { useRoleSummary, resolveOperatorPill } from '@/lib/use-role-summary';
+import { useRoleSummary, resolveOperatorDoor, type OperatorDoor } from '@/lib/use-role-summary';
 import { usePublicFlip } from '@/lib/use-public-flip';
 import FlipPill from '@/components/shared/FlipPill';
 import flip from '@/components/shared/FlipPill.module.css';
+import WorkspacesPill from '@/components/shared/WorkspacesPill';
+import type { WorkspaceDoor } from '@/lib/user-contexts';
 import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome } from '@/lib/consumer-routes';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
@@ -52,6 +54,7 @@ export default function ConsumerNav({
   signedIn: signedInProp = false,
   isCoach = false,
   adminHref = null,
+  workspaces = [],
   startMenu,
   variant = 'consumer',
   chatBackPath = null,
@@ -66,6 +69,11 @@ export default function ConsumerNav({
    *  persistent operator pill (WI-3): Admin Area outranks the coaches pill. The
    *  tournament variant resolves the same doors client-side via useRoleSummary. */
   adminHref?: string | null;
+  /** Stage D.2: every place the account holds, SSR'd by the same dynamic mounts from the
+   *  same shared resolver as Home's cards. 2+ turns the operator pill into the
+   *  "Workspaces ▾" popover; 0–1 keeps the direct labelled door (zero change). The
+   *  tournament variant gets the identical list client-side via useRoleSummary. */
+  workspaces?: WorkspaceDoor[];
   /** Persona-menu gating resolved server-side (lib/start-menu.ts) by mounts that are
    *  already dynamic. Omitted → StartMenu's safe defaults (chooser-routed, league hidden). */
   startMenu?: { coachHref: string; showLeague: boolean };
@@ -135,7 +143,8 @@ export default function ConsumerNav({
   // where the roles answer is already cached. Signed-out visitors are never held: their CTA is the
   // right answer and needs no lookup.
   const { resolution: eventFlip, resolving: stripDoorResolving } = usePublicFlip();
-  const stripOperatorPill = resolveOperatorPill(roleSummary?.adminHref, roleSummary?.coachHref);
+  // Stage D.2: the shared pill-vs-popover resolver (2+ places → Workspaces popover).
+  const stripDoor = resolveOperatorDoor(roleSummary?.workspaces, roleSummary?.adminHref, roleSummary?.coachHref);
 
   // The root-mounted tournament variant renders on every route; bail here — AFTER the
   // hooks (React-safe) but BEFORE building any badges/markup — so it's free off its own
@@ -228,11 +237,18 @@ export default function ConsumerNav({
       <span className={styles.wm3}>HQ</span>
     </Link>
   );
-  // ONE persistent operator pill (WI-3), via the shared precedence resolver (Admin Area
-  // outranks Coaches Portal). The coach shell (variant 'coach') IS the Coaches Portal —
-  // a self-referential door there is noise, so the coach door only feeds in outside it.
-  const operatorPill = signedIn
-    ? resolveOperatorPill(adminHref, isCoach && variant !== 'coach' ? '/coaches' : null)
+  // The nav skin decision, shared by the pill popover and the bar classes below (pure,
+  // variant+path only — safe to compute before the tournament early return never uses it).
+  const warmRoute = isWarmSkinPath(pathname) || variant === 'coach';
+
+  // ONE persistent operator door (WI-3 precedence + Stage D.2 pill-vs-popover), via the
+  // shared resolver: 2+ places → the "Workspaces ▾" popover (every place, one tap each,
+  // in Home's order — including the one you're in: a chooser shows the same named
+  // destinations every time, FlipPill ruling 2026-07-28); 0–1 → the direct labelled pill.
+  // The coach shell (variant 'coach') IS the Coaches Portal — a self-referential door is
+  // noise, so its coach door only feeds the SINGLE-pill branch outside that shell.
+  const operatorDoor: OperatorDoor | null = signedIn
+    ? resolveOperatorDoor(workspaces, adminHref, isCoach && variant !== 'coach' ? '/coaches' : null)
     : null;
 
   const topBarInner = (
@@ -246,8 +262,11 @@ export default function ConsumerNav({
         <Link href="/pricing" className={styles.utilLink}>Pricing</Link>
         {/* The ratified CTA, now a persona menu (WI-2) — same label, all four paths named. */}
         <StartMenu coachHref={startMenu?.coachHref} showLeague={startMenu?.showLeague} />
-        {operatorPill && (
-          <Link href={operatorPill.href} className={styles.utilCoach}>{operatorPill.label}</Link>
+        {operatorDoor?.kind === 'workspaces' && (
+          <WorkspacesPill workspaces={operatorDoor.workspaces} className={styles.utilCoach} warm={warmRoute} />
+        )}
+        {operatorDoor?.kind === 'pill' && (
+          <Link href={operatorDoor.pill.href} className={styles.utilCoach}>{operatorDoor.pill.label}</Link>
         )}
         {/* Signed-out visitors keep a "Sign in" affordance (never ON the sign-in pages). */}
         {!signedIn && !pathname.startsWith('/auth') && (
@@ -268,19 +287,23 @@ export default function ConsumerNav({
   //     a signed-in fan earns a chat door only with ≥1 real conversation, plus a compact
   //     Account avatar; an operator gets the persistent role pill instead of the CTA.
   if (variant === 'tournament') {
-    const pill = stripOperatorPill;
     // The Flip renders through the shared control — same glyph, same popover for a multi-hat
     // account — wearing the `strip` variant so it matches this row's all-caps mono typography and
     // pill sizing instead of the event-header typography it uses elsewhere (/design 2026-07-31).
     // While the answer is still in flight the slot holds its space and shows nothing, rather than
     // painting the acquisition CTA and taking it back.
-    const operatorDoor = stripDoorResolving
+    // Stage D.2 on the strip too, via the same shared resolver: an operator who is a
+    // plain fan of THIS event (no Flip) with 2+ places gets the honest Workspaces
+    // popover instead of the silent precedence winner.
+    const doorSlot = stripDoorResolving
       ? <FlipPill resolution={FLIP_SLOT_PENDING} variant="inline" className={flip.strip} />
       : eventFlip
         ? <FlipPill resolution={eventFlip} variant="inline" className={flip.strip} />
-        : pill
-          ? <Link href={pill.href} className={styles.utilCoach}>{pill.label}</Link>
-          : <StartMenu />;
+        : stripDoor?.kind === 'workspaces'
+          ? <WorkspacesPill workspaces={stripDoor.workspaces} className={styles.utilCoach} />
+          : stripDoor?.kind === 'pill'
+            ? <Link href={stripDoor.pill.href} className={styles.utilCoach}>{stripDoor.pill.label}</Link>
+            : <StartMenu />;
     return (
       <>
         <header className={`${styles.topbar} ${styles.topbarStrip}`}>
@@ -312,7 +335,7 @@ export default function ConsumerNav({
               </Link>
             )}
             {!signedIn && <Link href="/auth/login" className={styles.utilCta}>Sign in</Link>}
-            {operatorDoor}
+            {doorSlot}
           </div>
         </header>
         <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">
@@ -325,8 +348,8 @@ export default function ConsumerNav({
   // Consumer/coach variants only from here — the warm skin classes the tournament bar never
   // uses. The coach portal (A2) is warm-by-default + pref-gated exactly like the four tabs;
   // its routes aren't in isWarmSkinPath (that predicate also drives footer/theme-color for
-  // the (consumer) group), so the variant itself carries the warm decision.
-  const warmRoute = isWarmSkinPath(pathname) || variant === 'coach';
+  // the (consumer) group), so the variant itself carries the warm decision (warmRoute,
+  // computed above the pill block since the Workspaces popover shares it).
   // The four consumer TABS follow the user's theme preference (Dark⇄Warm); the always-warm
   // sign-up JOURNEY does not. The `…WarmTab` marker lets the CSS dark-gate repaint only the tab
   // nav under `data-user-theme="dark"`, leaving the journey nav warm. (TH-1/TH-3.)

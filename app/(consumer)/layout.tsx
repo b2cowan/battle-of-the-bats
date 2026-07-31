@@ -4,7 +4,7 @@ import ConsumerThemeManager from '@/components/consumer/ConsumerThemeManager';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from '@/components/consumer/ConsumerShell.module.css';
 import { getAuthUserCached } from '@/lib/supabase-server';
-import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination } from '@/lib/user-contexts';
+import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination, workspaceDoorsFromContexts, type WorkspaceDoor } from '@/lib/user-contexts';
 import { getUserTheme } from '@/lib/user-preferences';
 import { getStartMenuConfig } from '@/lib/start-menu';
 import type { UserTheme } from '@/lib/user-theme';
@@ -53,6 +53,7 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
   const startMenuPromise = getStartMenuConfig().catch(() => undefined);
   let isCoach = false;
   let adminHref: string | null = null;
+  let workspaces: WorkspaceDoor[] = [];
   let accountTheme: UserTheme | null = null;
   if (user?.email) {
     const [contexts, theme] = await Promise.all([
@@ -61,6 +62,7 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
     ]);
     isCoach = hasCoachAccess(contexts);
     adminHref = getPrimaryOrgDestination(contexts); // WI-3: the ONE persistent operator door
+    workspaces = workspaceDoorsFromContexts(contexts); // Stage D.2: the popover's rows, same source
     accountTheme = theme;
   }
   const startMenu = await startMenuPromise;
@@ -68,7 +70,7 @@ export default async function ConsumerLayout({ children }: { children: React.Rea
   return (
     <div className={styles.shell}>
       <ConsumerThemeManager accountTheme={accountTheme} />
-      <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} startMenu={startMenu} />
+      <ConsumerNav signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu} />
       <div className={styles.content}>{children}</div>
       <InstallAppPrompt
         followsUserTheme

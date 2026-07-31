@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
+import { hasSupabaseSessionCookie } from '@/lib/supabase-server';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams, countActiveTournamentsByOrg } from '@/lib/db';
+import { hasModuleEntitlement, isOrgHomeRealDestination } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
 import { isPlayoffOnly } from '@/lib/tournament-phase';
 import { tournamentToday } from '@/lib/timezone';
@@ -86,8 +88,34 @@ export default async function TournamentLayout({
 
   const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
   const isFreeTournamentPlan = isFreePlan(org.planId);
-  const authCtx = await getAuthContext({ orgSlug }).catch(() => null);
-  const showAcquisitionBanner = isFreeTournamentPlan && (!authCtx || authCtx.org.id !== org.id);
+
+  // Stage B.2 — the event chrome's conditional door UP to the org's public page (phone
+  // eyebrow link + desktop rail breadcrumb), via the ONE shared rule
+  // (isOrgHomeRealDestination). League/Club (public-site module) qualify with zero extra
+  // queries, so the head-count only ever runs for tournament-tier orgs — kicked off HERE,
+  // awaited at the bottom of the render, so it overlaps the banner/CTA queries below
+  // instead of adding a serial round trip to the highest-traffic public layout. Same
+  // markup for every visitor: the condition is org-shaped, never viewer-shaped, so the
+  // SW-cached anonymous HTML stays identical for everyone.
+  const activeCountPromise = hasModuleEntitlement(org, 'module_public_site')
+    ? null
+    : countActiveTournamentsByOrg(org.id);
+
+  // Acquisition banner (free events only) — hidden from members of THIS org. Resolving a
+  // Supabase session is the expensive part, so it only runs when (a) the plan is free —
+  // paid tiers never render the banner at all — and (b) the visitor carries an auth cookie
+  // (hasSupabaseSessionCookie — presence only, never an auth decision); the anonymous
+  // majority pays a cookie read instead of an auth resolution on every render
+  // (Nav Unification Stage A paper-cut #2; anonymous line in NAV_UNIFICATION_PLAN §5).
+  let showAcquisitionBanner = false;
+  if (isFreeTournamentPlan) {
+    if (await hasSupabaseSessionCookie()) {
+      const authCtx = await getAuthContext({ orgSlug }).catch(() => null);
+      showAcquisitionBanner = !authCtx || authCtx.org.id !== org.id;
+    } else {
+      showAcquisitionBanner = true;
+    }
+  }
   // NB: the flip pill's viewer/hats are deliberately NOT resolved here — the service worker
   // offline-caches this page's HTML as anonymous content, so the pill fetches its identity
   // client-side via /api/public/tournament-viewer instead (see TournamentFlipPill /
@@ -170,11 +198,24 @@ export default async function TournamentLayout({
   // two render light themes identically.
   const lightModeVars = effectiveColorMode === 'light' ? buildPublicLightModeCssVars() : null;
 
+  // Stage B.2 (resolution): the head-count kicked off near the top has had the whole render
+  // to complete in parallel; League/Club never ran it (null → count 0 → the module side of
+  // the shared rule answers).
+  const orgHomeHref = isOrgHomeRealDestination(org, (await activeCountPromise) ?? 0)
+    ? `/${orgSlug}`
+    : null;
+
   return (
     <>
       <OrgNavSync
         logoUrl={canUseAdvancedBranding ? tournament.logoUrl ?? org.logoUrl ?? null : null}
         orgName={org.name}
+        orgHomeHref={orgHomeHref}
+        // Restore the ORG identity on unmount: navigating up to /{orgSlug} via the new
+        // eyebrow/crumb links keeps the parent org layout mounted, so its own sync never
+        // re-fires — without this, the org page's nav went blank (/review find).
+        restoreLogoUrl={org.logoUrl ?? null}
+        restoreOrgName={org.name}
       />
       <TournamentNavSync
         slug={tournament.slug}

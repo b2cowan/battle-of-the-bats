@@ -56,12 +56,8 @@ export async function userBelongsToOtherRealOrg(userId: string, excludeOrgId?: s
   return (data ?? []).some(row => !isTeamWorkspaceRelation(row.organizations as OrgRel | OrgRel[] | null));
 }
 
-/** Count of distinct org workspaces the user is an ACTIVE member of (one row per org). */
-export async function getActiveOrgWorkspaceCount(userId: string): Promise<number> {
-  const { count } = await supabaseAdmin
-    .from('organization_members')
-    .select('id', { count: 'exact', head: true })
-    .eq('user_id', userId)
-    .eq('status', 'active');
-  return count ?? 0;
-}
+// getActiveOrgWorkspaceCount was removed here (Nav Unification Stage A): its raw
+// organization_members count fed the "All Workspaces" gate but missed coach/official-shaped
+// places. /api/me/workspaces now derives its count from the shared context resolver
+// (lib/user-contexts filterWorkspaceContexts) — the same list Home's Workspaces render —
+// so the two can never disagree. Do not reintroduce a parallel count.

@@ -44,3 +44,17 @@ export const getAuthUserCached = cache(async () => {
   const { data: { user } } = await supabase.auth.getUser();
   return user;
 });
+
+/**
+ * Cheap "might this request be signed in" — cookie-NAME presence only. @supabase/ssr names
+ * its session cookies `sb-<project-ref>-auth-token` (chunked as `.0`, `.1`, … when large);
+ * this module owns the cookie adapter, so it owns that naming knowledge too — never inline
+ * the string match at a call site. For anonymous fast-paths that want to skip session
+ * resolution entirely on high-traffic public renders (e.g. the tournament layout's
+ * acquisition banner). NEVER an auth decision — a stale cookie passes this check; anything
+ * gating real access must still resolve the session.
+ */
+export async function hasSupabaseSessionCookie(): Promise<boolean> {
+  const cookieStore = await cookies();
+  return cookieStore.getAll().some(c => c.name.startsWith('sb-') && c.name.includes('-auth-token'));
+}

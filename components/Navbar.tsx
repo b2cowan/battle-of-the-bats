@@ -5,12 +5,13 @@ import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
 import { useOrgNav } from './OrgNavContext';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
-import { useRoleSummary, resolveOperatorPill } from '@/lib/use-role-summary';
+import { useRoleSummary, resolveOperatorDoor } from '@/lib/use-role-summary';
 import { cn } from '@/lib/utils';
 import { phaseOf, fmtRange, daysUntil } from '@/lib/tournament-phase-display';
 import { tournamentToday } from '@/lib/timezone';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import TournamentFlipPill from '@/components/public/TournamentFlipPill';
+import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
 import styles from './Navbar.module.css';
@@ -42,7 +43,7 @@ export default function Navbar() {
   const params   = useParams();
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;
-  const { logoUrl, orgName, tournamentSlug, tournamentName, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta } = useOrgNav();
+  const { logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
 
@@ -193,7 +194,9 @@ export default function Navbar() {
      client-side, so anonymous fans get Sign In, signed-in fans get Account, and an
      operator gets their one persistent door (Admin Area outranks Coaches Portal). */
   if (!urlTournamentSlug) {
-    const orgHomePill = resolveOperatorPill(orgHomeRoles?.adminHref, orgHomeRoles?.coachHref);
+    // Stage D.2, via the shared resolver: 2+ places → the Workspaces popover; 0–1 → the
+    // direct pill as before.
+    const orgHomeDoor = resolveOperatorDoor(orgHomeRoles?.workspaces, orgHomeRoles?.adminHref, orgHomeRoles?.coachHref);
     return (
       <nav className={navClass}>
         <div className={`container ${styles.inner}`}>
@@ -212,8 +215,11 @@ export default function Navbar() {
                 public tournament strip — not a second brand mark competing with the org's own name. */}
             <Link href="/discover" className={styles.actionLink}>Discover</Link>
             <Link href="/pricing" className={styles.actionLink}>Pricing</Link>
-            {orgHomePill && (
-              <Link href={orgHomePill.href} className={styles.actionPill}>{orgHomePill.label}</Link>
+            {orgHomeDoor?.kind === 'workspaces' && (
+              <WorkspacesPill workspaces={orgHomeDoor.workspaces} className={styles.actionPill} />
+            )}
+            {orgHomeDoor?.kind === 'pill' && (
+              <Link href={orgHomeDoor.pill.href} className={styles.actionPill}>{orgHomeDoor.pill.label}</Link>
             )}
             {orgHomeSignedIn ? (
               <Link href="/account" className={styles.actionLink}>Account</Link>
@@ -285,7 +291,15 @@ export default function Navbar() {
           pre-event brand card on the overview, not the chrome. Condenses to a
           slim title bar on scroll (eyebrow + meta fold away in CSS). */}
       <div className={styles.eventHead}>
-        {showEyebrow && <span className={styles.ehOrg}>{orgName}</span>}
+        {/* Stage B.2 (Nav Unification): the org eyebrow becomes a real door up to the org's
+            public page — but ONLY when that page is a real destination (the layout resolves
+            the tier/active-count condition into orgHomeHref; null keeps today's inert text).
+            Same text, same look — just tappable. */}
+        {showEyebrow && (orgHomeHref ? (
+          <Link href={orgHomeHref} className={`${styles.ehOrg} ${styles.ehOrgLink}`}>{orgName}</Link>
+        ) : (
+          <span className={styles.ehOrg}>{orgName}</span>
+        ))}
         <Link href={homeHref} className={styles.ehTitle}>{tournamentName || orgName}</Link>
         {(dateRange || pill) && (
           <div className={styles.ehMeta}>

@@ -244,6 +244,13 @@
   transition: max-height 0.25s ease, opacity 0.25s ease, margin 0.25s ease;
 }
 
+/* Stage B.2 — the eyebrow rendered as a door up to the org page: identical look to the
+   inert span (no underline, inherited eyebrow color) so the header doesn't change visually. */
+.ehOrgLink {
+  color: var(--white-70);
+  text-decoration: none;
+}
+
 .ehTitle {
   display: -webkit-box;
   -webkit-line-clamp: 2;

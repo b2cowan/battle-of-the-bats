@@ -17,7 +17,7 @@
  */
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
-import { Home } from 'lucide-react';
+import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
 import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
@@ -64,17 +64,30 @@ export default function TournamentSideRail({
       data-color-mode={resolvedColorMode}
       aria-label="Tournament sections"
     >
-      <Link href={homeHref} className={styles.railHeader}>
-        {resolvedLogo && <img src={resolvedLogo} alt="" className={styles.railLogo} />}
-        {resolvedHeading && <span className={styles.railName}>{resolvedHeading}</span>}
-      </Link>
+      {/* Identity block — no longer a link to the event home (Nav Unification Stage B.4:
+          the Overview item directly below is that door; the logo-link duplicated it).
+          Stage B.2: when the org's public page is a real destination (layout-resolved
+          orgHomeHref — live site only, never the admin preview), the org name appears
+          above the event name as the breadcrumb up, suppressed when org and event share
+          a name (no "X › X"). */}
+      <div className={styles.railHeader}>
+        {!basePath && ctx.orgHomeHref && ctx.orgName && ctx.orgName !== resolvedHeading && (
+          <Link href={ctx.orgHomeHref} className={styles.railCrumb}>{ctx.orgName} ›</Link>
+        )}
+        <div className={styles.railIdentity}>
+          {resolvedLogo && <img src={resolvedLogo} alt="" className={styles.railLogo} />}
+          {resolvedHeading && <span className={styles.railName}>{resolvedHeading}</span>}
+        </div>
+      </div>
       <nav className={styles.nav}>
         <Link
           href={homeHref}
           className={`${styles.item} ${pathname === homeHref ? styles.active : ''}`}
           aria-current={pathname === homeHref ? 'page' : undefined}
         >
-          <Home size={18} />
+          {/* PanelsTopLeft, not Home (Stage B.3): the house glyph now means exactly one
+              thing platform-wide — the app's Home tab. */}
+          <PanelsTopLeft size={18} />
           <span>Overview</span>
         </Link>
         {items.map(({ key, label, Icon }) => {

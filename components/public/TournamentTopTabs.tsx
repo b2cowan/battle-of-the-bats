@@ -26,7 +26,7 @@
 import Link from 'next/link';
 import { useEffect, useRef } from 'react';
 import { usePathname, useParams } from 'next/navigation';
-import { Home } from 'lucide-react';
+import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
 import type { PublicPageKey } from '@/lib/public-pages';
@@ -85,7 +85,7 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: Tour
             className={`${styles.tab} ${overviewActive ? styles.active : ''}`}
             aria-current={overviewActive ? 'page' : undefined}
           >
-            <Home size={15} strokeWidth={overviewActive ? 2.4 : 1.9} aria-hidden />
+            <PanelsTopLeft size={15} strokeWidth={overviewActive ? 2.4 : 1.9} aria-hidden />
             <span>Overview</span>
           </Link>
           {tabs.map(({ key, label, Icon }) => {

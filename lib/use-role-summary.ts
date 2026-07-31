@@ -1,10 +1,14 @@
 'use client';
 import { useEffect, useState } from 'react';
+import type { WorkspaceDoor } from '@/lib/user-contexts';
 
 export type RoleSummary = {
   adminHref: string | null;
   coachHref: string | null;
   hasChat: boolean;
+  /** Every place this account holds, in Home's order (Stage D.2) — 2+ turns the operator
+   *  pill into the "Workspaces ▾" popover; fewer keeps the direct labelled door. */
+  workspaces: WorkspaceDoor[];
 };
 
 export type OperatorPill = { href: string; label: string };
@@ -20,6 +24,31 @@ export function resolveOperatorPill(
   if (adminHref) return { href: adminHref, label: 'Admin Area' };
   if (coachHref) return { href: coachHref, label: 'Coaches Portal' };
   return null;
+}
+
+/** The ratified Stage D.2 threshold: 2+ places → the Workspaces popover. Owned here, once —
+ *  the pill/popover fork and WorkspacesPill's own guard both read it, so a future threshold
+ *  change can't leave the chrome half-updated. */
+export const WORKSPACES_POPOVER_THRESHOLD = 2;
+
+export type OperatorDoor =
+  | { kind: 'workspaces'; workspaces: WorkspaceDoor[] }
+  | { kind: 'pill'; pill: OperatorPill };
+
+/** The ONE statement of the Stage D.2 pill-vs-popover rule (owner-ratified 2026-07-31),
+ *  layered on the WI-3 precedence above: 2+ places → the honest "Workspaces ▾" popover;
+ *  0–1 → the direct labelled pill exactly as before (zero change for single-role users).
+ *  All three pill surfaces resolve through here. */
+export function resolveOperatorDoor(
+  workspaces: WorkspaceDoor[] | undefined,
+  adminHref: string | null | undefined,
+  coachHref: string | null | undefined,
+): OperatorDoor | null {
+  if (workspaces && workspaces.length >= WORKSPACES_POPOVER_THRESHOLD) {
+    return { kind: 'workspaces', workspaces };
+  }
+  const pill = resolveOperatorPill(adminHref, coachHref);
+  return pill ? { kind: 'pill', pill } : null;
 }
 
 /**
@@ -44,6 +73,12 @@ export function useRoleSummary(enabled = true): RoleSummary | null {
           adminHref: typeof data.adminHref === 'string' ? data.adminHref : null,
           coachHref: typeof data.coachHref === 'string' ? data.coachHref : null,
           hasChat: !!data.hasChat,
+          workspaces: Array.isArray(data.workspaces)
+            ? data.workspaces.filter(
+                (w: WorkspaceDoor) =>
+                  w && typeof w.href === 'string' && typeof w.title === 'string' && typeof w.label === 'string',
+              )
+            : [],
         });
       } catch {
         /* stay null — chrome renders the fan-plain state */
