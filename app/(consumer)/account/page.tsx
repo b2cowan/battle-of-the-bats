@@ -8,6 +8,7 @@ import AppearanceCard from '@/components/consumer/AppearanceCard';
 import AccountFeedbackRow from '@/components/consumer/AccountFeedbackRow';
 import warm from '@/components/consumer/warmTheme.module.css';
 import AccountInstallRow from './AccountInstallRow';
+import AccountGetAppCard from './AccountGetAppCard';
 import styles from './account.module.css';
 
 // Reflects sign-in state — dynamic and not for indexing.
@@ -120,6 +121,14 @@ export default async function AccountPage() {
             </p>
           </>
         )}
+
+        {/* WI-11 — the desktop half of "get the app", OUTSIDE the signed-in branch on purpose.
+            A QR is not identity: a signed-out visitor browsing scores on a laptop is exactly who
+            most needs to know the phone app exists. It also keeps the footer's suppression rule
+            honest — the footer yields its own QR on this route because this card always owns it
+            here, which is only true if the card doesn't depend on being signed in. Self-gates to
+            desktop (the complement of the install row above), so the two are never both shown. */}
+        <AccountGetAppCard />
       </div>
     </div>
   );

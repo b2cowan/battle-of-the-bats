@@ -7,8 +7,10 @@ import {
   getLeagueSeasons, getDivisions, getOpenTryoutsByOrg,
 } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { isFreePlan } from '@/lib/plan-config';
 import { isFollowableOrg } from '@/lib/directory';
 import FollowOrgButton from '@/components/public/FollowOrgButton';
+import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import styles from './Home.module.css';
 
 export const dynamic = 'force-dynamic';
@@ -18,6 +20,12 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
   const org = await getOrganizationBySlug(orgSlug);
   if (!org || !org.isPublic) notFound();
   if (org?.subscriptionStatus === 'canceled') notFound();
+
+  // WI-10 — the plain org home is in scope for the paid credit (BUSINESS_DECISIONS 2026-07-30).
+  // Same gate the tournament layout uses. A free org's home page carries nothing today and keeps
+  // carrying nothing — this only fills the gap on paid tiers, which were the class with zero
+  // path back to the platform.
+  const showBuiltOnCredit = !isFreePlan(org.planId);
 
   // F1/F3: the hero Follow button shows only when the org passes the SAME eligibility gate a
   // follow write validates against — so the button never offers a follow the API would reject.
@@ -242,6 +250,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             </div>
           </section>
         )}
+        {showBuiltOnCredit && <BuiltOnCredit />}
       </div>
     );
   }
@@ -364,6 +373,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             </div>
           </section>
         )}
+        {showBuiltOnCredit && <BuiltOnCredit />}
       </div>
     );
   }
@@ -475,6 +485,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           </div>
         </section>
       )}
+      {showBuiltOnCredit && <BuiltOnCredit />}
     </div>
   );
 }

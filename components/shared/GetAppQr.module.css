@@ -1,0 +1,40 @@
+/* The one "Also on your phone" QR unit (WI-11), shared by the site footer and the Account
+   settings card. Colour is inherited from whichever surface mounts it — every consumer already
+   publishes --fl-text/--data-gray (marketing + org grounds) or has them remapped onto the warm
+   vocabulary, so this file declares NO colour of its own beyond those two text tokens.
+   Geometry only; the caller's wrapper owns how the image and the words sit together. */
+
+.code {
+  flex-shrink: 0;
+  border-radius: 8px;
+  /* No background plate: the SVG carries its own white ground plus a 4-module quiet zone, so
+     the code scans on a dark footer and a light card alike. A CSS plate here would be the
+     thing that breaks it — an earlier draft tinted this with --surface, which is DARK on the
+     marketing ground, leaving a dark ring where the quiet zone needs to be. */
+  /* No width/height here on purpose: the caller's `size` prop sets the img's width/height
+     attributes, and ANY CSS dimension would outrank them and silently pin every caller to one
+     size (the Account card asks for 92, the footer for 78). */
+}
+
+.copy {
+  font-family: var(--font-data, monospace);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+  line-height: 1.5;
+  max-width: 15rem;
+  margin: 0;
+  /* A flex item's default `min-width: auto` refuses to shrink below its max-content width, so
+     without this the 15rem paragraph pushed the marketing footer past the viewport and produced
+     real horizontal page scroll at 320–375px (measured: 56px of overflow at 320px). */
+  min-width: 0;
+}
+
+.title {
+  display: block;
+  color: var(--fl-text);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.62rem;
+  margin-bottom: 0.25rem;
+}

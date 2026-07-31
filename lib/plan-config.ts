@@ -148,6 +148,24 @@ export function isEffectivelyGated(planKey: OrgPlan): boolean {
   return PLAN_CONFIG[planKey]?.gatingStatus === 'early_access';
 }
 
+/**
+ * True for the free entry tier ('tournament'). The free/paid split drives public-presentation
+ * rules — the free tier carries the Powered-by badge + acquisition banner, paid tiers carry the
+ * quiet "Built on FieldLogicHQ" credit instead (BUSINESS_DECISIONS 2026-07-30). Both the
+ * tournament layout and the org home page asked this question with their own raw string compare
+ * against 'tournament'; two copies of one rule is one copy too many when they must agree about
+ * which surfaces get which treatment.
+ */
+export function isFreePlan(planId: string | null | undefined): boolean {
+  if (!planId || planId === 'tournament') return true;
+  // Anything we don't recognise is treated as FREE, deliberately. `organizations.plan_id` has a
+  // documented legacy value ('starter') that is not an OrgPlan key, and a null/absent id is
+  // possible on old rows — an unknown plan must not be able to buy paid-tier presentation by
+  // accident. The free branch is also the safe one to be wrong on: it shows the existing
+  // acquisition badge rather than silently granting a paid-tier treatment.
+  return !(planId in PLAN_CONFIG);
+}
+
 export function getEffectiveTournamentLimit(
   planId: OrgPlan,
   storedLimit?: number | null

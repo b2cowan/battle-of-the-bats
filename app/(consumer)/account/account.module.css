@@ -170,6 +170,25 @@
 }
 .ctaGhost:hover { border-color: var(--home-olive); }
 
+/* ── "Get the app" QR card (WI-11) — the desktop complement of the install row ────
+   Geometry only. The QR image and its words are the shared components/shared/GetAppQr unit
+   (the footer mounts the same one), and it inherits its text colour from this surface. */
+.getAppCard {
+  composes: surface;
+  /* The shared unit paints with --fl-text/--data-gray (the footer/marketing vocabulary). This
+     surface publishes --home-* instead, so map the two — exactly as the footer's own warm skin
+     does. Without this the copy would render in the DARK ramp on a white card, i.e. invisible. */
+  --fl-text:   var(--home-ink);
+  /* --home-ink-soft, not --home-dim: same AA reason as the footer's warm skin (--home-dim is
+     3.83:1 on a white card, under the floor for this size of instructional copy). */
+  --data-gray: var(--home-ink-soft);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  margin-top: 1.1rem;
+}
+
 /* ── Quiet pinned note (organizer door signed-in / device note signed-out) ──────── */
 .pinNote {
   margin-top: auto;

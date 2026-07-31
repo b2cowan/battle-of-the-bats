@@ -6,12 +6,14 @@ import { getRegistrationState } from '@/lib/registration-state';
 import { isPlayoffOnly } from '@/lib/tournament-phase';
 import { tournamentToday } from '@/lib/timezone';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { isFreePlan } from '@/lib/plan-config';
 import { resolveTheme } from '@/lib/themes';
 import { buildPublicLightModeCssVars } from '@/lib/public-tournament-theme';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { OrgNavSync } from '@/components/OrgNavSync';
 import TournamentNavSync from '@/components/TournamentNavSync';
 import PoweredByBadge from '@/components/marketing/PoweredByBadge';
+import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import TournamentAcquisitionBanner from '@/components/marketing/TournamentAcquisitionBanner';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import MyTeamDock from '@/components/public/MyTeamDock';
@@ -83,7 +85,7 @@ export default async function TournamentLayout({
   if (!tournament) notFound();
 
   const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
-  const isFreeTournamentPlan = org.planId === 'tournament';
+  const isFreeTournamentPlan = isFreePlan(org.planId);
   const authCtx = await getAuthContext({ orgSlug }).catch(() => null);
   const showAcquisitionBanner = isFreeTournamentPlan && (!authCtx || authCtx.org.id !== org.id);
   // NB: the flip pill's viewer/hats are deliberately NOT resolved here — the service worker
@@ -231,6 +233,14 @@ export default async function TournamentLayout({
           identity to, so it keeps the in-page titles (preview↔public parity). */}
       <div className={railStyles.shell} data-card-style={cardStyle} data-color-mode={effectiveColorMode} data-live-chrome="">
         {children}
+        {/* WI-10 — paid tiers only. Free events already carry the richer PoweredByBadge +
+            acquisition banner; stacking a second credit would say the same thing twice, so this
+            is the strict complement of `isFreeTournamentPlan`.
+            INSIDE the shell and AFTER {children} on purpose: unlike its two siblings, which are
+            `position: fixed` and so don't care about DOM order, this is a static in-flow block.
+            Mounted earlier it rendered at the TOP of the page, tucked under the nav strip and
+            covered by it — a "quiet path back to the platform" that was 100% unclickable. */}
+        {!isFreeTournamentPlan && <BuiltOnCredit />}
       </div>
       {/* Game-day "now playing" dock for the followed team (self-gates: followers
           on game day only; mobile-only). */}

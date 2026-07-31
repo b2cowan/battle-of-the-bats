@@ -1,0 +1,160 @@
+/* Site footer — ONE component, TWO grounds (Desktop Public UX Phase 1, WI-10).
+ *
+ * The footer used to render only on the dark marketing pages, so its colours were baked in as
+ * dark tokens (--pitch-black ground, blueprint-blue hairline). Chunk C turns it on across the
+ * consumer app as well — warm paper, or the dark ground under an explicit Dark preference.
+ * Painting the marketing footer onto that is exactly the defect this phase already fixed once
+ * (a black slab under a warm screen).
+ *
+ * So the chrome reads three local tokens (--footer-bg / --footer-line / --footer-rule) instead
+ * of fixed ones, and `.warm` remaps them plus the text tokens the inner markup consumes. The
+ * DEFAULTS are the marketing values, so a footer with no surface class renders as it always has.
+ *
+ * Org and public tournament pages deliberately get NO footer — see the note on resolveSurface()
+ * in Footer.tsx. A column footer carrying our wordmark and a "Start Free" link contradicts the
+ * ratified constraint that the paid-tier presence be SUBTLE; that space is owned by the much
+ * quieter <BuiltOnCredit> instead.
+ *
+ * Nothing here is a colour literal — every value is an existing token.
+ */
+
+.footer {
+  /* Marketing default — the values the footer has always had. */
+  --footer-bg:   var(--pitch-black);
+  --footer-line: rgba(var(--blueprint-blue-rgb), 0.3);
+  --footer-rule: rgba(var(--blueprint-blue-rgb), 0.2);
+
+  border-top: 1px solid var(--footer-line);
+  background: var(--footer-bg);
+  margin-top: 6rem;
+}
+
+.inner {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+}
+
+/* ── Surface: the consumer app (warm paper, or the dark ground under a Dark preference) ──
+   Remaps the same tokens the coaches' warm gate does, scoped to this subtree. The --home-*
+   vocabulary is published by the shell's warm wrapper and follows the account's theme, so
+   this one block covers both warm and Dark without a second variant. */
+.warm {
+  /* The footer is mounted in the ROOT layout, OUTSIDE the consumer shell's warm wrapper — so
+     the --home-* vocabulary simply is not in scope here and every var() below would resolve to
+     nothing (the whole footer rendered transparent the first time round). Compose the shell's
+     own `.warmTab` rather than re-declaring the palette: it is the single injection point that
+     already carries BOTH the warm values and the `html[data-user-theme="dark"]` gate, so this
+     footer follows the account's theme with no second copy of the dark mapping to drift.
+     `.warmTab`'s own `background`/`flex` are overridden right below — we want its tokens, not
+     its ground. */
+  /* BOTH leaves listed on purpose: `composes` is NOT transitive in Turbopack (composing
+     `.warmTab` alone drops the `.warmVars` it itself composes, which strips every --home-*
+     token off the surface — the documented gotcha this codebase has already been bitten by).
+     `warmVars` supplies the palette; `warmTab` is what the dark-preference gate selects on. */
+  composes: warmVars warmTab from './consumer/warmTheme.module.css';
+
+  --footer-bg:   var(--home-card);
+  --footer-line: var(--home-line);
+  --footer-rule: var(--home-line);
+  --fl-text:         var(--home-ink);
+  /* --home-ink-soft, NOT --home-dim. --home-dim is the warm palette's *meta* ink and lands at
+     3.83:1 on a white card — under AA for the 11–12px type the footer sets. The blurb, the
+     links and the QR instructions are real copy, not metadata. */
+  --data-gray:       var(--home-ink-soft);
+  --logic-lime:      var(--home-olive);
+  --blueprint-light: var(--home-dim);
+  flex: none;
+}
+
+/* Two classes, so this beats `.warmTab`'s own `background: var(--home-paper)` deterministically.
+   Single-class rules from two different modules tie on specificity and the winner then depends
+   on the bundler's stylesheet order — dev and prod have disagreed on exactly that before. */
+.footer.warm {
+  background: var(--footer-bg);
+  /* No top margin on the app screens. The 6rem above is breathing room after MARKETING page
+     content, where it is invisible (dark margin over the dark body). On a consumer tab the warm
+     surface stops exactly at the shell's edge and this margin became a 96px BLACK BAR between
+     the page and the footer — the body's dark ground showing through the gap. Flush is also
+     simply right here: the footer is the end of the app screen, not a separated slab. */
+  margin-top: 0;
+}
+
+/* ── Columns ───────────────────────────────────────────────────────────────── */
+/* Narrow: a real 2-column stack. NOT a 12-track grid — twelve tracks with a 2rem gap need
+   11 × 32px = 352px of GAP alone before any content, which overflows a 320–360px phone no
+   matter how small the spans are (the columns are minmax(0,1fr) and shrink to nothing; the
+   gaps don't). That produced real horizontal page scroll on the marketing pages, which keep
+   their footer at every width. Twelve tracks start at 768px, where they fit. */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.brandCol { grid-column: span 2; }
+.linkCol  { grid-column: span 1; }
+.qrCol    { grid-column: span 2; }
+
+@media (min-width: 768px) {
+  .grid { grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 2rem; }
+  .brandCol { grid-column: span 4; }
+  .linkCol  { grid-column: span 2; }
+  .qrCol    { grid-column: span 4; }
+}
+
+.wordmark {
+  font-family: var(--font-data, monospace);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.05em;
+  margin-bottom: 0.75rem;
+}
+.wordmarkA { color: var(--fl-text); }
+.wordmarkB { color: var(--logic-lime); }
+.wordmarkC { color: var(--data-gray); opacity: 0.5; }
+
+.blurb {
+  font-family: var(--font-data, monospace);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  line-height: 1.625;
+  max-width: 24rem;
+}
+
+.colHead { margin-bottom: 1rem; }
+.links { display: flex; flex-direction: column; gap: 0.5rem; list-style: none; margin: 0; padding: 0; }
+.link {
+  font-family: var(--font-data, monospace);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.link:hover { color: var(--logic-lime); }
+
+/* ── "Also on your phone" (WI-11) ──────────────────────────────────────────── */
+
+/* Geometry only — the QR image and its copy live in components/shared/GetAppQr. */
+.qrBlock { display: flex; gap: 0.9rem; align-items: flex-start; }
+
+/* ── Baseline ──────────────────────────────────────────────────────────────── */
+.baseline {
+  border-top: 1px solid var(--footer-rule);
+  padding-top: 1.5rem;
+}
+.copyright {
+  font-family: var(--font-data, monospace);
+  font-size: 0.75rem;
+  color: var(--data-gray);
+  opacity: 0.4;
+}
+
+/* ── Desktop only on the app surfaces ──────────────────────────────────────────
+   ≤900px the consumer app has its fixed bottom tab bar and the tournament pages have their
+   own bottom bar — a marketing footer under either is a second, competing set of links in
+   the one place a thumb lives. The marketing pages keep their footer at every width. */
+@media (max-width: 900px) {
+  .warm { display: none; }
+}

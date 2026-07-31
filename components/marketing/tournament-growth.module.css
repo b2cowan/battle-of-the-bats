@@ -1,3 +1,36 @@
+/* ── Paid-tier attribution line (WI-10) ───────────────────────────────────────────
+   Deliberately NOT .poweredBy: that one is a fixed, floating, lime-accented card for FREE
+   events. This is an in-flow line at the very bottom of the page in the org's own tokens —
+   quiet enough that a paid org reads it as a colophon, not as our advertising on their page.
+   The name is the only interactive part. Small type, muted ink, one hairline above it. */
+.builtOn {
+  margin-top: 3rem;
+  padding: 1.1rem 1.25rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--border);
+  text-align: center;
+  font-family: var(--font-data, monospace);
+  font-size: 0.7rem;
+  letter-spacing: 0.04em;
+  /* --white-60, not --white-45. Quiet is the point, but --white-45 measured 4.50:1 on a dark org
+     theme (passing by a rounding error) and 4.48:1 once the light-mode block remaps it — an
+     actual AA failure on light-themed org pages. --white-60 keeps the colophon register with a
+     real margin in both modes. */
+  color: var(--white-60);
+}
+
+.builtOn a {
+  color: var(--white-70);
+  font-weight: 700;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.builtOn a:hover {
+  color: var(--primary-light);
+  border-bottom-color: currentColor;
+}
+
 .poweredBy {
   position: fixed;
   right: 1rem;

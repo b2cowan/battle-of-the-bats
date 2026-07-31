@@ -150,6 +150,10 @@ const SCOPES = {
       'components/TeamAvatar.module.css',
       'components/notifications/PushPermissionPrompt.module.css',
       'app/system-screens.module.css',
+      // The site footer renders on TWO grounds since Chunk C — the marketing site's dark ground
+      // and the consumer app's warm paper (which itself follows the account's Dark/Warm
+      // preference). Cross-shell root chrome, same reason system-screens.module.css lives here.
+      'components/Footer.module.css',
     ],
     excludeSegments: new Set(),
     baseline: 'scripts/.shared-token-baseline.json',
