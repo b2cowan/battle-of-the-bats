@@ -422,7 +422,15 @@
 }
 
 /* ── Page layout ────────────────────────────────────────────────────────── */
-.page { max-width: 960px; }
+.page {
+  max-width: 960px;
+  /* Height of any page-level bar docked ABOVE the bottom nav. Zero by default — only the lineup
+     builder has one — so a single offset formula works on every coach page and a page without a
+     docked bar keeps its original geometry exactly. Raised to a real value on `.lineupDockedPage`
+     inside the ≤900px block, which is also where the bar is FORCED to that height, so the value and
+     the thing it describes have one owner. */
+  --lineup-dock-h: 0rem;
+}
 /* Week/Month calendar grids are structured layouts that benefit from extra width
    (wider day cells, less wrapping); List is a scannable text column that doesn't
    need to stretch as wide. Applied only on the schedule page via view state. */
@@ -907,7 +915,10 @@
   display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
   font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.5rem; border-radius: 999px;
 }
-.lineupFrontChip[data-tone="ok"]   { color: var(--success); background: rgba(74, 222, 128, 0.12); }
+/* Fill is tokenised, not a literal: the text is `--success`, which the warm gate remaps to a
+   forest green — a hard-coded cool mint underneath it put warm ink on a cold ground (and was a
+   live exception to the colour-token guardrail). Matches the warn chip on the next line. */
+.lineupFrontChip[data-tone="ok"]   { color: var(--success); background: rgba(var(--success-rgb), 0.12); }
 .lineupFrontChip[data-tone="warn"] { color: var(--warning); background: rgba(var(--warning-rgb), 0.12); }
 .lineupFrontAction {
   display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
@@ -1057,7 +1068,58 @@
 
 
 @media (max-width: 640px) {
-  .lineupFrontActionLabel { display: none; }
+  /* ── Lineup game cards: the NAME wraps, the furniture shrinks ──────────────
+     The row was flex with every element but the title at `flex-shrink: 0`, so the
+     whole width deficit landed on the one string that identifies the game: at 390px
+     the opponent name got 125px of a 326px row (95px at 360px), and two games against
+     the same club rendered identically once ellipsised. This is the un-migrated
+     instance of the 2026-06-29 schedule ruling ("line 2 = the untruncated name").
+
+     Below 640px the row becomes a grid so the title spans the full content column and
+     the status chip drops beside the time, where there is slack. `display: contents`
+     on the title+meta wrapper lets its two children take grid areas without a second
+     nesting level. Desktop is untouched — this whole block is phone-only. */
+  .lineupFrontRow {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      "date title title"
+      "date meta  chip";
+    column-gap: 0.8rem;
+    row-gap: 0.15rem;
+    align-items: center;
+  }
+  .lineupFrontMain  { display: contents; }
+  .lineupFrontDate  { grid-area: date; }
+  .lineupFrontMeta  { grid-area: meta; }
+  .lineupFrontChip  { grid-area: chip; justify-self: end; }
+  .lineupFrontTitle {
+    grid-area: title;
+    white-space: normal;          /* was nowrap — a cut name stops naming the game */
+    overflow-wrap: anywhere;      /* one long unbroken word can't overflow the card */
+    line-height: 1.25;
+    /* Two lines fits every realistic club name; the clamp is the safety valve that
+       stops one pathological entry making a five-line card. `overflow: hidden` +
+       `text-overflow` come from the base rule, so the cut still shows an ellipsis.
+       -webkit- only, deliberately: the standard `line-clamp` needs `display: block`
+       and a minifier that treats the pair as aliases keeps the LAST one (the
+       backdrop-filter prefix-order gotcha), which would silently unclamp this. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+  }
+  /* The pane's one lime action spans the card on its own row — it was competing with
+     the chip for the same shrink-proof corner and sat under the 44px tap floor. */
+  .lineupFrontPrimary {
+    grid-column: 1 / -1;
+    justify-content: center;
+    min-height: var(--tap-min, 44px);
+    margin-top: 0.6rem;
+  }
+  /* The whole card is the link and its label is hidden at this width, so what was left
+     was a bare glyph costing ~9% of the contested track for no information. */
+  .lineupFrontAction { display: none; }
+
   /* The needs-lineup toggle stops right-aligning and wraps to its own row. */
   .lineupFilterNeeds { margin-left: 0; }
   /* Touch targets (2026-06-29 mobile conventions): tabs ≥40px, chips bumped to ≥36px. */
@@ -2661,7 +2723,10 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .saveBar {
     left: 0;
     padding: 0.75rem 1rem 0.85rem;
-    bottom: calc(4.5rem + env(safe-area-inset-bottom, 0px));   /* clear the bottom nav */
+    /* Reads the nav's height from the token rather than restating it. `4.5rem` was the same 72px,
+       hand-copied — correct today, and silently wrong the day the nav changes. No behaviour change;
+       this is the same drift class that broke the lineup popovers when the docked bar arrived. */
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
   }
 }
 
@@ -3665,23 +3730,38 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .lineupAutoMenu .lineupControlLabel { min-width: 0; }
 
-/* Below 900px the coach BOTTOM NAV is present, and a downward-opening 270px dropdown collides with
-   it (its Generate button hides behind the nav). So wherever the bottom nav shows, the menu rises as
-   a bottom-anchored panel above the nav with its own scroll. (Was 640px — but the nav appears ≤900px.) */
+/* Below 900px the coach BOTTOM NAV is present, and a downward-opening dropdown collides with it
+   (its Generate button hides behind the nav). So wherever the bottom nav shows, the menu rises as a
+   bottom-anchored panel above the nav with its own scroll. (Was 640px — but the nav appears ≤900px.)
+
+   ⚠ 2026-07-31: this rule cleared the NAV correctly, but it was written before the lineup builder's
+   Undo/Redo/Print bar was docked above the nav — and nothing brought the two together, so the panel
+   was parked INSIDE the new bar's band and the bar (z-index 250 vs this panel's 60) painted over its
+   tail, swallowing the Generate button. Broken on every viewport ≤740px, both popovers.
+
+   The lesson is in the numbers, not the fix: `5.75rem` was the nav's height plus a gap, hand-composed
+   at a moment when the nav was the only thing down there. It could not know about a bar that did not
+   exist yet. So the offsets are now COMPOSED from the two things actually below the panel —
+   `--bottom-nav-height` and `--lineup-dock-h` — and `--lineup-dock-h` is 0 on every page without a
+   docked bar, so ONE formula serves both cases and the no-bar geometry is unchanged (72 + 0 + 20 =
+   92px = the old 5.75rem, exactly). Adding a third fixed thing down there means declaring it once,
+   not re-deriving this constant a third time. */
 @media (max-width: 900px) {
   .lineupAutoMenu {
     position: fixed;
     left: 0.9rem;
     right: 0.9rem;
     top: auto;
-    /* Sit clearly ABOVE the ~4.5rem bottom nav (with a gap), and cap the height to the space that
-       remains so the Generate button at the bottom is always visible even when Competitive expands
-       the menu — the menu scrolls internally rather than growing behind the nav. */
-    bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
     width: auto;
-    max-height: calc(100vh - 9rem);
-    max-height: calc(100dvh - 9rem - env(safe-area-inset-bottom, 0px));
+    /* Sit clearly above whatever is pinned below — nav, home indicator, docked action bar — and cap
+       the height to the space that ACTUALLY remains, so the Generate button at the bottom stays
+       visible even when Game rules expands the menu. It scrolls internally rather than growing
+       behind anything. */
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--lineup-dock-h, 0rem) + 1.25rem);
+    max-height: calc(100dvh - var(--bottom-nav-height, 72px) - env(safe-area-inset-bottom, 0px) - var(--lineup-dock-h, 0rem) - 2.5rem);
     overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 260;   /* over the docked action bar (250), still under the nav (300) */
   }
 }
 .lineupAutoNote { margin: 0; font-size: 0.72rem; color: var(--white-45); line-height: 1.4; }
@@ -3752,18 +3832,30 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 
 /* Below 900px (bottom-nav present): span the modal width just above the nav rather than anchoring
-   to the print button, so it never overflows the gutter or tucks behind the nav. */
+   to the print button, so it never overflows the gutter or tucks behind the nav.
+
+   Same composed offsets as `.lineupAutoMenu` above, for the same reason. This menu's own stacking is
+   already correct without a z-index — it is a DOM child of the docked bar, which is itself a stacking
+   context, so it paints at the bar's level and above the bar's own background. What it did NOT have
+   was the bar's HEIGHT in its offset, so it emerged from the middle of the bar and sat over the Undo
+   and Redo buttons instead of clearing them. */
 @media (max-width: 900px) {
   .lineupPdfMenu {
     position: fixed;
     left: 0.9rem;
     right: 0.9rem;
     top: auto;
-    bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
     width: auto;
-    max-height: calc(100vh - 9rem);
-    max-height: calc(100dvh - 9rem - env(safe-area-inset-bottom, 0px));
+    /* ⚠ Fallback is 3.5rem here, NOT the 0rem used by `.lineupAutoMenu`, and the difference is
+       deliberate. That panel appears on pages with and without a docked bar, so zero is its honest
+       default. This one only ever exists INSIDE the bar — so if `--lineup-dock-h` ever stopped
+       reaching it (the bar moved out of `.lineupDockedPage`, or portalled), zero would silently
+       park it back on top of the Undo button. A fallback should describe where the element
+       actually lives. */
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--lineup-dock-h, 3.5rem) + 1.25rem);
+    max-height: calc(100dvh - var(--bottom-nav-height, 72px) - env(safe-area-inset-bottom, 0px) - var(--lineup-dock-h, 3.5rem) - 2.5rem);
     overflow-y: auto;
+    overscroll-behavior: contain;
   }
 }
 .lineupPdfItem {
@@ -4395,6 +4487,40 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .lineupViewBtnActive:hover {
   background: rgba(var(--blueprint-blue-rgb), 0.15);
   color: var(--blueprint-blue);
+}
+
+/* ── Three views in the width that was sized for TWO ────────────────────────
+   This strip was built as a two-button toggle ("Lineup ⇄ Playing time"). Chunk C
+   split it into three (Batting order · Positions · Playing time) and never revisited
+   the sizing, so on a phone two of the three labels wrapped to a second line.
+
+   Three levers, because no single one has enough margin once the order label comes
+   from the Sport Pack and its length is therefore not ours to predict:
+     1. the strip fills the width instead of shrinking to fit  (+35px at 390px)
+     2. horizontal padding 1rem → 0.4rem                       (+19px per button)
+     3. type 0.82 → 0.75rem                                    (−8.5% label width)
+   `white-space: nowrap` then makes a second line structurally impossible rather
+   than merely unlikely, and the ellipsis is a safety valve that should never fire —
+   if a future sport ships a label long enough to trigger it, that is a signal to
+   shorten the label, not to let the strip silently grow a second row again.
+
+   ⚠ min-height is not optional here: on one line these buttons compute to ~34px,
+   so fixing the wrap would otherwise DROP the portal's primary view switcher below
+   the 44px tap floor — the wrap was accidentally holding them above it. */
+@media (max-width: 640px) {
+  .lineupViewToggle { display: flex; width: 100%; }
+  .lineupViewBtn {
+    min-width: 0;
+    padding: 0.42rem 0.4rem;
+    font-size: 0.75rem;
+    min-height: var(--tap-min, 44px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }
 
 /* Mobile-only up/down reorder in the lineup's batting-number column (the drag grip
@@ -5159,13 +5285,25 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    Only the LINEUP BUILDER opts in. The schedule slide-over uses the same base class inside its
    own scrolling panel, where sticky genuinely works — it is deliberately untouched. */
 @media (max-width: 900px) {
+  /* ONE OWNER for the docked bar's height. The bar is FORCED to this value below, and every
+     element that has to clear it is offset BY it — so the bar's height and the things dodging
+     it can never drift apart. (The comment under `.lineupDockedPage` used to carry "~56px" as
+     a prose estimate, which is exactly the kind of second, unenforced copy that drifts.) */
+  .lineupDockedPage { --lineup-dock-h: 3.5rem; }
+
   .lineupDockedFooter {
     position: fixed;
     left: 0;
     right: 0;
+    min-height: var(--lineup-dock-h, 3.5rem);
     /* Sits ON the nav, never over it. `--bottom-nav-height` is the same token the app layout
-       reserves with, so the two can't drift apart. */
-    bottom: var(--bottom-nav-height, 72px);
+       reserves with, so the two can't drift apart — but the nav is ALSO as tall as the home
+       indicator, and this offset used to omit that. Measured on a 34px inset: the bar sat
+       32px BEHIND the nav, and at z-index 250 vs the nav's 300 the nav won, hiding most of
+       the bar — Undo out of reach on the portal's most tap-heavy screen, which is the exact
+       defect docking this bar was meant to fix. It was only ever correct on phones with no
+       home indicator. Both terms, every time. */
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
     z-index: 250;   /* under the nav (300) — the nav always wins a tap */
     margin: 0;
     padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom, 0px) * 0);
@@ -5173,7 +5311,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
     background: var(--card-bg);
     box-shadow: 0 -6px 14px -10px rgba(0,0,0,0.5);
   }
-  /* The grid scrolls clear of the docked bar. Its own height (~56px) plus the page's breathing
-     room — anything less and the last player row hides behind it at the bottom of the scroll. */
-  .lineupDockedPage { padding-bottom: 4.5rem; }
+  /* The grid scrolls clear of the docked bar — its own height plus the page's breathing room.
+     Anything less and the last player row hides behind it at the bottom of the scroll. */
+  .lineupDockedPage { padding-bottom: calc(var(--lineup-dock-h, 0rem) + 1rem); }
 }

@@ -4,6 +4,319 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-07-31 — A REDACTION IS ONLY AS STRONG AS THE WEAKEST DOOR ON THE SAME SCREEN — and when a capability spans two kinds of thing, the gate must be the union of what BOTH kinds require (owner: "include it now" + "commit staff work first")
+
+**Decision (owner ratified both approved fixes plus the DB door found en route).** Spun out of the
+Coaching-staff layout `/review`. Built on dev, uncommitted.
+
+1. **⚠⚠ BINDING: per-player documents require BOTH `documents` and `rosterPii`
+   (`canViewPlayerDocuments` / `canManagePlayerDocuments`); team templates keep gating on
+   `documents` alone.** The `documents` capability silently spanned two unrelated things — blank
+   team forms (`rep_document_templates`, no `player_id`) and completed forms signed for one child
+   (`rep_player_documents`). Gating both on the weaker of the two requirements meant a default
+   assistant saw guardian email/phone/DOB/medical-notes **blanked out by `redactRosterPlayer`**, and
+   directly beneath them that same child's "Medical Consent" PDF by filename with a working Download
+   button. **The redaction was defeated from the very surface that performs it.** *Generalises: when
+   one capability covers two kinds of object, the gate is the UNION of what each kind requires — and
+   the tell is a screen that hides a fact in one component and ships the document containing it in
+   the next.*
+2. **Rejected (again, and recorded so it is not re-proposed): flipping `ASSISTANT_DEFAULTS.documents`
+   to `'off'`.** That reverses the locked 2026-06-25 ruling and takes blank templates from assistants
+   who legitimately need them. Requiring both makes **both** June rulings true simultaneously —
+   "documents view-only by default" AND "guardian PII off by default" — with no migration. A
+   dedicated capability was also rejected: a migration, new grid UI and a fourth grant to reason
+   about, to say what two existing grants already say together. *Generalises: a UI or route lying
+   about a decision is a bug in the UI or route, not grounds to reverse the decision.*
+3. **⚠⚠⚠ THE FINDING THAT MATTERED MORE THAN THE BUG WE WERE SENT TO FIX — the app-layer gate was
+   never the only door.** Prod grants `anon`/`authenticated` the default SELECT on public tables, and
+   `rep_roster_players` + `rep_player_documents` each carried two permissive SELECT policies keyed on
+   **assignment, never on capability** ("coaches can read assigned team roster", "org members can
+   read …"). The browser ships an anon-key client holding the coach's own session. So **any assigned
+   assistant could read the full unredacted roster — guardian email/phone, DOB, medical notes,
+   internal notes — from the browser console, bypassing the entire `rosterPii` model.** Fixing only
+   the routes would have closed the door and left the window. Migration **212** drops all four,
+   leaving RLS enabled with no policies (the standard service-role posture); every caller in the app
+   uses `supabaseAdmin`, so it is a no-op for the product. *Generalises: **when you gate something at
+   the app layer, enumerate every OTHER route to the same rows before calling it closed** — RLS
+   policies written as "defense in depth" become the primary door the moment the app layer starts
+   making finer-grained decisions than they do.*
+4. **⚠ DEV STRUCTURALLY CANNOT REPRODUCE THIS CLASS OF DEFECT.** Impersonation on dev returns
+   `permission denied` because dev's `authenticated` lacks the SELECT grant that prod holds. A clean
+   dev result is **not evidence**. Confirms and sharpens `reference_supabase_rls_grants.md`: read
+   posture from **live prod**, and treat dev as incapable of falsifying a grant-dependent claim.
+5. **⚠ SECOND INSTANCE OF THE FALSE-GREEN SHAPE: migration 212 is POLICY-only, and
+   `refresh-db-snapshots` reports `rls: 0` divergence with dev at 0 policies and prod still at 4.**
+   The drift gate cannot see policy changes, exactly as it could not see function-only mig 211. *The
+   drift gate is a COLUMN/CONSTRAINT parity gate — it is not a security-posture gate, and a green
+   drift report must never be read as "prod matches dev".*
+6. **Every member of the Sensitive group now prompts — behaviour fixed, sentence untouched.** The
+   group promised "You'll be asked to confirm before granting these" while only 3 of 6 did.
+   **Documents left the group** (it now grants blank team forms only, so it no longer warrants a
+   speed bump) and **Tryouts + Internal notes gained prompts** — Tryouts was the widest gap, handing
+   over guardian contact details for children *not yet on the team*, silently. `sensitiveGrantCount`
+   now derives from the SENSITIVE_* arrays instead of naming `documents` explicitly, so moving a
+   control between groups can't leave a stale term counting something the group no longer shows.
+   *Generalises: when copy promises a protection, add the protection; softening to "some of these"
+   trades a real safeguard for a tidy sentence and tells the reader nothing about which.*
+7. **Timing is the whole risk story, and it was checked before scheduling rather than after.** Prod
+   runs the defective code but holds **0 rep teams, 0 coaches, 0 roster players, 0 player
+   documents** — no org has built a rep team yet. So this removes access from nobody, needs no notice
+   to head coaches, and lands before the first real family's medical form rather than after.
+   *Generalises: for a live privacy defect, count the exposed ROWS before deciding severity — "live
+   in code" and "live in data" are different questions and they set different deadlines.*
+
+**Also found, NOT fixed (out of scope, flagged):** `storage.objects` carries `"Allow public update"`
+with `USING = null` and `WITH CHECK = bucket_id = 'resources'`, so a row in the private
+`rep-team-documents` bucket satisfies USING and the check would permit rewriting it *into* the
+public `resources` bucket. Unproven through the Storage API and unexploitable today (zero objects).
+Worth a hardening pass. The bucket itself is correctly private with no read policy — signed URLs
+really are the only read route, verified live.
+
+**Applies to:** `lib/coach-capabilities.ts` (two new predicates), the four
+`…/roster/[playerId]/documents/**` route gates, the player detail page (section no longer renders
+when it can't be opened), `components/coaches/CoachStaffPanel.tsx`, new
+`supabase/migrations/212_rep_roster_docs_rls_service_role_only.sql` (**dev only — NOT prod**), new
+`tests/unit/coach-capabilities.test.ts` (9 cases incl. the redaction invariant). Head coaches and org
+admins verified unaffected. Plan: `docs/projects/active/COACH_PLAYER_DOCUMENTS_PII_PLAN.md`.
+[[design-principles]]
+
+---
+
+### 2026-07-31 — The operator frame strip generalizes to EVERY admin hub: FieldLogicHQ branding applies to the premium Coaches Portal exactly as to tournament admin (Nav Unification D2 RATIFIED — reverses the premium portal's no-wordmark ruling)
+
+**Owner's words:** *"the fieldlogichq branding applies to coaches portal just like tournament admin,
+those surfaces from a product perspective are the same, admin hubs."*
+
+**Decision.** The thin operator frame strip (Nav Unification Stage C: wordmark→Home top-left; the
+person's own doors top-right; desktop >900px only) is the standard chrome of every ADMIN HUB — the
+tournament/org admin shell AND the premium Coaches Portal — each in its own skin (admin dark, coach
+warm/dark via the existing theme marker). This **reverses the "no platform wordmark anywhere in the
+premium portal" clause** of the operator-HQ ruling. **What it does NOT reverse:** the two-FAMILY
+chrome split stands (free coach = consumer chrome "companion"; premium = operator shell), the warm
+skin stands, the contextual ⇄ flip rules stand, and the phone portal is untouched — mobile doors
+remain gated on the More-sheet overflow check (Stage H mobile pass).
+
+**Build shape (mockup-faithful):** the coach strip carries wordmark · chat (icon-only — the portal's
+own "Chat" tab keeps the word) · account · Workspaces popover, per the approved rev-2 mockup panel.
+**The notification bell deliberately STAYS in the sidebar header** — the approved mockup shows no
+bell in the coach strip, and its notifications are portal-scoped; revisit in the mobile pass.
+
+**Applies to:** new `components/coaches/CoachTopStrip.tsx` (+ module css), `app/[orgSlug]/coaches/layout.tsx`
+mount, `coaches.module.css` shell top padding (`--coach-topstrip-h`), WorkspacesPill warm-skin
+fallbacks. [[design-system]] [[design-principles]]
+
+---
+
+### 2026-07-31 — Coach Portal Chunk B: a navigation control is named by its AUDIENCE when a sibling shares its category; help belongs to DOORS, not pages; and a welcome is an anchor STATE, never a banner beside one (mockups `claude.ai/code/artifact/96e4a359-7966-4f1c-9105-3ddbb85dd969` rev 1 = binding; D-B1–D-B4 ratified at the recommendations, "I agree with all of your recommendations")
+
+**Decision (owner ratified all four).** Findability chunk — P1 #1, #4, #17, and #12 narrowed. Four
+binding rules, plus the corrections that reshaped the chunk before a line was written.
+
+1. **⚠ A door renamed without its DESTINATION is a half-applied decision.** `Announcements` → **`Email families`** (names both audience and medium; `Chat` kept — it is the app-wide word for a conversation, the consumer bottom bar uses it, and the page already heads itself "Your chats", so renaming it would fracture a platform vocabulary to fix a local problem). **The screen it opens was renamed too**: leaving the page titled "Announcements" would have re-broken the 2026-07-31 destination-naming ruling one step further in. "Announcement" stays the noun for an individual sent item; only the place is renamed. **The FREE portal keeps "Announcements"** — separate tool catalog, two-family ruling intact. **Generalises: when two nav items sit under one category header, disambiguate by AUDIENCE, not by adding a description — a category header over two similar labels is what makes them read as interchangeable.**
+2. **⚠⚠ `isCoachNavItemVisible` is keyed by DISPLAY LABEL, so renaming a nav item silently opens its capability gate.** A missed case falls through to `default: return true` and hands an ungranted assistant the door. The new label was added as a case and **the old label kept as a fallthrough** — belt-and-braces for any surface a future rename misses, and the portal tour still asks by the old name. **Generalises: before renaming any nav label in this portal, grep the gate. A label is not just copy here — it is a lookup key.**
+3. **Help belongs to DOORS, not pages: every nav destination carries a help icon; a page reached by drilling INTO one inherits its parent's guide and carries none.** The review's "3 of ~25 pages" (12 of 41 by the time of the build) was the wrong denominator — all 12 existing icons were already nav destinations and every drill-in correctly had none, so the promise was **12 of 17 kept and the gap was five doors**: Attendance (nav home since Batch 4, help never added), Chat, Settings, Season's End, and Insights-on-a-closed-season (`/history/results` — the hub that carries the icon is unreachable there). **A page with no guide gets NO icon — and the guide gets written.** An icon that opens the help hub is a broken promise dressed as help: the coach taps "?" expecting an answer about *this screen* and gets a table of contents. Settings had no guide, so one was written in the same unit of work; the rule now has zero exceptions. **Chat is the documented shape exception**: deliberately full-bleed with no `.pageHeader`, so its trigger sits in the header of whichever surface is on screen — the room list when nothing is selected, the conversation header otherwise (exactly one door in all five states; a single room auto-selects and never renders the list at all).
+4. **A welcome is an anchor STATE at the top of the ordered resolver, never a banner beside it.** A cold-signup coach **is** a pre-season coach plus two extra facts — the same superset relation as `season_check`→`lull` — so the specific state REPLACES the general one and **inherits its door** ("Add your players instead"). A welcome band beside the anchor would have re-created the exact nine-independent-bands defect Chunk I exists to remove. Pre-season only: an introduction must never outrank a game today.
+
+**⚠ THE REVIEW CATCH WORTH GENERALISING (confirmed).** The welcome gated on `tourDismissed` + "no activity" — and **`hintsOff` and `tourDismissed` are INDEPENDENT account preferences**: `turnOffHints` never sets `tourDismissed`. So a coach who explicitly switched onboarding hints off on one team, then picked up a second, would have been met by an onboarding card — the precise interruption Quiet Mode exists to remove, delivered through the ONE card on the page. **Generalises: a welcome is a hint and obeys the hint switch; when two preferences can both mean "leave me alone", a new surface must honour BOTH, and independence between them is the thing to check, not assume.**
+
+**Ground truth the handoff got wrong — three corrections, verified at pickup:**
+- **Chat is no longer only the organizer channel.** Project 2A gave every team a standing **staff room** (own staff, all season, no tournament). Any naming that called Chat "the organizer line" would have been wrong — and the shipped portal-tour copy said exactly that, so a coach reading it never learned their staff room existed. Corrected in the same pass.
+- **P1 #12 was already half-built.** Quiet Mode shipped a good portal tour, but offered from inside ONE card — so a coach whose Overview resolved to a game, a lull, or nothing was never offered it at all.
+- **P1 #2 was genuinely closed** (verified rather than assumed) and its empty state is correctly scoped to the entitlement edge case.
+
+**Also worth keeping:** the mobile bell answer was **already shipped next door** — admin solved it 2026-07-22 (a More-sheet row opening the FULL page, count badging the More tab). Reused wholesale rather than designed again. It opens the **page, not the bell's panel**, because the panel's phone rules anchor it at `top: 48px` to sit under the *admin* top bar, which this portal does not have at any width. **Generalises: before designing portal chrome, check whether the sibling shell already solved it — and check that the destination you are pointing at works at the width you are pointing from.** Rejected and drawn as rejected: a 6th bottom-bar tab (~60px per door at 361px, below the tap floor, evicts Roster or Chat) and a page-header bell (three pages have no header; that slot belongs to help).
+
+**A probe that asserts a LIST is not asserting a RULE** (caught at `/simplify`): the help-coverage probe first hardcoded the door list, so a nav item added later without help would simply not be tested. It now walks the **rendered** sidebar, with a length guard so a selector matching nothing fails instead of passing vacuously.
+
+**Applies to:** `lib/{coach-nav-visibility,coach-overview}.ts` (+ tests), `components/coaches/{CoachesSidebar,CoachesBottomNav,CoachPortalTour}.tsx`, `components/coaches/CoachesBottomNav.module.css` (the chat unread badge's nine inline declarations retired onto a shared class — a literal outside the stylesheet is invisible to the colour guardrail and the warm gate), `components/chat/CoachChatView.{tsx,module.css}`, the team Overview + attendance/settings/season-end/history-results/announcements pages, `lib/help-content/coaches.tsx` (new `premium-team-settings` section + two premium FAQs), `tests/uat/scenarios/coach-findability-smoke.spec.ts` (new). **NO migration. No write path. `coaches.module.css` deliberately untouched** — a concurrent stream held uncommitted hunks in it, and the welcome inherits `.oneThing`'s base accent, so no rule was needed. [[design-system]] [[design-principles]]
+
+---
+
+### 2026-07-31 — Pinning something to the bottom of the screen is a change to a SHARED BUDGET, not to one element: everything already down there must be re-derived, and its height must be DECLARED rather than assumed
+
+**Decision (owner-directed sweep after three symptoms in a row traced to one cause).** Docking the
+lineup builder's Undo/Redo/Print bar above the bottom nav broke four separate things, none of which
+were touched by that change. All four are the same mistake: **a fixed offset hand-composed from what
+happened to be pinned at the bottom on the day it was written.**
+
+1. **⚠ A bar with no declared height is a lie every consumer repeats.** The coach bottom nav set
+   padding and let content decide its height — measured **70.31px** — while `--bottom-nav-height:
+   72px` is what ~15 consumers reserve against. Everything pinned to the token floated a **1.69px**
+   hairline clear of it (the reported symptom), and everything spacing against it over-reserved.
+   **The fix is to make the token TRUE — `min-height` on the bar — never to retune the consumers.**
+   The consumer shell's bar already did this; the coach one was the outlier.
+2. **⚠⚠ The same omission hid the bar behind the nav on every notched phone.** The bar's offset
+   carried the nav's height but not `env(safe-area-inset-bottom)`, so on a 34px inset it sat **32px
+   BEHIND the nav** — and at z-index 250 vs 300 the nav won and covered most of it. **Undo was
+   unreachable on the exact devices most coaches use**, which is the defect docking the bar existed
+   to fix. It was only ever correct on phones with no home indicator. **Generalises: an offset that
+   clears fixed chrome needs BOTH terms — the chrome's height AND the inset — every time.**
+3. **A popover positioned before the bar existed cannot know about it.** Both lineup popovers
+   (`.lineupAutoMenu`, one class serving Auto-fill AND Templates; `.lineupPdfMenu`) carried
+   `bottom: 5.75rem` — the nav's height plus a gap, correct when the nav was the only thing down
+   there. The new bar's band swallowed their tails, including Auto-fill's **Generate** button.
+   **Measured broken on 6 of 8 viewport/inset combinations — only tall phones escaped.** Fixed by
+   COMPOSING the offset from `--bottom-nav-height` + `env()` + a new `--lineup-dock-h`, so a fourth
+   pinned thing means declaring it once, not re-deriving a constant a fourth time.
+4. **Raising the z-index alone would only have moved the bug** — the panel would paint over the bar
+   but still run off a short screen, under the nav. The height budget must be **subtracted from the
+   viewport**, not guessed from the anchor: `100dvh − nav − inset − dock`.
+
+**Two rules that made the fix safe, both worth reusing:**
+- **`--lineup-dock-h` defaults to `0rem` on `.page` and is raised only on `.lineupDockedPage`**, so
+  ONE formula serves pages with and without a docked bar and the no-bar geometry is bit-identical to
+  before (72 + 0 + 20 = 92px = the old 5.75rem, exactly). A shared formula must reduce to the old
+  behaviour in the old case, or it is a rewrite wearing a refactor's clothes.
+- **A fallback should describe where the element actually LIVES.** `.lineupAutoMenu` falls back to
+  `0rem` (it appears on pages with no bar); `.lineupPdfMenu` falls back to `3.5rem` (it only ever
+  exists INSIDE the bar, so zero would silently park it back on the Undo button if the variable ever
+  stopped reaching it). Identical fallbacks would have been the easy, wrong choice.
+
+**Also fixed in the sweep:** the three lineup view tabs (`Batting order · Positions · Playing time`)
+wrapped to two lines — the strip was sized for the TWO-button toggle it used to be and Chunk C added
+a third without revisiting it. Full width + tighter padding + smaller type + `white-space: nowrap`
+makes a second line structurally impossible. **⚠ The wrap was accidentally holding those tabs above
+the tap floor** — on one line they compute to ~34px, so the fix REQUIRED `min-height: var(--tap-min)`
+or it would have traded a cosmetic bug for an accessibility one. **Generalises: before removing a
+wrap, check whether the second line was carrying the element's height.** One more instance of the
+same drift class hardened en route: `.saveBar` restated the nav height as a `4.5rem` literal.
+
+**Method note, and the reason all four were found:** every claim here is a **measured** computed-style
+probe across viewport widths, viewport heights and both safe-area states — not a screenshot and not
+spec reasoning. Two probes initially reported failures that were the HARNESS's fault (a nav rendered
+without its real font; a footer nested as a sibling of `.page` instead of a child, which silently cut
+off custom-property inheritance). **A probe that mis-nests is not measuring the page — reproduce the
+real DOM ancestry before believing a red result**, which is the sibling of the existing "when a probe
+measures a control, it is not measuring the layout".
+
+**Applies to:** `components/coaches/CoachesBottomNav.module.css`, the lineup builder + its popovers
+and view tabs, `.saveBar`, and `--lineup-dock-h` (new). CSS only, no migration. Owner QA pending.
+[[design-system]] [[design-principles]]
+
+---
+
+### 2026-07-31 — In a row that runs out of width, the thing that IDENTIFIES the row is the LAST thing allowed to shrink — never the first (mockup `claude.ai/code/artifact/8c0a52de-8f18-46d3-819b-2813f969ff5c`; owner "I agree with your proposals, go ahead")
+
+**Decision (owner ratified all seven + all three calls at the recommendations).** The Lineups → Games
+cards truncated the opponent name on every phone. The cause is a shape, not a value: **the row was
+flex with every element except the title at `flex-shrink: 0`**, so the entire width deficit landed on
+the one string that says which game this is. Measured at 390px, of a 326px row: date tile 44 · gaps
+41 · status chip 102 · arrow 14 — leaving the name **125px** (95px at 360px). The chip and the tile
+together outweighed the game's own name.
+
+1. **BINDING, generalises to every list row: a fixed-size ornament must never out-rank the row's
+   identifier for width.** Before pinning anything `flex-shrink: 0`, ask what absorbs the deficit
+   when the row is narrow. If the answer is "the name", the layout is wrong — reflow it. The
+   diagnostic that made this obvious is worth reusing: **write out the row's width budget in pixels
+   at 390 and 360 and see which segment is paying.**
+2. **Truncation that erases the DISTINGUISHING part of a label is a correctness bug, not a polish
+   one.** Two games against the same club rendered identically once cut ("vs Durham …" / "vs Durham
+   …"), so the card stopped answering its own question. **The name wraps; the furniture shrinks.**
+   Clamped at two lines with the ellipsis retained — unlimited wrap lets one pathological entry make
+   a five-line card, and a clamp with no ellipsis would be the 2026-07-30 "silently deletes it"
+   defect.
+3. **This was the UN-MIGRATED instance of the 2026-06-29 schedule ruling** ("line 2 = the untruncated
+   name"), in the same portal, on the same opponent names, and the schedule CSS still carries that
+   comment. **Confirms the 2026-07-31 Chunk C generalisation** — when a rule is written for one
+   surface, grep the sibling surfaces before assuming it landed. The transferable part was the RULE,
+   not the code: the schedule row is a wrapping flex chip, this is a date-tile card, so it took a
+   grid.
+4. **A fact stated twice on one card is stated once too often, at EVERY width.** The tile said "8 /
+   JUL" and the meta line repeated "Wed, Jul 8" beside it — and the repeat is what pushed the time
+   onto a second line. Meta is now `Wed · 2:00 p.m.`; the weekday earns its place because the tile
+   has no room for it. Applied on desktop too: **redundancy is not a width problem**, and offering
+   two strings by breakpoint would have been two truths to keep in sync.
+5. **A trailing chevron on a card that is already one tap target is decoration, and it is charged to
+   the name.** Its label was already hidden below 640px, so what survived was a bare glyph plus its
+   gap — ~9% of the contested track carrying nothing the card's own tap behaviour doesn't. Hidden on
+   phones, kept on desktop where width is free. **Rider: when a class's ONLY rule was the mobile
+   hide, the class and its wrapper spans go with it** rather than surviving as `styles.X` resolving
+   to `undefined`.
+6. **A primary action does not compete for a shrink-proof corner.** The pane's one lime "Build
+   lineup" left the name ~40px and sat under the tap floor; on phones it now spans the card on its
+   own row at `var(--tap-min)`.
+7. **A raw numeric `rgba()` of a semantic colour is theme-invisible.** The "Lineup set" chip's text
+   was `var(--success)` (warm gate → forest `#3E7A32`) over a hard-coded cool mint
+   `rgba(74, 222, 128, .12)` — warm ink on a cold ground. **⚠ The colour-token guardrail was GREEN
+   before and after this fix**: it matches hex and *brand*-rgba literals, so a raw numeric `rgba()`
+   of a status colour passes untracked. Handed to `/review` as a guardrail gap, not fixed here.
+
+**Two implementation rules worth keeping.** `display: contents` on a title+meta wrapper is the clean
+way to let its children take grid areas without a second nesting level (the same wrapper renders in
+the apply-template picker, so both lists are fixed by one block). And the clamp uses `-webkit-`
+**only**: the standard `line-clamp` needs `display: block`, and a minifier treating the pair as
+aliases keeps the LAST one — the documented backdrop-filter prefix-order gotcha — which would
+silently unclamp it.
+
+**Result:** the name goes 125px → **269px** (2.15×) at 390px, and wraps rather than vanishing.
+
+**Explicitly NOT changed:** the "p.m." time format (platform-wide via `formatInOrgZone`, changing it
+here alone would fork the Schedule), the row's warm card treatment, and the desktop layout.
+
+**⚠ Flagged, deliberately untouched, in the `/review` handoff:** this page formats dates and times
+through bare `new Date(...).toLocale*()` with no zone, while the Schedule tab was migrated to the
+org's zone in the Chunk C pass — the J3-047 class reaching one more surface. **The date-correctness
+guardrail's green tick is a FALSE NEGATIVE here**: its two rules both match date *arithmetic*
+(`toISOString().slice(0,10)`, `setHours(0,0,0,0)`), and it has no rule for display formatting at all.
+**⚠ CORRECTED BY THE `/review` PASS, same day — do not repeat the original claim.** This entry first
+said rule 4 "raises the stakes" because the tile became the only place the date appears. **That is
+false.** The tile (`getDate()` + `toLocaleDateString({month:'short'})`) and the retired meta string
+(`toLocaleDateString({weekday, month, day})`) both derived from the SAME instant in the SAME device
+zone, so they were always mutually consistent — the meta duplicated a possibly-wrong value, it never
+cross-checked one. **The timezone risk is exactly unchanged by this diff.** Generalises, and it is
+why the claim is worth recording rather than deleting: **two renderings of one value through one
+code path are not a cross-check, however differently they are formatted.** Removing a duplicate
+never "unmasks" the original.
+
+Also pre-existing and unchanged: the apply-template picker has no visible busy feedback on phones
+(its "Applying…" label was already hidden at this width, and `.lineupFrontRow` carries no `:disabled`
+styling at any width). What the change DID remove there is the static trailing arrow — the picker's
+rows now have no trailing affordance on phones at all.
+
+**Applies to:** the Coach Portal Lineups → Games list and the apply-template picker
+(`app/[orgSlug]/coaches/teams/[teamId]/lineups/page.tsx`, `app/[orgSlug]/coaches/coaches.module.css`).
+Rules 1, 2, 4 and 5 are general to every list row on the platform. Owner QA pending.
+[[design-principles]] [[design-system]]
+
+---
+
+### 2026-07-31 — A single-section page does not get a second section header; and a no-CTA teaching block is `quiet`
+
+**Trigger (owner, on the premium Coaching staff screen):** "anything we can do about the layout of objects on this page?" Diagnosis: the screen wrapped one message in three containers — the page header, a tinted `.setupPanel` whose eyebrow + title *repeated the page header verbatim* ("Coaching staff" → "COACHING STAFF" → "Assistant coaches"), and a centred 560px `CoachEmptyState` floating inside it. Nothing shared a left edge, the intro ran ~135ch, and the same promise ("nothing sensitive until you grant it") appeared twice, 400px apart.
+
+**Decisions (owner-approved via mockups, binding):**
+
+1. **When a page renders exactly ONE section, the page header IS the section header.** The section drops its own eyebrow/title/decorative icon. `.setupPanel`'s header exists for screens that stack SEVERAL sections (Settings, Season-end) and must not be used to frame a lone section — a border around the whole viewport has no contrast partner, and the repeated title is the first thing the eye has to discard. Generalises to any coach/admin page whose body is a single panel.
+2. **A no-CTA teaching block uses the `quiet` empty-state variant** — flat, left-aligned, full-width, neutral medallion, no lime wash. This EXTENDS `COACH_SURFACE_DESIGN_ADDENDUM §iii`, which previously reserved `quiet` for empties the coach *cannot act on*. New rule: **the trigger is the absence of a CTA on the block, not the absence of an action on the page.** Where the action lives directly above (as here — the invite form), a glowing centred illustration competes with the control it's explaining. Action empties that carry their own CTA keep the full/compact glow.
+3. **A decorative icon may not sit in a section header.** The retired `ShieldCheck` read as a *status* ("secure", "verified") while carrying no information, ~1000px from the heading it belonged to.
+4. **Standing reference beats a first-run message.** The access primer (what an assistant gets by default, what stays off) was an empty state, so it disappeared the instant the first invite landed — exactly when a head coach starts granting. It is now a persistent right rail. Its "off until you turn it on" list is DERIVED from the same constants that build the grant grid, so the rail can never claim something different from the controls beside it. ≤1023px the rail moves last (below the staff), because with assistants present the people are what the coach came for, and on an empty team the list row is only the short teaching block.
+5. **Fixed grid, not auto-fill, for a capability grid.** `repeat(auto-fill, minmax(200px, 1fr))` re-flowed the same team's ten access controls differently at every width; a fixed 2-column grid (1-col ≤560px) keeps a coach's spatial memory of where a toggle lives.
+6. **This screen drops `--home-olive-soft`** for a plain `--home-card` + hairline, consistent with the 2026-07-30 ink/lime ruling (a lime CTA on an olive ground never separates from its own hue). Scoped to Staff only — Settings and Season-end still use the tinted panel; sweeping them is a separate call.
+
+**Fixed en route (real defects, not restyling):** the segmented "on" state used a raw `var(--logic-lime)` **fill**, which the coach warm gate remaps to olive — the exact E3 violation the 2026-07-27 `--logic-lime-fixed` decision exists to prevent; it now carries the `--home-lime` warm override that `.btnPrimary` already had. The invite field was placeholder-only (no label). Off-scale radii (8px/10px literals) moved onto `--radius`/`--radius-sm`.
+
+**Also:** the panel's ~40 inline style objects moved into `components/coaches/CoachStaffPanel.module.css`. Every save, confirm-on-grant, optimistic-update and capability behaviour is byte-identical — this was a layout change only.
+
+**Known, NOT fixed (pre-existing, portal-wide):** an open `CoachFormDisclosure` renders `.formSection` on `--home-olive-soft`, so a lime-filled segment inside the Sensitive group still sits on an olive inset. Unchanged from before this pass; belongs to a portal-wide sweep, not one screen.
+
+**Applies to:** `components/coaches/CoachStaffPanel.tsx` + new `.module.css`. Mockups: `claude.ai/code/artifact/e0090415-0fa6-4b36-97bb-37f84a67e7ee`. Owner QA pending. [[design-system]] [[design-principles]]
+
+**/review pass, same day — 1 Critical + 2 High + 5 Medium confirmed and fixed. The headline is a rule, not a bug:**
+
+**BINDING — a UI that states a security posture must READ that posture, never re-describe it.** The rail's "off until you turn it on" list was derived from `SENSITIVE_*` group membership. **Sensitive and off-by-default are different questions.** `documents` is sensitive but ships `'view'` (locked owner decision 2026-06-25), and `coach-nav-visibility` opens the Documents door at `!== 'off'` — so the rail told head coaches that waivers and team files were locked while every new assistant could already read them. Both lists now derive from `ASSISTANT_DEFAULTS` itself, so a default change moves the rail with it. The finder's alternative fix (flip the default to `'off'`) was **rejected** — that silently reverses an owner ruling; a UI lying about a decision is a UI bug, not a reason to change the decision. Same pass killed the empty state's "sees only the areas you switch on for them", which was false for the same reason and contradicted the corrected rail beside it.
+
+⚠ **Surfaced for the owner, not changed:** new assistants can view Documents (waivers) by default. That is the June ruling working as designed — but this screen now says so out loud for the first time, and the sensitive-group note still promises "you'll be asked to confirm before granting these" when only money / contacts / announcements actually prompt (Documents and Tryouts do not). Pre-existing copy; worth a ruling.
+
+**Accessibility — the rewrite's own regressions, fixed:** retiring the visible `<h2>` also deleted it from the OUTLINE (h1 → h3/h4, loose headings tied to nothing) → restored as a `.srOnly` `<h2>`; **the design rule is about the visible header, never the document outline.** The new rail's lists were `div`/`span` with `aria-hidden` check/lock glyphs, so on-vs-off reached assistive tech only as reading order → real `<ul>`/`<li>` under real headings. Hardcoded element ids → `useId()`.
+
+**Pre-existing, fixed because this pass touched the markup:** the segmented access controls had **no accessible name at all** — a screen-reader user heard "Hidden, pressed" with no idea whether it governed Roster or Team money (`role="group"` + `aria-labelledby`), and their focus ring was clipped by the group's own `overflow: hidden` (`outline-offset: -2px` draws it inside). "Saving…"/"Saved" — the only confirmation a money/PII grant landed — was never announced (persistent `role="status"` region).
+
+**Deliberately NOT done:** a full `radiogroup` pattern for the tri-state segments (`aria-pressed` is the wrong state for a 1-of-N choice, but half a radiogroup — roles without roving tabindex and arrow keys — is worse than a named group; logged as follow-up). Raising the 1023px rail breakpoint: at 1024px the working column computes to ≈428px, tight but nothing overflows, and moving an approved breakpoint is an owner call. `.quiet` still caps `.description`/`.payoff` at 42ch inside a full-width block — pre-existing and shared with two other live call sites, including this same route's non-head-coach branch.
+
+**Refuted:** "the visible section heading was dropped by accident" (it is the approved decision; the page `<h1>` carries it), "the five retired shared classes are orphaned" (Settings + Season-end still use all five), "collapsed sensitive controls stay focusable" (`.discHidden` is `display: none`).
+
+---
+
 ### 2026-07-31 — Navigation controls are named by their DESTINATION, and a screen has ONE operator door, in the nav
 
 **Decisions (owner, binding):**

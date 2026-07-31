@@ -26,6 +26,14 @@
     backdrop-filter: blur(20px);
     border-top: 1px solid rgba(79, 163, 224, 0.25);
     padding: 0.4rem 0 calc(0.4rem + env(safe-area-inset-bottom));
+    /* MAKE THE TOKEN TRUE. `--bottom-nav-height: 72px` is what ~15 consumers across the
+       app reserve against (globals' `main` padding, the shell's own clearance, MyTeamDock,
+       the install prompt, the lineup builder's docked action bar), but this bar declared
+       no height at all — padding + content measured 70.31px, so every one of those
+       reservations was off by 1.69px and anything PINNED to the token floated a hairline
+       clear of the bar. The consumer shell's bar already states its height this way; this
+       one was the outlier. Measured, not assumed. */
+    min-height: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
     justify-content: space-around;
     align-items: flex-start;
   }
@@ -81,6 +89,29 @@
     border-radius: 50%;
     background: var(--blueprint-blue);
     box-shadow: 0 0 6px var(--blueprint-blue);
+  }
+
+  /* Count pip on a TAB icon — the Chat tab's unread, and (Chunk B) the notification count bubbling
+     up to More so what is waiting inside the sheet is visible without opening it. One class for
+     both: the Chat badge previously carried the same nine declarations as inline styles on the
+     element, which put literal token references outside the stylesheet where the colour-guardrail
+     and the warm gate cannot see them. */
+  .tabCount {
+    position: absolute;
+    top: -2px;
+    right: 2px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 4px;
+    border-radius: 999px;
+    background: var(--logic-lime);
+    color: var(--pitch-black);
+    font-size: 0.55rem;
+    font-weight: 800;
+    line-height: 1;
   }
 
   .label {
@@ -196,6 +227,29 @@
     opacity: 0.35;
     flex-shrink: 0;
   }
+
+  /* Unread count on a sheet ROW (Chunk B — Notifications). Mirrors the admin More sheet so the two
+     shells read the same. It takes the auto margin, so a row carrying both a count and a chevron
+     keeps them adjacent at the right edge rather than pushing them apart. */
+  .dropCount {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 1.05rem;
+    height: 1.05rem;
+    padding: 0 0.3rem;
+    border-radius: 999px;
+    background: var(--logic-lime);
+    color: var(--pitch-black);
+    font-family: var(--font-data);
+    font-size: 0.6rem;
+    font-weight: 800;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .dropItem:has(.dropCount) .dropChevron { margin-left: 0; }
 
   .dropDivider {
     height: 1px;

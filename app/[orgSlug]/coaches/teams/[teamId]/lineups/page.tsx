@@ -26,8 +26,12 @@ const TYPE_CHIPS = [
   { key: 'scrimmage', label: 'Scrimmage' },
 ] as const;
 
-function formatDay(value: string) {
-  return new Date(value).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+// Weekday only — the row's date tile already carries the day number and month directly beside this
+// line, so repeating them spent the card's scarcest resource on something already on screen (and on
+// a phone it pushed the time onto a second line). The weekday earns its place; the tile has no room
+// for it. One string at every width: redundancy is redundancy on desktop too.
+function formatWeekday(value: string) {
+  return new Date(value).toLocaleDateString('en-CA', { weekday: 'short' });
 }
 function formatTime(value: string) {
   return new Date(value).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' });
@@ -342,7 +346,7 @@ export default function CoachesLineupsPage({
         </span>
         <span className={styles.lineupFrontMain}>
           <span className={styles.lineupFrontTitle}>{gameTitle(e)}</span>
-          <span className={styles.lineupFrontMeta}>{formatDay(e.startsAt)} · {formatTime(e.startsAt)}</span>
+          <span className={styles.lineupFrontMeta}>{formatWeekday(e.startsAt)} · {formatTime(e.startsAt)}</span>
         </span>
         {r === true && <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Lineup set</span>}
         {r === false && <span className={styles.lineupFrontChip} data-tone="warn"><TriangleAlert size={13} aria-hidden /> Not set</span>}
@@ -350,7 +354,7 @@ export default function CoachesLineupsPage({
           <span className={`btn btn-lime btn-sm ${styles.lineupFrontPrimary}`}>Build lineup <ArrowRight size={14} aria-hidden /></span>
         ) : (
           <span className={styles.lineupFrontAction}>
-            <span className={styles.lineupFrontActionLabel}>{action}</span>
+            {action}
             <ArrowRight size={14} aria-hidden />
           </span>
         )}
@@ -563,11 +567,11 @@ export default function CoachesLineupsPage({
                   </span>
                   <span className={styles.lineupFrontMain}>
                     <span className={styles.lineupFrontTitle}>{gameTitle(g)}</span>
-                    <span className={styles.lineupFrontMeta}>{formatDay(g.startsAt)} · {formatTime(g.startsAt)}</span>
+                    <span className={styles.lineupFrontMeta}>{formatWeekday(g.startsAt)} · {formatTime(g.startsAt)}</span>
                   </span>
                   {ready[g.id] === true && <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Has lineup</span>}
                   <span className={styles.lineupFrontAction}>
-                    <span className={styles.lineupFrontActionLabel}>{applyBusyGameId === g.id ? 'Applying…' : 'Apply'}</span>
+                    {applyBusyGameId === g.id ? 'Applying…' : 'Apply'}
                     <ArrowRight size={14} aria-hidden />
                   </span>
                 </button>
