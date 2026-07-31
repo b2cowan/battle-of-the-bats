@@ -1,6 +1,11 @@
 # Navigation Model — Recommendation & Staged Plan
 
-**Date:** 2026-07-31 · **Status:** PROPOSED — awaiting owner ruling. No code written.
+> **⚠ SUPERSEDED (2026-07-31):** this plan's stages were merged into
+> **`NAV_UNIFICATION_PLAN.md`**, the single execution plan for all navigation work. Do not execute
+> from this document; it remains as audit trail and evidence detail (esp. §Q5's testable assertions,
+> referenced by the unified plan).
+
+**Date:** 2026-07-31 · **Status:** SUPERSEDED by `NAV_UNIFICATION_PLAN.md`. No code written.
 **Companions:** `NAVIGATION_MODEL_FINDINGS.md` (verified evidence) · `NAVIGATION_MODEL_PM_BRIEF.md`
 (plain-language) · mockups artifact (linked in TODO.md).
 **Method:** findings from a 19-agent code verification sweep, then a 27-agent design panel — five
@@ -207,7 +212,7 @@ has three states, and only one of them is a destination worth linking to:
 **The rule: render the org link only when the org either owns the public-site module or has 2+ active
 tournaments.** Otherwise omit it entirely. Both facts are already known where the link would render,
 so this is a condition, not a new lookup. Shipping it unconditionally would put a link on a paid
-customer's event page that either does nothing or lands a parent on a page announcing the club hasn't
+customer's event page that either does nothing or lands a parent on a page announcing the org hasn't
 set up a site — worse than the gap it closes.
 
 **Branding finding (verified 2026-07-31, follow-up question) — it strengthens the rule.** There are
@@ -221,7 +226,7 @@ seeds no theme. Consequences:
   the FieldLogicHQ lime accent — with no org logo and no hero banner**, regardless of how its events
   are branded. It also carries a "FieldLogicHQ" badge above the org's own name.
 - **A red event and a purple event never clash**, because neither is inherited. But the outcome is
-  worse than a clash: the page tying a paying club's events together is the *least* theirs, and it's
+  worse than a clash: the page tying a paying org's events together is the *least* theirs, and it's
   the page Stage 2 would point every event at. Sending a visitor from a fully-branded event to an
   unbranded platform-coloured page is a worse trip than no link.
 - The event cards on that page are also **not tinted per event**, so two differently-branded events
@@ -237,8 +242,8 @@ bleed in. That is the ratified precedence rule, stated in code: *"never the org/
 tournament's own choice on paid tiers, forced dark on free); the **org layout sets none at all**, and
 **org-level branding has no colour-mode setting** (org settings covers preset / primary / accent /
 font / card style / logo / hero banner — no light-dark). So **every org page is permanently dark, on
-every tier, including League and Club who can otherwise brand it.** A club can ship a *light*
-tournament page and then have the link up to their own club page hard-flip to dark. That is a second
+every tier, including League and Club who can otherwise brand it.** A League/Club customer can ship a
+*light* tournament page and then have the link up to their own org page hard-flip to dark. That is a second
 brand break stacked on the colour one, and it is worth naming in the same `/design` + `/strategy`
 conversation.
 
@@ -250,16 +255,24 @@ to the org-follow predicate so a searchable org and a followable org are the sam
 who follow an org also get a card on Home linking there.
 
 **This creates a dead end the Stage 2 rule does not cover.** Search returns eligible orgs *regardless
-of how many active tournaments they have* — so a fan can search a club by name and land on the
+of how many active tournaments they have* — so a fan can search an organization by name and land on the
 redirect (1 event), the selector (2+), **or the "hasn't set up their public site yet" placeholder
 (0)**. The conditional link rule governs only the event→org link. **Search needs its own answer**, and
 the cheapest honest one is to give the empty state something real to say rather than to hide the org
-from search — a club with no live events still has a name, a crest (if they could set one), and past
+from search — an organization with no live events still has a name and past
 results. Route with the placeholder copy to `/marketing`.
 
-**Routing:** whether the $39 tier should be able to brand its own address is a **packaging** question
-for `/strategy` + `/marketing` — a club can brand every event but not the page that lists them. Do not
-settle it inside this navigation plan. Two cheap fixes are safe either way, whenever that page is next
+**DECIDED 2026-07-31 (owner; logged in `BUSINESS_DECISIONS.md`): org-level branding stays a
+League/Club benefit — Tournament and Tournament Plus do not get it.** A tournament organization sells
+events, and the event is the branded unit; an org-level identity is what a league or club buys,
+because they have standing programs that persist between events. So the platform-coloured org page is
+correct-by-design on these tiers, not a gap. **This makes the conditional link rule below more
+important, not less** — if that page can never be theirs, there is even less reason to send a visitor
+to it from a fully-branded event page.
+
+**Vocabulary (binding):** there is **no "club" at the Tournament tiers.** A Tournament-Plus customer
+is a **tournament organization** running more than one tournament. "Club" is a tier name; using it
+generically for any paying org is wrong. Corrected throughout this doc. Two cheap fixes are safe either way, whenever that page is next
 open: tint each event card with its own event colour, and add the "Home" link. The placeholder copy
 ("hasn't set up their public site yet", under a platform badge, on a paying customer's address) goes to
 `/marketing` with it.
