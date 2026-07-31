@@ -136,7 +136,13 @@ P1 #1 (Chat vs Announcements), #2 (Chat's honest empty state), #4 (mobile notifi
 collision is gone — but note the concurrent Coach Onboarding Quiet Mode stream is also editing empty
 states and page headers; check its state before starting #2 and #17.
 
-**C · Schedule intelligence** — *medium; UNBLOCKED 2026-07-29 (Batch 4 landed)*
+**C · Schedule intelligence** — *medium; UNBLOCKED* — **handoff prompt ready:
+`COACH_PORTAL_CHUNK_C_SCHEDULE_INTELLIGENCE_BUILD_PROMPT.md` — run in a FRESH chat (owner-picked
+next build 2026-07-30). ⚠ Owner-mandated gate: plan + PM brief + approved mockups BEFORE any
+code.** It carries verified ground truth (the recurrence form stamps ONE opponent across a whole
+series; the recurring-edit scope chooser exists; mirrored-event landmines; the H2 importer
+contract; the Chunk I anchor rules the game-day enrichment must live inside). *(original entry
+below)*
 P1 #6 (weekly recurrence locks one opponent — currently *more* clicks than not using it) + #7
 (schedule import) + #9 (lineup touch targets) + the remainder of wow #2 (arm-care warning and richer
 chips on the game-day card — its *downgrade* half shipped in Batch 4). ⚠ Recurrence and import both

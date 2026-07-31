@@ -81,8 +81,8 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to open tryouts and review applicants',
       summary: 'Turn on the public tryout form, process applications, and close registration when evaluations are done.',
-      keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline', 'consent', 'compliance'],
-      searchText: 'open tryouts review applicants public tryout form registration pending review extend offer accept decline close registration add applicant offer extended consent guardian consent privacy data collection PIPEDA CASL compliance consent column consent record export',
+      keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline', 'consent', 'compliance', 'email families', 'family emails'],
+      searchText: 'open tryouts review applicants public tryout form registration pending review extend offer accept decline close registration add applicant offer extended consent guardian consent privacy data collection PIPEDA CASL compliance consent column consent record export email families my decisions switch off by default record only no email sent welcome email release note',
       content: (
         <>
           <p>Tryout registration belongs to a specific team program year.</p>
@@ -90,11 +90,12 @@ const repTeamsHelp: HelpPageContent = {
             <li>Open the team and select the correct program year, then go to <strong>Tryouts</strong>.</li>
             <li>Turn on <strong>Open Registration</strong> so families can apply from your org&apos;s public page.</li>
             <li>Review incoming applicants in <strong>Pending Review</strong>.</li>
-            <li>Use <strong>Extend Offer</strong> to invite a player — the guardian gets a club-branded email with no-login <strong>Accept/Decline</strong> buttons (good for 7 days). The applicant panel then shows where the family stands: <em>awaiting response</em>, <em>family accepted</em>, <em>declined</em>, or <em>expired</em>. A family&apos;s response is recorded but never rosters the player on its own — you still confirm.</li>
-            <li>Use <strong>Accept</strong> once the player is confirmed (typically after the family accepts) — this opens a short drawer that adds them to the roster (and, optionally, sets up their fees) in one step, and makes them visible to the coach. <strong>Decline</strong> sends a warm release note; <strong>Waitlist</strong> sends a waitlist note.</li>
+            <li><strong>Decide how families hear from you.</strong> Out of the box, decisions are <strong>only recorded</strong> — no emails go anywhere, and you deliver the news your way. Flip <strong>Email families my decisions</strong> (above the applicant tabs) and each decision emails the family for you.</li>
+            <li>Use <strong>Extend Offer</strong> to invite a player — with emails on, the guardian gets a club-branded email with no-login <strong>Accept/Decline</strong> buttons (good for 7 days), and the applicant panel shows where the family stands: <em>awaiting response</em>, <em>family accepted</em>, <em>declined</em>, or <em>expired</em>. A family&apos;s response is recorded but never rosters the player on its own — you still confirm.</li>
+            <li>Use <strong>Accept</strong> once the player is confirmed (typically after the family accepts) — this opens a short drawer that adds them to the roster (and, optionally, sets up their fees) in one step, and makes them visible to the coach. With emails on, <strong>Decline</strong> sends a warm release note (it asks you to confirm first — an email can&apos;t be unsent), <strong>Waitlist</strong> sends a waitlist note, and Accept sends the welcome email.</li>
             <li>Close registration when tryouts finish so the public form goes offline.</li>
           </ol>
-          <p>The applicant list shows a <strong>Consent</strong> column: when a family submits the public form they confirm consent to data collection and email contact, and the date is captured for your records. Include it in the <strong>applicant export</strong> when you need a documented consent record.</p>
+          <p>The applicant list shows a <strong>Consent</strong> column: when a family submits the public form they confirm consent to data collection and that they&apos;re the guardian of an eligible player, and the date is captured for your records. A separate <strong>optional</strong> box covers club news and future-season emails — status emails about their own application (offers, waitlist, roster updates) are sent regardless, as the form tells them plainly. The <strong>applicant export</strong> includes both the consent record and the news-email answer when you need documentation.</p>
           <p>If an applicant registered outside the form, use <strong>Add Applicant</strong> so the decision history stays with the program year — note that manually added applicants won&apos;t carry a form consent record.</p>
         </>
       ),
@@ -102,12 +103,13 @@ const repTeamsHelp: HelpPageContent = {
         {
           id: 'faq-tryout-consent',
           question: 'Do families consent to us collecting their information?',
-          answerText: 'Yes. The public tryout form requires the parent or guardian to confirm consent before they can submit — to data collection, to email contact, and that they are the guardian and the player is eligible to try out. The Tryouts list shows a Consent column with the date it was given, and you can include the consent record in the applicant export when you need it for compliance. Applicants you enter manually with Add Applicant do not carry a form consent record.',
-          keywords: ['consent', 'privacy', 'PIPEDA', 'CASL', 'compliance', 'guardian consent', 'data collection', 'consent record'],
+          answerText: 'Yes. The public tryout form requires the parent or guardian to confirm two things before they can submit: consent to data collection, and that they are the guardian and the player is eligible to try out. Emails about club news and future seasons are a separate OPTIONAL box, unchecked by default — Canada\'s anti-spam rules (CASL) treat that as marketing consent, and it is never a condition of applying. Status emails about their own application (offer, waitlist, decline, welcome) are transactional and are sent regardless — the form says so plainly. The Tryouts list shows a Consent column with the date, and the applicant export includes the consent record plus the news-email answer. Applicants you enter manually with Add Applicant do not carry a form consent record.',
+          keywords: ['consent', 'privacy', 'PIPEDA', 'CASL', 'compliance', 'guardian consent', 'data collection', 'consent record', 'marketing consent', 'news email', 'optional email', 'anti-spam'],
           answer: (
             <>
-              <p>Yes. The public tryout form requires the parent or guardian to confirm consent before they can submit — to data collection, to email contact, and that they are the guardian and the player is eligible to try out.</p>
-              <p>The <strong>Tryouts</strong> list shows a <strong>Consent</strong> column with the date it was given, and you can include the consent record in the <strong>applicant export</strong> when you need it for compliance. Applicants you enter manually with <strong>Add Applicant</strong> won&apos;t carry a form consent record.</p>
+              <p>Yes. The public tryout form requires the parent or guardian to confirm <strong>two</strong> things before they can submit: consent to data collection, and that they&apos;re the guardian and the player is eligible to try out.</p>
+              <p>Emails about <strong>club news and future seasons</strong> are a separate <strong>optional</strong> box, unchecked by default — Canada&apos;s anti-spam rules (CASL) treat that as marketing consent, and it&apos;s never a condition of applying. Status emails about their own application (offer, waitlist, decline, welcome) are transactional and are sent regardless — the form says so plainly.</p>
+              <p>The <strong>Tryouts</strong> list shows a <strong>Consent</strong> column with the date, and the <strong>applicant export</strong> includes the consent record plus the news-email answer. Applicants you enter manually with <strong>Add Applicant</strong> won&apos;t carry a form consent record.</p>
             </>
           ),
         },

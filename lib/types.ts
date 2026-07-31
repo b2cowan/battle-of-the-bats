@@ -1119,8 +1119,11 @@ export interface RepTryoutRegistration {
   guardianPhone: string | null;
   status: RepTryoutRegistrationStatus;
   adminNotes: string | null;
-  // Consent capture (PIPEDA/CASL), Phase 1.1. All three are required by the app to submit, so a
-  // non-null consentAt means all three were ticked. NULL on pre-gate rows = no consent on record.
+  // Consent capture (PIPEDA/CASL), Phase 1.1. Since 2026-07-30 (CASL unbundling, owner-decided):
+  // data-collection + eligibility are REQUIRED to submit — a non-null consentAt means those two
+  // were ticked. consentEmailComms is OPTIONAL genuine MARKETING consent (club news / future
+  // seasons); tryout STATUS emails are transactional and never gated on it. Rows consented
+  // before the unbundling have all three true. NULL consentAt on pre-gate rows = no record.
   consentDataCollection: boolean | null;
   consentEmailComms: boolean | null;
   consentEligibility: boolean | null;

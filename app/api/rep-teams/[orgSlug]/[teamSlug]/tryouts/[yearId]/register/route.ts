@@ -74,10 +74,14 @@ export const POST = withObservability(async (req: Request,
   // Consent gate (PIPEDA/CASL): all three must be explicitly true. We do NOT trust a client-sent
   // timestamp/IP — those are stamped server-side below.
   const consentDataCollection = body.consentDataCollection === true;
+  // OPTIONAL since 2026-07-30 (CASL unbundling, owner-decided): this is genuine MARKETING
+  // consent — club news and future-season announcements. Tryout STATUS emails (offer, waitlist,
+  // release, welcome) are transactional updates about the family's own application and are
+  // never gated on it; making it a submit condition was the pattern CASL frowns on.
   const consentEmailComms     = body.consentEmailComms === true;
   const consentEligibility    = body.consentEligibility === true;
-  if (!consentDataCollection || !consentEmailComms || !consentEligibility) {
-    errors.consent = 'Please confirm the three boxes above before submitting.';
+  if (!consentDataCollection || !consentEligibility) {
+    errors.consent = 'Please confirm the two boxes above before submitting.';
   }
 
   if (Object.keys(errors).length > 0) {

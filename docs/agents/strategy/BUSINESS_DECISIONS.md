@@ -8,6 +8,20 @@
 
 ---
 
+### 2026-07-30 — Tryout registration: marketing-email consent UNBUNDLED from applying (CASL)
+**Status:** Decided (owner accepted the recommendation 2026-07-30 — "go ahead with your recommendations"; built the same day)
+**Decision:** The public tryout registration form no longer makes email consent a condition of applying. **Required to submit (two boxes):** consent to data collection + guardian/eligibility confirmation. **Email consent is a separate OPTIONAL box, unchecked by default**, reframed as genuine marketing consent (org news + future-season announcements; wording via `/marketing` if it ever changes). **Tryout STATUS emails — offer, waitlist, release note, welcome — are transactional updates about the family's own application: sent regardless of the box (subject to the D-E9 decision-email switch on the org/coach side), and the form states this plainly.** The applicant export gained a **News-Email Consent** column so the record is auditable; rows consented before the unbundling carry all three confirmations as true.
+**Rationale:** CASL disfavors making marketing consent a condition of a service that doesn't require it, and treats application-status email as transactional. The forced bundle was simultaneously a compliance risk, an unfriendly ask of families, and a polluted consent record (nobody could tell a genuine opt-in from a coerced one). Trade-off accepted: the marketing list only grows from real opt-ins — smaller, but usable.
+**Affects:** the public tryout form, the applicant export/consent record, and every FUTURE marketing/news send to tryout families. **No pricing, plan, or gate impact — `PLAN_PRICING_FACTS.md` untouched.**
+**Handoff:**
+HANDOFF → counsel (via the already-open facilitated-payments session) — confirm the transactional/marketing split and the two required confirmations as framed; a cheap add-on question, not a blocker (the change moves in the safer direction either way).
+HANDOFF → `/billing` — none.
+HANDOFF → `/marketing` — none now; any future org-news/announcement feature that emails tryout families **must gate on the stored news-consent flag** (nothing reads it today, which is correct while no marketing sends exist — the first one to ship inherits this as a binding requirement).
+HANDOFF → `/plan` — none; built 2026-07-30 (form + submit validation + export column + admin/coach help guides trued).
+**Relates to:** D-E9 (decision emails opt-in everywhere tryout decisions are made — `memory/design_decisions.md` 2026-07-30 Chunk E entry + same-day admin amendment), the product-side sibling of this compliance-side ruling.
+
+---
+
 ### 2026-07-30 — Paid-tier public tournament pages carry a subtle "Built on FieldLogicHQ" credit
 **Status:** Decided (ratified by owner 2026-07-30 in the Desktop Public UX Phase 1 conversation — "built for fieldlogichq is good but should be subtle")
 **Decision:** Public tournament pages on **paid org tiers** (Tournament Plus, League Plus, Club incl. Club · Association) — which today carry **zero** FieldLogicHQ presence — get a **quiet, text-only credit** in the page-footer region: "Built on FieldLogicHQ" (final wording via `/marketing`), at most a quiet link onward. **Binding constraint: SUBTLE** — no banner, no badge, no CTA block, small type, rendered in the org's own theme tokens so it defers to the org's branding. **Free-plan events are unchanged:** they keep the existing richer Powered-by badge + dismissible acquisition banner. The plain org home page (no tournament in URL) is in scope for the same treatment.

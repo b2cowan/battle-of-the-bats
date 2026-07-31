@@ -61,9 +61,11 @@ export default function TryoutRegisterForm({
   function setConsentField(field: 'data' | 'email' | 'eligibility', value: boolean) {
     const next = { ...consent, [field]: value };
     setConsent(next);
-    // Clear the consent error only once all three are actually confirmed — un-ticking a box
-    // should not dismiss the "please confirm" message.
-    if (next.data && next.email && next.eligibility) clearFieldError('consent');
+    // Clear the consent error only once both REQUIRED boxes are confirmed — un-ticking a box
+    // should not dismiss the "please confirm" message. The email box is optional MARKETING
+    // consent (CASL unbundling, 2026-07-30): status emails about this application are
+    // transactional and never depend on it.
+    if (next.data && next.eligibility) clearFieldError('consent');
   }
 
   function clearFieldError(field: string) {
@@ -88,8 +90,8 @@ export default function TryoutRegisterForm({
     setGlobalError(null);
     setErrors({});
 
-    if (!consent.data || !consent.email || !consent.eligibility) {
-      setErrors({ consent: 'Please confirm the three boxes above before submitting.' });
+    if (!consent.data || !consent.eligibility) {
+      setErrors({ consent: 'Please confirm the two boxes above before submitting.' });
       setSubmitting(false);
       return;
     }
@@ -323,18 +325,6 @@ export default function TryoutRegisterForm({
             <input
               type="checkbox"
               className={styles.consentCheckbox}
-              checked={consent.email}
-              onChange={e => setConsentField('email', e.target.checked)}
-            />
-            <span className={styles.consentText}>
-              I agree to receive emails from {orgName} about this tryout and the team.
-            </span>
-          </label>
-
-          <label className={styles.consentItem}>
-            <input
-              type="checkbox"
-              className={styles.consentCheckbox}
               checked={consent.eligibility}
               onChange={e => setConsentField('eligibility', e.target.checked)}
             />
@@ -344,6 +334,27 @@ export default function TryoutRegisterForm({
           </label>
         </div>
         {errors.consent && <p className={styles.errorMsg} style={{ marginTop: '0.6rem' }}>{errors.consent}</p>}
+
+        {/* Status emails about THIS application are transactional — they were never something a
+            family should have to "consent" to in order to apply (CASL unbundling, 2026-07-30). */}
+        <p className={styles.consentText} style={{ display: 'block', margin: '0.8rem 0 0' }}>
+          We&apos;ll email you about this application either way — offers, waitlist and roster updates.
+        </p>
+
+        {/* Genuine MARKETING consent, optional and unchecked — club news, not application status. */}
+        <div className={styles.consentList} style={{ marginTop: '0.8rem' }}>
+          <label className={styles.consentItem}>
+            <input
+              type="checkbox"
+              className={styles.consentCheckbox}
+              checked={consent.email}
+              onChange={e => setConsentField('email', e.target.checked)}
+            />
+            <span className={styles.consentText}>
+              <strong>Optional:</strong> send me {orgName} news and future-season announcements by email.
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* ── Submit ───────────────────────────────────────────────────────── */}

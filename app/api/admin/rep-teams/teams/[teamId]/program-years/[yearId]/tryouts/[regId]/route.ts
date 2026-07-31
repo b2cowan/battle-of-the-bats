@@ -95,6 +95,10 @@ export const PATCH = withObservability(async (req: Request,
 
   const body = await req.json();
   const contactEmail = ctx!.org.contactEmail ?? undefined;
+  // D-E9 (extended to the admin surface, owner-directed 2026-07-30): family emails are OPT-IN
+  // everywhere decisions are made. The flag rides each status write from the visible switch —
+  // the server defaults to record-only, so the failure direction is always "no email".
+  const notifyFamily = body.notifyFamily === true;
 
   // Notes-only update (no status change)
   if (body.status === undefined && body.adminNotes !== undefined) {
@@ -139,19 +143,23 @@ export const PATCH = withObservability(async (req: Request,
 
     try {
       const { registration, player } = await acceptTryoutAndAddToRoster(reg.id, { roster, dues });
-      sendTransactionalEmail({
-        key: 'tryout_offer_accepted',
-        to: reg.guardianEmail,
-        vars: {
-          guardianFirstName: emailParams.guardianFirstName,
-          playerFirstName: emailParams.playerFirstName,
-          playerLastName: emailParams.playerLastName,
-          teamName: emailParams.teamName,
-          yearName: emailParams.yearName,
-        },
-        defaultSubject: `${team.name} — Welcome to the Team!`,
-        defaultHtml: tryoutAcceptedHtml(emailParams),
-      }).catch(e => console.error('[email] tryout accepted:', e));
+      // Welcome email follows the same opt-in switch as every other decision email (D-E9),
+      // and is AWAITED — no post-response work guarantee on this platform (Amplify gotcha).
+      if (notifyFamily && reg.guardianEmail?.trim()) {
+        await sendTransactionalEmail({
+          key: 'tryout_offer_accepted',
+          to: reg.guardianEmail,
+          vars: {
+            guardianFirstName: emailParams.guardianFirstName,
+            playerFirstName: emailParams.playerFirstName,
+            playerLastName: emailParams.playerLastName,
+            teamName: emailParams.teamName,
+            yearName: emailParams.yearName,
+          },
+          defaultSubject: `${team.name} — Welcome to the Team!`,
+          defaultHtml: tryoutAcceptedHtml(emailParams),
+        }).catch(e => console.error('[email] tryout accepted:', e));
+      }
       return NextResponse.json({ registration, player });
     } catch (e) {
       if (e instanceof TryoutAcceptError) {
@@ -169,12 +177,12 @@ export const PATCH = withObservability(async (req: Request,
   );
 
   // Family-facing side effects (offer link + branded offer/waitlist/release emails) — same shared
-  // path as the coach decision board (Phase 2B.5). The ADMIN surface always notifies; on the coach
-  // board emails are opt-in per D-E9 — a deliberate, flagged scope line (Chunk E plan §4).
+  // path as the coach decision board (Phase 2B.5), and since 2026-07-30 the same OPT-IN rule
+  // (D-E9 extended): emails fire only when the request's switch says so.
   await applyTryoutDecisionSideEffects({
     reg: registration,
     newStatus,
-    notifyFamily: true,
+    notifyFamily,
     teamName: team.name,
     yearName: programYear.name,
     orgName: ctx!.org.name,

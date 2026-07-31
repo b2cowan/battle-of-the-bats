@@ -380,10 +380,10 @@ line + a cheap count; no rollover mechanics change.
 - **Fold the coverage report into the board** (retire the second door entirely) — the heavier
   alternative to WI-5's copy fix.
 - **Generic "resend notification"** on any decided candidate (today only offers resend).
-- **The org-admin tryout decision surface keeps its current always-email behaviour** — D-E9 is a
-  coach-portal ruling this chunk; aligning the admin side (and whether org teams need a
-  stored-per-tryout setting both surfaces share) is a follow-up decision, flagged here so the
-  inconsistency for org-run tryouts is a known choice, not an oversight.
+- ~~The org-admin tryout decision surface keeps its current always-email behaviour~~ →
+  **RESOLVED 2026-07-30 (owner-directed, built same day as the E commit):** the admin applicant
+  surface now follows the same D-E9 opt-in rule — its own switch (default OFF, shared device key
+  with the coach board), decline-confirm, truthful toasts, welcome-email behind the switch.
 - **Welcome email naming the fees** attached at accept — template work, fast-follow candidate.
 - **Coach-side "mark withdrawn"** for a family that calls to pull out.
 - **Rubric field polish**: weight-0 "won't count" badge, duplicate-label warning, weight-total
