@@ -21,6 +21,11 @@ import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { syncTournamentGameMirrorSafely } from '@/lib/rep-tournament-game-mirror';
+import {
+  generateWeeklyOccurrences, reviewRecurrenceOccurrences,
+  type RecurrenceOccurrenceInput,
+} from '@/lib/coach-recurrence';
+import { EVENT_NAME_PREFIX } from '@/lib/coach-schedule-vocab';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -45,30 +50,6 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 }
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-function generateOccurrences(
-  startDate: string,
-  endDate: string,
-  dayOfWeek: number,
-  startTime: string,
-  endTime: string | null,
-): { startsAt: string; endsAt: string | null }[] {
-  const result: { startsAt: string; endsAt: string | null }[] = [];
-  const end = new Date(endDate + 'T23:59:59');
-  const current = new Date(startDate + 'T00:00:00');
-  const daysUntil = (dayOfWeek - current.getDay() + 7) % 7;
-  current.setDate(current.getDate() + daysUntil);
-
-  while (current <= end) {
-    const dateStr = current.toISOString().slice(0, 10);
-    result.push({
-      startsAt: `${dateStr}T${startTime}:00`,
-      endsAt: endTime ? `${dateStr}T${endTime}:00` : null,
-    });
-    current.setDate(current.getDate() + 7);
-  }
-  return result;
-}
 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
@@ -168,6 +149,8 @@ export const POST = withObservability(async (req: Request,
   if (!VALID_TYPES.includes(eventType)) {
     return NextResponse.json({ error: 'Invalid eventType' }, { status: 400 });
   }
+  // Narrowed once, after validation — `eventType` comes off the request body as `any`.
+  const type: RepEventType = eventType;
 
   // Event types that may recur weekly (practices, league games, generic team events). Scrimmages
   // and tournament games stay one-off (tournament-bound / ad hoc).
@@ -184,8 +167,24 @@ export const POST = withObservability(async (req: Request,
       return NextResponse.json({ error: `dayOfWeek must be 0–6 (${DAYS.join(', ')})` }, { status: 400 });
     }
 
-    const occurrences = generateOccurrences(startDate, endDate, Number(dayOfWeek), startTime, endTime);
-    if (!occurrences.length) {
+    const rule = { dayOfWeek: Number(dayOfWeek), startDate, endDate };
+    // Chunk C (P1 #6): the coach reviews the occurrences before any exist, so the client sends the
+    // rows it actually showed them — each with its own opponent. Regenerate from the SAME rule and
+    // reconcile: a submitted date this rule cannot produce fails the whole request (never written,
+    // never quietly dropped), and a generated date the client omitted is a deliberate removal.
+    // A caller that sends no `occurrences` at all gets the full generated series, one row per date.
+    const submitted: RecurrenceOccurrenceInput[] = Array.isArray(body.occurrences)
+      ? body.occurrences
+      : generateWeeklyOccurrences(rule).map(date => ({ date, opponent, homeAway }));
+    const reviewed = reviewRecurrenceOccurrences(rule, submitted);
+
+    if (reviewed.unknown.length) {
+      return NextResponse.json(
+        { error: `These dates aren’t part of this repeat: ${reviewed.unknown.join(', ')}. Reopen the form and try again.` },
+        { status: 400 },
+      );
+    }
+    if (!reviewed.accepted.length) {
       return NextResponse.json({ error: 'No occurrences generated in the given date range' }, { status: 400 });
     }
 
@@ -194,28 +193,35 @@ export const POST = withObservability(async (req: Request,
     // and deletes resolve the whole series.
     const anchorId = randomUUID();
     const isGame = eventType === 'scrimmage' || eventType === 'league_game' || eventType === 'tournament_game';
-    const rows = occurrences.map((occ, i) => ({
-      ...(i === 0 ? { id: anchorId } : {}),
-      programYearId: programYear.id,
-      teamId: team.id,
-      orgId: ctx!.org.id,
-      eventType,
-      name: name.trim(),
-      description: description?.trim() || null,
-      startsAt: occ.startsAt,
-      endsAt: occ.endsAt,
-      location: location?.trim() || null,
-      locationAddress: locationAddress?.trim() || null,
-      arrivalTime: arrivalTime?.trim() || null,
-      fieldNumber: fieldNumber?.trim() || null,
-      uniform: isGame ? (uniform?.trim() || null) : null,
-      resources: resources.length ? resources : undefined,
-      opponent: isGame ? (opponent?.trim() || null) : null,
-      homeAway: isGame ? (homeAway || null) : null,
-      isRecurring: true,
-      recurrenceRule,
-      recurrenceParentId: i === 0 ? null : anchorId,
-    }));
+    const rows = reviewed.accepted.map((occ, i) => {
+      // Per-date opponent (Chunk C) with the single-opponent body value as the fallback, so a
+      // caller that never opened the preview still behaves exactly as it did before.
+      const rowOpponent = occ.opponent ?? (opponent?.trim() || null);
+      return {
+        ...(i === 0 ? { id: anchorId } : {}),
+        programYearId: programYear.id,
+        teamId: team.id,
+        orgId: ctx!.org.id,
+        eventType,
+        // A game names itself from ITS OWN opponent, so a series of twelve different opponents
+        // reads as twelve different games rather than twelve copies of the first one's title.
+        name: isGame && rowOpponent ? `${EVENT_NAME_PREFIX[type]} vs ${rowOpponent}` : name.trim(),
+        description: description?.trim() || null,
+        startsAt: `${occ.date}T${startTime}`,
+        endsAt: endTime ? `${occ.date}T${endTime}` : null,
+        location: location?.trim() || null,
+        locationAddress: locationAddress?.trim() || null,
+        arrivalTime: arrivalTime?.trim() || null,
+        fieldNumber: fieldNumber?.trim() || null,
+        uniform: isGame ? (uniform?.trim() || null) : null,
+        resources: resources.length ? resources : undefined,
+        opponent: isGame ? rowOpponent : null,
+        homeAway: isGame ? (occ.homeAway ?? homeAway ?? null) : null,
+        isRecurring: true,
+        recurrenceRule,
+        recurrenceParentId: i === 0 ? null : anchorId,
+      };
+    });
 
     // Insert the anchor FIRST, then the children that reference it — so the self-referencing
     // recurrence_parent_id FK is always satisfied (never relies on intra-statement FK timing).

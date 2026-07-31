@@ -107,6 +107,69 @@ export function utcToZonedInputs(
   return { date: `${get('year')}-${get('month')}-${get('day')}`, time: `${hour}:${get('minute')}` };
 }
 
+/** A naive wall-clock timestamp — `YYYY-MM-DDTHH:mm`, optionally with seconds and fractional
+ *  seconds, and with NO zone suffix. Fractional seconds are tolerated so a value that has been
+ *  through a `Date`-shaped round trip is still recognised as naive rather than falling through
+ *  the passthrough and being resolved as UTC. */
+const NAIVE_TIMESTAMP = /^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?$/;
+
+/**
+ * Resolve a schedule write's timestamp to a true UTC instant.
+ *
+ * A write may carry EITHER a naive wall-clock string in the ORG's own clock
+ * (`2026-09-08T18:00` — what every `datetime-local` input, the recurrence generator, the
+ * schedule importer and the tournament-game mirror all produce) OR a value that already
+ * names its zone (`…Z`, `…+00:00`). **Naive is converted; anything already carrying a zone
+ * passes through untouched**, so a caller that has already resolved an instant — or a value
+ * read back out of Postgres and written straight back — can never be double-converted.
+ *
+ * This exists because `rep_team_events.starts_at` is `timestamptz`: handing Postgres a naive
+ * literal makes it resolve in the SESSION zone (UTC on Supabase), so a coach's 6:00 PM was
+ * stored as 18:00Z and rendered back 2:00 PM to them. That is the J3-047 bug class this module
+ * was written for, reaching one more surface — see the header. House League already converts on
+ * every write; the coach schedule never adopted it.
+ *
+ * @returns the UTC ISO instant, the input unchanged when it already names a zone, or null.
+ */
+export function wallClockStringToUtc(
+  value: string | null | undefined,
+  timeZone: string = ORG_TIME_ZONE,
+): string | null {
+  if (!value) return null;
+  const naive = NAIVE_TIMESTAMP.exec(value.trim());
+  if (!naive) return value; // already zoned (…Z / ±HH:MM), or a shape we must not reinterpret
+  return zonedWallClockToUtc(naive[1], naive[2], timeZone) ?? value;
+}
+
+/**
+ * Format a stored instant as a wall clock in the ORG's timezone — never the reader's.
+ *
+ * A game starts when it starts. A coach travelling, or a grandparent watching from another
+ * province, must see the game's LOCAL start time, so every schedule surface formats through
+ * here rather than a bare `new Date(iso).toLocaleTimeString()` (which silently renders in
+ * whatever zone the device happens to be in).
+ */
+export function formatInOrgZone(
+  iso: string | null | undefined,
+  options: Intl.DateTimeFormatOptions,
+  locale = 'en-CA',
+  timeZone: string = ORG_TIME_ZONE,
+): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat(locale, { timeZone, ...options }).format(d);
+}
+
+/**
+ * The calendar day a stored instant falls on **in the org's timezone**, as `YYYY-MM-DD`.
+ * Slicing the raw string instead (`iso.slice(0, 10)`) reads the UTC day, which is a different
+ * date for every event after 8 PM Eastern.
+ */
+export function orgDayKey(iso: string | null | undefined): string {
+  return utcToZonedInputs(iso).date;
+}
+
 /**
  * "Today" as a `YYYY-MM-DD` string in the tournament timezone (default
  * `America/Toronto`), NOT the server/browser UTC date. Fan surfaces must use this

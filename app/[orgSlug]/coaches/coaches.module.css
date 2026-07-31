@@ -275,7 +275,23 @@
 
 @media (max-width: 900px) {
   .coachesShell { flex-direction: column; }
-  .coachesMain { padding: 1rem 1rem 6rem; }
+  /* The coaches shell nests its own <main> inside the app layout's <main>, and BOTH were
+     reserving for the 72px fixed bottom nav: the outer one via `main { padding-bottom:
+     var(--bottom-nav-height) }` in globals.css (correct — that IS the nav's height), and this
+     rule via a further 6rem on top. Every coaches page therefore ended in a band of dead space.
+
+     The outer reservation already clears the nav, so this value is only page breathing room. It
+     is set by arithmetic rather than taste, because the portal's one page-level sticky footer
+     (`.attendanceFooter`, on the lineup builder) carries `margin-bottom: -1.5rem` and so pulls
+     itself 24px up out of this padding. Measured at 361px with the page scrolled fully down:
+
+         gap under the lineup's action bar  =  padding − 24px
+         gap under an ordinary page's last card  =  padding
+
+     2rem gives the lineup an 8px breath above the nav and ordinary pages 32px. Below 1.5rem the
+     action bar slides under the nav. (`.stickyActionBar` has no consumers, and modal footers
+     scroll inside their own overlay, so neither constrains this.) */
+  .coachesMain { padding: 1rem 1rem 2rem; }
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
@@ -3583,11 +3599,17 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   color: var(--home-olive);
 }
 
-/* Mobile: bump the dense attendance controls to ≥36px so they clear the
-   touch-target floor (desktop keeps the compact 34/30px density). */
+/* Mobile: the dense attendance controls reach the portal's ONE tap floor (desktop keeps the
+   compact 34/30px density).
+
+   Chunk C (P1 #9) settled a disagreement rather than just resizing a grid: this block used to
+   say 36px and call it "the touch-target floor", while `--tap-min` (44px) governed the tryout
+   check-in rows, the Overview's primary action and every card action cell. Two standards in one
+   screen family is how the lineup finding came back from two independent reviewers — so there is
+   now one number, and it is the one the rest of the portal already used. */
 @media (max-width: 640px) {
-  .attendanceStatusBtn { width: 36px; height: 36px; }
-  .attendanceNoteToggle { width: 36px; height: 36px; }
+  .attendanceStatusBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  .attendanceNoteToggle { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
 }
 
 /* Sticky action bar pinned to the bottom of the slide-over, so Save/Clear/PDF stay
@@ -3682,6 +3704,11 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .footerIconBtn:hover:not(:disabled) { background: var(--home-olive-soft, rgba(255,255,255,0.1)); color: var(--white-90); }
 .footerIconBtn:disabled { opacity: 0.3; cursor: default; }
+/* On a phone these are Undo / Redo / Print — the bar's whole reason to exist — so they answer to
+   the same 44px floor the rest of the portal does (P1 #9). Desktop keeps the compact 40px. */
+@media (max-width: 900px) {
+  .footerIconBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+}
 
 /* Auto-save status (replaces the Save button) — quiet "Saving…/Saved" or a retry. */
 .saveStatus {
@@ -3965,6 +3992,14 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   min-width: 680px;
   border-collapse: collapse;
   font-size: 0.78rem;
+
+  /* ONE owner for the pinned lead columns' widths. Every sticky `left` below is derived from
+     these, so narrowing a column can never leave a later one parked at a stale offset — which is
+     exactly what happened when the Bat column shrank and the player cell's offset was a
+     hard-coded rem value passed in from the component. */
+  --lineup-bat-w: 2.2rem;    /* Bat — a double-digit batting order and nothing else */
+  --lineup-start-w: 2.4rem;  /* Start — nine-player ball only */
+  --lineup-player-w: 8rem;   /* Player — capped on phones so the innings keep the rest */
 }
 
 .lineupTable th {
@@ -4065,6 +4100,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   color: var(--white-90);
   padding: 0.25rem 0.35rem;
   font-size: 0.78rem;
+  box-sizing: border-box;
 }
 
 /* One-time-ish scroll affordance above the grid (mobile only) — the lineup is a
@@ -4079,21 +4115,40 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
     font-weight: 600;
   }
   /* Drag-to-reorder is impractical inside a horizontally-scrolling pinned column on
-     touch; the batting order follows the roster (and the hint says so), so hide the
-     grip on mobile — consistent with disabling roster card drag on touch. */
+     touch: a drag and a sideways swipe are indistinguishable at the moment they begin.
+     Chunk C stopped fighting that and MOVED reordering out — the order view is a plain
+     vertical list with nothing competing for the gesture, so press-and-hold drag works
+     there exactly as it does in any phone list. This grid keeps positions only. */
   .lineupGrip { display: none; }
-  /* Sticky lead columns so the batting number + player name stay visible while
-     innings scroll. The Start column is mode-conditional, so the player-cell
-     offset is driven by --lineup-lead (set on the table from lineupMode). */
+  /* The 22px remove ✕ goes with them; removal lives in the order view at full size. */
+  .lineupRemoveBtn { display: none; }
+  /* The per-inning cell reaches the portal's 44px tap floor. `box-sizing: border-box`
+     above makes min-height the FULL box, so this is a real 44 rather than 44 + padding. */
+  .lineupPositionSelect { min-height: var(--tap-min, 44px); width: 64px; }
+  /* A players × innings grid on a 361px screen is a scroller by arithmetic, not by choice — the
+     pinned name column plus one inning already fills two thirds of it, which is why the swipe
+     hint exists. Trimming the inning gutters buys most of a third inning on the first screenful;
+     measured at 361px it goes from ~2.1 to ~2.6. Do not squeeze the name column further chasing
+     a whole third — a lineup you cannot read the names in is not a lineup. */
+  .lineupTable td:not(:first-child):not(.lineupColStart):not(.lineupPlayerCell) { padding: 0.4rem 0.2rem; }
+  .lineupTable th.lineupColInning { padding: 0.45rem 0.2rem; }
+  .lineupTable { --lineup-player-w: 7.5rem; }
+  /* Sticky lead columns so the batting number + player name stay visible while the innings
+     scroll. Every `left` is DERIVED from the width tokens on `.lineupTable`, so the offsets can
+     never drift out of step with the widths — the failure that put the player column on top of
+     two innings when the Bat column was narrowed. */
   .lineupTable th:first-child,
   .lineupTable td:first-child {
     position: sticky;
     left: 0;
     z-index: 2;
     box-sizing: border-box;
-    width: 3.4rem;            /* fits the up/down arrows + a double-digit batting order */
-    min-width: 3.4rem;
-    max-width: 3.4rem;
+    /* Chunk C: was 3.4rem to fit the up/down arrows beside the number. The arrows moved to the
+       order view, so this holds a double-digit batting order and nothing else — and the width
+       it gives back goes to the innings, which is the feature. */
+    width: var(--lineup-bat-w);
+    min-width: var(--lineup-bat-w);
+    max-width: var(--lineup-bat-w);
     background: var(--card-bg);
   }
   /* Prefixed with .lineupTable so the opaque sticky background beats the base
@@ -4101,22 +4156,35 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
      scrolling inning header bleeds through the pinned Player/Start header cells. */
   .lineupTable .lineupColStart {
     position: sticky;
-    left: 3.4rem;
+    left: var(--lineup-bat-w);
     z-index: 2;
     box-sizing: border-box;
-    width: 2.4rem;
-    min-width: 2.4rem;
-    max-width: 2.4rem;
+    width: var(--lineup-start-w);
+    min-width: var(--lineup-start-w);
+    max-width: var(--lineup-start-w);
     background: var(--card-bg);
   }
+  /* The player column starts where the columns before it end. Everyone-bats has no Start
+     column, so the two modes differ by exactly that width — expressed here rather than as a
+     number computed in the component. */
   .lineupTable .lineupColPlayer,
   .lineupTable .lineupPlayerCell {
     position: sticky;
-    left: var(--lineup-lead, 2.8rem);
+    left: var(--lineup-bat-w);
     z-index: 2;
-    min-width: 8rem;
+    box-sizing: border-box;
+    /* Capped, not just floored: the table is 680px wide inside a 360px scroller, and a
+       min-width-only player column absorbs all of the slack — which left barely two innings
+       visible. Long names ellipsis (`.lineupPlayerName`) instead. */
+    width: var(--lineup-player-w);
+    min-width: var(--lineup-player-w);
+    max-width: var(--lineup-player-w);
     background: var(--card-bg);
     box-shadow: 6px 0 8px -6px rgba(0,0,0,0.55);   /* edge cue where the scroll begins */
+  }
+  .lineupTable[data-mode='nine_player'] .lineupColPlayer,
+  .lineupTable[data-mode='nine_player'] .lineupPlayerCell {
+    left: calc(var(--lineup-bat-w) + var(--lineup-start-w));
   }
 }
 
@@ -4364,23 +4432,10 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .lineupAutoWrap { width: 100%; }
   .lineupAutoWrap > button { width: 100%; justify-content: center; }
 
-  /* #7 — mobile reorder arrows */
-  .lineupMoveControls { display: inline-flex; flex-direction: column; gap: 1px; }
-  .lineupMoveBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 18px;
-    height: 18px;
-    background: none;
-    border: none;
-    border-radius: 3px;
-    color: var(--white-45);
-    cursor: pointer;
-    padding: 0;
-  }
-  .lineupMoveBtn:hover:not(:disabled) { background: var(--home-olive-soft, rgba(255,255,255,0.1)); color: var(--white-90); }
-  .lineupMoveBtn:disabled { opacity: 0.25; cursor: default; }
+  /* The 18px in-grid reorder arrows are RETIRED (Chunk C, P1 #9 / D-C10). They were the
+     substitute for a drag that couldn't work inside a horizontally-scrolling grid; the order
+     view restores the real gesture at full size, so a control a third of the tap standard no
+     longer has to exist. `.lineupMoveControls` / `.lineupMoveBtn` are gone with them. */
 }
 
 /* ── Money hub (Plan → Collect → Spend → Review) ─────────────────────────
@@ -4879,3 +4934,246 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   border-color: var(--home-olive, var(--logic-lime));
 }
 .teamSwitcherSelect option { background: var(--home-card, var(--bg-2)); }
+
+/* ── Recurrence preview (Chunk C, P1 #6) ──────────────────────────────────────
+   "Repeat weekly" used to commit blind from a one-line summary that was honest about the dates
+   and silent about the fact that ONE opponent was about to be stamped onto every game. These are
+   the occurrences as rows, before any of them exist — the same shape the importer's preview uses,
+   because a generated series and a pasted file are the same thing: proposals awaiting review. */
+.occList {
+  margin-top: 0.7rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.occHead {
+  padding: 0.55rem 0.7rem;
+  border-bottom: 1px solid var(--border-2);
+  background: var(--home-olive-soft, var(--white-03));
+}
+
+.occCount {
+  margin: 0 0 0.15rem;
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--home-ink, var(--white-90));
+}
+
+.occRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.7rem;
+  border-bottom: 1px solid var(--border-2);
+}
+.occRow:last-child { border-bottom: none; }
+/* A removed date stays visible and reversible — deleting a bye week must not feel like a
+   destructive act the coach can't undo before committing. */
+.occRow[data-removed] { opacity: 0.55; }
+.occRow[data-removed] .occDate { text-decoration: line-through; }
+
+.occDate {
+  flex-shrink: 0;
+  min-width: 5.6rem;
+  font-size: 0.76rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--home-ink-soft, var(--white-65));
+}
+
+.occRow .input { flex: 1; min-width: 0; }
+
+.occPlain { flex: 1; font-size: 0.78rem; color: var(--home-dim, var(--white-45)); }
+
+.occRemoved {
+  flex: 1;
+  font-size: 0.76rem;
+  color: var(--home-dim, var(--white-45));
+}
+
+.occAction {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: none;
+  color: var(--home-dim, var(--white-45));
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.occAction:hover { color: var(--danger); border-color: var(--danger); }
+.occAction:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+
+/* ── The order view (Chunk C, D-C10/D-C11/D-C12) ──────────────────────────────
+   Reordering left the positions grid. The grid scrolls sideways, and a drag is
+   indistinguishable from a horizontal swipe at the moment it begins — which is why drag was
+   disabled on touch and replaced with 18px arrows. A plain vertical list has no competing
+   gesture, so press-and-hold drag is the ordinary phone gesture again and every control here
+   clears the tap floor. Arrows stay for a single nudge and for anyone who can't drag. */
+.orderView { display: flex; flex-direction: column; gap: 0.35rem; }
+
+.orderHint {
+  margin: 0 0 0.3rem;
+  font-size: 0.76rem;
+  color: var(--home-dim, var(--white-45));
+}
+
+.orderRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 56px;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--home-card, var(--white-03));
+  touch-action: manipulation;
+}
+
+.orderNumber {
+  flex-shrink: 0;
+  min-width: 1.6rem;
+  text-align: center;
+  font-size: 0.92rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-90);
+}
+
+.orderName {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--home-ink, var(--white-90));
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.orderMeta {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--home-dim, var(--white-45));
+}
+
+.orderControls { display: flex; align-items: center; gap: 0.15rem; flex-shrink: 0; }
+
+.orderMoveBtn,
+.orderRemoveBtn,
+.orderGrip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  box-sizing: border-box;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--home-dim, var(--white-45));
+  cursor: pointer;
+}
+.orderMoveBtn:hover:not(:disabled),
+.orderGrip:hover { background: var(--home-olive-soft, var(--white-05)); color: var(--white-90); }
+.orderMoveBtn:disabled { opacity: 0.25; cursor: default; }
+.orderRemoveBtn:hover { color: var(--danger); }
+.orderMoveBtn:focus-visible,
+.orderRemoveBtn:focus-visible,
+.orderGrip:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+/* `touch-action: none` is what lets the pointer sensor claim the gesture instead of the page
+   scrolling underneath it — the whole reason drag works here and never worked in the grid. */
+.orderGrip { cursor: grab; touch-action: none; }
+
+/* The cut line only exists where there IS a cut — 9-player ball. Everyone-bats has no bench. */
+.orderCut {
+  margin: 0.5rem 0 0.35rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  background: var(--home-olive-soft, var(--white-03));
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--home-dim, var(--white-45));
+}
+
+/* ── Arm care on the game-day anchor (Chunk C, wow #2 / D-C7) ─────────────────
+   Decision SUPPORT, styled as such: a note the coach reads, not an alert that blocks them.
+   Warning tone, never danger — nothing here is an error, and nothing here is a verdict. */
+.oneArmCare {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-top: 0.55rem;
+  padding: 0.5rem 0.6rem;
+  border: 1px solid var(--warning);
+  border-radius: 8px;
+  background: rgba(var(--warning-rgb), 0.09);
+}
+
+.oneArmCareRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.4rem;
+  margin: 0;
+  font-size: 0.79rem;
+  line-height: 1.45;
+  color: var(--home-ink, var(--white-90));
+}
+.oneArmCareRow > svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--warning); }
+.oneArmCareRow strong { font-weight: 650; }
+
+.oneArmCareDetail {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--home-ink-soft, var(--white-65));
+}
+
+/* What an import just did. A confirmation belongs above the calendar it changed. */
+.importResult {
+  margin: 0 0 0.8rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid var(--success);
+  border-radius: 8px;
+  background: rgba(var(--success-rgb), 0.1);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--home-ink, var(--white-90));
+}
+
+/* ── The lineup builder's docked action bar (Chunk C) ─────────────────────────
+   Undo / Redo / Print / save-status, held above the bottom nav on phones instead of sitting at
+   the end of the page.
+
+   Why this exists: the bar was already marked `position: sticky`, but its containing block ends
+   at exactly the same point it does, so it had ZERO travel and never stuck — measured at four
+   scroll positions on a 12 × 7 grid, it was completely invisible until the page was scrolled to
+   the very bottom. On the portal's most tap-heavy screen that put Undo out of reach at the
+   moment a coach needs it.
+
+   Only the LINEUP BUILDER opts in. The schedule slide-over uses the same base class inside its
+   own scrolling panel, where sticky genuinely works — it is deliberately untouched. */
+@media (max-width: 900px) {
+  .lineupDockedFooter {
+    position: fixed;
+    left: 0;
+    right: 0;
+    /* Sits ON the nav, never over it. `--bottom-nav-height` is the same token the app layout
+       reserves with, so the two can't drift apart. */
+    bottom: var(--bottom-nav-height, 72px);
+    z-index: 250;   /* under the nav (300) — the nav always wins a tap */
+    margin: 0;
+    padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom, 0px) * 0);
+    border-top: 1px solid var(--home-line, rgba(255,255,255,0.08));
+    background: var(--card-bg);
+    box-shadow: 0 -6px 14px -10px rgba(0,0,0,0.5);
+  }
+  /* The grid scrolls clear of the docked bar. Its own height (~56px) plus the page's breathing
+     room — anything less and the last player row hides behind it at the bottom of the scroll. */
+  .lineupDockedPage { padding-bottom: 4.5rem; }
+}

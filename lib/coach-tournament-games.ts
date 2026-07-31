@@ -1,5 +1,6 @@
 import type { RepTeamEvent } from './types';
 import { toMinute, toDay } from './tournament-game-mirror';
+import { formatInOrgZone } from './timezone';
 
 export { toMinute };
 
@@ -143,10 +144,13 @@ export function eventDisplayTitle(event: Pick<RepTeamEvent, 'name' | 'opponent' 
   return `${event.name}${opponentSuffix(event)}`;
 }
 
-/** "Sat May 16 · 9:00 a.m." — the portal's standard one-line when. */
+/** "Sat May 16 · 9:00 a.m." — the portal's standard one-line when.
+ *  Rendered in the ORG'S zone (C0): a stored event time is an instant, and the only clock that
+ *  means anything for it is the one at the field. */
 export function formatEventWhen(startsAt: string): string {
-  const d = new Date(startsAt);
-  return `${d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })} · ${d.toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' })}`;
+  const day = formatInOrgZone(startsAt, { weekday: 'short', month: 'short', day: 'numeric' });
+  const time = formatInOrgZone(startsAt, { hour: 'numeric', minute: '2-digit' });
+  return `${day} · ${time}`;
 }
 
 /**

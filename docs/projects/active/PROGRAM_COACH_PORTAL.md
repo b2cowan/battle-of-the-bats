@@ -75,10 +75,10 @@ finished — everything below is still open.**
 | 3 | Attendance has no home in the nav (×2 reviewers) | ✅ **Batch 4** — own Squad item, gated on attendance + roster; page opens on "take attendance for {next event}" |
 | 4 | No notification bell anywhere on mobile | **OPEN** |
 | 5 | Unsaved-changes guard missing on Accounting + Tryout-setup forms | ✅ **COMPLETE — Chunk A (Money) + Chunk E (tryouts, built on dev 2026-07-30)** — session form, scorecard builder, accept drawer, walk-up modal and evaluator modal all guard through `useDiscardGuard` with stake-naming copy; the scorecard save also stopped silently dropping typed-but-unnamed rows |
-| 6 | Weekly recurrence locks every game to one opponent | **OPEN** — pairs with #7 |
-| 7 | No schedule import | **OPEN** — deliberately excluded from Batch 2; belongs with #6 |
+| 6 | Weekly recurrence locks every game to one opponent | ✅ **Chunk C (built on dev 2026-07-31)** — "Repeat weekly" shows the occurrences as ROWS before any exist, each with its own opponent; a bye week is removed before commit; the button names the real count. ≈120 taps → ≈23 for a 12-game round robin |
+| 7 | No schedule import | ✅ **Chunk C (built on dev 2026-07-31)** — paste or file, verdict per row, reads its own export back; refuses an ambiguous date rather than guessing; a look-alike organizer game is surfaced, never merged |
 | 8 | Game-day card downgrades on the actual game day | ✅ **Batch 4** — game day now offers the same one-tap lineup + attendance the in-season card does. The *fuller* card (wow #2: arm-care warning, richer chips) is still open |
-| 9 | Lineup touch targets under the standard (×2 reviewers) | **OPEN** — ⚠ lineups; do with/after Batch 4 |
+| 9 | Lineup touch targets under the standard (×2 reviewers) | ✅ **Chunk C (built on dev 2026-07-31)** — reordering LEFT the grid into its own `Batting order` view with press-and-hold drag restored + 44px arrows; the 18px in-grid arrows are retired, the per-inning cell reaches 44, and the **36-vs-44 disagreement in the same screen family is settled onto one token**. The grid's pinned column narrowed, so a 360px phone shows one more inning |
 | 10 | Money's reports have zero mobile adaptation (×2 reviewers) | ✅ **Chunk A** (built on dev 2026-07-30) — lists became cards, Budget vs. Actual stayed a comparison grid that scrolls with the line name pinned + a visible swipe hint; `budget.module.css` and `bva.module.css` gained their first-ever media queries |
 | 11 | Forms don't reflow to one column on phones | ✅ **absorbed into Batch 1** (verified 2026-07-29: reaches Player Detail too) |
 | 12 | No orientation for coaches who never had a free team | **OPEN, narrowed** — Batch 2's first-week trail covers the guidance half; the *welcome* moment for cold signups is still missing |
@@ -108,7 +108,7 @@ Not enumerated here — the review's paragraph stays the source. **Absorbed so f
 |---|------|--------|
 | 1 | First-10-minutes setup momentum ring | ✅ Batch 2 |
 | 7 | Season Wrapped | ✅ Batch 3 |
-| 2 | Real game-day card for regular-season games | **PARTIAL** — the downgrade half shipped in Batch 4 (P1 #8); the arm-care warning + richer chips remain open |
+| 2 | Real game-day card for regular-season games | ✅ **COMPLETE — Batch 4 + Chunk C (built on dev 2026-07-31)** — the anchor gained call time + uniform and an arm-care warning that claims ONLY what the coach's own cap and saved lineups prove (no invented season ceiling), including the double-header |
 | 3 | One-tap postgame recap draft into Announcements | **OPEN** |
 | 4 | No-login "follow this game" link for parents | **OPEN** — review's pick for most likely to spread |
 | 5 | Shareable player trading card | **OPEN** |
@@ -136,13 +136,30 @@ P1 #1 (Chat vs Announcements), #2 (Chat's honest empty state), #4 (mobile notifi
 collision is gone — but note the concurrent Coach Onboarding Quiet Mode stream is also editing empty
 states and page headers; check its state before starting #2 and #17.
 
-**C · Schedule intelligence** — *medium; UNBLOCKED* — **handoff prompt ready:
-`COACH_PORTAL_CHUNK_C_SCHEDULE_INTELLIGENCE_BUILD_PROMPT.md` — run in a FRESH chat (owner-picked
-next build 2026-07-30). ⚠ Owner-mandated gate: plan + PM brief + approved mockups BEFORE any
-code.** It carries verified ground truth (the recurrence form stamps ONE opponent across a whole
-series; the recurring-edit scope chooser exists; mirrored-event landmines; the H2 importer
-contract; the Chunk I anchor rules the game-day enrichment must live inside). *(original entry
-below)*
+**C · Schedule intelligence** — *medium* — **PLANNED 2026-07-30, NO CODE WRITTEN. Blocked at the
+owner gate: mockup approval + D-C1…D-C10.** Plan + PM brief:
+`COACH_PORTAL_CHUNK_C_SCHEDULE_INTELLIGENCE_{PLAN,PM_BRIEF}.md`; mockups
+`claude.ai/code/artifact/81a33e54-42db-4fbb-bd73-c9007b4ab06b` **rev 3** (binding on approval).
+Six items: **C0** time truth · **C1** recurrence preview (P1 #6) · **C2** import (P1 #7) ·
+**C3** lineup touch targets (P1 #9) · **C4** game-day card (wow #2) · **C5** discard-guard
+migration. Design thesis: *a recurring series and an imported file are the same thing — a set of
+proposed events the coach reviews before any exist* — so ONE verdict-per-row preview serves both.
+
+⚠⚠ **FOUND AT PICKUP — a LIVE defect on a shipped surface.** `rep_team_events.starts_at` is
+`timestamptz`, but the coach form writes a **naive** wall-clock string (`isoFromInputs` →
+`` `${date}T${time}` ``) which Postgres resolves in the UTC session zone, while every display path
+converts back to the **reader's** zone (`new Date(iso).toLocaleTimeString`). A Toronto coach types
+6:00 PM and sees **2:00 PM**; re-saving an untouched event shifts it again (`toLocalInput` converts
+before the next naive write). **The Batch 4 mirror writes naive too** (`tests/unit/tournament-game-mirror.test.ts:101`
+asserts `starts_at: '2026-05-17T14:00'`), so organizer-owned games are shifted as well — the coach's
+calendar can disagree with the tournament they're playing in. **House League already does this
+correctly** via `zonedWallClockToUtc()`. Both conventions are visible side by side in dev data.
+This is the precondition for import (bulk-writing through a broken convention multiplies it).
+
+⚠ Two handoff assumptions were **wrong** and are corrected in the plan: the event modal's discard
+guard is **not bare** (it is hand-rolled with the banned "unsaved changes" copy — a migration, not a
+build), and the schedule **does** have an export to round-trip against (`SCHEDULE_EXPORT_COLS`).
+*(original entry below)*
 P1 #6 (weekly recurrence locks one opponent — currently *more* clicks than not using it) + #7
 (schedule import) + #9 (lineup touch targets) + the remainder of wow #2 (arm-care warning and richer
 chips on the game-day card — its *downgrade* half shipped in Batch 4). ⚠ Recurrence and import both

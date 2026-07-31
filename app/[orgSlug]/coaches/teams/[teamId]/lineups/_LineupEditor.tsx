@@ -5,7 +5,7 @@
 // (attendance/mismatch/undo/PDF/notes for a game; name/save for a template). Everything about the
 // editing itself — format/innings, auto-fill, Reshuffle, the grid, the playing-time view, add/remove
 // — lives here so it's written once and both surfaces stay in lock-step.
-import { useState, useRef, useEffect, type CSSProperties } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { X, ChevronUp, ChevronDown, GripVertical, Shuffle } from 'lucide-react';
 import {
@@ -35,28 +35,29 @@ type GameRules = { maxPos: string; pitcher: string; minPlay: string };
 // One drag-sortable lineup row. Batting order = drag position (auto-numbered), so duplicate slot
 // numbers are impossible.
 function SortableLineupRow({
-  row, battingNumber, mode, inningCount, onStarterToggle, onPositionChange, index, count, onMove, onRemove,
+  row, battingNumber, mode, inningCount, onStarterToggle, onPositionChange, onRemove, orderLabel,
 }: {
   row: LineupPlayerRow; battingNumber: string; mode: RepLineupMode; inningCount: number;
   onStarterToggle: (playerId: string, checked: boolean) => void;
   onPositionChange: (playerId: string, inning: number, value: string) => void;
-  index: number; count: number; onMove: (index: number, dir: -1 | 1) => void; onRemove: (playerId: string) => void;
+  onRemove: (playerId: string) => void;
+  orderLabel: string;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.player.id });
   const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
   return (
     <tr ref={setNodeRef} style={style}>
       <td>
+        {/* Chunk C (D-C10): the mobile ▲▼ pair (18px each) left this cell entirely — reordering
+            lives in the order view, where a row is full width and nothing competes for the
+            gesture. The desktop grip stays: it already works, costs no width, and removing a
+            working affordance to fix a phone problem would be its own regression. */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-          <button type="button" aria-label={`Drag to reorder ${playerDisplayName(row.player)} in the batting order`}
+          <button type="button" aria-label={`Drag to reorder ${playerDisplayName(row.player)} in the ${orderLabel.toLowerCase()}`}
             className={styles.lineupGrip} {...attributes} {...listeners}
             style={{ background: 'none', border: 'none', padding: 2, lineHeight: 0, cursor: 'grab', color: 'var(--home-dim, rgba(255,255,255,0.35))', touchAction: 'none' }}>
             <GripVertical size={14} />
           </button>
-          <span className={styles.lineupMoveControls}>
-            <button type="button" className={styles.lineupMoveBtn} aria-label={`Move ${playerDisplayName(row.player)} up`} disabled={index === 0} onClick={() => onMove(index, -1)}><ChevronUp size={14} /></button>
-            <button type="button" className={styles.lineupMoveBtn} aria-label={`Move ${playerDisplayName(row.player)} down`} disabled={index === count - 1} onClick={() => onMove(index, 1)}><ChevronDown size={14} /></button>
-          </span>
           <span style={{ minWidth: '1.2ch', textAlign: 'center', fontVariantNumeric: 'tabular-nums', color: battingNumber ? 'var(--white-90)' : 'var(--home-dim, rgba(255,255,255,0.3))' }}>{battingNumber || '–'}</span>
         </div>
       </td>
@@ -83,6 +84,56 @@ function SortableLineupRow({
         );
       })}
     </tr>
+  );
+}
+
+/**
+ * One row of the ORDER view (Chunk C, D-C10).
+ *
+ * Reordering left the positions grid entirely. The grid scrolls sideways — players × innings can't
+ * fit a phone — and a drag is indistinguishable from a horizontal swipe at the moment it begins,
+ * which is why drag was disabled on touch and replaced with 18px arrows. A plain vertical list has
+ * no competing gesture, so press-and-hold-to-drag is simply the ordinary phone gesture again, and
+ * every control here is full size. Arrows stay for a single nudge and for anyone who can't drag.
+ */
+function SortableOrderRow({
+  row, battingNumber, index, count, onMove, onRemove, subtitle,
+}: {
+  row: LineupPlayerRow; battingNumber: string; index: number; count: number;
+  onMove: (playerId: string, dir: -1 | 1) => void;
+  onRemove: (playerId: string) => void;
+  subtitle: string;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.player.id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.6 : 1 };
+  const name = playerDisplayName(row.player);
+  return (
+    <div ref={setNodeRef} style={style} className={styles.orderRow}>
+      <span className={styles.orderNumber}>{battingNumber || '—'}</span>
+      <span className={styles.orderName}>
+        {name}
+        {subtitle && <span className={styles.orderMeta}>{subtitle}</span>}
+      </span>
+      <span className={styles.orderControls}>
+        <button
+          type="button" className={styles.orderMoveBtn} aria-label={`Move ${name} up`}
+          disabled={index === 0} onClick={() => onMove(row.player.id, -1)}
+        ><ChevronUp size={17} /></button>
+        <button
+          type="button" className={styles.orderMoveBtn} aria-label={`Move ${name} down`}
+          disabled={index === count - 1} onClick={() => onMove(row.player.id, 1)}
+        ><ChevronDown size={17} /></button>
+        <button
+          type="button" className={styles.orderRemoveBtn} aria-label={`Remove ${name} from the lineup`}
+          onClick={() => onRemove(row.player.id)}
+        ><X size={16} /></button>
+        <button
+          type="button" className={styles.orderGrip}
+          aria-label={`Drag to reorder ${name}`}
+          {...attributes} {...listeners}
+        ><GripVertical size={17} /></button>
+      </span>
+    </div>
   );
 }
 
@@ -133,7 +184,8 @@ export default function LineupEditor(props: LineupEditorProps) {
   const [fillTo, setFillTo] = useState<number | null>(null);
   const rangeFrom = Math.min(Math.max(1, fillFrom), inningCount);
   const rangeTo = Math.min(fillTo ?? inningCount, inningCount);
-  const [view, setView] = useState<'lineup' | 'summary'>('lineup');
+  // Three views of ONE lineup (D-C11). Opens on 'lineup' (Positions) — today's default surface.
+  const [view, setView] = useState<'order' | 'lineup' | 'summary'>('lineup');
   // Keep the auto-fill policy in sync when the parent changes its pre-pick (e.g. a game loads).
   const policyInitRef = useRef(false);
   useEffect(() => {
@@ -179,6 +231,39 @@ export default function LineupEditor(props: LineupEditorProps) {
     onBeforeMutate?.();
     onRowsChange(updater);
   }
+  /**
+   * D-C12 — dragging across the cut line in 9-player ball PROMOTES the player.
+   *
+   * Batting numbers are only handed out to rows flagged `starter`, so before this a drag from the
+   * bench to the top of the order did nothing visible at all: the player got no number and the
+   * one batting first stayed first. A gesture that silently no-ops is exactly the "worse than not
+   * using it" failure this chunk exists to remove — so a move into the batting section sets the
+   * flag, and the ninth starter is displaced to the top of the bench rather than quietly dropped.
+   */
+  function applySectionMove(
+    list: LineupPlayerRow[], playerId: string, intoStarters: boolean,
+  ): LineupPlayerRow[] {
+    if (lineupMode !== 'nine_player') return list;
+    const moved = list.find(r => r.player.id === playerId);
+    if (!moved || moved.starter === intoStarters) return list;
+
+    let next = list.map(r => (r.player.id === playerId ? { ...r, starter: intoStarters } : r));
+    if (intoStarters) {
+      const starters = next.filter(r => r.starter);
+      if (starters.length > 9) {
+        // The last starter in the NEW order steps down — never the one just promoted. Searching
+        // from the end for the first row that ISN'T them matters: dropping a player at the very
+        // bottom of the batting section would otherwise leave ten starters, and the tenth would
+        // render as a starter with no number.
+        const demoted = [...starters].reverse().find(r => r.player.id !== playerId);
+        if (demoted) {
+          next = next.map(r => (r.player.id === demoted.player.id ? { ...r, starter: false } : r));
+        }
+      }
+    }
+    return next;
+  }
+
   function handleDragEnd(e: DragEndEvent) {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
@@ -186,11 +271,29 @@ export default function LineupEditor(props: LineupEditorProps) {
       const oldIndex = list.findIndex(r => r.player.id === active.id);
       const newIndex = list.findIndex(r => r.player.id === over.id);
       if (oldIndex < 0 || newIndex < 0) return list;
-      return renumberBattingOrder(arrayMove(list, oldIndex, newIndex), lineupMode);
+      // Where it LANDED decides whether it is in the order or on the bench.
+      const target = list[newIndex];
+      const moved = arrayMove(list, oldIndex, newIndex);
+      return renumberBattingOrder(applySectionMove(moved, String(active.id), target.starter), lineupMode);
     });
   }
-  function moveRow(index: number, dir: -1 | 1) {
-    mutate(list => (index + dir < 0 || index + dir >= list.length) ? list : renumberBattingOrder(arrayMove(list, index, index + dir), lineupMode));
+  /**
+   * Nudge one player by a single place — the arrow path, and the accessible alternative to drag.
+   *
+   * Keyed on the PLAYER, not a display index: the order view renders two sections in 9-player
+   * ball, so a row's position within its section is not its position in the list. Crossing the
+   * cut line by arrow promotes/demotes exactly as dragging across it does (D-C12), so the two
+   * paths can never disagree.
+   */
+  function moveRowByPlayer(playerId: string, dir: -1 | 1) {
+    mutate(list => {
+      const from = list.findIndex(r => r.player.id === playerId);
+      const to = from + dir;
+      if (from < 0 || to < 0 || to >= list.length) return list;
+      const target = list[to];
+      const moved = arrayMove(list, from, to);
+      return renumberBattingOrder(applySectionMove(moved, playerId, target.starter), lineupMode);
+    });
   }
   function removePlayer(playerId: string) {
     mutate(list => renumberBattingOrder(list.filter(r => r.player.id !== playerId), lineupMode));
@@ -299,10 +402,60 @@ export default function LineupEditor(props: LineupEditorProps) {
 
   return (
     <div className={styles.lineupSection}>
-      <div className={styles.lineupViewToggle} role="tablist" aria-label="Lineup view">
-        <button type="button" role="tab" aria-selected={view === 'lineup'} className={`${styles.lineupViewBtn} ${view === 'lineup' ? styles.lineupViewBtnActive : ''}`} onClick={() => setView('lineup')}>Lineup</button>
+      {/* Chunk C (D-C11): three views, so "Lineup" can no longer be one of their names — all three
+          ARE the lineup, and the page keeps that name. Each tab now says which question it answers.
+          Left to right is the real order of work (and the order auto-fill consumes), but the page
+          still OPENS on Positions: that is the surface coaches already know and where readiness is
+          answered. The order tab's word comes from the Sport Pack, not from here — this surface
+          carries documented diamond-vocabulary debt and a hard-coded "Batting order" would be a new
+          instance of it. */}
+      <div className={styles.lineupViewToggle} role="tablist" aria-label="Lineup views">
+        <button type="button" role="tab" aria-selected={view === 'order'} className={`${styles.lineupViewBtn} ${view === 'order' ? styles.lineupViewBtnActive : ''}`} disabled={rows.length === 0} onClick={() => setView('order')}>{sportPack.orderLabel}</button>
+        <button type="button" role="tab" aria-selected={view === 'lineup'} className={`${styles.lineupViewBtn} ${view === 'lineup' ? styles.lineupViewBtnActive : ''}`} onClick={() => setView('lineup')}>Positions</button>
         <button type="button" role="tab" aria-selected={view === 'summary'} className={`${styles.lineupViewBtn} ${view === 'summary' ? styles.lineupViewBtnActive : ''}`} disabled={rows.length === 0} onClick={() => setView('summary')}>Playing time</button>
       </div>
+
+      {/* ── The order view (Chunk C, D-C10/D-C12) ────────────────────────────
+          A plain vertical list — no horizontal scroll — which is the whole reason press-and-hold
+          drag works here and never worked in the grid. The rows are the SAME row objects the grid
+          and Playing time read, so a reorder is already there when the coach switches tabs, and a
+          player's positions travel with the player rather than staying with the batting slot. */}
+      {view === 'order' && (
+        <div className={styles.orderView}>
+          <p className={styles.orderHint}>
+            Hold a row and drag it, or use the arrows. Positions and playing time follow the player.
+          </p>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={rows.map(r => r.player.id)} strategy={verticalListSortingStrategy}>
+              {rows.map((row, i) => {
+                const isFirstBench = lineupMode === 'nine_player'
+                  && !row.starter && (i === 0 || rows[i - 1].starter);
+                return (
+                  <div key={row.player.id}>
+                    {isFirstBench && (
+                      <p className={styles.orderCut}>
+                        Bench — drag above this line to put someone in the {sportPack.orderLabel.toLowerCase()}
+                      </p>
+                    )}
+                    <SortableOrderRow
+                      row={row}
+                      battingNumber={row.battingOrder}
+                      index={i}
+                      count={rows.length}
+                      onMove={moveRowByPlayer}
+                      onRemove={removePlayer}
+                      // The jersey number is already in the display name — the subtitle carries
+                      // what the name doesn't, which is where they usually play.
+                      subtitle={[row.player.primaryPosition, row.player.secondaryPosition]
+                        .filter(Boolean).join(' · ')}
+                    />
+                  </div>
+                );
+              })}
+            </SortableContext>
+          </DndContext>
+        </div>
+      )}
 
       {view === 'lineup' && (<>
         <div className={styles.lineupHeader}>
@@ -436,7 +589,13 @@ export default function LineupEditor(props: LineupEditorProps) {
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <p className={styles.lineupScrollHint}>Swipe across innings →</p>
             <div className={styles.lineupTableWrap}>
-              <table className={styles.lineupTable} style={{ '--lineup-lead': lineupMode === 'nine_player' ? '5.8rem' : '3.4rem' } as CSSProperties}>
+              {/* The pinned lead columns' widths live entirely in CSS (see `.lineupTable` in
+                  coaches.module.css). This only names the MODE, because the Start column exists
+                  in nine-player ball and not otherwise. Previously the player column's sticky
+                  offset was passed in here as a hard-coded rem value computed from the Bat
+                  column's width — so narrowing that column left the player cell parked at the old
+                  offset, overlapping two innings. One owner for the widths, no arithmetic here. */}
+              <table className={styles.lineupTable} data-mode={lineupMode}>
                 <thead>
                   <tr>
                     <th>Bat</th>
@@ -451,9 +610,9 @@ export default function LineupEditor(props: LineupEditorProps) {
                 </thead>
                 <tbody>
                   <SortableContext items={rows.map(r => r.player.id)} strategy={verticalListSortingStrategy}>
-                    {rows.map((row, i) => (
+                    {rows.map(row => (
                       <SortableLineupRow key={row.player.id} row={row} battingNumber={row.battingOrder} mode={lineupMode} inningCount={inningCount}
-                        onStarterToggle={toggleStarter} onPositionChange={setPosition} index={i} count={rows.length} onMove={moveRow} onRemove={removePlayer} />
+                        onStarterToggle={toggleStarter} onPositionChange={setPosition} onRemove={removePlayer} orderLabel={sportPack.orderLabel} />
                     ))}
                   </SortableContext>
                 </tbody>

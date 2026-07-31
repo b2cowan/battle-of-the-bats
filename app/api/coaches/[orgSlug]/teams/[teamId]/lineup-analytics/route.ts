@@ -5,7 +5,7 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { computeTeamSeasonLineupAnalytics } from '@/lib/team-season-analytics';
 
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
 
@@ -24,10 +24,17 @@ export const GET = withObservability(async (_req: Request,
 
   // Shared assembly (lib/team-season-analytics) — the same composition the Development
   // card quotes, so the two surfaces can never drift. Pass the already-fetched team through.
-  const result = await computeTeamSeasonLineupAnalytics(teamId, { team });
+  // `?armCareForEvent=` (Chunk C) rides this existing call rather than adding a second round trip
+  // for the Overview's game-day card; the gate is the same `lineups` capability, because the
+  // warning is derived entirely from saved lineups.
+  const armCareForEventId = new URL(req.url).searchParams.get('armCareForEvent');
+  const result = await computeTeamSeasonLineupAnalytics(teamId, { team, armCareForEventId });
   if (!result) {
     return NextResponse.json({ error: 'No active program year for this team' }, { status: 404 });
   }
 
-  return NextResponse.json({ analytics: result.analytics });
+  return NextResponse.json({
+    analytics: result.analytics,
+    ...(result.armCare ? { armCare: result.armCare, periodLabelPlural: result.periodLabelPlural } : {}),
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/lineup-analytics' });

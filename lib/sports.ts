@@ -139,6 +139,15 @@ export interface SportPack {
   periodLabel: string;
   periodLabelPlural: string;
   defaultPeriodCount: number;
+  /**
+   * What the ordered list of who-goes-when is called ("Batting order", "Playing order").
+   *
+   * Added in Chunk C for the lineup surface's third tab. That surface already carries documented
+   * diamond-vocabulary debt (PROGRAM_COACH_PORTAL §1.7) which this chunk must not deepen, so the
+   * tab label is sourced here rather than typed into the component — softball and baseball render
+   * "Batting order" exactly as before, and a non-diamond sport does not inherit a wrong word.
+   */
+  orderLabel: string;
   /** Phrase before "in …" in the pre-event countdown ("First pitch", "Tip-off", "Kickoff"). */
   startVerb: string;
   /** Roster positions offered as a dropdown (empty = free-text only). Shared vocabulary
@@ -185,6 +194,7 @@ const SOFTBALL_PACK: SportPack = {
   periodLabel: 'Inning',
   periodLabelPlural: 'Innings',
   defaultPeriodCount: 7,
+  orderLabel: 'Batting order',
   startVerb: 'First pitch',
   positions: DIAMOND_POSITIONS,
   fieldPositions: DIAMOND_FIELD_POSITIONS,
@@ -218,6 +228,7 @@ const BASEBALL_PACK: SportPack = {
   periodLabel: 'Inning',
   periodLabelPlural: 'Innings',
   defaultPeriodCount: 9,
+  orderLabel: 'Batting order',
   startVerb: 'First pitch',
   positions: DIAMOND_POSITIONS,
   fieldPositions: DIAMOND_FIELD_POSITIONS,
@@ -250,6 +261,7 @@ const BASKETBALL_PACK: SportPack = {
   periodLabel: 'Quarter',
   periodLabelPlural: 'Quarters',
   defaultPeriodCount: 4,
+  orderLabel: 'Playing order',
   startVerb: 'Tip-off',
   positions: ['PG', 'SG', 'SF', 'PF', 'C'],
   fieldPositions: ['PG', 'SG', 'SF', 'PF', 'C'],
@@ -283,6 +295,7 @@ const GENERIC_PACK: SportPack = {
   periodLabel: 'Period',
   periodLabelPlural: 'Periods',
   defaultPeriodCount: 2,
+  orderLabel: 'Playing order',
   startVerb: 'Tournament starts',
   positions: [],
   fieldPositions: [],

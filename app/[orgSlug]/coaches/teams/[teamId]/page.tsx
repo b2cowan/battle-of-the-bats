@@ -28,7 +28,8 @@ import {
   type TileKey,
 } from '@/lib/coach-overview';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
-import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
+import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone } from '@/lib/timezone';
+import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
 import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
@@ -136,8 +137,18 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
+/** C0: the org's calendar day, not the reader's — a 9 PM game is tomorrow in UTC and would have
+ *  named the wrong weekday on the card announcing it. */
 function formatEventDate(value: string): string {
-  return new Date(value).toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+  return formatInOrgZone(value, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+
+/** "HH:mm" (24h, as arrival_time is stored) → a friendly clock ("5:15 PM"). */
+function fmtClockLabel(hhmm: string): string {
+  const m = /^(\d{1,2}):(\d{2})/.exec(hhmm.trim());
+  if (!m) return hhmm;
+  const h = Number(m[1]);
+  return `${h % 12 === 0 ? 12 : h % 12}:${m[2]} ${h >= 12 ? 'PM' : 'AM'}`;
 }
 
 function formatMoney(amount: number): string {
@@ -194,6 +205,9 @@ export default function TeamOverviewPage({
   const [birthdays, setBirthdays] = useState<{ name: string; inDays: number }[]>([]);
   // In/Late/Out/No-reply headcount for the next event → Next-up tile.
   const [nextAttendance, setNextAttendance] = useState<{ in: number; late: number; out: number; noReply: number } | null>(null);
+  /** Chunk C (wow #2) — arm-care concerns for the anchor game, and the sport's period noun. */
+  const [gameDayArmCare, setGameDayArmCare] = useState<ArmCareConcern[]>([]);
+  const [periodLabelPlural, setPeriodLabelPlural] = useState('Innings');
   // Tournament registrations summary → Tournaments tile.
   const [tournaments, setTournaments] = useState<{ count: number; pending: number; nextDate: string | null; liveNow: boolean; owed: number; owingCount: number } | null>(null);
   // P3: the ⇄ Fan view door's eligibility — any registration in a live public event,
@@ -648,18 +662,28 @@ export default function TeamOverviewPage({
     const a = assignments.find(x => x.teamId === teamId);
     if (!a || !a.capabilities.lineups) return; // never fetched ⇒ flag + tile stay null
     let cancelled = false;
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-analytics`)
+    // Chunk C: when the anchor is a GAME, ask the same call for today's arm-care concerns rather
+    // than adding a second round trip. It answers only from what the coach's own settings and
+    // saved lineups prove — their per-game cap, and days since that player last pitched.
+    const armCareParam = nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType)
+      ? `?armCareForEvent=${encodeURIComponent(nextEvent.id)}`
+      : '';
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-analytics${armCareParam}`)
       .then(res => (res.ok ? res.json() : null))
       .then(json => {
         if (cancelled) return;
         const over = (json?.analytics?.armCare ?? []).find((r: { overCapGames: number }) => r.overCapGames > 0);
         setArmCareFlag(over ? { name: over.name, overCapGames: over.overCapGames } : null);
+        setGameDayArmCare((json?.armCare ?? []) as ArmCareConcern[]);
+        setPeriodLabelPlural(json?.periodLabelPlural ?? 'Innings');
         const fairPlay = (json?.analytics?.fairPlay ?? []) as { fieldInnings: number; benchInnings: number }[];
         setPlayingTime(summarisePlayingTime(fairPlay, json?.analytics?.gamesWithLineup ?? 0));
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [loading, isClosedTeam, orgSlug, teamId, assignments]);
+    // Keyed on the anchor event's id/type so a new game day re-asks; the object identity churns.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, isClosedTeam, orgSlug, teamId, assignments, nextEvent?.id, nextEvent?.eventType]);
 
   // Season attendance reliability → the Attendance tile (chunk I, D13). Fired ONLY when the board
   // will actually draw the tile — see `needsAttendanceRead` above.
@@ -1384,7 +1408,11 @@ export default function TeamOverviewPage({
 
   const attendanceTotal = nextAttendance ? nextAttendance.in + nextAttendance.late + nextAttendance.out + nextAttendance.noReply : 0;
   const fieldOrLoc = nextEvent ? (nextEvent.fieldNumber || nextEvent.location || null) : null;
-  const nextTimeLabel = nextEvent ? new Date(nextEvent.startsAt).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }) : null;
+  // C0: the ORG'S clock, never the device's. A coach travelling, or a family in another province,
+  // must see the game's local start time — the one that means anything.
+  const nextTimeLabel = nextEvent
+    ? formatInOrgZone(nextEvent.startsAt, { hour: 'numeric', minute: '2-digit' })
+    : null;
 
   // ── THE ONE THING (chunk I) ───────────────────────────────────────────────
   // Exactly one card, chosen by ONE ordered rule. Before this, nine bands each tested their own
@@ -1567,7 +1595,10 @@ export default function TeamOverviewPage({
           )}
 
           {/* Readiness rides the card on BOTH working shapes — it is the whole reason a coach
-              opens the portal on a game morning, and it used to sit three scrolls down. */}
+              opens the portal on a game morning, and it used to sit three scrolls down.
+              Chunk C adds the two facts a coach re-checks on a game morning that otherwise mean
+              opening the event: the call time and the uniform. They show for EVERYONE on staff —
+              they are facts, not actions — while the arm-care line below needs lineup access. */}
           {(anchor.kind === 'game_day' || anchor.kind === 'next_event') && nextIsGame && (
             <div className={styles.oneReady}>
               {nextAttendance
@@ -1575,6 +1606,31 @@ export default function TeamOverviewPage({
                 : <span className={styles.oneReadyMuted}>Attendance not taken</span>}
               {nextLineupReady === true && <span className={styles.oneReadyOk}><CheckCircle2 size={14} aria-hidden /> Lineup ready</span>}
               {nextLineupReady === false && <span className={styles.oneReadyWarn}><TriangleAlert size={14} aria-hidden /> Lineup not set</span>}
+              {nextEvent?.arrivalTime && <span>Call {fmtClockLabel(nextEvent.arrivalTime)}</span>}
+              {nextEvent?.uniform && <span>{nextEvent.uniform}</span>}
+            </div>
+          )}
+
+          {/* Arm care (wow #2, D-C7). Decision SUPPORT: it warns, never blocks, never changes a
+              lineup, and never tells the coach what to do. It claims ONLY what the coach's own
+              settings and saved lineups prove — their per-game cap, and days since that player
+              last pitched. There is no season innings ceiling in this product, so it does not
+              imply one; a fabricated threshold here would cost a child's arm. */}
+          {(anchor.kind === 'game_day' || anchor.kind === 'next_event') && nextIsGame
+            && gameDayArmCare.length > 0 && (
+            <div className={styles.oneArmCare} role="note">
+              {gameDayArmCare.slice(0, 2).map(concern => {
+                const copy = armCareCopy(concern, periodLabelPlural);
+                return (
+                  <p key={concern.playerId} className={styles.oneArmCareRow}>
+                    <TriangleAlert size={14} aria-hidden />
+                    <span>
+                      <strong>{copy.headline}</strong>
+                      {copy.detail && <span className={styles.oneArmCareDetail}>{copy.detail}</span>}
+                    </span>
+                  </p>
+                );
+              })}
             </div>
           )}
 

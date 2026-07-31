@@ -1,6 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, Upload, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
@@ -33,7 +33,14 @@ import {
   type MovedGame, type DuplicateGamePair,
 } from '@/lib/coach-tournament-games';
 import styles from '../../../coaches.module.css';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, formatInOrgZone, orgDayKey, utcToZonedInputs } from '@/lib/timezone';
+import {
+  EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES,
+  needsOpponent, needsRecurrence, RECURRABLE_TYPES, deriveGameName,
+} from '@/lib/coach-schedule-vocab';
+import { generateWeeklyOccurrences, type RecurrenceOccurrenceInput } from '@/lib/coach-recurrence';
+import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
+import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
 import type {
   RepAttendanceStatus,
   RepLineupMode,
@@ -101,15 +108,6 @@ function scoreline(event: RepTeamEvent) {
   );
 }
 
-const EVENT_LABELS: Record<RepEventType, string> = {
-  external_tournament: 'Tournament',
-  tournament_game:     'Game (Tournament)',
-  scrimmage:           'Scrimmage',
-  league_game:         'League Game',
-  practice:            'Practice',
-  team_event:          'Team Event',
-};
-
 const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
   external_tournament: Trophy,
   tournament_game:     Trophy,
@@ -157,35 +155,10 @@ const GAME_EVENT_TYPES = COACH_GAME_EVENT_TYPES as RepEventType[];
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-// Which event types capture an opponent + home/away, and which can recur. Pure functions of
-// the type so the form, the open helpers, and save can all share one source of truth.
-const needsOpponent = (t: RepEventType) => GAME_EVENT_TYPES.includes(t);
-// Event types that can be set to repeat weekly: practices, league games, generic team events.
-const RECURRABLE_TYPES: RepEventType[] = ['practice', 'league_game', 'team_event'];
-const needsRecurrence = (t: RepEventType) => RECURRABLE_TYPES.includes(t);
-
-// Prefix used to auto-name an event. Games derive "{prefix} vs {opponent}"; other types use it
-// as a friendly default when the coach leaves the name blank.
-const EVENT_NAME_PREFIX: Record<RepEventType, string> = {
-  external_tournament: 'Tournament',
-  tournament_game: 'Tournament Game',
-  scrimmage: 'Scrimmage',
-  league_game: 'League Game',
-  practice: 'Practice',
-  team_event: 'Team Event',
-};
-
-/** Auto-derived name for a game type from its opponent ('' when not a game / no opponent yet). */
-function deriveGameName(type: RepEventType, opponent: string): string {
-  const opp = opponent.trim();
-  return needsOpponent(type) && opp ? `${EVENT_NAME_PREFIX[type]} vs ${opp}` : '';
-}
-
-const HOME_AWAY_CHOICES: { value: string; label: string }[] = [
-  { value: 'home', label: 'Home' },
-  { value: 'away', label: 'Away' },
-  { value: 'neutral', label: 'Neutral' },
-];
+// The event-type vocabulary (labels, name prefixes, which types take an opponent, which can
+// recur, home/away) moved to `lib/coach-schedule-vocab` in Chunk C — the export writes it, the
+// importer reads it back, and the recurrence writer names each game from its own opponent, so all
+// three have to agree on one copy (H2 rule 4).
 
 /** Add hours to a `datetime-local` string ("YYYY-MM-DDThh:mm"), returning the same format. */
 function addHoursLocal(dtLocal: string, hours: number): string {
@@ -265,14 +238,16 @@ const BLANK_FORM: EventForm = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+// Chunk C (C0): every schedule surface reads the stored instant in the ORG'S timezone, never the
+// device's. A game starts when it starts — a coach travelling, or a family watching from another
+// province, must see the game's local start time. `new Date(iso).toLocaleTimeString()` renders in
+// whatever zone the device happens to be in, which is how a 6:00 PM game read back 2:00 PM.
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-CA', {
-    weekday: 'short', month: 'short', day: 'numeric', year: 'numeric',
-  });
+  return formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function fmtTime(iso: string) {
-  return new Date(iso).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 // Google Maps deep link for a place/address. The lightweight `?q=` form 302-redirects straight
@@ -313,20 +288,23 @@ function fmtClock(hhmm: string): string {
   return `${h12}:${mins} ${period}`;
 }
 
+/** Form inputs → the wall-clock string the API takes. The server resolves it to a real instant in
+ *  the ORG'S zone (C0), so the client never has to know the offset. */
 function isoFromInputs(date: string, time: string) {
   return `${date}T${time}`;
 }
 
-// ISO/stored datetime → a `datetime-local` input value (YYYY-MM-DDTHH:mm, local).
+/**
+ * A stored instant → a `datetime-local` input value, IN THE ORG'S ZONE.
+ *
+ * The exact inverse of the write path, and that pairing is what makes the round trip stable: open
+ * an event, change nothing, save, and the time is identical. Before C0 this converted to the
+ * DEVICE'S zone while the write treated the same string as the org's — so every re-save shifted
+ * the event by another offset, compounding each time.
+ */
 function toLocalInput(iso: string | null | undefined): string {
-  if (!iso) return '';
-  if (/[zZ]|[+-]\d\d:?\d\d$/.test(iso)) {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso.slice(0, 16);
-    const p = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
-  }
-  return iso.slice(0, 16);
+  const { date, time } = utcToZonedInputs(iso);
+  return date ? `${date}T${time}` : '';
 }
 
 function eventToForm(e: RepTeamEvent): EventForm {
@@ -365,7 +343,9 @@ function weekKey(iso: string) {
 // ── Multi-day tournament spanning ───────────────────────────────────────────────
 // A tournament container (external_tournament) occupies every day from its start date
 // through its end date inclusive; every other event occupies only its start day.
-function dayStr(iso: string) { return iso.slice(0, 10); }
+/** The calendar day an event falls on IN THE ORG'S ZONE. Slicing the raw string instead reads the
+ *  UTC day, which is a different date for every event after 8 PM Eastern (C0). */
+function dayStr(iso: string) { return orgDayKey(iso); }
 
 // Whole days between two YYYY-MM-DD keys (UTC anchored so DST never shifts the count).
 function daysBetween(a: string, b: string) {
@@ -627,8 +607,13 @@ export default function CoachesSchedulePage({
   /** Batch 4: the event being edited is an organizer-owned mirrored tournament game. */
   const [editingMirrored, setEditingMirrored] = useState(false);
   const [editScopeOpen, setEditScopeOpen] = useState(false);
-  const [formBaseline, setFormBaseline] = useState('');
+  /** ONE structured baseline for the whole event form — the fields AND the recurrence preview's
+   *  per-date edits. One mapping per form, per the Chunk A discard-guard contract. */
+  const [formBaseline, setFormBaseline] = useState<unknown>(null);
   const [addTypeMenuOpen, setAddTypeMenuOpen] = useState(false);
+  /** Chunk C (P1 #7) — the schedule importer. */
+  const [importOpen, setImportOpen] = useState(false);
+  const [importToast, setImportToast] = useState('');
   const [form, setForm] = useState<EventForm>(BLANK_FORM);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
@@ -907,7 +892,9 @@ export default function CoachesSchedulePage({
       ...overrides,
     };
     setForm(blank);
-    setFormBaseline(JSON.stringify(blank));
+    setOccurrenceOpponents({});
+    setRemovedDates(new Set());
+    setFormBaseline({ form: blank, occurrenceOpponents: {}, removed: [] });
     setEditingEventId(null);
     setEditingMirrored(false);
     setEditingRecurring(false);
@@ -1008,7 +995,9 @@ export default function CoachesSchedulePage({
   function openEditForm(event: RepTeamEvent) {
     const f = { ...eventToForm(event), tagIds: tagsByEventId[event.id] ?? [] };
     setForm(f);
-    setFormBaseline(JSON.stringify(f));
+    setOccurrenceOpponents({});
+    setRemovedDates(new Set());
+    setFormBaseline({ form: f, occurrenceOpponents: {}, removed: [] });
     setEditingEventId(event.id);
     // Batch 4: editing a mirrored tournament game opens the form in restricted mode — the
     // organizer's facts render as context, only the coach's own fields are editable.
@@ -1020,9 +1009,34 @@ export default function CoachesSchedulePage({
     setShowAddForm(true);
   }
 
-  const formDirty = showAddForm && JSON.stringify(form) !== formBaseline;
   // Event-form view helpers (drive the per-type sections + the Save guard).
   const recurringSeries = needsRecurrence(form.eventType) && form.isRecurring;
+
+  // ── Recurrence preview (Chunk C, P1 #6) ─────────────────────────────────────
+  // "Repeat weekly" used to take ONE opponent and stamp it onto every game it created, so a
+  // 12-game round robin was MORE work through the feature than without it. The fix is not a
+  // twelfth opponent field — it is showing the occurrences before any of them exist. The dates
+  // come from the shared generator the commit route also runs, so the two can never disagree.
+  const recurrenceDates = useMemo(
+    () => (recurringSeries
+      ? generateWeeklyOccurrences({
+          dayOfWeek: Number(form.dayOfWeek),
+          startDate: form.startDate,
+          endDate: form.endDate,
+        })
+      : []),
+    [recurringSeries, form.dayOfWeek, form.startDate, form.endDate],
+  );
+  /** Per-date opponent, keyed by date. A date absent from `removedDates` is committed. */
+  const [occurrenceOpponents, setOccurrenceOpponents] = useState<Record<string, string>>({});
+  const [removedDates, setRemovedDates] = useState<Set<string>>(new Set());
+  const keptDates = recurrenceDates.filter(d => !removedDates.has(d));
+  const recurrenceIsGame = needsOpponent(form.eventType);
+
+  // The dirty baseline covers the occurrence edits too — nine typed opponents and a deleted bye
+  // week are exactly the work the discard guard exists to protect (Chunk A rule 4).
+  const formSnapshot = { form, occurrenceOpponents, removed: [...removedDates].sort() };
+  const formDirty = showAddForm && !snapshotEqual(formSnapshot, formBaseline);
   // Tournament-game attachment: the active (non-cancelled) tournaments a new game can hang under.
   const tournamentOptions = events
     .filter(e => e.eventType === 'external_tournament' && e.status !== 'cancelled')
@@ -1049,8 +1063,9 @@ export default function CoachesSchedulePage({
   // via the in-detail "+ Add game" shortcut counts even if its tournament is cancelled and so
   // absent from the picker, so this keys off the actual parent, not the options list.)
   const tournamentParentMissing = addingTournamentGame && !form.parentEventId;
+  // A series with every date removed has nothing to write — the button must not offer to add 0.
   const formHasStart = recurringSeries
-    ? Boolean(form.startTime && form.startDate && form.endDate)
+    ? Boolean(form.startTime && form.startDate && form.endDate && keptDates.length)
     : Boolean(form.startsAt);
   // A resource row blocks save only if it has content but is incomplete/has a bad URL; fully-empty
   // rows are fine (dropped on save).
@@ -1058,9 +1073,7 @@ export default function CoachesSchedulePage({
     const has = r.label.trim() || r.url.trim();
     return has && (!r.label.trim() || !isValidResourceUrl(r.url));
   });
-  const recurrencePreview = recurringSeries && form.startDate && form.startTime
-    ? `Adds a ${EVENT_LABELS[form.eventType].toLowerCase()} every ${DAYS_OF_WEEK[Number(form.dayOfWeek)] ?? ''}${form.endDate ? ` from ${form.startDate} through ${form.endDate}` : ` starting ${form.startDate}`} at ${form.startTime}.`
-    : '';
+  const recurrenceNoun = EVENT_LABELS[form.eventType].toLowerCase();
 
   // Drives the "Add details (optional)" disclosure (Batch 2, P0 #8). `hasEventDetails` is read on
   // mount only, so editing an event that already carries any of these opens the group; the summary
@@ -1168,14 +1181,27 @@ export default function CoachesSchedulePage({
     setDaySheet({ dateKey, events: dayEvents });
   }
 
-  async function requestCloseForm() {
-    if (formDirty && !(await confirm({
-      title: 'Discard changes?',
-      message: 'You have unsaved changes to this event. Discard them?',
-      confirmText: 'Discard',
-      cancelText: 'Keep editing',
-      tone: 'danger',
-    }))) return;
+  // Chunk C (C5): the guard was hand-rolled with the one phrase the discard-guard contract bans
+  // ("You have unsaved changes to this event"). It now runs on the shared primitive with copy that
+  // NAMES what is at stake — "9 opponents and a removed date" is judgeable in a second, one-handed,
+  // which "unsaved changes" never is.
+  const typedOpponentCount = keptDates.filter(d => (occurrenceOpponents[d] ?? '').trim()).length;
+  const discardDetail = recurringSeries && recurrenceDates.length
+    ? [
+        `${keptDates.length} ${EVENT_LABELS[form.eventType].toLowerCase()}${keptDates.length === 1 ? '' : 's'}`,
+        typedOpponentCount ? `${typedOpponentCount} opponent${typedOpponentCount === 1 ? '' : 's'}` : '',
+        removedDates.size ? `${removedDates.size} removed date${removedDates.size === 1 ? '' : 's'}` : '',
+      ].filter(Boolean).join(', ')
+    : undefined;
+
+  const requestDiscardForm = useDiscardGuard({
+    dirty: formDirty,
+    close: closeAddForm,
+    noun: editingEventId ? 'change' : EVENT_LABELS[form.eventType].toLowerCase(),
+    detail: discardDetail,
+  });
+
+  function closeAddForm() {
     setShowAddForm(false);
     setEditingEventId(null);
     setEditingRecurring(false);
@@ -1327,6 +1353,14 @@ export default function CoachesSchedulePage({
           startTime: form.startTime,
           endTime: form.endTime || null,
         };
+        // Chunk C (P1 #6): send the rows the coach actually reviewed — each with its own opponent,
+        // and without any date they removed. The route regenerates from the same rule and refuses
+        // a date it can't produce, so a stale client can never write an unreviewed occurrence.
+        body.occurrences = keptDates.map<RecurrenceOccurrenceInput>(date => ({
+          date,
+          opponent: recurrenceIsGame ? (occurrenceOpponents[date]?.trim() || null) : null,
+          homeAway: recurrenceIsGame ? (form.homeAway || null) : null,
+        }));
       } else {
         if (!form.startsAt || (!form.isRecurring && form.eventType === 'practice' && !form.startTime)) {
           const d = form.startDate || form.startsAt?.slice(0, 10);
@@ -1776,7 +1810,9 @@ export default function CoachesSchedulePage({
         ))}
         {cells.map((day, i) => {
           if (!day) return <div key={i} className={styles.calMonthCell} />;
-          const key = day.toISOString().slice(0, 10);
+          // Built from calendar parts, so read back from calendar parts — `toISOString()` on a
+          // locally-constructed Date reads the UTC day and can name the wrong cell (C0).
+          const key = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
           const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
           const dayTryouts = tryoutSessions.filter(s => s.startsAt.slice(0, 10) === key);
           const dayGames = unmirroredGames.filter(g => g.gameDate === key);
@@ -1884,8 +1920,20 @@ export default function CoachesSchedulePage({
               </button>
             ))}
           </div>
-          {/* Export + Add (right) */}
+          {/* Import + Export + Add (right) */}
           <div className={styles.scheduleToolbarActions}>
+            {/* Chunk C (P1 #7). Sits beside Export deliberately: the pair is one idea — a schedule
+                goes out and comes back, and the importer reads the exporter's own columns. Gated on
+                the same grant as Add Event; a read-only assistant sees neither. */}
+            {canAddEvents && (
+              <button
+                className={styles.btnSecondary}
+                onClick={() => { setImportToast(''); setImportOpen(true); }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}
+              >
+                <Upload size={13} aria-hidden /> <span className={styles.addEventLabel}>Import</span>
+              </button>
+            )}
             <ExportMenu
               formats={['xlsx', 'csv', 'ics']}
               onExportXLSX={handleExportXLSX}
@@ -1985,6 +2033,11 @@ export default function CoachesSchedulePage({
             );
           })}
         </div>
+      )}
+
+      {/* What an import just did — above the calendar it changed, not adrift at the page foot. */}
+      {importToast && (
+        <p className={styles.importResult} role="status">{importToast}</p>
       )}
 
       {/* Calendar body */}
@@ -2547,11 +2600,44 @@ export default function CoachesSchedulePage({
       {/* Warn before leaving with unsaved event / attendance / lineup edits */}
       <UnsavedChangesGuard active={formDirty || attendanceDirty} />
 
+      {/* ── Schedule import (Chunk C, P1 #7) ───────────────────────────────── */}
+      {importOpen && (
+        <ScheduleImportSheet
+          orgSlug={orgSlug}
+          teamId={teamId}
+          // Resolved to the ORG'S calendar day + clock here, because that is the day the coach's
+          // spreadsheet means. A raw UTC slice would put every evening game on the wrong date and
+          // so match the wrong row (C0).
+          existing={events.map(e => {
+            const zoned = utcToZonedInputs(e.startsAt);
+            return {
+              id: e.id,
+              eventType: e.eventType,
+              day: zoned.date,
+              time: zoned.time,
+              opponent: e.opponent ?? null,
+              name: e.name,
+              location: e.location ?? null,
+              isMirrored: isMirroredEvent(e),
+            };
+          })}
+          onClose={() => setImportOpen(false)}
+          onImported={({ created, updated }) => {
+            setImportOpen(false);
+            setImportToast(
+              [created ? `${created} added` : '', updated ? `${updated} updated` : '']
+                .filter(Boolean).join(' · ') || 'Schedule updated',
+            );
+            void fetchEvents();
+          }}
+        />
+      )}
+
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {showAddForm && (
-        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={requestCloseForm}>
+        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={requestDiscardForm}>
           <div className={`${styles.modal} ${styles.eventFormModal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestCloseForm} />
+            <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestDiscardForm} />
 
             <div className={styles.formBody}>
               {/* Legend for the per-field <span className={styles.labelRequired}>*</span> markers below —
@@ -2714,7 +2800,58 @@ export default function CoachesSchedulePage({
                         <input className={styles.input} type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
                       </div>
                     </div>
-                    {recurrencePreview && <p className={styles.formHint}>{recurrencePreview}</p>}
+                    {/* Chunk C (P1 #6) — the occurrences, as rows, BEFORE any of them exist.
+                        This replaced a one-line summary that was honest about the dates and
+                        silent about the fact that one opponent was about to be stamped onto
+                        every game. A recurring series and an imported file are the same shape:
+                        a set of proposed events reviewed before commit. */}
+                    {recurrenceDates.length > 0 && (
+                      <div className={styles.occList}>
+                        <div className={styles.occHead}>
+                          <p className={styles.occCount}>
+                            {keptDates.length} {recurrenceNoun}{keptDates.length === 1 ? '' : 's'}
+                          </p>
+                          <p className={styles.formHint}>
+                            {recurrenceIsGame
+                              ? 'Add an opponent to each. Nothing is saved until you tap Add.'
+                              : 'Nothing is saved until you tap Add.'}
+                          </p>
+                        </div>
+                        {recurrenceDates.map(date => {
+                          const removed = removedDates.has(date);
+                          return (
+                            <div key={date} className={styles.occRow} data-removed={removed || undefined}>
+                              <span className={styles.occDate}>{shortDate(date)}</span>
+                              {removed ? (
+                                <span className={styles.occRemoved}>Removed</span>
+                              ) : recurrenceIsGame ? (
+                                <input
+                                  className={styles.input}
+                                  placeholder="Opponent"
+                                  aria-label={`Opponent on ${shortDate(date)}`}
+                                  value={occurrenceOpponents[date] ?? ''}
+                                  onChange={e => setOccurrenceOpponents(o => ({ ...o, [date]: e.target.value }))}
+                                />
+                              ) : (
+                                <span className={styles.occPlain}>{fmtClock(form.startTime) || '—'}</span>
+                              )}
+                              <button
+                                type="button"
+                                className={styles.occAction}
+                                aria-label={removed ? `Put ${shortDate(date)} back` : `Remove ${shortDate(date)}`}
+                                onClick={() => setRemovedDates(prev => {
+                                  const next = new Set(prev);
+                                  if (removed) next.delete(date); else next.add(date);
+                                  return next;
+                                })}
+                              >
+                                {removed ? '↩' : '✕'}
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </>
                 ) : (
                   <>
@@ -2989,13 +3126,20 @@ export default function CoachesSchedulePage({
               </div>
             ) : (
               <div className={styles.modalFooter}>
-                <button className={styles.btnGhost} onClick={requestCloseForm}>Cancel</button>
+                <button className={styles.btnGhost} onClick={requestDiscardForm}>Cancel</button>
                 <button
                   className={styles.btnPrimary}
                   disabled={saving || !formHasStart || tournamentParentMissing || resourcesInvalid}
                   onClick={editingEventId && editingRecurring ? () => setEditScopeOpen(true) : handleSave}
                 >
-                  {saving ? 'Saving…' : editingEventId ? 'Save changes' : 'Save Event'}
+                  {saving
+                    ? 'Saving…'
+                    : editingEventId
+                      ? 'Save changes'
+                      // Name the real count: a removed bye week means eleven, not twelve.
+                      : recurringSeries && keptDates.length
+                        ? `Add ${keptDates.length} ${recurrenceNoun}${keptDates.length === 1 ? '' : 's'}`
+                        : 'Save Event'}
                 </button>
               </div>
             )}

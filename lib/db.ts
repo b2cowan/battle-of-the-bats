@@ -12,7 +12,7 @@ import { DEFAULT_SPORT } from './sports';
 import { generateOfferToken, hashOfferToken } from './tryout-offer-token';
 import { SELF_TOKEN_HASH_PREFIX } from './tryout-evaluator-token';
 import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
-import { tournamentToday, addCalendarDays } from './timezone';
+import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
@@ -1825,6 +1825,21 @@ export async function getTournamentsByOrg(orgId: string, options: ReadOptions = 
 export async function getActiveTournamentByOrg(orgId: string): Promise<Tournament | null> {
   const ts = await getTournamentsByOrg(orgId);
   return ts.find(t => t.status === 'active') ?? null;
+}
+
+/** Cheap head-count of an org's ACTIVE tournaments — drives the conditional event→org
+ *  breadcrumb (Nav Unification Stage B.2): /{orgSlug} is only a real destination for orgs
+ *  with the public-site module or 2+ active events (with exactly 1 it redirects straight
+ *  back into that event; with 0 it renders the platform "no public site yet" placeholder),
+ *  so event chrome must not link up to it otherwise. */
+export async function countActiveTournamentsByOrg(orgId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('tournaments')
+    .select('id', { count: 'exact', head: true })
+    .eq('org_id', orgId)
+    .eq('status', 'active');
+  if (error) return 0;
+  return count ?? 0;
 }
 
 export async function getTournamentBySlug(orgId: string, slug: string): Promise<Tournament | null> {
@@ -5423,8 +5438,8 @@ export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Prom
       event_type: fields.eventType,
       name: fields.name,
       description: fields.description ?? null,
-      starts_at: fields.startsAt,
-      ends_at: fields.endsAt ?? null,
+      starts_at: wallClockStringToUtc(fields.startsAt),
+      ends_at: wallClockStringToUtc(fields.endsAt) ?? null,
       location: fields.location ?? null,
       location_address: fields.locationAddress ?? null,
       arrival_time: fields.arrivalTime ?? null,
@@ -5457,8 +5472,8 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
       event_type: f.eventType,
       name: f.name,
       description: f.description ?? null,
-      starts_at: f.startsAt,
-      ends_at: f.endsAt ?? null,
+      starts_at: wallClockStringToUtc(f.startsAt),
+      ends_at: wallClockStringToUtc(f.endsAt) ?? null,
       location: f.location ?? null,
       location_address: f.locationAddress ?? null,
       arrival_time: f.arrivalTime ?? null,
@@ -5502,8 +5517,8 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   if (fields.name !== undefined)        patch.name = fields.name;
   if (fields.description !== undefined) patch.description = fields.description;
   if (fields.eventType !== undefined)   patch.event_type = fields.eventType;
-  if (fields.startsAt !== undefined)    patch.starts_at = fields.startsAt;
-  if (fields.endsAt !== undefined)      patch.ends_at = fields.endsAt;
+  if (fields.startsAt !== undefined)    patch.starts_at = wallClockStringToUtc(fields.startsAt);
+  if (fields.endsAt !== undefined)      patch.ends_at = wallClockStringToUtc(fields.endsAt);
   if (fields.location !== undefined)    patch.location = fields.location;
   if (fields.locationAddress !== undefined) patch.location_address = fields.locationAddress;
   if (fields.arrivalTime !== undefined) patch.arrival_time = fields.arrivalTime;
@@ -5573,9 +5588,16 @@ export async function updateRepTeamEventSeries(
 
   for (const row of rows ?? []) {
     const patch: Record<string, unknown> = { ...base };
-    const date = (row.starts_at as string).slice(0, 10);
-    if (fields.startTime) patch.starts_at = `${date}T${fields.startTime}:00`;
-    if (fields.endTime)   patch.ends_at = `${date}T${fields.endTime}:00`;
+    // The occurrence's own calendar day IN THE ORG'S ZONE — never `starts_at.slice(0, 10)`, which
+    // reads the UTC day and so lands a day late for any evening event once the stored value is a
+    // true instant (a 9 PM Toronto game is 01:00Z the NEXT date).
+    const date = orgDayKey(row.starts_at as string);
+    // Only assign a resolved instant. `starts_at` is NOT NULL, so a malformed time must leave the
+    // occurrence's existing value alone rather than null it out.
+    const nextStart = fields.startTime ? zonedWallClockToUtc(date, fields.startTime) : null;
+    const nextEnd = fields.endTime ? zonedWallClockToUtc(date, fields.endTime) : null;
+    if (nextStart) patch.starts_at = nextStart;
+    if (nextEnd)   patch.ends_at = nextEnd;
     const { error: uErr } = await supabaseAdmin.from('rep_team_events').update(patch).eq('id', row.id);
     if (uErr) throw uErr;
   }

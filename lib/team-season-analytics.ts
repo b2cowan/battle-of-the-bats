@@ -10,6 +10,8 @@ import {
 import { getSportPack, DEFAULT_SPORT } from './sports';
 import { playerDisplayName } from './coach-roster-name';
 import { computeSeasonLineupAnalytics, type SeasonLineupAnalytics } from './lineup-season-analytics';
+import { resolveArmCare, type ArmCareConcern, type ArmCareLineup } from './coach-arm-care';
+import { orgDayKey, tournamentToday } from './timezone';
 
 /**
  * ONE shared assembly of the season lineup-analytics inputs. This exact composition
@@ -24,8 +26,22 @@ export async function computeTeamSeasonLineupAnalytics(
   teamId: string,
   // Callers that already fetched the team for their own auth check pass it through so the
   // helper doesn't re-fetch it (only `sport` is read here).
-  opts?: { team?: { sport?: string | null } | null },
-): Promise<{ analytics: SeasonLineupAnalytics; programYearId: string } | null> {
+  opts?: {
+    team?: { sport?: string | null } | null;
+    /**
+     * Chunk C (wow #2): when set, also resolve the arm-care concerns for THAT event, so the
+     * Overview's game-day card can warn without a second round trip. Everything the warning
+     * needs — saved lineups, event dates, per-player caps, the season default and the sport's
+     * pitcher position — is already loaded here.
+     */
+    armCareForEventId?: string | null;
+  },
+): Promise<{
+  analytics: SeasonLineupAnalytics;
+  programYearId: string;
+  armCare?: ArmCareConcern[];
+  periodLabelPlural?: string;
+} | null> {
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return null;
 
@@ -59,5 +75,41 @@ export async function computeTeamSeasonLineupAnalytics(
     fieldPositions: sportPack.fieldPositions,
   });
 
-  return { analytics, programYearId: programYear.id };
+  if (!opts?.armCareForEventId) return { analytics, programYearId: programYear.id };
+
+  // Arm care for one specific game (D-C7). Innings at the pitcher position per player, per saved
+  // lineup, plus each event's calendar day IN THE ORG'S ZONE — "days since their last outing" is a
+  // calendar question, so it must not be answered from a raw UTC slice.
+  const dayByEvent = new Map(events.map(e => [e.id, orgDayKey(e.startsAt)]));
+  const pitcherPos = sportPack.pitcherPosition;
+  const armCareLineups: ArmCareLineup[] = pitcherPos
+    ? lineups.map(l => ({
+        eventId: l.eventId,
+        day: dayByEvent.get(l.eventId) ?? '',
+        inningsByPlayer: Object.fromEntries(
+          l.entries.map(e => [
+            e.playerId,
+            Object.values(e.inningPositions ?? {}).filter(p => p === pitcherPos).length,
+          ]).filter(([, n]) => (n as number) > 0),
+        ) as Record<string, number>,
+      })).filter(l => l.day)
+    : [];
+
+  return {
+    analytics,
+    programYearId: programYear.id,
+    armCare: resolveArmCare({
+      today: tournamentToday(),
+      todayEventId: opts.armCareForEventId,
+      lineups: armCareLineups,
+      players: players.map(p => ({
+        id: p.id,
+        name: playerDisplayName(p),
+        perGameCap: p.lineupProfile?.pitcher?.maxInnings ?? null,
+      })),
+      seasonCap: programYear.lineupSettings?.pitcherMaxInningsDefault ?? null,
+      pitcherPosition: pitcherPos,
+    }),
+    periodLabelPlural: sportPack.periodLabelPlural,
+  };
 }

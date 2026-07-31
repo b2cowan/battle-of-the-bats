@@ -1,0 +1,211 @@
+/* Chunk C — the schedule import sheet. Tokens only, no colour literals (the six colour-token
+   baselines stay at zero). Warm-gate safe: --home-* with the portal's dark fallbacks.
+   Two breakpoints only (900 / 640), per the primitives header in coaches.module.css. */
+
+/* Wider than a form modal: the review step carries a verdict and a reason per row, and squeezing
+   it would push the reason — the whole point of a preview — onto four lines. */
+.sheet { max-width: 780px; }
+
+/* ── step 1: how it comes in ─────────────────────────────────────────────── */
+
+.tabs {
+  display: flex;
+  gap: 0.3rem;
+  padding: 0.2rem;
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  margin-bottom: 0.7rem;
+}
+
+.tab {
+  flex: 1;
+  min-height: 44px;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--home-ink-soft, var(--white-65));
+  cursor: pointer;
+}
+.tab:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+.tabActive {
+  background: var(--home-olive-soft, var(--white-05));
+  color: var(--primary-light);
+}
+
+.paste {
+  width: 100%;
+  min-height: 132px;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--home-card, var(--white-05));
+  color: var(--home-ink, var(--white-90));
+  font: inherit;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  resize: vertical;
+  margin-bottom: 0.7rem;
+}
+.paste:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 1px; }
+
+.fileInput { display: none; }
+
+.templates {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border-2);
+}
+
+.templatesHead {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0 0 0.5rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--home-dim, var(--white-45));
+}
+
+.templateRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.4rem 0;
+  font-size: 0.84rem;
+  color: var(--home-ink, var(--white-90));
+}
+
+.templateLinks { display: flex; gap: 0.5rem; }
+
+.linkBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0.35rem 0.2rem;
+  font: inherit;
+  font-size: 0.76rem;
+  color: var(--primary-light);
+  cursor: pointer;
+}
+.linkBtn:hover { text-decoration: underline; }
+.linkBtn:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+
+/* ── step 2: the review ──────────────────────────────────────────────────── */
+
+.summary {
+  margin: 0 0 0.8rem;
+  font-size: 0.84rem;
+  color: var(--home-ink-soft, var(--white-65));
+}
+.summary strong { color: var(--home-ink, var(--white-90)); }
+
+.rows { display: flex; flex-direction: column; gap: 0.55rem; }
+
+.row {
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-2);
+  border-left-width: 3px;
+  border-radius: 8px;
+  background: var(--home-card, var(--white-03));
+}
+/* The verdict is carried on the LEFT RAIL as well as the chip, so a coach scanning twelve rows
+   sees which ones need them without reading a word. */
+.row[data-outcome='add']       { border-left-color: var(--success); }
+.row[data-outcome='update']    { border-left-color: var(--warning); }
+.row[data-outcome='blocked']   { border-left-color: var(--danger); }
+.row[data-outcome='organizer'] { border-left-color: var(--primary-light); }
+
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.rowWhen { display: flex; gap: 0.3rem; flex: 1; min-width: 0; }
+
+.cellDate, .cellTime, .cellType, .cellOpponent, .cellLocation {
+  min-height: 44px;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: var(--home-card, var(--white-05));
+  color: var(--home-ink, var(--white-90));
+  font: inherit;
+  font-size: 0.78rem;
+  min-width: 0;
+}
+.cellDate { flex: 1.2; }
+.cellTime { flex: 1; }
+.cellType, .cellOpponent, .cellLocation { flex: 1; }
+.cellDate:focus-visible, .cellTime:focus-visible, .cellType:focus-visible,
+.cellOpponent:focus-visible, .cellLocation:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 1px;
+}
+
+.verdict {
+  flex-shrink: 0;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.verdict[data-outcome='add']       { color: var(--success); background: rgba(var(--success-rgb), 0.14); }
+.verdict[data-outcome='update']    { color: var(--warning); background: rgba(var(--warning-rgb), 0.14); }
+.verdict[data-outcome='blocked']   { color: var(--danger);  background: rgba(var(--danger-rgb), 0.14); }
+.verdict[data-outcome='organizer'] { color: var(--primary-light); background: var(--home-olive-soft, var(--white-05)); }
+
+.rowDrop {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border-2);
+  border-radius: 6px;
+  background: none;
+  color: var(--home-dim, var(--white-45));
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.rowDrop:hover { color: var(--danger); border-color: var(--danger); }
+.rowDrop:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; }
+
+.rowBody { display: flex; gap: 0.3rem; }
+
+@media (max-width: 640px) {
+  .rowBody { flex-wrap: wrap; }
+  .cellType, .cellOpponent, .cellLocation { flex: 1 1 100%; }
+}
+
+.reason {
+  margin: 0.4rem 0 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft, var(--white-65));
+}
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: 0.3rem 0 0;
+  font-size: 0.74rem;
+  color: var(--warning);
+}
+
+.rowActions {
+  display: flex;
+  gap: 0.4rem;
+  margin-top: 0.5rem;
+}

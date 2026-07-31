@@ -193,7 +193,7 @@ const coachesHelp: HelpPageContent = {
             <li>Edit or remove any event with the pencil and trash icons.</li>
           </ol>
           <p>Events list in date order so your whole season reads top to bottom.</p>
-          <p><strong>Premium Coaches Portal adds:</strong> more event types (league and tournament games, scrimmages, team events, and multi-day tournaments), <strong>List / Week / Month</strong> calendar views, game-day details (arrival/call time, field/diamond #, uniform) with a tap-to-open map link, recurring events (set repeating practices once), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar. See <strong>Tournaments, games &amp; calendar views</strong> and <strong>Game-day details</strong> below.</p>
+          <p><strong>Premium Coaches Portal adds:</strong> more event types (league and tournament games, scrimmages, team events, and multi-day tournaments), <strong>List / Week / Month</strong> calendar views, game-day details (arrival/call time, field/diamond #, uniform) with a tap-to-open map link, <strong>Repeat weekly</strong> (see every date before you create it, and give each game its own opponent), <strong>Import</strong> (bring a whole season in from a spreadsheet or a league email), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar. See <strong>Set up a repeating practice or league schedule</strong> and <strong>Bring a schedule in from a spreadsheet</strong> below.</p>
         </>
       ),
     },
@@ -1298,6 +1298,89 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'premium-repeat-weekly',
+      group: 'Premium Coaches Portal',
+      heading: 'Set up a repeating practice or league schedule (Premium)',
+      summary: 'Set the pattern once, then see every date it will create — and give each game its own opponent — before anything is saved.',
+      keywords: ['repeat weekly', 'repeating', 'recurring', 'every tuesday', 'weekly practice', 'series', 'round robin', 'league schedule', 'different opponent each week', 'bye week', 'skip a week', 'twelve games'],
+      searchText: 'repeat weekly repeating recurring event every tuesday weekly practice series round robin league schedule different opponent each week per date opponent bye week skip a week remove a date preview before saving edit this and future all occurrences delete series how many games will it create',
+      content: (
+        <>
+          <p>Tick <strong>Repeat weekly</strong> on a practice, league game or team event, then set the day, the time and the first and last dates.</p>
+          <p><strong>You then see the actual list of dates</strong> it will create — not a summary sentence. For games, type the opponent beside each date; for practices it&rsquo;s just the dates. Nothing is saved until you tap the button at the bottom, which names exactly how many events you&rsquo;re about to add.</p>
+          <ul>
+            <li><strong>A different opponent every week</strong> is the normal case for a league, so each date has its own box. Leave one blank and that game simply names itself.</li>
+            <li><strong>A bye week?</strong> Tap the <strong>✕</strong> beside that date to drop it before anything is created. Tap <strong>↩</strong> to put it back.</li>
+            <li><strong>Editing later</strong> works as it always has: open any occurrence and choose <strong>This</strong>, <strong>This &amp; future</strong>, or <strong>All</strong>.</li>
+          </ul>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-repeat-different-opponents',
+          question: 'Can a repeating series have a different opponent each week?',
+          answerText: 'Yes. When you tick Repeat weekly on a league game and set the day, time and date range, the form shows you the actual list of dates it is about to create, with a box for the opponent beside each one. Type them in and tap the button at the bottom — it names the exact count, for example "Add 11 league games". Leave an opponent blank and that game just names itself; you can fill it in later. If your league has a bye week, tap the ✕ beside that date to drop it before anything is created, and ↩ to put it back. Nothing is written until you tap the button, so you can correct anything first.',
+          keywords: ['different opponent each week', 'round robin', 'twelve different teams', 'opponent per date', 'bye week', 'skip a date', 'remove a week'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>Yes.</strong> Tick <strong>Repeat weekly</strong> on a league game and set the day, time and date range — the form then shows you the <strong>actual list of dates</strong> it&rsquo;s about to create, with an <strong>opponent box beside each one</strong>.</p>
+              <p>Type them in and tap the button at the bottom; it names the exact count (&ldquo;Add 11 league games&rdquo;). Leave one blank and that game just names itself — you can fill it in later.</p>
+              <p>If your league has a <strong>bye week</strong>, tap the <strong>✕</strong> beside that date to drop it before anything is created (<strong>↩</strong> puts it back). Nothing is written until you tap the button.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'premium-schedule-import',
+      group: 'Premium Coaches Portal',
+      heading: 'Bring a schedule in from a spreadsheet (Premium)',
+      summary: 'Paste it from a league email or upload the file — every row shows you what it will do before anything is saved.',
+      keywords: ['import schedule', 'import', 'upload schedule', 'paste schedule', 'spreadsheet', 'excel', 'csv', 'league sent me a schedule', 'bulk add games', 'template'],
+      searchText: 'import schedule upload spreadsheet excel xlsx csv paste from email league schedule bulk add games template download games sheet practice block round trip export then import back review before saving what will change ambiguous date refused cannot tell the date organizer game duplicate keep both skip row',
+      content: (
+        <>
+          <p>On your <strong>Schedule</strong>, tap <strong>Import</strong> (beside Export). Paste the rows from a league email, or upload the <strong>.xlsx</strong> or <strong>.csv</strong> the league sent.</p>
+          <p><strong>You review everything before it&rsquo;s saved.</strong> Each row shows what it will do in plain words — <strong>Adds</strong>, <strong>Updates</strong> (naming what changes, like &ldquo;time changes from 2:00 p.m. to 6:00 p.m.&rdquo;), or <strong>Can&rsquo;t import</strong> with the reason. Fix anything in place and the verdict updates as you type.</p>
+          <ul>
+            <li><strong>Templates</strong> — download a <strong>Games sheet</strong> or a <strong>Practice block</strong> to fill in. They carry the column headings only; no dates or opponents are filled in for you.</li>
+            <li><strong>It reads its own export.</strong> Export your schedule, edit it in Excel, and bring the same file straight back.</li>
+            <li><strong>A blank column is left alone.</strong> If your sheet has no uniform column, importing it won&rsquo;t clear the uniforms you already set.</li>
+          </ul>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-import-ambiguous-date',
+          question: 'Why won’t it accept my dates?',
+          answerText: 'Because a date like 03/04/2026 could be 3 April or 4 March, and there is no safe way for us to tell which one you meant. Rather than pick one and quietly put your season a month out, that row is handed back saying "We can’t tell what date 03/04/2026 is — write it as 2026-04-03 and we’ll take it." Anything unambiguous is accepted as-is: 2026-04-03, 2026/4/3, "Sep 8, 2026" and "8 September 2026" all work. Times are forgiving — 6:00 PM, 6pm and 18:00 are all fine. You can fix the date right there in the review list and the row turns green without re-uploading anything.',
+          keywords: ['ambiguous date', 'wont accept my date', 'date format', 'cannot tell the date', 'dd/mm', 'mm/dd', 'date rejected', 'fix the date'],
+          popular: true,
+          answer: (
+            <>
+              <p>Because a date like <strong>03/04/2026</strong> could be <strong>3 April</strong> or <strong>4 March</strong>, and there&rsquo;s no safe way for us to know which you meant. Rather than pick one and quietly put your season a month out, that row comes back asking.</p>
+              <p>Anything unambiguous is accepted as-is: <strong>2026-04-03</strong>, <strong>2026/4/3</strong>, <strong>Sep 8, 2026</strong> and <strong>8 September 2026</strong> all work. Times are forgiving — <strong>6:00 PM</strong>, <strong>6pm</strong> and <strong>18:00</strong> are all fine.</p>
+              <p>Fix the date right there in the review list and the row turns green — no need to re-upload anything.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-import-tournament-duplicate',
+          question: 'My league sheet includes our tournament games — will it duplicate them?',
+          answerText: 'No. Games that come from a FieldLogicHQ tournament belong to the organizer, and nothing you import will change or overwrite them. If a row you are importing looks like one of those games, it is shown side by side marked "Already yours", with the tournament named, and two choices: Keep both (import your row as a separate event as well) or Skip this row. We never merge them for you and we never guess — your hand-entered copy might have attendance and a lineup on it that we would be throwing away.',
+          keywords: ['duplicate tournament game', 'league sheet has tournament games', 'will it duplicate', 'keep both', 'skip row', 'already yours', 'organizer game'],
+          answer: (
+            <>
+              <p><strong>No.</strong> Games that come from a FieldLogicHQ tournament belong to the organizer, and nothing you import will change or overwrite them.</p>
+              <p>If a row looks like one of those games, it&rsquo;s shown marked <strong>Already yours</strong> with the tournament named, and two choices: <strong>Keep both</strong> (import your row as a separate event too) or <strong>Skip this row</strong>.</p>
+              <p>We never merge them for you — your hand-entered copy might carry attendance and a lineup we&rsquo;d be throwing away.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'premium-tournament-games',
       group: 'Premium Coaches Portal',
       heading: 'Tournament games on your team calendar (Premium)',
@@ -1353,8 +1436,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Building lineups & reusable templates (Premium)',
       summary: 'Set who plays where once, then reuse it game to game — and let game sheets, attendance and Insights read from it.',
-      keywords: ['lineups', 'lineup', 'build lineup', 'playing order', 'batting order', 'field positions', 'who plays where', 'templates', 'auto-fill', 'game sheet', 'needs lineup'],
-      searchText: 'lineups lineup build a lineup playing order batting order field positions who plays where period by period inning by inning game sheet print attendance insights playing time fairness templates reusable base lineup apply template auto-fill generate lineup needs lineup not set games tab templates tab no games yet add a game schedule first assistant coach lineup access',
+      keywords: ['lineups', 'lineup', 'build lineup', 'playing order', 'batting order', 'field positions', 'who plays where', 'templates', 'auto-fill', 'game sheet', 'needs lineup', 'reorder batting order', 'drag to reorder', 'move a player up', 'change the batting order', 'positions tab', 'batting order tab'],
+      searchText: 'lineups lineup build a lineup playing order batting order field positions who plays where period by period inning by inning game sheet print attendance insights playing time fairness templates reusable base lineup apply template auto-fill generate lineup needs lineup not set games tab templates tab no games yet add a game schedule first assistant coach lineup access batting order tab positions tab playing time tab three views drag to reorder press and hold move a player up or down bench cut line nine player ball swap someone in positions follow the player',
       content: (
         <>
           <p>A <strong>lineup</strong> is your playing order and field positions for one game, set period by period. Open <strong>Lineups</strong> in the Squad menu — the <strong>Games</strong> tab lists every game on your schedule, each marked <strong>Lineup set</strong> or <strong>Not set</strong>, so you can see at a glance what still needs doing before the weekend.</p>
@@ -1362,6 +1445,13 @@ const coachesHelp: HelpPageContent = {
           <p><strong>You need a game before you can build a lineup.</strong> If the Games tab is empty, add a practice or game on your <strong>Schedule</strong> first. Lineups are always attached to a real game — there&rsquo;s nowhere to put one otherwise.</p>
           <p><strong>Templates</strong> (the second tab) are reusable base lineups you apply to any game in one tap — your usual order, a rain-day rotation, a tournament arrangement. Build one from scratch, or save a game&rsquo;s lineup as a template once you like it.</p>
           <p><strong>Filters:</strong> the Games tab has scope chips (League / Tournament / Scrimmage) and a <strong>Needs lineup</strong> toggle that narrows the list to the games still missing one.</p>
+          <p><strong>Inside a game, the lineup has three views</strong> — each answers a different question, and they&rsquo;re all the same lineup:</p>
+          <ul>
+            <li><strong>Batting order</strong> — who bats when. A plain list: <strong>press and hold a row and drag it</strong> where you want, or use the arrows. In 9-player ball the batting nine sit above a line with the bench below; drag someone across it and they swap in.</li>
+            <li><strong>Positions</strong> — who plays where, period by period. This is where the page opens.</li>
+            <li><strong>Playing time</strong> — whether it&rsquo;s coming out fair.</li>
+          </ul>
+          <p>Changes carry across all three, and a player&rsquo;s positions <strong>follow the player</strong> when you move them in the order — nothing gets left behind in the slot they were in.</p>
         </>
       ),
       faqs: [

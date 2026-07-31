@@ -4,7 +4,7 @@ import { isPlatformAdminEmail } from './platform-auth';
 import { deriveCoachLifecycleChip } from './coach-tournament-lifecycle';
 import { buildCoachTournamentStatus } from './coach-status-model';
 import { excludeActivePremiumUpgrades } from './coach-team-page';
-import { tournamentNow, tournamentToday } from './timezone';
+import { tournamentNow, tournamentToday, zonedWallClockToUtc } from './timezone';
 import { getTeamWorkspaceForRepTeam } from './team-workspace-entitlements';
 import { getLinkedRegistrationIdsForRepTeam } from './rep-team-tournament-links';
 
@@ -1274,7 +1274,12 @@ export async function getRegistrationGamesForTeam(
       : null;
     return {
       id: game.id,
-      startsAt: game.game_date ? `${game.game_date}T${game.game_time ?? '00:00'}` : null,
+      // A tournament game's date + time are the ORG'S WALL CLOCK (`game_date` + `game_time`), and
+      // this value is written straight into `rep_team_events.starts_at` (a timestamptz) by the
+      // Batch 4 mirror. Resolve it to a real instant here — a naive literal would be read by
+      // Postgres in the UTC session zone, so a 2 PM game would mirror onto the coach's calendar
+      // as 10 AM and their schedule would disagree with the tournament they are playing in.
+      startsAt: zonedWallClockToUtc(game.game_date, game.game_time ?? '00:00'),
       gameDate: game.game_date,
       dateLabel: game.game_date === today ? 'Today' : formatGameDateLabel(game.game_date),
       timeLabel: formatGameTimeLabel(game.game_time),

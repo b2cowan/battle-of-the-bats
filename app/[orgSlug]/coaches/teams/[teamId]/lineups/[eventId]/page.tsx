@@ -480,7 +480,9 @@ export default function CoachLineupBuilderPage({
   );
 
   return (
-    <div className={styles.page}>
+    // The docked action bar is out of flow on phones, so the page reserves its height — otherwise
+    // the last player row ends up hidden behind it at the bottom of the scroll.
+    <div className={`${styles.page} ${lineupRows.length > 0 ? styles.lineupDockedPage : ''}`}>
       {header}
       <UnsavedChangesGuard active={lineupDirty} />
 
@@ -537,8 +539,13 @@ export default function CoachLineupBuilderPage({
               placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster" maxLength={1000} style={{ marginTop: '1rem' }} />
           )}
 
+          {/* Chunk C: docked above the bottom nav on phones rather than sitting at the end of the
+              page. This bar carries Undo — the control a coach reaches for immediately after a
+              mis-tap — and on a 12 × 7 grid the page is ~1700px tall, so "at the end" meant
+              unreachable without scrolling the whole grid. (It was already marked sticky, but its
+              container ends exactly where it does, so it had no travel and never stuck.) */}
           {lineupRows.length > 0 && (
-            <div className={styles.attendanceFooter}>
+            <div className={`${styles.attendanceFooter} ${styles.lineupDockedFooter}`}>
               <div className={styles.lineupFooterTools}>
                 <button type="button" className={styles.footerIconBtn} aria-label="Undo" title="Undo" disabled={lineupHistory.undo.length === 0} onClick={undoLineup}><Undo2 size={18} /></button>
                 <button type="button" className={styles.footerIconBtn} aria-label="Redo" title="Redo" disabled={lineupHistory.redo.length === 0} onClick={redoLineup}><Redo2 size={18} /></button>
