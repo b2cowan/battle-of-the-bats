@@ -1,6 +1,14 @@
 # Coach Onboarding — Quiet Mode
 
-**Status:** Active · **Phase A + B COMMITTED on dev 2026-07-29** (B's chip removal held back — see §B4) · **Phase C BUILT on dev 2026-07-29 (mig 209 applied to DEV only; ⚠ PROD-PENDING)** · owner QA pending on all three
+**Status:** Active — **code COMPLETE, all three phases committed on `dev`, ✅ owner QA PASSED 2026-07-29.**
+Remaining is release only: **⚠ migration 209 is DEV-ONLY — apply to prod BEFORE promoting** (see §B4/§C2),
+then promote. Kept in `active/` rather than archived because nothing is on production yet.
+
+> §B4's held-back set is now resolved: the other session's tournament-games work landed
+> (`13e2c021`), and its follow-up commit (`0c744a81`) carried the chip removal, the Schedule
+> teaching copy and all of Phase C in with it. Verified present in `HEAD`: `DISCOVERY_SECTIONS`
+> gone, `.discover*` rules gone, Schedule payoff copy + "Add Event" capability gate landed, tour
+> registers with the overlay signal.
 **Owner decision date:** 2026-07-29
 **Surfaces:** Premium coach team Overview, every coach portal section, help drawer
 **Related:** `PREMIUM_COACHES_PORTAL_WALKTHROUGH_PM_BRIEF.md` (archived), `COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`, `HELP_SYSTEM_REDESIGN_PLAN.md` (archived)

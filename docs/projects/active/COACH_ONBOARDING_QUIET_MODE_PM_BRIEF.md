@@ -1,6 +1,8 @@
 # PM Brief — Coach Onboarding: Quiet Mode
 
-**Status:** Approved 2026-07-29 · **All three phases built.** A + B committed on `dev`; C built with its database change applied to the test environment only. Owner QA pending on all three.
+**Status:** ✅ **Owner QA passed 2026-07-29.** All three phases built and committed. Only the release
+remains: the two new account settings must be added to production **before** the code ships there,
+otherwise a coach's choice appears to save and is silently undone on their next visit.
 **Full plan:** `COACH_ONBOARDING_QUIET_MODE_PLAN.md`
 
 ---

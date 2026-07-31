@@ -894,14 +894,16 @@ export default async function TournamentHomeContent({
 
   return (
     <div className={styles.page}>
-      {/* F1: whole-event follow strip — HOME tab only, directly under the event header.
-          Inside .page so it sits below the mobile header clearance (padding-top). Live
-          public affordance — never in the admin preview. */}
+      {/* F1: the mobile event ACTION ROW (Follow + Share) — HOME tab only, directly under the
+          event header. Inside .page so it sits below the mobile header clearance (padding-top).
+          Live public affordance — never in the admin preview. Desktop keeps its own share row
+          below the hero (.eventShareRow), which hides ≤900px so Share renders once per width. */}
       {!isPreview && (
         <FollowTournamentStrip
           orgSlug={orgSlug}
           tournamentSlug={tournamentSlug}
           tournamentName={tournament.name}
+          shareUrl={publicBase}
         />
       )}
       {playoffsSet && (

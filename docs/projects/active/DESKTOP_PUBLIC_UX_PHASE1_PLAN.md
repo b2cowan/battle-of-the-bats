@@ -70,6 +70,13 @@ Option 1 (Trim Pass) in full **plus**: persona menu under "Run a Tournament" (fr
 
 ---
 
+## Phase 2 — owner rulings 2026-07-30 (mockups: `claude.ai/code/artifact/f2b33b25-e051-4396-9dd2-a4b1c64e2bd4`)
+
+- ✅ **BUILD — Account two-column** (section list left, content right). Closes the gap Chunk B knowingly left at 720px. No evidence gate: we chose the narrow column as a stopgap and recorded the two-column screen as the real answer.
+- ✅ **BUILD — Chat split-pane** (inbox left, conversation right). Also fixes the screen that had to opt out of the WI-10 footer.
+- ❌ **CLOSED — multi-column Home.** Not building. The side column needs follows-per-account to justify it and that data doesn't exist; an empty second column is worse than none.
+- ⏸ **Desktop navigation rail — OPEN, scope widened by the owner** into a whole-platform navigation model across four personas (anonymous browser / tournament admin / coach / multi-hat league admin). See the navigation-model artifact. **Key finding: the rail is NOT new** — admin, coach and public-tournament shells all already have one; only the fan app lacks it. The real gap is that each shell carries its OWN context switcher (workspace switcher, tournament switcher, season switcher, team switcher, coach door, operator pill, roles chooser), so a multi-hat user meets a different mechanism in every shell.
+
 ## Work items
 
 ### Chunk A — Chrome & navigation (ConsumerNav + shell)

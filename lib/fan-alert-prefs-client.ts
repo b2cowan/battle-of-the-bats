@@ -3,9 +3,9 @@
  * lib/fan-alert-prefs-client.ts — browser-side counterpart to lib/fan-alert-prefs.ts.
  *
  * One shared source for the signed-in fan's two global alert switches, used by
- * every surface that shows or edits them (FollowAlertsToggle, FanNotificationBell,
- * AlertsNudge, FanAlertsCard). A tournament page mounts several of these at once
- * (mobile strip + desktop rail + dock + navbar bell), so the GET is memoized
+ * every surface that shows or edits them (FollowAlertsToggle, AlertsNudge,
+ * FanAlertsCard). A tournament page mounts several of these at once
+ * (mobile strip + desktop rail + dock), so the GET is memoized
  * module-wide — all instances await ONE fetch per page load — and saves update
  * the cache + broadcast `fl-fan-prefs-change` so every mounted control stays in
  * sync without its own re-fetch.

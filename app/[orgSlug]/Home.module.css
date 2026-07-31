@@ -1722,6 +1722,13 @@
   margin-bottom: 0.25rem;
 }
 
+/* ≤900px the hero is hidden, so this row used to land right under the follow strip — one
+   button on the left edge, one on the right, two heights (the "stagger", owner 2026-07-29).
+   Share now rides IN the follow strip on mobile (Option A), so this row is desktop-only. */
+@media (max-width: 900px) {
+  .eventShareRow { display: none; }
+}
+
 /* CSS-Modules keyframe scoping fix (2026-07-27). The 7 `animation: fadeInUp ...` rules in
    this file referenced the GLOBAL @keyframes in globals.css. Turbopack rewrites animation
    names in a module to the module-scoped identifier, so those references resolved to a

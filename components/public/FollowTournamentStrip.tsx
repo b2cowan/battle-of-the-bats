@@ -2,9 +2,14 @@
 /**
  * components/public/FollowTournamentStrip.tsx — Phase 6 (F1)
  *
- * The "Follow this tournament" strip that sits directly under the unified event header on the
- * tournament HOME tab only (the header itself keeps only Share — G5 holds). One tap follows the
- * WHOLE event (not a team) — instantly, no account (free-first business decision). States:
+ * The event ACTION ROW that sits directly under the unified event header on the tournament HOME
+ * tab only: Follow (leading) + Share (secondary), one row, one baseline. Share used to live in a
+ * separate right-aligned row below the hero; on mobile the hero is hidden, so the two landed
+ * back-to-back on opposite edges and read as a zig-zag (owner call 2026-07-29, Option A). The
+ * desktop share row is unchanged and now hides ≤900px, so exactly one Share renders per width.
+ *
+ * One tap follows the WHOLE event (not a team) — instantly, no account (free-first business
+ * decision). States:
  * ghost-star "Follow this tournament" → a dimmed saving beat → ink-on-lime "★ Following"
  * (standard pillOn). Tap again unfollows.
  *
@@ -20,18 +25,21 @@ import { Star, X } from 'lucide-react';
 import { useFollowedTournament } from '@/lib/follow';
 import { getSession } from '@/lib/auth';
 import { fireConsumerEvent } from '@/lib/consumer-events-client';
+import SharePageButton from '@/components/public/SharePageButton';
 import styles from './FollowTournamentStrip.module.css';
 
 interface Props {
   orgSlug: string;
   tournamentSlug: string;
   tournamentName: string;
+  /** Path the Share partner sends (origin prepended by SharePageButton). */
+  shareUrl: string;
 }
 
 // One global dismissal key (plan §6): the sign-in nudge shows at most once per device until cleared.
 const NUDGE_DISMISS_KEY = 'fl_follow_tourn_nudge_dismissed';
 
-export default function FollowTournamentStrip({ orgSlug, tournamentSlug, tournamentName }: Props) {
+export default function FollowTournamentStrip({ orgSlug, tournamentSlug, tournamentName, shareUrl }: Props) {
   const { following: deviceFollowing, follow, unfollow } = useFollowedTournament(orgSlug, tournamentSlug);
   const [accountFollowing, setAccountFollowing] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
@@ -112,6 +120,14 @@ export default function FollowTournamentStrip({ orgSlug, tournamentSlug, tournam
           <Star size={14} strokeWidth={2.2} fill={following ? 'currentColor' : 'none'} aria-hidden />
           {following ? 'Following' : 'Follow this tournament'}
         </button>
+        {/* The quieter partner: same height, same baseline, its own type register so
+            Follow stays the one branded thing in the row. */}
+        <SharePageButton
+          url={shareUrl}
+          title={tournamentName}
+          text="Live on FieldLogicHQ"
+          className={styles.share}
+        />
       </div>
 
       {showNudge && (

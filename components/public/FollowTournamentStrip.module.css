@@ -19,14 +19,21 @@
   .wrap { display: none; }
 }
 
+/* Follow + Share as ONE row (owner call 2026-07-29, Option A): Follow leads and grows,
+   Share holds its natural width beside it. Both sit on the 44px public touch floor, so
+   the pair reads as one action line instead of two rows on opposite edges. */
 .strip {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  gap: 0.45rem;
 }
 
 .pill {
+  flex: 1;
+  min-width: 0;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.4rem;
   min-height: var(--tap-min, 44px);
   border: 1px solid rgba(var(--primary-rgb), 0.3);
@@ -64,6 +71,43 @@
 .saving {
   opacity: 0.55;
   pointer-events: none;
+}
+
+/* Share — deliberately NOT branded: neutral outline in the same mono register and on the
+   same 44px floor as the pill, so the row has one voice and one lead action. Replaces the
+   old `.btn btn-outline btn-sm` share, which rendered ~30px tall (under the touch floor). */
+.share {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: var(--tap-min, 44px);
+  /* Hairline at a third of the pill's alpha — reads as neutral next to Follow, and unlike
+     --border-2 (white-alpha) it stays visible in the event's LIGHT mode too. */
+  border: 1px solid rgba(var(--primary-rgb), 0.18);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.8rem;
+  background: transparent;
+  color: var(--white-70);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.share:hover {
+  background: rgba(var(--primary-rgb), 0.07);
+  border-color: rgba(var(--primary-rgb), 0.32);
+  color: var(--white);
+}
+
+.share:disabled {
+  opacity: 0.6;
+  cursor: default;
 }
 
 /* Quiet, dismissible sign-in nudge under the strip (signed-out only, once per device). */
@@ -109,3 +153,4 @@
 .nudgeClose:hover { color: var(--white-70); }
 
 [data-color-mode="light"] .nudgeText { color: var(--fl-text); }
+[data-color-mode="light"] .share { color: var(--fl-text); }

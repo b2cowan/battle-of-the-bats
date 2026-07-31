@@ -60,9 +60,18 @@ type CoachEmptyStateProps = {
   /** Compact variant: 40px medallion + tighter padding. */
   compact?: boolean;
   /**
-   * Quiet "waiting" variant (addendum §iii) — a NO-ACTION empty the coach can only check back on
-   * (unpublished / no-games schedule). Flat panel, neutral --white-40 medallion (no lime, no glow),
-   * left-aligned, section-weight — matches the data panels around it. Do NOT use with a CTA.
+   * Quiet variant (addendum §iii) — flat panel, neutral --white-40 medallion (no lime, no glow),
+   * left-aligned, section-weight, so it sits at the same visual weight as the data panels around
+   * it. Do NOT use with a CTA.
+   *
+   * Use it when THIS BLOCK carries no call to action — either because the coach can only check
+   * back (unpublished / no-games schedule), or because the one action already sits beside the
+   * block and a glowing centred illustration would compete with the control it is explaining
+   * (Coaching staff, where the invite form is directly above).
+   *
+   * The trigger is the absence of a CTA **on the block**, not the absence of an action on the
+   * page — design decision 2026-07-31, which extended the original "no-action empty" wording.
+   * Empties that carry their own CTA keep the full/compact glow.
    */
   quiet?: boolean;
   /**
