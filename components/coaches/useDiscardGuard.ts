@@ -58,7 +58,20 @@ export function useDiscardGuard({
  * own keys so a form object carrying extra runtime keys can't produce a false positive.
  * Selections that don't live in the form object (a payee, tag ids) are OR'd in by the
  * call site, which is the only place that knows about them.
+ * (Constraint is `object`, not `Record<string, string>` — a typed form interface isn't
+ * assignable to an index signature, and the comparison is `!==` either way.)
  */
-export function touched<T extends Record<string, string>>(form: T, blank: T): boolean {
+export function touched<T extends object>(form: T, blank: T): boolean {
   return (Object.keys(blank) as Array<keyof T>).some(k => form[k] !== blank[k]);
+}
+
+/**
+ * Deep-equality for a STRUCTURED dirty baseline (nested arrays/objects — a rubric's category
+ * rows, an accept form's installment rows) where `touched()`'s flat compare can't reach.
+ * JSON round-trip equality is exactly right here: the two snapshots come from the same code
+ * path moments apart, so key order is stable by construction. ONE home for the idiom so
+ * every structured form guards the same way.
+ */
+export function snapshotEqual(a: unknown, b: unknown): boolean {
+  return JSON.stringify(a) === JSON.stringify(b);
 }

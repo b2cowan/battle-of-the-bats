@@ -1,6 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Users, Plus, Copy, Check, Ban } from 'lucide-react';
+import { Users, Plus, Copy, Check, Ban, RefreshCw } from 'lucide-react';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from './TryoutDayCard.module.css';
 
 interface Evaluator {
@@ -15,6 +18,8 @@ interface Evaluator {
 interface Props {
   /** Evaluators API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-evaluators`. */
   apiBase: string;
+  /** Explicit per-component write gate (WI-11) — a no-op while tryouts is all-or-nothing. */
+  canWrite?: boolean;
   onError?: (msg: string) => void;
 }
 
@@ -24,7 +29,13 @@ function statusOf(e: Evaluator): { label: string; live: boolean } {
   return { label: 'Active', live: true };
 }
 
-export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
+/** "until Sat 6:00 pm" — the link's lifetime belongs beside its status (WI-8). */
+function expiryLabel(e: Evaluator): string {
+  return new Date(e.expiresAt).toLocaleString(undefined, { weekday: 'short', hour: 'numeric', minute: '2-digit' });
+}
+
+export default function TryoutEvaluatorsCard({ apiBase, canWrite = true, onError }: Props) {
+  const confirm = useConfirm();
   const [evaluators, setEvaluators] = useState<Evaluator[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -33,8 +44,20 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [freshLink, setFreshLink] = useState<string | null>(null);
+  /** Whose link the show-once modal is presenting — "Link ready for {name}" on mint AND reissue. */
+  const [freshFor, setFreshFor] = useState<string>('');
   const [copied, setCopied] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
+  const [reissuingId, setReissuingId] = useState<string | null>(null);
+
+  useOverlayOpen(open);
+  // Light guard (WI-2): one typed name is still typed work — but once the link is minted the
+  // modal is a done-screen and closes silently (the BudgetStarterSheet post-save exemption).
+  const guardedClose = useDiscardGuard({
+    dirty: !freshLink && name.trim().length > 0,
+    close: () => setOpen(false),
+    noun: 'evaluator link',
+  });
 
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
@@ -60,6 +83,7 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
     setName('');
     setFormError(null);
     setFreshLink(null);
+    setFreshFor('');
     setCopied(false);
     setOpen(true);
   }
@@ -77,6 +101,7 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
       const data = await res.json();
       if (!res.ok) throw new Error(data.errors?.evaluatorName ?? data.error ?? 'Failed to create link');
       setEvaluators(prev => [data.session, ...prev]);
+      setFreshFor(name.trim());
       setFreshLink(`${window.location.origin}/tryout-score/${data.token}`);
     } catch (e: any) {
       setFormError(e.message ?? 'Failed to create link.');
@@ -96,16 +121,60 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
     }
   }
 
-  async function revoke(id: string) {
-    setRevokingId(id);
+  async function revoke(e: Evaluator) {
+    // Instant outward-facing destruction deserves an ask — and the ask names who (WI-8).
+    const ok = await confirm({
+      title: `Turn off ${e.evaluatorName ?? 'this evaluator'}’s link?`,
+      message: `${e.evaluatorName ?? 'They'} loses scoring access immediately. ${e.candidatesScored > 0 ? `Their ${e.candidatesScored} scored player${e.candidatesScored === 1 ? '' : 's'} are kept.` : 'Nothing they’ve done is lost — they haven’t scored yet.'}`,
+      confirmText: 'Turn off link',
+      cancelText: 'Cancel',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setRevokingId(e.id);
     try {
-      const res = await fetch(`${apiBase}/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${apiBase}/${e.id}`, { method: 'DELETE' });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.error ?? 'Failed to turn off link'); }
-      setEvaluators(prev => prev.map(e => (e.id === id ? { ...e, revokedAt: new Date().toISOString() } : e)));
-    } catch (e: any) {
-      fail(e.message ?? 'Failed to turn off link.');
+      setEvaluators(prev => prev.map(x => (x.id === e.id ? { ...x, revokedAt: new Date().toISOString() } : x)));
+    } catch (err: any) {
+      fail(err.message ?? 'Failed to turn off link.');
     } finally {
       setRevokingId(null);
+    }
+  }
+
+  /** Fresh link, SAME identity (WI-8): their scores stay attached — a second "evaluator" for the
+   *  same person would double-count their opinion in the rankings. */
+  async function reissue(e: Evaluator) {
+    if (reissuingId) return;
+    // Reissuing a deliberately turned-off link REVIVES it — that must never happen silently
+    // from an icon whose tooltip only promises "new link".
+    if (e.revokedAt) {
+      const ok = await confirm({
+        title: `Give ${e.evaluatorName ?? 'this evaluator'} a new link?`,
+        message: `You turned their link off. A new link gives ${e.evaluatorName ?? 'them'} scoring access again (their earlier scores are kept).`,
+        confirmText: 'Create new link',
+        cancelText: 'Cancel',
+        tone: 'warning',
+      });
+      if (!ok) return;
+    }
+    setReissuingId(e.id);
+    try {
+      const res = await fetch(`${apiBase}/${e.id}`, { method: 'POST' });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to issue a new link');
+      setEvaluators(prev => prev.map(x => (x.id === e.id ? { ...x, expiresAt: data.session.expiresAt, revokedAt: null } : x)));
+      setName('');
+      setFormError(null);
+      setCopied(false);
+      setFreshFor(e.evaluatorName ?? 'this evaluator');
+      setFreshLink(`${window.location.origin}/tryout-score/${data.token}`);
+      setOpen(true);
+    } catch (err: any) {
+      fail(err.message ?? 'Failed to issue a new link.');
+    } finally {
+      setReissuingId(null);
     }
   }
 
@@ -132,20 +201,35 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
                   <div className={styles.sessionWhen}>{e.evaluatorName ?? 'Evaluator'}</div>
                   <div className={styles.sessionMeta}>
                     <span style={{ color: st.live ? 'var(--logic-lime)' : 'var(--home-dim, rgba(255,255,255,0.4))' }}>{st.label}</span>
+                    {st.live && <> · until {expiryLabel(e)}</>}
                     {' · '}{e.candidatesScored} scored
                   </div>
                 </div>
-                {st.live && (
-                  <button
-                    type="button"
-                    className={`${styles.iconBtn} ${styles.iconDanger}`}
-                    onClick={() => revoke(e.id)}
-                    disabled={revokingId === e.id}
-                    aria-label="Turn off link"
-                    title="Turn off link"
-                  >
-                    <Ban size={15} />
-                  </button>
+                {canWrite && (
+                  <div className={styles.sessionActions}>
+                    <button
+                      type="button"
+                      className={styles.iconBtn}
+                      onClick={() => reissue(e)}
+                      disabled={reissuingId === e.id}
+                      aria-label={`New link for ${e.evaluatorName ?? 'this evaluator'} — their scores are kept`}
+                      title="New link (their scores are kept)"
+                    >
+                      <RefreshCw size={15} />
+                    </button>
+                    {st.live && (
+                      <button
+                        type="button"
+                        className={`${styles.iconBtn} ${styles.iconDanger}`}
+                        onClick={() => revoke(e)}
+                        disabled={revokingId === e.id}
+                        aria-label="Turn off link"
+                        title="Turn off link"
+                      >
+                        <Ban size={15} />
+                      </button>
+                    )}
+                  </div>
                 )}
               </div>
             );
@@ -153,12 +237,14 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
         </div>
       )}
 
-      <div className={styles.actions}>
-        <button type="button" className={styles.addBtn} onClick={openAdd}><Plus size={14} /> Add evaluator</button>
-      </div>
+      {canWrite && (
+        <div className={styles.actions}>
+          <button type="button" className={styles.addBtn} onClick={openAdd}><Plus size={14} /> Add evaluator</button>
+        </div>
+      )}
 
       {open && (
-        <div className={styles.scrim} onClick={() => !saving && setOpen(false)}>
+        <div className={styles.scrim} onClick={() => !saving && guardedClose()}>
           <div className={styles.modal} onClick={ev => ev.stopPropagation()}>
             {!freshLink ? (
               <>
@@ -173,13 +259,13 @@ export default function TryoutEvaluatorsCard({ apiBase, onError }: Props) {
                 </p>
                 {formError && <p style={{ color: 'var(--danger-light)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
                 <div className={styles.modalActions}>
-                  <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)} disabled={saving}>Cancel</button>
+                  <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving}>Cancel</button>
                   <button type="button" className="btn btn-primary" onClick={create} disabled={saving}>{saving ? 'Creating…' : 'Create link'}</button>
                 </div>
               </>
             ) : (
               <>
-                <h3 className={styles.modalTitle}>Link ready for {name.trim()}</h3>
+                <h3 className={styles.modalTitle}>Link ready for {freshFor}</h3>
                 <p className={styles.subtitle} style={{ margin: '0 0 0.6rem' }}>
                   Copy it now and text or email it to them — for their privacy we don’t show it again.
                 </p>

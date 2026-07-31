@@ -122,7 +122,9 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
                 <th>Player</th>
                 {showGoals && <th>Active focus</th>}
                 <th>Last measurable</th>
-                <th>History linked</th>
+                {/* Measures cross-season identity continuity, not attention — the old
+                    "History linked" label undercut this report's own headline (WI-5). */}
+                <th>Returning player</th>
               </tr>
             </thead>
             <tbody>
@@ -144,7 +146,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
                     <td data-label="Last measurable" className={styles.devBoardVal}>
                       {r.lastRecordedOn ? formatShortDate(r.lastRecordedOn) : <span className={styles.devBoardMuted}>—</span>}
                     </td>
-                    <td data-label="History linked" className={styles.devBoardVal}>
+                    <td data-label="Returning player" className={styles.devBoardVal}>
                       {r.historyLinked ? `${r.historyLinked} ✓` : <span className={styles.devBoardMuted}>—</span>}
                     </td>
                   </tr>

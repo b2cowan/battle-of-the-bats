@@ -409,3 +409,72 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .acceptRosterBtn:hover {
   background: rgba(var(--home-olive-rgb), 0.16);
 }
+
+/* ── D-E9: the decision-email switch (Chunk E) ─────────────────────────────────
+   Sits directly above the decision buttons so what a tap does is visible at the
+   moment of decision. The track/knob classes are REUSED from the accept drawer's
+   fee toggle (TryoutAcceptDrawer.module.css .toggle/.switch/.knob, warm overrides
+   included) — only the row layout lives here. */
+.notifyRow {
+  display: flex; align-items: flex-start; gap: 0.6rem;
+  margin: 0 0 0.7rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.03);
+}
+.notifyText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+.notifyLabel { font-size: 0.82rem; font-weight: 700; color: var(--white-90); }
+.notifyHint { font-size: 0.74rem; color: rgba(255,255,255,0.45); line-height: 1.45; }
+
+/* "No email on file" — a decision the product can't deliver must say so where it's made. */
+.noEmailChip {
+  display: inline-block; margin-left: 0.5rem;
+  font-size: 0.64rem; font-weight: 700; letter-spacing: 0.02em;
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.10);
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  border-radius: 999px; padding: 0.12rem 0.5rem;
+  vertical-align: 1px;
+}
+
+/* The family's registration note — read-only expand under the row. */
+.noteToggle {
+  background: transparent; border: none; cursor: pointer; padding: 0;
+  margin-left: 0.6rem;
+  font-size: 0.74rem; font-weight: 600;
+  color: var(--logic-lime);
+  font-family: inherit;
+}
+.familyNote {
+  margin-top: 0.35rem;
+  font-size: 0.78rem; line-height: 1.45;
+  color: rgba(255,255,255,0.65);
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 0.45rem 0.6rem;
+  display: flex; flex-direction: column; gap: 0.2rem;
+}
+
+/* Warm variant: paper panel + ink text; switch tracks mirror the fee toggle. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .notifyRow {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .notifyLabel {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .notifyHint {
+  color: var(--home-dim);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noEmailChip {
+  color: var(--home-amber);
+  background: rgba(var(--home-amber-rgb), 0.10);
+  border-color: rgba(var(--home-amber-rgb), 0.45);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .familyNote {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+  color: var(--home-ink-soft);
+}

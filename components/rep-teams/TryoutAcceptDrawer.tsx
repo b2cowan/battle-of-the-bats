@@ -1,6 +1,8 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { X, Trash2, Plus } from 'lucide-react';
+import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from './TryoutAcceptDrawer.module.css';
 
 export interface AcceptIdentity {
@@ -11,6 +13,8 @@ export interface AcceptIdentity {
   guardianLastName: string | null;
   guardianEmail: string | null;
   guardianPhone: string | null;
+  /** What the family wrote at registration — captured, fetched, and (until Chunk E) never shown. */
+  playerNotes?: string | null;
 }
 
 export interface AcceptSuggestedDues {
@@ -57,6 +61,26 @@ export default function TryoutAcceptDrawer({ identity, suggestedDues, onClose, o
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useOverlayOpen(true);
+  // Dirty baseline = the drawer's own initial state (incl. the suggestedDues prefill — our
+  // prefill is not the coach's work, Chunk G rider). Mount-time snapshot; identity is read-only.
+  const [initial] = useState(() => ({
+    playerNumber: '', primaryPosition: '', jerseySize: '', notes: '',
+    feesOn: !!(suggestedDues && suggestedDues.complete),
+    total: suggestedDues ? String(suggestedDues.totalAmount) : '',
+    installments: suggestedDues && suggestedDues.installments.length
+      ? suggestedDues.installments.map(i => ({ amount: String(i.amount), dueDate: i.dueDate }))
+      : [{ amount: '', dueDate: '' }],
+  }));
+  const dirty = !snapshotEqual({ playerNumber, primaryPosition, jerseySize, notes, feesOn, total, installments }, initial);
+  const instCount = installments.filter(i => i.amount || i.dueDate).length;
+  const guardedClose = useDiscardGuard({
+    dirty,
+    close: onClose,
+    noun: 'accept form',
+    detail: instCount > 0 ? `roster details and ${instCount} fee installment${instCount === 1 ? '' : 's'}` : 'roster details',
+  });
 
   const totalNum = Number(total);
   const sum = useMemo(
@@ -127,14 +151,14 @@ export default function TryoutAcceptDrawer({ identity, suggestedDues, onClose, o
     : null;
 
   return (
-    <div className={styles.scrim} onClick={submitting ? undefined : onClose}>
+    <div className={styles.scrim} onClick={submitting ? undefined : () => guardedClose()}>
       <div className={styles.panel} onClick={e => e.stopPropagation()} role="dialog" aria-label={`Accept ${playerName}`}>
         <div className={styles.header}>
           <div>
             <h3 className={styles.headerTitle}>Accept {playerName}</h3>
             <p className={styles.headerSub}>Add to the roster{feesOn ? ' with their fees' : ''}</p>
           </div>
-          <button type="button" className={styles.closeBtn} onClick={onClose} disabled={submitting} aria-label="Close">
+          <button type="button" className={styles.closeBtn} onClick={() => guardedClose()} disabled={submitting} aria-label="Close">
             <X size={16} />
           </button>
         </div>
@@ -150,6 +174,7 @@ export default function TryoutAcceptDrawer({ identity, suggestedDues, onClose, o
             )}
             {identity.guardianEmail && <div className={styles.readField}><span className={styles.readLabel}>Email</span><span className={styles.readValue}>{identity.guardianEmail}</span></div>}
             {identity.guardianPhone && <div className={styles.readField}><span className={styles.readLabel}>Phone</span><span className={styles.readValue}>{identity.guardianPhone}</span></div>}
+            {identity.playerNotes && <div className={styles.readField}><span className={styles.readLabel}>Family&apos;s note</span><span className={styles.readValue}>{identity.playerNotes}</span></div>}
           </div>
 
           {/* Optional roster fields */}
@@ -257,7 +282,7 @@ export default function TryoutAcceptDrawer({ identity, suggestedDues, onClose, o
 
         <div className={styles.footer}>
           {error && <p className={styles.errText} style={{ marginRight: 'auto', alignSelf: 'center' }}>{error}</p>}
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={submitting}>Cancel</button>
+          <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={submitting}>Cancel</button>
           <button
             type="button" className="btn btn-primary"
             onClick={handleConfirm}

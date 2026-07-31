@@ -4,7 +4,10 @@ import Link from 'next/link';
 import { ClipboardList, Plus, Pencil, Trash2, UserCheck, Eye, EyeOff } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
+import { getSportPack } from '@/lib/sports';
 import type { RepTryout, RepTryoutSession } from '@/lib/types';
 import styles from './TryoutDayCard.module.css';
 
@@ -70,8 +73,19 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<SessionForm>(BLANK);
+  // ONE baseline set by every open path (add = BLANK, edit = the loaded session) so the guard
+  // can't drift from what the form actually started as (Chunk A D4).
+  const [formBaseline, setFormBaseline] = useState<SessionForm>(BLANK);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  useOverlayOpen(modalOpen);
+  const guardedClose = useDiscardGuard({
+    dirty: touched(form, formBaseline),
+    close: () => setModalOpen(false),
+    noun: 'tryout session',
+    detail: form.startsAt ? `a session on ${formatWhen({ startsAt: form.startsAt, endsAt: form.endsAt || null } as RepTryoutSession)}` : undefined,
+  });
 
   const fail = useCallback((msg: string) => { onError ? onError(msg) : console.error(msg); }, [onError]);
 
@@ -124,18 +138,21 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
   function openAdd() {
     setEditingId(null);
     setForm(BLANK);
+    setFormBaseline(BLANK);
     setFormError(null);
     setModalOpen(true);
   }
   function openEdit(s: RepTryoutSession) {
-    setEditingId(s.id);
-    setForm({
+    const loaded: SessionForm = {
       startsAt: toInputValue(s.startsAt),
       endsAt: toInputValue(s.endsAt),
       location: s.location ?? '',
       fieldNumber: s.fieldNumber ?? '',
       label: s.label ?? '',
-    });
+    };
+    setEditingId(s.id);
+    setForm(loaded);
+    setFormBaseline(loaded);
     setFormError(null);
     setModalOpen(true);
   }
@@ -185,6 +202,11 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
   }
 
   const windowNotice = form.startsAt ? getTryoutWindowNotice(new Date(form.startsAt), { sport }) : null;
+
+  // Venue vocabulary from the sport pack — a basketball tryout shouldn't say "diamond" (WI-9).
+  const facility = getSportPack(sport ?? undefined).defaultFacilityType;
+  const facilityLabel = facility === 'diamond' ? 'Field / diamond' : facility === 'court' ? 'Court' : 'Field / venue';
+  const facilityExample = facility === 'diamond' ? 'e.g. Diamond 3' : facility === 'court' ? 'e.g. Court 2' : 'e.g. Field 3';
 
   return (
     <div className={styles.card}>
@@ -259,7 +281,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
       </div>
 
       {modalOpen && (
-        <div className={styles.scrim} onClick={() => !saving && setModalOpen(false)}>
+        <div className={styles.scrim} onClick={() => !saving && guardedClose()}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>{editingId ? 'Edit session' : 'Add session'}</h3>
 
@@ -296,9 +318,9 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
                   onChange={e => setForm(f => ({ ...f, location: e.target.value }))} placeholder="e.g. Centennial Park" />
               </div>
               <div className={styles.field}>
-                <label className={styles.label}>Field / diamond</label>
+                <label className={styles.label}>{facilityLabel}</label>
                 <input className={styles.input} type="text" maxLength={40} value={form.fieldNumber}
-                  onChange={e => setForm(f => ({ ...f, fieldNumber: e.target.value }))} placeholder="e.g. Diamond 3" />
+                  onChange={e => setForm(f => ({ ...f, fieldNumber: e.target.value }))} placeholder={facilityExample} />
               </div>
             </div>
 
@@ -311,7 +333,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, checkInHref, o
             {formError && <p style={{ color: 'var(--danger-light)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
 
             <div className={styles.modalActions}>
-              <button type="button" className="btn btn-ghost" onClick={() => setModalOpen(false)} disabled={saving}>Cancel</button>
+              <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={saveSession} disabled={saving}>
                 {saving ? 'Saving…' : editingId ? 'Save' : 'Add session'}
               </button>

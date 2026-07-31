@@ -36,6 +36,7 @@ export default function CoachesAwardsReportPage({
   const [manageOpen, setManageOpen] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState('');
+  const [noSeason, setNoSeason] = useState(false);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -45,9 +46,19 @@ export default function CoachesAwardsReportPage({
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`),
       ]);
+      // No active program year is a legitimate state, not a retryable failure — the same
+      // honest-empty branch this report's three siblings already have (WI-7).
+      if (typesRes.status === 404 || awardsRes.status === 404) {
+        setNoSeason(true);
+        setAwardTypes([]);
+        setAwards([]);
+        setPlayers([]);
+        return;
+      }
       if (!typesRes.ok || !awardsRes.ok) throw new Error();
       const types = await typesRes.json();
       const data = await awardsRes.json();
+      setNoSeason(false);
       setAwardTypes(types.awardTypes ?? []);
       setAwards(data.awards ?? []);
       setPlayers(data.players ?? []);
@@ -147,10 +158,21 @@ export default function CoachesAwardsReportPage({
         <div className={styles.loadingState}>Loading report…</div>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
+      ) : noSeason ? (
+        <div className={styles.emptyState}>
+          <Award size={26} style={{ opacity: 0.3, margin: '0 auto 0.6rem', display: 'block' }} />
+          <p className={styles.emptyStateTitle}>No season set up yet</p>
+          <p className={styles.emptyStateSub}>Awards live inside a season — start one from your team settings and this report fills in.</p>
+        </div>
       ) : (
         <>
-          <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-            <button className={styles.btnPrimary} onClick={() => setGiveOpen(true)}>🏆 Give an award</button>
+          <div style={{ marginBottom: '1rem', display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
+            {players.length === 0 ? (
+              <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
+            ) : (
+              <button className={styles.btnPrimary} onClick={() => setGiveOpen(true)}>🏆 Give an award</button>
+            )}
             <button className={styles.tagManageLink} onClick={() => setManageOpen(true)}>Manage award types</button>
           </div>
 

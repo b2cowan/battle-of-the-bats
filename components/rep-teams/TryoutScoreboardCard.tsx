@@ -4,7 +4,7 @@ import { Trophy, TrendingUp, TrendingDown, EyeOff, Lock, LockOpen } from 'lucide
 import styles from './TryoutDayCard.module.css';
 
 interface CategoryDef { key: string; label: string; weight: number }
-interface EvaluatorRow { id: string; name: string | null; candidatesScored: number; meanScore: number | null; biasDelta: number | null; biased: boolean }
+interface EvaluatorRow { id: string; name: string | null; isSelf: boolean; candidatesScored: number; meanScore: number | null; biasDelta: number | null; biased: boolean }
 interface CandidateRow {
   registrationId: string;
   bib: string | null;
@@ -12,6 +12,7 @@ interface CandidateRow {
   composite: number | null;
   evaluatorCount: number;
   categoryAverages: Record<string, number | null>;
+  isCheckedIn: boolean;
 }
 interface Scoreboard {
   blind: boolean;
@@ -28,12 +29,15 @@ interface Props {
   apiBase: string;
   /** Tryout-settings API (the sessions route) used to lock/reopen scoring. Omit to hide the control. */
   settingsBase?: string;
+  /** Explicit per-component write gate (WI-11) — a no-op while tryouts is all-or-nothing, but the
+   *  invariant is reviewable here instead of implicit in the page above. */
+  canWrite?: boolean;
   onError?: (msg: string) => void;
 }
 
 const POLL_MS = 6000;
 
-export default function TryoutScoreboardCard({ apiBase, settingsBase, onError }: Props) {
+export default function TryoutScoreboardCard({ apiBase, settingsBase, canWrite = true, onError }: Props) {
   const [board, setBoard] = useState<Scoreboard | null>(null);
   const [loading, setLoading] = useState(true);
   const [locking, setLocking] = useState(false);
@@ -114,7 +118,7 @@ export default function TryoutScoreboardCard({ apiBase, settingsBase, onError }:
             {board.blind && <> <EyeOff size={12} style={{ verticalAlign: '-1px' }} /> Blind — bib numbers only.</>}
           </p>
         </div>
-        {settingsBase && (
+        {settingsBase && canWrite && (
           <button type="button" className={styles.revealBtn} onClick={toggleLock} disabled={locking}
             title={board.locked ? 'Reopen scoring for evaluators' : 'Freeze evaluator scoring'}>
             {board.locked ? <><LockOpen size={14} /> Reopen scoring</> : <><Lock size={14} /> Lock scoring</>}
@@ -126,7 +130,7 @@ export default function TryoutScoreboardCard({ apiBase, settingsBase, onError }:
         <div className={styles.evalChips}>
           {board.evaluators.map(e => (
             <span key={e.id} className={`${styles.evalChip} ${e.biased ? styles.evalChipBias : ''}`}>
-              {e.name ?? 'Evaluator'}
+              {e.name ?? 'Evaluator'}{e.isSelf && ' (you)'}
               {e.meanScore != null && <span className={styles.evalChipMean}> avg {e.meanScore}</span>}
               {e.biased && e.biasDelta != null && (
                 <span className={styles.biasFlag} title="This evaluator’s average is out of line with the group — worth a look.">
@@ -152,6 +156,9 @@ export default function TryoutScoreboardCard({ apiBase, settingsBase, onError }:
                   {c.name && <span style={{ marginLeft: '0.5rem' }}>{c.name}</span>}
                 </div>
                 <div className={styles.sessionMeta}>
+                  {/* A no-show must never read as merely "unscored" — a kid with a family
+                      emergency is not a kid who scored low (WI-3). */}
+                  {!c.isCheckedIn && <span style={{ marginRight: '0.7rem', fontWeight: 700 }}>didn’t check in ·</span>}
                   {board.categories.map(cat => {
                     const v = c.categoryAverages[cat.key];
                     return <span key={cat.key} style={{ marginRight: '0.7rem' }}>{cat.label} {v != null ? v.toFixed(1) : '–'}</span>;

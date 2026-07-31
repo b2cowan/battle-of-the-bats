@@ -6,6 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
 import PositionProfileEditor from '@/components/coaches/PositionProfileEditor';
+import CoachScrollX from '@/components/coaches/CoachScrollX';
 import type { RepRosterPlayer, LineupSettings } from '@/lib/types';
 import styles from './DepthChartBoard.module.css';
 
@@ -280,7 +281,12 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                 <span className={styles.swatch}><span className={`${styles.sw} ${styles.swX}`} />Not set</span>
                 <span className={styles.tip}>Tap a cell to cycle · Best cells number in the order you pick them</span>
               </div>
-              <div className={styles.gridScroll}>
+              {/* CoachScrollX owns the scroller AND its swipe hint together (Chunk A rule) — this
+                  was the portal's last bare sideways scroller (f9-2 remainder, Chunk E WI-4). The
+                  board keeps its own 3-column sticky implementation (Player/Pitcher/A-squad pin
+                  against the scroller CoachScrollX renders); frame=false — the card already
+                  draws the frame. */}
+              <CoachScrollX hint="swipe for more positions" frame={false} className={styles.gridScrollWrap} scrollerClassName={styles.gridScroller}>
                 <table className={styles.table} style={{ minWidth: 150 + (pitcherPos ? 86 : 0) + 64 + fieldCols.length * 56 }}>
                   <thead>
                     <tr>
@@ -336,7 +342,7 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                     })}
                   </tbody>
                 </table>
-              </div>
+              </CoachScrollX>
             </section>
             {saveBar}
             <p className={styles.foot}>Edits here write the same profile as each player’s page — positions, pitching, and A-squad stay in sync. Saves automatically as you go.</p>

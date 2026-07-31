@@ -76,6 +76,8 @@ export const GET = withObservability(async (_req: Request,
   const now = Date.now();
 
   // 2B.5: surface the family's offer response + a lazily-computed "expired" flag (no status mutation).
+  // Chunk E (WI-3): plus what the coach needs to decide honestly — whether the family is even
+  // reachable by email, whether the kid actually showed up, and what the family wrote at signup.
   const ranked = rankTryoutCandidates(inPlay, categories, scores, { blind })
     .map(c => {
       const reg = regById.get(c.registrationId);
@@ -85,6 +87,14 @@ export const GET = withObservability(async (_req: Request,
         status: reg?.status ?? 'pending_review',
         offerResponse: reg?.offerResponse ?? null,
         offerExpired,
+        // A response link only exists once an offer EMAIL went out — a record-only offer
+        // (D-E9, switch off) mints nothing, so there is no response to await.
+        offerEmailed: !!reg?.offerExpiresAt,
+        hasGuardianEmail: !!reg?.guardianEmail?.trim(),
+        isCheckedIn: reg?.isCheckedIn ?? false,
+        // Family-authored context — blind-SAFE only once names are visible; a parent's
+        // note beside an anonymized bib could identify the kid.
+        playerNotes: !blind ? (reg?.playerNotes ?? null) : null,
       };
     });
 
@@ -120,6 +130,10 @@ export const POST = withObservability(async (req: Request,
   const body = await req.json().catch(() => ({}));
   const registrationId = typeof body.registrationId === 'string' ? body.registrationId : '';
   const decision = typeof body.decision === 'string' ? body.decision : '';
+  // D-E9: family emails are OPT-IN on the coach board. The flag rides each decision write from
+  // the visible switch — the server defaults to record-only, so the failure direction is always
+  // "no email", never an unwanted one.
+  const notifyFamily = body.notifyFamily === true;
 
   // IDOR + guard: the candidate must be in THIS program year (shared by the resend + decision paths).
   const registrations = await getRepTryoutRegistrations(r.programYear.id);
@@ -134,13 +148,17 @@ export const POST = withObservability(async (req: Request,
     contactEmail: r.contactEmail,
   };
 
-  // Resend: re-send the offer email with a FRESH Accept/Decline link + new deadline, without changing
-  // status. Only valid while an offer is out; re-minting resets any prior family response.
+  // Resend / "Email this offer": send the offer email with a FRESH Accept/Decline link + new
+  // deadline, without changing status. Explicitly requested, so it always notifies — and a
+  // missing guardian email is an honest error here, never a silent no-op.
   if (decision === 'resend') {
     if (registration.status !== 'offered') {
-      return NextResponse.json({ error: 'not_offered', message: 'You can only resend an offer that is currently extended.' }, { status: 409 });
+      return NextResponse.json({ error: 'not_offered', message: 'You can only email an offer that is currently extended.' }, { status: 409 });
     }
-    await applyTryoutDecisionSideEffects({ reg: registration, newStatus: 'offered', ...sideEffectCtx });
+    if (!registration.guardianEmail?.trim()) {
+      return NextResponse.json({ error: 'no_email', message: 'This family has no email on file — add one, or reach them by phone.' }, { status: 400 });
+    }
+    await applyTryoutDecisionSideEffects({ reg: registration, newStatus: 'offered', notifyFamily: true, ...sideEffectCtx });
     return NextResponse.json({ registrationId, status: 'offered', resent: true });
   }
 
@@ -153,9 +171,9 @@ export const POST = withObservability(async (req: Request,
 
   const updated = await updateRepTryoutRegistrationStatus(registrationId, nextStatus);
 
-  // Family-facing side effects — same shared path as the admin route (offer link + branded emails).
-  // The coach board previously sent NO email on offer/waitlist/cut; 2B.5 makes them consistent.
-  await applyTryoutDecisionSideEffects({ reg: updated, newStatus: nextStatus, ...sideEffectCtx });
+  // Family-facing side effects — same shared path as the admin route (offer link + branded
+  // emails), but on the coach board they fire only when the switch says so (D-E9).
+  await applyTryoutDecisionSideEffects({ reg: updated, newStatus: nextStatus, notifyFamily, ...sideEffectCtx });
 
   return NextResponse.json({ registrationId, status: updated.status });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-decisions' });

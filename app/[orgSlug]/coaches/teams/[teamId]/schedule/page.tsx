@@ -2199,7 +2199,12 @@ export default function CoachesSchedulePage({
                         ))}
                       </div>
                     )}
-                    <button className={styles.btnSecondary} onClick={() => setGiveAwardOpen(true)}>🏆 Give an award</button>
+                    {/* A rosterless team gets a reason, not a blank player picker (Chunk E WI-7). */}
+                    {awardPlayers.length === 0 ? (
+                      <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--white-55)' }}>🏆 Add players to your roster first — then you can give awards.</p>
+                    ) : (
+                      <button className={styles.btnSecondary} onClick={() => setGiveAwardOpen(true)}>🏆 Give an award</button>
+                    )}
                   </>
                 )}
               </div>

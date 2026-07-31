@@ -224,11 +224,14 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
             )}
           </div>
 
-          {/* ── Team board door ── */}
+          {/* ── Team board door — the WORKING surface. Chunk E WI-5: this door used to also call
+                 itself "a coverage view", making it indistinguishable from the Insights report
+                 door below. Now the two doors ask two different questions; "coverage" belongs to
+                 exactly one of them. ── */}
           <Link href={`${base}/development/board`} className={styles.insightsDoor}>
-            <span className={styles.insightsDoorQ}>How&apos;s everyone developing?<span aria-hidden>→</span></span>
+            <span className={styles.insightsDoorQ}>What&apos;s each player working on?<span aria-hidden>→</span></span>
             <span className={styles.insightsDoorSum}>
-              Every player&apos;s focus areas and latest numbers, in roster order — a coverage view, not a ranking.
+              Open the team board to set focus areas and log where each player is.
             </span>
           </Link>
 

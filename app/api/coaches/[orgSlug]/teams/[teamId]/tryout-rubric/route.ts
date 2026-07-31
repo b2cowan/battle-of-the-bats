@@ -42,7 +42,7 @@ export const GET = withObservability(async (_req: Request,
 
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
   const rubric = await getRepTryoutRubric(tryout.id);
-  return NextResponse.json({ rubric, starter: getRubricStarter(), scaleOptions: [5, 10] });
+  return NextResponse.json({ rubric, starter: getRubricStarter(r.assignment.teamSport), scaleOptions: [5, 10] });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-rubric' });
 
 /** Create/replace the tryout's scorecard. */

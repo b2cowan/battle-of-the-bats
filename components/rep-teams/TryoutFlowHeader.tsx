@@ -74,7 +74,7 @@ export default function TryoutFlowHeader({ overview, rosterHref, activeTab, onTa
           <div className={styles.how}>
             <div className={styles.howStep}><span className={styles.howNum}>1</span><span><strong>Set up.</strong> Add your tryout dates and build a quick scorecard of what you&apos;ll rate. Invite helpers to score too, if you like — no accounts needed.</span></div>
             <div className={styles.howStep}><span className={styles.howNum}>2</span><span><strong>Tryout day.</strong> Check players in (names stay hidden for fairness) and score them from your phone — the board ranks everyone live.</span></div>
-            <div className={styles.howStep}><span className={styles.howNum}>3</span><span><strong>Decide.</strong> Lock scoring, reveal names, then offer, waitlist, or pass on each player. Families reply from a secure link in their email.</span></div>
+            <div className={styles.howStep}><span className={styles.howNum}>3</span><span><strong>Decide.</strong> Lock scoring, reveal names, then offer, waitlist, or pass on each player. Reach families yourself — or turn on family emails and offers land with a secure reply link.</span></div>
             <div className={styles.howStep}><span className={styles.howNum}>4</span><span><strong>Build your team.</strong> Accept players onto your roster (with their fees, optional). They&apos;re then ready for your lineups.</span></div>
           </div>
         )}

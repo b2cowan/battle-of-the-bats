@@ -27,6 +27,7 @@ export default function CoachScrollX({
   sticky = false,
   frame = true,
   className = '',
+  scrollerClassName = '',
 }: {
   children: ReactNode;
   /** What the coach gains by swiping — name the columns, not the gesture. */
@@ -36,6 +37,9 @@ export default function CoachScrollX({
    *  doesn't draw a second frame around it on desktops that never overflow. */
   frame?: boolean;
   className?: string;
+  /** Styles the SCROLLER element itself (e.g. `isolation: isolate` for Safari sticky
+   *  stacking) — callers must never reach into this component's structure by position. */
+  scrollerClassName?: string;
 }) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [overflows, setOverflows] = useState(false);
@@ -80,7 +84,7 @@ export default function CoachScrollX({
         // Stable handle for the layout probes: a `[class*="scrollX"]` selector also matches the
         // hint, which sits earlier in the DOM and has no overflow of its own.
         data-testid="coach-scrollx"
-        className={`${styles.scrollX} ${sticky ? styles.scrollXSticky : ''} ${overflows ? styles.scrollXOverflowing : ''} ${frame ? '' : styles.scrollXBare}`}
+        className={`${styles.scrollX} ${sticky ? styles.scrollXSticky : ''} ${overflows ? styles.scrollXOverflowing : ''} ${frame ? '' : styles.scrollXBare} ${scrollerClassName}`}
         onScroll={e => { if (!scrolled && e.currentTarget.scrollLeft > 8) setScrolled(true); }}
         // Keyboard and screen-reader users get a real scrollable region rather than a
         // silently clipped one; the label carries the same information as the hint.

@@ -1,12 +1,16 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { ListChecks, Plus, Trash2, Pencil } from 'lucide-react';
+import { useDiscardGuard, snapshotEqual } from '@/components/coaches/useDiscardGuard';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTryoutRubric, RepTryoutRubricCategory } from '@/lib/types';
 import styles from './TryoutDayCard.module.css';
 
 interface Props {
   /** The rubric API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-rubric`. */
   apiBase: string;
+  /** Explicit per-component write gate (WI-11) — a no-op while tryouts is all-or-nothing. */
+  canWrite?: boolean;
   onError?: (msg: string) => void;
 }
 
@@ -16,7 +20,11 @@ const toDraft = (c: RepTryoutRubricCategory): CatDraft => ({
   key: c.key, label: c.label, weight: String(c.weight), instructions: c.instructions ?? '',
 });
 
-export default function TryoutRubricCard({ apiBase, onError }: Props) {
+/** The builder's whole typed state — ONE shape for the dirty baseline and the live form, so the
+ *  guard can't drift from what openBuilder seeded (the one-mapping rule, Chunk A D4). */
+interface BuilderSnapshot { name: string; scaleMax: number; cats: CatDraft[] }
+
+export default function TryoutRubricCard({ apiBase, canWrite = true, onError }: Props) {
   const [rubric, setRubric] = useState<RepTryoutRubric | null>(null);
   const [starter, setStarter] = useState<{ scaleMax: number; categories: RepTryoutRubricCategory[] } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -25,8 +33,20 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
   const [name, setName] = useState('');
   const [scaleMax, setScaleMax] = useState(5);
   const [cats, setCats] = useState<CatDraft[]>([]);
+  // Whatever openBuilder seeded — the rubric being edited OR the starter draft. Our prefill is
+  // not the coach's work, so an untouched seeded form still closes silently (Chunk G rider).
+  const [baseline, setBaseline] = useState<BuilderSnapshot | null>(null);
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
+
+  useOverlayOpen(open);
+  const catCount = cats.filter(c => c.label.trim()).length;
+  const guardedClose = useDiscardGuard({
+    dirty: baseline != null && !snapshotEqual({ name, scaleMax, cats }, baseline),
+    close: () => setOpen(false),
+    noun: 'scorecard',
+    detail: catCount > 0 ? `${catCount} categor${catCount === 1 ? 'y' : 'ies'} and their weights` : undefined,
+  });
 
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
@@ -50,15 +70,16 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
   useEffect(() => { load(); }, [load]);
 
   function openBuilder() {
+    let seed: BuilderSnapshot;
     if (rubric && rubric.categories.length > 0) {
-      setName(rubric.name ?? '');
-      setScaleMax(rubric.scaleMax);
-      setCats(rubric.categories.map(toDraft));
+      seed = { name: rubric.name ?? '', scaleMax: rubric.scaleMax, cats: rubric.categories.map(toDraft) };
     } else {
-      setName('');
-      setScaleMax(starter?.scaleMax ?? 5);
-      setCats((starter?.categories ?? []).map(toDraft));
+      seed = { name: '', scaleMax: starter?.scaleMax ?? 5, cats: (starter?.categories ?? []).map(toDraft) };
     }
+    setName(seed.name);
+    setScaleMax(seed.scaleMax);
+    setCats(seed.cats);
+    setBaseline(seed);
     setFormError(null);
     setOpen(true);
   }
@@ -69,6 +90,16 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
     setCats(cs => cs.map((c, idx) => (idx === i ? { ...c, [field]: val } : c)));
 
   async function save() {
+    // A row with SUBSTANCE but no name must BLOCK, not silently vanish from the payload (WI-2).
+    // Substance = an EXISTING category (its `key` means evaluators may already have scored it —
+    // dropping it severs those scores from the rubric), typed instructions, or a non-default
+    // weight. Only a brand-new row that never got anything but its default weight may drop
+    // silently — that row is genuinely empty.
+    const orphanIdx = cats.findIndex(c => !c.label.trim() && (c.key || c.instructions.trim() || (c.weight.trim() !== '' && c.weight.trim() !== '1')));
+    if (orphanIdx !== -1) {
+      setFormError(`Category ${orphanIdx + 1} needs a name before you can save it — name it or remove the row.`);
+      return;
+    }
     const categories = cats
       .filter(c => c.label.trim())
       .map(c => ({
@@ -126,21 +157,25 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
               </div>
             ))}
           </div>
-          <div className={styles.actions}>
-            <button type="button" className={styles.addBtn} onClick={openBuilder}><Pencil size={14} /> Edit scorecard</button>
-          </div>
+          {canWrite && (
+            <div className={styles.actions}>
+              <button type="button" className={styles.addBtn} onClick={openBuilder}><Pencil size={14} /> Edit scorecard</button>
+            </div>
+          )}
         </>
       ) : (
         <>
           <p className={styles.empty}>No scorecard yet. Set one up before scoring players.</p>
-          <div className={styles.actions}>
-            <button type="button" className="btn btn-primary" style={{ fontSize: '0.85rem' }} onClick={openBuilder}>Set up scorecard</button>
-          </div>
+          {canWrite && (
+            <div className={styles.actions}>
+              <button type="button" className="btn btn-primary" style={{ fontSize: '0.85rem' }} onClick={openBuilder}>Set up scorecard</button>
+            </div>
+          )}
         </>
       )}
 
       {open && (
-        <div className={styles.scrim} onClick={() => !saving && setOpen(false)}>
+        <div className={styles.scrim} onClick={() => !saving && guardedClose()}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>Evaluation scorecard</h3>
 
@@ -174,7 +209,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
                   <div key={i} style={{ border: '1px solid var(--home-line, rgba(255,255,255,0.1))', borderRadius: 8, padding: '0.6rem' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
                       <input className={styles.input} style={{ flex: 1 }} value={c.label} maxLength={60}
-                        placeholder="Category (e.g. Hitting)" onChange={e => updateCat(i, 'label', e.target.value)} />
+                        placeholder={`Category (e.g. ${starter?.categories[0]?.label ?? 'Skills'})`} onChange={e => updateCat(i, 'label', e.target.value)} />
                       <input className={styles.input} style={{ width: 74 }} type="number" min={0} step={1} value={c.weight}
                         title="Weight" onChange={e => updateCat(i, 'weight', e.target.value)} />
                       <button type="button" className={`${styles.iconBtn} ${styles.iconDanger}`} onClick={() => removeCat(i)} aria-label="Remove category"><Trash2 size={15} /></button>
@@ -190,7 +225,7 @@ export default function TryoutRubricCard({ apiBase, onError }: Props) {
             {formError && <p style={{ color: 'var(--danger-light)', fontSize: '0.82rem', margin: '0 0 0.5rem' }}>{formError}</p>}
 
             <div className={styles.modalActions}>
-              <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)} disabled={saving}>Cancel</button>
+              <button type="button" className="btn btn-ghost" onClick={() => guardedClose()} disabled={saving}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={save} disabled={saving}>{saving ? 'Saving…' : 'Save scorecard'}</button>
             </div>
           </div>

@@ -1,8 +1,7 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { ClipboardList, UserCheck, ArrowRight } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
-import { canManageTryouts } from '@/lib/coach-capabilities';
+import { ClipboardList, UserCheck, ArrowRight, Play } from 'lucide-react';
+import { useTryoutAccess } from '@/components/coaches/useTryoutAccess';
 import FeedbackModal from '@/components/FeedbackModal';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
@@ -35,13 +34,10 @@ export default function CoachTryoutsPage({
   const { orgSlug, teamId } = use(params);
   const base = `/api/coaches/${orgSlug}/teams/${teamId}`;
   const checkInHref = `/${orgSlug}/coaches/teams/${teamId}/tryouts/check-in`;
+  const scoreHref = `/${orgSlug}/coaches/teams/${teamId}/tryouts/score`;
   const rosterHref = `/${orgSlug}/coaches/teams/${teamId}/roster`;
-  const { assignments, loading: ctxLoading } = useCoaches();
-  const assignment = assignments.find(a => a.teamId === teamId);
-  // The sidebar already hides Tryouts without this grant and every tryout route enforces it — this
-  // is the direct-URL case. Fail OPEN while assignments resolve so a real coach never flickers into
-  // a "no access" wall; the server is the gate either way.
-  const canTryouts = assignment ? canManageTryouts(assignment.capabilities) : true;
+  // ONE shared gate for all three tryout pages (WI-11) — semantics documented in the hook.
+  const { ctxLoading, canTryouts, assignment } = useTryoutAccess(teamId);
   // No `label` — HelpButton falls back to its own `label` prop, so the string lives in one place.
   const helpRequest = { module: 'coaches' as const, sectionIds: ['recipe-run-tryouts'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-run-tryouts` };
 
@@ -115,25 +111,32 @@ export default function CoachTryoutsPage({
       {/* Stage 1 — Set up */}
       <div className={hidden('setup')} role="tabpanel">
         <PanelIntro text="Before tryout day: set your dates, build a scorecard of what you'll rate, and (optionally) invite helpers to score." />
-        <TryoutDayCard apiBase={`${base}/tryout-sessions`} canWrite checkInHref={checkInHref} onError={fail} />
-        <TryoutRubricCard apiBase={`${base}/tryout-rubric`} onError={fail} />
-        <TryoutEvaluatorsCard apiBase={`${base}/tryout-evaluators`} onError={fail} />
+        <TryoutDayCard apiBase={`${base}/tryout-sessions`} canWrite sport={assignment?.teamSport} checkInHref={checkInHref} onError={fail} />
+        <TryoutRubricCard apiBase={`${base}/tryout-rubric`} canWrite onError={fail} />
+        <TryoutEvaluatorsCard apiBase={`${base}/tryout-evaluators`} canWrite onError={fail} />
       </div>
 
       {/* Stage 2 — Tryout day */}
       <div className={hidden('tryout-day')} role="tabpanel">
         <PanelIntro
           text="Check players in (names stay hidden for fairness), then score them — the board ranks everyone live."
-          action={<a className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem' }} href={checkInHref}><UserCheck size={14} /> Open check-in</a>}
+          action={
+            <>
+              {/* WI-1: the tab finally delivers what this intro promises — the coach's own door
+                  into the shared scorer, signed in, no evaluator link required. */}
+              <a className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem' }} href={scoreHref}><Play size={14} /> Score players</a>
+              <a className="btn btn-secondary" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.82rem' }} href={checkInHref}><UserCheck size={14} /> Open check-in</a>
+            </>
+          }
         />
-        <TryoutScoreboardCard apiBase={`${base}/tryout-scoreboard`} settingsBase={`${base}/tryout-sessions`} onError={fail} />
+        <TryoutScoreboardCard apiBase={`${base}/tryout-scoreboard`} settingsBase={`${base}/tryout-sessions`} canWrite onError={fail} />
       </div>
 
       {/* Stage 3 — Decide */}
       <div className={hidden('decide')} role="tabpanel">
-        <PanelIntro text="Offer, waitlist, or pass on each ranked player — families reply from a secure link in their email. (If names are still hidden, reveal them back on the Set up tab first.)" />
+        <PanelIntro text="Offer, waitlist, or pass on each ranked player. Turn on family emails to have offers land with a secure reply link — or leave them off and reach out yourself. (If names are still hidden, reveal them back on the Set up tab first.)" />
         <TryoutDecisionBoard apiBase={`${base}/tryout-decisions`}
-          continuityApiBase={`${base}/development/continuity`} onError={fail} />
+          continuityApiBase={`${base}/development/continuity`} canWrite teamId={teamId} onError={fail} />
       </div>
 
       {/* Stage 4 — Build your team */}

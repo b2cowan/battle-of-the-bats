@@ -5,17 +5,14 @@ import {
   getCoachingAssignmentsForUser,
   getActiveRepProgramYear,
   getOrCreateRepTryout,
-  getRepTryoutEvaluatorSessions,
+  getRepTryoutEvaluatorLinkSessions,
   createRepTryoutEvaluatorSession,
   getRepTryoutScores,
 } from '@/lib/db';
-import { generateEvaluatorToken, hashEvaluatorToken } from '@/lib/tryout-evaluator-token';
+import { generateEvaluatorToken, hashEvaluatorToken, EVALUATOR_LINK_TTL_MS } from '@/lib/tryout-evaluator-token';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
-
-/** Evaluator links live for 48 hours — long enough for a multi-session tryout weekend. */
-const LINK_TTL_MS = 48 * 60 * 60 * 1000;
 
 type Resolved =
   | { ok: false; res: Response }
@@ -45,8 +42,10 @@ export const GET = withObservability(async (_req: Request,
   if (denied) return denied;
 
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
+  // Links only: a coach's own `self:` scoring session is not a link — it shows on the
+  // scoreboard as "(you)", never in this management list (WI-1).
   const [sessions, scores] = await Promise.all([
-    getRepTryoutEvaluatorSessions(tryout.id),
+    getRepTryoutEvaluatorLinkSessions(tryout.id),
     getRepTryoutScores(tryout.id),
   ]);
 
@@ -88,7 +87,7 @@ export const POST = withObservability(async (req: Request,
     orgId: r.orgId,
     evaluatorName,
     tokenHash: hashEvaluatorToken(token),
-    expiresAt: new Date(Date.now() + LINK_TTL_MS).toISOString(),
+    expiresAt: new Date(Date.now() + EVALUATOR_LINK_TTL_MS).toISOString(),
   });
 
   // `token` is surfaced only here; the client builds the shareable /tryout-score/<token> URL.

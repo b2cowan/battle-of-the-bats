@@ -2,9 +2,13 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, Check, Plus, EyeOff, Printer } from 'lucide-react';
+import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { downloadPDF, buildFilename } from '@/lib/export';
 import type { RepTryoutRegistration } from '@/lib/types';
 import styles from './TryoutCheckIn.module.css';
+
+const BLANK_WALKUP = { first: '', last: '', email: '' };
 
 interface Props {
   /** The candidate API base, e.g. `/api/coaches/{orgSlug}/teams/{teamId}/tryout-candidates`. */
@@ -35,8 +39,15 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
   const [recentId, setRecentId] = useState<string | null>(null);
   const recentTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [walkupOpen, setWalkupOpen] = useState(false);
-  const [walkup, setWalkup] = useState({ first: '', last: '', email: '' });
+  const [walkup, setWalkup] = useState(BLANK_WALKUP);
   const [savingWalkup, setSavingWalkup] = useState(false);
+
+  useOverlayOpen(walkupOpen);
+  const guardedWalkupClose = useDiscardGuard({
+    dirty: touched(walkup, BLANK_WALKUP),
+    close: () => setWalkupOpen(false),
+    noun: 'walk-up',
+  });
 
   const fail = useCallback((m: string) => { onError ? onError(m) : console.error(m); }, [onError]);
 
@@ -108,7 +119,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
       });
       if (!res.ok) { const d = await res.json().catch(() => ({})); throw new Error(d.errors?.playerFirstName ?? d.error ?? 'Failed to add'); }
       setWalkupOpen(false);
-      setWalkup({ first: '', last: '', email: '' });
+      setWalkup(BLANK_WALKUP);
       await load();
     } catch (e: any) {
       fail(e.message ?? 'Failed to add walk-up.');
@@ -155,7 +166,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
           onChange={e => setSearch(e.target.value)}
         />
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <button type="button" className={styles.addBtn} onClick={() => { setWalkup({ first: '', last: '', email: '' }); setWalkupOpen(true); }}>
+          <button type="button" className={styles.addBtn} onClick={() => { setWalkup(BLANK_WALKUP); setWalkupOpen(true); }}>
             <Plus size={15} /> Add walk-up
           </button>
           <button type="button" className={styles.addBtn} onClick={printSheet} disabled={candidates.length === 0}>
@@ -214,7 +225,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
       )}
 
       {walkupOpen && (
-        <div className={styles.scrim} onClick={() => !savingWalkup && setWalkupOpen(false)}>
+        <div className={styles.scrim} onClick={() => !savingWalkup && guardedWalkupClose()}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>Add walk-up</h3>
             <div className={styles.row2}>
@@ -232,7 +243,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
               <input className={styles.input} type="email" value={walkup.email} maxLength={200} onChange={e => setWalkup(w => ({ ...w, email: e.target.value }))} placeholder="Add now or later" />
             </div>
             <div className={styles.modalActions}>
-              <button type="button" className="btn btn-ghost" onClick={() => setWalkupOpen(false)} disabled={savingWalkup}>Cancel</button>
+              <button type="button" className="btn btn-ghost" onClick={() => guardedWalkupClose()} disabled={savingWalkup}>Cancel</button>
               <button type="button" className="btn btn-primary" onClick={addWalkup} disabled={savingWalkup || !walkup.first.trim()}>
                 {savingWalkup ? 'Adding…' : 'Add & check in'}
               </button>

@@ -5,9 +5,11 @@ import {
   getCoachingAssignmentsForUser,
   getActiveRepProgramYear,
   getOrCreateRepTryout,
-  getRepTryoutEvaluatorSessions,
+  getRepTryoutEvaluatorLinkSessions,
   revokeRepTryoutEvaluatorSession,
+  reissueRepTryoutEvaluatorSession,
 } from '@/lib/db';
+import { generateEvaluatorToken, hashEvaluatorToken, EVALUATOR_LINK_TTL_MS } from '@/lib/tryout-evaluator-token';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
@@ -30,7 +32,8 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   return { ok: true, orgId: ctx.org.id, teamId, programYear, assignment };
 }
 
-/** Revoke an evaluator link. The id must belong to THIS team's tryout (IDOR guard). */
+/** Revoke an evaluator link. The id must belong to THIS team's tryout AND be a shareable link —
+ *  a coach's own `self:` scoring session is not a link and is never managed here (IDOR guard). */
 export const DELETE = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; evaluatorId: string }> },) => {
   const { orgSlug, teamId, evaluatorId } = await params;
@@ -40,10 +43,35 @@ export const DELETE = withObservability(async (_req: Request,
   if (denied) return denied;
 
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
-  const sessions = await getRepTryoutEvaluatorSessions(tryout.id);
+  const sessions = await getRepTryoutEvaluatorLinkSessions(tryout.id);
   const target = sessions.find(s => s.id === evaluatorId);
   if (!target) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   await revokeRepTryoutEvaluatorSession(target.id);
   return NextResponse.json({ ok: true });
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-evaluators/[evaluatorId]' });
+
+/** Re-key a link for the SAME evaluator (WI-8): new token + fresh 48 h expiry on the same session
+ *  row, revocation cleared. Their scores stay attached to one identity — minting a second
+ *  "evaluator" for the same person double-counts their opinion in the per-category means.
+ *  Returns the raw token ONCE, exactly like the mint route. */
+export const POST = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; evaluatorId: string }> },) => {
+  const { orgSlug, teamId, evaluatorId } = await params;
+  const r = await resolveCoach(orgSlug, teamId);
+  if (!r.ok) return r.res;
+  const denied = denyUnless(r.assignment.capabilities.tryouts, 'Only the head coach manages tryouts.');
+  if (denied) return denied;
+
+  const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
+  const sessions = await getRepTryoutEvaluatorLinkSessions(tryout.id);
+  const target = sessions.find(s => s.id === evaluatorId);
+  if (!target) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+
+  const token = generateEvaluatorToken();
+  const session = await reissueRepTryoutEvaluatorSession(target.id, {
+    tokenHash: hashEvaluatorToken(token),
+    expiresAt: new Date(Date.now() + EVALUATOR_LINK_TTL_MS).toISOString(),
+  });
+  return NextResponse.json({ session, token });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-evaluators/[evaluatorId]' });

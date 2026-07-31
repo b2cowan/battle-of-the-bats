@@ -74,7 +74,7 @@ finished — everything below is still open.**
 | 2 | Chat has no honest empty state outside a tournament | **OPEN** |
 | 3 | Attendance has no home in the nav (×2 reviewers) | ✅ **Batch 4** — own Squad item, gated on attendance + roster; page opens on "take attendance for {next event}" |
 | 4 | No notification bell anywhere on mobile | **OPEN** |
-| 5 | Unsaved-changes guard missing on Accounting + Tryout-setup forms | ⚠️ **PARTIAL — Chunk A** — every multi-field Money form now asks before discarding (`useDiscardGuard`, a NEW primitive: the shipped guard only covers route changes, and Money's forms are all modals). **Tryout-setup forms remain OPEN** — deferred to chunk E by owner ruling D3 |
+| 5 | Unsaved-changes guard missing on Accounting + Tryout-setup forms | ✅ **COMPLETE — Chunk A (Money) + Chunk E (tryouts, built on dev 2026-07-30)** — session form, scorecard builder, accept drawer, walk-up modal and evaluator modal all guard through `useDiscardGuard` with stake-naming copy; the scorecard save also stopped silently dropping typed-but-unnamed rows |
 | 6 | Weekly recurrence locks every game to one opponent | **OPEN** — pairs with #7 |
 | 7 | No schedule import | **OPEN** — deliberately excluded from Batch 2; belongs with #6 |
 | 8 | Game-day card downgrades on the actual game day | ✅ **Batch 4** — game day now offers the same one-tap lineup + attendance the in-season card does. The *fuller* card (wow #2: arm-care warning, richer chips) is still open |
@@ -85,7 +85,7 @@ finished — everything below is still open.**
 | 13 | Guardian fields are contact-only, unexplained | ➡️ **moved to §1.4** (guardian model) |
 | 14 | Tournaments list unsorted, no in-context help | ✅ **absorbed into Batch 1** |
 | 15 | Season winding-down gives no cue | ✅ **absorbed into Batch 3** |
-| 16 | Tryout scoring hidden behind an evaluator detour | **OPEN** |
+| 16 | Tryout scoring hidden behind an evaluator detour | ✅ **Chunk E (built on dev 2026-07-30)** — "Score players" on the Tryout Day tab opens the SAME field scorer signed-in (shared component, one persistent self identity per coach, "(you)" on the scoreboard); the Evaluators card is now genuinely for helpers |
 | 17 | Help "?" icons promised everywhere, present on 3 of ~25 pages | **OPEN** |
 
 #### P2 — polish (~30, prose paragraph in the review): mostly open
@@ -95,7 +95,7 @@ Not enumerated here — the review's paragraph stays the source. **Absorbed so f
 - Native `alert()` on budget-delete failure → ✅ **Chunk A** — the reason now appears inside the delete dialog, which is still open when the failure lands. **This was the LAST native browser dialog anywhere under `app/[orgSlug]/coaches/`**; a probe now asserts none fires
 - Inconsistent "(paid only)" caveats on Money's headline numbers (f4-6) → ✅ **Chunk A** — the cash basis is stated once above the row
 - No cross-link between Payment Requests and Org Allocations (f4-7) → ✅ **Chunk A** (both directions)
-- Desktop grids capped to a narrow column then scrolling internally (f9-2) → ⚠️ **PARTIAL — Chunk A** — Budget vs. Actual took the shipped `.pageWide` opt-in (the 960px cap is the portal's convention, NOT a Money bug, so the shared default was left alone). **The Depth Chart half remains OPEN** — different area, chunk E territory
+- Desktop grids capped to a narrow column then scrolling internally (f9-2) → ✅ **COMPLETE — Chunk A (BvA) + Chunk E (Depth Chart, built on dev 2026-07-30)** — the depth VIEW of Roster takes `.pageWide` (Schedule's view-conditional shape) and its bare scroller became `CoachScrollX` (honest swipe hint; the portal's last silent sideways scroll)
 - "Save & add another" on the one-player flow → ✅ Batch 2
 - Live duplicate-jersey check → ⚠️ **PARTIAL** — Batch 2 flags clashes in the *bulk preview*; the
   single Add Player form still only reports them after saving
@@ -150,7 +150,8 @@ The review's judgement: the ingredients already exist server-side, so this is pr
 **verify that before promising it.** Decide first whether this is a *retention* play or an
 *acquisition* play; that changes what gets built and whether it's gated.
 
-**E · Tryouts + Development tidy-up** — *small; independent of everything*
+**E · Tryouts + Development tidy-up** — ✅ **BUILT ON DEV 2026-07-30 (uncommitted)** — plan + PM brief `COACH_PORTAL_CHUNK_E_TRYOUTS_TIDY_UP_{PLAN,PM_BRIEF}.md`; mockups artifact `82b6eac7-89b0-4c28-9d75-777e54e7f86d` rev 2 (approved = binding); **D-E1–D-E8 ratified at the recommendations + D-E9 owner-directed 2026-07-30: decision emails default OFF, opt-in switch.** 12 work items in one pass, NO migration: the signed-in "Score players" door (shared scorer component + persistent per-coach self identity, "(you)" chip) · discard guards on all five tryout forms + the silent-row-drop fix · the decision-email switch + per-row "Email this offer" + no-email/no-show chips + family's note surfaced + awaited sends + the offer-email timezone fix · depth-chart `.pageWide` + CoachScrollX · Development door copy split + "Returning player" relabel + awards/test-types honesty trio · evaluator link reissue-on-same-row + expiry display + loud mid-session lockout + revoke confirm · check-in client gate + hub fail-open fix + canWrite threading · rollover unfinished-tryout warning. Gate green (typecheck 0 / 600 units / lint 0 errors / six colour baselines ZERO / date ZERO / parity 0) + NEW tryouts probe suite **10/10** + Money regression 35/35. `/simplify` (11 applied) + `/review` (12 confirmed-fixed incl. a High rubric-category-loss case, 4 refuted, security lens clean) + `/docs` done. Remaining: fresh dev restart → owner QA → commit with per-action OK. *(original scope below)*
+*Original entry:* — *small; independent of everything* — handoff prompt `COACH_PORTAL_CHUNK_E_TRYOUTS_TIDY_UP_BUILD_PROMPT.md`. It carries verified ground truth (the scoring surface at `/tryout-score/{token}` is good and must be REUSED — only the route to it is the defect; the hub's four cards + phase-auto-select behaviour; the two competing Development doors, both self-described as "a coverage view") and, at the owner's request 2026-07-30, a **discovery brief**: walk the tryout as the head coach, the volunteer evaluator handed a cold link, and the parent/candidate — including what a *declined* candidate currently experiences. ⚠ Its own D-G1 analogue: **the product must never appear to make the cut** — ranking and bias flags are decision support, not the answer.
 P1 #16 (tryout scoring hidden behind an evaluator detour) + the Development-hub polish (two
 overlapping "coverage" doors, a permanent "coming later" placeholder on brand-new teams, a blank
 award picker). Good filler work; collision-free.

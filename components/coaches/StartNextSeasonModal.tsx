@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { X, CheckCircle2, AlertTriangle } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { useCoaches } from '@/lib/coaches-context';
 
 /** Local mirror of the parts of RepSeasonRolloverSummary this modal renders (the source type lives
  *  in the server-only lib/rep-season-rollover.ts). */
@@ -40,10 +41,45 @@ export default function StartNextSeasonModal({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [summary, setSummary] = useState<RolloverSummary | null>(null);
+  // Chunk E WI-12: rollover carries roster/coaches/budget/fees and ZERO tryout data — a
+  // mid-flight tryout becomes silently unreachable. Warn (never block) when unresolved
+  // candidates or open scoring exist. Best-effort: a coach without the tryouts grant (or a
+  // team that never used tryouts) just sees no line.
+  const [tryoutWarning, setTryoutWarning] = useState<string | null>(null);
 
   // This component only exists while the parent has it open (mount/unmount, no internal open
   // flag) — register for the whole mounted lifetime; the hook auto-unregisters on unmount.
   useOverlayOpen(true);
+
+  // Only teams that have actually USED tryouts get the check — the nav's own signal. This also
+  // skips the fetch for coaches without the tryouts grant (403) and avoids lazily creating a
+  // tryout workspace row for teams that never opened the feature (review finding).
+  const { assignments } = useCoaches();
+  const hasTryoutSignal = assignments.find(a => a.teamId === teamId)?.hasTryoutSignal ?? false;
+  useEffect(() => {
+    if (!hasTryoutSignal) return;
+    let alive = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-overview`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const s = data?.stats;
+        if (!s || !alive) return;
+        // Waitlisted candidates are lost in the roll exactly like pending/offered ones — a
+        // parked kid is still awaiting an outcome (review finding).
+        const awaiting = (s.pending ?? 0) + (s.offered ?? 0) + (s.waitlisted ?? 0);
+        const scoringOpen = (s.scoredCount ?? 0) > 0 && !s.locked;
+        if (awaiting > 0 || scoringOpen) {
+          const parts: string[] = [];
+          if (awaiting > 0) parts.push(`${awaiting} candidate${awaiting === 1 ? ' is' : 's are'} still awaiting an outcome`);
+          if (scoringOpen) parts.push('scoring is open');
+          setTryoutWarning(`Your tryout isn’t finished — ${parts.join(' and ')}. It won’t carry into the new season.`);
+        }
+      } catch { /* best-effort — no warning beats a broken rollover form */ }
+    })();
+    return () => { alive = false; };
+  }, [orgSlug, teamId, hasTryoutSignal]);
 
   // Escape closes the form (not the success view — that only exits via "Go to ...").
   useEffect(() => {
@@ -186,6 +222,18 @@ export default function StartNextSeasonModal({
                 <strong>Awards</strong> stay on the team&apos;s all-time record — nothing to carry.
               </li>
             </ul>
+
+            {/* WI-12: a live tryout doesn't survive the roll — say so before the coach commits. */}
+            {tryoutWarning && (
+              <div style={{
+                display: 'flex', gap: '0.55rem', alignItems: 'flex-start', marginTop: '1rem',
+                background: 'rgba(var(--warning-rgb), 0.1)', border: '1px solid rgba(var(--warning-rgb), 0.3)',
+                borderRadius: 8, padding: '0.7rem 0.85rem',
+              }}>
+                <AlertTriangle size={16} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: 2 }} aria-hidden />
+                <span style={{ fontSize: '0.85rem', color: 'var(--white-80)', lineHeight: 1.5 }}>{tryoutWarning}</span>
+              </div>
+            )}
 
             {/* Clear, unmissable caution — starting a season is a one-way lock (no reopen). */}
             <div style={{

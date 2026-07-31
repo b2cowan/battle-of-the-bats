@@ -7,7 +7,7 @@ import {
   getOrCreateRepTryout,
   getRepTryoutSessions,
   getRepTryoutRubric,
-  getRepTryoutEvaluatorSessions,
+  getRepTryoutEvaluatorLinkSessions,
   getRepTryoutRegistrations,
   getRepTryoutScores,
   getRepRosterPlayers,
@@ -72,7 +72,10 @@ export const GET = withObservability(async (_req: Request,
   const [sessions, rubric, evaluators, registrations, scores, roster] = await Promise.all([
     getRepTryoutSessions(tryout.id),
     getRepTryoutRubric(tryout.id),
-    getRepTryoutEvaluatorSessions(tryout.id),
+    // Links only: a coach's own permanent self-scoring session is not an "evaluator invited",
+    // and it would inflate this count forever (review finding — latent, nothing reads the
+    // field today, but the next UI that does would ship silently wrong).
+    getRepTryoutEvaluatorLinkSessions(tryout.id),
     getRepTryoutRegistrations(r.programYear.id),
     getRepTryoutScores(tryout.id),
     getRepRosterPlayers(r.programYear.id),

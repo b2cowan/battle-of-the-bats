@@ -10,6 +10,7 @@ import { computeTournamentStandings, type DivisionStandingRow } from './tie-brea
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
 import { generateOfferToken, hashOfferToken } from './tryout-offer-token';
+import { SELF_TOKEN_HASH_PREFIX } from './tryout-evaluator-token';
 import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabilityGrants } from './coach-capabilities';
 import { tournamentToday, addCalendarDays } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
@@ -4829,12 +4830,26 @@ export async function createRepTryoutEvaluatorSession(fields: {
   return mapRepTryoutEvaluatorSession(data);
 }
 
-/** All evaluator links for a tryout (head-coach management view), newest first. */
+/** All evaluator sessions for a tryout (scoreboard identity view), newest first — INCLUDING
+ *  coaches' own `self:`-keyed scoring sessions (their scores are real scores). */
 export async function getRepTryoutEvaluatorSessions(tryoutId: string): Promise<RepTryoutEvaluatorSession[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_tryout_evaluator_sessions')
     .select('*')
     .eq('tryout_id', tryoutId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTryoutEvaluatorSession);
+}
+
+/** Shareable evaluator LINKS only (the Evaluators card's management view) — a coach's own
+ *  self-keyed scoring session is not a link: nothing to copy, resend, or turn off. */
+export async function getRepTryoutEvaluatorLinkSessions(tryoutId: string): Promise<RepTryoutEvaluatorSession[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_evaluator_sessions')
+    .select('*')
+    .eq('tryout_id', tryoutId)
+    .not('token_hash', 'like', `${SELF_TOKEN_HASH_PREFIX}%`)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(mapRepTryoutEvaluatorSession);
@@ -4858,6 +4873,36 @@ export async function revokeRepTryoutEvaluatorSession(id: string): Promise<void>
     .update({ revoked_at: new Date().toISOString() })
     .eq('id', id);
   if (error) throw error;
+}
+
+/** The org-membership display name for one user — how the portal names a coach anywhere it
+ *  needs a label (the self-scoring identity, WI-1). Null when unset; caller picks the fallback. */
+export async function getOrgMemberDisplayName(orgId: string, userId: string): Promise<string | null> {
+  const { data, error } = await supabaseAdmin
+    .from('organization_members')
+    .select('display_name')
+    .eq('organization_id', orgId)
+    .eq('user_id', userId)
+    .maybeSingle();
+  if (error) throw error;
+  return (data?.display_name as string | null) ?? null;
+}
+
+/** Re-key an evaluator link on the SAME session row — new token hash + fresh expiry, revocation
+ *  cleared. The identity (and every score already attached to it) survives; minting a second row
+ *  for the same person would give their opinion 2× weight in the per-category means. */
+export async function reissueRepTryoutEvaluatorSession(id: string, fields: {
+  tokenHash: string;
+  expiresAt: string;
+}): Promise<RepTryoutEvaluatorSession> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_tryout_evaluator_sessions')
+    .update({ token_hash: fields.tokenHash, expires_at: fields.expiresAt, revoked_at: null })
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTryoutEvaluatorSession(data);
 }
 
 function mapRepTryoutScore(r: any): RepTryoutScore {

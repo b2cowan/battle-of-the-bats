@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import type { RepTeamMeasurableType } from '@/lib/types';
 
@@ -111,9 +112,16 @@ export default function TestTypesManager({ apiBase, types, canWrite, onTypesChan
   return (
     <>
       {types.length === 0 && (
-        <p className={styles.detailPlaceholder}>
-          {canWrite ? 'No tests yet — add your first below (like "60-yd sprint" in seconds).' : 'No tests yet.'}
-        </p>
+        /* The portal's ONE empty-state primitive — this card hand-rolled its own while its
+           sibling section used CoachEmptyState one section above (WI-7). The description also
+           pre-empts a real confusable: test types are NOT the tryout scorecard. */
+        <CoachEmptyState
+          compact
+          headline="No tests on your list yet"
+          description="Objective measurements you track over the season — not the tryout scorecard."
+          payoff="Add your first test and an evaluation session can record it for the whole roster in one go."
+          blocker={canWrite ? undefined : 'Only the head coach edits the test list.'}
+        />
       )}
       {types.map(t => (
         <div key={t.id} className={styles.tagManagerRow}>

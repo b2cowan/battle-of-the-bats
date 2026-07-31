@@ -486,7 +486,10 @@ export default function RosterPage({
   const nudge = nudgeParts.length ? `${nudgeParts.join(' · ')} — open a player to fill in details` : '';
 
   return (
-    <div className={styles.page}>
+    /* The depth VIEW is a genuine 2-D comparison grid, so it takes the shipped `.pageWide`
+       opt-in (the Schedule's exact view-conditional shape); the roster LIST keeps the 960px
+       reading column — f9-2 remainder, Chunk E WI-4. */
+    <div className={`${styles.page} ${view === 'depth' ? styles.pageWide : ''}`}>
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>

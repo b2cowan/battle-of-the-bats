@@ -168,11 +168,13 @@ export const PATCH = withObservability(async (req: Request,
     body.adminNotes !== undefined ? body.adminNotes : reg.adminNotes,
   );
 
-  // Family-facing side effects (offer link + branded offer/waitlist/release emails) — shared with the
-  // coach decision board so both surfaces behave identically (Phase 2B.5).
+  // Family-facing side effects (offer link + branded offer/waitlist/release emails) — same shared
+  // path as the coach decision board (Phase 2B.5). The ADMIN surface always notifies; on the coach
+  // board emails are opt-in per D-E9 — a deliberate, flagged scope line (Chunk E plan §4).
   await applyTryoutDecisionSideEffects({
     reg: registration,
     newStatus,
+    notifyFamily: true,
     teamName: team.name,
     yearName: programYear.name,
     orgName: ctx!.org.name,

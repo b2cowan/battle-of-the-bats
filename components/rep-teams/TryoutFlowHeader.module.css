@@ -81,7 +81,7 @@
 .panelHidden { display: none; }
 .panelIntro { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; margin: 0 0 0.9rem; }
 .panelIntroText { flex: 1 1 240px; font-size: 0.82rem; color: rgba(255,255,255,0.5); margin: 0; line-height: 1.5; }
-.panelAction { flex: 0 0 auto; }
+.panelAction { flex: 0 0 auto; display: inline-flex; gap: 0.45rem; flex-wrap: wrap; }
 
 /* ── "Build your team" results footer ───────────────────────────────────────── */
 .results { border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 1.15rem 1.35rem; }

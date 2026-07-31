@@ -1,10 +1,14 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
-import { ListChecks, Check, EyeOff } from 'lucide-react';
+import { ListChecks, Check, EyeOff, Mail } from 'lucide-react';
 import TryoutAcceptDrawer, { type AcceptIdentity, type AcceptSuggestedDues, type AcceptPayload } from './TryoutAcceptDrawer';
 import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import styles from './TryoutDayCard.module.css';
+// The email switch reuses the accept drawer's fee-toggle track/knob classes VERBATIM (warm
+// overrides included) — two visually-identical toggles in one feature must be one style.
+import toggleStyles from './TryoutAcceptDrawer.module.css';
 
 type Status = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined' | 'withdrawn';
 type Decision = 'offer' | 'waitlist' | 'cut';
@@ -19,6 +23,12 @@ interface Candidate {
   // 2B.5: the family's self-serve offer response + a lazily-computed deadline lapse (offered rows only).
   offerResponse?: 'accepted' | 'declined' | null;
   offerExpired?: boolean;
+  /** True only when an offer email (with its response link) has actually gone out — a
+   *  record-only offer has nothing to await (D-E9). */
+  offerEmailed?: boolean;
+  hasGuardianEmail?: boolean;
+  isCheckedIn?: boolean;
+  playerNotes?: string | null;
 }
 interface Counts { offered: number; waitlisted: number; declined: number; accepted: number; pending: number }
 interface Board {
@@ -38,6 +48,10 @@ interface Props {
    *  render when provided AND the candidate's name is visible (never in blind mode: a
    *  prior-season name beside an anonymized bib would break blind integrity). */
   continuityApiBase?: string;
+  /** Keys the device-remembered email switch per team. */
+  teamId?: string;
+  /** Explicit per-component write gate (WI-11) — a no-op while tryouts is all-or-nothing. */
+  canWrite?: boolean;
   onError?: (msg: string) => void;
 }
 
@@ -52,11 +66,19 @@ const CHOICES: { key: Decision; label: string; status: Status }[] = [
 
 interface AcceptTarget { registrationId: string; identity: AcceptIdentity; suggestedDues: AcceptSuggestedDues | null }
 
-export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onError }: Props) {
+/** Device-remembered, per team — presentation state for a per-ACTION flag. The server only ever
+ *  emails when the individual decision request carries the flag, so a device that never turned
+ *  the switch on can never send anything (D-E9: the failure direction is always "no email"). */
+const emailSwitchKey = (teamId: string) => `tryout-email-decisions:${teamId}`;
+
+export default function TryoutDecisionBoard({ apiBase, continuityApiBase, teamId, canWrite = true, onError }: Props) {
+  const confirm = useConfirm();
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState<string | null>(null);
   const [continuityOpenId, setContinuityOpenId] = useState<string | null>(null);
+  const [notesOpenId, setNotesOpenId] = useState<string | null>(null);
+  const [notifyFamily, setNotifyFamily] = useState(false);
   const {
     byCurrent: continuityByReg, decide: decideContinuityShared, dismiss: dismissContinuity,
     busy: continuityBusy, error: continuityErr,
@@ -67,6 +89,19 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
   const onErrorRef = useRef(onError);
   useEffect(() => { onErrorRef.current = onError; }, [onError]);
   const fail = useCallback((m: string) => { if (onErrorRef.current) onErrorRef.current(m); else console.error(m); }, []);
+
+  // Rehydrate the switch after mount (SSR-safe), per team.
+  useEffect(() => {
+    if (!teamId) return;
+    try { setNotifyFamily(localStorage.getItem(emailSwitchKey(teamId)) === '1'); } catch { /* private mode */ }
+  }, [teamId]);
+  const toggleNotify = () => {
+    setNotifyFamily(v => {
+      const next = !v;
+      if (teamId) { try { localStorage.setItem(emailSwitchKey(teamId), next ? '1' : '0'); } catch { /* private mode */ } }
+      return next;
+    });
+  };
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -91,7 +126,30 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
     if (savingId) return;
     const target = CHOICES.find(x => x.key === choice)!;
     if (c.status === target.status) return; // no-op
+
+    // Lock BEFORE any await: the confirm below suspends this call mid-dialog, and the shared
+    // ConfirmProvider holds a single resolver — a second decide() slipping in while the dialog
+    // is open would orphan this one's promise forever (review finding). savingId also disables
+    // the other rows' buttons, which is exactly right while a decision dialog is up.
     setSavingId(c.registrationId);
+
+    // With emails ON, a pass sends a release note the moment it lands — and an email cannot be
+    // unsent, from a button that sits adjacent to Offer. Ask first, naming what the family gets.
+    // Record-only mode needs no ask: nothing outward happens and the tap is fully re-tappable.
+    if (choice === 'cut' && notifyFamily) {
+      const who = c.name ?? `Bib #${c.bib ?? '—'}`;
+      const ok = await confirm({
+        title: `Pass on ${who}?`,
+        message: c.hasGuardianEmail === false
+          ? 'This family has no email on file, so nothing will be sent — remember to tell them yourself.'
+          : 'Their family receives a respectful “not this season” email right away. You can change the decision later, but an email can’t be unsent.',
+        confirmText: c.hasGuardianEmail === false ? 'Pass' : 'Pass & send',
+        cancelText: 'Cancel',
+        tone: 'danger',
+      });
+      if (!ok) { setSavingId(null); return; }
+    }
+
     const prevStatus = c.status;
     // Optimistic: update the one candidate + the tally.
     setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, status: target.status } : x), counts: recount(b.candidates, c.registrationId, target.status) } : b);
@@ -99,10 +157,15 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
       const res = await fetch(apiBase, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ registrationId: c.registrationId, decision: choice }),
+        body: JSON.stringify({ registrationId: c.registrationId, decision: choice, notifyFamily }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to save decision');
+      // Mirror the server's offer-link truth so badges never go stale within a session:
+      // an EMAILED offer has a live link; every other transition (waitlist/cut clears the link
+      // server-side; a record-only offer never mints one) leaves nothing to await.
+      const emailed = choice === 'offer' && notifyFamily && c.hasGuardianEmail !== false;
+      setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, offerEmailed: emailed, offerResponse: null, offerExpired: false } : x) } : b);
     } catch (e: any) {
       // Revert just this candidate.
       setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, status: prevStatus } : x), counts: recount(b.candidates, c.registrationId, prevStatus) } : b);
@@ -112,8 +175,9 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
     }
   }
 
-  // Re-send the offer email with a fresh Accept/Decline link + new deadline (clears any prior response).
-  async function resendOffer(c: Candidate) {
+  // "Email this offer" / re-send: a fresh Accept/Decline link + new deadline (clears any prior
+  // response). The one explicit per-row send that works whatever the switch says.
+  async function emailOffer(c: Candidate) {
     if (resendingId || savingId) return;
     setResendingId(c.registrationId);
     try {
@@ -123,11 +187,11 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
         body: JSON.stringify({ registrationId: c.registrationId, decision: 'resend' }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to resend offer');
-      // Fresh link + deadline + cleared response → the row is back to "awaiting".
-      setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, offerResponse: null, offerExpired: false } : x) } : b);
+      if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to email the offer');
+      // Fresh link + deadline + cleared response → the row is (back to) "awaiting".
+      setBoard(b => b ? { ...b, candidates: b.candidates.map(x => x.registrationId === c.registrationId ? { ...x, offerEmailed: true, offerResponse: null, offerExpired: false } : x) } : b);
     } catch (e: any) {
-      fail(e.message ?? 'Failed to resend the offer.');
+      fail(e.message ?? 'Failed to email the offer.');
     } finally {
       setResendingId(null);
     }
@@ -156,7 +220,8 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
     const res = await fetch(`${apiBase}/accept`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ registrationId: regId, ...payload }),
+      // The welcome email follows the same switch as every other decision email (D-E9).
+      body: JSON.stringify({ registrationId: regId, notifyFamily, ...payload }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.message ?? data.error ?? 'Failed to add the player.');
@@ -201,6 +266,33 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
         </div>
       </div>
 
+      {/* D-E9: the email switch lives directly above the decision buttons, so what a tap does is
+          visible at the moment of decision. Default OFF — decisions are the coach's to deliver. */}
+      {canWrite && (
+        <div className={styles.notifyRow}>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={notifyFamily}
+            aria-label="Email families my decisions"
+            className={toggleStyles.toggle}
+            onClick={toggleNotify}
+          >
+            <span className={`${toggleStyles.switch} ${notifyFamily ? toggleStyles.switchOn : ''}`}>
+              <span className={toggleStyles.knob} aria-hidden />
+            </span>
+          </button>
+          <div className={styles.notifyText}>
+            <span className={styles.notifyLabel}><Mail size={13} style={{ verticalAlign: '-2px' }} /> Email families my decisions</span>
+            <span className={styles.notifyHint}>
+              {notifyFamily
+                ? 'On — each choice emails the family right away: an offer with an Accept/Decline link, a waitlist update, or a respectful release note on “Not this season”.'
+                : 'Off — decisions are only recorded here; you reach out yourself. Offered players keep an “Email this offer” button for selective sends.'}
+            </span>
+          </div>
+        </div>
+      )}
+
       <div className={styles.tally}>
         <span className={styles.tallyItem}><strong>{board.counts.offered}</strong> offered</span>
         <span className={styles.tallyItem}><strong>{board.counts.waitlisted}</strong> waitlist</span>
@@ -227,6 +319,7 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
           const contRows = c.name ? (continuityByReg[c.registrationId] ?? []) : [];
           const suggested = contRows.filter(r => r.status === 'suggested');
           const confirmedRow = contRows.find(r => r.status === 'confirmed');
+          const hasFamilyNote = !!c.playerNotes;
           return (
             <Fragment key={c.registrationId}>
             <div className={styles.scoreRow}>
@@ -235,6 +328,11 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
                 <div className={styles.sessionWhen}>
                   <span className={styles.bib}>#{c.bib ?? '—'}</span>
                   {c.name && <span style={{ marginLeft: '0.5rem' }}>{c.name}</span>}
+                  {c.hasGuardianEmail === false && (
+                    <span className={styles.noEmailChip} title="No guardian email was captured for this candidate — no decision email can reach this family.">
+                      no email on file — notify by phone
+                    </span>
+                  )}
                   {suggested.length > 0 && (
                     <button type="button"
                       style={{ marginLeft: '0.5rem', background: 'rgba(var(--home-rust-rgb, 180,83,9),0.18)', border: '1px solid var(--warning)', color: 'var(--home-amber, #fcd34d)', fontSize: '0.66rem', fontWeight: 700, padding: '0.14rem 0.5rem', borderRadius: 999, cursor: 'pointer' }}
@@ -249,12 +347,25 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
                   )}
                 </div>
                 <div className={styles.sessionMeta}>
+                  {/* A no-show must never read as merely "not scored yet" — a kid with a family
+                      emergency is not a kid who scored low (WI-3). */}
+                  {c.isCheckedIn === false && <span style={{ fontWeight: 700 }}>didn’t check in · </span>}
                   {c.composite != null ? <>score {c.composite.toFixed(1)}/{board.scaleMax} · {c.evaluatorCount} eval{c.evaluatorCount === 1 ? '' : 's'}</> : 'not scored yet'}
+                  {hasFamilyNote && (
+                    <button type="button" className={styles.noteToggle}
+                      onClick={() => setNotesOpenId(id => id === c.registrationId ? null : c.registrationId)}
+                      aria-expanded={notesOpenId === c.registrationId}>
+                      {notesOpenId === c.registrationId ? '▾' : '▸'} family&apos;s note
+                    </button>
+                  )}
                 </div>
+                {notesOpenId === c.registrationId && hasFamilyNote && (
+                  <div className={styles.familyNote}>{c.playerNotes}</div>
+                )}
               </div>
               {accepted ? (
                 <span className={styles.acceptedChip}><Check size={13} /> Accepted</span>
-              ) : (
+              ) : canWrite ? (
                 <div className={styles.decisionCol}>
                   <div className={styles.choiceGroup} role="group" aria-label="Decision">
                     {CHOICES.map(choice => (
@@ -263,7 +374,10 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
                         type="button"
                         className={`${styles.choiceBtn} ${c.status === choice.status ? styles[`choice_${choice.key}`] : ''}`}
                         onClick={() => decide(c, choice.key)}
-                        disabled={!!savingId}
+                        // Also locked while an accept drawer is LOADING — cutting a candidate whose
+                        // drawer is about to open would present a stale accept form (server 409s
+                        // either way; this keeps the UI honest).
+                        disabled={!!savingId || !!acceptLoadingId}
                         aria-pressed={c.status === choice.status}
                       >
                         {choice.label}
@@ -272,7 +386,9 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
                   </div>
                   {c.status === 'offered' && (
                     <>
-                      {offerBadge(c)}
+                      {/* Response badges only make sense once an offer EMAIL exists — a
+                          record-only offer has nothing to await (D-E9). */}
+                      {c.offerEmailed && offerBadge(c)}
                       <button
                         type="button"
                         className={styles.acceptRosterBtn}
@@ -283,21 +399,21 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
                           : c.offerResponse === 'accepted' ? 'Confirm → add to roster'
                           : 'Accept → add to roster'}
                       </button>
-                      {c.offerResponse !== 'accepted' && (
+                      {c.offerResponse !== 'accepted' && c.hasGuardianEmail !== false && (
                         <button
                           type="button"
                           className={styles.resendBtn}
-                          onClick={() => resendOffer(c)}
+                          onClick={() => emailOffer(c)}
                           disabled={!!resendingId || !!savingId}
-                          title="Re-send the offer email with a fresh Accept/Decline link + new deadline"
+                          title="Email the offer with a fresh Accept/Decline link + response deadline"
                         >
-                          {resendingId === c.registrationId ? 'Resending…' : 'Resend offer'}
+                          {resendingId === c.registrationId ? 'Sending…' : c.offerEmailed ? 'Resend offer' : '✉ Email this offer'}
                         </button>
                       )}
                     </>
                   )}
                 </div>
-              )}
+              ) : null}
             </div>
             {continuityOpenId === c.registrationId && suggested.length > 0 && (
               <div style={{ margin: '0 0 0.6rem 2.2rem' }}>
@@ -330,7 +446,7 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, onErro
   );
 }
 
-/** A small chip showing where a family's offer response stands (offered rows only). */
+/** A small chip showing where a family's offer response stands (emailed offers only). */
 function offerBadge(c: Candidate) {
   let text: string, color: string;
   if (c.offerResponse === 'accepted') { text = '✓ Family accepted'; color = 'var(--logic-lime)'; }

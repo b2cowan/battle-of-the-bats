@@ -65,6 +65,8 @@ export const GET = withObservability(async (req: Request,
       guardianLastName: reg.guardianLastName,
       guardianEmail: reg.guardianEmail,
       guardianPhone: reg.guardianPhone,
+      // What the family wrote at registration — visible where the coach acts on it (WI-3).
+      playerNotes: reg.playerNotes,
     },
     suggestedDues,
   });
@@ -81,6 +83,9 @@ export const POST = withObservability(async (req: Request,
 
   const body = await req.json().catch(() => ({}));
   const registrationId = typeof body.registrationId === 'string' ? body.registrationId : '';
+  // D-E9: the welcome email follows the same opt-in switch as every other decision email —
+  // a coach welcoming families personally isn't second-guessed by an automatic send.
+  const notifyFamily = body.notifyFamily === true;
 
   const reg = await getRepTryoutRegistration(registrationId);
   if (!reg || reg.programYearId !== r.programYear.id) return NextResponse.json({ error: 'not_found' }, { status: 404 });
@@ -101,27 +106,30 @@ export const POST = withObservability(async (req: Request,
 
   try {
     const { registration, player } = await acceptTryoutAndAddToRoster(reg.id, { roster, dues });
-    // Same welcome email the admin accept sends (fire-and-forget).
-    sendTransactionalEmail({
-      key: 'tryout_offer_accepted',
-      to: reg.guardianEmail,
-      vars: {
-        guardianFirstName: reg.guardianFirstName,
-        playerFirstName: reg.playerFirstName,
-        playerLastName: reg.playerLastName,
-        teamName: r.team!.name,
-        yearName: r.programYear.name,
-      },
-      defaultSubject: `${r.team!.name} — Welcome to the Team!`,
-      defaultHtml: tryoutAcceptedHtml({
-        guardianFirstName: reg.guardianFirstName,
-        playerFirstName: reg.playerFirstName,
-        playerLastName: reg.playerLastName,
-        teamName: r.team!.name,
-        yearName: r.programYear.name,
-        contactEmail: r.contactEmail,
-      }),
-    }).catch(e => console.error('[email] tryout accepted (coach):', e));
+    // Same welcome email the admin accept sends — but only when the coach's switch says so
+    // (D-E9), and AWAITED: no post-response work guarantee on this platform (Amplify gotcha).
+    if (notifyFamily && reg.guardianEmail?.trim()) {
+      await sendTransactionalEmail({
+        key: 'tryout_offer_accepted',
+        to: reg.guardianEmail,
+        vars: {
+          guardianFirstName: reg.guardianFirstName,
+          playerFirstName: reg.playerFirstName,
+          playerLastName: reg.playerLastName,
+          teamName: r.team!.name,
+          yearName: r.programYear.name,
+        },
+        defaultSubject: `${r.team!.name} — Welcome to the Team!`,
+        defaultHtml: tryoutAcceptedHtml({
+          guardianFirstName: reg.guardianFirstName,
+          playerFirstName: reg.playerFirstName,
+          playerLastName: reg.playerLastName,
+          teamName: r.team!.name,
+          yearName: r.programYear.name,
+          contactEmail: r.contactEmail,
+        }),
+      }).catch(e => console.error('[email] tryout accepted (coach):', e));
+    }
     return NextResponse.json({ registrationId: registration.id, status: registration.status, player });
   } catch (e) {
     if (e instanceof TryoutAcceptError) {

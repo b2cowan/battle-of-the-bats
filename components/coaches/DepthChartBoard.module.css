@@ -57,7 +57,11 @@
 .tip { margin-left: auto; color: var(--ink-45); }
 
 /* ── desktop grid ── */
-.gridScroll { padding: 6px 6px 8px; overflow-x: auto; isolation: isolate; } /* own stacking context so sticky headers/cluster never bleed (Safari) */
+/* The scroller itself is <CoachScrollX> (scroller + swipe hint, one component — Chunk E WI-4).
+   The wrapper keeps the old .gridScroll padding; the scroller gets its Safari fix via the
+   scrollerClassName prop: own stacking context so sticky headers never bleed. */
+.gridScrollWrap { padding: 6px 6px 8px; }
+.gridScroller { isolation: isolate; }
 .table { border-collapse: separate; border-spacing: 0; width: 100%; }
 .table th, .table td { text-align: center; padding: 0; }
 .table thead th {

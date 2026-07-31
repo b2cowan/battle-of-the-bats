@@ -23,8 +23,10 @@ const DIAMOND_TEMPLATE: RubricTemplate = {
   ],
 };
 
-/** The suggested starter scorecard. V1 returns the diamond set (softball/baseball); add a sport
- *  param + a per-sport lookup here when non-diamond sports land (sport-neutrality carry-over). */
-export function getRubricStarter(): RubricTemplate {
+/** The suggested starter scorecard for a team's sport. V1: every offered sport is a diamond
+ *  sport, so every lookup resolves to the diamond set — but the seam is here NOW so the day a
+ *  non-diamond sport is enabled, this is a template addition, not an API change (§1.7 carry-over).
+ */
+export function getRubricStarter(_sport?: string | null): RubricTemplate {
   return DIAMOND_TEMPLATE;
 }

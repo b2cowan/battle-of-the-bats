@@ -8,8 +8,10 @@ import {
   getRepTryoutRubric,
   getRepTryoutCheckinList,
   getRepTryoutEvaluatorSessions,
+  getRepTryoutEvaluatorSessionByTokenHash,
   getRepTryoutScores,
 } from '@/lib/db';
+import { selfEvaluatorTokenHash } from '@/lib/tryout-evaluator-token';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import { rankTryoutCandidates } from '@/lib/tryout-scoring';
@@ -17,7 +19,7 @@ import type { RepProgramYear } from '@/lib/types';
 
 type Resolved =
   | { ok: false; res: Response }
-  | { ok: true; orgId: string; teamId: string; programYear: RepProgramYear; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
+  | { ok: true; orgId: string; userId: string; teamId: string; programYear: RepProgramYear; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
 
 async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -30,7 +32,7 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   if (!assignment) return { ok: false, res: forbidden() };
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  return { ok: true, orgId: ctx.org.id, teamId, programYear, assignment };
+  return { ok: true, orgId: ctx.org.id, userId: ctx.user.id, teamId, programYear, assignment };
 }
 
 /** Aggregated tryout scoreboard: weighted composite per candidate + a runs-hot/cold bias flag. */
@@ -43,11 +45,14 @@ export const GET = withObservability(async (_req: Request,
   if (denied) return denied;
 
   const tryout = await getOrCreateRepTryout({ programYearId: r.programYear.id, teamId: r.teamId, orgId: r.orgId });
-  const [rubric, candidates, sessions, scores] = await Promise.all([
+  // The self-session lookup (the "(you)" flag) rides the same batch — this route is polled
+  // every 6s while the Tryout Day tab is open.
+  const [rubric, candidates, sessions, scores, selfSession] = await Promise.all([
     getRepTryoutRubric(tryout.id),
     getRepTryoutCheckinList(r.programYear.id),
     getRepTryoutEvaluatorSessions(tryout.id),
     getRepTryoutScores(tryout.id),
+    getRepTryoutEvaluatorSessionByTokenHash(selfEvaluatorTokenHash(tryout.id, r.userId)),
   ]);
 
   const blind = tryout.isAnonymous;
@@ -57,8 +62,15 @@ export const GET = withObservability(async (_req: Request,
 
   const evalName = new Map(sessions.map(s => [s.id, s.evaluatorName]));
 
-  // Ranked candidate rows come from the shared helper (single-sourced with the decision board).
-  const candidateRows = rankTryoutCandidates(candidates, categories, scores, { blind });
+  // Which session is THIS coach scoring as themselves? (Mapped sessions never carry the hash —
+  // resolved by the deterministic self key in the batch above.) Flags the "(you)" chip.
+  const selfSessionId = selfSession?.id ?? null;
+
+  // Ranked candidate rows come from the shared helper (single-sourced with the decision board);
+  // check-in state rides along so a no-show never reads as merely "not scored yet" (WI-3).
+  const checkedInById = new Map(candidates.map(c => [c.id, c.isCheckedIn]));
+  const candidateRows = rankTryoutCandidates(candidates, categories, scores, { blind })
+    .map(c => ({ ...c, isCheckedIn: checkedInById.get(c.registrationId) ?? false }));
 
   // Per-evaluator running totals for the bias flag (scoreboard-only concern).
   const evalSum = new Map<string, { sum: number; n: number }>();
@@ -85,6 +97,9 @@ export const GET = withObservability(async (_req: Request,
     return {
       id: s.id,
       name: evalName.get(s.id) ?? null,
+      // D-E2: the coach's own scores count like anyone's — same mean, same bias flag. The chip
+      // just says which one is them.
+      isSelf: s.id === selfSessionId,
       candidatesScored: scoredCount,
       meanScore: mean != null ? Math.round(mean * 100) / 100 : null,
       biasDelta: delta != null ? Math.round(delta * 100) / 100 : null,
