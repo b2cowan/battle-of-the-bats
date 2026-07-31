@@ -11,7 +11,10 @@ import { LogOut } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import styles from '@/app/(consumer)/account/account.module.css';
 
-export default function AccountSignOutButton() {
+export default function AccountSignOutButton({ inline = false }: {
+  /** Desktop Profile pane (Phase 2): a button-sized ghost instead of the full-width row. */
+  inline?: boolean;
+}) {
   const [busy, setBusy] = useState(false);
 
   async function handleSignOut() {
@@ -21,6 +24,15 @@ export default function AccountSignOutButton() {
     } finally {
       window.location.assign('/discover');
     }
+  }
+
+  if (inline) {
+    return (
+      <button type="button" className={styles.inlineSignOut} onClick={handleSignOut} disabled={busy}>
+        <LogOut size={16} aria-hidden />
+        {busy ? 'Signing out…' : 'Sign out'}
+      </button>
+    );
   }
 
   return (

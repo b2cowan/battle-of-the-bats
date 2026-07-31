@@ -31,6 +31,16 @@
   margin: 0;
 }
 
+/* ── Desktop settings pane (Phase 2) — this file's FIRST desktop breakpoint ────────
+   Inside the /account two-column shell the pane provides the geometry: the old lone
+   780px column's cap, centring and side padding come off, and the page title steps
+   down to a pane heading (the shell's own "Account" h1 carries the screen). ≤1023px:
+   untouched — the standalone stacked page keeps every rule it shipped with. */
+@media (min-width: 1024px) {
+  .page { max-width: none; margin: 0; padding: 0 0 2.5rem; }
+  .title { font-size: 1.05rem; }
+}
+
 .subtitle {
   font-family: var(--font-data, monospace);
   font-size: 0.8rem;

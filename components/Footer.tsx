@@ -66,10 +66,11 @@ function resolveSurface(pathname: string): 'marketing' | 'warm' | null {
     isWarmJourneyPath(pathname)
   ) return null;
 
-  // Chat is a FIXED-HEIGHT panel (inbox list + conversation with a pinned composer). A footer
-  // below it either compresses the composer or strands itself past a non-scrolling pane, so
-  // this one consumer tab opts out — the only surface in the app with no path onward, which is
-  // the acceptable trade for not breaking the one screen people type in.
+  // Chat is a bounded viewport-height pane with a pinned composer — position:fixed on phones,
+  // and since the Phase 2 split pane, an explicit 100dvh-minus-topbar shell on desktop too. A
+  // footer below a non-scrolling pane is unreachable, so this one consumer tab opts out — the
+  // only surface in the app with no path onward, which is the acceptable trade for not breaking
+  // the one screen people type in. (Owner-affirmed at the Phase 2 mockup sign-off.)
   if (pathname === '/chat' || pathname.startsWith('/chat/')) return null;
 
   // /auth is inside CONSUMER_SHELL_PREFIXES (it follows the account theme like the tabs do), but
@@ -95,10 +96,11 @@ export default function Footer() {
   if (!surface) return null;
 
   const skin = surface === 'warm' ? styles.warm : '';
-  // The Account TAB renders the same QR as a settings card of its own, so the footer yields
-  // there. EXACT match only: the card is mounted on /account, not on its sub-routes, so
-  // suppressing across /account/* would leave /account/notifications with no QR at all.
-  const isAccount = pathname === '/account';
+  // The footer yields its QR exactly where the page renders the same unit as content of its
+  // own: the Account TAB's stacked page (phone/tablet) and the desktop shell's Get-the-app
+  // section (Phase 2). EXACT matches only — a prefix would strip the QR from every other
+  // /account/* section (that regression shipped once and was caught in /review).
+  const isAccount = pathname === '/account' || pathname === '/account/get-the-app';
 
   return (
     <footer className={`${styles.footer} ${skin}`}>

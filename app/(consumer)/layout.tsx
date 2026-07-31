@@ -3,7 +3,7 @@ import ConsumerNav from '@/components/consumer/ConsumerNav';
 import ConsumerThemeManager from '@/components/consumer/ConsumerThemeManager';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import styles from '@/components/consumer/ConsumerShell.module.css';
-import { createClient } from '@/lib/supabase-server';
+import { getAuthUserCached } from '@/lib/supabase-server';
 import { getUserAccessContextsCached, hasCoachAccess, getPrimaryOrgDestination } from '@/lib/user-contexts';
 import { getUserTheme } from '@/lib/user-preferences';
 import { getStartMenuConfig } from '@/lib/start-menu';
@@ -35,8 +35,7 @@ export const metadata: Metadata = {
 };
 
 export default async function ConsumerLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUserCached();
 
   // Phase 3: surface the coaches hub inside the fan shell for accounts that coach.
   // Rides the access-context source of truth so claimable (email-matched, unclaimed)

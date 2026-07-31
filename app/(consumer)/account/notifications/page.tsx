@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase-server';
+import { getAuthUserCached } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getUserAccessContexts } from '@/lib/user-contexts';
 import { getCoachingAssignmentsForUser } from '@/lib/db';
@@ -10,7 +10,6 @@ import { isNotificationsPaused } from '@/lib/notification-pause';
 import type { Capability } from '@/lib/roles';
 import type { Organization } from '@/lib/types';
 import type { FanCardData } from '@/components/notifications/FanAlertsCard';
-import warm from '@/components/consumer/warmTheme.module.css';
 import styles from './AccountNotifications.module.css';
 import accountStyles from '../account.module.css';
 import AccountNotificationsClient, { type NotificationCard } from './AccountNotificationsClient';
@@ -50,27 +49,27 @@ export default async function AccountNotificationsPage({
   searchParams: Promise<{ focus?: string }>;
 }) {
   const { focus } = await searchParams;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUserCached();
 
   if (!user?.email) {
+    // Warm paper comes from the /account layout wrapper (Desktop Phase 2) — content only here.
     return (
-      <div className={warm.warmTab}>
-        <div className={styles.page}>
-          <div className={styles.header}>
-            <h1 className={styles.title}>Notification settings</h1>
-            <p className={styles.subtitle}>Sign in to manage what the platform sends you.</p>
-          </div>
-          <div className={accountStyles.ctaStack}>
-            <Link href="/auth/login?next=%2Faccount%2Fnotifications" className={accountStyles.ctaPrimary}>Sign in</Link>
-            <Link href="/discover" className={accountStyles.ctaGhost}>Browse tournaments</Link>
-          </div>
-          <p className={styles.signedOutNote}>
-            You don&rsquo;t need an account to follow teams and watch live scores — following works on
-            this device right away. <strong>Score alerts are what signing in gets you</strong> — a push
-            when your teams&rsquo; games go live, on every device you sign in on.
-          </p>
+      <div className={styles.page}>
+        <div className={styles.header}>
+          {/* h2, not h1: inside the desktop settings shell the layout's "Account" h1 carries
+              the screen; standalone (phone) this matches the sibling section panes. */}
+          <h2 className={styles.title}>Notification settings</h2>
+          <p className={styles.subtitle}>Sign in to manage what the platform sends you.</p>
         </div>
+        <div className={accountStyles.ctaStack}>
+          <Link href="/auth/login?next=%2Faccount%2Fnotifications" className={accountStyles.ctaPrimary}>Sign in</Link>
+          <Link href="/discover" className={accountStyles.ctaGhost}>Browse tournaments</Link>
+        </div>
+        <p className={styles.signedOutNote}>
+          You don&rsquo;t need an account to follow teams and watch live scores — following works on
+          this device right away. <strong>Score alerts are what signing in gets you</strong> — a push
+          when your teams&rsquo; games go live, on every device you sign in on.
+        </p>
       </div>
     );
   }

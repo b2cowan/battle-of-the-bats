@@ -21,7 +21,6 @@ import FanAlertsCard, { type FanCardData } from '@/components/notifications/FanA
 import { useOrgPreferences } from '@/components/notifications/useOrgPreferences';
 import { NOTIFICATION_SECTIONS, simpleGroupsFor } from '@/lib/notification-labels';
 import type { NotificationEventType } from '@/lib/types';
-import warm from '@/components/consumer/warmTheme.module.css';
 import styles from './AccountNotifications.module.css';
 
 export type NotificationCard = {
@@ -307,11 +306,14 @@ export default function AccountNotificationsClient({
     </section>
   ) : null;
 
+  // The warm paper wrapper moved to the /account layout (Desktop Phase 2) — the one owner
+  // of the ground for the whole settings space; this component renders content only.
   return (
-    <div className={warm.warmTab}>
-      <div className={styles.page}>
+    <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Notification settings</h1>
+        {/* h2, not h1: the desktop settings shell's "Account" h1 carries the screen; the
+            sibling section panes (Appearance / Get the app / Help) are h2 as well. */}
+        <h2 className={styles.title}>Notification settings</h2>
         <p className={styles.subtitle}>
           Signed in as {userEmail}
           {cards.length > 0 && ' — one card per workspace you belong to.'}
@@ -372,7 +374,6 @@ export default function AccountNotificationsClient({
           </div>
         </>
       )}
-      </div>
     </div>
   );
 }

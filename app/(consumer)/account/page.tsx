@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { User, Bell, LifeBuoy, ChevronRight, HelpCircle } from 'lucide-react';
-import { createClient } from '@/lib/supabase-server';
+import { getAuthUserCached } from '@/lib/supabase-server';
 import { getUserAccessContextsCached, hasCoachAccess } from '@/lib/user-contexts';
 import AccountSignOutButton from '@/components/consumer/AccountSignOutButton';
 import AppearanceCard from '@/components/consumer/AppearanceCard';
 import AccountFeedbackRow from '@/components/consumer/AccountFeedbackRow';
-import warm from '@/components/consumer/warmTheme.module.css';
 import AccountInstallRow from './AccountInstallRow';
 import AccountGetAppCard from './AccountGetAppCard';
+import { SUPPORT_MAILTO } from './support';
 import styles from './account.module.css';
 
 // Reflects sign-in state — dynamic and not for indexing.
@@ -19,14 +19,8 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-// Consumer support has no dedicated help page (all Help lives in the admin/coach portals),
-// so the row opens a pre-addressed email — the right home for installed-app users who never
-// see the marketing site. Owner call 2026-07-20.
-const SUPPORT_MAILTO = 'mailto:hello@fieldlogichq.ca?subject=FieldLogicHQ%20support';
-
 export default async function AccountPage() {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUserCached();
   const email = user?.email ?? null;
   const signedIn = !!email;
 
@@ -40,23 +34,32 @@ export default async function AccountPage() {
     isCoach = hasCoachAccess(contexts);
   }
 
+  // Identity block — the one thing this screen exists to show, given real weight. Rendered
+  // in BOTH presentations below (mobile stack + desktop Profile pane), so it's built once:
+  // a future change (a role badge, say) can't silently diverge between the two.
+  const identityBlock = (
+    <div className={styles.identity}>
+      <span className={styles.avatar} aria-hidden>
+        {signedIn ? email!.charAt(0).toUpperCase() : <User size={22} />}
+      </span>
+      <span className={styles.identityMeta}>
+        <span className={styles.identityLabel}>{signedIn ? 'Signed in' : 'Not signed in'}</span>
+        <span className={`${styles.identityValue}${signedIn ? '' : ` ${styles.dim}`}`}>
+          {signedIn ? email : 'Sign in to keep your teams, workspaces, and alerts on every device'}
+        </span>
+      </span>
+    </div>
+  );
+
+  // Two presentations, one route (Desktop Phase 2). The stacked page below is the phone/
+  // tablet experience, byte-identical to what always shipped; the Profile pane renders only
+  // inside the desktop settings shell (≥1024px, provided by ../account/layout.tsx — which
+  // also owns the warm paper wrapper this file used to carry).
   return (
-    <div className={`${warm.warmTab} ${styles.accountFill}`}>
+    <>
       <div className={styles.page}>
         <h1 className={styles.title}>Account</h1>
-
-        {/* Identity block — the one thing this screen exists to show, given real weight. */}
-        <div className={styles.identity}>
-          <span className={styles.avatar} aria-hidden>
-            {signedIn ? email!.charAt(0).toUpperCase() : <User size={22} />}
-          </span>
-          <span className={styles.identityMeta}>
-            <span className={styles.identityLabel}>{signedIn ? 'Signed in' : 'Not signed in'}</span>
-            <span className={`${styles.identityValue}${signedIn ? '' : ` ${styles.dim}`}`}>
-              {signedIn ? email : 'Sign in to keep your teams, workspaces, and alerts on every device'}
-            </span>
-          </span>
-        </div>
+        {identityBlock}
 
         <AppearanceCard signedIn={signedIn} />
 
@@ -127,9 +130,30 @@ export default async function AccountPage() {
             most needs to know the phone app exists. It also keeps the footer's suppression rule
             honest — the footer yields its own QR on this route because this card always owns it
             here, which is only true if the card doesn't depend on being signed in. Self-gates to
-            desktop (the complement of the install row above), so the two are never both shown. */}
+            desktop (the complement of the install row above), so the two are never both shown.
+            Desktop-shell note: ≥1024px this whole stack is hidden — the Profile pane below
+            mounts the same card so the route's exactly-one-QR guarantee holds there too. */}
         <AccountGetAppCard />
       </div>
-    </div>
+
+      {/* Desktop Profile pane (≥1024px only): identity + the one session action, button-sized.
+          Appearance / Get the app / Help & the coach rows live on their own rail sections. */}
+      <div className={styles.profilePane}>
+        {identityBlock}
+        {signedIn ? (
+          <AccountSignOutButton inline />
+        ) : (
+          <div className={styles.profileCtas}>
+            <Link href="/auth/login" className={styles.ctaPrimary}>Sign in</Link>
+            <Link href="/auth/signup?account=1&next=/discover" className={styles.ctaGhost}>Create free account</Link>
+          </div>
+        )}
+        {/* The QR keeps its pre-Phase-2 guarantee — visible exactly ONCE on /account at
+            desktop widths (/review 2026-07-31): the footer yields its copy here by exact
+            pathname, and the stacked page's card is display:none ≥1024, so without this
+            mount a desktop visitor saw NO QR at all. Same self-gating unit as the stack. */}
+        <AccountGetAppCard />
+      </div>
+    </>
   );
 }
