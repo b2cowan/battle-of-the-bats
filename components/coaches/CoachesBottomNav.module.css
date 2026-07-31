@@ -4,6 +4,13 @@
   /* Scoped dropdown-surface color (bespoke near-black, not a semantic token) — declared
      unconditionally here so it cascades to .dropdown regardless of the media query. */
   --nav-dropdown-bg: #0d111a; /* token-exempt: bespoke near-black dropdown, no global match */
+  /* The SAME surface at zero alpha, for the scroll-shadow gradients on .dropdown. Fading to
+     the `transparent` KEYWORD interpolates through transparent-BLACK, which hazes grey over a
+     light surface — so each theme states its own zero-alpha twin instead. ⚠ Keep this in step
+     with --nav-dropdown-bg above (and with the warm remap below) whenever either changes. */
+  --nav-dropdown-bg-t: rgba(13, 17, 26, 0); /* token-exempt: zero-alpha twin of the above */
+  --nav-scroll-shadow: rgba(0, 0, 0, 0.55);
+  --nav-scrollbar-thumb: rgba(255, 255, 255, 0.28);
 }
 
 @media (max-width: 900px) {
@@ -101,7 +108,6 @@
     bottom: calc(100% + 0.75rem);
     right: 0;
     min-width: 210px;
-    background: var(--nav-dropdown-bg);
     border: 1px solid rgba(79, 163, 224, 0.25);
     border-radius: 16px;
     box-shadow: 0 -8px 32px rgba(0,0,0,0.65), 0 0 24px rgba(79,163,224,0.1);
@@ -112,7 +118,40 @@
     max-height: min(70vh, calc(100dvh - 5.5rem - env(safe-area-inset-bottom, 0px)));
     overflow-y: auto;
     overscroll-behavior: contain;
+    /* ── Scroll affordance ──────────────────────────────────────────────────────────────
+       The cap above does its job — measured in the live portal, the panel never draws off
+       the top of the screen at any size. But it leaves the list routinely TALLER than the
+       panel (14 rows + 5 headers ≈ 854px inside a ~538px box on a 768px-tall phone, so
+       ~318px is out of view), and nothing said so: an overlay scrollbar stays invisible
+       until a gesture is already underway, so a menu nudged even slightly reads as one
+       whose top items have been lost. That is the bug this pair of declarations answers —
+       the reported "goes above the screen with no scrolling" was this menu scrolled to its
+       bottom, the missing rows being exactly Squad + Attendance/Lineups/Development/Tryouts.
+
+       Two signals, no JS:
+        1. a permanently visible hairline track;
+        2. self-hiding fades at whichever end still has content — the two `local` covers ride
+           WITH the content and mask each shadow once that end is reached, so the ABSENCE of
+           a top fade is itself the cue that you are at the start of the list. Layer order is
+           load-bearing: covers first, shadows behind them, solid surface last. */
+    scrollbar-width: thin;
+    scrollbar-color: var(--nav-scrollbar-thumb) transparent;
+    background:
+      linear-gradient(var(--nav-dropdown-bg) 40%, var(--nav-dropdown-bg-t)) top / 100% 30px no-repeat local,
+      linear-gradient(var(--nav-dropdown-bg-t), var(--nav-dropdown-bg) 60%) bottom / 100% 30px no-repeat local,
+      radial-gradient(farthest-side at 50% 0, var(--nav-scroll-shadow), var(--nav-dropdown-bg-t)) top / 100% 15px no-repeat scroll,
+      radial-gradient(farthest-side at 50% 100%, var(--nav-scroll-shadow), var(--nav-dropdown-bg-t)) bottom / 100% 15px no-repeat scroll,
+      var(--nav-dropdown-bg);
     animation: slideUpMenu 0.18s ease;
+  }
+
+  /* Safari < 18.2 and Chrome < 121 ignore scrollbar-width/-color; same hairline for them.
+     Where BOTH are understood the standard properties above win, so this can't double up. */
+  .dropdown::-webkit-scrollbar { width: 6px; }
+  .dropdown::-webkit-scrollbar-track { background: transparent; }
+  .dropdown::-webkit-scrollbar-thumb {
+    background: var(--nav-scrollbar-thumb);
+    border-radius: 999px;
   }
 
   /* ── Dropdown section labels ──────────────────────── */
@@ -181,12 +220,21 @@
     background: rgba(var(--home-paper-rgb), 0.92);
     border-top-color: var(--home-line);
     --nav-dropdown-bg: var(--home-card);
+    /* Zero-alpha twin of --home-card (#FFFFFF) — see the note beside the dark pair above. */
+    --nav-dropdown-bg-t: rgba(255, 255, 255, 0);
+    --nav-scroll-shadow: rgba(var(--home-line-rgb), 0.45);
+    --nav-scrollbar-thumb: rgba(var(--home-line-rgb), 0.55);
   }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab { color: var(--home-dim); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab.active .iconWrap { background: var(--home-olive-soft); }
+  /* A WHITE panel on a CREAM page separated by a hairline barely reads as a panel at all —
+     the list appears to sit directly on the screen and run off the top of it, which is a good
+     part of why a scrolled menu was reported as a clipped one. A deeper drop shadow plus a
+     firm 1px ring give the menu an edge you can actually see. Dark already separates cleanly
+     against its near-black page, so its shadow above is deliberately left alone. */
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropdown {
     border-color: var(--home-line);
-    box-shadow: 0 -8px 32px rgba(var(--home-line-rgb), 0.14), 0 0 24px rgba(var(--home-olive-rgb), 0.06);
+    box-shadow: 0 -8px 32px rgba(var(--home-line-rgb), 0.24), 0 0 0 1px rgba(var(--home-line-rgb), 0.5);
   }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropSectionLabel { color: var(--home-dim); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem { color: var(--home-ink-soft); }
