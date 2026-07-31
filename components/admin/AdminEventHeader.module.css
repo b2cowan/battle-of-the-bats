@@ -7,7 +7,9 @@
  */
 .header {
   position: sticky;
-  top: 0;
+  /* Stage C: stick just below the fixed AdminTopStrip (0 on mobile/focused shells, where
+     no strip renders — today's exact behavior). */
+  top: var(--admin-topstrip-h, 0px);
   z-index: 40;
   /* env() is 0 on desktop, so this clears the notch on mobile and is a plain top pad on desktop. */
   padding: calc(0.7rem + env(safe-area-inset-top)) max(0.9rem, env(safe-area-inset-right)) 0.7rem max(0.9rem, env(safe-area-inset-left));

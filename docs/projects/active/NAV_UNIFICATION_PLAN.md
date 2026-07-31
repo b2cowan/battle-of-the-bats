@@ -3,7 +3,32 @@
 **Date:** 2026-07-31 · **Status:** APPROVED — mockups rev 2 owner-approved 2026-07-31 ("looks good,
 go ahead"); grammar ratified; Stages A–E cleared to build. D1 still open; D2 signalled-yes, pending
 explicit ratification before Stage H.
-**Build status:** ✅ **Stages A + B + D BUILT on dev 2026-07-31, uncommitted — owner QA pending.**
+**Build status:** ✅ **Stages A + B + D COMMITTED dev `453c3df0` 2026-07-31** (owner QA passed;
+/simplify + /review funnel complete — see below). ✅ **Stage C BUILT on dev 2026-07-31, uncommitted
+— owner QA pending:** new `AdminTopStrip` (fixed 44px, desktop >900px only, z-60) mounted by
+AdminChrome on all non-focused admin surfaces — wordmark→Home + bell (hoisted count, moved from the
+sidebar) + account + WorkspacesPill (2+ places). **NO chat door (owner ruling 2026-07-31,
+generalized from the coach strip): chat is a section of the work, not an exit — a /chat door
+duplicated the shell's own Chat and ejected the operator into consumer chrome.** Sidebar opens with the org name (pure place chrome; lockup styles
+retired); footer "All Workspaces" retired into the popover; orphaned `/api/me/workspaces` +
+`use-has-multiple-workspaces` DELETED. Geometry via `--admin-topstrip-h` on `.adminShell` (44px;
+0 on mobile + focused shells): sidebar top/height, event-header sticky top, and the three
+`--admin-header-h` sticky-toolbar consumers now stack both offsets. Preview/onboarding/help shells
+unchanged. Gate green; typecheck clean.
+✅ **Stage H.1 BUILT on dev 2026-07-31, uncommitted — D2 ratified same day** (owner: admin hubs are
+one product surface; branding applies). New `CoachTopStrip` (+css) mounted by the premium coach
+layout inside the warm marker: wordmark→Home · account · WorkspacesPill (warm popover skin w/ new
+dark fallbacks). **The chat door was REMOVED post-build (owner ruling 2026-07-31, another session):
+the portal's own Chat is per-USER ("Your chats") — the strip's door was a duplicate that ejected
+the coach into consumer chrome. Strips carry only genuine leave-this-place doors.**
+Skin = portal tokens (`--card-bg`/`--home-line`/`--white`/`--logic-lime`), so it flips warm/dark
+with the account theme like the sidebar; z-80 (above save bar 40 + dropdowns 60, below modals 200).
+Shell pads down by `--coach-topstrip-h` (44px; 0 ≤900px). **Mockup-faithful deviations from admin:
+NO bell in the strip** (stays in the sidebar header — portal-scoped notifications; mockup shows
+none) and **no sidebar edits at all** (CoachesSidebar/BottomNav are mid-edit by a concurrent
+session; the portal's "COACHES PORTAL + org name" header already reads as pure place chrome).
+Mobile portal untouched (still no Home/Account doors — the Stage H mobile pass stays gated on the
+More-sheet overflow check). Gate green; typecheck clean.
 D (pulled forward at owner QA — "shouldn't this be all workspaces?"): role-summary now ships the
 full places list (same resolver as Home's cards); new shared `WorkspacesPill` (ENTER chooser — no ⇄
 glyph, host-styled trigger, HUD + warm popover skins) renders on all three pill sites (consumer/coach
@@ -172,13 +197,28 @@ design it, don't rush it. This is the only genuinely new engineering in the plan
 ### Stage G — grammar polish (NEW in this pass, 2026-07-31) — `/design` GATE
 1. **Shared frame geometry tokens**: strip height, pill silhouette/radius, nav type scale — so
    crossing surfaces holds the layout still while the skin changes. Tokens only; zero color
-   unification (brand precedence is ratified).
+   unification (brand precedence is ratified). **Scope additions from the C+H.1 /simplify pass:**
+   the 30px icon-door primitive (now three variants: consumer circle+ring, admin/coach
+   squircle+fill ×2) and whether the two per-shell strip-height vars unify into one
+   `--operator-strip-h`; also the coach shell's missing dark-mode `--home-*` injection point
+   (the consumer side's proven single-injection pattern — currently patched by fallbacks in the
+   Workspaces popover only).
 2. **One pill vocabulary**: ⇄ = SIDE, plain = ENTER, applied to all pill labels (consumer "Admin
    Area" pill stays plain; tournament "⇄ Admin" and admin "⇄ Public site" keep the glyph).
 3. **Consistent door order** across strips: chat before account, role pill outermost, on every
    surface that shows them.
 
 ### Stage H — coach portal doors (absorbs: Nav Model Stages 5–6) — OWNER + `/design` GATES
+
+> **⚠ AMENDED 2026-07-31 (owner ruling, logged in `memory/design_decisions.md` — that entry, not the
+> mockup, is now the authority on this element): the coach strip carries NO chat door.** It was
+> justified as "your own conversations" vs the portal's "team chat", but the portal's Chat is
+> **per-user, not per-team** — same membership, same staff + tournament rooms, headed "Your chats".
+> Two doors, one room set. The strip's lost because it **ejected the coach into consumer chrome** —
+> the trip that already needed a "Back to your Coaches Portal" rescue link at A3 QA.
+> **Binding rule for the strip on any shell: only genuine leave-this-place doors (wordmark ·
+> account · workspaces). A section of the work is not an exit**, however app-wide its content is.
+> Do not re-add the icon from the earlier mockup.
 1. **Premium coach exit — UPGRADED (owner direction 2026-07-31): the operator strip in the portal's
    warm skin** (Stage C's anatomy: wordmark→Home · chat · account · workspaces pill), replacing the
    earlier plain-text-"Home"-link idea. **Owner gate first (D2, §7):** the strip carries the
@@ -218,9 +258,10 @@ stage here; any PR that can't go green on them does not ship.
   link + breadcrumb + sections). Full parity (the app bar/bottom bar on org pages too) closes the
   house-league fan gap completely but wraps a paying org's branded page in platform chrome — a
   packaging call to make in the open. Not blocked on: Stages A–E ship either way.
-- **D2 — Premium coach portal joins the operator strip (reverses the no-wordmark ruling).** Upgraded
-  from the plain-text-link question per owner direction 2026-07-31 ("there seems to be room in the
-  coaches portal for this thin top nav"). One explicit yes ratifies the reversal; unlocks Stage H.1.
+- **D2 — ✅ RATIFIED 2026-07-31 (owner):** *"the fieldlogichq branding applies to coaches portal just
+  like tournament admin, those surfaces from a product perspective are the same, admin hubs."* The
+  no-wordmark ruling is reversed (logged in memory/design_decisions.md); the two-FAMILY chrome split
+  itself stands. Stage H.1 built the same day.
 - **D3 — ✅ DECIDED 2026-07-31 (owner, logged in BUSINESS_DECISIONS.md):** org-level branding stays a
   **League/Club benefit** — Tournament + Tournament Plus do NOT get it; the platform-preset org page
   is correct-by-design on those tiers, which makes Stage B.2's conditional link rule MORE important,

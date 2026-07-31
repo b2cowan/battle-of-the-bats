@@ -40,8 +40,9 @@
 /* ─── Bulk Action Bar ─────────────────────────────────────────────────────── */
 .bulkBar {
   position: sticky;
-  /* Stick BELOW the shared AdminEventHeader (falls back to 1rem when there's no header). */
-  top: var(--admin-header-h, 1rem);
+  /* Stick BELOW the shared AdminEventHeader (falls back to 1rem when there's no header).
+     The header itself now sticks below the Stage C top strip, so both offsets stack. */
+  top: calc(var(--admin-header-h, 1rem) + var(--admin-topstrip-h, 0px));
   z-index: 100;
   background: rgba(var(--blueprint-blue-rgb), 0.18);
   border-radius: 2px;

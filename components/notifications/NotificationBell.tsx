@@ -17,9 +17,13 @@ interface Props {
    *  shell, public) to keep the count self-contained. */
   count?: number;
   onCountChange?: Dispatch<SetStateAction<number>>;
+  /** Anchor for the (portaled, fixed) panel — must match where this bell is mounted:
+   *  default 'sidebar' (the classic left-rail anchor); 'topStrip' when the bell lives in
+   *  the Stage C operator top strip (drops from the top-right corner instead). */
+  panelPlacement?: 'sidebar' | 'topStrip';
 }
 
-export default function NotificationBell({ orgId, settingsHref, seeAllHref, count, onCountChange }: Props) {
+export default function NotificationBell({ orgId, settingsHref, seeAllHref, count, onCountChange, panelPlacement }: Props) {
   // Skip the internal fetch+Realtime when an ancestor provides the count (avoids a duplicate subscription).
   const internal = useNotificationUnread(count === undefined ? orgId : null);
   const unreadCount = count ?? internal.count;
@@ -67,6 +71,7 @@ export default function NotificationBell({ orgId, settingsHref, seeAllHref, coun
           onUnreadChange={setUnreadCount}
           settingsHref={settingsHref}
           seeAllHref={seeAllHref}
+          placement={panelPlacement}
         />
       )}
     </div>

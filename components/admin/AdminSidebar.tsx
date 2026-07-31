@@ -1,17 +1,16 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect, type Dispatch, type SetStateAction } from 'react';
+import { useState, useEffect } from 'react';
 import {
   LogOut, Home, Trophy,
   ChevronRight, CreditCard, Settings,
   Users2, ArrowLeft, Globe, DollarSign,
   CalendarDays, ClipboardList, FileText, UserCheck, ExternalLink, HelpCircle,
-  Link2, Plus, MapPin, Mail, Archive, Users, Calendar, LayoutGrid,
+  Link2, Plus, MapPin, Mail, Archive, Users, Calendar,
 } from 'lucide-react';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
-import NotificationBell from '@/components/notifications/NotificationBell';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import { signOut } from '@/lib/auth';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -19,8 +18,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
-import { useHasMultipleWorkspaces } from '@/lib/use-has-multiple-workspaces';
-import { getBillingHref, isTournamentTier, getNotificationSettingsHref } from '@/lib/billing-urls';
+import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import { isWithinEventDates } from '@/lib/tournament-phase';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
@@ -41,11 +39,11 @@ function isHouseLeagueSeasonOption(value: unknown): value is HouseLeagueSeasonOp
   return typeof season.id === 'string' && typeof season.name === 'string';
 }
 
-export default function AdminSidebar({ notifCount, onNotifCountChange }: {
-  /** Hoisted unread count from the admin shell (so the bell shares one fetch+channel with the mobile
-   *  badge). Absent when the sidebar is reused outside the admin shell — the bell self-serves then. */
-  notifCount?: number;
-  onNotifCountChange?: Dispatch<SetStateAction<number>>;
+export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
+  /** Hoisted from AdminChrome (one fetch + Realtime channel shared with the top strip's
+   *  chat door — same contract as the notification count). Absent when the sidebar is
+   *  mounted outside the admin shell — it self-serves then, tournament routes only. */
+  chatUnread?: number;
 } = {}) {
   const pathname = usePathname();
   const router   = useRouter();
@@ -65,8 +63,10 @@ export default function AdminSidebar({ notifCount, onNotifCountChange }: {
   const isHouseLeague  = pathname.startsWith(`${base}/house-league`);
   const isRepTeams     = pathname.startsWith(`${base}/rep-teams`);
   const isTournaments  = pathname.startsWith(`${base}/tournaments`);
-  // Chat unread — only poll while the tournament nav is on screen (Chat lives there).
-  const chatUnread = useChatUnread(isTournaments);
+  // Chat unread — hoisted count when the shell provides one; otherwise self-serve, and
+  // only poll while the tournament nav is on screen (Chat lives there).
+  const ownChatUnread = useChatUnread(chatUnreadProp === undefined && isTournaments);
+  const chatUnread = chatUnreadProp ?? ownChatUnread;
 
   const seasonMatch     = pathname.match(/\/house-league\/seasons\/([^/]+)/);
   const repTeamMatch    = pathname.match(/\/rep-teams\/teams\/([^/]+)\/program-years\/([^/]+)/);
@@ -129,9 +129,6 @@ export default function AdminSidebar({ notifCount, onNotifCountChange }: {
   // coachDoorFor centralizes the show/href rule (shared with the mobile nav).
   const coachAccess = useCurrentOrgCoachAccess(currentOrgSlug, !isCanceled);
   const coachDoor = coachDoorFor(coachAccess, currentOrgSlug);
-  // "Single-org by default" (2026-06-19): only surface the workspace switcher when the user
-  // actually has more than one workspace; single-org admins never see it.
-  const hasMultipleWorkspaces = useHasMultipleWorkspaces();
 
   const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
   // Org venue library is a League/Club-band feature (League Plus, Club, Club · Association) —
@@ -248,32 +245,11 @@ export default function AdminSidebar({ notifCount, onNotifCountChange }: {
   return (
     <>
     <aside className={styles.sidebar}>
-      {/* Logo — a real door since Nav Unification Stage B.1 (was a dead div): the wordmark
-          exits to Home on every surface (grammar Zone 1), identical pixels. */}
+      {/* Org identity — pure place chrome since Stage C (Nav Unification): the FieldLogicHQ
+          wordmark + notification bell moved UP into the AdminTopStrip, so platform identity
+          lives exactly once and the sidebar opens with WHOSE place this is (grammar Zone 2). */}
       <div className={styles.logo}>
-        <div className={styles.logoTopRow}>
-          <Link href="/discover" className={styles.logoLockup} aria-label="FieldLogicHQ Home">
-            {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG logo */}
-            <img className={styles.brandLogo} src="/favicon.svg" alt="" width={30} height={30} aria-hidden />
-            <div className={styles.logoMain}>
-              <span className={styles.logoField}>Field</span>
-              <span className={styles.logoLogic}>Logic</span>
-              <span className={styles.logoHq}>HQ</span>
-            </div>
-          </Link>
-          {currentOrg?.id && (
-            <div className="flex items-center gap-1 ml-auto self-start shrink-0">
-              <NotificationBell
-                orgId={currentOrg.id}
-                settingsHref={getNotificationSettingsHref(currentOrg.slug)}
-                seeAllHref={`/${currentOrg.slug}/admin/notifications`}
-                count={notifCount}
-                onCountChange={onNotifCountChange}
-              />
-            </div>
-          )}
-        </div>
-        <div className={styles.logoSub}>{currentOrg?.name ?? 'Admin'}</div>
+        <div className={styles.orgLabel}>{currentOrg?.name ?? 'Admin'}</div>
       </div>
 
       <div className={styles.sidebarScroll}>
@@ -610,11 +586,8 @@ export default function AdminSidebar({ notifCount, onNotifCountChange }: {
               <Users2 size={15} /> Coaches Portal
             </Link>
           )}
-          {hasMultipleWorkspaces && (
-            <Link href="/discover" className={styles.footerLink} id="admin-all-workspaces">
-              <LayoutGrid size={15} /> All Workspaces
-            </Link>
-          )}
+          {/* "All Workspaces" retired here (Stage C): the top strip's Workspaces popover is
+              the one multi-place chooser, fed by the shared places resolver. */}
           <Link
             href={helpHref}
             className={styles.footerLink}

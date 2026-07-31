@@ -1,8 +1,10 @@
 .sidebar {
   width: 240px;
-  height: 100vh;
+  /* Stage C: sit below the fixed AdminTopStrip (var defined on .adminShell; 0 on mobile
+     and focused shells, so those keep today's exact geometry). */
+  height: calc(100vh - var(--admin-topstrip-h, 0px));
   position: sticky;
-  top: 0;
+  top: var(--admin-topstrip-h, 0px);
   background: var(--pitch-black);
   border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
   display: flex;
@@ -143,56 +145,16 @@
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
 }
 
-.logoTopRow {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-/* Brand lockup: the lime "FL" mark + the FieldLogicHQ wordmark. The mark is the
-   same device as the coach portal's brandMark (cross-shell brand continuity);
-   admin dialect uses 2px corners to match the cockpit's sharp radius system. */
-.logoLockup {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  min-width: 0;
-  /* Stage B.1: the lockup is now a Link to Home — keep it pixel-identical to the old div
-     (wordmark spans carry their own colors; no underline, no anchor tint). */
-  color: inherit;
-  text-decoration: none;
-}
-
-.brandLogo {
-  flex-shrink: 0;
-  display: block;
-  width: 30px;
-  height: 30px;
-}
-
-.logoIcon {
-  display: none;
-}
-
-.logoMain {
+/* Stage C: the FieldLogicHQ lockup + bell moved up into AdminTopStrip (its own module owns
+   those styles now) — the sidebar opens with the org's own name, pure place chrome. */
+.orgLabel {
   font-family: var(--font-data);
-  font-size: 1rem;
-  font-weight: 900;
-  letter-spacing: 0;
-  line-height: 1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--fl-text);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-}
-
-.logoField { color: var(--fl-text); }
-.logoLogic { color: var(--logic-lime); }
-.logoHq    { color: var(--data-gray); opacity: 0.5; }
-
-.logoSub {
-  font-family: var(--font-data);
-  font-size: 0.625rem;
-  color: var(--data-gray);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  word-break: break-word;
 }
 
 /* Nav Sections */

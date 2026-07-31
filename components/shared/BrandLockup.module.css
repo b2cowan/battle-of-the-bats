@@ -1,0 +1,29 @@
+/**
+ * BrandLockup — geometry + typography only (identical in every shell, by ruling).
+ * Wordmark colors come from the host via the three span classNames.
+ */
+
+.lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.brandLogo {
+  flex-shrink: 0;
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+
+.logoMain {
+  font-family: var(--font-data);
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
+  text-transform: uppercase;
+}

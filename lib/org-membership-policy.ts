@@ -58,6 +58,7 @@ export async function userBelongsToOtherRealOrg(userId: string, excludeOrgId?: s
 
 // getActiveOrgWorkspaceCount was removed here (Nav Unification Stage A): its raw
 // organization_members count fed the "All Workspaces" gate but missed coach/official-shaped
-// places. /api/me/workspaces now derives its count from the shared context resolver
-// (lib/user-contexts filterWorkspaceContexts) — the same list Home's Workspaces render —
-// so the two can never disagree. Do not reintroduce a parallel count.
+// places. Stage C then deleted /api/me/workspaces entirely — chrome reads the places list
+// client-side via useRoleSummary, derived from the shared context resolver
+// (lib/user-contexts filterWorkspaceContexts), the same list Home's Workspaces render.
+// Do not reintroduce a parallel count.

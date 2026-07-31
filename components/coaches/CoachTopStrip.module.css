@@ -1,0 +1,91 @@
+/**
+ * CoachTopStrip — Stage H.1 operator frame strip, premium-portal skin. Fixed above the
+ * shell (.coachesShell pads down by --coach-topstrip-h, defined in coaches.module.css).
+ * Every color is a portal token, so the strip flips warm/dark with the account theme
+ * exactly like the sidebar: --card-bg / --home-line / --white / --logic-lime all remap
+ * under html[data-user-theme="warm"] [data-coach-warm-enabled] (the layout's marker
+ * wraps this strip too). z-index 80: above the docked save bar (40) and the desktop
+ * dropdowns (60), below modal overlays (200+). Desktop only — hidden with the sidebar
+ * at ≤900px, where the bottom nav + More sheet own the chrome.
+ */
+
+.strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* The ONE height definition is --coach-topstrip-h on .coachesShell (the strip mounts
+     inside the shell so the var reaches it); the fallback only guards an out-of-shell
+     mount that shouldn't exist. */
+  height: var(--coach-topstrip-h, 44px);
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0 1rem 0 1.25rem;
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.07));
+}
+
+/* Zone 1 — wordmark colors only; the lockup's geometry/markup is the shared BrandLockup.
+   --white re-anchors to ink under the warm marker; --logic-lime remaps to olive. */
+.logoField { color: var(--white); }
+.logoLogic { color: var(--logic-lime); }
+.logoHq { color: var(--home-dim, var(--data-gray)); }
+
+/* Zone 3 — the person's own doors, same corner as every other surface. */
+.doors {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.iconDoor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--home-dim, var(--data-gray));
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.iconDoor:hover {
+  color: var(--white);
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.06));
+}
+
+/* ChatUnreadBadge inside the fixed 30px door: overlay it on the corner (the badge's own
+   layout is an inline end-of-nav-row pill and can't fit beside the icon — mirrors
+   ConsumerNav's .stripBadge corner treatment). Positioning only; no properties the
+   badge's own module also sets, so cross-module order can't matter. */
+/* (.doorBadge retired with the chat door — owner ruling 2026-07-31. The only door that carried
+   an unread count has gone; Account and the Workspaces pill never had one.) */
+
+/* The Workspaces trigger — accent pill; color-mix follows the remapped accent so the
+   border reads lime on dark, olive on warm, with no literal colors. */
+.pill {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  border: 1px solid color-mix(in srgb, var(--logic-lime) 45%, transparent);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  transition: border-color 0.15s ease;
+}
+
+.pill:hover {
+  border-color: var(--logic-lime);
+}
+
+@media (max-width: 900px) {
+  .strip {
+    display: none;
+  }
+}

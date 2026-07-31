@@ -5,6 +5,7 @@ import { useOrg } from '@/lib/org-context';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminBottomNav from '@/components/admin/AdminBottomNav';
 import AdminEventHeader from '@/components/admin/AdminEventHeader';
+import AdminTopStrip from '@/components/admin/AdminTopStrip';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { CancellationGuard } from '@/components/admin/CancellationGuard';
 import { getBillingHref } from '@/lib/billing-urls';
@@ -32,11 +33,15 @@ export default function AdminChrome({
   const isFocusedAdmin = isOnboarding || isHelp;
   const isFocused = isFocusedAdmin || isTournamentPreview;
 
-  // Own the unread notification count ONCE for the whole admin shell — the desktop sidebar bell and
-  // the mobile More-tab badge both read it, so a single fetch + Realtime channel serves both (both are
-  // always mounted; CSS just hides one per breakpoint). Skip it on focused shells that render no
-  // consumer, so we never hold a Realtime channel open with nothing reading it.
+  // Own the unread notification count ONCE for the whole admin shell — the desktop top-strip bell
+  // (Stage C: moved up from the sidebar) and the mobile More-tab badge both read it, so a single
+  // fetch + Realtime channel serves both (both are always mounted; CSS just hides one per
+  // breakpoint). Skip it on focused shells that render no consumer, so we never hold a Realtime
+  // channel open with nothing reading it.
   const notif = useNotificationUnread(!isFocused ? currentOrg?.id : null);
+  // Chat unread is NOT hoisted here: the strip's chat door was removed (owner ruling
+  // 2026-07-31 — chat is a section of the work, not an exit), so the sidebar's tournament
+  // Chat badge is the only consumer again and self-serves, gated to tournament routes.
 
   // Cancelled-account redirect guard.
   // useOrg() provides the subscription status synchronously (from initialOrg set in the layout),
@@ -61,7 +66,18 @@ export default function AdminChrome({
       <AdminTitleManager />
       <FeedbackRequestIdProvider />
       <div className={shellClassName}>
-        {!isFocused && <AdminSidebar notifCount={notif.count} onNotifCountChange={notif.setCount} />}
+        {/* Stage C — the operator frame strip: desktop-only fixed top bar (wordmark → Home,
+            bell · chat · account · Workspaces). Mounted INSIDE the shell so the strip can
+            read the shell's own --admin-topstrip-h (custom properties don't reach siblings);
+            position:fixed keeps it out of the flex flow regardless. The shell + sidebar +
+            event header all offset by the same var (admin.module.css). */}
+        {!isFocused && (
+          <AdminTopStrip
+            notifCount={notif.count}
+            onNotifCountChange={notif.setCount}
+          />
+        )}
+        {!isFocused && <AdminSidebar />}
         <main className={mainClassName}>
           {isFocused ? (
             children
@@ -78,9 +94,11 @@ export default function AdminChrome({
             </>
           )}
         </main>
+        {/* Inside the shell so the rail's top offset can read --admin-topstrip-h (custom
+            properties don't reach siblings); position:fixed keeps it out of the flex flow. */}
+        {!isFocused && <LiveLogicRail />}
       </div>
       {!isFocused && <AdminBottomNav notifUnread={notif.count} />}
-      {!isFocused && <LiveLogicRail />}
       </AdminWorklistProvider>
     </AdminDensityProvider>
   );

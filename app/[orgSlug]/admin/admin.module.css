@@ -1,10 +1,18 @@
 .adminShell {
+  /* Stage C — the operator frame strip's height. ONE definition; the fixed AdminTopStrip,
+     the sticky sidebar, the sticky AdminEventHeader, and the in-page sticky toolbars all
+     read it (NOT --admin-strip-h, which is the mobile AdminContextStrip's). Zeroed on
+     mobile and focused shells below, where no strip renders. */
+  --admin-topstrip-h: 44px;
   display: flex;
   min-height: 100vh;
+  padding-top: var(--admin-topstrip-h);
   background: var(--hud-surface);
 }
 
 .adminShellFocused {
+  /* Zeroing the var alone collapses the shell's padding-top (it reads the var). */
+  --admin-topstrip-h: 0px;
   display: block;
 }
 
@@ -51,6 +59,10 @@
 /* ── Mobile: hide sidebar, use bottom nav instead ── */
 @media (max-width: 900px) {
   .adminShell {
+    /* No top strip on mobile (bottom nav + More sheet carry its doors) — zeroing the var
+       collapses every offset that reads it (incl. the shell's own padding-top) back to
+       today's exact mobile geometry. */
+    --admin-topstrip-h: 0px;
     flex-direction: column;
     /* App-shell pattern: lock to viewport height so adminMain's overflow-y:auto
        handles all scrolling. Prevents body-scroll / overscroll into empty flex

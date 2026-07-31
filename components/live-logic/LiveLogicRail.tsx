@@ -5,8 +5,12 @@ import { cn } from '@/lib/utils';
 export function LiveLogicRail() {
   const { events, dismiss } = useLiveLogic();
 
+  // top = the original 5rem clearance + the Stage C top strip's height, so toasts keep the
+  // same distance from the event header now that all admin chrome sits 44px lower. The var
+  // resolves only when this rail is mounted inside .adminShell (AdminChrome does); the 0px
+  // fallback reproduces the old offset anywhere else.
   return (
-    <div className="fixed top-20 right-4 z-[9999] flex flex-col gap-2 w-[360px] pointer-events-none">
+    <div className="fixed top-[calc(var(--admin-topstrip-h,0px)+5rem)] right-4 z-[9999] flex flex-col gap-2 w-[360px] pointer-events-none">
       {events.map(event => (
         <div
           key={event.id}

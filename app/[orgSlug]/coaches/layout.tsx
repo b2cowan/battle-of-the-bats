@@ -12,6 +12,7 @@ import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
+import CoachTopStrip from '@/components/coaches/CoachTopStrip';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import ConfirmProvider from '@/components/coaches/ConfirmProvider';
@@ -138,6 +139,13 @@ export default async function CoachesLayout({
                   team page and the nav that needs to hide under them. */}
               <CoachesOverlayProvider>
                 <div className={styles.coachesShell}>
+                  {/* Stage H.1 (Nav Unification, D2 ratified 2026-07-31): the operator
+                      frame strip — desktop-only fixed top bar (wordmark → Home, chat ·
+                      account · Workspaces) in the portal's own warm/dark skin. Mounted
+                      INSIDE the shell so it reads the shell's --coach-topstrip-h (custom
+                      properties don't reach siblings); position:fixed keeps it out of the
+                      flex flow. The shell pads down by the same var (coaches.module.css). */}
+                  <CoachTopStrip />
                   <CoachesSidebar orgSlug={orgSlug} />
                   <main className={styles.coachesMain}>
                     {children}

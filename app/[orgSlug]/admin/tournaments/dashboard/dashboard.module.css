@@ -1321,8 +1321,9 @@
   border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
   background: rgba(var(--blueprint-blue-rgb), 0.04);
   position: sticky;
-  /* Stick BELOW the shared AdminEventHeader, not under it (which would bury Done / Reset). */
-  top: var(--admin-header-h, 0px);
+  /* Stick BELOW the shared AdminEventHeader, not under it (which would bury Done / Reset).
+     The header itself now sticks below the Stage C top strip, so both offsets stack. */
+  top: calc(var(--admin-header-h, 0px) + var(--admin-topstrip-h, 0px));
   z-index: 5;
 }
 

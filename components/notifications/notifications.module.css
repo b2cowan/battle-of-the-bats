@@ -75,11 +75,23 @@
   left: 248px;        /* same sidebar width */
 }
 
+/* Bell in the Stage C operator TOP STRIP (desktop, top-RIGHT corner): drop the panel from
+   the trigger's corner instead of the sidebar anchor above. Declared AFTER .panel in this
+   same file, so the override order is deterministic. The var fallback matters: the panel
+   is portaled to <body>, outside the shell that defines --admin-topstrip-h — 44px IS the
+   strip height whenever this variant can open at all. */
+.panelTopStrip {
+  top: calc(var(--admin-topstrip-h, 44px) + 6px);
+  left: auto;
+  right: 16px;
+}
+
 /* Mobile (≤900px): no sidebar — anchor the panel under the admin top bar as a
    near-full-width dropdown instead of off-screen to the right (left:248px). */
 @media (max-width: 900px) {
   .panel,
-  .panelCoaches {
+  .panelCoaches,
+  .panelTopStrip {
     top: calc(48px + env(safe-area-inset-top) + 0.4rem);
     left: 0.6rem;
     right: 0.6rem;

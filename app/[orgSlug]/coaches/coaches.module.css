@@ -251,8 +251,12 @@
 
 /* ── Shell ──────────────────────────────────────────────────────────────── */
 .coachesShell {
+  /* Stage H.1 (Nav Unification, D2 2026-07-31): the fixed CoachTopStrip's height — the
+     shell pads down by it on desktop; zeroed ≤900px where the strip never renders. */
+  --coach-topstrip-h: 44px;
   display: flex;
   min-height: 100vh;
+  padding-top: var(--coach-topstrip-h);
   background: var(--pitch-black);
   /* Scoped bespoke tag/money-chip palette (org-tag blue-violet vs own-tag lime-green) —
      not semantic tokens, declared once here so they cascade to every coaches page (P3). */
@@ -274,7 +278,8 @@
 }
 
 @media (max-width: 900px) {
-  .coachesShell { flex-direction: column; }
+  /* Zeroing the var alone collapses the shell's padding-top (it reads the var). */
+  .coachesShell { flex-direction: column; --coach-topstrip-h: 0px; }
   /* The coaches shell nests its own <main> inside the app layout's <main>, and BOTH were
      reserving for the 72px fixed bottom nav: the outer one via `main { padding-bottom:
      var(--bottom-nav-height) }` in globals.css (correct — that IS the nav's height), and this

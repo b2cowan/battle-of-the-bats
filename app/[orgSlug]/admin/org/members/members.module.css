@@ -438,8 +438,9 @@
   border-bottom: 1px solid var(--border, rgba(255,255,255,0.08));
   background: var(--bg-3, rgba(255,255,255,0.04));
   position: sticky;
-  /* Stick BELOW the shared AdminEventHeader, not under it. */
-  top: var(--admin-header-h, 0px);
+  /* Stick BELOW the shared AdminEventHeader, not under it. The header itself now sticks
+     below the Stage C top strip, so both offsets stack. */
+  top: calc(var(--admin-header-h, 0px) + var(--admin-topstrip-h, 0px));
   z-index: 1;
 }
 

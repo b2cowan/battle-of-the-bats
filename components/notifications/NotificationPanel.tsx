@@ -26,9 +26,13 @@ interface Props {
   settingsHref?: string;
   /** When provided, a "See all" link to the full notifications page is shown in the footer. */
   seeAllHref?: string;
+  /** Where the TRIGGER lives, which decides the fixed panel's anchor: default = the classic
+   *  sidebar-left anchor; 'topStrip' = drop from the operator top strip's right corner
+   *  (Stage C — the admin bell moved there 2026-07-31). */
+  placement?: 'sidebar' | 'topStrip';
 }
 
-export default function NotificationPanel({ orgId, onClose, onUnreadChange, panelRef, settingsHref, seeAllHref }: Props) {
+export default function NotificationPanel({ orgId, onClose, onUnreadChange, panelRef, settingsHref, seeAllHref, placement = 'sidebar' }: Props) {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [loading,       setLoading]       = useState(true);
   const [markingAll,    setMarkingAll]    = useState(false);
@@ -191,7 +195,13 @@ export default function NotificationPanel({ orgId, onClose, onUnreadChange, pane
   }
 
   const panel = (
-    <div ref={panelRef} className={styles.panel} role="dialog" aria-label="Notifications" data-notification-panel>
+    <div
+      ref={panelRef}
+      className={`${styles.panel}${placement === 'topStrip' ? ` ${styles.panelTopStrip}` : ''}`}
+      role="dialog"
+      aria-label="Notifications"
+      data-notification-panel
+    >
       <div className={styles.panelHeader}>
         <p className={styles.panelTitle}>Notifications</p>
         {unreadCount > 0 && (

@@ -1,0 +1,85 @@
+/**
+ * AdminTopStrip — Stage C operator frame strip, admin skin. Fixed above the whole shell;
+ * the sidebar, the sticky event header, and the shell's top padding all offset by
+ * --admin-topstrip-h (defined on .adminShell in admin.module.css — NOT --admin-strip-h,
+ * which belongs to the mobile AdminContextStrip). z-index 60: above the sticky
+ * AdminEventHeader (40), below sheets/menus (200+) and the mobile bottom nav (300).
+ * Desktop only — hidden with the sidebar at ≤900px, where the bottom nav + More sheet
+ * already carry these doors.
+ */
+
+.strip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* The ONE height definition is --admin-topstrip-h on .adminShell (the strip mounts
+     inside the shell so the var reaches it); the fallback only guards an out-of-shell
+     mount that shouldn't exist. */
+  height: var(--admin-topstrip-h, 44px);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0 1rem 0 1.25rem;
+  background: var(--pitch-black);
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+}
+
+/* Zone 1 — wordmark colors only; the lockup's geometry/markup is the shared BrandLockup. */
+.logoField { color: var(--fl-text); }
+.logoLogic { color: var(--logic-lime); }
+.logoHq { color: var(--data-gray); opacity: 0.5; }
+
+/* Zone 3 — the person's own doors, same corner as every other surface. */
+.doors {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.iconDoor {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  color: var(--data-gray);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.iconDoor:hover {
+  color: var(--fl-text);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* (.doorBadge retired with the chat door — owner ruling 2026-07-31, generalized from the
+   coach strip. The bell carries its own corner badge; Account and the Workspaces pill
+   never had one.) */
+
+/* The Workspaces trigger — lime pill, matching the admin accent language. */
+.pill {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  border-radius: 999px;
+  padding: 0.3rem 0.7rem;
+  transition: border-color 0.15s ease;
+}
+
+.pill:hover {
+  border-color: var(--logic-lime);
+}
+
+@media (max-width: 900px) {
+  .strip {
+    display: none;
+  }
+}
