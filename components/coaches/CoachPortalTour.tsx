@@ -70,10 +70,14 @@ const CARDS: TourCard[] = [
     key: 'communication',
     group: 'Communication',
     headline: 'Reaching families and organizers',
-    body: 'Announcements send one email to every family at once, using the guardian emails already on your roster. Chat is your direct line to a tournament organizer while an event is running.',
+    // Chunk B: this card now teaches the distinction the rename encodes — the two doors differ by
+    // AUDIENCE, MEDIUM and DIRECTION. The old copy also described Chat as the organizer line only,
+    // which stopped being true when every team gained a standing staff room; a coach reading it
+    // would not have known their own staff room existed.
+    body: 'Email families sends one email to everyone on your roster at once, using the guardian addresses already there. Chat is a conversation — your own coaching staff all season, plus the organizer and the other coaches while a tournament is running.',
     href: '/announcements',
-    linkLabel: 'Open Announcements',
-    needsAnyOf: ['Announcements', 'Chat'],
+    linkLabel: 'Open Email families',
+    needsAnyOf: ['Email families', 'Chat'],
   },
 ];
 

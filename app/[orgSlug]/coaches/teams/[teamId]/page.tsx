@@ -869,13 +869,15 @@ export default function TeamOverviewPage({
       key: 'announcements',
       label: 'Tell your families',
       detail: 'First announcement sent',
-      desc: 'Announcements email every guardian on your roster at once — the season dates, the first practice, a rain-out.',
+      desc: 'Email families reaches every guardian on your roster at once — the season dates, the first practice, a rain-out.',
       action: 'Write one',
       href: `${base}/announcements`,
       complete: milestones?.hasSentAnnouncement === true,
       group: 'optional',
       visible: assignment.capabilities.announcementsSend,
-      help: { title: 'Announcements', body: 'A one-way email to every guardian on your active roster. Different from Chat, which talks to tournament organizers and other coaches. Drafts stay private until you send.' },
+      // Chunk B: names the door as it is now labelled, and describes Chat honestly — it carries the
+      // coach's own standing staff room as well as the tournament rooms.
+      help: { title: 'Email families', body: 'A one-way email to every guardian on your active roster. Different from Chat, which is a conversation with your own coaching staff and, during a tournament, the organizer. Drafts stay private until you send.' },
       milestone: { order: 4, short: 'Families', value: milestones?.hasSentAnnouncement ? 'Sent' : '' },
     },
     {
@@ -1435,6 +1437,18 @@ export default function TeamOverviewPage({
     hasUpcomingTournament,
     caps: assignment.capabilities,
     canManageSeasons: seasonMeta.canManageSeasons,
+    // Chunk B (P1 #12) — a paying coach who never had a free team, on their first visit. Requires
+    // setupStats to have actually LOADED: on a failed fetch the counts are unknown, and welcoming an
+    // established coach is a worse error than not welcoming a new one, so unknown resolves to false.
+    //
+    // `!hintsOff` is load-bearing, not defensive. The tour flag and the hints switch are INDEPENDENT
+    // account preferences: turning hints off never sets `tourDismissed`. So a coach who explicitly
+    // switched hints off on one team and then picks up a second would have been met by an
+    // onboarding card — the precise interruption Quiet Mode exists to remove, re-introduced by the
+    // one card on the page. A welcome is a hint; it obeys the hint switch.
+    isColdStart:
+      !tourSeen && !hintsOff && !!setupStats
+      && setupStats.activeRosterCount === 0 && setupStats.eventCount === 0,
   });
 
   // ── The board ─────────────────────────────────────────────────────────────
@@ -1468,11 +1482,15 @@ export default function TeamOverviewPage({
     view_tournaments: 'View tournaments',
     close_season: 'Close out the season',
     setup_step: setupLine?.label ?? 'Get started',
+    take_tour: 'Show me around',
   };
   const ANSWER_LABEL: Record<string, string> = {
     ...ANCHOR_LABEL,
-    // D2 — the season check inherits the door it replaced, and says so plainly.
+    // D2 — a state that replaces another inherits the door it replaced, and says so plainly.
     add_event: anchor?.kind === 'season_check' ? 'Add an event instead' : 'Add an event',
+    setup_step: anchor?.kind === 'welcome'
+      ? `${setupLine?.label ?? 'Get started'} instead`
+      : (setupLine?.label ?? 'Get started'),
     not_yet: 'Not yet',
     got_it: 'Got it',
     skip_step: 'Skip this step',
@@ -1545,6 +1563,21 @@ export default function TeamOverviewPage({
           sentence and drops its button, never a disabled control. */}
       {anchor && (
         <div className={styles.oneThing} data-shape={anchor.shape} data-kind={anchor.kind}>
+          {/* Chunk B (P1 #12) — the first thing a cold-signup coach ever sees. Names the team so it
+              reads as THEIR portal, not a product tour, and lists the areas rather than selling
+              them. No colour rule needed: `.oneThing`'s base accent already applies, which is the
+              same treatment the pre-season card this replaces was using. */}
+          {anchor.kind === 'welcome' && (
+            <>
+              <p className={styles.oneKicker} data-t="work">Welcome</p>
+              <p className={styles.oneHeadline}>This is your team&apos;s portal</p>
+              <p className={styles.oneMeta}>
+                Roster, schedule, lineups, attendance and money for {assignment.teamName} — all in
+                one place. Two minutes to see what&apos;s here.
+              </p>
+            </>
+          )}
+
           {anchor.kind === 'game_day' && nextEvent && (
             <>
               <p className={styles.oneKicker} data-t="live">
@@ -1687,6 +1720,13 @@ export default function TeamOverviewPage({
           {anchor.primary && (
             anchor.primary === 'close_season' ? (
               <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={() => setRolloverOpen(true)}>
+                {ANCHOR_LABEL[anchor.primary]}
+              </button>
+            ) : anchor.primary === 'take_tour' ? (
+              // Opens the tour DRAWER in place — not a navigation. Opening deliberately does not
+              // retire the offer; only finishing or skipping does (the shipped Quiet Mode rule), so
+              // an accidental Escape doesn't cost the coach their one welcome.
+              <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={openPortalTour}>
                 {ANCHOR_LABEL[anchor.primary]}
               </button>
             ) : (

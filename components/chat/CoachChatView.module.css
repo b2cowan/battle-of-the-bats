@@ -75,6 +75,21 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--white-40);
+  /* Chunk B: carries the Chat help trigger when no conversation is open (the room list is then the
+     only header on screen). Flex so the "?" pins right without a margin on the label itself. */
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.sidebarHead > :last-child { margin-left: auto; }
+
+/* Conversation-header action cluster — the "Rooms" back control (mobile, multi-room only) and the
+   Chat help trigger. A wrapper rather than two slots so the header keeps ONE right-hand child
+   whether or not the back button is rendered. */
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 /* Mobile: full-swap — show the list OR the conversation, not both. (Scoped to mobile so these can't

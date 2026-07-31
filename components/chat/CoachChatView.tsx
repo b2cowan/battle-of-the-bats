@@ -9,6 +9,7 @@ import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import { divisionScopeLabel } from '@/lib/chat-display';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
+import HelpButton from '@/components/help/HelpButton';
 import ChatPanel from './ChatPanel';
 import styles from './CoachChatView.module.css';
 
@@ -94,6 +95,8 @@ export default function CoachChatView() {
   const isDesktop = useIsDesktop();
   const pathname = usePathname();
   const { openHelp } = useHelpDrawer();
+  // `/{orgSlug}/coaches/teams/{teamId}/chat` → the portal's own help hub.
+  const helpOrgSlug = pathname.match(/^\/([^/]+)\/coaches\//)?.[1];
 
   useEffect(() => {
     let cancelled = false;
@@ -157,9 +160,35 @@ export default function CoachChatView() {
     const selectedRoom = rooms.find((r) => r.room.id === selected) ?? null;
     const multi = rooms.length > 1;
 
+    // Chunk B (P1 #17): Chat is a nav destination, so it owes a help icon — but it is deliberately
+    // full-bleed and has no `.pageHeader` to hang one on. It goes in the header of whichever surface
+    // is actually on screen, which is exactly ONE in every state:
+    //   1 room (auto-selected) · multi + selected  → the conversation header
+    //   multi + nothing selected                   → the room-list header (no conversation is drawn)
+    // Both guides are offered together because a coach cannot tell from the nav which kind of room
+    // they are about to open, and the two behave differently (staff-room history is not shared).
+    const chatHelp = (
+      <HelpButton
+        iconOnly
+        label="Chat"
+        help={{
+          module: 'coaches',
+          sectionIds: ['recipe-tournament-chat', 'recipe-staff-room'],
+          // Derived from the route rather than a prop: this component is portal-agnostic and the
+          // page that renders it already reads its org from the same path (see `tournamentsPath`).
+          // Left undefined rather than guessed when the path doesn't match — the drawer still
+          // opens, it just loses its "Open full guide" footer link.
+          fullGuideHref: helpOrgSlug ? `/${helpOrgSlug}/coaches/help#recipe-tournament-chat` : undefined,
+        }}
+      />
+    );
+
     const roomList = (
       <div className={styles.sidebar} aria-label="Your chats">
-        <p className={styles.sidebarHead}>Your chats</p>
+        <p className={styles.sidebarHead}>
+          <span>Your chats</span>
+          {!selectedRoom && chatHelp}
+        </p>
         {rooms.map((r) => {
           const active = r.room.id === selected;
           return (
@@ -253,16 +282,19 @@ export default function CoachChatView() {
               topBanner={nudge}
               iconBefore={<MessageSquare size={14} aria-hidden />}
               headerRight={
-                multi && !isDesktop ? (
-                  <button
-                    type="button"
-                    className={styles.backBtn}
-                    onClick={() => setSelected(null)}
-                    aria-label="Back to your chats"
-                  >
-                    <ChevronLeft size={18} aria-hidden /> <span className={styles.backBtnLabel}>Rooms</span>
-                  </button>
-                ) : undefined
+                <span className={styles.headerActions}>
+                  {multi && !isDesktop && (
+                    <button
+                      type="button"
+                      className={styles.backBtn}
+                      onClick={() => setSelected(null)}
+                      aria-label="Back to your chats"
+                    >
+                      <ChevronLeft size={18} aria-hidden /> <span className={styles.backBtnLabel}>Rooms</span>
+                    </button>
+                  )}
+                  {chatHelp}
+                </span>
               }
             />
           </div>

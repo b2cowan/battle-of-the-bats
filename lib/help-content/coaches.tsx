@@ -377,8 +377,12 @@ const coachesHelp: HelpPageContent = {
       group: 'Your team tools',
       heading: 'How to message your team',
       summary: 'Email every parent with a contact email on your roster in one send.',
-      keywords: ['announcements', 'email parents', 'message team', 'send announcement', 'contact parents', 'reuse announcement', 'resend', 'confirm send'],
-      searchText: 'announcements email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium confirm before sending irreversible cannot unsend reuse resend duplicate past announcement send again recipient count updates automatically no refresh unsaved changes draft warning read full message expand',
+      // Search matches KEYWORDS, never body text — so the premium door's new name has to be listed
+      // here explicitly or a coach who reads "Email families" in their nav can never find this page.
+      // The old term stays: the FREE portal's door is still called Announcements, and premium
+      // coaches have been reading that word since launch.
+      keywords: ['announcements', 'email families', 'email parents', 'email my families', 'message team', 'send announcement', 'contact parents', 'reuse announcement', 'resend', 'confirm send', 'where is announcements', 'announcements renamed', 'announcements gone', 'cant find announcements', 'email everyone'],
+      searchText: 'announcements email families email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium confirm before sending irreversible cannot unsend reuse resend duplicate past announcement send again recipient count updates automatically no refresh unsaved changes draft warning read full message expand renamed email families premium nav door where did announcements go different from chat one way email audience families',
       content: (
         <>
           <p>Turn on <strong>Announcements</strong> from Explore to email your whole team at once.</p>
@@ -389,6 +393,7 @@ const coachesHelp: HelpPageContent = {
           </ol>
           <p>If a player has no contact email, the page warns you and won&apos;t reach them — add an email on your Roster to include them. Every send is saved to a <strong>Recent announcements</strong> log showing whether it sent fully, partly, or failed.</p>
           <p><strong>Premium Coaches Portal adds:</strong> a quick <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), a recipient count that <strong>updates on its own</strong> as you add contacts, the ability to reopen a past announcement to <strong>read it in full and reuse it</strong>, and automatic dues and event reminders.</p>
+          <p><strong>In the Premium portal this is called &ldquo;Email families&rdquo;</strong> — same screen, clearer name. It sits next to <strong>Chat</strong> in your menu and the two do different jobs: Email families is a <strong>one-way email out to parents</strong>; Chat is a <strong>conversation</strong> with your own coaching staff, and with the organizer and other coaches while a tournament is running.</p>
         </>
       ),
       faqs: [
@@ -650,7 +655,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'What Premium Coaches Portal adds',
       summary: 'The serious-operator upgrade — game-day tools, automation, budget, and documents.',
       keywords: ['coaches portal premium', 'upgrade', 'premium', 'paid coaches portal'],
-      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins start next season new season division team settings multi season year over year player profile positions best okay never ranked positions never play position preferences pitcher pitching depth chart ace pitcher rank max innings arm care innings cap this player pitches medical allergies emergency contact handedness bats throws jersey size attendance snapshot per player dues roster export pdf excel csv awards mvp best hitter hustle award season awards player awards development focus areas idp measurables 60 yard sprint test times log a measurable player development goals working on it achieved trend sparkline evaluation session testing day whole roster batch entry team board development page coverage previous seasons archive scrapbook history bring forward carry forward start fresh print summary pdf handout parent development report insights everyone getting attention history linked',
+      searchText: 'coaches portal premium upgrade paid lineup builder attendance dues automation team budget document storage carries over organization joins start next season new season division team settings lineup rules innings caps notifications notification bell where are my notifications more menu phone email families announcements renamed chat versus announcements which one emails parents multi season year over year player profile positions best okay never ranked positions never play position preferences pitcher pitching depth chart ace pitcher rank max innings arm care innings cap this player pitches medical allergies emergency contact handedness bats throws jersey size attendance snapshot per player dues roster export pdf excel csv awards mvp best hitter hustle award season awards player awards development focus areas idp measurables 60 yard sprint test times log a measurable player development goals working on it achieved trend sparkline evaluation session testing day whole roster batch entry team board development page coverage previous seasons archive scrapbook history bring forward carry forward start fresh print summary pdf handout parent development report insights everyone getting attention history linked',
       content: (
         <>
           <p><strong>Premium Coaches Portal</strong> keeps everything in your free portal and adds the tools for running a full competitive season:</p>
@@ -662,12 +667,47 @@ const coachesHelp: HelpPageContent = {
             <li>Dues automation — installment schedules, due dates, and overdue reminders — plus a season budget with expenses and fundraiser credits.</li>
             <li>Export your roster to Excel, CSV, or a print-ready PDF.</li>
             <li>Document storage for waivers and team forms (see below).</li>
-            <li>A <strong>Settings</strong> area to start your next season yourself and set your team&apos;s division (see below).</li>
+            <li>A <strong>Team settings</strong> area for your division, the season you&apos;re in, and the <strong>lineup rules</strong> game-day auto-fill follows (see below).</li>
           </ul>
           <p>If your organization later joins FieldLogicHQ, your team and its history carry over automatically.</p>
         </>
       ),
       faqs: [
+        {
+          // Chunk B (P1 #4). The premium portal gained its first-ever mobile door to notifications;
+          // before this, searching the guide for "notifications" returned only tournament-alert
+          // content, and the feed itself was unreachable on a phone.
+          id: 'faq-premium-notifications-phone',
+          question: 'Where are my notifications on my phone?',
+          answerText: 'Tap More in the bar at the bottom of your screen — Notifications is the first row, and it shows a count when something is waiting. The count also appears on the More button itself, so you can see there is something new without opening the menu. Tapping the row opens your full notification list, and Notification settings at the top of that page is where you choose what reaches you. On a computer the same thing lives in the bell at the top of the left-hand menu. Notifications are per organization, so if you coach for two clubs each has its own list. Chat messages are not in here — chat has its own unread badge on the Chat tab.',
+          keywords: ['notifications', 'notification', 'where are my notifications', 'notifications on phone', 'no bell', 'bell missing', 'cannot find notifications', 'notification settings', 'alerts', 'unread', 'badge', 'count on more', 'more menu', 'turn off notifications', 'notification bell', 'phone notifications'],
+          popular: true,
+          answer: (
+            <>
+              <p>Tap <strong>More</strong> in the bar at the bottom of your screen — <strong>Notifications</strong> is the first row, and it shows a count when something is waiting. That count also appears on the <strong>More</strong> button itself, so you can see there&rsquo;s something new without opening the menu.</p>
+              <p>Tapping the row opens your full notification list, and <strong>Notification settings</strong> at the top of that page is where you choose what reaches you. On a computer the same thing lives in the <strong>bell</strong> at the top of the left-hand menu.</p>
+              <p>Notifications are <strong>per organization</strong> — if you coach for two clubs, each has its own list. <strong>Chat messages aren&rsquo;t in here</strong>: chat has its own unread badge on the <strong>Chat</strong> tab.</p>
+            </>
+          ),
+        },
+        {
+          // Chunk B (P1 #1). The nav door was renamed; this is where a coach who knew the old word
+          // lands. Kept in the PREMIUM section deliberately — the free portal still says
+          // "Announcements", so a shared FAQ would mislead half the audience.
+          id: 'faq-premium-chat-vs-email',
+          question: 'What’s the difference between Chat and Email families?',
+          answerText: 'They reach different people in different ways. Email families (called Announcements in the free portal, and on your Explore list) sends one email out to every family on your roster, using the guardian addresses already there — it is one-way, and it is the one to use for a rain-out, a time change, or what to bring on Saturday. Chat is a conversation: your own coaching staff have a room that stays open all season, and while you are entered in a tournament you also get the organizer and the other coaches in that event. Chat never emails anyone; it notifies phones and shows an unread badge on the Chat tab. If you are trying to reach parents, it is Email families every time — parents are not in your chat rooms.',
+          keywords: ['chat vs announcements', 'chat or email families', 'difference between chat and email', 'which one emails parents', 'reach parents', 'message parents', 'email families', 'announcements', 'two options', 'communication', 'staff room', 'organizer chat', 'who gets it', 'renamed'],
+          popular: true,
+          answer: (
+            <>
+              <p>They reach <strong>different people</strong>, in <strong>different ways</strong>.</p>
+              <p><strong>Email families</strong> sends one email out to every family on your roster, using the guardian addresses already there. It&rsquo;s <strong>one-way</strong>, and it&rsquo;s the one for a rain-out, a time change, or what to bring on Saturday. (In the free portal this is called <strong>Announcements</strong> — same thing.)</p>
+              <p><strong>Chat</strong> is a <strong>conversation</strong>. Your own coaching staff have a room that stays open all season, and while you&rsquo;re entered in a tournament you also get the organizer and the other coaches in that event. Chat never emails anyone — it notifies phones and shows an unread badge on the Chat tab.</p>
+              <p><strong>Trying to reach parents? It&rsquo;s Email families, every time</strong> — parents aren&rsquo;t in your chat rooms.</p>
+            </>
+          ),
+        },
         {
           id: 'faq-premium-player-profile',
           question: 'What can I keep on each player?',
@@ -980,12 +1020,13 @@ const coachesHelp: HelpPageContent = {
           answer: (
             <>
               <p>Open <strong>Staff</strong> (head coach only) and invite them by email. Each assistant has their own card with two groups.</p>
-              <p><strong>Everyday coaching</strong> is up front — schedule, attendance, lineups, and viewing the roster. These are what an assistant is normally invited to do, and they save the moment you tap them.</p>
-              <p><strong>Sensitive access</strong> sits behind its own line and covers team money, documents, family contact details and player birthdates, internal notes, sending announcements, and tryouts. The line shows how many are currently granted, so nothing is ever hidden from you, and it opens by itself if anything is already on. Turning on <strong>team money</strong>, <strong>contacts &amp; birthdates</strong>, or <strong>send announcements</strong> asks you to confirm first — those three expose your team&apos;s finances, your families&apos; personal details, and the ability to email every parent. <strong>Taking access away is always instant</strong> and never asks.</p>
+              <p><strong>Everyday coaching</strong> is up front — schedule, attendance, lineups, viewing the roster, and <strong>documents</strong> (the blank team forms your organization publishes). These are what an assistant is normally invited to do, and they save the moment you tap them.</p>
+              <p><strong>Sensitive access</strong> sits behind its own line and covers team money, family contact details and player birthdates, internal notes, sending announcements, and tryouts. The line shows how many are currently granted, so nothing is ever hidden from you, and it opens by itself if anything is already on. <strong>Every one of them asks you to confirm before you grant it</strong> — each exposes something personal: your team&apos;s finances, your families&apos; details, private staff notes, the ability to email every parent, or the contact details of children still trying out. <strong>Taking access away is always instant</strong> and never asks.</p>
+              <p><strong>One pair works together.</strong> A player&apos;s <em>signed</em> forms — waivers and medical consents on their profile — need <strong>both</strong> Documents <em>and</em> Contacts &amp; birthdates. Documents on its own is only the blank forms. So if you grant one and the assistant already has the other, we&apos;ll ask you to confirm at that point, because between them they open every family&apos;s signed paperwork.</p>
             </>
           ),
-          answerText: 'Open Staff (head coach only) and invite an assistant by email. Their card has two groups. Everyday coaching — schedule, attendance, lineups, viewing the roster — is up front and saves instantly. Sensitive access sits behind its own line and covers team money, documents, family contact details and birthdates, internal notes, sending announcements, and tryouts; the line shows how many are granted and opens automatically if any are on. Granting team money, contacts and birthdates, or send announcements asks you to confirm. Removing access is always instant and never asks.',
-          keywords: ['assistant coach', 'assistant permissions', 'what can my assistant do', 'staff permissions', 'grant access', 'money access', 'contacts and birthdates', 'send announcements', 'sensitive access', 'everyday coaching', 'confirm before granting', 'remove assistant', 'take access away', 'restrict assistant'],
+          answerText: 'Open Staff (head coach only) and invite an assistant by email. Their card has two groups. Everyday coaching — schedule, attendance, lineups, viewing the roster, and documents (the blank team forms your organization publishes) — is up front and saves instantly. Sensitive access sits behind its own line and covers team money, family contact details and birthdates, internal notes, sending announcements, and tryouts; the line shows how many are granted and opens automatically if any are on. Every item in the sensitive group asks you to confirm before granting. Removing access is always instant and never asks. One pair works together: a player’s signed forms — waivers and medical consents on their profile — need BOTH Documents and Contacts and birthdates. Documents on its own is only the blank team forms, so granting the second half of that pair asks you to confirm because together they open every family’s signed paperwork.',
+          keywords: ['assistant coach', 'assistant permissions', 'what can my assistant do', 'staff permissions', 'grant access', 'money access', 'contacts and birthdates', 'send announcements', 'sensitive access', 'everyday coaching', 'confirm before granting', 'remove assistant', 'take access away', 'restrict assistant', 'internal notes access', 'tryouts access', 'signed forms access', 'medical consent access', 'waiver access', 'documents and contacts', 'why did it ask me to confirm'],
         },
       ],
     },
@@ -1436,8 +1477,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Building lineups & reusable templates (Premium)',
       summary: 'Set who plays where once, then reuse it game to game — and let game sheets, attendance and Insights read from it.',
-      keywords: ['lineups', 'lineup', 'build lineup', 'playing order', 'batting order', 'field positions', 'who plays where', 'templates', 'auto-fill', 'game sheet', 'needs lineup', 'reorder batting order', 'drag to reorder', 'move a player up', 'change the batting order', 'positions tab', 'batting order tab'],
-      searchText: 'lineups lineup build a lineup playing order batting order field positions who plays where period by period inning by inning game sheet print attendance insights playing time fairness templates reusable base lineup apply template auto-fill generate lineup needs lineup not set games tab templates tab no games yet add a game schedule first assistant coach lineup access batting order tab positions tab playing time tab three views drag to reorder press and hold move a player up or down bench cut line nine player ball swap someone in positions follow the player',
+      keywords: ['lineups', 'lineup', 'build lineup', 'playing order', 'batting order', 'field positions', 'who plays where', 'templates', 'auto-fill', 'game sheet', 'needs lineup', 'reorder batting order', 'drag to reorder', 'move a player up', 'change the batting order', 'positions tab', 'batting order tab', 'print lineup', 'dugout poster', 'batting order card', 'undo', 'save lineup'],
+      searchText: 'lineups lineup build a lineup playing order batting order field positions who plays where period by period inning by inning game sheet print attendance insights playing time fairness templates reusable base lineup apply template auto-fill generate lineup needs lineup not set games tab templates tab no games yet add a game schedule first assistant coach lineup access batting order tab positions tab playing time tab three views drag to reorder press and hold move a player up or down bench cut line nine player ball swap someone in positions follow the player saves automatically no save button where is the save button saving saved couldnt save retry undo redo mis-tap print lineup dugout poster batting order card paper lineup sheet print lineup notes',
       content: (
         <>
           <p>A <strong>lineup</strong> is your playing order and field positions for one game, set period by period. Open <strong>Lineups</strong> in the Squad menu — the <strong>Games</strong> tab lists every game on your schedule, each marked <strong>Lineup set</strong> or <strong>Not set</strong>, so you can see at a glance what still needs doing before the weekend.</p>
@@ -1519,6 +1560,23 @@ const coachesHelp: HelpPageContent = {
               <p>Yes. On your <strong>Lineups</strong> page, the <strong>Templates</strong> tab holds reusable &ldquo;base&rdquo; lineups — a gold-medal batting order, a rain-day rotation, whatever you run often.</p>
               <p><strong>Build one two ways:</strong> on a game&apos;s builder, open <strong>Templates</strong> and <strong>Save current lineup as a template</strong>; or on the <strong>Templates</strong> tab tap <strong>New template</strong> to build one from scratch with no game attached.</p>
               <p>From the Templates list you can <strong>rename</strong> it, <strong>delete</strong> it, open it to <strong>edit</strong>, or <strong>Apply</strong> it to a game. When you apply, pick the game — if that game <strong>already has a lineup, you&apos;re asked before overwriting</strong> — and the template maps onto that game&apos;s current roster, quietly skipping anyone no longer on the team. Templates use your current-season roster.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-lineup-save-print',
+          question: 'How do I save a lineup, undo a mistake, or print one for the field?',
+          answerText: 'You never save a lineup by hand. It saves itself about a second after your last change, and the bar along the bottom of the builder tells you where it stands — Saving, then Saved. If a save fails it says so and offers Retry, so a lineup is never lost quietly. That bar stays at the bottom of the screen the whole time you work, on a phone as well, and holds three controls. Undo and Redo step back and forward through your changes, which is worth knowing on a screen this tap-heavy; they grey out when there is nothing to step through. Print gives you two sheets: a Dugout poster, which is positions period by period with blank boxes to pen in at the field, and a Batting order card, a large-type order for the scorekeeper or the dugout. If you have written lineup notes, a checkbox prints them on the poster too. The bar appears once there is at least one player in the lineup.',
+          keywords: ['save lineup', 'save', 'no save button', 'where is the save button', 'autosave', 'saves automatically', 'saved', 'couldn\'t save', 'retry', 'undo', 'redo', 'undo a mistake', 'mis-tap', 'wrong tap', 'print lineup', 'print', 'dugout poster', 'batting order card', 'lineup sheet', 'paper lineup', 'pdf', 'lineup notes', 'print notes'],
+          answer: (
+            <>
+              <p><strong>You never save by hand.</strong> A lineup saves itself about a second after your last change. The bar along the bottom of the builder tells you where it stands — <em>Saving&hellip;</em>, then <strong>Saved</strong> — and if a save fails it says so and offers <strong>Retry</strong>, so nothing is lost quietly.</p>
+              <p>That bar stays at the bottom of the screen the whole time you work, on a phone as well, and holds three controls:</p>
+              <ul>
+                <li><strong>Undo</strong> and <strong>Redo</strong> — step back and forward through your changes, which is worth knowing on a screen this tap-heavy. They grey out when there&rsquo;s nothing to step through.</li>
+                <li><strong>Print</strong> — two sheets. A <strong>Dugout poster</strong> (positions period by period, with blank boxes to pen in at the field) and a <strong>Batting order card</strong> (large-type order for the scorekeeper or the dugout). If you&rsquo;ve written lineup notes, a checkbox prints them on the poster too.</li>
+              </ul>
+              <p>The bar appears once there&rsquo;s at least one player in the lineup.</p>
             </>
           ),
         },
@@ -1621,6 +1679,56 @@ const coachesHelp: HelpPageContent = {
       ),
     },
     {
+      // Chunk B (P1 #17). Team settings was the one nav destination in the premium portal with no
+      // guide at all — so its help icon could only ever have opened the hub, which is a table of
+      // contents where the coach expected an answer about this screen. Written rather than linked
+      // so the "every door carries help" rule has no exceptions. Deliberately does NOT restate the
+      // rollover walkthrough (recipe-start-next-season owns it) — it says what the screen is for and
+      // points there.
+      id: 'premium-team-settings',
+      group: 'Premium Coaches Portal',
+      heading: 'Team settings (Premium)',
+      summary: 'Your division, the season you are in, the lineup rules Auto-fill follows, and — for a standalone team — your link to a club or league.',
+      keywords: ['team settings', 'settings', 'setting', 'division', 'change division', 'edit division', 'age group', 'lineup rules', 'lineup settings', 'innings cap', 'pitching cap', 'pitch count', 'arm care', 'max innings', 'minimum innings', 'min play', 'playing time rule', 'rotation', 'auto-fill', 'autofill', 'auto fill rules', 'season status', 'season name', 'start next season', 'parent organization', 'link org', 'join a club', 'transfer team', 'club admin', 'where do i change', 'team options', 'configure team'],
+      searchText: 'team settings screen division age group change division club admin manages division standalone team season name status active complete start next season rollover lineup rules season defaults auto-fill max innings at one position rotation pitching innings cap arm care per pitcher player own pitcher cap stricter wins minimum innings per player everyone plays leave blank to turn off override for a single game auto-fill menu parent organization link to a club or league recognition transfer team invited by your organization manage organization link premium coaches portal where do i change my division where are lineup caps',
+      content: (
+        <>
+          <p><strong>Team settings</strong> is the small set of things that are true about your team for a whole season, rather than about one game or one player. There are up to four panels.</p>
+          <p><strong>Division.</strong> The age group or division your team plays in — it labels your team across the portal and on any public page. If your team belongs to a club or league, your <strong>club admin owns this</strong> and you&rsquo;ll see it here read-only; a standalone team sets it themselves.</p>
+          <p><strong>Season.</strong> Shows which season you&rsquo;re in and whether it&rsquo;s still open. If you run your own team, this is also where you <strong>start next season</strong> — your roster comes with you and last season becomes read-only history. (Full walkthrough: <em>How to start your next season</em>.)</p>
+          <p><strong>Lineup rules.</strong> Season defaults that game-day <strong>Auto-fill</strong> follows — a cap on innings at one position (which forces rotation), a default pitching cap, and a minimum number of innings for every player. <strong>Leave a field blank to turn that rule off</strong>, and you can override any of them for a single game from the Auto-fill menu. A player&rsquo;s own pitching cap still applies on top of the season default, and <strong>the stricter of the two always wins</strong> — a season cap can never loosen a limit you set on an individual arm.</p>
+          <p><strong>Parent organization</strong> (standalone teams only). Connect your team to a club or league for recognition, or transfer it across entirely. Most teams are invited by their organization instead — if that happens you&rsquo;ll see it here and on your Overview.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-settings-division-locked',
+          question: 'Why can’t I change my division?',
+          answerText: 'Because your team belongs to a club or league, and division is managed by your organization admin so it stays consistent across every team they run. Ask them to change it. Standalone teams — ones you set up yourself rather than being invited into — set their own division on this screen.',
+          keywords: ['cannot change division', 'division locked', 'division read only', 'club admin', 'greyed out', 'who changes division', 'edit division'],
+          answer: (
+            <>
+              <p>Because your team belongs to a <strong>club or league</strong>, and division is managed by your organization&rsquo;s admin so it stays consistent across every team they run. Ask them to change it.</p>
+              <p><strong>Standalone teams</strong> — ones you set up yourself rather than being invited into — set their own division right here.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-settings-lineup-caps',
+          question: 'What happens if a season lineup rule conflicts with a player’s own cap?',
+          answerText: 'The stricter one wins. Season lineup rules are defaults for the whole team; a pitching cap you set on an individual player is about that player\'s arm. Auto-fill applies whichever is tighter, so a season default can never loosen a limit you set on one player. Leaving a season field blank turns that rule off entirely, and you can override any of them for a single game from the Auto-fill menu.',
+          keywords: ['conflict', 'stricter', 'player cap', 'pitching cap', 'season default', 'which cap wins', 'arm care', 'override', 'single game', 'blank'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>The stricter one wins.</strong> Season lineup rules are defaults for the whole team; a pitching cap you set on an individual player is about <em>that player&rsquo;s arm</em>. Auto-fill applies whichever is tighter, so a season default can never loosen a limit you set on one player.</p>
+              <p>Leaving a season field <strong>blank turns that rule off</strong> entirely, and you can override any of them for a single game from the Auto-fill menu.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'recipe-start-next-season',
       group: 'Premium Coaches Portal',
       heading: 'How to start your next season & set your division (Premium)',
@@ -1707,16 +1815,17 @@ const coachesHelp: HelpPageContent = {
       heading: 'Player documents (Premium)',
       summary: 'Download the blank forms your organization publishes, then keep each family’s signed copy on the player it belongs to.',
       keywords: ['documents', 'waiver', 'medical form', 'templates', 'completion', 'premium', 'signed form', 'upload document', 'where do documents go'],
-      searchText: 'documents player documents waiver medical consent code of conduct org templates team templates blank forms download hand out signed copy upload a document to a player player profile roster attach paperwork cannot upload my own team template add team form no upload button assistant coach view only documents premium team workspace organization org admin publishes',
+      searchText: 'documents player documents waiver medical consent code of conduct org templates team templates blank forms download hand out signed copy upload a document to a player player profile roster attach paperwork cannot upload my own team template add team form no upload button assistant coach view only documents premium team workspace organization org admin publishes who can see a signed form assistant cannot see documents section documents section missing on player needs both documents and contacts and birthdates contacts and birthdates required for signed forms medical consent privacy assistant cannot open waiver two settings decide this half of it head coaches always have both blank team forms only need documents',
       content: (
         <>
           <p>Documents are part of the <strong>Premium team workspace</strong> (the richer workspace coaches get when their team runs under a FieldLogicHQ organization). The free standalone portal doesn&apos;t include a Documents area.</p>
           <p>There are <strong>two different places</strong> paperwork lives, and it&apos;s worth knowing which is which:</p>
           <ul>
             <li><strong>The Documents page — blank forms to hand out.</strong> Your organization publishes waivers, medical consent forms and codes of conduct here. You <strong>download</strong> them and share them with your families. This page is read-only for coaches: your org admin decides what appears on it, so if you&apos;re expecting a form and don&apos;t see it, ask them.</li>
-            <li><strong>The player&apos;s profile — the signed copy that comes back.</strong> Once a family returns a completed form, open that player on your <strong>Roster</strong> and upload it in their <strong>Documents</strong> section. That way the paperwork sits with the player it belongs to, instead of in your inbox — and anyone else with document access can see it&apos;s been handed in.</li>
+            <li><strong>The player&apos;s profile — the signed copy that comes back.</strong> Once a family returns a completed form, open that player on your <strong>Roster</strong> and upload it in their <strong>Documents</strong> section. That way the paperwork sits with the player it belongs to, instead of in your inbox.</li>
           </ul>
           <p>Files can be PDF, JPG, PNG or DOCX, up to 10&nbsp;MB each.</p>
+          <p><strong>Who else can see a signed form.</strong> Because these are a family&apos;s own paperwork — often medical — an assistant coach needs <strong>both</strong> <em>Documents</em> and <em>Contacts &amp; birthdates</em> access before a player&apos;s Documents section appears for them at all. The head coach grants that pairing on the <strong>Staff</strong> page. Blank team forms are different: those only need <em>Documents</em>. Head coaches and your org admins always have both.</p>
         </>
       ),
       faqs: [
@@ -1735,12 +1844,13 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-documents-assistant-access',
           question: 'Why can’t my assistant coach upload a signed form?',
-          answerText: 'Document access is one of the per-assistant settings on the Staff page, and it has three levels: off, view, and manage. New assistants start at view — they can open and download what is there, but the Upload and delete controls do not appear for them. Switch that assistant to manage on the Staff page if you want them handling paperwork. Head coaches always have manage.',
-          keywords: ['assistant documents', 'assistant cannot upload', 'document permission', 'view only documents', 'manage documents', 'staff permissions documents'],
+          answerText: 'Two settings decide this, and which one you need depends on which kind of paperwork you mean. Documents on the Staff page has three levels — off, view, manage — and new assistants start at view, so the Upload and delete controls do not appear for them; switch them to manage if you want them handling paperwork. But for a player’s SIGNED forms on their profile, Documents is only half of it: the assistant also needs Contacts and birthdates. Without both, the Documents section does not appear on the player at all — so if your assistant says they cannot even see it, that is the missing half, not the manage level. Blank team forms on the Documents page only ever need Documents. Head coaches always have both.',
+          keywords: ['assistant documents', 'assistant cannot upload', 'document permission', 'view only documents', 'manage documents', 'staff permissions documents', 'assistant cannot see documents', 'documents section missing', 'no documents on player', 'signed form missing', 'cannot see waiver', 'cannot open medical consent'],
           answer: (
             <>
-              <p>Document access is one of the per-assistant settings on the <strong>Staff</strong> page, with three levels: <strong>off</strong>, <strong>view</strong>, and <strong>manage</strong>. New assistants start at <strong>view</strong> — they can open and download what&apos;s there, but the Upload and delete controls simply don&apos;t appear for them.</p>
-              <p>Switch that assistant to <strong>manage</strong> on the Staff page if you want them handling paperwork. Head coaches always have manage.</p>
+              <p><strong>Two settings decide this</strong>, and which you need depends on which paperwork you mean.</p>
+              <p><strong>Documents</strong> on the <strong>Staff</strong> page has three levels — <strong>off</strong>, <strong>view</strong>, <strong>manage</strong>. New assistants start at <strong>view</strong>, so the Upload and delete controls simply don&apos;t appear for them. Switch that assistant to <strong>manage</strong> if you want them handling paperwork.</p>
+              <p>But for a player&apos;s <strong>signed</strong> forms on their profile, Documents is only half of it — the assistant also needs <strong>Contacts &amp; birthdates</strong>. Without both, the Documents section <strong>doesn&apos;t appear on the player at all</strong>. So if your assistant says they can&apos;t even see it, that&apos;s the missing half, not the manage level. (Blank team forms on the <strong>Documents</strong> page only ever need Documents.) Head coaches always have both.</p>
             </>
           ),
         },

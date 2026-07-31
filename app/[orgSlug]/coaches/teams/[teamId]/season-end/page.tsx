@@ -8,6 +8,7 @@ import { useOrg } from '@/lib/org-context';
 import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
+import HelpButton from '@/components/help/HelpButton';
 import styles from '../../../coaches.module.css';
 
 /**
@@ -84,6 +85,14 @@ export default function SeasonEndPage({
             {seasonName && <p className={styles.pageSub}>{seasonName}</p>}
           </div>
         </div>
+        {/* Chunk B (P1 #17): on a closed season this is one of only TWO doors the coach gets, so a
+            missing help icon lands on the coach with the least context — the one returning months
+            later to look something up. */}
+        <HelpButton
+          iconOnly
+          label="Season's End"
+          help={{ module: 'coaches', sectionIds: ['premium-season-end'], fullGuideHref: `/${orgSlug}/coaches/help#premium-season-end` }}
+        />
       </div>
 
       {fetching ? (

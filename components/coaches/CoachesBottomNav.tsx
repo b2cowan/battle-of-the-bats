@@ -5,13 +5,14 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Trophy,
   Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
-  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered, TrendingUp, Shield,
+  MoreHorizontal, X, ChevronRight, LogOut, HelpCircle, Settings, ClipboardList, ListOrdered, TrendingUp, Shield, Bell,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { isCoachNavItemVisible, CLOSED_TEAM_NAV_ITEMS } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
+import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { useAnyOverlayOpen } from '@/lib/coaches-overlay';
 import styles from './CoachesBottomNav.module.css';
 import { useDismissable } from '@/lib/overlay-hooks';
@@ -52,8 +53,10 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   { header: 'Money', items: [
     { key: '/accounting',    icon: DollarSign,    label: 'Money' },
   ] },
+  // Chunk B (P1 #1) — renamed to name its audience; see the sidebar's note for why Chat kept its
+  // name. The route is unchanged, and the capability gate keeps the old label as a fallthrough.
   { header: 'Communication', items: [
-    { key: '/announcements', icon: Megaphone,     label: 'Announcements' },
+    { key: '/announcements', icon: Megaphone,     label: 'Email families' },
   ] },
   { header: 'Team admin', items: [
     { key: '/staff',         icon: UserCog,       label: 'Staff' },
@@ -62,6 +65,11 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   ] },
 ];
 const ALL_MORE_KEYS = MORE_SECTIONS.flatMap(s => s.items.map(i => i.key));
+
+/** Badge text for an unread count — the bar shows five of these (chat tab, More tab, the
+ *  Notifications row, and both of their accessible names), and a "10" that renders where "9+"
+ *  belongs is the kind of drift a repeated inline ternary invites. */
+const badgeText = (n: number): string => (n > 9 ? '9+' : String(n));
 
 export default function CoachesBottomNav() {
   const pathname = usePathname();
@@ -77,6 +85,25 @@ export default function CoachesBottomNav() {
   const [moreOpen, setMoreOpen] = useState(false);
   const moreRef = useRef<HTMLDivElement>(null);
   const chatUnread = useChatUnread();
+  // Chunk B (P1 #4): until now the notification bell existed ONLY in the desktop sidebar, which is
+  // display:none ≤900px — and the coach feed page had exactly ONE inbound link in the whole product,
+  // inside that bell's panel. A phone-only coach could reach neither their notifications nor their
+  // notification settings by any route. This mirrors the admin shell's shipped answer ("The Flip",
+  // 2026-07-22): a row inside More that opens the FULL PAGE, with the count badging the More tab so
+  // it is discoverable without opening the sheet.
+  //
+  // Deliberately the full page and not the bell's panel: the panel's phone rules anchor it at
+  // `top: 48px + safe-area` to sit under the ADMIN top bar, and this portal has no top bar at any
+  // width — it would hang below 48px of nothing.
+  //
+  // Not hoisted, deliberately. The sidebar bell and this bar are separated by CSS, NOT by React —
+  // both components mount at every width, so on desktop two instances of this hook are live at
+  // once. That is anticipated: the hook keys its Realtime channel off `useId` precisely so the
+  // sidebar bell and the bottom nav can coexist in one tree without colliding, and `useChatUnread`
+  // right above already double-mounts the same way. Hoisting would mean a client wrapper around a
+  // server layout to own the count — real structure for one extra `limit=1` fetch on a breakpoint
+  // where the bar is invisible. Revisit together with the chat count, never just this one.
+  const { count: notifUnread } = useNotificationUnread(currentOrg?.id);
   // Safety net (Coach Portal Batch 1, D3): while any sheet/modal is open, the bar hides itself
   // (no layout shift — visibility, not display) so a mis-tap can never land on a nav tab
   // underneath a full-height mobile sheet, even for a modal the CSS sweep hasn't reached yet.
@@ -145,17 +172,14 @@ export default function CoachesBottomNav() {
             href={`${teamBase}${key}`}
             className={`${styles.tab} ${active ? styles.active : ''}`}
             id={`coaches-mob-${label.toLowerCase()}`}
-            aria-label={isChat && chatUnread > 0 ? `Chat, ${chatUnread > 9 ? '9+' : chatUnread} unread` : undefined}
+            aria-label={isChat && chatUnread > 0 ? `Chat, ${badgeText(chatUnread)} unread` : undefined}
           >
             <span className={styles.iconWrap}>
               <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
               {active && <span className={styles.activeDot} />}
               {isChat && chatUnread > 0 && (
-                <span
-                  aria-hidden
-                  style={{ position: 'absolute', top: -2, right: 2, background: 'var(--logic-lime)', color: 'var(--pitch-black)', fontSize: '0.55rem', fontWeight: 800, borderRadius: 999, padding: '0 4px', minWidth: 14, height: 14, display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-                >
-                  {chatUnread > 9 ? '9+' : chatUnread}
+                <span aria-hidden className={styles.tabCount}>
+                  {badgeText(chatUnread)}
                 </span>
               )}
             </span>
@@ -172,6 +196,7 @@ export default function CoachesBottomNav() {
           id="coaches-mob-more"
           aria-haspopup="true"
           aria-expanded={moreOpen}
+          aria-label={!moreOpen && notifUnread > 0 ? `More, ${badgeText(notifUnread)} unread notifications` : undefined}
         >
           <span className={styles.iconWrap}>
             {moreOpen
@@ -179,12 +204,44 @@ export default function CoachesBottomNav() {
               : <MoreHorizontal size={22} strokeWidth={(moreOpen || isOnTeamMore) ? 2.5 : 1.8} />
             }
             {isOnTeamMore && !moreOpen && <span className={styles.activeDot} />}
+            {/* What is waiting inside More bubbles up to the tab, so the coach never has to open the
+                sheet to find out. Hidden while the sheet is open — the row itself is on screen. */}
+            {!moreOpen && notifUnread > 0 && (
+              <span aria-hidden className={styles.tabCount}>
+                {badgeText(notifUnread)}
+              </span>
+            )}
           </span>
           <span className={styles.label}>More</span>
         </button>
 
         {moreOpen && (
           <div className={styles.dropdown} role="menu">
+            {/* Notifications — the mobile home for a feed that had no phone door at all (Chunk B,
+                P1 #4). FIRST in the sheet, matching the admin shell's placement, and opening the
+                full page rather than the desktop bell's panel (see the hook comment above). The
+                page carries its own "Notification settings" link, so one row reaches both. */}
+            {currentOrg?.id && (
+              <>
+                <Link
+                  className={styles.dropItem}
+                  href={`${base}/notifications`}
+                  onClick={() => setMoreOpen(false)}
+                  role="menuitem"
+                  id="coaches-mob-notifications"
+                >
+                  <Bell size={17} />
+                  <span>Notifications</span>
+                  {notifUnread > 0 && (
+                    <span className={styles.dropCount} aria-label={`${badgeText(notifUnread)} unread`}>
+                      {badgeText(notifUnread)}
+                    </span>
+                  )}
+                </Link>
+                <div className={styles.dropDivider} />
+              </>
+            )}
+
             {/* Team switcher — only earns its place with 2+ entries (mirrors the tournament
                 switcher). Closed-season teams get a quiet group instead of vanishing. */}
             {assignments.length + closedAssignments.length > 1 && (

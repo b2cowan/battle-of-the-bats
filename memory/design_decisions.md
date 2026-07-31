@@ -4,6 +4,27 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-07-31 — The premium coach strip carries NO chat door: a door that EJECTS you from the workspace loses to one that keeps you in it (owner ruling, "I am good with that approach") — amends Nav Unification Stage H.1
+
+**Trigger (owner, seeing both at once):** *"do we need chat on the side nav now that we have the top nav universal chat?"* On a desktop portal the coach had **two chat doors visible simultaneously** — the new strip's icon and the sidebar's "Chat". (No duplication on a phone: the strip is >900px only, so the bottom-nav Chat tab stands alone.)
+
+**The justification for keeping both was FALSE, and that is the finding.** `CoachTopStrip` documented its icon as *"the APP's /chat (your own conversations); the portal's bottom-tab 'Chat' keeps the word for the team's chat."* The portal's chat screen is **per-USER, not per-team** — `CoachChatView` resolves from the same `chat_room_members` membership, carries the same staff **and** tournament rooms, and heads itself *"Your chats"*. The published help says the same thing (the staff room appears in the portal list *and* on the app's Chat tab). Two labels, one room set; the only difference is presentation (app tab groups by event, portal is flat).
+
+**Decision (owner): remove the chat door from the coach strip; the sidebar/bottom-nav Chat stays.**
+The portal's door won on one concrete ground: **the strip's door ejected the coach into consumer chrome** — the exact trip that already needed a *"Back to your Coaches Portal"* rescue link bolted on at A3 QA because first-time coaches landed there and could not find their way home. **A door that needs a rescue link to undo itself is the weaker of two doors to the same place.**
+
+**Generalises — the rule for the operator strip on any shell:** the strip carries **only genuine leave-this-place doors** (wordmark → Home · account · workspaces). A **section of the work is not an exit** and does not belong there, however app-wide its content happens to be. Reach for the strip when the answer to *"where does this take me?"* is *another place*; reach for the place's own nav when the answer is *another part of this place*.
+
+**Rejected alternative (named so it is not re-proposed):** keep both and make the distinction real by scoping the portal's Chat to the current team. Declined — a coach with two teams would lose the single list showing everything, which is what makes the portal chat useful; it would also be a behaviour change dressed as a naming fix.
+
+**Side effect worth banking:** the strip no longer mounts a chat-unread pipeline, retiring the *"THIRD always-mounted chat-unread pipeline"* KNOWN COST that file shipped with. The sidebar + bottom-nav pair still double-mount theirs — a documented pre-existing duplication, still to be hoisted **together**, never one alone.
+
+**⚠ Provenance:** this REVERSES a detail of an approved Stage H.1 mockup, so the mockup is no longer the authority on this one element — **this entry is.** `NAV_UNIFICATION_PLAN.md` Stage H.1 amended in the same unit of work. `CoachTopStrip` was untracked/in-flight in a concurrent session when this landed; if the icon reappears, it was re-added from the stale mockup and should be removed again.
+
+**Applies to:** `components/coaches/CoachTopStrip.{tsx,module.css}` (chat door + `.doorBadge` + the unread hook removed), `docs/projects/active/NAV_UNIFICATION_PLAN.md` §Stage H.1. No migration. [[design-principles]]
+
+---
+
 ### 2026-07-31 — A REDACTION IS ONLY AS STRONG AS THE WEAKEST DOOR ON THE SAME SCREEN — and when a capability spans two kinds of thing, the gate must be the union of what BOTH kinds require (owner: "include it now" + "commit staff work first")
 
 **Decision (owner ratified both approved fixes plus the DB door found en route).** Spun out of the
@@ -79,6 +100,17 @@ when it can't be opened), `components/coaches/CoachStaffPanel.tsx`, new
 `tests/unit/coach-capabilities.test.ts` (9 cases incl. the redaction invariant). Head coaches and org
 admins verified unaffected. Plan: `docs/projects/active/COACH_PLAYER_DOCUMENTS_PII_PLAN.md`.
 [[design-principles]]
+
+---
+
+### 2026-07-31 — The strip's chat-door removal generalizes to ALL admin hubs (owner: "that should probably be the case for all admin screens")
+
+**Decision.** The coach-strip chat-door removal (entry above/nearby, another session) applies to the
+ADMIN top strip too, and to any future operator strip: **the frame strip carries only genuine
+leave-this-place doors — wordmark · (bell where the hub has one) · account · Workspaces. Chat is a
+section of the work, not an exit.** A /chat door on an operator strip duplicates the shell's own
+Chat surface and ejects the operator into consumer chrome. Applied same-day to `AdminTopStrip`
+(chat door + its unread pipeline removed; the sidebar's tournament Chat badge self-serves again).
 
 ---
 

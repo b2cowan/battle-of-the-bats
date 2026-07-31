@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Trophy, Archive, ChevronDown, Check } from 'lucide-react';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import HelpButton from '@/components/help/HelpButton';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamHistoryYear, RepTeamTag } from '@/lib/types';
 
@@ -168,6 +169,15 @@ export default function CoachesResultsReportPage({
             <p className={styles.pageSub}>{isClosedOnly ? 'Your seasons, kept for good' : 'Every result this season, plus your past seasons'}</p>
           </div>
         </div>
+        {/* Chunk B (P1 #17): on a CLOSED season the nav points Insights straight here, so this page
+            is a nav destination in its own right — the /history hub that carries the icon is not
+            reachable at all. On a live season it is a drill-in and inherits the hub's guide; one
+            icon covers both readings rather than two rules. */}
+        <HelpButton
+          iconOnly
+          label="Insights"
+          help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
+        />
       </div>
 
       {loading || loadedFor !== teamId ? (

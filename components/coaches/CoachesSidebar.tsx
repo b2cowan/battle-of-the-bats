@@ -43,9 +43,16 @@ const TEAM_NAV_GROUPS: { label?: string; items: { label: string; href: string; i
   { label: 'Money', items: [
     { label: 'Money',       href: '/accounting',  icon: DollarSign },
   ] },
+  // Chunk B (P1 #1): the two doors now name their AUDIENCE. "Chat" and "Announcements" sat adjacent
+  // with nothing to tell them apart, and a coach had to open one and back out to find the one that
+  // reaches parents. They are not two flavours of messaging — Chat is a two-way conversation with
+  // the coach's own staff (all season) and, during an event, the organizer; this one is a one-way
+  // EMAIL to every family on the roster. "Chat" is kept because it is the app-wide word for a
+  // conversation (the consumer bottom bar uses it and the page heads itself "Your chats"), so
+  // renaming it would fracture a platform vocabulary to fix a local problem.
   { label: 'Communication', items: [
-    { label: 'Chat',          href: '/chat',          icon: MessageSquare },
-    { label: 'Announcements', href: '/announcements', icon: Megaphone },
+    { label: 'Chat',           href: '/chat',          icon: MessageSquare },
+    { label: 'Email families', href: '/announcements', icon: Megaphone },
   ] },
   { label: 'Team admin', items: [
     { label: 'Staff',         href: '/staff',       icon: UserCog },

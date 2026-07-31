@@ -39,6 +39,13 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     case 'Tryouts':       return caps.tryouts;
     // Hidden unless the coach can send (no draft UI yet). When the draft flow ships, switch this to
     // always-visible or a dedicated `canDraftAnnouncements` cap so granted assistants can draft.
+    //
+    // ⚠ This gate is keyed by DISPLAY LABEL, so a rename that misses this switch falls through to
+    // `default: return true` and hands an ungranted assistant the door. Chunk B renamed the door to
+    // "Email families" (the old label gave a coach no way to tell it apart from Chat); the old label
+    // is kept as a fallthrough deliberately — the portal tour still asks for it by its old name, and
+    // any surface a future rename misses keeps gating instead of silently opening.
+    case 'Email families':
     case 'Announcements': return caps.announcementsSend;
     case 'Money':         return caps.money !== 'off';
     // Open to any assigned coach: the hub shows record / roster size / tryout trend to everyone;

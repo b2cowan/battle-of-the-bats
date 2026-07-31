@@ -70,10 +70,10 @@ finished — everything below is still open.**
 
 | # | Item | Status |
 |---|------|--------|
-| 1 | Chat vs Announcements are indistinguishable in the nav | **OPEN** |
-| 2 | Chat has no honest empty state outside a tournament | **OPEN** |
+| 1 | Chat vs Announcements are indistinguishable in the nav | ✅ **Chunk B (built on dev 2026-07-31)** — `Announcements` → **"Email families"** (audience + medium), `Chat` kept as the app-wide word for a conversation; the SCREEN was renamed too, so the door and its destination agree. ⚠ Found in build: the review's premise was stale — Chat also carries the standing **staff room**, so the shipped tour copy calling it "the organizer line" was wrong and was corrected. ⚠ The capability gate is keyed by DISPLAY LABEL; the new label is a case and the old one a fallthrough |
+| 2 | Chat has no honest empty state outside a tournament | ✅ **ALREADY SHIPPED** (verified 2026-07-31 while scoping Chunk B — absorbed by an earlier batch without being ticked here). `CoachChatView` renders `CoachEmptyState`: *"Only the organizer can open a chat, and only for a tournament your team is entered in — so there's nothing here until then."* **Do not re-plan it.** |
 | 3 | Attendance has no home in the nav (×2 reviewers) | ✅ **Batch 4** — own Squad item, gated on attendance + roster; page opens on "take attendance for {next event}" |
-| 4 | No notification bell anywhere on mobile | **OPEN** |
+| 4 | No notification bell anywhere on mobile | ✅ **Chunk B (built on dev 2026-07-31)** — worse than reported at pickup: the feed page had **exactly ONE inbound link in the product**, inside the desktop-only bell's panel, so on a phone it was unreachable by any route. Fixed by REUSING the admin shell's shipped answer (2026-07-22) — a **Notifications row first in the More sheet** opening the **full page** (not the bell's panel, whose phone rules anchor it under an *admin* top bar this portal lacks), with the unread count badging the More tab. A 6th tab and a page-header bell were rejected with reasons drawn in the mockups |
 | 5 | Unsaved-changes guard missing on Accounting + Tryout-setup forms | ✅ **COMPLETE — Chunk A (Money) + Chunk E (tryouts, built on dev 2026-07-30)** — session form, scorecard builder, accept drawer, walk-up modal and evaluator modal all guard through `useDiscardGuard` with stake-naming copy; the scorecard save also stopped silently dropping typed-but-unnamed rows |
 | 6 | Weekly recurrence locks every game to one opponent | ✅ **Chunk C (built on dev 2026-07-31)** — "Repeat weekly" shows the occurrences as ROWS before any exist, each with its own opponent; a bye week is removed before commit; the button names the real count. ≈120 taps → ≈23 for a 12-game round robin |
 | 7 | No schedule import | ✅ **Chunk C (built on dev 2026-07-31)** — paste or file, verdict per row, reads its own export back; refuses an ambiguous date rather than guessing; a look-alike organizer game is surfaced, never merged |
@@ -81,12 +81,12 @@ finished — everything below is still open.**
 | 9 | Lineup touch targets under the standard (×2 reviewers) | ✅ **Chunk C (built on dev 2026-07-31)** — reordering LEFT the grid into its own `Batting order` view with press-and-hold drag restored + 44px arrows; the 18px in-grid arrows are retired, the per-inning cell reaches 44, and the **36-vs-44 disagreement in the same screen family is settled onto one token**. The grid's pinned column narrowed, so a 360px phone shows one more inning |
 | 10 | Money's reports have zero mobile adaptation (×2 reviewers) | ✅ **Chunk A** (built on dev 2026-07-30) — lists became cards, Budget vs. Actual stayed a comparison grid that scrolls with the line name pinned + a visible swipe hint; `budget.module.css` and `bva.module.css` gained their first-ever media queries |
 | 11 | Forms don't reflow to one column on phones | ✅ **absorbed into Batch 1** (verified 2026-07-29: reaches Player Detail too) |
-| 12 | No orientation for coaches who never had a free team | **OPEN, narrowed** — Batch 2's first-week trail covers the guidance half; the *welcome* moment for cold signups is still missing |
+| 12 | No orientation for coaches who never had a free team | ✅ **Chunk B (built on dev 2026-07-31)** — found half-built at pickup: Quiet Mode's portal tour existed but was offered from inside ONE card, so a coach whose Overview resolved to a game / a lull / nothing was never offered it. Now a **`welcome` state at the top of Chunk I's ordered resolver** (pre-season only — an introduction never outranks game day), inheriting the pre-season door, retired permanently by `tourDismissed`. ⚠ `/review` caught that it must ALSO honour the independent Quiet Mode hints switch, or a coach who turned hints off met an onboarding card |
 | 13 | Guardian fields are contact-only, unexplained | ➡️ **moved to §1.4** (guardian model) |
 | 14 | Tournaments list unsorted, no in-context help | ✅ **absorbed into Batch 1** |
 | 15 | Season winding-down gives no cue | ✅ **absorbed into Batch 3** |
 | 16 | Tryout scoring hidden behind an evaluator detour | ✅ **Chunk E (built on dev 2026-07-30)** — "Score players" on the Tryout Day tab opens the SAME field scorer signed-in (shared component, one persistent self identity per coach, "(you)" on the scoreboard); the Evaluators card is now genuinely for helpers |
-| 17 | Help "?" icons promised everywhere, present on 3 of ~25 pages | **OPEN** |
+| 17 | Help "?" icons promised everywhere, present on 3 of ~25 pages | ✅ **Chunk B (built on dev 2026-07-31)** — the "29 pages missing" framing was the wrong denominator: all 12 existing icons were already **nav destinations** and every drill-in correctly had none, so the promise was **12 of 17 kept and the gap was FIVE doors**. Rule now binding: *every nav destination carries help; a page reached by drilling into one inherits its parent's guide.* Closed: Attendance · Chat (its own header — the page is full-bleed) · Settings · Season's End · closed-season Insights. **Settings had no guide, so one was WRITTEN** — a "?" that opens the hub is a broken promise. A probe walks the RENDERED nav, so a future nav item shipped without help fails |
 
 #### P2 — polish (~30, prose paragraph in the review): mostly open
 
@@ -130,7 +130,14 @@ worst thing in the product to retype) + the P2 native `alert()` on budget-delete
 a phone today but cannot read their own budget report on one. **Accounting is untouched by every
 other active stream** — verified 2026-07-29.
 
-**B · Findability & portal chrome** — *small–medium; UNBLOCKED 2026-07-29 (Batch 4 landed)*
+**B · Findability & portal chrome** — ✅ **BUILT ON DEV 2026-07-31 (uncommitted)** — plan + PM brief `COACH_PORTAL_CHUNK_B_FINDABILITY_{PLAN,PM_BRIEF}.md`; mockups artifact `96e4a359-7966-4f1c-9105-3ddbb85dd969` rev 1 (approved = binding); **D-B1–D-B4 ALL RATIFIED at the recommendations 2026-07-31** ("I agree with all of your recommendations"). **NO migration, no write path, no API change**, as predicted. What shipped: the mobile **Notifications** door (More-sheet row → full feed page, count on the row AND the More tab, reusing admin's 2026-07-22 answer) · **`Announcements` → "Email families"** in both navs, the page it opens, the tour and the guide — with the **label-keyed capability gate** given the new case + the old one as a fallthrough · the **help rule** closing five nav doors and a newly-written **Team settings** guide · a **`welcome` anchor state** at the top of Chunk I's resolver for cold signups. Gate green (typecheck 0 / **651 unit tests** / lint 0 errors / all six colour baselines ZERO / date ZERO / parity 0) + new findability probe suite. `/simplify` (3 applied — incl. a probe that asserted a LIST instead of the RULE) + `/review` (high-risk tier, **3 confirmed-fixed**, security lens clean) + `/docs` done. **`coaches.module.css` deliberately untouched** (a concurrent stream held uncommitted hunks there). Remaining: fresh dev restart → owner QA → commit with per-action OK. *(original scope below)*
+*Original entry:* — *small–medium; handoff prompt
+`COACH_PORTAL_CHUNK_B_FINDABILITY_BUILD_PROMPT.md`.* It
+carries ground truth re-verified 2026-07-31: **P1 #2 is already shipped and must be dropped from
+scope**, the help-icon count has moved to **12 of 41** pages, the notification bell exists in the
+desktop sidebar but **not** in the mobile bottom nav (which already carries an unread-dot precedent
+to reuse), and three concurrent streams — the nav rename, Desktop Phase 2 and Quiet Mode — have all
+been editing this exact area. *(original entry below)*
 P1 #1 (Chat vs Announcements), #2 (Chat's honest empty state), #4 (mobile notification bell),
 #17 (the help-icon promise), #12 (welcome moment for cold signups). Batch 4 has landed, so the nav
 collision is gone — but note the concurrent Coach Onboarding Quiet Mode stream is also editing empty

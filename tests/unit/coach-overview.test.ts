@@ -50,6 +50,7 @@ function anchorInput(overrides: Partial<AnchorInput> = {}): AnchorInput {
     hasUpcomingTournament: false,
     caps: HEAD_CAPS,
     canManageSeasons: true,
+    isColdStart: false,
     ...overrides,
   };
 }
@@ -87,6 +88,69 @@ describe('resolveOverviewAnchor — the collision this module exists to fix', ()
     const decision = resolveOverviewAnchor(anchorInput({ hasNextEvent: false, seasonWindingDown: false }));
     assert.equal(decision?.kind, 'lull');
     assert.equal(decision?.primary, 'add_event');
+  });
+
+  // ── Chunk B (P1 #12): the cold-signup welcome ─────────────────────────────
+  // Same superset relation as season_check→lull: a brand-new coach IS a pre-season coach plus two
+  // extra facts, so the welcome REPLACES the pre-season card rather than stacking beside it.
+
+  it('welcomes a cold-start coach instead of opening with a task', () => {
+    const decision = resolveOverviewAnchor(anchorInput({
+      phase: 'preseason',
+      isColdStart: true,
+      hasOpenSetupStep: true,
+    }));
+    assert.equal(decision?.kind, 'welcome');
+    assert.equal(decision?.primary, 'take_tour');
+  });
+
+  it('the welcome inherits the pre-season door it replaced (rule 2)', () => {
+    const decision = resolveOverviewAnchor(anchorInput({
+      phase: 'preseason',
+      isColdStart: true,
+      hasOpenSetupStep: true,
+    }));
+    assert.ok(
+      decision?.answers.includes('setup_step'),
+      'replacing the pre-season card must not cost the coach its door',
+    );
+  });
+
+  it('offers no inherited door when there is no step this coach can complete', () => {
+    // `hasOpenSetupStep` arrives capability-filtered, so a false here means an assistant who cannot
+    // finish any remaining step. Offering it anyway would send them to a read-only surface.
+    const decision = resolveOverviewAnchor(anchorInput({
+      phase: 'preseason',
+      isColdStart: true,
+      hasOpenSetupStep: false,
+    }));
+    assert.equal(decision?.kind, 'welcome');
+    assert.deepEqual(decision?.answers, []);
+  });
+
+  // THE regression that matters: `isColdStart` folds in the account-scoped tour preference, so once
+  // the coach takes or skips the tour this candidate must become permanently ineligible. Without
+  // this the portal would re-welcome the same coach on every single visit.
+  it('never welcomes again once the tour has been taken or skipped', () => {
+    const decision = resolveOverviewAnchor(anchorInput({
+      phase: 'preseason',
+      isColdStart: false,
+      hasOpenSetupStep: true,
+    }));
+    assert.equal(decision?.kind, 'preseason', 'a toured coach gets their real next step, not a second welcome');
+  });
+
+  it('never displaces game day — an introduction does not outrank a game today', () => {
+    // The welcome is pre-season only. A coach arriving mid-season to a live team meets their real
+    // situation; showing "this is your portal" on the morning of a game would be the Chunk I
+    // regression (turning the portal's highest-value moment into a prompt) in a new costume.
+    const decision = resolveOverviewAnchor(anchorInput({
+      phase: 'game_day',
+      hasNextEvent: true,
+      nextIsGame: true,
+      isColdStart: true,
+    }));
+    assert.equal(decision?.kind, 'game_day');
   });
 
   it('never returns two decisions — one call, one card', () => {

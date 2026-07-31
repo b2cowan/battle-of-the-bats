@@ -32,20 +32,23 @@ export default function TeamAnnouncementsPage({
         <span><ChevronRight size={12} /></span>
         <Link href={base}>{assignment.teamName}</Link>
         <span><ChevronRight size={12} /></span>
-        <span>Announcements</span>
+        <span>Email families</span>
       </div>
 
-      {/* Header */}
+      {/* Header — Chunk B (P1 #1): the DOOR and the DESTINATION must agree. Renaming the nav item
+          to "Email families" without renaming the screen it opens would have re-broken the very
+          rule the rename cites (a control is named by where it goes), just one step further in.
+          "Announcement" stays the noun for an individual sent item; only the place is renamed. */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div>
-            <h1 className={styles.pageTitle}>Announcements</h1>
+            <h1 className={styles.pageTitle}>Email families</h1>
             <p className={styles.pageSub}>{assignment.teamName} — {assignment.programYearName}</p>
           </div>
         </div>
         <HelpButton
           iconOnly
-          label="Announcements"
+          label="Email families"
           help={{ module: 'coaches', sectionIds: ['recipe-announcements'], fullGuideHref: `/${params.orgSlug}/coaches/help#recipe-announcements` }}
         />
       </div>

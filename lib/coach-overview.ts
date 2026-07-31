@@ -34,7 +34,7 @@ import { isCoachNavItemVisible } from './coach-nav-visibility';
 // ── The one thing ────────────────────────────────────────────────────────────
 
 /** Which situation won the single anchor slot. */
-export type AnchorKind = 'game_day' | 'next_event' | 'season_check' | 'lull' | 'preseason';
+export type AnchorKind = 'welcome' | 'game_day' | 'next_event' | 'season_check' | 'lull' | 'preseason';
 
 /**
  * The three shapes one card can take (design log 2026-07-30, rule 3). The desktop mockups framed
@@ -51,7 +51,9 @@ export type AnchorAction =
   | 'open_schedule'
   | 'add_event'
   | 'close_season'
-  | 'setup_step';
+  | 'setup_step'
+  /** Chunk B — opens the portal tour drawer. Not a navigation; the page owns the handler. */
+  | 'take_tour';
 
 /** Secondary text answers, rendered as one row (never a stack of buttons — rule 8). */
 export type AnchorAnswer =
@@ -61,7 +63,9 @@ export type AnchorAnswer =
   | 'view_tournaments'
   | 'not_yet'
   | 'got_it'
-  | 'skip_step';
+  | 'skip_step'
+  /** Chunk B — the pre-season door the welcome INHERITS when it replaces that card (rule 2). */
+  | 'setup_step';
 
 export interface AnchorInput {
   phase: CoachRepPhase;
@@ -76,6 +80,20 @@ export interface AnchorInput {
   seasonWindingDown: boolean;
   /** A still-open setup step exists that THIS coach can complete (already capability-filtered). */
   hasOpenSetupStep: boolean;
+  /**
+   * Chunk B (P1 #12) — has this coach never been offered the portal tour, on a team that has not
+   * been used yet? The account-scoped `tourDismissed` preference is what retires it, so this can
+   * only ever be true BEFORE the coach takes or skips the tour once, on any team.
+   *
+   * Deliberately several facts, not one. `tourDismissed` alone would welcome an established coach
+   * on a brand-new team they just rolled into; "no activity" alone would re-welcome someone who
+   * already took the tour every time they started a season. Both together describe exactly the
+   * person P1 #12 is about: a paying coach who never had a free team and has just arrived.
+   *
+   * The caller also folds in the Quiet Mode hints switch — a welcome IS a hint, and that switch is
+   * independent of the tour flag, so a coach who turned hints off must not be met by one.
+   */
+  isColdStart: boolean;
   /** A registered tournament is upcoming or live — the lull card's second door. */
   hasUpcomingTournament: boolean;
   /** The caller's FULL resolved capabilities — gates below go through the exported predicates. */
@@ -123,7 +141,8 @@ function eventActions(nextIsGame: boolean, caps: CoachCapabilities): Pick<Anchor
 /**
  * Resolve the ONE anchor. First match wins; every later candidate is discarded.
  *
- * Order (design log 2026-07-30, rule 1):
+ * Order (design log 2026-07-30, rule 1; welcome added by Chunk B):
+ *   0. welcome         — first visit, never toured  ← STRICT SUPERSET of (5); tested FIRST
  *   1. game day        — a game is today
  *   2. next event      — something is scheduled ahead
  *   3. season check    — winding down  ← STRICT SUPERSET of (4); must be tested FIRST
@@ -134,8 +153,32 @@ function eventActions(nextIsGame: boolean, caps: CoachCapabilities): Pick<Anchor
  * opens on the board. A calm board beats narrating a situation the reader cannot act on.
  */
 export function resolveOverviewAnchor(input: AnchorInput): AnchorDecision | null {
-  const { phase, hasNextEvent, nextIsGame, seasonWindingDown, hasOpenSetupStep, hasUpcomingTournament, caps, canManageSeasons } = input;
+  const { phase, hasNextEvent, nextIsGame, seasonWindingDown, hasOpenSetupStep, hasUpcomingTournament, caps, canManageSeasons, isColdStart } = input;
   const canSchedule = canManageSchedule(caps);
+
+  // (0) Chunk B (P1 #12). A cold-signup coach IS a pre-season coach plus two extra facts, so this is
+  // the same superset relation as (3)→(4): the specific state REPLACES the general one rather than
+  // stacking beside it. A welcome BANNER next to the anchor would have re-created the exact
+  // nine-independent-bands defect this resolver exists to remove.
+  //
+  // It inherits the replaced card's door (rule 2): "Add your players instead" carries the setup step
+  // the welcome displaced, so a coach who would rather get on with it loses nothing. The inherited
+  // answer is offered only when a step actually exists AND this coach can complete it — the same
+  // capability filter the pre-season card applies, since `hasOpenSetupStep` arrives pre-filtered.
+  //
+  // Rule 4 (state proposes, capability disposes) is satisfied for free: every coach can take a tour,
+  // so this card can never be the button-less variant.
+  //
+  // Only reachable in pre-season. A coach arriving mid-season to a live team meets their real
+  // situation — a game today outranks an introduction, and this must never displace game day.
+  if (isColdStart && phase === 'preseason') {
+    return {
+      kind: 'welcome',
+      shape: 'next_step',
+      primary: 'take_tour',
+      answers: hasOpenSetupStep ? ['setup_step'] : [],
+    };
+  }
 
   // Every event-shaped candidate reads from the events fetch, which a coach without schedule
   // access never makes. Without it the page has NO event data — so these cards could only ever

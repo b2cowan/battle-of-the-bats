@@ -3,6 +3,7 @@ import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Archive, CalendarPlus, Link2, Pencil, SlidersHorizontal } from 'lucide-react';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
+import HelpButton from '@/components/help/HelpButton';
 import type { LineupSettings } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -153,6 +154,14 @@ export default function TeamSettingsPage({
             <p className={styles.pageSub}>{team.name}</p>
           </div>
         </div>
+        {/* Chunk B (P1 #17): the one door of the five that had NO guide to open. Rather than point
+            a "?" at the help hub — a table of contents where the coach expected an answer about
+            this screen — the guide was written in the same unit of work. */}
+        <HelpButton
+          iconOnly
+          label="Team settings"
+          help={{ module: 'coaches', sectionIds: ['premium-team-settings'], fullGuideHref: `/${orgSlug}/coaches/help#premium-team-settings` }}
+        />
       </div>
 
       {/* ── Division ─────────────────────────────────────────────────────── */}

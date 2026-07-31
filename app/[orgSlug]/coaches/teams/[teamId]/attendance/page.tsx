@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { CalendarCheck, ArrowRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import HelpButton from '@/components/help/HelpButton';
 import {
   COACH_GAME_EVENT_TYPES, eventDisplayTitle, formatEventWhen, pickNextOrMostRecent,
 } from '@/lib/coach-tournament-games';
@@ -136,6 +137,13 @@ export default function CoachesAttendancePage({
             <p className={styles.pageSub}>Who&apos;s been making it out this season</p>
           </div>
         </div>
+        {/* Chunk B (P1 #17): Attendance gained a nav home in Batch 4 but never got the help icon
+            every other nav destination carries. */}
+        <HelpButton
+          iconOnly
+          label="Attendance"
+          help={{ module: 'coaches', sectionIds: ['recipe-attendance'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-attendance` }}
+        />
       </div>
 
       {/* Batch 4 — record first, review second. The review found this page explained what it would
