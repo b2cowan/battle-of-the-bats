@@ -11,7 +11,7 @@ import {
 import { deriveStandardDuesSchedule, validateAcceptDues, normalizeAcceptDues } from '@/lib/tryout-fees';
 import { tryoutAcceptedHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
-import { denyUnless } from '@/lib/coach-capabilities';
+import { denyUnless, redactRosterPlayer } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
 
@@ -130,7 +130,17 @@ export const POST = withObservability(async (req: Request,
         }),
       }).catch(e => console.error('[email] tryout accepted (coach):', e));
     }
-    return NextResponse.json({ registrationId: registration.id, status: registration.status, player });
+    // Redact on the way out like every other roster read. `tryouts` and `rosterPii` are independent
+    // grants, so a tryouts-only assistant reached this with an unredacted player attached. Harmless
+    // today — the row was just created from registration fields they already see, and medical /
+    // emergency / notes columns are still null — but this route was the one roster response in the
+    // portal that shipped the raw shape, and it would leak silently the moment the accept RPC starts
+    // copying more across. (/review 2026-07-31)
+    return NextResponse.json({
+      registrationId: registration.id,
+      status: registration.status,
+      player: redactRosterPlayer(player, r.assignment.capabilities),
+    });
   } catch (e) {
     if (e instanceof TryoutAcceptError) {
       const status = e.code === 'not_found' ? 404 : e.code === 'not_offered' ? 409 : 400;

@@ -9,7 +9,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canViewDocuments, canManageDocuments } from '@/lib/coach-capabilities';
+import { denyUnless, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -47,7 +47,9 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId, playerId } = await params;
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
-  const denied = denyUnless(canViewDocuments(resolved.assignment.capabilities), 'You do not have access to documents.');
+  // Per-player forms need guardian-PII clearance too — the file itself may hold exactly the
+  // details `redactRosterPlayer` nulls on this same player. Team templates gate on `documents` alone.
+  const denied = denyUnless(canViewPlayerDocuments(resolved.assignment.capabilities), 'You do not have access to this player’s documents.');
   if (denied) return denied;
 
   const docs = await getRepPlayerDocuments(playerId);
@@ -60,7 +62,7 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveContext(orgSlug, teamId, playerId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, player, assignment } = resolved;
-  const denied = denyUnless(canManageDocuments(assignment.capabilities), 'You do not have permission to manage documents.');
+  const denied = denyUnless(canManagePlayerDocuments(assignment.capabilities), 'You do not have permission to manage this player’s documents.');
   if (denied) return denied;
 
   let formData: FormData;

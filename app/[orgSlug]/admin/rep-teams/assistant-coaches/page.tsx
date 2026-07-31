@@ -28,7 +28,12 @@ function grantSummary(c: Caps): string {
   if (c.money === 'write') grants.push('money: edit');
   if (c.rosterPii) grants.push('contacts & DOB');
   if (c.notes) grants.push('internal notes');
-  if (c.documents === 'manage') grants.push('manage documents');
+  if (c.documents === 'manage') grants.push('manage team forms');
+  // `documents` alone is blank TEAM forms; a player's signed waiver / medical consent needs
+  // contacts too (canViewPlayerDocuments). Naming it plain "documents" here let an admin read
+  // this row as covering player files when it did not — and, once contacts are also granted,
+  // miss that it now does. Say which. (/review 2026-07-31)
+  if (c.documents !== 'off' && c.rosterPii) grants.push("players' signed forms");
   if (c.announcementsSend) grants.push('send announcements');
   if (c.tryouts) grants.push('tryouts');
   const off: string[] = [];
@@ -36,7 +41,7 @@ function grantSummary(c: Caps): string {
   if (!c.schedule) off.push('schedule');
   if (!c.attendance) off.push('attendance');
   if (!c.lineups) off.push('lineups');
-  if (c.documents === 'off') off.push('documents');
+  if (c.documents === 'off') off.push('team forms');
   if (grants.length === 0 && off.length === 0) return 'Coaching basics only';
   const segs = ['Coaching basics'];
   if (grants.length) segs.push('+ ' + grants.join(' · '));

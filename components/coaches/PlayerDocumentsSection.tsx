@@ -27,9 +27,11 @@ interface Props {
   teamId: string;
   playerId: string;
   /**
-   * Whether THIS coach may upload/delete. Mirrors `canManageDocuments` — the POST and DELETE routes
-   * both 403 without it, and an assistant's documents default is view-only, so an ungated Upload
-   * button was an action they could never complete. Fails OPEN (the routes are the real gate).
+   * Whether THIS coach may upload/delete. Mirrors `canManagePlayerDocuments` (documents:'manage'
+   * AND rosterPii) — the POST and DELETE routes both 403 without it, and an assistant's documents
+   * default is view-only, so an ungated Upload button was an action they could never complete.
+   * Fails OPEN (the routes are the real gate); the player page only mounts this section when
+   * `canViewPlayerDocuments` already passed, so the default is never the effective value there.
    */
   canManage?: boolean;
 }

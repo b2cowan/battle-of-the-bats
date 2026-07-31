@@ -134,8 +134,30 @@ export function isMoneyRedactedForTeam(
   return !assignment || !canViewMoney(assignment.capabilities);
 }
 export const canWriteMoney = (c: CoachCapabilities) => c.money === 'write';
+/** TEAM-level blank forms (`rep_document_templates`) — no `player_id`, nothing personal in them. */
 export const canViewDocuments = (c: CoachCapabilities) => c.documents !== 'off';
 export const canManageDocuments = (c: CoachCapabilities) => c.documents === 'manage';
+
+/**
+ * PER-PLAYER completed forms (`rep_player_documents` — waiver / medical consent / code of conduct),
+ * which require BOTH `documents` AND `rosterPii`.
+ *
+ * `documents` alone was the gate until 2026-07-31, and it defeated the redaction on the very screen
+ * that performs it: a default assistant saw guardian email/phone/DOB/medical notes blanked out by
+ * `redactRosterPlayer`, and directly beneath them that same child's "Medical Consent" PDF listed by
+ * filename with a working Download button. The file contents ARE the guardian details and medical
+ * history the redaction exists to hide — so hiding the field while handing over the document was
+ * one gate contradicting the other.
+ *
+ * Requiring both makes both locked owner decisions true at once — "documents view-only by default"
+ * (2026-06-25) AND "guardian PII off by default" — with no migration and no fourth grant for a head
+ * coach to reason about. A dedicated capability was considered and rejected on that cost.
+ *
+ * Head coaches are unaffected: `HEAD_COACH_ALL` sets `rosterPii: true`, so this is a strict no-op
+ * for them. Org admins never reach these predicates (they use the /api/admin/rep-teams routes).
+ */
+export const canViewPlayerDocuments = (c: CoachCapabilities) => canViewDocuments(c) && c.rosterPii;
+export const canManagePlayerDocuments = (c: CoachCapabilities) => canManageDocuments(c) && c.rosterPii;
 export const canViewRoster = (c: CoachCapabilities) => c.roster !== 'off';
 // Player Awards (Phase 2): "roster/schedule access" per the locked scope — either surface
 // already implies enough context to know the players and games awards attach to.

@@ -8,7 +8,7 @@ import {
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canViewDocuments, canManageDocuments } from '@/lib/coach-capabilities';
+import { denyUnless, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 
 async function resolveContext(orgSlug: string, teamId: string, playerId: string, docId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -38,7 +38,9 @@ export const GET = withObservability(async (_req: Request,
   const resolved = await resolveContext(orgSlug, teamId, playerId, docId);
   if ('error' in resolved) return resolved.error!;
   const { doc, assignment } = resolved;
-  const denied = denyUnless(canViewDocuments(assignment.capabilities), 'You do not have access to documents.');
+  // This route mints a 1-hour signed URL to the actual file, so it is the download itself —
+  // it needs guardian-PII clearance on top of `documents`, same as the list route.
+  const denied = denyUnless(canViewPlayerDocuments(assignment.capabilities), 'You do not have access to this player’s documents.');
   if (denied) return denied;
 
   const { data, error } = await supabaseAdmin.storage
@@ -59,7 +61,7 @@ export const DELETE = withObservability(async (_req: Request,
   const resolved = await resolveContext(orgSlug, teamId, playerId, docId);
   if ('error' in resolved) return resolved.error!;
   const { doc, assignment } = resolved;
-  const denied = denyUnless(canManageDocuments(assignment.capabilities), 'You do not have permission to manage documents.');
+  const denied = denyUnless(canManagePlayerDocuments(assignment.capabilities), 'You do not have permission to manage this player’s documents.');
   if (denied) return denied;
 
   await supabaseAdmin.storage.from('rep-team-documents').remove([doc.storagePath]);

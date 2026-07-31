@@ -6,7 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
 import PlayerDevelopmentSection from '@/components/coaches/PlayerDevelopmentSection';
-import { canViewDevelopmentGoals, canViewMeasurables, canManageDocuments } from '@/lib/coach-capabilities';
+import { canViewDevelopmentGoals, canViewMeasurables, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -526,15 +526,21 @@ export default function PlayerDetailPage({
         </div>
       </div>
 
-      {/* Documents */}
-      <div className={styles.detailSection}>
-        <PlayerDocumentsSection
-          orgSlug={orgSlug}
-          teamId={teamId}
-          playerId={playerId}
-          canManage={assignment ? canManageDocuments(assignment.capabilities) : true}
-        />
-      </div>
+      {/* Documents — a player's signed waiver / medical consent needs BOTH `documents` and
+          guardian-PII clearance. Rendering it unconditionally put that child's medical PDF one tap
+          away directly beneath the guardian fields this same page had just blanked out. The routes
+          are the real gate (they 403 either way); this keeps the surface from advertising a file
+          the coach cannot open. */}
+      {assignment && canViewPlayerDocuments(assignment.capabilities) && (
+        <div className={styles.detailSection}>
+          <PlayerDocumentsSection
+            orgSlug={orgSlug}
+            teamId={teamId}
+            playerId={playerId}
+            canManage={canManagePlayerDocuments(assignment.capabilities)}
+          />
+        </div>
+      )}
 
       {/* Development (Player Development 3A) — section renders only when this coach can see
           goals (notes) or measurables (roster view); the API filters server-side regardless. */}

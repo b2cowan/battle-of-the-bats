@@ -43,14 +43,20 @@ type Toggle = { key: keyof Caps; label: string; hint: string };
 /**
  * The head coach's duty grid. Grants are stored per-assistant; head coaches always have full access.
  *
- * Split into EVERYDAY (the four things an assistant is invited to do) and SENSITIVE (money, family
- * contact details, and anything that speaks to parents), which sits behind a disclosure — ten flat
- * access decisions in one grid was readiness-review finding #8. Every grant still saves instantly;
- * only *granting* something in the sensitive group asks first (D3, 2026-07-28).
+ * Split into EVERYDAY (what an assistant is invited to do) and SENSITIVE (money, family contact
+ * details, and anything that speaks to parents), which sits behind a disclosure — ten flat access
+ * decisions in one grid was readiness-review finding #8. Every grant still saves instantly; only
+ * *granting* something in the sensitive group asks first (D3, 2026-07-28), and as of 2026-07-31
+ * every member of that group has a prompt rather than three of six.
  */
 const EVERYDAY_SEGMENTS: Segment[] = [
   { key: 'roster', label: 'Roster', hint: 'Player list', options: [
     { value: 'off', label: 'Hidden' }, { value: 'view', label: 'View' } ] },
+  // Everyday since 2026-07-31: this grant is blank TEAM forms only. A player's signed waiver or
+  // medical consent now additionally requires `rosterPii` (`canViewPlayerDocuments`), so the speed
+  // bump lives on the grant that actually hands over family details.
+  { key: 'documents', label: 'Documents', hint: 'Blank team forms', options: [
+    { value: 'off', label: 'Hidden' }, { value: 'view', label: 'View' }, { value: 'manage', label: 'Manage' } ] },
 ];
 
 const EVERYDAY_TOGGLES: Toggle[] = [
@@ -62,8 +68,6 @@ const EVERYDAY_TOGGLES: Toggle[] = [
 const SENSITIVE_SEGMENTS: Segment[] = [
   { key: 'money', label: 'Team money', hint: 'Budget, dues, expenses', options: [
     { value: 'off', label: 'Hidden' }, { value: 'read', label: 'View' }, { value: 'write', label: 'View + edit' } ] },
-  { key: 'documents', label: 'Documents', hint: 'Waivers & team files', options: [
-    { value: 'off', label: 'Hidden' }, { value: 'view', label: 'View' }, { value: 'manage', label: 'Manage' } ] },
 ];
 
 const SENSITIVE_TOGGLES: Toggle[] = [
@@ -74,22 +78,65 @@ const SENSITIVE_TOGGLES: Toggle[] = [
 ];
 
 /**
- * The three grants worth a speed bump: money, family contact details, and the ability to email
- * parents. Revoking is never confirmed — a head coach taking access back is always in a hurry.
+ * EVERY grant in the Sensitive group asks first — the group's own note promises "You'll be asked to
+ * confirm before granting these", and until 2026-07-31 only 3 of 6 actually did: Documents, Internal
+ * notes and Tryouts handed over silently. Fixed the behaviour rather than softening the sentence —
+ * "some of these" tells a head coach nothing about which. Documents left the group entirely (it now
+ * grants blank team forms only), so the four below ARE the group.
+ *
+ * Adding a control to SENSITIVE_* without an entry here re-breaks that promise.
+ *
+ * Revoking is never confirmed — a head coach taking access back is always in a hurry.
  */
-const CONFIRM_ON_GRANT: Partial<Record<keyof Caps, (who: string) => { title: string; message: string }>> = {
+type ConfirmCopy = { title: string; message: string };
+/** Returns null when THIS grant, for THIS assistant's current access, needs no speed bump. */
+type ConfirmOnGrant = (who: string, current: Caps) => ConfirmCopy | null;
+
+const CONFIRM_ON_GRANT: Partial<Record<keyof Caps, ConfirmOnGrant>> = {
   money: who => ({
     title: `Give ${who} access to team money?`,
     message: `${who} will be able to see the budget, dues, and every payment on this team. You can take this back any time.`,
   }),
-  rosterPii: who => ({
+  // The other half of the same compound: only claim the signed-forms consequence when Documents is
+  // actually on, or this prompt overstates what it is about to grant — the mirror of the mistake
+  // the Documents entry below fixes.
+  rosterPii: (who, current) => ({
     title: `Share family contact details with ${who}?`,
-    message: `${who} will see guardian names, emails, phone numbers, and player birthdates for the whole roster.`,
+    message: current.documents !== 'off'
+      ? `${who} will see guardian names, emails, phone numbers, and player birthdates for the whole roster — and, because they already have Documents access, will be able to open each player's signed forms including medical consents.`
+      : `${who} will see guardian names, emails, phone numbers, and player birthdates for the whole roster.`,
   }),
   announcementsSend: who => ({
     title: `Let ${who} email your families?`,
     message: `${who} will be able to send announcements to every guardian on the roster, not just draft them.`,
   }),
+  tryouts: who => ({
+    title: `Give ${who} access to tryouts?`,
+    message: `${who} will see every candidate's guardian contact details and your evaluation decisions — including players who never join the team.`,
+  }),
+  notes: who => ({
+    title: `Share your internal notes with ${who}?`,
+    message: `${who} will see private staff notes about each player, which are written for coaches and never shown to families.`,
+  }),
+  /**
+   * ⚠ Documents sits in EVERYDAY because on its own it grants blank team forms — but a player's
+   * signed waiver / medical consent needs `documents` AND `rosterPii` together. So when contacts
+   * are ALREADY granted, switching Documents on is the second half of a compound grant and DOES
+   * hand over medical files — under a control labelled "Blank team forms".
+   *
+   * `/review` 2026-07-31 caught this: the `rosterPii` prompt covers the compound only when PII is
+   * granted LAST, so whether anyone was warned depended purely on the order the head coach happened
+   * to flip the two switches. Confirm exactly when the compound completes, and stay silent when
+   * this really is just blank forms. Generalises: **when two grants COMBINE to unlock something
+   * neither unlocks alone, the confirm belongs on whichever one completes the pair — which means
+   * it is conditional on the other, not a fixed property of the control.**
+   */
+  documents: (who, current) => current.rosterPii
+    ? {
+        title: `Give ${who} access to signed player forms?`,
+        message: `${who} already has family contact details, so turning Documents on also lets them open every player's signed forms — including medical consents.`,
+      }
+    : null,
 };
 
 /**
@@ -123,11 +170,14 @@ const grantedByDefault = (key: keyof Caps) => {
 const DEFAULT_ON = ['Chat', ...GRANT_LABELS.filter(g => grantedByDefault(g.key)).map(g => g.label)];
 const DEFAULT_OFF = GRANT_LABELS.filter(g => !grantedByDefault(g.key)).map(g => g.label);
 
-/** Count of sensitive grants currently in effect — shown on the collapsed group so it never hides one. */
+/**
+ * Count of sensitive grants currently in effect — shown on the collapsed group so it never hides one.
+ * Derived from the SENSITIVE_* arrays themselves, so moving a control between groups (as Documents
+ * moved out on 2026-07-31) can't leave a stale term counting something the group no longer shows.
+ */
 function sensitiveGrantCount(c: Caps): number {
-  return (c.money !== 'off' ? 1 : 0)
-    + (c.documents !== 'off' ? 1 : 0)
-    + SENSITIVE_TOGGLES.filter(t => Boolean(c[t.key])).length;
+  const granted = (v: unknown) => v !== false && v !== 'off' && v !== undefined;
+  return [...SENSITIVE_SEGMENTS, ...SENSITIVE_TOGGLES].filter(t => granted(c[t.key])).length;
 }
 
 function grantsFrom(c: Caps) {
@@ -207,9 +257,13 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
       ? value && !current
       : (RANK[String(value)] ?? 0) > (RANK[String(current)] ?? 0);
     const prompt = CONFIRM_ON_GRANT[key];
-    if (isGrant && prompt) {
-      const { title, message } = prompt(member.displayName || member.email || 'this assistant');
-      const ok = await confirm({ title, message, confirmText: 'Give access', cancelText: 'Cancel', tone: 'warning' });
+    // A prompt may decline to fire for THIS assistant's current access (see `documents`), so the
+    // null case is "no speed bump needed", not "no prompt configured".
+    const copy = isGrant && prompt
+      ? prompt(member.displayName || member.email || 'this assistant', member.capabilities)
+      : null;
+    if (copy) {
+      const ok = await confirm({ ...copy, confirmText: 'Give access', cancelText: 'Cancel', tone: 'warning' });
       if (!ok) return;
     }
     await saveCaps(member, { ...member.capabilities, ...patch });
@@ -388,8 +442,8 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
                 </div>
 
                 {/* Everyday coaching — what an assistant is invited to do, always visible. One fixed
-                    two-column grid (three toggles + Roster) instead of an auto-filling one that
-                    re-flowed the same team's controls differently at every width. */}
+                    two-column grid (three toggles + Roster + Documents) instead of an auto-filling
+                    one that re-flowed the same team's controls differently at every width. */}
                 <p className={css.groupLabel}>Everyday coaching</p>
                 <div className={css.grid}>
                   {EVERYDAY_TOGGLES.map(renderToggle)}
