@@ -44,6 +44,76 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-07-31',
+    title: 'The Coaches Portal grows up — plus one connected navigation and real desktop layouts',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Tournament admin, the Coaches Portal, and public event pages now share one connected navigation, with a Workspaces switcher for anyone running more than one team, league, or tournament.',
+      },
+      {
+        category: 'new',
+        text: 'Coaches Portal notifications now reach coaches\' phones directly, and there\'s one way in instead of two.',
+      },
+      {
+        category: 'new',
+        text: 'Import a season\'s schedule straight from a spreadsheet — game times now save to the exact minute you entered.',
+      },
+      {
+        category: 'new',
+        text: 'Account and Chat both got real desktop layouts: a proper settings screen with sections, and a full split-pane view for chat.',
+      },
+      {
+        category: 'new',
+        text: 'Coaches can score their own tryouts directly, and families only get an email when the coach sends one.',
+      },
+      {
+        category: 'new',
+        text: 'The free Coaches Portal team Overview always shows the one tournament that matters right now, instead of two conflicting answers.',
+      },
+      {
+        category: 'new',
+        text: 'Public tournament pages gained a footer, a "Get the app" QR code, and organizer credit for paid-plan customers.',
+      },
+      {
+        category: 'new',
+        text: 'A full treasurer view in the Coaches Portal: a month-by-month look at the books, a first-season budget starter, and team finances that read clearly on a phone.',
+      },
+      {
+        category: 'new',
+        text: 'Decision emails to families are now the club\'s own choice to send, and applying no longer requires opting into marketing email.',
+      },
+      {
+        category: 'fixed',
+        text: 'A privacy issue where an assistant coach could see a child\'s confidential medical notes — and download the file it came from — is fixed. Access is now properly restricted.',
+      },
+      {
+        category: 'fixed',
+        text: 'The Coaches Portal Development page is redesigned into clear sections instead of a wall of cards; a low-contrast text issue in warm theme is fixed.',
+      },
+      {
+        category: 'fixed',
+        text: 'The coach money screen keeps its own budget total at the bottom, instead of asking for it four separate times.',
+      },
+      {
+        category: 'fixed',
+        text: 'The coaching-staff screen no longer shows the same message three times.',
+      },
+      {
+        category: 'fixed',
+        text: 'The Coaches Portal\'s More menu now scrolls properly and reads correctly in warm theme.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed a message on public tournament pages that wrongly told a paying customer\'s visitors the organizer hadn\'t finished setup.',
+      },
+      {
+        category: 'fixed',
+        text: 'Menus and popups can now be dismissed by tapping away on iPhone, and by pressing Escape on any device.',
+      },
+    ],
+  },
+  {
     date: '2026-07-29',
     title: 'Season\'s End, real tournament tools, and faster role switching for coaches',
     highlights: [
