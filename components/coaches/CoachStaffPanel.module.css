@@ -1,0 +1,295 @@
+/* CoachStaffPanel — the head coach's staff + access screen.
+   Layout study 2026-07-31: this screen used to wrap one message in three containers
+   (page header → tinted section panel repeating the page header → a centred card
+   floating inside it). The panel header is gone (on a single-section page the page
+   header IS the section header), the olive tint is gone (a lime CTA on an olive
+   ground reads muddy — 2026-07-30 ink/lime ruling), and everything now shares one
+   left edge.
+
+   Replaces the file's previous inline-style layout wholesale. */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* The section heading exists for the accessibility tree only — the design decision retires the
+   VISIBLE second header, not the document outline. Not `display: none`, which would remove it
+   from that tree too and defeat the point. */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* One sentence, capped at a readable measure. The "nothing sensitive until you
+   grant it" half of the old intro now lives in the access rail, where it can be
+   specific — it used to be said twice on one screen. */
+.lede {
+  margin: 0;
+  max-width: 68ch;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--white-70);
+}
+
+/* Working column + a persistent access rail.
+   Desktop: rail sits right, spanning both rows of the working column.
+   ≤1023px: single column, rail LAST — a coach reaches their staff first, and on an
+   empty team the list row is only the short teaching block, so the rail is still
+   right there. */
+.cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 288px;
+  grid-template-areas:
+    "invite rail"
+    "list   rail";
+  gap: 1rem 1.5rem;
+  align-items: start;
+}
+
+.inviteArea { grid-area: invite; min-width: 0; }
+.listArea   { grid-area: list;   min-width: 0; display: flex; flex-direction: column; gap: 0.9rem; }
+.railArea   { grid-area: rail;   min-width: 0; }
+
+@media (max-width: 1023px) {
+  .cols {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "invite"
+      "list"
+      "rail";
+  }
+}
+
+/* ── Shared card shell ────────────────────────────────────────────────────── */
+.card {
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+}
+
+/* The invite is a control, not a stray row — capped so it reads as an object. */
+.inviteCard { max-width: 520px; }
+
+.inviteForm {
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+/* Two controls on one row share one height. The portal's shared input and button
+   classes derive their heights from different padding + line-height (≈35px vs
+   ≈37px), so side by side they always read as misaligned. Pin both here rather
+   than retuning either shared class — that would ripple through every form in the
+   portal. 38px matches the portal's existing compact control height; ≤640px both
+   rise to the 44px touch floor the portal already uses for standalone controls. */
+.inviteForm input,
+.inviteForm button {
+  height: 38px;
+}
+
+/* The shared field class sets no line-height, so a single-line text input inherits the body's 1.6
+   — a ~23px line box inside a 20px content box at this height. Harmless in practice (the excess is
+   half-leading, not glyphs) but it means the height budget above doesn't reconcile, so pin the
+   control default. Scoped to this row — the shared class is used by every form in the portal. */
+.inviteForm input { line-height: normal; }
+
+@media (max-width: 640px) {
+  .inviteForm input,
+  .inviteForm button { height: 44px; }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 260px;
+  max-width: 100%;
+}
+
+/* A real label — the field used to carry a placeholder only, which disappears the
+   moment a coach starts typing. */
+.label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+.inviteNote { margin: 0.6rem 0 0; font-size: 0.85rem; color: var(--logic-lime); }
+
+/* Scoped by the card rather than left bare: this overrides `.errorText`'s `margin: 0`, and two
+   single-class rules would be settled only by which module the bundler emits last. The descendant
+   form outranks it deterministically. */
+.card .inviteError { margin: 0.6rem 0 0; }
+
+/* ── Staff list ───────────────────────────────────────────────────────────── */
+.count {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+.person {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.personName { margin: 0; font-weight: 600; color: var(--white-90); }
+/* A long unbroken club/school address would otherwise set the flex item's min-content width and
+   push past the card edge — wrapping is never worse than overflowing. */
+.personEmail { margin: 0; font-size: 0.8rem; color: var(--white-45); overflow-wrap: anywhere; }
+
+.personActions { display: flex; align-items: center; gap: 0.6rem; }
+.saveState { font-size: 0.78rem; color: var(--white-45); }
+.saveStateDone { font-size: 0.78rem; color: var(--logic-lime); }
+/* Card-scoped for the same reason as `.card .inviteError` — this compacts `.btnSecondary`'s own
+   padding/font-size, and equal-specificity rules would be decided by bundler emission order. */
+.card .removeBtn { font-size: 0.78rem; padding: 0.25rem 0.55rem; }
+
+.groupLabel {
+  margin: 1rem 0 0.55rem;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+/* A fixed two-column rhythm. The old auto-fill grid re-flowed the access controls
+   at every width, so the same team's grid never looked the same twice. */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem 1.4rem;
+}
+
+@media (max-width: 560px) {
+  .grid { grid-template-columns: 1fr; }
+}
+
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+.check input { margin-top: 3px; flex-shrink: 0; }
+.checkLabel { font-size: 0.83rem; color: var(--white-90); }
+.checkHint { display: block; font-size: 0.72rem; color: var(--white-45); }
+
+.seg { display: flex; flex-direction: column; gap: 0.22rem; }
+.segLabel { font-size: 0.83rem; color: var(--white-90); }
+.segHint { font-size: 0.72rem; color: var(--white-45); }
+
+.segControl {
+  display: inline-flex;
+  align-self: flex-start;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.segBtn {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 500;
+  padding: 0.3rem 0.65rem;
+  background: transparent;
+  color: var(--white-70);
+}
+
+/* The group clips its rounded corners with overflow:hidden, which swallows the global focus ring
+   drawn 2px OUTSIDE the button. Draw it inside instead — keeping the global colour and width, only
+   moving it. These are the controls that hand out team money and guardian contact details; their
+   keyboard focus state has to be visible. (/review 2026-07-31) */
+.segBtn:focus-visible { outline-offset: -2px; }
+
+.segBtnOn {
+  background: var(--logic-lime);
+  color: var(--pitch-black);
+  font-weight: 700;
+}
+
+/* Warm portal: a lime FILL must stay TRUE lime with dark ink (E3 / the 2026-07-27
+   --logic-lime-fixed ruling). Without this the accent remap turns the selected
+   segment olive, which is the drab-CTA bug the ruling exists to prevent. Mirrors
+   the .btnPrimary rule in coaches.module.css. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnOn {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+.disclosureWrap { margin-top: 0.9rem; }
+
+/* ── Access rail ──────────────────────────────────────────────────────────── */
+/* Standing reference, not a first-run message. This is the only place on the
+   platform that says what an assistant can actually see; it used to be an empty
+   state, so it vanished the moment the first invite landed — exactly when a head
+   coach starts making access decisions. */
+.rail {
+  background: var(--home-card, rgba(255,255,255,0.04));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.railTitle {
+  margin: 0;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-45);
+}
+
+.railGroup { display: flex; flex-direction: column; gap: 0.4rem; }
+
+/* A real heading, styled to the same weight it had as a span — the outline is for assistive tech,
+   not a visual change. */
+.railGroupLabel { margin: 0; font-size: 0.83rem; font-weight: 700; color: var(--white-90); }
+
+.railList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
+
+.railItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.83rem;
+  color: var(--white-70);
+}
+
+/* Lime as an ICON, not a fill — the accent remap correctly darkens it to olive on
+   paper, which is what E3 asks for. */
+.railIconOn { display: grid; place-items: center; flex-shrink: 0; color: var(--logic-lime); }
+.railIconOff { display: grid; place-items: center; flex-shrink: 0; color: var(--white-45); }
+
+.railFoot {
+  margin: 0;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-2);
+  font-size: 0.8rem;
+  line-height: 1.5;
+  color: var(--white-45);
+}

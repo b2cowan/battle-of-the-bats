@@ -1,10 +1,12 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
-import { UserPlus, Trash2, ShieldCheck } from 'lucide-react';
+import { useCallback, useEffect, useId, useState } from 'react';
+import { UserPlus, Trash2, Check, Lock } from 'lucide-react';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { ASSISTANT_DEFAULTS } from '@/lib/coach-capabilities';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
+import css from './CoachStaffPanel.module.css';
 
 type MoneyAccess = 'off' | 'read' | 'write';
 type DocsAccess = 'off' | 'view' | 'manage';
@@ -90,6 +92,37 @@ const CONFIRM_ON_GRANT: Partial<Record<keyof Caps, (who: string) => { title: str
   }),
 };
 
+/**
+ * The access rail's two lists. This is the only place on the platform that states what an
+ * assistant can actually see, and it used to be an empty state — so it disappeared the moment
+ * the first invite landed, which is exactly when a head coach starts granting things (layout
+ * study 2026-07-31). It is now standing reference beside the staff list.
+ *
+ * BOTH lists are derived from `ASSISTANT_DEFAULTS` — the server's own least-privilege bundle —
+ * and never from which group a control happens to sit in.
+ *
+ * /review 2026-07-31 caught the first version deriving "off until you turn it on" from
+ * SENSITIVE_* membership. **Sensitive and off-by-default are different questions:** Documents is
+ * sensitive but ships `view` (a locked owner decision, 2026-06-25 — see `lib/coach-capabilities.ts`),
+ * so the rail told head coaches that waivers and team files were locked when every new assistant
+ * could already open them. Reading the defaults directly makes that class of lie structurally
+ * impossible — if a default ever changes, this rail changes with it.
+ */
+const GRANT_LABELS: ReadonlyArray<{ key: keyof Caps; label: string }> =
+  [...EVERYDAY_TOGGLES, ...EVERYDAY_SEGMENTS, ...SENSITIVE_SEGMENTS, ...SENSITIVE_TOGGLES]
+    .map(({ key, label }) => ({ key, label }));
+
+/** Granted = a toggle that is true, or a segment set to anything other than 'off'. */
+const grantedByDefault = (key: keyof Caps) => {
+  const v = ASSISTANT_DEFAULTS[key];
+  return v !== false && v !== 'off';
+};
+
+// Chat is named explicitly because it is NOT a capability toggle — every coach on a team becomes a
+// chat member on reconcile, so there is no default to derive it from.
+const DEFAULT_ON = ['Chat', ...GRANT_LABELS.filter(g => grantedByDefault(g.key)).map(g => g.label)];
+const DEFAULT_OFF = GRANT_LABELS.filter(g => !grantedByDefault(g.key)).map(g => g.label);
+
 /** Count of sensitive grants currently in effect — shown on the collapsed group so it never hides one. */
 function sensitiveGrantCount(c: Caps): number {
   return (c.money !== 'off' ? 1 : 0)
@@ -120,6 +153,7 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
   const [inviteError, setInviteError] = useState('');
 
   const confirm = useConfirm();
+  const uid = useId();
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/staff`;
 
   const load = useCallback(async () => {
@@ -229,140 +263,199 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
   const assistants = (staff ?? []).filter(s => s.coachRole === 'assistant_coach');
 
   return (
-    <section className={styles.setupPanel} aria-labelledby="staff-title">
-      <div className={styles.setupHeader}>
-        <div>
-          <p className={styles.setupKicker}>Coaching staff</p>
-          <h2 id="staff-title" className={styles.setupTitle}>Assistant coaches</h2>
-        </div>
-        <ShieldCheck size={18} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
-      </div>
+    <section className={css.wrap} aria-labelledby={`${uid}-title`}>
+      {/* The design decision retires the VISIBLE second section header (the page h1 names this
+          screen). The heading itself still has to exist: without it the page jumped h1 → h3/h4 and
+          a screen-reader user browsing by heading saw loose h3s with nothing tying them to
+          "Assistant coaches" (/review 2026-07-31). Hidden visually, present structurally. */}
+      <h2 id={`${uid}-title`} className={css.srOnly}>Assistant coaches</h2>
 
-      <p style={{ margin: '0 0 0.9rem', fontSize: '0.88rem', color: 'var(--white-70)' }}>
-        Invite assistants and choose exactly what each one can do. New assistants start with the safe
-        basics (chat, schedule, attendance, lineups, roster names) and nothing sensitive until you grant it.
-      </p>
-
-      {/* Invite */}
-      <form onSubmit={sendInvite} style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '0.5rem' }}>
-        <input
-          type="email"
-          required
-          className={styles.input}
-          placeholder="assistant@email.com"
-          value={inviteEmail}
-          onChange={e => { setInviteEmail(e.target.value); setInviteMsg(''); setInviteError(''); }}
-          style={{ maxWidth: 300 }}
-        />
-        <button type="submit" className={styles.btnPrimary} disabled={inviting} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap' }}>
-          <UserPlus size={15} /> {inviting ? 'Sending…' : 'Invite assistant'}
-        </button>
-      </form>
-      {inviteMsg && <p style={{ margin: '0 0 0.6rem', fontSize: '0.85rem', color: 'var(--logic-lime)' }}>{inviteMsg}</p>}
-      {inviteError && <p className={styles.errorText} style={{ margin: '0 0 0.6rem' }}>{inviteError}</p>}
+      {/* One sentence. The other half of the old intro ("nothing sensitive until you grant it")
+          now lives in the access rail, where it can name the actual areas instead of being the
+          same promise said twice on one screen. */}
+      <p className={css.lede}>Invite assistants and choose exactly what each one can do.</p>
 
       {loadError && <p className={styles.errorText}>{loadError}</p>}
-      {!staff && !loadError && <p className={styles.muted}>Loading staff…</p>}
 
-      {staff && assistants.length === 0 && (
-        // The invite form directly above is the ONE action, so this teaches rather than repeating it.
-        <CoachEmptyState
-          compact
-          icon={<UserPlus size={20} aria-hidden />}
-          headline="No assistant coaches yet"
-          description="An assistant gets their own sign-in to this team — you never share a password — and sees only the areas you switch on for them."
-          payoff="They can add games while you run practice, build the lineup, or take attendance on game day, and it all lands in the same team — so the roster, schedule and Insights everyone sees stay in step."
-          blocker="New assistants start with the least access that's still useful. Guardian contacts, private notes, team money, sending announcements and tryouts are all off until you turn them on."
-        />
-      )}
+      <div className={css.cols}>
+        {/* Invite — its own object, with a real field label. */}
+        <div className={`${css.inviteArea} ${css.card} ${css.inviteCard}`}>
+          <form onSubmit={sendInvite} className={css.inviteForm}>
+            <div className={css.field}>
+              <label className={css.label} htmlFor={`${uid}-invite-email`}>Assistant&apos;s email</label>
+              <input
+                id={`${uid}-invite-email`}
+                type="email"
+                required
+                className={styles.input}
+                placeholder="assistant@email.com"
+                value={inviteEmail}
+                onChange={e => { setInviteEmail(e.target.value); setInviteMsg(''); setInviteError(''); }}
+              />
+            </div>
+            <button type="submit" className={styles.btnPrimary} disabled={inviting}>
+              <UserPlus size={15} /> {inviting ? 'Sending…' : 'Invite assistant'}
+            </button>
+          </form>
+          {inviteMsg && <p className={css.inviteNote}>{inviteMsg}</p>}
+          {inviteError && <p className={`${styles.errorText} ${css.inviteError}`}>{inviteError}</p>}
+        </div>
 
-      {/* Assistant cards */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem', marginTop: '0.6rem' }}>
-        {assistants.map(member => {
-          const c = member.capabilities;
-          const setCap = (patch: Partial<Caps>) => { void requestSetCap(member, patch); };
-          const renderSegment = (seg: Segment) => (
-            <div key={String(seg.key)} style={{ minWidth: 170 }}>
-              <p style={{ margin: '0 0 0.2rem', fontSize: '0.8rem', color: 'var(--white-70)' }}>{seg.label}</p>
-              <div style={{ display: 'inline-flex', border: '1px solid var(--border-2)', borderRadius: 8, overflow: 'hidden' }}>
-                {seg.options.map(opt => {
-                  const active = String(c[seg.key]) === opt.value;
-                  return (
-                    <button key={opt.value} type="button"
-                      onClick={() => setCap({ [seg.key]: opt.value } as Partial<Caps>)}
-                      style={{
-                        border: 'none', cursor: 'pointer', fontSize: '0.76rem', padding: '0.3rem 0.6rem',
-                        background: active ? 'var(--logic-lime)' : 'transparent',
-                        color: active ? 'var(--pitch-black)' : 'var(--white-70)',
-                        fontWeight: active ? 700 : 500,
-                      }}>
-                      {opt.label}
+        <div className={css.listArea}>
+          {!staff && !loadError && <p className={styles.muted}>Loading staff…</p>}
+
+          {staff && assistants.length === 0 && (
+            // Quiet, not the glowing illustration: the invite sits directly above and the rail
+            // beside it, so this is a note at the weight of the panels around it, not a hero.
+            // The description no longer says an assistant "sees only the areas you switch on" —
+            // that was false (several areas are on from the start) and contradicted the rail
+            // beside it. (/review 2026-07-31)
+            <CoachEmptyState
+              quiet
+              icon={<UserPlus size={18} aria-hidden />}
+              headline="No assistant coaches yet"
+              description="An assistant gets their own sign-in to this team, and you decide which areas they can open."
+              payoff="They can add games while you run practice, build the lineup, or take attendance on game day, and it all lands in the same team — so the roster, schedule and Insights everyone sees stay in step."
+            />
+          )}
+
+          {staff && assistants.length > 0 && (
+            <p className={css.count}>
+              {assistants.length} {assistants.length === 1 ? 'assistant' : 'assistants'}
+            </p>
+          )}
+
+          {assistants.map(member => {
+            const c = member.capabilities;
+            const setCap = (patch: Partial<Caps>) => { void requestSetCap(member, patch); };
+            // The visible label is tied to the button group with role="group" + aria-labelledby.
+            // Without it a screen-reader user tabbing in hears only "Hidden, pressed" with no idea
+            // WHICH area it governs — on a screen that hands out team money and guardian contact
+            // details, that was the most consequential gap /review found (2026-07-31). The ids are
+            // per-assistant so they stay unique when several staff cards are on screen.
+            const renderSegment = (seg: Segment) => {
+              const labelId = `${uid}-${member.coachId}-${String(seg.key)}`;
+              return (
+                <div key={String(seg.key)} className={css.seg}>
+                  <span className={css.segLabel} id={labelId}>{seg.label}</span>
+                  <span className={css.segControl} role="group" aria-labelledby={labelId}>
+                    {seg.options.map(opt => {
+                      const active = String(c[seg.key]) === opt.value;
+                      return (
+                        <button key={opt.value} type="button"
+                          aria-pressed={active}
+                          className={active ? `${css.segBtn} ${css.segBtnOn}` : css.segBtn}
+                          onClick={() => setCap({ [seg.key]: opt.value } as Partial<Caps>)}>
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </span>
+                  <span className={css.segHint}>{seg.hint}</span>
+                </div>
+              );
+            };
+            const renderToggle = (t: Toggle) => (
+              <label key={String(t.key)} className={css.check}>
+                <input type="checkbox" checked={Boolean(c[t.key])} onChange={e => setCap({ [t.key]: e.target.checked } as Partial<Caps>)} />
+                <span>
+                  <span className={css.checkLabel}>{t.label}</span>
+                  <span className={css.checkHint}>{t.hint}</span>
+                </span>
+              </label>
+            );
+            const granted = sensitiveGrantCount(c);
+            return (
+              <div key={member.coachId} className={css.card}>
+                <div className={css.person}>
+                  <div>
+                    <p className={css.personName}>{member.displayName || member.email || 'Assistant coach'}</p>
+                    {member.email && member.displayName && <p className={css.personEmail}>{member.email}</p>}
+                  </div>
+                  <div className={css.personActions}>
+                    {/* Persistent live region — a wrapper that only appears WITH its text is often
+                        never announced. This confirms a money / guardian-contact grant actually
+                        saved, so it has to reach assistive tech. (/review 2026-07-31) */}
+                    <span role="status" aria-live="polite">
+                      {savingId === member.coachId && <span className={css.saveState}>Saving…</span>}
+                      {savedId === member.coachId && <span className={css.saveStateDone}>Saved</span>}
+                    </span>
+                    <button type="button" onClick={() => removeAssistant(member)} disabled={removingId === member.coachId}
+                      className={`${styles.btnSecondary} ${css.removeBtn}`}>
+                      <Trash2 size={13} /> Remove
                     </button>
-                  );
-                })}
-              </div>
-              <p style={{ margin: '0.15rem 0 0', fontSize: '0.72rem', color: 'var(--white-45)' }}>{seg.hint}</p>
-            </div>
-          );
-          const renderToggle = (t: Toggle) => (
-            <label key={String(t.key)} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', cursor: 'pointer' }}>
-              <input type="checkbox" checked={Boolean(c[t.key])} onChange={e => setCap({ [t.key]: e.target.checked } as Partial<Caps>)} style={{ marginTop: 2 }} />
-              <span>
-                <span style={{ fontSize: '0.83rem', color: 'var(--white-90)' }}>{t.label}</span>
-                <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--white-45)' }}>{t.hint}</span>
-              </span>
-            </label>
-          );
-          const granted = sensitiveGrantCount(c);
-          return (
-            <div key={member.coachId} style={{ border: '1px solid var(--border-2)', borderRadius: 10, padding: '0.85rem' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <div>
-                  <p style={{ margin: 0, fontWeight: 600, color: 'var(--white-90)' }}>{member.displayName || member.email || 'Assistant coach'}</p>
-                  {member.email && member.displayName && <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--white-45)' }}>{member.email}</p>}
+                  </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                  {savingId === member.coachId && <span style={{ fontSize: '0.78rem', color: 'var(--white-45)' }}>Saving…</span>}
-                  {savedId === member.coachId && <span style={{ fontSize: '0.78rem', color: 'var(--logic-lime)' }}>Saved</span>}
-                  <button type="button" onClick={() => removeAssistant(member)} disabled={removingId === member.coachId}
-                    className={styles.btnSecondary}
-                    style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.78rem', padding: '0.25rem 0.55rem' }}>
-                    <Trash2 size={13} /> Remove
-                  </button>
+
+                {/* Everyday coaching — what an assistant is invited to do, always visible. One fixed
+                    two-column grid (three toggles + Roster) instead of an auto-filling one that
+                    re-flowed the same team's controls differently at every width. */}
+                <p className={css.groupLabel}>Everyday coaching</p>
+                <div className={css.grid}>
+                  {EVERYDAY_TOGGLES.map(renderToggle)}
+                  {EVERYDAY_SEGMENTS.map(renderSegment)}
+                </div>
+
+                {/* Sensitive access — money, family contact details, and anything that emails parents.
+                    The count on the collapsed toggle means a granted permission is never out of sight,
+                    and the group opens by default whenever something is already granted. */}
+                <div className={css.disclosureWrap}>
+                  <CoachFormDisclosure
+                    label="Sensitive access"
+                    title="Sensitive access"
+                    note="Money, family contact details, and anything that emails your parents. You'll be asked to confirm before granting these."
+                    meta={granted > 0 ? `${granted} granted` : undefined}
+                    defaultOpen={granted > 0}
+                  >
+                    <div className={css.grid}>
+                      {SENSITIVE_SEGMENTS.map(renderSegment)}
+                      {SENSITIVE_TOGGLES.map(renderToggle)}
+                    </div>
+                  </CoachFormDisclosure>
                 </div>
               </div>
+            );
+          })}
+        </div>
 
-              {/* Everyday coaching — what an assistant is invited to do, always visible. */}
-              <p className={styles.formSectionTitle} style={{ marginTop: '0.7rem' }}>Everyday coaching</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem 1rem', marginTop: '0.4rem' }}>
-                {EVERYDAY_TOGGLES.map(renderToggle)}
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.9rem', marginTop: '0.7rem' }}>
-                {EVERYDAY_SEGMENTS.map(renderSegment)}
-              </div>
+        {/* Standing access reference — see DEFAULT_ON / DEFAULT_OFF above. */}
+        <aside className={`${css.railArea} ${css.rail}`} aria-label="What an assistant gets">
+          <h3 className={css.railTitle}>What an assistant gets</h3>
 
-              {/* Sensitive access — money, family contact details, and anything that emails parents.
-                  The count on the collapsed toggle means a granted permission is never out of sight,
-                  and the group opens by default whenever something is already granted. */}
-              <div style={{ marginTop: '0.9rem' }}>
-                <CoachFormDisclosure
-                  label="Sensitive access"
-                  title="Sensitive access"
-                  note="Money, family contact details, and anything that emails your parents. You'll be asked to confirm before granting these."
-                  meta={granted > 0 ? `${granted} granted` : undefined}
-                  defaultOpen={granted > 0}
-                >
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.9rem' }}>
-                    {SENSITIVE_SEGMENTS.map(renderSegment)}
-                  </div>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '0.5rem 1rem' }}>
-                    {SENSITIVE_TOGGLES.map(renderToggle)}
-                  </div>
-                </CoachFormDisclosure>
-              </div>
-            </div>
-          );
-        })}
+          {/* Real lists, each tied to its own heading. The check and lock glyphs are decorative
+              (aria-hidden), so before this the on/off distinction reached assistive tech ONLY as
+              reading order — fine read top-to-bottom, useless to anyone jumping by list or
+              heading. The headings now carry the state, and the lists announce their length.
+              (/review 2026-07-31) */}
+          <div className={css.railGroup}>
+            <h4 className={css.railGroupLabel} id={`${uid}-rail-on`}>On from the start</h4>
+            <ul className={css.railList} aria-labelledby={`${uid}-rail-on`}>
+              {DEFAULT_ON.map(label => (
+                <li key={label} className={css.railItem}>
+                  <span className={css.railIconOn}><Check size={13} aria-hidden /></span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className={css.railGroup}>
+            <h4 className={css.railGroupLabel} id={`${uid}-rail-off`}>Off until you turn it on</h4>
+            <ul className={css.railList} aria-labelledby={`${uid}-rail-off`}>
+              {DEFAULT_OFF.map(label => (
+                <li key={label} className={css.railItem}>
+                  <span className={css.railIconOff}><Lock size={12} aria-hidden /></span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <p className={css.railFoot}>
+            Every assistant signs in as themselves — you never share a password — and you can take
+            any of this back the moment you need to.
+          </p>
+        </aside>
       </div>
     </section>
   );
