@@ -208,6 +208,122 @@
   font-size: 0.68rem;
 }
 
+/* ── Split pane (Phase 2) — ONE tree at every width, CSS-driven swap ────────────────
+   The JSX renders list + conversation panes at every viewport; these rules decide what
+   shows. Below 1024px they reproduce the shipped full-swap exactly (and the ≤900px
+   fixed-position conversation rule still owns the phone overlay). The shape must never
+   branch on a JS viewport flag: a root-shape change across the 1024px boundary remounts
+   the whole ChatPanel — destroying an unsent draft, refetching history, resubscribing
+   realtime — and flashes the mobile layout on desktop deep-link loads (/review
+   2026-07-31; CoachChatView's constant-shape recipe). */
+.split {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  width: 100%;
+}
+.splitConv {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+}
+@media (max-width: 1023px) {
+  /* The shipped full swap, via CSS: an open room hides the list; no selection hides the
+     conversation pane (which would only hold the desktop placeholder). */
+  .splitHasSel .splitList { display: none; }
+  .split:not(.splitHasSel) .splitConv { display: none; }
+}
+
+/* Desktop (≥1024px): the shell takes the definite viewport height the pinned-composer
+   layout always assumed (it only ever existed on mobile via position:fixed): messages
+   scroll, the composer stays put, the page never scrolls — which is also why /chat keeps
+   its footer opt-out (see Footer.tsx). */
+@media (min-width: 1024px) {
+  .chatShell {
+    /* .content starts flush under the sticky top bar, so this is exactly the remaining
+       viewport. overflow-y:auto (not hidden): the split sizes itself to fit, and the few
+       non-split states (fan pitch / loading / error) scroll INSIDE the pane on short
+       screens instead of being clipped. */
+    height: calc(100dvh - var(--consumer-top-h, 3rem));
+    min-height: 0;
+    overflow-y: auto;
+  }
+  .split {
+    /* FULL width, not the --app-col reading measure (owner QA 2026-07-31, WhatsApp as the
+       reference): chat is an app pane, and centring it in the browse column wasted most of
+       a wide screen. Long lines don't follow — each bubble caps its own width in ChatPanel,
+       and the message spread is tuned on .splitConv below. */
+    flex-direction: row;
+    gap: 1rem;
+    padding: 1.1rem 1rem 1.25rem;
+  }
+  .splitList {
+    /* ~a quarter of the screen like the desktop messengers, floored at the phone-list
+       width and capped so the list never rivals the conversation. */
+    flex: 0 0 clamp(300px, 24vw, 400px);
+    /* Not min-width:auto — the nowrap preview lines would floor the pane at their
+       min-content width and silently widen it past the track; the rows' own ellipsis
+       truncation is what absorbs the narrowness, exactly as it does on phones. */
+    min-width: 0;
+    /* This element also wears .inbox (the phone list): neutralize its centering caps. */
+    max-width: none;
+    margin: 0;
+  }
+  .splitConv {
+    /* Owner tuning 2026-07-31 (second pass): the panel's 820px reading column left dead margins
+       inside a 1400px+ pane. Widen the message spread to the pane minus a 2.5rem inset per side —
+       incoming bubbles hug left, outgoing hug right, the WhatsApp shape. Long messages stay
+       readable because each bubble caps its own width (min(78%, 520px) in ChatPanel). The 100%s
+       cancel inside the panel's gutter calc, so this resolves to a clean 2.5rem everywhere the
+       panel uses the formula (messages, composer, pinned bar, reply bar, popovers). */
+    --chat-max: calc(100% - 5rem);
+  }
+  /* Explicit height chain (binding chat-pane ruling: never rely on flex-stretch alone) —
+     the conversation wrapper takes the pane's full height so ChatPanel's own
+     `height:100%` finally has something definite to resolve against on desktop. */
+  .splitConv .conversation { height: 100%; flex: none; }
+
+  /* The open room's row — persistent card highlight (hover look, held). Box-shadow ring,
+     not a border: the row resets `border:none`, and a late border would nudge the text a
+     pixel at selection time. */
+  .rowActive,
+  .rowActive:hover {
+    background: var(--home-card);
+    box-shadow: 0 0 0 1px var(--home-line), var(--home-shadow-sm);
+  }
+
+  /* Right pane before any room is chosen. No auto-open with several rooms — opening marks
+     a room read, and that stays the reader's call. Blueprint-blue medallion: the chat
+     empty-state idiom. */
+  .pickPane {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.7rem;
+    padding: 2rem;
+    text-align: center;
+    color: var(--home-dim);
+    font-family: var(--font-sans, system-ui, sans-serif);
+  }
+  .pickMedallion {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(var(--home-blue-rgb), 0.1);
+    color: var(--home-blue);
+  }
+  .pickTitle { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--home-ink-soft); }
+  .pickSub { margin: 0; font-size: 0.82rem; line-height: 1.5; max-width: 30ch; }
+}
+
 /* ── Conversation host ─────────────────────────────────────────────────── */
 .conversation {
   display: flex;

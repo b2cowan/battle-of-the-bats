@@ -1,8 +1,11 @@
 .panel {
   /* Conversation content is centered to a readable column on wide panes; the header/composer BARS
      stay full-width (chrome). The max() gutter no-ops below this width, so narrow panes stay edge-to-
-     edge. Tune the reading width here. */
-  --chat-max: 820px;
+     edge. --chat-max is deliberately NOT declared here: a declaration on .panel would beat any
+     ancestor's value, and the consumer desktop split (Desktop Phase 2, owner-tuned) widens the column
+     by setting --chat-max on its pane. The platform default (820px) lives in globals.css :root — edit
+     it THERE; the var(--chat-max, 820px) fallbacks below are a safety net only. Every other host
+     (admin, coach, consumer phone) inherits the :root default unchanged. */
   position: relative;
   display: flex;
   flex-direction: column;

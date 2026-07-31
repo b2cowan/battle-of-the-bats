@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
-import { createClient } from '@/lib/supabase-server';
+import { getAuthUserCached } from '@/lib/supabase-server';
 import { safeNextPath } from '@/lib/safe-redirect';
 import warm from '@/components/consumer/warmTheme.module.css';
 import shell from './chat-inbox.module.css';
@@ -45,8 +45,7 @@ export default async function ChatPage({
   // would otherwise win the `??` in ChatInbox and defeat that fallback).
   const roomId = rawRoom && rawRoom.length > 0 ? rawRoom : undefined;
 
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getAuthUserCached();
   const signedIn = !!user?.email;
 
   // WI-2 (owner decision, WhatsApp model): a chat push tapped while signed out must prompt sign-in

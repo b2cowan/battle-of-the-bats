@@ -23,13 +23,21 @@ export default function ChatConversation({
   room,
   onBack,
   onMuteChange,
+  hideBack = false,
 }: {
   room: InboxRoom;
   onBack: () => void;
   onMuteChange?: (muted: boolean) => void;
+  /** Desktop split pane (Phase 2): the room list stays on screen, so the back button is
+   *  redundant chrome there — same rule as CoachChatView's `multi && !isDesktop`. */
+  hideBack?: boolean;
 }) {
   const [sheet, setSheet] = useState<SheetTarget>(null);
-  const [muted, setMuted] = useState(room.selfNotifMuted);
+  // Mute state lives on the PARENT's rooms list (single source): the inbox updates it
+  // optimistically via onMuteChange and it flows back down through `room`. A local copy
+  // seeded at mount went stale when a desktop refresh updated the same-key room prop
+  // (/review 2026-07-31).
+  const muted = room.selfNotifMuted;
 
   // WI-1: the return path out of a chat room. The event chip goes back to the tournament home; the
   // Event-admin shortcut (moderators only) opens the admin chat with THIS tournament pre-selected.
@@ -77,9 +85,11 @@ export default function ChatConversation({
         onLongPressMessage={(m) => setSheet(m)}
         headerRight={headerRight}
         iconBefore={
-          <button type="button" className={styles.backBtn} onClick={onBack} aria-label="Back to your chats">
-            <ChevronLeft size={20} aria-hidden />
-          </button>
+          hideBack ? undefined : (
+            <button type="button" className={styles.backBtn} onClick={onBack} aria-label="Back to your chats">
+              <ChevronLeft size={20} aria-hidden />
+            </button>
+          )
         }
       />
       <ChatSafetySheet
@@ -89,7 +99,7 @@ export default function ChatConversation({
         roomId={room.roomId}
         muted={muted}
         onClose={() => setSheet(null)}
-        onMuteChange={(m) => { setMuted(m); onMuteChange?.(m); }}
+        onMuteChange={(m) => onMuteChange?.(m)}
       />
     </div>
   );

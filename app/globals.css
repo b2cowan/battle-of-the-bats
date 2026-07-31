@@ -134,6 +134,13 @@
      ships with today, so mobile and tablet stay untouched. */
   --app-col: 980px;
 
+  /* Chat conversation reading-column default (ChatPanel). ONE home for the number: the
+     panel deliberately does NOT declare this on itself so a host can override it (the
+     consumer desktop split sets its own on .splitConv); every ChatPanel usage carries a
+     var(--chat-max, 820px) fallback as a safety net, but THIS declaration is the value
+     to edit. */
+  --chat-max: 820px;
+
   /* Themeable nav backgrounds — overridden in light mode */
   --nav-bg-scrolled:  rgba(13, 11, 20, 0.92);
   --nav-mobile-bg:    rgba(13, 11, 20, 0.97);

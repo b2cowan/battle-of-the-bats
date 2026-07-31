@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { MessageSquare, ChevronLeft, Loader2, UserPlus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { teamColor, teamInitials } from '@/lib/team-color';
+import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
 import { divisionScopeLabel } from '@/lib/chat-display';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
@@ -89,20 +90,10 @@ export default function CoachChatView() {
   const [selected, setSelected] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   // On desktop (≥1024px) the room list is a PERSISTENT sidebar, so the "Rooms" back control is
-  // redundant there — only render it on mobile (full-swap list↔conversation). Default false (mobile)
-  // for SSR; corrected on mount so it's never shown on a desktop pane.
-  const [isDesktop, setIsDesktop] = useState(false);
+  // redundant there — only render it on mobile (full-swap list↔conversation).
+  const isDesktop = useIsDesktop();
   const pathname = usePathname();
   const { openHelp } = useHelpDrawer();
-
-  useEffect(() => {
-    if (typeof window === 'undefined' || !window.matchMedia) return;
-    const mq = window.matchMedia('(min-width: 1024px)');
-    const update = () => setIsDesktop(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
