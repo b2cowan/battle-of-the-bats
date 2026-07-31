@@ -552,6 +552,27 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --white-05: var(--home-paper);
   --white-03: var(--home-paper);
 
+  /* ── Re-anchor INHERITED text colour to the warm-scoped ink (the white-on-cream floor) ──
+     `body { color: var(--white) }` resolves OUTSIDE this marker, so it computes to the DARK
+     ramp's white. Every descendant that doesn't name its own colour token inherits that and
+     vanishes on the cream ground — the Development test-type rows and the session run screen's
+     recorded readings did exactly that, at ~1.25:1.
+     Declared HERE, on the marker itself, rather than on a shell class: the ORG-SCOPED coaches
+     layout puts its marker on a display:contents wrapper ABOVE the providers, so the re-anchor
+     also reaches the modals, drawers, bottom nav and install prompt that render as SIBLINGS of
+     the shell. Inherited properties pass through display:contents (inheritance walks the DOM
+     tree, not the box tree), so the missing box costs nothing.
+     NOTE the org-less /coaches portal differs: its marker sits on CoachPortalShell's own root,
+     which HelpDrawerProvider wraps from OUTSIDE — so that portal's help drawer receives neither
+     the warm tokens nor this re-anchor. It renders self-consistently dark rather than illegible,
+     so it is a pre-existing cosmetic gap, not a legibility bug — but don't read the sibling
+     claim above as covering both shells.
+     CoachPortalShell's `.shell` already carries the same re-anchor for its own subtree (with
+     the same reasoning in its comment); this is the portal-wide floor beneath it. Any element
+     that names its own colour still wins — verified no dark-filled coach surface relies on
+     inheriting white. */
+  color: var(--white);
+
   /* ── :root ALIASES of the ramp must be RE-DECLARED here (frozen-alias gotcha) ──
      An alias like --text-primary: var(--white) resolves AT :root against the DARK
      ramp, and descendants inherit that already-resolved value — the --white remaps

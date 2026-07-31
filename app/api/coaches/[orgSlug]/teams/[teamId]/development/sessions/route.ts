@@ -80,6 +80,19 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'No active program year for this team' }, { status: 404 });
   }
 
+  // The dead-end guard (hub restructure D1, 2026-07-31): a session with nothing to measure
+  // records nothing, so it must not be creatable. The hub already holds its button back in
+  // this state, but the honest prerequisite belongs on the write path too — the old UI let
+  // the click through and landed the coach on an empty session screen.
+  // ACTIVE types only: an all-retired list leaves the session picker empty just the same.
+  const activeTypes = await getRepTeamMeasurableTypes(teamId, { includeRetired: false });
+  if (activeTypes.length === 0) {
+    return NextResponse.json(
+      { error: 'Add at least one test to your list before running a session — a session with nothing to measure records nothing.' },
+      { status: 400 },
+    );
+  }
+
   const session = await createRepTeamEvaluationSession({
     orgId: ctx.org.id,
     teamId,

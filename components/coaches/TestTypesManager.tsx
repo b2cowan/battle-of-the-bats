@@ -7,13 +7,17 @@ import type { RepTeamMeasurableType } from '@/lib/types';
 /** The "add a new test type" fields — ONE implementation for the inline log flow, the manage
  *  surfaces, and the session screen. Lives HERE (not in PlayerDevelopmentSection) so the
  *  import graph stays acyclic: PlayerDevelopmentSection → TestTypesManager, never back. */
-export function NewTypeFields({ idPrefix, name, unit, onName, onUnit, onAdd }: {
+export function NewTypeFields({ idPrefix, name, unit, onName, onUnit, onAdd, primaryAdd = false }: {
   idPrefix: string;
   name: string;
   unit: string;
   onName: (v: string) => void;
   onUnit: (v: string) => void;
   onAdd: () => void;
+  /** CP-1 (one lime per surface): normally the surface's lime belongs to something else, so
+   *  Add stays ghost. The Development hub's FIRST-RUN state is the exception — sessions are
+   *  held back until a test exists, so adding the first test IS the page's one action. */
+  primaryAdd?: boolean;
 }) {
   return (
     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', flexWrap: 'wrap' }}>
@@ -27,7 +31,7 @@ export function NewTypeFields({ idPrefix, name, unit, onName, onUnit, onAdd }: {
         <input id={`${idPrefix}-unit`} className={styles.input} type="text" value={unit}
           onChange={e => onUnit(e.target.value)} maxLength={20} placeholder="seconds" />
       </div>
-      <button type="button" className="btn btn-ghost" style={{ fontSize: '0.8rem' }} onClick={onAdd}>
+      <button type="button" className={`btn ${primaryAdd ? 'btn-lime' : 'btn-ghost'}`} style={{ fontSize: '0.8rem' }} onClick={onAdd}>
         Add test
       </button>
     </div>
@@ -41,12 +45,14 @@ export function NewTypeFields({ idPrefix, name, unit, onName, onUnit, onAdd }: {
  * dialog shipped with. `onTypesChanged` takes an UPDATER (prev → next), never a snapshot —
  * a stale-prop overwrite here silently dropped concurrent type creations (3B review fix).
  */
-export default function TestTypesManager({ apiBase, types, canWrite, onTypesChanged }: {
+export default function TestTypesManager({ apiBase, types, canWrite, onTypesChanged, primaryAdd = false }: {
   /** …/api/coaches/{org}/teams/{team}/development/measurable-types */
   apiBase: string;
   types: RepTeamMeasurableType[];
   canWrite: boolean;
   onTypesChanged: (update: (prev: RepTeamMeasurableType[]) => RepTeamMeasurableType[]) => void;
+  /** Render Add as the lime action — see NewTypeFields. Default ghost. */
+  primaryAdd?: boolean;
 }) {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState('');
@@ -173,7 +179,7 @@ export default function TestTypesManager({ apiBase, types, canWrite, onTypesChan
       {canWrite && (
         <div style={{ marginTop: '0.7rem' }}>
           <NewTypeFields idPrefix="test-types-manager" name={newName} unit={newUnit}
-            onName={setNewName} onUnit={setNewUnit} onAdd={addType} />
+            onName={setNewName} onUnit={setNewUnit} onAdd={addType} primaryAdd={primaryAdd} />
         </div>
       )}
       {err && <p className={styles.errorText} role="alert" style={{ marginTop: '0.5rem' }}>{err}</p>}

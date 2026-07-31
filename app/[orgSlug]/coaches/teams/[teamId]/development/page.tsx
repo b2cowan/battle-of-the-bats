@@ -14,21 +14,12 @@ import { canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment } from
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
 
-/**
- * The honest prerequisite for the sessions empty state, in priority order: a missing test list
- * blocks EVERYONE (a session with nothing to measure records nothing), and only then does it matter
- * that writes are head-coach-only. Sequential guards rather than a nested ternary in the JSX.
- */
-function sessionsBlocker(noTypes: boolean, canWrite: boolean): string | undefined {
-  if (noTypes) return 'Add at least one test to your list below first — that’s what a session records.';
-  if (!canWrite) return 'Only the head coach can start a session and record readings.';
-  return undefined;
-}
-
 function formatSessionDate(iso: string): string {
   const d = new Date(`${iso.slice(0, 10)}T00:00:00`);
   return isNaN(d.getTime()) ? iso : d.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
 }
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 export default function DevelopmentHubPage({
   params,
@@ -55,7 +46,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   // ONE source for the write flag, resilient to the sessions GET 404'ing (no active program
-  // year must not silently lock the Test types card for a legit head coach).
+  // year must not silently lock the test list for a legit head coach).
   const canWrite = caps ? canWriteDevelopment(caps) : false;
 
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
@@ -92,6 +83,40 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   }, [apiBase]);
 
   useEffect(() => { load(); }, [load]);
+
+  /**
+   * Door state (restructure D3): the two doors soften when there is genuinely nothing behind
+   * them — the treatment the Insights hub ALREADY applies to these same two doors, so the two
+   * surfaces stop disagreeing about how one door looks.
+   *
+   * Rides the board GET (the Insights precedent: "one dataset, several doors") rather than
+   * widening the hub's own fetch, deliberately: it stays OFF the first-paint path, so the hub
+   * still renders at the speed of the sessions GET and the door labels fill in a moment later.
+   * Failure is silent and safe — no coverage means the doors render unsoftened, which never
+   * hides a door from a coach who has data. If this ever costs too much, the fix is one shared
+   * summary endpoint serving BOTH hubs, not a third fetch here.
+   */
+  const [coverage, setCoverage] = useState<{ rosterCount: number; withMeasurable: number; withFocus: number } | null>(null);
+  // Gated the way its own precedent gates it (/review): the board route requires roster
+  // visibility, so a coach without it must not fire a request that can only ever 403.
+  const canSeeBoard = caps ? canViewMeasurables(caps) : false;
+  useEffect(() => {
+    if (!canSeeBoard) return;
+    let cancelled = false;
+    fetch(`${apiBase}/board`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(data => {
+        if (cancelled || !data) return;
+        const rows: { goals?: { status: string }[]; latest?: Record<string, unknown> }[] = data.rows ?? [];
+        setCoverage({
+          rosterCount: rows.length,
+          withMeasurable: rows.filter(r => Object.keys(r.latest ?? {}).length > 0).length,
+          withFocus: rows.filter(r => (r.goals ?? []).some(g => g.status === 'working')).length,
+        });
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [apiBase, canSeeBoard]);
 
   async function newSession() {
     if (busy) return;
@@ -151,6 +176,176 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
 
   const loading = sessions === null || types === null;
 
+  /* ── The one branch this page turns on ────────────────────────────────────────────
+     A session can only record what's on the test list, so a team with no ACTIVE test has
+     exactly one thing to do — and the page shows exactly one thing to do (restructure D1).
+     Retired tests are excluded on purpose: they leave the session picker, so an all-retired
+     list is as empty as no list at all, and the server guard counts the same way. */
+  const activeTypes = (types ?? []).filter(t => t.isActive);
+  const firstRun = !loading && activeTypes.length === 0;
+
+  /* The honest reason the action is off, in the coach's terms. Branches on BOTH axes: a list
+     that exists-but-is-all-retired is a different fact from no list at all, and a view-only
+     coach must not be told "your head coach hasn't set one up" when one exists with history
+     behind it (/review F2). */
+  const listExists = (types ?? []).length > 0;
+  const heldBackReason = listExists
+    ? (canWrite
+        ? 'Every test on your list is retired — add or restore one above and this turns on.'
+        : 'Every test on the list is retired, so there’s nothing for a session to record right now.')
+    : (canWrite
+        ? 'Add your first test above and this turns on. A session runs your whole test list across the roster in one go, usually at a practice.'
+        : 'Your head coach hasn’t set up a test list yet, so there’s nothing to record.');
+
+  const hasSessions = (sessions ?? []).length > 0;
+
+  /* ── Band 1 — Evaluation sessions ──
+     `firstRun` withholds the ability to START a session. It must NOT withhold the sessions
+     already run: an all-retired test list used to swap this whole card for a header + note,
+     silently hiding real session history — three sessions of readings could vanish from the
+     page because someone retired a test (/review F1). The list now renders in every state;
+     only the button, the note, and the dimming change. Nothing holding real records is dimmed. */
+  const sessionsCard = (
+    <div key="sessions" className={`${styles.detailSection} ${firstRun && !hasSessions ? styles.devHeldBack : ''}`}>
+      <div className={styles.devCardHeadRow}>
+        <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Evaluation sessions</p>
+        {canWrite && (firstRun ? (
+          /* aria-disabled, NOT the `disabled` attribute: a disabled button leaves the tab
+             order, so a keyboard or screen-reader user never lands on it and never hears WHY
+             it's off (/review a11y). It carries no handler, so it stays inert to a click. */
+          <button type="button" className={styles.devBtnHeld} aria-disabled="true" aria-describedby="dev-sessions-held">
+            <Plus size={13} aria-hidden /> New session
+          </button>
+        ) : (
+          <button type="button" className="btn btn-lime" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+            disabled={busy} onClick={newSession}>
+            <Plus size={13} /> New session
+          </button>
+        ))}
+      </div>
+
+      {firstRun ? (
+        <p className={styles.devCardNote} id="dev-sessions-held" style={{ margin: hasSessions ? '0 0 0.5rem' : 0 }}>{heldBackReason}</p>
+      ) : hasSessions ? (
+        <p className={styles.devCardNote} style={{ marginBottom: '0.5rem' }}>
+          Run your tests for the whole roster in one go — a few sessions a season is what makes the trend lines real.
+        </p>
+      ) : null}
+
+      {hasSessions ? (
+        /* While a delete is in flight the rows go inert — tapping into a session
+           that's mid-delete would land on a jarring 404. */
+        <ul className={styles.miniList} style={busy ? { pointerEvents: 'none', opacity: 0.6 } : undefined}>
+          {(sessions ?? []).map(s => (
+            <li key={s.id} className={styles.miniRow}>
+              <span className={styles.miniRowMain}>
+                <Link href={`${base}/development/sessions/${s.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
+                  {formatSessionDate(s.sessionDate)}{s.note ? ` — ${s.note}` : ''}
+                </Link>
+              </span>
+              <span className={styles.miniRowMeta}>
+                {(s.playerCount ?? 0) > 0
+                  ? `${plural(s.playerCount ?? 0, 'player')} · ${plural(s.typeCount ?? 0, 'test')}`
+                  : 'no readings yet'}
+              </span>
+              {canWrite && (
+                <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.1rem 0.35rem' }}
+                  aria-label="Delete this session" onClick={() => deleteSession(s)}>
+                  <X size={11} />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      ) : firstRun ? null : (
+        // The card header already owns the ONE lime action ("New session"), so this empty
+        // teaches and links to the guide rather than repeating the button. The old "add a test
+        // below" blocker is gone: that state renders the held-back note above instead, and
+        // "below" was wrong on desktop anyway (the list sat diagonally down-right).
+        <CoachEmptyState
+          compact
+          headline={canWrite ? 'No sessions yet' : 'No sessions have been run yet'}
+          description="An evaluation session runs your tests across the whole roster in one go, usually at a practice."
+          payoff="A few a season is what turns single readings into a trend — and it's what fills the team board and the “Is everyone getting attention?” report in Insights."
+          blocker={canWrite ? undefined : 'Only the head coach can start a session and record readings.'}
+          secondaryAction={{ label: 'How development works', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
+        />
+      )}
+    </div>
+  );
+
+  /* ── Band 2 — the two doors OUT, together and equal ──
+     Chunk E WI-5 already untangled their wording (the team board is a surface you edit; the
+     Insights report is read-only). The restructure fixes their SHAPE: sharing one row makes
+     them the same height by construction, instead of two odd-sized tiles marooned in a card
+     grid. .insightsDoors is the Insights-hub strip primitive — same doors, same idiom. */
+  const boardEmpty = coverage !== null && coverage.withFocus === 0 && coverage.withMeasurable === 0;
+  const reportEmpty = coverage !== null && coverage.withMeasurable === 0;
+
+  const doorsStrip = (
+    <div key="doors" className={styles.insightsDoors}>
+      <Link href={`${base}/development/board`} className={`${styles.insightsDoor} ${boardEmpty ? styles.insightsDoorSoft : ''}`}>
+        <span className={styles.insightsDoorQ}>What&apos;s each player working on?<span aria-hidden>→</span></span>
+        <span className={styles.insightsDoorSum}>
+          {boardEmpty
+            ? 'Nothing set yet — the board fills in as you give players focus areas.'
+            : coverage && coverage.withFocus > 0
+              // Verb agrees with the SUBJECT count, noun with the roster count — "1 of 1 player
+              // has", "1 of 12 players has", "9 of 12 players have" (/review F4).
+              ? `Set focus areas and log where each player is. ${coverage.withFocus} of ${plural(coverage.rosterCount, 'player')} ${coverage.withFocus === 1 ? 'has' : 'have'} an active focus.`
+              : 'Open the team board to set focus areas and log where each player is.'}
+        </span>
+      </Link>
+
+      {/* Insights door (3D) — deliberately absent until the report existed (no doors to
+          nowhere); same question as the Insights tile: one phrasing, one destination. */}
+      <Link href={`${base}/history/development`} className={`${styles.insightsDoor} ${reportEmpty ? styles.insightsDoorSoft : ''}`}>
+        <span className={styles.insightsDoorQ}>Is everyone getting attention?<span aria-hidden>→</span></span>
+        <span className={styles.insightsDoorSum}>
+          {reportEmpty
+            ? 'Nothing to report until your first session.'
+            : 'The coverage report in Insights — one row per player: active focus, last evaluation, history linked.'}
+        </span>
+      </Link>
+    </div>
+  );
+
+  /* ── Band 3 — the test list. "Your test list" is the wording the sessions card already uses
+        when it points here; "Test types" was the only place that said it the other way. ── */
+  const testListCard = (
+    <div key="testlist" className={styles.detailSection}>
+      <div className={styles.devCardHeadRow}>
+        <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Your test list</p>
+        {firstRun && canWrite && <span className={styles.devStartHere}>Start here</span>}
+      </div>
+      <TestTypesManager
+        apiBase={`${apiBase}/measurable-types`}
+        types={types ?? []}
+        canWrite={canWrite}
+        primaryAdd={firstRun}
+        onTypesChanged={update => setTypes(t => update(t ?? []))}
+      />
+    </div>
+  );
+
+  const bandRule = (
+    <div key="rule" className={styles.devBandRule}><span className={styles.devBandLabel}>Then go look</span></div>
+  );
+
+  const practicePlansLine = (
+    <p className={styles.devTail}>Practice plans are coming in a later phase — plan practices around who&apos;s working on what.</p>
+  );
+
+  /* The keys here are load-bearing, not decoration. Without them React reconciles these
+     siblings POSITIONALLY across the firstRun flip, so adding the first test tore down and
+     rebuilt the very card the coach was typing in — dropping keyboard focus to the top of the
+     document and discarding any open rename draft (/review F6 + concurrency lens). Keyed,
+     React MOVES the existing nodes instead, so the card keeps its state and its focus while
+     the page reorders around it. */
+  const bands = firstRun
+    ? [testListCard, sessionsCard, bandRule, doorsStrip]
+    : [sessionsCard, bandRule, doorsStrip, testListCard];
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -158,7 +353,15 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
           <div className={styles.headerIcon}><TrendingUp size={22} /></div>
           <div>
             <h1 className={styles.pageTitle}>Development</h1>
-            <p className={styles.pageSub}>{assignment?.teamName ?? ''} — evaluation sessions, the team board, and your test list</p>
+            <p className={styles.pageSub}>
+              {assignment?.teamName ?? ''}
+              {/* Instructional, not a claim about the team's overall state — a team can have
+                  focus areas set with no test list yet, and the doors below will say so
+                  truthfully; the subtitle must not contradict them (/review F3). */}
+              {loading ? '' : firstRun
+                ? ' — add a test to start recording evaluations'
+                : ' — run evaluations, see where each player is'}
+            </p>
           </div>
         </div>
         <HelpButton iconOnly label="Development" help={helpRequest} />
@@ -168,98 +371,13 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       {loading ? (
         <div className={styles.loadingState}>Loading development…</div>
       ) : (
-        <div className={styles.devHubGrid}>
-          {/* ── Evaluation sessions — the working card (the hub's ONE lime action) ── */}
-          <div className={styles.detailSection}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.6rem' }}>
-              <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Evaluation sessions</p>
-              {canWrite && (
-                <button type="button" className="btn btn-lime" style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-                  disabled={busy} onClick={newSession}>
-                  <Plus size={13} /> New session
-                </button>
-              )}
-            </div>
-            {sessions.length > 0 && (
-              <p className={styles.devCardNote} style={{ marginBottom: '0.5rem' }}>
-                Run your tests for the whole roster in one go — a few sessions a season is what makes the trend lines real.
-              </p>
-            )}
-            {sessions.length === 0 ? (
-              // The card header already owns the ONE lime action ("New session"), so this empty
-              // teaches and links to the guide rather than repeating the button.
-              <CoachEmptyState
-                compact
-                headline={canWrite ? 'No sessions yet' : 'No sessions have been run yet'}
-                description="An evaluation session runs your tests across the whole roster in one go, usually at a practice."
-                payoff="A few a season is what turns single readings into a trend — and it's what fills the team board and the “Is everyone getting attention?” report in Insights."
-                blocker={sessionsBlocker(types.length === 0, canWrite)}
-                secondaryAction={{ label: 'How development works', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
-              />
-            ) : (
-              /* While a delete is in flight the rows go inert — tapping into a session
-                 that's mid-delete would land on a jarring 404. */
-              <ul className={styles.miniList} style={busy ? { pointerEvents: 'none', opacity: 0.6 } : undefined}>
-                {sessions.map(s => (
-                  <li key={s.id} className={styles.miniRow}>
-                    <span className={styles.miniRowMain}>
-                      <Link href={`${base}/development/sessions/${s.id}`} style={{ color: 'inherit', textDecoration: 'none' }}>
-                        {formatSessionDate(s.sessionDate)}{s.note ? ` — ${s.note}` : ''}
-                      </Link>
-                    </span>
-                    <span className={styles.miniRowMeta}>
-                      {(s.playerCount ?? 0) > 0
-                        ? `${s.playerCount} player${s.playerCount === 1 ? '' : 's'} · ${s.typeCount} test${s.typeCount === 1 ? '' : 's'}`
-                        : 'no readings yet'}
-                    </span>
-                    {canWrite && (
-                      <button type="button" className="btn btn-ghost" style={{ fontSize: '0.7rem', padding: '0.1rem 0.35rem' }}
-                        aria-label="Delete this session" onClick={() => deleteSession(s)}>
-                        <X size={11} />
-                      </button>
-                    )}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </div>
-
-          {/* ── Team board door — the WORKING surface. Chunk E WI-5: this door used to also call
-                 itself "a coverage view", making it indistinguishable from the Insights report
-                 door below. Now the two doors ask two different questions; "coverage" belongs to
-                 exactly one of them. ── */}
-          <Link href={`${base}/development/board`} className={styles.insightsDoor}>
-            <span className={styles.insightsDoorQ}>What&apos;s each player working on?<span aria-hidden>→</span></span>
-            <span className={styles.insightsDoorSum}>
-              Open the team board to set focus areas and log where each player is.
-            </span>
-          </Link>
-
-          {/* ── Insights door (3D) — deliberately absent until the report existed (no doors
-                 to nowhere); same question as the Insights tile: one phrasing, one destination. ── */}
-          <Link href={`${base}/history/development`} className={styles.insightsDoor}>
-            <span className={styles.insightsDoorQ}>Is everyone getting attention?<span aria-hidden>→</span></span>
-            <span className={styles.insightsDoorSum}>
-              The coverage report in Insights — one row per player: active focus, last evaluation, history linked.
-            </span>
-          </Link>
-
-          {/* ── Test types card — the ONE shared manager ── */}
-          <div className={styles.detailSection}>
-            <p className={styles.detailSectionTitle}>Test types</p>
-            <TestTypesManager
-              apiBase={`${apiBase}/measurable-types`}
-              types={types}
-              canWrite={canWrite}
-              onTypesChanged={update => setTypes(t => update(t ?? []))}
-            />
-          </div>
-
-          {/* ── Practice plans slot — reserved room, honestly not built (Phase 4 fills it) ── */}
-          <div className={styles.devSlotCard}>
-            <p className={styles.detailSectionTitle} style={{ color: 'inherit', margin: 0 }}>Practice plans</p>
-            <p>Coming in a later phase — plan practices around who&apos;s working on what.</p>
-          </div>
+        /* One top-to-bottom sequence, not a mosaic. FIRST RUN puts the test list first (the
+           only thing a coach can actually do) and holds sessions back; once a test exists the
+           everyday order takes over and the list drops below the doors, where a set-and-forget
+           list belongs. Phones inherit whichever order applies, for free. */
+        <div className={styles.devBands}>
+          {bands}
+          {practicePlansLine}
         </div>
       )}
     </div>

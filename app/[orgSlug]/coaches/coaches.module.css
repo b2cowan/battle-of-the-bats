@@ -4759,19 +4759,69 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 /* ── Player Development 3B — hub grid, session run screen, team board ──
    Hub composes as a section-card GRID on desktop per the 2026-07-09 multi-domain layout
    rule (design decision 2026-07-17); phones stack. Tokens only — no new primitives. */
-.devHubGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: 1rem;
-  align-items: start;
+/* ── Development hub — the band stack (owner-approved restructure 2026-07-31) ──
+   REPLACES the auto-fit card mosaic. Five tiles of very different heights in a two-across
+   row grid meant every row was as tall as its tallest tile and `align-items: start` pinned
+   the short one up, so a short door beside a tall card ALWAYS left a hole — no ordering
+   fixes that while doors and working cards share one grid. Bands are full width and read as
+   one top-to-bottom sequence (work → exits → the list you set once); phones inherit the same
+   order for free instead of getting whatever order the tiles happened to be written in. */
+.devBands { display: flex; flex-direction: column; gap: 1rem; }
+
+/* Card title + its one action, on a row. Was an inline style repeated per card. */
+.devCardHeadRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  margin-bottom: 0.6rem;
 }
-.devSlotCard {
-  border: 1px dashed var(--border-subtle, rgba(255, 255, 255, 0.14));
-  border-radius: var(--radius);
-  padding: 1rem;
-  color: var(--white-45, rgba(255, 255, 255, 0.45));
+
+/* The one rule that separates "work happens here" from "this takes you elsewhere". */
+.devBandRule { display: flex; align-items: center; gap: 0.7rem; margin: 0.15rem 0; }
+.devBandRule::after { content: ''; flex: 1; height: 1px; background: var(--border-2); }
+.devBandLabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--white-45);
 }
-.devSlotCard p { margin: 0.25rem 0 0; font-size: 0.85rem; }
+
+/* First-run only: the sessions card is present and readable but plainly not yet available,
+   rather than dangling a button that leads to a session with nothing to record. */
+.devHeldBack { opacity: 0.78; }
+.devBtnHeld {
+  background: transparent;
+  color: var(--white-45);
+  border: 1px dashed var(--border-2);
+  border-radius: var(--radius-sm);
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.3rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  cursor: not-allowed;
+}
+
+/* "Start here" — the ONE moment the hub points at a single next action (first run only).
+   Wears the ratified ink-on-lime chip: --home-lime is true lime inside the warm gate and
+   falls back to the dark ramp's lime outside it, so it reads on either ground. */
+.devStartHere {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--home-lime-ink, var(--on-lime));
+  background: var(--home-lime, var(--logic-lime));
+  border-radius: 3px;
+  padding: 0.15rem 0.4rem;
+}
+
+/* Practice plans — demoted from a full dashed card to one honest line. Still sets the
+   expectation; no longer claims a tool's worth of visual weight for something that isn't one. */
+.devTail { font-size: 0.78rem; color: var(--white-45); margin: 0.1rem 0 0; }
 
 /* Session run screen — roster rows are ≥44px tap targets, ROSTER ORDER ONLY. */
 .devRow {

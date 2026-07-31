@@ -699,14 +699,14 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-evaluation-sessions',
           question: 'How do I test my whole roster at once? (Evaluation Sessions)',
-          answerText: 'Open Development in the Squad menu and tap New session. Pick which test you are running (or set one up on the spot), then work straight down your roster — tap a player, type their number, and it saves as you go, with an "N of M entered" count so you always know where you are. Leave a player blank to skip them (an absent player is never given a fake 0). Rows always stay in roster order — testing day is not a leaderboard. Every reading lands on that player\'s profile exactly as if you had logged it there, tagged with the session date. The session itself is saved ("Jul 17 — 14 players, 2 tests") so you can come back to it, and deleting a session never deletes the readings — they just lose the grouping. The Development page also has the Team board — everyone\'s focus areas and latest numbers at a glance, in roster order — and your Test types list. Two or three sessions a season is what makes each player\'s trend lines real.',
-          keywords: ['evaluation session', 'testing day', 'test the whole team', 'whole roster', 'batch entry', 'development page', 'team board', 'new session', 'run tests', 'timing day', 'combine'],
+          answerText: 'Open Development in the Squad menu and tap New session. Pick which test you are running (or set one up on the spot), then work straight down your roster — tap a player, type their number, and it saves as you go, with an "N of M entered" count so you always know where you are. Leave a player blank to skip them (an absent player is never given a fake 0). Rows always stay in roster order — testing day is not a leaderboard. Every reading lands on that player\'s profile exactly as if you had logged it there, tagged with the session date. The session itself is saved ("Jul 17 — 14 players, 2 tests") so you can come back to it, and deleting a session never deletes the readings — they just lose the grouping. Below your sessions the Development page has two doors — the Team board (everyone\'s focus areas and latest numbers at a glance, in roster order) and the coverage report in Insights — and then Your test list at the foot of the page. If New session is switched off, your test list has no active test on it yet. Two or three sessions a season is what makes each player\'s trend lines real.',
+          keywords: ['evaluation session', 'testing day', 'test the whole team', 'whole roster', 'batch entry', 'development page', 'team board', 'new session', 'run tests', 'timing day', 'combine', 'your test list'],
           popular: true,
           answer: (
             <>
               <p>Open <strong>Development</strong> in the Squad menu and tap <strong>New session</strong>. Pick which test you&apos;re running (or set one up on the spot), then work straight down your roster — tap a player, type their number, and it <strong>saves as you go</strong>, with an &ldquo;N of M entered&rdquo; count so you always know where you are. <strong>Leave a player blank to skip them</strong> — an absent player is never given a fake 0. Rows always stay in <strong>roster order</strong> — testing day isn&apos;t a leaderboard.</p>
               <p>Every reading lands on that player&apos;s profile exactly as if you&apos;d logged it there, tagged with the session date. The session itself is saved (&ldquo;Jul 17 — 14 players, 2 tests&rdquo;) so you can come back to it, and <strong>deleting a session never deletes the readings</strong> — they just lose the grouping.</p>
-              <p>The Development page also has the <strong>Team board</strong> — everyone&apos;s focus areas and latest numbers at a glance, in roster order — and your <strong>Test types</strong> list. Two or three sessions a season is what makes each player&apos;s trend lines real.</p>
+              <p>Below your sessions, the Development page has two doors — the <strong>Team board</strong> (everyone&apos;s focus areas and latest numbers at a glance, in roster order) and the coverage report in <strong>Insights</strong> — and then <strong>Your test list</strong> at the foot of the page. If <strong>New session</strong> is switched off, your test list has no active test on it yet. Two or three sessions a season is what makes each player&apos;s trend lines real.</p>
             </>
           ),
         },
@@ -1529,21 +1529,44 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Player Development: focus areas, tests & evaluation sessions (Premium)',
       summary: 'Track what each player is working on and how they are progressing — a coverage picture, never a ranking.',
-      keywords: ['development', 'player development', 'evaluation session', 'measurables', 'test types', 'focus area', 'goals', 'team board', 'progress', 'skills test'],
-      searchText: 'player development focus areas goals what each player is working on measurables tests test types test list evaluation session run tests whole roster team board coverage who is getting attention progress trend lines season insights development report head coach only assistant notes capability no sessions yet add a test type first not a ranking',
+      // 'test types' stays in keywords ON PURPOSE after the rename to "Your test list": the
+      // player-profile Development section still uses the old label, and a coach who remembers
+      // either name must land here. Same reason the failure phrasings ("greyed out", "can't
+      // start a session") are listed — search matches keywords, never the prose above.
+      keywords: ['development', 'player development', 'evaluation session', 'measurables', 'test list', 'your test list', 'test types', 'focus area', 'goals', 'team board', 'progress', 'skills test', 'start here', 'new session greyed out', 'cannot start a session', 'retire test'],
+      searchText: 'player development focus areas goals what each player is working on measurables tests test types test list your test list evaluation session run tests whole roster team board coverage who is getting attention progress trend lines season insights development report head coach only assistant notes capability no sessions yet not a ranking then go look doors faded dimmed nothing behind it start here add your first test new session greyed out disabled switched off why can i not start a session add a test first retired test retire restore last active test session history stays visible page order layout',
       content: (
         <>
           <p><strong>Development</strong> is where you record what each player is working on and how they&rsquo;re coming along. It has two halves that work together:</p>
           <ul>
             <li><strong>Focus areas</strong> — the one or two things a player is currently working on, in your words.</li>
-            <li><strong>Tests</strong> — the repeatable measurements you take (your <strong>test list</strong> defines them, and you decide what&rsquo;s on it).</li>
+            <li><strong>Tests</strong> — the repeatable measurements you take. <strong>Your test list</strong> defines them, and you decide what&rsquo;s on it.</li>
           </ul>
           <p>An <strong>evaluation session</strong> runs your tests across the whole roster in one go, at a practice. A few sessions a season is what turns single readings into a trend you can actually coach from.</p>
+          <p><strong>How the page is laid out.</strong> Top to bottom: your <strong>evaluation sessions</strong> and the button to start a new one, then — under <em>&ldquo;Then go look&rdquo;</em> — two doors out to the <strong>team board</strong> and the coverage report in <strong>Insights</strong>, and last, <strong>your test list</strong>. A door fades when there&rsquo;s nothing behind it yet, so you can tell at a glance whether it&rsquo;s worth opening.</p>
+          <p><strong>Starting from scratch.</strong> A session can only record what&rsquo;s on your test list, so until you have at least one test the page puts <strong>your test list first</strong> and marks it <em>Start here</em>. <strong>New session</strong> stays switched off, with a line saying what turns it on. Add one test and the page reorders itself into its everyday shape.</p>
+          <p><strong>Retiring tests.</strong> Retiring a test keeps every reading already logged against it — it just leaves the picker. If you retire your <em>last</em> active test, new sessions switch off again until you add or restore one, but <strong>every session you&rsquo;ve already run stays right where it was</strong> and stays open.</p>
           <p><strong>What it feeds.</strong> The <strong>team board</strong> shows every player&rsquo;s focus areas and latest numbers in roster order, and <strong>Insights</strong> answers <em>&ldquo;Is everyone getting attention?&rdquo;</em> — one row per player, so the quiet kid at the end of the bench doesn&rsquo;t get overlooked. It&rsquo;s deliberately a coverage view, not a leaderboard.</p>
-          <p><strong>Before your first session,</strong> put at least one test on your test list — a session with nothing to measure has nothing to record. You&rsquo;ll also need players on your roster.</p>
           <p><strong>Who can do what:</strong> every coach with player access can read the board. <strong>Writing</strong> — starting sessions, recording readings, editing the test list and focus areas — is head-coach only, because it&rsquo;s coach judgment written about a minor.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-development-new-session-off',
+          question: 'Why is “New session” switched off?',
+          answerText: 'Because there is nothing on your test list for a session to record. A session runs your tests across the roster, so it needs at least one active test to exist. When that is the case the Development page puts Your test list at the top and marks it "Start here" — add a test there and New session turns on straight away. The same thing happens if every test on your list is retired: retired tests leave the picker, so an all-retired list counts as an empty one. Add a new test or restore a retired one and sessions come back. Any sessions you have already run stay on the page and stay open the whole time — only starting a new one is switched off. If you are an assistant coach rather than the head coach, starting sessions is head-coach only, and the button will not appear for you at all.',
+          keywords: ['new session greyed out', 'new session disabled', 'cannot start a session', 'can\'t start session', 'button not working', 'session button off', 'start here', 'no tests', 'empty test list', 'all retired', 'retired tests', 'why is the button grey'],
+          popular: true,
+          answer: (
+            <>
+              <p>Because there&rsquo;s nothing on your test list for a session to <em>record</em>. A session runs your tests across the roster, so it needs at least one <strong>active</strong> test to exist.</p>
+              <p>When that&rsquo;s the case, the Development page puts <strong>Your test list</strong> at the top and marks it <em>Start here</em> — add a test there and <strong>New session</strong> turns on straight away.</p>
+              <p>The same happens if <strong>every test on your list is retired</strong>: retired tests leave the picker, so an all-retired list counts as an empty one. Add a new test or restore a retired one and sessions come back. <strong>Sessions you&rsquo;ve already run stay on the page and stay open</strong> the whole time — only starting a <em>new</em> one is switched off.</p>
+              <p>If you&rsquo;re an <strong>assistant coach</strong>, starting sessions is head-coach only, so the button won&rsquo;t appear for you at all.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'premium-insights',
