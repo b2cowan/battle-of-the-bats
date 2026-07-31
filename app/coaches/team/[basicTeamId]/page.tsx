@@ -1,5 +1,4 @@
 import { redirect, notFound } from 'next/navigation';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import {
@@ -21,8 +20,7 @@ import {
 import { getActivePremiumPortalSlug } from '@/lib/coach-team-page';
 import HelpButton from '@/components/help/HelpButton';
 import TeamHQ from '@/components/coaches/TeamHQ';
-import { pickFanViewRegistration } from '@/lib/coach-alert-registration';
-import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
+import { pickFeaturedRegistration, resolveRowFanView } from '@/lib/coach-alert-registration';
 import CoachTeamSetupPanel from '@/components/coaches/CoachTeamSetupPanel';
 import CoachOverviewInvite from '@/components/coaches/CoachOverviewInvite';
 import ScopeShelf from '@/components/coaches/ScopeShelf';
@@ -126,14 +124,29 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   const tournamentFee = acceptedRegistrations.length > 0
     ? acceptedRegistrations.reduce((total, entry) => total + (entry.amountDue ?? 0), 0)
     : null;
-  const latestHistory = history[0] ?? null;
-  const latestHistoryLabel = latestHistory
-    ? `${registrationStatusLabel(latestHistory.registration.status)} - ${latestHistory.tournament?.name ?? latestHistory.registration.name}`
-    : 'No tournaments yet';
+  const today = tournamentToday();
 
-  // S5 → P3 ("The Flip"): quiet round trip to the public event from the Overview — the shared
-  // eligibility rule (live/upcoming public event, any registration status), same as premium.
-  const fanViewEntry = pickFanViewRegistration(history);
+  // DF-1: the Overview names ONE tournament — whatever is happening, then whatever is next, then
+  // the most recent finished one. It used to render the team's WHOLE list (the Tournaments tab
+  // verbatim, and that tab is permanently one tap away) and then repeat its top entry immediately
+  // below as a second card built from the same array. Same tournament, twice, before the team's own
+  // numbers. The full list lives on the tab; the Tournaments tile is the door to it.
+  //
+  // Chosen by LIFECYCLE, not by `registeredAt` (DF-2) — `history` is sorted newest-registration
+  // first, so the old "first entry" rule let an August event outrank the one being played today.
+  const featured = pickFeaturedRegistration(history, today);
+  // S5 → P3 ("The Flip"): quiet round trip to the public event — the shared ROW rule (the public
+  // page has to exist), same as both Tournaments lists.
+  const featuredFanView = featured ? resolveRowFanView(featured) : null;
+
+  // ⚠ Derived from `featured`, NEVER from `history[0]`. `history` arrives sorted `registeredAt`
+  // DESC, so reading the tile's label off `history[0]` made it name the most recently REGISTERED
+  // event while the card above named the one being PLAYED — two different tournaments asserted as
+  // current, a few hundred pixels apart on one screen. That is the same defect DF-2 fixes for the
+  // card, and it has to be fixed for the tile in the same breath or the page contradicts itself.
+  const latestHistoryLabel = featured
+    ? `${registrationStatusLabel(featured.registration.status)} - ${featured.tournament?.name ?? featured.registration.name}`
+    : 'No tournaments yet';
 
   // Setup panel gate (owner decision 2026-07-29 — see FREE_COACH_ONBOARDING_PLAN.md §2):
   // scratch teams only, and it survives partial progress so a finished step can actually
@@ -151,8 +164,6 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
   const isSettingUp =
     history.length === 0 &&
     !(setupStepsDone.roster && setupStepsDone.schedule && setupStepsDone.announcements);
-
-  const today = tournamentToday();
 
   return (
     <div className={`${shared.page} ${styles.pageWide}`}>
@@ -172,63 +183,65 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
 
       {/* A3 QA (owner call 2026-07-27): tournaments LEAD the page — they're why a
           first-tournament coach is here. (The A2 chat doorway is retired — the global
-          Chat tab in the bottom bar is the one chat door.) */}
+          Chat tab in the bottom bar is the one chat door.)
+          DF-1: ONE tournament, not the whole list. Heading is singular whenever we're naming a
+          specific event; the plural survives only on the empty state, which is about the set. */}
       <section className={shared.section}>
         <div className={shared.sectionHeader}>
-          <h2 className={shared.sectionTitle}>Your tournaments</h2>
+          <h2 className={shared.sectionTitle}>{featured ? 'Your tournament' : 'Your tournaments'}</h2>
         </div>
-        {history.length === 0 ? (
+        {!featured ? (
           <div className={shared.empty}>
             <p>This team isn&apos;t in any tournaments yet. When you register it for one, the registration and schedule show up here.</p>
           </div>
         ) : (
-          <div className={styles.historyList}>
-            {/* A3.3: the shared registration card (lifecycle chip + one anatomy across all
-                three lists). fanView stays null HERE — the Fan view door for a live event
-                lives in the CoachLiveEventCard block below (P3 rev-4, no duplicate). */}
-            {history.map(entry => (
-              <CoachRegistrationCard
-                key={entry.registration.id}
-                href={`${COACHES_TOURNAMENTS_PATH}/${entry.registration.id}`}
-                title={entry.tournament?.name ?? entry.registration.name}
-                registrationStatus={entry.registration.status}
-                startDate={entry.tournament?.startDate ?? null}
-                endDate={entry.tournament?.endDate ?? null}
-                today={today}
-                metaParts={[entry.org?.name]}
-                fanView={null}
-              />
-            ))}
-          </div>
+          /* A3.3: the shared registration card (lifecycle chip + one anatomy across all three
+             lists) — and it is already a door to the record, which is why it beat the compact
+             event card for this slot. Its ⇄ Fan view line is RESTORED here: with the duplicate
+             block gone there is no second place for that door to live. */
+          <CoachRegistrationCard
+            href={`${COACHES_TOURNAMENTS_PATH}/${featured.registration.id}`}
+            title={featured.tournament?.name ?? featured.registration.name}
+            registrationStatus={featured.registration.status}
+            startDate={featured.tournament?.startDate ?? null}
+            endDate={featured.tournament?.endDate ?? null}
+            today={today}
+            metaParts={[featured.org?.name]}
+            fanView={featuredFanView}
+          />
         )}
       </section>
-
-      {/* P3 rev-5 (owner call): the compact "your tournament" block — event card naming the live/
-          upcoming public event + its ⇄ Fan view door. No alerts/follow affordance here — the
-          public side already carries those; the portal doesn't push follow at the coach. */}
-      {fanViewEntry && (
-        <section className={shared.section}>
-          <div className={shared.sectionHeader}>
-            <h2 className={shared.sectionTitle}>Your event</h2>
-          </div>
-          <CoachLiveEventCard event={fanViewEntry} />
-        </section>
-      )}
 
       {/* A3 QA: an explicit seam between the tournament group above and the team tools
           below — a first-tournament coach must never read roster/schedule/fees as
           something the tournament requires. Free-floor framing per copy canon (these
           tools ARE free; the season HQ pitch lives in Explore). Hidden for a team with
-          no registrations — there, the whole page is team tools. */}
+          no registrations — there, the whole page is team tools.
+          DF-6: the seam states the fact and carries NO link. Its job is to stop the tools reading
+          as tournament homework, which needs no door — and the roster invite below already points
+          at Explore, so the link made two doors to one place ~450px apart. */}
       {history.length > 0 && (
         <div className={styles.toolsDivider} role="separator" aria-label="Your team's own tools">
           <p className={styles.toolsDividerEyebrow}>Your team — beyond this tournament</p>
           <p className={styles.toolsDividerNote}>
             Everything below belongs to your team, not this tournament — free tools to try
-            whenever you like, and they carry over to every event you enter.{' '}
-            <Link href={`${coachTeamPath(basicTeamId)}/explore`}>See everything included &rarr;</Link>
+            whenever you like, and they carry over to every event you enter.
           </p>
         </div>
+      )}
+
+      {/* DF-4: while the team is still being set up, the invitation comes BEFORE the numbers.
+          Every tile reads zero for this coach, so the strip is the ABSENCE of information — and it
+          used to push the one card that can help them 82px (390px phone) to 186px (360px) below the
+          fold. Same `isSettingUp` gate as before; only the slot moved. */}
+      {isSettingUp && (
+        <section className={shared.section}>
+          <CoachTeamSetupPanel
+            basicTeamId={basicTeamId}
+            activatedFeatures={team.activatedFeatures}
+            stepsDone={setupStepsDone}
+          />
+        </section>
       )}
 
       {/* A3.2: every persistent Overview block announces itself in the same slim mono
@@ -248,30 +261,21 @@ export default async function CoachTeamHomePage({ params }: RouteParams) {
         recipientCount={announcementRecipientSummary.recipientCount}
         historyCount={history.length}
         latestHistoryLabel={latestHistoryLabel}
+        activatedFeatures={team.activatedFeatures}
+        historyHref={`${coachTeamPath(basicTeamId)}/tournaments`}
       />
 
       {/* Discovery nudge (Variant A): a quiet, dismissible invite to turn on the persisted-roster
           wedge → degrades to a faint line on dismiss (never erased; Explore link stays in the rail).
           Suppressed while the setup panel leads (its step 1 already owns the roster invitation, so
-          the two must never stack) and once roster is already on. */}
+          the two must never stack) and once roster is already on.
+          (The setup panel itself moved ABOVE the strip — DF-4. The two are still mutually
+          exclusive; they simply no longer compete for the same slot.) */}
       {!isSettingUp && (
         <section className={shared.section}>
           <CoachOverviewInvite
             basicTeamId={basicTeamId}
             rosterActivated={team.activatedFeatures.includes('roster')}
-          />
-        </section>
-      )}
-
-      {/* Setup panel: every step is honest about state and carries its own action — a tool that
-          isn't on yet is switched on FROM the step and opened, so no step can name a section the
-          coach has no way to reach (the defect this replaced). One click skips the whole thing. */}
-      {isSettingUp && (
-        <section className={shared.section}>
-          <CoachTeamSetupPanel
-            basicTeamId={basicTeamId}
-            activatedFeatures={team.activatedFeatures}
-            stepsDone={setupStepsDone}
           />
         </section>
       )}

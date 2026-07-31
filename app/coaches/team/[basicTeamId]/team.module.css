@@ -122,13 +122,14 @@
 /* (The first-run checklist styles moved to components/coaches/CoachTeamSetupPanel.module.css —
    the steps are now interactive and own their own card body.) */
 
-/* Tournament history rows — A3.3: the row anatomy retired in favour of the shared
-   CoachRegistrationCard; this wrapper keeps only the list rhythm. */
-.historyList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-}
+/* (DF-1, 2026-07-30) `.historyList` is RETIRED. The Overview no longer renders the team's whole
+   tournament list — that list was a verbatim copy of the Tournaments tab, and its top entry was
+   then repeated immediately below as a second card built from the same array. The Overview now
+   names ONE tournament (a single shared CoachRegistrationCard, no wrapper needed) and the
+   Tournaments tile carries the door to the rest. The list rhythm still lives on the tab, in
+   tournaments.module.css `.list`.
+   Verified orphaned before deleting: the other two `.historyList` rules in this repo belong to
+   platform-admin change-requests and admin data-tools, which have their own modules. */
 
-/* (P3 rev-4) The Overview's Fan view door moved into the CoachLiveEventCard block at the top of
-   the page — the old under-history link slot is gone. */
+/* (P3 rev-4) The Overview's Fan view door lived in a separate CoachLiveEventCard block; DF-1
+   folded that block into the single registration card, which carries the door itself. */

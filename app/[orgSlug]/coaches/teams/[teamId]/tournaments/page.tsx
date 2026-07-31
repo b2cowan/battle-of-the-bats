@@ -2,6 +2,7 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import { Trophy } from 'lucide-react';
 import { sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
+import { resolveRowFanView } from '@/lib/coach-alert-registration';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
@@ -107,8 +108,9 @@ export default function PremiumTeamTournamentsPage({
           </div>
           <div className={styles.tournamentHistoryList}>
             {sorted.map(entry => {
-              const canFanView = Boolean(entry.org?.slug && entry.tournament?.slug &&
-                (entry.tournament.status === 'active' || entry.tournament.status === 'completed'));
+              /* One rule for every coach-facing tournament ROW, shared with the free portal's
+                 lists and its Overview card. */
+              const fanView = resolveRowFanView(entry);
 
               return (
                 <CoachRegistrationCard
@@ -120,7 +122,7 @@ export default function PremiumTeamTournamentsPage({
                   endDate={entry.tournament?.endDate ?? null}
                   today={today}
                   metaParts={[entry.org?.name, entry.registration.name]}
-                  fanView={canFanView ? { orgSlug: entry.org!.slug, tournamentSlug: entry.tournament!.slug! } : null}
+                  fanView={fanView}
                 />
               );
             })}

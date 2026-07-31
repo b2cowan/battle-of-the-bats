@@ -62,12 +62,19 @@ export default function CoachRegistrationCard({
   const withDot = chip.state === 'live' || chip.state === 'game_day';
   const statusLabel = registrationStatusLabel(registrationStatus);
 
-  // When a lifecycle chip is present, the registration status demotes to trailing meta —
-  // and is hidden entirely on LIVE rows (the chip wins). No chip → the badge carries it.
+  // When a lifecycle chip is present, the registration status demotes to trailing meta — and on a
+  // LIVE row the chip wins. But the chip only *implies* a status when that status is `accepted`:
+  // "Live" on a pending, waitlisted or rejected row says the EVENT is running, not that this team
+  // is in it. Suppressing "Not Accepted" there states a fact the team can act on nowhere else.
+  //   This mattered less when the card was one row among many — the accepted registration was
+  //   visible on the same screen. The free Overview now shows exactly ONE of these cards, so a
+  //   swallowed status is the difference between a record and a false claim.
+  // No chip → the badge carries the status on its own.
   const parts = metaParts.filter((p): p is string => Boolean(p));
   const dateRange = formatCardDateRange(startDate, endDate);
   if (dateRange) parts.push(dateRange);
-  if (hasChip && !isLive) parts.push(statusLabel);
+  const liveChipImpliesStatus = isLive && registrationStatus === 'accepted';
+  if (hasChip && !liveChipImpliesStatus) parts.push(statusLabel);
 
   return (
     <div className={styles.entry}>

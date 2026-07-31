@@ -51,6 +51,9 @@
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  /* Never let a one-word label escape its card. The value and sub-line have carried this since
+     Theme 3; the label was the one element that hadn't needed it — until the tiles went 2-up. */
+  overflow-wrap: anywhere;
 }
 
 .hqItem strong {
@@ -120,29 +123,97 @@
   .hqLiveDot { animation: none; }
 }
 
+/* DF-5: a tool that isn't switched on and has nothing to report says what it WOULD give rather
+   than printing a zero. Muted, and a step down from a real figure — it is a description, not a
+   number. Never dashed: the portal has exactly one dashed frame (the Money sample, Chunk G rule 3). */
+.hqItem strong.hqOff {
+  /* --white-70, not --white-40: under the warm theme (the platform default) the whole --white-35→65
+     band collapses onto ONE token (--home-dim #8A8177), which lands at ~3.8:1 on the white card —
+     under AA for text this size. --white-70 resolves to --home-ink-soft (~9.6:1) and still reads a
+     clear step below a real figure, which is all "muted" has to mean. */
+  color: var(--white-70);
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+/* The Tournaments tile's door to the full list — its OWN line, never appended to the clamped
+   sub-line above it (see the note at the call site). Padded to a real tap target rather than an
+   inline sliver in a 0.76rem paragraph. */
+.hqTileLink {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  margin-top: 0.15rem;
+  padding: 0.1rem 0;
+  font-size: 0.76rem;
+  color: var(--logic-lime);
+  font-weight: 600;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.hqTileLink:hover {
+  text-decoration: underline;
+}
+
+/* DF-3: the phone was the ONLY width that stacked all five tiles at full width — 2-up already
+   applied from 701px up. Five short numbers cost 474px of a 648px first screenful, and premium's
+   Chunk I board is 2-up on a phone by ratified rule (D9). */
 @media (max-width: 700px) {
   .hqStrip {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .hqItem {
     min-height: 0;
   }
 
-  /* Theme 3 (D-1) legibility floor — on a 1-col mobile tile the value/label have
-     room to grow: value ≥1.25rem, label ≥0.7rem (was 1.08rem / 0.64rem). */
+  /* Theme 3's D-1 legibility floor raised the value/label on a mobile tile *because a 1-column tile
+     had the room* (1.08→1.25rem, 0.64→0.7rem). DF-3 spends that room on a second column, so both
+     step back toward their desktop sizes — same reasoning, opposite direction.
+     The label size is not cosmetic here: MEASURED at 0.7rem/0.08em, "ANNOUNCEMENTS" needs 92px and
+     a half-width tile gives it 55px at 320px and 75px at 360px, so it escaped the card by up to
+     37px. At 0.64rem/0.045em it fits on one line from 390px up, and `overflow-wrap` above catches
+     the 320–360px case as a wrap instead of a spill. */
   .hqLabel {
-    font-size: 0.7rem;
+    font-size: 0.64rem;
+    letter-spacing: 0.045em;
   }
 
   .hqItem strong {
-    font-size: 1.25rem;
+    font-size: 1.12rem;
+  }
+
+  .hqItem strong.hqFeeAlert {
+    font-size: 0.9rem;
   }
 }
 
 @media (min-width: 701px) and (max-width: 1120px) {
   .hqStrip {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* DF-3: an odd fifth tile in a 2-col grid would leave a half-empty final row. The Tournaments tile
+   takes the whole row instead — it is also the door to the full list, so it earns the width.
+   Scoped to the 2-col widths: above 1120px the strip is 5-across and a span would swallow it. */
+@media (max-width: 1120px) {
+  .hqItemWide {
+    grid-column: 1 / -1;
+  }
+
+  /* Full-width again → the roomier 1-col value size is back on the table.
+     ⚠ KEEP THIS BLOCK LAST. It ties on specificity (0,1,1) with `.hqItem strong` in the ≤700px
+     block above, so SOURCE ORDER is the only thing making it win. The two 2-col blocks look like
+     obvious merge candidates — merging or reordering them silently reverts this tile to 1.12rem
+     with no visual warning and no test to catch it.
+     (`strong.hqOff` / `strong.hqFeeAlert` are 0,2,1 and outrank this by specificity, whatever the
+     order — correct today, since the wide tile has neither state, and correct if it ever does: a
+     description or an alarm should not be sized like a headline figure.) */
+  .hqItemWide strong {
+    font-size: 1.25rem;
   }
 }
 

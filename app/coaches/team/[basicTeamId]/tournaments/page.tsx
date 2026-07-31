@@ -6,6 +6,8 @@ import {
 import { createClient } from '@/lib/supabase-server';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import { sortByCoachLifecycle } from '@/lib/coach-tournament-lifecycle';
+import { resolveRowFanView } from '@/lib/coach-alert-registration';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import ScopeShelf from '@/components/coaches/ScopeShelf';
@@ -28,8 +30,18 @@ export async function generateMetadata({ params }: RouteParams) {
 export default async function CoachTeamTournamentsPage({ params }: RouteParams) {
   const { basicTeamId } = await params;
   const { team } = await resolveCoachTeamPage(basicTeamId, '/tournaments');
-  const history = await getBasicCoachTournamentHistoryForTeam(basicTeamId);
+  const rawHistory = await getBasicCoachTournamentHistoryForTeam(basicTeamId);
   const today = tournamentToday();
+  // DF-7: live-first, like the account-wide hub and the premium team list. This was the only one of
+  // the three that stayed in `registeredAt` order, so the same coach's events read in two different
+  // orders on two screens — and it matters more now that the Overview names one event and sends
+  // them here for the rest.
+  const history = sortByCoachLifecycle(
+    rawHistory,
+    entry => entry.tournament?.startDate ?? null,
+    entry => entry.tournament?.endDate ?? null,
+    today,
+  );
   // Entries that actually put this team in an event. Used only to gate the B3.2 shelf — the
   // list itself still shows every entry, rejections included, because that IS their record.
   const liveEntryCount = history.filter(({ registration }) => registration.status !== 'rejected').length;
@@ -51,22 +63,19 @@ export default async function CoachTeamTournamentsPage({ params }: RouteParams) 
         <div className={styles.list}>
           {/* A3.3: the shared registration card — the old per-list design (tournament-hashed
               monogram, fainter border, neutral hover) retired in favour of the one anatomy. */}
-          {history.map(({ registration, tournament, org }) => (
+          {history.map(entry => (
             <CoachRegistrationCard
-              key={registration.id}
-              href={`${COACHES_TOURNAMENTS_PATH}/${registration.id}`}
-              title={tournament?.name ?? registration.name}
-              registrationStatus={registration.status}
-              startDate={tournament?.startDate ?? null}
-              endDate={tournament?.endDate ?? null}
+              key={entry.registration.id}
+              href={`${COACHES_TOURNAMENTS_PATH}/${entry.registration.id}`}
+              title={entry.tournament?.name ?? entry.registration.name}
+              registrationStatus={entry.registration.status}
+              startDate={entry.tournament?.startDate ?? null}
+              endDate={entry.tournament?.endDate ?? null}
               today={today}
-              metaParts={[org?.name]}
-              fanView={
-                org?.slug && tournament?.slug &&
-                (tournament.status === 'active' || tournament.status === 'completed')
-                  ? { orgSlug: org.slug, tournamentSlug: tournament.slug }
-                  : null
-              }
+              metaParts={[entry.org?.name]}
+              /* One rule for every coach-facing tournament ROW (it was inlined identically here,
+                 on the premium list, and would have been a third copy on the Overview). */
+              fanView={resolveRowFanView(entry)}
             />
           ))}
         </div>

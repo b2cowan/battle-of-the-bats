@@ -205,6 +205,12 @@ colour-token baselines at ZERO, and a phone probe pass at 360×740 in the style 
   state benefits both) but keeps its own layout. The two tiers will visibly diverge further; that is
   consistent with the two-family ruling (free = consumer "companion", premium = operator "HQ") and is
   deliberate. A follow-up chunk can decide whether the free overview adopts the one-thing rule.
+  **→ ANSWERED 2026-07-30: it does NOT.** The free page has no overlapping predicates and already
+  satisfies "one prose card per surface"; it has a *redundancy* defect instead (the same tournament
+  stated up to four times, the coach's own numbers last). Review + seven decisions awaiting
+  ratification: `FREE_COACH_OVERVIEW_COHERENCE_PLAN.md`. One of them (**DF-2**) is a correctness fix
+  in `pickFanViewRegistration` that lands on **this** tier too — it picks by `registeredAt` and by
+  *publication* status, so premium's tail row can name a future event while a live one is running.
 - **A seventh tile.** See open question 2.
 - **Any migration.** Nothing in this chunk stores anything new.
 

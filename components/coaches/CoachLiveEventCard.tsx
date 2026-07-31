@@ -11,14 +11,17 @@ import { tournamentToday } from '@/lib/timezone';
  * ("Nothing on your schedule"), leaving the link floating with no event context. This block is
  * self-contained: a small card naming the event (lifecycle chip + name + dates) with the ⇄ Fan
  * view link beneath it. Deliberately NO follow/alert affordance (owner call 2026-07-23 — the
- * public side owns those; the portal doesn't push follow at the coach). ONE component for both
- * tiers so the block can't drift. Server-safe (no hooks).
+ * public side owns those; the portal doesn't push follow at the coach). Server-safe (no hooks).
  *
- * `layout` (Chunk I) — the premium Overview demotes this block to a single row in the quiet tail
- * while the free portal keeps the standalone card. That is a LAYOUT difference, not a different
- * component: the lifecycle derivation, the three chip labels and the fan-view door stay in one
- * place, which is the whole point of the "both tiers" rule above. A second hand-rolled row in the
- * premium page would have meant a future state (say "Postponed") landing on one tier only.
+ * ⚠ TRUTH-UP 2026-07-30 (DF-1): this is now the PREMIUM tail row only. It used to be the "one
+ * component for both tiers" block, but the free Overview's copy sat directly beneath a list that
+ * already named the same tournament — so the free side folded into the single shared
+ * `CoachRegistrationCard`, which is also a door to the record. `layout="card"` therefore has no
+ * caller today; it is kept because it is the honest standalone presentation and costs nothing.
+ * The shared rules the old comment protected did not move: lifecycle derivation lives in
+ * `lib/coach-tournament-lifecycle`, and which registration counts as "current" plus whether a row
+ * has a fan-view door both live in `lib/coach-alert-registration` — so a new state still lands on
+ * both tiers by construction.
  */
 
 function formatRange(start: string | null, end: string | null): string | null {
