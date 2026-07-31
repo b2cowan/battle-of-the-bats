@@ -333,14 +333,9 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
             </h1>
             <p className={styles.heroSub}>
               {showTournamentDraftGuidance
-                ? 'Tournament details are being prepared. Registration and public schedules will appear here once the organizer publishes the tournament.'
-                : 'This organization hasn&apos;t set up their public site yet.'}
+                ? 'A tournament is being set up. Registration opens when it is ready.'
+                : 'No tournaments are running right now.'}
             </p>
-            {showTournamentDraftGuidance && (
-              <div className={styles.draftPublicNotice}>
-                Draft tournament pages are private until the organizer activates registration.
-              </div>
-            )}
             {showFollow && <FollowOrgButton orgSlug={orgSlug} orgName={org.name} />}
           </div>
         </section>
