@@ -1,13 +1,13 @@
 # Free coach Overview — coherence review + recommendation
 
-**Status:** ✅ **DF-1…DF-7 RATIFIED + BUILT ON DEV 2026-07-30 (uncommitted). `/review` DONE (§7.3 —
-6 findings confirmed + fixed). `/docs` DONE (§7.4).** Owner ratified all seven at the
+**Status:** ✅ **DF-1…DF-7 SHIPPED — COMMITTED ON DEV 2026-07-30 (`a0f56d34`, 15 files, `git show --stat` verified clean — NOT on prod).**
+`/review` DONE (§7.3 — 6 findings confirmed + fixed). `/docs` DONE (§7.4). Owner ratified all seven at the
 recommendations ("take all seven"). Final gate: typecheck 0 · focused lint 0 errors · **600 unit
 tests** (17 in this module) · all six colour baselines unchanged (tsx 427) · date-correctness 0 ·
 schema parity 0 · dictionary OK · org-context guard clean. **NO migration.** Clean dev restart done
 (server stopped → `.next` cleared → restarted; `Ready in 892ms`, platform-admin login 200, both
 changed coach routes and both help surfaces compile, **zero** Supabase `EACCES`).
-**Remaining = owner QA (§8) → commit.**
+**Remaining = owner QA (§8) only.** Decision logged in `memory/design_decisions.md` (2026-07-30) so the question is closed rather than re-opened whenever the tiers are compared.
 
 Answers the question set by `FREE_COACH_OVERVIEW_COHERENCE_PROMPT.md` (written by the Chunk I session).
 

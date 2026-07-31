@@ -4,6 +4,60 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-07-30 — The FREE coach Overview does NOT get a one-thing resolver — it had a REDUNDANCY defect, not a contradiction. A surface may state a fact ONCE; a page must never duplicate a tab it links to. (DF-1…DF-7 ratified "take all seven"; mockups `claude.ai/code/artifact/8efbb388-a58c-40b9-8377-62b36f140bde`; shipped `a0f56d34`)
+
+**Decision (question closed — do not re-open when the tiers are compared).** The Chunk I handoff asked
+whether the free coach Overview needs its own "one thing" pass. **It does not.** All seven of its
+conditional blocks were walked: no pair can issue conflicting instructions, and "one prose card per
+surface" already holds (the setup card and the roster invite are mutually exclusive by construction).
+**Premium's defect is genuinely absent, so no ordered anchor resolver, and `lib/coach-overview.ts` is
+NOT to be generalised** — it reasons about assistant-coach capabilities the free tier does not have,
+and a shared module only one caller's inputs make sense for is worse than two honest ones.
+
+The free page had a *different* defect, and the distinction is the reusable part:
+
+> **Premium said two things at once. Free said ONE THING FOUR TIMES** — the same tournament as a list
+> row, again as an event card built from the same array, again as a tile value, again in the sticky
+> header — **and ranked the team's own numbers below all four repetitions.**
+
+Five rules generalise out of the fix:
+1. **A page must not duplicate a tab it links to.** The free Overview's lead section was a verbatim
+   copy of the Tournaments tab (same component, same source, same order), which is permanently one tap
+   away. An overview names the ONE item that matters and links out for the rest.
+2. **"Which item is current" is decided by LIFECYCLE, never by insert/registration order.** Applies to
+   both tiers. Publication status (`active`) is not a lifecycle claim.
+3. **…and never by lifecycle alone where STANDING exists.** Anything the user is still in outranks
+   anything they were turned away from; a rejection is featured only when it is the only entry.
+4. **When one surface's ordering rule changes, every other consumer of the same array changes with
+   it.** Half-applying it is its own defect: the tile and the card named two different tournaments as
+   current, on one screen — the exact contradiction the pass existed to remove.
+5. **An empty tile states what the tool would give, never "0"** — but only when it is genuinely empty.
+   A real figure, or money owed to a third party, always outranks the "Not on" face.
+
+**Also binding from this pass:** a phone is not the width that gets the *sparsest* grid (the free strip
+was 1-up on phone and 2-up from 701px — inverted); a new affordance must not be placed inside a
+line-clamped container (a hard cut with no ellipsis silently deletes it); a separator's job needs no
+link; and under the warm default the whole `--white-35…65` band collapses onto ONE token, so
+`--white-70` is the first tier that is actually darker — check contrast against the resolved warm
+value, not the dark one.
+
+**Rationale:** verified by reading the page rather than trusting the handoff, and **measured in
+Chromium at 390×844 / 360×740** rather than eyeballed: the duplicated tournament filled 44% of the
+first screenful (53% at 360px), and a brand-new team's setup card sat 82–186px below the fold under
+474px of zeros — premium's finding #3 with the tiers swapped. After: page 1600→1302px, "At a glance"
+y672→y521, four of five tiles on the first screen instead of one clipped one, setup card at y340.
+
+**Explicitly NOT changed, and not re-litigated by a layout pass:** the pressure ladder and the Premium
+shelf on the Overview (an enumerated permitted ask surface), "tournaments lead the free Overview"
+(owner call, A3 QA 2026-07-27), the two-family companion voice, and the free sections' existing
+empty-state copy.
+
+**Applies to:** the free coach team Overview and its Tournaments tab; rules 2–4 reach the premium
+Overview's tail through the shared picker. Full record + owner QA matrix:
+`docs/projects/active/FREE_COACH_OVERVIEW_COHERENCE_PLAN.md`.
+
+---
+
 ### 2026-07-30 — Coach Portal Chunk I: the Overview may show exactly ONE prose card, chosen by an ORDERED rule; a more specific state REPLACES the general state it is a superset of and inherits its door; CTAs gate on "can complete", never "can see" (mockups `claude.ai/code/artifact/5ae1c9e4-c31e-4f83-a098-3fbaa0ae15cd` rev 3 = binding; owner picked Option C and ratified D1–D15, 2026-07-30 — "looks good, go ahead")
 
 **Decision (owner-reported defect → owner-approved direction):** the premium team Overview rendered NINE independent bands, each testing its own predicate, in source order, with no priority between them. Two of them shipped opposite instructions off the SAME state: the in-season lull card (`in_season && !nextEvent` → "Add an event") and the winding-down cue (that predicate PLUS four more facts → "Close out the season"). The cue's predicate is a **strict superset**, so whenever it can render the lull card is already wrong — and both drew. Every other symptom the owner reported (full-width tournament strip vs. small tiles, the record floating at `width: fit-content`, "at a glance" pushed below the fold, "Add an event" said three times) is downstream of the same missing priority model. Eight binding rules:
