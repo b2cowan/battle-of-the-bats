@@ -205,6 +205,12 @@ export default function Navbar() {
           </Link>
 
           <div className={styles.actions}>
+            {/* The way back into the app. Org pages carry no tab row and no bottom bar at any width,
+                so before this a visitor who arrived here (from search, a follow card, or a link) had
+                no route to Scores/Chat/Account except the browser's Back button. Deliberately a
+                plain link at Pricing's weight, and labelled to match the identical link on the
+                public tournament strip — not a second brand mark competing with the org's own name. */}
+            <Link href="/discover" className={styles.actionLink}>Discover</Link>
             <Link href="/pricing" className={styles.actionLink}>Pricing</Link>
             {orgHomePill && (
               <Link href={orgHomePill.href} className={styles.actionPill}>{orgHomePill.label}</Link>

@@ -9,11 +9,32 @@ import {
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreePlan } from '@/lib/plan-config';
 import { isFollowableOrg } from '@/lib/directory';
+import { resolveTheme } from '@/lib/themes';
+import type { Tournament } from '@/lib/types';
 import FollowOrgButton from '@/components/public/FollowOrgButton';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import styles from './Home.module.css';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * Each event card wears ITS OWN event's colour, not the org's.
+ *
+ * This page is the one place several differently-branded events sit side by side, and until now
+ * every card inherited the single org-level `--primary` — so a club running a red event and a purple
+ * one showed two identical cards, and neither looked like the page it opened. Scoping the theme vars
+ * to the card is enough: the badge, hover border and CTA all read `--primary*`, so they retint
+ * without touching any rule. Falls back to the org's own theme when an event has set no branding.
+ */
+function eventCardTheme(t: Pick<Tournament, 'themePreset' | 'themePrimary' | 'themeAccent'>): React.CSSProperties | undefined {
+  if (!t.themePreset && !t.themePrimary) return undefined; // unbranded event → inherit the org's
+  const theme = resolveTheme(t.themePreset, t.themePrimary, t.themeAccent);
+  return {
+    '--primary': theme.primary,
+    '--primary-light': theme.primaryLight,
+    '--primary-rgb': theme.primaryRgb,
+  } as React.CSSProperties;
+}
 
 export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = await params;
@@ -159,7 +180,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
               ) : (
                 <div className={styles.tournamentCards}>
                   {tournamentDetails.map(({ tournament: t, ageRange }) => (
-                    <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard}`}>
+                    <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard}`} style={eventCardTheme(t)}>
                       <div className={styles.tournamentCardHeader}>
                         <span className="badge badge-primary">
                           <Star size={10} fill="currentColor" /> Live
@@ -415,7 +436,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           </div>
           <div className={styles.tournamentCards}>
             {activeTournaments.map(t => (
-              <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard}`}>
+              <Link key={t.id} href={`/${orgSlug}/${t.slug}`} className={`card ${styles.tournamentCard}`} style={eventCardTheme(t)}>
                 <div className={styles.tournamentCardHeader}>
                   <span className="badge badge-primary">
                     <Star size={10} fill="currentColor" /> Live

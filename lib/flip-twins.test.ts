@@ -12,7 +12,7 @@ import {
   allowedAdminScreens,
   primaryTarget,
   parseReturnMemory,
-  flipOriginLabel,
+  flipSurfaceLabel,
   publicGamePageHref,
   publicTeamPageHref,
   type FlipContext,
@@ -230,25 +230,36 @@ test('to-public: adminTournamentId is NOT applied (the admin shell already has i
   assert.equal(target.href, `/${ORG}/${SLUG}/schedule`); // public twin, unaffected
 });
 
-// ── Origin labels ("⇄ Back to {label}") ──────────────────────────────────────────────────────────
+// ── Surface labels (a return link is named by WHERE IT GOES, never "Back to …") ──────────────────
 
-test('flipOriginLabel names admin screens and public sections from the pathname', () => {
-  assert.equal(flipOriginLabel(adminPath('results')), 'Results');
-  assert.equal(flipOriginLabel(adminPath('registrations')), 'Teams');
-  assert.equal(flipOriginLabel(`/${ORG}/admin/tournaments`), 'Admin'); // no screen segment
-  assert.equal(flipOriginLabel(`/${ORG}/admin/org/settings`), 'Admin'); // non-tournament admin
-  assert.equal(flipOriginLabel(`/${ORG}/${SLUG}`), 'Overview'); // public root
-  assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/schedule`), 'Schedule');
-  assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/standings`), 'Standings');
-  assert.equal(flipOriginLabel(`/${ORG}/${SLUG}/schedule/game-123`), 'Schedule'); // game page → its section
+test('flipSurfaceLabel names the SURFACE, not the screen — one vocabulary with the stateless pill', () => {
+  // Every admin screen reads "Admin". The old behaviour named the screen ("Results", "Dashboard"),
+  // which is what produced "Back to Dashboard" beside a pill that said "Public site".
+  assert.equal(flipSurfaceLabel(adminPath('results')), 'Admin');
+  assert.equal(flipSurfaceLabel(adminPath('registrations')), 'Admin');
+  assert.equal(flipSurfaceLabel(`/${ORG}/admin/tournaments`), 'Admin');
+  assert.equal(flipSurfaceLabel(`/${ORG}/admin/org/settings`), 'Admin');
 });
 
-test('flipOriginLabel names the coach portals and scorekeeper shell (never a raw id segment)', () => {
-  assert.equal(flipOriginLabel('/coaches/tournaments/3f2a-uuid'), 'Coach view'); // free portal record
-  assert.equal(flipOriginLabel('/coaches/team/abc123'), 'Coach view');
-  assert.equal(flipOriginLabel(`/${ORG}/coaches/teams/t1/tournaments/r1`), 'Coach view'); // premium record
-  assert.equal(flipOriginLabel(`/${ORG}/coaches`), 'Coach view');
-  assert.equal(flipOriginLabel(`/${ORG}/scorekeeper`), 'Scorekeeper');
+test('flipSurfaceLabel names every public tournament page "Public site"', () => {
+  assert.equal(flipSurfaceLabel(`/${ORG}/${SLUG}`), 'Public site');
+  assert.equal(flipSurfaceLabel(`/${ORG}/${SLUG}/schedule`), 'Public site');
+  assert.equal(flipSurfaceLabel(`/${ORG}/${SLUG}/standings`), 'Public site');
+  assert.equal(flipSurfaceLabel(`/${ORG}/${SLUG}/schedule/game-123`), 'Public site');
+});
+
+test('flipSurfaceLabel names both coach portals and the scorekeeper shell', () => {
+  assert.equal(flipSurfaceLabel('/coaches/tournaments/3f2a-uuid'), 'Coaches Portal'); // free portal
+  assert.equal(flipSurfaceLabel('/coaches/team/abc123'), 'Coaches Portal');
+  assert.equal(flipSurfaceLabel(`/${ORG}/coaches/teams/t1/tournaments/r1`), 'Coaches Portal'); // premium
+  assert.equal(flipSurfaceLabel(`/${ORG}/coaches`), 'Coaches Portal');
+  assert.equal(flipSurfaceLabel(`/${ORG}/scorekeeper`), 'Scorekeeper');
+});
+
+test('flipSurfaceLabel ignores query + hash (the stored origin URL carries them)', () => {
+  assert.equal(flipSurfaceLabel(`/${ORG}/admin/tournaments/schedule?tournamentId=t1`), 'Admin');
+  assert.equal(flipSurfaceLabel(`/${ORG}/${SLUG}/schedule?highlightGameId=g1`), 'Public site');
+  assert.equal(flipSurfaceLabel(`/${ORG}/${SLUG}#status`), 'Public site');
 });
 
 // ── Staff scoping: nearest permitted screen, never a 403 ─────────────────────────────────────────

@@ -70,7 +70,7 @@ export default function CoachesBottomNav() {
   const { assignments, closedAssignments } = useCoaches();
   const orgSlug  = currentOrg?.slug ?? '';
   const base     = `/${orgSlug}/coaches`;
-  // "Back to admin" — only for a coach who also administers this org (seeded from the layout's
+  // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
   const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
 
@@ -293,7 +293,7 @@ export default function CoachesBottomNav() {
                 onClick={() => setMoreOpen(false)}
               >
                 <Shield size={17} />
-                <span>Back to admin</span>
+                <span>Admin</span>
               </Link>
             )}
             <button

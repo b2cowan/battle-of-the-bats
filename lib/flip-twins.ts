@@ -73,7 +73,7 @@ export type FlipResolution =
 // ── Mapping tables (the ONE place the twin map lives) ────────────────────────────────────────────
 
 /** Admin screen (segment after /admin/tournaments/) → its public twin + the page's own label (the
- *  latter feeds the "⇄ Back to {label}" return memory). ONE map so adding a screen updates both at
+ *  latter is the in-shell screen label). ONE map so adding a screen updates both at
  *  once and they can't drift; unlisted screens fall back to the Overview twin / generic "Admin". */
 const ADMIN_SCREEN: Record<string, { twin: PublicTwinKey; label: string }> = {
   dashboard:     { twin: 'overview', label: 'Dashboard' },
@@ -359,7 +359,7 @@ export function primaryTarget(resolution: FlipResolution): FlipTarget {
   return resolution.kind === 'single' ? resolution.target : resolution.targets[0];
 }
 
-// ── Return-memory ("⇄ Back to {label}") ──────────────────────────────────────────────────────────
+// ── Return-memory (a direct return to the page a flip came from) ─────────────────────────────────
 //
 // After a flip, the destination side's pill can offer a one-tap return to the exact origin URL. The
 // snapshot lives in sessionStorage; stateless twin resolution is ALWAYS the fallback when it's
@@ -405,7 +405,7 @@ export function readReturnMemory(now: number, maxAgeMs: number = RETURN_MAX_AGE_
 /**
  * Persist the return snapshot at flip time (browser only) — the write half of the round trip.
  * Called on EVERY hop, both directions, from the shared FlipPill, so the arrival side's pill can
- * offer "⇄ Back to {label}". Best-effort: a storage failure just falls back to stateless resolution.
+ * offer a direct return to it. Best-effort: a storage failure just falls back to stateless resolution.
  */
 export function writeReturnMemory(mem: { originUrl: string; label: string }, now: number): void {
   try {
@@ -418,7 +418,7 @@ export function writeReturnMemory(mem: { originUrl: string; label: string }, now
 
 /**
  * Spend the return snapshot (browser only). Called once the arrival side leaves its landing page, so
- * the pill reverts to the stateless page-matched twin instead of a stale "⇄ Back to …". Best-effort.
+ * the pill reverts to the stateless page-matched twin instead of a stale return. Best-effort.
  */
 export function clearReturnMemory(): void {
   try {
@@ -428,26 +428,26 @@ export function clearReturnMemory(): void {
   }
 }
 
-// ── Origin label ("⇄ Back to {label}") ───────────────────────────────────────────────────────────
+// ── Surface label (names WHERE a return link goes) ───────────────────────────────────────────────
 
 /**
- * Human label for the page a flip is LEAVING — powers the arrival side's "⇄ Back to {label}".
- * Derived from the pathname alone (no side-specific plumbing): admin screens read their label from
- * the ADMIN_SCREEN map (the same map that owns the twin, so they can't drift); public sections are
- * just the capitalized section segment (the twin maps own the canonical section vocabulary — this is
- * a cosmetic label, so it needs no second table and gracefully names any section, e.g. Playoffs).
+ * The name of the SURFACE a URL belongs to — "Admin", "Coaches Portal", "Scorekeeper", "Public site".
+ *
+ * Owner call 2026-07-31: navigation controls are labelled by DESTINATION, never "Back to …". The
+ * return-memory pill still lands you on the exact page you came from (that intelligence is in the
+ * stored href) — it just stops narrating the trip. Naming the surface rather than the screen is what
+ * makes it match the stateless pill beside it: both now read "Public site" / "Admin", so the control
+ * never appears to change job depending on whether a memory happens to be live.
+ *
+ * Deliberately coarse. The old version named the SCREEN ("Results", "Teams", "Schedule"), which is
+ * why the pill read "Back to Dashboard" on a public page while the admin-side pill read "Public
+ * site" — two vocabularies for one control.
  */
-export function flipOriginLabel(pathname: string): string {
-  if (/\/admin(\/|$)/.test(pathname)) {
-    const screen = adminScreenFromPath(pathname);
-    return (screen && ADMIN_SCREEN[screen]?.label) || 'Admin';
-  }
-  // Coach portals (free `/coaches/…` + premium `/{org}/coaches/…`) and the scorekeeper shell (P3):
-  // their inner segments are ids/tools, not public sections, so name the surface itself — otherwise
-  // the fallback below would surface a raw UUID ("⇄ Back to 3f2a…").
+export function flipSurfaceLabel(url: string): string {
+  const pathname = url.split(/[?#]/)[0];
+  if (/\/admin(\/|$)/.test(pathname)) return 'Admin';
   if (/\/scorekeeper(\/|$)/.test(pathname)) return 'Scorekeeper';
-  if (/\/coaches(\/|$)/.test(pathname)) return 'Coach view';
-  // Public tournament path: /{org}/{tournament}/{section?}/… — the section is the 3rd segment.
-  const section = pathname.split('/').filter(Boolean)[2];
-  return section ? section.charAt(0).toUpperCase() + section.slice(1) : 'Overview';
+  // Both coach portals: free (`/coaches/…`) and premium (`/{org}/coaches/…`).
+  if (/\/coaches(\/|$)/.test(pathname)) return 'Coaches Portal';
+  return 'Public site';
 }

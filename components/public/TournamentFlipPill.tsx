@@ -15,7 +15,7 @@ import { usePublicFlip } from '@/lib/use-public-flip';
 import styles from './TournamentFlipPill.module.css';
 
 export default function TournamentFlipPill() {
-  const resolution = usePublicFlip();
+  const { resolution } = usePublicFlip();
   // Nothing until identity resolves; nothing for fans/signed-out (no hat here) — the corner is theirs.
   if (!resolution) return null;
   return <FlipPill resolution={resolution} variant="inline" className={styles.enter} />;

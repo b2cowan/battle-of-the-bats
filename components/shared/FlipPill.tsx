@@ -13,14 +13,15 @@
  * tokens (never the event brand) so it adapts to the admin HUD now and the warm coach shell later.
  *
  * Return-memory (read): after a flip, if a fresh sessionStorage snapshot exists it overrides the
- * stateless twin with "⇄ Back to {origin}". Writes are wired in Phase 2; the read is inert until then.
+ * stateless twin with a direct return to the exact page they came from, labelled by DESTINATION
+ * (e.g. "⇄ Admin") — never "Back to …" (owner call 2026-07-31).
  */
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronDown } from 'lucide-react';
-import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipOriginLabel, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
+import { readReturnMemory, writeReturnMemory, clearReturnMemory, flipSurfaceLabel, type FlipResolution, type FlipTarget } from '@/lib/flip-twins';
 import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './FlipPill.module.css';
 
@@ -43,7 +44,7 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
 
   // Return-memory read (post-mount, so SSR/hydration is stateless — no flash, no CLS).
   const [back, setBack] = useState<{ href: string; label: string } | null>(null);
-  // The page the flip landed on: the "⇄ Back to {origin}" affordance lives ONLY on this page. Once
+  // The page the flip landed on: the direct-return affordance lives ONLY on this page. Once
   // the user navigates to a different section on this side, the memory is spent and the pill reverts
   // to the stateless page-matched twin (ratified spec: revert on navigate-to-a-different-section — a
   // per-instance ref, so a fresh arrival-side pill starts clean after each hop).
@@ -56,7 +57,13 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
     if (mem.originUrl === here || mem.originUrl.startsWith(`${here}?`)) { setBack(null); return; }
     if (arrivalPathRef.current === null) arrivalPathRef.current = here; // first page after the hop
     if (arrivalPathRef.current === here) {
-      setBack({ href: mem.originUrl, label: `Back to ${mem.label}` });
+      // Labelled by DESTINATION, never "Back to …" (owner call 2026-07-31). The href still carries
+      // the exact page they came from — the link is no less smart, it just stops narrating itself.
+      //
+      // Derived from the stored URL rather than the stored label so a snapshot written by the
+      // PREVIOUS build (which stored a screen name — "Dashboard", "Results") can't surface the old
+      // vocabulary for the 20 minutes it stays fresh. Storage outlives a deploy; this read doesn't.
+      setBack({ href: mem.originUrl, label: flipSurfaceLabel(mem.originUrl) });
     } else {
       // Moved on to another section → spend the memory so the pill returns to the page-matched twin.
       clearReturnMemory();
@@ -67,12 +74,12 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   useDismissable(open, wrapRef, () => setOpen(false));
 
   // Stamp the return snapshot the instant a flip is taken — on EVERY hop, both directions — so the
-  // arrival side's pill can read "⇄ Back to {this page}". The origin is the exact current URL
+  // arrival side's pill can offer a direct return here. The origin is the exact current URL
   // (search included, so a filtered schedule returns filtered); the label is derived from the path.
   const stampReturn = () => {
     try {
       const search = typeof window !== 'undefined' ? window.location.search : '';
-      writeReturnMemory({ originUrl: `${pathname}${search}`, label: flipOriginLabel(pathname) }, Date.now());
+      writeReturnMemory({ originUrl: `${pathname}${search}`, label: flipSurfaceLabel(pathname) }, Date.now());
     } catch {
       /* non-fatal — stateless resolution still works */
     }
@@ -94,9 +101,18 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   // an empty corner that fills in reads as loading; a label that rewrites itself reads as a bug.
   // aria-hidden + inert so a screen reader never announces a placeholder.
   if (resolution.pending) {
+    // Size from the label the CALLER expects, not a fixed string. Every pending caller used to
+    // resolve to "Public site", so a hardcoded stand-in happened to match; the platform strip
+    // resolves to "Admin" / "Coaches Portal" / "Roles" instead, and reserving the wrong width makes
+    // the control jump on arrival — the very thing this state exists to prevent.
+    const pendingLabel = resolution.kind === 'single' ? resolution.target.label : resolution.label;
     return (
       <div className={rootClass} aria-hidden>
-        <span className={`${pillClass} ${styles.pendingPlaceholder}`}>{inner('Public site')}</span>
+        <span className={`${pillClass} ${styles.pendingPlaceholder}`}>
+          {inner(pendingLabel)}
+          {/* A chooser resolves with a caret, so reserve its width too or the pill grows on arrival. */}
+          {resolution.kind === 'multi' && <ChevronDown size={13} className={styles.caret} aria-hidden />}
+        </span>
       </div>
     );
   }
@@ -128,10 +144,10 @@ export default function FlipPill({ resolution, variant = 'inline', compact = fal
   // multi → button + anchored popover of same-tab rows.
   //
   // A CHOOSER SHOWS THE SAME NAMED DESTINATIONS EVERY TIME (owner ruling 2026-07-28). Return-memory
-  // is deliberately ignored here: rewriting one row to "Back to …" made the list shift under people
+  // is deliberately ignored here: rewriting one row to a return made the list shift under people
   // depending on how they arrived, and the destination is already in the list under its own name —
   // so returning is still one row away, just labelled by WHERE it goes rather than how you got here.
-  // (Single-target pills keep the ratified one-tap "Back to …" behaviour above — nothing to shift.)
+  // (Single-target pills keep the ratified one-tap direct return above — nothing to shift.)
   const rows: FlipTarget[] = resolution.targets;
 
   return (

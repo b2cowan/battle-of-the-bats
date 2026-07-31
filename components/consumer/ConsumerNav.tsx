@@ -22,6 +22,9 @@ import { useChatUnread } from '@/lib/use-chat-unread';
 import { usePendingInviteCount } from '@/lib/use-pending-invites';
 import { useClientSignedIn } from '@/lib/use-client-signed-in';
 import { useRoleSummary, resolveOperatorPill } from '@/lib/use-role-summary';
+import { usePublicFlip } from '@/lib/use-public-flip';
+import FlipPill from '@/components/shared/FlipPill';
+import flip from '@/components/shared/FlipPill.module.css';
 import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome } from '@/lib/consumer-routes';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
@@ -39,6 +42,11 @@ const TABS = [
 // (the single source of truth in lib/consumer-routes). Auth / select-org / suspended are excluded and
 // stay dark (R1-4), so navigating within the app never flips theme mid-surface.
 const underPrefix = (path: string, p: string) => path === p || path.startsWith(p + '/');
+
+/** Space-holder for the strip's operator slot while the answer is in flight. FlipPill's own
+ *  `pending` branch renders it invisible-but-sized, so the row never jumps and never paints a
+ *  door it has to take back. The target is never navigable — it exists only to size the space. */
+const FLIP_SLOT_PENDING = { kind: 'single' as const, target: { href: '#', label: 'Admin' }, pending: true };
 
 export default function ConsumerNav({
   signedIn: signedInProp = false,
@@ -108,6 +116,26 @@ export default function ConsumerNav({
   // CLIENT-side (same rule as identity — never SSR'd into SW-cached tournament HTML).
   // Inert everywhere else and for anonymous visitors (no network).
   const roleSummary = useRoleSummary(variant === 'tournament' && signedIn);
+
+  // ONE operator door on a public event page, and it lives HERE — in the nav, the same slot the
+  // consumer screens put it in (owner call 2026-07-31: consistency between screens). Before this
+  // there were two on desktop: this strip's global pill AND the event header's Flip.
+  //
+  // The slot fills with the best door available, in this order:
+  //   1. the Flip — page-matched and scoped to THIS event, so it beats a global pill outright;
+  //   2. the global operator pill — for an operator who is a plain fan of this particular event
+  //      (their own workspace is still one click away);
+  //   3. the "Run a tournament" menu — fans and anonymous visitors, unchanged.
+  // Shares one cached request per event with the phone-width header Flip, and stays silent for
+  // anonymous visitors.
+  // Both values come from the ONE hook, so the "still waiting" flag can never conclude the answer
+  // has landed before the answer exists. An earlier version ran a second, independently-gated
+  // readiness probe here; it could finish first and drop the slot back to the acquisition CTA for a
+  // beat — the exact flash the placeholder exists to prevent, and worst on the admin→public trip
+  // where the roles answer is already cached. Signed-out visitors are never held: their CTA is the
+  // right answer and needs no lookup.
+  const { resolution: eventFlip, resolving: stripDoorResolving } = usePublicFlip();
+  const stripOperatorPill = resolveOperatorPill(roleSummary?.adminHref, roleSummary?.coachHref);
 
   // The root-mounted tournament variant renders on every route; bail here — AFTER the
   // hooks (React-safe) but BEFORE building any badges/markup — so it's free off its own
@@ -240,7 +268,19 @@ export default function ConsumerNav({
   //     a signed-in fan earns a chat door only with ≥1 real conversation, plus a compact
   //     Account avatar; an operator gets the persistent role pill instead of the CTA.
   if (variant === 'tournament') {
-    const pill = resolveOperatorPill(roleSummary?.adminHref, roleSummary?.coachHref);
+    const pill = stripOperatorPill;
+    // The Flip renders through the shared control — same glyph, same popover for a multi-hat
+    // account — wearing the `strip` variant so it matches this row's all-caps mono typography and
+    // pill sizing instead of the event-header typography it uses elsewhere (/design 2026-07-31).
+    // While the answer is still in flight the slot holds its space and shows nothing, rather than
+    // painting the acquisition CTA and taking it back.
+    const operatorDoor = stripDoorResolving
+      ? <FlipPill resolution={FLIP_SLOT_PENDING} variant="inline" className={flip.strip} />
+      : eventFlip
+        ? <FlipPill resolution={eventFlip} variant="inline" className={flip.strip} />
+        : pill
+          ? <Link href={pill.href} className={styles.utilCoach}>{pill.label}</Link>
+          : <StartMenu />;
     return (
       <>
         <header className={`${styles.topbar} ${styles.topbarStrip}`}>
@@ -272,10 +312,7 @@ export default function ConsumerNav({
               </Link>
             )}
             {!signedIn && <Link href="/auth/login" className={styles.utilCta}>Sign in</Link>}
-            {/* Operators get their door; everyone else keeps the acquisition CTA. */}
-            {pill
-              ? <Link href={pill.href} className={styles.utilCoach}>{pill.label}</Link>
-              : <StartMenu />}
+            {operatorDoor}
           </div>
         </header>
         <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">

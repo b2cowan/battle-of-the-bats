@@ -598,10 +598,10 @@ export default function AdminSidebar({ notifCount, onNotifCountChange }: {
         <div className={styles.footer}>
           {/* The Flip: the tournament "View Site"/"Preview Site" footer link is retired — the always-
               visible header FlipPill (top-right of the content area) replaces it. Non-tournament
-              sections keep their org-level "Back to Site" door (org-level is out of scope). */}
+              sections keep their org-level "Public site" door (org-level is out of scope). */}
           {!isTournaments && !isOrgAdmin && (
             <Link href={`/${currentOrg?.slug ?? 'milton-bats'}`} className={styles.footerLink} id="admin-back-site">
-              <Home size={15} /> Back to Site
+              <Home size={15} /> Public site
             </Link>
           )}
           {coachDoor.show && (

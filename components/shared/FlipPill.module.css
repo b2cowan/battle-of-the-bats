@@ -28,6 +28,22 @@
   pointer-events: auto;
 }
 
+/* 'strip' = the platform utility row on public tournament pages (2026-07-31 owner call moved the
+   operator door there). That row is an all-caps mono cluster — Discover / Run a Tournament / Sign in
+   — so the pill matches ITS ROW's typography rather than the event-header typography it uses
+   everywhere else, where it sits beside a sentence-case event name. The control's identity is
+   carried by the pill shape, the ⇄ glyph and the popover, none of which change; only the letterform
+   and size follow the container. Sizing is matched to the `.utilCta`/`.utilCoach` pills it now sits
+   among so it isn't the smallest thing in a row where it's the most important.
+   Amends the 2026-07-23 "renders identically on every surface" note for this container only. */
+.strip .pill {
+  max-width: none;
+  padding: 0.4rem 0.9rem;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
 .pill {
   display: inline-flex;
   align-items: center;

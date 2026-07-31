@@ -5,6 +5,14 @@
   animation: fadeIn 0.18s ease both;
 }
 
+/* Phone-width only (2026-07-31). The operator's door moved into the platform strip so it sits in the
+   same place as on every other consumer screen — but that strip is hidden ≤900px, where the branded
+   event header owns the top of the screen. So the header keeps this control below 901px and yields
+   it above, and exactly one door renders at any width. Both resolve from one shared request. */
+@media (min-width: 901px) {
+  .enter { display: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .enter { animation: none; }
 }

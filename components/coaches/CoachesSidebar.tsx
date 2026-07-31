@@ -64,7 +64,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
   const router = useRouter();
   const { assignments, closedAssignments } = useCoaches();
   const { currentOrg, userRole } = useOrg();
-  // "Back to admin" — only for a coach who also administers this org (seeded from the layout's
+  // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
   // membership role; a coach-only user has no admin role, so no door). Review P3-4.
   const isOrgAdmin = userRole === 'owner' || userRole === 'admin';
   const chatUnread = useChatUnread();
@@ -148,7 +148,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         {/* The old "Back to {org}" link (→ the org's PUBLIC page) was removed here (owner
             call, Batch 3 QA 2026-07-29): the portal is a workspace, not a public sub-page —
             public surfaces are reached through the Flip doors, and admin-coaches keep their
-            "Back to admin" door below. */}
+            "Admin" door below. */}
       </div>
 
       {/* Team switcher — a DROPDOWN, matching the admin shell's tournament switcher (owner
@@ -245,7 +245,7 @@ export default function CoachesSidebar({ orgSlug }: { orgSlug: string }) {
         {isOrgAdmin && (
           <Link href={`/${orgSlug}/admin`} className={styles.sidebarItem}>
             <Shield size={14} />
-            Back to admin
+            Admin
           </Link>
         )}
         <button
