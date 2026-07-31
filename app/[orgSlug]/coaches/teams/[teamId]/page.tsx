@@ -5,11 +5,10 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { Archive, ArrowRight, Building2, Cake, Calendar, CheckCircle2, ChevronDown, Circle, DollarSign, MinusCircle, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
+import { Archive, ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import CoachTournamentAwarenessBanner from '@/components/marketing/CoachTournamentAwarenessBanner';
-import SeasonRecordWidget from '@/components/coaches/SeasonRecordWidget';
 // Loaded on demand, mirroring HelpDrawerProvider's treatment of the help drawer: the tour is a
 // one-time offer most returning coaches have already dismissed, so it shouldn't sit in the
 // Overview bundle (already one of the portal's heaviest) for everyone who never opens it.
@@ -18,6 +17,17 @@ import { useDismissable, useViewportFit } from '@/lib/overlay-hooks';
 import { pickFanViewRegistration, type FanViewRegistration } from '@/lib/coach-alert-registration';
 import CoachLiveEventCard from '@/components/coaches/CoachLiveEventCard';
 import { deriveRepPhase } from '@/lib/coach-rep-phase';
+import {
+  resolveOverviewAnchor,
+  resolveBoard,
+  resolveCoachingTilesShown,
+  summariseAttendance,
+  summarisePlayingTime,
+  type AttendanceSummary,
+  type PlayingTimeSummary,
+  type TileKey,
+} from '@/lib/coach-overview';
+import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
@@ -202,6 +212,16 @@ export default function TeamOverviewPage({
   // Safety-tier Insights bridge: the ONE finding category that shouldn't wait for a couch
   // session (a pitcher over their arm-care cap) echoes as a single quiet line here.
   const [armCareFlag, setArmCareFlag] = useState<{ name: string; overCapGames: number } | null>(null);
+  // The coaching pair (chunk I, D13) — the two season-health tiles a coach WITHOUT money access
+  // gets in slots 5–6. Both ride fetches this page already makes, so neither costs a request.
+  const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
+  const [playingTime, setPlayingTime] = useState<PlayingTimeSummary | null>(null);
+  // Open development goals → the Playing time slot's fallback when a coach has no lineup access.
+  const [openGoalCount, setOpenGoalCount] = useState<number | null>(null);
+  // The coach's remembered record scope (League / Tournament / Scrimmage), set on Insights and read
+  // by every surface that shows a record — so the board's glance and the Insights band can never
+  // report different numbers for the same season.
+  const [wltScope, setWltScope] = useState<Record<string, boolean> | null>(null);
   // Winding-down cue (Batch 3, P1 f5-1): when the season quietly stops, say so — once.
   const [lastPastEventAt, setLastPastEventAt] = useState<string | null>(null);
   const [seasonCueDismissed, setSeasonCueDismissed] = useState(false);
@@ -356,6 +376,11 @@ export default function TeamOverviewPage({
   useEffect(() => {
     if (!loading && !isClosedTeam) void Promise.resolve().then(loadSetup);
   }, [loading, isClosedTeam, loadSetup]);
+
+  // Hydrate the remembered record scope (per team). Read-only here — Insights owns setting it.
+  useEffect(() => {
+    void Promise.resolve().then(() => setWltScope(readWltPreference(teamId)));
+  }, [teamId]);
 
   // Hydrate skipped optional steps (per team). Best-effort — never breaks the page.
   const skipStorageKey = `coach-setup-skipped:${teamId}`;
@@ -576,12 +601,52 @@ export default function TeamOverviewPage({
     return () => { cancelled = true; };
   }, [loading, isClosedTeam, orgSlug, teamId, assignments]);
 
-  // Safety bridge (design log 2026-07-09): surface an over-cap pitcher as one quiet line
-  // linking into Insights. Lineups-gated; fail-silent (Overview never blocks on analytics).
+  // ── Has this team started using money AT ALL? ─────────────────────────────
+  // Declared HERE, above the effects, because two things need the same answer and must not derive
+  // it separately: the board's D16 collapse, and the fetch gates below. The server computes this
+  // authoritatively (`milestones.moneyStarted`); the budget/dues fallback only covers that read
+  // failing silently, using data this page already holds. While the first read is in flight, assume
+  // UNDERWAY — an established coach flashing "set up your money" is a worse lie than the reverse.
+  // `null` until a real answer lands. Guessing makes two tiles change identity after first paint —
+  // dues/budget → money-setup/attendance for a brand-new coach, or the reverse for an established
+  // one — which is the reshuffle the fixed-set rule exists to prevent. The board renders neutral
+  // placeholders instead while this is null.
+  //
+  // The server's `milestones.moneyStarted` is authoritative. The budget/dues fallback exists only
+  // for that fail-silent read failing, and it is deliberately BROADER than the server's definition
+  // (which counts dues SCHEDULES; this counts generated installments) — so it is consulted only
+  // once milestones has had its chance, never as a competing signal.
+  const moneySignalSettled = !setupLoading && (milestones !== null || !!setupError);
+  const moneyStarted: boolean | null = !moneySignalSettled
+    ? null
+    : (milestones?.moneyStarted === true
+        || (budget?.amount != null)
+        || (duesProgress != null && duesProgress.total > 0)
+        // A failed money read leaves us genuinely unable to tell. Treat an established team as the
+        // default — showing "set up your money" to a coach who already has is the worse lie, and
+        // the tiles themselves render "—" rather than a fabricated figure.
+        || (!!setupError && budget === null));
+
+  // Exactly which coaching tiles the board will draw — the same function the board uses, so the
+  // fetch gate and the board cannot disagree in EITHER direction (unit-tested both ways). These two
+  // tiles are the only ones backed by their own request; firing for a tile that is never drawn is a
+  // wasted round trip on the portal's landing page.
+  const teamAssignment = assignments.find(a => a.teamId === teamId);
+  const coachingTiles = teamAssignment
+    ? resolveCoachingTilesShown(teamAssignment.capabilities, moneyStarted)
+    : [];
+  const needsAttendanceRead = coachingTiles.includes('attendance');
+  const needsDevelopmentRead = coachingTiles.includes('development');
+
+  // Season lineup analytics — ONE fetch, two consumers:
+  //   • the safety bridge (design log 2026-07-09): an over-cap pitcher as one quiet line, and
+  //   • the Playing time tile (chunk I, D13): is everyone getting a fair share of the game.
+  // Lineups-gated; fail-silent (the Overview never blocks on analytics). Deliberately NOT a second
+  // request for the tile — the payload already carries what both need.
   useEffect(() => {
     if (loading || isClosedTeam) return;
     const a = assignments.find(x => x.teamId === teamId);
-    if (!a || !a.capabilities.lineups) return; // never fetched ⇒ flag stays null
+    if (!a || !a.capabilities.lineups) return; // never fetched ⇒ flag + tile stay null
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-analytics`)
       .then(res => (res.ok ? res.json() : null))
@@ -589,10 +654,50 @@ export default function TeamOverviewPage({
         if (cancelled) return;
         const over = (json?.analytics?.armCare ?? []).find((r: { overCapGames: number }) => r.overCapGames > 0);
         setArmCareFlag(over ? { name: over.name, overCapGames: over.overCapGames } : null);
+        const fairPlay = (json?.analytics?.fairPlay ?? []) as { fieldInnings: number; benchInnings: number }[];
+        setPlayingTime(summarisePlayingTime(fairPlay, json?.analytics?.gamesWithLineup ?? 0));
       })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [loading, isClosedTeam, orgSlug, teamId, assignments]);
+
+  // Season attendance reliability → the Attendance tile (chunk I, D13). Fired ONLY when the board
+  // will actually draw the tile — see `needsAttendanceRead` above.
+  useEffect(() => {
+    if (loading || isClosedTeam || !needsAttendanceRead) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => {
+        if (cancelled || !json?.players) return;
+        setAttendanceSummary(summariseAttendance(json.players as { games: { attended: number; known: number }; practices: { attended: number; known: number } }[]));
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [loading, isClosedTeam, orgSlug, teamId, needsAttendanceRead]);
+
+  // Open development goals → the Playing time slot's documented fallback for a coach with no
+  // lineup access. Fired ONLY when the board will actually draw the tile.
+  useEffect(() => {
+    if (loading || isClosedTeam || !needsDevelopmentRead) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/board`)
+      .then(res => (res.ok ? res.json() : null))
+      .then(json => {
+        // The route returns the roster under `rows` (NOT `players`) and reports whether goals were
+        // included at all via `showGoals` — it redacts them for a coach without the notes grant.
+        // Trusting a redacted-empty array would print a confident "No goals yet" at someone who is
+        // simply not cleared to see them.
+        if (cancelled || !json?.rows || !json.showGoals) return;
+        // 'working' is the only OPEN status — 'achieved' and 'parked' are both settled, and
+        // counting a parked goal as outstanding would nag about work the coach deliberately shelved.
+        const open = (json.rows as { goals?: { status?: string }[] }[])
+          .reduce((n, p) => n + (p.goals ?? []).filter(g => g.status === 'working').length, 0);
+        setOpenGoalCount(open);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [loading, isClosedTeam, orgSlug, teamId, needsDevelopmentRead]);
 
   // Org-invite banner — show only when an organization has actually invited this team
   // to connect (org-initiated). Self-serve linking lives quietly in Settings otherwise.
@@ -813,136 +918,253 @@ export default function TeamOverviewPage({
   // the remaining items are all optional, so the header just labels them as such.
   const guidance = getCoachGuidance('roster', { base, helpHref });
 
-  // Snapshot ("Your team at a glance") cards — real data, link into each section.
-  // While the first load is in flight, show a neutral "…" rather than flashing a
-  // misleading "Nothing scheduled" / "—" before the data arrives.
+  // ── The board (chunk I) ───────────────────────────────────────────────────
+  // A FIXED set of six tiles in a VARIABLE order, so a coach keeps their spatial memory as the
+  // season changes state. WHICH tiles is decided by the pure resolver (lib/coach-overview);
+  // everything below is the copy and the numbers for a tile that has already been chosen.
   //
-  // Each card declares its own `visible` predicate for the same reason the setup steps do: a tile
-  // whose source data this coach isn't allowed to fetch must HIDE, never render a confident zero.
-  // "0 active players" to an assistant whose head coach hid the roster is worse than no tile — it
-  // isn't a permission message, it's a wrong answer.
-  const snapshotCards = [
-    {
-      key: 'roster',
-      label: 'Roster',
-      icon: Users,
-      value: setupLoading ? '…' : String(setupStats?.activeRosterCount ?? 0),
-      sub: 'active players',
-      href: `${base}/roster`,
-      visible: canViewRoster,
-      tone: 'default' as const,
-      flag: (!setupLoading && missingEmailCount > 0)
-        ? { text: `${missingEmailCount} missing email`, tone: 'warn' as 'ok' | 'warn' }
-        : null,
-      headcount: null as { in: number; late: number; out: number; noReply: number } | null,
-      // Jersey + position readiness across the active roster.
-      progress: (!setupLoading && setupStats && setupStats.activeRosterCount > 0)
-        ? {
-            value: setupStats.positionedRosterCount,
-            total: setupStats.activeRosterCount,
-            label: `${setupStats.positionedRosterCount}/${setupStats.activeRosterCount}`,
-            title: `${setupStats.positionedRosterCount} of ${setupStats.activeRosterCount} players have a jersey number and position`,
-            tone: 'default' as 'default' | 'danger',
-          }
-        : null,
-    },
-    {
-      key: 'schedule',
-      label: 'Next up',
-      icon: Calendar,
-      value: setupLoading ? '…' : nextEvent ? formatEventDate(nextEvent.startsAt) : 'Nothing scheduled',
-      sub: nextEvent ? (nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Upcoming event')) : 'Add an event',
-      href: `${base}/schedule`,
-      visible: canSchedule,
-      tone: 'default' as const,
-      flag: (nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType) && nextLineupReady !== null)
-        ? (nextLineupReady
-            ? { text: 'Lineup ready', tone: 'ok' as 'ok' | 'warn' }
-            : { text: 'Lineup not set', tone: 'warn' as 'ok' | 'warn' })
-        : null,
-      headcount: nextAttendance,
-      progress: null,
-    },
-    {
-      key: 'dues',
-      label: 'Dues',
-      icon: DollarSign,
-      value: setupLoading ? '…' : duesOutstanding == null ? '—' : duesOutstanding > 0 ? formatMoney(duesOutstanding) : 'All paid',
-      sub: duesOutstanding == null
-        ? 'Set up dues'
-        : duesOverdueCount > 0
-          ? `${duesOverdueCount} overdue`
-          : duesOutstanding > 0 ? 'outstanding' : 'nothing owed',
-      href: `${base}/accounting`,
-      visible: canViewMoney,
-      tone: (duesOverdueCount > 0 ? 'danger' : 'default') as 'default' | 'danger',
-      // "N unpaid" = players who've paid nothing at all — the coach's real "who do I chase"
-      // question, surfaced on the tile (separate from the overdue count in the sub line).
-      flag: (!setupLoading && duesUnpaidCount > 0)
-        ? { text: `${duesUnpaidCount} unpaid`, tone: 'warn' as 'ok' | 'warn' }
-        : null,
-      headcount: null as { in: number; late: number; out: number; noReply: number } | null,
-      // Paid vs total installments collected this season.
-      progress: (!setupLoading && duesProgress)
-        ? {
-            value: duesProgress.paid,
-            total: duesProgress.total,
-            label: `${duesProgress.paid}/${duesProgress.total} paid`,
-            title: `${duesProgress.paid} of ${duesProgress.total} dues installments paid`,
-            tone: (duesOverdueCount > 0 ? 'danger' : 'default') as 'default' | 'danger',
-          }
-        : null,
-    },
-    {
-      key: 'budget',
-      label: 'Budget',
-      icon: Wallet,
-      value: setupLoading ? '…'
-        : (!budget || budget.amount == null) ? 'No budget'
-          : formatMoney(budget.amount - budget.spent),
-      sub: (!budget || budget.amount == null)
-        ? 'Set a budget'
-        : `${formatMoney(budget.spent)} of ${formatMoney(budget.amount)} spent`,
-      href: `${base}/accounting/budget-vs-actual`,
-      visible: canViewMoney,
-      tone: (budget && budget.amount != null && budget.spent > budget.amount ? 'danger' : 'default') as 'default' | 'danger',
-      flag: null as { text: string; tone: 'ok' | 'warn' } | null,
-      headcount: null as { in: number; late: number; out: number; noReply: number } | null,
-      // Spent vs budgeted this season.
-      progress: (!setupLoading && budget && budget.amount != null && budget.amount > 0)
-        ? {
-            value: Math.min(budget.spent, budget.amount),
-            total: budget.amount,
-            label: `${Math.round((budget.spent / budget.amount) * 100)}%`,
-            title: `${formatMoney(budget.spent)} spent of ${formatMoney(budget.amount)} budget`,
-            tone: (budget.spent > budget.amount ? 'danger' : 'default') as 'default' | 'danger',
-          }
-        : null,
-    },
-    {
-      key: 'tournaments',
-      label: 'Tournaments',
-      icon: Trophy,
-      value: tournaments == null ? '…'
-        : tournaments.liveNow ? 'Live now'
-          : tournaments.nextDate ? formatEventDate(`${tournaments.nextDate}T00:00:00`)
-            : tournaments.count > 0 ? 'None upcoming'
-              : 'None yet',
-      sub: tournaments && tournaments.count > 0
-        ? `${tournaments.count} registered${tournaments.pending > 0 ? ` · ${tournaments.pending} pending` : ''}`
-        : 'Register for a tournament',
-      href: `${base}/tournaments`,
-      visible: true,
-      tone: 'default' as const,
-      // Tournament fees owed are a money figure — gate on money view (the tournaments tile itself
-      // isn't in the dues/budget money filter, so this flag needs its own guard).
-      flag: (canViewMoney && tournaments && tournaments.owingCount > 0)
-        ? { text: `${formatMoney(tournaments.owed)} in fees due · ${tournaments.owingCount} to pay`, tone: 'warn' as 'ok' | 'warn' }
-        : null,
-      headcount: null as { in: number; late: number; out: number; noReply: number } | null,
-      progress: null,
-    },
-  ];
+  // While the first load is in flight a tile shows a neutral "…" rather than flashing a misleading
+  // "Nothing scheduled" / "$0" before the data arrives.
+  type TileTone = 'default' | 'danger' | 'muted';
+  interface Tile {
+    key: TileKey;
+    label: string;
+    icon: typeof Users;
+    value: string;
+    sub: string;
+    href: string;
+    tone: TileTone;
+    flag?: { text: string; tone: 'ok' | 'warn' | 'mute' } | null;
+    progress?: { value: number; total: number; label: string; title: string; tone: 'default' | 'danger' } | null;
+    /** Last-5 W/L/T pips — the record tile's equivalent of a progress bar. */
+    pips?: { result: string }[] | null;
+  }
+
+  const pct = (share: number) => `${Math.round(share * 100)}%`;
+
+  const buildTile = (key: TileKey): Tile => {
+    switch (key) {
+      case 'record': {
+        // The record moved OUT of its own half-width band and into the board (D5): a name and a
+        // date range were taking full page width while six real numbers floated beside dead space.
+        // The League/Tournament/Scrimmage scope chips live on Insights — a configuration control is
+        // not a glanceable fact (owner ruling 2026-07-30) — but the coach's CHOICE still governs
+        // this number, or the glance here and the band there would report different seasons.
+        const scope = wltScope ?? {};
+        const decided = finalizedGames.filter(e => scope[e.eventType]);
+        const tally = tallyResults(decided);
+        const countedLabels = WLT_CATEGORIES.filter(c => scope[c.key]).map(c => c.label);
+        // A coach who has switched every category OFF has not played no games — they have chosen to
+        // count none. Saying "No games yet · fills in as you finalize scores" to a team mid-season
+        // would be a confident falsehood, and the setting that caused it lives on another page.
+        const noneCounted = wltScope !== null && countedLabels.length === 0;
+        return {
+          key, label: 'Record', icon: Trophy,
+          value: setupLoading || wltScope === null ? '…'
+            : noneCounted ? 'Not counted'
+              : decided.length === 0 ? 'No games yet'
+                : formatRecord(tally),
+          sub: noneCounted ? 'No game types selected — choose them in Insights'
+            : decided.length === 0 ? 'Fills in as you finalize scores'
+              : countedLabels.join(' + '),
+          href: `${base}/history`,
+          tone: noneCounted || decided.length === 0 ? 'muted' : 'default',
+          pips: decided.slice(-5).map(e => ({ result: e.result ?? '' })),
+        };
+      }
+      case 'roster':
+        return {
+          key, label: 'Roster', icon: Users,
+          value: setupLoading ? '…' : String(setupStats?.activeRosterCount ?? 0),
+          sub: 'active players',
+          href: `${base}/roster`,
+          tone: 'default',
+          flag: (!setupLoading && missingEmailCount > 0)
+            ? { text: `${missingEmailCount} missing email`, tone: 'warn' }
+            : null,
+          progress: (!setupLoading && setupStats && setupStats.activeRosterCount > 0)
+            ? {
+                value: setupStats.positionedRosterCount,
+                total: setupStats.activeRosterCount,
+                label: `${setupStats.positionedRosterCount}/${setupStats.activeRosterCount}`,
+                title: `${setupStats.positionedRosterCount} of ${setupStats.activeRosterCount} players have a jersey number and position`,
+                tone: 'default',
+              }
+            : null,
+        };
+      case 'schedule': {
+        // Two faces, one slot. When the anchor is already about what's next, repeating it here is
+        // the "say it three times" defect — so the slot reports a DIFFERENT fact instead of being
+        // removed, which would leave a five-tile board in the most common state of all.
+        if (board.scheduleFace === 'thisWeek') {
+          const parts = [
+            weekSummary && weekSummary.games > 0 ? `${weekSummary.games} game${weekSummary.games === 1 ? '' : 's'}` : null,
+            weekSummary && weekSummary.practices > 0 ? `${weekSummary.practices} practice${weekSummary.practices === 1 ? '' : 's'}` : null,
+            weekSummary && weekSummary.other > 0 ? `${weekSummary.other} other` : null,
+          ].filter(Boolean) as string[];
+          return {
+            key, label: 'This week', icon: Calendar,
+            value: setupLoading ? '…' : (parts[0] ?? 'Nothing else'),
+            sub: parts.slice(1).join(' · ') || 'in the next 7 days',
+            href: `${base}/schedule`,
+            tone: parts.length === 0 ? 'muted' : 'default',
+            flag: birthdays.length > 0
+              ? {
+                  text: birthdays.length === 1
+                    ? `${birthdays[0].name}’s birthday${birthdays[0].inDays === 0 ? ' today' : birthdays[0].inDays === 1 ? ' tomorrow' : ''}`
+                    : `${birthdays.length} birthdays this week`,
+                  tone: 'mute',
+                }
+              : null,
+          };
+        }
+        return {
+          key, label: 'Next up', icon: Calendar,
+          value: setupLoading ? '…' : nextEvent ? formatEventDate(nextEvent.startsAt) : 'Nothing',
+          sub: nextEvent
+            ? (nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Upcoming event'))
+            : 'scheduled ahead',
+          href: `${base}/schedule`,
+          tone: nextEvent ? 'default' : 'muted',
+          flag: (nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType) && nextLineupReady !== null)
+            ? (nextLineupReady ? { text: 'Lineup ready', tone: 'ok' } : { text: 'Lineup not set', tone: 'warn' })
+            : null,
+        };
+      }
+      case 'tournaments':
+        return {
+          key, label: 'Tournaments', icon: Trophy,
+          value: tournaments == null ? '…'
+            : tournaments.liveNow ? 'Live now'
+              : tournaments.count > 0 ? String(tournaments.count)
+                : 'None yet',
+          sub: tournaments && tournaments.count > 0
+            ? (tournaments.nextDate
+                ? `next ${formatEventDate(`${tournaments.nextDate}T00:00:00`)}`
+                : `registered${tournaments.pending > 0 ? ` · ${tournaments.pending} pending` : ''}`)
+            : 'Register for a tournament',
+          href: `${base}/tournaments`,
+          tone: (tournaments && tournaments.count > 0) ? 'default' : 'muted',
+          // Tournament fees owed are a money figure — gate on money view (this tile isn't in the
+          // money pair, so the flag needs its own guard).
+          flag: (canViewMoney && tournaments && tournaments.owingCount > 0)
+            ? { text: `${formatMoney(tournaments.owed)} in fees due`, tone: 'warn' }
+            : null,
+        };
+      case 'dues':
+        return {
+          key, label: 'Dues', icon: DollarSign,
+          value: setupLoading ? '…' : duesOutstanding == null ? '—' : duesOutstanding > 0 ? formatMoney(duesOutstanding) : 'All paid',
+          sub: duesOutstanding == null
+            ? 'Set up dues'
+            : duesOverdueCount > 0
+              ? `outstanding · ${duesOverdueCount} overdue`
+              : duesOutstanding > 0
+                ? `outstanding${duesUnpaidCount > 0 ? ` · ${duesUnpaidCount} unpaid` : ''}`
+                : 'nothing owed',
+          href: `${base}/accounting`,
+          tone: duesOverdueCount > 0 ? 'danger' : 'default',
+          progress: (!setupLoading && duesProgress)
+            ? {
+                value: duesProgress.paid,
+                total: duesProgress.total,
+                label: `${duesProgress.paid}/${duesProgress.total} paid`,
+                title: `${duesProgress.paid} of ${duesProgress.total} dues installments paid`,
+                tone: duesOverdueCount > 0 ? 'danger' : 'default',
+              }
+            : null,
+        };
+      case 'budget':
+        return {
+          key, label: 'Budget', icon: Wallet,
+          value: setupLoading ? '…'
+            : (!budget || budget.amount == null) ? 'Not set'
+              : formatMoney(budget.amount - budget.spent),
+          sub: (!budget || budget.amount == null)
+            ? 'Track what the season costs'
+            : `${formatMoney(budget.spent)} of ${formatMoney(budget.amount)} spent`,
+          href: `${base}/accounting/budget-vs-actual`,
+          tone: (!budget || budget.amount == null) ? 'muted'
+            : budget.spent > budget.amount ? 'danger' : 'default',
+          progress: (!setupLoading && budget && budget.amount != null && budget.amount > 0)
+            ? {
+                value: Math.min(budget.spent, budget.amount),
+                total: budget.amount,
+                label: `${Math.round((budget.spent / budget.amount) * 100)}%`,
+                title: `${formatMoney(budget.spent)} spent of ${formatMoney(budget.amount)} budget`,
+                tone: budget.spent > budget.amount ? 'danger' : 'default',
+              }
+            : null,
+        };
+      case 'moneySetup':
+        // D16 — while a money-capable coach has NEITHER dues nor a budget, the pair collapses to
+        // this one tile and the freed slot goes to a coaching tile. Two muted tiles side by side
+        // spent a third of a phone screen saying "not set", which reads as a broken product to the
+        // exact coach least able to judge.
+        return {
+          key, label: 'Money', icon: DollarSign,
+          value: 'Not set up',
+          sub: 'Dues, a budget, and who has paid',
+          href: `${base}/accounting`,
+          tone: 'muted',
+        };
+      case 'attendance': {
+        const s = attendanceSummary;
+        return {
+          key, label: 'Attendance', icon: CalendarCheck,
+          value: s == null ? '…' : s.share == null ? 'Not enough yet' : pct(s.share),
+          sub: s == null || s.share == null
+            ? 'Take attendance to see the season trend'
+            : 'season average',
+          href: `${base}/attendance`,
+          tone: s?.share == null ? 'muted' : 'default',
+          flag: (s && s.lowCount > 0)
+            ? { text: `${s.lowCount} player${s.lowCount === 1 ? '' : 's'} under ${pct(0.7)}`, tone: 'warn' }
+            : null,
+          progress: (s && s.share != null)
+            ? {
+                value: Math.round(s.share * 100),
+                total: 100,
+                label: `${s.sessions} recorded`,
+                title: `${pct(s.share)} attendance across ${s.sessions} recorded player-sessions`,
+                tone: 'default',
+              }
+            : null,
+        };
+      }
+      case 'playingTime': {
+        const p = playingTime;
+        return {
+          key, label: 'Playing time', icon: ListOrdered,
+          value: p == null ? '…'
+            : p.verdict === 'insufficient' ? 'Not enough yet'
+              : p.verdict === 'even' ? 'Fairly even' : 'Uneven',
+          sub: p == null || p.verdict === 'insufficient'
+            ? 'Save a few lineups to see the balance'
+            : `across ${p.games} game${p.games === 1 ? '' : 's'}`,
+          href: `${base}/history/playing-time`,
+          tone: p == null || p.verdict === 'insufficient' ? 'muted' : 'default',
+          flag: (p && p.belowCount > 0)
+            ? { text: `${p.belowCount} player${p.belowCount === 1 ? '' : 's'} well below`, tone: 'warn' }
+            : null,
+        };
+      }
+      case 'development':
+        // The documented fallback when a coach has no lineup access — never a ranked list, so the
+        // board cannot reshuffle underneath them week to week.
+        return {
+          key, label: 'Development', icon: TrendingUp,
+          value: openGoalCount == null ? '…' : openGoalCount === 0 ? 'No goals yet' : String(openGoalCount),
+          // Null (still loading) must not borrow the zero copy — the value would read "…" beside a
+          // caption that has already decided the answer is none.
+          sub: openGoalCount == null ? 'Checking…'
+            : openGoalCount > 0 ? 'goals in progress' : 'Set a focus for each player',
+          href: `${base}/development`,
+          tone: openGoalCount ? 'default' : 'muted',
+        };
+    }
+  };
+
 
   const renderSetupRow = (item: SetupItem) => {
     const skipped = isSkipped(item);
@@ -1009,7 +1231,6 @@ export default function TeamOverviewPage({
     hasFinalizedGame,
     hasUpcomingTournament,
   });
-  const resultWord = (r?: string | null) => (r === 'win' ? 'Win' : r === 'loss' ? 'Loss' : r === 'tie' ? 'Tie' : '');
 
   // The first still-open setup step, for the pre-season anchor's single next action. Ring steps
   // come first so "Next:" names a first-week milestone before a config chore.
@@ -1034,10 +1255,12 @@ export default function TeamOverviewPage({
   const showSetupChip = setupDecided && actionableItems.length > 0 && !everythingSatisfied;
   // Quiet = the chip is a doorway, not a counter: essentials cleared, or hints turned off.
   const setupChipQuiet = essentialsDone || hintsOff;
-  const showSetupLine = setupDecided && !hintsOff && !essentialsDone && !!nextSetupItem;
-  // One branch, not four: while the roster is missing the line speaks in the roster guidance's
-  // voice, after that it speaks for the next open step. Splitting this across four inline ternaries
-  // let the headline/body pair and the CTA pair guard on subtly different conditions.
+  // The pre-season card's sentence. While the roster is missing it speaks in the roster guidance's
+  // voice, after that it speaks for the next open step. One branch, not four — splitting this across
+  // inline ternaries let the headline/body pair and the CTA pair guard on subtly different
+  // conditions. (Chunk I: this is no longer a separate BAND — it is the pre-season anchor's copy.
+  // The old always-on "next action" line, which shared a rule with the unrelated tour offer, is
+  // retired; the tour now lives only in the Season setup chip, its one permanent home.)
   const setupLine = nextSetupItem && (!requiredDone
     ? {
         head: guidance.headline,
@@ -1051,16 +1274,6 @@ export default function TeamOverviewPage({
         href: nextSetupItem.href,
         label: nextSetupItem.action,
       });
-  // Every "Right now" anchor variant (game day, next event, in-season lull, the winding-down cue)
-  // is schedule-derived. A coach without schedule access has no event data, so those cards would
-  // confidently announce "Nothing on your schedule" to someone simply not permitted to see it.
-  const showAnchor = !setupLoading && requiredDone && canSchedule;
-  // The preseason anchor says the same sentence as the next-action line — never both, and never
-  // one then the other. `showAnchor` clears as soon as the roster/events read lands, but
-  // `showSetupLine` additionally waits on the separate milestones read; without `setupDecided`
-  // here, a returning coach in preseason saw the anchor card render and then get swapped out for
-  // the line milliseconds later. Waiting for both reads costs a beat of blank space instead.
-  const showPreseasonAnchor = setupDecided && showAnchor && phase === 'preseason' && !showSetupLine;
 
   // Season setup — progress as a header control, not a panel. It opens on demand and never
   // occupies the canvas; the canvas belongs to the coach's team. Kept out of the header JSX so
@@ -1158,31 +1371,84 @@ export default function TeamOverviewPage({
   // (scrimmages are excluded from the canonical record) — the cue's "unlocks your Season
   // Wrapped" promise must only be made when a real-competition game was played.
   const hasRealFinalizedGame = finalizedGames.some(e => e.eventType !== 'scrimmage');
-  const showSeasonCue = showAnchor
-    && phase === 'in_season'
+  // The winding-down PREDICATE. Whether it WINS the anchor slot is the resolver's call — this is
+  // only "is the evidence strong enough to say it at all". Note it is a strict superset of the
+  // in-season lull's condition, which is exactly why the two used to contradict each other.
+  const seasonWindingDown = phase === 'in_season'
     && !nextEvent
     && hasRealFinalizedGame
     && !hasUpcomingTournament
     && daysSinceLastEvent != null
     && daysSinceLastEvent >= 14
     && !seasonCueDismissed;
-  // Which variant: the coach who can actually close the season gets the door; everyone else
-  // gets the honest expectation (club seasons are closed by the org admin).
-  const cueCanClose = seasonMeta.canManageSeasons;
 
   const attendanceTotal = nextAttendance ? nextAttendance.in + nextAttendance.late + nextAttendance.out + nextAttendance.noReply : 0;
   const fieldOrLoc = nextEvent ? (nextEvent.fieldNumber || nextEvent.location || null) : null;
   const nextTimeLabel = nextEvent ? new Date(nextEvent.startsAt).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit' }) : null;
 
-  // Phase-ordered tiles (most time-sensitive first for that phase).
-  const TILE_ORDER: Record<string, string[]> = {
-    preseason: ['roster', 'schedule', 'dues', 'budget', 'tournaments'],
-    in_season: ['dues', 'roster', 'budget', 'tournaments', 'schedule'],
-    game_day: ['dues', 'roster', 'budget', 'tournaments', 'schedule'],
-    result: ['tournaments', 'dues', 'roster', 'budget', 'schedule'],
+  // ── THE ONE THING (chunk I) ───────────────────────────────────────────────
+  // Exactly one card, chosen by ONE ordered rule. Before this, nine bands each tested their own
+  // predicate in source order — and the lull card and the winding-down cue, whose predicates are
+  // general and specific versions of the same state, both drew: "Add an event" stacked on top of
+  // "Close out the season". Selection is pure and unit-tested (lib/coach-overview); only the copy
+  // and the hrefs live here.
+  //
+  // Held back until the first read lands, so the page never renders a confident card built on data
+  // it does not have yet.
+  const anchor = setupLoading ? null : resolveOverviewAnchor({
+    phase,
+    hasNextEvent: !!nextEvent,
+    nextIsGame,
+    seasonWindingDown,
+    // Pre-season only names a step this coach can actually finish — `visibleSetupItems` is already
+    // capability-filtered, so an assistant is never told to "Add players" (a step only a head coach
+    // can complete) and then dropped on a read-only roster.
+    hasOpenSetupStep: setupDecided && !hintsOff && !!nextSetupItem,
+    hasUpcomingTournament,
+    caps: assignment.capabilities,
+    canManageSeasons: seasonMeta.canManageSeasons,
+  });
+
+  // ── The board ─────────────────────────────────────────────────────────────
+  // `moneyStarted` is computed once, above the effects, so the board and the fetch gates share one
+  // definition and cannot disagree about whether the coaching pair is needed.
+  const board = resolveBoard({
+    phase,
+    anchorKind: anchor?.kind ?? null,
+    caps: assignment.capabilities,
+    moneyStarted,
+  });
+
+  // The anchor's action set → labels and destinations. Kept in ONE place so a card can't offer a
+  // door its resolver never granted, and `null` genuinely renders nothing (never a disabled button).
+  const anchorHref = (action: string): string => {
+    switch (action) {
+      case 'build_lineup': return nextEvent ? `${base}/lineups/${nextEvent.id}` : `${base}/lineups`;
+      case 'take_attendance': return nextEvent ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`;
+      case 'open_schedule': return `${base}/schedule`;
+      case 'add_event': return `${base}/schedule`;
+      case 'view_tournaments': return `${base}/tournaments`;
+      case 'setup_step': return setupLine?.href ?? base;
+      default: return base;
+    }
   };
-  const tileOrder = TILE_ORDER[phase] ?? TILE_ORDER.in_season;
-  const orderedCards = [...snapshotCards].sort((a, b) => tileOrder.indexOf(a.key) - tileOrder.indexOf(b.key));
+  const ANCHOR_LABEL: Record<string, string> = {
+    build_lineup: 'Build lineup',
+    take_attendance: 'Take attendance',
+    open_schedule: 'Open schedule',
+    add_event: 'Add an event',
+    view_tournaments: 'View tournaments',
+    close_season: 'Close out the season',
+    setup_step: setupLine?.label ?? 'Get started',
+  };
+  const ANSWER_LABEL: Record<string, string> = {
+    ...ANCHOR_LABEL,
+    // D2 — the season check inherits the door it replaced, and says so plainly.
+    add_event: anchor?.kind === 'season_check' ? 'Add an event instead' : 'Add an event',
+    not_yet: 'Not yet',
+    got_it: 'Got it',
+    skip_step: 'Skip this step',
+  };
 
   return (
     <div className={styles.page}>
@@ -1245,193 +1511,230 @@ export default function TeamOverviewPage({
         </p>
       )}
 
-      {/* One line, not a panel. Names the single next action, offers the tour once, and its ✕
-          ends all setup prompting for this coach on every team they hold. */}
-      {showSetupLine && setupLine && (
-        <div className={styles.setupLine}>
-          <span className={styles.setupLineBody}>
-            <span className={styles.setupLineHead}>{setupLine.head}</span>
-            <span className={styles.setupLineDesc}>{setupLine.desc}</span>
-          </span>
-          <span className={styles.setupLineActions}>
-            <Link href={setupLine.href} className="btn btn-lime btn-sm">
-              {setupLine.label} <ArrowRight size={14} />
-            </Link>
-            {!tourSeen && (
-              <button type="button" className={styles.setupLineTour} onClick={openPortalTour}>
-                New here? Take the 2-minute tour
+      {/* ══ THE ONE THING ══════════════════════════════════════════════════════
+          Exactly one card. Which one is the resolver's decision; this renders it in one of three
+          shapes. A `null` primary is deliberate and means informational — the card keeps its
+          sentence and drops its button, never a disabled control. */}
+      {anchor && (
+        <div className={styles.oneThing} data-shape={anchor.shape} data-kind={anchor.kind}>
+          {anchor.kind === 'game_day' && nextEvent && (
+            <>
+              <p className={styles.oneKicker} data-t="live">
+                <span className={styles.oneLiveDot} aria-hidden>●</span> Game day <span className={styles.oneKickerWhen}>Today</span>
+              </p>
+              <p className={styles.oneHeadline}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Game day')}</p>
+              {/* On a mirrored tournament game the event's NAME is the tournament, and the headline
+                  has already taken the opponent — so name it here or it disappears entirely. */}
+              {(nextTimeLabel || fieldOrLoc || isMirroredEvent(nextEvent)) && (
+                <p className={styles.oneMeta}>
+                  {[isMirroredEvent(nextEvent) ? nextEvent.name : null, nextTimeLabel, fieldOrLoc].filter(Boolean).join(' · ')}
+                </p>
+              )}
+              {/* The scoreline. Once a score is entered on game day this is the single most-wanted
+                  fact on the page, and dropping it in the rewrite would have made the Overview go
+                  quiet at exactly the moment it matters most. */}
+              {nextEvent.teamScore != null && nextEvent.opponentScore != null && (
+                <p className={styles.oneScoreline}>
+                  {nextEvent.teamScore} – {nextEvent.opponentScore}
+                  {nextEvent.result && (
+                    <span className={styles.oneScoreResult}>
+                      {' · '}{nextEvent.result === 'win' ? 'Win' : nextEvent.result === 'loss' ? 'Loss' : 'Tie'}
+                    </span>
+                  )}
+                </p>
+              )}
+            </>
+          )}
+
+          {anchor.kind === 'next_event' && nextEvent && (
+            <>
+              <p className={styles.oneKicker} data-t="work">
+                Next {nextIsGame ? 'game' : 'event'}
+                {nextEventDays != null && (
+                  <span className={styles.oneKickerWhen}>
+                    {nextEventDays === 0 ? 'Today' : nextEventDays === 1 ? 'Tomorrow' : `in ${nextEventDays} days`}
+                  </span>
+                )}
+              </p>
+              <p className={styles.oneHeadline}>
+                {formatEventDate(nextEvent.startsAt)}{nextTimeLabel ? `, ${nextTimeLabel}` : ''}
+                {nextEvent.opponent ? ` vs ${nextEvent.opponent}` : ''}
+              </p>
+              <p className={styles.oneMeta}>
+                {[nextEvent.opponent ? null : (nextEvent.name || 'Upcoming event'), fieldOrLoc].filter(Boolean).join(' · ') || 'On your schedule'}
+              </p>
+            </>
+          )}
+
+          {/* Readiness rides the card on BOTH working shapes — it is the whole reason a coach
+              opens the portal on a game morning, and it used to sit three scrolls down. */}
+          {(anchor.kind === 'game_day' || anchor.kind === 'next_event') && nextIsGame && (
+            <div className={styles.oneReady}>
+              {nextAttendance
+                ? <span><strong>{nextAttendance.in}</strong> of {attendanceTotal} in</span>
+                : <span className={styles.oneReadyMuted}>Attendance not taken</span>}
+              {nextLineupReady === true && <span className={styles.oneReadyOk}><CheckCircle2 size={14} aria-hidden /> Lineup ready</span>}
+              {nextLineupReady === false && <span className={styles.oneReadyWarn}><TriangleAlert size={14} aria-hidden /> Lineup not set</span>}
+            </div>
+          )}
+
+          {anchor.kind === 'season_check' && (
+            <>
+              <p className={styles.oneKicker} data-t="decide">Season check</p>
+              <p className={styles.oneHeadline}>
+                {anchor.primary ? 'Is the season over?' : 'Your season looks finished'}
+              </p>
+              <p className={styles.oneMeta}>
+                No games in {daysSinceLastEvent === null ? 'a while' : `${Math.floor((daysSinceLastEvent ?? 0) / 7)} weeks`} and nothing scheduled.{' '}
+                {anchor.primary
+                  ? <>Closing it out locks your record and unlocks your <strong>Season Wrapped</strong>.</>
+                  : <>{currentOrg?.name ?? 'Your club'} closes the season — your <strong>Season Wrapped</strong> appears here when they do.</>}
+              </p>
+            </>
+          )}
+
+          {anchor.kind === 'lull' && (
+            <>
+              <p className={styles.oneKicker} data-t="work">
+                {hasUpcomingTournament ? <><Trophy size={13} aria-hidden /> Next up</> : 'In season'}
+                {hasUpcomingTournament && tournaments?.nextDate && (
+                  <span className={styles.oneKickerWhen}>
+                    {tournaments.liveNow ? 'Live now' : formatEventDate(`${tournaments.nextDate}T00:00:00`)}
+                  </span>
+                )}
+              </p>
+              <p className={styles.oneHeadline}>
+                {hasUpcomingTournament
+                  ? (tournaments?.liveNow ? 'Your tournament is on' : 'Tournament coming up')
+                  : 'Nothing on your schedule'}
+              </p>
+              <p className={styles.oneMeta}>
+                {hasUpcomingTournament
+                  ? 'Add your games and practices so attendance, lineups and your record keep up.'
+                  : 'Add your next game or practice to track attendance, lineups, and your record.'}
+              </p>
+            </>
+          )}
+
+          {anchor.kind === 'preseason' && setupLine && (
+            <>
+              <p className={styles.oneKicker} data-t="work">Next step</p>
+              <p className={styles.oneHeadline}>{setupLine.head}</p>
+              <p className={styles.oneMeta}>{setupLine.desc}</p>
+            </>
+          )}
+
+          {/* One full-width primary, then answers on ONE line. A stack of buttons costs ~140px on a
+              phone and pushes the board under the fold. */}
+          {/* The shipped lime CTA language + a layout-only modifier, so warm-theme handling and the
+              single-lime-action rule are inherited rather than re-implemented. */}
+          {anchor.primary && (
+            anchor.primary === 'close_season' ? (
+              <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={() => setRolloverOpen(true)}>
+                {ANCHOR_LABEL[anchor.primary]}
               </button>
-            )}
-          </span>
-          <button type="button" className={styles.setupLineDismiss} onClick={turnOffHints} aria-label="Turn off setup hints">
-            <X size={15} aria-hidden />
-          </button>
-        </div>
-      )}
+            ) : (
+              <Link href={anchorHref(anchor.primary)} className={`btn btn-lime ${styles.onePrimary}`}>
+                {ANCHOR_LABEL[anchor.primary]} <ArrowRight size={15} aria-hidden />
+              </Link>
+            )
+          )}
 
-      {/* ── "Right now" anchor — the phase-adaptive "what matters now" surface.
-          Ports the TeamHQ phase LOGIC into the operating-tool card language (no hero). */}
-      {showAnchor && phase === 'game_day' && nextEvent && (
-        <div className={`${styles.nowCard} ${styles.nowGameDay}`}>
-          <p className={styles.nowEyebrow}><span className={styles.nowLiveDot} aria-hidden>●</span> Game day <span className={styles.nowEyebrowCount}>Today</span></p>
-          <p className={styles.nowHeadline}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Game day')}</p>
-          {/* On a mirrored tournament game the event's name IS the tournament, and the headline has
-              already taken the opponent — so name the tournament here or it disappears entirely. */}
-          {(nextTimeLabel || fieldOrLoc || isMirroredEvent(nextEvent)) && (
-            <p className={styles.nowMeta}>
-              {[isMirroredEvent(nextEvent) ? nextEvent.name : null, nextTimeLabel, fieldOrLoc].filter(Boolean).join(' · ')}
-            </p>
-          )}
-          {nextEvent.teamScore != null && nextEvent.opponentScore != null && (
-            <p className={styles.nowScoreline}>{nextEvent.teamScore} – {nextEvent.opponentScore}{nextEvent.result ? <span className={styles.nowScoreResult}> · {resultWord(nextEvent.result)}</span> : null}</p>
-          )}
-          {(nextAttendance || nextLineupReady !== null) && (
-            <>
-              <div className={styles.nowDivider} />
-              <div className={styles.nowStatsRow}>
-                {nextAttendance && <span><span className={styles.nowStatIn}>{nextAttendance.in}</span> of {attendanceTotal} in</span>}
-                {nextLineupReady === true && <span className={styles.nowStatOk}><CheckCircle2 size={14} aria-hidden /> Lineup ready</span>}
-                {nextLineupReady === false && <span className={styles.nowStatWarn}><TriangleAlert size={14} aria-hidden /> Lineup not set</span>}
-              </div>
-            </>
-          )}
-          {/* Batch 4 (f2-3): game day used to offer ONE generic link while three days earlier the
-              coach got one-tap lineup and attendance — backwards, since game day is the moment with
-              the least patience. Kept structurally identical to the in-season card's action row
-              below (same hrefs, same gates, same inline-ternary shape) so they can't diverge. */}
-          <div className={styles.nowActions}>
-            <Link href={nextIsGame && canViewLineup ? `${base}/lineups/${nextEvent.id}` : `${base}/schedule`} className="btn btn-lime btn-sm">{nextIsGame && canViewLineup ? 'Build lineup' : 'Open game day'} <ArrowRight size={14} /></Link>
-            {nextIsGame && <Link href={canSchedule ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`} className={styles.nowSecondary}>Take attendance <ArrowRight size={13} /></Link>}
-          </div>
-        </div>
-      )}
-
-      {showAnchor && phase === 'in_season' && nextEvent && (
-        <div className={`${styles.nowCard} ${styles.nowInSeason}`}>
-          <p className={styles.nowEyebrow}>Next {nextIsGame ? 'game' : 'event'}
-            {nextEventDays != null && <span className={styles.nowEyebrowCount}>{nextEventDays === 0 ? 'Today' : nextEventDays === 1 ? 'Tomorrow' : `in ${nextEventDays} days`}</span>}
-          </p>
-          <p className={styles.nowHeadline}>{formatEventDate(nextEvent.startsAt)}{nextTimeLabel ? ` · ${nextTimeLabel}` : ''}</p>
-          <p className={styles.nowMeta}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Upcoming event')}{fieldOrLoc ? ` · ${fieldOrLoc}` : ''}</p>
-          {nextIsGame && (
-            <>
-              <div className={styles.nowDivider} />
-              <div className={styles.nowStatsRow}>
-                {nextAttendance
-                  ? <span><span className={styles.nowStatIn}>{nextAttendance.in}</span> of {attendanceTotal} in</span>
-                  : <span className={styles.nowStatMuted}>Attendance not taken</span>}
-                {nextLineupReady === true && <span className={styles.nowStatOk}><CheckCircle2 size={14} aria-hidden /> Lineup ready</span>}
-                {nextLineupReady === false && <span className={styles.nowStatWarn}><TriangleAlert size={14} aria-hidden /> Lineup not set</span>}
-              </div>
-            </>
-          )}
-          {canViewMoney && duesOverdueCount > 0 && (
-            <p className={styles.nowMoneyAlert}><DollarSign size={14} aria-hidden /> {duesOverdueCount} {duesOverdueCount === 1 ? 'player' : 'players'} overdue{duesOutstanding && duesOutstanding > 0 ? ` · ${formatMoney(duesOutstanding)}` : ''}</p>
-          )}
-          <div className={styles.nowActions}>
-            <Link href={nextIsGame && canViewLineup ? `${base}/lineups/${nextEvent.id}` : `${base}/schedule`} className="btn btn-lime btn-sm">{nextIsGame ? 'Build lineup' : 'Open schedule'} <ArrowRight size={14} /></Link>
-            {nextIsGame && <Link href={canSchedule ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`} className={styles.nowSecondary}>Take attendance <ArrowRight size={13} /></Link>}
-          </div>
-        </div>
-      )}
-
-      {/* In season, but nothing on the game schedule — a lull or a tournament-only stretch.
-          NOT the afterglow (which needs an explicitly-closed season). */}
-      {showAnchor && phase === 'in_season' && !nextEvent && (
-        <div className={`${styles.nowCard} ${styles.nowInSeason}`}>
-          {hasUpcomingTournament && tournaments?.nextDate ? (
-            <>
-              <p className={styles.nowEyebrow}><Trophy size={13} aria-hidden /> Next up
-                <span className={styles.nowEyebrowCount}>{tournaments.liveNow ? 'Live now' : formatEventDate(`${tournaments.nextDate}T00:00:00`)}</span>
-              </p>
-              <p className={styles.nowHeadline}>{tournaments.liveNow ? 'Your tournament is on' : 'Tournament coming up'}</p>
-              <p className={styles.nowMeta}>Add your games and practices to your schedule to plan around it.</p>
-            </>
-          ) : (
-            <>
-              <p className={styles.nowEyebrow}>In season</p>
-              <p className={styles.nowHeadline}>Nothing on your schedule</p>
-              <p className={styles.nowMeta}>Add your next game or practice to track attendance, lineups, and your record.</p>
-            </>
-          )}
-          {canViewMoney && duesOverdueCount > 0 && (
-            <p className={styles.nowMoneyAlert}><DollarSign size={14} aria-hidden /> {duesOverdueCount} {duesOverdueCount === 1 ? 'player' : 'players'} overdue{duesOutstanding && duesOutstanding > 0 ? ` · ${formatMoney(duesOutstanding)}` : ''}</p>
-          )}
-          <div className={styles.nowActions}>
-            <Link href={`${base}/schedule`} className="btn btn-lime btn-sm">Add an event <ArrowRight size={14} /></Link>
-            {hasUpcomingTournament && <Link href={`${base}/tournaments`} className={styles.nowSecondary}>View tournaments <ArrowRight size={13} /></Link>}
-          </div>
-        </div>
-      )}
-
-      {/* Winding-down cue (f5-1) — one quiet, dismissible card; never a modal or toast. */}
-      {showSeasonCue && (
-        <div className={styles.seasonCue} role="status">
-          <p className={styles.seasonCueEyebrow}>Season check</p>
-          {cueCanClose ? (
-            <>
-              <p className={styles.seasonCueBody}>
-                No games in {daysSinceLastEvent === null ? 'a while' : `${Math.floor((daysSinceLastEvent ?? 0) / 7)} weeks`} and
-                nothing scheduled — looks like the season may be winding down. Closing it out
-                unlocks your <strong>Season Wrapped</strong>.
-              </p>
-              <div className={styles.seasonCueActions}>
-                <button type="button" className="btn btn-lime btn-sm" onClick={() => setRolloverOpen(true)}>
-                  Close out the season
+          {anchor.answers.length > 0 && (
+            <div className={styles.oneAnswers}>
+              {anchor.answers.map(answer => {
+                if (answer === 'not_yet' || answer === 'got_it') {
+                  return (
+                    <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={dismissSeasonCue}>
+                      {ANSWER_LABEL[answer]}
+                    </button>
+                  );
+                }
+                if (answer === 'skip_step') {
+                  return (
+                    <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={() => nextSetupItem && toggleSkip(nextSetupItem.key)}>
+                      {ANSWER_LABEL[answer]}
+                    </button>
+                  );
+                }
+                return (
+                  <Link key={answer} href={anchorHref(answer)} className={styles.oneAnswer}>
+                    {ANSWER_LABEL[answer]}
+                  </Link>
+                );
+              })}
+              {/* The tour is offered ONCE, and only beside the pre-season step — the one moment it
+                  is actually relevant. It no longer shares a rule with this season's next task. */}
+              {anchor.kind === 'preseason' && !tourSeen && (
+                <button type="button" className={styles.oneAnswer} onClick={openPortalTour}>
+                  Take the 2-minute tour
                 </button>
-                <button type="button" className={styles.seasonCueDismiss} onClick={dismissSeasonCue}>Not yet</button>
-              </div>
-            </>
-          ) : (
-            <>
-              <p className={styles.seasonCueBody}>
-                No games in {daysSinceLastEvent === null ? 'a while' : `${Math.floor((daysSinceLastEvent ?? 0) / 7)} weeks`} and
-                nothing scheduled — the season may be winding down. When {currentOrg?.name ?? 'your club'} closes
-                it, your <strong>Season Wrapped</strong> appears here.
-              </p>
-              <div className={styles.seasonCueActions}>
-                <button type="button" className={styles.seasonCueDismiss} onClick={dismissSeasonCue}>Got it</button>
-              </div>
-            </>
+              )}
+            </div>
           )}
         </div>
       )}
 
-      {/* The old `result`-phase afterglow card was removed in Batch 3: it was unreachable
-          (assignments are draft|active-filtered, so `phase` can never be 'result' here) and
-          its job now belongs to the Season's End page this page redirects closed teams to. */}
-
-      {showPreseasonAnchor && (
-        <div className={`${styles.nowCard} ${styles.nowPreseason}`}>
-          {/* No progress count here any more — the header chip is the single place setup progress
-              is reported, so the two can't disagree. */}
-          <p className={styles.nowEyebrow}>Your roster&apos;s ready</p>
-          <p className={styles.nowHeadline}>{nextSetupItem ? nextSetupItem.label : 'Add your first game'}</p>
-          <p className={styles.nowMeta}>{nextSetupItem ? nextSetupItem.desc : 'Put a game or practice on the schedule to start tracking attendance, lineups, and your season record.'}</p>
-          <div className={styles.nowActions}>
-            <Link href={nextSetupItem ? nextSetupItem.href : `${base}/schedule`} className="btn btn-lime btn-sm">{nextSetupItem ? nextSetupItem.action : 'Add an event'} <ArrowRight size={14} /></Link>
-          </div>
+      {/* ══ THE BOARD ══════════════════════════════════════════════════════════
+          Six tiles, fixed set, variable order — the coach's own numbers, directly under the one
+          thing rather than below the fold at the bottom of the page. */}
+      <section aria-labelledby="board-title">
+        <p className={styles.sectionKicker} id="board-title">Your team at a glance</p>
+        {/* The shipped tile language, unchanged — this band gained tiles and moved up the page, so
+            re-skinning it would have been a second card system for no reason. */}
+        <div className={styles.snapshotGrid}>
+          {board.slots.map(key => {
+            const tile = buildTile(key);
+            const Icon = tile.icon;
+            return (
+              <Link key={tile.key} href={tile.href} className={styles.snapshotCard} data-tone={tile.tone}>
+                <span className={styles.snapshotHead}>
+                  <span className={styles.snapshotHeadLabel}><Icon size={13} aria-hidden /> {tile.label}</span>
+                  <ArrowRight size={13} className={styles.snapshotHeadArrow} aria-hidden />
+                </span>
+                <span className={styles.snapshotValue} data-tone={tile.tone}>{tile.value}</span>
+                <span className={styles.snapshotSub}>{tile.sub}</span>
+                {tile.pips && tile.pips.length > 0 && (
+                  // The same W/L/T pips the record widget and Insights use — one pip language.
+                  <span className={styles.wltFormPips} aria-hidden>
+                    {tile.pips.map((p, i) => (
+                      <span key={i} className={styles.wltPip} data-r={p.result || undefined}>
+                        {p.result === 'win' ? 'W' : p.result === 'loss' ? 'L' : 'T'}
+                      </span>
+                    ))}
+                  </span>
+                )}
+                {tile.progress && (
+                  <span className={styles.snapshotBar} title={tile.progress.title}>
+                    <span className={styles.snapshotBarTrack}>
+                      <span
+                        className={styles.snapshotBarFill}
+                        data-tone={tile.progress.tone}
+                        style={{ width: `${tile.progress.total > 0 ? Math.round((tile.progress.value / tile.progress.total) * 100) : 0}%` }}
+                      />
+                    </span>
+                    <span className={styles.snapshotBarPct}>{tile.progress.label}</span>
+                  </span>
+                )}
+                {tile.flag && <span className={styles.snapshotFlag} data-tone={tile.flag.tone}>{tile.flag.text}</span>}
+              </Link>
+            );
+          })}
+          {/* Undecided slots hold their space without claiming an identity, so resolving them into
+              real tiles is not a reshuffle. A placeholder that said "Dues" and then became "Money —
+              not set up" would be exactly the identity flip the fixed-set rule forbids. */}
+          {Array.from({ length: board.pendingSlots }, (_, i) => (
+            <div key={`pending-${i}`} className={styles.snapshotCard} data-tone="muted" aria-hidden>
+              <span className={styles.snapshotHead}><span className={styles.snapshotHeadLabel}>&nbsp;</span></span>
+              <span className={styles.snapshotValue} data-tone="muted">…</span>
+            </div>
+          ))}
         </div>
-      )}
+      </section>
 
-      {/* P3 rev-5 (owner call): the compact "your tournament" block — an event card naming the
-          live/upcoming public event + its ⇄ Fan view door. No alerts/follow affordance here —
-          the public side already carries those; the portal doesn't push follow at the coach.
-          Self-contained context: the phase anchor above isn't always about the tournament. */}
-      {overviewFanView && (
-        <div style={{ marginBottom: '1.25rem' }}>
-          <CoachLiveEventCard event={overviewFanView} />
-        </div>
-      )}
-
-      {/* Season record — moved UP to sit under the anchor (was stranded at page bottom).
-          Self-hides until a finalized game exists (pre-season shows nothing). Schedule-gated:
-          without event access the games list is empty, which would read as "no record" rather
-          than "not yours to see". */}
-      {canSchedule && <SeasonRecordWidget events={seasonGames} teamId={teamId} insightsHref={`${base}/history`} />}
-
-      {/* Safety-tier bridge from Insights — the only finding category that crosses over (CP-1
-          safe: a quiet blueprint link, never lime). */}
+      {/* Safety-tier bridge from Insights — the ONE finding category that shouldn't wait for a
+          couch session. Kept as its own line rather than folded into the tail: an arm-care breach
+          is a warning, and the tail is where quiet things go. */}
       {armCareFlag && (
         <p className={styles.insightsBridge}>
           <span className={styles.insightsBridgeIcon} aria-hidden>⚠</span>
@@ -1440,92 +1743,31 @@ export default function TeamOverviewPage({
         </p>
       )}
 
-      {/* Your team at a glance — run-mode snapshot of real data (replaces the old
-          quick-links grid, which just duplicated the sidebar). */}
-      <section aria-labelledby="snapshot-title">
-        <p className={styles.sectionKicker} id="snapshot-title">Your team at a glance</p>
-        <div className={styles.snapshotGrid}>
-          {orderedCards.filter(card => card.visible).map(card => {
-            const Icon = card.icon;
-            return (
-              <Link
-                key={card.key}
-                href={card.href}
-                className={styles.snapshotCard}
-              >
-                <span className={styles.snapshotHead}>
-                  <span className={styles.snapshotHeadLabel}><Icon size={14} aria-hidden /> {card.label}</span>
-                  <ArrowRight size={13} className={styles.snapshotHeadArrow} aria-hidden />
-                </span>
-                <span className={styles.snapshotValue} data-tone={card.tone}>{card.value}</span>
-                <span className={styles.snapshotSub}>{card.sub}</span>
-                {card.progress && (
-                  <span className={styles.snapshotBar} title={card.progress.title}>
-                    <span className={styles.snapshotBarTrack}>
-                      <span
-                        className={styles.snapshotBarFill}
-                        data-tone={card.progress.tone}
-                        style={{ width: `${card.progress.total > 0 ? Math.round((card.progress.value / card.progress.total) * 100) : 0}%` }}
-                      />
-                    </span>
-                    <span className={styles.snapshotBarPct}>{card.progress.label}</span>
-                  </span>
-                )}
-                {card.flag && (
-                  <span className={styles.snapshotFlag} data-tone={card.flag.tone}>{card.flag.text}</span>
-                )}
-                {card.headcount && (
-                  <span className={styles.snapshotHeadcount} aria-label="Attendance for the next event">
-                    <span data-s="in">{card.headcount.in} in</span>
-                    {card.headcount.late > 0 && <span data-s="late">{card.headcount.late} late</span>}
-                    <span data-s="out">{card.headcount.out} out</span>
-                    {card.headcount.noReply > 0 && <span data-s="noreply">{card.headcount.noReply} no&nbsp;reply</span>}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-        </div>
-      </section>
+      {/* ══ THE TAIL ═══════════════════════════════════════════════════════════
+          Everything that is not today's work, in one quiet list: a tappable row list on a phone, a
+          single ruled line on desktop. Replaces four scattered bands (the full-width tournament
+          strip, the fan-view link floating on the page ground, the last-season card and the
+          this-week strip) that between them out-weighted the coach's actual numbers. */}
+      {(overviewFanView || lastSeason) && (
+        <div className={styles.tail}>
+          {/* The SAME component the free portal renders, in its row layout — so the lifecycle
+              states, their labels and the ⇄ Fan view door stay in one place. A hand-rolled row here
+              would have meant a future state landing on one tier only. */}
+          {overviewFanView && <CoachLiveEventCard event={overviewFanView} layout="row" />}
 
-      {/* Last season — a small proactive handle on resonant history (money-gated), links into
-          Past Seasons. Only renders once a completed/archived season exists. */}
-      {lastSeason && (
-        <Link href={`${base}/history`} className={styles.lastSeasonCard}>
-          <Archive size={20} className={styles.lastSeasonIcon} aria-hidden />
-          <span className={styles.lastSeasonBody}>
-            <span className={styles.lastSeasonLabel}>Last season</span>
-            <span className={styles.lastSeasonName}>{lastSeason.name}</span>
-            <span className={styles.lastSeasonStats}>
-              {lastSeason.record && <span><strong>{lastSeason.record}</strong> record</span>}
-              <span><strong>{formatMoney(lastSeason.duesCollected)}</strong> collected</span>
-              <span><strong>{formatMoney(lastSeason.totalExpenses)}</strong> spent</span>
-            </span>
-          </span>
-          <ArrowRight size={16} className={styles.lastSeasonArrow} aria-hidden />
-        </Link>
-      )}
-
-      {/* This week — events in the next 7 days + any player birthdays. */}
-      {((weekSummary && weekSummary.total > 0) || birthdays.length > 0) && (
-        <div className={styles.weekStrip}>
-          {weekSummary && weekSummary.total > 0 && (
-            <span className={styles.weekItem}>
-              <Calendar size={13} aria-hidden /> This week:{' '}
-              {[
-                weekSummary.games > 0 ? `${weekSummary.games} game${weekSummary.games === 1 ? '' : 's'}` : null,
-                weekSummary.practices > 0 ? `${weekSummary.practices} practice${weekSummary.practices === 1 ? '' : 's'}` : null,
-                weekSummary.other > 0 ? `${weekSummary.other} other` : null,
-              ].filter(Boolean).join(' · ')}
-            </span>
-          )}
-          {birthdays.length > 0 && (
-            <span className={styles.weekItem}>
-              <Cake size={13} aria-hidden />{' '}
-              {birthdays.length === 1
-                ? `${birthdays[0].name}’s birthday${birthdays[0].inDays === 0 ? ' today' : birthdays[0].inDays === 1 ? ' tomorrow' : ''}`
-                : `${birthdays.length} birthdays this week`}
-            </span>
+          {lastSeason && (
+            <Link href={`${base}/history`} className={styles.tailRow} key="last-season">
+              <Archive size={15} className={styles.tailIcon} aria-hidden />
+              <span className={styles.tailLabel}>Last season · {lastSeason.name}</span>
+              <span className={styles.tailMeta}>
+                {[
+                  lastSeason.record ? `${lastSeason.record} record` : null,
+                  `${formatMoney(lastSeason.duesCollected)} collected`,
+                  `${formatMoney(lastSeason.totalExpenses)} spent`,
+                ].filter(Boolean).join(' · ')}
+              </span>
+              <ArrowRight size={14} className={styles.tailArrow} aria-hidden />
+            </Link>
           )}
         </div>
       )}

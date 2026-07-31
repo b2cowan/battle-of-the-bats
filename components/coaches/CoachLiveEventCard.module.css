@@ -20,6 +20,25 @@
   border-radius: 12px;
 }
 
+/* `layout="row"` — the same event, demoted to one line in the premium Overview's quiet tail.
+   No panel of its own: the tail supplies the rules and the row rhythm. Everything else (the chip
+   language, the name, the dates, the fan-view door) is shared with the card above by construction. */
+.row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.6rem;
+  min-height: 44px;
+  padding: 0.45rem 0;
+}
+.row .dates { margin-left: 0; }
+/* The door sits at the end of the row on desktop; on a phone it wraps to its own line, which keeps
+   it a full-width target rather than a cramped tail-end link. */
+.row a { margin-left: auto; }
+@media (max-width: 640px) {
+  .row a { margin-left: 0; flex-basis: 100%; }
+}
+
 .chip {
   display: inline-flex;
   align-items: center;
@@ -63,6 +82,14 @@
   background: rgba(var(--info-rgb), 0.1);
   border: 1px solid rgba(var(--info-rgb), 0.45);
   color: var(--info);
+}
+
+/* Deliberately the quietest of the three: "finished" is context, not news. It exists so the
+   ABSENCE of a chip can never be how this card says an event is over. */
+.chipDone {
+  background: var(--white-8);
+  border: 1px solid var(--border-2);
+  color: var(--white-50);
 }
 
 .name {

@@ -675,7 +675,9 @@
   align-items: stretch; /* every tile in a row is the same height */
 }
 @media (min-width: 700px)  { .snapshotGrid { grid-template-columns: repeat(3, 1fr); } }
-@media (min-width: 1280px) { .snapshotGrid { grid-template-columns: repeat(5, 1fr); } }
+/* Chunk I: the board is SIX tiles, so 3-up is the only even desktop shape (two clean rows).
+   The old 5-up rule existed for a five-tile row and would now orphan the sixth. The portal's
+   reading column is 960px, so 6-across would be ~145px a tile — a list, not a board. */
 .snapshotCard {
   display: flex;
   flex-direction: column;
@@ -730,6 +732,15 @@
   margin-top: 0.1rem;
 }
 .snapshotValue[data-tone="danger"] { color: var(--danger); }
+/* Chunk I, D11 — "nothing set up yet" is a MUTED tile, never a dashed one (the portal has exactly
+   one dashed frame, the Money sample). A first-week coach would otherwise read six tiles saying
+   "not set" as a broken product, so the tile keeps its frame, softens its ink, and its `sub` says
+   what it would give them. Smaller because these values are words, not figures. */
+.snapshotValue[data-tone="muted"] {
+  color: var(--white-55);
+  font-size: 1.12rem;
+  font-weight: 700;
+}
 .snapshotSub {
   font-size: 0.78rem;
   color: var(--white-45);
@@ -772,6 +783,8 @@
 }
 .snapshotFlag[data-tone="ok"] { color: var(--logic-lime); }
 .snapshotFlag[data-tone="warn"] { color: var(--warning); }
+/* A fact worth carrying but not worth alarming about (a birthday this week). */
+.snapshotFlag[data-tone="mute"] { color: var(--white-45); font-weight: 600; }
 
 /* In/Late/Out/No-reply headcount for the next event (on the Next-up tile). */
 .snapshotHeadcount {
@@ -1086,10 +1099,196 @@
   .lastSeasonStats { font-size: 0.75rem; }
 }
 
+/* ══ THE ONE THING (Chunk I) ═══════════════════════════════════════════════
+   Exactly ONE of these renders per page — the resolver in lib/coach-overview decides which. It
+   replaces four bands that each tested their own predicate (the `.nowCard` variants, `.seasonCue`
+   and `.setupLine`), two of which fired on the same state and gave opposite instructions.
+
+   Three shapes, one card. `data-shape` carries the treatment; `data-kind` is available for
+   per-situation tweaks without another class. Colour comes from the SAME semantic tokens the old
+   cards used, so the warm gate's remaps reach this with no gate-specific rules. */
+.oneThing {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1.05rem 1.25rem 1.15rem;
+  margin: 0 0 1.35rem;
+  background: var(--white-8);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-left-width: 3px;
+  border-left-color: var(--blueprint-blue);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+}
+/* The accent is driven by `data-kind` ALONE, on purpose. Colouring by `data-shape` as well put two
+   equal-specificity rules on one property, so the winner depended on declaration order — a future
+   reorder would have silently flipped game day from green to blue. `shape` is a pure function of
+   `kind` in the resolver, so one axis can express everything and the collision cannot recur. */
+.oneThing[data-kind="game_day"] { border-left-color: var(--success); }
+.oneThing[data-kind="next_event"] { border-left-color: var(--blueprint-blue); }
+/* A decision only this coach can make. Amber = "you are being asked", never an error. */
+.oneThing[data-kind="season_check"] { border-left-color: var(--warning); }
+.oneThing[data-kind="lull"] { border-left-color: var(--blueprint-blue); }
+.oneThing[data-kind="preseason"] { border-left-color: var(--blueprint-blue); }
+
+.oneKicker {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0;
+  color: var(--white-45);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.oneKicker svg { color: currentColor; }
+.oneKicker[data-t="live"] { color: var(--success); }
+.oneKicker[data-t="decide"] { color: var(--warning); }
+.oneKickerWhen { margin-left: auto; color: var(--white-40); font-weight: 700; }
+.oneLiveDot { color: var(--success); font-size: 0.7rem; }
+
+.oneHeadline {
+  margin: 0.1rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.32rem;
+  letter-spacing: -0.01em;
+  color: var(--white-90);
+  line-height: 1.18;
+  text-wrap: balance;
+}
+.oneMeta { margin: 0; color: var(--white-55); font-size: 0.9rem; }
+
+/* Once a score exists it is the most-wanted fact on the card, so it outsizes the meta line. */
+.oneScoreline {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.5rem;
+  letter-spacing: -0.01em;
+  color: var(--white-90);
+  line-height: 1.1;
+}
+.oneScoreResult { font-size: 0.85rem; font-weight: 700; color: var(--white-55); }
+
+/* Readiness rides the card on both working shapes — it used to sit three scrolls down, which is
+   backwards on the one morning a coach has the least patience. */
+.oneReady {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 0.9rem;
+  flex-wrap: wrap;
+  margin-top: 0.5rem;
+  padding-top: 0.55rem;
+  border-top: 1px solid var(--border-2);
+  font-size: 0.85rem;
+  color: var(--white-70);
+}
+.oneReady strong { font-family: var(--font-display); font-weight: 800; color: var(--white-90); }
+.oneReadyMuted { color: var(--white-45); }
+.oneReadyOk { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--success); font-weight: 600; }
+.oneReadyWarn { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--warning); font-weight: 600; }
+
+/* Layout ONLY — colour and hover come from the shipped `btn btn-lime`, so the warm-theme
+   ink-on-lime handling and the one-lime-action rule are inherited, not re-implemented. */
+.onePrimary {
+  align-self: flex-start;
+  margin-top: 0.85rem;
+  min-height: 40px;
+  gap: 0.4rem;
+}
+
+/* Answers share ONE row. A stack of buttons costs ~140px on a phone and pushes the board under
+   the fold — the whole reason the board is worth moving up. */
+.oneAnswers {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem 1.1rem;
+  flex-wrap: wrap;
+  margin-top: 0.6rem;
+}
+.oneAnswer,
+.oneAnswerMuted {
+  display: inline-flex;
+  align-items: center;
+  /* A real touch target even though it reads as text — the alternatives must not be second-class. */
+  min-height: 32px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 650;
+  cursor: pointer;
+  text-decoration: none;
+}
+.oneAnswer { color: var(--blueprint-blue); }
+.oneAnswerMuted { color: var(--white-45); font-weight: 600; }
+.oneAnswer:hover,
+.oneAnswerMuted:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .oneThing { padding: 0.95rem 1rem 1.05rem; }
+  .oneHeadline { font-size: 1.14rem; }
+  /* Full-width primary on a phone — the one control that must never be a small target. */
+  .onePrimary { align-self: stretch; justify-content: center; min-height: 44px; }
+  .oneAnswers { justify-content: space-between; gap: 0.4rem 0.75rem; }
+}
+
+/* ══ THE TAIL (Chunk I) ════════════════════════════════════════════════════
+   Everything that is not today's work, in ONE quiet list: a tappable row list on a phone, a ruled
+   line on desktop. Replaces four scattered bands — a full-width tournament strip, a fan-view link
+   floating on the page ground with nothing to attach to, the last-season card and the this-week
+   strip — which between them out-weighted the coach's own numbers. */
+.tail {
+  display: flex;
+  flex-direction: column;
+  margin-top: 1.35rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--border-2);
+}
+.tailRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  min-height: 44px;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--border-2);
+  font-size: 0.82rem;
+  color: var(--white-45);
+  text-decoration: none;
+}
+.tailRow:last-child { border-bottom: 0; }
+.tailIcon { color: var(--white-35); flex-shrink: 0; }
+.tailLabel { color: var(--white-70); font-weight: 650; }
+.tailMeta { color: var(--white-45); }
+.tailArrow { margin-left: auto; color: var(--white-35); flex-shrink: 0; }
+a.tailRow:hover .tailLabel { color: var(--white-90); }
+a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
+
+/* NOTE: the tournament row's chip is deliberately NOT defined here. That row renders through
+   `CoachLiveEventCard` (layout="row"), which owns the lifecycle states and their chip language for
+   both tiers — a second chip formula in this file is exactly the drift that component exists to
+   prevent, and it would have carried its own warm-theme lime restore to keep in sync. */
+
+@media (max-width: 640px) {
+  .tailRow { padding: 0.55rem 0; }
+  .tailMeta { flex-basis: 100%; }
+}
+
 /* ── Phase-adaptive "Right now" anchor (Overview top) ──────────────────────
    Rendered in the elevated coach card language — NOT a hero (no hero headers
    inside operating tools, 2026-06-29). Ports the TeamHQ phase LOGIC, not its
-   celebratory hero SKIN (design_decisions 2026-07-04). Per-phase left accent. */
+   celebratory hero SKIN (design_decisions 2026-07-04). Per-phase left accent.
+
+   ⚠ DO NOT DELETE. The team OVERVIEW no longer uses `.nowCard` (Chunk I replaced it with
+   `.oneThing` above), but this family is still live on two other pages — the Attendance page's
+   take-attendance card and the Money hub's six anchor cards. An earlier version of this comment
+   said it was safe to retire, which was wrong and would have stripped the styling off both.
+   The genuinely orphaned Chunk-I leftovers are `.seasonCue*`, `.setupLine*`, `.lastSeasonCard*`
+   and `.weekStrip*` — those, and only those, are the ones a cleanup sweep should take. */
 .nowCard {
   display: flex;
   flex-direction: column;
