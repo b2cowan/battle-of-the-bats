@@ -14,6 +14,7 @@ import TournamentFlipPill from '@/components/public/TournamentFlipPill';
 import FlipPill from '@/components/shared/FlipPill';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import { resolveOrgReturnFlip } from '@/lib/flip-twins';
+import { showsOrgPublicChrome } from '@/lib/consumer-routes';
 import { orgSectionCrumb } from '@/lib/org-public-sections';
 import { reportNavClick } from '@/lib/nav-beacon';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
@@ -237,7 +238,10 @@ export default function Navbar() {
             )}
           </div>
 
-          <div className={styles.actions}>
+          {/* D1 follow-through: where the phone bottom bar renders, this row sheds the links that
+              bar now duplicates (see .actionsWithBottomBar). Without it a 390px screen showed the
+              club's own name squeezed to nothing behind four utility links. */}
+          <div className={`${styles.actions} ${showsOrgPublicChrome(pathname) ? styles.actionsWithBottomBar : ''}`}>
             {/* The way back into the app. Org pages carry no tab row and no bottom bar at any width,
                 so before this a visitor who arrived here (from search, a follow card, or a link) had
                 no route to Scores/Chat/Account except the browser's Back button. Deliberately a

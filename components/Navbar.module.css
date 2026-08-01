@@ -6,7 +6,11 @@
   left: 0;
   right: 0;
   z-index: 100;
-  height: var(--nav-height);
+  /* The BASE, not the total: on an org page carrying Stage F's section tabs, --nav-height grows
+     to cover both rows (so page padding clears them), but this bar is still only the identity
+     row — the tabs are their own fixed element pinned directly beneath it. Identical everywhere
+     else, where the two vars are equal. */
+  height: var(--nav-height-base);
   background: transparent;
   transition: background 0.3s ease, backdrop-filter 0.3s ease, box-shadow 0.3s ease;
 }
@@ -58,6 +62,8 @@
 }
 
 .crumbSep {
+  /* Retires with the crumb it separates (see .crumb). */
+  display: var(--org-crumb-display, inline);
   flex-shrink: 0;
   font-size: 1.1rem;
   line-height: 1;
@@ -72,6 +78,13 @@
    a long ORG name is, and that clamps in .orgName as it already did. Naming entities here instead
    would have needed the ellipsis machinery this deliberately does without. */
 .crumb {
+  /* Stage F: where the section TAB ROW renders, the crumb retires — the two answer the same
+     question and the row answers it better. The org layout sets --org-crumb-display: none when it
+     mounts the tabs, so the two can never both paint; everywhere else the var is unset and this
+     falls back to showing. A CSS handshake rather than nav-context plumbing, deliberately: the
+     org identity channel is the one that blanked an org's name and logo earlier in this project. */
+  display: var(--org-crumb-display, inline-flex);
+  align-items: center;
   flex-shrink: 0;
   font-family: var(--font-data, monospace);
   font-size: 0.76rem;
@@ -419,6 +432,18 @@
   .logo { flex: 1 1 auto; }
   .actions { flex: 0 0 auto; }
   .orgName { max-width: none; }
+
+  /* ── D1 follow-through: the phone bottom bar makes these links redundant ──
+     On an org public page the bar below now carries Home · Scores · Chat · Account (and Sign In
+     when signed out), so keeping Discover / Pricing / Account / Sign In up here says the same
+     things twice AND leaves the club's own name nowhere to go — at 390px it was squeezed off the
+     screen entirely by four utility links.
+
+     What survives is exactly what the bottom bar does NOT have: the operator's door (the ⇄ flip or
+     the Workspaces pill). The class is only applied where that bar actually renders, so operator
+     routes that keep this nav without a bottom bar are untouched. */
+  .actionsWithBottomBar .actionLink,
+  .actionsWithBottomBar .actionCta { display: none; }
 
   /* ── Unified event header takes over the tournament bar (G3) ── */
   .hasEventHead { height: auto; min-height: var(--nav-height); }

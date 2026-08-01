@@ -44,9 +44,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  /* Stage G — one size everywhere; the radius is the only geometric family split. */
+  width: var(--icon-door-size);
+  height: var(--icon-door-size);
+  border-radius: var(--icon-door-radius);
   color: var(--data-gray);
   transition: color 0.15s ease, background 0.15s ease;
 }

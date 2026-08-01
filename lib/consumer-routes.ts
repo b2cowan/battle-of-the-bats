@@ -42,15 +42,36 @@ export function isWarmSkinPath(pathname: string): boolean {
 // Split out of isConsumerShellPath so the persistent global bar and the branded
 // event chrome (header + top tabs) can BOTH be true on /{orgSlug}/{tournamentSlug}/*.
 
-// Static children of app/[orgSlug]/ — org-level public pages + operator shells.
-// Next resolves these static segments BEFORE the dynamic [tournamentSlug], so a
-// tournament slug can never occupy one; excluding them keeps the global bar off
-// org pages AND off day-of ops shells (admin/coaches/scorekeeper/check-in/official/
-// league) by construction. Keep in sync with the app/[orgSlug]/ directory.
-const ORG_STATIC_SECTIONS = new Set([
-  'admin', 'archives', 'check-in', 'coaches', 'league', 'news', 'official',
-  'register', 'results', 'rules', 'schedule', 'scorekeeper', 'standings', 'teams',
-]);
+// Static children of app/[orgSlug]/, split by AUDIENCE. Next resolves these static segments
+// BEFORE the dynamic [tournamentSlug], so a tournament slug can never occupy one.
+//
+// ONE list per audience and the union derived from them — the two predicates below read
+// different halves, so a section added to the wrong half is a visible bug rather than a
+// silent drift between two hand-maintained copies. Keep in sync with the app/[orgSlug]/ directory.
+
+/** Day-of ops + operator shells. These render their own chrome and never take consumer bars. */
+const ORG_OPERATOR_SECTIONS = ['admin', 'check-in', 'coaches', 'official', 'scorekeeper'] as const;
+
+/** Fan-facing org pages — the org's own public site. */
+const ORG_PUBLIC_SECTIONS = [
+  'archives', 'league', 'news', 'register', 'results', 'rules', 'schedule', 'standings', 'teams',
+] as const;
+
+const ORG_OPERATOR_SECTION_SET = new Set<string>(ORG_OPERATOR_SECTIONS);
+const ORG_PUBLIC_SECTION_SET = new Set<string>(ORG_PUBLIC_SECTIONS);
+const ORG_STATIC_SECTIONS = new Set<string>([...ORG_OPERATOR_SECTIONS, ...ORG_PUBLIC_SECTIONS]);
+
+/**
+ * Segment a pathname and apply the "could this even be an org route?" guard, ONCE. Returns null for
+ * the marketing root and for any real top-level route (seg[0] reserved), so the three predicates
+ * below share one definition of that question instead of three copies that can drift apart.
+ */
+function orgSegments(pathname: string): string[] | null {
+  const seg = pathname.split('/').filter(Boolean);
+  if (seg.length === 0) return null;                 // '/' — marketing root
+  if (RESERVED_ORG_SLUGS.has(seg[0])) return null;   // a real top-level route, not an org
+  return seg;
+}
 
 /**
  * Public tournament routes — `/{orgSlug}/{tournamentSlug}[/...]`. Gates the root-mounted
@@ -73,9 +94,40 @@ const ORG_STATIC_SECTIONS = new Set([
  *     (which lacks the param) still won't mis-mount the bar.
  */
 export function showsTournamentChrome(pathname: string): boolean {
-  const seg = pathname.split('/').filter(Boolean);
-  if (seg.length < 2) return false;                 // '/' or org home '/{orgSlug}' — out of scope
-  if (RESERVED_ORG_SLUGS.has(seg[0])) return false; // seg[0] is a real top-level route, not an org
-  if (ORG_STATIC_SECTIONS.has(seg[1])) return false;
-  return true;
+  const seg = orgSegments(pathname);
+  if (!seg || seg.length < 2) return false;         // org home '/{orgSlug}' — out of scope here
+  return !ORG_STATIC_SECTIONS.has(seg[1]);
+}
+
+/**
+ * An ORG's own public pages — `/{orgSlug}` and its fan-facing sections (league, teams,
+ * archives, and the tournament-shim routes). Gates the PHONE bottom bar there.
+ *
+ * Decision D1 (owner, 2026-08-01 — "connectivity vs full parity", settled from mockups):
+ * **PHONE ONLY.** Org public pages take the app's bottom bar ≤900px and nothing at all above
+ * it. The gap this closes is real and was inverted against the price ladder — a free-tier
+ * tournament family kept the app throughout while a League/Club family lost it the moment they
+ * left Home — but the fix is deliberately asymmetric: on a phone the club still owns the top of
+ * the screen (their identity row), which is the part that reads as theirs, while the bar takes
+ * the bottom. Adding the desktop strip too would have sandwiched a paying club's branded page
+ * between two FieldLogicHQ bars, which is what every design lens marked the parity option down
+ * for. So: no strip, no second wordmark, no top-of-screen platform chrome on these pages.
+ *
+ * The org root has ONE segment, so it is matched by length rather than by a section name.
+ * A `/{orgSlug}/{tournamentSlug}` path falls through (its segment is not a known section) —
+ * `showsTournamentChrome` owns that surface and renders the fuller treatment.
+ */
+export function showsOrgPublicChrome(pathname: string): boolean {
+  const seg = orgSegments(pathname);
+  if (!seg) return false;
+  if (seg.length === 1) return true;                // the org home itself
+  return ORG_PUBLIC_SECTION_SET.has(seg[1]);
+}
+
+/** True on an org's operator/day-of shells (`/{orgSlug}/admin…`, `/coaches…`, `/scorekeeper…`).
+ *  Exported so a caller can ask the question directly instead of re-deriving the segment list. */
+export function isOrgOperatorShellPath(pathname: string): boolean {
+  const seg = orgSegments(pathname);
+  if (!seg || seg.length < 2) return false;
+  return ORG_OPERATOR_SECTION_SET.has(seg[1]);
 }

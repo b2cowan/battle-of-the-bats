@@ -46,9 +46,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  /* Stage G — identical geometry to the admin door; only the colour differs by family. */
+  width: var(--icon-door-size);
+  height: var(--icon-door-size);
+  border-radius: var(--icon-door-radius);
   color: var(--home-dim, var(--data-gray));
   transition: color 0.15s ease, background 0.15s ease;
 }

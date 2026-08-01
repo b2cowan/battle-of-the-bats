@@ -27,7 +27,7 @@ import FlipPill from '@/components/shared/FlipPill';
 import flip from '@/components/shared/FlipPill.module.css';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
-import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome } from '@/lib/consumer-routes';
+import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome, showsOrgPublicChrome } from '@/lib/consumer-routes';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
@@ -105,11 +105,18 @@ export default function ConsumerNav({
   const onTournamentRoute =
     variant === 'tournament' && showsTournamentChrome(pathname) && !!params?.tournamentSlug;
 
+  // D1 (owner ruling 2026-08-01, settled from mockups): an ORG's public pages take the bottom
+  // bar on a PHONE and nothing above it — see showsOrgPublicChrome for why the asymmetry is the
+  // decision rather than an omission. Same root mount, same bar; only the strip half is skipped.
+  const onOrgPublicRoute = variant === 'tournament' && showsOrgPublicChrome(pathname);
+  // Either public surface resolves identity the same way: client-side, never SSR'd.
+  const onPublicRoute = onTournamentRoute || onOrgPublicRoute;
+
   // Tournament identity resolves CLIENT-SIDE via the shared hook (getSession = a local
   // cookie read; anonymous visitors never hit the network; re-resolves on SPA sign-in/
   // out). Inert off tournament routes; the consumer variant keeps its SSR prop — identity
   // is NEVER SSR'd into SW-cached tournament HTML (the shared-device replay guard).
-  const clientSignedIn = useClientSignedIn(onTournamentRoute);
+  const clientSignedIn = useClientSignedIn(onPublicRoute);
   const signedIn = variant === 'tournament' ? clientSignedIn : signedInProp;
 
   // Unified cross-tab badge policy (Phase 5, owner-ratified): a red count means "something is
@@ -123,7 +130,11 @@ export default function ConsumerNav({
   // WI-3/WI-4: the tournament strip resolves the operator doors + chat membership
   // CLIENT-side (same rule as identity — never SSR'd into SW-cached tournament HTML).
   // Inert everywhere else and for anonymous visitors (no network).
-  const roleSummary = useRoleSummary(variant === 'tournament' && signedIn);
+  // Strip-only: the doors this feeds exist only on the tournament strip. Gated on
+  // onTournamentRoute (NOT the wider public gate) because on an org public page the org's own
+  // navbar already resolves this same summary for its operator door — asking again here would
+  // be a second identical request for one answer.
+  const roleSummary = useRoleSummary(onTournamentRoute && signedIn);
 
   // ONE operator door on a public event page, and it lives HERE — in the nav, the same slot the
   // consumer screens put it in (owner call 2026-07-31: consistency between screens). Before this
@@ -149,7 +160,7 @@ export default function ConsumerNav({
   // The root-mounted tournament variant renders on every route; bail here — AFTER the
   // hooks (React-safe) but BEFORE building any badges/markup — so it's free off its own
   // routes.
-  if (variant === 'tournament' && !onTournamentRoute) return null;
+  if (variant === 'tournament' && !onPublicRoute) return null;
 
   const cap = (n: number) => (n > 9 ? '9+' : String(n));
   // Chat carries the coach return path when the coach shell provides one (tab-active
@@ -210,6 +221,18 @@ export default function ConsumerNav({
       )}
     </>
   );
+
+  // D1 — org public pages: the bottom bar alone, in the same neutral venue-following skin the
+  // tournament bar uses (no warm classes; the org layout's :root override themes it). Returned
+  // BEFORE the tournament branch so none of the strip's door/flip machinery is built for a
+  // surface that never renders it — the org navbar already owns the operator door here.
+  if (onOrgPublicRoute && !onTournamentRoute) {
+    return (
+      <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">
+        {bottomTabs}
+      </nav>
+    );
+  }
 
   // Shared top-bar content — the wordmark, the visible tab links, and the organizer
   // utility cluster (consumer/coach variants only since WI-4 — the tournament strip

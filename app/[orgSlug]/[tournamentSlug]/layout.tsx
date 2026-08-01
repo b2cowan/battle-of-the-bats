@@ -261,7 +261,7 @@ export default async function TournamentLayout({
             consumer shell (72px, top-aligned tabs) so the persistent tab bar reads as the same
             app chrome on tournament routes as everywhere else. Canonical bottom-bar var
             (MyTeamDock, install prompt, growth chrome, page clearances read it). */}
-      <style dangerouslySetInnerHTML={{ __html: `:root { --desktop-strip-h: 48px; } @media (max-width: 900px) { :root { --nav-event-h: 161px; --bottom-nav-height: 4.5rem; --desktop-strip-h: 0px; } }` }} />
+      <style dangerouslySetInnerHTML={{ __html: `:root { --desktop-strip-h: var(--chrome-bar-h); } @media (max-width: 900px) { :root { --nav-event-h: 161px; --bottom-nav-height: 4.5rem; --desktop-strip-h: 0px; } }` }} />
       {lightModeVars && (
         <style dangerouslySetInnerHTML={{ __html: `:root { ${lightModeVars} }` }} />
       )}

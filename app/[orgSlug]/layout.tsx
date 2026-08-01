@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Inter, Barlow_Condensed, DM_Serif_Display, DM_Sans } from 'next/font/google';
-import { getActiveTournamentByOrg } from '@/lib/db';
 import { getOrganizationBySlugForServer } from '@/lib/server-organizations';
 import { resolveTheme } from '@/lib/themes';
+import { resolveOrgSections } from '@/lib/org-section-availability';
+import { ORG_SECTION_TABS_MIN } from '@/lib/org-public-sections';
 import { OrgNavSync } from '@/components/OrgNavSync';
+import OrgSectionTabs from '@/components/public/OrgSectionTabs';
 
 // Pre-load all font options at module level (next/font requirement).
 // Each uses a unique CSS variable so they don't conflict with the root layout fonts.
@@ -41,7 +43,9 @@ export async function generateMetadata({
   const { orgSlug } = await params;
   const org = await getOrganizationBySlugForServer(orgSlug);
   if (!org) return {};
-  const activeTournament = await getActiveTournamentByOrg(org.id);
+  // (An `getActiveTournamentByOrg` call sat here with its result unused — a per-request query on
+  // EVERY route under /{orgSlug} that fed nothing. Removed while making this layout's Stage F
+  // lookups cheap; the metadata below never referenced it.)
   return {
     title: {
       default: org.name,
@@ -63,6 +67,16 @@ export default async function OrgLayout({
   if (!org) notFound();
 
   const theme = resolveTheme(org.themePreset, org.themePrimary, org.themeAccent);
+
+  // ── Stage F: the org's section tabs ────────────────────────────────────────────
+  // Tier-gated and deliberately CHEAP (see lib/org-section-availability for why it can't be
+  // pathname-gated: this layout also wraps admin/coaches/scorekeeper and every tournament page,
+  // and a Server Component has no pathname here — proxy.ts intentionally doesn't run on public org
+  // routes, which is what keeps an anonymous page free of session work). Two `head:true` counts.
+  const sections = await resolveOrgSections(org);
+  // Fewer than two sections means there is nowhere else to go — a row holding only "Home" is
+  // chrome that says nothing, so it doesn't render.
+  const showSectionTabs = sections.length >= ORG_SECTION_TABS_MIN;
 
   const cssVars = [
     `--primary:       ${theme.primary}`,
@@ -91,6 +105,11 @@ export default async function OrgLayout({
       <OrgNavSync logoUrl={org.logoUrl ?? null} orgName={org.name} />
       {/* Sets vars on :root so globally-mounted components (Navbar, ConsumerNav) inherit the org theme */}
       <style dangerouslySetInnerHTML={{ __html: `:root { ${cssVars} }` }} />
+      {/* Stage F — the org's own section nav. Mounted here because which sections exist is SERVER
+          data; the component itself decides WHERE to render, because this layout also wraps
+          `/admin`, `/coaches`, `/scorekeeper` and every tournament page and cannot read the
+          pathname. It carries NO identity, so it is safe in SW-cached anonymous HTML. */}
+      {showSectionTabs && <OrgSectionTabs sections={sections} />}
       <div
         className={fontClasses}
         data-card-style={org.themeCardStyle ?? 'default'}

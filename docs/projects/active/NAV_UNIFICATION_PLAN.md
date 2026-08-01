@@ -29,6 +29,47 @@ none) and **no sidebar edits at all** (CoachesSidebar/BottomNav are mid-edit by 
 session; the portal's "COACHES PORTAL + org name" header already reads as pure place chrome).
 Mobile portal untouched (still no Home/Account doors — the Stage H mobile pass stays gated on the
 More-sheet overflow check). Gate green; typecheck clean.
+✅ **D1 + Stages F + G BUILT on dev 2026-08-01, uncommitted — owner QA pending.** /design gate run
+first (verdicts logged in memory/design_decisions.md; both stages approved WITH CHANGES).
+**D1 (phone only):** new `showsOrgPublicChrome` gates the app bottom bar onto org public pages
+≤900px; ConsumerNav returns the bar ALONE there (no strip), before any strip machinery is built.
+`ORG_STATIC_SECTIONS` split by AUDIENCE (operator vs public) with the union derived, so the two
+chrome predicates read different halves of ONE list — proven mutually exclusive by unit test.
+role-summary stays gated to the tournament strip: the org navbar already resolves it for its own
+door, so a second call would be a duplicate fetch.
+**F (section tabs):** new `OrgSectionTabs` — a tab row at EVERY width (NOT the 248px rail: an org
+root is a directory page, and a permanent quarter-viewport column for three words fights the hero).
+Gated on `module_public_site` + 2 sections. Mounted by the org layout (which owns the server data)
+but SELF-GATING on pathname, because that layout also wraps /admin, /coaches, /scorekeeper and every
+tournament page. It declares its own geometry as SSR'd markup: `--nav-height` grows by
+`--org-sections-h` so every org page's existing `calc(var(--nav-height) + …)` padding clears both
+rows with ZERO per-page edits (new `--nav-height-base` = the identity row; `.nav` measures the base).
+Same markup sets `--org-crumb-display: none` — ONE condition drives both the row and the crumb's
+retirement, so they can never both paint. **`teams` is a crumb label but NOT a tab** — no rep-teams
+index page exists (`/{org}/teams` is a redirect shim; the org home's "Tryouts Are Open" card
+pointing at it is a known broken link), so the section table carries a `tabbable` flag rather than
+splitting into two lists.
+**G:** the coach dark-mode gap fixed AT SOURCE (new `html[data-user-theme="dark"]
+[data-coach-warm-enabled]` block in globals beside the warm one; WorkspacesPill's per-property
+fallbacks DELETED — they were patching a missing injection point one property at a time). Shared
+`--chrome-bar-h` (48px, the ONE platform chrome-bar height — see below) / `--icon-door-size` / `--icon-door-radius`; both shells' local strip vars now
+DERIVE from the shared one (deliberately NOT renamed — a dozen sticky headers read them with a
+`, 0px` fallback, so a missed rename would silently tuck a toolbar under the strip). Door order
+audited and ratified as already correct; no code change.
+**Gate:** typecheck clean, lint clean, **745 unit tests pass** (+18: the two route predicates proven
+mutually exclusive, the section table's crumb/tab split). Browser suites **33/33 green**, extended
+with D1 (phone bar state-based + no new identity round-trip + desktop deliberately bare) and F
+(row renders, crumb steps aside, active tab follows depth, tournament tiers get no row, row is
+identity-free in SSR). All six token ratchets ZERO. Dev server restarted on a cleared cache,
+login 200, no EACCES.
+⚠ **NOT done, still open:** the org-page light/dark setting — every org page is dark on every tier,
+so a club with a light tournament page still hard-flips to dark going up. F doesn't worsen the seam
+but doesn't close it; it needs a settings screen + stored preference (product work, not navigation).
+⚠ **A concurrent session's file broke the dev server mid-verification** (a practice-plan editor
+importing `../../../../coaches.module.css`, one level too many → Module-not-found → 500 on EVERY
+route). Corrected locally to unblock the run; that file is NOT part of this work and must be
+excluded from the commit.
+
 ✅ **Stage E COMMITTED dev `db0db159` 2026-08-01** (owner QA passed; /simplify + /review funnel complete — see the funnel note at the end of this block). All five items.
 **E.1** the Discover anchor was already shipped (Desktop Public UX WI-6) so the only delta is a
 **click** handler → NEW `lib/nav-beacon.ts` (allowlist + `sendBeacon`/keepalive send in ONE module,
@@ -273,13 +314,17 @@ design it, don't rush it. This is the only genuinely new engineering in the plan
    unification (brand precedence is ratified). **Scope additions from the C+H.1 /simplify pass:**
    the 30px icon-door primitive (now three variants: consumer circle+ring, admin/coach
    squircle+fill ×2) and whether the two per-shell strip-height vars unify into one
-   `--operator-strip-h`; also the coach shell's missing dark-mode `--home-*` injection point
+   one shared height (RESOLVED 2026-08-01 as `--chrome-bar-h: 48px`, unifying the 48px consumer strip with the 44px operator strips — owner spotted the mismatch crossing surfaces); also the coach shell's missing dark-mode `--home-*` injection point
    (the consumer side's proven single-injection pattern — currently patched by fallbacks in the
    Workspaces popover only).
 2. **One pill vocabulary**: ⇄ = SIDE, plain = ENTER, applied to all pill labels (consumer "Admin
    Area" pill stays plain; tournament "⇄ Admin" and admin "⇄ Public site" keep the glyph).
-3. **Consistent door order** across strips: chat before account, role pill outermost, on every
-   surface that shows them.
+3. **Consistent door order** across strips — RATIFIED 2026-08-01 as already built:
+   **wordmark · … · bell (where the hub has one) · account · Workspaces, outermost.** Scope
+   increases left to right. ⚠ The previous wording here said "chat before account" and was STALE:
+   the chat door was removed from operator strips by binding ruling. The CONSUMER strip keeps its
+   chat icon and must not be "fixed" to match — chat is a top-level destination for a fan and a
+   section of the work for an operator.
 
 ### Stage H — coach portal doors (absorbs: Nav Model Stages 5–6) — OWNER + `/design` GATES
 
@@ -327,10 +372,12 @@ stage here; any PR that can't go green on them does not ship.
 
 ## 7. Open decisions (owner-facing)
 
-- **D1 — Org public pages: connectivity vs full parity.** This plan ships connectivity (Discover
-  link + breadcrumb + sections). Full parity (the app bar/bottom bar on org pages too) closes the
-  house-league fan gap completely but wraps a paying org's branded page in platform chrome — a
-  packaging call to make in the open. Not blocked on: Stages A–E ship either way.
+- **D1 — ✅ DECIDED 2026-08-01 (owner, from a two-device mockup): PHONE ONLY.** Org public pages
+  take the app's bottom bar ≤900px and NO platform chrome above it at any width. Closes the
+  inversion (a free-tier tournament family kept the app throughout; a League/Club family lost it
+  leaving Home) without sandwiching a paying club's branded page between two FieldLogicHQ bars —
+  the failure every design lens marked full parity down for. The club still owns the top of the
+  screen. **Adding the desktop strip later re-opens this decision; it does not extend it.**
 - **D2 — ✅ RATIFIED 2026-07-31 (owner):** *"the fieldlogichq branding applies to coaches portal just
   like tournament admin, those surfaces from a product perspective are the same, admin hubs."* The
   no-wordmark ruling is reversed (logged in memory/design_decisions.md); the two-FAMILY chrome split

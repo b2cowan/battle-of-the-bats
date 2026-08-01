@@ -9,6 +9,13 @@
  * written as a STANDING regression guard rather than a one-off Stage E check: the assertions are
  * about the invariant, not about any one stage's diff.
  *
+ * ⚠ WHAT THE RULE DOES *NOT* FORBID (D1, owner ruling 2026-08-01): org public pages now carry the
+ * app's bottom bar on PHONE widths. That is new anonymous DOM, and it is deliberate — the rule
+ * bans identity-DERIVED chrome and new identity round-trips, not owner-approved public navigation.
+ * The bar is state-based exactly like the tournament bar: signed-out renders Home/Scores/Sign In,
+ * never Account or an operator door. The assertions below are written to hold either way, so they
+ * still catch a real leak; the D1 additions are pinned separately at the bottom of the file.
+ *
  * Runs signed-OUT — the file overrides the suite's default org-owner session.
  */
 import { test, expect, type Page } from '@playwright/test';
@@ -20,6 +27,9 @@ test.use({ storageState: { cookies: [], origins: [] } });
 const ORG = '/dev-league-org';
 const CLUB_ORG = '/dev-club-org';
 const TOURNAMENT = '/dev-test-org/live-demo';
+/** A tournament-tier public org: no public-site module, so no Stage F tab row — the surface where
+ *  the Stage E crumb is still the wayfinding device. */
+const TOURNAMENT_TIER_ORG = '/free-test-org';
 
 /** Requests that resolve WHO the visitor is. None may fire for a signed-out visitor. */
 const IDENTITY_PATTERNS = [
@@ -29,6 +39,10 @@ const IDENTITY_PATTERNS = [
   '/tournament-viewer',
   '/hats',
   '/workspaces',
+  // Reachable from the D1 bottom bar's badges. Both are signed-in-gated today; listing them is what
+  // makes this guard able to NOTICE if that gate is ever dropped on the surface D1 just widened.
+  '/api/chat/unread',
+  '/api/consumer/invites/count',
 ];
 
 function isIdentityRequest(url: string): boolean {
@@ -128,14 +142,18 @@ test.describe('Stage E.3 — the section crumb is URL-derived, not role-derived'
   });
 
   test('a section one level in shows its crumb to an ANONYMOUS visitor', async ({ page }) => {
-    await page.goto(`${ORG}/league`, { waitUntil: 'networkidle' });
+    // Deliberately a TOURNAMENT-tier org: Stage F gave League/Club a section tab row, and where
+    // that row renders the crumb retires (one wayfinding device per page). The crumb is now the
+    // answer for exactly these tier-less pages — so this is where its behaviour is pinned.
+    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
+    await expect(page.getByRole('navigation', { name: 'Sections' })).toHaveCount(0);
     // Present without sign-in is the point: the crumb is public wayfinding, not operator chrome.
-    await expect(page.locator('nav').getByText('League', { exact: true }).first()).toBeVisible();
+    await expect(page.locator('nav').getByText('Archives', { exact: true }).first()).toBeVisible();
   });
 
   test('the org name at depth is a real link back to the org root', async ({ page }) => {
-    await page.goto(`${ORG}/league`, { waitUntil: 'networkidle' });
-    const home = page.locator(`nav a[href="${ORG}"]`).first();
+    await page.goto(`${TOURNAMENT_TIER_ORG}/archives`, { waitUntil: 'networkidle' });
+    const home = page.locator(`nav a[href="${TOURNAMENT_TIER_ORG}"]`).first();
     await expect(home).toBeVisible();
   });
 });
@@ -154,5 +172,83 @@ test.describe('Stage E.4 — the sitemap only lists org pages that really render
     expect(xml).not.toContain(`<loc>${origin}/free-test-org</loc>`);
     // A tournament-tier org with NO active events renders the platform placeholder — a dead end.
     expect(xml).not.toContain(`<loc>${origin}/test-minor-softball</loc>`);
+  });
+});
+
+test.describe('D1 — the phone frame on org public pages (owner ruling 2026-08-01)', () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+
+  test('a PHONE gets the app bottom bar, state-based for a signed-out visitor', async ({ page }) => {
+    await page.goto(ORG, { waitUntil: 'networkidle' });
+    const bar = page.getByRole('navigation', { name: 'Primary' });
+    await expect(bar).toBeVisible();
+    // Browsable tabs only — Chat and Account are sign-in walls, collapsed into one door.
+    await expect(bar.getByRole('link', { name: /Home/i })).toBeVisible();
+    await expect(bar.getByRole('link', { name: /Scores/i })).toBeVisible();
+    await expect(bar.getByRole('link', { name: /Sign In/i })).toBeVisible();
+    await expect(bar.getByRole('link', { name: /^Account$/i })).toHaveCount(0);
+    await expect(bar.getByRole('link', { name: /^Chat$/i })).toHaveCount(0);
+  });
+
+  test('the bar reaches the org\'s deeper public sections too', async ({ page }) => {
+    await page.goto(`${ORG}/league`, { waitUntil: 'networkidle' });
+    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeVisible();
+  });
+
+  test('it stays OFF operator shells — those own their own chrome', async ({ page }) => {
+    // Signed out, an admin route redirects to login; assert on wherever we land, which must
+    // never be an org public page wearing the bar.
+    await page.goto(`${ORG}/admin`, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1000);
+    expect(page.url()).not.toContain(`${ORG}/admin`);
+  });
+
+  test('adding the bar did NOT add an identity round-trip', async ({ page }) => {
+    const requests = await recordRequests(page, ORG);
+    expect(requests.filter(isIdentityRequest), 'identity requests on a phone org page').toEqual([]);
+  });
+});
+
+test.describe('D1 — desktop is deliberately untouched (no platform strip on a club page)', () => {
+  test.use({ viewport: { width: 1280, height: 900 } });
+
+  test('no FieldLogicHQ wordmark above the club\'s own identity row', async ({ page }) => {
+    await page.goto(ORG, { waitUntil: 'networkidle' });
+    await page.waitForTimeout(1000);
+    // The parity option would have sandwiched the club between two platform bars. It was ruled
+    // out; a second wordmark appearing here is that ruling silently reversing.
+    await expect(page.getByRole('navigation', { name: 'Primary' })).toBeHidden();
+  });
+});
+
+test.describe('Stage F — the org section tabs', () => {
+  test('a club with sections gets a tab row, and the crumb steps aside', async ({ page }) => {
+    await page.goto(ORG, { waitUntil: 'networkidle' });
+    const tabs = page.getByRole('navigation', { name: 'Sections' });
+    await expect(tabs).toBeVisible();
+    await expect(tabs.getByRole('link', { name: 'Home' })).toBeVisible();
+    // One wayfinding device per page: where the row renders, the Stage E crumb is hidden.
+    await expect(page.locator('nav').getByText('›', { exact: true })).toBeHidden();
+  });
+
+  test('the active tab follows the section, at any depth', async ({ page }) => {
+    await page.goto(`${ORG}/league`, { waitUntil: 'networkidle' });
+    const tabs = page.getByRole('navigation', { name: 'Sections' });
+    await expect(tabs.getByRole('link', { name: 'League' })).toHaveAttribute('aria-current', 'page');
+    await expect(tabs.getByRole('link', { name: 'Home' })).not.toHaveAttribute('aria-current', 'page');
+  });
+
+  test('tournament-tier orgs get NO tab row (they keep the crumb instead)', async ({ page }) => {
+    // free-test-org is a tournament-plan org — no public-site module, so no section row.
+    await page.goto('/free-test-org', { waitUntil: 'networkidle' });
+    await expect(page.getByRole('navigation', { name: 'Sections' })).toHaveCount(0);
+  });
+
+  test('the row carries no identity — it is safe in SW-cached anonymous HTML', async ({ request }) => {
+    const html = await (await request.get(ORG)).text();
+    expect(html).toContain('Sections');            // server-rendered, so no post-hydration jump
+    for (const marker of ['Admin Area', 'Workspaces', '⇄']) {
+      expect(html, `${marker} must not ride the section row`).not.toContain(marker);
+    }
   });
 });

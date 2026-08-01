@@ -1,19 +1,21 @@
 'use client';
 import { usePathname } from 'next/navigation';
 import { isCoachPortalShellPath } from '@/lib/coaches-portal-routes';
-import { isConsumerShellPath, isWarmJourneyPath } from '@/lib/consumer-routes';
+import { isConsumerShellPath, isWarmJourneyPath, isOrgOperatorShellPath } from '@/lib/consumer-routes';
 import Navbar from './Navbar';
 
 export default function SiteChrome() {
   const pathname = usePathname();
-  // Volunteer day-of shells (/{orgSlug}/scorekeeper, /{orgSlug}/check-in) render
-  // their own sticky FieldLogicHQ header; the global Navbar would double up and
-  // overlap it. Suppress here, same as /home, the coach portal, and platform-admin.
-  const isVolunteerShell = /^\/[^/]+\/(scorekeeper|check-in)(\/|$)/.test(pathname);
-  // The org-scoped Coaches Portal (`/{orgSlug}/coaches…`) renders its own sidebar shell.
-  // isCoachPortalShellPath only covers the org-less `/coaches…` hub, so without this the
-  // global Navbar double-renders and overlaps the portal header.
-  const isOrgCoachShell = /^\/[^/]+\/coaches(\/|$)/.test(pathname);
+  // Every org-scoped OPERATOR shell renders its own chrome, so the global Navbar must not double up
+  // and overlap it: the volunteer day-of shells (`/{org}/scorekeeper`, `/{org}/check-in`), the
+  // org-scoped Coaches Portal (`/{org}/coaches…` — isCoachPortalShellPath below only covers the
+  // ORG-LESS `/coaches…` hub), the admin shell, and `/{org}/official`.
+  //
+  // This used to be two hand-written regexes here that covered only 2 of those 5 sections. That is
+  // the same audience split lib/consumer-routes now states once, so ask it rather than keeping a
+  // second, narrower copy — the missing sections were a latent double-render waiting for whichever
+  // of them grew a real page first.
+  const isOperatorShell = isOrgOperatorShellPath(pathname);
   if (
     pathname.startsWith('/platform-admin') ||
     pathname === '/dev' ||
@@ -28,8 +30,7 @@ export default function SiteChrome() {
     // Navbar would double up (and previously fell into its empty org-home branch on /start,
     // hijacking taps to '/'). Single source of truth in lib/consumer-routes.
     isWarmJourneyPath(pathname) ||
-    isVolunteerShell ||
-    isOrgCoachShell ||
+    isOperatorShell ||
     isCoachPortalShellPath(pathname) ||
     // Consumer shell (/discover, /scores, /following, /account) renders its own
     // top bar + bottom nav — the marketing Navbar would double up.

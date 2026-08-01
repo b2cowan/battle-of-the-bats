@@ -124,8 +124,42 @@
      system sans on local dev while prod rendered correctly. Consumers that need
      a hard fallback use var(--font-sans, system-ui, sans-serif) inline. */
 
-  --nav-height:  72px;
+  /* The IDENTITY row's own height. `--nav-height` is the TOTAL fixed chrome above the page, and
+     pages pad by it (`calc(var(--nav-height) + …)`) — so a surface that adds a second fixed row
+     grows --nav-height and every page clears both with no per-page edit. Stage F's org section
+     tabs are the first such surface; the bar element itself always measures the base.
+     They are equal everywhere else, so this split is invisible outside org pages. */
+  --nav-height-base: 72px;
+  --nav-height:  var(--nav-height-base);
   --transition:  all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Shared frame geometry (Nav Unification Stage G) ──────────────────────────────
+     THE PLATFORM CHROME BAR. One height for every bar that carries FieldLogicHQ's own
+     identity + personal doors: the consumer app's desktop strip, the strip on public
+     tournament pages, and the admin + coach operator strips. They were 48px and 44px
+     respectively — the same kind of bar at two heights nobody chose (owner spotted it
+     crossing surfaces, 2026-08-01). Unified UP to 48px: the consumer bar is the
+     higher-traffic surface and already holds a search field, so growing the operator strip
+     is the safer direction.
+
+     This is NOT the height of a BRANDED bar. An org/tournament public page's identity row
+     stays --nav-height-base (72px) because it carries a customer's 44px logo and their name
+     at display size. Two heights, both deliberate: platform chrome is compact, a customer's
+     identity gets room. Don't collapse them into one.
+
+     Each operator shell still declares its own local var (--admin-topstrip-h /
+     --coach-topstrip-h) DERIVED from this, because each shell also zeroes its own var below
+     901px and on focused shells — that zeroing is shell-local logic, not a shared value.
+     Deliberately NOT a rename of those two vars: a dozen sticky headers read them with a
+     `, 0px` fallback, so a missed rename would not error, it would silently tuck a toolbar
+     under the strip.
+
+     The icon-door primitive is ONE size on every surface; only the shape and the colour
+     differ by family (circle on consumer, soft square on operator — colour is what carries
+     family, so the radius is the only geometric split). */
+  --chrome-bar-h:     48px;
+  --icon-door-size:   30px;
+  --icon-door-radius: 8px;   /* operator family — the consumer variant uses 50% (a circle) */
 
   /* Desktop content column for the consumer app screens (Desktop Public UX Phase 1,
      WI-7/WI-8 — approved mockup: "content widens to ~980px"). ONE home for the number so
@@ -643,6 +677,70 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --glow-blue: 0 0 12px rgba(var(--home-olive-rgb), 0.20);
   --glow-lime: 0 0 16px rgba(var(--home-olive-rgb), 0.22);
 }
+
+/* ─── Coaches Portal under an explicit DARK preference (Nav Unification Stage G) ────────────
+   The block above defines the --home-* palette ONLY under html[data-user-theme="warm"]. Under an
+   explicit Dark choice it never applies, so every --home-* custom property was UNDEFINED inside
+   the coaches shells while the shells kept consuming them — each `var(--home-x)` silently fell
+   back to nothing (or to whatever per-property fallback a component happened to carry). That is
+   why the Workspaces popover shipped a hand-written fallback for every property it used: it was
+   patching a missing injection point one component at a time, and every future warm-token
+   consumer would have had to do the same.
+
+   This is that injection point, stated ONCE for the marker — the same single-injection pattern
+   the consumer shell already proved on its own nav (ConsumerShell.module.css's
+   html[data-user-theme="dark"] .topbarWarmTab/.bottomNavWarmTab block). Core canvas tokens are
+   deliberately NOT remapped here: under Dark they are already correct at :root. Only the
+   --home-* layer needs a dark definition. */
+html[data-user-theme="dark"] [data-coach-warm-enabled] {
+  /* Paper/ink → the dark canvas the shell already paints. */
+  --home-paper:       var(--bg);
+  --home-card:        var(--bg-card);
+  --home-ink:         var(--fl-text);
+  --home-ink-soft:    var(--white-70);
+  --home-dim:         var(--white-45);
+  --home-line:        var(--border-2);
+  --home-line-strong: var(--border);
+  --home-nav-bg:      var(--nav-mobile-bg);
+
+  /* Accent: olive is the WARM darkening of lime (E3 — raw lime never renders as text on paper).
+     On a dark ground that rule does not apply, so olive resolves back to true accent lime. */
+  --home-olive:       var(--primary-light);
+  --home-olive-soft:  rgba(var(--primary-rgb), 0.18);
+  --home-olive-rgb:   var(--logic-lime-rgb);
+
+  /* Status hues → the semantic tokens (already dark-tuned at :root). */
+  --home-live:        var(--danger);
+  --home-live-soft:   rgba(var(--danger-rgb), 0.12);
+  --home-live-rgb:    var(--danger-rgb);
+  --home-amber:       var(--warning);
+  --home-amber-rgb:   var(--warning-rgb);
+  --home-blue:        var(--info);
+  --home-blue-rgb:    var(--info-rgb);
+  --home-win:         var(--success);
+  --home-win-rgb:     var(--success-rgb);
+
+  /* Triplets the warm block derives from its paper/ink hues. */
+  --home-line-rgb:    255, 255, 255;
+  --home-paper-rgb:   10, 10, 10;
+
+  /* The lime FILL survives in both themes (ink-on-lime CTA) — sourced from the fixed lime that
+     no theme gate remaps, exactly as the warm block does. */
+  --home-lime:        var(--logic-lime-fixed);
+  --home-lime-rgb:    var(--logic-lime-fixed-rgb);
+  --home-lime-ink:    var(--pitch-black);
+
+  /* Geometry is theme-agnostic — same values as warm, so the shared ChatPanel `.panelWarm`
+     recipe resolves identically whichever preference is active. */
+  --home-radius:      14px;
+  --home-radius-sm:   9px;
+  --home-radius-pill: 999px;
+
+  /* Popover card shadow (StartMenu + WorkspacesPill paint on --home-card). Mirrors the value the
+     consumer shell's dark gate already uses. */
+  --home-shadow:      0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+
 
 /* Warm CTA — the lime primary button (.btn-lime) is the ratified ink-on-lime call to action:
    on paper it must stay TRUE lime with dark ink, not the drab olive the accent remap would give

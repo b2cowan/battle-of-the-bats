@@ -97,17 +97,20 @@
 }
 
 /* ── Warm skin (paper card, ink/olive vocabulary — same set StartMenu uses) ──
-   Every value carries a HUD fallback: the premium coach strip passes `warm`
-   unconditionally, and under an explicit Dark preference the --home-* set isn't defined
-   in that shell — the fallbacks keep the popover a legible dark card instead of
-   rendering transparent. (The consumer bars define both sets, so fallbacks are inert there.) */
+   Plain --home-* reads, no per-property fallbacks. The fallbacks this block used to carry were
+   standing in for a MISSING injection point: the premium coach strip passes `warm`
+   unconditionally, and under an explicit Dark preference the coaches shell defined no --home-*
+   at all. Stage G fixed that at the source (globals.css now has a
+   `html[data-user-theme="dark"] [data-coach-warm-enabled]` block beside the warm one), so both
+   preferences define the full set on every surface that renders this popover and a fallback here
+   would only mask a future gap instead of surfacing it. */
 .warm .popover {
-  background: var(--home-card, var(--hud-surface));
-  border-color: var(--home-line-strong, var(--border-2));
-  box-shadow: var(--home-shadow, 0 10px 30px rgba(0, 0, 0, 0.35));
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  box-shadow: var(--home-shadow);
 }
-.warm .row { color: var(--home-ink, var(--fl-text)); }
-.warm .row:hover { background: var(--home-olive-soft, rgba(255, 255, 255, 0.07)); }
-.warm .rowCap { color: var(--home-dim, var(--data-gray)); }
-.warm .footerRow { color: var(--home-dim, var(--data-gray)); border-top-color: var(--home-line-strong, var(--border-2)); }
-.warm .footerRow:hover { color: var(--home-ink, var(--fl-text)); }
+.warm .row { color: var(--home-ink); }
+.warm .row:hover { background: var(--home-olive-soft); }
+.warm .rowCap { color: var(--home-dim); }
+.warm .footerRow { color: var(--home-dim); border-top-color: var(--home-line-strong); }
+.warm .footerRow:hover { color: var(--home-ink); }

@@ -55,8 +55,10 @@
   top: 0;
   left: 0;
   right: 0;
-  /* 48px fallback = the tournament layout's --desktop-strip-h seed (keep the two in sync). */
-  height: var(--desktop-strip-h, 48px);
+  /* Both this fallback and the tournament layout's own seed now read the ONE platform chrome-bar
+     height (--chrome-bar-h), so the pair can no longer drift — they used to be two hand-kept 48s
+     with a "keep the two in sync" note standing in for a shared token. */
+  height: var(--desktop-strip-h, var(--chrome-bar-h));
 }
 @media (max-width: 900px) {
   .topbarStrip { display: none; }
@@ -231,8 +233,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 30px;
+  /* Stage G — same size as the operator door; the CIRCLE is the consumer family's shape. */
+  width: var(--icon-door-size);
+  height: var(--icon-door-size);
   border-radius: 50%;
   color: var(--white-45);
   border: 1px solid transparent;

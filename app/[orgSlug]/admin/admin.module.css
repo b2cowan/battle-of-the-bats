@@ -2,8 +2,10 @@
   /* Stage C — the operator frame strip's height. ONE definition; the fixed AdminTopStrip,
      the sticky sidebar, the sticky AdminEventHeader, and the in-page sticky toolbars all
      read it (NOT --admin-strip-h, which is the mobile AdminContextStrip's). Zeroed on
-     mobile and focused shells below, where no strip renders. */
-  --admin-topstrip-h: 44px;
+     mobile and focused shells below, where no strip renders.
+     Derived from the shared --chrome-bar-h (Stage G) — the ONE platform chrome-bar height, worn
+     also by the other operator strip and the consumer app strip, so none can drift. The local var stays because the zeroing below is shell-local. */
+  --admin-topstrip-h: var(--chrome-bar-h);
   display: flex;
   min-height: 100vh;
   padding-top: var(--admin-topstrip-h);

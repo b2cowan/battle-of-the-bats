@@ -1,0 +1,92 @@
+/* Org section tabs (Nav Unification Stage F). A horizontally-scrolling row pinned directly under
+   the org's identity row, at EVERY width — the design ruling against reusing the tournament's
+   desktop left rail (see the component header for why).
+
+   Geometry contract with the org layout: the layout publishes --org-sections-h and grows
+   --nav-height by it, so every org page's existing `calc(var(--nav-height) + …)` top padding
+   clears BOTH rows with no per-page edit. This row pins at --nav-height-base (the identity row's
+   own height), which is what --nav-height used to be before the layout grew it.
+
+   Skin is token-only — the org's :root override tints the active tab with the club's own colour. */
+
+.tabs {
+  position: fixed;
+  top: var(--nav-height-base);
+  left: 0;
+  right: 0;
+  z-index: 99; /* just under the identity nav (100) — the nav's shadow lands on top of this row */
+  height: var(--org-sections-h);
+  background: var(--nav-bg-scrolled);
+  /* -webkit- BEFORE standard: the minifier keeps the LAST of the alias pair, so standard-last is
+     what ships (backdrop-filter prefix-order gotcha). */
+  -webkit-backdrop-filter: blur(var(--blur-bar));
+  backdrop-filter: blur(var(--blur-bar));
+  border-bottom: 1px solid var(--border);
+}
+
+/* Solid fallback where the browser can't frost — keep the row opaque/legible. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .tabs { background: var(--bg); }
+}
+
+.scroller {
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.scroller::-webkit-scrollbar { display: none; }
+
+/* The track wears the GLOBAL `.container` class (applied in the component alongside this one), so
+   the tabs share the identity row's exact content column — same max-width, same gutters, same
+   centring. Declaring those numbers here instead would be a second copy that drifts the moment the
+   container changes; an earlier cut did exactly that and pinned the tabs to the viewport edge
+   while the org's name sat 300px in. Only the flex behaviour is local. */
+.track {
+  display: flex;
+  align-items: stretch;
+  gap: 0.25rem;
+  height: 100%;
+}
+
+.tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  /* Never shrink: when the row outgrows the content column the tabs keep their size and the
+     scroller takes over, rather than squeezing every label toward illegibility. */
+  flex-shrink: 0;
+  padding: 0 0.875rem;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-60);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+.tab:hover { color: var(--white); }
+
+.tab.active { color: var(--white); }
+
+/* The active underline — same accent language as the identity row's own link treatment. Inset to
+   the label, not the tab box, so it reads as underlining the WORD. */
+.tab.active::after {
+  content: '';
+  position: absolute;
+  left: 0.875rem;
+  right: 0.875rem;
+  bottom: 0.55rem;
+  height: 2px;
+  background: var(--primary-light);
+  border-radius: 999px 999px 0 0;
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: -2px;
+  border-radius: var(--radius-sm);
+}

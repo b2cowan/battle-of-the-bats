@@ -81,7 +81,12 @@
    is portaled to <body>, outside the shell that defines --admin-topstrip-h — 44px IS the
    strip height whenever this variant can open at all. */
 .panelTopStrip {
-  top: calc(var(--admin-topstrip-h, 44px) + 6px);
+  /* The FALLBACK is what actually applies here, not the var: this panel is portaled to
+     document.body, so it sits outside `.adminShell` and never sees that shell-scoped
+     --admin-topstrip-h. It therefore reads --chrome-bar-h — the platform chrome-bar height, which
+     IS defined at :root — instead of a hand-copied literal. A literal was correct until the strip
+     went 44px → 48px (Stage G), at which point the panel silently opened 4px too high. */
+  top: calc(var(--admin-topstrip-h, var(--chrome-bar-h)) + 6px);
   left: auto;
   right: 16px;
 }
