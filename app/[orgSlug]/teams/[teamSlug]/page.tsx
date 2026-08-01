@@ -6,6 +6,8 @@ import {
   getRepProgramYears,
   getActiveTournamentByOrg,
 } from '@/lib/db';
+import { isFreePlan } from '@/lib/plan-config';
+import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 
 export const dynamic = 'force-dynamic';
 
@@ -275,6 +277,10 @@ export default async function TeamPublicPage({
             </div>
           </div>
         )}
+
+        {/* Nav Unification Stage E.5 — the ratified-subtle paid-tier credit, same component
+            and same plan gate as the org home and event pages. */}
+        {!isFreePlan(org.planId) && <BuiltOnCredit />}
       </div>
     </div>
   );

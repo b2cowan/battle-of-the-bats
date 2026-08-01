@@ -29,6 +29,56 @@ none) and **no sidebar edits at all** (CoachesSidebar/BottomNav are mid-edit by 
 session; the portal's "COACHES PORTAL + org name" header already reads as pure place chrome).
 Mobile portal untouched (still no Home/Account doors — the Stage H mobile pass stays gated on the
 More-sheet overflow check). Gate green; typecheck clean.
+✅ **Stage E BUILT on dev 2026-08-01, uncommitted — owner QA pending.** All five items.
+**E.1** the Discover anchor was already shipped (Desktop Public UX WI-6) so the only delta is a
+**click** handler → NEW `lib/nav-beacon.ts` (allowlist + `sendBeacon`/keepalive send in ONE module,
+so client and endpoint can't drift) → NEW `POST /api/client/nav-beacon` logging
+`[metric] nav_click event= from=` (mirrors Stage A's `multi_hat` CloudWatch line). Always 202 (a
+beacon must not be probeable); allowlisted event names only (an open `event` field = an arbitrary
+log sink); `from` passes a code-point printable filter (log-injection guard on a browser-supplied
+value). ⚠ **The CTR DENOMINATOR is deliberately NOT collected** — a page-view beacon is a new
+anonymous request, which §5 forbids; org-page view counts must come from server request logs when
+the gate is read. Throttling extracted to NEW `lib/observability/ip-throttle.ts` as a FACTORY
+(error-capture repointed at it) — a shared singleton would let an error burst starve the beacon.
+**E.2** NEW `resolveOrgReturnFlip` in `lib/flip-twins.ts` (beside the event-level resolvers, not a
+new module): fed the workspaces list the org-home nav ALREADY resolves — no new fetch, no second
+readiness probe (the Stage-B review catch). Segment-exact slug match (`/${slug}/`) so `ravens-north`
+can't borrow `ravens`'s pill; 1 door → direct pill labelled by `flipSurfaceLabel`, 2+ → the "Roles"
+chooser with each row sublabelled by place. Renders through the shared FlipPill, so return-memory
+works for free. **Precedence: the flip BEATS the Workspaces pill on this surface**, matching the
+ratified tournament-strip rule — accepted trade: a multi-workspace operator standing on their own
+org page gets the flip instead of the ENTER chooser (Home + Account still reach everything).
+**E.3** NEW `lib/org-public-sections.ts` — **SECTION names (League/Teams/Archives), owner-ruled
+2026-08-01 after a two-window mockup comparison**, NOT entity names: entity names needed four more
+pages to publish into nav context (the plumbing the OrgNavSync restore fix already had to repair)
+plus a truncation rule; section labels need neither and the page heading already names the entity.
+Depth-insensitive (a season page still reads "League"); unnamed sections render nothing rather than
+guess. Identity block split — `.logo` is now a row, `.logoLink` carries the self-link.
+**E.4** NEW `getOrgSitemapEntries` reusing `isOrgHomeRealDestination` (never restated); the
+followable-org predicate extracted to `scopeFollowableOrgs<T>` (the file's own
+`scopeListedTournaments` convention) so ONE predicate serves two column sets. `hasModuleEntitlement`
+/`isOrgHomeRealDestination` now take a narrowed `EntitlementOrg` (4 fields) so a partial scan row
+can ask. Both sitemap scans fail independently + quietly. **Verified discriminating on dev: 2 real
+destinations in, 7 eligible-but-redirecting/placeholder orgs correctly out.**
+**E.5** BuiltOnCredit on the three named call sites (league index, rep team, archives index), same
+`!isFreePlan` gate as org home.
+**Gate:** typecheck clean; verify:changed **0 errors**, all six token ratchets ZERO, date + coverage
+green (⚠ the ONE red is `check-schema-parity` — a CONCURRENT session's mig #213 practice-plan
+columns; this stage touches no schema). Unit tests **707 pass / 0 fail** (+13 new: 6 for the org
+return flip incl. the prefix-org leak, 7 for the crumb). **NEW Playwright `anonymous-public-
+invariant.spec.ts` — 21/21 green** (written as a STANDING guard, not a one-off): Q5.1 zero identity
+requests on marketing/consumer/org-home/org-league/tournament, Q5.2 no operator door for anonymous,
+Q5.4 role-free SSR payload, plus beacon-fires-on-click-not-render and the sitemap gate. **NEW
+`org-return-flip-smoke.spec.ts` — 7/7 green** (the signed-in half: the door appears on an owned
+org, is per-page scoped across two owned orgs, and is absent on a foreign org — a control gated so
+tightly it never renders fails silently, so both halves are tested). Dev server restarted on a
+cleared cache, login 200, no EACCES, clean log.
+⚠ **Deliberate reading of the superseded §Q5 item 3** ("no crumb may be added to org pages at all"):
+that line is superseded by this plan's §5, which measures parity on **org home (root)** — where E.3
+adds nothing by design — and by owner approval of Stage E's scope. The crumb is URL-derived, carries
+no role/membership/hat state, and is asserted visible to ANONYMOUS visitors in the spec, so it
+passes Q5.2 as written. Flagged rather than assumed.
+
 D (pulled forward at owner QA — "shouldn't this be all workspaces?"): role-summary now ships the
 full places list (same resolver as Home's cards); new shared `WorkspacesPill` (ENTER chooser — no ⇄
 glyph, host-styled trigger, HUD + warm popover skins) renders on all three pill sites (consumer/coach

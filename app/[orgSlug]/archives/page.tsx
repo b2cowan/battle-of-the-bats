@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { getOrganizationBySlug, getArchivesByOrg } from '@/lib/db';
 import { getAuthContextWithScope } from '@/lib/api-auth';
+import { isFreePlan } from '@/lib/plan-config';
+import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 
 export default async function ArchivesPage({
   params,
@@ -233,6 +235,10 @@ export default async function ArchivesPage({
             ← {org.name}
           </Link>
         </div>
+
+        {/* Nav Unification Stage E.5 — the ratified-subtle paid-tier credit, same component and
+            same plan gate as the org home and event pages. */}
+        {!isFreePlan(org.planId) && <BuiltOnCredit />}
       </div>
     </div>
   );

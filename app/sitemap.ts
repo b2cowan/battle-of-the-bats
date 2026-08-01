@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { getDirectorySitemapEntries } from '@/lib/directory';
+import { getDirectorySitemapEntries, getOrgSitemapEntries } from '@/lib/directory';
 
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
 
@@ -20,6 +20,19 @@ const STATIC_PATHS: { path: string; priority: number; changeFrequency: MetadataR
   { path: '/changelog',                priority: 0.5, changeFrequency: 'weekly'  },
 ];
 
+/** Map one dynamic scan's rows into sitemap entries, or contribute nothing if the scan fails.
+ *  States the fail-quiet contract once, for every scan. */
+async function safeEntries<T>(
+  scan: Promise<T[]>,
+  toEntry: (row: T) => MetadataRoute.Sitemap[number],
+): Promise<MetadataRoute.Sitemap> {
+  try {
+    return (await scan).map(toEntry);
+  } catch {
+    return [];
+  }
+}
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticEntries: MetadataRoute.Sitemap = STATIC_PATHS.map(s => ({
     url: `${SITE_URL}${s.path}`,
@@ -27,19 +40,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: s.priority,
   }));
 
-  let tournamentEntries: MetadataRoute.Sitemap = [];
-  try {
-    const entries = await getDirectorySitemapEntries();
-    tournamentEntries = entries.map(e => ({
+  // Each dynamic scan fails INDEPENDENTLY and quietly: one hiccup must not cost the sitemap the
+  // other scan's pages, and neither may break the static set above.
+  const [tournamentEntries, orgEntries] = await Promise.all([
+    safeEntries(getDirectorySitemapEntries(), e => ({
       url: `${SITE_URL}${e.href}`,
       lastModified: e.lastModified ? new Date(e.lastModified) : undefined,
       changeFrequency: 'daily',
       priority: 0.6,
-    }));
-  } catch {
-    // Never let a directory-query hiccup break the whole sitemap — ship the static set.
-    tournamentEntries = [];
-  }
+    })),
+    // Nav Unification Stage E.4 — an org's public home, but ONLY where that page is a real
+    // destination (the resolver applies the shared rule); a redirecting or placeholder page is
+    // never emitted. Ranked just under its own event pages: the hub is a genuine landing page
+    // for a club's families, but an event page is what a search is usually looking for.
+    safeEntries(getOrgSitemapEntries(), e => ({
+      url: `${SITE_URL}${e.href}`,
+      changeFrequency: 'weekly',
+      priority: 0.5,
+    })),
+  ]);
 
-  return [...staticEntries, ...tournamentEntries];
+  return [...staticEntries, ...tournamentEntries, ...orgEntries];
 }

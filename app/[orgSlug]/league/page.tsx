@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { getLeagueSeasons } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
+import { isFreePlan } from '@/lib/plan-config';
+import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import type { LeagueSeason } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
@@ -157,6 +159,12 @@ export default async function LeagueIndexPage({
             No seasons have been published yet. Check back soon.
           </div>
         )}
+
+        {/* Nav Unification Stage E.5 — the same ratified-subtle paid-tier credit the org home and
+            event pages already carry, on the same plan gate. House league is a League/Club feature,
+            so in practice this always renders here; the gate stays for the free-floor League
+            Starter profile, which reaches this page on a free plan and keeps carrying nothing. */}
+        {!isFreePlan(org.planId) && <BuiltOnCredit />}
       </div>
     </div>
   );

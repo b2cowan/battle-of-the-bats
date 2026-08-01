@@ -11,7 +11,11 @@ import { phaseOf, fmtRange, daysUntil } from '@/lib/tournament-phase-display';
 import { tournamentToday } from '@/lib/timezone';
 import TournamentNavStatus from '@/components/public/TournamentNavStatus';
 import TournamentFlipPill from '@/components/public/TournamentFlipPill';
+import FlipPill from '@/components/shared/FlipPill';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
+import { resolveOrgReturnFlip } from '@/lib/flip-twins';
+import { orgSectionCrumb } from '@/lib/org-public-sections';
+import { reportNavClick } from '@/lib/nav-beacon';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
 import styles from './Navbar.module.css';
@@ -197,30 +201,61 @@ export default function Navbar() {
     // Stage D.2, via the shared resolver: 2+ places → the Workspaces popover; 0–1 → the
     // direct pill as before.
     const orgHomeDoor = resolveOperatorDoor(orgHomeRoles?.workspaces, orgHomeRoles?.adminHref, orgHomeRoles?.coachHref);
+    // Stage E.3 — one level in, the identity row grows a trail so "up" works a step at a time.
+    // Null at the org root and on any section Stage E doesn't name, which keeps today's identity.
+    const sectionCrumb = orgSectionCrumb(pathname, orgSlug);
+    // Stage E.2 — the return half of the org-level flip, for operators of THIS org only. It takes
+    // the door slot ahead of the Workspaces pill, matching the tournament strip's ratified
+    // precedence (Flip → pill → StartMenu): a flip back to the place you just left beats a chooser
+    // of everywhere you could go. Renders nothing for fans, so the slot falls through unchanged.
+    const orgReturnFlip = resolveOrgReturnFlip(orgHomeRoles?.workspaces, orgSlug);
+    // One flat precedence chain rather than nested JSX branches, so the rule reads in source order.
+    const orgDoorSlot = orgReturnFlip
+      ? <FlipPill resolution={orgReturnFlip} variant="inline" className={styles.orgFlip} />
+      : orgHomeDoor?.kind === 'workspaces'
+        ? <WorkspacesPill workspaces={orgHomeDoor.workspaces} className={styles.actionPill} />
+        : orgHomeDoor?.kind === 'pill'
+          ? <Link href={orgHomeDoor.pill.href} className={styles.actionPill}>{orgHomeDoor.pill.label}</Link>
+          : null;
     return (
       <nav className={navClass}>
         <div className={`container ${styles.inner}`}>
-          <Link href={`/${orgSlug}`} className={styles.logo}>
-            {logoUrl && (
-              <img src={logoUrl} alt={orgName || 'Org logo'} className={styles.logoImg} />
+          {/* The identity block is a row, not a single link: at depth the org name self-links to
+              the org root and the crumb names the section, so the two carry different jobs. */}
+          <div className={styles.logo}>
+            <Link href={`/${orgSlug}`} className={styles.logoLink}>
+              {logoUrl && (
+                <img src={logoUrl} alt={orgName || 'Org logo'} className={styles.logoImg} />
+              )}
+              {orgName && <span className={styles.orgName}>{orgName}</span>}
+            </Link>
+            {sectionCrumb && (
+              <>
+                <span className={styles.crumbSep} aria-hidden>›</span>
+                <span className={styles.crumb}>{sectionCrumb}</span>
+              </>
             )}
-            {orgName && <span className={styles.orgName}>{orgName}</span>}
-          </Link>
+          </div>
 
           <div className={styles.actions}>
             {/* The way back into the app. Org pages carry no tab row and no bottom bar at any width,
                 so before this a visitor who arrived here (from search, a follow card, or a link) had
                 no route to Scores/Chat/Account except the browser's Back button. Deliberately a
                 plain link at Pricing's weight, and labelled to match the identical link on the
-                public tournament strip — not a second brand mark competing with the org's own name. */}
-            <Link href="/discover" className={styles.actionLink}>Discover</Link>
+                public tournament strip — not a second brand mark competing with the org's own name.
+
+                Stage E.1: the click (never the render) reports to the beacon that feeds the plan's
+                CTR gate — the number that decides whether one link is the permanent answer to the
+                fan gap. The anchor itself is identical for every visitor, signed in or not. */}
+            <Link
+              href="/discover"
+              className={styles.actionLink}
+              onClick={() => reportNavClick('org_discover')}
+            >
+              Discover
+            </Link>
             <Link href="/pricing" className={styles.actionLink}>Pricing</Link>
-            {orgHomeDoor?.kind === 'workspaces' && (
-              <WorkspacesPill workspaces={orgHomeDoor.workspaces} className={styles.actionPill} />
-            )}
-            {orgHomeDoor?.kind === 'pill' && (
-              <Link href={orgHomeDoor.pill.href} className={styles.actionPill}>{orgHomeDoor.pill.label}</Link>
-            )}
+            {orgDoorSlot}
             {orgHomeSignedIn ? (
               <Link href="/account" className={styles.actionLink}>Account</Link>
             ) : (

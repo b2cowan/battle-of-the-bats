@@ -12,7 +12,18 @@ import type { Organization } from './types';
  *   if (!hasCapability(ctx.role, ctx.capabilities, 'module_X')) return forbidden();
  *   if (!hasModuleEntitlement(ctx.org, 'module_X')) return forbidden();
  */
-export function hasModuleEntitlement(org: Organization, cap: Capability): boolean {
+/**
+ * The only fields entitlement answers actually depend on. Narrowed from `Organization` so a caller
+ * holding a partial row — the Stage E.4 sitemap scan, which selects four columns for the whole
+ * platform — can ask the question without inventing a full org object. Every existing caller
+ * passing a complete `Organization` still satisfies this.
+ */
+export type EntitlementOrg = Pick<
+  Organization,
+  'planId' | 'subscriptionStatus' | 'enabledAddons' | 'freeFloor'
+>;
+
+export function hasModuleEntitlement(org: EntitlementOrg, cap: Capability): boolean {
   if (org.subscriptionStatus === 'canceled') return false;
 
   const plan = PLAN_CONFIG[org.planId];
@@ -32,6 +43,6 @@ export function hasModuleEntitlement(org: Organization, cap: Capability): boolea
  * of this rule — the event chrome's org link today, the Stage E sitemap gate next — derives
  * from here, never from its own re-statement.
  */
-export function isOrgHomeRealDestination(org: Organization, activeTournamentCount: number): boolean {
+export function isOrgHomeRealDestination(org: EntitlementOrg, activeTournamentCount: number): boolean {
   return hasModuleEntitlement(org, 'module_public_site') || activeTournamentCount >= 2;
 }

@@ -41,6 +41,62 @@
   min-width: 0;
 }
 
+/* ── Org-page identity row (Nav Unification Stage E.3) ──
+   At depth the identity block stops being ONE link: the org name/logo self-links to the org root
+   while the crumb names the section, so `.logo` became a plain row and this carries the link. On
+   the tournament branch `.logo` is still the <Link> itself, which is why this is additive. */
+/* Deliberately NOT `composes: logo` — `.logo` carries `flex: 1 1 0` (its equal-share role as a
+   direct child of `.inner`), which is wrong for a child that should size to its content beside the
+   crumb. The four shared layout lines are restated rather than inherited for that reason. */
+.logoLink {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.crumbSep {
+  flex-shrink: 0;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--white-30);
+}
+
+/* Deliberately quieter than the org name and in the utility row's mono voice: the crumb is
+   orientation, not a second title competing with the club's own name.
+
+   `flex-shrink: 0` with no truncation rule, on purpose: the vocabulary is a closed set of three
+   short section words (see lib/org-public-sections), so the crumb can never be what overflows —
+   a long ORG name is, and that clamps in .orgName as it already did. Naming entities here instead
+   would have needed the ellipsis machinery this deliberately does without. */
+.crumb {
+  flex-shrink: 0;
+  font-family: var(--font-data, monospace);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-70);
+  white-space: nowrap;
+}
+
+/* The operator's return flip fades in once identity resolves client-side, so the door doesn't pop
+   in hard after hydration. Placement is the actions cluster's; sizing is FlipPill's own. */
+.orgFlip {
+  animation: navFadeIn 0.18s ease both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orgFlip { animation: none; }
+}
+
+@keyframes navFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
 .logoImg {
   width: 44px;
   height: 44px;

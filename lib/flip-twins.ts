@@ -359,6 +359,58 @@ export function primaryTarget(resolution: FlipResolution): FlipTarget {
   return resolution.kind === 'single' ? resolution.target : resolution.targets[0];
 }
 
+/** The shape this module needs from a workspace door: structurally satisfied by
+ *  `user-contexts.WorkspaceDoor`, but declared locally and narrowed to the two fields actually
+ *  read. Not an import, because `user-contexts` reaches the service-role Supabase client and this
+ *  module is deliberately dependency-free so it stays trivially unit-testable — structural typing
+ *  still makes a drifting `WorkspaceDoor` a compile error at the call site. */
+export interface OrgReturnDoor {
+  href: string;
+  title: string;
+}
+
+/**
+ * The ORG-LEVEL return flip (Nav Unification Stage E.2): standing on `/{orgSlug}`'s public pages,
+ * which side(s) of this org does the viewer hold?
+ *
+ * Closes the one-way flip — admin screens already resolve `to-public` at `/{orgSlug}` ("⇄ Public
+ * site"), but nothing resolved the way back, so an operator who took that trip was stranded on
+ * their own public page. Lives here beside the event-level resolvers so both directions of both
+ * levels are stated in one file and can never drift.
+ *
+ * Unlike the event resolvers this one is fed a DOOR LIST rather than a pathname: the org level has
+ * no page-matched twin (an org public page has no admin counterpart screen), so the honest answer
+ * is "the places you hold here", which is exactly what the workspaces resolver already computes.
+ *
+ * Segment-exact matching (note the trailing slash) — without it an operator of `ravens-north`
+ * would get a return pill on `ravens`'s public page. Org-less coach doors (`/coaches/…`) and the
+ * Following feed fall out correctly: neither is a side of THIS org.
+ */
+export function resolveOrgReturnFlip(
+  workspaces: OrgReturnDoor[] | undefined,
+  orgSlug: string,
+): FlipResolution | null {
+  if (!workspaces?.length || !orgSlug) return null;
+  const doors = workspaces.filter(w => w.href.startsWith(`/${orgSlug}/`));
+  if (doors.length === 0) return null;
+
+  // Labelled by SURFACE ("Admin" / "Coaches Portal" / "Scorekeeper") through the same helper the
+  // return-memory label uses, so the stateless pill and the remembered one read identically and the
+  // control never appears to change job depending on how you arrived (owner call 2026-07-31).
+  // The sublabel names WHICH place, so someone who both runs and coaches at this org reads two
+  // distinct rows rather than the same word twice; FlipPill only renders it in the chooser's rows,
+  // so carrying it on the single target too is harmless.
+  const targets: FlipTarget[] = doors.map(door => ({
+    href: door.href,
+    label: flipSurfaceLabel(door.href),
+    sublabel: door.title,
+  }));
+
+  return targets.length === 1
+    ? { kind: 'single', target: targets[0] }
+    : { kind: 'multi', label: 'Roles', targets };
+}
+
 // ── Return-memory (a direct return to the page a flip came from) ─────────────────────────────────
 //
 // After a flip, the destination side's pill can offer a one-tap return to the exact origin URL. The

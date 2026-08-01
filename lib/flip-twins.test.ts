@@ -15,6 +15,7 @@ import {
   flipSurfaceLabel,
   publicGamePageHref,
   publicTeamPageHref,
+  resolveOrgReturnFlip,
   type FlipContext,
   type FlipResolution,
 } from './flip-twins.ts';
@@ -449,4 +450,83 @@ test('admin→public: a game deep-link is preserved when Schedule is visible, dr
   });
   // Falls back to the front page — and must NOT smuggle the game id onto it.
   assert.equal(primaryTarget(hidden).href, '/acme/summer-slam');
+});
+
+// ── Org-level return flip (Nav Unification Stage E.2) ────────────────────────────────────────────
+
+test('org return: no doors / no slug / doors in OTHER orgs → no pill at all', () => {
+  assert.equal(resolveOrgReturnFlip(undefined, 'ravens'), null);
+  assert.equal(resolveOrgReturnFlip([], 'ravens'), null);
+  assert.equal(resolveOrgReturnFlip([{ href: '/ravens/admin', title: 'Ravens' }], ''), null);
+  // A fan of this org who administers a DIFFERENT one gets nothing here.
+  assert.equal(
+    resolveOrgReturnFlip([{ href: '/storm/admin/tournaments/dashboard', title: 'Storm' }], 'ravens'),
+    null,
+  );
+  // Org-less coach hub + the Following feed are not sides of THIS org.
+  assert.equal(
+    resolveOrgReturnFlip([{ href: '/coaches', title: 'Coaches Portal' }, { href: '/following', title: 'Following' }], 'ravens'),
+    null,
+  );
+});
+
+test('org return: slug match is SEGMENT-exact — a prefix org must not borrow the pill', () => {
+  // `ravens-north` starts with `ravens`; without the trailing slash this leaked across orgs.
+  assert.equal(
+    resolveOrgReturnFlip([{ href: '/ravens-north/admin', title: 'Ravens North' }], 'ravens'),
+    null,
+  );
+  assert.equal(
+    resolveOrgReturnFlip([{ href: '/ravens/admin', title: 'Ravens' }], 'ravens-north'),
+    null,
+  );
+});
+
+test('org return: one door → a direct pill labelled by SURFACE', () => {
+  const res = resolveOrgReturnFlip(
+    [{ href: '/ravens/admin/tournaments/dashboard', title: 'Cedarvale Ravens' }],
+    'ravens',
+  );
+  assert.equal(res?.kind, 'single');
+  assert.equal(res?.kind === 'single' && res.target.href, '/ravens/admin/tournaments/dashboard');
+  assert.equal(res?.kind === 'single' && res.target.label, 'Admin');
+  // The sublabel rides along but FlipPill only renders it in chooser rows, so a lone door still
+  // shows just its surface name.
+  assert.equal(res?.kind === 'single' && res.target.sublabel, 'Cedarvale Ravens');
+});
+
+test('org return: a coach-only door reads "Coaches Portal", not "Admin"', () => {
+  const res = resolveOrgReturnFlip([{ href: '/ravens/coaches', title: 'Cedarvale Ravens' }], 'ravens');
+  assert.equal(res?.kind === 'single' && res.target.label, 'Coaches Portal');
+});
+
+test('org return: two doors in one org → the Roles chooser, each row named by its place', () => {
+  const res = resolveOrgReturnFlip(
+    [
+      { href: '/ravens/admin/tournaments/dashboard', title: 'Cedarvale Ravens' },
+      { href: '/ravens/coaches', title: 'Cedarvale Ravens' },
+    ],
+    'ravens',
+  );
+  assert.equal(res?.kind, 'multi');
+  assert.equal(res?.kind === 'multi' && res.label, 'Roles');
+  assert.deepEqual(
+    res?.kind === 'multi' && res.targets.map(t => t.label),
+    ['Admin', 'Coaches Portal'],
+  );
+  // The sublabel names WHICH place, so two rows never read as the same word twice.
+  assert.equal(res?.kind === 'multi' && res.targets[0].sublabel, 'Cedarvale Ravens');
+});
+
+test('org return: doors from other orgs are filtered out BEFORE the single/multi fork', () => {
+  // One door here + one elsewhere must stay a direct pill, not become a chooser.
+  const res = resolveOrgReturnFlip(
+    [
+      { href: '/ravens/admin', title: 'Cedarvale Ravens' },
+      { href: '/storm/admin', title: 'Northside Storm' },
+    ],
+    'ravens',
+  );
+  assert.equal(res?.kind, 'single');
+  assert.equal(res?.kind === 'single' && res.target.href, '/ravens/admin');
 });

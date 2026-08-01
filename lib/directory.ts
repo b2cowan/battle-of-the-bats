@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getSportPack } from '@/lib/sports';
 import { provinceName, isProvinceCode } from '@/lib/canadian-provinces';
 import { tournamentToday } from '@/lib/timezone';
+import { isOrgHomeRealDestination } from '@/lib/module-entitlements';
 import type { Organization } from '@/lib/types';
 
 // Shared data layer for the public tournament discovery directory (/discover).
@@ -332,6 +333,7 @@ export async function getDirectorySitemapEntries(): Promise<{ href: string; last
   return out;
 }
 
+
 // ────────────────────────────────────────────────────────────────────────────────
 // Unified public search — Organizations & Teams
 //
@@ -366,15 +368,111 @@ function rankByNeedle<T>(rows: T[], fields: (r: T) => string[], needle: string):
  * picker) plus is_public + isNormalLinkableOrg's exclusions (team-workspace shadow orgs, the
  * `team` plan, canceled subs). A row that survives this always resolves to a live `/{orgSlug}`.
  */
-function followableOrgQuery() {
-  return supabaseAdmin
-    .from('organizations')
-    .select('id, name, slug, logo_url')
+// Minimal fluent shape used to apply the shared filter — kept separate from the (deeply generic)
+// supabase builder type so composing it never triggers TS's deep-instantiation guard. Mirrors the
+// ListedTournamentFilter convention above.
+interface FollowableOrgFilter {
+  eq(column: string, value: string | boolean): FollowableOrgFilter;
+  neq(column: string, value: string): FollowableOrgFilter;
+}
+
+/** The predicate itself, applied to any column selection — so the "real, publicly-reachable org"
+ *  rule is stated ONCE while callers pick the columns they need (search wants display fields, the
+ *  Stage E.4 sitemap wants entitlement fields). */
+function scopeFollowableOrgs<T>(query: T): T {
+  let q = query as unknown as FollowableOrgFilter;
+  q = q
     .eq('is_discoverable', true)
     .eq('is_public', true)
     .neq('account_kind', 'team_workspace')
     .neq('plan_id', 'team')
     .neq('subscription_status', 'canceled');
+  return q as unknown as T;
+}
+
+function followableOrgQuery() {
+  return scopeFollowableOrgs(
+    supabaseAdmin.from('organizations').select('id, name, slug, logo_url'),
+  );
+}
+
+/**
+ * Every org whose PUBLIC HOME PAGE is worth crawling (Nav Unification Stage E.4).
+ *
+ * Org pages were absent from the sitemap entirely, so a club's own hub — the page their families
+ * are sent to — was unfindable in search while their event pages were indexed.
+ *
+ * TWO gates, and both matter:
+ *  • the org must be publicly reachable at all (the shared follow/search eligibility predicate, so
+ *    a searchable org and a crawlable org are the same set);
+ *  • `/{orgSlug}` must be a REAL destination — `isOrgHomeRealDestination`, the ONE statement of
+ *    that rule (lib/module-entitlements), shared with the event chrome's org link. Without it the
+ *    sitemap would hand crawlers a page that redirects into a lone event (a loop) or renders the
+ *    platform "hasn't set up their public site yet" placeholder. Never restate the rule here.
+ */
+export async function getOrgSitemapEntries(): Promise<{ href: string }[]> {
+  const { data: orgRows, error } = await scopeFollowableOrgs(
+    supabaseAdmin
+      .from('organizations')
+      .select('id, slug, plan_id, subscription_status, enabled_addons, free_floor'),
+  ).limit(SCAN_CEILING);
+  if (error) throw error;
+  const orgs = orgRows ?? [];
+  if (orgs.length >= SCAN_CEILING) {
+    console.warn(`[sitemap] org scan hit the ${SCAN_CEILING} ceiling — some org pages omitted`);
+  }
+  if (!orgs.length) return [];
+
+  const entitlementOf = (o: (typeof orgs)[number]) => ({
+    planId: o.plan_id,
+    subscriptionStatus: o.subscription_status,
+    enabledAddons: o.enabled_addons ?? [],
+    freeFloor: o.free_floor ?? null,
+  });
+
+  // Drop rows whose entitlements can't be resolved at all, ONCE, before either pass below. The
+  // lookup indexes PLAN_CONFIG by the row's plan_id, so a single row carrying an unrecognized plan
+  // would otherwise throw and cost EVERY org its sitemap entry — the caller's fail-quiet wrapper
+  // can only drop the whole batch. One bad row should cost one URL.
+  const usable = orgs.filter(o => {
+    try {
+      isOrgHomeRealDestination(entitlementOf(o), 0);
+      return true;
+    } catch {
+      console.warn(`[sitemap] skipped org ${o.slug} — entitlements could not be resolved`);
+      return false;
+    }
+  });
+
+  // An org owning the public-site module is a real destination REGARDLESS of event count, so its
+  // answer needs no count at all. Splitting first means the count query only carries the orgs whose
+  // answer actually depends on it — which on the paid tiers is the minority — keeping the `.in()`
+  // filter (a URL-encoded id list) far below any practical length limit.
+  const needsCount = usable.filter(o => !isOrgHomeRealDestination(entitlementOf(o), 0));
+
+  const activeByOrg = new Map<string, number>();
+  if (needsCount.length) {
+    const { data: activeRows, error: countErr } = await supabaseAdmin
+      .from('tournaments')
+      .select('org_id')
+      .eq('status', 'active')
+      .in('org_id', needsCount.map(o => o.id))
+      .limit(SCAN_CEILING);
+    if (countErr) throw countErr;
+    const rows = activeRows ?? [];
+    // A truncated count would UNDERCOUNT and silently drop a real destination from the sitemap, so
+    // say so rather than shipping a quietly incomplete file (matches this file's other scans).
+    if (rows.length >= SCAN_CEILING) {
+      console.warn(`[sitemap] active-tournament scan hit the ${SCAN_CEILING} ceiling — org counts may undercount`);
+    }
+    for (const row of rows) {
+      activeByOrg.set(row.org_id, (activeByOrg.get(row.org_id) ?? 0) + 1);
+    }
+  }
+
+  return usable
+    .filter(o => isOrgHomeRealDestination(entitlementOf(o), activeByOrg.get(o.id) ?? 0))
+    .map(o => ({ href: `/${o.slug}` }));
 }
 
 /** In-memory mirror of followableOrgQuery's predicate — for a server component that ALREADY
