@@ -29,7 +29,7 @@ none) and **no sidebar edits at all** (CoachesSidebar/BottomNav are mid-edit by 
 session; the portal's "COACHES PORTAL + org name" header already reads as pure place chrome).
 Mobile portal untouched (still no Home/Account doors — the Stage H mobile pass stays gated on the
 More-sheet overflow check). Gate green; typecheck clean.
-✅ **Stage E BUILT on dev 2026-08-01, uncommitted — owner QA pending.** All five items.
+✅ **Stage E COMMITTED dev `db0db159` 2026-08-01** (owner QA passed; /simplify + /review funnel complete — see the funnel note at the end of this block). All five items.
 **E.1** the Discover anchor was already shipped (Desktop Public UX WI-6) so the only delta is a
 **click** handler → NEW `lib/nav-beacon.ts` (allowlist + `sendBeacon`/keepalive send in ONE module,
 so client and endpoint can't drift) → NEW `POST /api/client/nav-beacon` logging
@@ -38,8 +38,11 @@ beacon must not be probeable); allowlisted event names only (an open `event` fie
 log sink); `from` passes a code-point printable filter (log-injection guard on a browser-supplied
 value). ⚠ **The CTR DENOMINATOR is deliberately NOT collected** — a page-view beacon is a new
 anonymous request, which §5 forbids; org-page view counts must come from server request logs when
-the gate is read. Throttling extracted to NEW `lib/observability/ip-throttle.ts` as a FACTORY
-(error-capture repointed at it) — a shared singleton would let an error burst starve the beacon.
+the gate is read. Abuse control uses the EXISTING `lib/rate-limit.ts` (per-IP bucket + spoofing-proof
+global ceiling, the same pairing as auth/signup); error-capture's inline throttle was repointed at it
+too. Cross-origin posts are rejected via a NEW exported `isTrustedAppOrigin` extracted from
+`lib/app-origin.ts`, and the log-value filter drops C0/C1 **and U+2028/U+2029** (both survive
+JSON.parse and render as line breaks in log consoles — enough to forge a whole fake metric line).
 **E.2** NEW `resolveOrgReturnFlip` in `lib/flip-twins.ts` (beside the event-level resolvers, not a
 new module): fed the workspaces list the org-home nav ALREADY resolves — no new fetch, no second
 readiness probe (the Stage-B review catch). Segment-exact slug match (`/${slug}/`) so `ravens-north`
@@ -64,7 +67,7 @@ destinations in, 7 eligible-but-redirecting/placeholder orgs correctly out.**
 `!isFreePlan` gate as org home.
 **Gate:** typecheck clean; verify:changed **0 errors**, all six token ratchets ZERO, date + coverage
 green (⚠ the ONE red is `check-schema-parity` — a CONCURRENT session's mig #213 practice-plan
-columns; this stage touches no schema). Unit tests **707 pass / 0 fail** (+13 new: 6 for the org
+columns; this stage touches no schema). Unit tests **727 pass / 0 fail** (+13 new: 6 for the org
 return flip incl. the prefix-org leak, 7 for the crumb). **NEW Playwright `anonymous-public-
 invariant.spec.ts` — 21/21 green** (written as a STANDING guard, not a one-off): Q5.1 zero identity
 requests on marketing/consumer/org-home/org-league/tournament, Q5.2 no operator door for anonymous,
@@ -78,6 +81,26 @@ that line is superseded by this plan's §5, which measures parity on **org home 
 adds nothing by design — and by owner approval of Stage E's scope. The crumb is URL-derived, carries
 no role/membership/hat state, and is asserted visible to ANONYMOUS visitors in the spec, so it
 passes Q5.2 as written. Flagged rather than assumed.
+**FUNNEL (2026-08-01).** /simplify applied 5 — **deleted a duplicate rate limiter this stage had
+written (`lib/rate-limit.ts` already existed with the same eviction loop and IP parser; both client
+endpoints now use it)**; nav door precedence flattened to one chain; the sitemap's fail-quiet contract
+stated once; flip targets built once; and the sitemap now skips counts it doesn't need (a
+module-owning org is a real destination at any count — `isOrgHomeRealDestination` is monotonic in
+count, so the short-circuit is sound), which also keeps the `.in()` id list small. Skipped 5, notably
+`composes: logo` on `.logoLink` (would have newly applied `flex: 1 1 0` to the inner link — a layout
+change AFTER owner QA) and pushing the BuiltOnCredit plan gate into the component (edits 3
+pre-existing call sites; a good platform-wide follow-up, not this stage's).
+/review at high-risk, 5 lenses → **3 CONFIRMED + FIXED, all on the new public endpoint**: (1) any
+third-party site could inflate the Discover metric cross-origin with one line of JS — it feeds a real
+go/no-go gate, so an Origin check was added (an ABSENT Origin still passes: only browsers must send
+one, so rejecting absence would drop legitimate clients — this blunts the drive-by vector, not a
+scripted caller); (2) the U+2028/U+2029 log-forgery gap above; (3) one unrecognized plan_id would have
+cost EVERY org its sitemap entry, since the fail-quiet wrapper can only drop the whole batch — bad
+rows are now filtered once, up front. **REFUTED: "the direct FlipPill import adds anonymous-bundle
+bytes" — `TournamentFlipPill` already imported it at HEAD, so it was in Navbar's module graph
+transitively; zero new bytes.** Correctness, regression and multi-tenant lenses swept clean. All three
+fixes verified by request against the running server (foreign origin dropped, same-origin logged, the
+U+2028 payload rendered inert inside one line).
 
 D (pulled forward at owner QA — "shouldn't this be all workspaces?"): role-summary now ships the
 full places list (same resolver as Home's cards); new shared `WorkspacesPill` (ENTER chooser — no ⇄
