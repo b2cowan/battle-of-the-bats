@@ -300,11 +300,65 @@ const orgHelp: HelpPageContent = {
             <li>Note that registration form links sent to coaches in past emails will break</li>
             <li>Consider the timing — avoid changing mid-tournament</li>
           </ul>
-          <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image for your public pages. Free Tournament orgs use FieldLogicHQ default styling; logos, colours, and the hero banner become available on Tournament Plus and higher. There is also a toggle to list your organization on the public <strong>/discover</strong> directory.</p>
+          <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image for your public pages. This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization address keeps FieldLogicHQ&rsquo;s default styling. There is also a toggle to list your organization on the public <strong>/discover</strong> directory.</p>
           <p><strong>Danger zone</strong> — the bottom of Settings has a <strong>Request Account Deletion</strong> flow for closing the organization.</p>
           <p>Requiring an admin to review scores before results go public is a per-tournament setting in each event's settings, not an org-wide Settings option.</p>
         </>
       ),
+    },
+    {
+      id: 'public-org-page',
+      heading: 'Your public organization page — what visitors see',
+      summary: 'How families move around your public pages: section tabs, the trail back up, the way into the app, and the shortcut back to admin for your own staff.',
+      keywords: [
+        'public organization page', 'public page', 'org page', 'what visitors see', 'section tabs',
+        'tabs', 'navigation', 'breadcrumb', 'trail', 'home league archives', 'sections',
+        'discover link', 'back to the app', 'bottom bar', 'phone navigation', 'mobile navigation',
+        'event card colour', 'event card color', 'tinted cards', 'return to admin from public page',
+        'admin shortcut', 'coaches portal shortcut', 'flip', 'public site',
+      ],
+      searchText: 'public organization page what families see visitors see fans see section tabs tab row home league archives navigation between sections breadcrumb trail org name links back to the front page discover link way back into the app scores chat account bottom bar on a phone mobile bottom navigation app bar desktop unchanged event cards wear their own event colour tinted per event branding red event purple event return to admin from my public page shortcut back admin coaches portal flip pill remembers the screen i left league club only tournament plus breadcrumb instead teams tab missing rep teams',
+      content: (
+        <>
+          <p>Your organization&rsquo;s public address — <code>fieldlogichq.ca/your-slug/</code> — is where families land from a search, a shared link, or your own website. This is what they can do once they are there.</p>
+
+          <p><strong>Moving between your sections.</strong> On <strong>League and Club</strong> plans, a row of tabs sits under your organization&rsquo;s name — <strong>Home</strong>, <strong>League</strong>, <strong>Archives</strong> — so a visitor can move straight between them instead of reversing back to your front page each time. The row appears only when you actually have more than one section to offer. On <strong>Tournament</strong> and <strong>Tournament Plus</strong>, you get a simpler trail instead: your organization&rsquo;s name followed by the section, like <em>Cedarvale Ravens &rsaquo; Archives</em>, with the name itself linking back to your front page.</p>
+
+          <p><strong>On a phone, families keep the app.</strong> On phone-sized screens your public pages carry the FieldLogicHQ bottom bar — <strong>Home</strong>, <strong>Scores</strong>, <strong>Chat</strong> and <strong>Account</strong> (a signed-out visitor sees Home, Scores and Sign In). Before this, a family who reached your league or archive pages on a phone had no route back into the app except the browser&rsquo;s Back button. Because that bar now carries those destinations, your own header drops its Discover, Pricing and Account links on phones — which gives your organization&rsquo;s name the whole row to itself. <strong>Desktop is deliberately unchanged</strong>: no FieldLogicHQ bar sits above your name there.</p>
+
+          <p><strong>The way into the app on desktop</strong> is a single quiet <strong>Discover</strong> link in your page header, next to Pricing. It opens the public directory of tournaments, teams and organizations.</p>
+
+          <p><strong>Your events keep their own colours.</strong> When your front page lists several tournaments, each card wears <em>that event&rsquo;s</em> branding rather than one shared colour — so a red event and a purple event look like themselves, and each card looks like the page it opens.</p>
+
+          <p><strong>If you help run this organization</strong> and you are signed in, a <strong>&#8646;</strong> pill appears in the corner of your own public pages and takes you back to your admin area or Coaches Portal in the same tab. It remembers the exact screen you came from, so a quick look at the public site and back is two taps. Families and signed-out visitors never see it. If you hold more than one role here, the pill opens a short list so you can pick.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-public-page-no-teams-tab',
+          question: 'Why is there no Teams tab on my public page?',
+          answerText: 'Rep teams do not have a public index page yet, so there is nowhere for a Teams tab to lead. Individual team pages exist and are reachable from your front page, and a visitor on one still sees the trail back to your organization. The tab appears once the index page ships. The row deliberately leaves it out rather than offering a tab that would bounce the visitor somewhere unexpected.',
+          keywords: ['teams tab', 'no teams tab', 'rep teams missing', 'teams section', 'tryouts link'],
+          answer: (
+            <>
+              <p>Rep teams don&rsquo;t have a public <em>index</em> page yet — there is no single page listing them — so there is nowhere for a Teams tab to lead. Individual team pages do exist and are reachable from your front page, and a visitor on one still sees the trail back to your organization.</p>
+              <p>The tab appears as soon as that index page ships. Until then the row deliberately leaves it out rather than offering a tab that would bounce the visitor somewhere unexpected.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-public-page-tabs-missing',
+          question: 'I have League and Archives but I don&rsquo;t see the section tabs — why?',
+          answerText: 'The tab row comes with League and Club plans. On Tournament and Tournament Plus you get the simpler breadcrumb trail instead - your organization name followed by the section, with the name linking back to your front page. The row also needs at least two sections to show at all: if your front page is the only public section you have, there is nowhere to navigate to and the row stays hidden.',
+          keywords: ['tabs missing', 'no section tabs', 'tab row not showing', 'league club only', 'why no tabs'],
+          answer: (
+            <>
+              <p>Two reasons, and one of them may be your plan. The tab row comes with <strong>League and Club</strong>; on Tournament and Tournament Plus you get the breadcrumb trail instead.</p>
+              <p>The row also needs <strong>at least two sections</strong> to appear at all. If your front page is the only public section you have, there is nowhere to navigate to, so the row stays hidden rather than showing a single tab.</p>
+            </>
+          ),
+        },
+      ],
     },
   ],
 };
