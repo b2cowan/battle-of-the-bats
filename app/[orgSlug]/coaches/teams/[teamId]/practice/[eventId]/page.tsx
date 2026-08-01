@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CalendarDays, Check, ClipboardList, Copy, Printer, Ruler, X } from 'lucide-react';
+import { ArrowLeft, CalendarDays, Check, ClipboardList, Copy, Play, Printer, Ruler, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -386,6 +386,15 @@ export default function CoachPracticePlanPage({
           {(hasPlan || canWrite) && (
             <>
               <div className={styles.ppToolbar}>
+                {/* The door to the field screen (1b). Rides `schedule` like the rest of this page,
+                    so the assistant who runs the tee station reaches it too. ABSENT rather than
+                    disabled until there is something to run — a control that exists only to refuse
+                    is the shape 1a shipped three corrections for. */}
+                {hasPlan && (
+                  <Link href={`${base}/practice/${eventId}/run`} className={styles.btnSecondary}>
+                    <Play size={14} aria-hidden /> Run practice
+                  </Link>
+                )}
                 {canWrite && previousWithPlans.length > 0 && (
                   <button type="button" className={styles.btnSecondary} onClick={() => setCopyOpen(true)}>
                     <Copy size={14} aria-hidden /> Copy from a previous practice

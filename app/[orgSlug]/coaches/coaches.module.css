@@ -2789,15 +2789,44 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .notAssignedEmailLink:hover { text-decoration: underline; }
 
-.notAssignedBack {
-  display: inline-block;
-  margin-top: 1.25rem;
-  font-size: 0.85rem;
-  color: var(--white-45);
-  text-decoration: none;
-  transition: color 0.12s;
+/* ── The wall's doors (R2, top-nav audit D2 — 2026-08-01) ────────────────────
+   The wall used to return BEFORE any chrome mounted: no wordmark, no account door, no
+   sign-out, and one link that could itself 404. It now renders inside the portal frame
+   (CoachTopStrip above, the shell's own ground beneath) and offers a real triad — where
+   am I / who am I / a way out — as a row of equal doors. The org door only joins the row
+   when `isOrgHomeRealDestination` says that page is real, so the wall can never hand a
+   revoked coach a second dead end. */
+.notAssignedDoors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
 }
-.notAssignedBack:hover { color: var(--home-ink, rgba(255,255,255,0.8)); }
+
+.notAssignedDoor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 1rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--home-ink-soft, rgba(255,255,255,0.6));
+  background: transparent;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12));
+  border-radius: var(--home-radius-pill, 999px);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+.notAssignedDoor:hover:not(:disabled) {
+  color: var(--home-ink, rgba(255,255,255,0.85));
+  border-color: var(--home-ink-soft, rgba(255,255,255,0.35));
+}
+.notAssignedDoor:disabled { cursor: default; opacity: 0.65; }
 
 /* ── Sidebar team list sub-label ────────────────────────────────────────── */
 .sidebarTeamInfo {
@@ -5746,6 +5775,194 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .ppGroupTools select { flex: 1 1 auto; min-width: 0; }
   .ppFieldHint { align-self: flex-start; padding-bottom: 0; }
 }
+
+/* ══ THE FIELD RUN SCREEN (Practice Plans 1b) ══════════════════════════════════
+   Sized for sun, gloves, one hand and twelve kids — NOT for the density the rest of the portal
+   is tuned to. The deliberate departures from the surrounding conventions, so a later sweep
+   doesn't "fix" them back:
+
+   · The primary control is 56px, not the 44px `--tap-min` floor. The floor is the minimum a
+     control may be; this one is read and hit without looking.
+   · The block title is the largest type in the product (~28–32px) because at arm's length there
+     is room for exactly one idea.
+   · The one filled control is the INK chip (2026-07-30 ruling). ⚠ LIME IS NEVER USED HERE —
+     it fails in direct sunlight and is reserved for conversion. Do not "brighten" this screen.
+   · Overrun is `--warning` and nothing else happens: no sound, no vibration, no auto-advance
+     (D26). A practice that runs long is normal.
+   · The column caps at 30rem even on a desktop. This is a phone screen that a laptop may also
+     open, never a dashboard that shrinks. */
+.ppRunPage { max-width: 30rem; margin: 0 auto; }
+
+.ppRunBar {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  font-family: var(--font-data); font-size: 0.7rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--white-45); padding-bottom: 0.9rem;
+}
+.ppRunBar b { color: var(--home-ink, var(--white-90)); font-variant-numeric: tabular-nums; font-weight: 700; }
+.ppRunBackLink {
+  display: inline-flex; align-items: center; gap: 0.3rem; min-height: var(--tap-min, 44px);
+  color: var(--white-55); font-family: inherit; font-size: inherit; letter-spacing: inherit;
+  text-transform: inherit; background: none; border: none; padding: 0; cursor: pointer;
+}
+.ppRunBackLink:hover { color: var(--home-ink, var(--white-90)); }
+/* The shared icon-only Help button is 34px, collapsing to 32px on phones — a portal-wide
+   convention, and not one this slice should change everywhere. But a screen whose own controls are
+   56px because the user is wearing gloves cannot ship a 32px target, so it is raised to the tap
+   floor HERE and only here. Scoped by the bar, so no other surface moves. */
+.ppRunBar button { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+
+/* One block owns the screen. */
+.ppRunTitle {
+  margin: 0; font-size: clamp(1.75rem, 8vw, 2rem); line-height: 1.06; font-weight: 800;
+  letter-spacing: -0.025em; color: var(--home-ink, var(--white-90)); overflow-wrap: anywhere;
+}
+.ppRunRound {
+  margin: 0.5rem 0 0; font-family: var(--font-data); font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.12em; text-transform: uppercase; color: var(--home-olive, var(--logic-lime));
+}
+/* A clock, not an alarm (D26). Tabular so the digits don't dance while it counts. */
+.ppRunClock {
+  margin: 0.3rem 0 0; font-family: var(--font-data);
+  font-size: clamp(2.375rem, 11vw, 2.875rem); font-weight: 700; line-height: 1;
+  letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+  color: var(--home-ink, var(--white-90));
+}
+.ppRunOf {
+  margin: 0.35rem 0 0; font-family: var(--font-data); font-size: 0.72rem;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--white-45);
+}
+.ppRunClock[data-over='over'], .ppRunOf[data-over='over'] { color: var(--warning); }
+
+.ppRunNote { margin: 0.85rem 0 0; font-size: 0.95rem; line-height: 1.5; color: var(--white-80); }
+.ppRunGoal { margin: 0.5rem 0 0; font-size: 0.95rem; line-height: 1.5; font-weight: 600; color: var(--home-ink, var(--white-90)); }
+.ppRunPoints {
+  margin: 0.75rem 0 0; padding-left: 1.2rem;
+  font-size: 0.95rem; font-weight: 600; line-height: 1.7; color: var(--home-ink, var(--white-90));
+}
+.ppRunWho { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.8rem; }
+.ppRunChip {
+  font-size: 0.85rem; font-weight: 700; color: var(--home-ink, var(--white-90));
+  background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
+  border-radius: 999px; padding: 0.3rem 0.7rem;
+}
+
+/* Three lines — group, station, who's running it — at arm's-length size. */
+.ppRunWhere {
+  display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); gap: 0.7rem; align-items: baseline;
+  margin-top: 0.7rem; padding: 0.65rem 0.75rem; border-radius: 10px;
+  border: 1px solid var(--border-2); background: var(--home-card, var(--card-bg));
+}
+.ppRunWhereG { font-size: 0.95rem; font-weight: 900; color: var(--home-olive, var(--logic-lime)); overflow-wrap: anywhere; }
+.ppRunWhereS { margin: 0; font-size: 1rem; font-weight: 700; color: var(--home-ink, var(--white-90)); overflow-wrap: anywhere; }
+.ppRunWhereM { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--white-55); }
+/* Overrun goes amber and WAITS. Nothing rotates by itself. */
+.ppRunWhere[data-due='due'] {
+  border-color: rgba(var(--warning-rgb), 0.4); background: rgba(var(--warning-rgb), 0.08);
+}
+.ppRunWhere[data-due='due'] .ppRunWhereG { color: var(--warning); }
+
+.ppRunNext {
+  margin-top: 0.95rem; padding-top: 0.7rem; border-top: 1px solid var(--border-2);
+  font-size: 0.9rem; color: var(--white-55);
+}
+.ppRunNext b { color: var(--home-ink, var(--white-90)); font-weight: 700; }
+
+/* ≥56px, well above the 44px floor — and no swipe, drag or long-press anywhere on this screen:
+   gloves defeat all three, and a swipe collides with the browser's own back gesture. */
+.ppRunActions { display: flex; gap: 0.55rem; margin-top: 0.9rem; }
+.ppRunPrimary {
+  flex: 1 1 auto; min-height: 3.5rem; display: grid; place-items: center; text-align: center;
+  padding: 0.5rem 0.9rem; border-radius: 10px; cursor: pointer;
+  background: var(--home-ink, var(--white-90)); color: var(--home-paper, var(--bg));
+  border: 1px solid var(--home-ink, var(--white-90));
+  font-size: 1.05rem; font-weight: 800; line-height: 1.25;
+}
+.ppRunPrimary:hover { background: var(--home-ink-soft, var(--white-80)); border-color: var(--home-ink-soft, var(--white-80)); }
+.ppRunSecondary {
+  width: 4.75rem; flex: 0 0 auto; min-height: 3.5rem; display: grid; place-items: center;
+  border-radius: 10px; border: 1px solid var(--border-2); background: none; cursor: pointer;
+  color: var(--white-80); font-size: 0.9rem; font-weight: 600;
+}
+.ppRunSecondary:hover:not(:disabled) { color: var(--home-ink, var(--white-90)); border-color: var(--border); }
+.ppRunSecondary:disabled { opacity: 0.35; cursor: default; }
+
+/* D8 — who's coming, folded shut. Already recorded, already true; one tap to open. */
+.ppRunFold {
+  margin-top: 0.9rem; border: 1px solid var(--border-2); border-radius: 10px;
+  background: var(--home-card, var(--card-bg));
+}
+.ppRunFoldHead {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  min-height: var(--tap-min, 44px); padding: 0.6rem 0.75rem; cursor: pointer;
+  font-size: 0.9rem; font-weight: 600; color: var(--home-ink, var(--white-90)); list-style: none;
+}
+.ppRunFoldHead::-webkit-details-marker { display: none; }
+.ppRunFoldCount { font-family: var(--font-data); font-size: 0.8rem; color: var(--white-45); font-variant-numeric: tabular-nums; }
+.ppRunFoldBody { padding: 0 0.75rem 0.75rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.ppRunFoldGroup { font-size: 0.85rem; color: var(--white-80); line-height: 1.5; }
+.ppRunFoldGroup b { color: var(--home-ink, var(--white-90)); font-weight: 700; display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; }
+
+/* ── The station picker (D28) — whoever is running a station taps into their own patch of grass ── */
+.ppRunStations { margin-top: 1.1rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.ppRunStationsLbl {
+  margin: 0; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--white-45);
+}
+.ppRunStationRow {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.7rem; align-items: center;
+  width: 100%; text-align: left; min-height: var(--tap-min, 44px);
+  padding: 0.6rem 0.75rem; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--border-2); background: var(--home-card, var(--card-bg));
+}
+.ppRunStationRow:hover { border-color: var(--border); }
+.ppRunStationRow[data-mine='mine'] { border-color: var(--home-olive, var(--logic-lime)); }
+.ppRunStationName { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--home-ink, var(--white-90)); overflow-wrap: anywhere; }
+.ppRunStationMeta { margin: 0.2rem 0 0; font-size: 0.8rem; color: var(--white-55); overflow-wrap: anywhere; }
+.ppRunStationGo { font-size: 0.8rem; font-weight: 700; color: var(--home-olive, var(--logic-lime)); white-space: nowrap; }
+
+/* ── "My station" (D28) — the same one-thing-at-a-time treatment, scoped to one station ── */
+.ppStEyebrow {
+  margin: 0; font-family: var(--font-data); font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--home-olive, var(--logic-lime));
+}
+.ppStName {
+  margin: 0.25rem 0 0; font-size: clamp(1.6rem, 7.5vw, 1.9rem); line-height: 1.05;
+  font-weight: 800; letter-spacing: -0.025em; color: var(--home-ink, var(--white-90));
+  overflow-wrap: anywhere;
+}
+.ppStNow {
+  margin-top: 0.85rem; padding: 0.7rem 0.8rem; border-radius: 10px;
+  border: 1px solid var(--border-2); background: var(--home-card, var(--card-bg));
+}
+.ppStNowL {
+  margin: 0 0 0.25rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--white-45);
+}
+.ppStNowG { margin: 0; font-size: 1.1rem; font-weight: 800; color: var(--home-ink, var(--white-90)); }
+.ppStNowP { margin: 0.25rem 0 0; font-size: 0.9rem; line-height: 1.5; color: var(--white-80); }
+.ppStNowT { margin: 0.4rem 0 0; font-family: var(--font-data); font-size: 0.8rem; color: var(--white-55); font-variant-numeric: tabular-nums; }
+.ppStNowT[data-over='over'] { color: var(--warning); }
+.ppStBlock { margin-top: 0.9rem; }
+.ppStLbl {
+  margin: 0 0 0.3rem; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--white-45);
+}
+.ppStTxt { margin: 0; font-size: 0.95rem; line-height: 1.55; color: var(--home-ink, var(--white-90)); }
+.ppStTxtSoft { margin: 0; font-size: 0.9rem; line-height: 1.55; color: var(--white-80); }
+.ppStDivider { height: 1px; background: var(--border-2); margin: 0.9rem 0; }
+/* Tonight's note — one-off, and never saved back to the station (D27). */
+.ppStNote {
+  margin-top: 0.9rem; padding: 0.65rem 0.75rem; border-radius: 9px;
+  border: 1px solid rgba(var(--warning-rgb), 0.22); background: rgba(var(--warning-rgb), 0.08);
+}
+.ppStNote p { margin: 0; font-size: 0.88rem; line-height: 1.5; color: var(--white-80); }
+.ppStUp { margin-top: 1rem; padding-top: 0.7rem; border-top: 1px solid var(--border-2); }
+.ppStUpRow {
+  display: grid; grid-template-columns: 3.75rem minmax(0, 1fr); gap: 0.6rem;
+  padding: 0.2rem 0; font-size: 0.88rem; color: var(--home-ink, var(--white-90));
+}
+.ppStUpRow span:first-child { font-family: var(--font-data); font-size: 0.8rem; color: var(--white-45); font-variant-numeric: tabular-nums; }
+.ppStUpNone { margin: 0; font-size: 0.85rem; color: var(--white-45); }
 
 
 .devTailLink { color: var(--white-80); text-decoration: underline; font-weight: 600; }

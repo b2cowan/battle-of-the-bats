@@ -138,6 +138,18 @@ export const GET = withObservability(async (_req: Request,
     staff.map(s => s.displayName ?? ''),
   );
 
+  /**
+   * The reader's OWN staff name, so the field screen can pick out the station they're tagged on
+   * ("Craig · Jen — that's you", D28) without asking them who they are.
+   *
+   * ⚠ This is a MATCH ON A LABEL, not an identity claim. Staff on a plan are free text (§10.3),
+   * so this can miss — a coach who typed "Craig" while the account says "Craig Whitfield" simply
+   * doesn't get their station pre-picked, and the picker still lists every station. It can never
+   * do the reverse and grant anything: the name is used for emphasis only, and every station is
+   * readable by anyone who can read the plan at all.
+   */
+  const viewerName = staff.find(s => s.userId === ctx.user.id)?.displayName ?? null;
+
   return NextResponse.json({
     event,
     plan: event.practicePlan,
@@ -152,6 +164,7 @@ export const GET = withObservability(async (_req: Request,
     staffSuggestions: tagSuggestions.staff,
     equipmentSuggestions: tagSuggestions.equipment,
     practiceTypeSuggestions: tagSuggestions.practiceTypes,
+    viewerName,
     canWrite: canWriteDevelopment(caps),
     canViewFocus: showFocus,
     canViewAttendance: showAttendance,

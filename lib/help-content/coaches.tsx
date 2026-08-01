@@ -1606,24 +1606,28 @@ const coachesHelp: HelpPageContent = {
       summary: 'Write the practice on the practice — blocks, stations, groups and a rotation the product works out for you — then print it.',
       // "rotation" / "stations" / "groups" are the terms a coach searches for, and none of them
       // appear in a heading — search never reads the prose, so they have to live here.
-      keywords: ['practice plan', 'practice plans', 'plan a practice', 'practice', 'blocks', 'stations', 'rotation', 'rotations', 'carousel', 'groups', 'random groups', 'draw groups', 'split into groups', 'pair up', 'coaching points', 'what to watch for', 'print practice', 'practice sheet', 'copy last practice', 'rest of practice', 'kit', 'equipment', 'who runs it'],
-      searchText: 'practice plan plans plan a practice tuesday night blocks timed blocks how long minutes range 25 to 35 rest of practice remaining time running clock start time stations station name how many equipment kit setup who runs it who is at it note for tonight rotation rotations carousel rotate every 15 minutes rounds group by round grid where is everyone who is at which station groups draw at random random draw shuffle reshuffle draw again how many groups players per group uneven split coaching points what to watch for focus areas what everyone is working on focus rail copy from a previous practice copy last practice print the sheet one page pdf assistant tee station head coach only schedule access reorder blocks up down arrows planned not done',
+      keywords: ['practice plan', 'practice plans', 'plan a practice', 'practice', 'blocks', 'add a block', 'stations', 'rotation', 'rotations', 'carousel', 'rotate toggle', 'stop rotating', 'stations side by side', 'groups', 'random groups', 'draw groups', 'split into groups', 'pair up', 'coaching points', 'what to watch for', 'print practice', 'practice sheet', 'copy last practice', 'rest of practice', 'kit', 'equipment', 'who runs it', 'players moved', 'where did my players go', 'run practice'],
+      searchText: 'practice plan plans plan a practice tuesday night blocks add a block timed blocks how long minutes rest of practice remaining time running clock start time stations station name how many equipment kit bring setup who runs it who is at it note for tonight rotation rotations carousel rotate toggle rotates by default turn off rotation stop rotating stations side by side separate stations two stations rotate every 15 minutes one turn each rounds group by round grid where is everyone who is at which station groups draw at random random draw shuffle reshuffle draw again how many groups players per group uneven split people live in one place players moved where did my players go coaching points what to watch for focus areas what everyone is working on focus rail copy from a previous practice copy last practice print the sheet one page pdf assistant tee station head coach only schedule access reorder blocks up down arrows planned not done run practice at the field',
       content: (
         <>
           <p>A <strong>practice plan</strong> lives on the practice itself. Open the practice on your <strong>Schedule</strong> and use <strong>Plan this practice</strong> — there&rsquo;s no separate calendar and nothing new to set up.</p>
-          <p><strong>Start with the shape of the night.</strong> Give the practice a goal and a <strong>Bring / kit</strong> line, then add <strong>blocks</strong> in the order you&rsquo;ll run them. A block can be a fixed number of minutes, a <strong>range</strong> (&ldquo;25 to 35, depending how they&rsquo;re going&rdquo;), or one <strong>rest of practice</strong> block — you only get one of those, since only one thing can run to the end. The clock times down the side are worked out from the practice&rsquo;s own start time, so you never type them.</p>
+          <p><strong>Start with the shape of the night.</strong> Give the practice a goal and an <strong>Equipment</strong> line, then add <strong>blocks</strong> in the order you&rsquo;ll run them. A block is a number of minutes, or one <strong>rest of practice</strong> block — you only get one of those, since only one thing can run to the end. The clock times down the side are worked out from the practice&rsquo;s own start time, so you never type them.</p>
           <p>Each block holds a description, a goal, who&rsquo;s running it, who&rsquo;s in it, and <strong>what to watch for</strong> — the two or three things you actually want to see. Reorder blocks with the <strong>up and down arrows</strong> rather than dragging, so it works with cold hands on a phone.</p>
-          <p><strong>Stations</strong> sit inside a block: what the station is, how many of them, the kit, how it&rsquo;s set up, who runs it, who&rsquo;s at it, and a note just for tonight.</p>
-          <p><strong>Rotations are the part a shared document can&rsquo;t do.</strong> Make a block a <strong>rotation</strong>, name the stations, say how long it runs and how often groups move — and the plan works out <em>who is at which station in every round</em> and shows you the grid. It tells you the truth when the numbers don&rsquo;t divide neatly: <em>&ldquo;3 rounds of 15, with 5 min spare&rdquo;</em>, <em>&ldquo;Group C won&rsquo;t reach the third station&rdquo;</em>, <em>&ldquo;Groups A and D share a station in round 2&rdquo;</em>. It will never quietly invent a round or drop a station to make the arithmetic tidy.</p>
+          <p><strong>Stations</strong> sit inside a block: what the station is, how many of them, the equipment, how it&rsquo;s set up, who runs it, who&rsquo;s at it, and a note just for tonight.</p>
+          <p><strong>People live in one place at a time.</strong> A block with no stations holds its own list of players. Add a station and that list moves down to the stations — because that&rsquo;s now where people actually stand. Turn on rotating and they move again, into the groups. You&rsquo;ll see the names move when you do it; nothing is lost, and it means a station can never give you two different answers to &ldquo;who&rsquo;s here?&rdquo;</p>
+          <p><strong>Rotations are the part a shared document can&rsquo;t do.</strong> There&rsquo;s no separate kind of block to add — <strong>put two or more stations in a block and it rotates by default</strong>. (A single station isn&rsquo;t a rotation, it&rsquo;s a queue, so the choice only appears once there are two.) If your stations run side by side instead, switch <strong>rotate</strong> off inside the block and each keeps its own players.</p>
+          <p>Say how long the block runs and how often groups move, and the plan works out <em>who is at which station in every round</em> and shows you the grid. Leave &ldquo;rotate every&rdquo; blank and it gives everyone exactly one turn at each station. It tells you the truth when the numbers don&rsquo;t divide neatly: <em>&ldquo;3 rounds of 15, with 5 min spare&rdquo;</em>, <em>&ldquo;Group C won&rsquo;t reach the third station&rdquo;</em>, <em>&ldquo;Groups A and D share a station in round 2&rdquo;</em>. It will never quietly invent a round or drop a station to make the arithmetic tidy.</p>
           <p><strong>Groups</strong> can be picked by hand or <strong>drawn at random</strong> — choose how many groups, or how many players per group, and press <strong>Draw again</strong> as often as you like. Only players who&rsquo;ve replied that they&rsquo;re coming go into the draw, and anyone left out is named rather than quietly dropped. The draw is deliberately simple: it shuffles and deals. <strong>It never sorts anyone by ability.</strong></p>
           <p><strong>Beside the plan sits the roster and what each player is currently working on</strong>, in roster order — so putting three players on a station is a glance, not a memory test. Tap <strong>Choose players</strong> anywhere in the plan and you get the same list, with their focus areas beside them.</p>
           <p><strong>If last week worked, copy it.</strong> <strong>Copy from a previous practice</strong> brings that plan onto tonight and leaves the original exactly as it was — change the one block that needs changing.</p>
           <p><strong>Print the sheet</strong> gives you a one-page PDF, rotation grid and all, to hand to whoever&rsquo;s running a station. It&rsquo;s a download you carry, never a link you share.</p>
+          <p><strong>Then run it.</strong> When the plan&rsquo;s written, <strong>Run practice</strong> takes it to the field — see <em>Running a practice at the field</em> below.</p>
           <p><strong>A plan is what you intend to do.</strong> Nothing here records what actually happened on the night — that&rsquo;s deliberate, so the plan never quietly turns into a claim about your players.</p>
           <p><strong>Who can do what:</strong> <strong>writing</strong> the plan is head-coach only. Any coach with <strong>schedule</strong> access can open it and print it, which is what makes it useful to hand an assistant a station. Seeing <em>what players are working on</em> needs <strong>player notes</strong> access, and the attendance markers in the player list need <strong>attendance</strong> access.</p>
         </>
       ),
       links: [
+        { label: 'Running it at the field', href: '#premium-practice-run' },
         { label: 'Player Development', href: '#premium-development' },
         { label: 'Repeating practices', href: '#premium-repeat-weekly' },
       ],
@@ -1679,6 +1683,101 @@ const coachesHelp: HelpPageContent = {
               <p>Yes. Reading and printing a plan rides <strong>schedule</strong> access, so an assistant who can already open Tuesday&rsquo;s practice can open its plan and print the sheet — which is the point, since they&rsquo;re often the one running a station.</p>
               <p><strong>Writing</strong> the plan is head-coach only.</p>
               <p><em>What players are working on</em> is separate: those focus areas need <strong>player notes</strong> access. An assistant without it sees the blocks, the stations and the names, but never the notes about a child — and the <strong>printed sheet follows the same rule</strong>, so if you can&rsquo;t see focus areas in the app they simply aren&rsquo;t on the sheet you print.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-practice-stations-side-by-side',
+          question: 'My two stations run side by side — how do I stop them rotating?',
+          answerText: 'Switch "rotate" off inside the block. As soon as a block has two or more stations it rotates by default, because a carousel is the common case — the toggle only appears at two stations, since one station with groups queued behind it is a queue, not a rotation. Turn rotate off and each station keeps its own list of players instead of sharing groups that move around. Note that turning it on or off moves where the players live: with rotating on, people sit in the groups; with it off, they sit on each station. You will see the names move when you switch it, and nothing is lost.',
+          keywords: ['stop rotating', 'turn off rotation', 'stations side by side', 'no rotation', 'rotate toggle', 'two stations', 'stations at the same time', 'separate stations', 'dont rotate'],
+          answer: (
+            <>
+              <p>Switch <strong>rotate</strong> off inside the block. As soon as a block has <strong>two or more stations it rotates by default</strong>, because a carousel is the common case — and the choice only appears at two, since one station with groups queued behind it is a queue, not a rotation.</p>
+              <p>With rotate off, each station keeps <strong>its own list of players</strong> instead of sharing groups that move around.</p>
+              <p>Switching it moves where the players live — with rotating on they sit in the <strong>groups</strong>, with it off they sit on <strong>each station</strong>. You&rsquo;ll see the names move when you do it, and nothing is lost.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-practice-players-moved',
+          question: 'I added a station and my players jumped out of the block — where did they go?',
+          answerText: 'Onto the stations. Players live in exactly one place at a time: a block with no stations holds its own list, adding a station moves that list down to the stations, and turning on rotating moves it again into the groups. This is deliberate — it is what stops a station ever showing two different answers to "who is here?", and it means the printed sheet and the field screen can never disagree. Nothing is deleted; the names move to the level that now makes sense, and you can move them again by hand.',
+          keywords: ['players disappeared', 'players moved', 'where did my players go', 'lost players', 'block players gone', 'who is at this station', 'players jumped'],
+          answer: (
+            <>
+              <p>Onto the stations. Players live in <strong>exactly one place at a time</strong>: a block with no stations holds its own list, adding a station moves that list <strong>down to the stations</strong>, and turning on rotating moves it again into the <strong>groups</strong>.</p>
+              <p>That&rsquo;s deliberate — it&rsquo;s what stops a station ever showing two different answers to &ldquo;who&rsquo;s here?&rdquo;, and it means the printed sheet and the field screen can never disagree.</p>
+              <p>Nothing is deleted. The names move to the level that now makes sense, and you can move them again by hand.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'premium-practice-run',
+      group: 'Premium Coaches Portal',
+      heading: 'Running a practice at the field (Premium)',
+      summary: 'One block at a time on your phone, big enough to read in the sun — the rotation, your own station, and a clock that never beeps.',
+      // "run practice" / "my station" / "rotate now" / "timer" are what a coach searches for, and
+      // search never reads the prose — so every one of them has to live here.
+      keywords: ['run practice', 'run it', 'field screen', 'at the field', 'practice timer', 'timer', 'countdown', 'clock', 'rotate now', 'next block', 'my station', 'station view', 'running a station', 'who is here tonight', 'started late', 'running late', 'overrun', 'amber', 'read in the sun', 'one block at a time'],
+      searchText: 'run practice run it at the field field screen one block at a time phone in the sun gloves one hand arm length big timer countdown clock counts down remaining time left of overrun amber over by next block back button rotate now rotation due round 2 of 3 which group is at which station carousel no alarm no sound no beep no vibration no buzz no notification does not advance by itself never moves on its own manual tap my station station picker what am i doing what am i watching for coaching points setup note for tonight coming to you who is here tonight attendance folded collapsed running late started late behind schedule nothing is recorded no ticks read only planned not done assistant tee station schedule access',
+      content: (
+        <>
+          <p><strong>Run practice</strong> opens the field screen — one block filling the phone, big enough to read at arm&rsquo;s length in the sun. The block, a countdown, the note, and one quiet line at the foot telling you what&rsquo;s next. Two buttons: a big <strong>Next block</strong> and a smaller <strong>Back</strong>. There&rsquo;s nothing to swipe or drag, because gloves defeat all of that.</p>
+          <p>You&rsquo;ll find it on the plan itself, and on the practice in your <strong>Schedule</strong>. Opening it mid-practice lands you on whichever block should be running right now, so you don&rsquo;t tap through from the start.</p>
+          <p><strong>In a rotation the same screen shows the carousel</strong> — which group is at which station right now, who&rsquo;s running each one, and how long until they move. The button reads <strong>Rotate now</strong>, and once there&rsquo;s no round left it goes back to <strong>Next block</strong>. A rotation isn&rsquo;t a mode you have to get out of; it&rsquo;s just part of the same run.</p>
+          <p><strong>It&rsquo;s a clock, not an alarm.</strong> It never beeps, never buzzes, and never moves itself on. If a drill runs long the clock simply turns amber and says so — a practice that overruns is normal, and a phone going off in front of twelve kids is not. <strong>Starting late is fine too:</strong> whenever you tap, that block gets its full length from that moment, so one late start doesn&rsquo;t leave everything reading as overdue for the rest of the night.</p>
+          <p><strong>&ldquo;My station&rdquo; is for whoever&rsquo;s running one.</strong> Tap a station and you get just that patch of grass — the group with you now and how long you&rsquo;ve got, what you&rsquo;re doing, <strong>what you&rsquo;re watching for</strong>, the coaching points, the setup, tonight&rsquo;s note, and who&rsquo;s coming to you next. If you&rsquo;re tagged on a station it&rsquo;s marked as yours, and it stays chosen for the rest of the practice. You can still look at what everyone else is doing.</p>
+          <p><strong>Who&rsquo;s here tonight</strong> sits folded shut at the bottom — the attendance replies you already have, nothing to fill in. It needs <strong>attendance</strong> access.</p>
+          <p><strong>Nothing is recorded at the field.</strong> No ticks, no &ldquo;we did this&rdquo;, and <strong>Rotate now</strong> writes nothing either. That&rsquo;s deliberate: attendance is the one thing coaches reliably finish during a practice and it already exists, and a half-finished second one would quietly turn your plan into a claim about your players.</p>
+          <p><strong>Who can use it:</strong> any coach with <strong>schedule</strong> access can run a practice — that&rsquo;s what makes it useful to hand an assistant a station. There&rsquo;s nothing to save here, so there&rsquo;s nothing that needs head-coach access.</p>
+        </>
+      ),
+      links: [
+        { label: 'Writing the plan', href: '#premium-practice-plans' },
+        { label: 'Attendance', href: '#recipe-attendance' },
+      ],
+      faqs: [
+        {
+          id: 'faq-practice-run-timer',
+          question: 'Does the practice timer beep or move on by itself?',
+          answerText: 'No. It is a clock, not an alarm. There is no sound, no vibration, no notification, and it never advances by itself. If a block or a rotation runs past its planned length the clock simply turns amber and shows how far over you are, and it waits for you. A drill that is going well should be allowed to run long, and a phone going off in front of twelve kids helps nobody. The screen only ever moves when you tap Next block or Rotate now.',
+          keywords: ['timer', 'practice timer', 'does it beep', 'alarm', 'sound', 'vibrate', 'buzz', 'notification', 'auto advance', 'moves on by itself', 'countdown', 'overrun', 'running over'],
+          popular: true,
+          answer: (
+            <>
+              <p>No — it&rsquo;s a <strong>clock, not an alarm</strong>. No sound, no vibration, no notification, and it never advances by itself.</p>
+              <p>If a block or a rotation runs past its planned length the clock turns <strong>amber</strong> and shows how far over you are, then waits. A drill that&rsquo;s going well should be allowed to run long; a phone going off in front of twelve kids helps nobody.</p>
+              <p>The screen moves only when you tap <strong>Next block</strong> or <strong>Rotate now</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-practice-run-late',
+          question: 'We started ten minutes late — is the whole field screen wrong now?',
+          answerText: 'No. When you open the field screen it lands on whichever block the plan says should be running, with the real time left, which is what you want if you have just pulled your phone out mid-practice. But the moment you tap Next block or Rotate now, that block gets its full planned length starting from that moment. So a late start does not leave every remaining block showing as overdue for the rest of the night. Nothing about the plan itself changes, and nothing is saved.',
+          keywords: ['started late', 'running late', 'behind schedule', 'clock is wrong', 'times are off', 'late start', 'practice started late'],
+          answer: (
+            <>
+              <p>No. Opening the field screen lands you on whichever block the plan says should be running, with the real time left — handy when you&rsquo;ve just pulled your phone out mid-practice.</p>
+              <p>But the moment you tap <strong>Next block</strong> or <strong>Rotate now</strong>, that block gets its <strong>full planned length from that moment</strong>. A late start doesn&rsquo;t leave everything showing as overdue for the rest of the night.</p>
+              <p>Nothing about the plan itself changes, and nothing is saved.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-practice-run-my-station',
+          question: 'I am running one station — can I see just mine?',
+          answerText: 'Yes. On the field screen, tap your station under Stations and you get "My station": the group with you right now and how long until they move, what you are doing, what you are watching for, the coaching points, the setup, any note the head coach left for tonight, and who is coming to you next. If your name is tagged on a station it is marked as yours, and once you open it, it stays chosen for the rest of the practice. You can still look at what the other stations are doing. It is read-only — there is nothing to fill in.',
+          keywords: ['my station', 'just my station', 'station view', 'i am on tees', 'what am i doing', 'what am i watching for', 'running a station', 'assistant station', 'station screen'],
+          popular: true,
+          answer: (
+            <>
+              <p>Yes. On the field screen, tap your station under <strong>Stations</strong> and you get <strong>My station</strong>: the group with you right now and how long until they move, what you&rsquo;re doing, <strong>what you&rsquo;re watching for</strong>, the coaching points, the setup, any note left for tonight, and <strong>who&rsquo;s coming to you next</strong>.</p>
+              <p>If your name is tagged on a station it&rsquo;s marked as yours, and once you open it, it stays chosen for the rest of the practice. You can still look at what the other stations are doing.</p>
+              <p>It&rsquo;s read-only — there&rsquo;s nothing to fill in.</p>
             </>
           ),
         },

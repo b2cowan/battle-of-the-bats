@@ -2301,8 +2301,18 @@ export default function CoachesSchedulePage({
                 where the focus rail and the rotation grid have room. Read rides `schedule` (this
                 whole slide-over already does); writing is head-coach-only and the builder says so.
                 The links section above is left completely alone — some coaches will keep their
-                own document forever, and that is a legitimate outcome (D2). */}
-            {selectedEvent.eventType === 'practice' && (
+                own document forever, and that is a legitimate outcome (D2).
+
+                ⚠ ABSENT IN AN ARCHIVE (`!page.isReadOnly`), per the binding "the archive is OPT-IN"
+                ruling and the closing task in the plan doc's §11.1. The practice-plan routes resolve
+                the team's ACTIVE program year, so from a completed season "Open the plan →" errored
+                and "Plan this practice →" invited a write into a finished season. Hiding the entry
+                point is the cheapest correct answer: a link that 404s is the same bug wearing a
+                politer face. ⚠ If practice plans are ever ruled READABLE in history, this condition
+                comes off ONLY together with the season-read rail on both routes and both entries in
+                `APPROVED_SEASON_AWARE_ROUTES` / `APPROVED_ARCHIVE_DOORS` — which fail the build
+                until they are edited, and that is the decision point. */}
+            {selectedEvent.eventType === 'practice' && !page.isReadOnly && (
               <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
                 <h4 className={styles.formSectionTitle}>Practice plan</h4>
                 {selectedEvent.practicePlan ? (
@@ -2311,9 +2321,14 @@ export default function CoachesSchedulePage({
                       {summarizePracticePlan(selectedEvent.practicePlan)}
                       {selectedEvent.practicePlan.goal ? ` — ${selectedEvent.practicePlan.goal}` : ''}
                     </p>
-                    <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
-                      Open the plan →
-                    </Link>
+                    <div className={styles.ppToolbar} style={{ marginBottom: 0 }}>
+                      <Link href={`${base}/practice/${selectedEvent.id}/run`} className={styles.btnSecondary}>
+                        Run practice →
+                      </Link>
+                      <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
+                        Open the plan →
+                      </Link>
+                    </div>
                   </>
                 ) : (
                   <>

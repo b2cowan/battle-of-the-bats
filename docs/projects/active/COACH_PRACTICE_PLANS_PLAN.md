@@ -1,6 +1,42 @@
 # Practice Plans — Implementation Plan (Player Development, roadmap Phase 4)
 
-> **Status:** 🔨 **PHASE 1a BUILT 2026-08-01 — awaiting owner QA. UNCOMMITTED.**
+> **Status:** ✅ **PHASE 1a COMPLETE — owner QA PASSED 2026-08-01, committed on `dev` (`c0ecebe2`).**
+> ✅ **PHASE 1b ("Run it") BUILT 2026-08-01 — UNCOMMITTED on `dev`, owner QA pending. NOT on prod.**
+> ⚠ Migration 213 is dev-only and must reach prod before either is promoted. **1b adds no storage.**
+>
+> **What shipped in 1b:** the field run screen at `…/practice/[eventId]/run` — one block filling the
+> phone, the countdown, the "Up next" line, a ≥56px **Next block** / **Rotate now** pair · the
+> rotation carousel (group → station → who's running it, with an amber "Rotation due" state that
+> waits) · **"My station"** + the station picker (D28) · **"Who's here tonight"** folded shut and
+> `attendance`-gated (D8) · a `practice_plans` Basic-coach interest option · a new
+> **`premium-practice-run`** help section. **Nothing is written at the field (D4); nothing beeps,
+> buzzes or auto-advances (D26).**
+>
+> **Also closed in 1b — the §11.1 archive dead-end (owner-approved 2026-08-01):** the schedule
+> slide-over's practice-plan section is **absent in a completed season**, so neither "Open the plan"
+> nor the new "Run practice" can dead-end. Option chosen: *hide both doors*, per the binding
+> "the archive is OPT-IN" ruling. Making plans genuinely readable in history remains available as a
+> later decision — the work is listed in §11.1 and is gated on the two build-enforced allow-lists.
+>
+> **⚠ The UAT probe harness is FIXED (2026-08-01).** Two sessions blamed an "orphaned `rep_teams`
+> row"; both were wrong. The real cause was **one missing `organization_members` row** for the UAT
+> coach — the portal resolves org context before coaching assignments, so an assigned coach who is
+> not an org member resolves no org and every team lookup comes back empty. Repaired idempotently by
+> **`scripts/seed-uat-coach-fixture.mjs`**, which also seeds a probe practice shaped to exercise the
+> whole surface. **This unblocks Playwright probes for the entire coaches portal, not just this
+> feature.** ⚠ A secondary lesson recorded in that script: an unchecked supabase-js `select` with a
+> wrong column name returns an error, not rows — which is how "the coach has no assignment" was
+> mis-diagnosed. Always check `error` before believing an empty result.
+>
+> **Verification (1b):** `/simplify` (9 cleanups — the heaviest was a rotation grid being recomputed
+> every second) → `/review` high-risk, 5 lenses (**6 findings confirmed and fixed**, 0 refuted; the
+> security lens found none) → `/docs` (a new run section + 2 FAQs, and three stale-1a corrections
+> the owner-QA revisions had left behind) → probes. typecheck ✓ · lint 0 errors · **786 unit tests ✓**
+> · all colour baselines still ZERO · date-correctness ZERO.
+>
+> **Next: Phase 2 — the drill library.** The 1b build prompt
+> ([`COACH_PRACTICE_PLANS_PHASE1B_BUILD_PROMPT.md`](COACH_PRACTICE_PLANS_PHASE1B_BUILD_PROMPT.md))
+> is now spent.
 > Planning complete and all 30 decisions (D1–D30) owner-accepted 2026-07-31; all five mockup rounds
 > accepted and binding. Final phase ladder in §9.2. The overdue release was promoted first
 > (prod moved to the 2026-07-31 changelog commit) before the build started.
@@ -710,15 +746,70 @@ becomes a two-line change** — that is the trigger to revisit, not a defect to 
 
 ---
 
+## 10.6 · Slice 1b deviations + the two rulings taken at build time (2026-08-01)
+
+**Two owner rulings, taken at the recommendations before any code was written:**
+
+1. **The field clock RE-ANCHORS on every tap.** Opening the run screen lands the coach on the block
+   the *planned* clock says is running, with the true time left — the reason to pull a phone out
+   mid-practice at all. **The moment they tap Next block or Rotate now, that stop re-anchors to now
+   and gets its full planned length.** A practice that starts eight minutes late therefore does not
+   spend the rest of the night declaring every remaining block overdue. *Anchor to the plan for
+   ORIENTATION, to the tap for DURATION.* ⚠ Nothing about position or elapsed time is stored — the
+   anchor is React state, derived fresh on every render (D4 intact).
+2. **The archived-season dead-end (§11.1) closes by HIDING the door** — see §11.1, now CLOSED.
+
+**Two deviations from the letter of the round-5 mockup, both deliberate:**
+
+1. **"My station" carries the advance control the mockup omitted.** That frame drew no buttons at
+   all. But the person this screen exists for is standing at a station, and without it they must
+   back out to the station list, tap, and come back in — three gloved taps, three times a practice.
+   It is the same tap as "Rotate now" on the block screen, driven by the same handler, and it
+   records nothing, so D4 and D26 are untouched.
+2. **Tonight's note is NOT attributed.** The mockup drew *"Note from Brett"*; the model stores the
+   note and not who typed it, and inventing an author on the one line a coach is most likely to act
+   on would be a fabrication. It reads **"Note for tonight"**. ⚠ Attribution is a model change, not
+   a label change — raise it as one.
+
+**One structural call taken during `/docs`:** the field-screen half of the practice-plans guide
+became its own section, **`premium-practice-run`**, because the original had grown to sixteen
+paragraphs spanning two different jobs (writing on a couch, running in the sun) and the run screen
+needs its own deep-link anchor for in-context help. The two sections cross-link.
+
+**Three stale-1a corrections the owner-QA revisions had left in the guide**, found and fixed in the
+same pass: the guide still described duration **ranges** (removed §10.5), still called equipment
+**"kit"** (renamed §10.4 item 2), and still told coaches to *"make a block a rotation"* as though it
+were a block type to add (collapsed into the rotate toggle, §10.4 item 1) — the last of which would
+have sent a coach hunting for a button that no longer exists. The **"people live at exactly one
+level"** rule (§10.4 item 3) was undocumented entirely and now has a paragraph and an FAQ.
+
+---
+
 ## 11 · Cut list — judged out, do not quietly re-add
 
 Auto-generated plans from focus areas (free text doesn't cluster; the suggestion would be a confident lie) · **a drill library in V1** *(revised round 2: a coach-authored drill library is now **V2** — what stays cut is drill **videos**, hosted drill **content**, and any seeded sport-specific drills)* · **player grouping by ability or need** *(explicit coach-chosen pairs are V4; automatic grouping by level stays cut forever)* · any "these N kids need the most work" surface · parent/player/guardian visibility of a plan · timer sounds, vibration, notifications, or auto-advance · plan sharing links · simultaneous multi-station timers · importing an existing Google Doc · a plan on the Overview screen (Chunk I: the Overview shows **one** anchor by an ordered rule — a practice plan does not get to jump that queue) · a seventh Insights tile · **per-child commentary in the "how it went" recap** (D17 guardrail — practice-level only).
 
 ---
 
-## 11.1 · CLOSING TASK — decide what a practice plan does in an ARCHIVED season (added by the Chunk F session, 2026-08-01)
+## 11.1 · ✅ CLOSED — what a practice plan does in an ARCHIVED season (raised by the Chunk F session; RULED by the owner 2026-08-01, built in slice 1b)
 
-⚠ **Do not close this project without answering this.** Chunk F (the frozen past season) shipped
+> **✅ RULING: HIDE THE ENTRY POINT.** The owner was offered the three options below and chose the
+> cheapest correct one. **The schedule slide-over's practice-plan section now renders only when the
+> season is live** (`!page.isReadOnly`), so in a completed season neither *"Open the plan →"* (which
+> errored) nor *"Run practice →"* (which would have inherited the same break) exists to dead-end on.
+> One condition, no new plumbing — and it CLOSED an existing defect rather than doubling it, which
+> is why it was worth doing inside 1b rather than deferring to project close.
+>
+> **This is the "archive is OPT-IN" ruling applied to its first new feature since that ruling was
+> made.** The server already failed closed by construction: the practice-plan route resolves the
+> team's ACTIVE program year and is correctly absent from `APPROVED_SEASON_AWARE_ROUTES`.
+>
+> **The door remains re-openable.** If the owner later decides practice plans SHOULD be readable in
+> history — a defensible ask, and the same instinct that put tryout history in scope — the four
+> steps below are still the work, and both build-enforced allow-lists still fail the build until
+> the decision is made explicitly. Nothing in 1b forecloses it.
+
+⚠ *Original brief, kept for the reasoning:* Chunk F (the frozen past season) shipped
 while this build was in flight, so the two never met.
 
 **Where it stands today, verified 2026-08-01 — the data is safe, the door is not:**
