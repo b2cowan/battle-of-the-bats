@@ -10629,6 +10629,15 @@
     "ordinal_position": 9
   },
   {
+    "table_name": "rep_team_evaluation_sessions",
+    "column_name": "event_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
     "table_name": "rep_team_event_attendance",
     "column_name": "id",
     "data_type": "uuid",
@@ -11014,6 +11023,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 29
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "practice_plan",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 30
   },
   {
     "table_name": "rep_team_expense_tags",

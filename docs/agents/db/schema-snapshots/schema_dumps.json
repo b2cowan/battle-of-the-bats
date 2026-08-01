@@ -10631,6 +10631,15 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 10,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_event_attendance",
         "pos": 1,
         "column_name": "id",
@@ -11014,6 +11023,15 @@
         "column_name": "source_tournament_game_id",
         "data_type": "uuid",
         "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 30,
+        "column_name": "practice_plan",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -16367,14 +16385,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -16395,14 +16413,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -16423,14 +16441,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -16782,6 +16800,13 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "rep_team_evaluation_sessions_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "column_name": "event_id",
+        "foreign_table": "rep_team_events",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_evaluation_sessions_event_id_fkey"
       },
       {
         "table_name": "rep_team_evaluation_sessions",
@@ -19305,6 +19330,11 @@
         "tablename": "rep_team_coaches",
         "indexname": "rep_team_coaches_user_idx",
         "indexdef": "CREATE INDEX rep_team_coaches_user_idx ON public.rep_team_coaches USING btree (org_id, user_id)"
+      },
+      {
+        "tablename": "rep_team_evaluation_sessions",
+        "indexname": "rep_team_eval_sessions_event_idx",
+        "indexdef": "CREATE INDEX rep_team_eval_sessions_event_idx ON public.rep_team_evaluation_sessions USING btree (event_id) WHERE (event_id IS NOT NULL)"
       },
       {
         "tablename": "rep_team_evaluation_sessions",

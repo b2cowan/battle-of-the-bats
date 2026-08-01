@@ -340,6 +340,108 @@ export async function downloadPDF(
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+//  Practice plan sheet (Practice Plans 1a)
+//  The one-page sheet a coach hand-carries to the field, and hands to the assistant
+//  running the tee station. It is what makes slice 1a usable on its own, before the
+//  field screen exists.
+//
+//  ⚠ THE VOCABULARY IS "PLANNED", NEVER "DONE" (plan §4). This sheet records what was
+//  INTENDED. Nothing on it — no tick box, no blank "did it" column, no wording — may
+//  suggest anything happened. That rule is easiest to breach on paper, which is why the
+//  print path carries it explicitly.
+//
+//  ⚠ Coach-generated and hand-carried. NEVER a shareable link: a practice plan names
+//  children alongside a date, a start time and a street address.
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface PracticeSheetOptions {
+  teamName: string;
+  /** Pre-formatted by the caller in the ORG's timezone — never re-derived here. */
+  dateLabel: string;
+  /** "6:00 PM · Arrive 5:45 PM · Sherwood Park, Diamond 2" — assembled by the caller. */
+  whereLabel?: string | null;
+  goal?: string | null;
+  /** Coach-typed labels ("Hitting", "Fielding"…) — never a fixed, sport-specific list. */
+  practiceTypes?: string[];
+  equipment?: string[];
+  /** One row per block: running time window, title, duration, staff, who, notes. */
+  blocks: { time: string; title: string; duration: string; staff: string; players: string; notes: string }[];
+  /** One table per rotation: the computed group × round grid, plus its plain statements. */
+  rotations: { label: string; groupNames: string[]; rounds: { round: string; stations: string[] }[]; notes: string[] }[];
+  /** Group membership, so whoever runs a station knows who is in front of them. */
+  groups: { label: string; group: string; players: string }[];
+  /**
+   * The roster with active focus areas. Printed ONLY when the person generating the sheet can
+   * see focus areas (`notes`). An assistant without that grant gets the same sheet with this
+   * section ABSENT — not redacted-looking, just not there.
+   */
+  focus: { player: string; focusAreas: string }[];
+  settings: OrgPdfSettings;
+}
+
+/**
+ * Save the one-page practice sheet. Built on the shared `downloadPDF`/`buildTablePDF` report
+ * engine via its multi-header `groups` mode, so org header/footer/branding stay in ONE place —
+ * there is deliberately no second print pipeline in this feature.
+ */
+export async function downloadPracticeSheet(filename: string, opts: PracticeSheetOptions): Promise<void> {
+  const groups: { label: string; headers: string[]; rows: (string | number | null | undefined)[][] }[] = [];
+
+  const practiceTypes = (opts.practiceTypes ?? []).join(', ');
+  const equipment = (opts.equipment ?? []).join(', ');
+  if (opts.goal || practiceTypes || equipment) {
+    groups.push({
+      label: 'Tonight',
+      headers: ['', ''],
+      rows: [
+        ...(practiceTypes ? [['Practice', practiceTypes]] : []),
+        ...(opts.goal ? [['Goal', opts.goal]] : []),
+        ...(equipment ? [['Equipment', equipment]] : []),
+      ],
+    });
+  }
+
+  groups.push({
+    // "The plan" — not "what we did". The heading carries the vocabulary rule too.
+    label: 'The plan',
+    headers: ['Time', 'Block', 'Length', 'Staff', 'Players', 'Notes'],
+    rows: opts.blocks.map(b => [b.time, b.title, b.duration, b.staff, b.players, b.notes]),
+  });
+
+  for (const rotation of opts.rotations) {
+    groups.push({
+      label: rotation.label,
+      headers: ['Round', ...rotation.groupNames],
+      rows: [
+        ...rotation.rounds.map(r => [r.round, ...r.stations]),
+        // The honest-arithmetic statements travel onto paper with the grid (D25) — a coach
+        // reading only the sheet must still learn that Group C won't reach a station.
+        ...rotation.notes.map(n => [n, ...rotation.groupNames.map(() => '')]),
+      ],
+    });
+  }
+
+  if (opts.groups.length > 0) {
+    groups.push({
+      label: 'Groups',
+      headers: ['Rotation', 'Group', 'Players'],
+      rows: opts.groups.map(g => [g.label, g.group, g.players]),
+    });
+  }
+
+  if (opts.focus.length > 0) {
+    groups.push({
+      label: 'What everyone’s working on',
+      headers: ['Player', 'Focus areas'],
+      rows: opts.focus.map(f => [f.player, f.focusAreas]),
+    });
+  }
+
+  const subtitle = [opts.teamName, opts.dateLabel, opts.whereLabel].filter(Boolean).join('  ·  ') || undefined;
+  await downloadPDF(filename, 'Practice plan', subtitle, [], [], opts.settings, groups);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 //  Player Development summary (Player Development 3D)
 //  A one-page, hand-delivered family handout: the player's focus areas and their
 //  dated measurable log. CURRENT SEASON ONLY, player-vs-self only — no deltas, no

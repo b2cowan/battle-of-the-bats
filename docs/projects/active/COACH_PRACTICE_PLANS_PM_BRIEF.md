@@ -1,8 +1,32 @@
 # Practice Plans — PM Brief
 
 > Companion to [COACH_PRACTICE_PLANS_PLAN.md](COACH_PRACTICE_PLANS_PLAN.md) · **PLANNED 2026-07-31,
-> ✅ **ALL 30 DECISIONS ACCEPTED + ALL 5 MOCKUP ROUNDS ACCEPTED 2026-07-31.** Nothing built yet.
-> **Next: the Phase 1a build session, in a fresh chat** (`COACH_PRACTICE_PLANS_PHASE1_BUILD_PROMPT.md`).
+> ✅ ALL 30 DECISIONS + ALL 5 MOCKUP ROUNDS ACCEPTED 2026-07-31.**
+> 🔨 **PHASE 1a ("Write it") BUILT 2026-08-01 — awaiting owner QA. UNCOMMITTED, NOT on prod.**
+>
+> **What a coach can do now:** open any practice on their Schedule and write the plan for it —
+> tonight's goal and what to bring, then timed blocks (a number, a range like "25 to 35", or one
+> "rest of practice"), each with a description, a goal, who's running it, who's in it, and what to
+> watch for. A block can instead be a **rotation**: name the stations, set how long it runs and how
+> often groups move, and the product works out and shows **who is at which station in every round**.
+> Groups can be picked by hand or **drawn at random** (choose how many groups, or how many players
+> per group, and re-draw as often as you like) — only players who've replied yes are drawn, and
+> anyone left out is named rather than quietly dropped. Beside all of it sits **the roster with what
+> each player is currently working on**. Last week's plan can be copied forward in one tap, and the
+> whole thing prints as a **one-page sheet** — including the rotation grid — for whoever's running
+> the tee station.
+>
+> **Also landed:** evaluation sessions now have an **editable date** and can be **linked to the
+> practice they were taken at** (with a confirmation that says exactly how many readings will move
+> if the date changes), the practice shows a **"Recorded here"** line back, and the Development page
+> now points at the Schedule instead of saying "coming in a later phase".
+>
+> **Still to come (not built, by design):** the at-the-field run screen and "My station" (1b), the
+> drill library (2), the plan library and "how it went" (3), and Helpers (4, gated on a privacy
+> sign-off).
+>
+> ⚠ **Release note:** a database change must reach production **before** this code does, or saving
+> any practice or game on the schedule will fail for paying customers.
 > Roadmap **Phase 4 of Player Development** (Phases 3A–3D shipped 2026-07-17).
 > **Mockups round 1 (ACCEPTED 2026-07-31):** https://claude.ai/code/artifact/34f5affe-162d-4b2c-8fb0-bb83e715d48e
 > **Mockups round 2 (awaiting acceptance):** https://claude.ai/code/artifact/1a76bcf4-22f3-4b8f-90e9-387180742363

@@ -2003,6 +2003,19 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_events.resources -->
 **`resources`** (jsonb, nullable; mig 162) — Phase 4 per-event resource links: an array of typed entries `{ type: 'link', label, url }`. V1 = labelled web links only (drill video / rules / field map / flyer); the `type` field reserves room for `'file'` later (V2, reusing Documents storage) with no schema change. **App-validated/capped, NOT by DB constraints** ([lib/rep-event-resources.ts](../../../lib/rep-event-resources.ts)): each entry needs a non-empty label + an http(s) URL; max 10 per event; empty/invalid rows dropped server-side (`sanitizeResources`). Stored NULL when empty. Coach/assistant-facing in V1 (no parent/player login yet). Read for free via the event row; threaded through create/single-update/series-update.
 
+<!-- dict:col:rep_team_events.practice_plan -->
+**`practice_plan`** (jsonb, nullable; mig 213) — Practice Plans slice 1a: the structured plan for **this** practice. Shape: `{ version, goal?, kit?, blocks: [{ id, shape: 'activity'|'rotation', title, description?, goal?, duration: { minutes | toMinutes | restOfPractice }, staff?[], playerIds?[], coachingPoints?[], stations?[], rotation?{ totalMinutes, intervalMinutes, groups[], groupSource } }] }`. **App-validated/capped, NOT by DB constraints** ([lib/rep-practice-plan.ts](../../../lib/rep-practice-plan.ts) — `sanitizePracticePlan` runs on every write **and on every read**, so a row written before a cap tightened can't reach a surface malformed). Caps: 30 blocks, 12 stations/block, 12 groups, 8 staff or coaching points per item. Stored NULL when the plan is empty. Written **only** by `updateRepTeamEventPracticePlan` via `PUT …/events/[eventId]/practice-plan` (head-coach-only per D3); reads ride the `schedule` capability.
+
+⚠ **Four invariants live in the sanitiser, not the DB, and each has a reason a CHECK couldn't express:**
+1. **At most ONE `restOfPractice` block per plan** — a second one keeps its block but loses the claim (the coach doesn't lose their typing).
+2. **A `rotation` block's stations carry NO `playerIds`** — its people come from block-level groups, so a per-station roster would be a second, silently-disagreeing answer to "who's at this station?".
+3. **Every `playerIds` entry must be a CURRENT active roster id** — re-checked server-side on every write, so a stale client can't attach a departed or cross-team player.
+4. **A range whose ceiling isn't above its floor is dropped**, rather than rendering "25 to 20".
+
+⚠ **OCCURRENCE-SCOPED (plan D7).** `updateRepTeamEventSeries` does **not** carry this column and must never be taught to: a "this & future"/"all" edit on a weekly practice would overwrite every week's plan with one night's — a season of a coach's thinking gone in one tap, with no undo. The dedicated write function and route exist precisely so the recurrence edit-scope machinery has no path to a plan.
+
+⚠ **`staff` entries are LABELS, never grants** — plain names (an outside instructor or PD coach is commonly not a portal user at all). No account, no invitation, no capability implication. The reusable vocabulary is assembled from the team's coaches plus names already used on previous plans (`collectStaffSuggestions`), so a typo stops being suggested once no plan uses it.
+
 <!-- dict:col:rep_team_events.opponent -->
 **`opponent`** (text, nullable) — **game-types only** (UI-gated).
 
@@ -2404,7 +2417,15 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 **`program_year_id`** (FK → `rep_program_years.id`, NOT NULL, CASCADE) — the season the session belongs to (gotcha 3).
 
 <!-- dict:col:rep_team_evaluation_sessions.session_date -->
-**`session_date`** (date, NOT NULL) — when the tests were run; defaults to today in the UI, same 2000..next-year sanity bounds as `rep_player_measurables.recorded_on` (app-enforced).
+**`session_date`** (date, NOT NULL) — when the tests were run; defaults to today in the UI, same 2000..next-year sanity bounds as `rep_player_measurables.recorded_on` (app-enforced). **Editable since mig 213 (D10)** — and see the re-stamp rule on `event_id` below, which that edit-ability makes mandatory.
+
+<!-- dict:col:rep_team_evaluation_sessions.event_id -->
+**`event_id`** (FK → `rep_team_events.id` **ON DELETE SET NULL**, nullable; mig 213) — the scheduled event these readings were collected at ("coaches write things down during a practice and type them in later"). Partial index `rep_team_eval_sessions_event_idx (event_id) WHERE event_id IS NOT NULL` backs the practice's **"Recorded here"** section. **Any event type qualifies** (plan §10.2 ruling 2) — restricting to practices would be a dead end for a coach who tested at a Saturday scrimmage warm-up; the link is descriptive, not structural. `SET NULL` because deleting the practice must leave the session alive as an ordinary dated session — the same "the grouping artifact is not the record" rule as gotcha 1.
+
+⚠ **THE RE-STAMP RULE — read before touching either column.** `rep_player_measurables.recorded_on` is copied from `session_date` **at the moment each reading is typed**. That was invisible while the date couldn't change. Now it can, so:
+- **Changing `session_date` MUST re-stamp every reading with that `session_id`** (`restampRepSessionMeasurables`, called by the session PATCH *before* the session row is updated, so a failure leaves both sides consistent on the old date). Without it the session silently disagrees with its own contents and every per-player trend line plots on the wrong day. The UI confirms first, naming the exact count; with zero readings there is no dialog.
+- **Changing or rescheduling the LINKED EVENT must NOT move `session_date`, and must NOT re-stamp anything** (§10.2 ruling 1). The link and the date are two separate facts — *which practice this belongs to* and *when the readings were actually taken*. Picking an event PRE-FILLS the date; it never derives it. A derived date would rewrite history to keep a foreign key tidy, and "tested at 5:35 before a 6:00 practice" has to stay expressible.
+- Readings logged individually from a player profile carry no `session_id` and are never touched by the re-stamp (the `.eq('session_id', …)` filter is the guarantee).
 
 <!-- dict:col:rep_team_evaluation_sessions.note -->
 **`note`** (text, nullable; CHECK `≤ 200` chars) — optional session label ("post-break testing").

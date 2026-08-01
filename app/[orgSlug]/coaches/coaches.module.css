@@ -5766,3 +5766,46 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 @media (max-width: 640px) {
   .devSessionWhen { flex-direction: column; align-items: stretch; }
 }
+
+/* Practice plan — a count inside a chip (a group's size beside its name). */
+.ppChipCount {
+  font-size: 0.66rem; font-weight: 700; color: var(--white-45);
+  border-left: 1px solid var(--border-2); padding-left: 0.3rem; margin-left: 0.1rem;
+}
+/* An inline correction the coach must see before autosave silently drops what they typed. */
+.ppWarn { margin: 0; font-size: 0.78rem; color: var(--warn, var(--white-80)); }
+
+/* The optional range: its box and the control that clears it sit as one unit. */
+.ppRangeWrap { display: inline-flex; align-items: center; gap: 0.15rem; }
+
+/* The two ways to make groups, stated separately. Cramming "how many / draw / add" into one row
+   left nothing to explain which control belonged to which choice. */
+.ppGroupWays { display: flex; flex-direction: column; gap: 0.5rem; }
+.ppGroupWay {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  padding: 0.5rem 0.6rem; border: 1px solid var(--white-8); border-radius: 8px;
+}
+.ppGroupWayLabel {
+  font-size: 0.78rem; font-weight: 600; color: var(--white-80);
+  min-width: 9.5rem;
+}
+.ppGroupWayControls { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.ppGroupWayControls select { width: auto; min-width: 9.5rem; }
+/* A unit sitting tight against its own box, rather than floating after two of them. */
+.ppUnit { font-size: 0.78rem; color: var(--white-45); }
+@media (max-width: 640px) {
+  .ppGroupWay { flex-direction: column; align-items: stretch; }
+  .ppGroupWayLabel { min-width: 0; }
+  .ppGroupWayControls select { flex: 1 1 auto; min-width: 0; }
+}
+
+/* Previously-used labels, offered as tappable chips. A datalist alone is invisible until you
+   type, so the control read as free text — these make it obviously a picker. */
+.ppSuggestWrap { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.3rem; }
+.ppSuggestChip {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.72rem; color: var(--white-55); cursor: pointer;
+  padding: 0.15rem 0.4rem; border-radius: 6px;
+  border: 1px dashed var(--border-2); background: none;
+}
+.ppSuggestChip:hover { color: var(--white-90); border-color: var(--white-35); border-style: solid; }

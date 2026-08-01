@@ -3115,7 +3115,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3125,7 +3125,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3165,7 +3165,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3175,7 +3175,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3205,7 +3205,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3215,7 +3215,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "prior_roster_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3936,6 +3936,16 @@
     "column_name": "created_by",
     "foreign_table": null,
     "foreign_column": null,
+    "delete_rule": "SET NULL",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_team_evaluation_sessions",
+    "constraint_name": "rep_team_evaluation_sessions_event_id_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "event_id",
+    "foreign_table": "rep_team_events",
+    "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },

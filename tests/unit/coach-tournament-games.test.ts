@@ -25,6 +25,8 @@ function event(overrides: Partial<RepTeamEvent> = {}): RepTeamEvent {
     fieldNumber: null,
     uniform: null,
     resources: [],
+    practicePlan: null,
+    familySharedAt: null,
     opponent: 'Kanata Selects',
     homeAway: 'away',
     teamScore: null,

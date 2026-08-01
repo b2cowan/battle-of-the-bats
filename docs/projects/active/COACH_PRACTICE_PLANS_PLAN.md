@@ -1,11 +1,38 @@
 # Practice Plans — Implementation Plan (Player Development, roadmap Phase 4)
 
-> **Status:** ✅ **PLANNING COMPLETE — ALL 30 DECISIONS (D1–D30) OWNER-ACCEPTED 2026-07-31, and all
-> five mockup rounds accepted. The mockups ARE the binding visual spec.** Final phase ladder in §9.2.
-> **Next step = the Phase 1a build session, in a FRESH chat** (`COACH_PRACTICE_PLANS_PHASE1_BUILD_PROMPT.md`).
-> ⚠ **A release is overdue and is the higher priority** — see the TODO ledger. Planning-only session
-> 2026-07-31 — no source edits, no migrations. A build session follows owner approval **and an
-> approved mockup round** (owner-mandated: mockups before code).
+> **Status:** 🔨 **PHASE 1a BUILT 2026-08-01 — awaiting owner QA. UNCOMMITTED.**
+> Planning complete and all 30 decisions (D1–D30) owner-accepted 2026-07-31; all five mockup rounds
+> accepted and binding. Final phase ladder in §9.2. The overdue release was promoted first
+> (prod moved to the 2026-07-31 changelog commit) before the build started.
+>
+> **What shipped in 1a:** the plan on the practice event (goal + kit · blocks with
+> description/goal/flexible duration/staff/players/coaching points · stations · groups incl. the
+> random draw · rotation blocks with the computed group×round grid) · the focus rail ·
+> copy-from-a-previous-practice · the one-page printed sheet incl. the rotation grid · D10 (the
+> evaluation-session editable date, the event link, the re-stamp confirm, and the practice's
+> "Recorded here" section) · the Development hub pointer line (D9) · the schedule slide-over summary.
+>
+> **Migration 213** (`rep_team_events.practice_plan` + `rep_team_evaluation_sessions.event_id`)
+> is **APPLIED TO DEV ONLY**. ⚠ **It must be applied to PROD before this code is promoted** — see
+> the §7 release rider. The schema-parity gate currently reports the expected 4-row divergence.
+>
+> **Two deviations from the letter of the plan, both deliberate — see §10.3.**
+>
+> **Verification:** `/simplify` (12 cleanups, 2 of them real defects) → `/review` high-risk, 5 lenses
+> (14 findings confirmed and fixed, 1 refuted) → `/docs` (a new `premium-practice-plans` guide section,
+> a `faq-session-change-date` FAQ, and in-context help on the builder). typecheck ✓ · lint 0 errors ·
+> 40 practice-plan unit tests ✓ · dictionary + snapshots refreshed ✓ · clean dev restart ✓.
+> ⚠ **The Playwright computed-style probes (361/390/desktop) are WRITTEN but could NOT run** —
+> `tests/uat/scenarios/practice-plan-layout.spec.ts`, needs `PROBE_EVENT_ID`. The UAT coach fixture is
+> **orphaned**: `rep_teams` row `3127a094…` points at an `org_id` that no longer exists in
+> `organizations`, so no coach resolves an assignment there and every probe lands on "Not assigned to
+> any teams". **Pre-existing UAT environment breakage, unrelated to this feature.** Repair the fixture
+> (or point the spec at a live team) and the probes run unchanged. Layout therefore rests on owner QA
+> for this slice.
+>
+> **NOT built (correctly out of scope):** the field run screen and "My station" (1b) · the drill
+> library (Phase 2) · the plan library, "how it went", the coverage answer (Phase 3) · Helpers
+> (Phase 4, gated).
 > **⚠ SCOPE ADDED AFTER PLANNING (2026-07-31): D10 — the evaluation-session date + practice link.**
 > The owner deferred it into this project rather than shipping it standalone, so the practice↔development
 > seam is designed once. It is **NOT in the round-1 mockups — a round 2 is required before build.**
@@ -561,6 +588,125 @@ is *what you intended*; the session line is *what actually got measured*. It is 
 screen allowed to say it happened, and it earns that because a coach typed real numbers. **This does
 not breach §4's "planned, never done" rule** — the wording keeps them apart, and a `/review` checklist
 item verifies it.
+
+---
+
+## 10.4 · Owner QA revisions (2026-08-01) — BINDING, they supersede the earlier wording
+
+Seven corrections from the owner's first pass over the built screen. All are implemented.
+
+1. **ONE kind of block, not two.** "Add a block" / "Add a rotation" collapsed into a single
+   **Add a block**; whether its stations rotate is a **toggle inside the block, defaulting to
+   rotate**. ⚠ The toggle only appears at **two or more stations** — one station with groups queued
+   behind it is a queue, not a rotation. `blockRotates()` is the single answer, shared by the
+   sanitiser, the builder, the grid and the printed sheet. This **retires D23's "two shapes"
+   framing**: the shape was never the coach's decision to make before typing anything.
+2. **"Bring / kit" → "Equipment", as reusable tags**, suggested from what the team has used before —
+   the same control as staff names. Station equipment became tags too. Legacy free-text `kit` is
+   read forward into the first tag.
+3. **⚠ PEOPLE LIVE AT EXACTLY ONE LEVEL.** A block with no stations owns its player list; add a
+   station and the list moves to the stations; make it rotate and the people live only in the
+   groups. Enforced in the sanitiser, not just hidden in the UI, so no payload can produce two
+   disagreeing answers to "who is at this station?". **This generalises D23** from rotations to
+   every block.
+4. **A rotating station shows which group STARTS there** ("Starts with Group A"), so a station card
+   answers "who do I begin with?" without reading the grid. Where more groups than stations share a
+   start, **both are named** — never one silently winning.
+5. **The optional "to" minutes is refused below the floor** — `min` on the control plus a spoken
+   correction. The sanitiser already dropped such a range; the coach could previously type "30 to
+   20", see it accepted, and find it gone on reload.
+6. **A station IS the drill** (owner-confirmed). No change needed — D27's drill/practice split
+   already draws that line, which is what Phase 2 lifts the library out of.
+7. **Practice type — a LABEL now, filtering in Phase 2.** A multi-select **"Kind of practice"** on
+   the plan, shown on screen and on the printed sheet. ⚠ **Coach-typed tags, never a fixed list**:
+   "Hitting / Fielding / Pitching" is one sport talking, and the sport-neutrality rule binds here
+   even though these are labels rather than seeded data.
+   **It does NOT filter the focus rail yet, deliberately.** Focus areas are free text a coach typed
+   ("stay back on the curve"), so nothing knows which are "fielding" — filtering needs focus areas
+   to carry a category, which the drill library pays for in **Phase 2 (D16)**. Doing it now would
+   mean either categorising every existing focus area by hand or guessing from keywords, and §4
+   forbids the guess ("free text doesn't cluster; the grouping would be a confident lie").
+   **⚠ And when filtering does land, non-matching areas DIM, never hide** (owner ruling, confirming
+   D16 and §4) — a player whose only focus areas are off-type must never vanish from a coverage
+   list, because that is precisely the child most likely to be overlooked.
+
+---
+
+## 10.5 · Saving model — AUTOSAVE CONFIRMED (owner, 2026-08-01)
+
+The owner asked whether a screen this data-heavy should have an explicit **Save** button pinned to
+the bottom instead of saving on every change. **Ruled: keep autosave**, for two reasons:
+
+1. **Consistency.** Every other coach surface saves itself — the lineup builder, evaluation
+   sessions, attendance. A Save button here would be the only one in the product.
+2. **Interruption is the use case.** §2 describes a coach with "~4 minutes of attention" on a phone
+   on a couch. Phones evict background tabs aggressively; an explicit-save model loses a
+   half-written plan to a phone call. `UnsavedChangesGuard` catches deliberate navigation only —
+   not tab eviction, not a flat battery.
+
+**Two real defects surfaced by the question, both fixed:**
+
+- **⚠ The status pill was lying.** It read "Saving…" whenever `saving || dirty`, so a coach could
+  not tell *working* from *stuck*, and the word was frequently untrue. Now three honest states:
+  **Saving…** only while a request is genuinely open · **Unsaved changes** · **Saved**. The save is
+  also **bounded (15s)** — a request that never returns becomes a visible failure with Retry rather
+  than an eternal spinner.
+- **⚠ Autosave was deleting half-built rows.** The sanitiser discarded any block or station with
+  nothing typed in it. Autosave fires ~1s after typing stops, so adding three stations and naming
+  one meant the other two were gone on reload — and the screen still looked right, because the
+  response isn't applied to local state. **Emptiness no longer discards anything**: a row exists
+  because the coach pressed "Add", and that press is the intent. Only junk that was never a row
+  (a string, a null, a number in the array) is refused. Abandoned rows are the coach's to delete,
+  and each carries a visible bin.
+
+⚠ **The interaction between "autosave" and "discard incomplete data" is the thing to watch** in any
+future slice: a rule that is safe on an explicit save becomes data loss under autosave.
+
+---
+
+## 10.3 · Deviations taken at build time (2026-08-01) — deliberate, and why
+
+Two places where the build delivered the **decision's outcome** by a different mechanism than the
+decision's wording named. Both are recorded here so a later session doesn't "restore" them.
+
+### 1. D12 staff — reusable NAMES, not `rep_team_tags` rows
+
+**D12 ruled "tags", naming the existing coach tag control.** The build stores staff as plain
+**names** on the plan, with the reusable vocabulary assembled from (a) the team's own coaching staff
+and (b) every staff name already used on this team's previous practice plans
+(`collectStaffSuggestions`). The behaviour D12 specified is fully delivered: team coaches are
+offered automatically, anyone else is created on the spot by typing them, and the name is reusable
+on every later plan.
+
+**Why the mechanism changed:**
+- A plan lives in a **jsonb column**, so a tag reference would be an id embedded in JSON — not the
+  join-table linkage every other tag kind uses. `merge_rep_team_tags` re-points
+  `rep_team_event_tags` and `rep_team_expense_tags`; it **cannot** re-point ids inside jsonb, so
+  merging two staff tags would silently orphan every practice plan referencing the loser. That is a
+  data-corruption path introduced purely to reuse a control.
+- It would also have required widening the `rep_team_tags.kind` CHECK constraint (a shared,
+  cross-feature constraint) and adding a `kind` parameter to the coach tags route.
+- **A past plan naming "Adam" should keep saying "Adam"** — it is the historical record of who ran
+  that station. A rename-everywhere function is arguably wrong for this artifact.
+- The suggestion list **self-heals**: a typo stops being offered as soon as no plan uses it, which
+  is better than a 50-tag library a coach must curate by hand.
+
+**Net:** same coach-visible behaviour, no CHECK-constraint change, no new route, no dangling ids,
+no merge-corruption path. ⚠ If the owner wants a *managed* staff list (rename, retire, merge), that
+is a real feature — raise it rather than quietly swapping the storage back.
+
+### 2. §10.2 ruling 3 — the program-year date bound is NOT enforced
+
+Ruling 3 said to refuse an out-of-season session date "with a plain reason", **with an explicit
+escape clause: "where a program year has no bounded dates, accept anything."** Verified at build
+time: `rep_program_years` carries **no start/end dates** — only a `year` integer and a status. There
+is nothing to bound against.
+
+Deriving a bound from the calendar year would be **wrong**, not merely incomplete: a "2026" season
+that runs September 2026 → March 2027 would have its own March practices refused. So the escape
+clause applies and the existing sanity bounds (`isValidRecordDate`: a real date, year 2000 …
+next year) are the only guard. **If season date bounds are ever added to `rep_program_years`, this
+becomes a two-line change** — that is the trigger to revisit, not a defect to fix now.
 
 ---
 

@@ -1,12 +1,29 @@
 {
-  "generated": "2026-07-31",
-  "total": 0,
+  "generated": "2026-08-01",
+  "total": 4,
   "counts": {
     "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
+    "columns": 2,
+    "indexes": 1,
+    "constraints": 1,
     "rls": 0
   },
-  "items": []
+  "items": [
+    {
+      "key": "column:only-dev:rep_team_evaluation_sessions.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.practice_plan",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_evaluation_sessions.rep_team_evaluation_sessions_event_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_eval_sessions_event_idx",
+      "sig": ""
+    }
+  ]
 }

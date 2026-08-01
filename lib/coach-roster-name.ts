@@ -9,10 +9,16 @@ export function cleanNamePart(part: string | null | undefined): string {
   return s.toLowerCase() === 'null' || s.toLowerCase() === 'undefined' ? '' : s;
 }
 
-export function playerName(player: RepRosterPlayer): string {
+/** The three fields a name actually needs. Typed structurally so a surface that fetched only an
+ *  identity projection — the practice-plan builder deliberately never loads guardian PII — can
+ *  still render the same name as a surface holding the whole roster row. `RepRosterPlayer`
+ *  satisfies this, so every existing caller is unaffected. */
+export type NamedRosterPlayer = Pick<RepRosterPlayer, 'playerFirstName' | 'playerLastName' | 'playerNumber'>;
+
+export function playerName(player: Pick<NamedRosterPlayer, 'playerFirstName' | 'playerLastName'>): string {
   return [cleanNamePart(player.playerFirstName), cleanNamePart(player.playerLastName)].filter(Boolean).join(' ');
 }
 
-export function playerDisplayName(player: RepRosterPlayer): string {
+export function playerDisplayName(player: NamedRosterPlayer): string {
   return [player.playerNumber ? `#${player.playerNumber}` : '', playerName(player)].filter(Boolean).join(' ');
 }
