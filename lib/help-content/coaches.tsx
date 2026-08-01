@@ -842,13 +842,30 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'When a season ends: Season’s End, your wrap-up, and what carries forward',
       summary: 'A closed season stays yours — a Season Wrapped highlight card you can share, plus read-only access to every result and money record.',
-      keywords: ['season over', 'season ended', 'season complete', 'end of season', 'season wrapped', 'wrapped', 'share season', 'season recap', 'highlight card', 'locked out', 'lost access', 'not assigned', 'read only', 'past seasons', 'season history', 'close season', 'close out the season', 'start next season', 'rollover', 'new season', 'what carries over', 'winding down', 'awards carry', 'development carry', 'tryout carry', 'unfinished tryout'],
+      keywords: ['season over', 'season ended', 'season complete', 'end of season', 'season wrapped', 'wrapped', 'share season', 'season recap', 'highlight card', 'locked out', 'lost access', 'not assigned', 'read only', 'past seasons', 'season history', 'close season', 'close out the season', 'start next season', 'rollover', 'new season', 'what carries over', 'winding down', 'awards carry', 'development carry', 'tryout carry', 'unfinished tryout',
+        // Chunk F — search matches KEYWORDS, not body text, so the archive's own vocabulary
+        // has to be listed or a coach looking for "last year's roster" finds nothing.
+        'last year', 'last season', 'previous season', 'past season', 'old season', 'archive',
+        'switch season', 'season switcher', 'change season', 'view past season', 'look up last year',
+        'past roster', 'last year roster', 'old roster', 'past schedule', 'past results',
+        'past attendance', 'past lineups', 'past money', 'old documents', 'past tryouts',
+        'tryout history', 'turnout', 'returning player', 'tried out before', 'frozen', 'view only',
+        // The deep pages a coach actually goes looking for in an archive, plus the "why can't I…"
+        // searches the exclusions generate.
+        'past dues', 'last year expenses', 'old budget', 'past budget vs actual', 'old fundraiser',
+        'past player record', 'old player', 'past lineup', 'last year lineup', 'past development',
+        'why can’t I edit', 'cannot edit past season', 'no edit button', 'read only season',
+        'email past season', 'chat past season'],
       searchText: 'season over ended complete end of season seasons end page season wrapped highlight card share your season image final record longest streak closest game attendance rate most awarded lineup fact read only past seasons results archive locked out lost access team disappeared not assigned any teams club admin closes season reappears next season start next season close out the season winding down quiet nothing scheduled what carries over roster staff budget fee plan development history bring forward measurements start fresh awards all time record',
       content: (
         <>
           <p>When your season is marked complete, your team doesn&apos;t disappear — it moves to its <strong>Season&apos;s End</strong> page. You&apos;ll find it in your team switcher (the dropdown in the sidebar, or the team list on your phone&apos;s More menu) under <strong>Season complete</strong> — and if it&apos;s your only team, the portal opens straight onto it.</p>
           <p><strong>Season Wrapped</strong> leads the page: your final record, longest win streak, closest game, attendance rate, top award-winner, and a standout lineup fact — built from the season you actually ran. <strong>Share your season</strong> turns it into a picture and opens your phone&apos;s share sheet, so it goes wherever you choose (the family group chat is the usual first stop). A short season simply gets a smaller card — no padded stats.</p>
-          <p>Below it, <strong>Look back any time</strong> opens your read-only archive: every result, season by season, plus roster size and money summaries. Nothing you built is deleted — it&apos;s just no longer editable, because the season is over.</p>
+          <p><strong>The whole season is still there.</strong> Roster, schedule and results, attendance, lineups, money records, documents, development and tryouts all stay open, exactly as they were — you just can&apos;t change them, because the season is over. Open any of them from the menu, the same way you did during the season.</p>
+          <p><strong>Moving between seasons:</strong> pick a season from the switcher under your team name (on a phone it&apos;s in <strong>More</strong>, under <em>This team&apos;s seasons</em>). It keeps you where you are — if you&apos;re on Roster, you get last season&apos;s Roster. A page from a finished season is marked <strong>Complete</strong> beside its title; on a phone, tapping that marker is also the quickest way back to the current season. This works even while a new season is running, so you can look up last year mid-season without leaving what you&apos;re doing.</p>
+          <p><strong>It goes all the way down.</strong> Open Money and you can still read that season&apos;s dues, expenses, budget, budget-vs-actual and fundraiser results. Open Roster and you can open a player to see their attendance, dues and awards for that season. Open Lineups and you can open a game and see the order you actually batted. Everything is marked <strong>Complete</strong> and nothing offers to be edited.</p>
+          <p><strong>What isn&apos;t in a finished season, and why:</strong> anything that <em>does</em> something rather than records it. You can&apos;t send an email to families, start a chat, request a payment, log a new org allocation, or run a tryout for a season that has already happened. Those are live-season tools; the archive is the record.</p>
+          <p>What you can see in a past season is what you could see <em>at the time</em>. If you were an assistant who wasn&apos;t given access to team money last year, the archive doesn&apos;t give it to you now — and if you were, it&apos;s still there.</p>
           <p><strong>Getting to next season:</strong> on a standalone Premium team, the head coach starts it from Season&apos;s End (or Settings) — the roster and coaching staff carry forward. On a club-owned team, your club admin runs seasons; when you&apos;re on next season&apos;s coaching staff, the team moves back up into your active list automatically.</p>
           <p>And before any of that: once games stop and nothing new is scheduled for a couple of quiet weeks, your Overview asks a gentle <strong>Season check</strong> — <em>is the season over?</em> — so it never just… stops. It always offers <strong>Add an event instead</strong> beside the answer, in case you&apos;re not done after all, and <strong>Not yet</strong> keeps it quiet for the rest of the season. If closing seasons isn&apos;t yours to do, you get the same heads-up without the button: your club closes it, and your Season Wrapped appears when they do.</p>
         </>
@@ -1583,6 +1600,91 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'premium-practice-plans',
+      group: 'Premium Coaches Portal',
+      heading: 'Practice plans: what you’re doing Tuesday, and who’s where (Premium)',
+      summary: 'Write the practice on the practice — blocks, stations, groups and a rotation the product works out for you — then print it.',
+      // "rotation" / "stations" / "groups" are the terms a coach searches for, and none of them
+      // appear in a heading — search never reads the prose, so they have to live here.
+      keywords: ['practice plan', 'practice plans', 'plan a practice', 'practice', 'blocks', 'stations', 'rotation', 'rotations', 'carousel', 'groups', 'random groups', 'draw groups', 'split into groups', 'pair up', 'coaching points', 'what to watch for', 'print practice', 'practice sheet', 'copy last practice', 'rest of practice', 'kit', 'equipment', 'who runs it'],
+      searchText: 'practice plan plans plan a practice tuesday night blocks timed blocks how long minutes range 25 to 35 rest of practice remaining time running clock start time stations station name how many equipment kit setup who runs it who is at it note for tonight rotation rotations carousel rotate every 15 minutes rounds group by round grid where is everyone who is at which station groups draw at random random draw shuffle reshuffle draw again how many groups players per group uneven split coaching points what to watch for focus areas what everyone is working on focus rail copy from a previous practice copy last practice print the sheet one page pdf assistant tee station head coach only schedule access reorder blocks up down arrows planned not done',
+      content: (
+        <>
+          <p>A <strong>practice plan</strong> lives on the practice itself. Open the practice on your <strong>Schedule</strong> and use <strong>Plan this practice</strong> — there&rsquo;s no separate calendar and nothing new to set up.</p>
+          <p><strong>Start with the shape of the night.</strong> Give the practice a goal and a <strong>Bring / kit</strong> line, then add <strong>blocks</strong> in the order you&rsquo;ll run them. A block can be a fixed number of minutes, a <strong>range</strong> (&ldquo;25 to 35, depending how they&rsquo;re going&rdquo;), or one <strong>rest of practice</strong> block — you only get one of those, since only one thing can run to the end. The clock times down the side are worked out from the practice&rsquo;s own start time, so you never type them.</p>
+          <p>Each block holds a description, a goal, who&rsquo;s running it, who&rsquo;s in it, and <strong>what to watch for</strong> — the two or three things you actually want to see. Reorder blocks with the <strong>up and down arrows</strong> rather than dragging, so it works with cold hands on a phone.</p>
+          <p><strong>Stations</strong> sit inside a block: what the station is, how many of them, the kit, how it&rsquo;s set up, who runs it, who&rsquo;s at it, and a note just for tonight.</p>
+          <p><strong>Rotations are the part a shared document can&rsquo;t do.</strong> Make a block a <strong>rotation</strong>, name the stations, say how long it runs and how often groups move — and the plan works out <em>who is at which station in every round</em> and shows you the grid. It tells you the truth when the numbers don&rsquo;t divide neatly: <em>&ldquo;3 rounds of 15, with 5 min spare&rdquo;</em>, <em>&ldquo;Group C won&rsquo;t reach the third station&rdquo;</em>, <em>&ldquo;Groups A and D share a station in round 2&rdquo;</em>. It will never quietly invent a round or drop a station to make the arithmetic tidy.</p>
+          <p><strong>Groups</strong> can be picked by hand or <strong>drawn at random</strong> — choose how many groups, or how many players per group, and press <strong>Draw again</strong> as often as you like. Only players who&rsquo;ve replied that they&rsquo;re coming go into the draw, and anyone left out is named rather than quietly dropped. The draw is deliberately simple: it shuffles and deals. <strong>It never sorts anyone by ability.</strong></p>
+          <p><strong>Beside the plan sits the roster and what each player is currently working on</strong>, in roster order — so putting three players on a station is a glance, not a memory test. Tap <strong>Choose players</strong> anywhere in the plan and you get the same list, with their focus areas beside them.</p>
+          <p><strong>If last week worked, copy it.</strong> <strong>Copy from a previous practice</strong> brings that plan onto tonight and leaves the original exactly as it was — change the one block that needs changing.</p>
+          <p><strong>Print the sheet</strong> gives you a one-page PDF, rotation grid and all, to hand to whoever&rsquo;s running a station. It&rsquo;s a download you carry, never a link you share.</p>
+          <p><strong>A plan is what you intend to do.</strong> Nothing here records what actually happened on the night — that&rsquo;s deliberate, so the plan never quietly turns into a claim about your players.</p>
+          <p><strong>Who can do what:</strong> <strong>writing</strong> the plan is head-coach only. Any coach with <strong>schedule</strong> access can open it and print it, which is what makes it useful to hand an assistant a station. Seeing <em>what players are working on</em> needs <strong>player notes</strong> access, and the attendance markers in the player list need <strong>attendance</strong> access.</p>
+        </>
+      ),
+      links: [
+        { label: 'Player Development', href: '#premium-development' },
+        { label: 'Repeating practices', href: '#premium-repeat-weekly' },
+      ],
+      faqs: [
+        {
+          id: 'faq-practice-plan-where',
+          question: 'Where do I write a practice plan?',
+          answerText: 'On the practice itself. Open your Schedule, tap the practice, and use "Plan this practice" in the Practice plan section — it becomes "Open the plan" once one exists. There is no separate practice-plans page: a practice is a date, and the date already lives on your Schedule. The Development page carries a pointer line to remind you. Writing the plan is head-coach only; any coach with schedule access can open and print one.',
+          keywords: ['where do i write a practice plan', 'where are practice plans', 'cannot find practice plans', 'practice plan page', 'plan this practice', 'no practice plan section'],
+          popular: true,
+          answer: (
+            <>
+              <p>On the practice itself. Open your <strong>Schedule</strong>, tap the practice, and use <strong>Plan this practice</strong> in the <em>Practice plan</em> section — it reads <strong>Open the plan</strong> once one exists.</p>
+              <p>There&rsquo;s no separate practice-plans page on purpose: a practice is a <em>date</em>, and your dates already live on the Schedule. The <strong>Development</strong> page carries a pointer line so you can find your way across.</p>
+              <p>Writing the plan is <strong>head-coach only</strong>. Any coach with <strong>schedule</strong> access can open and print one.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-practice-plan-rotation',
+          question: 'How do I set up three groups rotating between three stations?',
+          answerText: 'Add a block and switch it to a rotation. Name your stations, then type how long the whole rotation runs and how often groups move — for example 45 minutes moving every 15. The plan works out the rest: 3 rounds of 15, and a grid showing which group is at which station in each round. Groups move forward one station each round and coaches stay put. You can pick the groups yourself or draw them at random. If the numbers do not divide evenly the plan says so plainly rather than fudging it — it will tell you about spare minutes, name any group that will not reach a station, and say when two groups share one. It never invents an extra round or drops a station.',
+          keywords: ['rotation', 'rotate', 'carousel', 'three groups three stations', 'rotate every 15 minutes', 'group rotation', 'stations rotation', 'who is at which station', 'rotation grid'],
+          popular: true,
+          answer: (
+            <>
+              <p>Add a block and switch it to a <strong>rotation</strong>. Name your stations, then type <strong>how long the whole rotation runs</strong> and <strong>how often groups move</strong> — say 45 minutes, moving every 15.</p>
+              <p>The plan works out the rest: <em>3 rounds of 15</em>, plus a grid showing which group is at which station in each round. Groups move forward one station each round; coaches stay put.</p>
+              <p>If the numbers don&rsquo;t divide evenly it <strong>says so plainly</strong> rather than fudging it — spare minutes, any group that won&rsquo;t reach a station, and when two groups share one. It won&rsquo;t invent an extra round or drop a station to make it tidy.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-practice-plan-random-groups',
+          question: 'Does the random draw balance the groups by ability?',
+          answerText: 'No, and that is deliberate. The draw shuffles the players and deals them out — nothing more. It does not balance by ability, by focus area, or by anything else, and "Draw again" simply re-draws rather than trying to improve on the last one. Sorting children against each other is not something this product does. Only players who have replied that they are coming go into the draw, and anyone left out is named underneath so you can add them by hand. If a split is uneven the plan tells you up front, for example "3 groups from 10 — one of 4, two of 3".',
+          keywords: ['random groups', 'draw at random', 'balance groups', 'even groups', 'by ability', 'fair groups', 'draw again', 'reshuffle', 'uneven groups'],
+          answer: (
+            <>
+              <p>No — and that&rsquo;s deliberate. The draw <strong>shuffles and deals</strong>, and nothing more. It doesn&rsquo;t balance by ability, by focus area, or by anything else, and <strong>Draw again</strong> simply re-draws rather than trying to improve on the last one. Sorting children against each other isn&rsquo;t something this product does.</p>
+              <p>Only players who&rsquo;ve replied that they&rsquo;re coming go into the draw, and anyone left out is <strong>named</strong> underneath so you can add them by hand.</p>
+              <p>If a split is uneven you&rsquo;re told up front — <em>&ldquo;3 groups from 10 — one of 4, two of 3&rdquo;</em>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-practice-plan-assistant',
+          question: 'Can my assistant coach see the practice plan?',
+          answerText: 'Yes. Reading and printing a practice plan rides schedule access, so an assistant who can already open Tuesday\'s practice can open its plan and print the sheet — which is the point, since they are often the one running a station. Writing the plan is head-coach only. What players are working on is separate: those focus areas need player-notes access, so an assistant without it sees the blocks, the stations and the names, but never the notes about a child. The printed sheet follows the same rule — if you cannot see focus areas in the app, they are simply absent from the sheet you print.',
+          keywords: ['assistant coach practice plan', 'can assistants see the plan', 'share plan with assistant', 'assistant print practice', 'who can edit the practice plan'],
+          answer: (
+            <>
+              <p>Yes. Reading and printing a plan rides <strong>schedule</strong> access, so an assistant who can already open Tuesday&rsquo;s practice can open its plan and print the sheet — which is the point, since they&rsquo;re often the one running a station.</p>
+              <p><strong>Writing</strong> the plan is head-coach only.</p>
+              <p><em>What players are working on</em> is separate: those focus areas need <strong>player notes</strong> access. An assistant without it sees the blocks, the stations and the names, but never the notes about a child — and the <strong>printed sheet follows the same rule</strong>, so if you can&rsquo;t see focus areas in the app they simply aren&rsquo;t on the sheet you print.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'premium-development',
       group: 'Premium Coaches Portal',
       heading: 'Player Development: focus areas, tests & evaluation sessions (Premium)',
@@ -1591,8 +1693,8 @@ const coachesHelp: HelpPageContent = {
       // player-profile Development section still uses the old label, and a coach who remembers
       // either name must land here. Same reason the failure phrasings ("greyed out", "can't
       // start a session") are listed — search matches keywords, never the prose above.
-      keywords: ['development', 'player development', 'evaluation session', 'measurables', 'test list', 'your test list', 'test types', 'focus area', 'goals', 'team board', 'progress', 'skills test', 'start here', 'new session greyed out', 'cannot start a session', 'retire test'],
-      searchText: 'player development focus areas goals what each player is working on measurables tests test types test list your test list evaluation session run tests whole roster team board coverage who is getting attention progress trend lines season insights development report head coach only assistant notes capability no sessions yet not a ranking then go look doors faded dimmed nothing behind it start here add your first test new session greyed out disabled switched off why can i not start a session add a test first retired test retire restore last active test session history stays visible page order layout',
+      keywords: ['development', 'player development', 'evaluation session', 'measurables', 'test list', 'your test list', 'test types', 'focus area', 'goals', 'team board', 'progress', 'skills test', 'start here', 'new session greyed out', 'cannot start a session', 'retire test', 'change session date', 'session date', 'taken at', 'link session to practice', 'recorded here'],
+      searchText: 'player development focus areas goals what each player is working on measurables tests test types test list your test list evaluation session run tests whole roster team board coverage who is getting attention progress trend lines season insights development report head coach only assistant notes capability no sessions yet not a ranking then go look doors faded dimmed nothing behind it start here add your first test new session greyed out disabled switched off why can i not start a session add a test first retired test retire restore last active test session history stays visible page order layout change the date of a session edit session date wrong date backdate typed them in later taken at link a session to a practice which practice recorded here readings move with the date re-stamp confirm how many readings will move rescheduled practice does not move the session',
       content: (
         <>
           <p><strong>Development</strong> is where you record what each player is working on and how they&rsquo;re coming along. It has two halves that work together:</p>
@@ -1604,6 +1706,7 @@ const coachesHelp: HelpPageContent = {
           <p><strong>How the page is laid out.</strong> Top to bottom: your <strong>evaluation sessions</strong> and the button to start a new one, then — under <em>&ldquo;Then go look&rdquo;</em> — two doors out to the <strong>team board</strong> and the coverage report in <strong>Insights</strong>, and last, <strong>your test list</strong>. A door fades when there&rsquo;s nothing behind it yet, so you can tell at a glance whether it&rsquo;s worth opening.</p>
           <p><strong>Starting from scratch.</strong> A session can only record what&rsquo;s on your test list, so until you have at least one test the page puts <strong>your test list first</strong> and marks it <em>Start here</em>. <strong>New session</strong> stays switched off, with a line saying what turns it on. Add one test and the page reorders itself into its everyday shape.</p>
           <p><strong>Retiring tests.</strong> Retiring a test keeps every reading already logged against it — it just leaves the picker. If you retire your <em>last</em> active test, new sessions switch off again until you add or restore one, but <strong>every session you&rsquo;ve already run stays right where it was</strong> and stays open.</p>
+          <p><strong>When the readings were taken, and where.</strong> A session opens dated today, but you can <strong>change the date</strong> — for the common case of writing numbers on the back of your hand on Tuesday and typing them in on Thursday. You can also say which event they were <strong>taken at</strong>; pick the practice and the date fills itself in. ⚠ <strong>Moving a session&rsquo;s date moves every reading already entered in it</strong>, so the session never disagrees with its own contents — you&rsquo;re asked first, and told exactly how many readings will move. Linking a practice only <em>fills in</em> the date; if that practice is later rescheduled, your session stays on the day the testing actually happened. The practice itself gains a <strong>Recorded here</strong> line pointing back at the session.</p>
           <p><strong>What it feeds.</strong> The <strong>team board</strong> shows every player&rsquo;s focus areas and latest numbers in roster order, and <strong>Insights</strong> answers <em>&ldquo;Is everyone getting attention?&rdquo;</em> — one row per player, so the quiet kid at the end of the bench doesn&rsquo;t get overlooked. It&rsquo;s deliberately a coverage view, not a leaderboard.</p>
           <p><strong>Who can do what:</strong> every coach with player access can read the board. <strong>Writing</strong> — starting sessions, recording readings, editing the test list and focus areas — is head-coach only, because it&rsquo;s coach judgment written about a minor.</p>
         </>
@@ -1621,6 +1724,63 @@ const coachesHelp: HelpPageContent = {
               <p>When that&rsquo;s the case, the Development page puts <strong>Your test list</strong> at the top and marks it <em>Start here</em> — add a test there and <strong>New session</strong> turns on straight away.</p>
               <p>The same happens if <strong>every test on your list is retired</strong>: retired tests leave the picker, so an all-retired list counts as an empty one. Add a new test or restore a retired one and sessions come back. <strong>Sessions you&rsquo;ve already run stay on the page and stay open</strong> the whole time — only starting a <em>new</em> one is switched off.</p>
               <p>If you&rsquo;re an <strong>assistant coach</strong>, starting sessions is head-coach only, so the button won&rsquo;t appear for you at all.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-session-change-date',
+          question: 'I tested on Tuesday but typed it in on Thursday — can I fix the date?',
+          answerText: 'Yes. Open the session and change the Date field. Because every reading is stamped with the session\'s date as you type it, moving the session moves those readings with it — otherwise the session would disagree with its own contents and the trend lines would plot on the wrong day. You are asked to confirm first and told exactly how many readings will move; with nothing entered yet there is no prompt at all. You can also set "Taken at" to the practice or game the readings came from, which fills the date in for you. Linking an event only fills the date in, it never owns it: if that practice is later rescheduled your session stays on the day the testing actually happened. Readings you logged one at a time from a player\'s profile are not part of any session and are never touched. Changing the date is head-coach only.',
+          keywords: ['change session date', 'wrong date', 'edit the date', 'backdate a session', 'typed it in later', 'session on the wrong day', 'taken at', 'link session to practice', 'move a session'],
+          popular: true,
+          answer: (
+            <>
+              <p>Yes — open the session and change the <strong>Date</strong>.</p>
+              <p>Every reading is stamped with the session&rsquo;s date as you type it, so <strong>moving the session moves those readings with it</strong>. Otherwise the session would disagree with its own contents and your trend lines would plot on the wrong day. You&rsquo;re asked to confirm first and told <strong>exactly how many readings will move</strong>; with nothing entered yet there&rsquo;s no prompt at all.</p>
+              <p>You can also set <strong>Taken at</strong> to the practice or game the readings came from, which fills the date in for you. That link only <em>fills in</em> the date — it never owns it, so a practice that&rsquo;s later rescheduled won&rsquo;t drag your session with it.</p>
+              <p>Readings you logged one at a time from a player&rsquo;s profile aren&rsquo;t part of any session and are never touched. Changing the date is head-coach only.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'premium-tryout-history',
+      group: 'Premium Coaches Portal',
+      heading: 'Tryout history: turnout year over year, and the player who comes back',
+      summary: 'A finished season’s tryout stays on the record — how many turned up, what you decided, and what your evaluators wrote.',
+      keywords: ['tryout history', 'past tryout', 'last year tryout', 'previous tryout', 'turnout',
+        'how many tried out', 'tryout numbers', 'growing', 'program growth',
+        'returning player', 'tried out before', 'came back', 'didn’t make the team', 'did not make the team',
+        'cut player', 'past evaluations', 'old scores', 'evaluator notes', 'past decisions',
+        'who did we offer', 'declined offer', 'archive tryout'],
+      searchText: 'tryout history past tryout last year turnout how many candidates tried out numbers growing program growth returning player tried out before came back did not make the team cut past evaluations old scores evaluator notes past decisions offered declined archive read only',
+      content: (
+        <>
+          <p>Once a season is finished, its tryout stays readable under <strong>Tryouts</strong> — pick the season from the switcher under your team name (on a phone, <strong>More</strong> → <em>This team&rsquo;s seasons</em>).</p>
+          <p><strong>Turnout is shown as a comparison,</strong> not just a count: &ldquo;31 candidates, up 7 from 2024&rdquo;. A number on its own doesn&rsquo;t tell you whether the program is growing, which is the question the page exists to answer.</p>
+          <p>Below it, every candidate with their average score, what you decided, and — where evaluators left them — their <strong>notes</strong>, opened one candidate at a time.</p>
+          <p><strong>The player who comes back.</strong> When someone registers for this year&rsquo;s tryout who has been through one before, their name is marked on your check-in list: <em>Tried out in 2025</em>, or <em>On the 2025 roster</em>. Open that season&rsquo;s tryout history to read what was said last time. It&rsquo;s the same matching the portal already uses to spot returning players, so a change of nickname or a new email address doesn&rsquo;t lose them.</p>
+          <p><strong>What isn&rsquo;t here:</strong> anything that <em>runs</em> a tryout. You can&rsquo;t check anyone in, send an evaluator link, change a decision or email an offer for a season that has already finished. This is the record of what happened.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-tryout-history-who-can-see',
+          question: 'Can my assistant coaches read past evaluations?',
+          answer: (
+            <>
+              <p>Only if they had <strong>Tryouts</strong> access during that season. Access to a past season is exactly what it was at the time — an assistant you added this year can&rsquo;t browse last year&rsquo;s candidates, and one who was granted tryouts last year still can.</p>
+              <p>If you&rsquo;d rather someone no longer had it, remove them from that season&rsquo;s <strong>Staff</strong> list and their access goes immediately.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tryout-history-no-tryout',
+          question: 'The page says no tryout was held — but we definitely ran one.',
+          answer: (
+            <>
+              <p>Tryout records belong to the season they were run in. If you&rsquo;re looking at the wrong season, switch seasons under your team name. If the tryout was run outside the portal (on paper, or in a spreadsheet), there&rsquo;s nothing to show — the record starts from the first tryout you run here.</p>
             </>
           ),
         },
@@ -1667,7 +1827,10 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Adding assistant coaches (Premium)',
       summary: 'Give another coach their own sign-in, with exactly the areas you choose — and nothing else.',
-      keywords: ['staff', 'assistant coach', 'invite coach', 'second coach', 'permissions', 'capabilities', 'duty grid', 'access', 'head coach'],
+      keywords: ['staff', 'assistant coach', 'invite coach', 'second coach', 'permissions', 'capabilities', 'duty grid', 'access', 'head coach',
+        // Chunk F — the archive's staff vocabulary; search reads keywords, not the prose above.
+        'remove access', 'revoke access', 'past season staff', 'who can see last season',
+        'former assistant', 'assistant left', 'archive access', 'take away access'],
       searchText: 'coaching staff assistant coaches invite an assistant second coach their own login sign in permissions capabilities what each assistant can see duties grid schedule attendance lineups roster guardian contacts notes money documents announcements tryouts least privilege default head coach only remove an assistant no assistant coaches yet',
       content: (
         <>
@@ -1675,8 +1838,35 @@ const coachesHelp: HelpPageContent = {
           <p><strong>Why bother.</strong> An assistant with schedule access can add the games you&rsquo;re both chasing; one with lineup access can build the lineup while you run the practice; one with attendance can take the roll at the diamond. Everything they do lands in the same team, so the roster, schedule and Insights everyone else sees stay in step.</p>
           <p><strong>New assistants start with the least access that is still useful</strong> — schedule, attendance and lineups, plus a view of the roster basics. Everything sensitive is off until you switch it on: guardian contacts and dates of birth, private player notes, team money, sending announcements to families, and tryouts.</p>
           <p><strong>Only the head coach</strong> can invite, adjust, or remove assistant coaches. Assistants never receive roster editing in this version — adding and editing players stays with you.</p>
+          <p><strong>A finished season keeps its own staff list,</strong> and you still control who can open it. Switch to a past season and Staff shows who was on it and what each of them could see at the time. Two things work differently there: you can <strong>remove someone&rsquo;s access</strong> to that season&rsquo;s records, which takes effect straight away and doesn&rsquo;t touch your current team; and you <strong>can&rsquo;t change what anyone could see</strong>, because that&rsquo;s part of the record of what happened. Nobody can be added to a season that&rsquo;s already over.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-staff-past-season-access',
+          question: 'An assistant left the club — can I stop them seeing last season?',
+          answer: (
+            <>
+              <p>Yes. Switch to that season, open <strong>Staff</strong>, and choose <strong>Remove access</strong> beside their name. They lose the ability to open that season&rsquo;s records immediately.</p>
+              <p>It affects that season only. It doesn&rsquo;t change anything about the season itself — they stay part of its record — and it doesn&rsquo;t touch your current team, which you manage from the live season.</p>
+            </>
+          ),
+          answerText: 'assistant left the club stop them seeing last season past season remove access switch to that season staff remove access beside their name lose access immediately that season only does not change the record does not touch your current team revoke former assistant historical access',
+          keywords: ['remove access', 'revoke access', 'former assistant', 'assistant left', 'past season access', 'stop them seeing', 'archive access'],
+        },
+        {
+          id: 'faq-staff-past-season-grants',
+          question: 'Why can’t I change an assistant’s access on a past season?',
+          answer: (
+            <>
+              <p>Because what each coach could see is part of the record of that season. The archive shows every coach exactly what they could see at the time — change the grants and that record would no longer be true.</p>
+              <p>You can still take their access away entirely, and you can set whatever you like on your live season.</p>
+            </>
+          ),
+          answerText: 'why can not change assistant access past season grants greyed out disabled toggles record of that season what they could see at the time cannot edit permissions historical still remove access set on live season',
+          keywords: ['change access past season', 'toggles disabled', 'greyed out', 'edit permissions past season', 'why can’t I change'],
+        },
+      ],
     },
     {
       // Chunk B (P1 #17). Team settings was the one nav destination in the premium portal with no

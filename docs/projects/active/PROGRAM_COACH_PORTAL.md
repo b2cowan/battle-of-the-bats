@@ -186,7 +186,35 @@ P1 #16 (tryout scoring hidden behind an evaluator detour) + the Development-hub 
 overlapping "coverage" doors, a permanent "coming later" placeholder on brand-new teams, a blank
 award picker). Good filler work; collision-free.
 
-**F · The frozen past season** — *medium; owner-DECIDED, no decision outstanding; collision-free*
+**F · The frozen past season** — ✅ **BUILT ON DEV 2026-08-01 (uncommitted, owner QA pending)** —
+plan + PM brief `COACH_PORTAL_CHUNK_F_FROZEN_SEASON_{PLAN,PM_BRIEF}.md`; mockups artifact
+`16ff15b9-09f5-4063-81f1-36b673d06adf` **rev 3 = approved = binding**. D-F1…D-F7 all settled;
+**D-F1 and D-F3 and D-F4 were CHANGED by the owner** against the recommendations (tryout history
+back IN · switcher off the phone's pages into More · no per-screen read-only banner). What shipped:
+a year-aware season read rail resolving capabilities from **that season's** assignment row · ~20 GET
+routes season-scoped · a season switcher (sidebar + More sheet) and a tappable `2025 · Complete` chip
+that doubles as the phone exit · the closed-season nav opened 2 → 11 capability-gated doors ·
+Staff kept live on a past season as read-access-only · a new tryout-history archive + returning-
+candidate recognition · help rewritten with 28 new keywords + a new guide. NO migration.
+**Three ledger claims were verified FALSE and are corrected in `memory/design_decisions.md`
+(2026-08-01)** — most importantly *"capabilities resolved from the season's own assignment row"*,
+which the shipped resolver did **not** do. Gate green (typecheck 0 · 730/730 tests · lint 0 errors ·
+six colour baselines ZERO · date ZERO). Remaining: owner QA → run the new probe → commit with
+per-action OK. *(original entry below)*
+*Original:* — ***owner-picked next build 2026-07-31; handoff prompt ready:
+`COACH_PORTAL_CHUNK_F_FROZEN_SEASON_BUILD_PROMPT.md` — run in a FRESH chat.*** Scope + the three
+governing rules stay owner-DECIDED in §1.5; no decision outstanding on WHAT it does.
+⚠ **RE-SIZE IT BEFORE COMMITTING TO "medium".** Verified 2026-07-31 while writing the prompt: the
+season-READ resolver (`lib/coach-season-read.ts`) genuinely exists and is the right rail — but the
+claim below that *"every rail it needs already exists… not new plumbing"* is **OVERSTATED**. Exactly
+**one** route accepts `?year=` (`wrapped`) and exactly **two** use the season-read resolver
+(`wrapped`, `history`); roster, schedule/results, lineups, attendance, money, documents, awards and
+staff have **no year-parameterised read path at all**. The per-row "read-only past season" write
+guards are likewise **partial** — roster/player paths only, not portal-wide. Treat F as a
+**permissions chunk wearing a rendering chunk's clothes**: rules 1 + 3 mean a revoked assistant must
+lose access to a *past* season, so every new read path is a potential leak of a former team-mate's
+data. `/review` at the **high-risk** tier.
+*(original entry below)*
 Promoted from §1.5 to a first-class chunk (owner call, 2026-07-29) — it was being tracked as a
 footnote and kept getting deferred. Full scope and the governing rules stay in §1.5.
 *What it accomplishes:* a closed season becomes the whole portal again, read-only — roster,
@@ -412,6 +440,7 @@ you already have queued, then strike this section.
 - **Mobile pass** — Overview, Roster, Schedule, Accounting Dues exemplar.
 - **Coach Portal Growth Phase 1** — per-page education strip + cross-shell brand continuity.
 - **Free-coach removal safeguard P1–P2** — removing an org admin no longer silently destroys their free Coaches Portal.
+- **Practice Plans 1a — "Write it"** *(BUILT 2026-08-01, awaiting owner QA; **uncommitted, NOT on prod**)* — the plan on the practice event: goal + kit, timed blocks (fixed / a range / one "rest of practice"), staff labels, players, coaching points, stations, groups incl. a deliberately-dumb random draw, and rotation blocks with a **computed group×round grid**; plus the focus rail, copy-from-a-previous-practice, and the one-page printed sheet. Rode along: the evaluation-session editable date + practice link with a re-stamp confirm (D10), the practice's "Recorded here" return section, and the Development hub pointer line (D9). ⚠ **mig 213 is dev-only — apply to prod before promoting.** Next slices: 1b run it → 2 drill library → 3 plan library → 4 helpers (gated). See `COACH_PRACTICE_PLANS_PLAN.md`.
 
 ---
 

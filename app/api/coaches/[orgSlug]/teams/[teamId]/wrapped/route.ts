@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { getRepProgramYear, getLatestClosedRepProgramYear } from '@/lib/db';
-import { resolveCoachSeasonReadContext } from '@/lib/coach-season-read';
+import { getLatestClosedRepProgramYear } from '@/lib/db';
+import { resolveCoachSeasonReadContext, seasonParam } from '@/lib/coach-season-read';
 import { assembleSeasonWrapped } from '@/lib/rep-season-wrapped';
 import { withObservability } from '@/lib/observability';
 
@@ -14,18 +14,16 @@ import { withObservability } from '@/lib/observability';
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachSeasonReadContext(orgSlug, teamId);
+  // Chunk F: the year goes THROUGH the rail, not around it. Resolving it separately (as this
+  // route used to) meant the access check ran against the team rather than the requested season —
+  // a coach who joined in 2026 could open 2023's Wrapped. The rail 403s unless they were on that
+  // season's staff, and hands back the season it actually admitted.
+  const resolved = await resolveCoachSeasonReadContext(orgSlug, teamId, {
+    yearId: seasonParam(req) ?? (await getLatestClosedRepProgramYear(teamId))?.id ?? null,
+  });
   if ('error' in resolved) return resolved.error;
-  const { team } = resolved;
+  const { team, programYear } = resolved;
 
-  const yearParam = new URL(req.url).searchParams.get('year');
-  const programYear = yearParam
-    ? await getRepProgramYear(yearParam)
-    : await getLatestClosedRepProgramYear(teamId);
-
-  if (!programYear || programYear.teamId !== teamId) {
-    return NextResponse.json({ error: 'Season not found' }, { status: 404 });
-  }
   if (programYear.status !== 'completed' && programYear.status !== 'archived') {
     return NextResponse.json({ error: 'Season Wrapped is only available once a season is closed.' }, { status: 409 });
   }

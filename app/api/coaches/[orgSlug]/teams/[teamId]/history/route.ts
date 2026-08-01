@@ -5,8 +5,10 @@ import {
   getRepPlayerDuesSchedules,
   getRepPlayerDuesInstallments,
   getRepTeamExpenses,
+  getRepTeam,
 } from '@/lib/db';
-import { resolveCoachSeasonReadContext } from '@/lib/coach-season-read';
+import { resolveCoachSeasonCapabilityMap } from '@/lib/coach-season-read';
+import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { canViewMoney } from '@/lib/coach-capabilities';
 
@@ -36,39 +38,54 @@ async function accountingForYear(yearId: string): Promise<SeasonAccounting> {
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  // Season-READ resolver (not the standard active-only context): history is the one surface a
-  // coach explicitly keeps after their season closes (Batch 3, P0 #1) — and this route is
-  // GET-only, so admitting closed assignments opens no write path.
-  const resolved = await resolveCoachSeasonReadContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error;
+  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
+  if (!ctx) return unauthorized();
+  if (ctx.org.slug !== orgSlug) return forbidden();
 
-  // Record / roster / tryout data is open to any assigned coach; the money rows (dues + expenses)
-  // are layered on only when the caller can view finances (tri-state money capability).
-  const canMoney = canViewMoney(resolved.capabilities);
+  const team = await getRepTeam(teamId);
+  if (!team || team.orgId !== ctx.org.id) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // ⚠ Chunk F, governing rule 1: this route spans EVERY season, so it deliberately does NOT use
+  // the single-season read rail — that would resolve one season's context (and its team +
+  // program-year lookups) only to throw the result away, then re-fetch the same assignment lists
+  // here. The per-season capability map IS the access check: an empty map means this coach was
+  // never on this team's staff, in any year.
+  //
+  // One boolean can't be right across an archive — an assistant granted money in 2024 and not in
+  // 2025 must see 2024's totals and not 2025's — so the gate is resolved PER SEASON from that
+  // season's own assignment row.
+  const capsByYear = await resolveCoachSeasonCapabilityMap(ctx.org, ctx.user.id, teamId);
+  if (capsByYear.size === 0) return forbidden();
+
+  const moneyForYear = (yearId: string) => {
+    const caps = capsByYear.get(yearId);
+    return !!caps && canViewMoney(caps);
+  };
 
   const [history, current] = await Promise.all([
     getRepTeamHistory(teamId),
     getRepCurrentSeasonSummary(teamId),
   ]);
 
-  // Accounting per year, only when money-cleared. Fetch current + all past years in parallel.
-  let accountingByYear = new Map<string, SeasonAccounting>();
-  if (canMoney) {
-    const yearIds = [...history.map(y => y.id), ...(current ? [current.id] : [])];
-    const entries = await Promise.all(
-      yearIds.map(async id => [id, await accountingForYear(id)] as const),
-    );
-    accountingByYear = new Map(entries);
-  }
+  // Accounting only for the years this coach may see money on. Fetched in parallel.
+  const moneyYearIds = [...history.map(y => y.id), ...(current ? [current.id] : [])]
+    .filter(moneyForYear);
+  const accountingByYear = new Map<string, SeasonAccounting>(
+    await Promise.all(moneyYearIds.map(async id => [id, await accountingForYear(id)] as const)),
+  );
 
   return NextResponse.json({
-    canViewMoney: canMoney,
+    // Retained for the client's "money column exists at all" decision — true when the coach can
+    // see money on ANY season in the archive, not a claim about every row.
+    canViewMoney: [...capsByYear.values()].some(canViewMoney),
     current: current
-      ? { ...current, accounting: canMoney ? accountingByYear.get(current.id) ?? null : null }
+      ? { ...current, accounting: accountingByYear.get(current.id) ?? null }
       : null,
     history: history.map(y => ({
       ...y,
-      accounting: canMoney ? accountingByYear.get(y.id) ?? null : null,
+      accounting: accountingByYear.get(y.id) ?? null,
     })),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/history' });

@@ -2,7 +2,9 @@
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, Upload, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
-import { useCoaches } from '@/lib/coaches-context';
+import { useSearchParams } from 'next/navigation';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -20,6 +22,7 @@ import {
 import ExportMenu from '@/components/admin/ExportMenu';
 import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
+import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
@@ -658,10 +661,15 @@ export default function CoachesSchedulePage({
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
   // An assistant who reaches this page read-only must not be handed an "Add Event" button. Fails
   // CLOSED while the assignment resolves — the empty state only renders past the !assignment guard.
-  const canAddEvents = assignment ? canManageSchedule(assignment.capabilities) : false;
+  const canAddEvents = page.canWrite(page.capabilities ? canManageSchedule(page.capabilities) : false);
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.
   const scheduleHelpRequest = {
@@ -675,7 +683,7 @@ export default function CoachesSchedulePage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
       if (!res.ok) throw new Error(await res.text());
       const data = await res.json();
       const nextEvents: RepTeamEvent[] = data.events ?? [];
@@ -698,8 +706,8 @@ export default function CoachesSchedulePage({
       // Tryout markers + real tournament games are both optional read-only overlays keyed only on
       // org/team — fetch them concurrently (one round-trip, not two) and apply each independently.
       const [tryoutRes, gamesRes] = await Promise.allSettled([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-games`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tryout-sessions${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/tournament-games${seasonQuery}`),
       ]);
       if (tryoutRes.status === 'fulfilled' && tryoutRes.value.ok) {
         try { setTryoutSessions((await tryoutRes.value.json()).sessions ?? []); } catch { /* optional */ }
@@ -712,7 +720,7 @@ export default function CoachesSchedulePage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   // Player Awards data — separate from fetchEvents (own endpoints), but loaded alongside it so
   // the give-award picker and the slide-over's "Awards given" section are ready without a
@@ -720,8 +728,8 @@ export default function CoachesSchedulePage({
   const fetchAwardData = useCallback(async () => {
     try {
       const [typesRes, awardsRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards${seasonQuery}`),
       ]);
       if (typesRes.ok) setAwardTypes((await typesRes.json()).awardTypes ?? []);
       if (awardsRes.ok) {
@@ -730,7 +738,7 @@ export default function CoachesSchedulePage({
         setAwardPlayers(awardsData.players ?? []);
       }
     } catch { /* non-fatal — the schedule still works without award data */ }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => {
     void Promise.resolve().then(fetchEvents);
@@ -1273,8 +1281,8 @@ export default function CoachesSchedulePage({
     let hasLineup = false;
     try {
       const [attRes, lineupRes] = await Promise.allSettled([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/attendance`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/lineup`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/attendance${seasonQuery}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${pair.ownId}/lineup${seasonQuery}`),
       ]);
       if (attRes.status === 'fulfilled' && attRes.value.ok) {
         const d = await attRes.value.json();
@@ -1625,7 +1633,7 @@ export default function CoachesSchedulePage({
   // ── Rendering ───────────────────────────────────────────────────────────────
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading schedule…</div>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -1899,12 +1907,12 @@ export default function CoachesSchedulePage({
             <nav className={styles.breadcrumb}>
               <Link href={`/${orgSlug}/coaches`}>Portal</Link>
               <span>/</span>
-              <Link href={base}>{assignment.teamName}</Link>
+              <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
               <span>/</span>
               <span>Schedule</span>
             </nav>
-            <h1 className={styles.pageTitle}>Team Calendar</h1>
-            <p className={styles.pageSub}>{assignment.programYearName}</p>
+            <h1 className={styles.pageTitle}>Team Calendar<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+            <p className={styles.pageSub}>{page.programYearName}</p>
           </div>
         </div>
         <div className={styles.scheduleToolbar}>
@@ -2288,8 +2296,44 @@ export default function CoachesSchedulePage({
               </div>
             )}
 
+            {/* ── Practice plan (Practice Plans 1a) ──
+                A SUMMARY plus a door, never the editor: the plan is written on its own drill-in
+                where the focus rail and the rotation grid have room. Read rides `schedule` (this
+                whole slide-over already does); writing is head-coach-only and the builder says so.
+                The links section above is left completely alone — some coaches will keep their
+                own document forever, and that is a legitimate outcome (D2). */}
+            {selectedEvent.eventType === 'practice' && (
+              <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
+                <h4 className={styles.formSectionTitle}>Practice plan</h4>
+                {selectedEvent.practicePlan ? (
+                  <>
+                    <p className={styles.formHint}>
+                      {summarizePracticePlan(selectedEvent.practicePlan)}
+                      {selectedEvent.practicePlan.goal ? ` — ${selectedEvent.practicePlan.goal}` : ''}
+                    </p>
+                    <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
+                      Open the plan →
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <p className={styles.formHint}>
+                      No plan yet — set out the blocks, stations and groups for this practice.
+                    </p>
+                    <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
+                      Plan this practice →
+                    </Link>
+                  </>
+                )}
+              </div>
+            )}
+
             {/* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so
-                the destructive pair is separated from the everyday action. Kept above the tabs. */}
+                the destructive pair is separated from the everyday action. Kept above the tabs.
+                ⚠ Absent entirely in an archive (Chunk F): the server already refuses these for a
+                past season, but a record that draws Edit / Cancel / Delete and then errors is
+                worse than one that simply doesn't offer them. */}
+            {canAddEvents && (
             <div className={styles.slideOverActions}>
               {!deleteConfirm ? (
                 <>
@@ -2351,6 +2395,7 @@ export default function CoachesSchedulePage({
                 </div>
               )}
             </div>
+            )}
 
             {lineupMismatch && (
               <div className={styles.lineupPeekWarn} role="status">

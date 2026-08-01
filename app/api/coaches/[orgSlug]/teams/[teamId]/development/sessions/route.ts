@@ -8,6 +8,7 @@ import {
   getRepTeamMeasurableTypes,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import { denyUnless, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { isValidRecordDate } from '@/lib/measurable-format';
 
@@ -27,25 +28,31 @@ async function resolveContext(orgSlug: string, teamId: string) {
  *  auth-gated round trip (board-route precedent — two GETs doubled auth resolution).
  *  Two waves: (auth ∥ programYear) → deny → (sessions ∥ types). Team-scoped reads never
  *  run before the deny resolves — an unassigned org member must not force them. */
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const [resolved, programYear] = await Promise.all([
-    resolveContext(orgSlug, teamId),
-    getActiveRepProgramYear(teamId),
-  ]);
-  if ('error' in resolved) return resolved.error!;
-  const denied = denyUnless(canViewMeasurables(resolved.assignment.capabilities), 'You do not have access to measurables.');
+  // Season-scoped (Chunk F). This route used to resolve the ACTIVE year unconditionally while
+  // the Development page happily rendered a "2025 · Complete" chip above it — the archive said
+  // one season and the data was another. `?year=` now decides, and the capability gate reads
+  // that season's own grants.
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { programYear, capabilities, isReadOnly } = resolved;
+
+  const denied = denyUnless(canViewMeasurables(capabilities), 'You do not have access to measurables.');
   if (denied) return denied;
 
-  if (!programYear) {
-    return NextResponse.json({ error: 'No active program year for this team' }, { status: 404 });
-  }
   const [sessions, types] = await Promise.all([
     getRepTeamEvaluationSessions(programYear.id),
     getRepTeamMeasurableTypes(teamId, { includeRetired: true }),
   ]);
-  return NextResponse.json({ sessions, types, canWrite: canWriteDevelopment(resolved.assignment.capabilities) });
+  // A finished season can never be written to, whatever the grant says — the client uses this
+  // flag to decide whether to draw "New session".
+  return NextResponse.json({
+    sessions, types,
+    canWrite: !isReadOnly && canWriteDevelopment(capabilities),
+    isReadOnly,
+  });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/development/sessions' });
 
 export const POST = withObservability(async (req: Request,

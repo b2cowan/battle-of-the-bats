@@ -189,7 +189,20 @@ function grantsFrom(c: Caps) {
   };
 }
 
-export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
+export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = false, seasonQuery = '' }: {
+  orgSlug: string;
+  teamId: string;
+  /**
+   * Chunk F, governing rule 3: on a FINISHED season this panel governs who may still LOOK at
+   * that season, and nothing else. Removing a coach revokes their read access immediately;
+   * nobody can be invited to a season that has already happened, so the invite form goes.
+   * The capability toggles become a read-out of what each person could see at the time — the
+   * grants are the historical record, not a live control.
+   */
+  readAccessOnly?: boolean;
+  /** `?year=…` for the season being shown, so the LIST matches the page heading. */
+  seasonQuery?: string;
+}) {
   const [staff, setStaff] = useState<StaffMember[] | null>(null);
   const [loadError, setLoadError] = useState('');
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -205,11 +218,14 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
   const confirm = useConfirm();
   const uid = useId();
   const base = `/api/coaches/${orgSlug}/teams/${teamId}/staff`;
+  // ⚠ READ only. The write endpoints below deliberately do NOT carry the season — they resolve
+  // the live year, which is why the archive hides them (see the Remove button).
+  const readBase = `${base}${seasonQuery}`;
 
   const load = useCallback(async () => {
     setLoadError('');
     try {
-      const res = await fetch(base);
+      const res = await fetch(readBase);
       if (!res.ok) throw new Error('Could not load the coaching staff.');
       const json = await res.json();
       setStaff(json.staff ?? []);
@@ -273,9 +289,14 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
     // Was a native window.confirm() — the one dialog in the portal that broke from the app's own
     // styled confirmations (readiness-review finding f7-5).
     const ok = await confirm({
-      title: 'Remove this assistant?',
-      message: `${member.displayName || member.email || 'This assistant'} loses access to this team immediately. You can invite them again later.`,
-      confirmText: 'Remove',
+      title: readAccessOnly ? 'Remove their access to this season?' : 'Remove this assistant?',
+      // The archive wording names the blast radius precisely: this season's records only, and
+      // nothing about the current one. It matters because the same button on a live season DOES
+      // remove them from the team.
+      message: readAccessOnly
+        ? `${member.displayName || member.email || 'This assistant'} will no longer be able to open this finished season's records. It doesn't change what happened, and it doesn't affect any other season.`
+        : `${member.displayName || member.email || 'This assistant'} loses access to this team immediately. You can invite them again later.`,
+      confirmText: readAccessOnly ? 'Remove access' : 'Remove',
       cancelText: 'Keep them',
       tone: 'danger',
     });
@@ -327,12 +348,16 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
       {/* One sentence. The other half of the old intro ("nothing sensitive until you grant it")
           now lives in the access rail, where it can name the actual areas instead of being the
           same promise said twice on one screen. */}
-      <p className={css.lede}>Invite assistants and choose exactly what each one can do.</p>
+      <p className={css.lede}>{readAccessOnly
+          ? 'Who can still open this season’s records. Removing someone takes their access away straight away.'
+          : 'Invite assistants and choose exactly what each one can do.'}</p>
 
       {loadError && <p className={styles.errorText}>{loadError}</p>}
 
       <div className={css.cols}>
-        {/* Invite — its own object, with a real field label. */}
+        {/* Invite — its own object, with a real field label. Absent in an archive: you cannot
+            add someone to a season that has already happened (Chunk F, rule 3). */}
+        {!readAccessOnly && (
         <div className={`${css.inviteArea} ${css.card} ${css.inviteCard}`}>
           <form onSubmit={sendInvite} className={css.inviteForm}>
             <div className={css.field}>
@@ -354,6 +379,7 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
           {inviteMsg && <p className={css.inviteNote}>{inviteMsg}</p>}
           {inviteError && <p className={`${styles.errorText} ${css.inviteError}`}>{inviteError}</p>}
         </div>
+        )}
 
         <div className={css.listArea}>
           {!staff && !loadError && <p className={styles.muted}>Loading staff…</p>}
@@ -398,6 +424,10 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
                       return (
                         <button key={opt.value} type="button"
                           aria-pressed={active}
+                          // Archive: a read-out of what this person could see AT THE TIME, not a
+                          // control. The grants ARE the historical record (rule 1) — changing
+                          // them would rewrite what the season showed.
+                          disabled={readAccessOnly}
                           className={active ? `${css.segBtn} ${css.segBtnOn}` : css.segBtn}
                           onClick={() => setCap({ [seg.key]: opt.value } as Partial<Caps>)}>
                           {opt.label}
@@ -411,7 +441,8 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
             };
             const renderToggle = (t: Toggle) => (
               <label key={String(t.key)} className={css.check}>
-                <input type="checkbox" checked={Boolean(c[t.key])} onChange={e => setCap({ [t.key]: e.target.checked } as Partial<Caps>)} />
+                <input type="checkbox" checked={Boolean(c[t.key])} disabled={readAccessOnly}
+                  onChange={e => setCap({ [t.key]: e.target.checked } as Partial<Caps>)} />
                 <span>
                   <span className={css.checkLabel}>{t.label}</span>
                   <span className={css.checkHint}>{t.hint}</span>
@@ -434,9 +465,14 @@ export default function CoachStaffPanel({ orgSlug, teamId }: { orgSlug: string; 
                       {savingId === member.coachId && <span className={css.saveState}>Saving…</span>}
                       {savedId === member.coachId && <span className={css.saveStateDone}>Saved</span>}
                     </span>
+                    {/*
+                      Rule 3's one live action on a finished season. The endpoint resolves the
+                      TARGET'S own season, so removing here revokes access to THAT season and
+                      never touches a live assignment — the label says which.
+                    */}
                     <button type="button" onClick={() => removeAssistant(member)} disabled={removingId === member.coachId}
                       className={`${styles.btnSecondary} ${css.removeBtn}`}>
-                      <Trash2 size={13} /> Remove
+                      <Trash2 size={13} /> {readAccessOnly ? 'Remove access' : 'Remove'}
                     </button>
                   </div>
                 </div>

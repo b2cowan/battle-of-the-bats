@@ -1,7 +1,7 @@
 'use client';
 import { useState, useRef, useEffect, Fragment } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   LayoutDashboard, Calendar, CalendarCheck, MessageSquare, Trophy,
   Users, UserCog, Megaphone, DollarSign, FileText, BarChart3,
@@ -9,7 +9,8 @@ import {
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useOrg } from '@/lib/org-context';
-import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
+import { useCoaches, resolveClosedAssignment, resolveSeasonView } from '@/lib/coaches-context';
+import { resolveSeasonSwitchHref, seasonStatusLabel } from '@/lib/coach-season-view';
 import { isCoachNavItemVisible, CLOSED_TEAM_NAV_ITEMS } from '@/lib/coach-nav-visibility';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
@@ -27,10 +28,17 @@ const TEAM_TABS = [
 
 // A CLOSED season's tabs (Batch 3, P0 #1): the shared door list lives in
 // lib/coach-nav-visibility.ts (one source for both navs); icons resolve here.
-const CLOSED_TAB_ICON: Record<string, typeof Users> = { "Season's End": Trophy, Insights: BarChart3 };
+const CLOSED_TAB_ICON: Record<string, typeof Users> = {
+  "Season's End": Trophy, Roster: Users, Schedule: Calendar, Attendance: CalendarCheck,
+  Lineups: ListOrdered, Money: DollarSign, Documents: FileText, Development: TrendingUp,
+  Tryouts: ClipboardList, Insights: BarChart3, Staff: UserCog,
+};
 const CLOSED_TEAM_TABS = CLOSED_TEAM_NAV_ITEMS.map(item => ({
   key: item.href, icon: CLOSED_TAB_ICON[item.label] ?? Trophy, label: item.label,
 }));
+/** Chunk F: the archive has eleven doors and a phone bar holds four. These lead; the rest
+ *  drop into More, exactly as the live season's do. */
+const ARCHIVE_PRIMARY_LABELS = ["Season's End", 'Roster', 'Schedule', 'Money'];
 
 // Remaining team sections — surfaced under More, each beneath a plain-language section header that
 // mirrors the desktop sidebar groups (design rule: every More item sits under a section header).
@@ -74,8 +82,9 @@ const badgeText = (n: number): string => (n > 9 ? '9+' : String(n));
 export default function CoachesBottomNav() {
   const pathname = usePathname();
   const router   = useRouter();
+  const searchParams = useSearchParams();
   const { currentOrg, userRole } = useOrg();
-  const { assignments, closedAssignments } = useCoaches();
+  const { assignments, closedAssignments, seasons } = useCoaches();
   const orgSlug  = currentOrg?.slug ?? '';
   const base     = `/${orgSlug}/coaches`;
   // The "Admin" door — only for a coach who also administers this org (seeded from the layout's
@@ -122,7 +131,11 @@ export default function CoachesBottomNav() {
   // Closed-season access (Batch 3, P0 #1): the bar collapses to the read-only door set.
   // Same shared predicate as the sidebar/Overview (lib/coaches-context.tsx).
   const currentClosed = resolveClosedAssignment(assignments, closedAssignments, currentTeamId);
-  const caps = currentAssignment?.capabilities;
+  // Which SEASON (Chunk F). Read-only is a fact about the season, never the team.
+  const seasonView = resolveSeasonView(seasons, currentTeamId, searchParams.get('year'));
+  const inArchive = seasonView.isReadOnly;
+  // ⚠ In an archive the grants are THAT SEASON's (governing rule 1), not the coach's current ones.
+  const caps = inArchive ? seasonView.current?.capabilities : currentAssignment?.capabilities;
   // Shared with the desktop sidebar (lib/coach-nav-visibility.ts) — one source of truth for gating.
   const navVisible = (label: string): boolean => isCoachNavItemVisible(caps, label);
   // "In use yet?" signals decide whether a conditional item sits in its section or drops to Explore.
@@ -162,14 +175,18 @@ export default function CoachesBottomNav() {
       className={`${styles.bottomNav}${anyOverlayOpen ? ` ${styles.navHidden}` : ''}`}
       aria-label="Coaches mobile navigation"
     >
-      {/* Four primary team tabs (closed seasons: the two read-only doors) */}
-      {teamBase && (currentClosed ? CLOSED_TEAM_TABS : TEAM_TABS.filter(({ label }) => navVisible(label))).map(({ key, icon: Icon, label }) => {
+      {/* Four primary team tabs. In an archive the bar leads with the archive's four; the
+          remaining record doors drop into More, same as the live season's do. */}
+      {teamBase && ((currentClosed || inArchive)
+        ? CLOSED_TEAM_TABS.filter(({ label }) => ARCHIVE_PRIMARY_LABELS.includes(label) && navVisible(label))
+        : TEAM_TABS.filter(({ label }) => navVisible(label))
+      ).map(({ key, icon: Icon, label }) => {
         const active = tabIsActive(key);
         const isChat = key === '/chat';
         return (
           <Link
             key={key || 'overview'}
-            href={`${teamBase}${key}`}
+            href={`${teamBase}${key}${seasonView.query}`}
             className={`${styles.tab} ${active ? styles.active : ''}`}
             id={`coaches-mob-${label.toLowerCase()}`}
             aria-label={isChat && chatUnread > 0 ? `Chat, ${badgeText(chatUnread)} unread` : undefined}
@@ -287,9 +304,58 @@ export default function CoachesBottomNav() {
               </>
             )}
 
+            {/* Season switcher (Chunk F, D-F3 — owner call 2026-08-01). It lives HERE, not on the
+                page: a coach checks history a few times a season, and a row at the top of every
+                screen was charging rent on every screen for it. Same placement as the tournament
+                switcher in the admin bottom nav, directly under the team switcher above. */}
+            {teamBase && seasonView.hasChoice && (
+              <>
+                <div className={styles.dropSectionLabel}>This team&rsquo;s seasons</div>
+                {seasonView.options.map(s => {
+                  const active = seasonView.current?.programYearId === s.programYearId;
+                  return (
+                    <Link
+                      key={s.programYearId}
+                      // ONE switch rule with the sidebar and the chip. This list used to always
+                      // land on Season's End, so the same control behaved differently depending
+                      // on where the coach tapped it.
+                      href={resolveSeasonSwitchHref(teamBase, pathname, s)}
+                      className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
+                      role="menuitem"
+                    >
+                      <span>{s.programYearName}</span>
+                      <span className={styles.dropMeta}>{seasonStatusLabel(s)}</span>
+                    </Link>
+                  );
+                })}
+                <div className={styles.dropDivider} />
+              </>
+            )}
+
             {/* Remaining team sections — each under a plain-language header mirroring the
-                sidebar. A closed season has no "more" sections — its two doors ARE the tabs. */}
-            {teamBase && !currentClosed && (() => {
+                sidebar. In an ARCHIVE the record doors that didn't fit the four tabs land here. */}
+            {teamBase && (currentClosed || inArchive) && (
+              <>
+                <div className={styles.dropSectionLabel}>Sections</div>
+                {CLOSED_TEAM_TABS
+                  .filter(({ label }) => !ARCHIVE_PRIMARY_LABELS.includes(label) && navVisible(label))
+                  .map(({ key, icon: Icon, label }) => (
+                    <Link
+                      key={key}
+                      href={`${teamBase}${key}${seasonView.query}`}
+                      className={`${styles.dropItem} ${pathname.startsWith(`${teamBase}${key}`) ? styles.dropActive : ''}`}
+                      role="menuitem"
+                    >
+                      <Icon size={17} />
+                      <span>{label}</span>
+                      <ChevronRight size={14} className={styles.dropChevron} />
+                    </Link>
+                  ))}
+                <div className={styles.dropDivider} />
+              </>
+            )}
+
+            {teamBase && !currentClosed && !inArchive && (() => {
               const renderMoreItem = ({ key, icon: Icon, label }: MoreItem) => {
                 const href   = `${teamBase}${key}`;
                 const active = pathname.startsWith(href);

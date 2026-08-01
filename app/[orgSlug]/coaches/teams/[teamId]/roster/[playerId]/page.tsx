@@ -1,8 +1,10 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronRight, AlertTriangle, Check } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
 import PlayerDevelopmentSection from '@/components/coaches/PlayerDevelopmentSection';
@@ -126,6 +128,11 @@ export default function PlayerDetailPage({
 }) {
   const { orgSlug, teamId, playerId } = use(params);
   const { assignments, loading: assignmentsLoading } = useCoaches();
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
   // Positions/pitching vocabulary comes from this team's sport (falls back to the default until the
   // assignment loads). The picker offers the assignable FIELD positions (not the OF catch-all / DH).
@@ -255,7 +262,7 @@ export default function PlayerDetailPage({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   if (assignmentsLoading || fetching) return <p className={styles.muted}>Loading…</p>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -281,9 +288,9 @@ export default function PlayerDetailPage({
       <div className={styles.breadcrumb}>
         <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
         <span><ChevronRight size={12} /></span>
-        <Link href={base}>{assignment.teamName}</Link>
+        <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
         <span><ChevronRight size={12} /></span>
-        <Link href={`${base}/roster`}>Roster</Link>
+        <Link href={`${base}/roster${seasonQuery}`}>Roster</Link>
         <span><ChevronRight size={12} /></span>
         <span>{[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}</span>
       </div>
@@ -292,13 +299,13 @@ export default function PlayerDetailPage({
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div>
-            <h1 className={styles.pageTitle}>{[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}</h1>
+            <h1 className={styles.pageTitle}>{[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
             <p className={styles.pageSub}>
               {[
                 player.playerNumber ? `#${player.playerNumber}` : null,
                 ageFromDob(player.playerDateOfBirth) !== null ? `Age ${ageFromDob(player.playerDateOfBirth)}` : null,
-                seasonLabel(assignment.programYearName, assignment.teamName)
-                  ? `${seasonLabel(assignment.programYearName, assignment.teamName)} season` : null,
+                seasonLabel(page.programYearName, page.teamName)
+                  ? `${seasonLabel(page.programYearName, page.teamName)} season` : null,
               ].filter(Boolean).join(' · ')}
             </p>
           </div>

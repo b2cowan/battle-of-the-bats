@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Receipt, Plus, CheckCircle2, AlertTriangle, ArrowLeft, Tag, Settings2, Upload } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
@@ -138,9 +140,14 @@ export default function CoachesExpensesPage({
     noun: 'payable',
   });
 
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
-  const canWriteMoney = assignment?.capabilities.money === 'write';
+  const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
   // The team's OWN money tags (org-shared ones are managed by the org admin, not here).
   const ownMoneyTags = expenseTags.filter(t => t.teamId !== null);
   const tagById = new Map(expenseTags.map(t => [t.id, t]));
@@ -150,9 +157,9 @@ export default function CoachesExpensesPage({
     setError('');
     try {
       const [res, catRes, planRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/expenses${seasonQuery}`),
         fetch(`/api/coaches/${orgSlug}/budget-items`),
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
       ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
@@ -180,7 +187,7 @@ export default function CoachesExpensesPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -204,7 +211,7 @@ export default function CoachesExpensesPage({
     } finally {
       setScheduleLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => { if (tab === 'schedule') loadSchedule(); }, [tab, loadSchedule]);
 
@@ -405,7 +412,7 @@ export default function CoachesExpensesPage({
   }
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -439,7 +446,7 @@ export default function CoachesExpensesPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/accounting`} className={styles.backLink}>
+      <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Money
       </Link>
       <div className={styles.pageHeader}>
@@ -449,8 +456,8 @@ export default function CoachesExpensesPage({
             {/* "Tournament" retired (chunk H, D-H9): the same record has always handled a dome
                 booking or an equipment order just as well as a tournament entry — only the
                 words assumed otherwise. The stored type is unchanged. */}
-            <h1 className={styles.pageTitle}>Expenses &amp; Payables</h1>
-            <p className={styles.pageSub}>{assignment.programYearName}</p>
+            <h1 className={styles.pageTitle}>Expenses &amp; Payables<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+            <p className={styles.pageSub}>{page.programYearName}</p>
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem' }}>

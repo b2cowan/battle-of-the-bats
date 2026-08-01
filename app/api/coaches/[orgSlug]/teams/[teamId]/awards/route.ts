@@ -13,6 +13,7 @@ import {
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageAwards } from '@/lib/coach-capabilities';
 import { tournamentToday } from '@/lib/timezone';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -38,12 +39,17 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveTeamCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { ctx, programYear } = resolved;
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { ctx, programYear, capabilities } = resolved;
+  // ⚠ Stated HERE, not in a resolver. `resolveTeamCoachContext` below folds this same check into
+  // its return — a genuine trap: swapping the resolver silently drops the gate. The write verbs
+  // still use that resolver (and its gate); the read path states its own.
+  const denied = denyUnless(canManageAwards(capabilities), 'You do not have access to awards.');
+  if (denied) return denied;
 
   // `players` is a minimal, PII-free roster slice (id/name/number only) so the give-award
   // picker works for a schedule-only coach too, without widening the more tightly-scoped

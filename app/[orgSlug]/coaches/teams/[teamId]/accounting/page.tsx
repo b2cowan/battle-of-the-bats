@@ -1,11 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, use, type ReactNode } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   DollarSign, Users, Receipt, Building2, BarChart3, TrendingUp, Gift,
   ArrowLeftRight, ArrowRight, ChevronRight, AlertTriangle,
 } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import HelpButton from '@/components/help/HelpButton';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import styles from '../../../coaches.module.css';
@@ -61,6 +63,11 @@ export default function CoachesAccountingPage({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -68,7 +75,7 @@ export default function CoachesAccountingPage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-summary`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/money-summary${seasonQuery}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       setSummary(await res.json());
     } catch (e: unknown) {
@@ -76,12 +83,12 @@ export default function CoachesAccountingPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => { load(); }, [load]);
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -90,7 +97,7 @@ export default function CoachesAccountingPage({
     );
   }
 
-  const canWrite = assignment.capabilities.money === 'write';
+  const canWrite = page.canWrite(page.capabilities?.money === 'write');
 
   // ── Stage anchor content ─────────────────────────────────────────────────
   // One "right now" card, one lime CTA max (earned-lime rule). Operate splits
@@ -239,7 +246,11 @@ export default function CoachesAccountingPage({
     stat: ReactNode,
   ) {
     return (
-      <Link href={href} className={styles.moneyCard}>
+      // ⚠ The season rides EVERY card. This is the structural fix for the leak /review found:
+      // the hub was season-scoped but its cards were not, so opening Expenses from the 2025
+      // archive landed a coach in the LIVE season with full write controls and nothing saying
+      // so — one click from logging a real expense against the wrong year.
+      <Link href={`${href}${seasonQuery}`} className={styles.moneyCard}>
         <span className={styles.moneyCardIcon}>{icon}</span>
         <span className={styles.moneyCardBody}>
           <p className={styles.moneyCardTitle}>{title}</p>
@@ -260,12 +271,12 @@ export default function CoachesAccountingPage({
             <nav className={styles.breadcrumb}>
               <Link href={`/${orgSlug}/coaches`}>Portal</Link>
               <span>/</span>
-              <Link href={base}>{assignment.teamName}</Link>
+              <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
               <span>/</span>
               <span>Money</span>
             </nav>
-            <h1 className={styles.pageTitle}>Money</h1>
-            <p className={styles.pageSub}>{assignment.programYearName}</p>
+            <h1 className={styles.pageTitle}>Money<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+            <p className={styles.pageSub}>{page.programYearName}</p>
           </div>
         </div>
         <HelpButton
@@ -447,7 +458,9 @@ export default function CoachesAccountingPage({
                   <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>None logged</span>
                 ),
               )}
-              {summary.orgLinked && card(
+              {/* D-F7: instruments, not records — org allocations and payment requests MOVE money and
+                  their pages are live-season only, so a finished season does not offer them. */}
+              {summary.orgLinked && !page.isReadOnly && card(
                 `${base}/accounting/allocations`,
                 <Building2 size={20} style={{ color: 'var(--blueprint-blue)' }} />,
                 'Org Allocations',
@@ -463,7 +476,7 @@ export default function CoachesAccountingPage({
                   <span className={styles.moneyCardStatValue} style={{ color: 'var(--white-40)' }}>None assigned</span>
                 ),
               )}
-              {summary.orgLinked && card(
+              {summary.orgLinked && !page.isReadOnly && card(
                 `${base}/accounting/payment-requests`,
                 <ArrowLeftRight size={20} style={{ color: 'var(--warning)' }} />,
                 'Payment Requests',

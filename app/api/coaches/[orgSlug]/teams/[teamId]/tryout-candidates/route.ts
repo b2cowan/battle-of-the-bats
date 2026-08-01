@@ -8,7 +8,10 @@ import {
   getRepTryoutCheckinList,
   createRepTryoutRegistration,
   updateRepTryoutCheckin,
+  getRepProgramYears,
+  getPriorContinuityIdentities,
 } from '@/lib/db';
+import { matchPriorIdentities, type ContinuityKind } from '@/lib/continuity-match';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 import type { RepProgramYear } from '@/lib/types';
@@ -16,6 +19,51 @@ import type { RepProgramYear } from '@/lib/types';
 type Resolved =
   | { ok: false; res: Response }
   | { ok: true; orgId: string; teamId: string; programYear: RepProgramYear; assignment: Awaited<ReturnType<typeof getCoachingAssignmentsForUser>>[number] };
+
+/**
+ * Which of this year's candidates were here before, and in which season (Chunk F, D-F1).
+ * Keyed by registration id; absent = first time. `kind` distinguishes "tried out and didn't
+ * make it" from "was on the roster", because those are different conversations with a family.
+ */
+export interface ReturningCandidateMarker {
+  priorProgramYearId: string;
+  priorProgramYearName: string;
+  kind: ContinuityKind;
+  confidence: 'high' | 'possible';
+}
+
+async function resolveReturningCandidates(
+  teamId: string,
+  programYearId: string,
+  candidates: { id: string; playerFirstName: string; playerLastName: string | null;
+    playerDateOfBirth: string | null; guardianEmail: string | null }[],
+): Promise<Record<string, ReturningCandidateMarker>> {
+  if (candidates.length === 0) return {};
+  const years = await getRepProgramYears(teamId);
+  const { identities } = await getPriorContinuityIdentities(teamId, programYearId, years);
+  if (identities.length === 0) return {};
+
+  const yearName = new Map(years.map(y => [y.id, y.name]));
+  const out: Record<string, ReturningCandidateMarker> = {};
+  for (const c of candidates) {
+    const [best] = matchPriorIdentities(
+      {
+        kind: 'registration', id: c.id, programYearId,
+        firstName: c.playerFirstName, lastName: c.playerLastName,
+        dateOfBirth: c.playerDateOfBirth, guardianEmail: c.guardianEmail,
+      },
+      identities,
+    );
+    if (!best) continue;
+    out[c.id] = {
+      priorProgramYearId: best.prior.programYearId,
+      priorProgramYearName: yearName.get(best.prior.programYearId) ?? 'a past season',
+      kind: best.prior.kind,
+      confidence: best.confidence,
+    };
+  }
+  return out;
+}
 
 async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -43,7 +91,15 @@ export const GET = withObservability(async (_req: Request,
     getRepTryout(r.programYear.id),
     getRepTryoutCheckinList(r.programYear.id),
   ]);
-  return NextResponse.json({ isAnonymous: tryout?.isAnonymous ?? true, candidates });
+
+  // Chunk F (D-F1): "have we seen this person before?" — the moment past-season tryout records
+  // exist to serve. Reuses the SAME matcher the Decision Board's continuity scan runs on, so a
+  // returning candidate is recognised identically in both places. Never gated separately: the
+  // caller already cleared `tryouts` above, and the marker carries no evaluation content — just
+  // which season to go and read.
+  const returningByCandidate = await resolveReturningCandidates(teamId, r.programYear.id, candidates);
+
+  return NextResponse.json({ isAnonymous: tryout?.isAnonymous ?? true, candidates, returning: returningByCandidate });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/tryout-candidates' });
 
 // Walk-up add — a candidate who shows up without registering. Player name is enough; guardian

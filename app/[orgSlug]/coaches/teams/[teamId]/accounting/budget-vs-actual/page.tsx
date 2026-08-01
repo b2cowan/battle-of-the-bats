@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { TrendingUp, ChevronDown, ChevronRight, X, ArrowLeft, Tag } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -224,15 +226,29 @@ export default function BudgetVsActualPage({
   // PDF settings — fetched once on mount; used in handleExportPDF
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
+  // This page already carries a tag filter, so the season has to MERGE into the same query
+  // string rather than append a second `?`.
+  const bvaQuery = (() => {
+    const qs = new URLSearchParams();
+    if (filterTagId) qs.set('tagId', filterTagId);
+    if (page.season.isReadOnly && page.season.current) qs.set('year', page.season.current.programYearId);
+    const q = qs.toString();
+    return q ? `?${q}` : '';
+  })();
   const assignment = assignments.find(a => a.teamId === teamId);
-  const moneyCanWrite = assignment?.capabilities.money === 'write';
+  const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
 
   const load = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
       const [res, catRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual${filterTagId ? `?tagId=${filterTagId}` : ''}`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-vs-actual${bvaQuery}`),
         fetch(`/api/coaches/${orgSlug}/budget-items`),
       ]);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
@@ -246,7 +262,7 @@ export default function BudgetVsActualPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, filterTagId]);
+  }, [orgSlug, teamId, filterTagId, bvaQuery]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -454,7 +470,7 @@ export default function BudgetVsActualPage({
   }
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -467,15 +483,15 @@ export default function BudgetVsActualPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/accounting`} className={shared.backLink}>
+      <Link href={`${base}/accounting${seasonQuery}`} className={shared.backLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Money
       </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><TrendingUp size={22} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Budget vs. Actual</h1>
-            <p className={styles.pageSub}>{assignment.programYearName}</p>
+            <h1 className={styles.pageTitle}>Budget vs. Actual<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+            <p className={styles.pageSub}>{page.programYearName}</p>
           </div>
         </div>
         <ExportMenu

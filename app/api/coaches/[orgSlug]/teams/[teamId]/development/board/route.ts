@@ -12,6 +12,7 @@ import {
   getRepProgramYears,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import {
   denyUnless, canViewDevelopmentGoals, canViewMeasurables,
 } from '@/lib/coach-capabilities';
@@ -32,14 +33,12 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const withHistory = new URL(req.url).searchParams.get('history') === '1';
 
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-  if (ctx.org.slug !== orgSlug) return forbidden();
-
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return forbidden();
-  const caps = assignment.capabilities;
+  // Season-scoped (Chunk F): `?year=` decides which season is being read, and the grants come
+  // from THAT season's assignment row (governing rule 1) rather than the coach's current ones.
+  const seasonCtx = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in seasonCtx) return seasonCtx.error;
+  const ctx = seasonCtx.ctx;
+  const caps = seasonCtx.capabilities;
 
   const showGoals = canViewDevelopmentGoals(caps);
   const showMeasurables = canViewMeasurables(caps);
@@ -53,7 +52,7 @@ export const GET = withObservability(async (req: Request,
   const typesPromise = showMeasurables
     ? getRepTeamMeasurableTypes(teamId, { includeRetired: true })
     : Promise.resolve([]);
-  const programYear = await getActiveRepProgramYear(teamId);
+  const programYear = seasonCtx.programYear;
   if (!programYear) {
     await typesPromise.catch(() => {});
     return NextResponse.json({ error: 'No active program year for this team' }, { status: 404 });

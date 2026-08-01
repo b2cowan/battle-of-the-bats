@@ -15,6 +15,7 @@ import {
 import type { RepLineupMode } from '@/lib/types';
 import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import { withObservability } from '@/lib/observability';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
@@ -82,14 +83,25 @@ function normalizeInningPositions(raw: unknown, inningCount: number): Record<str
   return next;
 }
 
-export const GET = withObservability(async (_req: Request,
+// READ: season-scoped (Chunk F). A game from a past season is a record worth opening — before
+// this, tapping one from the archive's Lineups list hit "No active program year for this team".
+// The event must belong to the SEASON being read, so a year id can't surface another season's game.
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
-  if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear, event } = resolved;
-  const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+  const season = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in season) return season.error;
+  const { capabilities, programYear, isReadOnly } = season;
+  const denied = denyUnless(capabilities.lineups, 'You do not have access to lineups.');
   if (denied) return denied;
+
+  const event = await getRepTeamEventById(eventId);
+  if (!event || event.teamId !== teamId || event.programYearId !== programYear.id) {
+    return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+  }
+  if (!GAME_EVENT_TYPES.includes(event.eventType)) {
+    return NextResponse.json({ error: 'Lineups are available for games and scrimmages' }, { status: 400 });
+  }
 
   const [players, attendance, lineup] = await Promise.all([
     getRepRosterPlayers(programYear.id),
@@ -103,11 +115,12 @@ export const GET = withObservability(async (_req: Request,
     // header + poster without a second events fetch. (The schedule modal ignores this extra key.)
     event,
     // Redact guardian PII / notes for a coach without those grants (this endpoint returns the roster).
-    players: redactRoster(players.filter(player => player.status === 'active'), assignment.capabilities),
+    players: redactRoster(players.filter(player => player.status === 'active'), capabilities),
     attendance,
     lineup,
     entries,
     programYear,
+    isReadOnly,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/lineup' });
 

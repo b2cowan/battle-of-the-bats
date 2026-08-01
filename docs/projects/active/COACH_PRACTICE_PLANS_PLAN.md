@@ -1,11 +1,38 @@
 # Practice Plans — Implementation Plan (Player Development, roadmap Phase 4)
 
-> **Status:** ✅ **PLANNING COMPLETE — ALL 30 DECISIONS (D1–D30) OWNER-ACCEPTED 2026-07-31, and all
-> five mockup rounds accepted. The mockups ARE the binding visual spec.** Final phase ladder in §9.2.
-> **Next step = the Phase 1a build session, in a FRESH chat** (`COACH_PRACTICE_PLANS_PHASE1_BUILD_PROMPT.md`).
-> ⚠ **A release is overdue and is the higher priority** — see the TODO ledger. Planning-only session
-> 2026-07-31 — no source edits, no migrations. A build session follows owner approval **and an
-> approved mockup round** (owner-mandated: mockups before code).
+> **Status:** 🔨 **PHASE 1a BUILT 2026-08-01 — awaiting owner QA. UNCOMMITTED.**
+> Planning complete and all 30 decisions (D1–D30) owner-accepted 2026-07-31; all five mockup rounds
+> accepted and binding. Final phase ladder in §9.2. The overdue release was promoted first
+> (prod moved to the 2026-07-31 changelog commit) before the build started.
+>
+> **What shipped in 1a:** the plan on the practice event (goal + kit · blocks with
+> description/goal/flexible duration/staff/players/coaching points · stations · groups incl. the
+> random draw · rotation blocks with the computed group×round grid) · the focus rail ·
+> copy-from-a-previous-practice · the one-page printed sheet incl. the rotation grid · D10 (the
+> evaluation-session editable date, the event link, the re-stamp confirm, and the practice's
+> "Recorded here" section) · the Development hub pointer line (D9) · the schedule slide-over summary.
+>
+> **Migration 213** (`rep_team_events.practice_plan` + `rep_team_evaluation_sessions.event_id`)
+> is **APPLIED TO DEV ONLY**. ⚠ **It must be applied to PROD before this code is promoted** — see
+> the §7 release rider. The schema-parity gate currently reports the expected 4-row divergence.
+>
+> **Two deviations from the letter of the plan, both deliberate — see §10.3.**
+>
+> **Verification:** `/simplify` (12 cleanups, 2 of them real defects) → `/review` high-risk, 5 lenses
+> (14 findings confirmed and fixed, 1 refuted) → `/docs` (a new `premium-practice-plans` guide section,
+> a `faq-session-change-date` FAQ, and in-context help on the builder). typecheck ✓ · lint 0 errors ·
+> 40 practice-plan unit tests ✓ · dictionary + snapshots refreshed ✓ · clean dev restart ✓.
+> ⚠ **The Playwright computed-style probes (361/390/desktop) are WRITTEN but could NOT run** —
+> `tests/uat/scenarios/practice-plan-layout.spec.ts`, needs `PROBE_EVENT_ID`. The UAT coach fixture is
+> **orphaned**: `rep_teams` row `3127a094…` points at an `org_id` that no longer exists in
+> `organizations`, so no coach resolves an assignment there and every probe lands on "Not assigned to
+> any teams". **Pre-existing UAT environment breakage, unrelated to this feature.** Repair the fixture
+> (or point the spec at a live team) and the probes run unchanged. Layout therefore rests on owner QA
+> for this slice.
+>
+> **NOT built (correctly out of scope):** the field run screen and "My station" (1b) · the drill
+> library (Phase 2) · the plan library, "how it went", the coverage answer (Phase 3) · Helpers
+> (Phase 4, gated).
 > **⚠ SCOPE ADDED AFTER PLANNING (2026-07-31): D10 — the evaluation-session date + practice link.**
 > The owner deferred it into this project rather than shipping it standalone, so the practice↔development
 > seam is designed once. It is **NOT in the round-1 mockups — a round 2 is required before build.**
@@ -564,9 +591,93 @@ item verifies it.
 
 ---
 
+## 10.3 · Deviations taken at build time (2026-08-01) — deliberate, and why
+
+Two places where the build delivered the **decision's outcome** by a different mechanism than the
+decision's wording named. Both are recorded here so a later session doesn't "restore" them.
+
+### 1. D12 staff — reusable NAMES, not `rep_team_tags` rows
+
+**D12 ruled "tags", naming the existing coach tag control.** The build stores staff as plain
+**names** on the plan, with the reusable vocabulary assembled from (a) the team's own coaching staff
+and (b) every staff name already used on this team's previous practice plans
+(`collectStaffSuggestions`). The behaviour D12 specified is fully delivered: team coaches are
+offered automatically, anyone else is created on the spot by typing them, and the name is reusable
+on every later plan.
+
+**Why the mechanism changed:**
+- A plan lives in a **jsonb column**, so a tag reference would be an id embedded in JSON — not the
+  join-table linkage every other tag kind uses. `merge_rep_team_tags` re-points
+  `rep_team_event_tags` and `rep_team_expense_tags`; it **cannot** re-point ids inside jsonb, so
+  merging two staff tags would silently orphan every practice plan referencing the loser. That is a
+  data-corruption path introduced purely to reuse a control.
+- It would also have required widening the `rep_team_tags.kind` CHECK constraint (a shared,
+  cross-feature constraint) and adding a `kind` parameter to the coach tags route.
+- **A past plan naming "Adam" should keep saying "Adam"** — it is the historical record of who ran
+  that station. A rename-everywhere function is arguably wrong for this artifact.
+- The suggestion list **self-heals**: a typo stops being offered as soon as no plan uses it, which
+  is better than a 50-tag library a coach must curate by hand.
+
+**Net:** same coach-visible behaviour, no CHECK-constraint change, no new route, no dangling ids,
+no merge-corruption path. ⚠ If the owner wants a *managed* staff list (rename, retire, merge), that
+is a real feature — raise it rather than quietly swapping the storage back.
+
+### 2. §10.2 ruling 3 — the program-year date bound is NOT enforced
+
+Ruling 3 said to refuse an out-of-season session date "with a plain reason", **with an explicit
+escape clause: "where a program year has no bounded dates, accept anything."** Verified at build
+time: `rep_program_years` carries **no start/end dates** — only a `year` integer and a status. There
+is nothing to bound against.
+
+Deriving a bound from the calendar year would be **wrong**, not merely incomplete: a "2026" season
+that runs September 2026 → March 2027 would have its own March practices refused. So the escape
+clause applies and the existing sanity bounds (`isValidRecordDate`: a real date, year 2000 …
+next year) are the only guard. **If season date bounds are ever added to `rep_program_years`, this
+becomes a two-line change** — that is the trigger to revisit, not a defect to fix now.
+
+---
+
 ## 11 · Cut list — judged out, do not quietly re-add
 
 Auto-generated plans from focus areas (free text doesn't cluster; the suggestion would be a confident lie) · **a drill library in V1** *(revised round 2: a coach-authored drill library is now **V2** — what stays cut is drill **videos**, hosted drill **content**, and any seeded sport-specific drills)* · **player grouping by ability or need** *(explicit coach-chosen pairs are V4; automatic grouping by level stays cut forever)* · any "these N kids need the most work" surface · parent/player/guardian visibility of a plan · timer sounds, vibration, notifications, or auto-advance · plan sharing links · simultaneous multi-station timers · importing an existing Google Doc · a plan on the Overview screen (Chunk I: the Overview shows **one** anchor by an ordered rule — a practice plan does not get to jump that queue) · a seventh Insights tile · **per-child commentary in the "how it went" recap** (D17 guardrail — practice-level only).
+
+---
+
+## 11.1 · CLOSING TASK — decide what a practice plan does in an ARCHIVED season (added by the Chunk F session, 2026-08-01)
+
+⚠ **Do not close this project without answering this.** Chunk F (the frozen past season) shipped
+while this build was in flight, so the two never met.
+
+**Where it stands today, verified 2026-08-01 — the data is safe, the door is not:**
+- ✅ **No data risk.** The plan lives on the practice EVENT, and events are season-keyed, so a 2025
+  plan is permanently attached to 2025. Nothing can leak between seasons or be lost.
+- ❌ **The archive dead-ends.** `events/[eventId]/practice-plan` resolves `getActiveRepProgramYear`
+  and then requires `event.programYearId === programYear.id`. From a past season that is never true,
+  so **"Open the plan →" errors** — and on a team with no live season it errors for every plan, which
+  is exactly the coach most likely to be looking back.
+- ❌ **It invites a write into a finished season.** The schedule slide-over's practice block sits
+  OUTSIDE the actions block Chunk F gated, so an archived practice with no plan still offers
+  **"Plan this practice →"**.
+
+**The owner ruling that governs the answer (2026-08-01, binding — `memory/design_decisions.md`):**
+**the archive is OPT-IN.** New coach-portal functionality is *not* viewable in past seasons unless
+someone decides it should be. So the default, and the cheapest correct close-out, is:
+
+> **Hide the practice-plan entry point when the season being viewed is a record** — the schedule
+> slide-over's practice block renders only when the season is writable. One condition, no new
+> plumbing, and nothing dead-ends.
+
+**If the owner instead decides practice plans SHOULD be readable in history** (a defensible ask —
+"what did we work on last spring" is the same instinct that put tryout history in scope), the work is
+small and the pattern is already built and proven on the roster-player and lineup-detail pages:
+1. Route → `resolveCoachSeasonRead` (`lib/coach-season-read.ts`), event matched against the RESOLVED
+   season, capabilities from that season's assignment row.
+2. Page → `useCoachSeasonPage`, `CoachSeasonChip` beside the title, every write control through
+   `page.canWrite()`.
+3. The schedule link carries `page.query`.
+4. Add `events/[eventId]/practice-plan` to `APPROVED_SEASON_AWARE_ROUTES` and the page to the
+   archive sweep in `tests/uat/scenarios/coach-frozen-season-smoke.spec.ts` — **both lists fail the
+   build until you do, which is the point.**
 
 ---
 

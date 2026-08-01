@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
-  getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear,
   getRepTeamTagLibrary, getRepTeamExpenseTagsMap,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -12,28 +10,7 @@ import {
   buildMonthGrid, monthKeyOf,
   type CategoryEvent, type GridLine, type PriorLine,
 } from '@/lib/coach-budget-months';
-
-async function resolveCoachContext(orgSlug: string, teamId: string) {
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return { error: unauthorized() };
-  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
-
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) {
-    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
-  }
-
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
-
-  const programYear = await getActiveRepProgramYear(teamId);
-  if (!programYear) {
-    return { error: NextResponse.json({ error: 'No active program year' }, { status: 404 }) };
-  }
-
-  return { ctx, team, assignment, programYear };
-}
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 // GET /api/coaches/[orgSlug]/teams/[teamId]/budget-vs-actual
 //
@@ -44,10 +21,10 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment, programYear } = resolved;
-  const denied = denyUnless(canViewMoney(assignment.capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { ctx, capabilities, programYear } = resolved;
+  const denied = denyUnless(canViewMoney(capabilities), 'You do not have access to team finances. Ask the head coach to grant it.');
   if (denied) return denied;
 
   // Optional money-tag filter (Phase 3): when ?tagId= is present, the actuals are scoped to

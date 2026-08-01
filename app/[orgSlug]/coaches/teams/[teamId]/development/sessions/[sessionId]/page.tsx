@@ -1,5 +1,5 @@
 'use client';
-import { use, useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { ClipboardCheck, X } from 'lucide-react';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -15,11 +15,20 @@ interface SessionRosterRow {
   playerNumber: string | null;
 }
 
+/** The event-picker options (D10) — identity + date only, never a whole event record. */
+interface SessionEventOption {
+  id: string;
+  name: string;
+  eventType: string;
+  startsAt: string;
+}
+
 interface SessionWorld {
   session: RepTeamEvaluationSession;
   roster: SessionRosterRow[];
   types: RepTeamMeasurableType[];
   entries: RepPlayerMeasurable[];
+  events: SessionEventOption[];
   canWrite: boolean;
 }
 
@@ -57,17 +66,37 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   const [newTypeOpen, setNewTypeOpen] = useState(false);
   const [newTypeName, setNewTypeName] = useState('');
   const [newTypeUnit, setNewTypeUnit] = useState('');
+  // The date input's own value while the coach is mid-edit. Null = show the saved date, so a
+  // cancelled confirm snaps straight back to the truth rather than leaving a phantom date on screen.
+  const [dateDraft, setDateDraft] = useState<string | null>(null);
+  // One session mutation in flight at a time — see patchSession.
+  const [sessionBusy, setSessionBusy] = useState(false);
 
-  const load = useCallback(async () => {
+  /**
+   * Sequence guard: a slow earlier response must never stomp a newer one.
+   *
+   * This reload runs after every date/event save, so two in quick succession can resolve out of
+   * order and land the OLDER session on screen — the header would then disagree with what the
+   * coach just chose. Same guard the practice-plan drill-in uses.
+   *
+   * @returns whether the load actually landed (false = failed, or superseded by a newer one).
+   */
+  const loadSeqRef = useRef(0);
+  const load = useCallback(async (): Promise<boolean> => {
+    const seq = ++loadSeqRef.current;
     try {
       const res = await fetch(`${apiBase}/development/sessions/${sessionId}`);
       const json = await res.json().catch(() => null);
       if (!res.ok || !json) throw new Error(json?.error ?? 'Could not load the session — try again.');
+      if (seq !== loadSeqRef.current) return false;
       setData(json);
       setError('');
       setSelectedTypeId(prev => prev || (json.types as RepTeamMeasurableType[]).find(t => t.isActive)?.id || '');
+      return true;
     } catch (e) {
+      if (seq !== loadSeqRef.current) return false;
       setError(e instanceof Error ? e.message : 'Could not load the session — try again.');
+      return false;
     }
   }, [apiBase, sessionId]);
 
@@ -90,7 +119,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     );
   }
 
-  const { session, roster, types, entries, canWrite } = data;
+  const { session, roster, types, entries, events, canWrite } = data;
   const activeTypes = types.filter(t => t.isActive);
   const selectedType = activeTypes.find(t => t.id === selectedTypeId) ?? null;
   const draftKey = (playerId: string) => `${playerId}:${selectedTypeId}`;
@@ -106,6 +135,18 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   // Count only CURRENT roster members — a since-deactivated player's reading must not
   // produce "15 of 14 entered".
   const enteredCount = roster.filter(p => entryByPlayer.has(p.id)).length;
+
+  const linkedEvent = events.find(e => e.id === session.eventId) ?? null;
+  /* Practices first, then everything else, each ordered by how close it sits to the session's
+     current date (§10.2 ruling 2). A coach who tested at a Saturday scrimmage warm-up must still
+     find it, so nothing is filtered out — practices simply lead. */
+  const sessionEventOptions = [...events].sort((a, b) => {
+    const aPractice = a.eventType === 'practice' ? 0 : 1;
+    const bPractice = b.eventType === 'practice' ? 0 : 1;
+    if (aPractice !== bPractice) return aPractice - bPractice;
+    const anchor = new Date(`${session.sessionDate}T12:00:00Z`).getTime();
+    return Math.abs(new Date(a.startsAt).getTime() - anchor) - Math.abs(new Date(b.startsAt).getTime() - anchor);
+  });
 
   async function logDraft(player: SessionRosterRow) {
     if (!selectedType || !canWrite) return;
@@ -181,6 +222,98 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     }
   }
 
+  /**
+   * D10 — change the session's date.
+   *
+   * ⚠ Every reading already entered here moves with it. A reading is stamped with the session's
+   * date at the moment it is typed, so leaving them behind would make the session disagree with
+   * its own contents and plot every trend line on the wrong day. The coach is told the exact
+   * count BEFORE it happens; with nothing entered yet there is no dialog at all (§10.2 ruling 4).
+   */
+  /**
+   * ONE session mutation at a time.
+   *
+   * Both controls here can fire from a single gesture — clicking the event `<select>` blurs the
+   * date `<input>` first — and the date change is a TWO-statement server operation (re-stamp the
+   * readings, then move the session). Two of those interleaving can land as
+   * `re-stamp A → re-stamp B → move B → move A`: the readings end on B's date while the session
+   * says A's. That is exactly the "session disagrees with its own contents" corruption the
+   * re-stamp exists to prevent, rebuilt one level up. Serialising the writes closes it.
+   */
+  async function patchSession(
+    body: { sessionDate?: string; eventId?: string | null },
+    failure: string,
+  ): Promise<boolean> {
+    if (sessionBusy) return false;
+    setSessionBusy(true);
+    try {
+      const res = await fetch(`${apiBase}/development/sessions/${session.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const json = await res.json().catch(() => null);
+      if (!res.ok || !json) {
+        setDateDraft(null);
+        setRowErr(json?.error ?? failure);
+        return false;
+      }
+      // Reload so any moved readings' own dates are re-read rather than assumed. A failed
+      // reload is surfaced, not swallowed — the PATCH succeeded but the screen is now stale.
+      const reloaded = await load();
+      if (!reloaded) setRowErr('Saved, but the screen could not refresh — reload the page.');
+      setDateDraft(null);
+      return true;
+    } finally {
+      setSessionBusy(false);
+    }
+  }
+
+  async function saveSessionDate(nextDate: string) {
+    if (!nextDate || nextDate === session.sessionDate) { setDateDraft(null); return; }
+    const readingCount = entries.length;
+    if (readingCount > 0) {
+      const moving = `${readingCount} reading${readingCount === 1 ? '' : 's'}`;
+      const ok = await confirm({
+        title: 'Move this session?',
+        message: `Move this session to ${formatSessionDate(nextDate)}? The ${moving} already entered here move with it.`,
+        confirmText: 'Move the session',
+        cancelText: 'Keep the date',
+        tone: 'warning',
+      });
+      if (!ok) {
+        setDateDraft(null);
+        return;
+      }
+    }
+    await patchSession({ sessionDate: nextDate }, "Couldn't move the session — try again.");
+  }
+
+  /**
+   * D10 — link the session to the event its readings were taken at.
+   *
+   * ⚠ Picking an event PRE-FILLS the date; it never derives it (§10.2 ruling 1). The two stay
+   * separate facts — which practice this belongs to, and when the readings were actually taken —
+   * so a practice that gets rescheduled later never drags the measurements with it. The pre-fill
+   * only applies to a session with NOTHING entered yet: once real numbers exist, the date they
+   * were taken on is the coach's to state, and moving it needs the confirm above.
+   *
+   * The link and the pre-filled date go in ONE request, deliberately. Sending them as two
+   * chained PATCHes raced with itself and could re-stamp readings logged in the gap without ever
+   * showing the coach the count.
+   */
+  async function saveSessionEvent(eventId: string) {
+    const chosen = events.find(e => e.id === eventId) ?? null;
+    const eventDay = chosen?.startsAt?.slice(0, 10);
+    const prefillDate = chosen && eventDay && eventDay !== session.sessionDate && entries.length === 0
+      ? eventDay
+      : undefined;
+    await patchSession(
+      { eventId: chosen ? chosen.id : null, ...(prefillDate ? { sessionDate: prefillDate } : {}) },
+      "Couldn't link that event — try again.",
+    );
+  }
+
   async function addType() {
     if (!newTypeName.trim() || !newTypeUnit.trim()) {
       setRowErr('Give the test a name and a unit (like seconds).');
@@ -216,6 +349,44 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
           </div>
         </div>
       </div>
+
+      {/* ── When and where these readings were taken (D10) ──
+          Two SEPARATE facts, deliberately: which practice this belongs to, and when the
+          readings were actually taken. Picking a practice pre-fills the date; it never owns it,
+          so a practice that gets rescheduled later never drags the measurements with it. */}
+      {canWrite && (
+        <div className={styles.devSessionWhen}>
+          <label className={styles.field}>
+            <span className={styles.label}>Date</span>
+            <input className={styles.input} type="date" value={dateDraft ?? session.sessionDate}
+              disabled={sessionBusy}
+              onChange={e => setDateDraft(e.target.value)}
+              onBlur={e => saveSessionDate(e.target.value)} />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Taken at (optional)</span>
+            <select className={styles.input} value={session.eventId ?? ''} disabled={sessionBusy}
+              onChange={e => saveSessionEvent(e.target.value)}>
+              <option value="">Not linked to an event</option>
+              {sessionEventOptions.map(ev => (
+                <option key={ev.id} value={ev.id}>
+                  {formatSessionDate(ev.startsAt.slice(0, 10))} — {ev.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          {linkedEvent && (
+            <Link href={`${base}/practice/${linkedEvent.id}`} className={styles.devSessionEventLink}>
+              Open {linkedEvent.eventType === 'practice' ? 'the practice plan' : 'the event'} →
+            </Link>
+          )}
+        </div>
+      )}
+      {!canWrite && linkedEvent && (
+        <p className={styles.devCardNote} style={{ marginBottom: '0.7rem' }}>
+          Taken at {linkedEvent.name}.
+        </p>
+      )}
 
       {/* Session note — a label like "post-break testing"; saves on blur/Enter. */}
       {canWrite ? (

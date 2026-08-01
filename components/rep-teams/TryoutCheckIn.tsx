@@ -32,6 +32,8 @@ function ageFromDob(dob: string | null): string {
 
 export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
   const [candidates, setCandidates] = useState<RepTryoutRegistration[]>([]);
+  /** Chunk F: which candidates were here before, keyed by registration id (server-matched). */
+  const [returning, setReturning] = useState<Record<string, { priorProgramYearName: string; kind: string }> | null>(null);
   const [isAnonymous, setIsAnonymous] = useState(true);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -59,6 +61,7 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
       if (!res.ok) throw new Error(data.error ?? 'Failed to load candidates');
       setIsAnonymous(data.isAnonymous ?? true);
       setCandidates(data.candidates ?? []);
+      setReturning(data.returning ?? null);
     } catch (e: any) {
       fail(e.message ?? 'Failed to load candidates.');
     } finally {
@@ -198,6 +201,21 @@ export default function TryoutCheckIn({ apiBase, backHref, onError }: Props) {
                   {isAnonymous
                     ? <span className={styles.bibOnly}>Bib {c.bibNumber ?? '—'}</span>
                     : <span className={styles.name}>{fullName(c) || `Bib ${c.bibNumber ?? '—'}`}</span>}
+                  {/*
+                    Chunk F (D-F1): "have we seen this person before?" Deliberately a MARKER, not
+                    a link — the whole row is a tap-to-check-in target, and a nested link inside it
+                    would fight the primary action on the one screen where speed matters most. The
+                    coach opens the season switcher to read what was said; this just tells them
+                    there is something to read. Suppressed in an anonymous tryout, where the point
+                    is that names are hidden.
+                  */}
+                  {!isAnonymous && returning?.[c.id] && (
+                    <span className={styles.returning}>
+                      {returning[c.id].kind === 'roster'
+                        ? `On the ${returning[c.id].priorProgramYearName} roster`
+                        : `Tried out in ${returning[c.id].priorProgramYearName}`}
+                    </span>
+                  )}
                 </span>
                 {checked && recentId === c.id && (
                   <span

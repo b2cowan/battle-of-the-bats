@@ -3,7 +3,8 @@ import { use, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronRight, Trophy } from 'lucide-react';
-import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
+import { useCoaches, resolveClosedAssignment, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOrg } from '@/lib/org-context';
 import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
@@ -34,6 +35,9 @@ export default function SeasonEndPage({
   const active = assignments.find(a => a.teamId === teamId) ?? null;
   // Shared closed-state predicate (lib/coaches-context.tsx) — same rule as the navs.
   const closed = resolveClosedAssignment(assignments, closedAssignments, teamId);
+  // Chunk F: this page is now the ARCHIVE'S FRONT DOOR (D-F2), reached for any past season of
+  // any team — not just a team whose only season has ended.
+  const page = useCoachSeasonPage(orgSlug, teamId, yearParam);
 
   const [wrapped, setWrapped] = useState<SeasonWrappedPayload | null>(null);
   const [error, setError] = useState('');
@@ -55,7 +59,7 @@ export default function SeasonEndPage({
 
   if (loading) return <p className={styles.muted}>Loading...</p>;
 
-  if (!active && !closed) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -80,7 +84,7 @@ export default function SeasonEndPage({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
               <h1 className={styles.pageTitle}>{teamName}</h1>
-              <span className={`${styles.badge} ${styles.badgeCompleted}`}>Season complete</span>
+              <CoachSeasonChip season={page.season} teamBase={page.teamBase} />
             </div>
             {seasonName && <p className={styles.pageSub}>{seasonName}</p>}
           </div>
@@ -105,13 +109,18 @@ export default function SeasonEndPage({
 
           <section className={styles.setupPanel} aria-labelledby="season-end-doors">
             <p className={styles.setupKicker} id="season-end-doors">Look back any time</p>
-            {/* ONE door (deviation from the mockup's two rows — both landed on the same page,
-                which read as two destinations and delivered one). The archive carries the
-                game log plus per-season records, roster size, and money summaries. */}
+            {/* Chunk F: the sidebar now carries the WHOLE record set for this season, so this
+                page stops being the terminus it was in Batch 3 and becomes the way in. The one
+                door that stays here is the cross-season view, which the sidebar can't express —
+                it spans seasons rather than belonging to this one. */}
+            <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
+              Everything from this season is still here — roster, schedule, attendance, lineups,
+              money records, documents and tryouts. Open any of them from the menu.
+            </p>
             <Link href={`${base}/history/results`} className={styles.seasonDoorRow}>
               <span>
-                Results archive
-                <small>Every score, plus records, roster &amp; money summaries per season</small>
+                Compare every season
+                <small>Records, roster size and money summaries, season by season</small>
               </span>
               <ChevronRight size={16} className={styles.seasonDoorArrow} aria-hidden />
             </Link>

@@ -26,6 +26,7 @@ import {
   type RecurrenceOccurrenceInput,
 } from '@/lib/coach-recurrence';
 import { EVENT_NAME_PREFIX } from '@/lib/coach-schedule-vocab';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -54,10 +55,10 @@ const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment, programYear } = resolved;
-  const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { ctx, capabilities, programYear } = resolved;
+  const denied = denyUnless(capabilities.schedule, 'You do not have access to the schedule.');
   if (denied) return denied;
 
   const url = new URL(req.url);
@@ -82,7 +83,7 @@ export const GET = withObservability(async (req: Request,
   // Lineup flags, only for coaches who can see lineups (they're only actionable for them):
   // mismatch = saved lineup disagrees with attendance; set = the game has a real saved lineup
   // (powers the Lineups page's readiness chips + "Needs lineup" filter without N+1 probes).
-  const [lineupMismatchEventIds, lineupSetEventIds] = assignment.capabilities.lineups
+  const [lineupMismatchEventIds, lineupSetEventIds] = capabilities.lineups
     ? await Promise.all([
         getRepTeamLineupAttendanceMismatchEventIds(programYear.id),
         getRepTeamLineupSetEventIds(programYear.id),

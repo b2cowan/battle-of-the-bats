@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, ArrowLeft, Upload } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
@@ -209,6 +211,11 @@ export default function BudgetPlannerPage({
   // the failure message so reopening it doesn't show a stale reason.
   const closeDelete = useCallback(() => { setDeletingId(null); setDeleteError(''); }, []);
 
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
 
   // Checklist dismissals ("we don't pay for this") are DEVICE memory — localStorage per
@@ -284,7 +291,7 @@ export default function BudgetPlannerPage({
     setError('');
     try {
       const [planRes, catRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`),
+        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`),
         fetch(`/api/coaches/${orgSlug}/budget-items`),
       ]);
       const planData = await planRes.json();
@@ -300,7 +307,7 @@ export default function BudgetPlannerPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -661,7 +668,7 @@ export default function BudgetPlannerPage({
   const groups      = groupLines(plan?.lines ?? []);
   // Read-only money assistants see the plan but no write affordances (server
   // enforces regardless; this matches the gating on the Dues/BvA pages).
-  const moneyCanWrite = assignment.capabilities.money === 'write';
+  const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
 
   // Reconciliation: effective total = the larger of the season total and the itemized
   // sum; a season total above the itemized sum is a "non-itemized buffer", never a
@@ -680,14 +687,14 @@ export default function BudgetPlannerPage({
   return (
     <div className={styles.page}>
       {/* Header */}
-      <Link href={`${base}/accounting`} className={shared.backLink}>
+      <Link href={`${base}/accounting${seasonQuery}`} className={shared.backLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Money
       </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><BarChart3 size={22} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Season Budget Plan</h1>
+            <h1 className={styles.pageTitle}>Season Budget Plan<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
             <p className={styles.pageSub}>{assignment.programYearName} — estimated costs</p>
           </div>
         </div>

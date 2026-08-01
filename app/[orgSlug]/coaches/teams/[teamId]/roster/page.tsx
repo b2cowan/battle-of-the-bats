@@ -10,7 +10,8 @@ import {
   SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -116,6 +117,10 @@ export default function RosterPage({
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const { currentOrg } = useOrg();
   const { openHelp } = useHelpDrawer();
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1) and
+  // `page.canWrite()` folds in read-only, so every write flag below goes through it.
+  const searchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, searchParams.get('year'));
   const assignment = assignments.find(a => a.teamId === teamId);
   // Quick-add position dropdowns offer the sport's assignable FIELD positions (the ones auto-fill
   // uses) — not the OF catch-all or DH. PositionSelect keeps a "Custom…" escape for edge cases.
@@ -123,12 +128,18 @@ export default function RosterPage({
 
   // Depth chart is the second VIEW of Roster (?view=depth) rather than a separate page. The URL is
   // the single source of truth so the view is shareable + back-button friendly.
-  const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
   const view = searchParams.get('view') === 'depth' ? 'depth' : 'list';
-  const setView = (v: 'list' | 'depth') =>
-    router.replace(v === 'depth' ? `${pathname}?view=depth` : pathname, { scroll: false });
+  // Chunk F: toggling the view must not drop the season — both params ride the same URL.
+  const seasonQuery = page.query;
+  const setView = (v: 'list' | 'depth') => {
+    const qs = new URLSearchParams();
+    if (v === 'depth') qs.set('view', 'depth');
+    if (page.season.isReadOnly && page.season.current) qs.set('year', page.season.current.programYearId);
+    const q = qs.toString();
+    router.replace(q ? `${pathname}?${q}` : pathname, { scroll: false });
+  };
 
   const [players, setPlayers] = useState<RepRosterPlayer[]>([]);
   const [programYear, setProgramYear] = useState<RepProgramYear | null>(null);
@@ -165,7 +176,7 @@ export default function RosterPage({
   const load = useCallback(async () => {
     setFetching(true);
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster${seasonQuery}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to load roster');
       setPlayers(data.players ?? []);
@@ -175,7 +186,7 @@ export default function RosterPage({
     } finally {
       setFetching(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
 
@@ -439,7 +450,10 @@ export default function RosterPage({
   }
 
   if (assignmentsLoading) return <p className={styles.muted}>Loading…</p>;
-  if (!assignment) {
+  // Chunk F: `hasAccess` covers the archive too — a coach whose season has ended, or who has
+  // switched back to a past year, still belongs here. Keying this off the live assignment alone
+  // is what shut them out in the first place.
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -451,12 +465,12 @@ export default function RosterPage({
   // ── Roster summary + data-quality signals ─────────────────────────────────
   const activeCount = players.filter(p => p.status === 'active').length;
   const inactiveCount = players.length - activeCount;
-  const season = seasonLabel(programYear?.name ?? assignment.programYearName, assignment.teamName);
+  const season = seasonLabel(programYear?.name ?? page.programYearName, page.teamName);
   // Assistant Coaches: only the head coach (or an assistant granted it) edits the roster; guardian
   // contact + DOB are hidden from assistants without the PII grant. The API enforces both — these
   // just keep the UI honest (no broken buttons, no blank sensitive columns).
-  const canWriteRoster = assignment.capabilities.rosterWrite;
-  const canSeePii = assignment.capabilities.rosterPii;
+  const canWriteRoster = page.canWrite(page.capabilities?.rosterWrite);
+  const canSeePii = !!page.capabilities?.rosterPii;
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.
   const rosterHelpRequest = {
@@ -494,7 +508,7 @@ export default function RosterPage({
       <div className={styles.breadcrumb}>
         <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
         <span><ChevronRight size={12} /></span>
-        <Link href={base}>{assignment.teamName}</Link>
+        <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
         <span><ChevronRight size={12} /></span>
         <span>Roster</span>
       </div>
@@ -504,7 +518,12 @@ export default function RosterPage({
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Users size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Roster</h1>
+            <h1 className={styles.pageTitle}>
+              Roster
+              {/* Chunk F, D-F4: the read-only signal. Also the way OUT of an archive on a phone,
+                  where the season switcher lives in More. Renders nothing in a live season. */}
+              <CoachSeasonChip season={page.season} teamBase={page.teamBase} />
+            </h1>
             <p className={styles.pageSub}>
               {activeCount} active {activeCount === 1 ? 'player' : 'players'}
               {inactiveCount > 0 ? ` · ${inactiveCount} inactive` : ''}
@@ -625,6 +644,7 @@ export default function RosterPage({
                         key={p.id}
                         player={p}
                         base={base}
+                        seasonQuery={seasonQuery}
                         togglingId={togglingId}
                         onToggle={handleToggleStatus}
                         canWrite={canWriteRoster}
@@ -798,7 +818,7 @@ export default function RosterPage({
         <RosterBulkAddSheet
           orgSlug={orgSlug}
           teamId={teamId}
-          teamName={assignment.teamName}
+          teamName={page.teamName}
           existingPlayers={players}
           onClose={() => setBulkOpen(false)}
           onAdded={(created, message) => {
@@ -835,6 +855,7 @@ export default function RosterPage({
 function SortableRow({
   player: p,
   base,
+  seasonQuery,
   togglingId,
   onToggle,
   canWrite,
@@ -846,6 +867,8 @@ function SortableRow({
 }: {
   player: RepRosterPlayer;
   base: string;
+  /** Chunk F: keeps a player link inside the season the roster is showing. */
+  seasonQuery: string;
   togglingId: string | null;
   onToggle: (player: RepRosterPlayer) => void;
   canWrite: boolean;
@@ -885,7 +908,7 @@ function SortableRow({
       </td>
       <td className={`${styles.td} ${styles.playerCellTd}`} data-label="Player">
         <span className={styles.playerCell}>
-          <Link href={`${base}/roster/${p.id}`} className={styles.playerNameLink}>{fullName}</Link>
+          <Link href={`${base}/roster/${p.id}${seasonQuery}`} className={styles.playerNameLink}>{fullName}</Link>
           {/* Mobile only: jersey # + status fold into the header row (their own rows are hidden). */}
           <span className={styles.playerCellMeta}>
             {p.playerNumber && (

@@ -252,8 +252,10 @@
 /* ── Shell ──────────────────────────────────────────────────────────────── */
 .coachesShell {
   /* Stage H.1 (Nav Unification, D2 2026-07-31): the fixed CoachTopStrip's height — the
-     shell pads down by it on desktop; zeroed ≤900px where the strip never renders. */
-  --coach-topstrip-h: 44px;
+     shell pads down by it on desktop; zeroed ≤900px where the strip never renders.
+     Derived from the shared --chrome-bar-h (Stage G) — the ONE platform chrome-bar height, worn
+     also by the other operator strip and the consumer app strip, so none can drift. The local var stays because the zeroing below is shell-local. */
+  --coach-topstrip-h: var(--chrome-bar-h);
   display: flex;
   min-height: 100vh;
   padding-top: var(--coach-topstrip-h);
@@ -480,6 +482,12 @@
   margin: 0;
   color: var(--white-90);
   line-height: 1.1;
+  /* Chunk F: the "2025 · Complete" chip sits ON the title line, so an archived page costs no
+     vertical space for its read-only signal. Wraps rather than squeezing the title on a phone. */
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .pageSub {
@@ -5116,6 +5124,124 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .teamSwitcherSelect option { background: var(--home-card, var(--bg-2)); }
 
+/* Season switcher in its ARCHIVE state (Chunk F). The amber tint IS the read-only signal on
+   the shell side — the owner cut the per-screen banner (D-F4), so this plus the "· Complete"
+   chip beside the page title carry it. Amber, not lime: lime is reserved for conversion. */
+.seasonSwitcherArchive {
+  border-color: var(--home-amber, var(--warning-strong, var(--warning)));
+  background: rgba(var(--home-amber-rgb, 161, 98, 7), 0.10);
+}
+.seasonSwitcherArchive:focus { border-color: var(--home-amber, var(--warning-strong, var(--warning))); }
+
+/* ── "2025 · Complete" chip (Chunk F, D-F4) ───────────────────────────────────
+   The read-only signal, sitting beside a page title. The owner cut the per-screen banner —
+   this plus the amber shell switcher and the breadcrumb year carry it. On a phone it is also
+   the way OUT of an archive (D-F3), because the switcher lives in More there. */
+.seasonChipWrap { position: relative; display: inline-flex; }
+.seasonChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: var(--home-radius-pill, 999px);
+  background: rgba(var(--home-amber-rgb, 161, 98, 7), 0.12);
+  color: var(--home-amber, var(--warning-strong, var(--warning)));
+  border: 1px solid rgba(var(--home-amber-rgb, 161, 98, 7), 0.30);
+  font-size: 0.72rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.seasonChipButton { cursor: pointer; min-height: 24px; }
+.seasonChipButton:hover { background: rgba(var(--home-amber-rgb, 161, 98, 7), 0.18); }
+.seasonChipButton:focus-visible {
+  outline: 2px solid var(--home-amber, var(--warning-strong, var(--warning)));
+  outline-offset: 2px;
+}
+
+/* Base placement only — `useAnchoredMenu` overrides top/left/width/maxHeight inline once the
+   panel has laid out, so it flips above and clamps to the viewport on a narrow phone. */
+.seasonChipMenu {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  z-index: 200;
+  min-width: 13rem;
+  max-width: calc(100vw - 1.5rem);
+  background: var(--home-card, var(--bg-2));
+  border: 1px solid var(--home-line-strong, var(--white-15));
+  border-radius: var(--home-radius-sm, 9px);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+.seasonChipMenuHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  border-bottom: 1px solid var(--home-line, var(--white-10));
+}
+.seasonChipMenuClose {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  padding: 0.1rem;
+}
+.seasonChipMenuItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  /* One tap floor, portal-wide — no bespoke height here (primitives header). */
+  min-height: var(--tap-min, 44px);
+  padding: 0.5rem 0.7rem;
+  background: none;
+  border: none;
+  border-bottom: 1px solid var(--home-line, var(--white-10));
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  text-align: left;
+  cursor: pointer;
+}
+.seasonChipMenuItem:last-child { border-bottom: none; }
+.seasonChipMenuItem:hover { background: var(--home-olive-soft, var(--white-05)); }
+.seasonChipMenuItemActive {
+  background: var(--home-olive-soft, var(--white-05));
+  color: var(--home-olive, var(--logic-lime));
+  font-weight: 650;
+}
+.seasonChipMenuMeta { font-size: 0.72rem; opacity: 0.6; font-weight: 600; }
+
+/* Evaluation notes on a past tryout, opened in place beside the candidate rather than as a
+   standalone browsable file on a child (Chunk F §07 — the sensitivity note). */
+.tryoutHistoryNotes {
+  margin: 0.5rem 0 0;
+  padding-left: 1.1rem;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.tryoutHistoryNotes li { margin-bottom: 0.25rem; }
+
+/* The ONE explanatory line Chunk F keeps (D-F4, owner-approved exception 2026-08-01): the Staff
+   screen of a finished season, where the "Complete" chip is genuinely misleading because the
+   buttons still work. Everywhere else the chip carries it alone. */
+.seasonReadAccessNote {
+  margin: 0 0 1rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--home-radius-sm, 9px);
+  background: rgba(var(--home-amber-rgb, 161, 98, 7), 0.10);
+  border: 1px solid rgba(var(--home-amber-rgb, 161, 98, 7), 0.28);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 /* ── Recurrence preview (Chunk C, P1 #6) ──────────────────────────────────────
    "Repeat weekly" used to commit blind from a one-line summary that was honest about the dates
    and silent about the fact that ONE opponent was about to be stamped onto every game. These are
@@ -5369,4 +5495,274 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   /* The grid scrolls clear of the docked bar — its own height plus the page's breathing room.
      Anything less and the last player row hides behind it at the bottom of the scroll. */
   .lineupDockedPage { padding-bottom: calc(var(--lineup-dock-h, 0rem) + 1rem); }
+}
+
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   PRACTICE PLANS (slice 1a) â€” the builder on a practice event.
+
+   Uses the portal's TWO breakpoints only (900 shell / 640 content) and the
+   44px --tap-min floor. No third standard, and no bespoke @640 rule that a
+   primitive in the header already covers.
+
+   The layout is one grid: the block list, and the focus rail beside it on a
+   desktop. The rail is sticky INSIDE the grid, which gives it a containing
+   block taller than itself â€” the Chunk C lesson (a sticky element whose
+   container ends where it does has no travel and never sticks).
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
+.ppLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 1.25rem;
+  align-items: start;
+}
+.ppMain { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
+
+.ppToolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.9rem; }
+
+.ppHeaderCard {
+  display: flex; flex-direction: column; gap: 0.7rem;
+  padding: 0.9rem 1rem; border-radius: 12px;
+  border: 1px solid var(--border-2); background: var(--card-bg);
+}
+
+/* â”€â”€ Fields â”€â”€ */
+.ppField { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
+.ppFieldRow { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+.ppFieldLabel {
+  font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--white-45);
+}
+.ppFieldHint { font-size: 0.75rem; color: var(--white-45); align-self: flex-end; padding-bottom: 0.55rem; }
+.ppMinutes { width: 5rem; font-variant-numeric: tabular-nums; }
+.ppCount { width: 4rem; font-variant-numeric: tabular-nums; }
+
+/* â”€â”€ Blocks â”€â”€ */
+.ppBlock {
+  border: 1px solid var(--border-2); border-radius: 12px;
+  background: var(--card-bg); overflow: hidden;
+}
+.ppBlockHead {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06));
+}
+.ppBlockOrder { display: flex; flex-direction: column; gap: 0.1rem; flex-shrink: 0; }
+.ppBlockTitleWrap { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 auto; min-width: 0; }
+.ppBlockTitle { font-weight: 600; }
+.ppBlockClock {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  font-size: 0.72rem; color: var(--white-55); font-variant-numeric: tabular-nums;
+}
+.ppShapeTag {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--white-55); border: 1px solid var(--border-2); border-radius: 5px;
+  padding: 0.05rem 0.3rem;
+}
+.ppBlockBody { display: flex; flex-direction: column; gap: 0.75rem; padding: 0.8rem 0.9rem 1rem; }
+
+.ppDuration { display: flex; align-items: flex-end; gap: 0.7rem; flex-wrap: wrap; }
+.ppRestToggle {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  min-height: var(--tap-min, 44px);
+  font-size: 0.82rem; color: var(--white-80); cursor: pointer;
+}
+.ppRestToggle input { width: 1rem; height: 1rem; }
+
+.ppAddRow { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.3rem; }
+.ppAddInline {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  align-self: flex-start; min-height: var(--tap-min, 44px);
+  background: none; border: none; cursor: pointer;
+  font-size: 0.8rem; font-weight: 600; color: var(--white-80);
+}
+.ppAddInline:hover { color: var(--white-90); }
+
+.ppIconBtn {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px);
+  background: none; border: none; border-radius: 8px; cursor: pointer;
+  color: var(--white-55); flex-shrink: 0;
+}
+.ppIconBtn:hover:not(:disabled) { color: var(--white-90); background: var(--white-8); }
+.ppIconBtn:disabled { opacity: 0.3; cursor: default; }
+
+/* â”€â”€ Chips (staff, players, focus areas) â”€â”€ */
+.ppChipWrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
+.ppChip {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.74rem; font-weight: 600; color: var(--white-90);
+  padding: 0.15rem 0.45rem; border-radius: 6px; border: 1px solid var(--border-2);
+}
+.ppChipX {
+  display: inline-flex; align-items: center; justify-content: center;
+  background: none; border: none; cursor: pointer; color: var(--white-45); padding: 0.1rem;
+}
+.ppChipX:hover { color: var(--white-90); }
+.ppFocusChip {
+  font-size: 0.7rem; color: var(--white-80);
+  padding: 0.1rem 0.4rem; border-radius: 5px;
+  border: 1px solid var(--white-8); background: var(--home-olive-soft, rgba(255,255,255,0.03));
+}
+.ppPickBtn {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  min-height: var(--tap-min, 44px); padding: 0 0.6rem;
+  border: 1px dashed var(--border-2); border-radius: 8px; background: none;
+  font-size: 0.78rem; font-weight: 600; color: var(--white-80); cursor: pointer;
+}
+.ppPickBtn:hover:not(:disabled) { color: var(--white-90); border-color: var(--white-35); }
+.ppPickBtn:disabled { opacity: 0.4; cursor: default; }
+
+/* â”€â”€ Coaching points â”€â”€ */
+.ppPointRow { display: flex; align-items: center; gap: 0.4rem; }
+.ppPointNum {
+  min-width: 1.2rem; text-align: center; flex-shrink: 0;
+  font-size: 0.72rem; font-weight: 700; color: var(--white-45); font-variant-numeric: tabular-nums;
+}
+
+/* â”€â”€ Stations â”€â”€ */
+.ppStations { display: flex; flex-direction: column; gap: 0.6rem; }
+.ppStationsHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; flex-wrap: wrap; }
+.ppStation {
+  border: 1px solid var(--white-8); border-radius: 10px;
+  background: var(--home-olive-soft, rgba(255,255,255,0.02));
+}
+.ppStationHead {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.45rem 0.55rem;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
+}
+.ppStationNum {
+  min-width: 1.4rem; text-align: center; flex-shrink: 0;
+  font-size: 0.75rem; font-weight: 700; color: var(--white-45); font-variant-numeric: tabular-nums;
+}
+.ppStationName { flex: 1 1 auto; min-width: 0; }
+.ppStationBody { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.6rem 0.7rem 0.8rem; }
+
+/* â”€â”€ Rotation â”€â”€ */
+.ppRotation {
+  display: flex; flex-direction: column; gap: 0.75rem;
+  padding: 0.75rem 0.8rem; border-radius: 10px;
+  border: 1px solid var(--white-8); background: var(--home-olive-soft, rgba(255,255,255,0.02));
+}
+.ppRotationTimes { display: flex; align-items: flex-end; gap: 0.7rem; flex-wrap: wrap; }
+.ppGroupsHead { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+.ppGroupTools { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.ppGroupTools select { width: auto; min-width: 9.5rem; }
+.ppSplitNote { margin: 0; font-size: 0.8rem; color: var(--white-80); }
+.ppGroupList { display: flex; flex-direction: column; gap: 0.5rem; }
+.ppGroup { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.5rem 0.6rem; border: 1px solid var(--white-8); border-radius: 8px; }
+.ppGroupHead { display: flex; align-items: center; gap: 0.4rem; }
+.ppGroupName { flex: 1 1 auto; min-width: 0; font-weight: 600; }
+
+/* The computed group Ã— round grid â€” a genuine 2-D comparison, so it scrolls sideways with a
+   sticky first column rather than becoming cards (the .tableAsCards / CoachScrollX rule). */
+.ppGridWrap { display: flex; flex-direction: column; gap: 0.4rem; }
+.ppGridScroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ppGrid { border-collapse: collapse; width: 100%; min-width: 22rem; font-size: 0.8rem; }
+.ppGrid th, .ppGrid td {
+  border: 1px solid var(--white-8); padding: 0.4rem 0.55rem; text-align: left; white-space: nowrap;
+}
+.ppGrid thead th {
+  font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--white-45); font-weight: 700;
+}
+.ppGrid tbody th {
+  color: var(--white-90); font-weight: 700; font-variant-numeric: tabular-nums;
+  position: sticky; left: 0; background: var(--card-bg);
+}
+.ppGridTime { display: block; font-size: 0.66rem; font-weight: 500; color: var(--white-45); }
+.ppGrid tbody td { color: var(--white-80); }
+.ppNotes { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+.ppNotes li { font-size: 0.78rem; color: var(--white-55); }
+
+/* â”€â”€ The focus rail â”€â”€ */
+.ppRail { min-width: 0; }
+.ppRailInner {
+  position: sticky; top: 1rem;
+  display: flex; flex-direction: column; gap: 0.5rem;
+  padding: 0.85rem 0.9rem; border-radius: 12px;
+  border: 1px solid var(--border-2); background: var(--card-bg);
+  max-height: calc(100vh - 2rem); overflow-y: auto;
+}
+.ppRailTitle { margin: 0; font-size: 0.82rem; font-weight: 700; color: var(--white-90); }
+.ppRailList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.ppRailRow {
+  display: flex; flex-direction: column; gap: 0.25rem;
+  padding: 0.5rem 0; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
+}
+.ppRailRow:last-child { border-bottom: none; }
+.ppRailName { font-size: 0.82rem; font-weight: 600; color: var(--white-90); }
+.ppRailNone { font-size: 0.74rem; color: var(--white-35); }
+
+/* â”€â”€ The roster / copy picker â”€â”€ */
+.ppPickList { display: flex; flex-direction: column; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+.ppPickRow {
+  display: flex; align-items: flex-start; gap: 0.6rem; width: 100%; text-align: left;
+  min-height: var(--tap-min, 44px); padding: 0.55rem 0.4rem;
+  background: none; border: none; cursor: pointer;
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
+}
+.ppPickRow:hover { background: var(--white-8); }
+.ppPickCheck {
+  width: 1.1rem; height: 1.1rem; margin-top: 0.15rem; flex-shrink: 0;
+  border: 1px solid var(--border-2); border-radius: 5px;
+}
+.ppPickCheck[data-on='on'] { border-color: var(--logic-lime); background: var(--logic-lime); }
+.ppPickBody { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; flex: 1 1 auto; }
+.ppPickName {
+  display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;
+  font-size: 0.85rem; font-weight: 600; color: var(--white-90);
+}
+.ppPickMeta { font-size: 0.74rem; color: var(--white-45); }
+.ppPickStatus {
+  font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--white-45); border: 1px solid var(--border-2); border-radius: 4px; padding: 0 0.25rem;
+}
+
+/* â”€â”€ "Recorded here" â€” deliberately its own block, apart from the plan (Â§10.2) â”€â”€ */
+.ppRecorded {
+  margin-top: 1.25rem; padding: 0.85rem 1rem; border-radius: 12px;
+  border: 1px solid var(--border-2); background: var(--card-bg);
+}
+.ppRecordedTitle {
+  display: flex; align-items: center; gap: 0.4rem;
+  margin: 0 0 0.2rem; font-size: 0.9rem; font-weight: 700; color: var(--white-90);
+}
+.ppRecordedList { list-style: none; margin: 0.5rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+.ppRecordedList a { font-size: 0.84rem; color: var(--white-80); text-decoration: underline; }
+.ppRecordedList a:hover { color: var(--white-90); }
+
+/* 900 = SHELL reflow: the rail stops being a column and becomes a section under the plan.
+   It drops its own scroll and stickiness so the page scrolls as one. */
+@media (max-width: 900px) {
+  .ppLayout { grid-template-columns: minmax(0, 1fr); }
+  .ppRailInner { position: static; max-height: none; overflow: visible; }
+}
+
+/* 640 = CONTENT reflow: the dense control rows go to one axis so nothing is squeezed. */
+@media (max-width: 640px) {
+  .ppGroupTools { width: 100%; }
+  .ppGroupTools select { flex: 1 1 auto; min-width: 0; }
+  .ppFieldHint { align-self: flex-start; padding-bottom: 0; }
+}
+
+
+.devTailLink { color: var(--white-80); text-decoration: underline; font-weight: 600; }
+.devTailLink:hover { color: var(--white-90); }
+
+/* Evaluation session — when + where the readings were taken (D10). Two separate facts, side by
+   side on a desktop, stacked on a phone via the shared 640 content reflow. */
+.devSessionWhen {
+  display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.75rem;
+  margin: 0 0 0.8rem;
+}
+.devSessionWhen .field { min-width: 0; }
+.devSessionEventLink {
+  font-size: 0.8rem; color: var(--white-80); text-decoration: underline;
+  min-height: var(--tap-min, 44px); display: inline-flex; align-items: center;
+}
+.devSessionEventLink:hover { color: var(--white-90); }
+@media (max-width: 640px) {
+  .devSessionWhen { flex-direction: column; align-items: stretch; }
 }

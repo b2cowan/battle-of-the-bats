@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronRight, Download, FileText } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import styles from '../../../coaches.module.css';
@@ -35,6 +37,11 @@ export default function TeamDocumentsPage({
 }) {
   const params = use(paramsPromise);
   const { assignments, loading: assignmentsLoading } = useCoaches();
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(params.orgSlug, params.teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === params.teamId);
   const base = `/${params.orgSlug}/coaches/teams/${params.teamId}`;
   const apiBase = `/api/coaches/${params.orgSlug}/teams/${params.teamId}/documents/templates`;
@@ -75,7 +82,7 @@ export default function TeamDocumentsPage({
 
   if (assignmentsLoading || loading) return <div className={styles.loadingState}>Loading documents…</div>;
 
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -143,7 +150,7 @@ export default function TeamDocumentsPage({
       <div className={styles.breadcrumb}>
         <Link href={`/${params.orgSlug}/coaches`}>Coaches Portal</Link>
         <span><ChevronRight size={12} /></span>
-        <Link href={base}>{assignment.teamName}</Link>
+        <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
         <span><ChevronRight size={12} /></span>
         <span>Documents</span>
       </div>
@@ -152,8 +159,8 @@ export default function TeamDocumentsPage({
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div>
-            <h1 className={styles.pageTitle}>Documents</h1>
-            <p className={styles.pageSub}>{assignment.teamName} — {assignment.programYearName}</p>
+            <h1 className={styles.pageTitle}>Documents<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+            <p className={styles.pageSub}>{page.teamName} — {page.programYearName}</p>
           </div>
         </div>
         <HelpButton

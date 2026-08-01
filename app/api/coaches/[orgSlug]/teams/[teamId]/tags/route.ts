@@ -10,6 +10,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 const MAX_TAGS_PER_KIND = 50;
 
@@ -36,13 +37,13 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveTeamCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment } = resolved;
-  const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { ctx, capabilities } = resolved;
+  const denied = denyUnless(capabilities.schedule, 'You do not have access to the schedule.');
   if (denied) return denied;
 
   // Game-tag library = the team's own tags + the org's shared game tags (Phase 3).

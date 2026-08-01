@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOrg } from '@/lib/org-context';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import {
@@ -162,6 +164,11 @@ export default function CoachesDuesPage({
   const [surplusSaving, setSurplusSaving] = useState(false);
   const [surplusError, setSurplusError] = useState('');
 
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -183,7 +190,7 @@ export default function CoachesDuesPage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/dues${seasonQuery}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setPlayers(data.players ?? []);
@@ -192,7 +199,7 @@ export default function CoachesDuesPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -204,11 +211,11 @@ export default function CoachesDuesPage({
   }, [orgSlug]);
 
   useEffect(() => {
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings`)
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/accounting-settings${seasonQuery}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => { if (d) setAutoReminders(d.autoRemindersEnabled ?? true); })
       .catch(() => {});
-    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan`)
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/budget-plan${seasonQuery}`)
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (!d?.plan) return;
@@ -216,7 +223,7 @@ export default function CoachesDuesPage({
         setBudgetHasInstallments(!!d.plan.hasInstallments);
       })
       .catch(() => {});
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   async function toggleAutoReminders(enabled: boolean) {
     setAutoRemindersSaving(true);
@@ -308,7 +315,7 @@ export default function CoachesDuesPage({
   async function loadSurplus() {
     setSurplusLoading(true);
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/season-surplus${seasonQuery}`);
       const data = await res.json();
       setSurplusData(data);
       setSurplusInput(data.surplus ? String(data.surplus.totalSurplus) : '');
@@ -536,7 +543,7 @@ export default function CoachesDuesPage({
   }
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -547,22 +554,22 @@ export default function CoachesDuesPage({
 
   // Reminders (both proximity + never-paid) require money = write. Read-only money coaches
   // see the list but no send buttons.
-  const moneyCanWrite = assignment.capabilities.money === 'write';
+  const moneyCanWrite = page.canWrite(page.capabilities?.money === 'write');
   // Never-paid = same predicate as the Overview "N unpaid" badge, so the two always agree.
   const neverPaid = players.filter(isNeverPaidPlayer);
 
   return (
     <div className={styles.page}>
       {/* Header */}
-      <Link href={`${base}/accounting`} className={styles.backLink}>
+      <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Money
       </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Users size={22} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Player Dues</h1>
-            <p className={styles.pageSub}>{assignment.programYearName}</p>
+            <h1 className={styles.pageTitle}>Player Dues<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+            <p className={styles.pageSub}>{page.programYearName}</p>
           </div>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>

@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { CalendarCheck, ArrowRight } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import {
@@ -55,6 +57,11 @@ export default function CoachesAttendancePage({
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
   const { assignments, loading: ctxLoading } = useCoaches();
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
@@ -70,7 +77,7 @@ export default function CoachesAttendancePage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/attendance${seasonQuery}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       if (!isStale()) setRows(data.players ?? []);
@@ -79,12 +86,12 @@ export default function CoachesAttendancePage({
     } finally {
       if (!isStale()) setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   // Non-fatal: the report stands on its own if this fails — it just loses the shortcut.
   const loadMarkTarget = useCallback(async (isStale: () => boolean = () => false) => {
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
       if (!res.ok) return;
       const data: { events?: RepTeamEvent[] } = await res.json();
       if (isStale()) return;
@@ -93,7 +100,7 @@ export default function CoachesAttendancePage({
         now: Date.now(),
       }));
     } catch { /* the shortcut is a convenience, never a dependency */ }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   // Both loads are keyed on teamId, and a coach with several assignments can switch teams without
   // this page unmounting — so a slow response for the previous team must not land on the new one.
@@ -109,7 +116,7 @@ export default function CoachesAttendancePage({
   }, [loadMarkTarget]);
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -133,7 +140,7 @@ export default function CoachesAttendancePage({
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><CalendarCheck size={20} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Attendance</h1>
+            <h1 className={styles.pageTitle}>Attendance<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
             <p className={styles.pageSub}>Who&apos;s been making it out this season</p>
           </div>
         </div>

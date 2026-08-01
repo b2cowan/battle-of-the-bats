@@ -1,11 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
   ListOrdered, ArrowRight, CheckCircle2, TriangleAlert, CalendarPlus,
   Plus, Pencil, Trash2, Check, X, ClipboardCheck, HelpCircle,
 } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -53,14 +55,21 @@ export default function CoachesLineupsPage({
   const { assignments, loading: ctxLoading } = useCoaches();
   const confirm = useConfirm();
   const { openHelp } = useHelpDrawer();
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
   // Fail-open like the nav — the server still enforces on every lineup route.
-  const canLineups = assignment ? assignment.capabilities.lineups : true;
+  const canLineups = assignment ? page.capabilities?.lineups : true;
+  // Viewing a lineup is a READ; building one is a write, so it folds in read-only (Chunk F).
+  const canBuildLineups = page.canWrite(canLineups);
   // Adding a game is a SCHEDULE grant, not a lineup one — so a coach with lineups but no schedule
   // must never be handed an "Add a game" button they can't use. Fails CLOSED.
-  const canAddGames = assignment ? canManageSchedule(assignment.capabilities) : false;
+  const canAddGames = page.canWrite(page.capabilities ? canManageSchedule(page.capabilities) : false);
   const periodWord = sportPack.periodLabel.toLowerCase();
   // `label` is required here (unlike the HelpButton-only pages, which fall back to the button's own
   // label): this object also goes straight to openHelp() from the empty states, where there is no
@@ -105,7 +114,7 @@ export default function CoachesLineupsPage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
       if (!res.ok) throw new Error('Games could not be loaded');
       const data: { events?: RepTeamEvent[]; lineupSetEventIds?: string[] } = await res.json();
       const games = (data.events ?? []).filter(e => GAME_EVENT_TYPES.includes(e.eventType) && e.status !== 'cancelled');
@@ -128,13 +137,13 @@ export default function CoachesLineupsPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   const loadTemplates = useCallback(async () => {
     setTemplatesLoading(true);
     setTemplatesError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates${seasonQuery}`);
       if (!res.ok) throw new Error();
       const data = await res.json();
       setTemplates(data.templates ?? []);
@@ -143,7 +152,7 @@ export default function CoachesLineupsPage({
     } finally {
       setTemplatesLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   // Wait for the assignments context to resolve before deciding whether to fetch — otherwise the
   // fail-open `canLineups` default would fire the fetch for an assistant whose access is revoked.
@@ -221,7 +230,7 @@ export default function CoachesLineupsPage({
     if (!t) return;
     setApplyBusyGameId(game.id);
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${game.id}/lineup`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${game.id}/lineup${seasonQuery}`);
       if (!res.ok) throw new Error('Could not open that game');
       const data: {
         players?: RepRosterPlayer[];
@@ -281,7 +290,7 @@ export default function CoachesLineupsPage({
   }
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -295,7 +304,7 @@ export default function CoachesLineupsPage({
       <div className={styles.pageHeaderLeft}>
         <div className={styles.headerIcon}><ListOrdered size={22} /></div>
         <div>
-          <h1 className={styles.pageTitle}>Lineups</h1>
+          <h1 className={styles.pageTitle}>Lineups<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
           <p className={styles.pageSub}>Build game lineups and reusable templates for your team.</p>
         </div>
       </div>
@@ -339,7 +348,7 @@ export default function CoachesLineupsPage({
     const r = ready[e.id];
     const isPrimary = e.id === primaryGameId;
     return (
-      <Link key={e.id} href={`${base}/lineups/${e.id}`} className={styles.lineupFrontRow}>
+      <Link key={e.id} href={`${base}/lineups/${e.id}${seasonQuery}`} className={styles.lineupFrontRow}>
         <span className={styles.lineupFrontDate}>
           <span className={styles.lineupFrontDay}>{new Date(e.startsAt).getDate()}</span>
           <span className={styles.lineupFrontMonth}>{new Date(e.startsAt).toLocaleDateString('en-CA', { month: 'short' })}</span>
@@ -491,16 +500,18 @@ export default function CoachesLineupsPage({
               headline="No templates yet"
               description="A template is a reusable “base” lineup with no game attached — your usual order, a rain-day rotation, the arrangement you run at tournaments."
               payoff="Apply one to any game in a tap and it maps onto that game’s current roster, quietly skipping anyone who has left the team — so you’re not rebuilding the same lineup every week."
-              primaryAction={{ label: 'New template', icon: <Plus size={15} aria-hidden />, href: `${base}/lineups/templates/new` }}
+              primaryAction={canBuildLineups ? { label: 'New template', icon: <Plus size={15} aria-hidden />, href: `${base}/lineups/templates/new` } : undefined}
               secondaryAction={{ label: 'How templates work', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
             />
           ) : (
             <>
               <div className={styles.lineupTplHeader}>
                 <p className={styles.lineupTplHint}>Reusable “base” lineups you can apply to any game.</p>
-                <Link href={`${base}/lineups/templates/new`} className="btn btn-lime btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <Plus size={15} /> New template
-                </Link>
+                {canBuildLineups && (
+                  <Link href={`${base}/lineups/templates/new`} className="btn btn-lime btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <Plus size={15} /> New template
+                  </Link>
+                )}
               </div>
               <div className={styles.lineupTplList}>
                 {templates.map(t => (

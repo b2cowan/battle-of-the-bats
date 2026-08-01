@@ -1,9 +1,10 @@
 'use client';
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { TrendingUp, Plus, X, HelpCircle } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
@@ -36,8 +37,14 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const confirm = useConfirm();
   const { openHelp } = useHelpDrawer();
   const { assignments, loading: assignmentsLoading } = useCoaches();
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
-  const caps = assignment?.capabilities;
+  // Chunk F: THAT season's grants (governing rule 1), not the coach's current ones.
+  const caps = page.capabilities;
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const apiBase = `/api/coaches/${orgSlug}/teams/${teamId}/development`;
 
@@ -47,7 +54,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const [busy, setBusy] = useState(false);
   // ONE source for the write flag, resilient to the sessions GET 404'ing (no active program
   // year must not silently lock the test list for a legit head coach).
-  const canWrite = caps ? canWriteDevelopment(caps) : false;
+  const canWrite = page.canWrite(caps ? canWriteDevelopment(caps) : false);
 
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.
@@ -62,7 +69,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   // two separate GETs doubled the auth/capability resolution per hub load).
   const load = useCallback(async () => {
     try {
-      const res = await fetch(`${apiBase}/sessions`);
+      const res = await fetch(`${apiBase}/sessions${seasonQuery}`);
       const json = await res.json().catch(() => null);
       if (res.status === 404) {
         // No active program year — the hub still renders honestly empty.
@@ -80,7 +87,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       setSessions(s => s ?? []);
       setTypes(t => t ?? []);
     }
-  }, [apiBase]);
+  }, [apiBase, seasonQuery]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -103,7 +110,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   useEffect(() => {
     if (!canSeeBoard) return;
     let cancelled = false;
-    fetch(`${apiBase}/board`)
+    fetch(`${apiBase}/board${seasonQuery}`)
       .then(res => (res.ok ? res.json() : null))
       .then(data => {
         if (cancelled || !data) return;
@@ -116,7 +123,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [apiBase, canSeeBoard]);
+  }, [apiBase, canSeeBoard, seasonQuery]);
 
   async function newSession() {
     if (busy) return;
@@ -332,8 +339,14 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
     <div key="rule" className={styles.devBandRule}><span className={styles.devBandLabel}>Then go look</span></div>
   );
 
+  /* D9 — a POINTER, not a room. Practice plans live on the practice itself (D1), because a
+     practice is a date and Development owns no calendar. This one line keeps the feature
+     findable from where it was promised without minting a second home for one job. */
   const practicePlansLine = (
-    <p className={styles.devTail}>Practice plans are coming in a later phase — plan practices around who&apos;s working on what.</p>
+    <p className={styles.devTail}>
+      Practice plans live on each practice in your{' '}
+      <Link href={`${base}/schedule`} className={styles.devTailLink}>Schedule →</Link>
+    </p>
   );
 
   /* The keys here are load-bearing, not decoration. Without them React reconciles these
@@ -352,7 +365,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><TrendingUp size={22} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Development</h1>
+            <h1 className={styles.pageTitle}>Development<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
             <p className={styles.pageSub}>
               {assignment?.teamName ?? ''}
               {/* Instructional, not a claim about the team's overall state — a team can have

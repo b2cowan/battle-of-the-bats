@@ -1,15 +1,34 @@
 import type { CoachCapabilities } from './coach-capabilities';
 
 /**
- * The CLOSED-season nav set (Batch 3, P0 #1) — read-only doors only, shared by
- * CoachesSidebar and CoachesBottomNav for the same no-drift reason as the gate below.
- * Insights points straight at the results ARCHIVE: the hub's live-season tiles read as
- * errors for a team with no active year. Icons are resolved per component (lucide imports
- * stay component-side); a new door added here reaches both navs at once.
+ * The CLOSED-season nav set. Batch 3 shipped this as exactly two doors — everything else a
+ * coach built was unreachable the moment the season ended. Chunk F opens it to the full record
+ * set, still capability-gated by `isCoachNavItemVisible` against THAT season's grants.
+ *
+ * What is deliberately absent, and why (owner ruling D-F1/D-F7, 2026-08-01) — records in,
+ * instruments out:
+ *   • Chat / Email families — a finished season must not offer to message a team that no
+ *     longer exists.
+ *   • Settings — nothing in a finished season is configurable.
+ *   • Tryouts points at `/tryouts/history`, NOT the live hub: the hub runs a tryout
+ *     (check-in, evaluator links, decisions, offer emails); the archive records one.
+ *   • Money points at the records hub; payment requests and allocations move money and stay
+ *     live-season only.
+ * Season's End leads because it is the archive's front door (D-F2). Icons resolve per
+ * component; a door added here reaches both navs at once.
  */
 export const CLOSED_TEAM_NAV_ITEMS: { label: string; href: string }[] = [
   { label: "Season's End", href: '/season-end' },
-  { label: 'Insights', href: '/history/results' },
+  { label: 'Roster',       href: '/roster' },
+  { label: 'Schedule',     href: '/schedule' },
+  { label: 'Attendance',   href: '/attendance' },
+  { label: 'Lineups',      href: '/lineups' },
+  { label: 'Money',        href: '/accounting' },
+  { label: 'Documents',    href: '/documents' },
+  { label: 'Development',  href: '/development' },
+  { label: 'Tryouts',      href: '/tryouts/history' },
+  { label: 'Insights',     href: '/history/results' },
+  { label: 'Staff',        href: '/staff' },
 ];
 
 /**

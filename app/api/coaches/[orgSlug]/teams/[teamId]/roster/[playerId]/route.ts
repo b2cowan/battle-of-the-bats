@@ -15,6 +15,7 @@ import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } fr
 import { getSportPack } from '@/lib/sports';
 import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import { denyUnless, canViewMoney, canViewRoster, redactRosterPlayer } from '@/lib/coach-capabilities';
 
 function trimmedOrNull(v: unknown): string | null {
@@ -45,30 +46,36 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (_req: Request,
+// READ: season-scoped (Chunk F). Without this, tapping a player on an archived roster landed on
+// "No active program year for this team" — a dead end at the end of a door the archive opened.
+// The player must belong to the SEASON being read, not merely to the team, or a past season's
+// page would happily show a current player's record.
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; playerId: string }> },) => {
   const { orgSlug, teamId, playerId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment } = resolved;
-  const denied = denyUnless(canViewRoster(assignment.capabilities), 'You do not have access to the roster.');
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { ctx, capabilities, programYear, isReadOnly } = resolved;
+  const denied = denyUnless(canViewRoster(capabilities), 'You do not have access to the roster.');
   if (denied) return denied;
 
   const player = await getRepRosterPlayer(playerId);
-  if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
+  if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id
+      || player.programYearId !== programYear.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
   const [attendance, dues, awards] = await Promise.all([
-    getRepPlayerAttendanceSummary(playerId, resolved.programYear.id),
-    getRepPlayerDuesSummary(playerId, resolved.programYear.id),
+    getRepPlayerAttendanceSummary(playerId, programYear.id),
+    getRepPlayerDuesSummary(playerId, programYear.id),
     getRepPlayerAwardsSummary(playerId),
   ]);
 
   return NextResponse.json({
-    player: redactRosterPlayer(player, assignment.capabilities),
+    isReadOnly,
+    player: redactRosterPlayer(player, capabilities),
     attendance,
-    dues: canViewMoney(assignment.capabilities) ? dues : null,
+    dues: canViewMoney(capabilities) ? dues : null,
     awards,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]' });

@@ -1,6 +1,28 @@
 @AGENTS.md
 @AGENCY_RULES.md
 
+# Coaches Portal — the archive is OPT-IN (owner ruling 2026-08-01, binding)
+
+**New coaches-portal functionality is NOT viewable in archived (completed/archived) seasons unless
+someone explicitly decides it should be.** A coach can open any past season read-only (Chunk F); what
+they find there is a deliberate allow-list, never whatever happened to get built.
+
+This fails closed by design: a coach API route that does not opt into the season-read rail
+(`lib/coach-season-read.ts`) resolves the team's ACTIVE year and cannot address a past season at all.
+Two lists in `tests/unit/coach-season-write-guard.test.ts` turn that into a contract —
+`APPROVED_ARCHIVE_DOORS` (what a finished season offers) and `APPROVED_SEASON_AWARE_ROUTES` (what may
+serve one). **Adding either fails the build until the list is edited, which is the decision point.**
+
+Before proposing that anything join those lists, answer three questions:
+1. **Record or instrument?** Anything that moves money, runs a tryout, messages families, or
+   configures the team stays live-season-only.
+2. **Does the whole subtree carry the season?** An archive is a container — the unit of work is every
+   page reachable from the door, not the door. Chunk F's expensive defects were all one level down.
+3. **Does it show what the coach could see AT THE TIME**, not today?
+
+**If a surface is not archive-ready, hide its entry point in an archive** rather than letting it
+dead-end — a link that 404s is the same bug wearing a politer face.
+
 # Post-edit review
 
 After completing a **substantive** code change (new logic, API/DB/auth/shared-module edits, anything beyond copy/CSS/docs/config tweaks), proactively offer to run `/review` — the token-tiered adversarial funnel in `.claude/commands/review.md` — before treating the work as done. Offer once per logical chunk of work; don't nag on trivial diffs, and skip the offer if the user has already asked for a review or said to skip it. `/review` runs the deterministic gate first, so it's cheap on clean diffs.

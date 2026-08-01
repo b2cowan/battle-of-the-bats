@@ -1,8 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Gift, Plus, ChevronRight, TrendingUp, ArrowLeft } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -40,7 +42,7 @@ export default function FundraisersListPage({
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
-  const { assignments, loading: ctxLoading } = useCoaches();
+  const { loading: ctxLoading } = useCoaches();
 
   const [fundraisers, setFundraisers] = useState<Fundraiser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -55,10 +57,14 @@ export default function FundraisersListPage({
   const [saving, setSaving]                 = useState(false);
   const [formError, setFormError]           = useState('');
 
-  const assignment = assignments.find(a => a.teamId === teamId);
+  // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
+  // and `page.canWrite()` folds in read-only, so write flags go through it.
+  const seasonSearchParams = useSearchParams();
+  const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+  const seasonQuery = page.query;
   // Money is three-state (off|read|write); the create route already refuses a read-only
   // coach, so offering the form and failing at submit is a broken affordance.
-  const canWriteMoney = assignment?.capabilities.money === 'write';
+  const canWriteMoney = page.canWrite(page.capabilities?.money === 'write');
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   useOverlayOpen(showModal);
@@ -76,7 +82,7 @@ export default function FundraisersListPage({
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers`);
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/fundraisers${seasonQuery}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setFundraisers(data.fundraisers);
@@ -85,7 +91,7 @@ export default function FundraisersListPage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId]);
+  }, [orgSlug, teamId, seasonQuery]);
 
   useEffect(() => { load(); }, [load]);
 
@@ -132,7 +138,7 @@ export default function FundraisersListPage({
   }
 
   if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
-  if (!assignment) {
+  if (!page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -143,15 +149,15 @@ export default function FundraisersListPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/accounting`} className={styles.backLink}>
+      <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Money
       </Link>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Gift size={22} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Fundraisers</h1>
-            <p className={styles.pageSub}>{assignment.programYearName}</p>
+            <h1 className={styles.pageTitle}>Fundraisers<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+            <p className={styles.pageSub}>{page.programYearName}</p>
           </div>
         </div>
         {canWriteMoney && (

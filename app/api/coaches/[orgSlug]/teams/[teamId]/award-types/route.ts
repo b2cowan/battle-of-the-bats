@@ -11,6 +11,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageAwards } from '@/lib/coach-capabilities';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 const MAX_AWARD_TYPES = 30;
 
@@ -37,13 +38,13 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveTeamCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment } = resolved;
-  const denied = denyUnless(canManageAwards(assignment.capabilities), 'You do not have access to awards.');
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { ctx, capabilities } = resolved;
+  const denied = denyUnless(canManageAwards(capabilities), 'You do not have access to awards.');
   if (denied) return denied;
 
   // Seeds MVP / Best Hitter / Hustle Award on a team's very first read (editable starting

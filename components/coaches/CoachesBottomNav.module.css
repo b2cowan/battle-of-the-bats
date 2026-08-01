@@ -228,6 +228,16 @@
     flex-shrink: 0;
   }
 
+  /* Season status on a sheet row (Chunk F) — "Live" / "Complete" beside a season name. Takes the
+     auto margin like .dropChevron does, so it sits at the right edge of the row. */
+  .dropMeta {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    opacity: 0.55;
+  }
+
   /* Unread count on a sheet ROW (Chunk B — Notifications). Mirrors the admin More sheet so the two
      shells read the same. It takes the auto margin, so a row carrying both a count and a chevron
      keeps them adjacent at the right edge rather than pushing them apart. */

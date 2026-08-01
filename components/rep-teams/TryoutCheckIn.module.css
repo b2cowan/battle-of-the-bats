@@ -82,6 +82,16 @@
 .meta { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.05rem; }
 .bibOnly { font-size: 0.95rem; font-weight: 600; color: rgba(255,255,255,0.55); }
 
+/* "Tried out in 2025" (Chunk F, D-F1). A quiet second line, not a chip competing with the
+   check-in state on the right — this row's job is still one tap. */
+.returning {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--home-amber, var(--warning-strong, var(--warning)));
+}
+
 /* Three cues: structure (fill/outline), icon, label */
 .state { flex: 0 0 auto; display: flex; align-items: center; gap: 0.45rem; }
 .stateIcon {

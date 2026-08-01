@@ -4,6 +4,115 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-01 — Nav Unification D1/F/G: the club page gets a phone frame, a section row, and one frame geometry
+
+**D1 RULED (owner, from a two-device mockup): PHONE ONLY.** An org's public pages take the app's bottom bar ≤900px and **no platform chrome above it at any width**. The gap was real and inverted against the price ladder — a free-tier tournament family kept the app throughout while a League/Club family lost it the moment they left Home — but full parity would have sandwiched a paying club's branded page between two FieldLogicHQ bars, the one thing every design lens marked that option down for. Phone-only keeps the club owning the top of the screen (their identity row, the part that reads as theirs) and puts ours at the bottom. **Do not add the desktop strip here later without re-opening this decision** — a second wordmark above the club's name IS the rejected option. Gated by `showsOrgPublicChrome`; operator/day-of shells are excluded via an audience-split section list, so the two chrome predicates are provably mutually exclusive (unit-tested).
+
+**STAGE F APPROVED WITH THREE CHANGES:**
+1. **A TAB ROW AT EVERY WIDTH — NOT the tournament's desktop left rail.** The rail is a fixed 248px full-height column, justified for an event with six sections and live operational content. An org root is a directory page (hero + a few cards); a permanent quarter-viewport column holding three words fights the hero and commits a paying club's page to navigation furniture. Narrows the plan's "reuse the rail/tab-row pair" to the tab row only.
+2. **LEAGUE/CLUB ONLY** (gated on `module_public_site`), not a raw "2+ sections" count. On tournament tiers the only possible entries are Home and Archives — a whole chrome layer for two words, on the tier whose platform-plain org page is correct by design (D3, BUSINESS_DECISIONS 2026-07-31).
+3. **WHERE THE ROW RENDERS, THE STAGE E CRUMB RETIRES.** `Org › League` and a row highlighting League answer the same question and the row answers it better; stacking both is how a page reaches capacity. ONE wayfinding device per page. The crumb stays the answer on tournament-tier org pages. Implemented as a CSS handshake (`--org-crumb-display`) driven by the SAME single condition that mounts the row — deliberately NOT nav-context plumbing, the channel that blanked an org's name and logo earlier in this project.
+
+**Scope finding that changed the build:** `teams` ships as a CRUMB label but NOT a tab. There is no rep-teams index page — `/{org}/teams` is a redirect shim (the org home's "Tryouts Are Open" card pointing at it is a known broken link). A tab needs a real destination; a crumb only needs a name. Hence ONE section table with a `tabbable` flag rather than two lists. **Teams becomes a tab the day that index page exists — one edit, both consumers.**
+
+**STAGE G APPROVED WITH CHANGES:**
+- **The coach portal's dark-mode gap was a BUG, not polish, and is fixed at the source.** `--home-*` was defined only under `html[data-user-theme="warm"] [data-coach-warm-enabled]`; under an explicit Dark preference the whole palette was UNDEFINED inside the coaches shells while they kept consuming it. The Workspaces popover had been patching this one property at a time with hand-written fallbacks. globals.css now carries a `html[data-user-theme="dark"] [data-coach-warm-enabled]` block beside the warm one (the consumer shell's proven single-injection pattern), and the popover's fallbacks are DELETED — a fallback there would only mask the next gap instead of surfacing it.
+- **Do NOT rename the two strip-height vars into one `--operator-strip-h`.** They are read by a dozen sticky headers with a `, 0px` fallback, so a missed rename does not error — it silently tucks a toolbar under the strip. Instead the VALUE is stated once (`--operator-strip-h` in globals) and each shell's local var derives from it; the shell-local zeroing (≤900px, focused shells) stays local.
+- **The icon door is TWO shapes, not three.** All three were already 30px and the two operator variants already identical; they differ only in colour, which is correct because colour is what carries family. Now `--icon-door-size` everywhere + `--icon-door-radius` for the operator squircle; consumer keeps 50%. One size, two radii.
+- **Door order RATIFIED as already built** (audited, no code change): wordmark · … · bell (where the hub has one) · account · Workspaces, outermost. Scope increases left to right — the bell is about *this place*, account about *you*, Workspaces about *everywhere else*.
+- ⚠ **The plan text was STALE** ("chat before account") and is corrected: the chat door was removed from operator strips by binding ruling. **The consumer strip KEEPS its chat icon and must NOT be "fixed" to match** — chat is a top-level destination for a fan and a section of the work for an operator. Same icon, different job. This is the distinction a tidy-up would break.
+- **Pill vocabulary needs no new decision**: ⇄ = SIDE, plain = ENTER, already ratified — enforce only.
+
+**Explicitly NOT done, still open:** the org-page light/dark setting. Every org page is dark on every tier, so a club with a light tournament page still hard-flips to dark going up. F does not worsen the seam but does not close it; it needs a settings screen + stored preference (product work, not navigation).
+
+**Applies to:** `lib/consumer-routes.ts`, `lib/org-public-sections.ts`, `components/public/OrgSectionTabs.*`, `components/consumer/ConsumerNav.tsx`, `components/Navbar.module.css`, `app/globals.css`, both operator strips, `WorkspacesPill.module.css`, `app/[orgSlug]/layout.tsx`. Mockups: D1 `claude.ai/code/artifact/eef5768d-d2f4-4775-9194-03d23a5e39b2` · crumb `claude.ai/code/artifact/cd6b24d2-28c1-448c-add4-792d595a004c`.
+
+---
+
+### 2026-08-01 — THE ARCHIVE IS OPT-IN: new coach-portal functionality is NOT viewable in past seasons unless someone says so (owner ruling, binding)
+
+**Owner, in their words:** *"any new features, windows, etc. in the coaches portal default to not be
+viewable in archived seasons and we can explicitly add them if needed — that way we aren't opening up
+new functionality to historical seasons without explicitly saying so."*
+
+**Why it is the right default, from what Chunk F actually cost:** the expensive defect in that chunk
+was not a feature missing from the archive — it was a feature *reachable* from the archive that
+hadn't been built for it. Money sub-pages resolved the LIVE season with full write controls one click
+inside a 2025 view; Development showed live data under a "2025 · Complete" chip; Staff's remove
+button deleted a LIVE assignment. **Every one of those was a surface that arrived in the archive
+without anyone deciding it should.** Opt-in makes the failure mode "a section is missing from history"
+(visible, cheap, fixable) instead of "a section is lying about which season it is showing" (invisible,
+and it edits real data).
+
+**How it is ENFORCED, not just documented** — `tests/unit/coach-season-write-guard.test.ts`:
+1. `APPROVED_ARCHIVE_DOORS` — the exact door set a finished season offers. Adding a door fails the
+   build until the list is edited, which is the decision point.
+2. `APPROVED_SEASON_AWARE_ROUTES` — the exact set of coach API routes permitted to serve a past
+   season. Everything else resolves the ACTIVE year and cannot address history at all.
+The architecture already fails closed (a route that doesn't opt into the season-read rail simply
+can't see a past season); these lists turn that accident into a contract with a name on it.
+
+**The three questions to answer before adding anything to either list:**
+1. Is it a **RECORD or an INSTRUMENT**? Instruments — anything that moves money, runs a tryout,
+   messages families, or configures the team — stay live-season-only (D-F7).
+2. Does its page carry the season through **every link and every fetch**, all the way down? An
+   archive is a container; the unit of work is the whole reachable subtree, not the door.
+3. Does it show what the coach could see **AT THE TIME** (governing rule 1), not today?
+
+**Corollary for a surface that is NOT archive-ready:** hide its entry point in an archive rather than
+letting it dead-end. A link that 404s is the same bug wearing a politer face.
+
+---
+
+### 2026-08-01 — Read-only is a property of the SEASON, never of the team — and three "already shipped" claims that were false (Chunk F, the frozen past season)
+
+**The load-bearing rule, stated once:** a coach portal surface decides "can this be edited?" from **the season being viewed**, never from the team's state. `resolveClosedAssignment` (the Batch 3 predicate every nav and the Overview share) returns **null whenever the team has ANY active assignment** — so a **rolled-forward** team (2026 live, 2025 finished) is never itself "closed". Keying read-only off it would have left that team's 2025 archive quietly **writable**. `lib/coach-season-view.ts` holds the rule; `resolveClosedAssignment` keeps its own narrower job ("which of my TEAMS has finished") and was deliberately NOT widened.
+
+**Three claims in the plan of record were wrong. They are corrected here because the docs still read as if they were true elsewhere:**
+1. ❌ *"capabilities resolved from the SEASON'S OWN assignment row — rule 1 falls out of this design."* `lib/coach-season-read.ts` took **no year parameter at all** and returned the team's active assignment, else the **newest closed** one. Opening 2023 handed the coach their 2025 grants. Making governing rule 1 true was the centre of this chunk, not a freebie. **Fixed** — the rail now resolves the season first and takes capabilities from that season's row.
+2. ❌ *"`resolveCoachContext` — the ~49 write routes' resolver."* There is **no shared resolver**: it is a locally-declared function copy-pasted into ~53 route files. There is no chokepoint; portal-wide rules must be enforced by a rail routes opt into **plus a test that proves they did**.
+3. ⚠ *"the read-only write guards already exist."* Closed-season writes were refused **by accident, not by a guard** — write handlers resolve through the active-only assignment lookup (403) and then `getActiveRepProgramYear` (404), so a past season was simply unaddressable. **Chunk F makes past seasons addressable, which dissolves that accident.** The guard is now stated as a rule over the source tree (`tests/unit/coach-season-write-guard.test.ts`): no write handler may read `?year=` or import the season-read rail. One declared exception — Staff, governing rule 3.
+
+**Generalises — when safety is structural rather than stated, adding a capability removes the safety.** Before extending reach (a new parameter, a new door, a new id space), find out *why* the old thing was safe. If the answer is "it couldn't be addressed", you are not extending a guarded system; you are removing the guard.
+
+**⚠ The opposite correction, banked so it isn't re-feared:** the DB layer was *already* fully `programYearId`-keyed (`getRepRosterPlayers`, `getRepTeamEvents`, `getRepTeamAttendanceReliability`, `getRepTeamSeasonLineups`, `getRepPlayerDuesSummary`, `getRepTeamStaffForYear`). The handoff called this "genuinely new plumbing for ~8 sections". It wasn't — the gap was only that each ROUTE hardcoded `getActiveRepProgramYear(teamId)` then passed `programYear.id` down. **Re-size against what you read, in both directions.**
+
+**Owner rulings (2026-07-31 → 2026-08-01), binding:**
+- **D-F1 — tryout history is IN** (owner overruled the recommendation to cut it): turnout year-over-year, decisions, and evaluations. Delivered as **one dedicated archive read**, not `?year=` on the six live tryout endpoints — those are *instruments* (check-in, evaluator links, decisions, offer emails), and teaching them to address a past season would put a year parameter one typo from a write path. **Records in, instruments out** is now the line for money AND tryouts.
+- **D-F4 — no per-screen read-only banner.** A `2025 · Complete` chip beside the page title, an amber season switcher in the shell, and the year in the breadcrumb carry it. Owner: coaches learn the convention within a screen or two, and a banner on thirty-odd screens is noise. **ONE exception, owner-approved:** the Staff screen keeps a sentence, because it is the one place the chip is misleading — the season *is* complete and those buttons *do* work.
+- **D-F3 — the season switcher is NOT on the phone's pages.** Sidebar on desktop, **More sheet** on a phone (mirroring the tournament switcher in `AdminBottomNav`), because a coach checks history a few times a season and that row was charging rent on every screen. The chip doubles as the way back out on a phone, where the switcher is buried — it shares the title line, so the exit costs no vertical space.
+- **D-F2** Season's End is the archive's front door; **Chunk I's one-anchor Overview resolver is untouched** and gains no closed-season state. **D-F5** no cut-off. **D-F6** rolled-forward teams in scope, and they are the primary case.
+
+**⚠ Sensitivity, recorded as a decision rather than something that happened:** tryout evaluations are written judgements about other people's children, often children who were told no, now surfaced across years. Two constraints keep it proportionate and **must be preserved**: only coaches who held `tryouts` **at the time** can read them, and they open **in place beside a live candidate**, never as a standalone browsable dossier. Do not add a cross-season "candidate dossier" surface without a fresh owner ruling.
+
+**⚠ THE LESSON FROM THIS CHUNK'S OWN REVIEW (2026-08-01) — an archive is a CONTAINER, and a
+container is only as true as its deepest room.** Chunk F opened eleven doors on a past season and
+made the first room of each one season-aware. Every hub was correct; every page *beneath* a hub still
+resolved the live season, several with full write controls. A coach could switch to 2025, open
+Money → Expenses, and be logging a real expense against 2026 with nothing on screen saying so.
+Generalises: **when you add a dimension (a season, a tenant, a version) to a section, the unit of
+work is the whole reachable subtree from every door you opened — not the door.** The cheap test is to
+walk each new door two levels deep as the user and ask what the second screen thinks it is showing.
+
+Two Criticals from the same review, both worth remembering as shapes:
+- **A mechanical conversion that touches a fetch URL must also touch its dependency array.** Four
+  pages interpolated the season into the request and omitted it from the deps, so switching seasons
+  repainted the label and kept the data. The one page written by hand had it right. ⚠ **And every
+  probe passed** — because they all navigated with a full page load, which remounts and hides it. A
+  test suite that only hard-navigates cannot see a client-state bug; the probe now drives the real
+  switcher.
+- **A write endpoint that resolves "the active year" is not season-aware just because its READ is.**
+  The archive's Staff screen offered "Remove access" against a route that matched the target to the
+  team's ACTIVE year: on a rolled-forward team it deleted the assistant's LIVE assignment while the
+  copy promised it only affected who could view the archive. Fixed by resolving the TARGET'S own
+  season and checking head-coach authority against that season. **Rule 3 also now refuses capability
+  EDITS on a closed year (409)** — the stored grants are the record rule 1 reads back, so changing
+  them rewrites the past rather than changing who can look at it.
+
+**Also fixed in passing:** the Insights archive gated per-season money on ONE boolean — an assistant granted money this year saw every past season's totals. It now resolves the gate per season (`resolveCoachSeasonCapabilityMap`).
+
+---
+
 ### 2026-07-31 — The premium coach strip carries NO chat door: a door that EJECTS you from the workspace loses to one that keeps you in it (owner ruling, "I am good with that approach") — amends Nav Unification Stage H.1
 
 **Trigger (owner, seeing both at once):** *"do we need chat on the side nav now that we have the top nav universal chat?"* On a desktop portal the coach had **two chat doors visible simultaneously** — the new strip's icon and the sidebar's "Chat". (No duplication on a phone: the strip is >900px only, so the bottom-nav Chat tab stands alone.)

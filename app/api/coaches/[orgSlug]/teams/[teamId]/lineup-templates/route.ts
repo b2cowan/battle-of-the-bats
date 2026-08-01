@@ -12,6 +12,7 @@ import type { RepLineupMode, RepTeamLineupTemplateEntry } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
 import { cleanTemplateEntries } from '@/lib/lineup-template-entries';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
 const MAX_TEMPLATES_PER_SEASON = 50;
@@ -39,13 +40,13 @@ async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveTeamCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
-  const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { capabilities, programYear } = resolved;
+  const denied = denyUnless(capabilities.lineups, 'You do not have access to lineups.');
   if (denied) return denied;
 
   const [templates, players] = await Promise.all([
@@ -56,7 +57,7 @@ export const GET = withObservability(async (_req: Request,
   // its player grid without a game context — same source/gating as the game lineup GET.
   return NextResponse.json({
     templates,
-    players: redactRoster(players.filter(p => p.status === 'active'), assignment.capabilities),
+    players: redactRoster(players.filter(p => p.status === 'active'), capabilities),
     programYear,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/lineup-templates' });

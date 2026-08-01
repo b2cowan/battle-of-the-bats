@@ -9,6 +9,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, redactRoster, canViewRoster } from '@/lib/coach-capabilities';
+import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -32,17 +33,20 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   return { ctx, team, assignment, programYear };
 }
 
-export const GET = withObservability(async (_req: Request,
+// READ: season-scoped (Chunk F). `?year=` opens a past season's roster read-only, with the
+// capabilities recorded against THAT season's assignment row — an assistant who couldn't see
+// guardian details in 2025 still can't, no matter what they were granted since.
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
-  const resolved = await resolveCoachContext(orgSlug, teamId);
-  if ('error' in resolved) return resolved.error!;
-  const { assignment, programYear } = resolved;
-  const denied = denyUnless(canViewRoster(assignment.capabilities), 'You do not have access to the roster.');
+  const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
+  if ('error' in resolved) return resolved.error;
+  const { capabilities, programYear, isReadOnly } = resolved;
+  const denied = denyUnless(canViewRoster(capabilities), 'You do not have access to the roster.');
   if (denied) return denied;
 
   const players = await getRepRosterPlayers(programYear.id);
-  return NextResponse.json({ players: redactRoster(players, assignment.capabilities), programYear });
+  return NextResponse.json({ players: redactRoster(players, capabilities), programYear, isReadOnly });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster' });
 
 export const POST = withObservability(async (req: Request,
