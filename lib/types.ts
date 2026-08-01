@@ -1309,109 +1309,6 @@ export interface RepEventResource {
   url: string;
 }
 
-// ── Practice plans (mig 213) ─────────────────────────────────────────────────
-// The plan that lives on a practice event. SHAPE ONLY lives here (this file is a pure leaf with
-// no imports); every rule — validation, caps, the running clock, the random draw and the rotation
-// grid — lives in `lib/rep-practice-plan.ts`. Same split as `RepEventResource`/`lib/rep-event-resources`.
-
-/** D13 — a number, an optional upper bound, or exactly one "rest of practice" block per plan. */
-export interface PracticeDuration {
-  minutes: number | null;
-  toMinutes?: number | null;
-  restOfPractice?: boolean;
-}
-
-/** How a rotation's groups were arrived at (D21). */
-export type PracticeGroupSource = 'manual' | 'random' | 'previous';
-
-export interface PracticeGroup {
-  id: string;
-  name: string;
-  playerIds: string[];
-}
-
-/**
- * D27 — a station, split by SOURCE: the drill supplies the shape + the teaching (name, count,
- * equipment, setup, coaching points); the practice supplies the people + the moment (staff,
- * who's at it, tonight's note).
- *
- * ⚠ **A station IS the drill** (owner-confirmed 2026-08-01). Slice 1a has no library yet, so a
- * coach types both halves — but the split above is the seam Phase 2 lifts the drill out of, so
- * nothing on the drill half may come to depend on this particular practice.
- */
-export interface PracticeStation {
-  id: string;
-  name: string;
-  count?: number | null;
-  /** Reusable equipment labels (tags), suggested from what this team has used before. */
-  equipment?: string[];
-  setup?: string;
-  coachingPoints?: string[];
-  /** Names, never grants — a staff entry carries no account and no capability. */
-  staff?: string[];
-  /** ⚠ Only when the block has stations that do NOT rotate. See `blockRotates`. */
-  playerIds?: string[];
-  rotationNote?: string;
-  note?: string;
-}
-
-/** D22–D26 — a real carousel: the coach types total + interval, the grid is computed. */
-export interface PracticeRotation {
-  totalMinutes: number | null;
-  intervalMinutes: number | null;
-  groups: PracticeGroup[];
-  groupSource: PracticeGroupSource;
-}
-
-/**
- * A block is one stretch of the practice. It may hold stations; if it holds two or more, they
- * either ROTATE (groups move between them) or run separately (each station keeps its own players).
- *
- * ⚠ **People live at exactly ONE level** (owner ruling 2026-08-01) — see `blockRotates`:
- *   · no stations       → `playerIds` on the block
- *   · stations, no rotate → `playerIds` on each station
- *   · stations, rotating  → `rotation.groups` only
- * Whichever level doesn't apply is stripped on save, so no surface can ever show two different
- * answers to "who's here".
- */
-export interface PracticePlanBlock {
-  id: string;
-  /**
-   * Do the stations rotate? **Defaults to TRUE** (undefined = rotate) and is only meaningful
-   * with two or more stations — always read it through `blockRotates`, never directly.
-   */
-  rotates?: boolean;
-  title: string;
-  description?: string;
-  goal?: string;
-  duration: PracticeDuration;
-  staff?: string[];
-  /** ⚠ Only when the block has NO stations. */
-  playerIds?: string[];
-  coachingPoints?: string[];
-  stations?: PracticeStation[];
-  /** Groups + the clock. Present when the block's stations rotate. */
-  rotation?: PracticeRotation | null;
-}
-
-export interface PracticePlan {
-  version: number;
-  goal?: string;
-  /**
-   * What kind of practice this is ("Hitting", "Fielding" …) — COACH-TYPED tags, never a fixed
-   * list, because the vocabulary is sport-specific and this platform is not.
-   *
-   * ⚠ A LABEL ONLY in slice 1a: it does not filter the focus rail. Filtering needs focus areas to
-   * carry a category, which the drill library pays for in Phase 2 (D16) — and when it lands,
-   * non-matching areas DIM, never hide (owner ruling 2026-08-01), so a player whose only focus
-   * areas are off-type never vanishes from a coverage list.
-   */
-  practiceTypes?: string[];
-  /** Reusable equipment labels (tags) for the whole practice. */
-  equipment?: string[];
-  blocks: PracticePlanBlock[];
-}
-
 export interface RepTeamEvent {
   id: string;
   programYearId: string;
@@ -1429,14 +1326,6 @@ export interface RepTeamEvent {
   fieldNumber: string | null;   // diamond/field label within the location, e.g. "Diamond 2"
   uniform: string | null;       // game-day uniform/jersey note (games only, UI-gated)
   resources: RepEventResource[]; // per-event labelled links (mig 162), app-validated/capped
-  /**
-   * The structured practice plan for THIS practice (mig 213), or null when none is written.
-   *
-   * ⚠ OCCURRENCE-SCOPED (D7): a plan belongs to ONE practice and is never written by the
-   * recurrence series update. A "this & future"/"all" edit must never reach it — one careless
-   * series write would wipe a season of per-practice thinking.
-   */
-  practicePlan: PracticePlan | null;
   opponent: string | null;
   homeAway: 'home' | 'away' | 'neutral' | null;
   // Team-relative scoring (mig 158): your team's score vs the opponent's, NOT literal
@@ -1626,14 +1515,6 @@ export interface RepTeamEvaluationSession {
   teamId: string;
   programYearId: string;
   sessionDate: string;
-  /**
-   * D10 (mig 213) — the scheduled event these readings were collected at, or null.
-   *
-   * ⚠ The link and the date are TWO SEPARATE FACTS. Picking a practice PRE-FILLS `sessionDate`;
-   * it never derives it. A rescheduled practice must NOT move the session's date (and so must not
-   * re-stamp its readings) — the measurements happened when they happened.
-   */
-  eventId: string | null;
   note: string | null;
   createdBy: string | null;
   createdAt: string;

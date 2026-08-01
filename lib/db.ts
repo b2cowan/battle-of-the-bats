@@ -6,7 +6,6 @@ import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
-import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -5364,9 +5363,6 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     fieldNumber: r.field_number ?? null,
     uniform: r.uniform ?? null,
     resources: Array.isArray(r.resources) ? r.resources : [],
-    // Parsed through the sanitiser on READ too, so a row written before a cap tightened (or by
-    // hand) can never hand a malformed plan to a surface. Degrades to null pre-migration.
-    practicePlan: parsePracticePlan(r.practice_plan),
     opponent: r.opponent ?? null,
     homeAway: r.home_away ?? null,
     teamScore: r.team_score ?? null,
@@ -5549,63 +5545,6 @@ export async function updateRepTeamEvent(eventId: string, fields: {
     .single();
   if (error) throw error;
   return mapRepTeamEvent(data);
-}
-
-/**
- * Write the practice plan for ONE event (mig 213).
- *
- * ⚠ A DEDICATED write, deliberately kept out of `updateRepTeamEvent` and — critically — out of
- * `updateRepTeamEventSeries`. A practice plan belongs to exactly one practice (plan D7): the whole
- * premise is that *this* Tuesday differs from last Tuesday. If plan writes rode the generic event
- * update, a coach saving a recurring practice with scope "all" would silently overwrite every
- * week's plan in the series with one night's — eleven weeks of thinking gone in one tap, with no
- * undo. Keeping the write on its own route and its own function means the recurrence edit-scope
- * machinery has no path to a plan at all.
- *
- * Pass `null` to clear the column (an emptied plan is stored as NULL, never as `{blocks: []}`).
- */
-export async function updateRepTeamEventPracticePlan(
-  eventId: string,
-  teamId: string,
-  practicePlan: PracticePlan | null,
-): Promise<RepTeamEvent | null> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_events')
-    .update({ practice_plan: practicePlan, updated_at: new Date().toISOString() })
-    .eq('id', eventId)
-    // Belt-and-braces tenancy scope. The route already proves the caller is assigned to this
-    // team and that the event belongs to its active season, so this can't currently fire — but
-    // it means a future caller, or a refactor that loosens that check, can't silently regain a
-    // cross-team write. Same posture as restampRepSessionMeasurables and the session delete.
-    .eq('team_id', teamId)
-    .select()
-    .maybeSingle();
-  if (error) throw error;
-  return data ? mapRepTeamEvent(data) : null;
-}
-
-/**
- * This team's past practices that HAVE a plan, newest first — the source for both
- * "copy from a previous practice" and the reusable staff-name vocabulary (D12).
- *
- * Season-scoped and capped: a coach picking last Tuesday's plan is looking at the recent past,
- * and an unbounded read would grow with every practice of the year.
- */
-export async function getRepTeamEventsWithPracticePlans(
-  programYearId: string,
-  opts?: { limit?: number; excludeEventId?: string },
-): Promise<RepTeamEvent[]> {
-  let q = supabaseAdmin
-    .from('rep_team_events')
-    .select('*')
-    .eq('program_year_id', programYearId)
-    .not('practice_plan', 'is', null)
-    .order('starts_at', { ascending: false })
-    .limit(opts?.limit ?? 40);
-  if (opts?.excludeEventId) q = q.neq('id', opts.excludeEventId);
-  const { data, error } = await q;
-  if (error) throw error;
-  return (data ?? []).map(mapRepTeamEvent);
 }
 
 // Bulk-edit a recurring series. scope 'all' = every occurrence; 'remaining' = this one + later
@@ -6890,7 +6829,6 @@ function mapRepTeamEvaluationSession(r: any): RepTeamEvaluationSession {
     teamId: r.team_id,
     programYearId: r.program_year_id,
     sessionDate: r.session_date,
-    eventId: r.event_id ?? null,
     note: r.note ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
@@ -6934,7 +6872,7 @@ export async function getRepTeamEvaluationSessions(programYearId: string): Promi
 
 export async function createRepTeamEvaluationSession(fields: {
   orgId: string; teamId: string; programYearId: string; sessionDate: string;
-  note?: string | null; createdBy?: string | null; eventId?: string | null;
+  note?: string | null; createdBy?: string | null;
 }): Promise<RepTeamEvaluationSession> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_evaluation_sessions')
@@ -6943,7 +6881,6 @@ export async function createRepTeamEvaluationSession(fields: {
       team_id: fields.teamId,
       program_year_id: fields.programYearId,
       session_date: fields.sessionDate,
-      event_id: fields.eventId ?? null,
       note: fields.note?.trim() || null,
       created_by: fields.createdBy ?? null,
     })
@@ -6967,12 +6904,11 @@ export async function getRepTeamEvaluationSession(id: string, teamId: string): P
 
 export async function updateRepTeamEvaluationSession(
   id: string, teamId: string,
-  fields: { sessionDate?: string; note?: string | null; eventId?: string | null },
+  fields: { sessionDate?: string; note?: string | null },
 ): Promise<RepTeamEvaluationSession | null> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.sessionDate !== undefined) patch.session_date = fields.sessionDate;
   if (fields.note !== undefined) patch.note = fields.note?.trim() || null;
-  if (fields.eventId !== undefined) patch.event_id = fields.eventId;
   const { data, error } = await supabaseAdmin
     .from('rep_team_evaluation_sessions')
     .update(patch)
@@ -6982,57 +6918,6 @@ export async function updateRepTeamEvaluationSession(
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepTeamEvaluationSession(data) : null;
-}
-
-/**
- * Re-stamp every reading collected in one session onto a new date (D10 · plan §10.1).
- *
- * ⚠ THE TRAP THIS CLOSES. Each reading is stamped with the session's date **at the moment it is
- * typed** (the entry write copies `session.sessionDate` into `recorded_on`). That was invisible
- * while the date couldn't change. The realistic order of events is: open a session → start typing
- * Tuesday's numbers → notice the header says today → correct it. If the date change only moved the
- * header, every reading already entered would keep the WRONG day, the session would disagree with
- * its own contents, and the per-player trend lines would plot on the wrong date — precisely the
- * failure this whole feature exists to prevent.
- *
- * Safe and honest: a session's readings are by definition all from that one sitting. Readings
- * logged individually from a player profile carry no `session_id` and are never touched by this
- * (the `.eq('session_id', …)` filter is what guarantees it). Setting the date back moves them
- * back, so the operation is fully reversible.
- *
- * ⚠ Deliberately NOT called when a linked EVENT is rescheduled (§10.2 ruling 1) — the measurements
- * happened when they happened, and moving them to keep a foreign key tidy would be the same
- * dishonesty arriving through a different door.
- *
- * @returns how many readings moved.
- */
-export async function restampRepSessionMeasurables(
-  sessionId: string, teamId: string, recordedOn: string,
-): Promise<number> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_player_measurables')
-    .update({ recorded_on: recordedOn, updated_at: new Date().toISOString() })
-    .eq('session_id', sessionId)
-    .eq('team_id', teamId)
-    .select('id');
-  if (error) throw error;
-  return (data ?? []).length;
-}
-
-/** Evaluation sessions recorded at one event — the practice's "Recorded here" section (§10.2).
- *  This is the ONE surface in the feature allowed to say something happened, and it earns that
- *  because a coach typed real numbers into it. */
-export async function getRepTeamEvaluationSessionsForEvent(
-  eventId: string, teamId: string,
-): Promise<RepTeamEvaluationSession[]> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_team_evaluation_sessions')
-    .select('*')
-    .eq('event_id', eventId)
-    .eq('team_id', teamId)
-    .order('session_date', { ascending: false });
-  if (error) throw error;
-  return (data ?? []).map(mapRepTeamEvaluationSession);
 }
 
 /** Deleting a session degrades its entries to singles via ON DELETE SET NULL — readings
