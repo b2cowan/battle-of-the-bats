@@ -173,7 +173,26 @@ chips on the game-day card — its *downgrade* half shipped in Batch 4). ⚠ Rec
 write events; Batch 4 made the schedule carry organizer-owned mirrored games that must never be
 touched by a bulk path — any new write path must respect `isMirroredEvent`.
 
-**D · The parent-facing set** — *large; the commercial upside; needs an owner decision first*
+**D · The family experience** — ***owner-picked next; DISCOVERY brief ready:
+`COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_DISCOVERY_PROMPT.md` — run in a FRESH chat.*** The blocking
+decision is **MADE (owner, 2026-08-01): this is a RETENTION play** — it exists to make coaches and
+clubs keep using us by making the coach's work visible to the families already attached to the team.
+**No public sharing at this stage** (deferred, NOT cancelled — nothing naming a child leaves the
+authenticated product). **We are NOT competing with GameChanger on pitch-by-pitch analytics.**
+Scope widened by the owner beyond the five wow items: the next session must **evaluate all five,
+propose its own, study the GameChanger / TeamSnap / TeamLinkt parent models, and answer what would
+actually entice a coach or an org to choose us.**
+⚠ **VERIFIED 2026-08-01, and it reshapes the chunk: there is no parent/guardian identity.** `OrgRole`
+has no guardian; a guardian is roster DATA (name/email/phone on a player row), not an account. Fan
+accounts exist and follow TEAMS, never players. **Nothing links a signed-in adult to a child on a
+roster** — and every TeamSnap-style parent feature depends on that link. The first question is
+therefore "does the platform need a guardian identity, and what does it cost (PIPEDA/CASL)", not
+"which features". Also verified: **no public surface carries a player's name today**, so the review's
+*"the ingredients already exist, this is presentation work"* is true for team-level items and **false
+for anything player-level**. A no-login private-link pattern (tryout offers, evaluator links) already
+exists and is the likely delivery rail to a parent with no account.
+*(original entry below)*
+*Original:* — *large; the commercial upside; needs an owner decision first*
 Wow #4 (no-login "follow this game" link — the review's pick for most likely to spread), #5 (player
 trading card), #6 (per-player season recap), #3 (postgame recap draft), #8 (printable certificates).
 The review's judgement: the ingredients already exist server-side, so this is presentation work — but
