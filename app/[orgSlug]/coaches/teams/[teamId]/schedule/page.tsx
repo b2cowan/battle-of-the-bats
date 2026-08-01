@@ -22,7 +22,6 @@ import {
 import ExportMenu from '@/components/admin/ExportMenu';
 import { MapPin, Check, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
-import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
@@ -2296,39 +2295,7 @@ export default function CoachesSchedulePage({
               </div>
             )}
 
-            {/* ── Practice plan (Practice Plans 1a) ──
-                A SUMMARY plus a door, never the editor: the plan is written on its own drill-in
-                where the focus rail and the rotation grid have room. Read rides `schedule` (this
-                whole slide-over already does); writing is head-coach-only and the builder says so.
-                The links section above is left completely alone — some coaches will keep their
-                own document forever, and that is a legitimate outcome (D2). */}
-            {selectedEvent.eventType === 'practice' && (
-              <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
-                <h4 className={styles.formSectionTitle}>Practice plan</h4>
-                {selectedEvent.practicePlan ? (
-                  <>
-                    <p className={styles.formHint}>
-                      {summarizePracticePlan(selectedEvent.practicePlan)}
-                      {selectedEvent.practicePlan.goal ? ` — ${selectedEvent.practicePlan.goal}` : ''}
-                    </p>
-                    <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
-                      Open the plan →
-                    </Link>
-                  </>
-                ) : (
-                  <>
-                    <p className={styles.formHint}>
-                      No plan yet — set out the blocks, stations and groups for this practice.
-                    </p>
-                    <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
-                      Plan this practice →
-                    </Link>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so
+                        {/* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so
                 the destructive pair is separated from the everyday action. Kept above the tabs.
                 ⚠ Absent entirely in an archive (Chunk F): the server already refuses these for a
                 past season, but a record that draws Edit / Cancel / Delete and then errors is
