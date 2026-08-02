@@ -8,6 +8,12 @@ import { hasPlanFeature } from '@/lib/plan-features';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { getRegistrationState } from '@/lib/registration-state';
 import { tournamentToday } from '@/lib/timezone';
+import {
+  formatHeroDateRange,
+  heroCountdownText,
+  heroFirstPitchISO,
+  tournamentDayCount,
+} from '@/lib/tournament-hero-copy';
 import { deriveTierChampions, tierBadgeLabel, isTournamentPlayoffsComplete } from '@/lib/champions';
 import { fanRoundLabel } from '@/lib/playoff-bracket';
 import { isGameLive, gameStartMs, DEFAULT_GAME_DURATION_MINUTES } from '@/lib/game-status';
@@ -142,39 +148,13 @@ export default async function TournamentHomeContent({
     eventHasStarted &&
     poolPlayComplete;
   const firstPlayoffGame = sortedGames.find(g => g.isPlayoff && g.status === 'scheduled');
-  const firstPlayoffISO = firstPlayoffGame?.time
-    ? `${firstPlayoffGame.date}T${firstPlayoffGame.time.slice(0, 5)}:00`
-    : firstPlayoffGame?.date ? `${firstPlayoffGame.date}T09:00:00` : null;
+  const firstPlayoffISO = heroFirstPitchISO(firstPlayoffGame?.date, firstPlayoffGame?.time);
 
-  const dateDisplay = (startDate && endDate)
-    ? (() => {
-        const s = new Date(startDate + 'T12:00:00');
-        const e = new Date(endDate   + 'T12:00:00');
-        const sMonthDay = s.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' });
-        const eMonthDay = e.toLocaleDateString('en-CA', { month: 'long', day: 'numeric' });
-        const eYear = e.getFullYear();
-        if (s.getFullYear() === e.getFullYear()) {
-          return `${sMonthDay} - ${eMonthDay}, ${eYear}`;
-        }
-        return `${sMonthDay}, ${s.getFullYear()} - ${eMonthDay}, ${eYear}`;
-      })()
-    : 'Dates To Be Determined';
-
-  let countdownText = '';
-  if (startDate && endDate) {
-    const today = tournamentToday();
-    if (today < startDate) {
-      const msPerDay = 24 * 60 * 60 * 1000;
-      const diffDays = Math.ceil(
-        (new Date(startDate + 'T00:00:00').getTime() - new Date(today + 'T00:00:00').getTime()) / msPerDay
-      );
-      countdownText = `${diffDays} days to go`;
-    } else if (today >= startDate && today <= endDate) {
-      countdownText = 'Tournament in progress';
-    } else {
-      countdownText = 'Tournament complete';
-    }
-  }
+  // Badge strings come from lib/tournament-hero-copy.ts — shared with the setup wizard's
+  // live preview (components/admin/TournamentCreationPreview.tsx) so an organizer never
+  // watches a hero assemble itself in wording the published page does not use.
+  const dateDisplay = formatHeroDateRange(startDate, endDate);
+  let countdownText = heroCountdownText(startDate, endDate, tournamentToday());
   // A bracket can be decided before the last calendar day — keep the hero badge honest
   // with the finished body rather than reading "in progress".
   if (isFinished) countdownText = 'Tournament complete';
@@ -183,12 +163,11 @@ export default async function TournamentHomeContent({
   // after the start date (falling back to the start date at a sensible default).
   const isPreEvent = Boolean(startDate && now < startDate);
   const firstScheduledGame = sortedGames.find(g => g.status === 'scheduled' && (!startDate || g.date >= startDate));
-  // `time` may arrive as "HH:MM" or "HH:MM:SS" — normalise to HH:MM:SS so the ISO
-  // string is always valid (otherwise the Countdown silently renders nothing).
+  // A scheduled game with no start time does NOT move the countdown to that game's day —
+  // it falls back to 9 AM on the tournament's own start date. (Games are entered before
+  // times are; pointing "first pitch" at a timeless day-two game would be wrong twice.)
   const firstPitchISO = isPreEvent
-    ? (firstScheduledGame?.time
-        ? `${firstScheduledGame.date}T${firstScheduledGame.time.slice(0, 5)}:00`
-        : startDate ? `${startDate}T09:00:00` : null)
+    ? heroFirstPitchISO(firstScheduledGame?.time ? firstScheduledGame.date : startDate, firstScheduledGame?.time)
     : null;
 
   const sortedDivisions = [...divisions].sort((a, b) => a.order - b.order);
@@ -223,12 +202,9 @@ export default async function TournamentHomeContent({
     const maxAge = Math.max(...nums);
     thirdStatLabel = 'Age Range';
     thirdStatValue = minAge === maxAge ? `U${minAge}` : `U${minAge} - U${maxAge}`;
-  } else if (startDate && endDate) {
-    const msPerDay = 24 * 60 * 60 * 1000;
-    const dayCount = Math.round(
-      (new Date(endDate + 'T00:00:00').getTime() - new Date(startDate + 'T00:00:00').getTime()) / msPerDay
-    ) + 1;
-    thirdStatValue = String(Math.max(1, dayCount));
+  } else {
+    const dayCount = tournamentDayCount(startDate, endDate);
+    if (dayCount != null) thirdStatValue = String(dayCount);
   }
 
   const getTeamName     = (id: string) => teams.find(t => t.id === id)?.name ?? 'TBD';

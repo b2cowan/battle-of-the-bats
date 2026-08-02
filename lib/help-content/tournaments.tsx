@@ -67,8 +67,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Create the tournament',
       heading: 'Create, edit, and launch a tournament',
       summary: 'Names, dates, public URLs, draft mode, and the launch checklist — plus how to open team registration.',
-      keywords: ['new tournament', 'edit tournament', 'slug', 'dates', 'launch checklist', 'open registration', 'activate tournament', 'public form', 'division open'],
-      searchText: 'new tournament name year slug URL public link dates draft active status activation checklist tournament slot limit open team registration activate public registration form accepted teams capacity fees contact',
+      keywords: ['new tournament', 'edit tournament', 'slug', 'dates', 'launch checklist', 'open registration', 'activate tournament', 'public form', 'division open', 'live preview', 'preview public page'],
+      searchText: 'new tournament name year slug URL public link dates draft active status activation checklist tournament slot limit open team registration activate public registration form accepted teams capacity fees contact live preview phone preview public page preview while typing side by side desktop wide window countdown first pitch days to go missing preview no preview',
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
         { label: 'Dashboard Checklist', href: '../tournaments/dashboard' },
@@ -77,6 +77,7 @@ const tournamentsHelp: HelpPageContent = {
       content: (
         <>
           <p>Click <strong>New Tournament</strong> from Manage Tournaments. The setup wizard saves the tournament as a draft so you can finish the details before anything appears publicly.</p>
+          <p>On a wide desktop window, a live preview of your public tournament page sits beside the form. The event name, the date range, the countdown to first pitch, and the public link appear in it as you type, and the division and team-spot counts fill in once you reach the divisions step. It is a preview only — nothing in it is editable, and nothing is published until you activate the tournament. On narrower screens the wizard fills the window and the preview is not shown.</p>
           <p>For repeat events, Tournament Plus can start the draft from a previous tournament so divisions, locations, registration setup, public settings, and content are ready for review.</p>
           <p>The <strong>URL slug</strong> is used in every public tournament link. Choose it carefully. Changing it later can break links already shared by email, social media, or team communications.</p>
           <p>The dashboard launch checklist shows what is still required before activation. When every required item is complete, use Manage Tournaments to change the status from <strong>Draft</strong> to <strong>Active</strong>.</p>
@@ -93,6 +94,18 @@ const tournamentsHelp: HelpPageContent = {
         </>
       ),
       faqs: [
+        {
+          id: 'faq-creation-live-preview',
+          question: 'Why can I not see the live preview next to the setup wizard?',
+          answerText: 'The live preview of your public page needs a wide desktop window (about 1280 pixels or more). On a laptop with a narrow window, a tablet, or a phone the setup wizard fills the screen and the preview is hidden. Widen the browser window to bring it back. The preview is display only — you cannot edit anything inside it, and its colours come from the theme your public tournament pages already use.',
+          keywords: ['live preview', 'preview missing', 'no preview', 'phone preview', 'window width', 'desktop'],
+          answer: (
+            <>
+              <p>The preview needs the width to sit beside the form, so it appears on desktop windows of roughly 1280 pixels or more. On a narrow window, a tablet, or a phone the wizard fills the screen and the preview is hidden — widen the browser window to bring it back. Nothing else about setup changes either way.</p>
+              <p>The preview is display only: you cannot edit anything inside it, and its colours are the ones your public tournament pages already publish in. Organizations on plans that include custom tournament branding see their own colours; everyone else sees the FieldLogicHQ default.</p>
+            </>
+          ),
+        },
         {
           id: 'faq-change-slug',
           question: 'What happens if I change the tournament URL slug?',
@@ -112,8 +125,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Create the tournament',
       heading: 'Reuse setup for repeat tournaments',
       summary: 'Start the next event from prior setup without bringing teams, scores, or payments along.',
-      keywords: ['reuse setup', 'repeat tournament', 'next year', 'previous tournament', 'Tournament Plus', 'clone'],
-      searchText: 'reuse setup previous tournament repeat event next year copy clone Tournament Plus draft divisions pools slots venues locations registration questions fees branding public pages rules resources welcome never copied teams registrations waitlists games scores standings champions payments uploaded files private notes',
+      keywords: ['reuse setup', 'repeat tournament', 'next year', 'previous tournament', 'Tournament Plus', 'clone', 'live preview'],
+      searchText: 'reuse setup previous tournament repeat event next year copy clone Tournament Plus draft divisions pools slots venues locations registration questions fees branding public pages rules resources welcome never copied teams registrations waitlists games scores standings champions payments uploaded files private notes live preview public page preview prefilled',
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
         { label: 'Dashboard', href: '../tournaments/dashboard' },
@@ -123,6 +136,7 @@ const tournamentsHelp: HelpPageContent = {
         <>
           <p>Tournament Plus helps returning organizers turn a repeat event into review-and-adjust work instead of rebuilding from empty. Start from Manage Tournaments, the new tournament wizard, a draft dashboard prompt, or the completed tournament Summary page.</p>
           <p>The reused tournament is always created as a draft. Review dates, fees, registration questions, public page visibility, rules, and welcome content before activation.</p>
+          <p>On a wide desktop window, the live preview of the public page arrives already filled in with the new name and dates, so you can check how the returning event reads before creating the draft.</p>
           <p>Default setup areas can include:</p>
           <ul>
             <li><strong>Event structure</strong> — divisions, pools, and empty schedule slots.</li>

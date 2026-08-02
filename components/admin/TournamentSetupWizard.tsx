@@ -5,6 +5,7 @@ import { AlertCircle, ArrowRight, Copy, Plus, Trash2, X } from 'lucide-react';
 import type { TournamentFormat } from '@/lib/types';
 import styles from './TournamentSetupWizard.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import TournamentCreationPreview, { type PreviewOrg } from './TournamentCreationPreview';
 
 const WIZARD_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'review'] as const;
 const CANADIAN_PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
@@ -141,6 +142,12 @@ type TournamentSetupWizardProps = {
   initialSourceTournamentId?: string | null;
   /** Surface that opened the setup wizard, used for product analytics. */
   sourceSurface?: ReuseSetupSourceSurface;
+  /**
+   * The org, for the desktop live preview of the public page being created. Omit (or pass
+   * null) and the wizard renders exactly as it did before the preview existed — the pane
+   * needs the org's name and theme to show anything honest.
+   */
+  previewOrg?: PreviewOrg | null;
   /** Whether the org's plan includes tournament cloning. */
   canClone?: boolean;
   /** Upgrade copy shown if canClone is false. */
@@ -455,6 +462,7 @@ export default function TournamentSetupWizard({
   existingTournaments,
   initialSourceTournamentId,
   sourceSurface = 'unknown',
+  previewOrg = null,
   canClone,
   upgradeCopy,
   onClose,
@@ -882,6 +890,40 @@ export default function TournamentSetupWizard({
     }
   }
 
+  /**
+   * The desktop live preview of the public page being created — rendered as the modal
+   * overlay's second flex child (hidden by CSS below the two-pane breakpoint; see
+   * TournamentCreationPreview.module.css). Divisions only bind
+   * once the organizer has actually REACHED the divisions step: the starter set is
+   * pre-filled, and claiming six divisions on step 1 would preview a page they have not
+   * agreed to yet. The reuse path copies divisions server-side, so it stays unbound.
+   */
+  function renderPreview(source: {
+    name: string;
+    slug: string;
+    startDate: string;
+    endDate: string;
+    bindDivisions: boolean;
+  }) {
+    if (!previewOrg) return null;
+    // Count only the rows that will actually be created — a row whose name has been cleared
+    // is dropped on save (getDivisionDraftRows), so counting it here would preview divisions
+    // and team spots the published page never gets.
+    const realRows = divisionRows.filter(row => row.name.trim());
+    const divisionsBound = source.bindDivisions && !skipped.divisions && realRows.length > 0;
+    return (
+      <TournamentCreationPreview
+        org={previewOrg}
+        name={source.name}
+        slug={source.slug}
+        startDate={source.startDate}
+        endDate={source.endDate}
+        divisionCount={divisionsBound ? realRows.length : null}
+        teamSpots={divisionsBound ? realRows.reduce((sum, row) => sum + (row.capacity || 0), 0) : null}
+      />
+    );
+  }
+
   function renderFrame(title: string, description: string, children: React.ReactNode, options: {
     step: WizardStep;
     saveLabel: string;
@@ -958,6 +1000,13 @@ export default function TournamentSetupWizard({
             </div>
           </div>
         </div>
+        {renderPreview({
+          name: tournamentForm.name,
+          slug: tournamentForm.slug,
+          startDate: tournamentForm.startDate,
+          endDate: tournamentForm.endDate,
+          bindDivisions: WIZARD_ORDER.indexOf(options.step) >= WIZARD_ORDER.indexOf('divisions'),
+        })}
       </div>
     );
   }
@@ -1288,6 +1337,13 @@ export default function TournamentSetupWizard({
             </div>
           </div>
         </div>
+        {renderPreview({
+          name: cloneNameForm.name,
+          slug: cloneNameForm.slug,
+          startDate: cloneNameForm.startDate,
+          endDate: cloneNameForm.endDate,
+          bindDivisions: false,
+        })}
       </div>
     );
   }

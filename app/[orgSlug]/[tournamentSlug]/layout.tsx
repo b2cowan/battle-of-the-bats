@@ -9,8 +9,11 @@ import { isPlayoffOnly } from '@/lib/tournament-phase';
 import { tournamentToday } from '@/lib/timezone';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { isFreePlan } from '@/lib/plan-config';
-import { resolveTheme } from '@/lib/themes';
-import { buildPublicLightModeCssVars } from '@/lib/public-tournament-theme';
+import {
+  buildPublicLightModeCssVars,
+  hasOwnTournamentTheme,
+  resolvePublicTournamentTheme,
+} from '@/lib/public-tournament-theme';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
 import { OrgNavSync } from '@/components/OrgNavSync';
 import TournamentNavSync from '@/components/TournamentNavSync';
@@ -123,17 +126,13 @@ export default async function TournamentLayout({
   // client-side via /api/public/tournament-viewer instead (see TournamentFlipPill /
   // lib/use-public-flip). Do not thread per-user data into this layout.
   const effectiveColorMode = canUseAdvancedBranding ? tournament.colorMode ?? 'dark' : 'dark';
-  // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding values exist.
-  const hasTournamentTheme = canUseAdvancedBranding
-    ? !!(tournament.themePreset || tournament.themePrimary)
-    : true;
+  // Free public tournament pages always use the FieldLogicHQ default theme, even if old branding
+  // values exist. Nothing is emitted when the tournament has no theme of its own — the org
+  // layout's vars then stand. (The rule itself lives in lib/public-tournament-theme.ts, shared
+  // with the admin preview layout and the setup wizard's live preview.)
   let tournamentCssVars: string | null = null;
-  if (hasTournamentTheme) {
-    const t = resolveTheme(
-      canUseAdvancedBranding ? tournament.themePreset : 'platform',
-      canUseAdvancedBranding ? tournament.themePrimary : null,
-      canUseAdvancedBranding ? tournament.themeAccent : null
-    );
+  if (hasOwnTournamentTheme(org, tournament)) {
+    const t = resolvePublicTournamentTheme(org, tournament);
     tournamentCssVars = [
       `--primary:       ${t.primary}`,
       `--primary-light: ${t.primaryLight}`,

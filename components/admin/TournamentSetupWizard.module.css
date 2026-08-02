@@ -10,6 +10,11 @@
   padding: 1.5rem;
   background: rgba(0, 0, 0, 0.72);
   backdrop-filter: blur(8px);
+  /* The overlay IS the two-pane row: the live public-page preview sits beside the modal as
+     a second flex child. The gap only shows when that pane is visible — it appears at its
+     own breakpoint (TournamentCreationPreview.module.css), and the nested "leave setup?"
+     confirm is position:fixed, so it never joins this row. */
+  gap: 20px;
 }
 
 .workflowModal {

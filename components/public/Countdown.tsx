@@ -1,12 +1,17 @@
 'use client';
 /**
  * components/public/Countdown.tsx
- * Live "time until <target>" label (e.g. "First pitch in 2d 14h"). Ticks each
+ * Live "time until <target>" label (e.g. "First pitch in 2 days"). Ticks each
  * minute. SSR-safe: the first value is computed from the server clock so no-JS
  * visitors still see a (static) countdown. Renders `whenPast` (default nothing)
  * once the target has passed.
+ *
+ * Mounted by the real public hero AND by the setup wizard's live preview
+ * (components/admin/TournamentCreationPreview.tsx) — same component, so the
+ * countdown an organizer watches while typing is literally the one fans get.
  */
 import { useEffect, useState } from 'react';
+import { formatCountdownDuration } from '@/lib/tournament-hero-copy';
 
 interface Props {
   /** ISO datetime to count down to. */
@@ -15,18 +20,6 @@ interface Props {
   className?: string;
   /** Rendered once the target is in the past. Default: render nothing. */
   whenPast?: React.ReactNode;
-}
-
-function fmt(ms: number): string {
-  const totalMin = Math.floor(ms / 60_000);
-  const days = Math.floor(totalMin / 1440);
-  const hours = Math.floor((totalMin % 1440) / 60);
-  const mins = totalMin % 60;
-  // Plain, single-unit words — "41 days" reads better than "41d 19h" (and the
-  // hours are noise that far out). Granularity tightens as the event nears.
-  if (days >= 1) return `${days} day${days === 1 ? '' : 's'}`;
-  if (hours >= 1) return `${hours} hour${hours === 1 ? '' : 's'}`;
-  return `${Math.max(mins, 1)} minute${mins === 1 ? '' : 's'}`;
 }
 
 export default function Countdown({ target, prefix, className, whenPast = null }: Props) {
@@ -41,5 +34,5 @@ export default function Countdown({ target, prefix, className, whenPast = null }
   if (Number.isNaN(ms)) return null;
   if (ms <= 0) return <>{whenPast}</>;
 
-  return <span className={className}>{prefix}{fmt(ms)}</span>;
+  return <span className={className}>{prefix}{formatCountdownDuration(ms)}</span>;
 }

@@ -1,8 +1,8 @@
 import { notFound } from 'next/navigation';
 import { getAuthContextWithScope } from '@/lib/api-auth';
 import { getTournamentBySlug } from '@/lib/db';
-import { resolveTheme } from '@/lib/themes';
 import { canUseAdvancedTournamentBranding } from '@/lib/tournament-branding';
+import { resolvePublicTournamentTheme } from '@/lib/public-tournament-theme';
 import type { Organization, Tournament } from '@/lib/types';
 
 // The light-mode CSS var block is shared with the live public layout so the two
@@ -27,17 +27,7 @@ export async function getTournamentPreviewContext(orgSlug: string, tournamentSlu
 }
 
 export function buildPublicThemeCssVars(org: Organization, tournament?: Tournament | null): string {
-  const canUseAdvancedBranding = canUseAdvancedTournamentBranding(org);
-  const hasTournamentTheme = canUseAdvancedBranding
-    ? !!(tournament?.themePreset || tournament?.themePrimary)
-    : true;
-  const theme = hasTournamentTheme
-    ? resolveTheme(
-        canUseAdvancedBranding ? tournament?.themePreset : 'platform',
-        canUseAdvancedBranding ? tournament?.themePrimary : null,
-        canUseAdvancedBranding ? tournament?.themeAccent : null
-      )
-    : resolveTheme(org.themePreset, org.themePrimary, org.themeAccent);
+  const theme = resolvePublicTournamentTheme(org, tournament);
 
   return [
     `--primary:       ${theme.primary}`,

@@ -621,6 +621,7 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
           status: t.status ?? null,
         }))}
         sourceSurface="sidebar_create"
+        previewOrg={currentOrg}
         canClone={canClone}
         upgradeCopy={cloneUpgradeCopy}
         onClose={() => setShowCreateModal(false)}

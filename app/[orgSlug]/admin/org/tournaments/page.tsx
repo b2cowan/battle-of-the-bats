@@ -1151,6 +1151,7 @@ export default function AdminTournamentsPage({
           .sort((a, b) => (b.year ?? 0) - (a.year ?? 0))}
         initialSourceTournamentId={selectedReuseSourceId}
         sourceSurface={setupWizardSurface}
+        previewOrg={currentOrg}
         canClone={canReuseSetup}
         upgradeCopy={requiresTournamentPlusCopy('tournament_cloning')}
         onClose={() => {
