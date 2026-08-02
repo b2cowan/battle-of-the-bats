@@ -445,7 +445,7 @@ export default function CoachesExpensesPage({
   const filterTag = filterTagId ? tagById.get(filterTagId) : null;
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.pageWide}`}>
       <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Money
       </Link>

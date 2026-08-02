@@ -1958,7 +1958,7 @@ export default function CoachesSchedulePage({
 
 
   return (
-    <div className={`${styles.page}${view !== 'list' ? ` ${styles.pageWide}` : ''}`}>
+    <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Header */}
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>

@@ -141,7 +141,7 @@ export default function TemplateBuilderPage({
 
   if (!canLineups) {
     return (
-      <div className={styles.page}>{header}
+      <div className={`${styles.page} ${styles.pageWide}`}>{header}
         <div className={styles.emptyState}>
           <ListOrdered size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
           <p className={styles.emptyStateTitle}>Lineups aren&apos;t enabled for you</p>
@@ -152,7 +152,7 @@ export default function TemplateBuilderPage({
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.pageWide}`}>
       {header}
       {loading ? (
         <div className={styles.loadingState}>Loading…</div>

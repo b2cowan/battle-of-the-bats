@@ -110,7 +110,7 @@ export default function CoachesAllocationsPage({
   const overdueCount = allInstallments.filter(i => !i.paidAt && i.dueDate < today).length;
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.pageWide}`}>
       <Link href={`${base}/accounting`} className={styles.backLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Money
       </Link>

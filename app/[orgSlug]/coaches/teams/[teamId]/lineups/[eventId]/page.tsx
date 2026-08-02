@@ -424,7 +424,7 @@ export default function CoachLineupBuilderPage({
 
   if (!canLineups) {
     return (
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.pageWide}`}>
         {header}
         <div className={styles.emptyState}>
           <ListOrdered size={28} style={{ opacity: 0.3, margin: '0 auto 0.75rem', display: 'block' }} />
@@ -482,7 +482,7 @@ export default function CoachLineupBuilderPage({
   return (
     // The docked action bar is out of flow on phones, so the page reserves its height — otherwise
     // the last player row ends up hidden behind it at the bottom of the scroll.
-    <div className={`${styles.page} ${lineupRows.length > 0 ? styles.lineupDockedPage : ''}`}>
+    <div className={`${styles.page} ${styles.pageWide} ${lineupRows.length > 0 ? styles.lineupDockedPage : ''}`}>
       {header}
       <UnsavedChangesGuard active={lineupDirty} />
 

@@ -270,7 +270,11 @@
 .coachesMain {
   flex: 1;
   padding: 2rem;
-  overflow-y: auto;
+  /* ⚠ NO overflow rule — the DOCUMENT is the portal's one scroll container (probe-verified
+     2026-08-01: the old `overflow-y: auto` never actually scrolled — no ancestor height-clips
+     this element — but it silently became every sticky descendant's scrollport, so nothing
+     could ever pin against real scrolling. Removing it makes sticky compute against the
+     viewport, the admin desktop model.) */
   min-width: 0;
   background: var(--pitch-black);
   background-image:
@@ -301,16 +305,19 @@
   .coachesMain { padding: 1rem 1rem 2rem; }
 }
 
-/* ── Pinned team header (D2, owner-ratified 2026-08-01) ─────────────────────
-   Shell-owned identity bar: org eyebrow · team name · season · flip. Sticky against
-   .coachesMain (the scroll container), so it pins at every width — identity pins,
-   page titles keep scrolling (the admin model). Negative margins cancel the
-   container padding (chat.module.css precedent) so the bar spans the full scrollport;
+/* ── Pinned team masthead (D2 Option A, owner-picked 2026-08-02) ────────────
+   Shell-owned: org eyebrow · team name · season meta · flip. Sticky against the
+   VIEWPORT below the fixed top strip — the DOCUMENT is the portal's one scroll
+   container (see .coachesMain: it must never regain an overflow rule) — so identity
+   pins while page titles scroll, the admin model. Negative margins cancel the
+   container padding (chat.module.css precedent) so the bar spans the full width;
    margin-bottom MIRRORS the container padding so a full-bleed page that cancels that
    padding (Chat) lands flush under the bar instead of sliding beneath it. */
 .teamHeader {
   position: sticky;
-  top: 0;
+  /* Pins just below the fixed CoachTopStrip on desktop (the var is zeroed ≤900 where the
+     strip never renders) — the document scrolls underneath, mirroring AdminEventHeader. */
+  top: var(--coach-topstrip-h, 0px);
   z-index: 40; /* above page content incl. sticky bottom bars (z2); below sheets (200+) + nav (300) */
   display: flex;
   align-items: center;
@@ -327,45 +334,56 @@
   border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
 }
 
+/* Masthead hierarchy (Option A, owner-picked 2026-08-02): eyebrow → name → meta, stacked.
+   The hierarchy is the point — it is what lets identity repeat the sidebar's words and read
+   as an anchor rather than a stutter (admin's event header is the proof). */
 .teamHeaderLeft {
   display: flex;
-  align-items: baseline;
-  gap: 0.65rem;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.05rem;
   min-width: 0;
-  flex-wrap: wrap;
 }
 
 .teamHeaderEyebrow {
   font-family: var(--font-data);
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--white-40);
   white-space: nowrap;
 }
 
 .teamHeaderName {
-  font-size: 0.95rem;
-  font-weight: 800;
+  /* UI sans, NOT the display face (owner-picked Option 1, 2026-08-02): Barlow Condensed at
+     heavy weight crushes lowercase names — the standing rule is now "heavy condensed type
+     only at large sizes or uppercase". Inter 700 matches the sidebar's team name, which is
+     the treatment the owner finds readable. A name is data; the UI sans is the data voice. */
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 700;
   color: var(--white-90);
-  text-decoration: none;
   line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 40vw;
+  max-width: 56vw;
 }
-.teamHeaderName:hover { color: var(--white); }
 
-/* Live season, quiet text — the exceptional state (archive) gets the chip; the everyday
-   state gets a label, not chrome (Chunk F's no-banner philosophy carried into the bar). */
-.teamHeaderSeason {
+/* The status line. A1: season year (never programYearName — it can embed the team's name)
+   or the archive chip. A2 (decided fast-follow) adds record + game-day/next-event here. */
+.teamHeaderMeta {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
   font-family: var(--font-data);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   color: var(--white-45);
-  white-space: nowrap;
+  margin-top: 0.12rem;
 }
+.teamHeaderMeta:empty { display: none; }
 
 .teamHeaderFlip {
   display: inline-flex;
@@ -388,10 +406,13 @@
 
 @media (max-width: 900px) {
   .teamHeader { margin: -1rem -1rem 1rem; padding: 0.45rem 1rem; }
-  /* Scrolled state (phone only — desktop never collapses, same owner call as admin):
-     the eyebrow folds away and the bar slims so it stops competing with the work. */
+  .teamHeaderName { font-size: 0.98rem; max-width: 100%; }
+  /* Scrolled state (phone only — desktop keeps the full masthead, same owner call as
+     admin): eyebrow + meta fold away, leaving the bare team name on one slim line. */
   .teamHeaderCollapsed { min-height: 36px; padding-top: 0.3rem; padding-bottom: 0.3rem; }
   .teamHeaderCollapsed .teamHeaderEyebrow { display: none; }
+  .teamHeaderCollapsed .teamHeaderMeta { display: none; }
+  .teamHeaderCollapsed .teamHeaderName { font-size: 0.92rem; }
 }
 
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
@@ -403,6 +424,12 @@
   display: flex;
   flex-direction: column;
   padding: 1.5rem 0 2rem;
+  /* Pinned like AdminSidebar (2026-08-01, rides the D2 scroll-model fix): with the document
+     as the scroller, an unpinned sidebar scrolled away on any long page. Height-clipping is
+     what makes the overflow rule real, so the nav scrolls its own list independently. */
+  position: sticky;
+  top: var(--coach-topstrip-h, 0px);
+  height: calc(100vh - var(--coach-topstrip-h, 0px));
   overflow-y: auto;
 }
 
@@ -563,7 +590,7 @@
 }
 .profileRail {
   position: sticky;
-  top: calc(var(--coach-header-h, 0px) + 1rem);
+  top: calc(var(--coach-topstrip-h, 0px) + var(--coach-header-h, 0px) + 1rem);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -580,6 +607,9 @@
   background: var(--card-bg);
   border: 1px solid var(--home-line, rgba(255,255,255,0.08));
   border-radius: var(--radius);
+  /* A ?section= deep-link scrolls the section to the viewport top — under the pinned
+     chrome without this margin. */
+  scroll-margin-top: calc(var(--coach-topstrip-h, 0px) + var(--coach-header-h, 0px) + 0.5rem);
 }
 .collapseSummary {
   display: flex;
@@ -594,6 +624,16 @@
   min-height: 44px;
 }
 .collapseSummary::-webkit-details-marker { display: none; }
+/* The summary's title is a real <h3> for AT outline navigation — visually it inherits the
+   summary's own type so the heading adds semantics, not a second visual voice. */
+.collapseTitle {
+  margin: 0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  line-height: inherit;
+}
 .collapseSummary:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
 .collapseMeta {
   display: inline-flex;
@@ -5914,7 +5954,9 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 /* â”€â”€ The focus rail â”€â”€ */
 .ppRail { min-width: 0; }
 .ppRailInner {
-  position: sticky; top: 1rem;
+  /* Clears the fixed top strip + pinned team header now that document scrolling makes
+     sticky real (2026-08-01) — at the old `top: 1rem` it would pin occluded behind them. */
+  position: sticky; top: calc(var(--coach-topstrip-h, 0px) + var(--coach-header-h, 0px) + 1rem);
   display: flex; flex-direction: column; gap: 0.5rem;
   padding: 0.85rem 0.9rem; border-radius: 12px;
   border: 1px solid var(--border-2); background: var(--card-bg);

@@ -14,6 +14,7 @@ import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { COACHES_HOME_PATH } from '@/lib/coaches-portal-routes';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
+import CoachTeamHeader from '@/components/coaches/CoachTeamHeader';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import CoachTopStrip from '@/components/coaches/CoachTopStrip';
 import CoachWallSignOut from '@/components/coaches/CoachWallSignOut';
@@ -73,10 +74,19 @@ export default async function CoachesLayout({
   // request on every team switch for data that cannot differ by team — and would flash the wrong
   // state while it resolved. Reading them here costs no extra latency.
   const lookupOpts = { isTeamWorkspace: isTeamWorkspaceOrg(authCtx.org) };
-  const [assignments, closedAll, onboardingPrefs] = await Promise.all([
+  // publicHref: the pinned team header's flip door (D2, 2026-08-01). Same resolver + same
+  // "is this org page real?" predicate as the event chrome and the wall below; a team
+  // workspace resolves to null and the header simply shows no flip.
+  // ⚠ .catch(() => null): the resolver runs an uncaught DB count, and this Promise.all is
+  // the portal's critical path — a query blip must cost the flip pill, never a 500 (the
+  // tournament layout guards the identical call the same way). /review 2026-08-02.
+  const [assignments, closedAll, onboardingPrefs, publicHref] = await Promise.all([
     getCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id, lookupOpts),
     getClosedCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id, lookupOpts),
     getCoachOnboardingPrefs(authCtx.user.id),
+    lookupOpts.isTeamWorkspace
+      ? Promise.resolve(null)
+      : resolveOrgHomeHref(authCtx.org).catch(() => null),
   ]);
   // Same shaping as the assignments API: one entry per team, only teams with no active year.
   const activeTeamIds = new Set(assignments.map(a => a.teamId));
@@ -103,9 +113,10 @@ export default async function CoachesLayout({
     // home" is the org-less coach hub, which lists whatever they still hold — so that is the door.
     //
     // For a NORMAL org it is the org's public page, and only when the SAME shared resolver the
-    // event chrome uses says that page is real (top-nav audit D1/D2, 2026-08-01). Awaited inline
-    // because nothing else is in flight on this branch.
-    const orgHomeHref = isTeamWorkspace ? COACHES_HOME_PATH : await resolveOrgHomeHref(authCtx.org);
+    // event chrome uses says that page is real (top-nav audit D1/D2, 2026-08-01). The answer
+    // was already computed in the Promise.all above (`publicHref`) — re-awaiting the resolver
+    // here was a second identical DB count per wall load (/review 2026-08-02).
+    const orgHomeHref = isTeamWorkspace ? COACHES_HOME_PATH : publicHref;
     return (
       // R2 — the wall renders INSIDE the portal frame instead of returning before any chrome
       // mounts. A coach whose assignment was revoked (or anyone following a wrong-org link) now
@@ -194,6 +205,15 @@ export default async function CoachesLayout({
                   <CoachTopStrip />
                   <CoachesSidebar orgSlug={orgSlug} />
                   <main className={styles.coachesMain}>
+                    {/* D2 Option A (owner-picked 2026-08-02): the pinned team MASTHEAD —
+                        eyebrow · team name · season/archive meta · flip, admin's hierarchy
+                        recipe. First child of <main> so position:sticky pins at every
+                        width; renders nothing outside /teams/{teamId} paths. */}
+                    <CoachTeamHeader
+                      orgName={authCtx.org.name}
+                      isTeamWorkspace={lookupOpts.isTeamWorkspace}
+                      publicHref={publicHref}
+                    />
                     {children}
                   </main>
                 </div>

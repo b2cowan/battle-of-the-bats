@@ -304,7 +304,7 @@ export default function CoachesInsightsPage({
   const hasBand = scopedGames > 0 || last5.length > 0 || scoredGames.length > 0 || attendancePct != null || duesPct != null;
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.pageWide}`}>
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><BarChart3 size={22} /></div>

@@ -110,8 +110,11 @@ export default function SeasonEndPage({
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : wrapped ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', maxWidth: 560 }}>
+        /* Desktop shell D3 (2026-08-01): the Wrapped card and the recap/doors sit side by
+           side on desktop instead of a 560px strip floating in empty space; stacks ≤900. */
+        <div className={styles.seasonSpread}>
           <SeasonWrappedCard wrapped={wrapped} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
 
           {/* Chunk D 3.5 — did the families read the recaps? COUNTS ONLY: the product does not
               record, and this page cannot show, WHICH family opened one. Absent entirely when
@@ -172,6 +175,7 @@ export default function SeasonEndPage({
               </p>
             </section>
           )}
+          </div>
         </div>
       ) : null}
 

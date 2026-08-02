@@ -145,7 +145,7 @@ export default function TeamDocumentsPage({
   }
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link href={`/${params.orgSlug}/coaches`}>Coaches Portal</Link>

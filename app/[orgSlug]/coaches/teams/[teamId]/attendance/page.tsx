@@ -131,7 +131,7 @@ export default function CoachesAttendancePage({
   const hasAnyData = rows.some(r => r.games.known > 0 || r.practices.known > 0);
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Drill-in sub-page back-link (the coach breadcrumb is globally hidden — 2026-07-08 rule).
           IA parent = the Insights hub; the Roster page keeps its own in-context button here. */}
       <Link href={`${base}/history`} className={styles.lineupBackLink}>← Insights</Link>

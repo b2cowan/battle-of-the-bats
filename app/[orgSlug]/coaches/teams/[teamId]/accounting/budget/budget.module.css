@@ -1,5 +1,9 @@
+/* Desktop shell D1/D3 (2026-08-01): adopts its Budget-vs-Actual sibling's width — the two
+   share the month-grid shape and had drifted (BvA was widened for exactly this problem,
+   review f9-2, and the fix never propagated here). Centered per the portal-wide rule. */
 .page {
-  max-width: 960px;
+  max-width: 1200px;
+  margin-inline: auto;
 }
 
 .pageHeader {

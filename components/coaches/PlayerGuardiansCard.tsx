@@ -125,10 +125,20 @@ export default function PlayerGuardiansCard({
 
   return (
     <div className={styles.panel}>
-      <h2 className={styles.panelTitle}>
-        {playerFirstName}&rsquo;s guardians · {connected.length} connected
-        {decidable.length > 0 && <span className={styles.badge}>{decidable.length} waiting</span>}
+      {/* The profile page's collapse summary carries the visible "Guardians" title now; this h2
+          stays for the DOCUMENT OUTLINE only (the 2026-07-31 staff lesson: the repeated-header
+          rule is about the visible header, never the outline). The count + waiting badge remain
+          visible below, wording unchanged. */}
+      <h2
+        className={styles.panelTitle}
+        style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap', border: 0 }}
+      >
+        {playerFirstName}&rsquo;s guardians
       </h2>
+      <p className={styles.rowSub} style={{ marginTop: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        {connected.length} connected
+        {decidable.length > 0 && <span className={styles.badge}>{decidable.length} waiting</span>}
+      </p>
       <p className={styles.rowSub} style={{ marginTop: 0 }}>
         The accountable adults for this player — up to {maxPerPlayer}, so a second household fits.
       </p>

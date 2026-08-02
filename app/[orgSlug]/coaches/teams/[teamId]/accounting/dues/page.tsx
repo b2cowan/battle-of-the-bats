@@ -559,7 +559,7 @@ export default function CoachesDuesPage({
   const neverPaid = players.filter(isNeverPaidPlayer);
 
   return (
-    <div className={styles.page}>
+    <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Header */}
       <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Money

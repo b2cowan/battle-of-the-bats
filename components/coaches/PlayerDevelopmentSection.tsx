@@ -494,8 +494,10 @@ export default function PlayerDevelopmentSection({
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Development</p>
+      {/* No title of its own: the profile page's collapse summary carries "Development" now —
+          a second visible title directly beneath it is the repeated-header defect the
+          2026-07-31 staff ruling retired. The Saved flash + actions stay. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
           {savedFlash && (
             <span style={{ fontSize: '0.75rem', color: 'var(--logic-lime)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>

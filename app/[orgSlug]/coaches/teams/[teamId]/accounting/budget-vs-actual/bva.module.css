@@ -5,6 +5,7 @@
    Money page would make Money the only wide area in the portal. Chunk A D2. */
 .page {
   max-width: 1200px;
+  margin-inline: auto; /* Desktop shell D1 (2026-08-01): every page column centers. */
   --bva-unbudgeted: #f97316; /* token-exempt: distinct from schedule event accent */
 }
 

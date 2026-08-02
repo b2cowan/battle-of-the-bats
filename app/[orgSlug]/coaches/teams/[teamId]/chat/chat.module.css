@@ -4,7 +4,10 @@
    floats with dead space + a nested scroll. We cancel that padding with negative margins and set the
    vars to this portal's real chrome (no mobile top bar; bottom nav only ≤900px). */
 .chatWrap {
-  --coach-topbar-h: 0px;
+  /* The pinned team header (D2, 2026-08-01) IS this portal's top bar now — its measured
+     height is published as --coach-header-h on the shared <main>, so the chat box's
+     viewport calc stays honest and the composer never slips below the fold. */
+  --coach-topbar-h: var(--coach-header-h, 0px);
   --coach-bottomnav-h: 64px;
   margin: -1rem -1rem -6rem;
   min-width: 0;

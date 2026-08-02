@@ -115,14 +115,19 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
 
   return (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-        <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Documents</p>
+      {/* No title of its own: the profile page's collapse summary carries "Documents" now —
+          a second visible title directly beneath it is the repeated-header defect the
+          2026-07-31 staff ruling retired. The action row stays. */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
         {canManage && (
         <button
           type="button"
           className="btn btn-ghost"
           style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           onClick={() => { setUploadOpen(true); setUploadError(''); }}
+          /* The visible "Documents" context lives in the DOM-distant collapse summary now, so
+             the button names its own object for AT (/review 2026-08-02). */
+          aria-label="Upload document"
         >
           <Upload size={13} /> Upload
         </button>

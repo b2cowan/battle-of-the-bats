@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { ChevronRight, AlertTriangle, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
 import PlayerGuardiansCard from '@/components/coaches/PlayerGuardiansCard';
@@ -336,9 +337,13 @@ export default function PlayerDetailPage({
         </button>
       </div>
 
+      {/* Two-column profile (D3, owner-ratified 2026-08-01): the long/working sections carry
+          the main column as deep-linkable collapsible cards; the rail holds compact quick-facts
+          that stay visible while scrolling (sticky below the pinned header). */}
+      <div className={styles.profileCols}>
+      <div>
       {/* Player info */}
-      <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Player</p>
+      <CoachCollapseSection sectionId="player" title="Player">
         <div className={styles.formGrid}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="pfn">First Name</label>
@@ -460,8 +465,133 @@ export default function PlayerDetailPage({
               maxLength={1000} />
           </div>
         </div>
+      </CoachCollapseSection>
+
+      {/* Documents — a player's signed waiver / medical consent needs BOTH `documents` and
+          guardian-PII clearance. Rendering it unconditionally put that child's medical PDF one tap
+          away directly beneath the guardian fields this same page had just blanked out. The routes
+          are the real gate (they 403 either way); this keeps the surface from advertising a file
+          the coach cannot open. */}
+      {/* This player's guardians (Chunk D Slice 2). Rides `rosterPii` — the same capability
+          that governs guardian contact details, since this card shows exactly those. Renders
+          nothing at all while the guardian tier is switched off. */}
+      {assignment && assignment.capabilities.rosterPii && player && (
+        <CoachCollapseSection sectionId="guardians" title="Guardians">
+          <PlayerGuardiansCard
+            orgSlug={orgSlug}
+            teamId={teamId}
+            playerId={playerId}
+            playerFirstName={player.playerFirstName}
+            rosterGuardianEmail={player.guardianEmail ?? null}
+          />
+        </CoachCollapseSection>
+      )}
+
+      {assignment && canViewPlayerDocuments(assignment.capabilities) && (
+        <CoachCollapseSection sectionId="documents" title="Documents">
+          <PlayerDocumentsSection
+            orgSlug={orgSlug}
+            teamId={teamId}
+            playerId={playerId}
+            canManage={canManagePlayerDocuments(assignment.capabilities)}
+          />
+        </CoachCollapseSection>
+      )}
+
+      {/* Development (Player Development 3A) — section renders only when this coach can see
+          goals (notes) or measurables (roster view); the API filters server-side regardless. */}
+      {assignment && (canViewDevelopmentGoals(assignment.capabilities) || canViewMeasurables(assignment.capabilities)) && (
+        <CoachCollapseSection sectionId="development" title="Development">
+          {/* key forces a fresh mount per player — no cross-player fetch races or stale drafts */}
+          <PlayerDevelopmentSection
+            key={playerId}
+            orgSlug={orgSlug}
+            teamId={teamId}
+            playerId={playerId}
+            bestPositions={form?.positions.best ?? []}
+            attendancePct={attendance && attnKnown > 0 ? attnRate : null}
+            playerName={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
+            playerNumber={player.playerNumber ? clean(player.playerNumber) : null}
+            teamName={assignment.teamName}
+            seasonName={seasonLabel(assignment.programYearName, assignment.teamName) || null}
+          />
+        </CoachCollapseSection>
+      )}
+
+      {/* The family season recap, previewed (Chunk D 3.2). Live season only — the route
+          resolves the ACTIVE year and cannot address an archived one (the archive is opt-in),
+          and `isReadOnly` keeps the door off an archived page rather than letting it 404.
+          Gated on roster visibility AND notes, matching the payload's development content.
+          Left unwrapped by CoachCollapseSection — the component already implements its own
+          collapsed-by-default, fetch-on-open preview (a deliberate product decision, see the
+          component's own docblock); nesting it in a second disclosure would stack two
+          independent expand controls on one card. */}
+      {assignment && player && !page.isReadOnly
+        && canViewRoster(assignment.capabilities)
+        && canViewDevelopmentGoals(assignment.capabilities) && (
+        <PlayerRecapPreview
+          key={playerId}
+          orgSlug={orgSlug}
+          teamId={teamId}
+          playerId={playerId}
+          playerFirstName={clean(player.playerFirstName)}
+        />
+      )}
+
+      {/* Attendance */}
+      <CoachCollapseSection sectionId="attendance" title="Attendance">
+        {!attendance || attendance.total === 0 ? (
+          <p className={styles.detailPlaceholder}>No attendance recorded yet this season.</p>
+        ) : (
+          <>
+            <div className={styles.statStrip}>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attnRate}%</span><span className={styles.statBoxLabel}>Attendance</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.attending}</span><span className={styles.statBoxLabel}>Present</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.late}</span><span className={styles.statBoxLabel}>Late</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.absent}</span><span className={styles.statBoxLabel}>Absent</span></div>
+              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.total}</span><span className={styles.statBoxLabel}>Recorded</span></div>
+            </div>
+            {attendance.recent.length > 0 && (
+              <>
+                <p className={styles.miniListLabel}>Last {attendance.recent.length} sessions</p>
+                <ul className={styles.miniList}>
+                  {attendance.recent.map(r => (
+                    <li key={r.eventId} className={styles.miniRow}>
+                      <span className={styles.miniRowMain}>{r.name}</span>
+                      <span className={styles.miniRowMeta}>{formatShortDate(r.startsAt)}</span>
+                      <span className={`${styles.badge} ${ATTN_CHIP[r.status] ?? styles.badgeDraft}`}>{ATTN_LABEL[r.status] ?? r.status}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </>
+        )}
+      </CoachCollapseSection>
+
+      {/* Awards */}
+      <CoachCollapseSection sectionId="awards" title="Awards">
+        {!awards || awards.total === 0 ? (
+          <p className={styles.detailPlaceholder}>No awards yet this season.</p>
+        ) : (
+          <>
+            <p className={styles.miniListLabel} style={{ marginTop: 0 }}>
+              🏆 {awards.total} award{awards.total === 1 ? '' : 's'} this season
+            </p>
+            <ul className={styles.miniList}>
+              {awards.byType.map(t => (
+                <li key={t.awardTypeId} className={styles.miniRow}>
+                  <span className={styles.miniRowMain}>{t.emoji ? `${t.emoji} ` : ''}{t.name}</span>
+                  <span className={styles.miniRowMeta}>{t.count}×</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </CoachCollapseSection>
       </div>
 
+      <aside className={styles.profileRail}>
       {/* Guardian info */}
       <div className={styles.detailSection}>
         <p className={styles.detailSectionTitle}>Guardian</p>
@@ -535,127 +665,6 @@ export default function PlayerDetailPage({
         </div>
       </div>
 
-      {/* Documents — a player's signed waiver / medical consent needs BOTH `documents` and
-          guardian-PII clearance. Rendering it unconditionally put that child's medical PDF one tap
-          away directly beneath the guardian fields this same page had just blanked out. The routes
-          are the real gate (they 403 either way); this keeps the surface from advertising a file
-          the coach cannot open. */}
-      {/* This player's guardians (Chunk D Slice 2). Rides `rosterPii` — the same capability
-          that governs guardian contact details, since this card shows exactly those. Renders
-          nothing at all while the guardian tier is switched off. */}
-      {assignment && assignment.capabilities.rosterPii && player && (
-        <div className={styles.detailSection}>
-          <PlayerGuardiansCard
-            orgSlug={orgSlug}
-            teamId={teamId}
-            playerId={playerId}
-            playerFirstName={player.playerFirstName}
-            rosterGuardianEmail={player.guardianEmail ?? null}
-          />
-        </div>
-      )}
-
-      {assignment && canViewPlayerDocuments(assignment.capabilities) && (
-        <div className={styles.detailSection}>
-          <PlayerDocumentsSection
-            orgSlug={orgSlug}
-            teamId={teamId}
-            playerId={playerId}
-            canManage={canManagePlayerDocuments(assignment.capabilities)}
-          />
-        </div>
-      )}
-
-      {/* Development (Player Development 3A) — section renders only when this coach can see
-          goals (notes) or measurables (roster view); the API filters server-side regardless. */}
-      {assignment && (canViewDevelopmentGoals(assignment.capabilities) || canViewMeasurables(assignment.capabilities)) && (
-        <div className={styles.detailSection}>
-          {/* key forces a fresh mount per player — no cross-player fetch races or stale drafts */}
-          <PlayerDevelopmentSection
-            key={playerId}
-            orgSlug={orgSlug}
-            teamId={teamId}
-            playerId={playerId}
-            bestPositions={form?.positions.best ?? []}
-            attendancePct={attendance && attnKnown > 0 ? attnRate : null}
-            playerName={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
-            playerNumber={player.playerNumber ? clean(player.playerNumber) : null}
-            teamName={assignment.teamName}
-            seasonName={seasonLabel(assignment.programYearName, assignment.teamName) || null}
-          />
-        </div>
-      )}
-
-      {/* The family season recap, previewed (Chunk D 3.2). Live season only — the route
-          resolves the ACTIVE year and cannot address an archived one (the archive is opt-in),
-          and `isReadOnly` keeps the door off an archived page rather than letting it 404.
-          Gated on roster visibility AND notes, matching the payload's development content. */}
-      {assignment && player && !page.isReadOnly
-        && canViewRoster(assignment.capabilities)
-        && canViewDevelopmentGoals(assignment.capabilities) && (
-        <PlayerRecapPreview
-          key={playerId}
-          orgSlug={orgSlug}
-          teamId={teamId}
-          playerId={playerId}
-          playerFirstName={clean(player.playerFirstName)}
-        />
-      )}
-
-      {/* Attendance */}
-      <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Attendance</p>
-        {!attendance || attendance.total === 0 ? (
-          <p className={styles.detailPlaceholder}>No attendance recorded yet this season.</p>
-        ) : (
-          <>
-            <div className={styles.statStrip}>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attnRate}%</span><span className={styles.statBoxLabel}>Attendance</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.attending}</span><span className={styles.statBoxLabel}>Present</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.late}</span><span className={styles.statBoxLabel}>Late</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.absent}</span><span className={styles.statBoxLabel}>Absent</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.total}</span><span className={styles.statBoxLabel}>Recorded</span></div>
-            </div>
-            {attendance.recent.length > 0 && (
-              <>
-                <p className={styles.miniListLabel}>Last {attendance.recent.length} sessions</p>
-                <ul className={styles.miniList}>
-                  {attendance.recent.map(r => (
-                    <li key={r.eventId} className={styles.miniRow}>
-                      <span className={styles.miniRowMain}>{r.name}</span>
-                      <span className={styles.miniRowMeta}>{formatShortDate(r.startsAt)}</span>
-                      <span className={`${styles.badge} ${ATTN_CHIP[r.status] ?? styles.badgeDraft}`}>{ATTN_LABEL[r.status] ?? r.status}</span>
-                    </li>
-                  ))}
-                </ul>
-              </>
-            )}
-          </>
-        )}
-      </div>
-
-      {/* Awards */}
-      <div className={styles.detailSection}>
-        <p className={styles.detailSectionTitle}>Awards</p>
-        {!awards || awards.total === 0 ? (
-          <p className={styles.detailPlaceholder}>No awards yet this season.</p>
-        ) : (
-          <>
-            <p className={styles.miniListLabel} style={{ marginTop: 0 }}>
-              🏆 {awards.total} award{awards.total === 1 ? '' : 's'} this season
-            </p>
-            <ul className={styles.miniList}>
-              {awards.byType.map(t => (
-                <li key={t.awardTypeId} className={styles.miniRow}>
-                  <span className={styles.miniRowMain}>{t.emoji ? `${t.emoji} ` : ''}{t.name}</span>
-                  <span className={styles.miniRowMeta}>{t.count}×</span>
-                </li>
-              ))}
-            </ul>
-          </>
-        )}
-      </div>
-
       {/* Dues */}
       <div className={styles.detailSection}>
         <div className={styles.sectionHeadRow}>
@@ -683,6 +692,8 @@ export default function PlayerDetailPage({
             </p>
           </>
         )}
+      </div>
+      </aside>
       </div>
 
       {/* Save bar — viewport-pinned while there are unsaved changes, no matter where you scroll.
