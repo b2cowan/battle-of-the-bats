@@ -1,5 +1,5 @@
 'use client';
-import { use, useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Archive, History, Library, Plus, RotateCcw, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -8,11 +8,12 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
-  MAX_DRILL_CATEGORY_LEN, MAX_DRILL_MINUTES, MAX_DRILL_NAME_LEN, MAX_DRILL_POINTS,
-  MAX_DRILL_POINT_LEN, MAX_DRILL_TEXT_LEN, UNCATEGORISED_FILTER, collectDrillCategories,
-  filterDrills, sortDrillsForPicker,
+  MAX_DRILL_MINUTES, MAX_DRILL_NAME_LEN, MAX_DRILL_POINTS,
+  MAX_DRILL_POINT_LEN, MAX_DRILL_TEXT_LEN, UNTAGGED_FILTER, collectTags,
+  filterTagged, sortDrillsForPicker,
   type DrillInput, type RepTeamDrillWithUsage,
 } from '@/lib/rep-drills';
+import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import styles from '../../../../coaches.module.css';
 
 /**
@@ -27,7 +28,7 @@ import styles from '../../../../coaches.module.css';
  * ⚠ **PLANS, never practices** — nothing records what was actually run (D4), so "used 8×" would be
  * a claim the data cannot support.
  *
- * ⚠ **Nothing is seeded and no category is supplied.** Every drill and category here is coach-typed;
+ * ⚠ **Nothing is seeded and no tag is supplied.** Every drill and tag here is coach-typed;
  * a "Hitting / Fielding / Pitching" list would be one sport talking to a platform serving many.
  * That binds the placeholders too, not just the data.
  *
@@ -48,7 +49,7 @@ type ImportRow = {
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
 
 const emptyDraft = (): DrillInput => ({
-  name: '', category: '', usualMinutes: null, description: '', goal: '',
+  name: '', tagIds: [], usualMinutes: null, description: '', goal: '',
   coachingPoints: [], setup: '', equipment: [],
 });
 
@@ -60,10 +61,11 @@ function FieldLabel({ children }: { children: React.ReactNode }) {
 }
 
 function DrillForm({
-  draft, categories, busy, error, submitLabel, onChange, onSubmit, onCancel,
+  draft, tags, onCreateTag, busy, error, submitLabel, onChange, onSubmit, onCancel,
 }: {
   draft: DrillInput;
-  categories: string[];
+  tags: PickableTag[];
+  onCreateTag: (name: string) => Promise<PickableTag | null>;
   busy: boolean;
   error: string;
   submitLabel: string;
@@ -71,7 +73,6 @@ function DrillForm({
   onSubmit: () => void;
   onCancel: () => void;
 }) {
-  const listId = useId();
   const points = draft.coachingPoints ?? [];
   const equipment = draft.equipment ?? [];
   const [equipDraft, setEquipDraft] = useState('');
@@ -93,16 +94,18 @@ function DrillForm({
           onChange={e => onChange({ ...draft, name: e.target.value })} />
       </label>
 
+      {/* Coach-typed vocabulary, offered from what they've already used — never a fixed list. The
+          SAME tags a focus area can carry, which is what lets the two actually match. */}
+      <TagPicker
+        label="Tags"
+        all={tags}
+        selected={draft.tagIds ?? []}
+        onChange={next => onChange({ ...draft, tagIds: next })}
+        onCreate={onCreateTag}
+        emptyHint="No tags yet — type a word to make your first one."
+      />
+
       <div className={styles.ppDuration}>
-        <label className={styles.ppField} style={{ flex: 1 }}>
-          <FieldLabel>Category</FieldLabel>
-          {/* Coach-typed, offered from what they've already used — never a fixed list. This is the
-              SAME vocabulary a focus area can carry, which is what lets the two actually match. */}
-          <input className={styles.input} value={draft.category ?? ''} list={listId}
-            maxLength={MAX_DRILL_CATEGORY_LEN} placeholder="What kind of drill is it?"
-            onChange={e => onChange({ ...draft, category: e.target.value })} />
-          <datalist id={listId}>{categories.map(c => <option key={c} value={c} />)}</datalist>
-        </label>
         <label className={styles.ppField}>
           {/* ONE number. Ranges were removed at owner QA and are not returning via the library. */}
           <FieldLabel>Usually</FieldLabel>
@@ -203,10 +206,14 @@ function DrillRow({
         <span className={styles.ppDrillRowName}>
           {drill.name}
           {shared && <span className={styles.ppSharedChip}>Club</span>}
+          {drill.tags.length > 0 && (
+            <span className={styles.tagReadRow}>
+              {drill.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
+            </span>
+          )}
         </span>
         <span className={styles.ppDrillRowMeta}>
           {[
-            drill.category,
             drill.usualMinutes ? `${drill.usualMinutes} min` : null,
             // ⚠ PLANS, never practices (D4) — and written out, never a bare 0, so an unused drill
             // is not made to read as a failing score.
@@ -253,7 +260,7 @@ export default function CoachDrillsPage({
   const [loadError, setLoadError] = useState('');
 
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [showRetired, setShowRetired] = useState(false);
 
   const [editing, setEditing] = useState<{ id: string | null; draft: DrillInput } | null>(null);
@@ -284,19 +291,54 @@ export default function CoachDrillsPage({
   useEffect(() => { load(); }, [load]);
 
   // Memoised because `?? []` mints a NEW array on every render, which would make every memo below
-  // it (categories, active, retired, the filtered list) recompute on every keystroke in the search
+  // it (the chips, active, retired, the filtered list) recompute on every keystroke in the search
   // box — the walk of the whole library repeated per character.
   const drills = useMemo(() => data?.drills ?? [], [data]);
   const canWrite = !!data?.canWrite;
-  const categories = useMemo(() => collectDrillCategories(drills), [drills]);
+
+  /**
+   * The team's whole 'focus' vocabulary — NOT just the tags currently in use.
+   *
+   * ⚠ Deliberately a separate fetch from the drills. The picker must offer every tag the team has,
+   * including ones only a focus area or a template uses; deriving the list from the drills on screen
+   * would quietly hide vocabulary the coach has already created and invite them to mint a duplicate.
+   * The filter CHIPS below are derived from what is on screen, which is a different question.
+   */
+  const [tags, setTags] = useState<PickableTag[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) setTags(json.tags ?? []);
+      } catch { /* the picker degrades to "no tags yet"; the drill still saves */ }
+    })();
+    return () => { cancelled = true; };
+  }, [orgSlug, teamId]);
+
+  const createTag = useCallback(async (name: string): Promise<PickableTag | null> => {
+    const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const tag: PickableTag = json.tag;
+    setTags(prev => (prev.some(t => t.id === tag.id) ? prev : [...prev, tag]));
+    return tag;
+  }, [orgSlug, teamId]);
+
+  const chipTags = useMemo(() => collectTags(drills), [drills]);
 
   const active = useMemo(() => drills.filter(d => d.isActive), [drills]);
   const retired = useMemo(() => drills.filter(d => !d.isActive), [drills]);
 
   // The SAME predicate the in-plan picker uses — one rule, so the two lists can't drift.
   const shown = useMemo(
-    () => filterDrills(sortDrillsForPicker(active), query, category),
-    [active, query, category],
+    () => filterTagged(sortDrillsForPicker(active), query, tagFilter),
+    [active, query, tagFilter],
   );
 
   async function saveDrill() {
@@ -439,21 +481,21 @@ export default function CoachDrillsPage({
           </div>
 
           <div className={styles.ppSuggestWrap}>
-            <button type="button" className={styles.ppSuggestChip} data-on={category == null ? 'on' : undefined}
-              onClick={() => setCategory(null)}>All <span>{active.length}</span></button>
-            {categories.map(c => (
-              <button key={c} type="button" className={styles.ppSuggestChip}
-                data-on={category === c ? 'on' : undefined} onClick={() => setCategory(c)}>
-                {c} <span>{active.filter(d => d.category === c).length}</span>
+            <button type="button" className={styles.ppSuggestChip} data-on={tagFilter == null ? 'on' : undefined}
+              onClick={() => setTagFilter(null)}>All <span>{active.length}</span></button>
+            {chipTags.map(t => (
+              <button key={t.id} type="button" className={styles.ppSuggestChip}
+                data-on={tagFilter === t.id ? 'on' : undefined} onClick={() => setTagFilter(t.id)}>
+                {t.name} <span>{active.filter(d => d.tags.some(x => x.id === t.id)).length}</span>
               </button>
             ))}
             {/* ⚠ Always offered when it applies — a drill must never become unreachable simply by
-                having no category. */}
-            {active.some(d => !d.category) && (
+                carrying no tags. */}
+            {active.some(d => d.tags.length === 0) && (
               <button type="button" className={styles.ppSuggestChip}
-                data-on={category === UNCATEGORISED_FILTER ? 'on' : undefined}
-                onClick={() => setCategory(UNCATEGORISED_FILTER)}>
-                Uncategorised <span>{active.filter(d => !d.category).length}</span>
+                data-on={tagFilter === UNTAGGED_FILTER ? 'on' : undefined}
+                onClick={() => setTagFilter(UNTAGGED_FILTER)}>
+                No tags <span>{active.filter(d => d.tags.length === 0).length}</span>
               </button>
             )}
           </div>
@@ -467,7 +509,7 @@ export default function CoachDrillsPage({
                 setEditing({
                   id: drill.id,
                   draft: {
-                    name: drill.name, category: drill.category ?? '', usualMinutes: drill.usualMinutes,
+                    name: drill.name, tagIds: drill.tags.map(t => t.id), usualMinutes: drill.usualMinutes,
                     description: drill.description ?? '', goal: drill.goal ?? '',
                     coachingPoints: drill.coachingPoints, setup: drill.setup ?? '', equipment: drill.equipment,
                   },
@@ -506,7 +548,8 @@ export default function CoachDrillsPage({
             </div>
             <DrillForm
               draft={editing.draft}
-              categories={categories}
+              tags={tags}
+              onCreateTag={createTag}
               busy={formBusy}
               error={formError}
               submitLabel={editing.id ? 'Save' : 'Add drill'}

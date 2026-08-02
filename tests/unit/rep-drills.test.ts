@@ -2,7 +2,9 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   MAX_DRILL_MINUTES,
-  collectDrillCategories,
+  collectTags,
+  filterTagged,
+  UNTAGGED_FILTER,
   detachStationFromDrill,
   drillToStation,
   sortDrillsForPicker,
@@ -12,11 +14,15 @@ import {
 } from '../../lib/rep-drills.ts';
 import { countDrillUses, collectImportableDrills } from '../../lib/rep-drill-usage.ts';
 import { resolveStationTeaching, sanitizePracticePlan } from '../../lib/rep-practice-plan.ts';
-import type { RepTeamDrill } from '../../lib/types.ts';
+import type { RepTeamDrill, RepTeamTag } from '../../lib/types.ts';
+
+function tag(id: string, name: string): RepTeamTag {
+  return { id, orgId: 'o1', teamId: 't1', kind: 'focus', name, createdBy: null, createdAt: '', updatedAt: '' };
+}
 
 function drill(over: Partial<RepTeamDrill> = {}): RepTeamDrill {
   return {
-    id: 'd1', orgId: 'o1', teamId: 't1', name: 'Front toss', category: 'Hitting',
+    id: 'd1', orgId: 'o1', teamId: 't1', name: 'Front toss', tags: [tag('tg1', 'Hitting')],
     usualMinutes: 12, description: 'Feeder kneels behind the screen.', goal: 'Hands inside the ball.',
     coachingPoints: ['Choke up', 'Widen the stance'], setup: 'Screen at 45°', equipment: ['Screen', 'Balls'],
     isActive: true, sortOrder: 0, createdBy: null, createdAt: '', updatedAt: '', ...over,
@@ -34,7 +40,7 @@ describe('drill input validation', () => {
     const r = validateDrillInput({ name: 'Warm-up' });
     assert.ok('drill' in r);
     assert.equal(r.drill.name, 'Warm-up');
-    assert.equal(r.drill.category, null);
+    assert.deepEqual(r.drill.tagIds, []);
     assert.equal(r.drill.usualMinutes, null);
   });
 
@@ -77,10 +83,10 @@ describe('a picked drill brings the shape, empty of people (D20)', () => {
     assert.equal(s.note, undefined);
   });
 
-  it('carries provenance and a category SNAPSHOT, not a live reference', () => {
+  it('carries provenance and a TAG-NAME snapshot, not a live reference', () => {
     const s = drillToStation(drill(), () => 's1');
     assert.equal(s.drillId, 'd1');
-    assert.equal(s.drillCategory, 'Hitting');
+    assert.deepEqual(s.drillTags, ['Hitting']);
     assert.ok(stationIsFromDrill(s));
   });
 
@@ -94,13 +100,13 @@ describe('a picked drill brings the shape, empty of people (D20)', () => {
   });
 
   it('omits fields the drill does not have rather than writing empty strings', () => {
-    const s = drillToStation(drill({ description: null, goal: null, setup: null, coachingPoints: [], equipment: [], category: null }), () => 's1');
+    const s = drillToStation(drill({ description: null, goal: null, setup: null, coachingPoints: [], equipment: [], tags: [] }), () => 's1');
     assert.ok(!('description' in s));
     assert.ok(!('goal' in s));
     assert.ok(!('setup' in s));
     assert.ok(!('coachingPoints' in s));
     assert.ok(!('equipment' in s));
-    assert.ok(!('drillCategory' in s));
+    assert.ok(!('drillTags' in s));
   });
 });
 
@@ -115,7 +121,7 @@ describe('detaching — "Edit just for this practice"', () => {
     assert.equal(d.note, 'tonight');
     // The point of the whole read-only rule: this is no longer that drill.
     assert.equal(d.drillId, undefined);
-    assert.equal(d.drillCategory, undefined);
+    assert.equal(d.drillTags, undefined);
     assert.equal(stationIsFromDrill(d), false);
   });
 
@@ -132,9 +138,9 @@ describe('promotion (D18) drops the people, keeps the shape', () => {
       id: 's1', name: 'Short hops', description: 'Roll short hops', goal: 'Stay low',
       coachingPoints: ['soft hands'], setup: 'Two lines', equipment: ['Balls'],
       staff: ['Adam'], playerIds: ['p1', 'p2'], note: 'only 8 tonight',
-    }, ' Fielding ');
+    }, ['11111111-1111-4111-8111-111111111111']);
     assert.equal(input.name, 'Short hops');
-    assert.equal(input.category, 'Fielding');
+    assert.deepEqual(input.tagIds, ['11111111-1111-4111-8111-111111111111']);
     assert.equal(input.description, 'Roll short hops');
     assert.deepEqual(input.equipment, ['Balls']);
     assert.ok(!('staff' in input));
@@ -142,9 +148,9 @@ describe('promotion (D18) drops the people, keeps the shape', () => {
     assert.ok(!('note' in input));
   });
 
-  it('an empty category is null, not an empty string', () => {
-    assert.equal(stationToDrillInput({ id: 's', name: 'X' }, '   ').category, null);
-    assert.equal(stationToDrillInput({ id: 's', name: 'X' }).category, null);
+  it('drops anything that is not a uuid rather than passing it to a PostgREST filter', () => {
+    assert.deepEqual(stationToDrillInput({ id: 's', name: 'X' }, ['not-a-uuid', '']).tagIds, []);
+    assert.deepEqual(stationToDrillInput({ id: 's', name: 'X' }).tagIds, []);
   });
 });
 
@@ -159,14 +165,50 @@ describe('ordering and categories', () => {
     assert.deepEqual(sorted.map(d => d.name), ['Bee', 'Yak', 'Apple', 'Zebra']);
   });
 
-  it('collects distinct categories in first-seen order, ignoring case and blanks', () => {
+  it('collects distinct tags in first-seen order, by id', () => {
     assert.deepEqual(
-      collectDrillCategories([
-        { category: 'Hitting' }, { category: 'hitting' }, { category: null },
-        { category: '  ' }, { category: 'Fielding' },
+      collectTags([
+        { name: 'a', tags: [{ id: 't1', name: 'Hitting' }] },
+        { name: 'b', tags: [{ id: 't1', name: 'Hitting' }, { id: 't2', name: 'Fielding' }] },
+        { name: 'c', tags: [] },
       ]),
-      ['Hitting', 'Fielding'],
+      [{ id: 't1', name: 'Hitting' }, { id: 't2', name: 'Fielding' }],
     );
+  });
+});
+
+/**
+ * ⚠ REGRESSION GUARD for a defect that shipped in Phase 2 and was found at Phase 3 sign-off.
+ *
+ * The old free-text filter de-duplicated chip LABELS case-insensitively but compared the selected
+ * value EXACTLY. A coach who typed "Hitting" once and "hitting" later therefore saw ONE chip, an
+ * UNDER-COUNT on it, and a set of drills reachable by NO CHIP AT ALL. Filtering by tag id cannot
+ * drift, and `rep_team_tags` enforces case-insensitive uniqueness so both spellings can no longer
+ * exist at once — this asserts the id-based behaviour that replaced it.
+ */
+describe('the tag filter — one id, one meaning', () => {
+  const item = (name: string, tags: { id: string; name: string }[]) => ({ name, tags, description: null });
+  const items = [
+    item('A', [{ id: 't1', name: 'Hitting' }]),
+    item('B', [{ id: 't1', name: 'Hitting' }, { id: 't2', name: 'Fielding' }]),
+    item('C', []),
+  ];
+
+  it('null shows everything', () => {
+    assert.deepEqual(filterTagged(items, '', null).map(i => i.name), ['A', 'B', 'C']);
+  });
+
+  it('a tag id shows every item carrying it, however many others it also carries', () => {
+    assert.deepEqual(filterTagged(items, '', 't1').map(i => i.name), ['A', 'B']);
+    assert.deepEqual(filterTagged(items, '', 't2').map(i => i.name), ['B']);
+  });
+
+  it('an untagged item is reachable — it must never fall out of every chip', () => {
+    assert.deepEqual(filterTagged(items, '', UNTAGGED_FILTER).map(i => i.name), ['C']);
+  });
+
+  it('search reads the tag names as well as the item name', () => {
+    assert.deepEqual(filterTagged(items, 'field', null).map(i => i.name), ['B']);
   });
 });
 
@@ -237,7 +279,7 @@ describe('importing from a past season', () => {
       [{ plan: plan([{ name: 'Hitting off a tee' }]), startsAt: '2025-05-01T00:00:00Z' }],
       [],
     );
-    assert.equal(rows[0].drill.category, null);
+    assert.deepEqual(rows[0].drill.tagIds, []);
   });
 
   it('ignores unnamed stations', () => {
@@ -294,7 +336,7 @@ describe('the plan sanitiser round-trips the new station fields', () => {
     const raw = {
       blocks: [{
         title: 'B', duration: { minutes: 20 }, rotates: false,
-        stations: [{ name: 'Front toss', description: 'doing', goal: 'watching', drillId: 'd1', drillCategory: 'Hitting' }],
+        stations: [{ name: 'Front toss', description: 'doing', goal: 'watching', drillId: 'd1', drillTags: ['Hitting'] }],
       }],
     };
     const once = sanitizePracticePlan(raw);
@@ -304,7 +346,7 @@ describe('the plan sanitiser round-trips the new station fields', () => {
     assert.equal(s?.description, 'doing');
     assert.equal(s?.goal, 'watching');
     assert.equal(s?.drillId, 'd1');
-    assert.equal(s?.drillCategory, 'Hitting');
+    assert.deepEqual(s?.drillTags, ['Hitting']);
   });
 
   it('a rotating block still strips station players — a drill cannot smuggle people in', () => {

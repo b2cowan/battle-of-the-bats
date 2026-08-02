@@ -1,12 +1,12 @@
 {
   "generated": "2026-08-02",
-  "total": 159,
+  "total": 198,
   "counts": {
-    "tables": 6,
-    "columns": 81,
-    "indexes": 29,
-    "constraints": 27,
-    "rls": 16
+    "tables": 9,
+    "columns": 96,
+    "indexes": 38,
+    "constraints": 38,
+    "rls": 17
   },
   "items": [
     {
@@ -31,14 +31,6 @@
     },
     {
       "key": "check:only-dev:family_links.family_links_verified_via_check",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:rep_player_development_goals.rep_player_development_goals_category_len",
-      "sig": ""
-    },
-    {
-      "key": "check:only-dev:rep_team_drills.rep_team_drills_category_check",
       "sig": ""
     },
     {
@@ -67,6 +59,18 @@
     },
     {
       "key": "check:only-dev:rep_team_drills.rep_team_drills_usual_minutes_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_events.rep_team_events_practice_recap_len",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_plan_templates.rep_team_plan_templates_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_plan_templates.rep_team_plan_templates_plan_check",
       "sig": ""
     },
     {
@@ -294,11 +298,19 @@
       "sig": ""
     },
     {
-      "key": "column:only-dev:rep_player_development_goals.category",
+      "key": "column:only-dev:rep_player_development_goals.tag_id",
       "sig": ""
     },
     {
-      "key": "column:only-dev:rep_team_drills.category",
+      "key": "column:only-dev:rep_team_drill_tags.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_drill_tags.drill_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_drill_tags.tag_id",
       "sig": ""
     },
     {
@@ -375,6 +387,58 @@
     },
     {
       "key": "column:only-dev:rep_team_events.practice_plan",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.practice_recap",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_template_tags.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_template_tags.tag_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_template_tags.template_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.is_active",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.plan",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_plan_templates.updated_at",
       "sig": ""
     },
     {
@@ -478,6 +542,22 @@
       "sig": ""
     },
     {
+      "key": "constraint:only-dev:rep_player_development_goals.rep_player_development_goals_tag_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_drill_tags.rep_team_drill_tags_drill_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_drill_tags.rep_team_drill_tags_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_drill_tags.rep_team_drill_tags_tag_id_fkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_drills.rep_team_drills_created_by_fkey",
       "sig": ""
     },
@@ -499,6 +579,34 @@
     },
     {
       "key": "constraint:only-dev:rep_team_events.rep_team_events_family_shared_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_plan_template_tags.rep_team_plan_template_tags_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_plan_template_tags.rep_team_plan_template_tags_tag_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_plan_template_tags.rep_team_plan_template_tags_template_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_plan_templates.rep_team_plan_templates_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_plan_templates.rep_team_plan_templates_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_plan_templates.rep_team_plan_templates_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_plan_templates.rep_team_plan_templates_team_id_fkey",
       "sig": ""
     },
     {
@@ -586,6 +694,18 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_player_development_goals_tag_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_drill_tags_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_drill_tags_tag_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_drills_org_idx",
       "sig": ""
     },
@@ -611,6 +731,30 @@
     },
     {
       "key": "index:only-dev:rep_team_events_family_shared_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_plan_template_tags_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_plan_template_tags_tag_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_plan_templates_name_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_plan_templates_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_plan_templates_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_plan_templates_team_idx",
       "sig": ""
     },
     {
@@ -642,7 +786,19 @@
       "sig": ""
     },
     {
+      "key": "table:only-dev:rep_team_drill_tags",
+      "sig": ""
+    },
+    {
       "key": "table:only-dev:rep_team_drills",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_plan_template_tags",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_plan_templates",
       "sig": ""
     }
   ]

@@ -6126,6 +6126,29 @@ function mapRepTeamTag(r: any): RepTeamTag {
   };
 }
 
+/**
+ * Is this tag id one this team may actually use — its own, or the club's shared set?
+ *
+ * ⚠ Every write that accepts a tag id from a client must pass through here. RLS on the link tables
+ * is reached through the tagged THING (a drill, a template), not through the tag, so nothing at the
+ * database layer stops a route from linking one club's drill to another club's tag. This is that
+ * check, and it is why the id is proved rather than trusted.
+ */
+export async function isTeamFocusTag(tagId: string, orgId: string, teamId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .select('id, team_id')
+    .eq('id', tagId)
+    .eq('org_id', orgId)
+    .eq('kind', 'focus')
+    .maybeSingle();
+  // ⚠ Check `error` before believing an empty result — a select naming a column that does not exist
+  // returns {data:null}, which reads exactly like "no such tag".
+  if (error) throw error;
+  if (!data) return false;
+  return data.team_id === null || data.team_id === teamId;
+}
+
 export async function getRepTeamTags(teamId: string, kind: RepTagKind = 'game'): Promise<RepTeamTag[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_tags')
@@ -6826,8 +6849,11 @@ function mapRepPlayerDevelopmentGoal(r: any): RepPlayerDevelopmentGoal {
     focusArea: r.focus_area,
     note: r.note ?? null,
     status: r.status as RepDevelopmentGoalStatus,
-    // Optional and coach-typed (D16, mig 218). NULL renders at FULL strength in the focus rail.
-    category: r.category ?? null,
+    // ⚠ ONE optional grouping tag (mig 221). The focus area itself stays FREE TEXT in `focusArea`
+    // above — the tag never replaces the coach's specific words. NULL renders at FULL strength in
+    // the focus rail: absence of data must not read as absence of need.
+    tagId: r.tag_id ?? null,
+    tagName: r.rep_team_tags?.name ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -6838,7 +6864,9 @@ function mapRepPlayerDevelopmentGoal(r: any): RepPlayerDevelopmentGoal {
 export async function getRepPlayerDevelopmentGoalsForPlayer(playerId: string): Promise<RepPlayerDevelopmentGoal[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_player_development_goals')
-    .select('*')
+    // The tag name rides along on every read — the focus rail renders it, and fetching it per goal
+    // is how a roster-sized list turns into N+1 queries.
+    .select('*, rep_team_tags(name)')
     .eq('player_id', playerId)
     .order('created_at', { ascending: true });
   if (error) throw error;
@@ -6847,7 +6875,7 @@ export async function getRepPlayerDevelopmentGoalsForPlayer(playerId: string): P
 
 export async function createRepPlayerDevelopmentGoal(fields: {
   orgId: string; teamId: string; playerId: string; focusArea: string;
-  note?: string | null; status?: RepDevelopmentGoalStatus; category?: string | null;
+  note?: string | null; status?: RepDevelopmentGoalStatus; tagId?: string | null;
   createdBy?: string | null;
 }): Promise<RepPlayerDevelopmentGoal> {
   const { data, error } = await supabaseAdmin
@@ -6859,10 +6887,10 @@ export async function createRepPlayerDevelopmentGoal(fields: {
       focus_area: fields.focusArea.trim(),
       note: fields.note?.trim() || null,
       status: fields.status ?? 'working',
-      category: fields.category?.trim() || null,
+      tag_id: fields.tagId ?? null,
       created_by: fields.createdBy ?? null,
     })
-    .select()
+    .select('*, rep_team_tags(name)')
     .single();
   if (error) throw error;
   return mapRepPlayerDevelopmentGoal(data);
@@ -6875,7 +6903,7 @@ export async function updateRepPlayerDevelopmentGoal(
   id: string, teamId: string, playerId: string,
   fields: {
     focusArea?: string; note?: string | null; status?: RepDevelopmentGoalStatus;
-    category?: string | null;
+    tagId?: string | null;
   },
 ): Promise<RepPlayerDevelopmentGoal | null> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -6883,14 +6911,14 @@ export async function updateRepPlayerDevelopmentGoal(
   if (fields.note !== undefined) patch.note = fields.note?.trim() || null;
   if (fields.status !== undefined) patch.status = fields.status;
   // Explicit null clears it back to "the coach hasn't said" — which the rail shows at full strength.
-  if (fields.category !== undefined) patch.category = fields.category?.trim() || null;
+  if (fields.tagId !== undefined) patch.tag_id = fields.tagId ?? null;
   const { data, error } = await supabaseAdmin
     .from('rep_player_development_goals')
     .update(patch)
     .eq('id', id)
     .eq('team_id', teamId)
     .eq('player_id', playerId)
-    .select()
+    .select('*, rep_team_tags(name)')
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepPlayerDevelopmentGoal(data) : null;
@@ -6906,6 +6934,12 @@ export async function updateRepPlayerDevelopmentGoal(
 // ⚠ Never hard-deleted anywhere below — "retire" is `is_active = false`, which is what keeps every
 // practice plan the drill already sits in working untouched.
 
+/**
+ * ONE select string for every drill read, so a surface can never quietly fetch a drill without its
+ * tags and then render an empty chip row that looks like "this drill has no tags".
+ */
+const DRILL_SELECT = '*, rep_team_drill_tags(rep_team_tags(id, name))';
+
 function mapRepTeamDrill(r: any): RepTeamDrill {
   return {
     id: r.id,
@@ -6913,7 +6947,11 @@ function mapRepTeamDrill(r: any): RepTeamDrill {
     // NULL is meaningful here, not missing: it IS the org-shared marker.
     teamId: r.team_id ?? null,
     name: r.name,
-    category: r.category ?? null,
+    // Tags arrive through the join table (mig 221). Coerced rather than trusted: a link row whose
+    // tag was deleted mid-flight would otherwise render as `undefined` in a chip list.
+    tags: Array.isArray(r.rep_team_drill_tags)
+      ? r.rep_team_drill_tags.map((l: any) => l?.rep_team_tags).filter((t: any) => t && t.id && t.name)
+      : [],
     usualMinutes: r.usual_minutes ?? null,
     description: r.description ?? null,
     goal: r.goal ?? null,
@@ -6953,7 +6991,7 @@ export async function getDrillsForTeam(
   }
   let q = supabaseAdmin
     .from('rep_team_drills')
-    .select('*')
+    .select(DRILL_SELECT)
     .eq('org_id', orgId)
     .or(`team_id.eq.${teamId},team_id.is.null`);
   if (!opts?.includeRetired) q = q.eq('is_active', true);
@@ -6966,7 +7004,7 @@ export async function getDrillsForTeam(
 export async function getOrgSharedDrills(
   orgId: string, opts?: { includeRetired?: boolean },
 ): Promise<RepTeamDrill[]> {
-  let q = supabaseAdmin.from('rep_team_drills').select('*').eq('org_id', orgId).is('team_id', null);
+  let q = supabaseAdmin.from('rep_team_drills').select(DRILL_SELECT).eq('org_id', orgId).is('team_id', null);
   if (!opts?.includeRetired) q = q.eq('is_active', true);
   const { data, error } = await q.order('name', { ascending: true });
   if (error) throw error;
@@ -6975,7 +7013,8 @@ export async function getOrgSharedDrills(
 
 type DrillWriteFields = {
   name: string;
-  category?: string | null;
+  /** Tag ids. `undefined` leaves the links alone; `[]` clears them. Written after the row lands. */
+  tagIds?: string[] | null;
   usualMinutes?: number | null;
   description?: string | null;
   goal?: string | null;
@@ -6987,7 +7026,6 @@ type DrillWriteFields = {
 function drillWritePatch(fields: Partial<DrillWriteFields>): Record<string, unknown> {
   const patch: Record<string, unknown> = {};
   if (fields.name !== undefined) patch.name = fields.name.trim();
-  if (fields.category !== undefined) patch.category = fields.category?.trim() || null;
   if (fields.usualMinutes !== undefined) patch.usual_minutes = fields.usualMinutes ?? null;
   if (fields.description !== undefined) patch.description = fields.description?.trim() || null;
   if (fields.goal !== undefined) patch.goal = fields.goal?.trim() || null;
@@ -6995,6 +7033,33 @@ function drillWritePatch(fields: Partial<DrillWriteFields>): Record<string, unkn
   if (fields.setup !== undefined) patch.setup = fields.setup?.trim() || null;
   if (fields.equipment !== undefined) patch.equipment = fields.equipment ?? [];
   return patch;
+}
+
+/**
+ * Replace a drill's tag links.
+ *
+ * ⚠ Delete-then-insert rather than a diff: the set is at most `MAX_TAGS_PER_ITEM`, so a diff buys
+ * nothing and is one more place for the "removed tag stayed linked" bug to live.
+ *
+ * ⚠ The tag ids are NOT trusted from the caller's word alone — they are proved to belong to this
+ * drill's org (and to the 'focus' vocabulary) first. A drill route that accepted an arbitrary uuid
+ * would let one club link its drills to another's tags, which RLS on the join table cannot catch
+ * because the join is policed through the DRILL, not the tag.
+ */
+async function syncDrillTags(drillId: string, orgId: string, tagIds: string[]): Promise<void> {
+  await supabaseAdmin.from('rep_team_drill_tags').delete().eq('drill_id', drillId);
+  if (!tagIds.length) return;
+  const { data: valid, error: tagErr } = await supabaseAdmin
+    .from('rep_team_tags')
+    .select('id')
+    .eq('org_id', orgId)
+    .eq('kind', 'focus')
+    .in('id', tagIds);
+  if (tagErr) throw tagErr;
+  const rows = (valid ?? []).map(t => ({ drill_id: drillId, tag_id: t.id }));
+  if (!rows.length) return;
+  const { error } = await supabaseAdmin.from('rep_team_drill_tags').insert(rows);
+  if (error) throw error;
 }
 
 /** Create a drill. `teamId: null` mints an ORG-SHARED one — only the admin route ever passes that. */
@@ -7009,10 +7074,15 @@ export async function createRepTeamDrill(fields: DrillWriteFields & {
       ...drillWritePatch(fields),
       created_by: fields.createdBy ?? null,
     })
-    .select()
+    .select('id')
     .single();
   if (error) throw error;
-  return mapRepTeamDrill(data);
+  await syncDrillTags(data.id, fields.orgId, fields.tagIds ?? []);
+  // Re-read so the caller gets the tags it just wrote, rather than a row that claims none.
+  const { data: full, error: readErr } = await supabaseAdmin
+    .from('rep_team_drills').select(DRILL_SELECT).eq('id', data.id).single();
+  if (readErr) throw readErr;
+  return mapRepTeamDrill(full);
 }
 
 /**
@@ -7035,9 +7105,18 @@ export async function updateRepTeamDrill(
 
   let q = supabaseAdmin.from('rep_team_drills').update(patch).eq('id', id).eq('org_id', scope.orgId);
   q = scope.teamId === null ? q.is('team_id', null) : q.eq('team_id', scope.teamId);
-  const { data, error } = await q.select().maybeSingle();
+  const { data, error } = await q.select('id').maybeSingle();
   if (error) throw error;
-  return data ? mapRepTeamDrill(data) : null;
+  if (!data) return null;
+
+  // ⚠ Only when the caller actually said so. `undefined` means "not editing tags" — a retire/restore
+  // must not silently strip a drill's vocabulary.
+  if (fields.tagIds !== undefined) await syncDrillTags(data.id, scope.orgId, fields.tagIds ?? []);
+
+  const { data: full, error: readErr } = await supabaseAdmin
+    .from('rep_team_drills').select(DRILL_SELECT).eq('id', data.id).single();
+  if (readErr) throw readErr;
+  return mapRepTeamDrill(full);
 }
 
 /**
@@ -7275,7 +7354,7 @@ export async function getRepTeamDevelopmentGoalsForPlayers(playerIds: string[]):
   if (playerIds.length === 0) return [];
   const { data, error } = await supabaseAdmin
     .from('rep_player_development_goals')
-    .select('*')
+    .select('*, rep_team_tags(name)')
     .in('player_id', playerIds)
     .order('created_at', { ascending: true });
   if (error) throw error;

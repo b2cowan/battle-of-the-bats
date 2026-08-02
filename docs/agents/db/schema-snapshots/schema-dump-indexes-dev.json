@@ -1501,6 +1501,11 @@
   },
   {
     "tablename": "rep_player_development_goals",
+    "indexname": "rep_player_development_goals_tag_idx",
+    "indexdef": "CREATE INDEX rep_player_development_goals_tag_idx ON public.rep_player_development_goals USING btree (tag_id)"
+  },
+  {
+    "tablename": "rep_player_development_goals",
     "indexname": "rep_player_development_goals_team_idx",
     "indexdef": "CREATE INDEX rep_player_development_goals_team_idx ON public.rep_player_development_goals USING btree (team_id)"
   },
@@ -1688,6 +1693,16 @@
     "tablename": "rep_team_coaches",
     "indexname": "rep_team_coaches_user_idx",
     "indexdef": "CREATE INDEX rep_team_coaches_user_idx ON public.rep_team_coaches USING btree (org_id, user_id)"
+  },
+  {
+    "tablename": "rep_team_drill_tags",
+    "indexname": "rep_team_drill_tags_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_drill_tags_pkey ON public.rep_team_drill_tags USING btree (drill_id, tag_id)"
+  },
+  {
+    "tablename": "rep_team_drill_tags",
+    "indexname": "rep_team_drill_tags_tag_idx",
+    "indexdef": "CREATE INDEX rep_team_drill_tags_tag_idx ON public.rep_team_drill_tags USING btree (tag_id)"
   },
   {
     "tablename": "rep_team_drills",
@@ -1943,6 +1958,36 @@
     "tablename": "rep_team_payment_requests",
     "indexname": "rep_team_payment_requests_team_status_idx",
     "indexdef": "CREATE INDEX rep_team_payment_requests_team_status_idx ON public.rep_team_payment_requests USING btree (team_id, status)"
+  },
+  {
+    "tablename": "rep_team_plan_template_tags",
+    "indexname": "rep_team_plan_template_tags_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_plan_template_tags_pkey ON public.rep_team_plan_template_tags USING btree (template_id, tag_id)"
+  },
+  {
+    "tablename": "rep_team_plan_template_tags",
+    "indexname": "rep_team_plan_template_tags_tag_idx",
+    "indexdef": "CREATE INDEX rep_team_plan_template_tags_tag_idx ON public.rep_team_plan_template_tags USING btree (tag_id)"
+  },
+  {
+    "tablename": "rep_team_plan_templates",
+    "indexname": "rep_team_plan_templates_name_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_plan_templates_name_uniq ON public.rep_team_plan_templates USING btree (team_id, lower(btrim(name))) WHERE is_active"
+  },
+  {
+    "tablename": "rep_team_plan_templates",
+    "indexname": "rep_team_plan_templates_org_idx",
+    "indexdef": "CREATE INDEX rep_team_plan_templates_org_idx ON public.rep_team_plan_templates USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_plan_templates",
+    "indexname": "rep_team_plan_templates_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_plan_templates_pkey ON public.rep_team_plan_templates USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_plan_templates",
+    "indexname": "rep_team_plan_templates_team_idx",
+    "indexdef": "CREATE INDEX rep_team_plan_templates_team_idx ON public.rep_team_plan_templates USING btree (team_id, is_active)"
   },
   {
     "tablename": "rep_team_tags",

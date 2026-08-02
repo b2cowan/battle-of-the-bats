@@ -22,6 +22,7 @@ import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
 import type { DrillInput, RepTeamDrill } from '@/lib/rep-drills';
+import type { PickableTag } from '@/components/coaches/TagPicker';
 import styles from '../../../../coaches.module.css';
 import type { RepAttendanceStatus, RepTeamEvaluationSession, RepTeamEvent } from '@/lib/types';
 
@@ -213,6 +214,40 @@ export default function CoachPracticePlanPage({
     }
   }
 
+  /**
+   * The team's whole 'focus' vocabulary, owned here beside `drills` for the same reason: the editor
+   * is a controlled component and must not fetch its own reference data.
+   *
+   * ⚠ Every tag the team has, not only the ones already on a drill — a picker built from what is on
+   * screen would hide vocabulary a focus area or a template already uses, and quietly invite the
+   * coach to mint a duplicate.
+   */
+  const [focusTags, setFocusTags] = useState<PickableTag[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`);
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled) setFocusTags(json.tags ?? []);
+      } catch { /* the picker degrades to "no tags yet"; the plan still saves */ }
+    })();
+    return () => { cancelled = true; };
+  }, [orgSlug, teamId]);
+
+  const createFocusTag = useCallback(async (name: string): Promise<PickableTag | null> => {
+    const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name }),
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    const tag: PickableTag = json.tag;
+    setFocusTags(prev => (prev.some(t => t.id === tag.id) ? prev : [...prev, tag]));
+    return tag;
+  }, [orgSlug, teamId]);
+
   function applyPrevious(previous: PreviousPlan) {
     if (!previous.plan || !data) return;
     const rosterIds = new Set(data.roster.map(p => p.id));
@@ -376,7 +411,7 @@ export default function CoachPracticePlanPage({
 
   if (!canSchedule) {
     return (
-      <div className={styles.page}>
+      <div className={`${styles.page} ${styles.pageWide}`}>
         {header}
         <CoachEmptyState
           quiet
@@ -396,7 +431,7 @@ export default function CoachPracticePlanPage({
   const hasPlan = !isPracticePlanEmpty(plan);
 
   return (
-    <div className={`${styles.page} ${styles.lineupDockedPage}`}>
+    <div className={`${styles.page} ${styles.pageWide} ${styles.lineupDockedPage}`}>
       {header}
       <UnsavedChangesGuard active={dirty} />
 
@@ -464,6 +499,8 @@ export default function CoachPracticePlanPage({
                 // Absent for a viewer who can't write drills, which removes "Save to my drills…"
                 // entirely rather than offering a control that only exists to refuse.
                 onCreateDrill={canWrite ? createDrill : undefined}
+                focusTags={focusTags}
+                onCreateFocusTag={canWrite ? createFocusTag : undefined}
                 eventStartsAt={event?.startsAt ?? ''}
                 eventEndsAt={event?.endsAt ?? null}
                 readOnly={!canWrite}

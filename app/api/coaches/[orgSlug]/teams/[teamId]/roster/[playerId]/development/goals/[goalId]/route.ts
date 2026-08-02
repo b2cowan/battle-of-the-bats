@@ -5,6 +5,7 @@ import {
   getRepRosterPlayer,
   updateRepPlayerDevelopmentGoal,
   deleteRepPlayerDevelopmentGoal,
+  isTeamFocusTag,
 } from '@/lib/db';
 import type { RepDevelopmentGoalStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -40,14 +41,25 @@ export const PATCH = withObservability(async (req: Request,
   const denied = denyUnless(canWriteDevelopment(resolved.assignment.capabilities), 'Only the head coach can edit development.');
   if (denied) return denied;
 
-  let body: { focusArea?: unknown; note?: unknown; status?: unknown };
+  let body: { focusArea?: unknown; note?: unknown; status?: unknown; tagId?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const fields: { focusArea?: string; note?: string | null; status?: RepDevelopmentGoalStatus } = {};
+  const fields: {
+    focusArea?: string; note?: string | null; status?: RepDevelopmentGoalStatus;
+    tagId?: string | null;
+  } = {};
+  if (body.tagId !== undefined) {
+    const tagId = typeof body.tagId === 'string' && body.tagId.trim() ? body.tagId.trim() : null;
+    if (tagId && !(await isTeamFocusTag(tagId, resolved.ctx.org.id, teamId))) {
+      return NextResponse.json({ error: 'That tag is not one of this team’s.' }, { status: 400 });
+    }
+    // Null clears it back to "the coach hasn't said" — which the rail shows at full strength.
+    fields.tagId = tagId;
+  }
   if (body.focusArea !== undefined) {
     const focusArea = typeof body.focusArea === 'string' ? body.focusArea.trim() : '';
     if (!focusArea || focusArea.length > 80) {

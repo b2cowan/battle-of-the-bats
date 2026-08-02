@@ -9865,12 +9865,12 @@
   },
   {
     "table_name": "rep_player_development_goals",
-    "column_name": "category",
-    "data_type": "text",
-    "udt_name": "text",
+    "column_name": "tag_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
     "is_nullable": "YES",
     "column_default": null,
-    "ordinal_position": 11
+    "ordinal_position": 12
   },
   {
     "table_name": "rep_player_documents",
@@ -11052,6 +11052,33 @@
     "ordinal_position": 8
   },
   {
+    "table_name": "rep_team_drill_tags",
+    "column_name": "drill_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_team_drill_tags",
+    "column_name": "tag_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_team_drill_tags",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
+  },
+  {
     "table_name": "rep_team_drills",
     "column_name": "id",
     "data_type": "uuid",
@@ -11086,15 +11113,6 @@
     "is_nullable": "NO",
     "column_default": null,
     "ordinal_position": 4
-  },
-  {
-    "table_name": "rep_team_drills",
-    "column_name": "category",
-    "data_type": "text",
-    "udt_name": "text",
-    "is_nullable": "YES",
-    "column_default": null,
-    "ordinal_position": 5
   },
   {
     "table_name": "rep_team_drills",
@@ -11698,6 +11716,15 @@
     "is_nullable": "YES",
     "column_default": null,
     "ordinal_position": 32
+  },
+  {
+    "table_name": "rep_team_events",
+    "column_name": "practice_recap",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 33
   },
   {
     "table_name": "rep_team_expense_tags",
@@ -12517,6 +12544,114 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 17
+  },
+  {
+    "table_name": "rep_team_plan_template_tags",
+    "column_name": "template_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_team_plan_template_tags",
+    "column_name": "tag_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_team_plan_template_tags",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "plan",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "NO",
+    "column_default": "'{}'::jsonb",
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "is_active",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "true",
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_team_plan_templates",
+    "column_name": "updated_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 9
   },
   {
     "table_name": "rep_team_tags",

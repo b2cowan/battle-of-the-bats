@@ -9867,10 +9867,10 @@
       },
       {
         "table_name": "rep_player_development_goals",
-        "pos": 11,
-        "column_name": "category",
-        "data_type": "text",
-        "udt_name": "text",
+        "pos": 12,
+        "column_name": "tag_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -11054,6 +11054,33 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_drill_tags",
+        "pos": 1,
+        "column_name": "drill_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_drill_tags",
+        "pos": 2,
+        "column_name": "tag_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_drill_tags",
+        "pos": 3,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_team_drills",
         "pos": 1,
         "column_name": "id",
@@ -11087,15 +11114,6 @@
         "data_type": "text",
         "udt_name": "text",
         "is_nullable": "NO",
-        "column_default": null
-      },
-      {
-        "table_name": "rep_team_drills",
-        "pos": 5,
-        "column_name": "category",
-        "data_type": "text",
-        "udt_name": "text",
-        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -11698,6 +11716,15 @@
         "column_name": "family_shared_by",
         "data_type": "uuid",
         "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 33,
+        "column_name": "practice_recap",
+        "data_type": "text",
+        "udt_name": "text",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -12514,6 +12541,114 @@
       {
         "table_name": "rep_team_payment_requests",
         "pos": 17,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_plan_template_tags",
+        "pos": 1,
+        "column_name": "template_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_plan_template_tags",
+        "pos": 2,
+        "column_name": "tag_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_plan_template_tags",
+        "pos": 3,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 4,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 5,
+        "column_name": "plan",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 6,
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 7,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "pos": 9,
         "column_name": "updated_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
@@ -17145,14 +17280,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -17173,21 +17308,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -17195,6 +17323,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -17229,28 +17364,28 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -17294,6 +17429,13 @@
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_development_goals_player_id_fkey"
+      },
+      {
+        "table_name": "rep_player_development_goals",
+        "column_name": "tag_id",
+        "foreign_table": "rep_team_tags",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_development_goals_tag_id_fkey"
       },
       {
         "table_name": "rep_player_development_goals",
@@ -17439,14 +17581,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -17595,6 +17737,20 @@
         "foreign_table": null,
         "foreign_column": null,
         "constraint_name": "rep_team_coaches_user_id_fkey"
+      },
+      {
+        "table_name": "rep_team_drill_tags",
+        "column_name": "drill_id",
+        "foreign_table": "rep_team_drills",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_drill_tags_drill_id_fkey"
+      },
+      {
+        "table_name": "rep_team_drill_tags",
+        "column_name": "tag_id",
+        "foreign_table": "rep_team_tags",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_drill_tags_tag_id_fkey"
       },
       {
         "table_name": "rep_team_drills",
@@ -17959,6 +18115,41 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_payment_requests_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_plan_template_tags",
+        "column_name": "tag_id",
+        "foreign_table": "rep_team_tags",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_plan_template_tags_tag_id_fkey"
+      },
+      {
+        "table_name": "rep_team_plan_template_tags",
+        "column_name": "template_id",
+        "foreign_table": "rep_team_plan_templates",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_plan_template_tags_template_id_fkey"
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_plan_templates_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_plan_templates_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_plan_templates",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_plan_templates_team_id_fkey"
       },
       {
         "table_name": "rep_team_tags",
@@ -20080,6 +20271,11 @@
       },
       {
         "tablename": "rep_player_development_goals",
+        "indexname": "rep_player_development_goals_tag_idx",
+        "indexdef": "CREATE INDEX rep_player_development_goals_tag_idx ON public.rep_player_development_goals USING btree (tag_id)"
+      },
+      {
+        "tablename": "rep_player_development_goals",
         "indexname": "rep_player_development_goals_team_idx",
         "indexdef": "CREATE INDEX rep_player_development_goals_team_idx ON public.rep_player_development_goals USING btree (team_id)"
       },
@@ -20267,6 +20463,16 @@
         "tablename": "rep_team_coaches",
         "indexname": "rep_team_coaches_user_idx",
         "indexdef": "CREATE INDEX rep_team_coaches_user_idx ON public.rep_team_coaches USING btree (org_id, user_id)"
+      },
+      {
+        "tablename": "rep_team_drill_tags",
+        "indexname": "rep_team_drill_tags_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_drill_tags_pkey ON public.rep_team_drill_tags USING btree (drill_id, tag_id)"
+      },
+      {
+        "tablename": "rep_team_drill_tags",
+        "indexname": "rep_team_drill_tags_tag_idx",
+        "indexdef": "CREATE INDEX rep_team_drill_tags_tag_idx ON public.rep_team_drill_tags USING btree (tag_id)"
       },
       {
         "tablename": "rep_team_drills",
@@ -20522,6 +20728,36 @@
         "tablename": "rep_team_payment_requests",
         "indexname": "rep_team_payment_requests_team_status_idx",
         "indexdef": "CREATE INDEX rep_team_payment_requests_team_status_idx ON public.rep_team_payment_requests USING btree (team_id, status)"
+      },
+      {
+        "tablename": "rep_team_plan_template_tags",
+        "indexname": "rep_team_plan_template_tags_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_plan_template_tags_pkey ON public.rep_team_plan_template_tags USING btree (template_id, tag_id)"
+      },
+      {
+        "tablename": "rep_team_plan_template_tags",
+        "indexname": "rep_team_plan_template_tags_tag_idx",
+        "indexdef": "CREATE INDEX rep_team_plan_template_tags_tag_idx ON public.rep_team_plan_template_tags USING btree (tag_id)"
+      },
+      {
+        "tablename": "rep_team_plan_templates",
+        "indexname": "rep_team_plan_templates_name_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_plan_templates_name_uniq ON public.rep_team_plan_templates USING btree (team_id, lower(btrim(name))) WHERE is_active"
+      },
+      {
+        "tablename": "rep_team_plan_templates",
+        "indexname": "rep_team_plan_templates_org_idx",
+        "indexdef": "CREATE INDEX rep_team_plan_templates_org_idx ON public.rep_team_plan_templates USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_plan_templates",
+        "indexname": "rep_team_plan_templates_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_plan_templates_pkey ON public.rep_team_plan_templates USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_plan_templates",
+        "indexname": "rep_team_plan_templates_team_idx",
+        "indexdef": "CREATE INDEX rep_team_plan_templates_team_idx ON public.rep_team_plan_templates USING btree (team_id, is_active)"
       },
       {
         "tablename": "rep_team_tags",
@@ -22273,12 +22509,6 @@
       {
         "kind": "CHECK",
         "table_name": "rep_player_development_goals",
-        "detail": "rep_player_development_goals_category_len",
-        "check_clause": "((category IS NULL) OR ((char_length(btrim(category)) >= 1) AND (char_length(btrim(category)) <= 40)))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "rep_player_development_goals",
         "detail": "rep_player_development_goals_focus_area_check",
         "check_clause": "((char_length(btrim(focus_area)) >= 1) AND (char_length(btrim(focus_area)) <= 80))"
       },
@@ -22487,10 +22717,10 @@
         "check_clause": null
       },
       {
-        "kind": "CHECK",
-        "table_name": "rep_team_drills",
-        "detail": "rep_team_drills_category_check",
-        "check_clause": "((category IS NULL) OR ((char_length(btrim(category)) >= 1) AND (char_length(btrim(category)) <= 40)))"
+        "kind": "RLS",
+        "table_name": "rep_team_drill_tags",
+        "detail": "ENABLED",
+        "check_clause": null
       },
       {
         "kind": "CHECK",
@@ -22581,6 +22811,12 @@
         "table_name": "rep_team_events",
         "detail": "rep_team_events_home_away_check",
         "check_clause": "(home_away = ANY (ARRAY['home'::text, 'away'::text, 'neutral'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_events",
+        "detail": "rep_team_events_practice_recap_len",
+        "check_clause": "((practice_recap IS NULL) OR (char_length(practice_recap) <= 2000))"
       },
       {
         "kind": "CHECK",
@@ -22733,10 +22969,34 @@
         "check_clause": null
       },
       {
+        "kind": "RLS",
+        "table_name": "rep_team_plan_template_tags",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_plan_templates",
+        "detail": "rep_team_plan_templates_name_check",
+        "check_clause": "((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 120))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_plan_templates",
+        "detail": "rep_team_plan_templates_plan_check",
+        "check_clause": "(jsonb_typeof(plan) = 'object'::text)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_plan_templates",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
         "table_name": "rep_team_tags",
         "detail": "rep_team_tags_kind_check",
-        "check_clause": "(kind = ANY (ARRAY['game'::text, 'expense'::text]))"
+        "check_clause": "(kind = ANY (ARRAY['game'::text, 'expense'::text, 'focus'::text]))"
       },
       {
         "kind": "CHECK",

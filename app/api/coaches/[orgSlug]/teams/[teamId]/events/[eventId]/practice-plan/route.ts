@@ -160,11 +160,12 @@ export const GET = withObservability(async (_req: Request,
     event,
     plan: event.practicePlan,
     roster,
-    // Only what the rail needs. `category` (D16) rides along so the rail can soften off-type chips
-    // — it is a label on the AREA, never a judgement about the player, and it is behind the same
-    // `notes` gate as the focus text itself.
+    // Only what the rail needs. The grouping tag (D16, now mig 221) rides along so the rail can
+    // soften off-type areas — it is a label on the AREA, never a judgement about the player, and it
+    // sits behind the same `notes` gate as the focus text itself.
     goals: goals.map(g => ({
-      id: g.id, playerId: g.playerId, focusArea: g.focusArea, status: g.status, category: g.category,
+      id: g.id, playerId: g.playerId, focusArea: g.focusArea, status: g.status,
+      tagId: g.tagId, tagName: g.tagName,
     })),
     attendance,
     // Only what the copy picker needs — never the whole event rows again.

@@ -2027,6 +2027,15 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 ⚠ **`staff` entries are LABELS, never grants** — plain names (an outside instructor or PD coach is commonly not a portal user at all). No account, no invitation, no capability implication. The reusable vocabulary is assembled from the team's coaches plus names already used on previous plans (`collectStaffSuggestions`), so a typo stops being suggested once no plan uses it.
 
+<!-- dict:col:rep_team_events.practice_recap -->
+**`practice_recap`** (text, nullable; CHECK `≤ 2000`; mig 221) — **"How it went"** (D17, Practice Plans Phase 3): one free-text note a coach writes **after** a practice, at home. Season-keyed for free, because events are.
+
+⚠ **ABOUT THE PRACTICE, NEVER ABOUT A CHILD.** *"Tees were too crowded, run four next time"* is the whole value. There is deliberately **no per-player equivalent and none may be added** — per-child commentary would drift into behavioural profiling on minors. This is a `/review` checklist item, not a preference.
+
+⚠ **This does NOT reopen D4.** Nothing at the field records anything; an unhurried note written at home is a different act from an abandoned tick-box mid-drill, which is why there are still **no per-block "ran it" ticks** anywhere in this schema. It is the FIRST surface in the feature permitted to describe what actually happened, and it earns that only because a coach deliberately sat down and wrote it — every other surface still says **planned**.
+
+⚠ **NULL means nothing was written**, which the UI states honestly ("Nothing written down for this one") rather than rendering blank — silence must not read as "nothing happened". **Coach-facing only: families never see it.**
+
 <!-- dict:col:rep_team_events.opponent -->
 **`opponent`** (text, nullable) — **game-types only** (UI-gated).
 
@@ -2374,10 +2383,10 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 **Gotchas (read first):**
 1. **`team_id` is NULLABLE and that is the whole club-wide story.** `team_id` SET = a team's own private drill; `team_id` **NULL** (with `org_id` set) = an **org-authored shared** drill offered in *every* team's picker. Exactly the mig-184 shape used by `rep_team_tags` / `rep_team_award_types`, but adopted **up front** here rather than retro-fitted (owner ruling 2026-08-01, "both now"). ⚠ Postgres treats NULLs as DISTINCT, so the per-team unique index cannot constrain shared rows — they get their **own** partial index.
-2. **A PLAN NEVER DEPENDS ON THIS TABLE TO RENDER.** When a drill is added to a practice, its words are **COPIED** into `rep_team_events.practice_plan` jsonb and the drill's id rides along as `station.drillId` — **provenance only**. So editing a drill later cannot rewrite a practice already written, a retired drill keeps reading for ever, and there is no dangling-id class of bug (the failure mode §10.3 refused for staff tags). The id answers "used 8×", nothing more. `station.drillCategory` is likewise a **snapshot** (the `rep_player_measurables.unit` precedent).
+2. **A PLAN NEVER DEPENDS ON THIS TABLE TO RENDER.** When a drill is added to a practice, its words are **COPIED** into `rep_team_events.practice_plan` jsonb and the drill's id rides along as `station.drillId` — **provenance only**. So editing a drill later cannot rewrite a practice already written, a retired drill keeps reading for ever, and there is no dangling-id class of bug (the failure mode §10.3 refused for staff tags). The id answers "used 8×", nothing more. `station.drillTags` is likewise a **snapshot of the tag NAMES** (the `rep_player_measurables.unit` precedent) — names, not ids, so a merged-away tag still reads correctly in every practice already written.
 3. **Never hard-deleted.** No DELETE route or policy — "retire" is `is_active=false`, which keeps every plan the drill already sits in untouched. Both unique indexes are PARTIAL on `is_active`, so a retired name can be reused.
 4. **A drill is ONE activity — one station's worth**, and carries **NO PEOPLE** (no coaches, no players, no groups; plan decision D20). Picking a second drill into the same block is what produces two stations and therefore a rotation. There is deliberately no nested station list, and **no `count` column** (owner ruling 2026-08-01 — it retired the station-level `count` shipped in 1a too).
-5. **NOT seeded, ever, and no category is supplied.** Every drill and category is coach-typed; a "Hitting / Fielding / Pitching" list would be one sport talking to a multi-sport platform (same posture as gotcha 4 on `rep_team_measurable_types`). The library ships EMPTY.
+5. **NOT seeded, ever, and no tag is supplied.** Every drill and tag is coach-typed; a "Hitting / Fielding / Pitching" list would be one sport talking to a multi-sport platform (same posture as gotcha 4 on `rep_team_measurable_types`). The library ships EMPTY.
 6. **Writes split by row kind at BOTH layers.** TEAM rows: head-coach-only (app routes gate on `canWriteDevelopment`; RLS requires `coach_role='head_coach'`). SHARED rows: org-admin-only — the head-coach policies key on `team_id`, which is NULL on a shared row and therefore never matches, so a coach cannot write the club's set even via a direct PostgREST call. Reads: `schedule` at the app layer; RLS allows org members, coaches of the assigned team, **and** a separate policy for coaches reading their org's shared rows (the `team_id IN (…)` predicate is NULL-unknown and can never match a shared row on its own).
 7. **Live-season only — no archive door** (owner ruling 2026-08-01). A drill library is a reusable *instrument*, not a record of a season. Its routes deliberately do **not** use `resolveCoachSeasonRead`, the Development hub hides the Drills door in a completed season, and `tests/unit/coach-season-write-guard.test.ts` asserts the absence so it can't be reversed by accident. The one cross-season read is `development/drills/past-seasons`, which reads the team's own **past practice plans** (genuinely season-locked) so they can be copied forward — it writes nothing into a finished season.
 
@@ -2391,9 +2400,6 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_team_drills.name -->
 **`name`** (text, NOT NULL; CHECK `1–120` chars) — what the coach calls it; unique per team (and per org for shared rows) while active.
-
-<!-- dict:col:rep_team_drills.category -->
-**`category`** (text, nullable; CHECK `1–40` chars) — **coach-typed**, never a fixed list. Pairs with `rep_player_development_goals.category` to drive the focus-rail filter (D16).
 
 <!-- dict:col:rep_team_drills.usual_minutes -->
 **`usual_minutes`** (int, nullable; CHECK `1–600`) — how long it usually runs. ⚠ **ONE number** — duration *ranges* were removed at owner QA (§10.5) and must not return through the library.
@@ -2421,6 +2427,67 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_team_drills.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — who wrote it.
+
+### `rep_team_drill_tags`
+<!-- dict:table:rep_team_drill_tags -->
+
+**Purpose:** join table — the several **`kind='focus'` tags** a drill carries. Added by migration 221 (Practice Plans Phase 3). **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **This REPLACED `rep_team_drills.category`**, a free-text column that lived for about three hours. Free text shipped a live defect: the chip list de-duplicated case-insensitively while the filter compared exactly, so "Hitting" and "hitting" produced ONE chip, an UNDER-COUNT on it, and drills reachable by **no chip at all**. `rep_team_tags` has enforced a case-insensitive unique index per `(team_id, kind)` since mig 181, so the split is now **structurally impossible** rather than merely discouraged. Zero customer impact: mig 218 never reached prod.
+2. **Tenancy is reached through the DRILL, not the tag.** A drill carries `org_id` + `team_id` and is policed on them; an org-shared drill (`team_id IS NULL`) must be taggable by an org admin while a team's own drill is taggable by its coaches. Reaching through the tag gets the shared case wrong. ⚠ Because RLS here cannot see the tag's scope, **every write route must prove the tag id belongs to the drill's org** (`isTeamFocusTag` / `syncDrillTags`) — otherwise one club could link its drills to another's tags.
+3. **A plan does not read this table.** Tag NAMES are snapshotted into `practice_plan` jsonb at add time (`station.drillTags`), so a past practice keeps reading correctly however the library is later re-tagged or merged.
+
+<!-- dict:col:rep_team_drill_tags.drill_id -->
+**`drill_id`** (FK → `rep_team_drills.id`, NOT NULL, CASCADE) — half of the composite PK.
+
+<!-- dict:col:rep_team_drill_tags.tag_id -->
+**`tag_id`** (FK → `rep_team_tags.id`, NOT NULL, CASCADE) — the other half. `merge_rep_team_tags` re-points these atomically.
+
+### `rep_team_plan_templates`
+<!-- dict:table:rep_team_plan_templates -->
+
+**Purpose:** a **saved practice shape** a coach can start next Tuesday from — the plan library (D15). Added by migration 221 (Practice Plans Phase 3). **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **⚠ TEAM-scoped, deliberately NOT program-year-scoped.** `rep_team_lineup_templates` (mig 159) is keyed `(team_id, program_year_id)`; copying that here would **strand every coach's templates each autumn**. A team is PERMANENT and only its program year turns over, so a team-scoped library crosses a rollover with nothing to import — the same discovery that made the drill library's archive ruling cheap. §7's "the V1 shape lifts in unchanged" is overridden on this one point.
+2. **A TEMPLATE IS SCAFFOLDING, A DRILL IS AN IDENTITY — and the two rules are opposite and both correct.** Loading a template yields a **fully editable** plan (D14 copy-on-load): adapting a practice is the point. A loaded DRILL *inside* that plan stays **read-only**, because its name is a claim about what was run. **Do not unify them.** ⚠ Loading a template must PRESERVE each station's `drillId`, or every drill's count silently breaks.
+3. **`plan` is a COPY, never a join.** Same jsonb shape as `rep_team_events.practice_plan`. Editing a template cannot rewrite a practice already started from it, and vice versa.
+4. **Counts say PLANS STARTED, never practices run.** Nothing records what actually happened (D4). On screen: "Started 8 plans" / "Not started a plan yet" — never "used".
+5. **Never hard-deleted** — retire is `is_active=false` (the mig-182/189 library idiom); the unique index is PARTIAL on it, so a retired name can be reused. **No DELETE policy exists.**
+6. **`team_id` is NOT NULL.** Club-wide *templates* were never asked for and are not built. Mig 184's nullable-`team_id` widening is the cheap precedented path if that is ever ruled in — but it is an owner decision.
+7. **Live-season only, no archive door** — a template is an *instrument*, like the drill library. Its routes must not join the season-read rail.
+
+<!-- dict:col:rep_team_plan_templates.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL, CASCADE) — tenant scope.
+
+<!-- dict:col:rep_team_plan_templates.team_id -->
+**`team_id`** (FK → `rep_teams.id`, **NOT NULL**, CASCADE) — the owning team (gotcha 6).
+
+<!-- dict:col:rep_team_plan_templates.name -->
+**`name`** (text, NOT NULL; CHECK `1–120` chars) — unique per team, case-insensitive, while active.
+
+<!-- dict:col:rep_team_plan_templates.plan -->
+**`plan`** (jsonb, NOT NULL, default `{}`; CHECK object) — the plan shape (gotcha 3).
+
+<!-- dict:col:rep_team_plan_templates.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — retire/restore flag (gotcha 5).
+
+<!-- dict:col:rep_team_plan_templates.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — who saved it.
+
+### `rep_team_plan_template_tags`
+<!-- dict:table:rep_team_plan_template_tags -->
+
+**Purpose:** join table — the several `kind='focus'` tags a plan template carries. Added by migration 221. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas:** same shape and same cautions as `rep_team_drill_tags` — tenancy is reached through the TEMPLATE, and `merge_rep_team_tags` re-points these rows atomically. ⚠ A **practice plan's** own tags need no table here: they are rows in `rep_team_event_tags`, told apart by the tag's `kind`, which is what makes "show me every hitting practice I have run" a query the joins already support.
+
+<!-- dict:col:rep_team_plan_template_tags.template_id -->
+**`template_id`** (FK → `rep_team_plan_templates.id`, NOT NULL, CASCADE) — half of the composite PK.
+
+<!-- dict:col:rep_team_plan_template_tags.tag_id -->
+**`tag_id`** (FK → `rep_team_tags.id`, NOT NULL, CASCADE) — the other half.
 
 ### `rep_player_measurables`
 <!-- dict:table:rep_player_measurables -->
@@ -2532,8 +2599,14 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_player_development_goals.status -->
 **`status`** (text, NOT NULL, default `'working'`; CHECK `working|achieved|parked`) — the status pill (gotcha 2).
 
-<!-- dict:col:rep_player_development_goals.category -->
-**`category`** (text, nullable; CHECK `1–40` chars when set) — optional, **coach-typed**, added by migration 218 (Practice Plans Phase 2, decision D16). Drawn from the same vocabulary as the coach's **drill** categories (`rep_team_drills.category`), which is the whole mechanism: the practice-plan focus rail compares this against the categories of the drills in tonight's plan. ⚠ **Non-matching areas DIM, they never hide**, and a NULL category renders at **full strength** — a player whose only focus areas are off-type must never vanish from a coverage list. ⚠ **Nothing is back-filled and nothing is inferred from the focus text**: free text does not cluster, and guessing would be the "confident lie" the no-ranking rule forbids.
+<!-- dict:col:rep_player_development_goals.tag_id -->
+**`tag_id`** (FK → `rep_team_tags.id`, nullable, ON DELETE SET NULL; mig 221) — **ONE** optional grouping tag from the shared `kind='focus'` vocabulary. Replaced the free-text `category` of mig 218 (decision D16).
+
+⚠ **A FOCUS AREA IS FREE TEXT FIRST, TAGGED SECOND** (owner ruling 2026-08-01). `focus_area` stays the coach's own specific words — *"loading their back hip"*, *"changeup accuracy"* — because that is what a coach actually coaches from. **The tag never replaces it.** It exists only so the practice-plan focus rail can tell this area belongs to tonight's practice.
+
+⚠ **Hence the deliberate asymmetry:** drills, templates and plans carry SEVERAL tags via join tables; a focus area carries **ONE**, as a plain FK. A focus area is *more specific* than a plan tag by design — flattening the two would lose the coaching. **Do not "make them consistent".**
+
+⚠ **Non-matching areas DIM, they never hide**, and a NULL tag renders at **full strength** — a player whose only focus areas are off-type must never vanish from a coverage list, because that is precisely the child most likely to be overlooked. ⚠ **Nothing is back-filled and nothing is inferred from the focus text**: free text does not cluster, and guessing would be the "confident lie" the no-ranking rule forbids. `ON DELETE SET NULL` so retiring a tag degrades the grouping, never the coach's words.
 
 <!-- dict:col:rep_player_development_goals.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who set it.

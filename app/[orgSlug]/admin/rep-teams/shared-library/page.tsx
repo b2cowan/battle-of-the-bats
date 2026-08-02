@@ -313,17 +313,22 @@ function AwardTypeSection({ orgQuery, canWrite }: { orgQuery: string; canWrite: 
  * ⚠ Coaches may USE these but never rename or retire them; that stays here. And nothing is ever
  * seeded: a supplied drill list would be one sport talking to a platform that serves many, so this
  * section starts empty and fills as the club decides what its standard actually is.
+ *
+ * ⚠ **A SHARED DRILL CARRIES NO TAGS, deliberately (Phase 3, mig 221).** When categories became the
+ * shared 'focus' tag vocabulary, that vocabulary was scoped per TEAM — and a shared drill belongs to
+ * no team, so there is no correct list to offer here. The tag table does support org-shared rows
+ * (`team_id IS NULL`), so the club-wide vocabulary is a real future option; it simply has no UI and
+ * auto-creating it from one team's typing would put words in the club's mouth. The category input
+ * that Phase 2 had here was REMOVED rather than left writing to a dropped column.
  */
 function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite: boolean }) {
   const [drills, setDrills] = useState<RepTeamDrill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [newName, setNewName] = useState('');
-  const [newCategory, setNewCategory] = useState('');
   const [adding, setAdding] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState('');
-  const [editCategory, setEditCategory] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [showRetired, setShowRetired] = useState(false);
 
@@ -352,10 +357,10 @@ function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite
     try {
       const res = await fetch(`/api/admin/rep-teams/shared-drills${orgQuery}`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, category: newCategory.trim() || null }),
+        body: JSON.stringify({ name }),
       });
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not add drill');
-      setNewName(''); setNewCategory('');
+      setNewName('');
       await load();
     } catch (e) { setError(e instanceof Error ? e.message : 'Could not add drill'); }
     finally { setAdding(false); }
@@ -397,14 +402,11 @@ function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite
                   <input className={styles.input} style={{ flex: 1 }} value={editName} maxLength={120} autoFocus
                     onChange={e => setEditName(e.target.value)}
                     onKeyDown={e => {
-                      if (e.key === 'Enter') patchDrill(d.id, { name: editName.trim(), category: editCategory.trim() || null });
+                      if (e.key === 'Enter') patchDrill(d.id, { name: editName.trim() });
                       if (e.key === 'Escape') setEditId(null);
                     }} />
-                  <input className={styles.input} style={{ width: '9rem' }} value={editCategory} maxLength={40}
-                    placeholder="Category" aria-label="Category"
-                    onChange={e => setEditCategory(e.target.value)} />
                   <button className={styles.btnSecondary} disabled={busyId === d.id || !editName.trim()}
-                    onClick={() => patchDrill(d.id, { name: editName.trim(), category: editCategory.trim() || null })}>
+                    onClick={() => patchDrill(d.id, { name: editName.trim() })}>
                     <Check size={14} />
                   </button>
                   <button className={styles.btnGhost} onClick={() => setEditId(null)}><X size={14} /></button>
@@ -412,11 +414,10 @@ function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite
               ) : (
                 <>
                   <span style={{ flex: 1, fontSize: '0.9rem' }}>{d.name}</span>
-                  {d.category && <span className={styles.muted} style={{ fontSize: '0.8rem' }}>{d.category}</span>}
                   {canWrite && (
                     <>
                       <button className={styles.btnGhost} title="Edit" disabled={!!busyId}
-                        onClick={() => { setEditId(d.id); setEditName(d.name); setEditCategory(d.category ?? ''); }}>
+                        onClick={() => { setEditId(d.id); setEditName(d.name); }}>
                         <Pencil size={14} />
                       </button>
                       <button className={styles.btnGhost} title="Retire" disabled={!!busyId}
@@ -435,10 +436,6 @@ function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite
               <input className={styles.input} style={{ flex: 1, minWidth: '12rem' }} placeholder="Add a shared drill…"
                 value={newName} maxLength={120}
                 onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addDrill(); }} />
-              {/* Coach-typed, never a fixed list — the club's own vocabulary, not ours. */}
-              <input className={styles.input} style={{ width: '9rem' }} placeholder="Category" aria-label="Category"
-                value={newCategory} maxLength={40}
-                onChange={e => setNewCategory(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addDrill(); }} />
               <button className={styles.btnPrimary} disabled={adding || !newName.trim()} onClick={addDrill}>
                 <Plus size={14} /> Add
               </button>

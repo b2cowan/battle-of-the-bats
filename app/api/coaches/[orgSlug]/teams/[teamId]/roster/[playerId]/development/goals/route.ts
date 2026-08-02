@@ -4,6 +4,7 @@ import {
   getCoachingAssignmentsForUser,
   getRepRosterPlayer,
   createRepPlayerDevelopmentGoal,
+  isTeamFocusTag,
 } from '@/lib/db';
 import type { RepDevelopmentGoalStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -47,7 +48,7 @@ export const POST = withObservability(async (req: Request,
   const denied = denyUnless(canWriteDevelopment(assignment.capabilities), 'Only the head coach can edit development.');
   if (denied) return denied;
 
-  let body: { focusArea?: unknown; note?: unknown; status?: unknown };
+  let body: { focusArea?: unknown; note?: unknown; status?: unknown; tagId?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -67,6 +68,16 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
   }
 
+  // ⚠ ONE optional grouping tag (mig 221) — the SAME 'focus' vocabulary the team's drills use, which
+  // is what lets the focus rail tell which areas match tonight. The focus text above stays the
+  // coach's own specific words and is never replaced by it.
+  // ⚠ Never inferred from the focus text: free text doesn't cluster, and guessing would be the
+  // confident lie §4 forbids.
+  const tagId = typeof body.tagId === 'string' && body.tagId.trim() ? body.tagId.trim() : null;
+  if (tagId && !(await isTeamFocusTag(tagId, ctx.org.id, teamId))) {
+    return NextResponse.json({ error: 'That tag is not one of this team’s.' }, { status: 400 });
+  }
+
   const goal = await createRepPlayerDevelopmentGoal({
     orgId: ctx.org.id,
     teamId,
@@ -74,6 +85,7 @@ export const POST = withObservability(async (req: Request,
     focusArea,
     note: note || null,
     status,
+    tagId,
     createdBy: ctx.user.id,
   });
   return NextResponse.json({ goal }, { status: 201 });

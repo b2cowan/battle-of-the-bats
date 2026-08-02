@@ -866,6 +866,89 @@ library keeps reading correctly for ever.
 
 ---
 
+## 10.8 · Phase 3 — the owner rulings taken at sign-off (2026-08-01) — BINDING
+
+**Status: mockups signed off** (`claude.ai/code/artifact/7ac29440-1e16-4b0e-a22b-9e0093470107`,
+12 frames). Migration **221**. These rulings SUPERSEDE §9.2 wherever they disagree.
+
+### 1. The archive — templates and looking-back get DIFFERENT answers, as anticipated
+
+- **Plan templates are an INSTRUMENT — live-season only**, door hidden in a finished season, exactly
+  as the drill library. ⚠ **Scoped to the TEAM, not the program year** — so like drills they cross a
+  season rollover with nothing to import. **Deliberately NOT the `rep_team_lineup_templates` shape
+  (mig 159), which is year-keyed**; copying that precedent would strand a coach's templates every
+  autumn. §7's "the V1 shape lifts in unchanged" is overridden on this one point.
+- **Looking back is a RECORD**, and it opens further than first ruled: **a past plan is readable
+  READ-ONLY in any season**, reached *only* from the looking-back list. ⚠ **This is a NEW ARCHIVE
+  DOOR and was ruled explicitly** — the build-enforced allow-lists are what forced the decision, which
+  is what they are for. **The schedule's practice-plan section stays hidden in a completed season**
+  (1b's §11.1 ruling is NOT reversed) — the new door is narrow and one-way.
+
+### 2. Categories became TAGS (owner ruling — supersedes Phase 2's free-text category)
+
+**One shared tag vocabulary across drills, plan templates, plans and players' focus areas**, joining
+the tag system the product already runs (`rep_team_tags`, mig 181 + 184) as a **new `kind`** rather
+than a second system. What that buys, in the owner's order of interest: **several per item**,
+**rename**, and above all **`merge_rep_team_tags`, which atomically re-points history** — the reason
+tags beat free text here.
+
+⚠ **This retires the `category` column mig 218 shipped on both `rep_team_drills` and
+`rep_player_development_goals`.** Zero customer impact: 218 is DEV-ONLY and the drill library has
+never been on prod, so there is no real data to migrate. **This change was only cheap today.**
+
+- **Uniqueness is case-insensitive per team+kind**, which makes the "Hitting" vs "hitting" drift
+  **structurally impossible**. ⚠ **It was a live defect in committed Phase 2**: `collectDrillCategories`
+  de-duped case-insensitively while `filterDrills` matched exactly, so a case-variant category showed
+  one chip, under-counted it, and left the other drills reachable by **no chip at all**. Fixed here by
+  construction rather than by patching the comparison.
+- **A new tag is only minted on an explicit "+ New tag"** — typing searches existing tags. Deliberate
+  friction: the list must grow by decision, not by typo.
+- ⚠ **A FOCUS AREA IS FREE TEXT FIRST, TAGGED SECOND** (owner, explicitly). `focusArea` stays the
+  coach's own specific words — *"loading their back hip"*, *"changeup accuracy"* — because that is what
+  a coach coaches from. **The tag never replaces it**; it carries **ONE optional tag** purely so the
+  rail can tell it belongs to tonight's practice. **A focus area is deliberately MORE SPECIFIC than a
+  plan tag** — flattening the two would lose the coaching. Hence the asymmetry: drills/templates/plans
+  carry SEVERAL tags (join tables), a focus area carries ONE (nullable FK).
+- **Focus-rail matching:** an area stays at full strength if its tag matches anything planned tonight.
+  ⚠ Carried unchanged from Phase 2: **dim, never hide, never reorder**, and **an UNTAGGED area stays
+  at FULL strength** — absence of data must not read as absence of need.
+- **The template room is ONE FLAT LIST filtered by tag chips, not category groups** — several tags per
+  item would print the same template under two headings. "No tags" is always offered when it applies.
+
+### 3. Plans carry tags, and that is what makes the recap worth writing (owner's own insight)
+
+A coach about to plan a hitting practice **filters past practices to "Hitting" and gets every one they
+have run, what was in it, and what they said afterwards.** This reframes D17: the recap is not a diary
+(which a coach stops writing by June) but **a body of experience they mine before planning** — and it
+is the first surface in this project that gets *better* the longer the product is used.
+
+**Reuse:** a plan's tags are rows in the existing `rep_team_event_tags`, distinguished by the tag's
+`kind`. No new join table for plans.
+
+### 4. "New template" is offered at ZERO as well as at one (owner ruling)
+
+The empty state offers all three routes — build one, import from a past season, or save one from a
+practice. ⚠ **Consequence, accepted:** refusing at zero while allowing at one is an arbitrary rule, not
+a principle — so **the template room owns a FULL block-and-station editor**, not a rename box. A
+template built from scratch has no practice to inherit a shape from.
+
+### 5. Vocabulary — carried forward unchanged
+
+**"Started 8 plans" / "Not started a plan yet"**, never "used". Same rule as Phase 2's "In 8 plans".
+The coverage answer still says **"In a plan"** — never "worked on", "covered" or "did" — and a recap
+existing on some practices does not license the report to claim the plan happened.
+
+### What did NOT change
+
+No new capability key (templates ride `schedule` to read + head-coach-only to write; the coverage
+answer rides `notes`) · no seventh Insights tile · no new report page · the drill read-only rule ·
+the no-ranking rules on the coverage table · **club-wide TEMPLATES were never asked for and are NOT
+built** — templates are team-scoped only. ⚠ If that question is raised, **route it, don't decide it**;
+the club-wide drill precedent (`BUSINESS_DECISIONS.md` 2026-08-01) and mig 184's nullable-`team_id`
+widening are the cheap path if the owner ever says yes.
+
+---
+
 ## 11 · Cut list — judged out, do not quietly re-add
 
 Auto-generated plans from focus areas (free text doesn't cluster; the suggestion would be a confident lie) · **a drill library in V1** *(revised round 2: a coach-authored drill library is now **V2** — what stays cut is drill **videos**, hosted drill **content**, and any seeded sport-specific drills)* · **player grouping by ability or need** *(explicit coach-chosen pairs are V4; automatic grouping by level stays cut forever)* · any "these N kids need the most work" surface · parent/player/guardian visibility of a plan · timer sounds, vibration, notifications, or auto-advance · plan sharing links · simultaneous multi-station timers · importing an existing Google Doc · a plan on the Overview screen (Chunk I: the Overview shows **one** anchor by an ordered rule — a practice plan does not get to jump that queue) · a seventh Insights tile · **per-child commentary in the "how it went" recap** (D17 guardrail — practice-level only).

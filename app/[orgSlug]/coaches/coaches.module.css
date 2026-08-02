@@ -301,6 +301,99 @@
   .coachesMain { padding: 1rem 1rem 2rem; }
 }
 
+/* ── Pinned team header (D2, owner-ratified 2026-08-01) ─────────────────────
+   Shell-owned identity bar: org eyebrow · team name · season · flip. Sticky against
+   .coachesMain (the scroll container), so it pins at every width — identity pins,
+   page titles keep scrolling (the admin model). Negative margins cancel the
+   container padding (chat.module.css precedent) so the bar spans the full scrollport;
+   margin-bottom MIRRORS the container padding so a full-bleed page that cancels that
+   padding (Chat) lands flush under the bar instead of sliding beneath it. */
+.teamHeader {
+  position: sticky;
+  top: 0;
+  z-index: 40; /* above page content incl. sticky bottom bars (z2); below sheets (200+) + nav (300) */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: -2rem -2rem 2rem;
+  padding: 0.5rem 2rem;
+  min-height: 44px;
+  /* Opaque themed ground (binding 2026-07-24 warm-shell rule): the gradient layer paints
+     the card tone; the color layer beneath guarantees opacity even if --card-bg carries
+     alpha, so scrolled content can never ghost through the pinned bar. */
+  background-color: var(--pitch-black);
+  background-image: linear-gradient(var(--card-bg), var(--card-bg));
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
+}
+
+.teamHeaderLeft {
+  display: flex;
+  align-items: baseline;
+  gap: 0.65rem;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.teamHeaderEyebrow {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-40);
+  white-space: nowrap;
+}
+
+.teamHeaderName {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--white-90);
+  text-decoration: none;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 40vw;
+}
+.teamHeaderName:hover { color: var(--white); }
+
+/* Live season, quiet text — the exceptional state (archive) gets the chip; the everyday
+   state gets a label, not chrome (Chunk F's no-banner philosophy carried into the bar). */
+.teamHeaderSeason {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--white-45);
+  white-space: nowrap;
+}
+
+.teamHeaderFlip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--white-80);
+  text-decoration: none;
+  border: 1px solid var(--white-20);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  transition: background 0.12s, color 0.12s;
+}
+.teamHeaderFlip:hover { background: var(--white-5); color: var(--white); }
+
+@media (max-width: 900px) {
+  .teamHeader { margin: -1rem -1rem 1rem; padding: 0.45rem 1rem; }
+  /* Scrolled state (phone only — desktop never collapses, same owner call as admin):
+     the eyebrow folds away and the bar slims so it stops competing with the work. */
+  .teamHeaderCollapsed { min-height: 36px; padding-top: 0.3rem; padding-bottom: 0.3rem; }
+  .teamHeaderCollapsed .teamHeaderEyebrow { display: none; }
+}
+
 /* ── Sidebar ────────────────────────────────────────────────────────────── */
 .sidebar {
   width: 220px;
@@ -431,6 +524,9 @@
 /* ── Page layout ────────────────────────────────────────────────────────── */
 .page {
   max-width: 960px;
+  /* Desktop shell D1 (owner-ratified 2026-08-01): every page column CENTERS in the working
+     area — split margins, never a left-anchored strip with all the leftover on one side. */
+  margin-inline: auto;
   /* Height of any page-level bar docked ABOVE the bottom nav. Zero by default — only the lineup
      builder has one — so a single offset formula works on every coach page and a page without a
      docked bar keeps its original geometry exactly. Raised to a real value on `.lineupDockedPage`
@@ -438,10 +534,89 @@
      the thing it describes have one owner. */
   --lineup-dock-h: 0rem;
 }
-/* Week/Month calendar grids are structured layouts that benefit from extra width
-   (wider day cells, less wrapping); List is a scannable text column that doesn't
-   need to stretch as wide. Applied only on the schedule page via view state. */
+/* Data-dense surfaces (tables, calendars, 2-D grids, the plan editor) opt into the wide
+   column — the D1 allocation list lives in COACH_PORTAL_DESKTOP_SHELL_PLAN.md. Two sibling
+   surfaces sharing a grid shape must share a width (the Budget↔BvA drift rule). */
 .pageWide { max-width: 1200px; }
+
+/* ── D3 layout primitives (2026-08-01) ──────────────────────────────────── */
+
+/* Season-end: Wrapped card | recap side-by-side on desktop — replaces the inline
+   560px cap that left the portal's narrowest content floating in empty space. */
+.seasonSpread {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .seasonSpread { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
+}
+
+/* Profile pages: main column + sticky quick-facts rail (player profile is the first
+   adopter). The rail pins below the team header via the height it publishes. */
+.profileCols {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 1.25rem;
+  align-items: start;
+}
+.profileRail {
+  position: sticky;
+  top: calc(var(--coach-header-h, 0px) + 1rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+@media (max-width: 900px) {
+  /* People/work first on a phone; the rail's quick facts follow (Staff-rail precedent). */
+  .profileCols { grid-template-columns: minmax(0, 1fr); }
+  .profileRail { position: static; order: 2; }
+}
+
+/* Collapsible deep-linkable section (portal-styled adoption of admin CollapsibleCard
+   behavior): native <details> so children stay mounted; summary carries title + meta. */
+.collapseSection {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  border-radius: var(--radius);
+}
+.collapseSummary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 700;
+  color: var(--white-90);
+  min-height: 44px;
+}
+.collapseSummary::-webkit-details-marker { display: none; }
+.collapseSummary:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+.collapseMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--white-45);
+}
+.collapseChevron { transition: transform 0.15s; color: var(--white-45); flex-shrink: 0; }
+.collapseSection[open] > .collapseSummary .collapseChevron { transform: rotate(180deg); }
+.collapseBody { padding: 0 1.1rem 1.1rem; }
+/* Deep-link arrival flash — same orientation cue as admin's ?section= highlight. */
+.collapseFlash { animation: collapseFlash 2s ease-out 1; }
+@keyframes collapseFlash {
+  0%, 35% { box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.55); }
+  100% { box-shadow: 0 0 0 2px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .collapseFlash { animation: none; }
+  .collapseChevron { transition: none; }
+}
 
 .pageHeader {
   display: flex;
@@ -6170,3 +6345,90 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .ppDrillRowActions { justify-content: flex-end; }
   .ppDrillFilters .input { flex-basis: 100%; }
 }
+
+/* ── Tag picker (Practice Plans Phase 3) ─────────────────────────────────────
+   ⚠ Tap floor is stated LOCALLY here, as the drill CSS does. The portal's shared button
+   primitives render 31–41px product-wide and the team nav 38.5px — a pre-existing baseline that
+   must NOT be widened to satisfy a probe. */
+.tagPick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--bg-2, var(--surface));
+  padding: 0.4rem 0.5rem;
+  min-height: var(--tap-min, 44px);
+}
+.tagPick[data-disabled='on'] { background: none; border-style: dashed; }
+
+.tagChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--blueprint-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.10);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: 999px;
+  padding: 0.15rem 0.3rem 0.15rem 0.55rem;
+}
+.tagChip button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.65;
+  line-height: 1;
+  padding: 0.25rem;
+  border-radius: 999px;
+  display: inline-flex;
+}
+.tagChip button:hover { opacity: 1; }
+
+.tagPickInput {
+  border: none;
+  background: none;
+  outline: none;
+  font: inherit;
+  font-size: 0.86rem;
+  color: var(--white-90);
+  flex: 1 1 7rem;
+  min-width: 5rem;
+  padding: 0.2rem 0;
+}
+.tagPickInput::placeholder { color: var(--white-40); }
+
+/* Minting a tag is a DIFFERENT act from picking one, so it reads differently — solid, tinted,
+   and never mixed in among the suggestions as if it were an existing tag. */
+.tagCreateChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.42);
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  color: var(--blueprint-blue);
+}
+.tagCreateChip:disabled { opacity: 0.5; cursor: default; }
+
+/* A tag as it reads on a saved row — never interactive. */
+.tagRead {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--blueprint-blue);
+  background: rgba(var(--blueprint-blue-rgb), 0.10);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.22);
+  border-radius: 999px;
+  padding: 0.08rem 0.45rem;
+  white-space: nowrap;
+}
+.tagReadRow { display: inline-flex; gap: 0.25rem; flex-wrap: wrap; align-items: center; }

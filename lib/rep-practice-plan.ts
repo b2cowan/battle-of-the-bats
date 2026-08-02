@@ -208,8 +208,10 @@ function sanitizeStation(v: unknown, index: number): PracticeStation | null {
   // capped like any other client-supplied id.
   const drillId = optionalStr(raw.drillId, 64);
   if (drillId) station.drillId = drillId;
-  const drillCategory = optionalStr(raw.drillCategory, MAX_TITLE_LEN);
-  if (drillCategory) station.drillCategory = drillCategory;
+  // Tag NAMES, snapshotted at add time — never ids, so a plan renders with no dependency on the
+  // tag table and a merged-away tag still reads correctly in every practice already written.
+  const drillTags = strList(raw.drillTags, 6, MAX_TITLE_LEN);
+  if (drillTags) station.drillTags = drillTags;
   // Kept even when nothing has been typed yet — the coach pressed "Add a station", and autosave
   // must not delete what they are in the middle of creating. See isRowLike.
   return station;

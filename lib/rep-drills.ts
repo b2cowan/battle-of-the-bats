@@ -41,7 +41,10 @@ export type { RepTeamDrill, RepTeamDrillWithUsage } from './types';
 
 // ── Caps (app-layer, matched to the CHECK constraints in mig 218) ────────────
 export const MAX_DRILL_NAME_LEN = 120;
-export const MAX_DRILL_CATEGORY_LEN = 40;
+/** Matches the `rep_team_tags.name` CHECK (mig 181), which now governs the shared vocabulary. */
+export const MAX_TAG_NAME_LEN = 40;
+/** How many tags one drill / template / plan may carry. A vocabulary, not a description. */
+export const MAX_TAGS_PER_ITEM = 6;
 export const MAX_DRILL_TEXT_LEN = 600;
 export const MAX_DRILL_POINT_LEN = 200;
 export const MAX_DRILL_POINTS = 8;
@@ -55,7 +58,12 @@ export const MAX_SHARED_DRILLS_PER_ORG = 100;
 /** The editable half of a drill — what both the coach route and the admin route accept. */
 export interface DrillInput {
   name: string;
-  category?: string | null;
+  /**
+   * Tag IDs from the team's 'focus' vocabulary (Phase 3). ⚠ IDs, not names — a tag is minted by an
+   * explicit act on the tag route, so a drill save can never quietly create vocabulary. That is the
+   * deliberate friction that keeps the list growing by decision rather than by typo.
+   */
+  tagIds?: string[] | null;
   usualMinutes?: number | null;
   description?: string | null;
   goal?: string | null;
@@ -91,6 +99,31 @@ function labels(v: unknown, maxItems: number, maxLen: number): string[] {
   }
   return out;
 }
+
+/**
+ * A de-duplicated list of tag IDs.
+ *
+ * ⚠ **Shape-checked as uuids, not merely non-empty.** These ids reach PostgREST filters, and
+ * `getDrillsForTeam` already carries the scar: interpolating an unvalidated id into an `.or()`
+ * string lets it be parsed as filter syntax. Anything that is not a uuid is dropped here so it can
+ * never travel further.
+ */
+export function uniqueIds(v: unknown, maxItems: number): string[] {
+  if (!Array.isArray(v)) return [];
+  const out: string[] = [];
+  const seen = new Set<string>();
+  for (const raw of v) {
+    if (typeof raw !== 'string') continue;
+    const s = raw.trim();
+    if (!UUID_RE.test(s) || seen.has(s)) continue;
+    seen.add(s);
+    out.push(s);
+    if (out.length >= maxItems) break;
+  }
+  return out;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function positiveInt(v: unknown, max: number): number | null {
   const n = typeof v === 'number' ? v : typeof v === 'string' ? Number(v) : NaN;
@@ -129,7 +162,7 @@ export function validateDrillInput(input: unknown): { drill: DrillInput } | { er
   return {
     drill: {
       name,
-      category: optionalText(raw.category, MAX_DRILL_CATEGORY_LEN),
+      tagIds: uniqueIds(raw.tagIds, MAX_TAGS_PER_ITEM),
       usualMinutes,
       description: optionalText(raw.description, MAX_DRILL_TEXT_LEN),
       goal: optionalText(raw.goal, MAX_DRILL_TEXT_LEN),
@@ -147,14 +180,15 @@ export function validateDrillInput(input: unknown): { drill: DrillInput } | { er
  * practice supplies those. `note` ("just for tonight") is deliberately absent too: it is the one
  * field that must never travel in either direction.
  *
- * Every word is COPIED. `drillId` rides along as provenance so the library can answer "used 8x",
- * and `drillCategory` is snapshotted (the `rep_player_measurables.unit` precedent) so the focus
- * rail can filter without a join and a later re-categorisation cannot rewrite what a past practice
- * was about.
+ * Every word is COPIED. `drillId` rides along as provenance so the library can answer "in 8 plans",
+ * and the drill's tag NAMES are snapshotted (the `rep_player_measurables.unit` precedent) so the
+ * focus rail can match without a join and a later re-tagging cannot rewrite what a past practice was
+ * about — the property that lets a read-only past plan be honest about what the coach saw AT THE
+ * TIME.
  */
 export function drillToStation(drill: RepTeamDrill, newId: () => string = newPracticePlanId): PracticeStation {
   const station: PracticeStation = { id: newId(), name: drill.name, drillId: drill.id };
-  if (drill.category) station.drillCategory = drill.category;
+  if (drill.tags.length) station.drillTags = drill.tags.map(t => t.name);
   if (drill.description) station.description = drill.description;
   if (drill.goal) station.goal = drill.goal;
   if (drill.coachingPoints.length) station.coachingPoints = [...drill.coachingPoints];
@@ -171,14 +205,14 @@ export function drillToStation(drill: RepTeamDrill, newId: () => string = newPra
  * the station stops counting toward the drill's `useCount`, and every field becomes editable. The
  * words are kept in full — nothing a coach can press here loses their typing.
  *
- * The category snapshot goes with it. A detached station's words are the coach's now, so claiming
- * it is still "Hitting" on the drill's authority would be a fabrication; if they want it
- * categorised they can save it to their drills, which asks exactly that one question.
+ * The tag snapshot goes with it. A detached station's words are the coach's now, so claiming it is
+ * still "Hitting" on the drill's authority would be a fabrication; if they want it tagged they can
+ * save it to their drills, which asks exactly that one question.
  */
 export function detachStationFromDrill(station: PracticeStation): PracticeStation {
   const next = { ...station };
   delete next.drillId;
-  delete next.drillCategory;
+  delete next.drillTags;
   return next;
 }
 
@@ -188,12 +222,12 @@ export function detachStationFromDrill(station: PracticeStation): PracticeStatio
  * ⚠ **Promotion is explicit, never automatic.** Auto-saving every block fills the library with five
  * near-identical "Warm-up" rows inside a season and makes the picker slower than typing — drawn as
  * the rejected option on the round-3 artifact. The people on the station are dropped here, which is
- * the same D20 split pointing the other way, and the caller asks exactly one question (category).
+ * the same D20 split pointing the other way, and the caller asks exactly one question (tags).
  */
-export function stationToDrillInput(station: PracticeStation, category?: string | null): DrillInput {
+export function stationToDrillInput(station: PracticeStation, tagIds?: string[] | null): DrillInput {
   return {
     name: station.name,
-    category: category?.trim() || null,
+    tagIds: uniqueIds(tagIds, MAX_TAGS_PER_ITEM),
     usualMinutes: null,
     description: station.description ?? null,
     goal: station.goal ?? null,
@@ -214,56 +248,68 @@ export function stationIsFromDrill(station: Pick<PracticeStation, 'drillId'>): b
   return !!station.drillId;
 }
 
+/** The minimum an item must expose to be tag-filtered: drills, plan templates and tagged plans. */
+export interface Taggable {
+  name: string;
+  tags: readonly { id: string; name: string }[];
+  description?: string | null;
+}
+
 /**
- * Every distinct category in a set of drills, in first-seen order.
+ * Every distinct tag across a set of tagged items, in first-seen order.
  *
- * Used for the library's filter chips and for the coach-typed suggestions offered when
- * categorising a focus area — so the two vocabularies are the SAME one and can actually match,
- * which is the whole mechanism behind D16.
+ * Used for the filter chips on the drill library, the template room and the looking-back list —
+ * ONE vocabulary, so a chip means the same thing wherever it appears.
  */
-export function collectDrillCategories(drills: readonly { category: string | null }[]): string[] {
-  const seen = new Map<string, string>();
-  for (const d of drills) {
-    const c = d.category?.trim();
-    if (c && !seen.has(c.toLowerCase())) seen.set(c.toLowerCase(), c);
+export function collectTags<T extends Taggable>(items: readonly T[]): { id: string; name: string }[] {
+  const seen = new Map<string, { id: string; name: string }>();
+  for (const item of items) {
+    for (const t of item.tags) if (!seen.has(t.id)) seen.set(t.id, { id: t.id, name: t.name });
   }
   return [...seen.values()];
 }
 
 /**
- * The "no category" filter chip.
+ * The "no tags" filter chip.
  *
  * A sentinel rather than `null` so a single state value can express all three of "everything",
- * "this category" and "the ones with none". The leading space keeps it unreachable by a coach —
- * every category is trimmed on the way in, so nothing they type can ever collide with it.
+ * "this tag" and "the ones with none". Not a uuid, so it can never collide with a real tag id.
+ *
+ * ⚠ Always offered when it applies: an item must never become unreachable simply by having no tags.
  */
-export const UNCATEGORISED_FILTER = ' uncategorised';
+export const UNTAGGED_FILTER = ' untagged';
 
 /**
- * The ONE search-and-filter rule, shared by the library room and the in-plan picker.
+ * The ONE search-and-filter rule, shared by the drill library, the in-plan picker, the template
+ * room and the looking-back list.
  *
- * Both surfaces show the same drills with the same chips, and each having its own copy of this
- * predicate is exactly how they end up quietly disagreeing about whether the search box looks at
- * the description.
+ * Each surface having its own copy of this predicate is exactly how they end up quietly disagreeing
+ * about whether the search box looks at the description.
  *
- * @param category `null` = everything · `UNCATEGORISED_FILTER` = only drills with no category.
+ * ⚠ **Filtering is by tag ID, which is what closed a live Phase 2 defect.** The old free-text
+ * version de-duplicated chip labels case-insensitively but compared the filter value EXACTLY, so a
+ * coach who typed "Hitting" once and "hitting" later got one chip, an under-count on it, and a set
+ * of drills reachable by no chip at all. Ids cannot drift, and `rep_team_tags` enforces
+ * case-insensitive uniqueness per team so the two spellings can no longer both exist.
+ *
+ * @param tagId `null` = everything · `UNTAGGED_FILTER` = only items carrying no tags.
  */
-export function filterDrills<T extends { name: string; category: string | null; description: string | null }>(
-  drills: readonly T[],
+export function filterTagged<T extends Taggable>(
+  items: readonly T[],
   query: string,
-  category: string | null,
+  tagId: string | null,
 ): T[] {
   const q = query.trim().toLowerCase();
-  return drills.filter(d => {
-    if (category === UNCATEGORISED_FILTER) {
-      if (d.category) return false;
-    } else if (category != null && d.category !== category) {
+  return items.filter(item => {
+    if (tagId === UNTAGGED_FILTER) {
+      if (item.tags.length) return false;
+    } else if (tagId != null && !item.tags.some(t => t.id === tagId)) {
       return false;
     }
     if (!q) return true;
-    return d.name.toLowerCase().includes(q)
-      || (d.category ?? '').toLowerCase().includes(q)
-      || (d.description ?? '').toLowerCase().includes(q);
+    return item.name.toLowerCase().includes(q)
+      || item.tags.some(t => t.name.toLowerCase().includes(q))
+      || (item.description ?? '').toLowerCase().includes(q);
   });
 }
 

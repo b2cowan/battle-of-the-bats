@@ -1385,11 +1385,16 @@ export interface PracticeStation {
    */
   drillId?: string;
   /**
-   * The drill's category, SNAPSHOTTED at add time (the `rep_player_measurables.unit` precedent).
-   * Lets the focus rail filter without a join, and stops a later re-categorisation silently
-   * rewriting what a past practice was about.
+   * The drill's tag NAMES, SNAPSHOTTED at add time (the `rep_player_measurables.unit` precedent).
+   * Lets the focus rail match without a join, and stops a later re-tagging silently rewriting what
+   * a past practice was about — the property that makes a read-only past plan honest about what the
+   * coach could see AT THE TIME.
+   *
+   * ⚠ NAMES, not ids, and that is deliberate: a plan must render with no dependency on the tag
+   * table, exactly as it renders with no dependency on the drill table. A merged-away tag still
+   * reads correctly in every practice already written.
    */
-  drillCategory?: string;
+  drillTags?: string[];
 
   // ── The PRACTICE half — always editable, never written back to the library ──
   /** Names, never grants — a staff entry carries no account and no capability. */
@@ -1590,8 +1595,17 @@ export interface RepTeamLineupTemplate {
   updatedAt: string;
 }
 
-// Coach Tags (Coach Tags & Player Awards, Phase 1 game tags + Phase 3 expense tags).
-export type RepTagKind = 'game' | 'expense';
+/**
+ * Coach Tags (Coach Tags & Player Awards, Phase 1 game tags + Phase 3 expense tags).
+ *
+ * `focus` (Practice Plans Phase 3, mig 221) is the ONE shared vocabulary behind drills, plan
+ * templates, practice plans and players' focus areas — named for what it describes (what the work
+ * is about), not for any single surface that uses it. It REPLACED the free-text `category` mig 218
+ * put on drills and focus areas: the case-insensitive unique index tags have carried since mig 181
+ * makes the "Hitting" vs "hitting" split structurally impossible, and `merge_rep_team_tags`
+ * atomically re-points history when a coach ends up with two near-duplicates.
+ */
+export type RepTagKind = 'game' | 'expense' | 'focus';
 
 export interface RepTeamTag {
   id: string;
@@ -1664,6 +1678,52 @@ export interface RepTeamMeasurableType {
 }
 
 /**
+ * A saved practice shape (Practice Plans Phase 3, migration 221). Rules live in
+ * `lib/rep-plan-templates.ts`.
+ *
+ * ⚠ **A TEMPLATE IS SCAFFOLDING, NOT AN IDENTITY** — and that is the seam a later session will be
+ * tempted to "fix". Loading a template gives a FULLY EDITABLE plan (D14 copy-on-load): of course a
+ * coach adapts a practice, and adapting it is the point. A loaded DRILL, one level down inside that
+ * same plan, stays READ-ONLY, because a drill's name is a claim about what was run. **Both rules
+ * are correct and they sit one screen apart. Do not unify them.**
+ *
+ * ⚠ **`planCount` counts PLANS STARTED, never practices run.** Nothing records what actually
+ * happened (D4), so "used 8×" would be a claim the data cannot support. On screen: "Started 8
+ * plans" / "Not started a plan yet".
+ *
+ * ⚠ **Scoped to the TEAM, not the program year** — deliberately NOT the `rep_team_lineup_templates`
+ * shape (mig 159). A team is permanent and only its program year turns over, so templates cross a
+ * season rollover with nothing to import; year-keying them would strand a coach's library every
+ * autumn.
+ */
+export interface RepTeamPlanTemplate {
+  id: string;
+  orgId: string;
+  /** NOT nullable: club-wide templates were never asked for and are not built. See mig 221. */
+  teamId: string;
+  name: string;
+  /** Several, from the same 'focus' vocabulary as drills, plans and focus areas. */
+  tags: RepTeamTag[];
+  /** The plan SHAPE — same structure as `rep_team_events.practice_plan`. Copied on load. */
+  plan: unknown;
+  isActive: boolean;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A template plus its honest usage figures. */
+export interface RepTeamPlanTemplateWithUsage extends RepTeamPlanTemplate {
+  /** ⚠ Plans STARTED from this template — never practices run. See the note above. */
+  planCount: number;
+  /** ISO date of the most recent plan started from it, or null. */
+  lastPlannedAt: string | null;
+  /** Derived from `plan` for the list row — no second source of truth. */
+  blockCount: number;
+  totalMinutes: number | null;
+}
+
+/**
  * A reusable drill (Practice Plans Phase 2, migration 218) — the SHAPE of one activity and its
  * TEACHING, and nothing else. Rules live in `lib/rep-drills.ts`.
  *
@@ -1682,8 +1742,16 @@ export interface RepTeamDrill {
    */
   teamId: string | null;
   name: string;
-  /** Coach-typed. ⚠ NEVER a fixed or seeded list — that would be one sport talking. */
-  category: string | null;
+  /**
+   * Tags from the shared 'focus' vocabulary (Phase 3, mig 221) — SEVERAL per drill, replacing the
+   * single free-text `category` Phase 2 shipped.
+   *
+   * ⚠ NEVER a fixed or seeded list — every tag is coach-typed, because a supplied
+   * "Hitting / Fielding / Pitching" set is one sport talking to a platform serving many. What tags
+   * add over free text is that duplicate spellings are now IMPOSSIBLE rather than discouraged, and
+   * that two near-duplicates can be merged with their history intact.
+   */
+  tags: RepTeamTag[];
   /** ONE number. Ranges were removed at owner QA (§10.5) and must not return via the library. */
   usualMinutes: number | null;
   /** "What you're doing". */
@@ -1775,13 +1843,25 @@ export interface RepPlayerDevelopmentGoal {
   note: string | null;
   status: RepDevelopmentGoalStatus;
   /**
-   * Optional, coach-typed, drawn from the same vocabulary as their drill categories (D16, mig 218).
+   * ONE optional grouping tag from the shared 'focus' vocabulary (Phase 3, mig 221 — replaces the
+   * free-text `category` of mig 218).
+   *
+   * ⚠ **A FOCUS AREA IS FREE TEXT FIRST, TAGGED SECOND** (owner ruling 2026-08-01). `focusArea`
+   * above stays the coach's own specific words — *"loading their back hip"*, *"changeup accuracy"* —
+   * because that is what a coach actually coaches from. **The tag never replaces it.** It exists
+   * only so the focus rail can tell this area belongs to tonight's practice.
+   *
+   * ⚠ Hence the deliberate asymmetry with drills and templates, which carry SEVERAL tags: a focus
+   * area is MORE SPECIFIC than a plan tag by design, so one grouping handle is the whole need.
+   * Do not "make them consistent".
    *
    * ⚠ NULL means "the coach hasn't said" and renders at FULL strength in the focus rail — never
    * dimmed, never hidden. Nothing is back-filled and nothing is inferred from keywords: free text
    * does not cluster, and guessing would be a confident lie (§4).
    */
-  category: string | null;
+  tagId: string | null;
+  /** Denormalised for render — the tag's name, or null when `tagId` is null. */
+  tagName: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;

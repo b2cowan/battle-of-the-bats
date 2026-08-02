@@ -12,10 +12,11 @@ import {
   type PracticeRotation, type PracticeStation,
 } from '@/lib/rep-practice-plan';
 import {
-  MAX_DRILL_CATEGORY_LEN, UNCATEGORISED_FILTER, collectDrillCategories, detachStationFromDrill,
-  drillToStation, filterDrills, sortDrillsForPicker, stationToDrillInput,
+  UNTAGGED_FILTER, collectTags, detachStationFromDrill,
+  drillToStation, filterTagged, sortDrillsForPicker, stationToDrillInput,
   type DrillInput, type RepTeamDrill,
 } from '@/lib/rep-drills';
+import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepAttendanceStatus, RepDevelopmentGoalStatus } from '@/lib/types';
@@ -48,10 +49,12 @@ export type PracticeFocusGoal = {
   focusArea: string;
   status: RepDevelopmentGoalStatus;
   /**
-   * Optional, coach-typed (D16). ⚠ Used ONLY to soften a chip that doesn't match tonight — never
-   * to hide a row, never to reorder one, and a null category always reads as relevant.
+   * ONE optional grouping tag (D16, mig 221). ⚠ Used ONLY to soften an area that doesn't match
+   * tonight — never to hide a row, never to reorder one, and an UNTAGGED area always reads as
+   * relevant. The focus text itself stays the coach's own specific words and is never replaced.
    */
-  category: string | null;
+  tagId: string | null;
+  tagName: string | null;
 };
 
 type AttachTarget =
@@ -306,7 +309,7 @@ function StationCard({
                 itself, so there is no "edited" state to track. */}
             <p className={styles.ppFromDrill}>
               <Library size={12} aria-hidden /> From your drills
-              {station.drillCategory ? ` · ${station.drillCategory}` : ''}
+              {station.drillTags?.length ? ` · ${station.drillTags.join(' · ')}` : ''}
             </p>
             <DrillFacts station={station} />
             {!readOnly && (
@@ -610,14 +613,14 @@ function DrillPickerSheet({
   const hasDrills = drills.length > 0;
   const [tab, setTab] = useState<'drills' | 'write'>(hasDrills ? 'drills' : 'write');
   const [query, setQuery] = useState('');
-  const [category, setCategory] = useState<string | null>(null);
+  const [tagFilter, setTagFilter] = useState<string | null>(null);
   const [previewId, setPreviewId] = useState<string | null>(null);
 
-  const categories = useMemo(() => collectDrillCategories(drills), [drills]);
+  const drillTags = useMemo(() => collectTags(drills), [drills]);
   // The SAME predicate the library room uses — one rule, so the two lists can't drift.
   const shown = useMemo(
-    () => filterDrills(sortDrillsForPicker(drills), query, category),
-    [drills, query, category],
+    () => filterTagged(sortDrillsForPicker(drills), query, tagFilter),
+    [drills, query, tagFilter],
   );
 
   const preview = previewId ? drills.find(d => d.id === previewId) ?? null : null;
@@ -681,18 +684,18 @@ function DrillPickerSheet({
                   <input className={styles.input} value={query} onChange={e => setQuery(e.target.value)}
                     placeholder="Search…" aria-label="Search drills" />
                   <div className={styles.ppSuggestWrap}>
-                    <button type="button" className={styles.ppSuggestChip} data-on={category == null ? 'on' : undefined}
-                      onClick={() => setCategory(null)}>All</button>
-                    {categories.map(c => (
-                      <button key={c} type="button" className={styles.ppSuggestChip}
-                        data-on={category === c ? 'on' : undefined} onClick={() => setCategory(c)}>{c}</button>
+                    <button type="button" className={styles.ppSuggestChip} data-on={tagFilter == null ? 'on' : undefined}
+                      onClick={() => setTagFilter(null)}>All</button>
+                    {drillTags.map(t => (
+                      <button key={t.id} type="button" className={styles.ppSuggestChip}
+                        data-on={tagFilter === t.id ? 'on' : undefined} onClick={() => setTagFilter(t.id)}>{t.name}</button>
                     ))}
                     {/* ⚠ Always offered when it applies, so a drill can never become unreachable
-                        simply by having no category. */}
-                    {drills.some(d => !d.category) && (
+                        simply by carrying no tags. */}
+                    {drills.some(d => d.tags.length === 0) && (
                       <button type="button" className={styles.ppSuggestChip}
-                        data-on={category === UNCATEGORISED_FILTER ? 'on' : undefined}
-                        onClick={() => setCategory(UNCATEGORISED_FILTER)}>Uncategorised</button>
+                        data-on={tagFilter === UNTAGGED_FILTER ? 'on' : undefined}
+                        onClick={() => setTagFilter(UNTAGGED_FILTER)}>No tags</button>
                     )}
                   </div>
                 </div>
@@ -709,7 +712,7 @@ function DrillPickerSheet({
                           {drill.teamId === null && <span className={styles.ppSharedChip}>Club</span>}
                         </span>
                         <span className={styles.ppDrillRowMeta}>
-                          {[drill.category, drill.usualMinutes ? `${drill.usualMinutes} min` : null]
+                          {[drill.tags.map(t => t.name).join(' · ') || null, drill.usualMinutes ? `${drill.usualMinutes} min` : null]
                             .filter(Boolean).join(' · ')}
                         </span>
                       </div>
@@ -738,17 +741,17 @@ function DrillPickerSheet({
  * because that is the one thing that could surprise someone at this moment.
  */
 function PromoteDrillDialog({
-  stationName, categories, busy, error, onSave, onClose,
+  stationName, tags, onCreateTag, busy, error, onSave, onClose,
 }: {
   stationName: string;
-  categories: string[];
+  tags: PickableTag[];
+  onCreateTag: (name: string) => Promise<PickableTag | null>;
   busy: boolean;
   error: string;
-  onSave: (category: string) => void;
+  onSave: (tagIds: string[]) => void;
   onClose: () => void;
 }) {
-  const [category, setCategory] = useState('');
-  const listId = useId();
+  const [tagIds, setTagIds] = useState<string[]>([]);
   return (
     <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Save to my drills"
       onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
@@ -760,13 +763,13 @@ function PromoteDrillDialog({
           </button>
         </div>
         <div className={styles.ppDrillWrite}>
-          <label className={styles.ppField}>
-            <FieldLabel>Category — one question, and it&apos;s optional</FieldLabel>
-            <input className={styles.input} value={category} list={listId} maxLength={MAX_DRILL_CATEGORY_LEN}
-              onChange={e => setCategory(e.target.value)}
-              placeholder="What kind of drill is it?" />
-            <datalist id={listId}>{categories.map(c => <option key={c} value={c} />)}</datalist>
-          </label>
+          <TagPicker
+            label="Tags — one question, and it's optional"
+            all={tags}
+            selected={tagIds}
+            onChange={setTagIds}
+            onCreate={onCreateTag}
+          />
           <p className={styles.formHint}>
             The setup, coaching points and equipment come with it. Who ran it and who was at it stay
             with tonight&apos;s practice.
@@ -775,7 +778,7 @@ function PromoteDrillDialog({
         </div>
         <div className={styles.modalFooter}>
           <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => onSave(category)}>
+          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => onSave(tagIds)}>
             {busy ? 'Saving…' : 'Save to my drills'}
           </button>
         </div>
@@ -1015,6 +1018,15 @@ interface Props {
   drills: RepTeamDrill[];
   /** Saves a promoted station to the library (D18). Absent for a viewer who can't write drills. */
   onCreateDrill?: (input: DrillInput) => Promise<{ ok: boolean; error?: string }>;
+  /**
+   * The team's whole 'focus' vocabulary — owned by the page, like `drills`, not fetched here.
+   *
+   * ⚠ Every tag the team has, NOT only those already on a drill. Deriving the picker's list from
+   * what is on screen would hide vocabulary a focus area or a template already uses and quietly
+   * invite the coach to mint a duplicate — the exact drift tags exist to prevent.
+   */
+  focusTags?: PickableTag[];
+  onCreateFocusTag?: (name: string) => Promise<PickableTag | null>;
   eventStartsAt: string;
   eventEndsAt: string | null;
   readOnly: boolean;
@@ -1023,6 +1035,7 @@ interface Props {
 export default function PracticePlanEditor({
   plan, onChange, roster, goals, canViewFocus, attendance, canViewAttendance,
   staffSuggestions, equipmentSuggestions, practiceTypeSuggestions, drills, onCreateDrill,
+  focusTags = [], onCreateFocusTag,
   eventStartsAt, eventEndsAt, readOnly,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
@@ -1092,7 +1105,7 @@ export default function PracticePlanEditor({
       seen.set(key, s);
       if (isDerived) derived.push(s);
     };
-    for (const block of plan.blocks) for (const s of block.stations ?? []) add(s.drillCategory, true);
+    for (const block of plan.blocks) for (const s of block.stations ?? []) for (const t of s.drillTags ?? []) add(t, true);
     for (const t of plan.practiceTypes ?? []) add(t, false);
     return { practiceCategories: seen, derivedCategories: derived };
   }, [plan.blocks, plan.practiceTypes]);
@@ -1103,12 +1116,12 @@ export default function PracticePlanEditor({
    * ⚠ **DIM, NEVER HIDE** (owner ruling, confirming D16 and §4). This returns false only to soften
    * a chip — nothing anywhere removes a row. A player whose only focus areas are off-type must
    * never vanish from a coverage list, because that is precisely the child most likely to be
-   * overlooked. And an UNCATEGORISED_FILTER area always reads as relevant: the product does not know that
-   * it isn't, so it must not imply that it isn't.
+   * overlooked. And an UNTAGGED area always reads as relevant: the product does not know that it
+   * isn't, so it must not imply that it isn't.
    */
   const focusMatches = (goal: PracticeFocusGoal): boolean => {
     if (practiceCategories.size === 0) return true; // nothing to filter against yet
-    const c = goal.category?.trim().toLowerCase();
+    const c = goal.tagName?.trim().toLowerCase();
     if (!c) return true;
     return practiceCategories.has(c);
   };
@@ -1157,7 +1170,6 @@ export default function PracticePlanEditor({
     }]);
   }
 
-  const drillCategories = useMemo(() => collectDrillCategories(drills), [drills]);
 
   /**
    * A picked drill becomes a BLOCK: the block takes the drill's name and usual length, and the
@@ -1226,13 +1238,13 @@ export default function PracticePlanEditor({
     });
   }
 
-  async function promoteStation(category: string) {
+  async function promoteStation(tagIds: string[]) {
     if (!promoting || !onCreateDrill) return;
     const block = plan.blocks.find(b => b.id === promoting.blockId);
     const station = block?.stations?.find(s => s.id === promoting.stationId);
     if (!station) { setPromoting(null); return; }
     setPromoteBusy(true); setPromoteError('');
-    const result = await onCreateDrill(stationToDrillInput(station, category));
+    const result = await onCreateDrill(stationToDrillInput(station, tagIds));
     setPromoteBusy(false);
     if (!result.ok) { setPromoteError(result.error ?? 'Could not save that drill.'); return; }
     // ⚠ Promotion COPIES. Tonight's station is deliberately left exactly as it is — it does not
@@ -1522,7 +1534,8 @@ export default function PracticePlanEditor({
         return (
           <PromoteDrillDialog
             stationName={station.name}
-            categories={drillCategories}
+            tags={focusTags}
+            onCreateTag={onCreateFocusTag ?? (async () => null)}
             busy={promoteBusy}
             error={promoteError}
             onSave={promoteStation}

@@ -108,9 +108,9 @@ export function collectImportableDrills(
         key,
         drill: {
           name,
-          // ⚠ NOT inferred. A past station has no category, and guessing one from keywords is the
+          // ⚠ NOT inferred. A past station carries no tags, and guessing them from keywords is the
           // confident lie §4 forbids — the coach is asked when they save it.
-          category: null,
+          tagIds: [],
           usualMinutes: null,
           description: station.description ?? null,
           goal: station.goal ?? null,
