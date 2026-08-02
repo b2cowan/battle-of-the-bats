@@ -4,6 +4,114 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-01 — T1: ONE nav-label spec and ONE pill silhouette across all five top bars; plus the four top-nav micro-rulings
+
+**Trigger:** the top-nav consistency audit (`TOP_NAV_CONSISTENCY_FINDINGS.md` §6b) measured the five bars at 1440px and found the MATERIALS already consistent — IBM Plex Mono labels over an Inter base everywhere including marketing, fully-round pill radius everywhere, one icon-door size — but the FINE METRICS doing one job three ways with no written reason. Owner ruled T1 "per REC" the same day. This is Stage G's scoped-but-never-built third ("nav type scale + pill silhouette").
+
+**What was measured (the defect):** nav labels at **11.52px/600** (org identity row), **12px/400** (marketing) and **12.48px/600** (consumer + tournament strips), across **three** letter-spacings. Sign-in pill **32px** (marketing, org row) vs **34px** (consumer, tournament). And the **SAME shared `WorkspacesPill`** rendered **26px** in the two operator strips vs **30px** in the consumer bar — because the trigger inherits its host bar's `.pill` class and each host sized it locally.
+
+**BINDING RULES:**
+1. **Canonical spec = the consumer strip's, whole.** `--nav-label-size: 0.78rem` (12.48px), `--nav-label-weight: 600`, `--nav-label-tracking: 0.03em`. The consumer strip is the highest-traffic bar and already the reference for `--chrome-bar-h`. **Taking size from one bar and tracking from another would rebuild the exact defect** — one bar, one whole spec.
+2. **SIZE and TRACKING bind every nav label. WEIGHT binds plain nav LINKS.** Pills and CTAs keep **700** — that is emphasis carrying a role difference, not drift. (The audit's "two weights for one job" was 600 vs 400 on the *same* job across two bars.)
+3. **A nav label's type spec is a MATERIAL, not a dimension — so MARKETING JOINS.** R5 ruled that marketing's *height* may differ because a bar's height is the room's proportion; materials were already shared across all five bars. Marketing's own room is expressed by its ratified 64px `--marketing-bar-h`, its bottom link bar and its lime CTA — not by a 0.48px type difference nobody chose. **Visible on marketing:** labels go 400 → 600 and tracking tightens 0.1em → 0.03em.
+4. **`--nav-pill-h: 30px`, deliberately EQUAL to `--icon-door-size`.** A pill and an icon door share a row, so they share one silhouette. Pills declare `min-height` + zero vertical padding to land on it exactly, rather than hoping a padding pair adds up — which is how 32/34/26px happened in the first place.
+5. **A shared control must not be sized by its host.** `WorkspacesPill` inherits the host `.pill` class by design (colour is what carries family); its GEOMETRY now comes from the token, so the same control cannot render at two sizes again.
+
+**Applies to:** `globals.css` (token block, beside `--chrome-bar-h` / `--icon-door-*`), `ConsumerShell.module.css` (`.topLink` `.utilLink` `.utilCta` `.utilCoach`), `Navbar.module.css` (`.actionLink` `.actionCta` `.actionPill` + new `.marketingLink` `.marketingCta`), `AdminTopStrip.module.css` + `CoachTopStrip.module.css` (`.pill`).
+
+---
+
+**The four micro-rulings (bundled with T1 — one sentence each, per the repair plan):**
+
+**(a) Rail vs phone org-name — adopt the PHONE rule everywhere.** The org NAME always renders above an event's identity; it is a **link only when the org's public page is a real destination**. The desktop rail used to drop the name entirely when the page wasn't real while the phone eyebrow kept it as inert text — the same signal rendered two ways, and the desktop version lost *information*, not just a door. Whose event this is stays true whether or not there is a page to visit. **The chevron goes with the link** — a trail marker pointing nowhere is a dead affordance, the exact class this pass closes. *(Code: `TournamentSideRail.tsx`.)*
+
+**(b) The consumer variant's phone wordmark bar — ratified as-is.** The base app has no other identity anchor at phone widths, whereas the tournament and coach variants each substitute their own (a branded event header, a team/event header). The asymmetry has a local reason on each surface and needs no unifying principle. *(No code.)*
+
+**(c) Day-of shells keep INERT wordmarks — deliberate, now written down.** Scorekeeper, gate check-in and platform-admin render the FieldLogicHQ mark as text, not a door. A gloved volunteer mid-game should not be one mis-tap from the consumer app, and Sign Out is the intended exit; platform-admin is an internal console for a different audience entirely. Each file now carries a one-line "ruled exception" comment so an eager unification pass stops at the door. *(Code: comments only, in the three shells.)*
+
+**(d) Check-in gets NO flip door — considered and DECLINED, not overlooked.** Scorekeeper has one because a live event has a public twin to flip to; a gate check-in board has no public counterpart, so there is nothing on the other side. Recorded so the asymmetry reads as a decision rather than a gap. *(No code; comment in the check-in layout.)*
+
+---
+
+### 2026-08-01 — Practice Plans Phase 2 (the drill library): IDENTITY is read-only, SCAFFOLDING is editable — and a count may only claim what the data actually records
+
+**⚠ THE LOAD-BEARING RULE, and the one a later session will be tempted to "make consistent".** A
+loaded **drill's own words are READ-ONLY**; a loaded **plan template's are fully editable** (D14).
+Both are correct and they will shortly sit one screen apart. The distinguishing question is
+**whether the thing's name is a claim about what happened**:
+
+- A **drill is an IDENTITY** — a named thing a coach says they ran, and its count has to mean the
+  same thing eight times. Owner: *"if I load a drill and completely change everything about it, then
+  I didn't run the same drill."* **This OVERRIDES the D14 copy-on-load precedent**, which was cited
+  in favour of editable and does not bind here.
+- A **template is SCAFFOLDING** — a starting point for a practice. Of course you adapt it; adapting
+  it is the point.
+
+**Do not unify them.** Do not make templates read-only for symmetry, and do not "fix" the drill rule
+because a template beside it behaves differently.
+
+**How the read-only half is drawn (all three parts matter):**
+1. **The locked half renders as TEXT, not disabled inputs.** A stack of greyed boxes reads as broken
+   on a phone; text makes a drill-backed station visibly a shorter, *different shape* — the divide
+   explains itself without a tooltip. Locked: name, `description`, `goal`, `coachingPoints`, `setup`,
+   `equipment`.
+2. **Everything the PRACTICE owns stays editable** — who runs it, who's at it, the block's length,
+   and **"Just for tonight"**, which absorbs most one-word-different cases with no detaching at all.
+   The escape hatch is only reached by coaches who genuinely changed the drill.
+3. **"Edit just for this practice" DETACHES** — keeps every word, drops the provenance, stops
+   counting toward the drill. **The edit breaking the link is what keeps the count honest**;
+   detaching is the honest act, not a workaround. "Swap drill" falls out of the same shape for free.
+
+⚠ **Provenance is stored but NOTHING renders from it.** Every word is COPIED into the plan at add
+time, so a plan never depends on the library to display: editing a drill later cannot rewrite a
+practice already written, a retired drill keeps reading for ever, and there is no dangling-id failure
+of the kind §10.3 refused for staff tags. The id answers "in 8 plans", and it is cleared on detach.
+**A future phase that loads a template containing drill-backed stations must PRESERVE that
+provenance** — silently stripping it would quietly break every drill's count.
+
+**⚠ A COUNT MUST NAME WHAT IT ACTUALLY COUNTED.** *"Used 8×"* and *"Ran 6×"* were claims the data
+cannot support — nothing records what was actually run (D4), and a coach may have planned a drill and
+skipped it in the rain. Now **"In 8 plans" / "Not in a plan yet" / "last planned"**, and the field is
+named `planCount` so the honest word is in the **type** as well as on screen. **Generalises: when a
+metric's obvious English name overstates the record, rename the metric — and rename the field too, so
+the next reader of the code cannot reintroduce the claim.** Applies to every future count in this
+feature, including a template's *"Started 8 plans"*.
+
+**Dim, never hide, and never reorder.** The focus rail filters by the categories of the drills in the
+plan: off-type focus areas go **faint but stay exactly where they are**. Nobody disappears, nothing
+reorders, and a player with no category set stays at full strength. **A filter that removes a child
+from a roster-order list is a ranking wearing a filter's clothes.**
+
+**A drill is ONE activity — one station's worth.** Picking a second drill into the same block is what
+produces two stations, and therefore a rotation. There is no nested station list and no second kind
+of block. **There is no "how many of it" count** — it would be 1 almost every time, and three of
+something is three adds or a line in "just for tonight". ⚠ This retired the station-level `count`
+that slice 1a had already shipped.
+
+**The archive: a library is an INSTRUMENT, so it is live-season only** and its door is HIDDEN in a
+completed season. ⚠ **A TEAM IS PERMANENT — only its program year turns over** — so a team-scoped
+library survives a season rollover with nothing to migrate. What is genuinely season-locked is the
+practice PLANS, so **"Add drills from a past season"** reads those and copies them forward; that is
+the single deliberate cross-season read in the feature, it writes nothing into a finished season, and
+`tests/unit/coach-season-write-guard.test.ts` asserts the library stays OFF the season-read rail so a
+later session cannot assume the question was already answered.
+
+**Two smaller rules worth keeping:**
+- **A door must be gated on what lies BEHIND it, not on the room it sits in.** The Drills door rides
+  `schedule`, not just the season — Development is reachable by an assistant granted `notes` alone,
+  who would otherwise be shown a door that answers "you do not have access to the schedule". Same
+  dead-end the archive rule forbids, wearing a different wall.
+- **Same codebase, opposite sanitiser rules, both right.** The autosaving **plan** never discards a
+  row for being empty (autosave + discard-incomplete-data is data loss), but a **library item**
+  created by an explicit submit *does* reject an empty name. The distinguishing fact is whether a
+  human pressed a button.
+
+**Applies to:** `lib/rep-drills.ts`, `lib/rep-drill-usage.ts`, `PracticeStation` in `lib/types.ts`,
+`_PracticePlanEditor.tsx`, `_PracticeStationView.tsx`, the Drills room, and the org shared-library
+screen. Full build record + the two gate rulings: `COACH_PRACTICE_PLANS_PLAN.md` §10.7.
+
+---
+
 ### 2026-08-01 — Practice Plans 1b: the field clock RE-ANCHORS on every tap; a screen that shows one thing must own the case where that thing is half-written; and the archive dead-end closes by HIDING the door (owner ruled both open questions at the recommendations; mockup rounds 1/4/5 binding)
 
 **THE CLOCK — owner ruling, and it generalises.** A countdown on an operating screen can be anchored to the SCHEDULE or to the USER'S LAST ACTION, and the two disagree the moment reality slips. Ruled: **both, in sequence.** Opening the run screen lands the coach on the block the *planned* clock says is running, with the true time left — which is the whole value of pulling a phone out mid-practice. **The moment they tap, that stop re-anchors to now and gets its full planned length.** A practice that starts eight minutes late therefore does not spend the rest of the night declaring every block overdue. **Generalises: anchor to the plan for ORIENTATION, to the tap for DURATION.** Anchoring purely to the schedule is the version that looks correct in a spec and is useless on a field.

@@ -67,7 +67,10 @@ export default function AdminChrome({
       <FeedbackRequestIdProvider />
       <div className={shellClassName}>
         {/* Stage C — the operator frame strip: desktop-only fixed top bar (wordmark → Home,
-            bell · chat · account · Workspaces). Mounted INSIDE the shell so the strip can
+            bell · account · Workspaces). NO chat door: chat is a destination for a fan and a
+            SECTION OF THE WORK for an operator, so the strips deliberately don't eject into
+            consumer chrome (binding ruling 2026-07-31; this comment still listed the removed
+            door until the 2026-08-01 top-nav audit). Mounted INSIDE the shell so the strip can
             read the shell's own --admin-topstrip-h (custom properties don't reach siblings);
             position:fixed keeps it out of the flex flow regardless. The shell + sidebar +
             event header all offset by the same var (admin.module.css). */}

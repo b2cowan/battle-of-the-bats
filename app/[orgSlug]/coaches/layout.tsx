@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { getAuthContext } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getClosedCoachingAssignmentsForUser } from '@/lib/db';
+import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgRole } from '@/lib/types';
 import { buildCoachSeasons } from '@/lib/coach-season-view';
@@ -11,9 +12,11 @@ import { CoachesProvider } from '@/lib/coaches-context';
 import { getCoachOnboardingPrefs } from '@/lib/user-preferences';
 import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { COACHES_HOME_PATH } from '@/lib/coaches-portal-routes';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import CoachTopStrip from '@/components/coaches/CoachTopStrip';
+import CoachWallSignOut from '@/components/coaches/CoachWallSignOut';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import ConfirmProvider from '@/components/coaches/ConfirmProvider';
@@ -91,25 +94,59 @@ export default async function CoachesLayout({
   if (assignments.length === 0 && closedAssignments.length === 0) {
     const { name: orgName, contactEmail } = authCtx.org;
     const isTeamWorkspace = isTeamWorkspaceOrg(authCtx.org);
+    // The wall's second door, by persona.
+    //
+    // A TEAM WORKSPACE has no meaningful public page — its shadow org can never own the
+    // public-site module and can never run two active events, so the shared resolver always says
+    // "not a real place" for it. Pointing at `/{orgSlug}` (what the old wall did unconditionally)
+    // was therefore a guaranteed dead end for exactly this persona. Their real "Coaches Portal
+    // home" is the org-less coach hub, which lists whatever they still hold — so that is the door.
+    //
+    // For a NORMAL org it is the org's public page, and only when the SAME shared resolver the
+    // event chrome uses says that page is real (top-nav audit D1/D2, 2026-08-01). Awaited inline
+    // because nothing else is in flight on this branch.
+    const orgHomeHref = isTeamWorkspace ? COACHES_HOME_PATH : await resolveOrgHomeHref(authCtx.org);
     return (
+      // R2 — the wall renders INSIDE the portal frame instead of returning before any chrome
+      // mounts. A coach whose assignment was revoked (or anyone following a wrong-org link) now
+      // keeps the operator strip above and a real triad of doors below: where am I, who am I,
+      // and a way out. The warm marker + theme wrapper match the portal shell exactly, so the
+      // wall reads as this product rather than as an error page.
       <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole}>
-        <div className={styles.notAssigned}>
-          <h2>{isTeamWorkspace ? 'Coaches Portal not ready' : 'Not assigned to any teams'}</h2>
-          <p>
-            {isTeamWorkspace
-              ? `Your coach assignment or Premium entitlement is not active for ${orgName}.`
-              : `You don't have an active coaching assignment for ${orgName}.`}
-          </p>
-          <p className={styles.notAssignedContact}>
-            {contactEmail ? (
-              <>Questions? <a href={`mailto:${contactEmail}`} className={styles.notAssignedEmailLink}>{contactEmail}</a></>
-            ) : (
-              <>{isTeamWorkspace ? 'Questions? Contact FieldLogicHQ support.' : 'Questions? Contact your org admin.'}</>
-            )}
-          </p>
-          <Link href={`/${orgSlug}`} className={styles.notAssignedBack}>
-            {isTeamWorkspace ? 'Back to Coaches Portal home' : `Back to ${orgName}`}
-          </Link>
+        <div style={{ display: 'contents' }} {...coachWarmAttr}>
+          <CoachThemeColor />
+          <div className={styles.coachesShell}>
+            {/* Desktop-only by its own CSS; on a phone the card's doors below carry the same
+                three answers, which is why the wall doesn't mount the team bottom nav (a coach
+                with no teams has nothing for it to list). */}
+            <CoachTopStrip />
+            <main className={styles.coachesMain}>
+              <div className={styles.notAssigned}>
+                <h2>{isTeamWorkspace ? 'Coaches Portal not ready' : 'Not assigned to any teams'}</h2>
+                <p>
+                  {isTeamWorkspace
+                    ? `Your coach assignment or Premium entitlement is not active for ${orgName}.`
+                    : `You don't have an active coaching assignment for ${orgName}.`}
+                </p>
+                <p className={styles.notAssignedContact}>
+                  {contactEmail ? (
+                    <>Questions? <a href={`mailto:${contactEmail}`} className={styles.notAssignedEmailLink}>{contactEmail}</a></>
+                  ) : (
+                    <>{isTeamWorkspace ? 'Questions? Contact FieldLogicHQ support.' : 'Questions? Contact your org admin.'}</>
+                  )}
+                </p>
+                <div className={styles.notAssignedDoors}>
+                  <Link href="/discover" className={styles.notAssignedDoor}>Go to Home</Link>
+                  {orgHomeHref && (
+                    <Link href={orgHomeHref} className={styles.notAssignedDoor}>
+                      {isTeamWorkspace ? 'Back to Coaches Portal home' : `Back to ${orgName}`}
+                    </Link>
+                  )}
+                  <CoachWallSignOut />
+                </div>
+              </div>
+            </main>
+          </div>
         </div>
       </OrgProvider>
     );
@@ -146,8 +183,11 @@ export default async function CoachesLayout({
               <CoachesOverlayProvider>
                 <div className={styles.coachesShell}>
                   {/* Stage H.1 (Nav Unification, D2 ratified 2026-07-31): the operator
-                      frame strip — desktop-only fixed top bar (wordmark → Home, chat ·
-                      account · Workspaces) in the portal's own warm/dark skin. Mounted
+                      frame strip — desktop-only fixed top bar (wordmark → Home, account ·
+                      Workspaces) in the portal's own warm/dark skin. NO chat door and no
+                      bell: chat is a section of the work for an operator, and the coach
+                      sidebar keeps the bell (binding rulings 2026-07-31; this comment still
+                      listed the removed chat door until the 2026-08-01 top-nav audit). Mounted
                       INSIDE the shell so it reads the shell's --coach-topstrip-h (custom
                       properties don't reach siblings); position:fixed keeps it out of the
                       flex flow. The shell pads down by the same var (coaches.module.css). */}

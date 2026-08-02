@@ -4,6 +4,7 @@ import { getLeagueSeasonBySlug, getDivisionsForSeason } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import RegisterForm, { DivisionWithCount } from '@/components/league/RegisterForm';
+import column from '../league-column.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,13 +45,8 @@ export default async function RegisterPage({
         color: 'var(--fl-text)',
       }}
     >
-      <div
-        style={{
-          maxWidth: '640px',
-          margin: '0 auto',
-          padding: 'calc(var(--nav-height, 64px) + 2rem) 1.5rem 5rem',
-        }}
-      >
+      {/* R6: the shared 1200px page column; this page's 640px measure left-aligns inside it. */}
+      <div className={`container ${column.column}`} style={{ '--league-measure': '640px' } as React.CSSProperties}>
         {/* Back link */}
         <Link
           href={`/${orgSlug}/league/${seasonSlug}`}

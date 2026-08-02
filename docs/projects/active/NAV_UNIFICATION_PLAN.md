@@ -5,14 +5,16 @@ go ahead"); grammar ratified; Stages A–E cleared to build. D1 still open; D2 s
 explicit ratification before Stage H.
 **Build status:** ✅ **Stages A + B + D COMMITTED dev `453c3df0` 2026-07-31** (owner QA passed;
 /simplify + /review funnel complete — see below). ✅ **Stage C BUILT on dev 2026-07-31, uncommitted
-— owner QA pending:** new `AdminTopStrip` (fixed 44px, desktop >900px only, z-60) mounted by
+— owner QA pending:** new `AdminTopStrip` (fixed at the shared `--chrome-bar-h`, desktop >900px
+only, z-60) mounted by
 AdminChrome on all non-focused admin surfaces — wordmark→Home + bell (hoisted count, moved from the
 sidebar) + account + WorkspacesPill (2+ places). **NO chat door (owner ruling 2026-07-31,
 generalized from the coach strip): chat is a section of the work, not an exit — a /chat door
 duplicated the shell's own Chat and ejected the operator into consumer chrome.** Sidebar opens with the org name (pure place chrome; lockup styles
 retired); footer "All Workspaces" retired into the popover; orphaned `/api/me/workspaces` +
-`use-has-multiple-workspaces` DELETED. Geometry via `--admin-topstrip-h` on `.adminShell` (44px;
-0 on mobile + focused shells): sidebar top/height, event-header sticky top, and the three
+`use-has-multiple-workspaces` DELETED. Geometry via `--admin-topstrip-h` on `.adminShell`
+(= `--chrome-bar-h`, 48px since Stage G — this line read 44px, the pre-Stage-G value, until the
+2026-08-01 top-nav audit; 0 on mobile + focused shells): sidebar top/height, event-header sticky top, and the three
 `--admin-header-h` sticky-toolbar consumers now stack both offsets. Preview/onboarding/help shells
 unchanged. Gate green; typecheck clean.
 ✅ **Stage H.1 BUILT on dev 2026-07-31, uncommitted — D2 ratified same day** (owner: admin hubs are
@@ -23,7 +25,7 @@ the portal's own Chat is per-USER ("Your chats") — the strip's door was a dupl
 the coach into consumer chrome. Strips carry only genuine leave-this-place doors.**
 Skin = portal tokens (`--card-bg`/`--home-line`/`--white`/`--logic-lime`), so it flips warm/dark
 with the account theme like the sidebar; z-80 (above save bar 40 + dropdowns 60, below modals 200).
-Shell pads down by `--coach-topstrip-h` (44px; 0 ≤900px). **Mockup-faithful deviations from admin:
+Shell pads down by `--coach-topstrip-h` (= `--chrome-bar-h`, 48px since Stage G; 0 ≤900px). **Mockup-faithful deviations from admin:
 NO bell in the strip** (stays in the sidebar header — portal-scoped notifications; mockup shows
 none) and **no sidebar edits at all** (CoachesSidebar/BottomNav are mid-edit by a concurrent
 session; the portal's "COACHES PORTAL + org name" header already reads as pure place chrome).
@@ -181,7 +183,7 @@ it generically for a paying org. A Tournament/Tournament-Plus customer is a *tou
 organization*; generic references below say "org".
 **Mockups (before/after, all four surfaces):** https://claude.ai/code/artifact/e346068e-8a70-440c-b4a8-b1a8fef50e07
 **PM brief:** `NAV_UNIFICATION_PM_BRIEF.md`
-**Supersedes:** `NAVIGATION_MODEL_PLAN.md` + `PUBLIC_NAV_FRAME_PLAN.md` (both retained as audit trail;
+**Supersedes:** `NAVIGATION_MODEL_PLAN.md` + `PUBLIC_NAV_FRAME_PLAN.md` (both retained as audit trail — now in docs/projects/archive/;
 their FINDINGS doc remains the evidence base). This document is the single execution plan for all
 navigation work; do not execute from the superseded docs.
 
@@ -218,6 +220,25 @@ Supporting vocabulary (from the superseded model, still binding): **ENTER** = Ho
 the only aggregator; **MOVE** = each place's own section nav/switchers; **SIDE** = the Flip. The
 fourth question (*is this place still real?* — stale chrome after revocation) is named, NOT solved
 here, and must never be reported as progress.
+
+### The two chrome-growth mechanisms are COMPLEMENTARY, not competing (recorded 2026-08-01)
+
+Reading the geometry cold, it looks like two rival systems for "how does chrome grow when a surface
+adds a second fixed row":
+
+- **Org public pages grow the token.** Stage F's section tab row makes `--nav-height` cover *both*
+  rows while the bar element itself keeps measuring `--nav-height-base`. Every page already pads by
+  `calc(var(--nav-height) + …)`, so the tabs are cleared with no per-page edit.
+- **Tournament pages compose a new one.** `--chrome-top-h` / `--chrome-top-static-h` add the live
+  nav height, the score ticker and the desktop strip together, because those parts appear and
+  disappear independently (the mobile event header collapses on scroll; the ticker only exists on
+  game day).
+
+This was investigated as possible drift in the 2026-08-01 top-nav audit and **refuted**: they are one
+fallback chain, and the D1 route split keeps them disjoint — an org public page never mounts the
+tournament strip or the ticker, and a tournament page never mounts the org section tabs. Growing a
+token suits a fixed second row; composing suits parts that come and go. Do not "unify" them; the
+merge would make each surface pay for the other's variables.
 
 ## 4. Staged plan
 
@@ -355,7 +376,7 @@ zero new identity fetches, zero new role-tied DOM, zero new anonymous-bundle byt
 tournament HTML stays anonymous with identity resolved client-side post-hydration. **Acceptance is a
 diff, not an assertion:** capture anonymous network/DOM/bundle on marketing, consumer app, org home,
 and a tournament page before and after; identical except the one new anchor (Stage E.1) on qualifying
-org pages. The six testable assertions in `NAVIGATION_MODEL_PLAN.md` §Q5 apply verbatim to every
+org pages. The six testable assertions in `NAVIGATION_MODEL_PLAN.md` §Q5 (archived) apply verbatim to every
 stage here; any PR that can't go green on them does not ship.
 
 ## 6. Evidence gates (carried forward, unchanged)

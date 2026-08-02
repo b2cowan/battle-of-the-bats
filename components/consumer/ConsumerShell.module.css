@@ -9,8 +9,11 @@
   flex-direction: column;
   /* Height of the sticky top bar — descendants (e.g. the directory's sticky
      search bar) offset their own sticky position by this so they sit flush
-     beneath it. Custom properties cascade regardless of CSS-module scoping. */
-  --consumer-top-h: calc(3rem + env(safe-area-inset-top, 0px));
+     beneath it. Custom properties cascade regardless of CSS-module scoping.
+     Reads --chrome-bar-h (the ONE platform chrome-bar height, Stage G): this was a
+     hand-kept `3rem` that only COINCIDENTALLY equalled the token, so editing the
+     token moved every other bar and left this one behind (top-nav audit §4). */
+  --consumer-top-h: calc(var(--chrome-bar-h) + env(safe-area-inset-top, 0px));
   /* Rendered height of .bottomNav below — pinned to the codebase-wide 72px
      (--bottom-nav-height convention) so the bar is byte-identical in height and
      position to the tournament-route bar (.bottomNavTournament) and never jumps
@@ -106,9 +109,9 @@
 }
 .utilLink {
   font-family: var(--font-data, monospace);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-size: var(--nav-label-size);
+  font-weight: var(--nav-label-weight);
+  letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   text-decoration: none;
   color: var(--white-45);
@@ -118,14 +121,18 @@
 .utilLink:hover { color: var(--fl-text); }
 .utilCta {
   font-family: var(--font-data, monospace);
-  font-size: 0.75rem;
+  font-size: var(--nav-label-size);
+  /* T1: 700 is the deliberate emphasis step for a pill; size + tracking are shared. */
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   text-decoration: none;
   color: var(--fl-text);
   white-space: nowrap;
-  padding: 0.4rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--nav-pill-h);
+  padding: 0 0.9rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   transition: border-color 0.2s ease, color 0.2s ease;
@@ -138,14 +145,18 @@
    CTA pill so the coach's own surface reads distinct from the generic switcher. */
 .utilCoach {
   font-family: var(--font-data, monospace);
-  font-size: 0.75rem;
+  font-size: var(--nav-label-size);
+  /* T1: 700 is the deliberate emphasis step for a pill; size + tracking are shared. */
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   text-decoration: none;
   color: var(--logic-lime);
   white-space: nowrap;
-  padding: 0.4rem 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--nav-pill-h);
+  padding: 0 0.9rem;
   border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
   border-radius: 999px;
   transition: border-color 0.2s ease;
@@ -256,9 +267,9 @@
 
 .topLink {
   font-family: var(--font-data, monospace);
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.03em;
+  font-size: var(--nav-label-size);
+  font-weight: var(--nav-label-weight);
+  letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   text-decoration: none;
   color: var(--white-45);

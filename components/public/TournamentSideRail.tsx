@@ -70,9 +70,20 @@ export default function TournamentSideRail({
           orgHomeHref — live site only, never the admin preview), the org name appears
           above the event name as the breadcrumb up, suppressed when org and event share
           a name (no "X › X"). */}
+      {/* Micro-ruling (a), 2026-08-01: the NAME always renders; it is a LINK only when the org's
+          public page is a real destination. This used to drop the org's name entirely when the
+          page wasn't real, while the phone eyebrow kept it as inert text — the same signal
+          rendered two ways, and the desktop version lost information, not just a door. The phone
+          rule wins because whose event this is remains true whether or not there is a page to
+          visit. The chevron goes with the link: a trail marker pointing nowhere is a dead
+          affordance, which is the whole class of defect this pass is closing. */}
       <div className={styles.railHeader}>
-        {!basePath && ctx.orgHomeHref && ctx.orgName && ctx.orgName !== resolvedHeading && (
-          <Link href={ctx.orgHomeHref} className={styles.railCrumb}>{ctx.orgName} ›</Link>
+        {!basePath && ctx.orgName && ctx.orgName !== resolvedHeading && (
+          ctx.orgHomeHref ? (
+            <Link href={ctx.orgHomeHref} className={styles.railCrumb}>{ctx.orgName} ›</Link>
+          ) : (
+            <span className={styles.railCrumb}>{ctx.orgName}</span>
+          )
         )}
         <div className={styles.railIdentity}>
           {resolvedLogo && <img src={resolvedLogo} alt="" className={styles.railLogo} />}

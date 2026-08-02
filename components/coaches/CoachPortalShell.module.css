@@ -14,8 +14,10 @@
      which normally come from the CONSUMER shell's wrapper — absent here, their heights
      would collapse to auto / lose the safe-area cushion (the exact failure the tournament
      variant fixed with .bottomNavTournament). The coach mount supplies them itself.
-     KEEP IN SYNC with ConsumerShell.module.css `.shell` (3rem top / 4.5rem bottom). */
-  --consumer-top-h: calc(3rem + env(safe-area-inset-top, 0px));
+     KEEP IN SYNC with ConsumerShell.module.css `.shell` (--chrome-bar-h top / 4.5rem
+     bottom). The top half now reads the shared platform chrome-bar token, so the two
+     shells cannot drift on the day someone edits it (top-nav audit §4). */
+  --consumer-top-h: calc(var(--chrome-bar-h) + env(safe-area-inset-top, 0px));
   --consumer-bottom-h: calc(4.5rem + env(safe-area-inset-bottom, 0px));
   /* Height of the global consumer top bar the desktop rail and header band sit beneath. */
   --coach-top-strip: var(--consumer-top-h);

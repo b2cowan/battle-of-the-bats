@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import PricingSection from '@/components/PricingSection';
+import ViewerAwarePlans from './ViewerAwarePlans';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import ComparisonTable from './ComparisonTable';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
@@ -286,7 +286,11 @@ export default async function PricingPage() {
               Use these plans when you manage events or organization-wide operations.
             </p>
           </div>
-          <PricingSection gatingMap={gatingMap} />
+          {/* R4 (2026-08-01): same grid, but it knows whether the reader already operates here.
+              Prospects and anonymous visitors get today's cards untouched; a signed-in org
+              operator gets their tier marked and CTAs that open their billing screen instead of
+              the sign-up funnel. Resolved client-side, so this page stays static + role-free. */}
+          <ViewerAwarePlans gatingMap={gatingMap} />
 
           {/* Founding Season note */}
           <p className={`${styles.sectionSub} mt-3 text-center`} style={{ fontSize: '0.78rem' }}>

@@ -414,7 +414,7 @@ export async function getOrgSitemapEntries(): Promise<{ href: string }[]> {
   const { data: orgRows, error } = await scopeFollowableOrgs(
     supabaseAdmin
       .from('organizations')
-      .select('id, slug, plan_id, subscription_status, enabled_addons, free_floor'),
+      .select('id, slug, is_public, plan_id, subscription_status, enabled_addons, free_floor'),
   ).limit(SCAN_CEILING);
   if (error) throw error;
   const orgs = orgRows ?? [];
@@ -423,7 +423,13 @@ export async function getOrgSitemapEntries(): Promise<{ href: string }[]> {
   }
   if (!orgs.length) return [];
 
+  // `is_public` rides along because isOrgHomeRealDestination now owns that half of the rule
+  // (2026-08-01, audit D1) instead of each caller re-stating it. Behaviour here is UNCHANGED:
+  // scopeFollowableOrgs already filters `.eq('is_public', true)`, so every row reaching this
+  // point answers `true` — the field is threaded so the shared predicate can be the one that
+  // says so, not so this file starts filtering differently.
   const entitlementOf = (o: (typeof orgs)[number]) => ({
+    isPublic: o.is_public === true,
     planId: o.plan_id,
     subscriptionStatus: o.subscription_status,
     enabledAddons: o.enabled_addons ?? [],

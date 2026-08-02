@@ -72,7 +72,7 @@
   background: var(--home-card);
   box-shadow: var(--home-shadow-sm);
   overflow: hidden;
-  scroll-margin-top: calc(var(--consumer-top-h, 3rem) + 1rem);
+  scroll-margin-top: calc(var(--consumer-top-h, var(--chrome-bar-h)) + 1rem);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 

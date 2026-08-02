@@ -161,6 +161,54 @@
   --icon-door-size:   30px;
   --icon-door-radius: 8px;   /* operator family — the consumer variant uses 50% (a circle) */
 
+  /* ── Nav label + pill silhouette (Stage G's unbuilt third; T1, ruled 2026-08-01) ──
+     Measured across the five top bars, ONE job was being done three ways: nav labels at
+     11.52px/600 (org identity row), 12px/400 (marketing) and 12.48px/600 (consumer +
+     tournament strips), at three different letter-spacings — and the SAME shared
+     WorkspacesPill rendered 26px in the operator strips vs 30px in the consumer bar, because
+     each host sized it locally. Nobody chose any of it.
+
+     Canonical = the consumer strip's spec: it is the highest-traffic bar and already the
+     reference for --chrome-bar-h. Taking size from one bar and tracking from another would
+     rebuild the same defect, so the whole spec comes from one place.
+
+     SIZE + TRACKING bind every nav label, marketing included — a label's type spec is a
+     MATERIAL, and materials were already consistent across all five bars (one mono family,
+     one pill radius, one icon-door size). Marketing's own room is expressed by its ratified
+     64px bar (--marketing-bar-h), not by a 0.48px type difference.
+
+     WEIGHT binds plain nav LINKS. Pills and CTAs deliberately step to 700 — that is emphasis
+     carrying a role difference, not drift (the audit's "two weights for one job" was 600 vs
+     400 on the same job, across two bars).
+
+     --nav-pill-h equals --icon-door-size on purpose: a pill and an icon door share a row, so
+     they share one silhouette. Pills set `min-height` + zero vertical padding to hit it
+     exactly, rather than hoping a padding pair adds up. */
+  --nav-label-size:     0.78rem;   /* 12.48px at a 16px root */
+  --nav-label-weight:   600;
+  --nav-label-tracking: 0.03em;
+  /* DERIVED, not a matching literal — a second 30px here would agree with the icon door by luck,
+     which is the exact failure mode the rest of this block exists to retire. */
+  --nav-pill-h:         var(--icon-door-size);
+
+  /* MARKETING's own bar height — a THIRD height, chosen (repair ruling R5, 2026-08-01) rather
+     than inherited. FieldLogicHQ's marketing site is our own branded room, so its number may
+     differ by ruling exactly as the 72px customer identity row does; the defect the audit found
+     was not that 64px is wrong but that nobody had chosen it and nothing shared it (§D11).
+     Ratified at its measured value, so nothing moves — but it now has ONE home, and every
+     marketing page derives its top clearance from it instead of hand-rolling two schemes
+     (the home page read the unrelated 72px branded token; every sibling hardcoded 6rem).
+     Marketing's inner column is the shared 1200px `.container`, matching its own pages. */
+  --marketing-bar-h:  64px;
+
+  /* Day-of volunteer shells (/{org}/scorekeeper + /{org}/check-in) — a RULED EXCEPTION to
+     the grammar above, not an oversight. Those two screens are single-purpose gloved-hands
+     tools with no wordmark door, no account door and no workspace pill; their header is
+     taller than platform chrome because it stacks the FieldLogicHQ mark over the org name.
+     52px was already the height BOTH shells used — this token just stops it being two
+     hand-copied literals that agree by luck (top-nav audit §D9, 2026-08-01). */
+  --dayof-bar-h:      52px;
+
   /* Desktop content column for the consumer app screens (Desktop Public UX Phase 1,
      WI-7/WI-8 — approved mockup: "content widens to ~980px"). ONE home for the number so
      Home/Discover, Scores and Following can't drift apart. Only ever read inside a

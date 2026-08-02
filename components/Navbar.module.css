@@ -209,11 +209,13 @@
 /* ── Org-home action cluster (Desktop Public UX Phase 1, WI-6) ──
    Quiet links + one bordered door, in the org's own token vocabulary so per-org
    theming (and light mode's --white remap) carries through untouched. */
+/* T1 (2026-08-01): size + tracking come from the shared nav-label tokens, and the pills
+   from --nav-pill-h. This row was the outlier at 11.52px/0.06em with 32px pills. */
 .actionLink {
   font-family: var(--font-data, monospace);
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
+  font-size: var(--nav-label-size);
+  font-weight: var(--nav-label-weight);
+  letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   text-decoration: none;
   color: var(--white-45);
@@ -223,14 +225,18 @@
 .actionLink:hover { color: var(--white); }
 .actionCta {
   font-family: var(--font-data, monospace);
-  font-size: 0.72rem;
+  font-size: var(--nav-label-size);
+  /* 700 = the deliberate emphasis step for a pill (see the token block in globals.css). */
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   text-decoration: none;
   color: var(--white);
   white-space: nowrap;
-  padding: 0.35rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--nav-pill-h);
+  padding: 0 0.85rem;
   border: 1px solid var(--border);
   border-radius: 999px;
   transition: border-color 0.2s ease, color 0.2s ease;
@@ -241,14 +247,17 @@
 }
 .actionPill {
   font-family: var(--font-data, monospace);
-  font-size: 0.72rem;
+  font-size: var(--nav-label-size);
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   text-decoration: none;
   color: var(--primary-light);
   white-space: nowrap;
-  padding: 0.35rem 0.85rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--nav-pill-h);
+  padding: 0 0.85rem;
   border: 1px solid rgba(var(--primary-rgb), 0.45);
   border-radius: 999px;
   transition: border-color 0.2s ease;
@@ -373,6 +382,72 @@
   border: 1px solid rgba(var(--gold-rgb), 0.35);
 }
 
+/* ── Marketing bar (R5 + R3, top-nav repair 2026-08-01) ──────────────────────
+   Geometry moved out of Tailwind utilities and onto the platform's own vocabulary: the height
+   is the ratified `--marketing-bar-h` token (was a bare `h-16` nobody owned), and the inner row
+   sits in the shared 1200px `.container` its own pages already use — the two were 48px apart,
+   so every marketing page's content sat 24px inboard of its own navigation. */
+.marketingInner {
+  height: var(--marketing-bar-h);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* R3 — the desktop link cluster hides below the platform breakpoint (901px), not Tailwind's
+   default 768. The mobile bottom link bar has always taken over at ≤900px, so between 768 and
+   900 — iPad portrait is exactly 768 — the same five links rendered TWICE, the wordmark collided
+   with "TOURNAMENTS", and "SIGN IN" wrapped to two lines. 900 is the breakpoint everywhere else
+   in the product; 768 existed nowhere else in nav. */
+.marketingLinks { display: none; }
+
+@media (min-width: 901px) {
+  .marketingLinks {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+  }
+}
+
+/* T1 — marketing's nav labels join the platform spec. Its own room is expressed by the
+   ratified 64px bar (--marketing-bar-h), not by a type spec nobody chose: these were 12px/400
+   at 0.1em tracking, the only bar of the five doing it that way. Colour stays Tailwind's
+   (marketing keeps its own palette); only the metrics are shared. */
+.marketingLink {
+  font-family: var(--font-data, monospace);
+  font-size: var(--nav-label-size);
+  font-weight: var(--nav-label-weight);
+  letter-spacing: var(--nav-label-tracking);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.2s ease;
+}
+
+/* The bar's two right-hand controls share the platform pill silhouette (30px, = the icon-door
+   size) instead of the 32px their hand-written padding happened to produce. */
+.marketingCta {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--nav-pill-h);
+  font-family: var(--font-data, monospace);
+  font-size: var(--nav-label-size);
+  font-weight: 700;
+  letter-spacing: var(--nav-label-tracking);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+/* Unlike the desktop link cluster, these two render at EVERY width — they are the only controls
+   in the marketing bar on a phone. The T1 pill silhouette is a desktop density decision, so on
+   touch widths they take the platform tap floor instead (they were ~32px before, already under
+   it; /review flagged that this pass shaved 2px off rather than fixing it). The 64px bar has the
+   room. Deliberately scoped to ≤900px so the ratified 30px pill row is untouched on desktop. */
+@media (max-width: 900px) {
+  .marketingCta { min-height: var(--tap-min, 44px); }
+}
+
 /* Bottom nav (marketing pages, mobile only) */
 .bottomNav {
   display: none;
@@ -433,11 +508,20 @@
   .actions { flex: 0 0 auto; }
   .orgName { max-width: none; }
 
-  /* ── D1 follow-through: the phone bottom bar makes these links redundant ──
-     On an org public page the bar below now carries Home · Scores · Chat · Account (and Sign In
-     when signed out), so keeping Discover / Pricing / Account / Sign In up here says the same
-     things twice AND leaves the club's own name nowhere to go — at 390px it was squeezed off the
-     screen entirely by four utility links.
+  /* ── D1 follow-through: the phone row sheds its utility links ──
+     On an org public page the bar below carries Home · Scores · Chat · Account (and Sign In when
+     signed out). At 390px four utility links up here squeezed the club's own name off the screen
+     entirely, so the row sheds them — but the two reasons differ and the wording used to blur
+     them (trued up 2026-08-01, top-nav audit D6 / BUSINESS_DECISIONS "Acquisition chrome is for
+     PROSPECTS"):
+
+       • Discover, Account and Sign In are genuinely PROVIDED by the bar below — dropping them
+         here removes a duplicate.
+       • Pricing is DELIBERATELY DROPPED. The bar has never carried it and no footer backstops it,
+         so a phone visitor on a customer's public page has no path to our pricing — and that is
+         the ruling, not a gap: a paying club's page is not our billboard (same boundary as the
+         org-branding and phone-frame rulings). Acquisition on public surfaces stays where it
+         already lives — free-tier event pages carry the banner + powered-by credit.
 
      What survives is exactly what the bottom bar does NOT have: the operator's door (the ⇄ flip or
      the Workspaces pill). The class is only applied where that bar actually renders, so operator

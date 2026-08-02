@@ -37,6 +37,11 @@ export default async function PlatformAdminLayout({
   }
 
   return (
+    /* Platform-admin is a RULED EXCEPTION to the nav grammar (top-nav audit §3): an internal
+       console with a 220px sidebar and NO top bar, deliberately carrying no FieldLogicHQ
+       wordmark door back into the customer-facing app. It is a different product for a
+       different audience, not a fourth surface of the same one. Do not "unify" it into the
+       operator strip family. */
     <div className={styles.shell}>
       <PlatformAdminNav sessionEmail={auth.user.email ?? ''} role={auth.role} />
       <main className={styles.main}>

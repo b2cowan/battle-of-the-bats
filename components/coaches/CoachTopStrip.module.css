@@ -16,8 +16,10 @@
   right: 0;
   /* The ONE height definition is --coach-topstrip-h on .coachesShell (the strip mounts
      inside the shell so the var reaches it); the fallback only guards an out-of-shell
-     mount that shouldn't exist. */
-  height: var(--coach-topstrip-h, 44px);
+     mount that shouldn't exist. It points at the platform chrome token rather than a
+     literal — the literal said 44px, the pre-Stage-G height, so an out-of-shell mount
+     would have rendered the OLD strip (top-nav audit §4, 2026-08-01). */
+  height: var(--coach-topstrip-h, var(--chrome-bar-h));
   z-index: 80;
   display: flex;
   align-items: center;
@@ -70,14 +72,20 @@
    border reads lime on dark, olive on warm, with no literal colors. */
 .pill {
   font-family: var(--font-data);
-  font-size: 0.68rem;
+  /* T1 (2026-08-01): the SHARED WorkspacesPill inherits this class, so this rule was why the
+     same control rendered 26px here and 30px on the consumer bar. Size, tracking and height now
+     come from the platform nav tokens; 700 is the deliberate pill emphasis step. */
+  font-size: var(--nav-label-size);
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: var(--nav-label-tracking);
   text-transform: uppercase;
   color: var(--logic-lime);
   border: 1px solid color-mix(in srgb, var(--logic-lime) 45%, transparent);
   border-radius: 999px;
-  padding: 0.3rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--nav-pill-h);
+  padding: 0 0.7rem;
   transition: border-color 0.15s ease;
 }
 

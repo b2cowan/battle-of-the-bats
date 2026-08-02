@@ -276,6 +276,20 @@
   color: var(--data-gray);
 }
 
+/* R4 (2026-08-01) — the card the SIGNED-IN viewer is already on. Quiet, not a sales CTA: it
+   still opens their billing screen, but it must not compete with the tier they might move to.
+   Mirrors .ctaDisabled's restraint while staying a live, tappable door. */
+.viewerCurrentCta {
+  background: transparent;
+  color: var(--blueprint-blue);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
+}
+
+.viewerCurrentCta:hover {
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
+  color: var(--blueprint-blue);
+}
+
 .pendingCta {
   background: transparent;
   color: var(--logic-lime);

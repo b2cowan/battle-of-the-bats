@@ -65,7 +65,11 @@
   border: 1px solid rgba(var(--blueprint-blue-rgb, 30 58 138), 0.35);
   border-radius: 8px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
-  z-index: 1100;
+  /* 1105, not 1100: the What's-New popover also sat at 1100, so which of the two painted on
+     top was decided by DOM insertion order rather than by anyone. Notifications win — the
+     panel is the one that says "something is waiting for YOU to act", What's-New is an
+     announcement the operator can read whenever (top-nav audit §D12, 2026-08-01). */
+  z-index: 1105;
   display: flex;
   flex-direction: column;
 }
@@ -77,9 +81,8 @@
 
 /* Bell in the Stage C operator TOP STRIP (desktop, top-RIGHT corner): drop the panel from
    the trigger's corner instead of the sidebar anchor above. Declared AFTER .panel in this
-   same file, so the override order is deterministic. The var fallback matters: the panel
-   is portaled to <body>, outside the shell that defines --admin-topstrip-h — 44px IS the
-   strip height whenever this variant can open at all. */
+   same file, so the override order is deterministic. The var fallback is what actually
+   applies (see the note on the rule itself) and it reads the platform chrome-bar token. */
 .panelTopStrip {
   /* The FALLBACK is what actually applies here, not the var: this panel is portaled to
      document.body, so it sits outside `.adminShell` and never sees that shell-scoped
@@ -92,18 +95,21 @@
 }
 
 /* Mobile (≤900px): no sidebar — anchor the panel under the admin top bar as a
-   near-full-width dropdown instead of off-screen to the right (left:248px). */
+   near-full-width dropdown instead of off-screen to the right (left:248px).
+   The two heights were hand-copied 48px literals that only COINCIDENTALLY matched the
+   platform chrome bar — they now read the token, so editing --chrome-bar-h moves this
+   panel with everything else (top-nav audit §4, 2026-08-01). */
 @media (max-width: 900px) {
   .panel,
   .panelCoaches,
   .panelTopStrip {
-    top: calc(48px + env(safe-area-inset-top) + 0.4rem);
+    top: calc(var(--chrome-bar-h) + env(safe-area-inset-top) + 0.4rem);
     left: 0.6rem;
     right: 0.6rem;
     width: auto;
     max-width: none;
-    max-height: calc(100dvh - 48px - env(safe-area-inset-top) - 96px);
-    z-index: 1100;
+    max-height: calc(100dvh - var(--chrome-bar-h) - env(safe-area-inset-top) - 96px);
+    z-index: 1105;
   }
 }
 

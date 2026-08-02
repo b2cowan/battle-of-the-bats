@@ -247,7 +247,7 @@
        viewport. overflow-y:auto (not hidden): the split sizes itself to fit, and the few
        non-split states (fan pitch / loading / error) scroll INSIDE the pane on short
        screens instead of being clipped. */
-    height: calc(100dvh - var(--consumer-top-h, 3rem));
+    height: calc(100dvh - var(--consumer-top-h, var(--chrome-bar-h)));
     min-height: 0;
     overflow-y: auto;
   }
@@ -335,7 +335,7 @@
 @media (max-width: 900px) {
   .conversation {
     position: fixed;
-    top: var(--consumer-top-h, 3rem);
+    top: var(--consumer-top-h, var(--chrome-bar-h));
     bottom: var(--consumer-bottom-h, 4.5rem);
     left: 0;
     right: 0;

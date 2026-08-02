@@ -62,10 +62,15 @@ export default async function CheckInVolunteerLayout({
   }
 
   return (
+    /* Day-of volunteer shell — a RULED EXCEPTION to the nav grammar (top-nav audit §3):
+       the wordmark is deliberately INERT text, not a door, and Sign Out is the intended exit
+       for a volunteer working the gate. This shell also deliberately carries NO ⇄ flip door
+       (unlike scorekeeper): a check-in board has no public twin to flip to — considered and
+       declined, 2026-08-01. Do not "unify" this header into a platform strip. */
     <div style={{ minHeight: '100vh', background: 'var(--hud-surface)' }}>
       <header style={{
         borderBottom: '1px solid rgba(var(--blueprint-blue-rgb), 0.4)', background: 'var(--hud-surface)', padding: '0 1.25rem',
-        minHeight: '52px', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        minHeight: 'var(--dayof-bar-h)', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         gap: '1.25rem', position: 'sticky', top: 0, zIndex: 40,
       }}>
         <div style={{ flex: '1 1 auto', minWidth: 0 }}>

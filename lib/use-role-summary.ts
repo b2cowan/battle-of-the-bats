@@ -9,6 +9,11 @@ export type RoleSummary = {
   /** Every place this account holds, in Home's order (Stage D.2) — 2+ turns the operator
    *  pill into the "Workspaces ▾" popover; fewer keeps the direct labelled door. */
   workspaces: WorkspaceDoor[];
+  /** The primary org's plan key, and the billing screen where a plan change happens (R4,
+   *  2026-08-01). Both null for an account holding no org. Read by the pricing page so a
+   *  signed-in operator is never funnelled through sign-up for a plan they already have. */
+  orgPlan: string | null;
+  billingHref: string | null;
 };
 
 export type OperatorPill = { href: string; label: string };
@@ -59,14 +64,34 @@ export function resolveOperatorDoor(
  * and the chrome simply stays in its fan-plain state (fail-quiet, never fail-broken).
  */
 export function useRoleSummary(enabled = true): RoleSummary | null {
+  return useRoleSummaryState(enabled).summary;
+}
+
+/**
+ * The same resolution, plus whether the answer is STILL IN FLIGHT.
+ *
+ * `useRoleSummary` alone cannot tell "no roles" from "not answered yet" — both read as null — and a
+ * surface that must not paint the wrong door needs that distinction. This exposes it FROM THE HOOK
+ * THAT OWNS THE RESOLUTION rather than letting a caller infer it from a second probe: a caller-side
+ * readiness check racing this one is the precise defect that flashed an acquisition CTA at
+ * operators once before (see `usePublicFlip`'s `{resolution, resolving}` for the same shape).
+ *
+ * `resolving` clears on success AND on failure, so a fail-quiet response can never leave a caller
+ * pending forever — it falls through to the fan-plain state, which is the safe default.
+ */
+export function useRoleSummaryState(enabled = true): { summary: RoleSummary | null; resolving: boolean } {
   const [summary, setSummary] = useState<RoleSummary | null>(null);
+  // Tracks SETTLED rather than in-flight, so "still resolving" is derived below instead of being
+  // set synchronously in the effect body (which would cascade a render for no reason).
+  const [settled, setSettled] = useState(false);
   useEffect(() => {
     if (!enabled) return;
     let alive = true;
     (async () => {
       try {
         const res = await fetch('/api/me/role-summary', { cache: 'no-store' });
-        if (!alive || !res.ok) return;
+        if (!alive) return;
+        if (!res.ok) return;
         const data = await res.json();
         if (!alive) return;
         setSummary({
@@ -79,18 +104,25 @@ export function useRoleSummary(enabled = true): RoleSummary | null {
                   w && typeof w.href === 'string' && typeof w.title === 'string' && typeof w.label === 'string',
               )
             : [],
+          orgPlan: typeof data.orgPlan === 'string' ? data.orgPlan : null,
+          billingHref: typeof data.billingHref === 'string' ? data.billingHref : null,
         });
       } catch {
         /* stay null — chrome renders the fan-plain state */
+      } finally {
+        // Settles on EVERY path — success, non-ok, or throw — so a caller holding a pending
+        // state can never be stranded there by a fail-quiet response.
+        if (alive) setSettled(true);
       }
     })();
     // Cleanup (fires when `enabled` leaves true, or on unmount): RESET the summary, don't
     // just hide it. Deriving null while disabled isn't enough on a shared device — without
     // the reset, the next person to sign in would render the PREVIOUS account's doors for
     // one fetch round-trip before their own summary lands.
-    return () => { alive = false; setSummary(null); };
+    return () => { alive = false; setSummary(null); setSettled(false); };
   }, [enabled]);
   // Also derive null while disabled (mirrors useClientSignedIn) for the same-render gap
-  // before the cleanup runs.
-  return enabled ? summary : null;
+  // before the cleanup runs. `resolving` is likewise false when disabled — nothing is in
+  // flight for a caller that isn't asking.
+  return enabled ? { summary, resolving: !settled } : { summary: null, resolving: false };
 }

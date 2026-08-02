@@ -29,16 +29,21 @@ const MARKETING_NAV_LINKS = [
   { href: '/pricing',                   label: 'Pricing'    },
 ];
 
+/* Which paths get the MARKETING bar rather than an org/tournament one. Read only after
+   SiteChrome has already decided this Navbar mounts at all (its single mount site), so it
+   never needs to re-state SiteChrome's suppression list: `/discover` and `/auth` were listed
+   here for years and could not be reached — the consumer shell and the auth-page rule drop the
+   Navbar before this function runs. Removed 2026-08-01 (top-nav audit §D11) so the next reader
+   doesn't infer a marketing bar exists on those surfaces. `/coaches` stays: the shell only
+   suppresses the portal paths, so `/coaches/join` genuinely lands here. */
 function isMarketingPath(pathname: string) {
   return (
     pathname === '/' ||
-    pathname.startsWith('/discover') ||
     pathname.startsWith('/platform') ||
     pathname.startsWith('/for-') ||
     pathname.startsWith('/coaches') ||
     pathname.startsWith('/pricing') ||
     pathname.startsWith('/changelog') ||
-    pathname.startsWith('/auth') ||
     pathname.startsWith('/my')
   );
 }
@@ -63,6 +68,17 @@ export default function Navbar() {
   const onOrgHome = !!orgSlug && !urlTournamentSlug && !isAdmin && !isMarketingPath(pathname);
   const orgHomeSignedIn = useClientSignedIn(onOrgHome);
   const orgHomeRoles = useRoleSummary(onOrgHome && orgHomeSignedIn);
+
+  // R4 / audit D4 — the marketing bar was AUTH-BLIND. The app strip links to /pricing from every
+  // consumer surface, so a signed-in owner tapping it landed on a bar offering "Sign In" and
+  // "Get Started" — reading as being signed out, on the product's highest-traffic seam crossing.
+  // Resolved the same way the org branch resolves its own identity: a LOCAL cookie read after
+  // hydration (no network, nothing SSR'd), so marketing pages stay static and role-free and an
+  // anonymous visitor's page is byte-identical to before. Deliberately does NOT fetch the role
+  // summary: the two doors below need only "is someone signed in", and marketing is the one
+  // surface where a per-visit identity round-trip would be pure cost.
+  const onMarketing = isMarketingPath(pathname);
+  const marketingSignedIn = useClientSignedIn(onMarketing);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
@@ -117,10 +133,8 @@ export default function Navbar() {
 
   const navClass = `${styles.nav} ${scrolled ? styles.scrolled : ''}`;
 
-  /* ── Marketing nav (/, /discover, /auth/*) ── */
+  /* ── Marketing nav (/, /pricing, /for-*, /changelog, /coaches/join…) ── */
   if (isMarketingPath(pathname)) {
-    const isProtectedCoachesPortalPath = pathname.startsWith('/coaches/tournaments');
-
     return (
       <>
         <nav className={cn(
@@ -129,20 +143,21 @@ export default function Navbar() {
           scrolled && 'border-blueprint-blue/80 bg-pitch-black/85 backdrop-blur-md',
           !scrolled && 'bg-transparent'
         )}>
-          <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <div className={`container ${styles.marketingInner}`}>
             <Link href="/" className="flex items-center font-mono font-bold text-xl tracking-tighter">
               <span className="text-fl-text">FIELD</span>
               <span className="text-logic-lime">LOGIC</span>
               <span className="text-data-gray/50">HQ</span>
             </Link>
 
-            <div className="hidden md:flex items-center gap-6">
+            <div className={styles.marketingLinks}>
               {MARKETING_NAV_LINKS.map(({ href, label }) => (
                 <Link
                   key={href}
                   href={href}
                   className={cn(
-                    'font-mono text-xs uppercase tracking-widest transition-colors',
+                    styles.marketingLink,
+                    'transition-colors',
                     pathname.startsWith(href) ? 'text-logic-lime' : 'text-data-gray hover:text-fl-text'
                   )}
                 >
@@ -151,45 +166,45 @@ export default function Navbar() {
               ))}
             </div>
 
+            {/* The right cluster carried a second, unreachable "Portal / Upgrade" variant keyed on
+                `/coaches/tournaments` — a path SiteChrome suppresses (the coach portal shell owns
+                its own chrome), so it could never render. Removed 2026-08-01 (top-nav audit §D11).
+
+                R4: two states now, not one. Signed out is exactly what it always was. Signed in
+                swaps the pair for the doors that make sense to someone who already has an
+                account: their Account, and the way back into the app. "Open app →" goes to
+                /discover — the app's own Home and the one aggregator of every workspace they
+                hold — by the Zone-1 rule, so no role lookup is needed to name it. */}
+            {/* ONE pair of shells, two sets of destinations — so the quiet-link and lime-CTA
+                styling each live in exactly one place and can't drift between the two states. */}
             <div className="flex items-center gap-3">
-              {isProtectedCoachesPortalPath ? (
-                <Link
-                  href="/coaches/tournaments"
-                  className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
-                >
-                  Portal
-                </Link>
-              ) : (
-                <Link
-                  href="/auth/login"
-                  className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 py-2 transition-colors"
-                >
-                  Sign In
-                </Link>
-              )}
               <Link
-                href={isProtectedCoachesPortalPath ? '/coaches/start' : '/start'}
-                className="font-mono text-xs uppercase tracking-widest font-bold bg-logic-lime text-pitch-black px-4 py-2 hover:bg-white transition-colors"
+                href={marketingSignedIn ? '/account' : '/auth/login'}
+                className={`${styles.marketingCta} text-data-gray hover:text-fl-text border border-blueprint-blue/40 hover:border-blueprint-blue px-4 transition-colors`}
               >
-                {isProtectedCoachesPortalPath ? 'Upgrade' : 'Get Started'}
+                {marketingSignedIn ? 'Account' : 'Sign In'}
+              </Link>
+              <Link
+                href={marketingSignedIn ? '/discover' : '/start'}
+                className={`${styles.marketingCta} bg-logic-lime text-pitch-black px-4 hover:bg-white transition-colors`}
+              >
+                {marketingSignedIn ? 'Open app →' : 'Get Started'}
               </Link>
             </div>
           </div>
         </nav>
 
-        {!isProtectedCoachesPortalPath && (
-          <nav className={styles.bottomNav} aria-label="Main navigation">
-            {MARKETING_NAV_LINKS.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={`${styles.bottomNavLink} ${pathname.startsWith(href) ? styles.bottomNavActive : ''}`}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-        )}
+        <nav className={styles.bottomNav} aria-label="Main navigation">
+          {MARKETING_NAV_LINKS.map(({ href, label }) => (
+            <Link
+              key={href}
+              href={href}
+              className={`${styles.bottomNavLink} ${pathname.startsWith(href) ? styles.bottomNavActive : ''}`}
+            >
+              {label}
+            </Link>
+          ))}
+        </nav>
       </>
     );
   }
@@ -238,9 +253,11 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* D1 follow-through: where the phone bottom bar renders, this row sheds the links that
-              bar now duplicates (see .actionsWithBottomBar). Without it a 390px screen showed the
-              club's own name squeezed to nothing behind four utility links. */}
+          {/* D1 follow-through: where the phone bottom bar renders, this row sheds its utility
+              links (see .actionsWithBottomBar). Discover/Account/Sign In are duplicates of the bar
+              below; Pricing is DELIBERATELY dropped — the bar never carried it, and a paying
+              customer's public page is not our billboard (ruled 2026-08-01). Without the shed, a
+              390px screen showed the club's own name squeezed to nothing behind four links. */}
           <div className={`${styles.actions} ${showsOrgPublicChrome(pathname) ? styles.actionsWithBottomBar : ''}`}>
             {/* The way back into the app. Org pages carry no tab row and no bottom bar at any width,
                 so before this a visitor who arrived here (from search, a follow card, or a link) had
@@ -259,12 +276,18 @@ export default function Navbar() {
               Discover
             </Link>
             <Link href="/pricing" className={styles.actionLink}>Pricing</Link>
-            {orgDoorSlot}
+            {/* R7 (top-nav audit D7, 2026-08-01): Account sits INSIDE, the operator door OUTERMOST —
+                the same Zone-3 order every platform strip already uses. This row had them reversed,
+                making the org identity row the one corner in the product that read differently for a
+                multi-hat operator. The two written rules had never been reconciled: the grammar says
+                "everywhere", the Stage G ratification said "across strips", and this branded row fell
+                between them. Ruled: Zone-3 order binds ALL top bars, branded identity rows included. */}
             {orgHomeSignedIn ? (
               <Link href="/account" className={styles.actionLink}>Account</Link>
             ) : (
               <Link href="/auth/login" className={styles.actionCta}>Sign In</Link>
             )}
+            {orgDoorSlot}
           </div>
         </div>
       </nav>
@@ -272,7 +295,15 @@ export default function Navbar() {
   }
 
   /* ── Tournament nav (/[orgSlug]/[tournamentSlug]/*) ── */
-  const homeHref = tournamentSlug ? `/${orgSlug}/${tournamentSlug}` : `/${orgSlug}`;
+  /* The event's slug, taken from the URL when the nav CONTEXT hasn't landed yet.
+     This branch only runs when the URL carries a tournament slug, so the two always name the same
+     event — but the context is filled by OrgNavSync during the page render, so the server frame
+     saw `tournamentSlug === null` and fell back to `/{orgSlug}`. On an org whose public page is
+     switched off that is a door to a 404 in the first painted frame, and it built the section tabs
+     as `/{org}/null/teams` besides. Found by the R1 guard, 2026-08-01: SSR and hydrated markup now
+     name the same destinations. */
+  const eventSlug = tournamentSlug ?? urlTournamentSlug;
+  const homeHref = `/${orgSlug}/${eventSlug}`;
   const today = tournamentToday();
   const phase = phaseOf(tournamentStartDate, tournamentEndDate, tournamentStatus, today, tournamentFinished);
   const dateRange = fmtRange(tournamentStartDate, tournamentEndDate);
@@ -310,7 +341,7 @@ export default function Navbar() {
 
         <div className={styles.links}>
           {TOURNAMENT_PAGE_TABS.filter(l => !tournamentHiddenPages.includes(l.key)).map(l => {
-            const href = `/${orgSlug}/${tournamentSlug}/${l.key}`;
+            const href = `/${orgSlug}/${eventSlug}/${l.key}`;
             const isActive = pathname.startsWith(href);
             return (
               <Link

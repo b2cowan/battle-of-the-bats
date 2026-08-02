@@ -53,15 +53,15 @@ export default async function ScorekeeperLayout({
     return (
       <div style={{
         minHeight: '100vh',
-        background: '#0A0A0A',
+        background: 'var(--hud-surface)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '2rem',
       }}>
         <div style={{
-          border: '1px solid rgba(30,58,138,0.4)',
-          background: '#111827',
+          border: '1px solid rgba(var(--blueprint-blue-rgb), 0.4)',
+          background: 'var(--hud-surface)',
           padding: '2rem',
           maxWidth: '420px',
           width: '100%',
@@ -79,12 +79,19 @@ export default async function ScorekeeperLayout({
     // "The Flip" P3: the provider bridges the page's score fetch (which knows the day's
     // tournaments) to the header pill — see components/volunteer/ScorekeeperFlip.tsx.
     <ScorekeeperFlipProvider>
-    <div style={{ minHeight: '100vh', background: '#0A0A0A' }}>
+    {/* Day-of volunteer shell — a RULED EXCEPTION to the nav grammar (top-nav audit §3):
+        the wordmark here is deliberately INERT text, not a door. A gloved volunteer mid-game
+        should not be one mis-tap from the consumer app, and Sign Out is the intended exit.
+        Do not "unify" this header into a platform strip.
+        Ground + border + height now come from the same tokens as its twin (/{org}/check-in) —
+        they were a hand-written #0A0A0A and a literal rgba here, so a volunteer who does both
+        jobs watched the whole screen change colour crossing between them (§D9). */}
+    <div style={{ minHeight: '100vh', background: 'var(--hud-surface)' }}>
       <header style={{
-        borderBottom: '1px solid rgba(30,58,138,0.5)',
-        background: '#0A0A0A',
+        borderBottom: '1px solid rgba(var(--blueprint-blue-rgb), 0.4)',
+        background: 'var(--hud-surface)',
         padding: '0 1.25rem',
-        minHeight: '52px',
+        minHeight: 'var(--dayof-bar-h)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',

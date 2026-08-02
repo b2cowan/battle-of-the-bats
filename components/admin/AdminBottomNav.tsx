@@ -7,7 +7,7 @@ import {
   LogOut, X, ChevronRight, ChevronDown,
   LayoutGrid, CalendarDays, UserCheck,
   Bell, FileText, MessageSquarePlus, Globe, Download,
-  Home, MessageCircle, User,
+  Home, User,
   type LucideIcon,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
@@ -363,13 +363,21 @@ export default function AdminBottomNav({ notifUnread = 0 }: { notifUnread?: numb
             <div className={styles.dropDivider} />
 
             {/* "You" — the signed-in person's own global doors: their coach view (P3-2) and their
-                consumer Home/Chat/Account (P3-3). A single-org admin on mobile otherwise has no way
-                to reach their own inbox/account from inside the admin shell (review B11). */}
+                consumer Home/Account (P3-3). A single-org admin on mobile otherwise has no way to
+                reach their own account from inside the admin shell (review B11).
+
+                NO Chat door (R8, 2026-08-01 — generalising the desktop strips' ruling of
+                2026-07-31 to the phone sheet). It offered `/chat`, the CONSUMER inbox, while a
+                tournament's own Chat can be a primary tab on the very same screen: two doors with
+                the same name leading to different rooms. The desktop strips removed exactly this
+                door by ruling; the mobile shell was explicitly left un-rebuilt at the time, so the
+                sheet kept it — not silent drift, but never adjudicated either. Same rationale
+                applies verbatim: chat is a section of the work for an operator, not an exit, and
+                this door ejected them into consumer chrome. */}
             <div className={styles.dropSectionLabel}>You</div>
             {[
               ...(coachDoor.show ? [{ id: 'coaches-portal', href: coachDoor.href, icon: UserCheck, label: 'Coaches Portal' }] : []),
               { id: 'home', href: '/discover', icon: Home, label: 'Home' },
-              { id: 'chat', href: '/chat', icon: MessageCircle, label: 'Chat' },
               { id: 'account', href: '/account', icon: User, label: 'Account' },
             ].map(({ id, href, icon: Icon, label }) => (
               <Link

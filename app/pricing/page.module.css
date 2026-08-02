@@ -1,6 +1,8 @@
 /* ── Hero ────────────────────────────────────────────────────────────────── */
 .hero {
-  padding: 6rem 0 4rem;
+  /* R5: top clearance derives from the ONE marketing bar token (globals.css) instead of a
+     hand-kept literal — the bar and the air below it can no longer drift apart. */
+  padding: calc(var(--marketing-bar-h) + 2rem) 0 4rem;
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.2);
 }
 

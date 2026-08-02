@@ -13,7 +13,7 @@
  * only its label/icon change. It absorbs the retired Discover + Following tabs and
  * the /home workspace launchpad. On desktop the header also carries the organizer
  * affordances (Pricing + the "Run a tournament" persona menu + one operator pill +
- * Sign in) so desktop visitors who land here from search can still convert or sign in.
+ * Sign In) so desktop visitors who land here from search can still convert or sign in.
  */
 import Link from 'next/link';
 import { usePathname, useParams } from 'next/navigation';
@@ -41,8 +41,11 @@ const TABS = [
 
 // The nav skin follows the content. Warm surfaces = the four consumer-shell tabs PLUS the coach
 // sign-up journey (/start + /coaches/start + the post-provision success screen), via `isWarmSkinPath`
-// (the single source of truth in lib/consumer-routes). Auth / select-org / suspended are excluded and
-// stay dark (R1-4), so navigating within the app never flips theme mid-surface.
+// (the single source of truth in lib/consumer-routes). The `/auth` family — including select-org and
+// suspended — is INSIDE that set and follows the user's theme like every other tab: the old R1-4
+// "auth stays dark" carve-out was superseded once warm became the platform default
+// (design_decisions 2026-07-23), and leaving the note here described a rule the code stopped
+// following. Corrected 2026-08-01 (top-nav audit §4).
 const underPrefix = (path: string, p: string) => path === p || path.startsWith(p + '/');
 
 /** Space-holder for the strip's operator slot while the answer is in flight. FlipPill's own
@@ -274,6 +277,23 @@ export default function ConsumerNav({
     ? resolveOperatorDoor(workspaces, adminHref, isCoach && variant !== 'coach' ? '/coaches' : null)
     : null;
 
+  // R11 (owner-directed 2026-08-01; BUSINESS_DECISIONS "Acquisition chrome is for PROSPECTS"):
+  // acquisition items leave the chrome of anyone who already operates here. An operator has
+  // adopted the tool — a permanent sales link in their everyday bar reads as being marketed to
+  // inside it. Anonymous visitors and workspace-LESS accounts are prospects and keep both doors,
+  // unchanged: that chrome is ratified (WI-1/WI-2), and this amends its matrix by adding the
+  // operator state rather than superseding it.
+  //
+  // Read from the SAME signal the operator pill uses — no new plumbing, so the two can never
+  // disagree about who is an operator. Deliberately NOT `operatorDoor !== null`: inside the coach
+  // shell the coach door is suppressed (a self-referential door is noise), so a single-team coach
+  // standing in their own portal would resolve to null and wrongly be shown the sales links.
+  //
+  // Operators reach plans where billing lives — their in-app plan & billing screen carries the one
+  // "Compare all plans →" door out, and the now viewer-aware pricing page (R4) deep-links back
+  // into billing rather than the sign-up funnel.
+  const holdsWorkspace = signedIn && (workspaces.length > 0 || !!adminHref || isCoach);
+
   const topBarInner = (
     <>
       <div className={styles.topLeft}>
@@ -281,19 +301,28 @@ export default function ConsumerNav({
         <nav className={styles.topNav} aria-label="Primary">{topLinks}</nav>
       </div>
       <div className={styles.topUtil}>
-        {/* Standing Pricing link (WI-1) — always visible on desktop, signed in or out. */}
-        <Link href="/pricing" className={styles.utilLink}>Pricing</Link>
-        {/* The ratified CTA, now a persona menu (WI-2) — same label, all four paths named. */}
-        <StartMenu coachHref={startMenu?.coachHref} showLeague={startMenu?.showLeague} />
+        {!holdsWorkspace && (
+          <>
+            {/* Standing Pricing link (WI-1) — the low-commitment RESEARCH door. Kept alongside the
+                persona menu for prospects: hiding price behind a CTA reads as "call us" and fights
+                the self-serve free-tier motion (owner answered this explicitly, 2026-08-01). */}
+            <Link href="/pricing" className={styles.utilLink}>Pricing</Link>
+            {/* The ratified CTA, a persona menu (WI-2) — the ACTION door, all four paths named. */}
+            <StartMenu coachHref={startMenu?.coachHref} showLeague={startMenu?.showLeague} />
+          </>
+        )}
         {operatorDoor?.kind === 'workspaces' && (
           <WorkspacesPill workspaces={operatorDoor.workspaces} className={styles.utilCoach} warm={warmRoute} />
         )}
         {operatorDoor?.kind === 'pill' && (
           <Link href={operatorDoor.pill.href} className={styles.utilCoach}>{operatorDoor.pill.label}</Link>
         )}
-        {/* Signed-out visitors keep a "Sign in" affordance (never ON the sign-in pages). */}
+        {/* Signed-out visitors keep a "Sign In" affordance (never ON the sign-in pages).
+            Casing is canon: "Sign In" everywhere in chrome — the phone tab, the org identity
+            row and the marketing bar all said "Sign In" while these two desktop CTAs said
+            "Sign in" (top-nav audit §D12, 2026-08-01). */}
         {!signedIn && !pathname.startsWith('/auth') && (
-          <Link href="/auth/login" className={styles.utilCta}>Sign in</Link>
+          <Link href="/auth/login" className={styles.utilCta}>Sign In</Link>
         )}
       </div>
     </>
@@ -357,7 +386,7 @@ export default function ConsumerNav({
                 <User size={17} strokeWidth={1.8} />
               </Link>
             )}
-            {!signedIn && <Link href="/auth/login" className={styles.utilCta}>Sign in</Link>}
+            {!signedIn && <Link href="/auth/login" className={styles.utilCta}>Sign In</Link>}
             {doorSlot}
           </div>
         </header>

@@ -21,7 +21,10 @@
 /* ── Sticky search bar (top of Home) ─────────────────────────────────────── */
 .filterBar {
   position: sticky;
-  top: var(--consumer-top-h, var(--nav-height));
+  /* Fallback is the platform CHROME bar, not --nav-height: this bar sits under the consumer
+     strip, and --nav-height is the 72px BRANDED identity row (a customer's logo + name) —
+     24px too tall here if the shell var ever failed to reach (top-nav audit §4). */
+  top: var(--consumer-top-h, var(--chrome-bar-h));
   z-index: 10;
   /* Warm translucent so content scrolls under it legibly. */
   background: rgba(var(--home-paper-rgb), 0.92);

@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { getLeagueSeasonBySlug } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import StatusLookupForm from './StatusLookupForm';
+import column from '../../league-column.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,15 +27,12 @@ export default async function RegistrationStatusPage({
     color: 'var(--fl-text)',
   };
 
-  const innerStyle: React.CSSProperties = {
-    maxWidth: '560px',
-    margin: '0 auto',
-    padding: 'calc(var(--nav-height, 64px) + 2rem) 1.5rem 5rem',
-  };
+  // R6: the shared 1200px page column; this lookup form's 560px measure left-aligns inside it.
+  const innerStyle = { '--league-measure': '560px' } as React.CSSProperties;
 
   return (
     <div style={containerStyle}>
-      <div style={innerStyle}>
+      <div className={`container ${column.column}`} style={innerStyle}>
         <Link
           href={`/${orgSlug}/league/${seasonSlug}`}
           style={{

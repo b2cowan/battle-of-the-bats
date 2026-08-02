@@ -163,6 +163,18 @@ const PLANS: Plan[] = [
   },
 ];
 
+/**
+ * The plan keys this component actually RENDERS a card for — deliberately a subset of
+ * `PLAN_CONFIG`, which also carries `team` (the Coaches Portal, sold by its own callout below the
+ * grid) and `club_large` (Club · Association, a capacity band of Club rather than its own card).
+ *
+ * Exported because a caller marking "the viewer's current plan" has to test membership of THIS
+ * list, not of PLAN_CONFIG: `club_large` is a real, valid plan that no card here can match, so a
+ * PLAN_CONFIG-based check silently produced a `currentPlan` that never matched anything — leaving
+ * the platform's highest-paying tier with no "Current plan" badge at all (/review, 2026-08-01).
+ */
+export const RENDERED_PLAN_KEYS: readonly OrgPlan[] = ['tournament', 'tournament_plus', 'league', 'club'];
+
 const CTA_CLASS = 'block font-mono text-xs uppercase tracking-widest font-bold text-center bg-logic-lime text-pitch-black px-4 py-3 hover:bg-white transition-colors w-full border-0 cursor-pointer';
 
 interface PricingSectionProps {
@@ -172,6 +184,12 @@ interface PricingSectionProps {
   planLoading?: OrgPlan | null;
   disabledPlans?: OrgPlan[];
   ctaLabel?: (planKey: OrgPlan) => string | undefined;
+  /** Overrides the CTA's DESTINATION on the link branch (the marketing pricing page), the way
+   *  `ctaLabel` overrides its words. R4 (2026-08-01): a signed-in operator's cards point at
+   *  their own billing screen instead of the sign-up funnel. Returning undefined keeps the
+   *  sign-up href, which is what every prospect gets. Ignored when `onChoosePlan` is set —
+   *  the in-app wizard uses buttons, not links. */
+  ctaHrefFor?: (planKey: OrgPlan) => string | undefined;
   initialBilling?: Billing;
   /** Use condensed 5-item feature list and tighter spacing — for wizard/modal contexts */
   compact?: boolean;
@@ -181,7 +199,7 @@ interface PricingSectionProps {
   featuredPlan?: OrgPlan;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, initialBilling = 'monthly', compact = false, order, featuredPlan }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', compact = false, order, featuredPlan }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
 
   const orderedPlans = order
@@ -231,7 +249,10 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
       <div className={`${styles.pricingGrid} ${compact ? styles.pricingGridCompact : ''}`}>
         {orderedPlans.map(plan => {
           const isGated = gatingMap[plan.key] ?? false;
-          const isCurrent = !!onChoosePlan && currentPlan === plan.key;
+          // Deliberately NOT gated on `onChoosePlan` any more (R4, 2026-08-01): the marketing
+          // pricing page renders the LINK branch and still needs to mark the viewer's own tier.
+          // Every caller that doesn't pass `currentPlan` is unaffected.
+          const isCurrent = currentPlan === plan.key;
           const isIncluded = !!onChoosePlan && (disabledPlans?.includes(plan.key) ?? false);
           const isFeatured = !isGated && featuredPlan === plan.key;
           const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
@@ -316,8 +337,15 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                         : (ctaLabel?.(plan.key) ?? plan.cta)}
                 </button>
               ) : (
-                <Link href={getSignupHref(plan)} className={CTA_CLASS}>
-                  {plan.cta}
+                /* R4: the caller may override the destination and the words; `isCurrent` only
+                   quiets the styling, because a card for the tier you are already on should not
+                   compete with the one you might move to. One link, so href and label logic can
+                   never drift between a "current" and a "not current" copy of it. */
+                <Link
+                  href={ctaHrefFor?.(plan.key) ?? getSignupHref(plan)}
+                  className={`${CTA_CLASS}${isCurrent ? ` ${styles.viewerCurrentCta}` : ''}`}
+                >
+                  {ctaLabel?.(plan.key) ?? plan.cta}
                 </Link>
               )}
             </div>

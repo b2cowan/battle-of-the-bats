@@ -9,6 +9,7 @@ import {
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { ORG_TIME_ZONE } from '@/lib/timezone';
 import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
+import column from '../league-column.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,13 +93,8 @@ export default async function PublicSchedulePage({
         color: 'var(--fl-text)',
       }}
     >
-      <div
-        style={{
-          maxWidth: '800px',
-          margin: '0 auto',
-          padding: 'calc(var(--nav-height, 64px) + 2rem) 1.5rem 5rem',
-        }}
-      >
+      {/* R6: the shared 1200px page column; this page's 800px measure left-aligns inside it. */}
+      <div className={`container ${column.column}`} style={{ '--league-measure': '800px' } as React.CSSProperties}>
         {/* Back */}
         <Link
           href={`/${orgSlug}/league/${seasonSlug}`}

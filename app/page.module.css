@@ -2,7 +2,12 @@
 .hero {
   position: relative;
   overflow: hidden;
-  padding: calc(var(--nav-height) + 4rem) 0 5rem;
+  /* R5: the ONE marketing clearance rule, shared with every sibling marketing page. This read
+     `--nav-height` — the 72px BRANDED identity row, a token that has nothing to do with the
+     marketing bar — and so opened ~72px of air where its siblings opened ~32px. Deriving from
+     `--marketing-bar-h` brings the home page into line with the rest of the site; the visible
+     effect is 40px less space above the headline (top-nav audit §D11, 2026-08-01). */
+  padding: calc(var(--marketing-bar-h) + 2rem) 0 5rem;
 }
 
 .heroBg {

@@ -35,14 +35,57 @@ export function hasModuleEntitlement(org: EntitlementOrg, cap: Capability): bool
 }
 
 /**
- * The ONE statement of "is /{orgSlug} a REAL destination?" (Nav Unification Stage B.2 —
- * binding rule). True when the org owns the public-site module (the page always renders)
- * or runs 2+ active tournaments (the page is a genuine event selector). Otherwise the org
- * page redirects straight into a lone event (a loop) or shows the platform "hasn't set up
- * their public site yet" placeholder — and nothing may link a visitor there. Every consumer
- * of this rule — the event chrome's org link today, the Stage E sitemap gate next — derives
- * from here, never from its own re-statement.
+ * What "is /{orgSlug} a real destination?" needs to know. Deliberately WIDER than
+ * `EntitlementOrg`: the org's own "public page" switch is part of the answer (see below), but it
+ * is NOT part of a module-entitlement question, so `hasModuleEntitlement` keeps the narrow shape
+ * and its hundred-odd callers stay untouched.
  */
-export function isOrgHomeRealDestination(org: EntitlementOrg, activeTournamentCount: number): boolean {
+export type OrgHomeDestinationOrg = EntitlementOrg & Pick<Organization, 'isPublic'>;
+
+/**
+ * The ONE statement of "is /{orgSlug} a REAL destination?" (Nav Unification Stage B.2 —
+ * binding rule). True when ALL of:
+ *  • the org has its public page switched ON (`is_public`) — an admin-settings checkbox that
+ *    `app/[orgSlug]/page.tsx` enforces with a 404; and
+ *  • the org owns the public-site module (the page always renders) OR runs 2+ active tournaments
+ *    (the page is a genuine event selector).
+ * Otherwise the org page 404s, redirects straight into a lone event (a loop), or shows the
+ * platform "hasn't set up their public site yet" placeholder — and nothing may link a visitor
+ * there.
+ *
+ * The `isPublic` half moved INSIDE this predicate on 2026-08-01 (top-nav audit D1, owner ruling
+ * R1). It had been re-stated by two of the three callers (sitemap + directory) and forgotten by
+ * the third (the event chrome's org link), so an org with the toggle off served a 404 behind a
+ * normal-looking crumb on every one of its event pages. Every present and future caller now
+ * agrees by construction — which is what this function's name always claimed. Never re-state
+ * either half at a call site.
+ */
+export function isOrgHomeRealDestination(org: OrgHomeDestinationOrg, activeTournamentCount: number): boolean {
+  if (!org.isPublic) return false;
   return hasModuleEntitlement(org, 'module_public_site') || activeTournamentCount >= 2;
+}
+
+/**
+ * The predicate ABOVE answers the question; this answers it *including fetching what it needs* —
+ * returning the href to link, or null for "render no door".
+ *
+ * Why this exists as well: the rule has two halves, and the second half is "should the count query
+ * run at all?". Every caller was hand-copying that half (skip the count when the org isn't public,
+ * or when it owns the public-site module and the count therefore cannot change the answer) — which
+ * is precisely the shape that produced finding D1 in the first place: two callers re-stating a rule
+ * and a third forgetting it. Sharing only the boolean would have left that half unshared.
+ *
+ * Returns a PROMISE deliberately: the tournament layout — the highest-traffic public layout — kicks
+ * this off at the top of its render and awaits it at the bottom, so the head-count overlaps the
+ * banner/CTA queries instead of adding a serial round trip. Callers with nothing to overlap (the
+ * coaches wall) just await it inline.
+ */
+export async function resolveOrgHomeHref(
+  org: OrgHomeDestinationOrg & { id: string; slug: string },
+): Promise<string | null> {
+  // Both short-circuits below decide the answer WITHOUT the count, so no query is issued for them.
+  if (!org.isPublic) return null;
+  if (hasModuleEntitlement(org, 'module_public_site')) return `/${org.slug}`;
+  const { countActiveTournamentsByOrg } = await import('./db');
+  return isOrgHomeRealDestination(org, await countActiveTournamentsByOrg(org.id)) ? `/${org.slug}` : null;
 }

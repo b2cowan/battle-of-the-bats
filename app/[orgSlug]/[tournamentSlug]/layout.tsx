@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getAuthContext } from '@/lib/api-auth';
 import { hasSupabaseSessionCookie } from '@/lib/supabase-server';
-import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams, countActiveTournamentsByOrg } from '@/lib/db';
-import { hasModuleEntitlement, isOrgHomeRealDestination } from '@/lib/module-entitlements';
+import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeams } from '@/lib/db';
+import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
 import { isPlayoffOnly } from '@/lib/tournament-phase';
 import { tournamentToday } from '@/lib/timezone';
@@ -90,16 +90,18 @@ export default async function TournamentLayout({
   const isFreeTournamentPlan = isFreePlan(org.planId);
 
   // Stage B.2 — the event chrome's conditional door UP to the org's public page (phone
-  // eyebrow link + desktop rail breadcrumb), via the ONE shared rule
-  // (isOrgHomeRealDestination). League/Club (public-site module) qualify with zero extra
-  // queries, so the head-count only ever runs for tournament-tier orgs — kicked off HERE,
-  // awaited at the bottom of the render, so it overlaps the banner/CTA queries below
-  // instead of adding a serial round trip to the highest-traffic public layout. Same
-  // markup for every visitor: the condition is org-shaped, never viewer-shaped, so the
-  // SW-cached anonymous HTML stays identical for everyone.
-  const activeCountPromise = hasModuleEntitlement(org, 'module_public_site')
-    ? null
-    : countActiveTournamentsByOrg(org.id);
+  // eyebrow link + desktop rail breadcrumb), via the ONE shared resolver. That resolver owns
+  // BOTH halves of the rule — the answer, and whether the head-count query is needed at all
+  // (League/Club and non-public orgs are decided without it) — so this layout and the coaches
+  // wall cannot drift apart the way the callers of the bare predicate did (audit D1).
+  // Kicked off HERE and awaited at the bottom of the render, so any count overlaps the
+  // banner/CTA queries below instead of adding a serial round trip to the highest-traffic
+  // public layout. Same markup for every visitor: the condition is org-shaped, never
+  // viewer-shaped, so the SW-cached anonymous HTML stays identical for everyone.
+  // `.catch` at creation, not at the await: between the two the render issues other unguarded
+  // queries, and if one of those throws first this promise is never awaited — an unhandled
+  // rejection at the Node level rather than a React error. Failing to null just drops the door.
+  const orgHomeHrefPromise = resolveOrgHomeHref(org).catch(() => null);
 
   // Acquisition banner (free events only) — hidden from members of THIS org. Resolving a
   // Supabase session is the expensive part, so it only runs when (a) the plan is free —
@@ -198,12 +200,11 @@ export default async function TournamentLayout({
   // two render light themes identically.
   const lightModeVars = effectiveColorMode === 'light' ? buildPublicLightModeCssVars() : null;
 
-  // Stage B.2 (resolution): the head-count kicked off near the top has had the whole render
-  // to complete in parallel; League/Club never ran it (null → count 0 → the module side of
-  // the shared rule answers).
-  const orgHomeHref = isOrgHomeRealDestination(org, (await activeCountPromise) ?? 0)
-    ? `/${orgSlug}`
-    : null;
+  // Stage B.2 (resolution): the resolver kicked off near the top has had the whole render to
+  // complete in parallel. Null here = "no door": the rail's crumb line falls back to the org's
+  // name as inert text and the phone eyebrow does the same, exactly as for any org whose home
+  // isn't a real place.
+  const orgHomeHref = await orgHomeHrefPromise;
 
   return (
     <>

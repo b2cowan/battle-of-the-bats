@@ -1,0 +1,33 @@
+/**
+ * The League/Club public pages' page column (repair ruling R6 · audit finding D5, 2026-08-01).
+ *
+ * THE DEFECT: Stage F's section tab row wears the shared 1200px `.container` *specifically* so it
+ * lines up with the org's identity row above it. These pages then centred their own ad hoc
+ * 560–800px columns on the raw viewport instead — measured 244–304px of left-edge stagger between
+ * the navigation and the content it navigates, at desktop widths, on the paying tier the tab row
+ * exists for. Six pages, six hand-copied inline style objects, no shared statement of the rule.
+ *
+ * THE RULE: the OUTER column is the shared 1200px `.container` — same left edge as the tab row and
+ * the identity row above it. Each page keeps its own reading/form measure (a 760px article and a
+ * 640px form should not both be 1200px wide), but that measure now sits LEFT-ALIGNED inside the
+ * shared column, so a heading lands directly under the active tab.
+ *
+ * Per-page measure is set with `--league-measure` at the call site; 760px is the common case.
+ */
+/* Worn ALONGSIDE the global `.container` class — `className={`container ${column.column}`}` — which
+   is the pattern the Stage F tab row itself uses (`OrgSectionTabs`) and 20-odd other files besides.
+   So the 1200px column geometry is NOT restated here: these pages and the row they align to read
+   the one declaration in globals.css, which is the only way the alignment can't drift back. */
+.column {
+  /* Clears the fixed identity row (plus the section tab row where it renders — `--nav-height`
+     grows to cover both, which is the whole point of the Stage F geometry). */
+  padding-top: calc(var(--nav-height) + 2rem);
+  padding-bottom: 5rem;
+}
+
+/* The reading measure, applied to the column's own blocks so no page needs a second wrapper
+   element. Every child of these pages is a normal stacked block — none is full-bleed — so this
+   is equivalent to one inner column, and it left-aligns by default, which is the ruling. */
+.column > * {
+  max-width: var(--league-measure, 760px);
+}

@@ -5,6 +5,7 @@ import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { isFreePlan } from '@/lib/plan-config';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
 import type { LeagueSeason } from '@/lib/types';
+import column from './league-column.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,11 +24,6 @@ const STATUS_COLOR: Record<string, string> = {
   completed:           '#a78bfa',
   archived:            'rgba(255,255,255,0.3)',
 };
-
-function formatDate(iso: string | null): string {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
-}
 
 function formatYear(iso: string | null): string {
   if (!iso) return '';
@@ -62,13 +58,9 @@ export default async function LeagueIndexPage({
         color: 'var(--fl-text)',
       }}
     >
-      <div
-        style={{
-          maxWidth: '760px',
-          margin: '0 auto',
-          padding: 'calc(var(--nav-height, 64px) + 2rem) 1.5rem 5rem',
-        }}
-      >
+      {/* R6: the shared 1200px page column, with this page's 760px reading measure left-aligned
+          inside it — so headings sit under the section tab row rather than 244px inboard of it. */}
+      <div className={`container ${column.column}`}>
         {/* Back */}
         <Link
           href={`/${orgSlug}`}
