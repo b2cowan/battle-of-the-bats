@@ -1346,27 +1346,58 @@ export interface PracticeGroup {
 }
 
 /**
- * D27 — a station, split by SOURCE: the drill supplies the shape + the teaching (name, count,
- * equipment, setup, coaching points); the practice supplies the people + the moment (staff,
- * who's at it, tonight's note).
+ * D27 — a station, split by SOURCE. **A station IS the drill** (owner-confirmed 2026-08-01), and
+ * Phase 2 makes that literal: the DRILL supplies the shape + the teaching, the PRACTICE supplies
+ * the people + the moment. The two halves are marked below and the divide is load-bearing —
+ * `_PracticePlanEditor` renders the drill half read-only when `drillId` is set, and the field
+ * screen, the run screen and the printed sheet all read the drill half in preference to the
+ * block's.
  *
- * ⚠ **A station IS the drill** (owner-confirmed 2026-08-01). Slice 1a has no library yet, so a
- * coach types both halves — but the split above is the seam Phase 2 lifts the drill out of, so
- * nothing on the drill half may come to depend on this particular practice.
+ * ⚠ **There is NO `count`** (owner ruling 2026-08-01). It read as "how many times" or "how long",
+ * would have been 1 almost every time, and a coach wanting three of something adds the drill three
+ * times or says so in `note`. A legacy 1a value is simply dropped on the next save.
  */
 export interface PracticeStation {
   id: string;
   name: string;
-  count?: number | null;
+
+  // ── The DRILL half ──
+  // Read-only in the plan whenever `drillId` is set (owner ruling 2026-08-01): a drill is an
+  // IDENTITY CLAIM, so "used 8x" has to mean eight of the same thing. Editing detaches instead.
+  /** "What you're doing". ⚠ New in Phase 2 — see `drillId` for how older plans still read. */
+  description?: string;
+  /** "What you're watching for" — D28's direct answer to a coach arriving at a station cold. */
+  goal?: string;
+  coachingPoints?: string[];
+  setup?: string;
   /** Reusable equipment labels (tags), suggested from what this team has used before. */
   equipment?: string[];
-  setup?: string;
-  coachingPoints?: string[];
+
+  /**
+   * PROVENANCE ONLY — which library drill this station was picked from.
+   *
+   * ⚠ **Nothing renders from this id.** Every word above is COPIED into the plan when the drill is
+   * added, so a plan never depends on `rep_team_drills` to display: editing a drill later cannot
+   * rewrite a practice already written, a retired drill keeps reading for ever, and there is no
+   * dangling-id failure of the kind §10.3 refused for staff tags. The id answers "used 8x", and
+   * it is CLEARED the moment a coach detaches to edit — at which point it is no longer the same
+   * drill, which is the entire point of the read-only rule.
+   */
+  drillId?: string;
+  /**
+   * The drill's category, SNAPSHOTTED at add time (the `rep_player_measurables.unit` precedent).
+   * Lets the focus rail filter without a join, and stops a later re-categorisation silently
+   * rewriting what a past practice was about.
+   */
+  drillCategory?: string;
+
+  // ── The PRACTICE half — always editable, never written back to the library ──
   /** Names, never grants — a staff entry carries no account and no capability. */
   staff?: string[];
   /** ⚠ Only when the block has stations that do NOT rotate. See `blockRotates`. */
   playerIds?: string[];
   rotationNote?: string;
+  /** "Just for tonight" — the one-off note that is never saved back to the drill. */
   note?: string;
 }
 
@@ -1632,6 +1663,62 @@ export interface RepTeamMeasurableType {
   updatedAt: string;
 }
 
+/**
+ * A reusable drill (Practice Plans Phase 2, migration 218) — the SHAPE of one activity and its
+ * TEACHING, and nothing else. Rules live in `lib/rep-drills.ts`.
+ *
+ * ⚠ **A drill carries NO PEOPLE** (D20) — no coaches, no players, no groups. That is what keeps
+ * one drill working in April with twelve and July with nine.
+ *
+ * ⚠ **A drill is ONE activity — one station's worth.** Picking a second drill into the same block
+ * is what produces two stations, and therefore a rotation. There is no nested station list.
+ */
+export interface RepTeamDrill {
+  id: string;
+  orgId: string;
+  /**
+   * NULL = an ORG-AUTHORED shared drill, offered to every team in the club and writable only by an
+   * org owner/admin (owner ruling 2026-08-01; the mig-184 shape adopted up front).
+   */
+  teamId: string | null;
+  name: string;
+  /** Coach-typed. ⚠ NEVER a fixed or seeded list — that would be one sport talking. */
+  category: string | null;
+  /** ONE number. Ranges were removed at owner QA (§10.5) and must not return via the library. */
+  usualMinutes: number | null;
+  /** "What you're doing". */
+  description: string | null;
+  /** "What you're watching for". */
+  goal: string | null;
+  coachingPoints: string[];
+  setup: string | null;
+  equipment: string[];
+  /** Retire, never delete — every plan the drill already sits in keeps working untouched. */
+  isActive: boolean;
+  sortOrder: number;
+  createdBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** A drill plus how many plans it appears in. Assembled by the API, never stored. */
+export interface RepTeamDrillWithUsage extends RepTeamDrill {
+  /**
+   * How many stations across this team's practice PLANS were picked from this drill.
+   *
+   * ⚠ A fact about the DRILL, never about a child — the one count this feature is allowed to show
+   * (§4). Zero renders as "Not in a plan yet" rather than a 0, so an unused drill does not read as
+   * a failing score.
+   *
+   * ⚠ **It counts PLANS, not practices, and every surface must say so.** Nothing in this product
+   * records what was actually run (D4), so "used 8×" would be a claim the data cannot support —
+   * a coach may well have planned this drill and skipped it in the rain. The name is `planCount`
+   * for the same reason the copy says "In 8 plans": the honest word, in the type as well as on the
+   * screen.
+   */
+  planCount: number;
+}
+
 export interface RepPlayerMeasurable {
   id: string;
   orgId: string;
@@ -1687,6 +1774,14 @@ export interface RepPlayerDevelopmentGoal {
   focusArea: string;
   note: string | null;
   status: RepDevelopmentGoalStatus;
+  /**
+   * Optional, coach-typed, drawn from the same vocabulary as their drill categories (D16, mig 218).
+   *
+   * ⚠ NULL means "the coach hasn't said" and renders at FULL strength in the focus rail — never
+   * dimmed, never hidden. Nothing is back-filled and nothing is inferred from keywords: free text
+   * does not cluster, and guessing would be a confident lie (§4).
+   */
+  category: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;

@@ -1676,8 +1676,9 @@ const coachesHelp: HelpPageContent = {
         <>
           <p>A <strong>practice plan</strong> lives on the practice itself. Open the practice on your <strong>Schedule</strong> and use <strong>Plan this practice</strong> — there&rsquo;s no separate calendar and nothing new to set up.</p>
           <p><strong>Start with the shape of the night.</strong> Give the practice a goal and an <strong>Equipment</strong> line, then add <strong>blocks</strong> in the order you&rsquo;ll run them. A block is a number of minutes, or one <strong>rest of practice</strong> block — you only get one of those, since only one thing can run to the end. The clock times down the side are worked out from the practice&rsquo;s own start time, so you never type them.</p>
-          <p>Each block holds a description, a goal, who&rsquo;s running it, who&rsquo;s in it, and <strong>what to watch for</strong> — the two or three things you actually want to see. Reorder blocks with the <strong>up and down arrows</strong> rather than dragging, so it works with cold hands on a phone.</p>
-          <p><strong>Stations</strong> sit inside a block: what the station is, how many of them, the equipment, how it&rsquo;s set up, who runs it, who&rsquo;s at it, and a note just for tonight.</p>
+          <p>Each block holds a description, a goal, who&rsquo;s running it, who&rsquo;s in it, and <strong>coaching points</strong> — the two or three things you actually want to see. Reorder blocks with the <strong>up and down arrows</strong> rather than dragging, so it works with cold hands on a phone.</p>
+          <p><strong>Stations</strong> sit inside a block: what the station is, <strong>what you&rsquo;re doing</strong>, <strong>what you&rsquo;re watching for</strong>, the coaching points, the equipment, how it&rsquo;s set up, who runs it, who&rsquo;s at it, and a note just for tonight.</p>
+          <p><strong>You don&rsquo;t have to type a station twice.</strong> When you add a block or a station you can <strong>pick from your drills</strong> instead, and it arrives already written — see <em>Your drills</em> below.</p>
           <p><strong>People live in one place at a time.</strong> A block with no stations holds its own list of players. Add a station and that list moves down to the stations — because that&rsquo;s now where people actually stand. Turn on rotating and they move again, into the groups. You&rsquo;ll see the names move when you do it; nothing is lost, and it means a station can never give you two different answers to &ldquo;who&rsquo;s here?&rdquo;</p>
           <p><strong>Rotations are the part a shared document can&rsquo;t do.</strong> There&rsquo;s no separate kind of block to add — <strong>put two or more stations in a block and it rotates by default</strong>. (A single station isn&rsquo;t a rotation, it&rsquo;s a queue, so the choice only appears once there are two.) If your stations run side by side instead, switch <strong>rotate</strong> off inside the block and each keeps its own players.</p>
           <p>Say how long the block runs and how often groups move, and the plan works out <em>who is at which station in every round</em> and shows you the grid. Leave &ldquo;rotate every&rdquo; blank and it gives everyone exactly one turn at each station. It tells you the truth when the numbers don&rsquo;t divide neatly: <em>&ldquo;3 rounds of 15, with 5 min spare&rdquo;</em>, <em>&ldquo;Group C won&rsquo;t reach the third station&rdquo;</em>, <em>&ldquo;Groups A and D share a station in round 2&rdquo;</em>. It will never quietly invent a round or drop a station to make the arithmetic tidy.</p>
@@ -1773,6 +1774,94 @@ const coachesHelp: HelpPageContent = {
               <p>Onto the stations. Players live in <strong>exactly one place at a time</strong>: a block with no stations holds its own list, adding a station moves that list <strong>down to the stations</strong>, and turning on rotating moves it again into the <strong>groups</strong>.</p>
               <p>That&rsquo;s deliberate — it&rsquo;s what stops a station ever showing two different answers to &ldquo;who&rsquo;s here?&rdquo;, and it means the printed sheet and the field screen can never disagree.</p>
               <p>Nothing is deleted. The names move to the level that now makes sense, and you can move them again by hand.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'premium-drill-library',
+      group: 'Premium Coaches Portal',
+      heading: 'Your drills: write it once, then it’s four taps (Premium)',
+      summary: 'Save a drill once — the setup, what you’re watching for, the coaching points — and adding it to a practice stops being retyping.',
+      // "drill library" / "save a drill" / "read only" / "shared drills" are what a coach searches
+      // for, and none appear in a heading — search never reads the prose, so they live here.
+      keywords: ['drills', 'drill', 'drill library', 'my drills', 'your drills', 'save a drill', 'save to my drills', 'reuse a drill', 'pick a drill', 'drill picker', 'from your drills', 'write one', 'preview a drill', 'retire a drill', 'restore a drill', 'delete a drill', 'edit a drill', 'why can’t i edit', 'read only drill', 'greyed out', 'locked', 'edit just for this practice', 'swap drill', 'club drills', 'shared drills', 'org drills', 'category', 'categories', 'add from a past season', 'import drills', 'last season', 'in 8 plans', 'used'],
+      searchText: 'drills drill library my drills your drills in development save a drill once write it once four taps reuse stop retyping the same warm up every tuesday pick from your drills write one preview before adding category categories coach typed not a fixed list hitting fielding your own words usual minutes how long it usually runs what you are doing what you are watching for coaching points setup equipment no people no players no coaches empty of people read only cannot edit why is it greyed out locked edit just for this practice detach make it a one off swap drill change the drill save to my drills promote a station retire a drill restore hide from the picker keeps old plans delete club shared drills organisation wide every team can use admin manages them add from a past season import last season bring forward old practices in 8 plans not in a plan yet head coach only schedule access rotation two stations',
+      content: (
+        <>
+          <p>You run the same warm-up most Tuesdays. <strong>Your drills</strong> is where you write it down once — and after that, putting it in a practice is a few taps instead of retyping it.</p>
+          <p>You&rsquo;ll find it in <strong>Development → Your drills</strong>.</p>
+          <p><strong>What a drill holds:</strong> its name, what kind of drill it is, roughly how long it runs, <strong>what you&rsquo;re doing</strong>, <strong>what you&rsquo;re watching for</strong>, the <strong>coaching points</strong>, the setup, and the equipment. That&rsquo;s the shape of the drill and the teaching that goes with it.</p>
+          <p><strong>What a drill never holds is people.</strong> No coaches, no players, no groups — those belong to a particular practice. That&rsquo;s what lets the same drill work in April with twelve players and July with nine, and it&rsquo;s why your library doesn&rsquo;t go stale when the roster changes.</p>
+          <p><strong>Using one:</strong> when you add a block or a station, choose <strong>From your drills</strong>, search or filter, and <strong>Preview</strong> it before you commit. The station arrives already named, kitted, set up and taught — asking only to be staffed.</p>
+          <p><strong>Two drills in one block is how you build a rotation.</strong> Pick one and you&rsquo;ve got a block with that activity in it. Pick a second into the same block and you now have two stations — which is exactly when the rotation switch appears.</p>
+          <p><strong>A drill you&rsquo;ve added reads as text, not as boxes you can type in — and that&rsquo;s on purpose.</strong> A drill is a claim that you ran <em>that</em> drill, so if the words could be rewritten every time, &ldquo;in 8 plans&rdquo; would stop meaning anything. What stays editable is everything the <em>practice</em> owns: who runs it, who&rsquo;s at it, how long the block is, and <strong>Just for tonight</strong> — which covers most one-off changes on its own.</p>
+          <p><strong>Need it different tonight anyway?</strong> Tap <strong>Edit just for this practice</strong>. Every word is kept and everything unlocks — it simply stops being that drill from your library, and stops counting towards it. <strong>Swap drill</strong> replaces it with a different one. Neither touches your library.</p>
+          <p><strong>Wrote something good in the plan instead?</strong> Use <strong>Save to my drills…</strong> on that station. It asks one question — the category — and even that&rsquo;s optional. It copies: tonight&rsquo;s practice is left exactly as it is, and the drill is there for next time. Nothing is ever saved to your library automatically, so it doesn&rsquo;t fill up with five near-identical warm-ups.</p>
+          <p><strong>Categories are your words, not ours.</strong> Nothing is supplied and nothing is pre-loaded — you type what makes sense for your sport. They&rsquo;re what let the plan show which players&rsquo; focus areas match the kind of practice you&rsquo;re writing.</p>
+          <p><strong>Retiring, not deleting.</strong> A retired drill disappears from the picker and every practice that already used it is untouched — those plans keep reading exactly as they did. You can restore it any time, and you can reuse the name.</p>
+          <p><strong>Club drills.</strong> If your organisation shares a set of drills, they appear in your picker beside your own, marked <em>Club</em>. You can use them; renaming and retiring them stays with your club&rsquo;s administrator.</p>
+          <p><strong>Starting from what you&rsquo;ve already done.</strong> <strong>Add from a past season</strong> reads the practices you ran in previous years and offers what you wrote in them as drills. Adding one copies it into your library — the old practice is not changed. Anything already in your library is shown greyed out, so you can see why it isn&rsquo;t offered.</p>
+          <p><strong>Your drills stay with your team from season to season.</strong> There&rsquo;s nothing to move across when a new season starts. The library itself isn&rsquo;t browsable while you&rsquo;re looking at a finished season — it&rsquo;s a tool you use now, not a record of a year — but nothing in it is lost.</p>
+          <p><strong>&ldquo;In 8 plans&rdquo; counts plans, not practices.</strong> Nothing in the product records what actually got run on the night, so it tells you how many plans a drill appears in and nothing more.</p>
+          <p><strong>Who can do what:</strong> <strong>managing</strong> drills — writing, editing, retiring, importing — is head-coach only. Any coach with <strong>schedule</strong> access can see the library and pick from it, which is what lets an assistant build a practice from the drills you&rsquo;ve written.</p>
+        </>
+      ),
+      links: [
+        { label: 'Writing the plan', href: '#premium-practice-plans' },
+        { label: 'Running it at the field', href: '#premium-practice-run' },
+        { label: 'Player Development', href: '#premium-development' },
+      ],
+      faqs: [
+        {
+          id: 'faq-drill-read-only',
+          question: 'Why can’t I edit a drill after adding it to a practice?',
+          answerText: 'Because a drill is a claim that you ran that particular drill. If its words could be rewritten every time you used it, "in 8 plans" would be counting eight different things and would stop meaning anything. Everything the practice owns is still editable — who runs the station, who is at it, how long the block runs, and the "Just for tonight" note, which covers most one-off changes. If you genuinely need the drill itself to read differently tonight, tap "Edit just for this practice": every word is kept and everything unlocks, and the station simply stops being that library drill from then on. You can then use "Save to my drills…" to keep the new version as a separate drill.',
+          keywords: ['cannot edit', 'can’t edit', 'read only', 'greyed out', 'locked', 'not editable', 'why is it locked', 'edit a drill in a practice', 'edit just for this practice', 'detach'],
+          popular: true,
+          answer: (
+            <>
+              <p>Because a drill is a claim that you ran <em>that</em> drill. If its words could be rewritten every time you used it, <strong>&ldquo;in 8 plans&rdquo;</strong> would be counting eight different things — and would stop meaning anything.</p>
+              <p>Everything the <em>practice</em> owns is still editable: who runs the station, who&rsquo;s at it, how long the block runs, and <strong>Just for tonight</strong>, which covers most one-off changes on its own.</p>
+              <p>If you genuinely need the drill itself to read differently tonight, tap <strong>Edit just for this practice</strong>. Every word is kept and everything unlocks — the station just stops being that library drill from then on. You can then <strong>Save to my drills…</strong> to keep the new version as its own drill.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-drill-retire',
+          question: 'If I retire a drill, do my old practice plans lose it?',
+          answerText: 'No. Retiring only removes a drill from the picker when you are building a practice. Every plan that already uses it is completely untouched and keeps reading exactly as it did — a practice plan stores its own copy of the words, so it never depends on the library. You can restore a retired drill at any time, and you can reuse its name for a new one. There is no way to delete a drill outright, precisely so this can never go wrong.',
+          keywords: ['retire', 'retired', 'delete a drill', 'remove a drill', 'old plans', 'past practices', 'restore', 'bring back'],
+          answer: (
+            <>
+              <p>No. Retiring only takes a drill out of the picker when you&rsquo;re building a practice. <strong>Every plan that already uses it is untouched</strong> and keeps reading exactly as it did — a plan stores its own copy of the words, so it never depends on your library.</p>
+              <p>You can restore it any time, and you can reuse the name for something new. There&rsquo;s no way to delete a drill outright, precisely so this can&rsquo;t go wrong.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-drill-past-season',
+          question: 'Can I get drills from last season?',
+          answerText: 'Yes, two things are true here. First, your drill library belongs to your team and is not tied to a season at all, so anything you saved last year is still there this year with nothing to move. Second, for practices you wrote before you had a library, use "Add from a past season" in Your drills: it reads the practices you ran in previous years and offers what you wrote in them as drills you can save. Adding one copies it forward and changes nothing in the old practice. Drills you already have are shown greyed out so you can see why they are not offered.',
+          keywords: ['last season', 'past season', 'previous season', 'old drills', 'import drills', 'bring forward', 'new season', 'season rollover'],
+          answer: (
+            <>
+              <p>Two things are true here, and together they cover it.</p>
+              <p><strong>Your library belongs to your team, not to a season.</strong> Anything you saved last year is still there this year — there&rsquo;s nothing to move across.</p>
+              <p><strong>For practices you wrote before you had a library</strong>, use <strong>Add from a past season</strong> in Your drills. It reads the practices you ran in previous years and offers what you wrote in them. Adding one copies it forward and changes nothing in the old practice; drills you already have are shown greyed out so you can see why they&rsquo;re not offered.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-drill-club-shared',
+          question: 'What are the drills marked “Club”?',
+          answerText: 'They are drills your organisation shares with every team, curated by your club administrator on the shared library screen. They appear in your picker alongside your own drills and you can use them in any practice exactly like your own. You cannot rename or retire them — that stays with the administrator, which is what keeps a club standard actually standard. If your club has not set any up, you simply will not see any, and your own drills work exactly the same.',
+          keywords: ['club drills', 'shared drills', 'organisation drills', 'org drills', 'blue drills', 'who manages', 'club standard'],
+          answer: (
+            <>
+              <p>They&rsquo;re drills your organisation shares with every team, curated by your club administrator. They appear in your picker beside your own and you can use them in any practice exactly like your own.</p>
+              <p>You can&rsquo;t rename or retire them — that stays with the administrator, which is what keeps a club standard actually standard. If your club hasn&rsquo;t set any up, you simply won&rsquo;t see any.</p>
             </>
           ),
         },
@@ -2032,95 +2121,6 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
-      // Chunk B (P1 #17). Team settings was the one nav destination in the premium portal with no
-      // guide at all — so its help icon could only ever have opened the hub, which is a table of
-      // contents where the coach expected an answer about this screen. Written rather than linked
-      // so the "every door carries help" rule has no exceptions. Deliberately does NOT restate the
-      // rollover walkthrough (recipe-start-next-season owns it) — it says what the screen is for and
-      // points there.
-      id: 'premium-team-settings',
-      group: 'Premium Coaches Portal',
-      heading: 'Team settings (Premium)',
-      summary: 'Your division, the season you are in, the lineup rules Auto-fill follows, and — for a standalone team — your link to a club or league.',
-      keywords: ['team settings', 'settings', 'setting', 'division', 'change division', 'edit division', 'age group', 'lineup rules', 'lineup settings', 'innings cap', 'pitching cap', 'pitch count', 'arm care', 'max innings', 'minimum innings', 'min play', 'playing time rule', 'rotation', 'auto-fill', 'autofill', 'auto fill rules', 'season status', 'season name', 'start next season', 'parent organization', 'link org', 'join a club', 'transfer team', 'club admin', 'where do i change', 'team options', 'configure team'],
-      searchText: 'team settings screen division age group change division club admin manages division standalone team season name status active complete start next season rollover lineup rules season defaults auto-fill max innings at one position rotation pitching innings cap arm care per pitcher player own pitcher cap stricter wins minimum innings per player everyone plays leave blank to turn off override for a single game auto-fill menu parent organization link to a club or league recognition transfer team invited by your organization manage organization link premium coaches portal where do i change my division where are lineup caps',
-      content: (
-        <>
-          <p><strong>Team settings</strong> is the small set of things that are true about your team for a whole season, rather than about one game or one player. There are up to four panels.</p>
-          <p><strong>Division.</strong> The age group or division your team plays in — it labels your team across the portal and on any public page. If your team belongs to a club or league, your <strong>club admin owns this</strong> and you&rsquo;ll see it here read-only; a standalone team sets it themselves.</p>
-          <p><strong>Season.</strong> Shows which season you&rsquo;re in and whether it&rsquo;s still open. If you run your own team, this is also where you <strong>start next season</strong> — your roster comes with you and last season becomes read-only history. (Full walkthrough: <em>How to start your next season</em>.)</p>
-          <p><strong>Lineup rules.</strong> Season defaults that game-day <strong>Auto-fill</strong> follows — a cap on innings at one position (which forces rotation), a default pitching cap, and a minimum number of innings for every player. <strong>Leave a field blank to turn that rule off</strong>, and you can override any of them for a single game from the Auto-fill menu. A player&rsquo;s own pitching cap still applies on top of the season default, and <strong>the stricter of the two always wins</strong> — a season cap can never loosen a limit you set on an individual arm.</p>
-          <p><strong>Parent organization</strong> (standalone teams only). Connect your team to a club or league for recognition, or transfer it across entirely. Most teams are invited by their organization instead — if that happens you&rsquo;ll see it here and on your Overview.</p>
-        </>
-      ),
-      faqs: [
-        {
-          id: 'faq-settings-division-locked',
-          question: 'Why can’t I change my division?',
-          answerText: 'Because your team belongs to a club or league, and division is managed by your organization admin so it stays consistent across every team they run. Ask them to change it. Standalone teams — ones you set up yourself rather than being invited into — set their own division on this screen.',
-          keywords: ['cannot change division', 'division locked', 'division read only', 'club admin', 'greyed out', 'who changes division', 'edit division'],
-          answer: (
-            <>
-              <p>Because your team belongs to a <strong>club or league</strong>, and division is managed by your organization&rsquo;s admin so it stays consistent across every team they run. Ask them to change it.</p>
-              <p><strong>Standalone teams</strong> — ones you set up yourself rather than being invited into — set their own division right here.</p>
-            </>
-          ),
-        },
-        {
-          id: 'faq-settings-lineup-caps',
-          question: 'What happens if a season lineup rule conflicts with a player’s own cap?',
-          answerText: 'The stricter one wins. Season lineup rules are defaults for the whole team; a pitching cap you set on an individual player is about that player\'s arm. Auto-fill applies whichever is tighter, so a season default can never loosen a limit you set on one player. Leaving a season field blank turns that rule off entirely, and you can override any of them for a single game from the Auto-fill menu.',
-          keywords: ['conflict', 'stricter', 'player cap', 'pitching cap', 'season default', 'which cap wins', 'arm care', 'override', 'single game', 'blank'],
-          popular: true,
-          answer: (
-            <>
-              <p><strong>The stricter one wins.</strong> Season lineup rules are defaults for the whole team; a pitching cap you set on an individual player is about <em>that player&rsquo;s arm</em>. Auto-fill applies whichever is tighter, so a season default can never loosen a limit you set on one player.</p>
-              <p>Leaving a season field <strong>blank turns that rule off</strong> entirely, and you can override any of them for a single game from the Auto-fill menu.</p>
-            </>
-          ),
-        },
-      ],
-    },
-    {
-      id: 'recipe-start-next-season',
-      group: 'Premium Coaches Portal',
-      heading: 'How to start your next season & set your division (Premium)',
-      summary: 'Roll your team into a new season yourself — your roster comes with you, the schedule starts fresh, and last year becomes read-only history.',
-      keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium'],
-      searchText: 'start next season new season next year roll over rollover carry roster forward fee plan fee template planned budget schedule starts fresh previous season read only past seasons history season review insights team settings edit change division head coach year end premium club owned admin manages seasons lineup rules innings cap rotation pitching cap minimum innings min play playing time auto-fill caps this season vs last comparison winning percentage record roster size trend up down improving better than last year are we improving dues collected expenses assistant coaches can see who is earning it awards leaderboard season awards mvp leaderboard award history development history linked bring forward focus areas carry forward development notes',
-      content: (
-        <>
-          <p>In the <strong>Premium</strong> portal, a new <strong>Settings</strong> area lets you run your team from one year to the next yourself — without waiting on an organization admin.</p>
-          <p><strong>Start next season.</strong> When a season wraps, open <strong>Settings</strong> and choose <strong>Start next season</strong>. Confirm the new season&apos;s name and year, then pick what to bring over:</p>
-          <ul>
-            <li>Your <strong>active roster carries forward automatically</strong> — trim or add players from there. Each carried player&apos;s <strong>development history is linked</strong> to last season, and on their profile you&apos;ll get a one-time offer to <strong>bring forward the focus areas they were working on</strong> — or start fresh (readings stay in last season&apos;s archive either way).</li>
-            <li>Optionally bring over your <strong>fee plan</strong> (amounts and installments; due dates shift forward a year) and your <strong>planned budget</strong> (your projected buckets).</li>
-            <li>The <strong>schedule starts fresh</strong>, and last season&apos;s money — payments, spending, and paid history — stays behind with that season.</li>
-          </ul>
-          <p>The previous season then becomes <strong>read-only history</strong> under <strong>Insights</strong> (in the <strong>Season</strong> menu — this page was called <em>Season Review</em>). Insights keeps every past season as a <strong>plain archive</strong> — open <strong>&ldquo;How are we doing?&rdquo;</strong> there to see each year&apos;s record, roster size and (with money access) its dues and expenses. There&apos;s no season-to-season comparison on purpose: teams move up divisions and face new competition each year, so the years sit side by side as a scrapbook, not a scoreboard. You also land in the new season with a short summary of what carried over and anything worth a second look — for example, confirming the carried-over fee due dates or re-collecting waivers for the new season.</p>
-          <p><strong>Set your division.</strong> Settings is also where you set your team&apos;s <strong>division</strong> (for example, &quot;U13 Tier 1&quot;); it shows on your team overview.</p>
-          <p>If your team is <strong>owned by a club or league</strong> (an organization adopted it), your club admin manages seasons and division for you — you&apos;ll see those as read-only.</p>
-        </>
-      ),
-      faqs: [
-        {
-          id: 'faq-start-next-season',
-          question: 'How do I start a new season without an admin?',
-          answerText: 'On a standalone Premium team, the head coach can do it directly: open Settings and choose Start next season. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only history under Insights in the Season menu (this page was called Season Review). If your team is owned by a club or league, the club admin starts seasons for you.',
-          keywords: ['start new season', 'next season', 'no admin', 'rollover', 'head coach'],
-          popular: true,
-          answer: (
-            <p>On a standalone Premium team, the <strong>head coach</strong> can do it directly: open <strong>Settings</strong> and choose <strong>Start next season</strong>. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only history under <strong>Insights</strong> (in the <strong>Season</strong> menu). If your team is owned by a club or league, the club admin starts seasons for you.</p>
-          ),
-        },
-        {
-          id: 'faq-season-review-comparison',
-          question: 'How do I see if my team is improving year over year?',
-          answerText: "Open Insights (in the Season menu). The scoreboard across the top shows the honest ways to read this season: your record, recent form, streak, run difference, and your record in one-run games. On purpose, Insights does NOT compare seasons against each other — youth teams move up divisions and face different competition each year, so a 'better or worse than last year' arrow would mislead more than it tells. Your past seasons are still kept: open 'How are we doing?' to see every year's record, roster size and (with money access) dues and expenses as a plain archive — a scrapbook, not a scoreboard.",
-          keywords: ['improving', 'better than last year', 'this season vs last', 'season comparison', 'winning percentage', 'trend', 'year over year', 'season review', 'insights', 'scoreboard', 'close games', 'form', 'streak', 'past seasons'],
-          answer: (
-            <>
-    {
       // Chunk D Slice 1. The family layer is the first thing in the portal that hands a person
       // OUTSIDE the coaching staff a view of the team, so the guide leads with who ends up seeing
       // what — that is the question a coach actually has before they paste a link into a group
@@ -2329,6 +2329,95 @@ const coachesHelp: HelpPageContent = {
         },
       ],
     },
+    {
+      // Chunk B (P1 #17). Team settings was the one nav destination in the premium portal with no
+      // guide at all — so its help icon could only ever have opened the hub, which is a table of
+      // contents where the coach expected an answer about this screen. Written rather than linked
+      // so the "every door carries help" rule has no exceptions. Deliberately does NOT restate the
+      // rollover walkthrough (recipe-start-next-season owns it) — it says what the screen is for and
+      // points there.
+      id: 'premium-team-settings',
+      group: 'Premium Coaches Portal',
+      heading: 'Team settings (Premium)',
+      summary: 'Your division, the season you are in, the lineup rules Auto-fill follows, and — for a standalone team — your link to a club or league.',
+      keywords: ['team settings', 'settings', 'setting', 'division', 'change division', 'edit division', 'age group', 'lineup rules', 'lineup settings', 'innings cap', 'pitching cap', 'pitch count', 'arm care', 'max innings', 'minimum innings', 'min play', 'playing time rule', 'rotation', 'auto-fill', 'autofill', 'auto fill rules', 'season status', 'season name', 'start next season', 'parent organization', 'link org', 'join a club', 'transfer team', 'club admin', 'where do i change', 'team options', 'configure team'],
+      searchText: 'team settings screen division age group change division club admin manages division standalone team season name status active complete start next season rollover lineup rules season defaults auto-fill max innings at one position rotation pitching innings cap arm care per pitcher player own pitcher cap stricter wins minimum innings per player everyone plays leave blank to turn off override for a single game auto-fill menu parent organization link to a club or league recognition transfer team invited by your organization manage organization link premium coaches portal where do i change my division where are lineup caps',
+      content: (
+        <>
+          <p><strong>Team settings</strong> is the small set of things that are true about your team for a whole season, rather than about one game or one player. There are up to four panels.</p>
+          <p><strong>Division.</strong> The age group or division your team plays in — it labels your team across the portal and on any public page. If your team belongs to a club or league, your <strong>club admin owns this</strong> and you&rsquo;ll see it here read-only; a standalone team sets it themselves.</p>
+          <p><strong>Season.</strong> Shows which season you&rsquo;re in and whether it&rsquo;s still open. If you run your own team, this is also where you <strong>start next season</strong> — your roster comes with you and last season becomes read-only history. (Full walkthrough: <em>How to start your next season</em>.)</p>
+          <p><strong>Lineup rules.</strong> Season defaults that game-day <strong>Auto-fill</strong> follows — a cap on innings at one position (which forces rotation), a default pitching cap, and a minimum number of innings for every player. <strong>Leave a field blank to turn that rule off</strong>, and you can override any of them for a single game from the Auto-fill menu. A player&rsquo;s own pitching cap still applies on top of the season default, and <strong>the stricter of the two always wins</strong> — a season cap can never loosen a limit you set on an individual arm.</p>
+          <p><strong>Parent organization</strong> (standalone teams only). Connect your team to a club or league for recognition, or transfer it across entirely. Most teams are invited by their organization instead — if that happens you&rsquo;ll see it here and on your Overview.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-settings-division-locked',
+          question: 'Why can’t I change my division?',
+          answerText: 'Because your team belongs to a club or league, and division is managed by your organization admin so it stays consistent across every team they run. Ask them to change it. Standalone teams — ones you set up yourself rather than being invited into — set their own division on this screen.',
+          keywords: ['cannot change division', 'division locked', 'division read only', 'club admin', 'greyed out', 'who changes division', 'edit division'],
+          answer: (
+            <>
+              <p>Because your team belongs to a <strong>club or league</strong>, and division is managed by your organization&rsquo;s admin so it stays consistent across every team they run. Ask them to change it.</p>
+              <p><strong>Standalone teams</strong> — ones you set up yourself rather than being invited into — set their own division right here.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-settings-lineup-caps',
+          question: 'What happens if a season lineup rule conflicts with a player’s own cap?',
+          answerText: 'The stricter one wins. Season lineup rules are defaults for the whole team; a pitching cap you set on an individual player is about that player\'s arm. Auto-fill applies whichever is tighter, so a season default can never loosen a limit you set on one player. Leaving a season field blank turns that rule off entirely, and you can override any of them for a single game from the Auto-fill menu.',
+          keywords: ['conflict', 'stricter', 'player cap', 'pitching cap', 'season default', 'which cap wins', 'arm care', 'override', 'single game', 'blank'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>The stricter one wins.</strong> Season lineup rules are defaults for the whole team; a pitching cap you set on an individual player is about <em>that player&rsquo;s arm</em>. Auto-fill applies whichever is tighter, so a season default can never loosen a limit you set on one player.</p>
+              <p>Leaving a season field <strong>blank turns that rule off</strong> entirely, and you can override any of them for a single game from the Auto-fill menu.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-start-next-season',
+      group: 'Premium Coaches Portal',
+      heading: 'How to start your next season & set your division (Premium)',
+      summary: 'Roll your team into a new season yourself — your roster comes with you, the schedule starts fresh, and last year becomes read-only history.',
+      keywords: ['start next season', 'new season', 'next season', 'roll over season', 'season rollover', 'team settings', 'division', 'edit division', 'past seasons', 'premium'],
+      searchText: 'start next season new season next year roll over rollover carry roster forward fee plan fee template planned budget schedule starts fresh previous season read only past seasons history season review insights team settings edit change division head coach year end premium club owned admin manages seasons lineup rules innings cap rotation pitching cap minimum innings min play playing time auto-fill caps this season vs last comparison winning percentage record roster size trend up down improving better than last year are we improving dues collected expenses assistant coaches can see who is earning it awards leaderboard season awards mvp leaderboard award history development history linked bring forward focus areas carry forward development notes',
+      content: (
+        <>
+          <p>In the <strong>Premium</strong> portal, a new <strong>Settings</strong> area lets you run your team from one year to the next yourself — without waiting on an organization admin.</p>
+          <p><strong>Start next season.</strong> When a season wraps, open <strong>Settings</strong> and choose <strong>Start next season</strong>. Confirm the new season&apos;s name and year, then pick what to bring over:</p>
+          <ul>
+            <li>Your <strong>active roster carries forward automatically</strong> — trim or add players from there. Each carried player&apos;s <strong>development history is linked</strong> to last season, and on their profile you&apos;ll get a one-time offer to <strong>bring forward the focus areas they were working on</strong> — or start fresh (readings stay in last season&apos;s archive either way).</li>
+            <li>Optionally bring over your <strong>fee plan</strong> (amounts and installments; due dates shift forward a year) and your <strong>planned budget</strong> (your projected buckets).</li>
+            <li>The <strong>schedule starts fresh</strong>, and last season&apos;s money — payments, spending, and paid history — stays behind with that season.</li>
+          </ul>
+          <p>The previous season then becomes <strong>read-only history</strong> under <strong>Insights</strong> (in the <strong>Season</strong> menu — this page was called <em>Season Review</em>). Insights keeps every past season as a <strong>plain archive</strong> — open <strong>&ldquo;How are we doing?&rdquo;</strong> there to see each year&apos;s record, roster size and (with money access) its dues and expenses. There&apos;s no season-to-season comparison on purpose: teams move up divisions and face new competition each year, so the years sit side by side as a scrapbook, not a scoreboard. You also land in the new season with a short summary of what carried over and anything worth a second look — for example, confirming the carried-over fee due dates or re-collecting waivers for the new season.</p>
+          <p><strong>Set your division.</strong> Settings is also where you set your team&apos;s <strong>division</strong> (for example, &quot;U13 Tier 1&quot;); it shows on your team overview.</p>
+          <p>If your team is <strong>owned by a club or league</strong> (an organization adopted it), your club admin manages seasons and division for you — you&apos;ll see those as read-only.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-start-next-season',
+          question: 'How do I start a new season without an admin?',
+          answerText: 'On a standalone Premium team, the head coach can do it directly: open Settings and choose Start next season. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only history under Insights in the Season menu (this page was called Season Review). If your team is owned by a club or league, the club admin starts seasons for you.',
+          keywords: ['start new season', 'next season', 'no admin', 'rollover', 'head coach'],
+          popular: true,
+          answer: (
+            <p>On a standalone Premium team, the <strong>head coach</strong> can do it directly: open <strong>Settings</strong> and choose <strong>Start next season</strong>. Your active roster carries forward, you can optionally bring over your fee plan and planned budget, the schedule starts fresh, and last season moves to read-only history under <strong>Insights</strong> (in the <strong>Season</strong> menu). If your team is owned by a club or league, the club admin starts seasons for you.</p>
+          ),
+        },
+        {
+          id: 'faq-season-review-comparison',
+          question: 'How do I see if my team is improving year over year?',
+          answerText: "Open Insights (in the Season menu). The scoreboard across the top shows the honest ways to read this season: your record, recent form, streak, run difference, and your record in one-run games. On purpose, Insights does NOT compare seasons against each other — youth teams move up divisions and face different competition each year, so a 'better or worse than last year' arrow would mislead more than it tells. Your past seasons are still kept: open 'How are we doing?' to see every year's record, roster size and (with money access) dues and expenses as a plain archive — a scrapbook, not a scoreboard.",
+          keywords: ['improving', 'better than last year', 'this season vs last', 'season comparison', 'winning percentage', 'trend', 'year over year', 'season review', 'insights', 'scoreboard', 'close games', 'form', 'streak', 'past seasons'],
+          answer: (
+            <>
               <p>Open <strong>Insights</strong> (in the <strong>Season</strong> menu). The <strong>scoreboard</strong> across the top shows the honest ways to read this season: your record, recent form, streak, run difference, and your record in <strong>one-run games</strong>.</p>
               <p>On purpose, Insights <strong>doesn&apos;t compare seasons against each other</strong> — youth teams move up divisions and face different competition each year, so a &ldquo;better or worse than last year&rdquo; arrow would mislead more than it tells. Your past seasons are still kept: open <strong>&ldquo;How are we doing?&rdquo;</strong> to see every year&apos;s record as a plain archive — a scrapbook, not a scoreboard.</p>
             </>

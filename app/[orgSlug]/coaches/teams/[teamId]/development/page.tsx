@@ -11,7 +11,7 @@ import HelpButton from '@/components/help/HelpButton';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import TestTypesManager from '@/components/coaches/TestTypesManager';
 import { todayLocal } from '@/lib/measurable-format';
-import { canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { canManageSchedule, canViewDevelopmentGoals, canViewMeasurables, canWriteDevelopment } from '@/lib/coach-capabilities';
 import styles from '../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType } from '@/lib/types';
 
@@ -289,6 +289,38 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   const boardEmpty = coverage !== null && coverage.withFocus === 0 && coverage.withMeasurable === 0;
   const reportEmpty = coverage !== null && coverage.withMeasurable === 0;
 
+  /**
+   * The drill library — a REAL room (D15), unlike the practice-plan pointer at the foot of this
+   * page. A library is browsed, searched and read back, which is a different animal from the plan
+   * editor D1 correctly kept off Development. Still no new top-level nav.
+   *
+   * ⚠ **HIDDEN IN A COMPLETED SEASON** (owner ruling 2026-08-01 — the archive-is-opt-in rule applied
+   * to this feature's second door). A drill library is a reusable INSTRUMENT, not a record of a
+   * season, so it gets no archive door; the route behind it resolves the live context and cannot
+   * serve a past season, so showing the door here would dead-end — the politer face of a 404.
+   *
+   * A coach loses nothing by this: a team is PERMANENT and only its program year turns over, so its
+   * drills carry across seasons on their own, and what genuinely was season-locked (past PLANS) is
+   * reachable from inside the room via "Add from a past season". Hiding the entry point is exactly
+   * the close-out slice 1b used for the practice plan itself (§11.1).
+   */
+  /*
+   * ⚠ Also gated on `schedule`, not just on the season. A drill is practice content, so its API
+   * reads ride `schedule` — and this page is reachable by an assistant granted `notes` alone, who
+   * would otherwise be shown a door that answers "you do not have access to the schedule". A link
+   * that dead-ends is the same bug wearing a politer face (CLAUDE.md), whether the wall is a
+   * finished season or a missing grant.
+   */
+  const drillsDoor = page.isReadOnly || !caps || !canManageSchedule(caps) ? null : (
+    <Link href={`${base}/development/drills`} className={styles.insightsDoor}>
+      <span className={styles.insightsDoorQ}>Your drills<span aria-hidden>→</span></span>
+      <span className={styles.insightsDoorSum}>
+        Write a drill once — the setup, what you&apos;re watching for, the coaching points — and
+        adding it to a practice becomes four taps.
+      </span>
+    </Link>
+  );
+
   const doorsStrip = (
     <div key="doors" className={styles.insightsDoors}>
       <Link href={`${base}/development/board`} className={`${styles.insightsDoor} ${boardEmpty ? styles.insightsDoorSoft : ''}`}>
@@ -314,6 +346,8 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
             : 'The coverage report in Insights — one row per player: active focus, last evaluation, history linked.'}
         </span>
       </Link>
+
+      {drillsDoor}
     </div>
   );
 
@@ -348,6 +382,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       <Link href={`${base}/schedule`} className={styles.devTailLink}>Schedule →</Link>
     </p>
   );
+
 
   /* The keys here are load-bearing, not decoration. Without them React reconciles these
      siblings POSITIONALLY across the firstRun flip, so adding the first test tore down and

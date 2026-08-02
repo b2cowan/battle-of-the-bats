@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, type ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import type { PracticePlanBlock, PracticeStation, RotationGrid } from '@/lib/rep-practice-plan';
+import { resolveStationTeaching, type PracticePlanBlock, type PracticeStation, type RotationGrid } from '@/lib/rep-practice-plan';
 import styles from '../../../coaches.module.css';
 
 /**
@@ -16,11 +16,12 @@ import styles from '../../../coaches.module.css';
  * ⚠ READ-ONLY, like every other inch of the run (D4). There is no tick, no "we did this", no note
  * typed at the field. The screen moves; nothing is recorded.
  *
- * ⚠ WHERE EACH LINE COMES FROM (D27). Slice 1a puts the *teaching* on the block (description and
- * goal) and the *station* holds its own coaching points, setup and tonight's note — so "what you're
- * doing" and "what you're watching for" read from the block. That is the seam Phase 2's drill
- * library lifts out; it is not a shortcut, and it must not be papered over by adding a second
- * description field to the station.
+ * ⚠ WHERE EACH LINE COMES FROM (D27) — UPDATED IN PHASE 2. A station now carries its own
+ * `description` and `goal`, because that is what a library drill supplies. This screen therefore
+ * reads the STATION's words when it has them and FALLS BACK to the block's when it doesn't, via the
+ * shared `resolveStationTeaching`. **Fall back, never replace, and never migrate:** every plan
+ * written before the drill library existed has block-level teaching and no station-level teaching,
+ * and it must keep reading correctly for ever.
  */
 
 type Props = {
@@ -137,7 +138,9 @@ function everyoneHasBeenThrough({ station, block, grid }: StationFacts): boolean
 export default function PracticeStationView(props: Props) {
   const { station, stationIndex, block, rotating, round, grid, isMine, clock, clockOver, nameOf } = props;
   const name = station.name.trim() || `Station ${stationIndex + 1}`;
-  const points = station.coachingPoints?.length ? station.coachingPoints : block.coachingPoints ?? [];
+  // ONE resolver, shared with the run screen's block view and the printed sheet, so the three can
+  // never disagree about what this station is teaching.
+  const { description, goal, coachingPoints: points } = resolveStationTeaching(station, block);
 
   /**
    * ⚠ Memoised against the ROUND, not the clock. `clock` changes once a second for the whole time
@@ -163,9 +166,7 @@ export default function PracticeStationView(props: Props) {
       </div>
 
       <p className={styles.ppStEyebrow}>{isMine ? 'You’re running' : 'Station'}</p>
-      <h1 className={styles.ppStName}>
-        {name}{station.count ? ` ×${station.count}` : ''}
-      </h1>
+      <h1 className={styles.ppStName}>{name}</h1>
 
       {/* The three facts a station coach needs, at the top, in this order. */}
       {here && (
@@ -183,18 +184,20 @@ export default function PracticeStationView(props: Props) {
         </div>
       )}
 
-      {block.description && (
+      {description && (
         <div className={styles.ppStBlock}>
           <p className={styles.ppStLbl}>What you’re doing</p>
-          <p className={styles.ppStTxt}>{block.description}</p>
+          <p className={styles.ppStTxt}>{description}</p>
         </div>
       )}
 
-      {/* The direct answer to "what am I watching for" — the reason this screen exists. */}
-      {block.goal && (
+      {/* The direct answer to "what am I watching for" — the reason this screen exists. From
+          Phase 2 this rides the DRILL, so it is written once and read by whoever is standing at
+          the station, which is the whole payoff for typing it into the library. */}
+      {goal && (
         <div className={styles.ppStBlock}>
           <p className={styles.ppStLbl}>What you’re watching for</p>
-          <p className={styles.ppStTxt} style={{ fontWeight: 700 }}>{block.goal}</p>
+          <p className={styles.ppStTxt} style={{ fontWeight: 700 }}>{goal}</p>
         </div>
       )}
 

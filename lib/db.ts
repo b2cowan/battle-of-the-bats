@@ -5,7 +5,7 @@ import { createClient as createBrowserSupabaseClient } from './supabase-browser'
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
@@ -6826,6 +6826,8 @@ function mapRepPlayerDevelopmentGoal(r: any): RepPlayerDevelopmentGoal {
     focusArea: r.focus_area,
     note: r.note ?? null,
     status: r.status as RepDevelopmentGoalStatus,
+    // Optional and coach-typed (D16, mig 218). NULL renders at FULL strength in the focus rail.
+    category: r.category ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
@@ -6845,7 +6847,8 @@ export async function getRepPlayerDevelopmentGoalsForPlayer(playerId: string): P
 
 export async function createRepPlayerDevelopmentGoal(fields: {
   orgId: string; teamId: string; playerId: string; focusArea: string;
-  note?: string | null; status?: RepDevelopmentGoalStatus; createdBy?: string | null;
+  note?: string | null; status?: RepDevelopmentGoalStatus; category?: string | null;
+  createdBy?: string | null;
 }): Promise<RepPlayerDevelopmentGoal> {
   const { data, error } = await supabaseAdmin
     .from('rep_player_development_goals')
@@ -6856,6 +6859,7 @@ export async function createRepPlayerDevelopmentGoal(fields: {
       focus_area: fields.focusArea.trim(),
       note: fields.note?.trim() || null,
       status: fields.status ?? 'working',
+      category: fields.category?.trim() || null,
       created_by: fields.createdBy ?? null,
     })
     .select()
@@ -6869,12 +6873,17 @@ export async function createRepPlayerDevelopmentGoal(fields: {
  *  callers never need a separate ownership pre-fetch. */
 export async function updateRepPlayerDevelopmentGoal(
   id: string, teamId: string, playerId: string,
-  fields: { focusArea?: string; note?: string | null; status?: RepDevelopmentGoalStatus },
+  fields: {
+    focusArea?: string; note?: string | null; status?: RepDevelopmentGoalStatus;
+    category?: string | null;
+  },
 ): Promise<RepPlayerDevelopmentGoal | null> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.focusArea !== undefined) patch.focus_area = fields.focusArea.trim();
   if (fields.note !== undefined) patch.note = fields.note?.trim() || null;
   if (fields.status !== undefined) patch.status = fields.status;
+  // Explicit null clears it back to "the coach hasn't said" — which the rail shows at full strength.
+  if (fields.category !== undefined) patch.category = fields.category?.trim() || null;
   const { data, error } = await supabaseAdmin
     .from('rep_player_development_goals')
     .update(patch)
@@ -6885,6 +6894,187 @@ export async function updateRepPlayerDevelopmentGoal(
     .maybeSingle();
   if (error) throw error;
   return data ? mapRepPlayerDevelopmentGoal(data) : null;
+}
+
+// ── The drill library (Practice Plans Phase 2 — migration 218) ──
+//
+// ONE table holds two things (owner ruling 2026-08-01, "both now"):
+//   · team_id SET  → a team's own private drill.
+//   · team_id NULL → an ORG-AUTHORED shared drill, offered to every team in the club.
+// The mig-184 shape (shared tags / shared award types), adopted up front rather than retro-fitted.
+//
+// ⚠ Never hard-deleted anywhere below — "retire" is `is_active = false`, which is what keeps every
+// practice plan the drill already sits in working untouched.
+
+function mapRepTeamDrill(r: any): RepTeamDrill {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    // NULL is meaningful here, not missing: it IS the org-shared marker.
+    teamId: r.team_id ?? null,
+    name: r.name,
+    category: r.category ?? null,
+    usualMinutes: r.usual_minutes ?? null,
+    description: r.description ?? null,
+    goal: r.goal ?? null,
+    // Stored as jsonb arrays; a hand-rolled row could hold something else, so both are coerced
+    // rather than trusted — every reader treats these as plain string lists.
+    coachingPoints: Array.isArray(r.coaching_points) ? r.coaching_points.filter((p: unknown) => typeof p === 'string') : [],
+    setup: r.setup ?? null,
+    equipment: Array.isArray(r.equipment) ? r.equipment.filter((e: unknown) => typeof e === 'string') : [],
+    isActive: r.is_active,
+    sortOrder: r.sort_order,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/**
+ * Every drill a team's coach may pick from: the team's own PLUS the org's shared set, in one read.
+ *
+ * ⚠ Deliberately one query rather than two — the picker shows a single list, and fetching the two
+ * halves separately invited them to disagree about `includeRetired` (the club's retired drills
+ * quietly leaking into a coach's picker is exactly the bug that shape produces).
+ */
+export async function getDrillsForTeam(
+  orgId: string, teamId: string, opts?: { includeRetired?: boolean },
+): Promise<RepTeamDrill[]> {
+  /**
+   * ⚠ `.or()` takes a STRING that PostgREST parses as filter syntax, so an id containing a comma
+   * or a dot would not be escaped — it would be read as more filter. Every caller today proves the
+   * team id against the viewer's coaching assignments first, so nothing hostile can reach here;
+   * this guard is so that stays true even if a future caller forgets. Refused at the source rather
+   * than trusted from outside, because the failure mode (reading another team's drills inside the
+   * same org) is silent.
+   */
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(teamId)) {
+    throw new Error('getDrillsForTeam: teamId must be a uuid');
+  }
+  let q = supabaseAdmin
+    .from('rep_team_drills')
+    .select('*')
+    .eq('org_id', orgId)
+    .or(`team_id.eq.${teamId},team_id.is.null`);
+  if (!opts?.includeRetired) q = q.eq('is_active', true);
+  const { data, error } = await q.order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamDrill);
+}
+
+/** The org's shared set alone — what the admin shared-library screen manages. */
+export async function getOrgSharedDrills(
+  orgId: string, opts?: { includeRetired?: boolean },
+): Promise<RepTeamDrill[]> {
+  let q = supabaseAdmin.from('rep_team_drills').select('*').eq('org_id', orgId).is('team_id', null);
+  if (!opts?.includeRetired) q = q.eq('is_active', true);
+  const { data, error } = await q.order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamDrill);
+}
+
+type DrillWriteFields = {
+  name: string;
+  category?: string | null;
+  usualMinutes?: number | null;
+  description?: string | null;
+  goal?: string | null;
+  coachingPoints?: string[] | null;
+  setup?: string | null;
+  equipment?: string[] | null;
+};
+
+function drillWritePatch(fields: Partial<DrillWriteFields>): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.category !== undefined) patch.category = fields.category?.trim() || null;
+  if (fields.usualMinutes !== undefined) patch.usual_minutes = fields.usualMinutes ?? null;
+  if (fields.description !== undefined) patch.description = fields.description?.trim() || null;
+  if (fields.goal !== undefined) patch.goal = fields.goal?.trim() || null;
+  if (fields.coachingPoints !== undefined) patch.coaching_points = fields.coachingPoints ?? [];
+  if (fields.setup !== undefined) patch.setup = fields.setup?.trim() || null;
+  if (fields.equipment !== undefined) patch.equipment = fields.equipment ?? [];
+  return patch;
+}
+
+/** Create a drill. `teamId: null` mints an ORG-SHARED one — only the admin route ever passes that. */
+export async function createRepTeamDrill(fields: DrillWriteFields & {
+  orgId: string; teamId: string | null; createdBy?: string | null;
+}): Promise<RepTeamDrill> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_drills')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      ...drillWritePatch(fields),
+      created_by: fields.createdBy ?? null,
+    })
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamDrill(data);
+}
+
+/**
+ * Scoped update — rename, re-categorise, retire or restore.
+ *
+ * ⚠ `teamId` scopes the write IN THE QUERY. Passing `null` targets the org's shared set and
+ * therefore requires `orgId` too, so an admin of one org can never reach another's shared drill,
+ * and a coach's route (which always passes a real team id) can never touch a shared row at all.
+ */
+export async function updateRepTeamDrill(
+  id: string,
+  scope: { orgId: string; teamId: string | null },
+  fields: Partial<DrillWriteFields> & { isActive?: boolean },
+): Promise<RepTeamDrill | null> {
+  const patch: Record<string, unknown> = {
+    ...drillWritePatch(fields),
+    updated_at: new Date().toISOString(),
+  };
+  if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+
+  let q = supabaseAdmin.from('rep_team_drills').update(patch).eq('id', id).eq('org_id', scope.orgId);
+  q = scope.teamId === null ? q.is('team_id', null) : q.eq('team_id', scope.teamId);
+  const { data, error } = await q.select().maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamDrill(data) : null;
+}
+
+/**
+ * Every practice plan this team has ever written, ACROSS SEASONS, newest first.
+ *
+ * ⚠ **This is the one deliberate cross-season read in the whole feature** (owner ruling
+ * 2026-08-01). It exists for two jobs, both of which are reads of the team's own records feeding a
+ * live-season instrument, and neither of which writes anything into a finished season:
+ *   1. **"used 8x"** — counting how often a drill has actually been picked.
+ *   2. **"Add drills from a past season"** — the import that turns a coach's own history into
+ *      their starting library instead of a blank screen.
+ *
+ * Team-scoped rather than season-scoped precisely because a team is PERMANENT and only its program
+ * year turns over — which is also why a team's drill library needs no import to survive a season
+ * rollover, and why what actually needed rescuing was the plans.
+ *
+ * Capped, like `getRepTeamEventsWithPracticePlans`: an unbounded read grows with every practice a
+ * team has ever run.
+ */
+export async function getRepTeamPracticePlansAcrossSeasons(
+  teamId: string, opts?: { limit?: number },
+): Promise<{ eventId: string; name: string; startsAt: string | null; programYearId: string | null; plan: PracticePlan | null }[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('id, name, starts_at, program_year_id, practice_plan')
+    .eq('team_id', teamId)
+    .not('practice_plan', 'is', null)
+    .order('starts_at', { ascending: false })
+    .limit(opts?.limit ?? 400);
+  if (error) throw error;
+  return (data ?? []).map(r => ({
+    eventId: r.id,
+    name: r.name,
+    startsAt: r.starts_at ?? null,
+    programYearId: r.program_year_id ?? null,
+    plan: parsePracticePlan(r.practice_plan),
+  }));
 }
 
 // ── Evaluation Sessions (slice 3B — migration 190) ──

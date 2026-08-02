@@ -183,8 +183,13 @@ function sanitizeStation(v: unknown, index: number): PracticeStation | null {
   if (!isRowLike(v)) return null;
   const raw = v;
   const station: PracticeStation = { id: id(raw.id, `s${index}`), name: str(raw.name, MAX_TITLE_LEN) };
-  const count = posInt(raw.count, 99);
-  if (count != null) station.count = count;
+  // ⚠ A legacy `count` is deliberately DROPPED, not carried (owner ruling 2026-08-01). It read as
+  // "how many times" or "how long", and a coach wanting three of something adds the drill three
+  // times or says so in `note`. Any 1a value simply stops being stored on the next save.
+  const description = optionalStr(raw.description, MAX_TEXT_LEN);
+  if (description) station.description = description;
+  const goal = optionalStr(raw.goal, MAX_TEXT_LEN);
+  if (goal) station.goal = goal;
   const equipment = tagList(raw.equipment, MAX_TAGS_PER_ITEM, MAX_TITLE_LEN);
   if (equipment) station.equipment = equipment;
   const setup = optionalStr(raw.setup, MAX_TEXT_LEN);
@@ -199,9 +204,41 @@ function sanitizeStation(v: unknown, index: number): PracticeStation | null {
   if (rotationNote) station.rotationNote = rotationNote;
   const note = optionalStr(raw.note, MAX_TEXT_LEN);
   if (note) station.note = note;
+  // Provenance only — nothing renders from these (see PracticeStation.drillId). Kept opaque and
+  // capped like any other client-supplied id.
+  const drillId = optionalStr(raw.drillId, 64);
+  if (drillId) station.drillId = drillId;
+  const drillCategory = optionalStr(raw.drillCategory, MAX_TITLE_LEN);
+  if (drillCategory) station.drillCategory = drillCategory;
   // Kept even when nothing has been typed yet — the coach pressed "Add a station", and autosave
   // must not delete what they are in the middle of creating. See isRowLike.
   return station;
+}
+
+/**
+ * What a station SAYS, resolving the drill half against the block's (Phase 2).
+ *
+ * ⚠ **FALL BACK, NEVER REPLACE, AND NEVER MIGRATE.** Slice 1a put the teaching on the BLOCK, so
+ * every plan written before the drill library existed has block-level `description`/`goal` and no
+ * station-level anything. Those plans must keep reading correctly for ever — there is no "convert
+ * my old plans" story and none is wanted. A station's own words win when it has them; otherwise
+ * the block's are used exactly as they were before.
+ *
+ * ONE resolver, shared by "My station", the run screen's block view and the printed sheet, so the
+ * three surfaces can never drift apart on what a station is teaching — the same discipline
+ * `blockRotates` and `computeBlockClocks` already enforce elsewhere in this module.
+ */
+export function resolveStationTeaching(
+  station: Pick<PracticeStation, 'description' | 'goal' | 'coachingPoints'>,
+  block: Pick<PracticePlanBlock, 'description' | 'goal' | 'coachingPoints'>,
+): { description?: string; goal?: string; coachingPoints: string[] } {
+  return {
+    description: station.description ?? block.description,
+    goal: station.goal ?? block.goal,
+    // Length-checked, not presence-checked: an empty array on the station must not blank out the
+    // block's points, which is what a plain `??` would do.
+    coachingPoints: station.coachingPoints?.length ? station.coachingPoints : block.coachingPoints ?? [],
+  };
 }
 
 const GROUP_SOURCES: PracticeGroupSource[] = ['manual', 'random', 'previous'];

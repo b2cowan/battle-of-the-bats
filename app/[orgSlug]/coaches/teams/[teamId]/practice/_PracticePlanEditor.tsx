@@ -1,7 +1,7 @@
 'use client';
 import { useId, useMemo, useState } from 'react';
 import {
-  ChevronDown, ChevronUp, Plus, Repeat, Shuffle, Trash2, Users, X,
+  ChevronDown, ChevronUp, Library, Pencil, Plus, Repeat, Shuffle, Trash2, Users, X,
 } from 'lucide-react';
 import {
   MAX_BLOCKS, MAX_COACHING_POINTS, MAX_GROUPS, MAX_SHORT_TEXT_LEN, MAX_STAFF_PER_ITEM,
@@ -11,6 +11,11 @@ import {
   type BlockClock, type DrawMode, type PracticeGroup, type PracticePlan, type PracticePlanBlock,
   type PracticeRotation, type PracticeStation,
 } from '@/lib/rep-practice-plan';
+import {
+  MAX_DRILL_CATEGORY_LEN, UNCATEGORISED_FILTER, collectDrillCategories, detachStationFromDrill,
+  drillToStation, filterDrills, sortDrillsForPicker, stationToDrillInput,
+  type DrillInput, type RepTeamDrill,
+} from '@/lib/rep-drills';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepAttendanceStatus, RepDevelopmentGoalStatus } from '@/lib/types';
@@ -42,6 +47,11 @@ export type PracticeFocusGoal = {
   playerId: string;
   focusArea: string;
   status: RepDevelopmentGoalStatus;
+  /**
+   * Optional, coach-typed (D16). ⚠ Used ONLY to soften a chip that doesn't match tonight — never
+   * to hide a row, never to reorder one, and a null category always reads as relevant.
+   */
+  category: string | null;
 };
 
 type AttachTarget =
@@ -139,13 +149,21 @@ function TagChips({
   );
 }
 
+/**
+ * ⚠ The label is "Coaching points", NOT "What to watch for" (owner ruling 2026-08-01).
+ *
+ * The old label collided with the field screen's "What you're watching for", which is the GOAL —
+ * two different fields with near-identical names, one screen apart. One name per idea: the goal is
+ * "what you're watching for" everywhere, and this numbered list is "Coaching points" everywhere,
+ * which is already what the run screen, the drill record and the plan doc call it.
+ */
 function CoachingPoints({
   points, readOnly, onSet,
 }: { points?: string[]; readOnly: boolean; onSet: (next: string[]) => void }) {
   const current = points ?? [];
   return (
     <div className={styles.ppField}>
-      <FieldLabel>What to watch for</FieldLabel>
+      <FieldLabel>Coaching points</FieldLabel>
       {current.map((point, i) => (
         <div key={i} className={styles.ppPointRow}>
           <span className={styles.ppPointNum}>{i + 1}</span>
@@ -180,9 +198,63 @@ function PlayerPickerButton({
 
 // ── Station ──────────────────────────────────────────────────────────────────
 
+/**
+ * The DRILL half of a station, rendered as TEXT rather than as disabled inputs.
+ *
+ * ⚠ **Read-only is the point, not a limitation** (owner ruling 2026-08-01): *"if I load a drill and
+ * completely change everything about it, then I didn't run the same drill."* A drill is an IDENTITY
+ * CLAIM, so "used 8x" has to mean eight of the same thing — and locking these fields is what makes
+ * that count real data rather than noise.
+ *
+ * Text, not greyed-out boxes: a stack of disabled inputs reads as broken on a phone, and rendering
+ * the words plainly makes a drill-backed station visibly a different shape from one a coach typed —
+ * shorter, more readable, and honestly distinguishable at a glance.
+ */
+function DrillFacts({ station }: { station: PracticeStation }) {
+  const { description, goal, coachingPoints, setup, equipment } = station;
+  return (
+    <>
+      {description && (
+        <div className={styles.ppField}>
+          <FieldLabel>What you&apos;re doing</FieldLabel>
+          <p className={styles.ppReadTxt}>{description}</p>
+        </div>
+      )}
+      {goal && (
+        <div className={styles.ppField}>
+          <FieldLabel>What you&apos;re watching for</FieldLabel>
+          <p className={styles.ppReadTxt}>{goal}</p>
+        </div>
+      )}
+      {coachingPoints?.length ? (
+        <div className={styles.ppField}>
+          <FieldLabel>Coaching points</FieldLabel>
+          <ol className={styles.ppReadPoints}>
+            {coachingPoints.map((point, i) => <li key={i}>{point}</li>)}
+          </ol>
+        </div>
+      ) : null}
+      {setup && (
+        <div className={styles.ppField}>
+          <FieldLabel>Setup</FieldLabel>
+          <p className={styles.ppReadTxt}>{setup}</p>
+        </div>
+      )}
+      {equipment?.length ? (
+        <div className={styles.ppFieldRow}>
+          <FieldLabel>Equipment</FieldLabel>
+          <div className={styles.ppChipWrap}>
+            {equipment.map(e => <span key={e} className={styles.ppChip}>{e}</span>)}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function StationCard({
   station, index, isRotation, startingGroups, readOnly, staffSuggestions, equipmentSuggestions,
-  nameOf, onPatch, onRemove, onOpenPicker,
+  nameOf, onPatch, onRemove, onOpenPicker, onDetach, onSwapDrill, onPromote,
 }: {
   station: PracticeStation;
   index: number;
@@ -196,18 +268,30 @@ function StationCard({
   onPatch: (patch: Partial<PracticeStation>) => void;
   onRemove: () => void;
   onOpenPicker: () => void;
+  /** "Edit just for this practice" — keeps every word, drops the drill identity. */
+  onDetach: () => void;
+  onSwapDrill: () => void;
+  /** "Save to my drills…" — offered only on a station the coach typed themselves (D18). */
+  onPromote?: () => void;
 }) {
+  // Two DIFFERENT kinds of not-editable, deliberately never conflated:
+  //   readOnly  → this viewer may not write the plan at all (an assistant).
+  //   fromDrill → the drill's own words are locked because it is still that drill.
+  // They never compose: the drill half is rendered as TEXT when `fromDrill`, so the editable
+  // branch below is reached only when it is false and `readOnly` is the whole answer there.
+  const fromDrill = !!station.drillId;
+
   return (
     <div className={styles.ppStation}>
       <div className={styles.ppStationHead}>
         <span className={styles.ppStationNum}>{index + 1}</span>
-        <input className={`${styles.input} ${styles.ppStationName}`} value={station.name} disabled={readOnly}
-          maxLength={MAX_TITLE_LEN} placeholder="Station name"
-          aria-label={`Station ${index + 1} name`} onChange={e => onPatch({ name: e.target.value })} />
-        <input className={`${styles.input} ${styles.ppCount}`} type="number" min={1} max={99} inputMode="numeric"
-          disabled={readOnly} value={station.count ?? ''} placeholder="#"
-          aria-label={`How many of station ${index + 1}`}
-          onChange={e => onPatch({ count: e.target.value ? Number(e.target.value) : null })} />
+        {fromDrill ? (
+          <span className={styles.ppStationNameRead}>{station.name}</span>
+        ) : (
+          <input className={`${styles.input} ${styles.ppStationName}`} value={station.name} disabled={readOnly}
+            maxLength={MAX_TITLE_LEN} placeholder="Station name"
+            aria-label={`Station ${index + 1} name`} onChange={e => onPatch({ name: e.target.value })} />
+        )}
         {!readOnly && (
           <button type="button" className={styles.ppIconBtn} aria-label={`Remove station ${index + 1}`}
             onClick={onRemove}><Trash2 size={14} /></button>
@@ -215,15 +299,56 @@ function StationCard({
       </div>
 
       <div className={styles.ppStationBody}>
-        <label className={styles.ppField}>
-          <FieldLabel>Setup</FieldLabel>
-          <textarea className={styles.textarea} rows={2} value={station.setup ?? ''} disabled={readOnly}
-            maxLength={MAX_TEXT_LEN}
-            placeholder="How it's laid out — where things go, and how far apart"
-            onChange={e => onPatch({ setup: e.target.value })} />
-        </label>
-        <TagChips label="Equipment" values={station.equipment} suggestions={equipmentSuggestions}
-          readOnly={readOnly} onSet={next => onPatch({ equipment: next })} placeholder="Add kit…" />
+        {fromDrill ? (
+          <>
+            {/* Quiet, and it STAYS for the life of the station — it records where this came from,
+                which remains true however the practice goes. Nothing renders from the drill row
+                itself, so there is no "edited" state to track. */}
+            <p className={styles.ppFromDrill}>
+              <Library size={12} aria-hidden /> From your drills
+              {station.drillCategory ? ` · ${station.drillCategory}` : ''}
+            </p>
+            <DrillFacts station={station} />
+            {!readOnly && (
+              <div className={styles.ppDrillActions}>
+                {/* ⚠ Detaching is the HONEST act, not a workaround. It keeps every word and hands
+                    the coach full editing without leaving the plan at 9pm — and the count stays
+                    truthful precisely BECAUSE the edit breaks the link. */}
+                <button type="button" className={styles.ppAddInline} onClick={onDetach}>
+                  <Pencil size={12} aria-hidden /> Edit just for this practice
+                </button>
+                <button type="button" className={styles.ppAddInline} onClick={onSwapDrill}>
+                  <Repeat size={12} aria-hidden /> Swap drill
+                </button>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <label className={styles.ppField}>
+              <FieldLabel>What you&apos;re doing</FieldLabel>
+              <textarea className={styles.textarea} rows={2} value={station.description ?? ''} disabled={readOnly}
+                maxLength={MAX_TEXT_LEN}
+                placeholder="What happens at this station"
+                onChange={e => onPatch({ description: e.target.value })} />
+            </label>
+            <label className={styles.ppField}>
+              <FieldLabel>What you&apos;re watching for</FieldLabel>
+              <input className={styles.input} value={station.goal ?? ''} disabled={readOnly}
+                maxLength={MAX_TEXT_LEN} placeholder="What good looks like here"
+                onChange={e => onPatch({ goal: e.target.value })} />
+            </label>
+            <label className={styles.ppField}>
+              <FieldLabel>Setup</FieldLabel>
+              <textarea className={styles.textarea} rows={2} value={station.setup ?? ''} disabled={readOnly}
+                maxLength={MAX_TEXT_LEN}
+                placeholder="How it's laid out — where things go, and how far apart"
+                onChange={e => onPatch({ setup: e.target.value })} />
+            </label>
+            <TagChips label="Equipment" values={station.equipment} suggestions={equipmentSuggestions}
+              readOnly={readOnly} onSet={next => onPatch({ equipment: next })} placeholder="Add kit…" />
+          </>
+        )}
 
         <TagChips label="Who runs it" values={station.staff} suggestions={staffSuggestions}
           readOnly={readOnly} onSet={next => onPatch({ staff: next })} placeholder="Add a name…"
@@ -258,9 +383,15 @@ function StationCard({
           </div>
         )}
 
-        <CoachingPoints points={station.coachingPoints} readOnly={readOnly}
-          onSet={next => onPatch({ coachingPoints: next })} />
+        {/* Rendered above by DrillFacts when this station came from one. */}
+        {!fromDrill && (
+          <CoachingPoints points={station.coachingPoints} readOnly={readOnly}
+            onSet={next => onPatch({ coachingPoints: next })} />
+        )}
 
+        {/* ⚠ ALWAYS editable, even on a drill-backed station — this is the one field that must
+            never travel back to the library, so it is also the one that must never be locked. It
+            absorbs most "one word different tonight" cases with no detaching at all. */}
         <label className={styles.ppField}>
           <FieldLabel>Just for tonight</FieldLabel>
           <input className={styles.input} value={station.note ?? ''} disabled={readOnly} maxLength={MAX_TEXT_LEN}
@@ -274,6 +405,18 @@ function StationCard({
               maxLength={MAX_SHORT_TEXT_LEN} placeholder="Informal — e.g. swap halfway"
               onChange={e => onPatch({ rotationNote: e.target.value })} />
           </label>
+        )}
+
+        {/* D18 — explicit promotion, never automatic. Offered only on a station the coach wrote
+            themselves, and only once it has a name worth saving: auto-saving every station fills
+            the library with five near-identical "Warm-up" rows in a season and makes the picker
+            slower than typing. */}
+        {!readOnly && !fromDrill && onPromote && station.name.trim() && (
+          <div className={styles.ppDrillActions}>
+            <button type="button" className={styles.ppAddInline} onClick={onPromote}>
+              <Library size={12} aria-hidden /> Save to my drills…
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -441,10 +584,211 @@ function RotationPanel({
 
 // ── Block ────────────────────────────────────────────────────────────────────
 
+// ── The drill picker (Phase 2) ────────────────────────────────────────────────
+
+/**
+ * "From your drills" / "Write one" — the sheet that turns authoring into four taps.
+ *
+ * ⚠ **Preview before adding earns its place BECAUSE the drill arrives read-only.** A coach cannot
+ * quietly fix the words afterwards (they would have to detach), so being able to read the whole
+ * thing before committing is the difference between four taps and an undo.
+ *
+ * ⚠ **"Write one" is byte-for-byte the old behaviour.** A coach who never touches the library
+ * loses nothing and is never nagged toward it — and on an EMPTY library this sheet opens straight
+ * onto "Write one", so a new coach never meets a blank list first.
+ */
+function DrillPickerSheet({
+  drills, title, writeLabel, onPick, onWriteOne, onClose,
+}: {
+  drills: RepTeamDrill[];
+  title: string;
+  writeLabel: string;
+  onPick: (drill: RepTeamDrill) => void;
+  onWriteOne: () => void;
+  onClose: () => void;
+}) {
+  const hasDrills = drills.length > 0;
+  const [tab, setTab] = useState<'drills' | 'write'>(hasDrills ? 'drills' : 'write');
+  const [query, setQuery] = useState('');
+  const [category, setCategory] = useState<string | null>(null);
+  const [previewId, setPreviewId] = useState<string | null>(null);
+
+  const categories = useMemo(() => collectDrillCategories(drills), [drills]);
+  // The SAME predicate the library room uses — one rule, so the two lists can't drift.
+  const shown = useMemo(
+    () => filterDrills(sortDrillsForPicker(drills), query, category),
+    [drills, query, category],
+  );
+
+  const preview = previewId ? drills.find(d => d.id === previewId) ?? null : null;
+
+  return (
+    <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label={title}
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={`${styles.modal} ${styles.modalScrollBody}`}>
+        <div className={styles.modalHeader}>
+          <h3 className={styles.modalTitle}>{title}</h3>
+          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+
+        {preview ? (
+          <div className={styles.ppDrillPreview}>
+            <p className={styles.ppFieldLabel}>Preview — nothing added yet</p>
+            <p className={styles.ppDrillPreviewName}>{preview.name}</p>
+            {preview.description && <p className={styles.ppReadTxt}><b>Doing:</b> {preview.description}</p>}
+            {preview.goal && <p className={styles.ppReadTxt}><b>Watching for:</b> {preview.goal}</p>}
+            {preview.coachingPoints.length > 0 && (
+              <ol className={styles.ppReadPoints}>
+                {preview.coachingPoints.map((p, i) => <li key={i}>{p}</li>)}
+              </ol>
+            )}
+            {preview.setup && <p className={styles.ppReadTxt}><b>Setup:</b> {preview.setup}</p>}
+            {preview.equipment.length > 0 && (
+              <p className={styles.ppReadTxt}><b>Equipment:</b> {preview.equipment.join(' · ')}</p>
+            )}
+            <div className={styles.modalFooter}>
+              <button type="button" className={styles.btnGhost} onClick={() => setPreviewId(null)}>Back</button>
+              <button type="button" className={styles.btnPrimary} onClick={() => onPick(preview)}>
+                Add to the practice
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className={styles.ppDrillTabs} role="tablist">
+              <button type="button" role="tab" aria-selected={tab === 'drills'} disabled={!hasDrills}
+                className={styles.ppDrillTab} data-on={tab === 'drills' ? 'on' : undefined}
+                onClick={() => setTab('drills')}>From your drills</button>
+              <button type="button" role="tab" aria-selected={tab === 'write'}
+                className={styles.ppDrillTab} data-on={tab === 'write' ? 'on' : undefined}
+                onClick={() => setTab('write')}>Write one</button>
+            </div>
+
+            {tab === 'write' ? (
+              <div className={styles.ppDrillWrite}>
+                <p className={styles.formHint}>
+                  {hasDrills
+                    ? 'Write it here and it stays with this practice. You can save it to your drills afterwards.'
+                    : 'You haven’t saved any drills yet. Write this one here — you can save it to your drills afterwards, and picking it next time takes four taps.'}
+                </p>
+                <button type="button" className={styles.btnPrimary} onClick={onWriteOne}>{writeLabel}</button>
+              </div>
+            ) : (
+              <>
+                <div className={styles.ppDrillFilters}>
+                  <input className={styles.input} value={query} onChange={e => setQuery(e.target.value)}
+                    placeholder="Search…" aria-label="Search drills" />
+                  <div className={styles.ppSuggestWrap}>
+                    <button type="button" className={styles.ppSuggestChip} data-on={category == null ? 'on' : undefined}
+                      onClick={() => setCategory(null)}>All</button>
+                    {categories.map(c => (
+                      <button key={c} type="button" className={styles.ppSuggestChip}
+                        data-on={category === c ? 'on' : undefined} onClick={() => setCategory(c)}>{c}</button>
+                    ))}
+                    {/* ⚠ Always offered when it applies, so a drill can never become unreachable
+                        simply by having no category. */}
+                    {drills.some(d => !d.category) && (
+                      <button type="button" className={styles.ppSuggestChip}
+                        data-on={category === UNCATEGORISED_FILTER ? 'on' : undefined}
+                        onClick={() => setCategory(UNCATEGORISED_FILTER)}>Uncategorised</button>
+                    )}
+                  </div>
+                </div>
+
+                <div className={styles.ppPickList}>
+                  {shown.length === 0 && <p className={styles.formHint}>No drills match that.</p>}
+                  {shown.map(drill => (
+                    <div key={drill.id} className={styles.ppDrillRow}>
+                      <div className={styles.ppDrillRowMain}>
+                        <span className={styles.ppDrillRowName}>
+                          {drill.name}
+                          {/* Shared club drills are marked and lead — a coach should meet the
+                              club's answer before their own variation. */}
+                          {drill.teamId === null && <span className={styles.ppSharedChip}>Club</span>}
+                        </span>
+                        <span className={styles.ppDrillRowMeta}>
+                          {[drill.category, drill.usualMinutes ? `${drill.usualMinutes} min` : null]
+                            .filter(Boolean).join(' · ')}
+                        </span>
+                      </div>
+                      <div className={styles.ppDrillRowActions}>
+                        <button type="button" className={styles.ppAddInline} onClick={() => setPreviewId(drill.id)}>
+                          Preview
+                        </button>
+                        <button type="button" className={styles.btnSecondary} onClick={() => onPick(drill)}>Add</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "Save to my drills…" (D18) — asks EXACTLY ONE question, and even that one is optional.
+ *
+ * Anything more and a coach mid-plan simply won't do it. The sentence names what does NOT travel,
+ * because that is the one thing that could surprise someone at this moment.
+ */
+function PromoteDrillDialog({
+  stationName, categories, busy, error, onSave, onClose,
+}: {
+  stationName: string;
+  categories: string[];
+  busy: boolean;
+  error: string;
+  onSave: (category: string) => void;
+  onClose: () => void;
+}) {
+  const [category, setCategory] = useState('');
+  const listId = useId();
+  return (
+    <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Save to my drills"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={styles.modal}>
+        <div className={styles.modalHeader}>
+          <h3 className={styles.modalTitle}>Save &ldquo;{stationName}&rdquo; to your drills</h3>
+          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className={styles.ppDrillWrite}>
+          <label className={styles.ppField}>
+            <FieldLabel>Category — one question, and it&apos;s optional</FieldLabel>
+            <input className={styles.input} value={category} list={listId} maxLength={MAX_DRILL_CATEGORY_LEN}
+              onChange={e => setCategory(e.target.value)}
+              placeholder="What kind of drill is it?" />
+            <datalist id={listId}>{categories.map(c => <option key={c} value={c} />)}</datalist>
+          </label>
+          <p className={styles.formHint}>
+            The setup, coaching points and equipment come with it. Who ran it and who was at it stay
+            with tonight&apos;s practice.
+          </p>
+          {error && <p className={styles.errorText}>{error}</p>}
+        </div>
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
+          <button type="button" className={styles.btnPrimary} disabled={busy} onClick={() => onSave(category)}>
+            {busy ? 'Saving…' : 'Save to my drills'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BlockCard({
   block, index, blockCount, clock, blockStartMs, collapsed, readOnly, restTakenElsewhere, drawPool, notReplied,
   showNotReplied, staffSuggestions, equipmentSuggestions, nameOf,
-  onToggleCollapse, onMove, onDelete, onPatch, onOpenPicker,
+  onToggleCollapse, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation, onSwapStation,
+  onPromoteStation,
 }: {
   block: PracticePlanBlock;
   index: number;
@@ -466,6 +810,11 @@ function BlockCard({
   onDelete: () => void;
   onPatch: (patch: Partial<PracticePlanBlock>) => void;
   onOpenPicker: (target: AttachTarget) => void;
+  /** Opens the drill sheet for this block. `swapStationId` replaces rather than appends. */
+  onAddStation: (swapStationId?: string) => void;
+  onDetachStation: (stationId: string) => void;
+  onSwapStation: (stationId: string) => void;
+  onPromoteStation: (stationId: string) => void;
 }) {
   const isOpen = !collapsed;
   const stationCount = block.stations?.length ?? 0;
@@ -614,9 +963,10 @@ function BlockCard({
                   <span>Groups rotate between them</span>
                 </label>
               )}
+              {/* ⚠ Adding a SECOND station is how a rotation gets made — the picker is therefore
+                  also the carousel builder, with no second kind of block anywhere in the model. */}
               {!readOnly && stations.length < MAX_STATIONS_PER_BLOCK && (
-                <button type="button" className={styles.ppAddInline}
-                  onClick={() => onPatch({ stations: [...stations, { id: newPracticePlanId(), name: '' }] })}>
+                <button type="button" className={styles.ppAddInline} onClick={() => onAddStation()}>
                   <Plus size={13} aria-hidden /> Add a station
                 </button>
               )}
@@ -635,6 +985,9 @@ function BlockCard({
                 onPatch={patch => patchStation(station.id, patch)}
                 onRemove={() => onPatch({ stations: stations.filter(s => s.id !== station.id) })}
                 onOpenPicker={() => onOpenPicker({ kind: 'station', blockId: block.id, stationId: station.id })}
+                onDetach={() => onDetachStation(station.id)}
+                onSwapDrill={() => onSwapStation(station.id)}
+                onPromote={() => onPromoteStation(station.id)}
               />
             ))}
           </div>
@@ -658,6 +1011,10 @@ interface Props {
   staffSuggestions: string[];
   equipmentSuggestions: string[];
   practiceTypeSuggestions: string[];
+  /** This team's own drills PLUS the club's shared set, already merged by the API. */
+  drills: RepTeamDrill[];
+  /** Saves a promoted station to the library (D18). Absent for a viewer who can't write drills. */
+  onCreateDrill?: (input: DrillInput) => Promise<{ ok: boolean; error?: string }>;
   eventStartsAt: string;
   eventEndsAt: string | null;
   readOnly: boolean;
@@ -665,13 +1022,28 @@ interface Props {
 
 export default function PracticePlanEditor({
   plan, onChange, roster, goals, canViewFocus, attendance, canViewAttendance,
-  staffSuggestions, equipmentSuggestions, practiceTypeSuggestions, eventStartsAt, eventEndsAt, readOnly,
+  staffSuggestions, equipmentSuggestions, practiceTypeSuggestions, drills, onCreateDrill,
+  eventStartsAt, eventEndsAt, readOnly,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
-  // Register with the shared overlay stack: hides the mobile bottom nav while the picker sheet is
-  // up (so a mis-tap can't land on a nav tab underneath it) and locks the page behind it.
-  useOverlayOpen(!!attach);
+  /**
+   * Which drill sheet is open, and what it will do with the pick.
+   *   · `{ kind: 'block' }`                → a new block whose single station is that drill
+   *   · `{ kind: 'station', blockId }`     → another station on an existing block
+   *   · `{ kind: 'station', …, swapId }`   → replace that station, keeping its position
+   */
+  const [drillSheet, setDrillSheet] = useState<
+    | { kind: 'block' }
+    | { kind: 'station'; blockId: string; swapId?: string }
+    | null
+  >(null);
+  const [promoting, setPromoting] = useState<{ blockId: string; stationId: string } | null>(null);
+  const [promoteBusy, setPromoteBusy] = useState(false);
+  const [promoteError, setPromoteError] = useState('');
+  // Register with the shared overlay stack: hides the mobile bottom nav while a sheet is up (so a
+  // mis-tap can't land on a nav tab underneath it) and locks the page behind it.
+  useOverlayOpen(!!attach || !!drillSheet || !!promoting);
 
   // Keyed on plan.blocks, NOT the whole plan: typing in "Tonight's goal" replaces the plan object
   // but changes no block, and re-running this would rebuild an Intl formatter per block per
@@ -697,6 +1069,49 @@ export default function PracticePlanEditor({
     }
     return map;
   }, [goals]);
+
+  /**
+   * What kind of practice this is — DERIVED from the drills in it (D16), unioned with whatever the
+   * coach typed under "Kind of practice".
+   *
+   * Derived rather than asked, which is the whole reason the drill library came before the plan
+   * library: a practice's type falls out of what is actually in it instead of being one more field
+   * to fill in on a couch. The typed tags stay because a coach may plan a whole practice without
+   * touching the library, and the rail must work for them too.
+   */
+  const { practiceCategories, derivedCategories } = useMemo(() => {
+    // ONE walk of the blocks, producing both answers: the derived list the rail SHOWS, and the
+    // lookup it MATCHES against (which also folds in whatever the coach typed by hand).
+    const derived: string[] = [];
+    const seen = new Map<string, string>();
+    const add = (v: string | null | undefined, isDerived: boolean) => {
+      const s = v?.trim();
+      if (!s) return;
+      const key = s.toLowerCase();
+      if (seen.has(key)) return;
+      seen.set(key, s);
+      if (isDerived) derived.push(s);
+    };
+    for (const block of plan.blocks) for (const s of block.stations ?? []) add(s.drillCategory, true);
+    for (const t of plan.practiceTypes ?? []) add(t, false);
+    return { practiceCategories: seen, derivedCategories: derived };
+  }, [plan.blocks, plan.practiceTypes]);
+
+  /**
+   * Does this focus area match what tonight is about?
+   *
+   * ⚠ **DIM, NEVER HIDE** (owner ruling, confirming D16 and §4). This returns false only to soften
+   * a chip — nothing anywhere removes a row. A player whose only focus areas are off-type must
+   * never vanish from a coverage list, because that is precisely the child most likely to be
+   * overlooked. And an UNCATEGORISED_FILTER area always reads as relevant: the product does not know that
+   * it isn't, so it must not imply that it isn't.
+   */
+  const focusMatches = (goal: PracticeFocusGoal): boolean => {
+    if (practiceCategories.size === 0) return true; // nothing to filter against yet
+    const c = goal.category?.trim().toLowerCase();
+    if (!c) return true;
+    return practiceCategories.has(c);
+  };
 
   const attendanceByPlayer = useMemo(
     () => new Map(attendance.map(a => [a.playerId, a.status])),
@@ -740,6 +1155,89 @@ export default function PracticePlanEditor({
       title: '',
       duration: { minutes: 15 },
     }]);
+  }
+
+  const drillCategories = useMemo(() => collectDrillCategories(drills), [drills]);
+
+  /**
+   * A picked drill becomes a BLOCK: the block takes the drill's name and usual length, and the
+   * drill itself becomes that block's single station.
+   *
+   * ⚠ This is "a drill is one activity — one station's worth" made literal. With one station
+   * `blockRotates` is false, so a single picked drill is simply a stretch of practice; adding a
+   * second drill to the same block is what turns it into a carousel.
+   */
+  function addBlockFromDrill(drill: RepTeamDrill) {
+    if (plan.blocks.length >= MAX_BLOCKS) return;
+    setBlocks([...plan.blocks, {
+      id: newPracticePlanId(),
+      title: drill.name,
+      duration: { minutes: drill.usualMinutes ?? 15 },
+      stations: [drillToStation(drill, newPracticePlanId)],
+    }]);
+    setDrillSheet(null);
+  }
+
+  /** Append a drill as another station — or replace one in place when swapping. */
+  function addStationFromDrill(blockId: string, drill: RepTeamDrill, swapId?: string) {
+    const block = plan.blocks.find(b => b.id === blockId);
+    if (!block) return;
+    const stations = block.stations ?? [];
+    const fresh = drillToStation(drill, newPracticePlanId);
+    if (swapId) {
+      // ⚠ Keep the ORIGINAL station id. The rotation grid and every "who starts here" read key on
+      // it, so minting a new one would silently detach the station from its own carousel position.
+      patchBlock(blockId, { stations: stations.map(s => (s.id === swapId ? { ...fresh, id: s.id } : s)) });
+    } else {
+      if (stations.length >= MAX_STATIONS_PER_BLOCK) return;
+      patchBlock(blockId, { stations: [...stations, fresh] });
+    }
+    setDrillSheet(null);
+  }
+
+  function addBlankStation(blockId: string, swapId?: string) {
+    const block = plan.blocks.find(b => b.id === blockId);
+    if (!block) return;
+    const stations = block.stations ?? [];
+    if (swapId) {
+      // Swapping to "write one" detaches in place, keeping the words the coach can now edit.
+      patchBlock(blockId, {
+        stations: stations.map(s => (s.id === swapId ? detachStationFromDrill(s) : s)),
+      });
+    } else {
+      if (stations.length >= MAX_STATIONS_PER_BLOCK) return;
+      patchBlock(blockId, { stations: [...stations, { id: newPracticePlanId(), name: '' }] });
+    }
+    setDrillSheet(null);
+  }
+
+  /**
+   * "Edit just for this practice" — keeps every word, drops the drill identity.
+   *
+   * The whole point of the read-only rule: a coach who changes a drill's words did not run that
+   * drill, so the station stops counting toward its use count at the same moment it becomes
+   * editable. No confirm — nothing is lost, and asking would make the honest path feel expensive.
+   */
+  function detachStation(blockId: string, stationId: string) {
+    const block = plan.blocks.find(b => b.id === blockId);
+    if (!block) return;
+    patchBlock(blockId, {
+      stations: (block.stations ?? []).map(s => (s.id === stationId ? detachStationFromDrill(s) : s)),
+    });
+  }
+
+  async function promoteStation(category: string) {
+    if (!promoting || !onCreateDrill) return;
+    const block = plan.blocks.find(b => b.id === promoting.blockId);
+    const station = block?.stations?.find(s => s.id === promoting.stationId);
+    if (!station) { setPromoting(null); return; }
+    setPromoteBusy(true); setPromoteError('');
+    const result = await onCreateDrill(stationToDrillInput(station, category));
+    setPromoteBusy(false);
+    if (!result.ok) { setPromoteError(result.error ?? 'Could not save that drill.'); return; }
+    // ⚠ Promotion COPIES. Tonight's station is deliberately left exactly as it is — it does not
+    // become drill-backed and therefore does not become read-only under the coach's hands.
+    setPromoting(null);
   }
 
   function moveBlock(index: number, delta: number) {
@@ -870,12 +1368,19 @@ export default function PracticePlanEditor({
             onDelete={() => setBlocks(plan.blocks.filter(b => b.id !== block.id))}
             onPatch={patch => patchBlock(block.id, patch)}
             onOpenPicker={setAttach}
+            onAddStation={swapId => setDrillSheet({ kind: 'station', blockId: block.id, swapId })}
+            onDetachStation={stationId => detachStation(block.id, stationId)}
+            onSwapStation={stationId => setDrillSheet({ kind: 'station', blockId: block.id, swapId: stationId })}
+            onPromoteStation={stationId => {
+              setPromoteError('');
+              setPromoting({ blockId: block.id, stationId });
+            }}
           />
         ))}
 
         {!readOnly && plan.blocks.length < MAX_BLOCKS && (
           <div className={styles.ppAddRow}>
-            <button type="button" className={styles.btnSecondary} onClick={addBlock}>
+            <button type="button" className={styles.btnSecondary} onClick={() => setDrillSheet({ kind: 'block' })}>
               <Plus size={14} aria-hidden /> Add a block
             </button>
           </div>
@@ -890,10 +1395,20 @@ export default function PracticePlanEditor({
         <aside className={styles.ppRail} aria-label="Focus areas">
           <div className={styles.ppRailInner}>
             <h2 className={styles.ppRailTitle}>What everyone&apos;s working on</h2>
+            {/* The derived line, so it is obvious WHY some chips are softened — and obvious that
+                the answer came from the practice rather than from a judgement about a child. */}
+            {derivedCategories.length > 0 && (
+              <p className={styles.ppRailDerived}>
+                Tonight: {derivedCategories.join(' · ')} <span>— from the drills in this practice</span>
+              </p>
+            )}
             {roster.length === 0 ? (
               <p className={styles.formHint}>No players on the roster yet.</p>
             ) : (
               <ul className={styles.ppRailList}>
+                {/* ⚠ ROSTER ORDER, every player, always. No sort control, no reordering by
+                    relevance, and nothing is filtered OUT — the only thing tonight's categories
+                    change is how strongly a chip is drawn. */}
                 {roster.map(player => {
                   const playerGoals = goalsByPlayer.get(player.id) ?? [];
                   return (
@@ -903,7 +1418,12 @@ export default function PracticePlanEditor({
                         <span className={styles.ppRailNone}>Nothing set yet</span>
                       ) : (
                         <span className={styles.ppChipWrap}>
-                          {playerGoals.map(g => <span key={g.id} className={styles.ppFocusChip}>{g.focusArea}</span>)}
+                          {playerGoals.map(g => (
+                            <span key={g.id} className={styles.ppFocusChip}
+                              data-off={focusMatches(g) ? undefined : 'off'}>
+                              {g.focusArea}
+                            </span>
+                          ))}
                         </span>
                       )}
                     </li>
@@ -964,6 +1484,52 @@ export default function PracticePlanEditor({
           </div>
         </div>
       )}
+
+      {/* ── The drill picker (Phase 2) ── */}
+      {drillSheet && (
+        <DrillPickerSheet
+          drills={drills}
+          title={
+            drillSheet.kind === 'block' ? 'Add a block'
+              : drillSheet.swapId ? 'Swap this drill'
+                : 'Add a station'
+          }
+          writeLabel={
+            drillSheet.kind === 'block' ? 'Write a block'
+              : drillSheet.swapId ? 'Write this one myself'
+                : 'Write a station'
+          }
+          onPick={drill => {
+            if (drillSheet.kind === 'block') addBlockFromDrill(drill);
+            else addStationFromDrill(drillSheet.blockId, drill, drillSheet.swapId);
+          }}
+          onWriteOne={() => {
+            if (drillSheet.kind === 'block') { addBlock(); setDrillSheet(null); }
+            else addBlankStation(drillSheet.blockId, drillSheet.swapId);
+          }}
+          onClose={() => setDrillSheet(null)}
+        />
+      )}
+
+      {/* ── "Save to my drills…" (D18) ── */}
+      {promoting && (() => {
+        const station = plan.blocks
+          .find(b => b.id === promoting.blockId)?.stations
+          ?.find(s => s.id === promoting.stationId);
+        // Deleting the station while its dialog is open would otherwise leave a dead end — the
+        // same self-closing rule `attachTargetExists` applies to the roster picker.
+        if (!station) return null;
+        return (
+          <PromoteDrillDialog
+            stationName={station.name}
+            categories={drillCategories}
+            busy={promoteBusy}
+            error={promoteError}
+            onSave={promoteStation}
+            onClose={() => setPromoting(null)}
+          />
+        );
+      })()}
     </div>
   );
 }

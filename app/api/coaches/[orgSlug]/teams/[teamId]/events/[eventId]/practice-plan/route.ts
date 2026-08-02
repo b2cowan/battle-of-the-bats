@@ -11,6 +11,7 @@ import {
   getRepRosterPlayers,
   getRepTeamStaffForYear,
   getRepTeamDevelopmentGoalsForPlayers,
+  getDrillsForTeam,
   updateRepTeamEventPracticePlan,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
@@ -96,7 +97,7 @@ export const GET = withObservability(async (_req: Request,
   // Only `goals` depends on the roster, so it chains off that read; everything else starts
   // immediately rather than queuing behind a round trip it has no need of.
   const playersPromise = getRepRosterPlayers(programYear.id).then(all => all.filter(p => p.status === 'active'));
-  const [players, goals, attendance, previousEvents, sessions, staff] = await Promise.all([
+  const [players, goals, attendance, previousEvents, sessions, staff, drills] = await Promise.all([
     playersPromise,
     // ⚠ Gated at the SOURCE: an assistant without `notes` never receives focus text, so no client
     // mistake can surface it. The rail simply isn't there for them.
@@ -112,6 +113,11 @@ export const GET = withObservability(async (_req: Request,
     getRepTeamEventsWithPracticePlans(programYear.id, { excludeEventId: eventId }).catch(() => []),
     getRepTeamEvaluationSessionsForEvent(eventId, teamId),
     getRepTeamStaffForYear(programYear.id, ctx.org.id),
+    // The picker's source: this team's own drills PLUS the club's shared set, active only — a
+    // retired drill must never be offered while building a practice. Non-fatal for the same reason
+    // as the previous-plans read above: on a database without migration 218 the table doesn't
+    // exist, and losing the picker must not take the whole plan screen down with it.
+    getDrillsForTeam(ctx.org.id, teamId).catch(() => []),
   ]);
 
   // Roster ORDER, always — never sorted by anything, and no sort affordance is ever offered
@@ -154,7 +160,12 @@ export const GET = withObservability(async (_req: Request,
     event,
     plan: event.practicePlan,
     roster,
-    goals,
+    // Only what the rail needs. `category` (D16) rides along so the rail can soften off-type chips
+    // — it is a label on the AREA, never a judgement about the player, and it is behind the same
+    // `notes` gate as the focus text itself.
+    goals: goals.map(g => ({
+      id: g.id, playerId: g.playerId, focusArea: g.focusArea, status: g.status, category: g.category,
+    })),
     attendance,
     // Only what the copy picker needs — never the whole event rows again.
     previousPlans: previousEvents.map(e => ({
@@ -164,6 +175,11 @@ export const GET = withObservability(async (_req: Request,
     staffSuggestions: tagSuggestions.staff,
     equipmentSuggestions: tagSuggestions.equipment,
     practiceTypeSuggestions: tagSuggestions.practiceTypes,
+    // ⚠ Sent to anyone who can READ the plan (`schedule`), which is deliberate: an assistant sees
+    // the same station text a picked drill produced anyway, so withholding the library would hide
+    // nothing while breaking the preview. Drills carry no player data of any kind (D20), so there
+    // is no PII here to gate — unlike focus areas, which stay behind `notes` above.
+    drills,
     viewerName,
     canWrite: canWriteDevelopment(caps),
     canViewFocus: showFocus,

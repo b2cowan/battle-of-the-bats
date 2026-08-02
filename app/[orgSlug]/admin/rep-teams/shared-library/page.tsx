@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Tag, ChevronLeft, Pencil, Trash2, GitMerge, Plus, Check, X, Archive, RotateCcw } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
-import type { RepTeamTag, RepTeamAwardType } from '@/lib/types';
+import type { RepTeamTag, RepTeamAwardType, RepTeamDrill } from '@/lib/types';
 import styles from '../rep-teams.module.css';
 
 // Org-authored shared library (Coach Tags & Player Awards, Phase 3). The org owner/admin curates a
@@ -303,6 +303,173 @@ function AwardTypeSection({ orgQuery, canWrite }: { orgQuery: string; canWrite: 
   );
 }
 
+/**
+ * The club's shared DRILL set (Practice Plans Phase 2 — owner ruling 2026-08-01, "both now").
+ *
+ * Drills every team's coaches can pull into a practice, curated here. Same storage shape as the
+ * shared tags and award types above — stored with no owning team — which is why this is a third
+ * section on an existing screen rather than a new admin area.
+ *
+ * ⚠ Coaches may USE these but never rename or retire them; that stays here. And nothing is ever
+ * seeded: a supplied drill list would be one sport talking to a platform that serves many, so this
+ * section starts empty and fills as the club decides what its standard actually is.
+ */
+function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite: boolean }) {
+  const [drills, setDrills] = useState<RepTeamDrill[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [newName, setNewName] = useState('');
+  const [newCategory, setNewCategory] = useState('');
+  const [adding, setAdding] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [showRetired, setShowRetired] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true); setError('');
+    try {
+      const res = await fetch(`/api/admin/rep-teams/shared-drills${orgQuery}`);
+      if (!res.ok) throw new Error('Could not load shared drills.');
+      const data = await res.json();
+      setDrills(data.drills ?? []);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not load shared drills.');
+    } finally {
+      setLoading(false);
+    }
+  }, [orgQuery]);
+  useEffect(() => { load(); }, [load]);
+
+  const active = drills.filter(d => d.isActive);
+  const retired = drills.filter(d => !d.isActive);
+
+  async function addDrill() {
+    const name = newName.trim();
+    if (!name) return;
+    setAdding(true); setError('');
+    try {
+      const res = await fetch(`/api/admin/rep-teams/shared-drills${orgQuery}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, category: newCategory.trim() || null }),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not add drill');
+      setNewName(''); setNewCategory('');
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : 'Could not add drill'); }
+    finally { setAdding(false); }
+  }
+
+  async function patchDrill(id: string, body: Record<string, unknown>) {
+    setBusyId(id); setError('');
+    try {
+      const res = await fetch(`/api/admin/rep-teams/shared-drills/${id}${orgQuery}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Update failed');
+      setEditId(null);
+      await load();
+    } catch (e) { setError(e instanceof Error ? e.message : 'Update failed'); }
+    finally { setBusyId(null); }
+  }
+
+  return (
+    <div className={styles.detailSection}>
+      <p className={styles.detailSectionTitle}>Drills</p>
+      <p className={styles.muted} style={{ margin: '0 0 0.75rem', fontSize: '0.8rem' }}>
+        Drills every team&rsquo;s coaches can pull into a practice. They appear in each coach&rsquo;s
+        picker alongside that team&rsquo;s own. Coaches can use them but can&rsquo;t rename or retire
+        them — that stays here. Retiring keeps every practice plan that already used one intact.
+      </p>
+
+      {loading ? <p className={styles.muted}>Loading…</p> : (
+        <>
+          {active.length === 0 && (
+            <p className={styles.muted} style={{ fontSize: '0.85rem' }}>
+              No shared drills yet. Add the ones your club wants every team running the same way.
+            </p>
+          )}
+          {active.map(d => (
+            <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0', borderBottom: '1px solid var(--white-8)' }}>
+              {editId === d.id ? (
+                <>
+                  <input className={styles.input} style={{ flex: 1 }} value={editName} maxLength={120} autoFocus
+                    onChange={e => setEditName(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') patchDrill(d.id, { name: editName.trim(), category: editCategory.trim() || null });
+                      if (e.key === 'Escape') setEditId(null);
+                    }} />
+                  <input className={styles.input} style={{ width: '9rem' }} value={editCategory} maxLength={40}
+                    placeholder="Category" aria-label="Category"
+                    onChange={e => setEditCategory(e.target.value)} />
+                  <button className={styles.btnSecondary} disabled={busyId === d.id || !editName.trim()}
+                    onClick={() => patchDrill(d.id, { name: editName.trim(), category: editCategory.trim() || null })}>
+                    <Check size={14} />
+                  </button>
+                  <button className={styles.btnGhost} onClick={() => setEditId(null)}><X size={14} /></button>
+                </>
+              ) : (
+                <>
+                  <span style={{ flex: 1, fontSize: '0.9rem' }}>{d.name}</span>
+                  {d.category && <span className={styles.muted} style={{ fontSize: '0.8rem' }}>{d.category}</span>}
+                  {canWrite && (
+                    <>
+                      <button className={styles.btnGhost} title="Edit" disabled={!!busyId}
+                        onClick={() => { setEditId(d.id); setEditName(d.name); setEditCategory(d.category ?? ''); }}>
+                        <Pencil size={14} />
+                      </button>
+                      <button className={styles.btnGhost} title="Retire" disabled={!!busyId}
+                        onClick={() => patchDrill(d.id, { isActive: false })}>
+                        <Archive size={14} />
+                      </button>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
+
+          {canWrite && (
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.75rem', flexWrap: 'wrap' }}>
+              <input className={styles.input} style={{ flex: 1, minWidth: '12rem' }} placeholder="Add a shared drill…"
+                value={newName} maxLength={120}
+                onChange={e => setNewName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addDrill(); }} />
+              {/* Coach-typed, never a fixed list — the club's own vocabulary, not ours. */}
+              <input className={styles.input} style={{ width: '9rem' }} placeholder="Category" aria-label="Category"
+                value={newCategory} maxLength={40}
+                onChange={e => setNewCategory(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addDrill(); }} />
+              <button className={styles.btnPrimary} disabled={adding || !newName.trim()} onClick={addDrill}>
+                <Plus size={14} /> Add
+              </button>
+            </div>
+          )}
+
+          {retired.length > 0 && (
+            <div style={{ marginTop: '1rem' }}>
+              <button className={styles.btnGhost} style={{ fontSize: '0.8rem' }} onClick={() => setShowRetired(s => !s)}>
+                {showRetired ? 'Hide' : 'Show'} retired ({retired.length})
+              </button>
+              {showRetired && retired.map(d => (
+                <div key={d.id} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.4rem 0', opacity: 0.7 }}>
+                  <span style={{ flex: 1, fontSize: '0.9rem' }}>{d.name}</span>
+                  {canWrite && (
+                    <button className={styles.btnGhost} title="Restore" disabled={!!busyId}
+                      onClick={() => patchDrill(d.id, { isActive: true })}>
+                      <RotateCcw size={14} /> Restore
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
+      )}
+      {error && <p className={styles.errorText} style={{ marginTop: '0.5rem' }}>{error}</p>}
+    </div>
+  );
+}
+
 export default function AdminSharedLibraryPage() {
   const { currentOrg, userRole } = useOrg();
   const orgSlug = currentOrg?.slug ?? '';
@@ -320,18 +487,19 @@ export default function AdminSharedLibraryPage() {
           <div className={styles.headerIcon}><Tag size={22} /></div>
           <div>
             <h1 className={styles.pageTitle}>Shared library</h1>
-            <p className={styles.pageSub}>Tags &amp; award types every team can use</p>
+            <p className={styles.pageSub}>Tags, award types &amp; drills every team can use</p>
           </div>
         </div>
       </div>
 
       <p className={styles.muted} style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', maxWidth: 640 }}>
-        Curate a small set of tags and award types shared across every team in your organization. They appear in each team&rsquo;s picker (in blue) alongside that team&rsquo;s own private ones. Teams can use them but can&rsquo;t rename or delete them — that stays here.
+        Curate a small set of tags, award types and drills shared across every team in your organization. They appear in each team&rsquo;s picker alongside that team&rsquo;s own private ones. Teams can use them but can&rsquo;t rename or delete them — that stays here.
       </p>
 
       <TagSection kind="game" label="Game tags" hint="Applied to games on the schedule (e.g. Provincials, Rivalry Week)." orgQuery={orgQuery} canWrite={canWrite} />
       <TagSection kind="expense" label="Money tags" hint="Applied to expenses in the money area (e.g. Winter dome, Fundraiser)." orgQuery={orgQuery} canWrite={canWrite} />
       <AwardTypeSection orgQuery={orgQuery} canWrite={canWrite} />
+      <SharedDrillSection orgQuery={orgQuery} canWrite={canWrite} />
     </div>
   );
 }

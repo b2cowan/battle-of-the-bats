@@ -248,19 +248,25 @@ describe('sanitizePracticePlan', () => {
     assert.deepEqual(p?.blocks[0].staff, ['Craig', 'Adam']);
   });
 
-  // Regression: an earlier hand-written "is this row empty?" checklist omitted `count` and
-  // `rotationNote`, so a station carrying only "rotate halfway" silently vanished on save.
-  it('keeps a station whose ONLY content is a rotation note, or a count', () => {
+  // Regression: an earlier hand-written "is this row empty?" checklist omitted `rotationNote`, so a
+  // station carrying only "rotate halfway" silently vanished on save.
+  it('keeps a station whose ONLY content is a rotation note', () => {
     const withNote = sanitizePracticePlan({
       blocks: [{ title: 'Stations', duration: { minutes: 20 }, stations: [{ rotationNote: 'swap halfway' }] }],
     });
     assert.equal(withNote?.blocks[0].stations?.length, 1);
     assert.equal(withNote?.blocks[0].stations?.[0].rotationNote, 'swap halfway');
+  });
 
-    const withCount = sanitizePracticePlan({
-      blocks: [{ title: 'Stations', duration: { minutes: 20 }, stations: [{ count: 3 }] }],
+  // A 1a plan may carry `count`; the field was retired at owner QA (2026-08-01). Dropping it must
+  // not take the station with it — the row is still the coach's, it just stops storing that number.
+  it('drops a legacy station `count` but KEEPS the station', () => {
+    const legacy = sanitizePracticePlan({
+      blocks: [{ title: 'Stations', duration: { minutes: 20 }, stations: [{ name: 'Tees', count: 3 }] }],
     });
-    assert.equal(withCount?.blocks[0].stations?.[0].count, 3);
+    assert.equal(legacy?.blocks[0].stations?.length, 1);
+    assert.equal(legacy?.blocks[0].stations?.[0].name, 'Tees');
+    assert.ok(!('count' in (legacy?.blocks[0].stations?.[0] ?? {})));
   });
 
   it('keeps a block whose ONLY content is coaching points', () => {

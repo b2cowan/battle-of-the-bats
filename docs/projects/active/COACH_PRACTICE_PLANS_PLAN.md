@@ -424,7 +424,7 @@ sequencing question in §10.
 |---|---|---|---|
 | **1a** | **Write it** | The plan on the practice — practice goal + kit · blocks (description/goal/duration D13) · staff tags (D12) · **stations** (D27) · **groups incl. the random draw** (D21) · **rotation blocks + computed grid** (D22–D26) · the focus rail · copy-from-a-previous-practice · the **printed sheet incl. the rotation grid** · **D10** (session date + practice link + "Recorded here") | One additive column (D6) |
 | **1b** | **Run it** | The field screen — block by block · rotation rounds + "Rotate now" · station cards · **"My station"** (D28) · coaching-points display | None |
-| **2** | **The drill library** | Drills w/ categories, coaching points, setup, default stations · the picker + preview · promotion (D18) · **the focus-rail filter** (D16) | New table + an optional category on focus areas |
+| **2** ✅ | **The drill library** — **BUILT on `dev` 2026-08-01, uncommitted, owner QA pending (§10.7)** | Drills w/ categories, coaching points, setup · the picker + preview · promotion (D18) · **the focus-rail filter** (D16) · **+ the club's shared drill set** and **"Add from a past season"** (owner rulings, §10.7). ⚠ "default stations" is retired — **a drill is ONE activity**, and two in a block is what makes a rotation. | `rep_team_drills` (mig 218, DEV ONLY) + `rep_player_development_goals.category` |
 | **3** | **The plan library & looking back** | Templates grouped by category (D14/D15) · usage history · **"how it went"** (D17) · **the coverage answer** folded into the existing development report | New table |
 | **4** | **Helpers** ⚠ **GATED** | The "Helper" invite preset + their one-screen portal (D29/D30 · §8.1) | None |
 
@@ -782,6 +782,87 @@ same pass: the guide still described duration **ranges** (removed §10.5), still
 were a block type to add (collapsed into the rotate toggle, §10.4 item 1) — the last of which would
 have sent a coach hunting for a button that no longer exists. The **"people live at exactly one
 level"** rule (§10.4 item 3) was undocumented entirely and now has a paragraph and an FAQ.
+
+---
+
+## 10.7 · Phase 2 — the owner rulings and the build record (2026-08-01) — BINDING
+
+**Status: BUILT on `dev`, UNCOMMITTED, owner QA pending.** Migration **218** applied to **dev only**.
+
+### The two gate rulings, taken before any code was written
+
+1. **GATE 2 — the drill library ships PER-TEAM *and* CLUB-WIDE together.** The owner was offered
+   per-team-now (with club-wide as a cheap, precedented later widening) and chose **both**. Logged in
+   `BUSINESS_DECISIONS.md` 2026-08-01. A club-wide library is the first artifact where a club's
+   *coaching method* becomes an org-level asset, which is a real reason Club sits above League.
+   ⚠ **Known cost, accepted:** the shared set has nobody to author it on day one, because the library
+   ships empty by design. **No pricing, plan, band, SKU or gate moved** — drift check run.
+2. **THE ARCHIVE — the library is LIVE-SEASON ONLY, and a coach pulls their own history forward.**
+   Its door is hidden in a completed season (a drill library is a reusable *instrument*, not a record
+   of a season). ⚠ **Discovered while designing this and it made the ruling cheaper than expected: a
+   TEAM IS PERMANENT — only its program year turns over — so a team-scoped drill library survives a
+   season rollover with no import at all.** What genuinely *is* season-locked is the practice PLANS,
+   so **"Add drills from a past season"** reads those and copies them forward. That route is the
+   **single deliberate cross-season read in the whole feature**; it writes nothing into a finished
+   season, and `tests/unit/coach-season-write-guard.test.ts` now asserts the library stays OFF the
+   season-read rail so a later session cannot assume the question was already answered.
+
+### The three build-time rulings the owner took on the mockups
+
+3. **A DRILL IS ONE ACTIVITY — one station's worth.** Confirms §10.4 item 6 ("a station IS the
+   drill") and **supersedes the older "default stations" wording**: a drill carries no nested station
+   list. Picking one drill while adding a block gives a block with that activity in it; picking a
+   **second into the same block produces two stations, which is exactly when `blockRotates` turns
+   true**. The carousel is assembled by picking — still no second kind of block anywhere.
+4. **THERE IS NO "how many of it" COUNT.** It would be 1 almost every time, and three of something is
+   three adds or a line in "just for tonight". ⚠ This also **RETIRED the station-level `count` that
+   slice 1a shipped** — a live removal, not just a mockup change.
+5. **⚠ A LOADED DRILL'S OWN WORDS ARE READ-ONLY** (owner: *"if I load a drill and completely change
+   everything about it, then I didn't run the same drill"*). A drill is an **identity claim**, so the
+   count has to mean the same thing eight times. **This OVERRIDES the D14 copy-on-load precedent,
+   which was cited in favour of editable and does not bind here** — a plan template is scaffolding
+   for a practice; a drill is a named thing you claim to have run.
+   - Locked: the drill's `description`, `goal`, `coachingPoints`, `setup`, `equipment`, name.
+     Rendered as **text, not disabled inputs** — a stack of greyed boxes reads as broken on a phone,
+     and text makes a drill-backed station visibly a shorter, different shape.
+   - Editable: everything the PRACTICE owns — who runs it, who's at it, the block's length, and
+     **"Just for tonight"**, which absorbs most one-word-different cases with no detaching at all.
+   - **"Edit just for this practice" DETACHES** (proposed at build time, owner approved): keeps every
+     word, drops the provenance, stops counting toward the drill. **The edit breaking the link is
+     what keeps the count honest** — detaching is the honest act, not a workaround. "Swap drill"
+     falls out of the same shape for free.
+
+### Deviations + corrections taken during the build
+
+- **Vocabulary, found by the planned-vs-done audit and fixed:** "Used 8×" / "Ran 6×" were **claims
+  the data cannot support** — nothing records what was actually run (D4), and a coach may have
+  planned a drill and skipped it in the rain. Now **"In 8 plans" / "Not in a plan yet" / "last
+  planned"**, and the field is named `planCount`, so the honest word is in the type as well as on
+  screen.
+- **A label collision fixed:** the builder called coaching points *"What to watch for"* while the
+  field screen called the GOAL *"What you're watching for"* — two fields, near-identical names, one
+  screen apart. Now: the goal is **"What you're watching for"** everywhere, the numbered list is
+  **"Coaching points"** everywhere.
+- **The Drills door is gated on `schedule` as well as on the season** (found by review). Development
+  is reachable by an assistant granted `notes` alone, who would otherwise be shown a door that
+  answers "you do not have access to the schedule" — the same dead-end bug the archive rule forbids,
+  wearing a different wall.
+- **The printed sheet's station lines were already stale** and are fixed in passing: they said "Kit"
+  (renamed at §10.4) and interpolated the equipment ARRAY, printing "Screen,Balls,Net" with no
+  spaces.
+- **The probes earned their keep twice:** they caught a wrong relative path on the new page's CSS
+  import (which TypeScript cannot see, so the room rendered a build error) and three controls under
+  the tap floor. ⚠ A first version of the tap probe asserted a blanket 44px across the document and
+  failed on the portal's own shell — **the team nav renders 38.5px and the shared button primitives
+  31–41px product-wide.** That baseline is pre-existing and was NOT changed to make a test pass; the
+  probe was narrowed to the controls this feature adds, and those were raised locally.
+
+### What Phase 2 did NOT change
+
+No new capability key (reads ride `schedule`, writes stay head-coach-only) · no new top-level nav ·
+no pricing/packaging/gate change · no change to how a plan is saved · **no migration of old plans,
+and none is wanted** — a station falls back to its block's teaching, so every plan written before the
+library keeps reading correctly for ever.
 
 ---
 

@@ -15,11 +15,13 @@ import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan,
-  formatDuration, isPracticePlanEmpty, newPracticePlanId, type PracticePlan,
+  formatDuration, isPracticePlanEmpty, newPracticePlanId, resolveStationTeaching,
+  type PracticePlan,
 } from '@/lib/rep-practice-plan';
 import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
+import type { DrillInput, RepTeamDrill } from '@/lib/rep-drills';
 import styles from '../../../../coaches.module.css';
 import type { RepAttendanceStatus, RepTeamEvaluationSession, RepTeamEvent } from '@/lib/types';
 
@@ -42,6 +44,8 @@ type LoadState = {
   staffSuggestions: string[];
   equipmentSuggestions: string[];
   practiceTypeSuggestions: string[];
+  /** This team's own drills plus the club's shared set — the picker's source (Phase 2). */
+  drills: RepTeamDrill[];
   canWrite: boolean;
   canViewFocus: boolean;
   canViewAttendance: boolean;
@@ -186,6 +190,29 @@ export default function CoachPracticePlanPage({
     setSaveError('');
   }
 
+  /**
+   * "Save to my drills…" (D18) — explicit promotion, never automatic.
+   *
+   * ⚠ It COPIES. Tonight's station is deliberately left exactly as it is: it does not become
+   * drill-backed, so it does not turn read-only under the coach's hands the moment they save it.
+   * The new drill joins the picker for NEXT time, which is the whole point.
+   */
+  async function createDrill(input: DrillInput): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/drills`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(input),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: json.error ?? 'Could not save that drill.' };
+      // Fold it into the picker immediately — a coach who saves a drill and then adds a second
+      // station should find it there, without a reload they have no reason to expect.
+      setData(d => (d ? { ...d, drills: [...d.drills, json.drill] } : d));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: errorMessage(e, 'Could not save that drill.') };
+    }
+  }
+
   function applyPrevious(previous: PreviousPlan) {
     if (!previous.plan || !data) return;
     const rosterIds = new Set(data.roster.map(p => p.id));
@@ -215,16 +242,33 @@ export default function CoachPracticePlanPage({
         block.goal ? `Goal: ${block.goal}` : '',
         block.description ?? '',
         ...(block.coachingPoints ?? []).map((p, i) => `${i + 1}. ${p}`),
-        ...(block.stations ?? []).map(s => [
-          s.name ? `• ${s.name}${s.count ? ` ×${s.count}` : ''}` : '',
-          s.setup ? `Setup: ${s.setup}` : '',
-          s.equipment ? `Kit: ${s.equipment}` : '',
-          s.staff?.length ? `Run by ${s.staff.join(', ')}` : '',
-          s.playerIds?.length ? s.playerIds.map(nameOf).filter(Boolean).join(', ') : '',
-          s.rotationNote ? `Rotation: ${s.rotationNote}` : '',
-          s.note ? `Tonight: ${s.note}` : '',
-          ...(s.coachingPoints ?? []).map(p => `– ${p}`),
-        ].filter(Boolean).join(' · ')),
+        ...(block.stations ?? []).map(s => {
+          // ⚠ The SAME resolver the field screen uses. The sheet is what an assistant running the
+          // tee station actually carries, so a station whose teaching came from a drill must print
+          // it — and a plan written before the library existed must still print the block's.
+          const { description, goal } = resolveStationTeaching(s, block);
+          // Read from the STATION, not the resolver: the block's own points are already printed
+          // once above, and re-printing them under every station would double them on the page.
+          // (Comparing the resolver's array by identity worked, but only by accident of how the
+          // fallback happens to return the same reference.)
+          const stationPoints = s.coachingPoints ?? [];
+          return [
+            s.name ? `• ${s.name}` : '',
+            // Only when the station says something the block hasn't already said above, so the
+            // sheet doesn't print the same sentence twice for a single-station block.
+            description && description !== block.description ? description : '',
+            goal && goal !== block.goal ? `Watch for: ${goal}` : '',
+            s.setup ? `Setup: ${s.setup}` : '',
+            // "Kit" was the pre-2026-08-01 name, and equipment is a LIST — the old template
+            // interpolated the array itself, printing "Screen,Balls,Net" with no spaces.
+            s.equipment?.length ? `Equipment: ${s.equipment.join(', ')}` : '',
+            s.staff?.length ? `Run by ${s.staff.join(', ')}` : '',
+            s.playerIds?.length ? s.playerIds.map(nameOf).filter(Boolean).join(', ') : '',
+            s.rotationNote ? `Rotation: ${s.rotationNote}` : '',
+            s.note ? `Tonight: ${s.note}` : '',
+            ...stationPoints.map(p => `– ${p}`),
+          ].filter(Boolean).join(' · ');
+        }),
       ].filter(Boolean).join('\n');
       return {
         time,
@@ -416,6 +460,10 @@ export default function CoachPracticePlanPage({
                 staffSuggestions={data.staffSuggestions}
                 equipmentSuggestions={data.equipmentSuggestions}
                 practiceTypeSuggestions={data.practiceTypeSuggestions}
+                drills={data.drills}
+                // Absent for a viewer who can't write drills, which removes "Save to my drills…"
+                // entirely rather than offering a control that only exists to refuse.
+                onCreateDrill={canWrite ? createDrill : undefined}
                 eventStartsAt={event?.startsAt ?? ''}
                 eventEndsAt={event?.endsAt ?? null}
                 readOnly={!canWrite}

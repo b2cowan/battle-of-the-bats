@@ -157,6 +157,36 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
     );
   });
 
+  /**
+   * The drill library (Practice Plans Phase 2) — a DECIDED absence, not an oversight.
+   *
+   * Owner ruling 2026-08-01: a drill library is a reusable INSTRUMENT, not a record of a season,
+   * so it gets no archive door — the Development hub hides the Drills door when the season is a
+   * record, and the routes below resolve the live context and cannot address a past season.
+   *
+   * A coach loses nothing: a team is PERMANENT and only its program year turns over, so drills
+   * carry forward on their own. What genuinely IS season-locked — past practice plans — is
+   * readable through `drills/past-seasons`, which copies forward into the live library and writes
+   * nothing back. That route is the single deliberate cross-season read in the feature, and it is
+   * deliberately NOT on the season-read rail: it serves the LIVE season.
+   *
+   * ⚠ This test exists so a later session cannot quietly put drills on the rail and assume the
+   * archive question was already answered. It was answered: NO.
+   */
+  it('the drill library is live-season only, by decision (Practice Plans Phase 2)', () => {
+    const drillRoutes = files.filter(f => f.replace(/\\/g, '/').includes('/development/drills'));
+    assert.ok(drillRoutes.length >= 2, 'expected the drill routes to exist');
+    for (const file of drillRoutes) {
+      const src = readFileSync(file, 'utf8');
+      assert.ok(
+        !/resolveCoachSeasonRead(Context)?\s*\(|resolveCoachSeasonCapabilityMap\s*\(/.test(src),
+        `${file} joined the season-read rail. The drill library is an INSTRUMENT and was ruled `
+        + 'live-season-only (owner, 2026-08-01). If that has genuinely changed, get the decision, '
+        + 'add it to APPROVED_SEASON_AWARE_ROUTES, and make the Development hub stop hiding its door.',
+      );
+    }
+  });
+
   it('no route has learned to serve a past season without a decision', () => {
     const actual = files
       .filter(f => /resolveCoachSeasonRead(Context)?\s*\(|resolveCoachSeasonCapabilityMap\s*\(/

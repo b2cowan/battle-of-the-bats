@@ -5594,7 +5594,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .ppFieldHint { font-size: 0.75rem; color: var(--white-45); align-self: flex-end; padding-bottom: 0.55rem; }
 .ppMinutes { width: 5rem; font-variant-numeric: tabular-nums; }
-.ppCount { width: 4rem; font-variant-numeric: tabular-nums; }
+/* .ppCount retired 2026-08-01 with the station's "how many of it" field (owner ruling). */
 
 /* â”€â”€ Blocks â”€â”€ */
 .ppBlock {
@@ -6057,3 +6057,116 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   border: 1px dashed var(--border-2); background: none;
 }
 .ppSuggestChip:hover { color: var(--white-90); border-color: var(--white-35); border-style: solid; }
+/* Selected filter chip. Solid, not dashed: a dashed "on" state reads as still-a-suggestion. */
+.ppSuggestChip[data-on='on'] {
+  color: var(--white-90); border-color: var(--white-45); border-style: solid;
+  background: var(--white-8); font-weight: 600;
+}
+.ppSuggestChip span { color: var(--white-45); font-variant-numeric: tabular-nums; }
+
+/* ===========================================================================
+   The drill library (Practice Plans Phase 2)
+   =========================================================================== */
+
+/* A drill-backed station renders its words as TEXT, not as disabled inputs -- a stack of greyed
+   boxes reads as broken on a phone, and plain text makes a picked drill visibly a different,
+   shorter shape from a station the coach typed. */
+.ppReadTxt { margin: 0; font-size: 0.82rem; line-height: 1.45; color: var(--white-80); }
+.ppReadPoints {
+  margin: 0; padding-left: 1.1rem;
+  font-size: 0.82rem; line-height: 1.5; color: var(--white-80);
+}
+.ppReadPoints li { margin-bottom: 0.15rem; }
+.ppStationNameRead {
+  flex: 1 1 auto; min-width: 0;
+  font-size: 0.88rem; font-weight: 700; color: var(--white-90);
+}
+
+/* Provenance. Quiet, and it STAYS for the life of the station -- it records where this came from,
+   which remains true however the practice goes. */
+.ppFromDrill {
+  display: inline-flex; align-items: center; gap: 0.3rem; margin: 0;
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.02em;
+  color: var(--white-45);
+}
+
+.ppDrillActions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+/* Marks a drill the CLUB shares. Coaches use it; only an org admin can change it. */
+.ppSharedChip {
+  display: inline-flex; align-items: center; margin-left: 0.35rem;
+  font-size: 0.62rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;
+  padding: 0.08rem 0.3rem; border-radius: 4px;
+  border: 1px solid var(--border-2); color: var(--white-55);
+}
+
+/* -- The picker sheet -- */
+.ppDrillTabs { display: flex; gap: 0.35rem; padding: 0.6rem 0.9rem 0; }
+.ppDrillTab {
+  flex: 1 1 0; min-height: var(--tap-min, 44px);
+  background: none; border: 1px solid var(--border-2); border-radius: 8px; cursor: pointer;
+  font-size: 0.8rem; font-weight: 600; color: var(--white-55); padding: 0 0.5rem;
+}
+.ppDrillTab[data-on='on'] { color: var(--white-90); background: var(--white-8); border-color: var(--white-45); }
+.ppDrillTab:disabled { opacity: 0.35; cursor: default; }
+
+.ppDrillFilters {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  padding: 0.7rem 0 0.5rem;
+}
+/* The tap floor is stated HERE rather than inherited. The portal's shared `.input` renders ~35px
+   and `.btnPrimary`/`.btnSecondary` ~31–41px product-wide; that baseline is fine on a desk but this
+   room is opened on a phone in a car park, so every control it introduces is raised to `--tap-min`
+   locally. Deliberately scoped to these classes — changing the shared primitives to satisfy one
+   feature would be a portal-wide visual change nobody asked for. */
+.ppDrillFilters .input { flex: 1 1 12rem; min-width: 0; min-height: var(--tap-min, 44px); }
+.ppDrillFilters button,
+.ppDrillRowActions button { min-height: var(--tap-min, 44px); }
+
+.ppDrillWrite { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem; min-width: 0; }
+
+.ppDrillRow,
+.ppDrillCard {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem;
+  flex-wrap: wrap; min-width: 0;
+  padding: 0.6rem 0.7rem; margin-bottom: 0.45rem;
+  border: 1px solid var(--border-2); border-radius: 10px; background: var(--card-bg);
+}
+/* Retired, and "already in your library" on the import list: shown and softened, never hidden --
+   a coach scanning for something they remember should find it and see why it isn't offered. */
+.ppDrillCard[data-retired='retired'] { opacity: 0.55; }
+.ppDrillRowMain { display: flex; flex-direction: column; gap: 0.15rem; flex: 1 1 12rem; min-width: 0; }
+.ppDrillRowName {
+  display: inline-flex; align-items: center; flex-wrap: wrap;
+  font-size: 0.86rem; font-weight: 700; color: var(--white-90); min-width: 0;
+}
+.ppDrillRowMeta { font-size: 0.74rem; color: var(--white-45); }
+.ppDrillRowActions { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+
+.ppDrillPreview {
+  display: flex; flex-direction: column; gap: 0.5rem;
+  padding: 0.9rem; min-width: 0;
+}
+.ppDrillPreviewName { margin: 0; font-size: 1rem; font-weight: 700; color: var(--white-90); }
+
+.ppRetiredWrap { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.3rem; }
+
+/* -- The focus rail's filter (D16) -- */
+/* The derived line, so it is obvious WHY some chips are softened, and obvious that the answer
+   came from the practice rather than from a judgement about a child. */
+.ppRailDerived {
+  margin: 0 0 0.4rem; font-size: 0.72rem; font-weight: 600; color: var(--white-80);
+}
+.ppRailDerived span { font-weight: 400; color: var(--white-45); }
+
+/* DIM, NEVER HIDE. An off-type focus area stays readable and stays in place -- a player whose only
+   focus areas are off-type must never vanish from a coverage list, because that is precisely the
+   child most likely to be overlooked. Nothing here removes, reorders or counts anything. */
+.ppFocusChip[data-off='off'] { opacity: 0.45; }
+
+@media (max-width: 640px) {
+  .ppDrillRow,
+  .ppDrillCard { flex-direction: column; align-items: stretch; }
+  .ppDrillRowActions { justify-content: flex-end; }
+  .ppDrillFilters .input { flex-basis: 100%; }
+}
