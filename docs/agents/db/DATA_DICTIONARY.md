@@ -1764,6 +1764,17 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_teams.is_archived -->
 **`is_archived`** (bool, NOT NULL, default false) — soft-hide for the admin team list (gotchas 2–3); the only PATCH-able boolean.
 
+<!-- dict:col:rep_teams.schedule_visibility -->
+**`schedule_visibility`** (text, NOT NULL, default `'families'`; CHECK `staff|families|public_link`; **mig 215**) — Chunk D owner ruling #4: who may see this team's games and practices. **Enforced at the API, never by hiding UI** — `getFamilyTeamView` ([lib/family-view.ts](../../../lib/family-view.ts)) returns null for every family/public caller at `staff`, so flipping the setting removes the DATA, not the button. `families` = connected family accounts see the full schedule; `public_link` additionally makes the standing public team page's schedule and the team-wide calendar feed exist. **Lives on the team, not the season**, because a FOLLOWER link is team-scoped and persists across seasons (ruling #17) — a grandparent does not re-apply every year. Normalized on read by `normalizeVisibility`, which falls back to `families` so an unrecognized value can never resolve to something MORE permissive.
+
+<!-- dict:col:rep_teams.family_link_token_hash -->
+<!-- dict:col:rep_teams.family_link_created_at -->
+<!-- dict:col:rep_teams.family_link_created_by -->
+**`family_link_token_hash` / `family_link_created_at` / `family_link_created_by`** (text unique-partial / timestamptz / uuid → `auth.users`, all nullable; **mig 215**) — the team family link, the ONLY door into the family layer (ruling #3: parent-initiated, coach-approved, **no public search for a team or child, ever**). Standard no-login token posture (`lib/no-login-token.ts`): 32 random bytes → base64url in the URL, **SHA-256 hex stored**, so a database read can never reconstruct a live link. **Reset IS the revocation** — overwriting the hash kills every previously-shared copy at the same instant. The raw token is returned exactly once, at mint.
+
+<!-- dict:col:rep_teams.family_calendar_token_hash -->
+**`family_calendar_token_hash`** (text, nullable, unique-partial; **mig 215**) — the TEAM-WIDE calendar (ICS) feed token, handed out only at `public_link`. Same hash-only posture. **Minting it is not itself an exposure**: the feed route re-checks `schedule_visibility` on every read, so a token minted while public stops serving the moment the team stops being public. Distinct from `family_links.calendar_token_hash`, which is the per-FAMILY feed available at `families`.
+
 ### `rep_team_groups`
 <!-- dict:table:rep_team_groups -->
 
@@ -2051,6 +2062,10 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 <!-- dict:col:rep_team_events.source_tournament_game_id -->
 **`source_tournament_game_id`** (uuid, nullable; mig 207) — provenance tag: the tournament-side **`games.id`** this event MIRRORS (Coach Portal Batch 4, P0 #2). Non-NULL ⇒ this is an organizer-owned tournament game projected onto the team calendar so attendance/lineups (which can only hang off `rep_team_events.id`) work on it; NULL ⇒ an ordinary coach-created event. Partial-unique index `(program_year_id, source_tournament_game_id) WHERE NOT NULL` = one mirror per game per season, so a concurrent double-sync can't duplicate. **Not an FK, deliberately** — an FK cascade would destroy the coach's attendance/lineup when an organizer deletes a game, and `SET NULL` would silently turn an organizer-owned game into a fully-editable coach event; `lib/rep-tournament-game-mirror.ts` owns that decision instead (re-point to a recognisable replacement → else cancel when coach work exists → else remove cleanly). **Field-ownership contract on a mirrored row:** the sync owns `starts_at`, `location`, `opponent`, `home_away`, `name`, `team_score`, `opponent_score`, `result`, `status` (the events PATCH rejects coach writes to these with 409, and DELETE is refused); the coach owns `arrival_time`, `uniform`, `field_number`, `description`, `resources`, tags, attendance and the lineup, and the sync never touches them.
+
+<!-- dict:col:rep_team_events.family_shared_at -->
+<!-- dict:col:rep_team_events.family_shared_by -->
+**`family_shared_at` / `family_shared_by`** (timestamptz / uuid → `auth.users`, both nullable; **mig 215**) — Chunk D 1.8: when a coach explicitly shared THIS game's public page, and who. **Non-NULL is the whole reason `/{org}/teams/{slug}/games/{id}` resolves at all.** Decision #15 kept that URL PLAIN PUBLIC rather than tokenized (the page shows what the scoreboard at the field shows, so tokenizing would add friction without protecting anything) — what keeps it honest is that the page does not exist until a coach deliberately shares it, and stops existing the moment they un-share or set `rep_teams.schedule_visibility='staff'`. **Never set on a practice** (the share route refuses `event_type='practice'`): a standing weekly practice location is what the `public_link` visibility setting is for, and a per-game share must not publish one sideways. Partial index `(team_id) WHERE family_shared_at IS NOT NULL`.
 
 ### `rep_team_event_attendance`
 <!-- dict:table:rep_team_event_attendance -->
@@ -2352,6 +2367,61 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_measurable_types.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who created the type.
 
+### `rep_team_drills`
+<!-- dict:table:rep_team_drills -->
+
+**Purpose:** a coach's reusable **drill** — the SHAPE of one activity and its TEACHING — plus the club's org-authored **shared** drill set, in one table. Added by migration 218 (Practice Plans Phase 2). Feeds the picker in the practice-plan builder, so authoring a practice becomes four taps instead of retyping the same warm-up every Tuesday. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **`team_id` is NULLABLE and that is the whole club-wide story.** `team_id` SET = a team's own private drill; `team_id` **NULL** (with `org_id` set) = an **org-authored shared** drill offered in *every* team's picker. Exactly the mig-184 shape used by `rep_team_tags` / `rep_team_award_types`, but adopted **up front** here rather than retro-fitted (owner ruling 2026-08-01, "both now"). ⚠ Postgres treats NULLs as DISTINCT, so the per-team unique index cannot constrain shared rows — they get their **own** partial index.
+2. **A PLAN NEVER DEPENDS ON THIS TABLE TO RENDER.** When a drill is added to a practice, its words are **COPIED** into `rep_team_events.practice_plan` jsonb and the drill's id rides along as `station.drillId` — **provenance only**. So editing a drill later cannot rewrite a practice already written, a retired drill keeps reading for ever, and there is no dangling-id class of bug (the failure mode §10.3 refused for staff tags). The id answers "used 8×", nothing more. `station.drillCategory` is likewise a **snapshot** (the `rep_player_measurables.unit` precedent).
+3. **Never hard-deleted.** No DELETE route or policy — "retire" is `is_active=false`, which keeps every plan the drill already sits in untouched. Both unique indexes are PARTIAL on `is_active`, so a retired name can be reused.
+4. **A drill is ONE activity — one station's worth**, and carries **NO PEOPLE** (no coaches, no players, no groups; plan decision D20). Picking a second drill into the same block is what produces two stations and therefore a rotation. There is deliberately no nested station list, and **no `count` column** (owner ruling 2026-08-01 — it retired the station-level `count` shipped in 1a too).
+5. **NOT seeded, ever, and no category is supplied.** Every drill and category is coach-typed; a "Hitting / Fielding / Pitching" list would be one sport talking to a multi-sport platform (same posture as gotcha 4 on `rep_team_measurable_types`). The library ships EMPTY.
+6. **Writes split by row kind at BOTH layers.** TEAM rows: head-coach-only (app routes gate on `canWriteDevelopment`; RLS requires `coach_role='head_coach'`). SHARED rows: org-admin-only — the head-coach policies key on `team_id`, which is NULL on a shared row and therefore never matches, so a coach cannot write the club's set even via a direct PostgREST call. Reads: `schedule` at the app layer; RLS allows org members, coaches of the assigned team, **and** a separate policy for coaches reading their org's shared rows (the `team_id IN (…)` predicate is NULL-unknown and can never match a shared row on its own).
+7. **Live-season only — no archive door** (owner ruling 2026-08-01). A drill library is a reusable *instrument*, not a record of a season. Its routes deliberately do **not** use `resolveCoachSeasonRead`, the Development hub hides the Drills door in a completed season, and `tests/unit/coach-season-write-guard.test.ts` asserts the absence so it can't be reversed by accident. The one cross-season read is `development/drills/past-seasons`, which reads the team's own **past practice plans** (genuinely season-locked) so they can be copied forward — it writes nothing into a finished season.
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_drills.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL, CASCADE) — tenant scope.
+
+<!-- dict:col:rep_team_drills.team_id -->
+**`team_id`** (FK → `rep_teams.id`, **NULLABLE**, CASCADE) — the owning team, or **NULL for an org-shared drill** (gotcha 1).
+
+<!-- dict:col:rep_team_drills.name -->
+**`name`** (text, NOT NULL; CHECK `1–120` chars) — what the coach calls it; unique per team (and per org for shared rows) while active.
+
+<!-- dict:col:rep_team_drills.category -->
+**`category`** (text, nullable; CHECK `1–40` chars) — **coach-typed**, never a fixed list. Pairs with `rep_player_development_goals.category` to drive the focus-rail filter (D16).
+
+<!-- dict:col:rep_team_drills.usual_minutes -->
+**`usual_minutes`** (int, nullable; CHECK `1–600`) — how long it usually runs. ⚠ **ONE number** — duration *ranges* were removed at owner QA (§10.5) and must not return through the library.
+
+<!-- dict:col:rep_team_drills.description -->
+**`description`** (text, nullable; CHECK `≤ 600`) — "What you're doing".
+
+<!-- dict:col:rep_team_drills.goal -->
+**`goal`** (text, nullable; CHECK `≤ 600`) — "What you're watching for"; the field the run screen's "My station" leads with (D28).
+
+<!-- dict:col:rep_team_drills.coaching_points -->
+**`coaching_points`** (jsonb array, NOT NULL, default `[]`; CHECK array + `≤ 8` items) — the short numbered list (D19), rendered at glance size while the drill runs.
+
+<!-- dict:col:rep_team_drills.setup -->
+**`setup`** (text, nullable; CHECK `≤ 600`) — how it's laid out (D27).
+
+<!-- dict:col:rep_team_drills.equipment -->
+**`equipment`** (jsonb array, NOT NULL, default `[]`; CHECK array + `≤ 12` items) — reusable equipment labels.
+
+<!-- dict:col:rep_team_drills.is_active -->
+**`is_active`** (bool, NOT NULL, default true) — retire/restore flag (gotcha 3).
+
+<!-- dict:col:rep_team_drills.sort_order -->
+**`sort_order`** (int, NOT NULL, default 0) — reserved; lists sort by NAME, never by use count (a "most used" ordering would be a ranking).
+
+<!-- dict:col:rep_team_drills.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — who wrote it.
+
 ### `rep_player_measurables`
 <!-- dict:table:rep_player_measurables -->
 
@@ -2462,6 +2532,9 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_player_development_goals.status -->
 **`status`** (text, NOT NULL, default `'working'`; CHECK `working|achieved|parked`) — the status pill (gotcha 2).
 
+<!-- dict:col:rep_player_development_goals.category -->
+**`category`** (text, nullable; CHECK `1–40` chars when set) — optional, **coach-typed**, added by migration 218 (Practice Plans Phase 2, decision D16). Drawn from the same vocabulary as the coach's **drill** categories (`rep_team_drills.category`), which is the whole mechanism: the practice-plan focus rail compares this against the categories of the drills in tonight's plan. ⚠ **Non-matching areas DIM, they never hide**, and a NULL category renders at **full strength** — a player whose only focus areas are off-type must never vanish from a coverage list. ⚠ **Nothing is back-filled and nothing is inferred from the focus text**: free text does not cluster, and guessing would be the "confident lie" the no-ranking rule forbids.
+
 <!-- dict:col:rep_player_development_goals.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who set it.
 
@@ -2560,7 +2633,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_tryout_registrations.consent_data_collection -->
 <!-- dict:col:rep_tryout_registrations.consent_email_comms -->
 <!-- dict:col:rep_tryout_registrations.consent_eligibility -->
-**`consent_data_collection` / `consent_email_comms` / `consent_eligibility`** (boolean, nullable; **mig 164**) — guardian consent captured at public submit: PIPEDA data-collection, CASL email, and guardian+eligibility confirmation. **All three are REQUIRED by the app to submit** (server re-checks `=== true`), so a non-NULL `consent_at` implies all three were true. Nullable, **no backfill** → pre-gate rows stay NULL = "no consent on record" (gotcha 7).
+**`consent_data_collection` / `consent_email_comms` / `consent_eligibility`** (boolean, nullable; **mig 164**) — guardian consent captured at public submit: PIPEDA data-collection, CASL marketing email, and guardian+eligibility confirmation. **⚠ DRIFT CORRECTED 2026-08-01 (Chunk D 0.6):** this entry previously claimed all three were required. Since the **2026-07-30 CASL consent-unbundling decision**, only `consent_data_collection` and `consent_eligibility` are required to submit (server re-checks `=== true`); **`consent_email_comms` is OPTIONAL** — bundling marketing consent with the thing a family must agree to in order to apply is precisely what CASL forbids. So a non-NULL `consent_at` implies the two REQUIRED consents were true and says nothing about the marketing one. Nullable, **no backfill** → pre-gate rows stay NULL = "no consent on record" (gotcha 7). Chunk D's **mig 214** backfills these into `family_consents` as two separate ledger rows (`scope='child_data'` and `scope='marketing'`) so the unbundling survives into the consent ledger.
 
 <!-- dict:col:rep_tryout_registrations.consent_at -->
 **`consent_at`** (timestamptz, nullable; **mig 164**) — server clock at the moment consent was given; the admin **Compliance** column + consent export key off this.
@@ -3345,6 +3418,285 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 ---
 
 *End of Rep finance (Phase 4b — 13 tables) and of the Rep teams / team workspaces domain (25 tables total: 12 operations + 13 finance). The 4 `team_workspace_*` tables the coverage classifier files under this domain live in the Coaches / basic-teams domain. The cross-module roster snapshot back-link `tournament_roster_players.source_player_id` now exists (free-tier Phase 5j, mig 123) on the **tournament/basic-coach** side only — `rep_roster_players` still has **no** such snapshot link (its only inbound provenance is `tryout_registration_id`; don't invent one).*
+
+---
+
+# Domain: Family layer (Chunk D)
+
+*Added 2026-08-01 (migs 214 + 215). The parent/guardian-facing layer: who is connected to a
+team, on what lawful basis, and who has asked not to be emailed. Companion docs:
+`docs/projects/active/COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` (build spec) and the
+2026-08-01 two-tier/premium-only entry in `docs/agents/strategy/BUSINESS_DECISIONS.md`.*
+
+**Gotchas first (the cross-cutting traps):**
+
+1. **Every table here is SERVICE-ROLE ONLY** — RLS enabled, **zero policies** (the mig-212
+   posture). PROD `anon`/`authenticated` hold a default SELECT grant on public tables, so
+   RLS-with-no-policies is what actually walls these off. The browser never queries them;
+   every read goes through a server route that resolves identity from the session. Read the
+   live posture from `pg_class`, never from a migration comment.
+2. **The tier boundary is a DATABASE constraint, not a convention.**
+   `family_links_role_player_ck` enforces `role='follower' ⇒ player_id IS NULL`. A follower is
+   a TEAM-level relationship that touches no child data at all; that is what let the follower
+   tier ship ahead of the guardian tier's PIPEDA/CASL counsel review.
+3. **The whole layer is PREMIUM-ONLY** (owner ruling, 2026-08-01). Every entry point runs
+   `isFamilyLayerEnabled` — a per-team entitlement for standalone Coaches-Portal teams, the
+   org plan for org-native League/Club teams. It is re-checked on **every read**, so a team
+   whose entitlement lapses stops serving families that day without anyone revoking links.
+4. **Schedule visibility is enforced at the API** (`rep_teams.schedule_visibility`), never by
+   hiding UI. `staff` is a server-side refusal rendered as a quiet state, not an error.
+5. **Coach-side family management is LIVE-SEASON-ONLY.** The coach routes deliberately do NOT
+   import the season-read rail, so they resolve the active season and cannot address a past
+   one — the archive's fail-closed default. They must never appear in
+   `APPROVED_SEASON_AWARE_ROUTES`.
+
+## `family_links`
+<!-- dict:table:family_links -->
+
+**Purpose:** one row per person connected (or asking to connect) to a rep team's family layer.
+The two-tier model from owner ruling #17 lives here: a **guardian** is tied to one player and is
+the accountable adult for money, registration and the player-specific payloads; a **follower**
+is tied to the team and to no child at all.
+
+**Note on scope:** mig 215 creates the FULL two-tier schema, but Slice 1 wires only the
+follower path. The guardian tier is blocked on counsel sign-off, not on schema — so Slice 2
+adds no migration, and the CHECK protecting followers exists before anything can violate it.
+
+<!-- dict:col:family_links.id -->
+**`id`** (uuid, PK).
+
+<!-- dict:col:family_links.org_id -->
+<!-- dict:col:family_links.rep_team_id -->
+**`org_id` / `rep_team_id`** (uuid, NOT NULL, FK → `organizations` / `rep_teams`, both CASCADE) — tenancy + team scope. Every mutation filters on `rep_team_id` in the WHERE clause as well as the id, so a link id from another team can never be acted on by this team's coach.
+
+<!-- dict:col:family_links.role -->
+**`role`** (text, NOT NULL; CHECK `guardian|follower`) — the tier. See gotcha 2.
+
+<!-- dict:col:family_links.player_id -->
+**`player_id`** (uuid → `rep_roster_players`, nullable, CASCADE) — **guardian only**; **ALWAYS NULL for a follower**, enforced by `family_links_role_player_ck`. Season-scoped by construction because roster rows are (a guardian link is re-established at continuity-confirm; a follower link simply persists).
+
+**⚠ CAP ENFORCED BY TRIGGER (mig 217).** `family_links_guardian_cap` (`enforce_guardian_cap()`) refuses a third LIVE guardian on a player. The app also checks — that is what produces the friendly message — but the app counts then inserts in two statements, so two coaches approving different requests for the same player at the same moment both read the same count and both proceed. Owner ruling #17 is "one per household, room for a second", and a cap enforced only by a racing read is not that cap. `declined`/`revoked` never count toward it, so a mistake is recoverable rather than permanently burning a slot. ⚠ Trigger-only changes get a FALSE GREEN from `check:migrations` (mig-211 lesson) — confirm in prod via `pg_trigger` directly.
+
+**⚠ CHECK amended by mig 216.** Mig 215 required *every* guardian row to carry a player, which the ruled-on flow cannot satisfy: parent-initiated + coach-approved means the parent types a child's **first name** into a form that shows them no roster, and the **coach** attaches the actual roster row at approval. A request that could select a roster row would mean the requester had picked a child from a list they must never see (ruling #3). The constraint is now:
+
+```
+(role = 'follower' AND player_id IS NULL)                                  -- UNCHANGED: the security half
+OR (role = 'guardian' AND (status <> 'verified' OR player_id IS NOT NULL)) -- a VERIFIED guardian has one
+```
+
+The follower half — the tier boundary the whole two-tier model rests on — is byte-identical and must never be loosened. `approveGuardianLink` sets `player_id` in the SAME statement that sets `status='verified'`, so there is no window in which a verified guardian lacks a player.
+
+<!-- dict:col:family_links.user_id -->
+**`user_id`** (uuid → `auth.users`, nullable, SET NULL) — NULL until the family creates/attaches an account. The email is the match key either way, because registrations are account-less by design (G7).
+
+<!-- dict:col:family_links.invited_email -->
+**`invited_email`** (text, NOT NULL) — **normalized** (trim + lowercase) via `lib/guardian-email.ts`. The de-facto family identity and the key the email opt-out list is checked against.
+
+<!-- dict:col:family_links.claimed_email -->
+**`claimed_email`** (text, nullable; **mig 220**) — the normalized address the account that **claimed** a coach invite actually holds, captured at claim time. Differs from `invited_email` exactly when the claim was routed to the approval queue for a mismatch (a parent who signed up with their work email); equal to it on a matched claim; **NULL = never claimed** (a parent-initiated request, an outstanding invite, or a pre-mig-220 row).
+
+**Why stored rather than resolved live from the account:** this is EVIDENCE behind an approval decision about a minor's data, sitting beside `consent_recorded_at` / `consent_ip` which are captured the same way for the same reason. A parent who changes their account email next season must not silently rewrite what the coach was looking at when they approved. **Never used for authorization** — the coach's approval is.
+
+⚠ Before mig 220 the coach reviewing a mismatched claim saw only `invited_email` — the address they themselves typed — so the one fact that sent the row to the queue was the only fact not on it. The guardian tier must not be switched on without this surfaced (plan §9.3).
+
+<!-- dict:col:family_links.relationship -->
+**`relationship`** (text, nullable) — display label only ('Grandparent', 'Aunt'), capped at 40 chars. **Never used for authorization** and never matched against the roster.
+
+<!-- dict:col:family_links.status -->
+**`status`** (text, NOT NULL, default `'requested'`; CHECK `requested|invited|pending_approval|verified|declined|revoked`) — only `verified` grants anything. Partial UNIQUE `(rep_team_id, invited_email, role) WHERE status NOT IN ('declined','revoked')` = one LIVE link per person per tier per team. **`declined` and `revoked` are deliberately outside that index**: a coach who declines by mistake, or removes someone who later rejoins the family, must be able to let them back in. Re-request spam is handled by the rate limiter, not by a permanent lockout.
+
+<!-- dict:col:family_links.verified_via -->
+**`verified_via`** (text, nullable; CHECK `email_match|coach_approved|registration_match`) — how the link was verified. Slice 1 writes only `coach_approved`; the other two are the Slice 2 on-ramps G3 granted.
+
+<!-- dict:col:family_links.requested_player_name -->
+**`requested_player_name`** (text, nullable) — guardian requests only: the name the parent typed, **matched against the roster by the COACH at approval time**. Never matched automatically and never echoed back to the requester — the request page shows them nothing from the roster (ruling #3).
+
+<!-- dict:col:family_links.claim_token_hash -->
+<!-- dict:col:family_links.claim_expires_at -->
+<!-- dict:col:family_links.invited_by_user_id -->
+**`claim_token_hash` / `claim_expires_at` / `invited_by_user_id`** (text unique / timestamptz / uuid → `auth.users`, nullable; **Slice 2**) — the coach-sent DIRECT invite (the secondary on-ramp). Hash-only, same no-login token posture. Unused in Slice 1.
+
+<!-- dict:col:family_links.calendar_token_hash -->
+**`calendar_token_hash`** (text, nullable, unique) — this family's own ICS feed token, minted on demand from the family view. Per family, not per team, so revoking one household's access does not disturb anyone else's calendar. **Nulled on revoke** — a removed follower whose phone kept refreshing a feed would be a revocation in name only.
+
+<!-- dict:col:family_links.consent_recorded_at -->
+<!-- dict:col:family_links.consent_ip -->
+**`consent_recorded_at` / `consent_ip`** (timestamptz / text, nullable; **Slice 2**) — guardian-tier consent evidence; the matching `family_consents` row is written in the same transaction. Unused in Slice 1: the follower path collects no child-data consent because it touches no child data.
+
+<!-- dict:col:family_links.approved_by_user_id -->
+<!-- dict:col:family_links.approved_at -->
+<!-- dict:col:family_links.declined_at -->
+<!-- dict:col:family_links.revoked_at -->
+**`approved_by_user_id` / `approved_at` / `declined_at` / `revoked_at`** (uuid → `auth.users` / timestamptz ×3, nullable) — the decision trail, **and the adoption metrics (plan 1.13)**: requested → approved / declined / revoked, with abandonment being a `requested` row that never moved. Counted from these stamps rather than a parallel counter table, so the numbers can never drift from the rows they describe.
+
+<!-- dict:col:family_links.created_at -->
+<!-- dict:col:family_links.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()) — `created_at` doubles as "requested at".
+
+## `family_consents`
+<!-- dict:table:family_consents -->
+
+**Purpose:** the consent ledger — who consented, for which org, on what lawful basis, when the
+basis started, and when it was withdrawn. CASL implied consent from membership is real but
+**time-boxed at 24 months**, so the basis and its start date have to be data rather than folklore.
+
+**Gotchas:**
+1. **Backfilled from the tryout form** (mig 214), which was the one strong consent trail the
+   product already had (G8). The form's required data-collection consent and its OPTIONAL
+   marketing consent land as **two separate rows with different `scope`** — the 2026-07-30
+   unbundling decision survives into the ledger rather than being re-bundled here.
+2. **Withdrawal stamps, it does not delete.** The uniqueness index applies to LIVE rows only
+   (`WHERE withdrawn_at IS NULL`), so re-consenting after a withdrawal is a NEW row and the
+   history stays intact.
+3. **A consent is per CONSENT ACT, not per (org, guardian, basis, scope) — corrected by
+   mig 217.** The original key had no player dimension, so a parent who is the accountable
+   adult for TWO children in the same organization (siblings on different teams — the ordinary
+   case) had their second consent silently no-op under `ignoreDuplicates`. That is worse than a
+   missing record: the first survives and LOOKS like evidence covering both children, while the
+   second child's actual **age band** — the thing the flow branches on, and which differs for a
+   younger sibling — was never captured. `source_id` (the `family_links` row) now joins the key,
+   with `COALESCE(source_id, '000…0')` so source-less backfill rows still collapse into one slot
+   rather than multiplying (NULLs are DISTINCT in a unique index).
+
+<!-- dict:col:family_consents.id -->
+**`id`** (uuid, PK).
+
+<!-- dict:col:family_consents.org_id -->
+**`org_id`** (uuid, NOT NULL, FK → `organizations`, CASCADE) — consent is per organization, not per team: a family agreed to a relationship with the club.
+
+<!-- dict:col:family_consents.guardian_email -->
+<!-- dict:col:family_consents.user_id -->
+**`guardian_email` / `user_id`** (text NOT NULL / uuid → `auth.users` nullable) — the consenting adult, identified the way the platform actually knows them: by normalized email always, by account only once they have one.
+
+<!-- dict:col:family_consents.basis -->
+<!-- dict:col:family_consents.basis_started_at -->
+<!-- dict:col:family_consents.withdrawn_at -->
+**`basis` / `basis_started_at` / `withdrawn_at`** (text NOT NULL CHECK `express_link|tryout_form|registration_implied` / timestamptz NOT NULL / timestamptz nullable) — what makes contacting or holding data on this family lawful, and for how long. `express_link` (ticked the boxes on a family link request) is the strongest; `registration_implied` carries the CASL 24-month clock from `basis_started_at`.
+
+<!-- dict:col:family_consents.scope -->
+**`scope`** (text, NOT NULL, default `'family_comms'`; CHECK `family_comms|child_data|marketing`) — what was consented TO. Keeping marketing separate from child-data is the unbundling rule made structural.
+
+<!-- dict:col:family_consents.source_table -->
+<!-- dict:col:family_consents.source_id -->
+**`source_table` / `source_id`** (text / uuid, nullable) — provenance: the row that carried the consent, so an auditor can walk from the ledger back to the artifact. Not FKs (polymorphic).
+
+<!-- dict:col:family_consents.consent_ip -->
+<!-- dict:col:family_consents.consent_text -->
+**`consent_ip` / `consent_text`** (text, nullable) — evidence captured at the moment of consent. `consent_ip` is server-captured only, never from a request body; audit use only.
+
+<!-- dict:col:family_consents.jurisdiction -->
+**`jurisdiction`** (text, nullable) — jurisdiction signal so a Quebec **Law 25** (under-14) or future **COPPA** flow can branch later without a data-model rebuild (discovery §3 privacy rule 4). Not populated in Slice 1; the column exists so it never needs to be added retroactively to existing consents.
+
+<!-- dict:col:family_consents.created_at -->
+<!-- dict:col:family_consents.updated_at -->
+**`created_at` / `updated_at`** (timestamptz, NOT NULL, default now()).
+
+## `family_email_optouts`
+<!-- dict:table:family_email_optouts -->
+
+**Purpose:** the suppression list for family email. Closes discovery **G8** — "Email families"
+previously had no opt-out of its own, and its lawful basis was purely relational.
+
+**Gotchas:**
+1. **Keyed `(org_id, email)`, deliberately** — a parent's unsubscribe covers every team in that
+   organization, not only the team whose email they happened to be reading. That is the honest
+   reading of a parent clicking "unsubscribe".
+2. **The send path fails CLOSED on this lookup.** If the suppression read errors, the
+   announcement send throws rather than mailing people who opted out — the opposite of the
+   fail-open posture used for notification pause, because here the failure mode is a
+   compliance breach rather than a missed alert.
+3. **The coach sees a COUNT, never the addresses** (`optedOutCount` on the recipient summary):
+   they learn their real reach without learning which family opted out.
+4. **Basic (free) teams are NOT covered.** `basic_coach_teams` has no `org_id` to key against,
+   so the per-family unsubscribe currently protects the Premium "Email families" path only.
+   Recorded as a known gap, not a decision.
+
+<!-- dict:col:family_email_optouts.id -->
+**`id`** (uuid, PK).
+
+<!-- dict:col:family_email_optouts.org_id -->
+<!-- dict:col:family_email_optouts.email -->
+**`org_id` / `email`** (uuid NOT NULL FK → `organizations` CASCADE / text NOT NULL) — UNIQUE together. `email` is **normalized** (trim + lowercase), the same key `lib/guardian-email.ts` produces.
+
+<!-- dict:col:family_email_optouts.opted_out_at -->
+<!-- dict:col:family_email_optouts.source -->
+<!-- dict:col:family_email_optouts.created_at -->
+**`opted_out_at` / `source` / `created_at`** (timestamptz NOT NULL / text NOT NULL default `'announcement_footer'` / timestamptz NOT NULL) — when and from which surface. `source` is for the record only; an opt-out suppresses ALL family email from the org regardless of where it arrived from.
+
+## `family_recap_views`
+<!-- dict:table:family_recap_views -->
+
+**Purpose:** did a connected family open their player's season recap? One row per **(link,
+season)** — the raw material for a COUNT, and for nothing else. Added by **mig 219** (Chunk D
+slice 3, item 3.5).
+
+**Gotchas:**
+1. **This is a "has read" FLAG, not a hit counter.** `first_viewed_at` is stamped once by an
+   idempotent upsert; re-reading the recap a hundred times writes nothing further. There is
+   deliberately no view count, no last-seen timestamp and no session log.
+2. **COUNTS ONLY — never a per-person read receipt.** Owner ruling for 3.5 is explicit, and the
+   guarantee is enforced by the READER, not by this table: `lib/family-engagement.ts` exports
+   `countRecapViewers` (two integers) and exports no row reader at all. De-duplicating "12 of
+   15 families" cannot be done without storing which link; the identity exists to be counted.
+   **A function that returned link ids, emails or timestamps from here would turn a count into
+   a receipt about a minor's family — that is an owner decision, not a helper.**
+3. **Service-role only** (RLS ON, no policies, grants revoked) — the mig-212 posture every
+   family-layer table uses. The browser never queries this table on either side of the product.
+4. **Everything CASCADEs.** This is derived, disposable telemetry; nothing here is a record
+   worth outliving the link or the season it describes.
+5. **The count only ever means something for a CLOSED season** — a family cannot open a recap
+   before the coach closes the season — which is why it surfaces on Season's End (through the
+   already-season-aware `wrapped` route) and not on the live-season family panel.
+
+<!-- dict:col:family_recap_views.id -->
+**`id`** (uuid, PK).
+
+<!-- dict:col:family_recap_views.org_id -->
+<!-- dict:col:family_recap_views.rep_team_id -->
+**`org_id` / `rep_team_id`** (uuid, NOT NULL, FK → `organizations` / `rep_teams`, both CASCADE) — tenancy + the team dimension the org-side rollup reads without a join.
+
+<!-- dict:col:family_recap_views.program_year_id -->
+**`program_year_id`** (uuid, NOT NULL, FK → `rep_program_years`, CASCADE) — WHICH season's recap. NOT NULL on purpose: it is half of the dedupe key, and NULLs are DISTINCT in a unique index, so a nullable season column would silently allow unlimited duplicate rows.
+
+<!-- dict:col:family_recap_views.link_id -->
+**`link_id`** (uuid, NOT NULL, FK → `family_links`, CASCADE) — which connected family. UNIQUE together with `program_year_id` (`family_recap_views_link_season_uniq`), which is also the upsert's conflict target.
+
+<!-- dict:col:family_recap_views.first_viewed_at -->
+**`first_viewed_at`** (timestamptz, NOT NULL, default now()) — the first open. **Never updated.**
+
+## `no_login_rate_limits`
+<!-- dict:table:no_login_rate_limits -->
+
+**Purpose:** a fixed-window counter shared by the no-login token rails. Discovery **G4** found
+that none of the four existing rails had any rate limiting — abuse resistance was token entropy
+plus DB scoping and nothing else. Entropy makes GUESSING a token hopeless but does nothing
+about a caller hammering a token they already hold, or hammering the request endpoint.
+
+**Gotchas:**
+1. **The subject is a HASHED IP, not an IP.** We count callers without storing who they are — a
+   rate-limit table accumulating raw IPs against family surfaces would be a new personal-data
+   store nobody asked for.
+2. **It must live in the DB.** On a serverless platform an in-memory counter resets per
+   instance, so it would not be a limit at all.
+3. **Increment is via `bump_no_login_rate_limit(rail, subject, window_seconds)`** — one
+   statement, so concurrent requests cannot both read the same count and both decide they are
+   under the limit. `SECURITY DEFINER`, EXECUTE granted to `service_role` only.
+   ⚠ `check:migrations` gives a **FALSE GREEN for function-only changes** (see mig 211) —
+   confirm this function exists in prod by querying `pg_proc` directly at release time.
+4. **The check FAILS OPEN.** If the counter is unavailable, a family trying to reach their
+   team's schedule is not locked out by our own infrastructure; the token remains the real
+   credential and this is defence in depth, not the defence.
+5. **The four EXISTING rails are deliberately not retro-fitted yet** — that is a behaviour
+   change to shipped flows (evaluators on a shared tryout-weekend wifi would start seeing
+   429s) and belongs in its own change with its own QA.
+
+<!-- dict:col:no_login_rate_limits.rail -->
+<!-- dict:col:no_login_rate_limits.subject -->
+**`rail` / `subject`** (text, NOT NULL, composite PK) — which rail is being hit (so one abusive surface cannot exhaust another's budget) and the hashed caller key.
+
+<!-- dict:col:no_login_rate_limits.window_started_at -->
+<!-- dict:col:no_login_rate_limits.attempts -->
+**`window_started_at` / `attempts`** (timestamptz NOT NULL default now() / integer NOT NULL default 0) — the fixed window and its running count. The function resets both when the window has elapsed.
 
 ---
 

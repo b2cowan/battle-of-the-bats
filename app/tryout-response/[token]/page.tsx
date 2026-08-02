@@ -12,7 +12,9 @@ interface OfferView {
   state: 'open' | 'expired' | 'responded' | 'closed' | 'invalid';
   response: 'accepted' | 'declined' | null;
   playerFirstName: string;
-  playerLastName: string;
+  /** "T." — the server deliberately never sends the full surname to this unauthenticated
+   *  page (decision #9). See the API route's lastInitial(). */
+  playerLastInitial: string;
   teamName: string;
   yearName: string;
   orgName: string | null;
@@ -87,7 +89,7 @@ export default function TryoutResponsePage({ params }: { params: Promise<{ token
     </>);
   }
 
-  const player = `${view.playerFirstName} ${view.playerLastName}`.trim();
+  const player = `${view.playerFirstName} ${view.playerLastInitial ?? ''}`.trim();
   const program = [view.teamName, view.yearName].filter(Boolean).join(' — ');
   const brand = view.orgName ? (
     <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem', paddingBottom: '1.1rem', borderBottom: `1px solid ${C.line}` }}>

@@ -40,6 +40,8 @@ export default function SeasonEndPage({
   const page = useCoachSeasonPage(orgSlug, teamId, yearParam);
 
   const [wrapped, setWrapped] = useState<SeasonWrappedPayload | null>(null);
+  /** Counts only — the route omits this entirely for a coach without guardian-contact access. */
+  const [recapEngagement, setRecapEngagement] = useState<{ viewers: number; eligible: number } | null>(null);
   const [error, setError] = useState('');
   const [fetching, setFetching] = useState(true);
   const [rolloverOpen, setRolloverOpen] = useState(false);
@@ -51,7 +53,11 @@ export default function SeasonEndPage({
     setError('');
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/wrapped${yearParam ? `?year=${encodeURIComponent(yearParam)}` : ''}`)
       .then(res => (res.ok ? res.json() : Promise.reject(new Error(String(res.status)))))
-      .then(json => { if (!cancelled) setWrapped(json.wrapped as SeasonWrappedPayload); })
+      .then(json => {
+        if (cancelled) return;
+        setWrapped(json.wrapped as SeasonWrappedPayload);
+        setRecapEngagement(json.recapEngagement ?? null);
+      })
       .catch(() => { if (!cancelled) setError('This season’s wrap-up couldn’t be loaded — refresh to try again.'); })
       .finally(() => { if (!cancelled) setFetching(false); });
     return () => { cancelled = true; };
@@ -106,6 +112,21 @@ export default function SeasonEndPage({
       ) : wrapped ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', maxWidth: 560 }}>
           <SeasonWrappedCard wrapped={wrapped} />
+
+          {/* Chunk D 3.5 — did the families read the recaps? COUNTS ONLY: the product does not
+              record, and this page cannot show, WHICH family opened one. Absent entirely when
+              no guardian was connected to this season — a "0 of 0" is not a fact worth
+              printing, and it would read as a failure rather than as "nobody signed up". */}
+          {recapEngagement && recapEngagement.eligible > 0 && (
+            <section className={styles.setupPanel} aria-labelledby="season-end-recaps">
+              <p className={styles.setupKicker} id="season-end-recaps">Family season recaps</p>
+              <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
+                <b>{recapEngagement.viewers} of {recapEngagement.eligible}</b> connected
+                {recapEngagement.eligible === 1 ? ' family has' : ' families have'} opened their
+                player&apos;s recap for this season.
+              </p>
+            </section>
+          )}
 
           <section className={styles.setupPanel} aria-labelledby="season-end-doors">
             <p className={styles.setupKicker} id="season-end-doors">Look back any time</p>

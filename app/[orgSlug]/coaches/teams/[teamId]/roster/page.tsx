@@ -25,6 +25,7 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
+import FamilyAccessPanel from '@/components/coaches/FamilyAccessPanel';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -475,7 +476,9 @@ export default function RosterPage({
   // where there is no HelpButton label to fall back to.
   const rosterHelpRequest = {
     module: 'coaches' as const,
-    sectionIds: ['recipe-add-player', 'premium-bulk-roster'],
+    // Team family access lives on this page, so its guide has to be reachable from this
+    // page's "?" — a coach about to paste a link into a group chat looks for help here.
+    sectionIds: ['recipe-add-player', 'premium-bulk-roster', 'premium-family-access'],
     label: 'Roster',
     fullGuideHref: `/${orgSlug}/coaches/help#recipe-add-player`,
   };
@@ -572,6 +575,15 @@ export default function RosterPage({
           <HelpButton iconOnly label="Roster" help={rosterHelpRequest} />
         </div>
       </div>
+
+      {/* Team family access (Chunk D). Mounted on the ROSTER index rather than the player
+          page the mockup drew it on: in Slice 1 this card is entirely TEAM-level (the link,
+          the visibility setting, the followers, who are tied to no player), so a coach looking
+          at one child is the wrong place for it. When Slice 2 adds the per-player guardians
+          card, that one goes on the player page as mocked and this stays here.
+          Renders nothing for a non-premium team or a coach without guardian-contact access —
+          it asks the API first and draws only on a yes. */}
+      {view === 'list' && <FamilyAccessPanel orgSlug={orgSlug} teamId={teamId} />}
 
       {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live here) */}
       <div className={styles.segChoice} style={{ margin: '0 0 1rem' }} aria-label="Roster view">

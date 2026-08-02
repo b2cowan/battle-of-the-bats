@@ -8,6 +8,10 @@ import {
 } from '@/lib/db';
 import { isFreePlan } from '@/lib/plan-config';
 import BuiltOnCredit from '@/components/marketing/BuiltOnCredit';
+import RepTeamPublicSchedule from '@/components/public/RepTeamPublicSchedule';
+import { isFamilyLayerEnabled, isPubliclyVisible } from '@/lib/family-access';
+import { getFamilyTeamView } from '@/lib/family-view';
+import publicStyles from '@/components/public/RepTeamPublicSchedule.module.css';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +44,19 @@ export default async function TeamPublicPage({
 
   const programYears = await getRepProgramYears(team.id);
 
+  // The standing public schedule (Chunk D 1.9) exists ONLY at "Public link" visibility, on a
+  // premium team. `getFamilyTeamView` re-checks both server-side and returns null otherwise —
+  // this page never decides, it only renders what it is given.
+  //
+  // The visibility check runs FIRST and off the ALREADY-LOADED team row, so a team that never
+  // turned Public link on — which is nearly all of them — pays zero extra queries for this
+  // feature on a page that gets public traffic. Only a team that actually opted in pays for
+  // the entitlement check and the schedule build.
+  const publicSchedule = isPubliclyVisible(team.scheduleVisibility)
+    && await isFamilyLayerEnabled({ org, repTeamId: team.id })
+    ? await getFamilyTeamView({ repTeamId: team.id, requireVisibility: 'public_link' })
+    : null;
+
   const openYear = !team.isArchived
     ? (programYears.find(y => y.status === 'active' && y.tryoutOpen) ?? null)
     : null;
@@ -63,7 +80,7 @@ export default async function TeamPublicPage({
         style={{
           maxWidth: '680px',
           margin: '0 auto',
-          padding: 'calc(var(--nav-height, 64px) + 2rem) 1.5rem 5rem',
+          padding: 'calc(var(--nav-height) + 2rem) 1.5rem 5rem',
         }}
       >
         <Link
@@ -227,6 +244,20 @@ export default async function TeamPublicPage({
               Register Now →
             </Link>
           </div>
+        )}
+
+        {/* Standing public schedule + the connect-your-account invitation (Chunk D 1.9).
+            The pitch is deliberately soft and last: this page's job is to answer "where is
+            the game", and a family that only ever uses this page is a retention win, not a
+            funnel failure. */}
+        {publicSchedule && (
+          <>
+            <RepTeamPublicSchedule view={publicSchedule} />
+            <p className={publicStyles.note}>
+              Following this team? Ask the coach for the team’s family link to get the schedule
+              in your own calendar and updates when a game changes.
+            </p>
+          </>
         )}
 
         {/* Past seasons */}

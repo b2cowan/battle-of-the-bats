@@ -11,7 +11,7 @@ import { useFollowFeed } from '@/lib/hooks/useFollowFeed';
 import { useDeviceEntityFollows } from '@/lib/hooks/useDeviceEntityFollows';
 import { followStatusText, GROUP_RANK, type TournamentFollowCard, type OrgFollowCard } from '@/lib/home-following';
 import { teamColor, teamInitials } from '@/lib/team-color';
-import type { FollowedTeamAccount } from '@/lib/fan-follows';
+import type { FollowedTeamAccount, FollowedRepTeamAccount } from '@/lib/fan-follows';
 import type { FollowFeedEntry } from '@/lib/follow-feed';
 import warm from './warmTheme.module.css';
 import styles from './FollowingList.module.css';
@@ -30,6 +30,7 @@ export default function FollowingList({
   feedEntries,
   accountWholeEvent,
   accountOrgs,
+  accountRepTeams = [],
   signedIn,
 }: {
   accountFollows: FollowedTeamAccount[];
@@ -39,6 +40,12 @@ export default function FollowingList({
   accountWholeEvent: TournamentFollowCard[];
   /** Server-computed followed-org cards (signed-in). */
   accountOrgs: OrgFollowCard[];
+  /**
+   * Rep teams this account follows through the Chunk D family layer (signed-in only).
+   * Account-only by design: a family connection IS an account relationship, so unlike
+   * tournament follows it has no device/localStorage half to reconcile.
+   */
+  accountRepTeams?: FollowedRepTeamAccount[];
   signedIn: boolean;
 }) {
   const router = useRouter();
@@ -145,7 +152,8 @@ export default function FollowingList({
     (signedIn ? accountOrgs.map(c => c.orgSlug) : deviceOrgs.map(o => o.orgSlug)).filter(s => !unfollowedOrgs.has(s)).length;
 
   const showClaim = signedIn && ready && !claimHidden && deviceOnlyCount > 0;
-  const anyRows = currentCount > 0 || pastCount > 0 || orgs.length > 0;
+  const repTeams = signedIn ? accountRepTeams : [];
+  const anyRows = currentCount > 0 || pastCount > 0 || orgs.length > 0 || repTeams.length > 0;
   const view =
     anyRows ? 'list'
     : feed.loading ? 'blank'
@@ -203,6 +211,31 @@ export default function FollowingList({
         <div />
       ) : (
         <>
+          {/* Family teams lead: a family member opens this page to answer "where is the
+              game", and their own team beating tournament follows to the top is the whole
+              point of the connection. No unfollow star — leaving a team is the coach's
+              revoke or nothing, so a star here would promise an action that doesn't exist. */}
+          {repTeams.length > 0 && (
+            <>
+              <p className={styles.kicker}>Your teams</p>
+              <div className={styles.list}>
+                {repTeams.map(t => (
+                  <div className={styles.row} key={t.repTeamId}>
+                    <Link href={`/family/teams/${t.repTeamId}`} className={styles.rowLink}>
+                      <span className={styles.monogram} style={{ background: teamColor(t.teamName, 55, 42) }} aria-hidden>
+                        {teamInitials(t.teamName)}
+                      </span>
+                      <span className={styles.body}>
+                        <span className={styles.name}>{t.teamName}</span>
+                        <span className={styles.event}>{t.orgName}</span>
+                        <span className={styles.status}>Schedule &amp; results</span>
+                      </span>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
           {currentRows.length > 0 && (
             <>
               <p className={styles.kicker}>Tournaments</p>

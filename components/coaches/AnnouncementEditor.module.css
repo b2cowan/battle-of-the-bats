@@ -190,6 +190,19 @@
   box-shadow: var(--shadow-sm), var(--highlight-top);
 }
 
+/* Chunk D 3.1 — "this was drafted for you, nothing has been sent". An informational note,
+   not a warning: the coach did nothing wrong by arriving here. */
+.draftNote {
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  color: var(--white-80);
+  background: rgba(var(--blueprint-blue-rgb), 0.10);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .input,
 .textarea {
   width: 100%;

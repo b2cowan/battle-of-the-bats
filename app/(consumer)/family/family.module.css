@@ -1,0 +1,525 @@
+/* Chunk D family surfaces — the join page and the family team view.
+   Warm tokens from components/consumer/warmTheme.module.css (the .warm wrapper on each
+   page root); this file only USES them and never redefines a global token. Dark is
+   covered because the warm tokens themselves flip with the user theme — the same
+   mechanism Following and Scores already ride, so these pages cannot become the one
+   consumer surface that ignores the theme.
+   No literal colours anywhere: the token guardrail is at ZERO across all scopes. */
+
+.page {
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+/* ── Shared card ─────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius);
+  padding: 1rem;
+  box-shadow: var(--home-shadow-sm);
+}
+
+.card + .card {
+  margin-top: 0.75rem;
+}
+
+.cardTitle {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--home-dim);
+  font-weight: 700;
+  margin: 0 0 0.6rem;
+}
+
+/* ── Join page header ────────────────────────────────────────────────────── */
+
+.joinHead {
+  text-align: center;
+  padding: 1.5rem 0.5rem 0.5rem;
+}
+
+.orgMark {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  margin: 0 auto 0.7rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+  overflow: hidden;
+}
+
+.orgMark img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.orgName {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--home-dim);
+  font-weight: 700;
+}
+
+.joinTitle {
+  font-size: 1.35rem;
+  line-height: 1.2;
+  margin: 0.4rem 0 0.5rem;
+  text-wrap: balance;
+  color: var(--home-ink);
+}
+
+.joinLede {
+  color: var(--home-dim);
+  font-size: 0.92rem;
+  margin: 0 auto;
+  max-width: 34ch;
+  line-height: 1.5;
+}
+
+/* ── Tier chooser ────────────────────────────────────────────────────────── */
+
+.tier {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  text-align: left;
+  border: 1.5px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
+  padding: 0.7rem 0.8rem;
+  background: transparent;
+  color: var(--home-ink);
+  cursor: pointer;
+  min-height: 44px;   /* mobile touch floor */
+  font: inherit;
+}
+
+.tier + .tier {
+  margin-top: 0.5rem;
+}
+
+.tierOn {
+  border-width: 2px;
+  border-color: var(--home-ink);
+}
+
+.tierLabel {
+  font-weight: 700;
+  display: block;
+}
+
+.tierSub {
+  font-size: 0.78rem;
+  color: var(--home-dim);
+  display: block;
+  margin-top: 0.1rem;
+  line-height: 1.4;
+}
+
+.tierRadio {
+  flex: none;
+  margin-top: 0.15rem;
+  color: var(--home-dim);
+}
+
+/* The guardian hold state — an honest closed door, not a dead control. */
+.holdNote {
+  margin: 0.6rem 0 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: var(--home-radius-sm);
+  background: var(--home-olive-soft);
+  color: var(--home-ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+/* Marks copy that is not final. Deliberately visible rather than a code comment: anyone
+   testing the guardian flow before counsel returns must be able to SEE that the wording
+   they are reading is a draft. */
+.placeholderNote {
+  margin: 0 0 0.7rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--home-radius-sm);
+  background: var(--home-olive-soft);
+  color: var(--home-ink-soft);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  font-style: italic;
+}
+
+/* Consent checkbox row. */
+.check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--home-ink);
+  margin: 0.55rem 0;
+  cursor: pointer;
+  min-height: 44px;
+}
+
+.check input {
+  flex: none;
+  margin-top: 0.2rem;
+  width: 18px;
+  height: 18px;
+  accent-color: var(--home-olive);
+}
+
+/* ── Guardian band on the family team view ──────────────────────────────── */
+
+.playerBand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.playerMark {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+.playerName {
+  font-weight: 700;
+  color: var(--home-ink);
+}
+
+.announcement + .announcement {
+  border-top: 1px solid var(--home-line);
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+}
+
+.announcementSubject {
+  font-weight: 600;
+  color: var(--home-ink);
+}
+
+.announcementBody {
+  font-size: 0.85rem;
+  color: var(--home-ink-soft);
+  line-height: 1.55;
+  margin-top: 0.15rem;
+  white-space: pre-wrap;
+}
+
+/* ── Form ────────────────────────────────────────────────────────────────── */
+
+.field {
+  display: block;
+  margin-top: 0.5rem;
+}
+
+.fieldLabel {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--home-dim);
+  margin-bottom: 0.3rem;
+}
+
+.input {
+  width: 100%;
+  min-height: 44px;
+  border: 1.5px solid var(--home-line-strong);
+  border-radius: var(--home-radius-sm);
+  padding: 0.6rem 0.75rem;
+  background: var(--home-paper);
+  color: var(--home-ink);
+  font: inherit;
+}
+
+.input:focus-visible {
+  outline: 3px solid var(--home-olive);
+  outline-offset: 1px;
+}
+
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+
+.actions {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: none;
+  border-radius: var(--home-radius-pill);
+  padding: 0.65rem 1.4rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--home-ink);
+  color: var(--home-paper);
+  font-family: inherit;
+}
+
+.chip:hover {
+  background: var(--home-ink-soft);
+}
+
+/* Lime is reserved for the ONE account-creation conversion moment (mockup rule). */
+.chipLime {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+.chipLime:hover {
+  background: var(--home-lime);
+  opacity: 0.9;
+}
+
+.chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+/* A quiet way back from a leaf page (the recap) — never competes with the page's own action. */
+.chipGhost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--home-radius-pill);
+  padding: 0.6rem 1.3rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  background: transparent;
+  color: var(--home-ink-soft);
+  text-decoration: none;
+}
+
+.chipGhost:hover {
+  background: var(--home-olive-soft);
+}
+
+/* Chunk D 3.2 — the recap door on the family team view, and the honest "season is over"
+   state that replaces a dead end once the schedule stops being served. */
+.recapDoor {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 0.85rem;
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius-sm);
+  margin-top: 0.75rem;
+}
+
+.recapDoorText {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--home-ink);
+}
+
+.recapDoorLink {
+  flex-shrink: 0;
+  color: var(--home-olive);
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+.linkAction {
+  display: inline-block;
+  margin-top: 0.7rem;
+  color: var(--home-olive);
+  font-weight: 600;
+  font-size: 0.86rem;
+  min-height: 44px;
+  line-height: 44px;
+}
+
+.footNote {
+  margin-top: 1rem;
+  padding: 0.7rem 0.8rem;
+  border-radius: var(--home-radius);
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  color: var(--home-dim);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.error {
+  color: var(--home-live);
+  font-size: 0.85rem;
+  margin: 0.6rem 0 0;
+}
+
+.notice {
+  color: var(--home-ink-soft);
+  font-size: 0.88rem;
+  margin: 0.6rem 0 0;
+  line-height: 1.5;
+}
+
+/* ── The one-list schedule (owner ruling #2) ─────────────────────────────── */
+
+.teamHead {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.25rem 0.25rem 0.75rem;
+}
+
+.teamName {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--home-ink);
+  margin: 0;
+}
+
+.teamMeta {
+  font-size: 0.8rem;
+  color: var(--home-dim);
+  margin-left: auto;
+  font-family: var(--font-data);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.6rem 0.15rem;
+}
+
+/* Completed rows recede so the eye lands on what is still to come. */
+.rowDone {
+  opacity: 0.62;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-weight: 600;
+  color: var(--home-ink);
+}
+
+.rowSub {
+  font-size: 0.78rem;
+  color: var(--home-dim);
+  margin-top: 0.1rem;
+}
+
+.rowCancelled {
+  text-decoration: line-through;
+}
+
+.score {
+  font-variant-numeric: tabular-nums;
+  font-family: var(--font-data);
+  font-weight: 800;
+  color: var(--home-ink);
+  white-space: nowrap;
+}
+
+.scoreWin  { color: var(--home-win); }
+.scoreLoss { color: var(--home-live); }
+
+.divider {
+  height: 1px;
+  background: var(--home-line);
+  margin: 0.15rem 0;
+}
+
+/* "Up next" — the anchor the list opens at. */
+.upNext {
+  background: var(--home-olive-soft);
+  border-radius: var(--home-radius-sm);
+  padding: 0.65rem 0.75rem;
+  margin: 0.25rem 0;
+  scroll-margin-top: 5rem;
+}
+
+.upNextLabel {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--home-olive);
+}
+
+.rowLink {
+  color: var(--home-olive);
+  font-weight: 600;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.calendarRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.15rem 0.2rem;
+  font-size: 0.82rem;
+  color: var(--home-dim);
+}
+
+.calendarButton {
+  margin-left: auto;
+  border: 1.5px solid var(--home-line-strong);
+  background: transparent;
+  color: var(--home-olive);
+  border-radius: var(--home-radius-sm);
+  padding: 0.4rem 0.8rem;
+  font-weight: 600;
+  font-size: 0.8rem;
+  cursor: pointer;
+  min-height: 44px;
+  font-family: inherit;
+}
+
+.calendarUrl {
+  margin-top: 0.5rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--home-radius-sm);
+  background: var(--home-paper);
+  border: 1px solid var(--home-line);
+  color: var(--home-ink-soft);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  word-break: break-all;
+}
+
+.empty {
+  color: var(--home-dim);
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1.5rem 0.5rem;
+  line-height: 1.6;
+}

@@ -1,6 +1,7 @@
 import 'server-only';
-import { sendEmail } from './email';
 import { supabaseAdmin } from './supabase-admin';
+import { normalizeGuardianEmail, isSendableGuardianEmail } from './guardian-email';
+import { getFamilySuppressionList, sendFamilyEmail } from './family-email';
 
 /**
  * One-way team announcements for the PREMIUM Coaches Portal (rep team workspace, table mig 138).
@@ -49,6 +50,12 @@ export type RepTeamAnnouncementRecipientSummary = {
   rosterContactCount: number;
   /** Active players whose stored guardian email is malformed (skipped defensively). */
   skippedInvalidCount: number;
+  /**
+   * Distinct roster contacts who have unsubscribed from this org's family email (0.3).
+   * A COUNT, never the addresses — the coach learns their reach without learning which
+   * family opted out, which is the point of an opt-out.
+   */
+  optedOutCount: number;
 };
 
 type RepTeamAnnouncementRow = {
@@ -73,12 +80,14 @@ type RepRosterContactRow = {
 
 type RecipientLookup = RepTeamAnnouncementRecipientSummary & {
   emails: string[];
+  /** Carried through to the send loop so the compliance guard inside `sendFamilyEmail` runs
+   *  against an already-loaded set rather than re-querying once per recipient. */
+  suppressed: Set<string>;
 };
 
 const ANNOUNCEMENT_COLUMNS =
   'id, org_id, team_id, program_year_id, subject, body, recipient_count, sent_count, failed_count, status, sent_at, created_at, updated_at';
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_SUBJECT_LENGTH = 160;
 const MAX_BODY_LENGTH = 4000;
 const MAX_RECIPIENTS_PER_ANNOUNCEMENT = 100;
@@ -109,39 +118,16 @@ function mapAnnouncement(row: RepTeamAnnouncementRow): RepTeamAnnouncement {
   };
 }
 
-function normalizeEmail(value: unknown): string {
-  return typeof value === 'string' ? value.trim().toLowerCase() : '';
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
-function announcementEmailHtml(params: { teamName: string; subject: string; body: string }): string {
-  const subject = escapeHtml(params.subject);
-  const body = escapeHtml(params.body).replace(/\n/g, '<br>');
-  const teamName = escapeHtml(params.teamName);
-  return `
-<div style="font-family:Inter,-apple-system,BlinkMacSystemFont,sans-serif;background:#111827;color:#F1F5F9;max-width:600px;margin:0 auto;padding:2rem;border:1px solid rgba(96,165,250,0.25);">
-  <div style="margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid rgba(96,165,250,0.18);">
-    <span style="font-size:0.72rem;font-weight:900;color:#60A5FA;letter-spacing:0.14em;text-transform:uppercase;">${teamName}</span>
-  </div>
-  <h2 style="margin:0 0 1rem;color:#fff;font-size:1.25rem;line-height:1.3;">${subject}</h2>
-  <div style="color:rgba(241,245,249,0.82);font-size:0.95rem;line-height:1.7;">${body}</div>
-  <p style="margin:1.75rem 0 0;color:rgba(241,245,249,0.45);font-size:0.78rem;line-height:1.5;">
-    You are receiving this because your email is listed as a guardian contact for ${teamName}.
-  </p>
-</div>`;
-}
-
-function statusFor(sentCount: number, failedCount: number): RepTeamAnnouncementStatus {
+/**
+ * `suppressedCount` is the third outcome the original two counters could not express. Without
+ * it, an announcement where every remaining recipient opted out mid-send scored
+ * `sent=0, failed=0` and logged as **"sent"** — a coach reading "Sent" for a message nobody
+ * received. A send that reached nobody is not a send.
+ */
+function statusFor(sentCount: number, failedCount: number, suppressedCount = 0): RepTeamAnnouncementStatus {
+  if (sentCount === 0 && (failedCount > 0 || suppressedCount > 0)) return 'failed';
   if (failedCount === 0) return 'sent';
-  return sentCount > 0 ? 'partial' : 'failed';
+  return 'partial';
 }
 
 function summaryFromLookup(lookup: RecipientLookup): RepTeamAnnouncementRecipientSummary {
@@ -150,6 +136,7 @@ function summaryFromLookup(lookup: RecipientLookup): RepTeamAnnouncementRecipien
     rosterPlayerCount: lookup.rosterPlayerCount,
     rosterContactCount: lookup.rosterContactCount,
     skippedInvalidCount: lookup.skippedInvalidCount,
+    optedOutCount: lookup.optedOutCount,
   };
 }
 
@@ -176,36 +163,47 @@ export function normalizeRepTeamAnnouncementBody(
   return { input };
 }
 
-async function getRecipientLookup(programYearId: string): Promise<RecipientLookup> {
-  const { data, error } = await supabaseAdmin
-    .from('rep_roster_players')
-    .select('guardian_email')
-    .eq('program_year_id', programYearId)
-    .eq('status', 'active');
+async function getRecipientLookup(orgId: string, programYearId: string): Promise<RecipientLookup> {
+  const [{ data, error }, suppressed] = await Promise.all([
+    supabaseAdmin
+      .from('rep_roster_players')
+      .select('guardian_email')
+      .eq('program_year_id', programYearId)
+      .eq('status', 'active'),
+    getFamilySuppressionList(orgId),
+  ]);
 
   if (error) throw error;
 
   const rows = data ?? [];
   const emails = new Set<string>();
+  const optedOut = new Set<string>();
   let rosterContactCount = 0;
   let skippedInvalidCount = 0;
   for (const row of rows) {
-    const email = normalizeEmail((row as RepRosterContactRow).guardian_email);
+    const email = normalizeGuardianEmail((row as RepRosterContactRow).guardian_email);
     if (!email) continue;
     rosterContactCount++;
-    if (!EMAIL_RE.test(email)) {
+    if (!isSendableGuardianEmail(email)) {
       skippedInvalidCount++;
+      continue;
+    }
+    // Opted out: counted (so the coach sees honest reach) but never added to the send list.
+    if (suppressed.has(email)) {
+      optedOut.add(email);
       continue;
     }
     emails.add(email);
   }
 
   return {
+    suppressed,
     emails: Array.from(emails).sort(),
     recipientCount: emails.size,
     rosterPlayerCount: rows.length,
     rosterContactCount,
     skippedInvalidCount,
+    optedOutCount: optedOut.size,
   };
 }
 
@@ -225,9 +223,10 @@ async function assertSendAllowance(teamId: string) {
 
 /** Count the current deduped active-roster guardian-email recipients for the season. */
 export async function getRepTeamAnnouncementRecipientSummary(
+  orgId: string,
   programYearId: string,
 ): Promise<RepTeamAnnouncementRecipientSummary> {
-  return summaryFromLookup(await getRecipientLookup(programYearId));
+  return summaryFromLookup(await getRecipientLookup(orgId, programYearId));
 }
 
 /** Recent one-way announcement log for a Premium rep team season. */
@@ -264,7 +263,7 @@ export async function sendRepTeamAnnouncement(params: {
   if (!subject) throw new Error('A subject is required.');
   if (!body) throw new Error('A message is required.');
 
-  const lookup = await getRecipientLookup(params.programYearId);
+  const lookup = await getRecipientLookup(params.orgId, params.programYearId);
   if (lookup.emails.length === 0) throw new Error(REP_TEAM_ANNOUNCEMENT_NO_RECIPIENTS_ERROR);
   if (lookup.emails.length > MAX_RECIPIENTS_PER_ANNOUNCEMENT) {
     throw new Error(REP_TEAM_ANNOUNCEMENT_RECIPIENT_LIMIT_ERROR);
@@ -272,13 +271,36 @@ export async function sendRepTeamAnnouncement(params: {
   await assertSendAllowance(params.teamId);
 
   const teamName = params.teamName?.trim() || 'Your team';
-  const html = announcementEmailHtml({ teamName, subject, body });
+  const { data: orgRow } = await supabaseAdmin
+    .from('organizations')
+    .select('name')
+    .eq('id', params.orgId)
+    .maybeSingle();
+  const orgName = (orgRow as { name?: string } | null)?.name ?? null;
+
   let sentCount = 0;
   let failedCount = 0;
+  let suppressedCount = 0;
   for (const email of lookup.emails) {
     try {
-      const result = await sendEmail(email, subject, html);
+      // Every family email goes through the one guarded sender: it re-checks the opt-out
+      // list and appends the CASL footer (sender identification + an unsubscribe link keyed
+      // to THIS address) so neither can be forgotten here.
+      const result = await sendFamilyEmail({
+        orgId: params.orgId,
+        to: email,
+        subject,
+        suppressed: lookup.suppressed,
+        content: {
+          teamName, orgName, title: subject, body,
+          reason: `your email is listed as a guardian contact for ${teamName}`,
+        },
+      });
       if (result.status === 'sent') sentCount++;
+      // 'suppressed' is neither sent nor failed — the recipient list already excluded opt-outs,
+      // so this only fires when someone opts out between the count and the send. Counted
+      // separately so the log cannot claim "sent" for a message nobody received.
+      else if (result.status === 'suppressed') suppressedCount++;
       else failedCount++;
     } catch (error) {
       console.error('[rep team announcements] failed to send one recipient:', error);
@@ -298,7 +320,7 @@ export async function sendRepTeamAnnouncement(params: {
       recipient_count: lookup.emails.length,
       sent_count: sentCount,
       failed_count: failedCount,
-      status: statusFor(sentCount, failedCount),
+      status: statusFor(sentCount, failedCount, suppressedCount),
       sent_at: sentAt,
       created_by: params.createdByUserId,
     })

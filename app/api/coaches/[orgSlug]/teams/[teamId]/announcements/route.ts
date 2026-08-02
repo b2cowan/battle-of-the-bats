@@ -58,11 +58,11 @@ export const GET = withObservability(async (_req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { programYear } = resolved;
+  const { ctx, programYear } = resolved;
 
   const [announcements, recipientSummary] = await Promise.all([
     getRepTeamAnnouncements(programYear.id),
-    getRepTeamAnnouncementRecipientSummary(programYear.id),
+    getRepTeamAnnouncementRecipientSummary(ctx.org.id, programYear.id),
   ]);
   return NextResponse.json({ ok: true, announcements, recipientSummary });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/announcements' });

@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeams, createRepTeam, getNonArchivedRepTeamCount } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { getOrgFamilyRollup, EMPTY_TEAM_FAMILY_ROLLUP } from '@/lib/family-access';
 import { DEFAULT_SPORT } from '@/lib/sports';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -34,7 +35,17 @@ export const GET = withObservability(async (req: Request) => {
 
   // Scoped member: ignore caller ?group= and enforce their assigned group IDs
   const groupFilter = searchParams.get('group') || undefined;
-  const teams = await getRepTeams(ctx!.org.id, groupFilter, ctx!.repGroupIds ?? undefined);
+  /**
+   * Chunk D 3.6 — how many families each team has actually connected, for the club.
+   *
+   * ONE grouped read for the whole org, not a query per row: this list already runs three
+   * queries per team, and a fourth down a 30-team list is how a page starts timing out. It
+   * needs only the org id, so it runs ALONGSIDE the team list rather than after it.
+   */
+  const [teams, familyByTeam] = await Promise.all([
+    getRepTeams(ctx!.org.id, groupFilter, ctx!.repGroupIds ?? undefined),
+    getOrgFamilyRollup(ctx!.org.id),
+  ]);
   const visible = includeArchived ? teams : teams.filter(t => !t.isArchived);
 
   // Fetch summary counts per team in one query each
@@ -58,7 +69,12 @@ export const GET = withObservability(async (req: Request) => {
         .eq('status', 'pending_review'),
     ]);
     const activeYear = years?.[0] ?? null;
-    return { team, activeYear, rosterCount: rosterCount ?? 0, pendingTryouts: pendingCount ?? 0 };
+    return {
+      team, activeYear,
+      rosterCount: rosterCount ?? 0,
+      pendingTryouts: pendingCount ?? 0,
+      family: familyByTeam.get(team.id) ?? { repTeamId: team.id, ...EMPTY_TEAM_FAMILY_ROLLUP },
+    };
   }));
 
   return NextResponse.json({ teams: summaries });

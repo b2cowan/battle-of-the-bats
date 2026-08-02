@@ -30,6 +30,23 @@ async function orgInfo(orgId: string): Promise<{ orgName: string | null; orgLogo
   return { orgName: data?.name ?? null, orgLogoUrl: data?.logo_url ?? null, orgSlug: data?.slug ?? null };
 }
 
+/**
+ * Data minimization for the one unauthenticated surface that names a child (decision #9).
+ *
+ * This page's only credential is a 256-bit URL token, and that URL travels by email — so it
+ * survives forwarding, shared inboxes and browser history on a family computer. A guardian
+ * opening their own offer needs to recognize WHICH child it concerns; they do not need the
+ * child's full legal name rendered to whoever else ends up holding the link. First name plus
+ * last initial is enough to recognize and not enough to identify.
+ *
+ * The coach-side notification is unchanged — that surface is authenticated and the coach
+ * already holds the roster.
+ */
+function lastInitial(lastName: string | null | undefined): string {
+  const trimmed = (lastName ?? '').trim();
+  return trimmed ? `${trimmed.charAt(0).toUpperCase()}.` : '';
+}
+
 /** Public, minimal view of the offer for the response page. */
 async function viewFor(reg: RepTryoutRegistration) {
   const [team, programYear, brand] = await Promise.all([
@@ -47,7 +64,8 @@ async function viewFor(reg: RepTryoutRegistration) {
     state,
     response: reg.offerResponse, // 'accepted' | 'declined' | null
     playerFirstName: reg.playerFirstName,
-    playerLastName: reg.playerLastName,
+    // NOT the full surname — see lastInitial(). The client cannot render what it never receives.
+    playerLastInitial: lastInitial(reg.playerLastName),
     teamName: team?.name ?? '',
     yearName: programYear?.name ?? '',
     orgName: brand.orgName,

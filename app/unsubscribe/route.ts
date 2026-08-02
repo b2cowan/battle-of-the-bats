@@ -1,6 +1,7 @@
 /**
- * GET /unsubscribe?org=<orgId>&token=<token>       — org-level marketing opt-out
- * GET /unsubscribe?user=<userId>&token=<token>     — per-person opt-out (coach campaigns)
+ * GET /unsubscribe?org=<orgId>&token=<token>                      — org-level marketing opt-out
+ * GET /unsubscribe?user=<userId>&token=<token>                    — per-person opt-out (coach campaigns)
+ * GET /unsubscribe?org=<orgId>&guardian=<email>&token=<token>     — per-family opt-out ("Email families")
  *
  * CASL-compliant marketing email unsubscribe endpoint.
  * No authentication required — the signed token IS the authorization.
@@ -15,7 +16,11 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { verifyUnsubscribeToken, verifyUserUnsubscribeToken } from '@/lib/unsubscribe-token';
+import {
+  verifyUnsubscribeToken,
+  verifyUserUnsubscribeToken,
+  verifyGuardianUnsubscribeToken,
+} from '@/lib/unsubscribe-token';
 
 export const runtime = 'nodejs';
 
@@ -23,6 +28,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const orgId = searchParams.get('org') ?? '';
   const userId = searchParams.get('user') ?? '';
+  const guardianEmail = (searchParams.get('guardian') ?? '').trim().toLowerCase();
   const token = searchParams.get('token') ?? '';
 
   const invalid = () =>
@@ -45,6 +51,29 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('[unsubscribe] user opt-out update error:', error);
+      return dbError();
+    }
+    return done();
+  }
+
+  // ── Per-GUARDIAN opt-out (Chunk D 0.3 — "Email families") ─────────────────────
+  // MUST be tested before the org branch: a guardian link carries `org` too, and falling
+  // through to the org branch would opt an entire organization out of its own marketing
+  // because one parent unsubscribed from a team email. The distinct HMAC means the org
+  // branch could not verify this token anyway — this ordering makes that structural rather
+  // than incidental.
+  if (guardianEmail) {
+    if (!orgId || !token || !verifyGuardianUnsubscribeToken(orgId, guardianEmail, token)) return invalid();
+
+    const { error } = await supabaseAdmin
+      .from('family_email_optouts')
+      .upsert(
+        { org_id: orgId, email: guardianEmail, opted_out_at: new Date().toISOString(), source: 'announcement_footer' },
+        { onConflict: 'org_id,email' },
+      );
+
+    if (error) {
+      console.error('[unsubscribe] guardian opt-out update error:', error);
       return dbError();
     }
     return done();

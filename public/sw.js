@@ -36,7 +36,9 @@
 //     had been cached in the shared data cache (/review 2026-07-15).
 // v3: unified-app Phase 0 — clean refresh of pages that referenced old
 //     per-tournament/scorekeeper manifests.
-const CACHE_VERSION = 'v9';
+// v10: Chunk D — /family added to NEVER_CACHE_PREFIXES; the bump forces a clean SW refresh
+//      so no already-installed worker keeps caching the new authed route.
+const CACHE_VERSION = 'v10';
 const SHELL_CACHE = 'flhq-shell-' + CACHE_VERSION; // precache + content-hashed static
 const PAGES_CACHE = 'flhq-pages-' + CACHE_VERSION; // last-good public tournament pages
 const DATA_CACHE  = 'flhq-data-'  + CACHE_VERSION; // last-good anonymous public API JSON
@@ -62,6 +64,10 @@ const PRECACHE_URLS = [OFFLINE_URL, '/icons/pwa-192.png', '/icons/badge-72.png']
 const NEVER_CACHE_PREFIXES = [
   '/api/', '/auth', '/platform-admin', '/home', '/my',
   '/coaches', '/team', '/start', '/account', '/following', '/chat',
+  // Chunk D: a connected family's own team schedule. Authed and per-account — the exact
+  // shape of the /coaches PII leak this list exists to prevent. Added in the SAME commit
+  // that created the route.
+  '/family',
 ];
 // Org sub-sections that are operator/authed surfaces (/{org}/{section}/...).
 const PRIVATE_ORG_SECTIONS = ['admin', 'coaches', 'scorekeeper', 'check-in', 'official', 'league'];

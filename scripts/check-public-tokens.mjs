@@ -120,6 +120,10 @@ const SCOPES = {
       'components/notifications/PreferencesTable.module.css',
       'components/notifications/PushDeviceTester.module.css',
       'components/notifications/FanAlertsCard.module.css',
+      // Chunk D 3.2 — the player season recap, rendered on the family page AND (inside the
+      // consumer warm shell) in the coach's preview. Scoped as consumer because that is the
+      // token set it is built on and the surface it is for.
+      'components/family/PlayerRecapView.module.css',
     ],
     excludeSegments: new Set(),
     excludeFiles: new Set(['components/consumer/ConsumerShell.module.css']),

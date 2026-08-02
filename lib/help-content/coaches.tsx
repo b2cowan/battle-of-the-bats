@@ -381,8 +381,13 @@ const coachesHelp: HelpPageContent = {
       // here explicitly or a coach who reads "Email families" in their nav can never find this page.
       // The old term stays: the FREE portal's door is still called Announcements, and premium
       // coaches have been reading that word since launch.
-      keywords: ['announcements', 'email families', 'email parents', 'email my families', 'message team', 'send announcement', 'contact parents', 'reuse announcement', 'resend', 'confirm send', 'where is announcements', 'announcements renamed', 'announcements gone', 'cant find announcements', 'email everyone'],
-      searchText: 'announcements email families email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium confirm before sending irreversible cannot unsend reuse resend duplicate past announcement send again recipient count updates automatically no refresh unsaved changes draft warning read full message expand renamed email families premium nav door where did announcements go different from chat one way email audience families',
+      keywords: ['announcements', 'email families', 'email parents', 'email my families', 'message team', 'send announcement', 'contact parents', 'reuse announcement', 'resend', 'confirm send', 'where is announcements', 'announcements renamed', 'announcements gone', 'cant find announcements', 'email everyone', 'unsubscribe', 'unsubscribed', 'opted out', 'opt out', 'family unsubscribed', 'not receiving emails', 'fewer families',
+        // Chunk D Slice 3 — the postgame draft. A coach who saw the button on the Schedule
+        // searches for the words ON the button, so they have to be listed here.
+        'draft the family email', 'draft family email', 'draft email', 'postgame email',
+        'post game email', 'after the game email', 'score email', 'result email',
+        'email after a game', 'tell families the score', 'write the email for me', 'pre-written'],
+      searchText: 'announcements email families email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium confirm before sending irreversible cannot unsend reuse resend duplicate past announcement send again recipient count updates automatically no refresh unsaved changes draft warning read full message expand renamed email families premium nav door where did announcements go different from chat one way email audience families unsubscribe link footer family opted out casl count not names cannot re-subscribe them why did my recipient count drop draft the family email postgame draft after saving a final score result and next event pre-written nothing sends by itself you edit and press send never auto sends skipping it is fine',
       content: (
         <>
           <p>Turn on <strong>Announcements</strong> from Explore to email your whole team at once.</p>
@@ -394,6 +399,11 @@ const coachesHelp: HelpPageContent = {
           <p>If a player has no contact email, the page warns you and won&apos;t reach them — add an email on your Roster to include them. Every send is saved to a <strong>Recent announcements</strong> log showing whether it sent fully, partly, or failed.</p>
           <p><strong>Premium Coaches Portal adds:</strong> a quick <strong>confirm</strong> before an announcement emails families (it can&apos;t be unsent), a recipient count that <strong>updates on its own</strong> as you add contacts, the ability to reopen a past announcement to <strong>read it in full and reuse it</strong>, and automatic dues and event reminders.</p>
           <p><strong>In the Premium portal this is called &ldquo;Email families&rdquo;</strong> — same screen, clearer name. It sits next to <strong>Chat</strong> in your menu and the two do different jobs: Email families is a <strong>one-way email out to parents</strong>; Chat is a <strong>conversation</strong> with your own coaching staff, and with the organizer and other coaches while a tournament is running.</p>
+          <p><strong>Families can unsubscribe.</strong> Every email you send now carries an unsubscribe link, and we honour it on every send afterwards. If anyone has opted out you&apos;ll see it as a count beside your recipient number — you see <em>how many</em>, never <em>which families</em>, because that is the point of an opt-out. A family who has opted out can only be reached by talking to them directly.</p>
+
+          <h4>The after-the-game email, written for you</h4>
+          <p>When you save a <strong>final score</strong> on the Schedule, a <strong>Draft the family email</strong> line appears under it. One tap opens this screen with the subject and message already written — the result, and what&apos;s next on your calendar. Change any of it, or delete it and write your own.</p>
+          <p><strong>Nothing sends by itself.</strong> The draft just puts words in the box; it still takes your <strong>Send</strong> like any other message, and a note at the top of the compose box says so. If you never use it, nothing is missing — families are never told an after-game email is coming, so one you skip isn&apos;t one they notice.</p>
         </>
       ),
       faqs: [
@@ -404,6 +414,37 @@ const coachesHelp: HelpPageContent = {
           keywords: ['no recipients', 'no one to email', 'contact email', 'announcement'],
           answer: (
             <p>Announcements only reach players who have a contact email on your <strong>Roster</strong>. Add a parent/guardian email to each player; the recipient count picks them up when you return to Announcements (or use <strong>Refresh contacts</strong> on the empty screen).</p>
+          ),
+        },
+        {
+          id: 'faq-announcement-unsubscribed',
+          question: 'Why is my recipient count lower than my roster?',
+          answerText: 'Three reasons. A player with no contact email on the Roster is not reachable — add one to include them. An address that is not a valid email is skipped. And a family who has unsubscribed is excluded from every send afterwards; you will see that as a count beside your recipient number. You see how many families opted out, never which ones, so if you need to reach them it has to be a direct conversation. You cannot re-subscribe someone on their behalf.',
+          keywords: ['recipient count', 'lower', 'fewer', 'unsubscribed', 'opted out', 'not receiving', 'missing families', 'why fewer'],
+          answer: (
+            <>
+              <p>Three reasons, in the order they are most likely:</p>
+              <ul>
+                <li>A player has <strong>no contact email</strong> on the Roster — add one to include them.</li>
+                <li>An address on file <strong>isn&apos;t a valid email</strong>, so it is skipped.</li>
+                <li>A family has <strong>unsubscribed</strong>, and is left out of every send afterwards.</li>
+              </ul>
+              <p>You see <em>how many</em> families opted out, never <em>which</em> ones — so if you need to reach them, that has to be a direct conversation. You can&apos;t re-subscribe someone on their behalf.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-postgame-draft',
+          question: 'What is “Draft the family email” after a game?',
+          answerText: 'Save a final score on a game in your Schedule and a Draft the family email line appears under the score. Tapping it opens Email families with the subject and message already written — the result, plus the next thing on your calendar. You edit it and press Send yourself; nothing is ever sent automatically, and a note on the compose box says so. It appears only on games with a score, never on a cancelled game, never in a finished season, and only if you are allowed to send announcements. Skipping it costs nothing — families are never promised an after-game email, so one you do not send is not one they miss.',
+          keywords: ['draft the family email', 'draft family email', 'postgame email', 'post game email', 'after the game', 'score email', 'result email', 'auto send', 'does it send automatically', 'pre-written email', 'where did this email come from'],
+          popular: true,
+          answer: (
+            <>
+              <p>Save a <strong>final score</strong> on a game in your Schedule and a <strong>Draft the family email</strong> line appears under it. Tapping it opens <strong>Email families</strong> with the subject and message already written — the result, plus the next thing on your calendar.</p>
+              <p><strong>It never sends on its own.</strong> You edit it and press <strong>Send</strong> yourself, exactly like any other message, and a note on the compose box says where the words came from.</p>
+              <p>You&apos;ll see it only on a game that has a score — never on a cancelled game, never in a finished season, and only if you&apos;re allowed to send announcements. <strong>Skipping it costs nothing:</strong> families are never told an after-game email is coming.</p>
+            </>
           ),
         },
         {
@@ -668,6 +709,7 @@ const coachesHelp: HelpPageContent = {
             <li>Export your roster to Excel, CSV, or a print-ready PDF.</li>
             <li>Document storage for waivers and team forms (see below).</li>
             <li>A <strong>Team settings</strong> area for your division, the season you&apos;re in, and the <strong>lineup rules</strong> game-day auto-fill follows (see below).</li>
+            <li><strong>Family access</strong> — one link that lets grandparents and relatives follow your schedule and results after you approve them, a setting for how much is visible, shareable pages for individual games, and a calendar families can subscribe to (see below).</li>
           </ul>
           <p>If your organization later joins FieldLogicHQ, your team and its history carry over automatically.</p>
         </>
@@ -855,13 +897,17 @@ const coachesHelp: HelpPageContent = {
         'past dues', 'last year expenses', 'old budget', 'past budget vs actual', 'old fundraiser',
         'past player record', 'old player', 'past lineup', 'last year lineup', 'past development',
         'why can’t I edit', 'cannot edit past season', 'no edit button', 'read only season',
-        'email past season', 'chat past season'],
-      searchText: 'season over ended complete end of season seasons end page season wrapped highlight card share your season image final record longest streak closest game attendance rate most awarded lineup fact read only past seasons results archive locked out lost access team disappeared not assigned any teams club admin closes season reappears next season start next season close out the season winding down quiet nothing scheduled what carries over roster staff budget fee plan development history bring forward measurements start fresh awards all time record',
+        'email past season', 'chat past season',
+        // Chunk D Slice 3 — the recap engagement count lands on this page.
+        'family season recaps', 'recap opened', 'did families read it', 'who opened the recap',
+        'recap count', 'families opened', 'season recap'],
+      searchText: 'season over ended complete end of season seasons end page season wrapped highlight card share your season image final record longest streak closest game attendance rate most awarded lineup fact read only past seasons results archive locked out lost access team disappeared not assigned any teams club admin closes season reappears next season start next season close out the season winding down quiet nothing scheduled what carries over roster staff budget fee plan development history bring forward measurements start fresh awards all time record closing the season hands families their player season recap family season recaps line how many connected families opened theirs count never which families needs family contact access hidden when no families were connected',
       content: (
         <>
           <p>When your season is marked complete, your team doesn&apos;t disappear — it moves to its <strong>Season&apos;s End</strong> page. You&apos;ll find it in your team switcher (the dropdown in the sidebar, or the team list on your phone&apos;s More menu) under <strong>Season complete</strong> — and if it&apos;s your only team, the portal opens straight onto it.</p>
           <p><strong>Season Wrapped</strong> leads the page: your final record, longest win streak, closest game, attendance rate, top award-winner, and a standout lineup fact — built from the season you actually ran. <strong>Share your season</strong> turns it into a picture and opens your phone&apos;s share sheet, so it goes wherever you choose (the family group chat is the usual first stop). A short season simply gets a smaller card — no padded stats.</p>
           <p><strong>The whole season is still there.</strong> Roster, schedule and results, attendance, lineups, money records, documents, development and tryouts all stay open, exactly as they were — you just can&apos;t change them, because the season is over. Open any of them from the menu, the same way you did during the season.</p>
+          <p><strong>Closing the season is also what hands each family their player&apos;s season recap.</strong> Once it has, a <strong>Family season recaps</strong> line appears here telling you how many of your connected families have opened theirs — a count only, never <em>which</em> families. It shows up only if families were connected to that season, so a team that hadn&apos;t started sharing isn&apos;t shown a zero to interpret. Reading it needs family-contact access.</p>
           <p><strong>Moving between seasons:</strong> pick a season from the switcher under your team name (on a phone it&apos;s in <strong>More</strong>, under <em>This team&apos;s seasons</em>). It keeps you where you are — if you&apos;re on Roster, you get last season&apos;s Roster. A page from a finished season is marked <strong>Complete</strong> beside its title; on a phone, tapping that marker is also the quickest way back to the current season. This works even while a new season is running, so you can look up last year mid-season without leaving what you&apos;re doing.</p>
           <p><strong>It goes all the way down.</strong> Open Money and you can still read that season&apos;s dues, expenses, budget, budget-vs-actual and fundraiser results. Open Roster and you can open a player to see their attendance, dues and awards for that season. Open Lineups and you can open a game and see the order you actually batted. Everything is marked <strong>Complete</strong> and nothing offers to be edited.</p>
           <p><strong>What isn&apos;t in a finished season, and why:</strong> anything that <em>does</em> something rather than records it. You can&apos;t send an email to families, start a chat, request a payment, log a new org allocation, or run a tryout for a season that has already happened. Those are live-season tools; the archive is the record.</p>
@@ -1210,8 +1256,11 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Game-day details: arrival, field, uniform, tags, awards, links & the map (Premium)',
       summary: 'Add an arrival/call time, diamond/field number, uniform, your own game tags, player awards, and resource links to an event — and split the place name from a street address that powers a tap-to-open map.',
-      keywords: ['arrival time', 'call time', 'be there by', 'field number', 'diamond number', 'uniform', 'jersey', 'location', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources', 'tags', 'tag a game', 'game tags', 'manage tags', 'merge tags', 'rename tag', 'filter by tag', 'record by tag', 'awards', 'give an award', 'mvp', 'best hitter', 'hustle award', 'award types', 'manage awards', 'retire award'],
-      searchText: 'arrival call time be there by field diamond number uniform jersey what to wear home whites location place name street address google maps open in maps map link recent locations chips tap to fill calendar export ics spreadsheet excel csv arrival field uniform columns game day details premium links attach link resource drill video rules page field map flyer youtube google doc url open in new tab tags tag a game rivalry top team autocomplete create new tag chip picker manage tags rename merge delete tag library filter by tag vs tag record how are we doing insights awards give an award mvp best hitter hustle award award icon emoji picker manage award types retire award restore award who is earning it leaderboard',
+      keywords: ['arrival time', 'call time', 'be there by', 'field number', 'diamond number', 'uniform', 'jersey', 'location', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources', 'tags', 'tag a game', 'game tags', 'manage tags', 'merge tags', 'rename tag', 'filter by tag', 'record by tag', 'awards', 'give an award', 'mvp', 'best hitter', 'hustle award', 'award types', 'manage awards', 'retire award',
+        // Chunk D Slice 3 — printable certificates live off the awards report.
+        'certificate', 'certificates', 'print certificate', 'print certificates', 'print awards',
+        'award certificate', 'awards night', 'banquet', 'year end party', 'pizza party', 'printable award'],
+      searchText: 'arrival call time be there by field diamond number uniform jersey what to wear home whites location place name street address google maps open in maps map link recent locations chips tap to fill calendar export ics spreadsheet excel csv arrival field uniform columns game day details premium links attach link resource drill video rules page field map flyer youtube google doc url open in new tab tags tag a game rivalry top team autocomplete create new tag chip picker manage tags rename merge delete tag library filter by tag vs tag record how are we doing insights awards give an award mvp best hitter hustle award award icon emoji picker manage award types retire award restore award who is earning it leaderboard print certificate certificates awards night banquet year end pizza party letter landscape team colour full name signature line background graphics',
       content: (
         <>
           <p>When you add or edit an event on the <strong>Premium</strong> schedule, a few optional details make game day smoother. Leave any of them blank if you don&apos;t need them.</p>
@@ -1256,6 +1305,21 @@ const coachesHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>Open a game that already has a <strong>final score</strong> entered, and tap <strong>Give an award</strong> in the Awards section. Pick a player, pick an award from your team&apos;s list — <strong>MVP</strong>, <strong>Best Hitter</strong>, and <strong>Hustle Award</strong> to start, fully editable — add an optional note, and save. The form clears right away so you can give another award for the same game without reopening anything. You can also give an award that isn&apos;t tied to one game — for a tournament, or a general season recognition — from the <strong>&ldquo;Who&apos;s earning it?&rdquo;</strong> report page in Insights.</p>
+          ),
+        },
+        {
+          id: 'faq-print-certificates',
+          question: 'Can I print award certificates for the year-end party?',
+          answerText: 'Yes. Open Insights then "Who\'s earning it?". Every row in the Full history has a print icon that opens a ready-to-print certificate for that award. To do a whole set at once, filter to a single award type with the chips at the top and use "Print N certificates" — one page per player. Certificates print Letter size, landscape, framed in your team colour, with your organization name, the award, the player\'s full name, your team and season, your note if you left one, and a line for you to sign. Turn on background graphics in your browser\'s print options if the frame does not appear. Nothing new to fill in — it prints the awards you already gave.',
+          keywords: ['certificate', 'certificates', 'print certificate', 'print awards', 'award certificate', 'awards night', 'year end', 'banquet', 'pizza party', 'trophy', 'printable', 'print', 'landscape'],
+          popular: true,
+          answer: (
+            <>
+              <p>Open <strong>Insights → &ldquo;Who&apos;s earning it?&rdquo;</strong>. Every row in <strong>Full history</strong> has a <strong>print</strong> icon that opens a ready-to-print certificate for that award.</p>
+              <p>For a whole set at once, filter to one award type with the chips at the top and use <strong>Print N certificates</strong> — one page per player.</p>
+              <p>Certificates come out <strong>Letter size, landscape</strong>, framed in your team colour, carrying your organization&apos;s name, the award, the player&apos;s <strong>full name</strong>, your team and season, your note if you left one, and a line for you to sign. There&apos;s nothing new to fill in — it prints the awards you already gave.</p>
+              <p>If the coloured frame doesn&apos;t appear, switch on <strong>background graphics</strong> in your browser&apos;s print options.</p>
+            </>
           ),
         },
         {
@@ -2056,6 +2120,215 @@ const coachesHelp: HelpPageContent = {
           keywords: ['improving', 'better than last year', 'this season vs last', 'season comparison', 'winning percentage', 'trend', 'year over year', 'season review', 'insights', 'scoreboard', 'close games', 'form', 'streak', 'past seasons'],
           answer: (
             <>
+    {
+      // Chunk D Slice 1. The family layer is the first thing in the portal that hands a person
+      // OUTSIDE the coaching staff a view of the team, so the guide leads with who ends up seeing
+      // what — that is the question a coach actually has before they paste a link into a group
+      // chat. The guardian tier is deliberately described as not-yet-open rather than omitted: a
+      // coach WILL be asked "can my parents connect?" and needs a true answer.
+      id: 'premium-family-access',
+      group: 'Premium Coaches Portal',
+      heading: 'Letting families follow your team (Premium)',
+      summary: 'Share one link so grandparents and relatives can follow your schedule and results — you approve every one of them, and you decide how much is visible.',
+      keywords: ['guardians', 'guardian', 'parent access', 'connect a parent', 'approve as', 'two guardians', 'second household', 'invite a guardian', 'family', 'families', 'family access', 'family link', 'team family link', 'follow the team', 'followers', 'family followers', 'grandparent', 'grandparents', 'relatives', 'parents see schedule', 'let parents see', 'share schedule', 'share my schedule', 'who can see my schedule', 'schedule visibility', 'staff only', 'public link', 'approve family', 'approval queue', 'requests waiting', 'remove follower', 'revoke', 'reset link', 'new link', 'stop sharing', 'guardian', 'parent access', 'connect parents', 'calendar', 'subscribe calendar',
+        // Chunk D Slice 3 — the recap the coach can preview today, and the keepsake families save.
+        'season recap', 'player season recap', 'family season recap', 'recap', 'preview recap',
+        'what parents see', 'what the family sees', 'end of season recap', 'keepsake',
+        'keepsake card', 'save keepsake', 'player card', 'share card', 'publish recap',
+        'release recap', 'when do families get the recap'],
+      searchText: 'family access team family link share link with families grandparents relatives follow team schedule results approve decline requests waiting queue remove follower revoke reset link new link old link stops working schedule visibility staff only families public link who can see games practices calendar subscription ics feed family gets alerts when a game moves final score guardian parent tier not open yet privacy review premium coaches portal roster page family access card no roster shown to requester family season recap preview what the parent sees attendance worked on focus areas test readings first to latest awards playing time fair play band nothing invented absent not empty never called an improvement never compares players closing the season releases recaps no publish button keepsake card first name and jersey saved to their phone no public link',
+      content: (
+        <>
+          <p>Families can follow your team without you sending anything out by hand. You share <strong>one link</strong>, they ask to follow, and you approve. It sits on your <strong>Roster</strong> page in the <strong>Team family access</strong> card.</p>
+
+          <h4>Sharing the link</h4>
+          <ol>
+            <li>Open <strong>Roster</strong> and find <strong>Team family access</strong>.</li>
+            <li>Choose <strong>Create link</strong> — it copies to your clipboard.</li>
+            <li>Paste it wherever your team already talks: the group chat, an email, a season-start message.</li>
+          </ol>
+          <p>The link is the only way in. There is <strong>no way to search for your team or a player</strong> — someone has to be given the link, and then you still have to approve them.</p>
+
+          <h4>Deciding who sees the schedule</h4>
+          <p><strong>Schedule visibility</strong> has three settings, and it applies to games and practices together:</p>
+          <ul>
+            <li><strong>Staff only</strong> — nobody outside your coaching staff sees the schedule. Families who are already connected get a short &ldquo;not available right now&rdquo; message rather than an error, and their connection stays intact for when you switch it back.</li>
+            <li><strong>Families</strong> (the default) — the people you have approved see the full schedule.</li>
+            <li><strong>Public link</strong> — additionally, your team&apos;s public page shows the schedule to anyone who visits it.</li>
+          </ul>
+          <p>This is enforced on our side, not just hidden. Setting it to Staff only genuinely removes the schedule everywhere, including from any calendar a family already subscribed to.</p>
+
+          <h4>Approving people</h4>
+          <p>Requests wait quietly on this same card as a <strong>&ldquo;waiting&rdquo;</strong> count — nothing chases you, and you deal with them when you are already on the page. Each row shows the email address and whatever they said about themselves (&ldquo;Grandparent&rdquo;). Choose <strong>Approve</strong> or <strong>Decline</strong>. Declining is not permanent — if you decline the wrong person, they can ask again.</p>
+          <p>Use <strong>Manage</strong> to see everyone currently following and <strong>Remove</strong> anyone. Removing takes effect immediately, including any calendar they had subscribed.</p>
+
+          <h4>What a follower actually sees</h4>
+          <p>Games and practices in one list, results once you enter them, and any game page you have shared. They can add the schedule to their own phone calendar, where it keeps itself current. They get a notice when you move a game, cancel one, or post a final score.</p>
+          <p><strong>What they never see:</strong> your roster, any player&apos;s name, contact details, fees, attendance, or anything else from your portal. A follower is connected to the <em>team</em>, not to a child.</p>
+
+          <h4>If you need a link back</h4>
+          <p><strong>Reset link</strong> creates a new one and stops the old one working everywhere it has been shared — the right move if a link travelled further than you meant it to. People you have already approved are unaffected.</p>
+
+          <p><strong>Connecting a player&apos;s own parent or guardian is not open yet.</strong> That part of the family experience is waiting on a privacy review covering a child&apos;s information. A parent who opens your link is told so plainly and offered the follow option instead, so nobody is left guessing.</p>
+
+          <h4>The season recap you can already look at</h4>
+          <p>Open any player from your <strong>Roster</strong> and you&apos;ll find <strong>Family season recap</strong> with a <strong>Preview</strong> control. It shows exactly what that player&apos;s parent or guardian will read once your season closes — you&apos;re looking at their screen, not a summary of it.</p>
+          <p>It&apos;s built entirely from things you already record: <strong>attendance</strong>, what you <strong>worked on</strong> with them (their focus areas, and each test&apos;s first and latest reading), their <strong>awards</strong>, and how their <strong>playing time</strong> sat against your team&apos;s fair-play band — plus your team&apos;s season record. There is nothing extra to write.</p>
+          <p><strong>Anything you didn&apos;t record simply isn&apos;t there.</strong> A team that never logged a test has no &ldquo;worked on&rdquo; section — not an empty one, not a prompt. Nothing is invented, and nothing tells a family a section is missing. A recap built from one feature you used all season is a short, true recap.</p>
+          <p>Two things it deliberately does <em>not</em> do: it never calls a test reading an improvement (only you know whether faster or higher is better for your own test), and it never compares one player to another.</p>
+          <p><strong>Closing your season is what hands recaps to families</strong> — there&apos;s no separate publish step. That&apos;s why the preview lives here during the season: it&apos;s while the season is open that you can still log a last reading or hand out an award. Preview needs roster access and notes access.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-family-who-sees-roster',
+          question: 'Can people who follow my team see my roster?',
+          answerText: 'No. A follower is connected to the team, not to a player. They see the schedule, results and any game page you shared. They never see your roster, a player name, contact details, fees or attendance. Even the request page shows them nothing about your team beyond its name.',
+          keywords: ['roster', 'player names', 'privacy', 'what do followers see', 'can they see'],
+          answer: (
+            <>
+              <p>No. A follower is connected to the <strong>team</strong>, not to a player. They see the schedule, results, and any game page you shared.</p>
+              <p>They never see your roster, a player&apos;s name, contact details, fees or attendance — and the request page itself shows them nothing about your team beyond its name.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-family-link-spread',
+          question: 'Someone forwarded my family link — what do I do?',
+          answerText: 'Choose Reset link on the Team family access card. That creates a new link and stops the old one working everywhere it was shared. Families you already approved keep their access. Anyone using the old link can no longer request. Nobody gets access from holding the link alone — you still approve every request.',
+          keywords: ['forwarded', 'shared too far', 'reset link', 'revoke link', 'new link', 'stop the link'],
+          popular: true,
+          answer: (
+            <>
+              <p>Choose <strong>Reset link</strong> on the Team family access card. That creates a new link and stops the old one working everywhere it was shared. Families you have already approved keep their access.</p>
+              <p>Worth knowing either way: holding the link never grants anything on its own — every request still comes to you.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-family-hide-schedule',
+          question: 'How do I stop families seeing the schedule for a while?',
+          answerText: 'Set Schedule visibility to Staff only on the Team family access card. Connected families see a short not-available message instead of the schedule, any shared game page stops opening, and subscribed calendars stop updating. Nobody is disconnected — switch it back to Families and everything returns.',
+          keywords: ['hide schedule', 'staff only', 'turn off', 'stop sharing schedule', 'temporarily'],
+          answer: (
+            <>
+              <p>Set <strong>Schedule visibility</strong> to <strong>Staff only</strong>. Connected families see a short &ldquo;not available right now&rdquo; message, any game page you shared stops opening, and subscribed calendars stop updating.</p>
+              <p>Nobody is disconnected — switch it back to <strong>Families</strong> and everything returns.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-family-recap-preview',
+          question: 'What is the “Family season recap” on a player’s page?',
+          answerText: 'It is what that player\'s connected parent or guardian reads when your season closes, and Preview shows you their actual screen. It is assembled from what you already record: attendance, the focus areas you worked on, each test\'s first and latest reading, awards, and how their playing time sat against your team\'s fair-play band, plus the team\'s season record. Nothing extra to write. Anything you never recorded is simply absent — a team that logged no tests has no worked-on section at all, not an empty one, and nothing tells the family a section is missing. It never calls a reading an improvement, because only you know whether faster or higher is better for your own test, and it never compares one player to another. You need roster access and notes access to preview it. It is available while the season is running, which is the point — that is when you can still log a reading or give an award.',
+          keywords: ['season recap', 'family season recap', 'player recap', 'preview', 'what parents see', 'what the family sees', 'end of season', 'recap sections missing', 'empty recap', 'no data'],
+          popular: true,
+          answer: (
+            <>
+              <p>It&apos;s what that player&apos;s connected parent or guardian reads once your season closes — and <strong>Preview</strong> shows you their actual screen, not a summary of it.</p>
+              <p>It&apos;s assembled from what you already record: <strong>attendance</strong>, the <strong>focus areas</strong> you worked on, each test&apos;s <strong>first and latest reading</strong>, <strong>awards</strong>, and how their <strong>playing time</strong> sat against your team&apos;s fair-play band. Nothing extra to write.</p>
+              <p><strong>Anything you never recorded is simply absent.</strong> A team that logged no tests has no &ldquo;worked on&rdquo; section at all — not an empty one — and nothing tells a family a section is missing.</p>
+              <p>It never calls a reading an <em>improvement</em> (only you know whether faster or higher is better for your own test), and it never compares one player to another. Previewing needs <strong>roster</strong> and <strong>notes</strong> access.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-family-recap-release',
+          question: 'How do I publish the season recaps to families?',
+          answerText: 'There is no publish button. Closing your season is what hands recaps to connected families — the same action that produces your Season Wrapped. That is deliberate: once a season is closed nothing in it can be edited, so what you previewed during the season is exactly what families read. Preview each player while the season is still open, because that is when you can still log a last test reading or hand out an award. Note that recaps go to a player\'s connected parent or guardian, and that connection type is not open yet while a privacy review is finished, so nothing reaches a family until it is.',
+          keywords: ['publish recap', 'release recap', 'send recap', 'when do families get the recap', 'share recap', 'no publish button'],
+          answer: (
+            <>
+              <p>There isn&apos;t one. <strong>Closing your season</strong> is what hands recaps to connected families — the same action that produces your Season Wrapped.</p>
+              <p>That&apos;s deliberate: once a season is closed nothing in it can be changed, so what you previewed <em>during</em> the season is exactly what families read. Preview while the season is still open — that&apos;s when you can still log a last reading or hand out an award.</p>
+              <p>Recaps go to a player&apos;s connected <strong>parent or guardian</strong>, and that connection isn&apos;t open yet while the privacy review is finished — so nothing reaches a family until it is.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-family-keepsake',
+          question: 'What is the keepsake card?',
+          answerText: 'On their child\'s season recap, a family can tap Save keepsake card to get a square picture for their camera roll — the team colours, the season, their child\'s first name and jersey number, their awards and attendance. It carries a first name and a number only, never a surname, and it is drawn on their own phone and handed to their normal share sheet. There is no public web page for it and no link anyone else can open — where it goes is entirely the family\'s choice. It is the same share-card idea as the Season Wrapped picture you can share from Season\'s End.',
+          keywords: ['keepsake', 'keepsake card', 'player card', 'share card', 'picture', 'image', 'camera roll', 'save card', 'trading card'],
+          answer: (
+            <>
+              <p>On their child&apos;s recap, a family can tap <strong>Save keepsake card</strong> for a square picture in their camera roll — team colours, the season, their child&apos;s <strong>first name and jersey number</strong>, awards and attendance.</p>
+              <p>It carries a first name and a number only — <strong>never a surname</strong> — it&apos;s drawn on their own phone, and it goes to their normal share sheet. There&apos;s <strong>no public page and no link</strong> anyone else can open; where it goes is the family&apos;s choice. Same idea as the <strong>Share your season</strong> picture on your Season&apos;s End page.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-family-guardian-tier',
+          question: 'A parent asked to connect to their own child — can they?',
+          answerText: 'Not yet on your account. Connecting a parent or guardian to a specific player is built but switched off across the platform while a privacy review covering a child information is finished. A parent who opens your family link is told that plainly and can follow the team instead, which gives them the schedule, results and game updates today. When it opens you will see a guardians card on each player page: parents ask to connect and name their child, you approve and say which player they belong to, up to two per player so a second household fits.',
+          keywords: ['parent', 'guardian', 'my child', 'connect to player', 'season recap', 'not available', 'guardians card', 'when will guardians', 'two guardians'],
+          answer: (
+            <>
+              <p>Not yet. Connecting a parent or guardian to a <em>specific player</em> is built, but switched off across the platform while a privacy review covering a child&apos;s information is finished.</p>
+              <p>A parent who opens your link is told that plainly and offered the team-follow option instead — which gives them the schedule, results and game updates today.</p>
+              <p><strong>What it will look like when it opens:</strong> a <strong>guardians card</strong> on each player&apos;s page. A parent opens your family link, names their child and gives the consents; you approve and say <em>which</em> player they belong to. Up to two per player, so a second household fits. You&apos;ll also be able to invite a parent directly at the email already on that player — and because you chose that address, someone signing in with it connects without needing a second approval from you.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-family-how-many',
+          question: 'How many people can follow my team?',
+          answerText: 'As many as you approve. There is a high safety ceiling to stop abuse, not a plan limit, and an ordinary team will never reach it. You can remove anyone at any time from the Manage list.',
+          keywords: ['how many', 'limit', 'cap', 'maximum followers', 'too many'],
+          answer: (
+            <p>As many as you approve. There is a high ceiling to stop abuse rather than a plan limit, and an ordinary team will never reach it. You can remove anyone at any time.</p>
+          ),
+        },
+      ],
+    },
+    {
+      // Chunk D Slice 1. Separate from the family-access section because a coach reaches this from
+      // the SCHEDULE, not the roster, and will search for "share a game" rather than "family".
+      id: 'premium-share-game-link',
+      group: 'Premium Coaches Portal',
+      heading: 'Sharing one game with people who have no account (Premium)',
+      summary: 'Turn a single game into a clean page anyone can open — teams, time, place, directions, and the final score once you enter it.',
+      keywords: ['share game', 'share game link', 'share a game', 'game link', 'game page', 'send the game', 'grandparent game', 'no account', 'follow this game', 'public game', 'stop sharing game', 'unshare'],
+      searchText: 'share game link single game public page no sign in needed teams time place directions final score grandparent out of town relatives share button event details schedule slide over stop sharing removes the page practices cannot be shared individually staff only blocks it team level only no player names premium coaches portal',
+      content: (
+        <>
+          <p>Open any game on your <strong>Schedule</strong> and choose <strong>Share</strong>. That creates a page for that one game which anyone can open — no account, no app.</p>
+          <p>The page shows both teams, the time, the place with directions, and the final score once you enter it. That is all it ever shows: <strong>no player names, no roster, no lineup</strong>. It is the same information as the scoreboard at the field, which is why it is safe to send to anyone.</p>
+          <p>Two things worth knowing:</p>
+          <ul>
+            <li><strong>The page does not exist until you share it.</strong> Nothing is public by default, and <strong>Stop sharing</strong> removes it again.</li>
+            <li><strong>Practices can&apos;t be shared this way.</strong> If you want your whole schedule public, that is the <strong>Public link</strong> setting on Team family access instead.</li>
+          </ul>
+          <p>If your Schedule visibility is set to <strong>Staff only</strong>, sharing is refused with an explanation — a shared page would not open for anyone.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-share-game-who-can-open',
+          question: 'Who can open a game link I share?',
+          answerText: 'Anyone you send it to. It needs no account and no sign in. It shows both teams, the time, the place with directions, and the final score once entered — never a player name, a roster or a lineup. It is not listed in search engines, so it only reaches the people you send it to.',
+          keywords: ['who can see', 'no account', 'public', 'anyone', 'search engine', 'google'],
+          answer: (
+            <>
+              <p>Anyone you send it to — it needs no account and no sign-in. It shows both teams, the time, the place with directions, and the final score once you enter it, and never a player name, roster or lineup.</p>
+              <p>It is not listed in search engines, so it reaches the people you send it to and nobody else.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-share-game-undo',
+          question: 'Can I take a shared game page back down?',
+          answerText: 'Yes. Open the game again and choose Stop sharing — the page stops opening immediately, including for anyone who bookmarked it. Setting Schedule visibility to Staff only also closes every shared game page at once.',
+          keywords: ['undo', 'take down', 'stop sharing', 'unshare', 'remove game page'],
+          answer: (
+            <>
+              <p>Yes — open the game and choose <strong>Stop sharing</strong>. The page stops opening immediately, including for anyone who bookmarked it.</p>
+              <p>Setting <strong>Schedule visibility</strong> to <strong>Staff only</strong> closes every shared game page at once.</p>
+            </>
+          ),
+        },
+      ],
+    },
               <p>Open <strong>Insights</strong> (in the <strong>Season</strong> menu). The <strong>scoreboard</strong> across the top shows the honest ways to read this season: your record, recent form, streak, run difference, and your record in <strong>one-run games</strong>.</p>
               <p>On purpose, Insights <strong>doesn&apos;t compare seasons against each other</strong> — youth teams move up divisions and face different competition each year, so a &ldquo;better or worse than last year&rdquo; arrow would mislead more than it tells. Your past seasons are still kept: open <strong>&ldquo;How are we doing?&rdquo;</strong> to see every year&apos;s record as a plain archive — a scrapbook, not a scoreboard.</p>
             </>

@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Award, Check, Trash2 } from 'lucide-react';
+import { Award, Check, Printer, Trash2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
@@ -174,6 +174,17 @@ export default function CoachesAwardsReportPage({
               <button className={styles.btnPrimary} onClick={() => setGiveOpen(true)}>🏆 Give an award</button>
             )}
             <button className={styles.tagManageLink} onClick={() => setManageOpen(true)}>Manage award types</button>
+            {/* Chunk D 3.4 — awards night, printed. Offered only for a chosen award TYPE:
+                "print every award this season" is a stack of mismatched certificates, not a
+                thing a coach wants. */}
+            {activeType && visibleAwards.length > 0 && (
+              <Link
+                href={`${base}/history/awards/certificate?typeId=${activeType.id}`}
+                className={styles.tagManageLink}
+              >
+                <Printer size={13} aria-hidden /> Print {visibleAwards.length} certificate{visibleAwards.length === 1 ? '' : 's'}
+              </Link>
+            )}
           </div>
 
           {awards.length === 0 ? (
@@ -252,6 +263,14 @@ export default function CoachesAwardsReportPage({
                           <td className={styles.insightsNum}>{new Date(`${a.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
                           <td className={styles.mutedInline}>{a.note || '—'}</td>
                           <td>
+                            {/* Two clicks from the history the coach already keeps (3.4). */}
+                            <Link
+                              title="Print certificate"
+                              href={`${base}/history/awards/certificate?awardId=${a.id}`}
+                              style={{ color: 'var(--white-45)', padding: '0.2rem', display: 'inline-block' }}
+                            >
+                              <Printer size={13} aria-hidden />
+                            </Link>
                             <button
                               title="Remove"
                               disabled={busyId === a.id}

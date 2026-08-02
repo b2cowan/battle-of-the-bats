@@ -16,6 +16,14 @@
  * never Account or an operator door. The assertions below are written to hold either way, so they
  * still catch a real leak; the D1 additions are pinned separately at the bottom of the file.
  *
+ * ⚠ WHERE THE CHUNK D SURFACES ARE COVERED: the two new anonymous public surfaces — the shared
+ * rep-team game page and the standing public team schedule — are asserted for this same
+ * invariant in `family-access-boundary.spec.ts`, not here. They are deliberately NOT added to
+ * the fixed-URL lists below because both only EXIST once a coach has shared a game / set the
+ * team to Public link, so they need provisioned fixtures rather than a static dev URL. That
+ * file checks the same two things this one does — no identity in the SSR HTML, no PII — plus
+ * the share and visibility gates that make the pages exist at all.
+ *
  * Runs signed-OUT — the file overrides the suite's default org-owner session.
  */
 import { test, expect, type Page } from '@playwright/test';
@@ -250,5 +258,151 @@ test.describe('Stage F — the org section tabs', () => {
     for (const marker of ['Admin Area', 'Workspaces', '⇄']) {
       expect(html, `${marker} must not ride the section row`).not.toContain(marker);
     }
+  });
+});
+
+test.describe('R1 — no navigation door may land on a 404 org home (top-nav audit D1)', () => {
+  // dev-test-org has its "public page" toggle OFF, so /dev-test-org 404s. Its event pages used to
+  // link there anyway from the desktop rail crumb and the phone eyebrow, because the shared
+  // predicate checked entitlements but not the toggle. Both halves now live in the predicate.
+  const PRIVATE_ORG = '/dev-test-org';
+
+  test('the org home really is a 404 — the fixture still reproduces the condition', async ({ request }) => {
+    expect((await request.get(PRIVATE_ORG)).status()).toBe(404);
+  });
+
+  test('the SERVER HTML of its event page carries no anchor to the org home', async ({ request }) => {
+    const html = await (await request.get(TOURNAMENT)).text();
+    // Match the href attribute exactly so a longer path under the org (an event link) never
+    // counts as a hit.
+    expect(html, 'SSR anchor to a 404 org home').not.toMatch(/href="\/dev-test-org\/?"/);
+  });
+
+  for (const [label, width] of [['desktop', 1440], ['phone', 390]] as const) {
+    test(`the HYDRATED event page renders no door to it (${label})`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto(TOURNAMENT, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(800);
+      const doors = await page.locator(`a[href="${PRIVATE_ORG}"], a[href="${PRIVATE_ORG}/"]`).count();
+      expect(doors, `${label}: doors to a 404 org home`).toBe(0);
+    });
+  }
+
+  test('an org whose home IS real keeps its door — the fix hides dead links, not live ones', async ({ page }) => {
+    // ORG is a League-tier org with the public-site module, so its home renders. Its own event
+    // chrome must still offer the way up; a blanket removal would have been the other bug.
+    await page.goto(ORG, { waitUntil: 'networkidle' });
+    expect(page.url()).toContain(ORG);
+    await expect(page.locator('h1, h2').first()).toBeVisible();
+  });
+});
+
+test.describe('R3 + R5 — the marketing bar joins the system (top-nav audit D3/D11)', () => {
+  test('at 820px exactly ONE nav set renders — the 768-900 double-nav band is closed', async ({ page }) => {
+    // iPad portrait is 768. Between Tailwind's default `md:` (768) and the platform breakpoint
+    // (900) the desktop cluster AND the mobile bottom link bar both rendered: the same five links
+    // twice, the wordmark colliding with "TOURNAMENTS", and "SIGN IN" wrapped over two lines.
+    await page.setViewportSize({ width: 820, height: 1180 });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    const pricingLinks = page.locator('nav a[href="/pricing"]:visible');
+    expect(await pricingLinks.count(), 'visible Pricing links in the chrome at 820px').toBe(1);
+  });
+
+  test('the desktop cluster returns above the platform breakpoint', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    // Desktop shows the top cluster; the bottom link bar is hidden by the same 900px rule.
+    expect(await page.locator('nav a[href="/pricing"]:visible').count()).toBe(1);
+  });
+
+  test('the bar is the ratified height and shares its own pages\' column', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    const m = await page.evaluate(() => {
+      const inner = document.querySelector('nav .container') as HTMLElement | null;
+      const pageCol = document.querySelector('main .container') as HTMLElement | null;
+      const root = getComputedStyle(document.documentElement);
+      return {
+        token: root.getPropertyValue('--marketing-bar-h').trim(),
+        barHeight: inner ? Math.round(inner.getBoundingClientRect().height) : null,
+        barLeft: inner ? Math.round(inner.getBoundingClientRect().left) : null,
+        pageLeft: pageCol ? Math.round(pageCol.getBoundingClientRect().left) : null,
+      };
+    });
+    expect(m.token, 'the marketing bar height has ONE home').toBe('64px');
+    expect(m.barHeight).toBe(64);
+    // D11's measured 24px stagger: the bar used a 1152px column while its own pages use 1200px.
+    expect(m.barLeft, 'bar column left edge').toBe(m.pageLeft);
+  });
+});
+
+test.describe('R6 — League pages share the column their own tab row aligns to (audit D5)', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  // The Stage F tab row wears the shared 1200px `.container` SPECIFICALLY to match the identity
+  // row above it. These pages centred their own 560-800px columns on the raw viewport instead —
+  // measured 244-304px of left-edge stagger between the navigation and the content it navigates.
+  for (const [label, path] of [
+    ['League index', `${ORG}/league`],
+  ] as const) {
+    test(`${label}: the tab row and the first heading share a left edge`, async ({ page }) => {
+      await page.goto(path, { waitUntil: 'networkidle' });
+      await page.waitForTimeout(600);
+      const m = await page.evaluate(() => {
+        const tabs = document.querySelector('nav[aria-label="Sections"] a');
+        const heading = document.querySelector('main h1, h1');
+        return {
+          tabLeft: tabs ? Math.round(tabs.getBoundingClientRect().left) : null,
+          headingLeft: heading ? Math.round(heading.getBoundingClientRect().left) : null,
+        };
+      });
+      expect(m.tabLeft, 'tab row left edge').not.toBeNull();
+      expect(m.headingLeft, 'content heading left edge').not.toBeNull();
+      expect(
+        Math.abs((m.headingLeft ?? 0) - (m.tabLeft ?? 0)),
+        `stagger between the section row and the page it navigates (tab ${m.tabLeft} vs heading ${m.headingLeft})`,
+      ).toBeLessThanOrEqual(8);
+    });
+  }
+});
+
+test.describe('T1 — one nav-label spec and one pill height across the bars', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('the tokens exist and carry the ratified values', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'domcontentloaded' });
+    const t = await page.evaluate(() => {
+      const r = getComputedStyle(document.documentElement);
+      return {
+        size: r.getPropertyValue('--nav-label-size').trim(),
+        weight: r.getPropertyValue('--nav-label-weight').trim(),
+        tracking: r.getPropertyValue('--nav-label-tracking').trim(),
+        pill: r.getPropertyValue('--nav-pill-h').trim(),
+        iconDoor: r.getPropertyValue('--icon-door-size').trim(),
+      };
+    });
+    // The CSS parser strips a leading zero, so `0.78rem` reads back as `.78rem`.
+    const norm = (v: string) => (v.startsWith('.') ? `0${v}` : v);
+    expect(norm(t.size)).toBe('0.78rem');
+    expect(t.weight).toBe('600');
+    expect(norm(t.tracking)).toBe('0.03em');
+    // A pill and an icon door share a row, so they share one silhouette.
+    expect(t.pill).toBe(t.iconDoor);
+  });
+
+  test('marketing and the org identity row now render the SAME nav label', async ({ page }) => {
+    const specOf = async (selector: string) => {
+      const el = page.locator(selector).first();
+      return el.evaluate(n => {
+        const cs = getComputedStyle(n);
+        return `${cs.fontSize}/${cs.fontWeight}/${cs.letterSpacing}`;
+      });
+    };
+    await page.goto('/', { waitUntil: 'networkidle' });
+    const marketing = await specOf('nav a[href="/pricing"]');
+    await page.goto(ORG, { waitUntil: 'networkidle' });
+    const orgRow = await specOf('nav a[href="/pricing"]');
+    expect(marketing, 'marketing nav label').toBe('12.48px/600/0.3744px');
+    expect(orgRow, 'org identity row nav label').toBe(marketing);
   });
 });

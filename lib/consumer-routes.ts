@@ -16,7 +16,12 @@ import { RESERVED_ORG_SLUGS } from './reserved-slugs';
 // This supersedes the R1-4 "auth stays dark" carve-out. /start is not a tab but DOES paint
 // warm: see WARM_JOURNEY_PREFIXES below, kept separate so the warm skin can extend to the
 // coach sign-up journey without entangling footer/Navbar classification.
-export const CONSUMER_SHELL_PREFIXES = ['/discover', '/scores', '/chat', '/following', '/account', '/auth'] as const;
+// /family (Chunk D) is a consumer-shell route, not a tab: it has no bottom-nav entry of
+// its own, but a family surface belongs to the consumer app (the two-family ruling — no
+// third shell), so it must suppress the marketing Navbar/Footer and paint warm like the
+// rest of the fan experience. A family member arrives here from a link in their team's
+// group chat; landing them on a marketing header would be the wrong product entirely.
+export const CONSUMER_SHELL_PREFIXES = ['/discover', '/scores', '/chat', '/following', '/account', '/auth', '/family'] as const;
 
 export function isConsumerShellPath(pathname: string): boolean {
   return CONSUMER_SHELL_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));

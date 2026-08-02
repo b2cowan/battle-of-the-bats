@@ -7,8 +7,10 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
+import PlayerGuardiansCard from '@/components/coaches/PlayerGuardiansCard';
 import PlayerDevelopmentSection from '@/components/coaches/PlayerDevelopmentSection';
-import { canViewDevelopmentGoals, canViewMeasurables, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
+import PlayerRecapPreview from '@/components/coaches/PlayerRecapPreview';
+import { canViewDevelopmentGoals, canViewMeasurables, canViewRoster, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -538,6 +540,21 @@ export default function PlayerDetailPage({
           away directly beneath the guardian fields this same page had just blanked out. The routes
           are the real gate (they 403 either way); this keeps the surface from advertising a file
           the coach cannot open. */}
+      {/* This player's guardians (Chunk D Slice 2). Rides `rosterPii` — the same capability
+          that governs guardian contact details, since this card shows exactly those. Renders
+          nothing at all while the guardian tier is switched off. */}
+      {assignment && assignment.capabilities.rosterPii && player && (
+        <div className={styles.detailSection}>
+          <PlayerGuardiansCard
+            orgSlug={orgSlug}
+            teamId={teamId}
+            playerId={playerId}
+            playerFirstName={player.playerFirstName}
+            rosterGuardianEmail={player.guardianEmail ?? null}
+          />
+        </div>
+      )}
+
       {assignment && canViewPlayerDocuments(assignment.capabilities) && (
         <div className={styles.detailSection}>
           <PlayerDocumentsSection
@@ -567,6 +584,22 @@ export default function PlayerDetailPage({
             seasonName={seasonLabel(assignment.programYearName, assignment.teamName) || null}
           />
         </div>
+      )}
+
+      {/* The family season recap, previewed (Chunk D 3.2). Live season only — the route
+          resolves the ACTIVE year and cannot address an archived one (the archive is opt-in),
+          and `isReadOnly` keeps the door off an archived page rather than letting it 404.
+          Gated on roster visibility AND notes, matching the payload's development content. */}
+      {assignment && player && !page.isReadOnly
+        && canViewRoster(assignment.capabilities)
+        && canViewDevelopmentGoals(assignment.capabilities) && (
+        <PlayerRecapPreview
+          key={playerId}
+          orgSlug={orgSlug}
+          teamId={teamId}
+          playerId={playerId}
+          playerFirstName={clean(player.playerFirstName)}
+        />
       )}
 
       {/* Attendance */}

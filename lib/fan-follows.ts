@@ -11,7 +11,14 @@ import { resolveFollowableOrgsByIds, type OrgDirectoryResult } from './directory
  * client. Distinct from lib/follow.ts (anonymous device localStorage), which stays.
  */
 
-export type FanFollowEntityType = 'tournament' | 'team' | 'org';
+/**
+ * `team` is a TOURNAMENT team (`teams.id`); `rep_team` is a club/league rep team
+ * (`rep_teams.id`), followed through the Chunk D family layer. They are separate members
+ * rather than one overloaded `team` because the two ids resolve against different tables
+ * — `getFollowedTeamsForUser` joins `teams`, and a rep-team id handed to it resolves to
+ * nothing and is silently dropped.
+ */
+export type FanFollowEntityType = 'tournament' | 'team' | 'org' | 'rep_team';
 export type FanFollowSource = 'manual' | 'directory' | 'qr' | 'device_reconcile' | 'registration';
 
 /** Matches a canonical UUID (case-insensitive). */
@@ -321,6 +328,64 @@ export async function getFollowedTeamsForUser(userId: string): Promise<FollowedT
       orgSlug: org.slug,
       tournamentSlug: tourn.slug,
       tournamentName: tourn.name,
+    });
+  }
+  return out;
+}
+
+/** A followed REP team (Chunk D). */
+export interface FollowedRepTeamAccount {
+  followId: string;
+  repTeamId: string;
+  teamName: string;
+  orgSlug: string;
+  orgName: string;
+}
+
+/**
+ * Resolve this user's REP-team follows for the Following list.
+ *
+ * Presentation only. The follow row is what makes the team APPEAR; the verified
+ * `family_links` row is what authorizes reading its schedule, and that check lives in
+ * the family routes. Keeping the two apart means a stray follow row can never become an
+ * access grant — the worst it can do is show a card whose page then refuses.
+ *
+ * Same clean-drop posture as the tournament-team resolver: a follow whose team has
+ * vanished or been archived is skipped rather than rendered as a dead link.
+ */
+export async function getFollowedRepTeamsForUser(userId: string): Promise<FollowedRepTeamAccount[]> {
+  const follows = (await getFanFollowsForUser(userId)).filter(f => f.entityType === 'rep_team');
+  if (follows.length === 0) return [];
+
+  const teamIds = Array.from(new Set(follows.map(f => f.entityId)));
+  const { data: teamRows, error: teamErr } = await supabaseAdmin
+    .from('rep_teams')
+    .select('id, name, org_id, is_archived')
+    .in('id', teamIds);
+  if (teamErr) throw teamErr;
+  const teams = (teamRows ?? []).filter(t => !t.is_archived);
+  if (teams.length === 0) return [];
+
+  const orgIds = Array.from(new Set(teams.map(t => t.org_id).filter(Boolean)));
+  const { data: orgRows, error: orgErr } = orgIds.length > 0
+    ? await supabaseAdmin.from('organizations').select('id, slug, name, subscription_status').in('id', orgIds)
+    : { data: [], error: null };
+  if (orgErr) throw orgErr;
+  const orgById = new Map((orgRows ?? []).map(o => [o.id, o]));
+
+  const teamById = new Map(teams.map(t => [t.id, t]));
+  const out: FollowedRepTeamAccount[] = [];
+  for (const f of follows) {
+    const team = teamById.get(f.entityId);
+    if (!team) continue;
+    const org = orgById.get(team.org_id);
+    if (!org || org.subscription_status === 'canceled') continue;
+    out.push({
+      followId: f.id,
+      repTeamId: team.id,
+      teamName: team.name,
+      orgSlug: org.slug,
+      orgName: org.name,
     });
   }
   return out;

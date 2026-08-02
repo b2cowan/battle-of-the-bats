@@ -32,6 +32,9 @@ interface TeamSummary {
   activeYear: { id: string; name: string; year: number; status: string } | null;
   rosterCount: number;
   pendingTryouts: number;
+  /** Chunk D 3.6 — read-only family-adoption counts. Never any family's identity.
+   *  `connected` is summed server-side so no surface re-derives what counts as connected. */
+  family?: { guardians: number; followers: number; connected: number; awaiting: number };
 }
 
 interface TeamForm {
@@ -257,6 +260,21 @@ export default function RepTeamsPage() {
 
   const displayedSummaries = summaries;
 
+  // Chunk D 3.6 — the club-wide picture, in one line. Counts across every visible team; the
+  // line is omitted entirely when no team has connected a family, so a club that has not
+  // rolled the feature out is not shown a zero it has to interpret.
+  const familyTotals = summaries.reduce(
+    (acc, s) => {
+      const connected = s.family?.connected ?? 0;
+      return {
+        connected: acc.connected + connected,
+        awaiting: acc.awaiting + (s.family?.awaiting ?? 0),
+        teams: acc.teams + (connected > 0 ? 1 : 0),
+      };
+    },
+    { connected: 0, awaiting: 0, teams: 0 },
+  );
+
   return (
     <div className={styles.page}>
       <div className={styles.pageHeader}>
@@ -270,6 +288,13 @@ export default function RepTeamsPage() {
                 ? ` — ${summaries.filter(s => !s.team.isArchived).length} of ${currentOrg.teamLimit} teams`
                 : ' — all teams'}
             </p>
+            {familyTotals.connected > 0 && (
+              <p className={styles.pageSub}>
+                {familyTotals.connected} connected famil{familyTotals.connected === 1 ? 'y' : 'ies'} across{' '}
+                {familyTotals.teams} team{familyTotals.teams === 1 ? '' : 's'}
+                {familyTotals.awaiting > 0 && ` · ${familyTotals.awaiting} waiting on a coach`}
+              </p>
+            )}
           </div>
         </div>
         {canWrite && (
@@ -649,7 +674,8 @@ function TeamCard({ summary, base, canWrite, onArchive }: {
   canWrite: boolean;
   onArchive: () => void;
 }) {
-  const { team, activeYear, rosterCount, pendingTryouts } = summary;
+  const { team, activeYear, rosterCount, pendingTryouts, family } = summary;
+  const connected = family?.connected ?? 0;
   const href = `${base}/rep-teams/teams/${team.id}`;
 
   return (
@@ -684,6 +710,21 @@ function TeamCard({ summary, base, canWrite, onArchive }: {
           <div className={styles.statItem}>
             <span className={styles.statLabel}>Pending</span>
             <span className={styles.statValue}>{pendingTryouts}</span>
+          </div>
+        )}
+        {/* Chunk D 3.6 — connected families, per team. Counts only; the club never sees who.
+            Absent when a team has connected nobody, so this stays a signal rather than a
+            column of zeros down a list of teams that never turned the feature on. */}
+        {connected > 0 && (
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Families</span>
+            <span className={styles.statValue}>{connected}</span>
+          </div>
+        )}
+        {(family?.awaiting ?? 0) > 0 && (
+          <div className={styles.statItem}>
+            <span className={styles.statLabel}>Waiting</span>
+            <span className={styles.statValue}>{family?.awaiting}</span>
           </div>
         )}
       </div>

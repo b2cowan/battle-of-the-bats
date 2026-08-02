@@ -1,0 +1,185 @@
+/* The player season recap (Chunk D 3.2 / S7) — rendered on BOTH the family page and the
+   coach's preview, so it is built on the warm --home-* token set the consumer shell provides
+   and the coaches shell inherits under the same wrapper. No literal colours: the token
+   guardrail is at ZERO across all scopes. The hero and its white ink are the deliberate
+   exception every share-card surface already makes — a fixed team-colour artifact, drawn
+   identically on screen and in the exported PNG. */
+
+.recap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.previewNote {
+  margin: 0;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--home-ink-soft);
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius-sm);
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────────────── */
+
+.hero {
+  border-radius: var(--home-radius);
+  padding: 1.15rem 1rem;
+  color: #F2F5FA; /* token-exempt: fixed-color hero on a team-color gradient, theme-independent (matches the Wrapped card) */
+  box-shadow: var(--home-shadow-sm);
+}
+
+.heroEyebrow {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--home-lime);
+}
+
+.heroName {
+  margin: 0.3rem 0 0.15rem;
+  font-size: 1.5rem;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+
+.heroSub {
+  margin: 0;
+  font-size: 0.86rem;
+  opacity: 0.82;
+}
+
+/* ── Tiles ────────────────────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  background: var(--home-card);
+  border: 1px solid var(--home-line);
+  border-radius: var(--home-radius-sm);
+  box-shadow: var(--home-shadow-sm);
+  min-width: 0;
+}
+
+.tileWide {
+  grid-column: 1 / -1;
+}
+
+.tileValue {
+  font-size: 1.35rem;
+  font-weight: 800;
+  color: var(--home-ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.tileLabel {
+  font-size: 0.72rem;
+  color: var(--home-dim);
+  font-weight: 600;
+}
+
+.tileSub {
+  font-size: 0.72rem;
+  color: var(--home-dim);
+  line-height: 1.45;
+}
+
+.tileBody {
+  font-size: 0.9rem;
+  color: var(--home-ink);
+  line-height: 1.45;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.55;
+  color: var(--home-ink-soft);
+}
+
+/* ── "Worked on this season" rows ─────────────────────────────────────────── */
+
+.focusRow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--home-line);
+  font-size: 0.88rem;
+  color: var(--home-ink);
+  min-width: 0;
+}
+
+.focusRow:first-of-type {
+  border-top: 0;
+}
+
+.focusStatus {
+  font-size: 0.72rem;
+  color: var(--home-olive);
+  font-weight: 600;
+}
+
+/* Deliberately NOT coloured by direction — the product cannot know whether up or down is
+   good for a coach's own test unit. A neutral reading, stated as a fact. */
+.trendValue {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--home-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Keepsake ─────────────────────────────────────────────────────────────── */
+
+.keepsake {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.9rem 0.6rem 0.2rem;
+  text-align: center;
+}
+
+.keepsakeBtn {
+  min-height: 44px;
+  padding: 0.6rem 1.4rem;
+  border: 0;
+  border-radius: var(--home-radius-pill);
+  background: var(--home-ink);
+  color: var(--home-paper);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.keepsakeBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.keepsakeNote {
+  margin: 0;
+  max-width: 34ch;
+  font-size: 0.74rem;
+  line-height: 1.5;
+  color: var(--home-dim);
+}
+
+@media (max-width: 380px) {
+  .grid { grid-template-columns: 1fr; }
+}

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getLatestClosedRepProgramYear } from '@/lib/db';
 import { resolveCoachSeasonReadContext, seasonParam } from '@/lib/coach-season-read';
 import { assembleSeasonWrapped } from '@/lib/rep-season-wrapped';
+import { countRecapViewers } from '@/lib/family-engagement';
 import { withObservability } from '@/lib/observability';
 
 /**
@@ -31,5 +32,22 @@ export const GET = withObservability(async (req: Request,
   const wrapped = await assembleSeasonWrapped(team, programYear, {
     fallbackColor: resolved.ctx.org.themePrimary ?? null,
   });
-  return NextResponse.json({ wrapped });
+
+  /**
+   * Chunk D 3.5 — "did the families read it?", attached HERE rather than on a new route.
+   *
+   * Season's End is where a coach looks back at a finished season, and this route is already
+   * approved to serve one. A recap count is only ever a CLOSED season's fact (families cannot
+   * open a recap before the season closes), so the live-season family panel — which is where
+   * this instinctively belongs — could only ever have shown a zero.
+   *
+   * ⚠ COUNTS, NEVER NAMES. `countRecapViewers` returns two integers and nothing else exists to
+   * return (see lib/family-engagement.ts). Gated on `rosterPii`: a coach who is not trusted
+   * with family contact details is not told how many of those families read a child's record.
+   */
+  const recapEngagement = resolved.capabilities.rosterPii
+    ? await countRecapViewers({ repTeamId: teamId, programYearId: programYear.id })
+    : null;
+
+  return NextResponse.json({ wrapped, recapEngagement });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/wrapped' });

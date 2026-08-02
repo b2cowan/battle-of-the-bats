@@ -1,0 +1,206 @@
+/* Coach "Team family access" panel (Chunk D 1.2 / 1.4 / 1.5).
+   Design tokens only — no literal colours (the token guardrail is at ZERO in every scope). */
+
+.panel {
+  border: 1px solid var(--white-10);
+  border-radius: 12px;
+  background: var(--bg-card);
+  padding: 1rem 1.1rem;
+  margin-bottom: 1.25rem;
+}
+
+.panelTitle {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  margin: 0 0 0.85rem;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.row + .row {
+  margin-top: 0.6rem;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 12rem;
+}
+
+.rowLabel {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--white-85);
+}
+
+.rowSub {
+  font-size: 0.78rem;
+  color: var(--white-45);
+  margin-top: 0.15rem;
+  line-height: 1.5;
+}
+
+.divider {
+  height: 1px;
+  background: var(--white-8);
+  margin: 0.85rem 0;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 34px;
+  padding: 0.34rem 0.8rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1.5px solid var(--white-20);
+  background: transparent;
+  color: var(--white-80);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.btn:hover  { border-color: var(--white-40); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+
+.btnPrimary {
+  border-color: var(--primary-light);
+  color: var(--primary-light);
+}
+
+.linkBtn {
+  background: none;
+  border: none;
+  padding: 0.34rem 0.2rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white-50);
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 34px;
+}
+
+.linkBtn:hover { color: var(--white-80); }
+
+/* The minted link — shown once, selectable. */
+.linkOut {
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: var(--white-5);
+  border: 1px solid var(--white-10);
+  color: var(--white-75);
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 0.72rem;
+  word-break: break-all;
+}
+
+/* Visibility segmented control */
+.seg {
+  display: inline-flex;
+  border: 1px solid var(--white-15, var(--white-10));
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.segBtn {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  background: transparent;
+  border: none;
+  color: var(--white-55);
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 34px;
+}
+
+.segBtn + .segBtn { border-left: 1px solid var(--white-10); }
+.segBtnActive { background: var(--white-10); color: var(--white-90); }
+
+/* Requests + followers */
+.request {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.55rem 0.7rem;
+  border-radius: 8px;
+  background: var(--white-5);
+  margin-top: 0.5rem;
+}
+
+.requestWho {
+  flex: 1;
+  min-width: 10rem;
+  font-size: 0.83rem;
+  color: var(--white-80);
+  overflow-wrap: anywhere;
+}
+
+/* Chunk D — the claimed-vs-invited mismatch on a waiting guardian row. Given its own block
+   below the address rather than appended inline: it is the reason the coach is being asked to
+   decide, and an inline clause on an already-busy line is the first thing a skim drops.
+   Warning-toned, not alarm-toned — a mismatch is an ordinary, expected outcome (a parent
+   signed up with their work email), not a security event. */
+.mismatchNote {
+  display: block;
+  margin-top: 0.3rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 6px;
+  background: rgba(var(--warning-rgb), 0.08);
+  border: 1px solid rgba(var(--warning-rgb), 0.25);
+  color: var(--white-70);
+  font-size: 0.78rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.follower {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.1rem;
+  border-bottom: 1px solid var(--white-5);
+  font-size: 0.83rem;
+  color: var(--white-70);
+  overflow-wrap: anywhere;
+}
+
+.follower:last-child { border-bottom: none; }
+
+.followerWho { flex: 1; min-width: 8rem; }
+
+.muted {
+  font-size: 0.8rem;
+  color: var(--white-40);
+  margin: 0.5rem 0 0;
+  line-height: 1.5;
+}
+
+.error {
+  font-size: 0.8rem;
+  color: var(--danger);
+  margin: 0.5rem 0 0;
+}
+
+/* The waiting-requests badge — the batched "3 waiting" digest, never a per-event interrupt. */
+.badge {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 800;
+  background: rgba(var(--warning-rgb), 0.16);
+  color: var(--warning);
+  margin-left: 0.4rem;
+}

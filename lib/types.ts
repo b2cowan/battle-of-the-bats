@@ -1058,6 +1058,14 @@ export interface RepTeam {
   description: string | null;
   color: string | null;
   isArchived: boolean;
+  /**
+   * Who may see this team's games and practices (Chunk D, mig 215): `staff` | `families` |
+   * `public_link`. Carried on the mapped team so a caller that already loaded it can answer
+   * "is anything family-facing switched on here?" without a second query — the public team
+   * page reads it to skip the family lookups entirely for the ~all teams that never opt in.
+   * It is NOT the enforcement point: every family/public read re-checks it server-side.
+   */
+  scheduleVisibility: 'staff' | 'families' | 'public_link';
   createdAt: string;
   updatedAt: string;
 }

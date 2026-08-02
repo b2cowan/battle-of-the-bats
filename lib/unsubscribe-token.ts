@@ -88,3 +88,44 @@ export function buildUserUnsubscribeUrl(userId: string): string {
   const token = generateUserUnsubscribeToken(userId);
   return `${base}/unsubscribe?user=${encodeURIComponent(userId)}&token=${encodeURIComponent(token)}`;
 }
+
+// ── Per-GUARDIAN unsubscribe (Chunk D 0.3 — "Email families") ──────────────────
+// A guardian on a team roster has no account, so neither existing variant fits: the ORG
+// token would opt the whole organization out of its own marketing on one parent's click,
+// and the USER token needs a user id that does not exist. This variant is keyed on
+// (org, normalized email) — the de-facto family identity — and a third distinct HMAC
+// suffix keeps all three token families non-interchangeable, so no guardian link can
+// ever flip an org-wide or per-coach opt-out.
+//
+// Known and accepted property, inherited from the whole rail: these tokens are
+// DETERMINISTIC, so a link stays live for as long as the secret does. That is the right
+// trade for an unsubscribe — a stale forwarded link can only ever stop mail reaching an
+// address, never start it or reveal anything — but it means the address travels in the
+// URL. It is the recipient's own address, in their own mail.
+
+/** Normalized inside so a caller passing raw casing can't mint a token that fails to verify. */
+function guardianKey(orgId: string, email: string): string {
+  return `${orgId}:${email.trim().toLowerCase()}:unsubscribe-guardian`;
+}
+
+export function generateGuardianUnsubscribeToken(orgId: string, email: string): string {
+  return createHmac('sha256', getSecret()).update(guardianKey(orgId, email)).digest('hex').slice(0, 32);
+}
+
+export function verifyGuardianUnsubscribeToken(orgId: string, email: string, token: string): boolean {
+  if (!orgId || !email || !token) return false;
+  const expected = generateGuardianUnsubscribeToken(orgId, email);
+  if (expected.length !== token.length) return false;
+  let mismatch = 0;
+  for (let i = 0; i < expected.length; i++) {
+    mismatch |= expected.charCodeAt(i) ^ token.charCodeAt(i);
+  }
+  return mismatch === 0;
+}
+
+export function buildGuardianUnsubscribeUrl(orgId: string, email: string): string {
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+  const normalized = email.trim().toLowerCase();
+  const token = generateGuardianUnsubscribeToken(orgId, normalized);
+  return `${base}/unsubscribe?org=${encodeURIComponent(orgId)}&guardian=${encodeURIComponent(normalized)}&token=${encodeURIComponent(token)}`;
+}

@@ -6,6 +6,7 @@ import { getFanFollowSummary } from './fan-follows';
 import { COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { WORKSPACE_KIND_LABEL } from './workspace-labels';
+import { getBillingHref } from './billing-urls';
 import type { OrgAccountKind, OrgPlan } from './types';
 
 export type OrgRelation = {
@@ -619,6 +620,40 @@ export function getPrimaryOrgDestination(contexts: UserAccessContext[]): string 
   // Derived through the doors list (not a parallel find) so the primary door and the
   // Workspaces popover's first Admin Area row are the same value by construction.
   return workspaceDoorsFromContexts(contexts).find(d => d.kind === 'organization')?.href ?? null;
+}
+
+/**
+ * The SAME primary organization the door above points at, described by plan and billing screen
+ * (top-nav repair R4, 2026-08-01). The pricing page uses it to stop sending a signed-in operator
+ * into the sign-up funnel for a plan their org already has: their current tier is marked, and
+ * every plan CTA deep-links to the billing screen where a plan change actually happens.
+ *
+ * Ordered off the same doors list as `getPrimaryOrgDestination`, so "your plan" and "your Admin
+ * Area door" can never describe two different orgs for a multi-org account. Costs no query — the
+ * plan and slug already ride the access contexts.
+ */
+export function getPrimaryOrgPlanContext(
+  contexts: UserAccessContext[],
+  /** The primary org door, when the caller has already resolved it (the role-summary route has).
+   *  Passing it shares the one answer instead of re-deriving the doors list a second time — which
+   *  is also what makes "same org" true by construction rather than by two lookups agreeing. */
+  primaryOrgHref: string | null = getPrimaryOrgDestination(contexts),
+): { planId: string | null; billingHref: string | null } {
+  if (!primaryOrgHref) return { planId: null, billingHref: null };
+  // `kind === 'organization'` already excludes the only kind filterWorkspaceContexts drops ('fan'),
+  // so this is one pass over the contexts, not a filter followed by a find.
+  const org = contexts.find(c => c.kind === 'organization' && c.destination === primaryOrgHref);
+  if (!org?.orgSlug) return { planId: null, billingHref: null };
+  const planId = typeof org.planId === 'string' ? org.planId : null;
+  return {
+    planId,
+    // Via the canonical resolver, NOT a hand-written path: Tournament and Tournament Plus have no
+    // org-admin concept and are redirected out of /admin/org/*, so their billing lives under the
+    // tournament settings instead. Writing the org path here would have sent the free tier — the
+    // largest group — to a door they cannot open, which is the exact defect class this repair pass
+    // is closing.
+    billingHref: getBillingHref(org.orgSlug, planId),
+  };
 }
 
 /** The one definition of "a workspace" (Nav Unification Stage A): every context kind

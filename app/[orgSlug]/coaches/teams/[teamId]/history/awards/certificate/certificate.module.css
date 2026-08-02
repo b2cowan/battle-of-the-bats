@@ -1,0 +1,130 @@
+/* Award certificates (Chunk D slice 3, item 3.4 / S8) — Letter, LANDSCAPE.
+   Paper is the medium here, which is why this is the one family-facing surface that carries a
+   player's FULL name (§8.2 reading, owner-approved): a coach hands it to a family at awards
+   night. There is no URL that shows it to anyone else — this page is behind the coach's own
+   awards permission.
+
+   Ink literals below are deliberate and annotated: a certificate must print the same from a
+   dark-theme browser as a light one, so its colours cannot follow the theme. */
+
+.screen {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.barNote {
+  flex: 1;
+  min-width: 12rem;
+  font-size: 0.82rem;
+  color: var(--white-55);
+  line-height: 1.45;
+}
+
+.sheet {
+  /* One certificate = one sheet. 11:8.5 is Letter landscape. */
+  aspect-ratio: 11 / 8.5;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5%;
+  text-align: center;
+  padding: 7%;
+  margin-bottom: 1.5rem;
+  background: #FFFFFF; /* token-exempt: paper — the certificate prints identically from either theme */
+  color: #1B1B1B;      /* token-exempt: print ink */
+  /* The team's own colour, passed inline as a computed value, never a literal. */
+  border: 6px solid var(--cert-color);
+  border-radius: 4px;
+}
+
+.sheet::before {
+  content: '';
+  position: absolute;
+  inset: 12px;
+  border: 1px solid var(--cert-color);
+  border-radius: 2px;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.org {
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--cert-color);
+}
+
+.award {
+  font-size: clamp(1.6rem, 4.2vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+  color: var(--cert-color);
+  margin: 0;
+}
+
+.to {
+  font-size: 0.85rem;
+  color: #5B5B5B; /* token-exempt: print ink */
+}
+
+.kid {
+  font-size: clamp(1.2rem, 3.2vw, 2rem);
+  font-weight: 700;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.meta {
+  font-size: 0.8rem;
+  color: #5B5B5B; /* token-exempt: print ink */
+}
+
+.note {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: #5B5B5B; /* token-exempt: print ink */
+  max-width: 46ch;
+}
+
+/* A rule the presenting coach signs. Deliberately NOT a printed coach name: any coach with
+   awards access can print this, and they are not necessarily the coach of record — printing
+   someone else's name under someone else's award is worse than a line to sign. */
+.signature {
+  margin-top: 3%;
+  width: 46%;
+  border-top: 1px solid #9A9A9A; /* token-exempt: print ink */
+  padding-top: 0.35rem;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #5B5B5B; /* token-exempt: print ink */
+}
+
+@media print {
+  .bar { display: none; }
+  .screen { max-width: none; margin: 0; padding: 0; }
+  .sheet {
+    margin: 0;
+    /* Fill the sheet rather than honouring the on-screen aspect box. */
+    aspect-ratio: auto;
+    height: 100vh;
+    border-radius: 0;
+    break-after: page;
+    break-inside: avoid;
+  }
+  .sheet:last-child { break-after: auto; }
+}

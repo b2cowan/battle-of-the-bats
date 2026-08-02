@@ -3447,6 +3447,37 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .eventScoreAdd { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 40px; padding: 0.4rem 0.8rem; background: var(--white-5); border: 1px solid var(--border-2); border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: var(--white-70); cursor: pointer; }
 .eventScoreAdd:hover { background: var(--white-8); color: var(--white-90); }
 
+/* Chunk D 3.1 — the postgame family-email offer, directly under the saved score. */
+.postgameDraft {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.85rem;
+  padding: 0.7rem 0.85rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.10);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
+  border-radius: var(--radius-sm);
+}
+.postgameDraftText { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
+.postgameDraftText strong { font-size: 0.88rem; font-weight: 700; color: var(--white-90); }
+.postgameDraftText span { font-size: 0.78rem; color: var(--white-55); line-height: 1.4; }
+.postgameDraftBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  min-height: 38px;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: var(--blueprint-blue);
+  color: var(--white);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+.postgameDraftBtn:hover { filter: brightness(1.1); }
+
 .resultBadge { font-size: 0.85rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
 .scoreForm { display: flex; flex-direction: column; gap: 0.55rem; }
 .scoreFormRow { display: flex; align-items: flex-end; gap: 0.5rem; flex-wrap: wrap; }

@@ -3101,6 +3101,9 @@ function mapRepTeam(r: any): RepTeam {
     description: r.description ?? null,
     color: r.color ?? null,
     isArchived: r.is_archived,
+    // Defaults to the column default when a row predates mig 215 — never to something more
+    // permissive.
+    scheduleVisibility: r.schedule_visibility ?? 'families',
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };

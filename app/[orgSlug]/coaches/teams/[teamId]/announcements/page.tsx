@@ -1,10 +1,12 @@
 'use client';
 import { use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { ChevronRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import HelpButton from '@/components/help/HelpButton';
 import RepAnnouncementEditor from '@/components/coaches/RepAnnouncementEditor';
+import { DRAFT_SUBJECT_PARAM, DRAFT_BODY_PARAM } from '@/lib/postgame-draft';
 import styles from '../../../coaches.module.css';
 
 export default function TeamAnnouncementsPage({
@@ -16,6 +18,15 @@ export default function TeamAnnouncementsPage({
   const { assignments, loading: assignmentsLoading } = useCoaches();
   const assignment = assignments.find(a => a.teamId === params.teamId);
   const base = `/${params.orgSlug}/coaches/teams/${params.teamId}`;
+
+  // Chunk D 3.1 — a draft handed over from the schedule's score entry. Read here rather than
+  // inside the editor so the editor stays a plain controlled component with no URL knowledge.
+  const searchParams = useSearchParams();
+  const draftSubject = searchParams.get(DRAFT_SUBJECT_PARAM);
+  const draftBody = searchParams.get(DRAFT_BODY_PARAM);
+  const initialDraft = draftSubject && draftBody
+    ? { subject: draftSubject, body: draftBody }
+    : null;
 
   if (assignmentsLoading) {
     return <div className={styles.page}><p className={styles.pageSub}>Loading…</p></div>;
@@ -63,6 +74,7 @@ export default function TeamAnnouncementsPage({
         orgSlug={params.orgSlug}
         teamId={params.teamId}
         canEditRoster={assignment.capabilities.rosterWrite}
+        initialDraft={initialDraft}
       />
     </div>
   );

@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@/lib/supabase-server';
-import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgsForUser } from '@/lib/fan-follows';
+import { getFollowedTeamsForUser, getFollowedTournamentsForUser, getFollowedOrgsForUser, getFollowedRepTeamsForUser } from '@/lib/fan-follows';
 import { getFollowFeed } from '@/lib/follow-feed';
 import { getWholeEventFollowCards, getOrgFollowRollups } from '@/lib/entity-follow-status';
 import FollowingList from '@/components/consumer/FollowingList';
@@ -18,13 +18,14 @@ export default async function FollowingPage() {
   const { data: { user } } = await supabase.auth.getUser();
   const signedIn = !!user?.email;
 
-  const [accountFollows, followedTournaments, followedOrgs] = signedIn
+  const [accountFollows, followedTournaments, followedOrgs, followedRepTeams] = signedIn
     ? await Promise.all([
         getFollowedTeamsForUser(user!.id),
         getFollowedTournamentsForUser(user!.id),
         getFollowedOrgsForUser(user!.id),
+        getFollowedRepTeamsForUser(user!.id),
       ])
-    : [[], [], []];
+    : [[], [], [], []];
 
   const [feedEntries, wholeEvent, organizations] = await Promise.all([
     accountFollows.length > 0
@@ -40,6 +41,7 @@ export default async function FollowingPage() {
       feedEntries={feedEntries}
       accountWholeEvent={wholeEvent}
       accountOrgs={organizations}
+      accountRepTeams={followedRepTeams}
       signedIn={signedIn}
     />
   );

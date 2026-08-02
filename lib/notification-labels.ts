@@ -24,6 +24,10 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   // Intentionally NOT in NOTIFICATION_SECTIONS — an @mention is always delivered (not user-mutable here).
   chat_mention:                      'Chat @mention',
   tryout_offer_response:             'Tryout offer response',
+  // Chunk D — reaches FAMILY accounts, not org staff, so it has no row in the org
+  // preferences UI below (it is not in NOTIFICATION_SECTIONS). The label exists because the
+  // bell renders one for every event it displays.
+  family_game_update:                'Team schedule update',
   assistant_coach_joined:            'Assistant coach joined',
   assistant_coach_approval_requested: 'Assistant coach awaiting approval',
   playoffs_set:                      'Playoff bracket set',
@@ -48,6 +52,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   chat_message:                      'A new message is posted in a tournament chat you are part of.',
   chat_mention:                      'Someone @mentions you in a tournament chat (always delivered).',
   tryout_offer_response:             'A tryout family accepts or declines an offer via their link — you confirm the roster spot.',
+  family_game_update:                'A team you follow as family moves a game, cancels one, or posts a final score.',
   assistant_coach_joined:            'An assistant coach you invited accepted and joined the team.',
   assistant_coach_approval_requested: 'A head coach invited an assistant coach and it needs admin approval.',
   playoffs_set:                      'The playoff bracket is set for a tournament — the seeding is locked and the knockout stage is on.',
@@ -210,6 +215,8 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   assistant_coach_joined:             'know',
   house_league_registration_new:      'know',
   coach_insights_digest:              'know',
+  // A family's own team news — informational, never a decision to make.
+  family_game_update:                 'know',
   // Talk — conversation (moves to the Chat tab in P3)
   chat_message:                       'talk',
   chat_mention:                       'talk',
