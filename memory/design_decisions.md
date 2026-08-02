@@ -4,6 +4,28 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-02 — The admin rail carries NO identity and NO status: both were second copies of what the page header already says
+
+**Trigger:** owner, reading the tournament admin rail at 1440px — "the org name in the nav bar, do we need that? it is also in the headers"; then, one screenshot later, "do we need both of these LIVE pills?" Two separate looks at the same rail, landing on the same defect.
+
+**The defect (one shape, twice):** `AdminEventHeader` already renders, on **every** admin screen, the org name (as the eyebrow above a tournament name; as the title itself on org-level screens) and the phase chip (Draft / Open / Live / Completed / Archived, off `resolvePhase()`). `AdminSidebar` rendered its own copy of **both**, a few hundred pixels away in the same upper-left quadrant. The status copy was the worse of the two: it re-derived `status === 'active'` + `isWithinEventDates()` **by hand** rather than calling the shared resolver, so the day the phase rules change the rail and the header would disagree and neither would look wrong.
+
+**BINDING RULES:**
+1. **The admin rail is NAV. It is not a nameplate and it is not a status board.** Its job is where-can-I-go. Whose place this is and what phase the event is in are the **page header's** job — one surface, so they cannot drift and cannot contradict.
+2. **Status renders once per screen, from `resolvePhase()` + `PHASE_LABEL`.** No surface re-derives phase from `status` + dates locally. The header's chip earns the spot: it sits beside the date range that *explains* the phase, carries the pulsing game-day dot, and is sticky and never collapses on desktop — so it survives scroll.
+3. **Multi-org orientation belongs to the `WorkspacesPill`, not to rail copy.** For a Tournament/Tournament-Plus customer (one org, often one event) a rail org label is zero information every time they look at it.
+4. **This narrows Stage C of Nav Unification, which is otherwise intact.** Stage C moved the FieldLogicHQ wordmark up into `AdminTopStrip` and had the rail open with "whose place this is" — the right instinct on the wrong surface. Zone-2 identity is still expressed exactly once; it is just expressed in the header. **Do not restore either block as a "consistency" fix.**
+
+**Cost/benefit:** ~62px of rail head returned to the nav list (about one and a half nav rows — on a laptop, one or two more destinations above the fold). The rail now opens on its first real block — the tournament switcher, a section header, or the back link — with a small scroll-container pad standing in for the retired border, so all three variants share one top edge.
+
+**Mobile is untouched by construction:** the rail is `display: none` ≤900px, so it never showed either block on a phone. Mobile already had exactly one org name and one status chip; **desktop now matches mobile**, which is the direction of travel, not a regression.
+
+**Supersedes:** the sidebar half of *2026-06-05 — density toggle removed; sidebar LIVE indicator uses `isWithinEventDates`*. That entry's **reasoning still stands and is now served better** — it fixed a rail that mislabelled a 40-days-out event as LIVE, by teaching the rail the game-day rule. Deleting the rail's chip retires the second implementation that had to be taught at all. Note that *2026-06-15 — Schedule publish: dual-state header control* cites "mirrors the sidebar's ● Live / ● Open indicators" as rationale; the **dot-not-pill treatment it chose is unaffected**, only that cross-reference is now historical.
+
+**Applies to:** `components/admin/AdminSidebar.tsx` + `.module.css` (head block, status chip, and the now-unused `isWithinEventDates` import all removed), `docs/projects/active/NAV_UNIFICATION_PLAN.md` (Stage C amended).
+
+---
+
 ### 2026-08-01 — T1: ONE nav-label spec and ONE pill silhouette across all five top bars; plus the four top-nav micro-rulings
 
 **Trigger:** the top-nav consistency audit (`TOP_NAV_CONSISTENCY_FINDINGS.md` §6b) measured the five bars at 1440px and found the MATERIALS already consistent — IBM Plex Mono labels over an Inter base everywhere including marketing, fully-round pill radius everywhere, one icon-door size — but the FINE METRICS doing one job three ways with no written reason. Owner ruled T1 "per REC" the same day. This is Stage G's scoped-but-never-built third ("nav type scale + pill silhouette").
@@ -1998,6 +2020,8 @@ Net ≈230px recovered (fits a 1366×768 laptop viewport). **Field spacing delib
 **Rationale:** The density toggle was discovered to be "barely noticeable" in browser testing — a toggle that produces no perceived change has negative UX value (confusion > benefit). The LIVE sidebar mislabel was flagged visually: "Battle of the Bats 2026" (40 days out) showed LIVE alongside "Live Demo — Game Day" (actually live today) — identical labels for different states.
 
 **Applies to:** `components/admin/AdminSidebar.tsx`, `components/admin/AdminBottomNav.tsx` (Display section removed, `useAdminDensity` import removed from both). `AdminSidebar.tsx` now imports `isWithinEventDates` from `@/lib/tournament-phase`.
+
+> ⚠ **SUPERSEDED in part (2026-08-02):** the density-toggle half stands. The sidebar LIVE indicator is **gone entirely** — the rail no longer shows status at all, and the `isWithinEventDates` import is removed with it. This entry's reasoning is honoured, not reversed: it fixed a rail that had to be taught the game-day rule separately; the fix now is that only the page header ever computes phase. See the 2026-08-02 entry at the top.
 
 ---
 

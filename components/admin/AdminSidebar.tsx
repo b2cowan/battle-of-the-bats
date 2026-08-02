@@ -19,7 +19,6 @@ import { useTournament } from '@/lib/tournament-context';
 import { hasCapability, type Capability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
-import { isWithinEventDates } from '@/lib/tournament-phase';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
@@ -53,7 +52,6 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
   const { tournaments, currentTournament, setCurrentTournament, refresh: refreshTournaments } = useTournament();
   const worklist = useAdminWorklist();
-  const sidebarIsLive = currentTournament?.status === 'active' && isWithinEventDates(currentTournament?.startDate, currentTournament?.endDate);
 
   // Tournament / Tournament Plus tiers have no org-admin concept — never treat them as
   // being "in org admin" even if a URL slips through (proxy.ts + the org layout redirect them).
@@ -245,13 +243,14 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
   return (
     <>
     <aside className={styles.sidebar}>
-      {/* Org identity — pure place chrome since Stage C (Nav Unification): the FieldLogicHQ
-          wordmark + notification bell moved UP into the AdminTopStrip, so platform identity
-          lives exactly once and the sidebar opens with WHOSE place this is (grammar Zone 2). */}
-      <div className={styles.logo}>
-        <div className={styles.orgLabel}>{currentOrg?.name ?? 'Admin'}</div>
-      </div>
-
+      {/* NO org label here (owner ruling 2026-08-02, narrowing Stage C). Stage C moved the
+          FieldLogicHQ wordmark up into AdminTopStrip and had the sidebar open with WHOSE place
+          this is — right principle, redundant in practice: AdminEventHeader already names the org
+          on EVERY admin screen (the eyebrow above a tournament name; the title itself on org-level
+          screens). The rail was repeating it ~20px away and costing ~62px of head, pushing nav
+          items below the fold on laptops. Zone-2 identity now lives once, in the page header; the
+          WorkspacesPill remains the multi-org "am I in the right place" check. The rail opens on
+          its first real block — switcher on tournament screens, section header otherwise. */}
       <div className={styles.sidebarScroll}>
       {/* Org Admin mode */}
       {isOrgAdmin && (
@@ -501,11 +500,14 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
                   )}
                 </div>
               )}
-              {currentTournament?.status === 'active' && sidebarIsLive  && <span className={styles.activePill}>● Live</span>}
-              {currentTournament?.status === 'active' && !sidebarIsLive && <span className={styles.activePill} style={{ opacity: 0.65 }}>● Open</span>}
-              {currentTournament?.status === 'draft'     && <span className={styles.activePill} style={{ opacity: 0.5 }}>Draft</span>}
-              {currentTournament?.status === 'completed' && <span className={styles.activePill} style={{ opacity: 0.5 }}>Completed</span>}
-              {currentTournament?.status === 'archived'  && <span className={styles.activePill} style={{ opacity: 0.4 }}>Archived</span>}
+              {/* NO status pill here (owner ruling 2026-08-02). It re-rendered the SAME five states
+                  as AdminEventHeader's phase chip (Draft / Open / Live / Completed / Archived) from
+                  the same tournament — but off its own hand-rolled copy of the status+date rules
+                  instead of resolvePhase(), so the two could silently disagree the day the phase
+                  rules change. One status, one resolver, in the header: it sits beside the date
+                  range that explains it, carries the pulsing game-day dot, and the header is sticky
+                  and never collapses on desktop, so nothing is lost on scroll. Mobile already had
+                  only the header chip (this rail is display:none ≤900px), so desktop now matches. */}
             </div>
           )}
           <div className={styles.navSection}>

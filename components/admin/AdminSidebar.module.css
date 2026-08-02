@@ -15,6 +15,10 @@
 
 .sidebarScroll {
   flex: 1;
+  /* Breathing room under AdminTopStrip now that no head block sits above this. Stacks with the
+     first child's own top padding (switcher 0.75rem / section header 0.625rem / back link
+     0.75rem) so every rail variant opens at a consistent ~16-18px, never flush against the strip. */
+  padding-top: 0.375rem;
   overflow-y: auto;
   overflow-x: hidden;
   scrollbar-width: thin;
@@ -127,35 +131,13 @@
   border-color: var(--blueprint-blue);
 }
 
-.activePill {
-  font-family: var(--font-data);
-  font-size: 0.625rem;
-  font-weight: 700;
-  color: var(--logic-lime);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-/* Logo */
-.logo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 1.25rem;
-  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-}
-
-/* Stage C: the FieldLogicHQ lockup + bell moved up into AdminTopStrip (its own module owns
-   those styles now) — the sidebar opens with the org's own name, pure place chrome. */
-.orgLabel {
-  font-family: var(--font-data);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--fl-text);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  word-break: break-word;
-}
+/* Two blocks are GONE from this rail — owner rulings 2026-08-02; see AdminSidebar.tsx for the
+   reasoning on each:
+   • .logo/.orgLabel (the org-name head) — the page header already names the org on every admin
+     screen. Its ~62px went back to the nav list; .sidebarScroll's padding-top now supplies the
+     small gap under the top strip that the block's border used to imply.
+   • .activePill (the Draft/Open/Live/Completed/Archived chip) — a second, independently-computed
+     copy of AdminEventHeader's phase chip. Status lives once, in the header, off resolvePhase(). */
 
 /* Nav Sections */
 .navSection {

@@ -10,8 +10,12 @@ only, z-60) mounted by
 AdminChrome on all non-focused admin surfaces — wordmark→Home + bell (hoisted count, moved from the
 sidebar) + account + WorkspacesPill (2+ places). **NO chat door (owner ruling 2026-07-31,
 generalized from the coach strip): chat is a section of the work, not an exit — a /chat door
-duplicated the shell's own Chat and ejected the operator into consumer chrome.** Sidebar opens with the org name (pure place chrome; lockup styles
-retired); footer "All Workspaces" retired into the popover; orphaned `/api/me/workspaces` +
+duplicated the shell's own Chat and ejected the operator into consumer chrome.** Sidebar lockup styles
+retired — and as of **2026-08-02 the org-name head block is retired too (owner ruling, narrowing
+Stage C): `AdminEventHeader` already names the org on every admin screen (eyebrow above a tournament
+name; the title itself on org-level screens), so the rail was repeating Zone-2 identity ~20px away
+at a cost of ~62px of head. The rail now opens on its first real block (switcher / section header /
+back link) with a 0.375rem scroll-container pad standing in for the old border.** Footer "All Workspaces" retired into the popover; orphaned `/api/me/workspaces` +
 `use-has-multiple-workspaces` DELETED. Geometry via `--admin-topstrip-h` on `.adminShell`
 (= `--chrome-bar-h`, 48px since Stage G — this line read 44px, the pre-Stage-G value, until the
 2026-08-01 top-nav audit; 0 on mobile + focused shells): sidebar top/height, event-header sticky top, and the three
@@ -282,8 +286,12 @@ multi-org operator always finds "out" and "elsewhere" in the same two corners.
   accounting). Premium coach portal joins under Stage H's owner gate. Scorekeeper and platform admin
   stay excluded (deliberate).
 - **The admin sidebar wordmark retires** — identity lives exactly once, in the strip; the sidebar
-  becomes pure place chrome (org name + switcher + sections). This absorbs Stage B.1 (the
+  becomes pure place chrome (~~org name +~~ switcher + sections). This absorbs Stage B.1 (the
   activate-the-dead-logo quick win still ships first as the interim fix if B lands before C).
+  **Amended 2026-08-02: the org name does NOT belong here either.** "Whose place this is" was the
+  right instinct but the wrong surface — the page header already answers it on every admin screen,
+  and a Tournament/Tournament-Plus customer (one org, often one event) reads zero information from
+  the rail's copy of it. Multi-org orientation is the WorkspacesPill's job (Stage D).
 - **The ⇄ pill stays in the event header** — strip = the frame's doors; the flip belongs to the
   place identity it flips (and is page-matched). Stage G's `/design` pass reviews the two-corner
   rhythm before polish freezes it.
