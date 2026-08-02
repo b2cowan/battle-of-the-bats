@@ -83,21 +83,8 @@
 .panelIntroText { flex: 1 1 240px; font-size: 0.82rem; color: rgba(255,255,255,0.5); margin: 0; line-height: 1.5; }
 .panelAction { flex: 0 0 auto; display: inline-flex; gap: 0.45rem; flex-wrap: wrap; }
 
-/* ── "Build your team" results footer ───────────────────────────────────────── */
-.results { border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; background: rgba(255,255,255,0.02); padding: 1.15rem 1.35rem; }
-.resultStats { display: flex; flex-wrap: wrap; gap: 1.25rem; margin-bottom: 1rem; }
-.resultStat { display: flex; flex-direction: column; }
-.resultNum { font-size: 1.5rem; font-weight: 800; color: var(--white-90); font-variant-numeric: tabular-nums; line-height: 1; }
-.resultLabel { font-size: 0.72rem; color: rgba(255,255,255,0.45); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 700; margin-top: 0.3rem; }
-.resultNumAccent { color: var(--logic-lime); }
-.rosterLink {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  padding: 0.6rem 1rem; border-radius: 8px; text-decoration: none;
-  font-size: 0.85rem; font-weight: 700; color: var(--white-90);
-  border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.03);
-}
-.rosterLink:hover { border-color: var(--logic-lime); }
-.resultEmpty { font-size: 0.85rem; color: rgba(255,255,255,0.45); margin: 0; }
+/* (The "Build your team" results footer styles lived here until 2026-08-02 — replaced by
+   TryoutReportCard, which owns that stage's presentation now.) */
 
 /* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5) ─────────────────────────────
    Tryouts run OUTDOORS in glare, so the warm variant is deliberately solid, not airy: white cards on
@@ -106,7 +93,6 @@
    lime FILL. lime-as-TEXT/border still darkens to olive (E3). Flat additive rules (the proven pattern) —
    never edit a dark declaration, so the dark coaches/admin header stays byte-identical. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .wrap,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .results,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .how {
   background: var(--home-card);
   border-color: var(--home-line);
@@ -114,18 +100,14 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .nextText,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabActive,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .resultNum,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howStep strong,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howBtn:hover,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rosterLink:hover {
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howBtn:hover {
   color: var(--home-ink);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howBtn,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .nextHint,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .doneNote,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .panelIntroText,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .resultLabel,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .resultEmpty,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howStep span,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabNum {
@@ -157,10 +139,4 @@
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .nextBtn:hover {
   background: rgba(var(--home-lime-rgb), 0.82);
-}
-/* Results footer roster link: ink text on white card, hairline border */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rosterLink {
-  background: var(--home-card);
-  border-color: var(--home-line-strong);
-  color: var(--home-ink);
 }

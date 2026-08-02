@@ -14,6 +14,7 @@ import {
 } from '@/lib/db';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
+import { tallyTryoutDecisions } from '@/lib/tryout-scoring';
 import type { RepProgramYear } from '@/lib/types';
 
 /**
@@ -82,14 +83,7 @@ export const GET = withObservability(async (_req: Request,
   ]);
 
   const inPlay = registrations.filter(reg => reg.status !== 'withdrawn');
-  const counts = { offered: 0, waitlisted: 0, declined: 0, accepted: 0, pending: 0 };
-  for (const reg of inPlay) {
-    if (reg.status === 'offered') counts.offered++;
-    else if (reg.status === 'waitlisted') counts.waitlisted++;
-    else if (reg.status === 'declined') counts.declined++;
-    else if (reg.status === 'accepted') counts.accepted++;
-    else counts.pending++;
-  }
+  const counts = tallyTryoutDecisions(inPlay);
 
   const stats = {
     sessionCount: sessions.length,

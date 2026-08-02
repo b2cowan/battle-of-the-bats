@@ -98,6 +98,7 @@ const SCOPES = {
       'components/rep-teams/TryoutFlowHeader.module.css',
       'components/rep-teams/TryoutCheckIn.module.css',
       'components/rep-teams/TryoutAcceptDrawer.module.css',
+      'components/rep-teams/TryoutReportCard.module.css',
       // The shared field scorer (Chunk E WI-1) — one surface behind the public token door AND
       // the coach's signed-in door; deliberately fixed-dark (token-exempt annotations inline).
       'components/rep-teams/TryoutScorerSurface.module.css',

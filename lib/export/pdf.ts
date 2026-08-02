@@ -361,7 +361,15 @@ export interface PracticeSheetOptions {
   /** "6:00 PM · Arrive 5:45 PM · Sherwood Park, Diamond 2" — assembled by the caller. */
   whereLabel?: string | null;
   goal?: string | null;
-  /** Coach-typed labels ("Hitting", "Fielding"…) — never a fixed, sport-specific list. */
+  /**
+   * What the practice is ABOUT ("Hitting", "Fielding"…) — coach-typed, never a fixed,
+   * sport-specific list.
+   *
+   * ⚠ Since Phase 3 the caller passes the practice's TAG NAMES from the team's shared vocabulary,
+   * followed by any legacy free-text labels a plan written before tags still carries. Both are the
+   * coach's own words, so nothing changes here — but the field is no longer fed by a single
+   * free-text control, and the sheet must go on describing what was PLANNED, never what was done.
+   */
   practiceTypes?: string[];
   equipment?: string[];
   /** One row per block: running time window, title, duration, staff, who, notes. */
@@ -486,6 +494,231 @@ export async function downloadDevelopmentSummary(filename: string, opts: Develop
   const title = `Development summary — ${opts.playerName}${opts.playerNumber ? `  ${opts.playerNumber}` : ''}`;
   const subtitle = [opts.teamName, opts.seasonLabel].filter(Boolean).join('  ·  ') || undefined;
   await downloadPDF(filename, title, subtitle, [], [], opts.settings, groups);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  Tryout Report — board-safe summary (Tryout Insights Phase 1, ruling R1)
+//  A drawn one-pager, NOT a table report: aggregates + the fairness receipt +
+//  roster names only. Nothing per-candidate — no score, no decision, no bias
+//  flag (R2) may appear here; the full-detail variant goes through the normal
+//  downloadPDF table path behind its own confirm.
+// ════════════════════════════════════════════════════════════════════════════
+
+export interface TryoutBoardSummaryOptions {
+  orgName: string;
+  teamName: string;
+  seasonName: string;
+  finalized: boolean;
+  stats: {
+    candidates: number;
+    /** Prior-season turnout; null = first recorded tryout. */
+    prior: number | null;
+    priorSeasonName: string | null;
+    offers: number;
+    accepted: number;
+    rosterTotal: number | null;
+    returning: number | null;
+    newcomers: number | null;
+  };
+  /** Pre-assembled truthful receipt lines (lib/tryout-report fairnessReceiptLines). Empty = omit section. */
+  processLines: string[];
+  /** Class profile; null/empty = omit section. */
+  profile: { label: string; avg: number | null }[] | null;
+  scaleMax: number | null;
+  /** Final roster display names; empty = omit section. */
+  rosterNames: string[];
+  settings: OrgPdfSettings;
+}
+
+export async function downloadTryoutBoardSummary(filename: string, opts: TryoutBoardSummaryOptions): Promise<void> {
+  const { default: jsPDF } = await import('jspdf');
+  const settings = opts.settings;
+  const accentRgb = hexToRgb(settings.accentColor);
+
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'letter' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const contentWidth = pageWidth - MARGIN * 2;
+  const maxY = pageHeight - 18; // keep clear of the footer band
+
+  // ── Header ────────────────────────────────────────────────────────────────
+  doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
+  doc.rect(0, 0, pageWidth, 8, 'F');
+  let y = MARGIN + 4;
+
+  // Neither the rubric's category count nor the roster size is bounded, so the "one-pager" must
+  // still page-break rather than silently run content off the bottom (/simplify altitude finding).
+  // Continuation pages carry a compact identity header — a page 2 handed to a board must still
+  // say whose report it is (/review finding).
+  function ensureRoom(needed: number) {
+    if (y + needed <= maxY) return;
+    doc.addPage();
+    doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
+    doc.rect(0, 0, pageWidth, 8, 'F');
+    y = MARGIN + 4;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(9);
+    doc.setTextColor(20, 20, 35);
+    doc.text(settings.headerLine1 || opts.orgName, MARGIN, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(110, 110, 125);
+    doc.text(`${opts.seasonName} Tryout Report — Board Summary (continued)`, pageWidth - MARGIN, y, { align: 'right' });
+    y += 7;
+  }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  doc.setTextColor(20, 20, 35);
+  doc.text(settings.headerLine1 || opts.orgName, MARGIN, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.setTextColor(80, 80, 100);
+  doc.text(settings.headerLine2 || opts.teamName, MARGIN, y);
+  y += 6;
+  doc.setDrawColor(210, 210, 220);
+  doc.setLineWidth(0.3);
+  doc.line(MARGIN, y, pageWidth - MARGIN, y);
+  y += 7;
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(13);
+  doc.setTextColor(20, 20, 35);
+  doc.text(`${opts.seasonName} Tryout Report — Board Summary`, MARGIN, y);
+  y += 5;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(110, 110, 125);
+  doc.text(opts.finalized ? 'Final — every candidate has a decision' : 'In progress — decisions are still being made', MARGIN, y);
+  y += 9;
+
+  // ── Headline stats ────────────────────────────────────────────────────────
+  const stats: { n: string; label: string }[] = [
+    { n: String(opts.stats.candidates), label: 'candidates' },
+  ];
+  if (opts.stats.prior != null) {
+    const d = opts.stats.candidates - opts.stats.prior;
+    stats.push({
+      n: d === 0 ? 'level' : `${d > 0 ? '+' : ''}${d}`,
+      label: opts.stats.priorSeasonName ? `vs ${opts.stats.priorSeasonName}` : 'vs last season',
+    });
+  } else {
+    stats.push({ n: '—', label: 'first recorded tryout' });
+  }
+  stats.push({ n: String(opts.stats.offers), label: 'offers' });
+  stats.push({ n: String(opts.stats.accepted), label: 'accepted' });
+  if (opts.stats.rosterTotal != null) stats.push({ n: String(opts.stats.rosterTotal), label: 'on the roster' });
+  if (opts.stats.returning != null && opts.stats.newcomers != null && opts.stats.rosterTotal != null && opts.stats.rosterTotal > 0) {
+    stats.push({ n: `${opts.stats.returning} / ${opts.stats.newcomers}`, label: 'returning / new' });
+  }
+  const colW = contentWidth / stats.length;
+  stats.forEach((s, i) => {
+    const x = MARGIN + i * colW;
+    // Labels can carry free text (an org's own season name) and up to six columns share the row —
+    // clamp each cell to its column so a long label can't run into its neighbour (/review finding).
+    const clamp = (text: string) => (doc.splitTextToSize(text, colW - 3) as string[])[0] ?? '';
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(20, 20, 35);
+    doc.text(clamp(s.n), x, y);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7.5);
+    doc.setTextColor(110, 110, 125);
+    doc.text(clamp(s.label), x, y + 4.5);
+  });
+  y += 13;
+
+  function sectionLabel(text: string) {
+    ensureRoom(18); // label + at least one content line stay together
+    doc.setDrawColor(210, 210, 220);
+    doc.setLineWidth(0.3);
+    doc.line(MARGIN, y, pageWidth - MARGIN, y);
+    y += 6;
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(110, 110, 125);
+    doc.text(text.toUpperCase(), MARGIN, y);
+    y += 5.5;
+  }
+
+  // ── Evaluation process (the fairness receipt) ─────────────────────────────
+  if (opts.processLines.length > 0) {
+    sectionLabel('Evaluation process');
+    for (const line of opts.processLines) {
+      ensureRoom(5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(50, 50, 65);
+      doc.text(`•  ${line}`, MARGIN, y);
+      y += 5;
+    }
+    y += 3;
+  }
+
+  // ── Class profile bars ────────────────────────────────────────────────────
+  if (opts.profile && opts.profile.length > 0 && opts.scaleMax) {
+    sectionLabel(`Class profile (category averages, scale 1–${opts.scaleMax})`);
+    const labelW = 58;
+    const valueW = 12;
+    const barW = contentWidth - labelW - valueW - 4;
+    for (const cat of opts.profile) {
+      ensureRoom(6.5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(8.5);
+      doc.setTextColor(50, 50, 65);
+      doc.text(cat.label, MARGIN, y);
+      // Track
+      doc.setFillColor(235, 235, 242);
+      doc.rect(MARGIN + labelW, y - 3, barW, 3.6, 'F');
+      if (cat.avg != null) {
+        const w = Math.max(0, Math.min(1, cat.avg / opts.scaleMax)) * barW;
+        doc.setFillColor(accentRgb.r, accentRgb.g, accentRgb.b);
+        doc.rect(MARGIN + labelW, y - 3, w, 3.6, 'F');
+      }
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8.5);
+      doc.setTextColor(20, 20, 35);
+      doc.text(cat.avg != null ? cat.avg.toFixed(1) : '—', pageWidth - MARGIN, y, { align: 'right' });
+      y += 6.5;
+    }
+    y += 2;
+  }
+
+  // ── Roster ────────────────────────────────────────────────────────────────
+  if (opts.rosterNames.length > 0) {
+    sectionLabel(`${opts.seasonName} roster — ${opts.rosterNames.length} player${opts.rosterNames.length === 1 ? '' : 's'}`);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(50, 50, 65);
+    const wrapped: string[] = doc.splitTextToSize(opts.rosterNames.join(' · '), contentWidth);
+    for (const line of wrapped) {
+      ensureRoom(5);
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(50, 50, 65);
+      doc.text(line, MARGIN, y);
+      y += 5;
+    }
+  }
+
+  // ── Footer on every page, with TRUE page numbers (same convention as the table reports) ──
+  const footerY = pageHeight - 8;
+  const parts: string[] = [];
+  if (settings.footerText) parts.push(settings.footerText);
+  if (settings.showDateStamp) parts.push(`Exported: ${tournamentToday()}`);
+  if (settings.showBranding) parts.push(BRANDING_TEXT);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const pageCount: number = (doc.internal as any).getNumberOfPages();
+  for (let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(140, 140, 155);
+    if (parts.length > 0) doc.text(parts.join('  ·  '), MARGIN, footerY);
+    if (settings.showPageNumbers) doc.text(`Page ${i} of ${pageCount}`, pageWidth - MARGIN, footerY, { align: 'right' });
+  }
+
+  doc.save(filename);
 }
 
 // ════════════════════════════════════════════════════════════════════════════

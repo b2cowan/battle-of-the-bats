@@ -1,0 +1,372 @@
+'use client';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { FileChartColumn, ChevronDown, ArrowRight, Lock, FileText, FileSpreadsheet } from 'lucide-react';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import { useOrg } from '@/lib/org-context';
+import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
+import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
+import {
+  downloadXLSX, buildFilename, downloadPDF, downloadTryoutBoardSummary,
+  DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
+} from '@/lib/export';
+import { fairnessReceiptLines, type TryoutReport } from '@/lib/tryout-report';
+import day from './TryoutDayCard.module.css';
+import styles from './TryoutReportCard.module.css';
+
+/**
+ * The Tryout Report — Build-your-team stage (Tryout Insights Phase 1; mockups v1 frames 01–03).
+ * Aggregates only on screen; the fairness receipt states nothing the data can't prove; the
+ * full-detail export sits behind an explicit confirm (R1) and cannot exist while blind (R6) —
+ * the server withholds candidateRows until names are revealed, this component only mirrors that.
+ */
+
+interface ReportPayload {
+  seasonName: string;
+  teamName: string;
+  orgName: string;
+  rosterNames: string[];
+  report: TryoutReport;
+}
+
+interface Props {
+  /** `/api/coaches/{orgSlug}/teams/{teamId}/tryout-report` */
+  apiBase: string;
+  orgSlug: string;
+  rosterHref: string;
+  /** True while the Build tab is the visible panel — triggers a refresh so decisions just made show up. */
+  active: boolean;
+  onError?: (msg: string) => void;
+}
+
+export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active, onError }: Props) {
+  const confirm = useConfirm();
+  const { currentOrg } = useOrg();
+  const [data, setData] = useState<ReportPayload | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  // Settings are only needed at export time — fetched lazily then cached (the PlayerDevelopmentSection
+  // pattern), not on mount: every visit to the Tryouts page mounts this card whether or not the
+  // coach ever opens Build or exports.
+  const pdfSettingsRef = useRef<OrgPdfSettings | null>(null);
+
+  useDismissable(menuOpen, rootRef, () => setMenuOpen(false));
+  const menuStyle = useAnchoredMenu(menuOpen, rootRef, menuRef, { minWidth: 260, narrowMinWidth: 200, align: 'end' });
+
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(apiBase);
+      if (!res.ok) return; // quiet — the Build tab keeps its intro; errors here should not block the stage
+      setData(await res.json());
+    } catch { /* non-blocking */ }
+  }, [apiBase]);
+
+  // Load only when the Build tab is (or becomes) the visible panel — the hub keeps every stage
+  // mounted, so this both avoids a wasted fetch and refreshes after decisions made on Decide.
+  useEffect(() => { if (active) load(); }, [active, load]);
+
+  const loadPdfSettings = useCallback(async (): Promise<OrgPdfSettings> => {
+    if (!pdfSettingsRef.current) {
+      try {
+        const res = await fetch(`/api/admin/org/pdf-settings?orgSlug=${orgSlug}`);
+        pdfSettingsRef.current = res.ok ? ((await res.json()) as OrgPdfSettings) : ({} as OrgPdfSettings);
+      } catch {
+        pdfSettingsRef.current = {} as OrgPdfSettings;
+      }
+    }
+    const stored = pdfSettingsRef.current;
+    return { ...DEFAULT_PDF_SETTINGS, ...(stored && Object.keys(stored).length > 0 ? stored : {}) };
+  }, [orgSlug]);
+
+  if (!data) return null;
+  const { report } = data;
+
+  if (!report.hasAnything) {
+    return (
+      <p className={styles.empty}>
+        Once you accept players from the decision board, they land on your{' '}
+        <a href={rosterHref} className={styles.inlineLink}>team roster</a> with their fees already
+        set — so lineups, attendance, dues and announcements all work from day one, with no name re-typed.
+      </p>
+    );
+  }
+
+  const canUsePDF = currentOrg ? hasPlanFeature(currentOrg.planId, 'pdf_exports') : true;
+  const pdfGateCopy = canUsePDF ? '' : requiresPlanCopy('pdf_exports');
+  const blind = report.candidateRows === null;
+
+  const f = report.funnel;
+  const denom = Math.max(1, f.registered);
+  const funnelRows: { label: string; value: number; caption?: string }[] = [
+    { label: 'Registered', value: f.registered },
+    {
+      label: 'Attended', value: f.attended,
+      caption: f.neverCheckedIn > 0 ? `${f.neverCheckedIn} never checked in` : undefined,
+    },
+    { label: 'Evaluated', value: f.evaluated },
+    { label: 'Offered', value: f.offered },
+    {
+      label: 'Accepted', value: f.accepted,
+      caption: [
+        f.familyDeclined > 0 ? `${f.familyDeclined} declined by family` : null,
+        f.offerExpired > 0 ? `${f.offerExpired} offer${f.offerExpired === 1 ? '' : 's'} expired` : null,
+        f.awaitingReply > 0 ? `${f.awaitingReply} awaiting reply` : null,
+      ].filter(Boolean).join(' · ') || undefined,
+    },
+    { label: 'On roster', value: f.rostered },
+  ];
+
+  const profile = report.profile;
+  const scoredAvgs = profile ? profile.categories.filter(c => c.avg != null) : [];
+  const minAvg = scoredAvgs.length >= 2 ? Math.min(...scoredAvgs.map(c => c.avg!)) : null;
+  const thinnest = minAvg != null ? profile!.categories.filter(c => c.avg === minAvg) : [];
+
+  const turnoutDelta = report.turnout.prior != null ? report.turnout.count - report.turnout.prior : null;
+
+  async function runExport(action: () => Promise<void>) {
+    setMenuOpen(false);
+    setExporting(true);
+    try { await action(); }
+    catch { onError?.('Export failed. Please try again.'); }
+    finally { setExporting(false); }
+  }
+
+  function exportBoardSummary() {
+    return runExport(async () => {
+      if (!data) return;
+      const settings = await loadPdfSettings();
+      await downloadTryoutBoardSummary(
+        buildFilename({ org: data.teamName, dataset: 'tryout-report', scope: 'board-summary' }, 'pdf'),
+        {
+          orgName: data.orgName,
+          teamName: data.teamName,
+          seasonName: data.seasonName,
+          finalized: report.finalized,
+          stats: {
+            candidates: report.turnout.count,
+            prior: report.turnout.prior,
+            priorSeasonName: report.turnout.priorSeasonName,
+            offers: f.offered,
+            accepted: f.accepted,
+            rosterTotal: report.composition?.rosterTotal ?? null,
+            returning: report.composition?.returning ?? null,
+            newcomers: report.composition?.newcomers ?? null,
+          },
+          processLines: report.fairness ? fairnessReceiptLines(report.fairness) : [],
+          profile: profile ? profile.categories.map(c => ({ label: c.label, avg: c.avg })) : null,
+          scaleMax: profile?.scaleMax ?? null,
+          rosterNames: data.rosterNames,
+          settings,
+        },
+      );
+    });
+  }
+
+  /** Full detail (R1): explicit confirm naming the consequence, then names × scores × decisions. */
+  async function exportFullDetail(format: 'pdf' | 'xlsx') {
+    if (!data || !report.candidateRows) return;
+    const ok = await confirm({
+      title: 'Export full detail?',
+      message: "This file lists every candidate by name with their scores and your decisions — including players who didn't make the team. It's for coaching staff only. The board summary is the version to share.",
+      confirmText: 'Export full detail',
+      tone: 'warning',
+    });
+    if (!ok) return;
+    const rows = report.candidateRows;
+    const catCols = profile ? profile.categories : [];
+    const headers = [
+      'Player', 'Bib', 'Composite', 'Evaluators',
+      ...catCols.map(c => c.label),
+      'Decision',
+    ];
+    const body = rows.map(r => [
+      r.name,
+      r.bib ?? '',
+      r.composite != null ? r.composite : '',
+      r.evaluatorCount,
+      ...catCols.map(c => r.categoryAverages[c.key] ?? ''),
+      r.decision,
+    ]);
+    const filename = buildFilename({ org: data.teamName, dataset: 'tryout-report', scope: 'full-detail' }, format);
+    await runExport(async () => {
+      if (format === 'xlsx') {
+        await downloadXLSX(filename, headers, body, 'Tryout report');
+      } else {
+        const settings = await loadPdfSettings();
+        await downloadPDF(
+          filename,
+          'Tryout report — full detail',
+          `${data.teamName}  ·  ${data.seasonName}  ·  Coaching staff only`,
+          headers, body, settings,
+        );
+      }
+    });
+  }
+
+  return (
+    <div className={day.card}>
+      <div className={day.head}>
+        <h3 className={day.title}><FileChartColumn size={16} /> Tryout report</h3>
+        <div className={styles.headActions}>
+          {report.finalized ? (
+            <span className={styles.finalChip}>✓ Final — every candidate has a decision</span>
+          ) : (
+            <span className={styles.liveChip}>● Live — updates as you decide</span>
+          )}
+          <div className={styles.menuWrap} ref={rootRef}>
+            <button
+              type="button" className={styles.exportBtn}
+              onClick={() => setMenuOpen(o => !o)}
+              disabled={exporting}
+              aria-haspopup="menu" aria-expanded={menuOpen}
+            >
+              {exporting ? 'Exporting…' : 'Export'} <ChevronDown size={14} />
+            </button>
+            {menuOpen && (
+              <div ref={menuRef} className={styles.menu} style={menuStyle} role="menu" aria-label="Export the tryout report">
+                <button
+                  role="menuitem" className={styles.menuItem}
+                  onClick={exportBoardSummary}
+                  disabled={!canUsePDF}
+                  title={canUsePDF ? undefined : pdfGateCopy}
+                >
+                  {!canUsePDF && <Lock size={12} aria-hidden />}<FileText size={14} aria-hidden />
+                  <span><span className={styles.menuLabel}>Board summary (PDF)</span>
+                  <span className={styles.menuHint}>{canUsePDF ? 'Aggregates and roster only — safe to share' : pdfGateCopy}</span></span>
+                </button>
+                <button
+                  role="menuitem" className={styles.menuItem}
+                  onClick={() => exportFullDetail('pdf')}
+                  disabled={blind || !canUsePDF}
+                  title={!canUsePDF ? pdfGateCopy : blind ? 'Reveal names first — full detail can’t exist while evaluation is blind' : undefined}
+                >
+                  {!canUsePDF && <Lock size={12} aria-hidden />}<FileText size={14} aria-hidden />
+                  <span><span className={styles.menuLabel}>Full detail (PDF)</span>
+                  <span className={styles.menuHint}>{blind ? 'Reveal names first' : 'Every candidate, score and decision — staff only'}</span></span>
+                </button>
+                <button
+                  role="menuitem" className={styles.menuItem}
+                  onClick={() => exportFullDetail('xlsx')}
+                  disabled={blind}
+                  title={blind ? 'Reveal names first — full detail can’t exist while evaluation is blind' : undefined}
+                >
+                  <FileSpreadsheet size={14} aria-hidden />
+                  <span><span className={styles.menuLabel}>Full detail (Excel)</span>
+                  <span className={styles.menuHint}>{blind ? 'Reveal names first' : 'Same data as the PDF, for your own analysis'}</span></span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* From signup to roster */}
+      <div className={styles.sectionLabel}>From signup to roster</div>
+      <div className={styles.funnel}>
+        {funnelRows.map(row => (
+          <div key={row.label} className={styles.funnelRowWrap}>
+            <div className={styles.funnelRow}>
+              <span className={styles.funnelLabel}>{row.label}</span>
+              <span className={styles.funnelTrack}>
+                {/* Clamped: the roster row counts roster truth, which historic data can push past
+                    the registered denominator — a bar must never overflow its track. */}
+                <span className={styles.funnelBar} style={{ width: `${Math.min(100, (row.value / denom) * 100)}%` }} />
+              </span>
+              <span className={styles.funnelValue}>{row.value}</span>
+            </div>
+            {row.caption && <div className={styles.funnelCaption}>{row.caption}</div>}
+          </div>
+        ))}
+      </div>
+
+      {/* Turnout */}
+      <div className={styles.sectionLabel}>Turnout</div>
+      <div className={styles.statRow}>
+        <div className={styles.stat}>
+          <span className={styles.statNum}>{report.turnout.count}</span>
+          <span className={styles.statLabel}>candidates</span>
+        </div>
+        <div className={styles.stat}>
+          {turnoutDelta == null ? (
+            <>
+              <span className={styles.statNum}>—</span>
+              <span className={styles.statLabel}>first recorded tryout</span>
+            </>
+          ) : (
+            <>
+              <span className={`${styles.statNum} ${turnoutDelta > 0 ? styles.statUp : turnoutDelta < 0 ? styles.statDown : ''}`}>
+                {turnoutDelta > 0 ? `▲ +${turnoutDelta}` : turnoutDelta < 0 ? `▼ ${turnoutDelta}` : 'level'}
+              </span>
+              <span className={styles.statLabel}>vs {report.turnout.priorSeasonName ?? 'last season'}</span>
+            </>
+          )}
+        </div>
+        {report.composition && (
+          <>
+            <div className={styles.stat}>
+              <span className={styles.statNum}>{report.composition.returning}</span>
+              <span className={styles.statLabel}>returning</span>
+            </div>
+            <div className={styles.stat}>
+              <span className={styles.statNum}>{report.composition.rosterTotal}</span>
+              <span className={styles.statLabel}>
+                on the roster{report.composition.fromTryout === report.composition.rosterTotal
+                  ? ' · all via tryout'
+                  : ` · ${report.composition.fromTryout} via tryout`}
+              </span>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Class strength profile */}
+      {profile && (
+        <>
+          <div className={styles.sectionLabel}>Where this class is strong — and thin</div>
+          <div className={styles.cats}>
+            {profile.categories.map(cat => {
+              const thin = thinnest.some(t => t.key === cat.key);
+              return (
+                <div key={cat.key} className={styles.catRow}>
+                  <span className={styles.catLabel}>{cat.label}</span>
+                  <span className={styles.catTrack}>
+                    {cat.avg != null && (
+                      <span
+                        className={`${styles.catBar} ${thin ? styles.catBarThin : ''}`}
+                        style={{ width: `${Math.min(100, (cat.avg / profile.scaleMax) * 100)}%` }}
+                      />
+                    )}
+                  </span>
+                  <span className={styles.catValue}>{cat.avg != null ? cat.avg.toFixed(1) : '—'}</span>
+                </div>
+              );
+            })}
+            {thinnest.length > 0 && (
+              <p className={styles.catFlag}>
+                {thinnest.map(t => t.label).join(' and ')} — thinnest area of the incoming class, a head start for practice planning.
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* Fairness receipt */}
+      {report.fairness && (
+        <>
+          <div className={styles.sectionLabel}>How the evaluation was run</div>
+          <div className={styles.receipt}>
+            <p className={styles.receiptTitle}>Fairness receipt</p>
+            <ul className={styles.receiptList}>
+              {fairnessReceiptLines(report.fairness).map(line => <li key={line}>{line}</li>)}
+            </ul>
+          </div>
+        </>
+      )}
+
+      {f.rostered > 0 && (
+        <a className={styles.rosterLink} href={rosterHref}>View your team roster <ArrowRight size={15} /></a>
+      )}
+    </div>
+  );
+}

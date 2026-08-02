@@ -4,6 +4,46 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-02 — Tryout Insights (Report · Baseline · Memory): evaluation data may travel, but only coach-eyes-only, only confirmed, and never through the blindfold
+
+**Trigger:** Tryout Insights plan + mockups v1, both owner-approved 2026-08-02
+(`docs/projects/active/COACH_TRYOUT_INSIGHTS_PLAN.md`; mockup artifact `3b8bf1f9` = binding visual
+spec). These rulings govern all three phases; full text with rationale = plan §2.
+
+**BINDING RULES (R1–R8):**
+
+1. **R1 — Two audiences, two documents.** The printable Tryout Report defaults to the board-safe
+   summary (aggregates + roster names only). The full candidate table (names × scores × decisions)
+   exists only behind an explicit per-export confirm naming the consequence.
+2. **R2 — Evaluator bias flags ("runs hot/cold") are screen-only.** Never in any export or print.
+3. **R3 — Tryout evaluation content is coach-eyes-only, PERMANENTLY.** No score/composite/note on
+   any family-facing surface, ever. The recap may state the fact ("earned a roster spot at tryouts
+   {date}") — never a number. Guarded by tests, not convention.
+4. **R4 — The baseline snapshot is CONTEXT, not a measurable.** It renders as a clearly labeled
+   artifact on the development page (dashed-border treatment, frame 05) and never enters the
+   measurables timeline or any trend computation. No surface may treat tryout-composite →
+   in-season-measurable as a trend.
+5. **R5 — Focus suggestions are coach-confirmed, never auto-written.** No focus tag/goal/vocabulary
+   entry is minted without explicit confirmation; "Don't add" is a first-class answer. Protects the
+   one-word-for-one-thing vocabulary discipline (18f05650).
+6. **R6 — Memory never breaks the blindfold.** Prior-year evaluation data appears ONLY at Decide
+   post-reveal (and on the report). Never on the scorer, live scoreboard, or check-in while blind.
+   Probes assert the ABSENCE at the DOM. (Check-in's identity-only returning marker is unchanged —
+   identity ≠ scores.)
+7. **R7 — Present, don't judge.** Prior/current snapshots side-by-side always; a delta only when
+   scales match (5↔5, 10↔10); category deltas only on matched keys; incomparable pairs show both
+   cards + "different scorecards" note, no arithmetic. Report aggregate ("returning candidates
+   improved +X") only at ≥3 comparable pairs — otherwise ABSENT (silence beats a confident lie).
+8. **R8 — The archive read is a made decision, not a side effect.** Phase 3's prior-season score
+   read into the live decision board is authorized: a new season-aware read route joins
+   `APPROVED_SEASON_AWARE_ROUTES` citing R8. NO new archive door; nav untouched.
+
+**Applies to:** the tryout hub Build stage, `tryout-overview`/new report route, `lib/export/*`,
+the player development page (Phase 2), the decision board (Phase 3),
+`tests/unit/coach-season-write-guard.test.ts` (Phase 3 only).
+
+---
+
 ### 2026-08-02 — The admin rail carries NO identity and NO status: both were second copies of what the page header already says
 
 **Trigger:** owner, reading the tournament admin rail at 1440px — "the org name in the nav bar, do we need that? it is also in the headers"; then, one screenshot later, "do we need both of these LIVE pills?" Two separate looks at the same rail, landing on the same defect.

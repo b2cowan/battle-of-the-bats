@@ -35,8 +35,10 @@ export interface ExportCatalogEntry {
   file: string;
   /** Formats available on this surface */
   formats: ('xlsx' | 'csv' | 'ics' | 'pdf')[];
-  /** Default format triggered by the primary Export button click */
-  defaultFormat: 'xlsx' | 'csv';
+  /** Default format triggered by the primary Export button click. 'pdf' is a ruled exception:
+   *  the coaches tryout report defaults to the board-safe PDF so the safe-to-share variant is
+   *  the path of least resistance (Tryout Insights ruling R1, 2026-08-02). */
+  defaultFormat: 'xlsx' | 'csv' | 'pdf';
   /** Minimum plan required for this export. Absent = no plan gate. */
   minPlan?: 'tournament' | 'tournament_plus' | 'league' | 'club';
   /** Module-level feature gate key (from lib/plan-features.ts), if applicable */
@@ -258,12 +260,15 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     plannedPhase: 'Phase D1',
   },
   {
+    // Catalog true-up 2026-08-02 (Tryout Insights Phase 1): this export shipped in Phase D1 but
+    // the entry still claimed "not yet implemented" and pointed at a page that never existed.
     id: 'rep-teams-tryout-registrations',
     label: 'Rep Teams Tryout Registrations',
     module: 'rep_teams',
-    page: 'Tryout Registrations',
-    file: 'app/[orgSlug]/admin/rep-teams/tryouts/page.tsx',
-    formats: ['xlsx', 'csv', 'pdf'],
+    page: 'Program Year — Tryout Applicants',
+    file: 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx',
+    // PDF appears in the menu but is a "coming soon" stub — not listed here until it downloads.
+    formats: ['xlsx', 'csv'],
     defaultFormat: 'xlsx',
     minPlan: 'club',
     moduleGate: 'club_exports',
@@ -273,9 +278,32 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     respectsCurrentFilters: true,
     serverSide: false,
     helpSummary:
-      'Export tryout registrations with player info, guardian contacts, notes, and evaluation status.',
-    omittedReason: 'Not yet implemented — planned Phase D1.',
-    plannedPhase: 'Phase D1',
+      'Export tryout applicants with player info, guardian contacts, consent audit columns, and application status.',
+  },
+  {
+    id: 'coaches-tryout-report',
+    label: 'Coaches Portal — Tryout Report',
+    module: 'coaches',
+    page: 'Tryouts — Build your team (Tryout report)',
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/tryouts/page.tsx',
+    formats: ['xlsx', 'pdf'],
+    // Ruled exception to the xlsx-primary standard (R1, 2026-08-02): the board-safe PDF —
+    // aggregates and roster names only — is the default so the shareable variant is the easy one.
+    // Full detail (names × scores × decisions) exists only behind an explicit staff-only confirm,
+    // and not at all while blind evaluation is on.
+    // NOTE for any future coverage check: this surface deliberately uses a bespoke menu (mockup-
+    // bound, R1) rather than components/admin/ExportMenu — a "catalogued file must import
+    // ExportMenu" assertion needs a carve-out here. PDF variants gate on the pdf_exports plan
+    // feature (same as every PDF export); Excel is ungated.
+    defaultFormat: 'pdf',
+    audiences: ['coach'],
+    requiredCapabilities: ['tryouts'],
+    includesSensitiveFields: true,
+    sensitiveFieldPolicy: 'opt_in_required',
+    respectsCurrentFilters: false,
+    serverSide: false,
+    helpSummary:
+      'Tryout report exports: a board-safe summary PDF (turnout, funnel, class profile, fairness receipt, roster) and a full-detail PDF/Excel of every candidate with scores and decisions, behind a deliberate coaching-staff-only confirmation.',
   },
   {
     id: 'coaches-roster',

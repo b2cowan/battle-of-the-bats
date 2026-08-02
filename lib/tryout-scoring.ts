@@ -1,5 +1,23 @@
 import type { RepTryoutRegistration, RepTryoutRubricCategory, RepTryoutScore } from './types';
 
+/** The status→bucket tally every tryout surface shares. Withdrawn candidates leave every count.
+ *  Extracted (/simplify 2026-08-02) because the report became the 4th hand-copy of this loop —
+ *  tryout-decisions/route.ts and TryoutDecisionBoard still carry their own; fold them in when touched. */
+export function tallyTryoutDecisions(registrations: Pick<RepTryoutRegistration, 'status'>[]): {
+  offered: number; waitlisted: number; declined: number; accepted: number; pending: number;
+} {
+  const counts = { offered: 0, waitlisted: 0, declined: 0, accepted: 0, pending: 0 };
+  for (const reg of registrations) {
+    if (reg.status === 'withdrawn') continue;
+    if (reg.status === 'offered') counts.offered++;
+    else if (reg.status === 'waitlisted') counts.waitlisted++;
+    else if (reg.status === 'declined') counts.declined++;
+    else if (reg.status === 'accepted') counts.accepted++;
+    else counts.pending++;
+  }
+  return counts;
+}
+
 /** One candidate's aggregated standing across all evaluators (Phase 2B). */
 export interface RankedTryoutCandidate {
   registrationId: string;

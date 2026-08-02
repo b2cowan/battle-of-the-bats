@@ -1,6 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
-import { ClipboardList, UserCheck, ArrowRight, Play } from 'lucide-react';
+import { ClipboardList, UserCheck, Play } from 'lucide-react';
 import { useTryoutAccess } from '@/components/coaches/useTryoutAccess';
 import FeedbackModal from '@/components/FeedbackModal';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -10,6 +10,7 @@ import TryoutRubricCard from '@/components/rep-teams/TryoutRubricCard';
 import TryoutEvaluatorsCard from '@/components/rep-teams/TryoutEvaluatorsCard';
 import TryoutScoreboardCard from '@/components/rep-teams/TryoutScoreboardCard';
 import TryoutDecisionBoard from '@/components/rep-teams/TryoutDecisionBoard';
+import TryoutReportCard from '@/components/rep-teams/TryoutReportCard';
 import TryoutFlowHeader, { type TryoutOverview, type TabKey } from '@/components/rep-teams/TryoutFlowHeader';
 import styles from '../../../coaches.module.css';
 import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
@@ -69,7 +70,6 @@ export default function CoachTryoutsPage({
   }, [loadOverview]);
 
   const hidden = (tab: TabKey) => (activeTab === tab ? '' : flow.panelHidden);
-  const s = overview?.stats;
 
   const header = (
     <div className={styles.pageHeader}>
@@ -139,28 +139,18 @@ export default function CoachTryoutsPage({
           continuityApiBase={`${base}/development/continuity`} canWrite teamId={teamId} onError={fail} />
       </div>
 
-      {/* Stage 4 — Build your team */}
+      {/* Stage 4 — Build your team: the Tryout Report (Tryout Insights Phase 1, mockups v1
+          frames 01–02 — replaces the bare four-stat row; the empty-state payoff paragraph
+          moved inside the card so this stage has one owner). */}
       <div className={hidden('build')} role="tabpanel">
         <PanelIntro text="Accept players onto your roster with their fees (optional). They're then ready for your lineups." />
-        <div className={flow.results}>
-          {!s ? null : (s.offered + s.waitlisted + s.accepted + s.rosterFromTryouts) > 0 ? (
-            <>
-              <div className={flow.resultStats}>
-                <div className={flow.resultStat}><span className={flow.resultNum}>{s.offered}</span><span className={flow.resultLabel}>Offered</span></div>
-                <div className={flow.resultStat}><span className={flow.resultNum}>{s.waitlisted}</span><span className={flow.resultLabel}>Waitlisted</span></div>
-                <div className={flow.resultStat}><span className={`${flow.resultNum} ${flow.resultNumAccent}`}>{s.accepted}</span><span className={flow.resultLabel}>Accepted</span></div>
-                <div className={flow.resultStat}><span className={`${flow.resultNum} ${flow.resultNumAccent}`}>{s.rosterFromTryouts}</span><span className={flow.resultLabel}>On your roster</span></div>
-              </div>
-              <a className={flow.rosterLink} href={rosterHref}>View your team roster <ArrowRight size={15} /></a>
-            </>
-          ) : (
-            <p className={flow.resultEmpty}>
-              Once you accept players from the decision board, they land on your{' '}
-              <a href={rosterHref} style={{ color: 'var(--logic-lime)' }}>team roster</a> with their fees already
-              set — so lineups, attendance, dues and announcements all work from day one, with no name re-typed.
-            </p>
-          )}
-        </div>
+        <TryoutReportCard
+          apiBase={`${base}/tryout-report`}
+          orgSlug={orgSlug}
+          rosterHref={rosterHref}
+          active={activeTab === 'build'}
+          onError={fail}
+        />
       </div>
 
       <FeedbackModal

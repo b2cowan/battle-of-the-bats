@@ -9,6 +9,7 @@ import {
 import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
+import { pickPriorProgramYear } from '@/lib/tryout-report';
 
 /**
  * Tryout HISTORY — the record of a tryout, not the machinery for running one (Chunk F, D-F1).
@@ -44,9 +45,7 @@ export const GET = withObservability(async (req: Request,
   // its turnout query joins that batch — otherwise "how does this compare to last year" costs a
   // second sequential round trip on exactly the request Chunk F exists to serve.
   const allYears = await getRepProgramYears(teamId);
-  const ordered = [...allYears].sort((a, b) => a.year - b.year);
-  const idx = ordered.findIndex(y => y.id === programYear.id);
-  const prior = idx > 0 ? ordered[idx - 1] : null;
+  const prior = pickPriorProgramYear(allYears, programYear.id);
 
   const [sessions, registrations, scores, priorRegistrations] = await Promise.all([
     getRepTryoutSessions(tryout.id),
