@@ -510,6 +510,96 @@
     "indexdef": "CREATE INDEX idx_error_groups_status_severity ON public.error_groups USING btree (status, severity)"
   },
   {
+    "tablename": "family_consents",
+    "indexname": "family_consents_live_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_consents_live_uniq ON public.family_consents USING btree (org_id, guardian_email, basis, scope, COALESCE(source_id, '00000000-0000-0000-0000-000000000000'::uuid)) WHERE (withdrawn_at IS NULL)"
+  },
+  {
+    "tablename": "family_consents",
+    "indexname": "family_consents_org_email_idx",
+    "indexdef": "CREATE INDEX family_consents_org_email_idx ON public.family_consents USING btree (org_id, guardian_email)"
+  },
+  {
+    "tablename": "family_consents",
+    "indexname": "family_consents_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_consents_pkey ON public.family_consents USING btree (id)"
+  },
+  {
+    "tablename": "family_consents",
+    "indexname": "family_consents_user_idx",
+    "indexdef": "CREATE INDEX family_consents_user_idx ON public.family_consents USING btree (user_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_email_optouts",
+    "indexname": "family_email_optouts_org_email_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_email_optouts_org_email_uniq ON public.family_email_optouts USING btree (org_id, email)"
+  },
+  {
+    "tablename": "family_email_optouts",
+    "indexname": "family_email_optouts_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_email_optouts_pkey ON public.family_email_optouts USING btree (id)"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_calendar_token_hash_key",
+    "indexdef": "CREATE UNIQUE INDEX family_links_calendar_token_hash_key ON public.family_links USING btree (calendar_token_hash)"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_claim_token_hash_key",
+    "indexdef": "CREATE UNIQUE INDEX family_links_claim_token_hash_key ON public.family_links USING btree (claim_token_hash)"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_email_idx",
+    "indexdef": "CREATE INDEX family_links_email_idx ON public.family_links USING btree (invited_email)"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_live_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_links_live_uniq ON public.family_links USING btree (rep_team_id, invited_email, role) WHERE (status <> ALL (ARRAY['declined'::text, 'revoked'::text]))"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_org_idx",
+    "indexdef": "CREATE INDEX family_links_org_idx ON public.family_links USING btree (org_id)"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_links_pkey ON public.family_links USING btree (id)"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_team_status_idx",
+    "indexdef": "CREATE INDEX family_links_team_status_idx ON public.family_links USING btree (rep_team_id, status)"
+  },
+  {
+    "tablename": "family_links",
+    "indexname": "family_links_user_idx",
+    "indexdef": "CREATE INDEX family_links_user_idx ON public.family_links USING btree (user_id) WHERE (user_id IS NOT NULL)"
+  },
+  {
+    "tablename": "family_recap_views",
+    "indexname": "family_recap_views_link_season_uniq",
+    "indexdef": "CREATE UNIQUE INDEX family_recap_views_link_season_uniq ON public.family_recap_views USING btree (link_id, program_year_id)"
+  },
+  {
+    "tablename": "family_recap_views",
+    "indexname": "family_recap_views_pkey",
+    "indexdef": "CREATE UNIQUE INDEX family_recap_views_pkey ON public.family_recap_views USING btree (id)"
+  },
+  {
+    "tablename": "family_recap_views",
+    "indexname": "family_recap_views_season_idx",
+    "indexdef": "CREATE INDEX family_recap_views_season_idx ON public.family_recap_views USING btree (program_year_id)"
+  },
+  {
+    "tablename": "family_recap_views",
+    "indexname": "family_recap_views_team_idx",
+    "indexdef": "CREATE INDEX family_recap_views_team_idx ON public.family_recap_views USING btree (rep_team_id)"
+  },
+  {
     "tablename": "fan_alert_prefs",
     "indexname": "fan_alert_prefs_pkey",
     "indexdef": "CREATE UNIQUE INDEX fan_alert_prefs_pkey ON public.fan_alert_prefs USING btree (user_id)"
@@ -758,6 +848,16 @@
     "tablename": "league_teams",
     "indexname": "league_teams_pkey",
     "indexdef": "CREATE UNIQUE INDEX league_teams_pkey ON public.league_teams USING btree (id)"
+  },
+  {
+    "tablename": "no_login_rate_limits",
+    "indexname": "no_login_rate_limits_pkey",
+    "indexdef": "CREATE UNIQUE INDEX no_login_rate_limits_pkey ON public.no_login_rate_limits USING btree (rail, subject)"
+  },
+  {
+    "tablename": "no_login_rate_limits",
+    "indexname": "no_login_rate_limits_window_idx",
+    "indexdef": "CREATE INDEX no_login_rate_limits_window_idx ON public.no_login_rate_limits USING btree (window_started_at)"
   },
   {
     "tablename": "notification_preferences",
@@ -1401,6 +1501,11 @@
   },
   {
     "tablename": "rep_player_development_goals",
+    "indexname": "rep_player_development_goals_tag_idx",
+    "indexdef": "CREATE INDEX rep_player_development_goals_tag_idx ON public.rep_player_development_goals USING btree (tag_id)"
+  },
+  {
+    "tablename": "rep_player_development_goals",
     "indexname": "rep_player_development_goals_team_idx",
     "indexdef": "CREATE INDEX rep_player_development_goals_team_idx ON public.rep_player_development_goals USING btree (team_id)"
   },
@@ -1488,6 +1593,26 @@
     "tablename": "rep_player_measurables",
     "indexname": "rep_player_measurables_type_idx",
     "indexdef": "CREATE INDEX rep_player_measurables_type_idx ON public.rep_player_measurables USING btree (measurable_type_id)"
+  },
+  {
+    "tablename": "rep_player_tryout_baselines",
+    "indexname": "rep_player_tryout_baselines_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_tryout_baselines_pkey ON public.rep_player_tryout_baselines USING btree (id)"
+  },
+  {
+    "tablename": "rep_player_tryout_baselines",
+    "indexname": "rep_player_tryout_baselines_player_year_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_player_tryout_baselines_player_year_uniq ON public.rep_player_tryout_baselines USING btree (roster_player_id, program_year_id)"
+  },
+  {
+    "tablename": "rep_player_tryout_baselines",
+    "indexname": "rep_player_tryout_baselines_team_idx",
+    "indexdef": "CREATE INDEX rep_player_tryout_baselines_team_idx ON public.rep_player_tryout_baselines USING btree (team_id)"
+  },
+  {
+    "tablename": "rep_player_tryout_baselines",
+    "indexname": "rep_player_tryout_baselines_year_idx",
+    "indexdef": "CREATE INDEX rep_player_tryout_baselines_year_idx ON public.rep_player_tryout_baselines USING btree (program_year_id)"
   },
   {
     "tablename": "rep_program_years",
@@ -1590,6 +1715,46 @@
     "indexdef": "CREATE INDEX rep_team_coaches_user_idx ON public.rep_team_coaches USING btree (org_id, user_id)"
   },
   {
+    "tablename": "rep_team_drill_tags",
+    "indexname": "rep_team_drill_tags_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_drill_tags_pkey ON public.rep_team_drill_tags USING btree (drill_id, tag_id)"
+  },
+  {
+    "tablename": "rep_team_drill_tags",
+    "indexname": "rep_team_drill_tags_tag_idx",
+    "indexdef": "CREATE INDEX rep_team_drill_tags_tag_idx ON public.rep_team_drill_tags USING btree (tag_id)"
+  },
+  {
+    "tablename": "rep_team_drills",
+    "indexname": "rep_team_drills_org_idx",
+    "indexdef": "CREATE INDEX rep_team_drills_org_idx ON public.rep_team_drills USING btree (org_id, is_active)"
+  },
+  {
+    "tablename": "rep_team_drills",
+    "indexname": "rep_team_drills_org_shared_name_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_drills_org_shared_name_uniq ON public.rep_team_drills USING btree (org_id, lower(btrim(name))) WHERE (is_active AND (team_id IS NULL))"
+  },
+  {
+    "tablename": "rep_team_drills",
+    "indexname": "rep_team_drills_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_drills_pkey ON public.rep_team_drills USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_drills",
+    "indexname": "rep_team_drills_team_idx",
+    "indexdef": "CREATE INDEX rep_team_drills_team_idx ON public.rep_team_drills USING btree (team_id, is_active, sort_order)"
+  },
+  {
+    "tablename": "rep_team_drills",
+    "indexname": "rep_team_drills_team_name_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_drills_team_name_uniq ON public.rep_team_drills USING btree (team_id, lower(btrim(name))) WHERE (is_active AND (team_id IS NOT NULL))"
+  },
+  {
+    "tablename": "rep_team_evaluation_sessions",
+    "indexname": "rep_team_eval_sessions_event_idx",
+    "indexdef": "CREATE INDEX rep_team_eval_sessions_event_idx ON public.rep_team_evaluation_sessions USING btree (event_id) WHERE (event_id IS NOT NULL)"
+  },
+  {
     "tablename": "rep_team_evaluation_sessions",
     "indexname": "rep_team_evaluation_sessions_id_team_uniq",
     "indexdef": "CREATE UNIQUE INDEX rep_team_evaluation_sessions_id_team_uniq ON public.rep_team_evaluation_sessions USING btree (id, team_id)"
@@ -1648,6 +1813,11 @@
     "tablename": "rep_team_event_tags",
     "indexname": "rep_team_event_tags_tag_idx",
     "indexdef": "CREATE INDEX rep_team_event_tags_tag_idx ON public.rep_team_event_tags USING btree (tag_id)"
+  },
+  {
+    "tablename": "rep_team_events",
+    "indexname": "rep_team_events_family_shared_idx",
+    "indexdef": "CREATE INDEX rep_team_events_family_shared_idx ON public.rep_team_events USING btree (team_id) WHERE (family_shared_at IS NOT NULL)"
   },
   {
     "tablename": "rep_team_events",
@@ -1810,6 +1980,36 @@
     "indexdef": "CREATE INDEX rep_team_payment_requests_team_status_idx ON public.rep_team_payment_requests USING btree (team_id, status)"
   },
   {
+    "tablename": "rep_team_plan_template_tags",
+    "indexname": "rep_team_plan_template_tags_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_plan_template_tags_pkey ON public.rep_team_plan_template_tags USING btree (template_id, tag_id)"
+  },
+  {
+    "tablename": "rep_team_plan_template_tags",
+    "indexname": "rep_team_plan_template_tags_tag_idx",
+    "indexdef": "CREATE INDEX rep_team_plan_template_tags_tag_idx ON public.rep_team_plan_template_tags USING btree (tag_id)"
+  },
+  {
+    "tablename": "rep_team_plan_templates",
+    "indexname": "rep_team_plan_templates_name_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_plan_templates_name_uniq ON public.rep_team_plan_templates USING btree (team_id, lower(btrim(name))) WHERE is_active"
+  },
+  {
+    "tablename": "rep_team_plan_templates",
+    "indexname": "rep_team_plan_templates_org_idx",
+    "indexdef": "CREATE INDEX rep_team_plan_templates_org_idx ON public.rep_team_plan_templates USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_plan_templates",
+    "indexname": "rep_team_plan_templates_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_plan_templates_pkey ON public.rep_team_plan_templates USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_plan_templates",
+    "indexname": "rep_team_plan_templates_team_idx",
+    "indexdef": "CREATE INDEX rep_team_plan_templates_team_idx ON public.rep_team_plan_templates USING btree (team_id, is_active)"
+  },
+  {
     "tablename": "rep_team_tags",
     "indexname": "rep_team_tags_name_uniq",
     "indexdef": "CREATE UNIQUE INDEX rep_team_tags_name_uniq ON public.rep_team_tags USING btree (team_id, kind, lower(btrim(name)))"
@@ -1858,6 +2058,16 @@
     "tablename": "rep_team_tournament_registrations",
     "indexname": "rep_team_tournament_registrations_tournament_team_unique",
     "indexdef": "CREATE UNIQUE INDEX rep_team_tournament_registrations_tournament_team_unique ON public.rep_team_tournament_registrations USING btree (tournament_team_id)"
+  },
+  {
+    "tablename": "rep_teams",
+    "indexname": "rep_teams_family_calendar_token_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_teams_family_calendar_token_uniq ON public.rep_teams USING btree (family_calendar_token_hash) WHERE (family_calendar_token_hash IS NOT NULL)"
+  },
+  {
+    "tablename": "rep_teams",
+    "indexname": "rep_teams_family_link_token_uniq",
+    "indexdef": "CREATE UNIQUE INDEX rep_teams_family_link_token_uniq ON public.rep_teams USING btree (family_link_token_hash) WHERE (family_link_token_hash IS NOT NULL)"
   },
   {
     "tablename": "rep_teams",
