@@ -9,7 +9,7 @@ import {
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { ORG_TIME_ZONE } from '@/lib/timezone';
 import type { LeagueDivision, LeagueTeam, LeagueGame } from '@/lib/types';
-import column from '../league-column.module.css';
+import column from '../../league-column.module.css';
 
 export const dynamic = 'force-dynamic';
 

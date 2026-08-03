@@ -1756,3 +1756,28 @@ tbody tr:hover { background: var(--white-10); }
     justify-content: center;
   }
 }
+
+/* ── Sandbox tour spotlight (moved from SandboxChrome.module.css) ───────────
+   Applied by JS to an arbitrary element elsewhere on the page, so it must be a
+   plain global class — CSS Modules rejects a bare :global() rule with no local
+   class attached. The ring holds for the WHOLE duration and breathes on top of
+   itself rather than fading to nothing between pulses, so a visitor who glanced
+   away still sees it when they look back. */
+.sandboxSpotlight {
+  border-radius: 8px;
+  outline: 2px solid var(--logic-lime);
+  outline-offset: 2px;
+  animation: sandboxSpot 0.8s ease-in-out 3;
+}
+
+@keyframes sandboxSpot {
+  0%, 100% { box-shadow: 0 0 10px rgba(var(--logic-lime-rgb), 0.25); }
+  50%      { box-shadow: 0 0 26px rgba(var(--logic-lime-rgb), 0.55); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sandboxSpotlight {
+    animation: none;
+    box-shadow: 0 0 20px rgba(var(--logic-lime-rgb), 0.4);
+  }
+}

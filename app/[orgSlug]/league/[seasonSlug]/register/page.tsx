@@ -4,7 +4,7 @@ import { getLeagueSeasonBySlug, getDivisionsForSeason } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import RegisterForm, { DivisionWithCount } from '@/components/league/RegisterForm';
-import column from '../league-column.module.css';
+import column from '../../league-column.module.css';
 
 export const dynamic = 'force-dynamic';
 

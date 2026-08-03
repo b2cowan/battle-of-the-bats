@@ -216,30 +216,6 @@
 
 .toastCta:hover { text-decoration: underline; }
 
-/* ── The spotlight a chip puts on the beat it points at ───────────────────── */
-
-/* The ring holds for the WHOLE duration and breathes on top of itself, rather than fading to
-   nothing between pulses. The first build's pulse spent half its life invisible, so a visitor who
-   glanced away — or whose beat was already on screen — saw a button that did nothing. */
-:global(.sandboxSpotlight) {
-  border-radius: 8px;
-  outline: 2px solid var(--logic-lime);
-  outline-offset: 2px;
-  animation: sandboxSpot 0.8s ease-in-out 3;
-}
-
-@keyframes sandboxSpot {
-  0%, 100% { box-shadow: 0 0 10px rgba(var(--logic-lime-rgb), 0.25); }
-  50%      { box-shadow: 0 0 26px rgba(var(--logic-lime-rgb), 0.55); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :global(.sandboxSpotlight) {
-    animation: none;
-    box-shadow: 0 0 20px rgba(var(--logic-lime-rgb), 0.4);
-  }
-}
-
 /* ── Narrow screens ───────────────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
