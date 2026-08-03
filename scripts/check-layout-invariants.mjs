@@ -243,10 +243,35 @@ function probeInPage(opts) {
     let node = el;
     while (node && node !== document.documentElement.parentElement) {
       const cs = getComputedStyle(node);
-      // A gradient or image behind the text means the contrast is not a single pair — a human
-      // has to judge it, so the rule declines rather than guesses.
-      if (cs.backgroundImage && cs.backgroundImage !== 'none') return null;
       const c = parseColor(cs.backgroundColor);
+      const img = cs.backgroundImage && cs.backgroundImage !== 'none' ? cs.backgroundImage : null;
+
+      if (img) {
+        // ⚠ THE BACKTEST'S SHARPEST FINDING (2026-08-03). A blanket "image behind the text → give
+        // up" made this rule STRUCTURALLY BLIND to the coach portal's own paper: `.coachesMain`
+        // paints the blueprint grid on every org-scoped screen in both themes, so 19–53% of the
+        // text on a screen — the muted labels, helper copy and empty states that live on the page
+        // ground rather than inside a card — was silently declined. It found the --home-dim defect
+        // only because that token is used INSIDE cards, which paint an opaque surface and
+        // short-circuit this walk before it ever reached main. Verified by restoring a real
+        // white-on-cream defect (7b6e5e23) and watching the rule stay green on it.
+        //
+        // A GRADIENT painted over an opaque colour on the SAME element is measurable: the colour
+        // is the ground everywhere the gradient is transparent, which for a hairline grid or a
+        // tint wash is almost everywhere. So composite against it rather than declining.
+        //
+        // Deliberately NOT extended to url() images. A photo has no single ground, and guessing
+        // one would trade a blind spot for a wrong answer — which is worse, because a wrong
+        // answer looks like a real finding. Same reasoning as the original decline.
+        //
+        // The approximation is honest but not free: where the gradient is DARKER than the colour
+        // beneath it, the true ratio is slightly worse than this reports. It under-reports rather
+        // than inventing findings, which is the right direction for a gate meant to be believed.
+        const gradientOnly = !/url\(/i.test(img);
+        if (gradientOnly && c && c.a >= 0.999) return acc ? over(acc, c) : c;
+        return null;
+      }
+
       if (c && c.a > 0) acc = acc ? over(acc, c) : c;
       if (acc && acc.a >= 0.999) return acc;
       node = node.parentElement;
@@ -421,7 +446,19 @@ function probeInPage(opts) {
     });
 
     if (bars.length) {
-      const sel = 'button, a[href], summary, select, textarea, input:not([type="hidden"]), [role="button"]';
+      // ⚠ NOT JUST CONTROLS (widened 2026-08-03 by the backtest). The first version asked only
+      // about interactive elements, and was verified SILENT on the real defect that motivates this
+      // rule: restoring the /coaches/join overlap (537689e3) put the card's heading at y=16 under
+      // a 64px fixed nav — precisely what was reported — while the nearest BUTTON sat at y=150 and
+      // the rule reported nothing. "The header is covering the page" is nearly always about text.
+      //
+      // Prose containers only — never a bare div. A wrapper's centre can sit anywhere relative to
+      // its children, so a covered div says nothing about whether anything readable is covered,
+      // and the three-way agreement below (fully in view · the bar's box really contains the
+      // centre · the hit test names something else) is the only thing keeping this rule believable.
+      const sel =
+        'button, a[href], summary, select, textarea, input:not([type="hidden"]), [role="button"], ' +
+        'h1, h2, h3, h4, p, li, dt, dd, figcaption, blockquote';
       for (const el of Array.from(root.querySelectorAll(sel))) {
         if (!visible(el) || isExempt(el)) continue;
         const r = el.getBoundingClientRect();

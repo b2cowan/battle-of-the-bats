@@ -259,12 +259,139 @@ text on that ground. An entry without a reason is not an exemption — same rule
 text. Raising it is a **design decision** (`/design`), not a tooling change, and is deliberately not
 made here.
 
-## 10. Not done / next
+## 10. Backtest against real history — 2026-08-03
 
-- [ ] Owner decision on `--home-dim`.
+**24 mechanical UI defects from the last ~6 weeks of fixed-and-recorded history were scored against
+the six rules. As shipped, the sweep catches 3.** Extending the screen list to the surfaces the
+corpus actually names would take it to ~11. The full table and method are in
+[LAYOUT_INVARIANT_SWEEP_BACKTEST.md](LAYOUT_INVARIANT_SWEEP_BACKTEST.md).
+
+Five scorings were verified by restoring the pre-fix state and re-running, per the rule that a green
+result proves nothing until the tool has been seen red on the real bug. **Three of five "would have
+caught" scores were wrong and were rescored to NO**, each for a different reason:
+
+| # | Rule | Verdict | Why |
+|---|---|---|---|
+| V4 | `contrast` | **red, confirmed** | `--home-dim: #8A8177` reinstated → 3.83 / 3.49 / 2.94:1, matching §7.1 to the hundredth. |
+| V3 | `contrast` | **red, confirmed** | Restored pre-fix Development page → ink-on-olive CTA at 2.41:1. |
+| V1 | `contrast` | rescored **NO** | The frozen-alias defect lives on the coach tournament record, which is **not in the screen list**. Widened to 11 listed screens: silent. |
+| V2 | `contrast` | rescored **NO** | See §10.1 — the rule cannot see text on the portal's own paper. |
+| V5 | `hidden-behind-chrome` | rescored **NO** | See §10.2 — the covered element was a heading, and the rule only inspects controls. |
+
+### 10.1 ✅ FIXED — `contrast` was blind to text on the portal ground
+
+`effectiveBg` returns `null` the moment it meets any `background-image`, and `.coachesMain` paints
+the blueprint grid on **every org-scoped coach screen, in both themes**. So every text element whose
+own ancestors are transparent — page ground text, not card text — is silently declined.
+
+Measured at 390px: **19–53% of text-bearing elements per screen are declined this way**
+(roster 43/87, schedule 9/17, development 18/38, tryouts 13/42, overview and team hub 8/42). Every
+one is recoverable: the gradient sits on an element that also declares an **opaque
+`background-color`**, so the composite is knowable, not a guess. Four genuine AA failures are hiding
+in that blind spot today (roster 4.49:1, tryouts 4.39:1 × 3).
+
+This reframes §7.1. The rule found the muted-ink defect because it is used inside **cards**, which
+paint an opaque surface and short-circuit the walk. It never looked at the paper.
+
+**Fixed 2026-08-03.** A **gradient** over an opaque `background-color` on the same element now
+composites against that colour; a `url()` image still declines, because a photo has no single ground
+and guessing one trades a blind spot for a wrong answer — which is worse, since a wrong answer looks
+like a real finding. The approximation under-reports where the gradient is darker than the colour
+beneath it, never invents findings.
+
+**Verified by breaking it:** with the pre-fix Development page restored, the rule now reports the
+white-on-cream text at **1.10:1** that it previously declined outright.
+
+### 10.2 ✅ FIXED — `hidden-behind-chrome` only inspected controls
+
+Restoring the `/coaches/join` overlap put the card heading at y=16 under a 64px fixed nav — the
+defect, exactly as reported — and the rule stayed silent, because the nearest **control** sat at
+y=150, clear of the bar. Covered *text* is invisible to it.
+
+**Fixed 2026-08-03.** The rule now also inspects prose containers — `h1`–`h4`, `p`, `li`, `dt`, `dd`,
+`figcaption`, `blockquote` — never a bare `div`, because a wrapper's centre says nothing about
+whether anything readable is covered, and the three-way agreement is the only thing keeping this rule
+believable.
+
+**Verified both ways:** with the clearance reverted it reports
+`h1 "Create Your Coaches Portal Account" · centre (195,36) sits under fixed nav`; with the shipped
+clearance restored it is silent again.
+
+`page-overflow`, `content-overflow` and `sticky-no-travel` were also falsified deliberately and all
+three fire correctly: re-adding `overflow-y` to `.coachesMain` reports the masthead as trapped in
+`<main>` (the shell ruling, now tested rather than asserted), and an injected 130vw block reports
+both overflow rules. **All six rules have now been seen red on a defect** — none of the zeroes is
+still unfalsified.
+
+### 10.2b What the two fixes surfaced — 9 findings, no noise
+
+Sampled 13 screen-widths across all four widths after the fix: **9 new `contrast` findings, zero
+`hidden-behind-chrome` false positives.** Every one is a genuine near-miss on the AA floor, and none
+would have been visible before:
+
+| Screen | Text | Ratio |
+|---|---|---|
+| coach-roster | "12 without a position · 12 without guardian" | 4.49:1 |
+| coach-roster @1440 | "Active" status pill | 4.08:1 |
+| coach-roster @1440 | "Deactivate" | 4.39:1 |
+| coach-tryouts | session count chips (×3) | 4.39:1 |
+| coach-dues @361 | the em-dash placeholder cell | 4.14:1 |
+
+**The baseline was deliberately NOT re-snapshotted.** Absorbing nine real accessibility findings into
+the ratchet is exactly the comfortable number §4.1 warns about — they are near-misses on the same
+warm palette §8 already tuned once, so they are a design call, not a tooling one.
+
+### 10.3 What the misses have in common
+
+- **9 of 21 misses are pure coverage** — the right rule existed, the screen was not listed.
+- **Truncation is the most common visible symptom and no rule sees it.** An ellipsis is
+  working-as-designed to a geometry check; four corpus defects were "the name got cut".
+- **The sweep measures one state per screen.** A closed More menu, an unopened popover, a modal and
+  a notched phone (`env(safe-area-inset-bottom)` is 0 in headless Chromium) are all unreachable —
+  four corpus defects lived in exactly those places.
+- **A whole class is constant-drift, not layout** — a 72px token against a 70.31px bar, a 71px bar
+  against a 72px sibling, a `styles.changeBarHoisted` that resolves to `undefined`, `@keyframes` in
+  the wrong CSS module. Cheap static checks; three of the four reached the owner.
+- **A clipped control is invisible to both overflow rules** — `content-overflow` skips anything whose
+  `overflow-x` is not `visible`, which is precisely how a control gets clipped.
+
+## 11. Not done / next
+
+**From the backtest (§10), highest value first:**
+
+- [x] **Fix the `contrast` gradient blindness** (§10.1) — done 2026-08-03, verified red then green.
+- [x] **Extend `hidden-behind-chrome` to headings and text blocks** (§10.2) — done 2026-08-03,
+      verified red then green.
+- [ ] **Owner/design call on the 9 findings the fixes surfaced** (§10.2b). Baseline deliberately not
+      re-snapshotted until this is decided.
+- [ ] **Extend the screen list beyond the coach portal** (admin, consumer, marketing, the free
+      portal, the coach tournament record) — one line each. This is 9 of the 21 misses, and the
+      corpus names the exact surfaces.
+- [ ] **New rule — `truncation`:** an element with `text-overflow: ellipsis` whose
+      `scrollWidth > clientWidth`, scoped to headings and primary labels so it does not fire on
+      every table cell.
+- [ ] **New static checks (not this tool):** a CSS-module class reference that resolves to
+      `undefined`, and `animation-name` with no same-file `@keyframes`. Both already shipped broken;
+      the second was swept by hand once and will drift again.
+- [ ] **Decide explicitly** whether one-state-per-screen is accepted (and say so in the doc), or
+      whether the list gains state variants (More menu open, a popover open).
+- [ ] **Conceded as not mechanically catchable here:** judgement defects (weak hierarchy, repeated
+      copy, drift from a mockup — 7 more in the corpus, counted separately) and interaction defects
+      (iOS tap-away, keyboard dismissal, the two-tap `cursor` bug). The last of those is catchable by
+      a lint, not by this sweep.
+
+**Pre-existing:**
+
+- [x] Owner decision on `--home-dim` — resolved 2026-08-02 (§8).
 - [ ] Decide whether the sweep formally gates handover, or stays advisory.
-- [ ] Extend the screen list beyond the coach portal (admin, consumer, marketing) — one line each.
 - [ ] Retire the overlapping assertions in the three per-feature layout specs once the sweep has
       proven itself, keeping only what is genuinely feature-specific (the run screen's 56px floor,
       tabular numerals, the read-only drill ruling, the GET-only network assertion).
 - [ ] Consider adding to `verify:changed` behind a dev-server-present check.
+
+**⚠ Bounds on every number above.** The corpus is only defects that were fixed **and** recorded in a
+commit body or plan file — silent fixes and still-open defects are invisible, and it skews to the
+last six weeks and to the coach portal. Two corpus items could not be verified at all because the
+code has since been deleted or restructured. And the sweep's own reach is bounded by the UAT fixture:
+several screens measure a near-empty page, and `ready: 'h1'` proves the shell rendered, not the
+content.
