@@ -22,12 +22,40 @@ Confirm briefly: _"Review context loaded — [N] files changed, tier = [trivial/
 
 Before spawning any agent, run the checks that prove mechanical correctness for free:
 
-- `npm run verify:changed` — public-token, snapshot-freshness, dictionary-coverage ratchets
+- `npm run verify:changed` — public-token, **palette-contrast**, snapshot-freshness, dictionary-coverage ratchets
 - `npm run typecheck` — when the diff touches shared modules (`lib/**`), route/auth/`proxy.ts`/config, or API/data contracts (per AGENCY_RULES resource-aware rule)
 - `npm run lint:focused -- <changed files>` — focused, not full-project
 - `npm run check:migrations` — only if `supabase/migrations/**` or `*.sql` changed
+- `npm run check:layout -- --changed` — **only if the diff touches a coach-portal screen, a shared portal stylesheet, or the palette**, and only when a dev server is already up. See below.
 
-Feed the results forward. **Do not spend a single agent hunting for type errors, lint, hardcoded hex, dictionary drift, or migration drift** — these are already gated. If the gate is red, surface those failures and stop; there is no point reviewing semantics on top of broken types.
+Feed the results forward. **Do not spend a single agent hunting for type errors, lint, hardcoded hex, dictionary drift, migration drift, or colour contrast** — these are already gated. If the gate is red, surface those failures and stop; there is no point reviewing semantics on top of broken types.
+
+### The rendered check (`check:layout`)
+
+Everything else in Stage 0 reads files. This one **renders pages**, and it is the only gate that can
+see a defect which exists solely once a browser has resolved a layout — sideways scroll, a control
+under the tap floor, a rail that stopped sticking, text on a ground it cannot be read against,
+something trapped under fixed chrome.
+
+- `--changed` picks the screens the diff touches and defaults to two representative widths (361 and
+  1440), so cost is proportional — **~3.4s per screen-width on a warm dev server**.
+  - **A normal feature diff (1–3 screens): 13–30 seconds.** This is the common case. (Measured:
+    1 screen × 2 widths = 13s, 2 screens × 4 widths = 25s, including ~5s of browser start-up.)
+  - **A palette or shared-chrome diff widens to all 28 screens: 3–5 minutes.** That widening is
+    deliberate — it is the blast radius that hid a portal-wide contrast defect for months — and it
+    is exactly the change you least want to wave through. Budget for it and run it.
+  - ⚠ **Cold routes cost far more than the measurement.** On a server that has not served these
+    pages yet, first compile dominates and the heaviest screen can exceed the timeout. Warm the
+    server, or expect one or two "did not render" lines that are compile timeouts rather than
+    defects — re-run those screens rather than reporting them as findings.
+- **It needs a running dev server and the seeded UAT fixture.** If the server is not up, the script
+  says so and exits non-zero.
+- ⚠ **If you skip it, SAY SO in the Stage 0 line of the report** — "check:layout skipped, no dev
+  server". Never let an unrun rendered check read as a pass. Silent skips reading as green is the
+  exact failure that let the contrast defect survive: two earlier probes `test.skip`-ed themselves
+  when their fixture was missing, and a skip reports green.
+- Whole-suite (`npm run check:layout`, all 28 screens) is a ~20-minute deliberate run, **not** a
+  review step, and it can exhaust the dev server's heap. Scope it.
 
 ---
 
@@ -39,7 +67,11 @@ Classify the diff by changed paths + size. When a diff spans tiers, the **highes
 
 **Standard** (lean funnel): feature pages/components, non-money API routes, hooks, client state.
 
-**Trivial** (deterministic + one read): copy, `*.module.css`/styling, markdown/docs, `TODO.md`, comment-only changes. No LLM finder fan-out — a single main-loop read plus the Stage 0 gate is sufficient. **Log that you did this.**
+**Trivial** (deterministic + one read): copy, a **single feature's** `*.module.css`/styling, markdown/docs, `TODO.md`, comment-only changes. No LLM finder fan-out — a single main-loop read plus the Stage 0 gate is sufficient. **Log that you did this.**
+
+⚠ **Design tokens and shared chrome are NOT trivial, however small the diff.** A one-line edit to `app/globals.css`, `components/consumer/warmTheme.module.css`, `app/[orgSlug]/coaches/coaches.module.css`, a shell layout, or anything under `components/coaches/` changes **every screen at once** — it has the blast radius of a shared module, not of a stylesheet. Treat it as **Standard** at minimum, and always run the rendered check.
+
+This carve-out exists because the classification above is precisely how a portal-wide accessibility defect survived: the muted-ink token was 1.6 points under the legibility floor on every ground it landed on, in 1,835 places, and every change that touched it read as "styling — trivial". Three separate sessions noticed the symptom locally, patched around it, and moved on. **The size of a colour diff tells you nothing about its reach.**
 
 ---
 
@@ -102,7 +134,7 @@ Then a **mandatory honesty footer** so efficiency is never silent:
 
 ```
 Review tier: [trivial/standard/high-risk]
-Deterministic gate: [verify:changed ✓/✗ · typecheck ✓/✗/skipped · lint ✓ · migrations ✓/n-a]
+Deterministic gate: [verify:changed ✓/✗ · typecheck ✓/✗/skipped · lint ✓ · migrations ✓/n-a · check:layout ✓/✗/n-a/SKIPPED-no-dev-server]
 Lenses run: [list]  ·  Findings: [found]→[after dedup]→[verified]; [N] refuted, [N] skipped deep-verify (tier)
 Not covered: [anything deliberately not deep-verified, e.g. "trivial CSS diff — no LLM finders"]
 ```

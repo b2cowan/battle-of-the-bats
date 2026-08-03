@@ -1,0 +1,270 @@
+# Layout Invariant Sweep — implementation plan
+
+**Status:** Built 2026-08-02 on `dev`, uncommitted. Owner QA pending.
+**PM brief:** [LAYOUT_INVARIANT_SWEEP_PM_BRIEF.md](LAYOUT_INVARIANT_SWEEP_PM_BRIEF.md)
+
+## 1. Why
+
+`npm run verify:changed` runs eight checks. Every one reads source text or database state:
+lint/typecheck on changed files, colour-token literals, date correctness, snapshot freshness, schema
+parity, dictionary coverage, admin org context, observability coverage.
+
+**None of them renders a page.** So the entire class of defect that only exists after the browser
+resolves a layout had no gate, and the owner's visual pass was the first thing in the pipeline that
+looked at pixels.
+
+Three files already held the right rules — `practice-plan-layout.spec.ts`,
+`practice-run-layout.spec.ts`, `drill-library-layout.spec.ts` — each pinned to one feature and one
+fixture. They protected three screens; every new screen started unprotected until a bug taught
+someone to write another one-off. Two of the three additionally guarded nothing at all, because
+they `test.skip(!PROBE_EVENT_ID)` and a skip reports green.
+
+## 2. What was built
+
+| File | Role |
+|---|---|
+| `scripts/check-layout-invariants.mjs` | The runner: six rules, the landing guard, the baseline ratchet |
+| `scripts/layout-screens.mjs` | **The screen list — this is the file you edit** |
+| `scripts/uat-fixture-context.mjs` | Resolves the UAT fixture by lookup; throws (never skips) when absent |
+| `scripts/.layout-baseline.json` | Generated. Today's known population |
+| npm scripts | `check:layout`, `:init`, `:report`, `:prune` |
+
+It is a `scripts/check-*.mjs` guardrail, deliberately matching `check-public-tokens.mjs` — same
+baseline-and-ratchet shape, same `--init` / `--report` modes — rather than a second convention.
+
+## 3. The six rules
+
+| id | Holds |
+|---|---|
+| `page-overflow` | `documentElement.scrollWidth <= clientWidth + 1`. Reports the widest offending elements. |
+| `tap-floor` | Interactive elements ≥ 44px tall. |
+| `content-overflow` | Nothing spills horizontally while `overflow-x: visible` — wide content must own a scroller. |
+| `sticky-no-travel` | Sticky elements can engage **on the axis they declare**, and are not trapped in a non-scrolling ancestor that runs past the viewport. |
+| `contrast` | WCAG 2.1 ratio of resolved text colour against the **composited** background: 4.5:1, or 3:1 for large text. |
+| `hidden-behind-chrome` | No fully-visible control is trapped under edge-anchored fixed chrome, judged **at the scroll position where that bar can actually trap** — top bars at scroll 0, bottom bars at the end. |
+
+`sticky-no-travel` is the direct guard for the coach-portal shell ruling — *the document is the
+scroll container; never re-add overflow to the main element.* Re-adding it traps the masthead in an
+ancestor that runs past the viewport with no travel, and this rule fires.
+
+`contrast` walks ancestors compositing `rgba` layers until it reaches opacity, and **declines** when
+a gradient or background image intervenes rather than guessing. This is the rule static colour
+scanning structurally cannot replace: the source uses the right token, and the *combination* is the
+defect.
+
+## 4. Decisions worth not re-litigating
+
+### 4.1 The baseline is not cheating
+
+A blanket 44px floor fails product-wide on day one: the shared `.btnPrimary` / `.btnSecondary`
+primitives render at 41px, team nav rows at 38.5px, on every screen. This is recorded inside
+`drill-library-layout.spec.ts`, where the response was to narrow that probe to the feature's own
+classes — which quietly meant the shell was never checked by anything.
+
+So the sweep ratchets: today's population is snapshotted, **new** findings fail. An entry with a
+`reason` is a decision; an entry without one is unargued debt, and every run prints how many are
+unexplained so the number stays visible.
+
+### 4.2 Four false-positive classes were found by verifying findings, not by reading code
+
+Every rule that produced a structural finding was checked against an independent measurement before
+being believed. **Both structural rules were wrong on the first pass — four distinct faults** — and
+none would have been caught by reading the code back:
+
+| # | Rule | Reported | Truth | Cause |
+|---|---|---|---|---|
+| 1 | `hidden-behind-chrome` | 2 overview cards buried under the bottom nav | centres at y=669, nav began at y=772 — not covered | Next.js dev overlay won the hit test |
+| 2 | `hidden-behind-chrome` | 54 controls buried across 11 screens | not buried | `html { scroll-behavior: smooth }` meant the scroll-to-end was measured mid-animation (1496 of 1567) |
+| 3 | `sticky-no-travel` | 62 frozen table headers/columns "inert" | correct behaviour | vertical travel checked for elements that stick **horizontally**; and "inert because the table fits" is healthy, not broken |
+| 4 | `hidden-behind-chrome` | 46 controls buried | **zero**; `main` reserves exactly the nav's 72px, measured at 361/390/768 | the rule ran at BOTH scroll positions against BOTH bars — but a top bar only traps at scroll 0, and a bottom bar only traps at the end |
+
+Fault 4 is the instructive one, because faults 1 and 2 made it look fixed. Each correction removed
+real noise and left a smaller, still-wrong residue that looked plausible. Only measuring the page
+directly — counting how many controls actually sit in the nav's band at the true bottom of the
+scroll — showed the answer was zero, not "fewer".
+
+The lasting lesson is the one already in this repo's memory: **read real geometry, and then check the
+geometry you read.** A plausible-sounding finding measured at the wrong moment, or on the wrong axis,
+is indistinguishable from a real one in the output.
+
+Concretely this produced four fixes: the dev overlay is exempt; the browser context runs with
+`reducedMotion: 'reduce'` (which trips the app's own `scroll-behavior: auto !important`) and the
+scroll is driven to a **confirmed** fixed point rather than fired once; `sticky-no-travel` asks
+about the axis the CSS actually declares and stays silent when stickiness is moot; and
+`hidden-behind-chrome` matches each bar to the scroll position at which it can actually trap.
+
+### 4.3 `hidden-behind-chrome` is deliberately conservative
+
+A finding now requires the element to be fully in the viewport, an **edge-anchored** fixed bar's box
+to genuinely contain its centre, the page to be at the scroll position where that bar can trap, and
+the hit test to independently agree that something else is on top. Chrome anchored to neither edge —
+a floating toast — is out of scope, because it is transient and judging it needs a human.
+
+**A gate that cries wolf gets switched off**, so it errs toward silence. The cost of that choice is
+stated plainly: this rule will miss some real overlaps. It is the right trade for a check whose
+whole value is that a red result is worth acting on.
+
+### 4.4 A full sweep can exhaust the dev server, and a partial run must never become a baseline
+
+Running all 112 combinations in one process crashed the dev server's V8 heap during the last width;
+26 of 112 screens then reported "did not render" and were simply absent from the results. Two
+consequences, one of them nearly serious:
+
+- **Operationally**, the sweep is heavy enough to want a fresh dev server. Run it by width
+  (`--width=1440`) on a machine that has already compiled the routes, or restart between passes.
+- **Correctness** — an unmeasured screen contributes no findings, so a baseline snapshotted from a
+  crashed run silently records the product as cleaner than it is. On 2026-08-02 that would have
+  overstated the colour fix substantially: the drop looked like 3,869 → 1,146, but part of it was
+  simply screens nobody looked at.
+
+`--init` and `--prune` now **refuse to write** when any screen failed to measure, unless
+`--allow-partial` is passed. Check mode already exited non-zero. The rule this encodes: *a check
+that could not look is not a check that passed.*
+
+## 5. Fixture durability
+
+The old probes pinned the team as a literal UUID and took the practice id from an env var guarded by
+`test.skip`. Both fail silently — reseeding rots the UUID, and a missing env var reports green. One
+was already guarding nothing.
+
+`uat-fixture-context.mjs` resolves org → team → active program year → the seeded `UAT probe practice`
+by the same lookups the seeder uses, checks `error` on every select before trusting an empty result
+(the mis-diagnosis recorded in the seeder's header), and **throws with the repair command** when
+anything is missing. A check that cannot see its fixture fails.
+
+The runner additionally treats *landing* failures as hard failures: a page containing
+"Not assigned to any teams", "Team not found" and similar measures perfectly and means nothing. This
+is the trap the coach specs document — the coaches portal resolves org context before coaching
+assignments, so a coach screen opened with the org-owner session renders a plausible dead end.
+
+## 6. Verification performed
+
+- Rules exercised against a real signed-in coach session on the dev server.
+- Determinism confirmed: identical finding count on repeat runs of the same screen/width.
+- Every structural finding class independently re-measured; three false-positive classes found,
+  root-caused and eliminated (§4.2), then re-verified as no longer reproducing.
+- Contrast maths hand-checked: `rgb(138,129,119)` on white → 3.826:1, matching the reported 3.83:1.
+
+**Not verified / residual risk.** The two high-volume rules — `contrast` (1,874 findings) and
+`tap-floor` (1,838) — were spot-checked, not exhaustively audited. `contrast` declines to judge text
+over gradients and images, and does not account for an ancestor's `opacity`. `tap-floor` measures an
+element's own box, so a small control inside a larger tappable row reads as a miss; that is a
+deliberate conservative choice, and the baseline absorbs it.
+
+## 7. Baseline as built — 28 screens × 4 widths, all 112 combinations measured
+
+| Rule | Findings | Reading |
+|---|---:|---|
+| `page-overflow` | **0** | No coach-portal screen scrolls sideways at any width. Clean. |
+| `sticky-no-travel` | **0** | Nothing claims to stick and fails to. Clean. |
+| `hidden-behind-chrome` | **0** | Nothing usable is trapped under the masthead or bottom nav. Clean. |
+| `content-overflow` | 1 | One 24px spill on the practice-plan schedule strip at 1440. |
+| `contrast` | 1,903 | **96% is one token** — see §7.1. |
+| `tap-floor` | 1,965 | The known product-wide primitive population — see §7.2. |
+
+The three structural rules landing at zero is a genuine result, not an absence of checking: they are
+the rules that produced every false positive in §4.2, and each was hardened until it agreed with an
+independent measurement.
+
+### 7.1 `--home-dim: #8A8177` fails WCAG AA wherever it carries normal text — **1,835 of 1,903**
+
+3.83:1 on white, 2.94:1 on the mobile bottom nav's cream, 3.49:1 on the warm card ground — against a
+4.5:1 floor. It is the portal's muted colour for labels, counts and helper text, so it is
+everywhere. **Raising this one token clears 47% of the entire baseline.**
+
+Smaller contrast populations, each its own decision: `rgb(217,72,43)` on white (4.17:1, 28×),
+`rgba(70,55,30,0.4)` on white (24×), and the lime `rgb(87,101,30)` on the dark grounds (~3:1, 6×).
+
+This is a **design decision** (`/design`), deliberately not made as part of a tooling change. It is
+also the case static colour scanning structurally cannot reach: the token is used correctly
+everywhere; the *value* is the defect.
+
+### 7.2 The tap-floor population is the shared primitives, not scattered mistakes
+
+The heights cluster hard: 39px (419×), 40px (375×), 36px (200×). That is the shell and the shared
+button primitives, exactly as `drill-library-layout.spec.ts` recorded. A handful of genuinely small
+controls sit underneath — 24px roster name links, 21–22px icon buttons — and those are worth
+looking at on their own merits.
+
+## 8. RESOLVED 2026-08-02 — both colour findings fixed at the token
+
+Owner approved against mockup artifact `aa2e9415` (binding visual spec). Ratified in
+`memory/design_decisions.md`, which supersedes the original R1-4 values.
+
+| Token | Was | Now | Worst ground (bottom nav) |
+|---|---|---|---|
+| `--home-dim` | `#8A8177` | `#6A635C` | 2.93:1 → **4.53:1** |
+| `--home-live` | `#D9482B` | `#B03A22` | 3.27:1 → **4.63:1** |
+
+Changed in both declared-mirror palette copies, plus the derived `-soft` / `-rgb` values, one
+fallback literal, and a chevron drawn as an inline SVG data URI.
+
+**The red is deliberately not the lightest passing value.** `#B33B23` clears the nav by 0.01; that
+ground is a composite, so anything that changes behind it drops the ratio back under. `#B03A22`
+holds 4.63:1.
+
+### 8.1 The finding underneath the finding
+
+Three earlier sessions had already hit this exact wall and patched around it **locally**:
+
+- the system screens forced `--home-ink-soft` in place of the muted token for the eyebrow, noting
+  "only reaches 3.3:1 on paper";
+- the same file hand-darkened the red with `color-mix(--home-live 78%, --home-ink)`, noting
+  "3.9:1 on paper — just under AA";
+- Team HQ's "not switched on" line forced `--white-70`, noting "~3.8:1 on the white card".
+
+Each comment recorded the failing ratio accurately and then routed around it. Nobody looked up.
+**A token that three separate surfaces privately work around is a broken token, not three unlucky
+surfaces** — and the local fix is the smell. The sweep's real contribution was not spotting a
+contrast failure; it was showing that the failure was *one value in 1,835 places* rather than a
+handful of awkward screens.
+
+The crash-screen `color-mix` workaround is now removed — that surface takes the corrected token
+directly. The other two stay: their reason was contrast, but the editorial choice (body ink for
+body copy, a clear step down for a "not set up" figure) stands on its own.
+
+## 8.2 The permanent guard: a palette test on the always-run gate
+
+The browser sweep cannot be automatic — it needs a dev server, a session, seeded data and twenty
+minutes. But the defect it found did not need a browser to catch. The tokens are known values, the
+grounds are known values, so *whether a colour can ever be legible* is arithmetic.
+
+`tests/unit/warm-palette-contrast.test.ts` asserts it, and `scripts/check-contrast.mjs` puts it on
+the `verify:changed` chain — which is what `/review` Stage 0 already runs. **Cost: ~0.45s inside a
+~28s gate, under 2%.**
+
+Six assertions: the parse actually found a palette (a vacuously-green test is worse than none); the
+two mirror copies agree; every prose ink clears AA on all four grounds; every status accent clears
+AA on the two grounds it lands on; the three-step ink hierarchy stays ≥1.5 apart so a contrast fix
+cannot collapse muted into secondary; and the light glyph on a live-red fill stays legible.
+
+**Verified by breaking it:** reinstating `#8A8177` turns the gate red and names the token, all four
+grounds and the exact ratios. A green test that has never been shown to fail is not evidence.
+
+The division of labour is deliberate and should stay:
+
+| | Question | Cost | Runs |
+|---|---|---|---|
+| Palette test | Can this colour *ever* be legible on that ground? — a **definition** question | 0.45s | Always, on the gate |
+| Browser sweep | Is this actual string legible on what is actually painted behind it? — a **usage** question, including alpha compositing | ~20 min | Deliberately |
+
+One accepted shortfall is recorded in the test with its reason: `--home-amber` on cream paper is
+4.49:1, a hundredth under. It is a status accent and the sweep finds no instance of it rendering as
+text on that ground. An entry without a reason is not an exemption — same rule as `token-exempt`.
+
+## 9. Findings to route onward
+
+**`--home-dim: #8A8177` fails WCAG AA wherever it carries normal-size text** — 3.83:1 on white,
+2.94:1 on the mobile bottom nav's cream. It is used portal-wide for muted labels, counts and helper
+text. Raising it is a **design decision** (`/design`), not a tooling change, and is deliberately not
+made here.
+
+## 10. Not done / next
+
+- [ ] Owner decision on `--home-dim`.
+- [ ] Decide whether the sweep formally gates handover, or stays advisory.
+- [ ] Extend the screen list beyond the coach portal (admin, consumer, marketing) — one line each.
+- [ ] Retire the overlapping assertions in the three per-feature layout specs once the sweep has
+      proven itself, keeping only what is genuinely feature-specific (the run screen's 56px floor,
+      tabular numerals, the read-only drill ruling, the GET-only network assertion).
+- [ ] Consider adding to `verify:changed` behind a dev-server-present check.

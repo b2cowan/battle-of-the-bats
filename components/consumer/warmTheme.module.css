@@ -23,13 +23,21 @@
                                                    dark-gate doesn't reach through the content card token */
   --home-ink:          #241E15;                 /* primary text / ink-filled chips bg */
   --home-ink-soft:     #4A4235;                 /* slightly lifted ink for secondary headings */
-  --home-dim:          #8A8177;                 /* secondary / meta text */
+  /* ⚠ AA-corrected 2026-08-02, in step with the coaches copy in globals.css — these two blocks
+     are meant to mirror, so they move together. Was #8A8177: 3.83:1 on a white card, 2.93:1 on
+     a nav ground, under the 4.5:1 floor everywhere it carried text. Now 5.91:1 / 4.53:1, same
+     hue, still a clear step lighter than --home-ink-soft. NOTE: the consumer surfaces were not
+     covered by the layout sweep that measured this — the value is corrected here for palette
+     parity, and these screens still want their own pass. */
+  --home-dim:          #6A635C;                 /* secondary / meta text */
   --home-line:         rgba(70, 55, 30, 0.12);  /* hairline */
   --home-line-strong:  rgba(70, 55, 30, 0.20);  /* stronger hairline */
   --home-olive:        #57651E;                 /* darkened-lime accent: links, active tab, filled star */
   --home-olive-soft:   rgba(87, 101, 30, 0.10); /* olive tint fill */
-  --home-live:         #D9482B;                 /* live red */
-  --home-live-soft:    rgba(217, 72, 43, 0.10);
+  --home-live:         #B03A22;                 /* live red — AA-corrected 2026-08-02 (was #D9482B,
+                                                   4.28:1 on white); as a fill it only improves,
+                                                   since --home-on-live is a light glyph */
+  --home-live-soft:    rgba(176, 58, 34, 0.10);
   --home-amber:        #A16207;                 /* upcoming amber */
   --home-blue:         #2563EB;                 /* admin-blue chips */
   --home-win:          #3E7A32;                 /* win green (loss = --home-live; tie = --home-dim) */
@@ -56,7 +64,7 @@
      pattern as --home-lime-ink, so the badge glyph stays legible without a dark-gate override. */
   --home-on-live:      #FFFFFF;
   --home-olive-rgb:    87, 101, 30;
-  --home-live-rgb:     217, 72, 43;
+  --home-live-rgb:     176, 58, 34;
   --home-amber-rgb:    161, 98, 7;
   --home-blue-rgb:     37, 99, 235;
   --home-win-rgb:      62, 122, 50;

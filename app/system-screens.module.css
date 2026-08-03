@@ -28,9 +28,11 @@
   color: var(--home-ink);
 }
 
-/* --home-dim is the *meta* ink (#8A8177) and only reaches 3.3:1 on paper — under AA for a
-   10px label. --home-ink-soft is the paper body ink; the eyebrow stays visually quiet through
-   size/mono/tracking rather than through low contrast. */
+/* The eyebrow stays visually quiet through size/mono/tracking rather than through low contrast.
+   (This line was originally forced onto --home-ink-soft because --home-dim was #8A8177 and only
+   reached 3.3:1 on paper. The token was corrected to #6A635C on 2026-08-02 and now clears AA on
+   every ground, so --home-dim would be legitimate here — but ink-soft is also the deliberate
+   choice for a label this small, so it stays.) */
 :global(html[data-user-theme="warm"]) .page :global(.hud-label) { color: var(--home-ink-soft); }
 
 /* ── Crash-screen eyebrow ──────────────────────────────────────────────────────
@@ -42,17 +44,22 @@
 .page .errLabel { color: var(--danger); }
 
 :global(html[data-user-theme="warm"]) .page .errLabel {
-  /* --home-live (#D9482B) is 3.9:1 on paper — just under AA at this size. Darkened toward
-     ink keeps the same hue and clears 5.3:1, with no new token. */
-  color: color-mix(in srgb, var(--home-live) 78%, var(--home-ink));
+  /* Was a local darken — color-mix(--home-live 78%, --home-ink) — because --home-live was
+     #D9482B and measured 3.9:1 on paper, under AA at this size. The token itself was corrected
+     to #B03A22 on 2026-08-02 and now clears 5.51:1 on paper, so the workaround is gone and this
+     screen simply takes the live red. One of three places that had privately patched around the
+     same broken token. */
+  color: var(--home-live);
 }
 
 /* The oversized "404" watermark digit — a quiet ink wash instead of navy tint. */
 :global(html[data-user-theme="warm"]) .bigCode { color: rgba(var(--home-line-rgb), 0.45); }
 
 :global(html[data-user-theme="warm"]) .title { color: var(--home-ink); }
-/* Body copy takes the paper BODY ink, not --home-dim (3.3:1). This is the screen's primary
-   explanation of what went wrong — it is not meta text. */
+/* Body copy takes the paper BODY ink, not --home-dim. This is the screen's primary explanation
+   of what went wrong — it is not meta text, so it wants body ink regardless of contrast. (The
+   original reason was that --home-dim only reached 3.3:1; that is fixed as of 2026-08-02, but
+   the editorial reason stands on its own.) */
 :global(html[data-user-theme="warm"]) .body { color: var(--home-ink-soft); }
 
 /* Outline CTA: lime-as-text darkens to olive (E3); hover = olive-soft wash

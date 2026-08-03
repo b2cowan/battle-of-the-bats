@@ -128,9 +128,11 @@
    number. Never dashed: the portal has exactly one dashed frame (the Money sample, Chunk G rule 3). */
 .hqItem strong.hqOff {
   /* --white-70, not --white-40: under the warm theme (the platform default) the whole --white-35→65
-     band collapses onto ONE token (--home-dim #8A8177), which lands at ~3.8:1 on the white card —
-     under AA for text this size. --white-70 resolves to --home-ink-soft (~9.6:1) and still reads a
-     clear step below a real figure, which is all "muted" has to mean. */
+     band collapses onto ONE token (--home-dim), and --white-70 resolves to --home-ink-soft, which
+     reads a clear step below a real figure — all "muted" has to mean here.
+     ⚠ The original reason was contrast: --home-dim was #8A8177 at ~3.8:1 on a white card, under AA
+     for text this size. That token was corrected to #6A635C on 2026-08-02 (5.91:1), so --home-dim
+     is now a legitimate choice for this line if the lighter step ever reads better. */
   color: var(--white-70);
   font-size: 1rem;
   font-weight: 750;

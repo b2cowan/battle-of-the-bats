@@ -4,6 +4,48 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-02 — The warm palette's muted ink and live red are AA-corrected; R1-4's original values are superseded
+
+**Trigger:** the layout-invariant sweep (`npm run check:layout`, 28 coach-portal screens × 4 widths)
+measured text contrast against the **composited** background actually painted behind each string —
+something the source-scanning colour guardrail structurally cannot do, because the tokens were being
+used *correctly* everywhere. Owner approved the fix 2026-08-02 against mockup artifact `aa2e9415`
+(= binding visual spec). Full reasoning: `docs/projects/active/LAYOUT_INVARIANT_SWEEP_PLAN.md` §7.1.
+
+**BINDING RULES (R1–R4):**
+
+1. **R1 — `--home-dim` is `#6A635C`, not `#8A8177`.** The old value measured 3.83:1 on a white card,
+   3.49:1 on paper, 3.31:1 on a tinted panel and **2.93:1 on the bottom nav** — under the 4.5:1 AA
+   floor on every ground it lands on, across 1,835 places. It failed even the 3:1 large-text floor
+   on the nav, so no size exception or per-surface carve-out could rescue it. The new value is the
+   same hue taken down until the darkest ground clears: 5.91:1 / 5.39:1 / 5.11:1 / **4.53:1**.
+2. **R2 — `--home-live` is `#B03A22`, not `#D9482B`** (4.28:1 on white → 6.04:1; 3.27:1 on the nav →
+   4.63:1). Deliberately **not** the lightest passing value `#B33B23`, which clears the nav by 0.01
+   — that ground is a composite, so any change behind it would drop it back under. As a *fill* the
+   darker red only improves, because the badges pair it with a light glyph (`--home-on-live`).
+3. **R3 — The two palette copies move together.** `app/globals.css` (coaches) and
+   `components/consumer/warmTheme.module.css` (consumer shell) are declared mirrors; changing one
+   alone is drift. ⚠ The consumer surfaces were **not** covered by the sweep — they were corrected
+   for parity and still want their own measured pass.
+4. **R4 — The three-step ink hierarchy is the constraint, not just the ratio.** `--home-ink`
+   (16.52:1) → `--home-ink-soft` (9.90:1) → `--home-dim` (5.91:1) must stay visibly distinct. Any
+   future proposal to lighten the muted ink back toward "quieter" must clear 4.5:1 **on the nav
+   ground**, which is the binding surface — not on white, which is the easy one.
+
+**Supersedes:** the `dim #8A8177` and `Live = warm red #D9482B` values in the 2026-05 **R1-4 warm
+consumer shell** entry below. Everything else in that ruling stands.
+
+**What this cost:** every muted label in both shells is one step darker. That is the visible price
+of the fix and it was accepted knowingly.
+
+**Prior art worth noting:** three separate sessions had already hit this wall and patched *locally*
+— forcing `--home-ink-soft` in place of the muted token on the system screens and the Team HQ "not
+switched on" line, and hand-darkening the red with a `color-mix` on the crash-screen eyebrow. Each
+comment recorded the failing ratio and moved on. **A token that three surfaces privately route
+around is a broken token, not three unlucky surfaces** — the local fix is the smell.
+
+---
+
 ### 2026-08-02 — Tryout Insights (Report · Baseline · Memory): evaluation data may travel, but only coach-eyes-only, only confirmed, and never through the blindfold
 
 **Trigger:** Tryout Insights plan + mockups v1, both owner-approved 2026-08-02

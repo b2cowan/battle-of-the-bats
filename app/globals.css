@@ -565,15 +565,26 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-card:        #FFFFFF;
   --home-ink:         #241E15;
   --home-ink-soft:    #4A4235;
-  --home-dim:         #8A8177;
+  /* ⚠ AA-corrected 2026-08-02. Was #8A8177, which measured 3.83:1 on a white card, 3.49:1 on
+     paper, 3.31:1 on a tinted panel and 2.93:1 on the bottom nav — under the 4.5:1 floor on
+     EVERY ground it lands on, in 1,835 places. It failed even the 3:1 large-text floor on the
+     nav, so no size or per-surface exception could rescue it. Same hue, taken down until the
+     darkest ground clears: worst case is now 4.53:1 (nav), 5.91:1 on a white card. It still
+     sits a clear step lighter than --home-ink-soft (9.90:1), so the three-step ink hierarchy
+     survives — this reads muted, it just also reads. */
+  --home-dim:         #6A635C;
   --home-line:        rgba(70, 55, 30, 0.12);
   --home-line-strong: rgba(70, 55, 30, 0.20);
   --home-olive:       #57651E;
   --home-olive-soft:  rgba(87, 101, 30, 0.10);
   --home-olive-rgb:   87, 101, 30;
-  --home-live:        #D9482B;
-  --home-live-soft:   rgba(217, 72, 43, 0.10);
-  --home-live-rgb:    217, 72, 43;
+  /* ⚠ AA-corrected 2026-08-02. Was #D9482B (4.28:1 on white, 3.27:1 on the nav). Deliberately
+     NOT the lightest passing value (#B33B23) — that clears the nav by 0.01, and this ground is
+     a composite, so any shift in what sits behind it would drop it back under. #B03A22 keeps
+     4.63:1 there. As a FILL it only improves: the badges pair it with a light glyph. */
+  --home-live:        #B03A22;
+  --home-live-soft:   rgba(176, 58, 34, 0.10);
+  --home-live-rgb:    176, 58, 34;
   --home-amber:       #A16207;
   --home-amber-rgb:   161, 98, 7;
   --home-blue:        #2563EB;
