@@ -1,12 +1,12 @@
 {
-  "generated": "2026-08-02",
-  "total": 198,
+  "generated": "2026-08-03",
+  "total": 221,
   "counts": {
-    "tables": 9,
-    "columns": 96,
-    "indexes": 38,
-    "constraints": 38,
-    "rls": 17
+    "tables": 10,
+    "columns": 106,
+    "indexes": 42,
+    "constraints": 45,
+    "rls": 18
   },
   "items": [
     {
@@ -31,6 +31,10 @@
     },
     {
       "key": "check:only-dev:family_links.family_links_verified_via_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_player_tryout_baselines.rep_player_tryout_baselines_snapshot_check",
       "sig": ""
     },
     {
@@ -302,6 +306,42 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_player_tryout_baselines.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_tryout_baselines.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_tryout_baselines.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_tryout_baselines.roster_player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_tryout_baselines.seeded_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_tryout_baselines.seeded_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_tryout_baselines.snapshot",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_tryout_baselines.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_player_tryout_baselines.tryout_registration_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_drill_tags.created_at",
       "sig": ""
     },
@@ -462,6 +502,10 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_tryout_registrations.first_offered_at",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:family_consents.family_consents_org_id_fkey",
       "sig": ""
     },
@@ -543,6 +587,34 @@
     },
     {
       "key": "constraint:only-dev:rep_player_development_goals.rep_player_development_goals_tag_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_tryout_baselines.rep_player_tryout_baselines_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_tryout_baselines.rep_player_tryout_baselines_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_tryout_baselines.rep_player_tryout_baselines_program_year_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_tryout_baselines.rep_player_tryout_baselines_roster_player_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_tryout_baselines.rep_player_tryout_baselines_seeded_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_tryout_baselines.rep_player_tryout_baselines_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_player_tryout_baselines.rep_player_tryout_baselines_tryout_registration_id_fkey",
       "sig": ""
     },
     {
@@ -698,6 +770,22 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:rep_player_tryout_baselines_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_tryout_baselines_player_year_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_tryout_baselines_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_player_tryout_baselines_year_idx",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_drill_tags_pkey",
       "sig": ""
     },
@@ -783,6 +871,10 @@
     },
     {
       "key": "table:only-dev:no_login_rate_limits",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_player_tryout_baselines",
       "sig": ""
     },
     {

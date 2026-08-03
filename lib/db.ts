@@ -5,8 +5,9 @@ import { createClient as createBrowserSupabaseClient } from './supabase-browser'
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
+import { planToTemplateShape } from './rep-plan-templates';
 import { computeTournamentStandings, type DivisionStandingRow } from './tie-breakers';
 import { resolvePlayoffWinner } from './playoff-bracket';
 import { DEFAULT_SPORT } from './sports';
@@ -158,7 +159,6 @@ export type CloneTournamentOptions = {
   includeRulesResources?: boolean;
   includeRegistrationFields?: boolean;
   includeFeeSchedule?: boolean;
-};
   /**
    * A theme preset chosen in the setup wizard. Applied AFTER the branding copy and wins
    * over it — an explicit pick is the organizer's latest word. It also clears any custom
@@ -166,6 +166,7 @@ export type CloneTournamentOptions = {
    * public page resolves its colours.
    */
   themePreset?: string | null;
+};
 
 export type CloneTournamentResult = {
   tournament: Tournament;
@@ -282,13 +283,13 @@ export async function cloneTournament(
       tournamentInsert.app_icon_scale = source.app_icon_scale ?? null;
     }
 
-    if (options.includePublicPages) {
     if (options.themePreset) {
       tournamentInsert.theme_preset = options.themePreset;
       tournamentInsert.theme_primary = null;
       tournamentInsert.theme_accent = null;
     }
 
+    if (options.includePublicPages) {
       tournamentInsert.public_hidden_pages = Array.isArray(source.public_hidden_pages)
         ? source.public_hidden_pages
         : [];
@@ -4237,6 +4238,9 @@ function mapRepTryoutRegistration(r: any): RepTryoutRegistration {
     isCheckedIn: r.is_checked_in ?? false,
     checkedInAt: r.checked_in_at ?? null,
     offerSentAt: r.offer_sent_at ?? null,
+    // Sticky (mig 223) — stamped by trigger on the first transition to 'offered' and never
+    // cleared. NOT the same fact as offer_sent_at above, which clearTryoutOffer wipes.
+    firstOfferedAt: r.first_offered_at ?? null,
     offerExpiresAt: r.offer_expires_at ?? null,
     offerResponse: r.offer_response ?? null,
     offerRespondedAt: r.offer_responded_at ?? null,
@@ -5316,6 +5320,45 @@ export async function getRepTeamAttendanceReliability(
   return byPlayer;
 }
 
+/** One attendance mark on one PRACTICE, with the event detail a receipt needs. */
+export interface RepPracticeAttendanceRow {
+  eventId: string;
+  eventName: string;
+  startsAt: string;
+  playerId: string;
+  status: RepAttendanceStatus;
+}
+
+/**
+ * Per-practice, per-player attendance marks for a season (Ask the Front Office, Phase A).
+ *
+ * Distinct from `getRepTeamAttendanceReliability`, which returns TOTALS. This question has to show
+ * its work — a coach told "missed 4 of the last 6" must be able to see the four specific dates —
+ * so the individual rows are the point, not an inefficiency. Practices only; cancelled events are
+ * excluded here exactly as they are for the reliability roll-up, so the two can never disagree
+ * about which sessions counted.
+ */
+export async function getRepTeamPracticeAttendance(
+  programYearId: string,
+): Promise<RepPracticeAttendanceRow[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_event_attendance')
+    .select('player_id, status, rep_team_events!inner(id, name, starts_at, event_type, status)')
+    .eq('program_year_id', programYearId)
+    .eq('rep_team_events.event_type', 'practice')
+    .eq('rep_team_events.status', 'scheduled');
+  if (error) throw error;
+  return ((data ?? []) as any[])
+    .filter(r => r.rep_team_events)
+    .map(r => ({
+      eventId: r.rep_team_events.id as string,
+      eventName: (r.rep_team_events.name ?? '') as string,
+      startsAt: r.rep_team_events.starts_at as string,
+      playerId: r.player_id as string,
+      status: r.status as RepAttendanceStatus,
+    }));
+}
+
 export interface RepPlayerDuesSummary {
   hasSchedule: boolean;
   totalAssessed: number;
@@ -5384,6 +5427,8 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     // Parsed through the sanitiser on READ too, so a row written before a cap tightened (or by
     // hand) can never hand a malformed plan to a surface. Degrades to null pre-migration.
     practicePlan: parsePracticePlan(r.practice_plan),
+    // "How it went" (mig 221). Degrades to null pre-migration, like practicePlan above.
+    practiceRecap: r.practice_recap ?? null,
     opponent: r.opponent ?? null,
     homeAway: r.home_away ?? null,
     teamScore: r.team_score ?? null,
@@ -5596,6 +5641,33 @@ export async function updateRepTeamEventPracticePlan(
     // team and that the event belongs to its active season, so this can't currently fire — but
     // it means a future caller, or a refactor that loosens that check, can't silently regain a
     // cross-team write. Same posture as restampRepSessionMeasurables and the session delete.
+    .eq('team_id', teamId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamEvent(data) : null;
+}
+
+/**
+ * "How it went" — the after-practice recap (D17, mig 221).
+ *
+ * ⚠ Its own writer rather than a field on the plan update, deliberately: the plan is what the
+ * coach INTENDED and the recap is what they thought afterwards, and the two are written days
+ * apart by different acts. Sharing one write path would let an autosaving plan editor overwrite a
+ * recap it never loaded — the "a truncated body silently wipes the column" class of bug the plan
+ * PUT already carries a guard against.
+ *
+ * Pass `null` to clear it. Scoped by `team_id` for the same belt-and-braces reason as the plan.
+ */
+export async function updateRepTeamEventPracticeRecap(
+  eventId: string,
+  teamId: string,
+  recap: string | null,
+): Promise<RepTeamEvent | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .update({ practice_recap: recap, updated_at: new Date().toISOString() })
+    .eq('id', eventId)
     .eq('team_id', teamId)
     .select()
     .maybeSingle();
@@ -6260,17 +6332,106 @@ export async function getRepTeamEventTagsMap(eventIds: string[]): Promise<Record
   return map;
 }
 
-/** Replace-on-save: sets the full tag set for one event (delete then insert) — same convenience
- *  convention as a lineup's entries. Caller must have already validated tagIds belong to this
- *  team's tag library (this function trusts its input). */
-export async function setRepTeamEventTags(eventId: string, tagIds: string[]): Promise<void> {
-  const { error: delError } = await supabaseAdmin.from('rep_team_event_tags').delete().eq('event_id', eventId);
-  if (delError) throw delError;
-  if (tagIds.length === 0) return;
-  const { error: insError } = await supabaseAdmin
+/**
+ * The tags on a set of events, resolved to `{id, name}` and narrowed to ONE kind.
+ *
+ * ⚠ `rep_team_event_tags` is shared by game tags and a practice plan's own tags (mig 221), told
+ * apart ONLY by the tag's `kind`. A caller that skips the narrowing gets a practice list carrying
+ * game tags and a game list carrying practice tags — which is why the filter lives here rather
+ * than being re-derived by each surface.
+ *
+ * Names, not just ids, because every consumer renders them: the looking-back list, its filter
+ * chips and the read-only past plan. One query for a whole season, like `getRepTeamEventTagsMap`.
+ */
+export async function getRepTeamEventTagsByKind(
+  eventIds: string[], kind: RepTagKind,
+): Promise<Record<string, { id: string; name: string }[]>> {
+  if (eventIds.length === 0) return {};
+  const { data, error } = await supabaseAdmin
     .from('rep_team_event_tags')
-    .insert(tagIds.map(tagId => ({ event_id: eventId, tag_id: tagId })));
-  if (insError) throw insError;
+    .select('event_id, rep_team_tags!inner(id, name, kind)')
+    .in('event_id', eventIds)
+    .eq('rep_team_tags.kind', kind);
+  if (error) throw error;
+  const map: Record<string, { id: string; name: string }[]> = {};
+  for (const row of (data ?? []) as any[]) {
+    const tag = row.rep_team_tags;
+    if (!tag?.id || !tag?.name) continue;
+    (map[row.event_id] ??= []).push({ id: tag.id, name: tag.name });
+  }
+  // A stable order so two loads of the same practice never re-shuffle its chips.
+  for (const list of Object.values(map)) list.sort((a, b) => a.name.localeCompare(b.name));
+  return map;
+}
+
+// ⚠ THERE IS DELIBERATELY NO UNSCOPED `setRepTeamEventTags` ANY MORE (removed 2026-08-02).
+//
+// It replaced EVERY tag row on an event, which was complete and correct while game tags were the
+// only kind in `rep_team_event_tags`. Migration 221 put a practice plan's own 'focus' tags in that
+// same table, and the old writer instantly became a footgun: any caller saving a game's tags on an
+// event that also carried focus tags would silently delete them, and nothing would fail.
+//
+// It was still dormant when this was written — the schedule form only sends `tagIds` for
+// game-shaped event types — but that was a property of one form, not a guard. Deleting the
+// function is the guard: `setRepTeamEventTagsOfKind` below is the only way to write these rows,
+// and it cannot touch a kind it was not asked about.
+
+/**
+ * Replace only the tags OF ONE KIND on an event, leaving the others untouched.
+ *
+ * ⚠ **This exists because `setRepTeamEventTags` above deletes every link on the event**, which was
+ * complete when game tags were the only kind and stopped being so in mig 221: a practice plan's
+ * own tags are rows in the same table. Saving a plan's tags through the unscoped writer would
+ * silently delete the game tags on the same event — a coach's schedule filters quietly emptying
+ * because they tagged a practice "Hitting".
+ *
+ * Read-then-narrow rather than a join-delete, because PostgREST cannot filter a DELETE on a joined
+ * table: the links are read with their kinds, only this kind's are removed, and the new set goes
+ * in. Both queries are keyed on one event, so the set is tiny.
+ *
+ * The caller must have already proved every id belongs to this team's library of that kind.
+ */
+export async function setRepTeamEventTagsOfKind(
+  eventId: string, kind: RepTagKind, tagIds: string[],
+): Promise<void> {
+  const { data: existing, error: readError } = await supabaseAdmin
+    .from('rep_team_event_tags')
+    .select('tag_id, rep_team_tags!inner(id, kind)')
+    .eq('event_id', eventId)
+    .eq('rep_team_tags.kind', kind);
+  if (readError) throw readError;
+
+  const have = new Set((existing ?? []).map((r: any) => r.tag_id));
+  const toRemove = [...have].filter(id => !tagIds.includes(id));
+  const toAdd = tagIds.filter(id => !have.has(id));
+
+  // ⚠ The two writes touch DISJOINT tag ids on the same event, so neither depends on the other's
+  // result — swapping one tag for another is one round trip, not two. Sequencing them bought
+  // nothing but latency on the commonest edit.
+  const [removed, added] = await Promise.all([
+    toRemove.length
+      ? supabaseAdmin.from('rep_team_event_tags').delete().eq('event_id', eventId).in('tag_id', toRemove)
+      : Promise.resolve({ error: null }),
+    /**
+     * ⚠ **UPSERT, not INSERT — this write races itself.** The tag picker saves on every click with
+     * no debounce, so two quick taps produce two overlapping requests that each read the same
+     * "before" state and each conclude the first tag is new. A plain multi-row insert then hits the
+     * (event_id, tag_id) primary key on the duplicate and **the whole statement fails** — so the
+     * coach's SECOND tag is dropped too, by a conflict that had nothing to do with it.
+     *
+     * Ignoring the duplicate makes the write idempotent, which is what a replace-on-save should
+     * have been all along: re-adding a tag that is already there is not an error, it is a no-op.
+     */
+    toAdd.length
+      ? supabaseAdmin
+          .from('rep_team_event_tags')
+          .upsert(toAdd.map(tagId => ({ event_id: eventId, tag_id: tagId })), {
+            onConflict: 'event_id,tag_id', ignoreDuplicates: true,
+          })
+      : Promise.resolve({ error: null }),
+  ]);
+  if (removed.error) throw removed.error;
+  if (added.error) throw added.error;
 }
 
 // ── Tag library + org-authored shared tags (Coach Tags & Player Awards, Phase 3) ──
@@ -6937,6 +7098,77 @@ export async function updateRepPlayerDevelopmentGoal(
   return data ? mapRepPlayerDevelopmentGoal(data) : null;
 }
 
+// ── Tryout development baselines (Tryout Insights Phase 2 — migration 223) ──
+//
+// ONE frozen tryout snapshot per rostered player per season, written once by an explicit coach
+// act in the seeding walkthrough. There is deliberately NO update and NO delete helper: a
+// baseline is a record of what the tryout said, not a working document (R4), and the unique
+// index refuses a second one. Removing the roster row removes it by cascade.
+
+function mapRepPlayerTryoutBaseline(r: any): RepPlayerTryoutBaseline {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    programYearId: r.program_year_id,
+    rosterPlayerId: r.roster_player_id,
+    tryoutRegistrationId: r.tryout_registration_id ?? null,
+    snapshot: r.snapshot as RepTryoutBaselineSnapshot,
+    seededBy: r.seeded_by ?? null,
+    seededAt: r.seeded_at,
+  };
+}
+
+/** Every baseline already set for one season — the walkthrough's "✓ baseline set" state. */
+export async function getRepPlayerTryoutBaselines(programYearId: string): Promise<RepPlayerTryoutBaseline[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_tryout_baselines')
+    .select('*')
+    .eq('program_year_id', programYearId);
+  if (error) throw error;
+  return (data ?? []).map(mapRepPlayerTryoutBaseline);
+}
+
+/** ONE player's baseline, for the context card on their development page. */
+export async function getRepPlayerTryoutBaseline(rosterPlayerId: string): Promise<RepPlayerTryoutBaseline | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_tryout_baselines')
+    .select('*')
+    .eq('roster_player_id', rosterPlayerId)
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerTryoutBaseline(data) : null;
+}
+
+/**
+ * Seed one. Returns null when a baseline already exists for this player+season — the unique
+ * index is the guard, and `ignoreDuplicates` turns a race between two open walkthroughs into a
+ * quiet "already set" instead of a 500. ⚠ It must stay an INSERT: an upsert that overwrote would
+ * silently rewrite a snapshot the coach already chose focus areas from (R4).
+ */
+export async function createRepPlayerTryoutBaseline(fields: {
+  orgId: string; teamId: string; programYearId: string; rosterPlayerId: string;
+  tryoutRegistrationId?: string | null;
+  snapshot: RepTryoutBaselineSnapshot;
+  seededBy?: string | null;
+}): Promise<RepPlayerTryoutBaseline | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_player_tryout_baselines')
+    .upsert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      program_year_id: fields.programYearId,
+      roster_player_id: fields.rosterPlayerId,
+      tryout_registration_id: fields.tryoutRegistrationId ?? null,
+      snapshot: fields.snapshot,
+      seeded_by: fields.seededBy ?? null,
+    }, { onConflict: 'roster_player_id,program_year_id', ignoreDuplicates: true })
+    .select('*')
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepPlayerTryoutBaseline(data) : null;
+}
+
 // ── The drill library (Practice Plans Phase 2 — migration 218) ──
 //
 // ONE table holds two things (owner ruling 2026-08-01, "both now"):
@@ -7167,6 +7399,245 @@ export async function getRepTeamPracticePlansAcrossSeasons(
     programYearId: r.program_year_id ?? null,
     plan: parsePracticePlan(r.practice_plan),
   }));
+}
+
+/**
+ * "Practices you've run" — one season's practices that carry a plan OR a recap, newest first
+ * (Practice Plans Phase 3, the Development report's third section).
+ *
+ * ⚠ **Either, not both.** A coach who wrote no plan but sat down afterwards and said how it went
+ * has produced exactly the record this section exists to show, and a plan-only filter would drop
+ * it. The reverse is the everyday case: a plan with no recap, which the list states honestly as
+ * "Nothing written down for this one" rather than hiding.
+ *
+ * ⚠ Practices only. The recap is written from the practice screen, but the filter is stated here
+ * so a later writer on another event type can never leak into a page headed "Practices you've run".
+ *
+ * Season-scoped, and capped like its siblings: an unbounded read grows with every practice a team
+ * has ever held.
+ */
+export async function getRepTeamPracticesWithPlanOrRecap(
+  programYearId: string, opts?: { limit?: number },
+): Promise<RepTeamEvent[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .eq('event_type', 'practice')
+    /**
+     * ⚠ **A CANCELLED PRACTICE DID NOT HAPPEN.** This feeds a section headed "Practices you've
+     * run" — the ONE surface in this feature licensed to describe reality — so a practice the
+     * coach planned and then called off (rained out, rink closed) must not appear under it.
+     * Cancelling only flips `status`; it never clears the plan or the recap, so without this the
+     * record would assert a night that never took place. That is the "planned quietly becomes
+     * done" trap §4 exists to prevent, and it is the SAME shape a /review pass already fixed for
+     * cancelled games elsewhere in this file.
+     */
+    .neq('status', 'cancelled')
+    // No caller input reaches this filter string — see getDrillsForTeam for why that matters.
+    .or('practice_plan.not.is.null,practice_recap.not.is.null')
+    .order('starts_at', { ascending: false })
+    .limit(opts?.limit ?? 200);
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamEvent);
+}
+
+// ── Plan templates (Practice Plans Phase 3 — migration 221) ──────────────────
+//
+// ⚠ TEAM-scoped and deliberately NOT year-scoped. `rep_team_lineup_templates` (mig 159) is keyed
+// (team_id, program_year_id) and copying that shape would strand every coach's templates each
+// autumn; a team is PERMANENT and only its program year turns over, so these cross a rollover with
+// nothing to import. That difference IS the archive ruling.
+//
+// ⚠ `team_id` is NOT NULL here, unlike a drill's — club-wide templates were never asked for and are
+// not built. If that is ever ruled in, mig 184's nullable-team_id widening is the precedented path,
+// but it is an owner decision, not a build-time one.
+//
+// ⚠ Never hard-deleted — "retire" is `is_active = false`, which keeps the usage history readable.
+
+/** ONE select for every template read, so no surface can fetch a template without its tags. */
+const PLAN_TEMPLATE_SELECT = '*, rep_team_plan_template_tags(rep_team_tags(id, name))';
+
+function mapRepTeamPlanTemplate(r: any): RepTeamPlanTemplate {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    name: r.name,
+    /**
+     * ⚠ `planToTemplateShape` on READ as well as on write — TWO layers, not one.
+     *
+     * Sanitising alone (what an event's plan does) only guarantees the shape is well-formed. A
+     * template carries the stricter invariant that it holds NO PEOPLE, and enforcing that at the
+     * write boundary alone trusts that every row was written by this app: a row that acquired
+     * players by any other route — a direct session, a hand-rolled insert, a policy that turns out
+     * to be looser than the code assumed — would be read straight back out and rendered.
+     *
+     * This is idempotent and already calls the sanitiser first, so it is strictly stronger than
+     * what it replaced and costs nothing on a row that was written correctly.
+     */
+    plan: planToTemplateShape(r.plan),
+    tags: Array.isArray(r.rep_team_plan_template_tags)
+      ? r.rep_team_plan_template_tags.map((l: any) => l?.rep_team_tags).filter((t: any) => t && t.id && t.name)
+      : [],
+    isActive: r.is_active,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+export async function getRepTeamPlanTemplates(
+  teamId: string, opts?: { includeRetired?: boolean },
+): Promise<RepTeamPlanTemplate[]> {
+  let q = supabaseAdmin.from('rep_team_plan_templates').select(PLAN_TEMPLATE_SELECT).eq('team_id', teamId);
+  if (!opts?.includeRetired) q = q.eq('is_active', true);
+  // ⚠ By NAME, never by use. A "most used first" library quietly tells a coach which of their own
+  // ideas is best — the instinct §4 applies to children, applied one level out.
+  const { data, error } = await q.order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamPlanTemplate);
+}
+
+/**
+ * How many plans ONE template has started, and when the most recent was.
+ *
+ * ⚠ A targeted read, deliberately NOT `getRepTeamPracticePlansAcrossSeasons` + `countTemplateUses`.
+ * That pair is right for the LIST route, which answers the question for every template in one walk;
+ * reusing it to answer it for ONE template makes the server pull up to 400 events with their full
+ * plan jsonb and parse every one to produce a single integer and a date. The filter belongs in the
+ * database, where the id already is.
+ *
+ * ⚠ `starts_at` descending with `limit(1)` gives "last planned" without reading the rest — and the
+ * count comes from `head: true`, which fetches no rows at all.
+ */
+export async function getRepTeamPlanTemplateUsage(
+  templateId: string, teamId: string,
+): Promise<{ planCount: number; lastPlannedAt: string | null }> {
+  const scoped = () => supabaseAdmin
+    .from('rep_team_events')
+    .select('starts_at', { count: 'exact', head: false })
+    .eq('team_id', teamId)
+    // The plan's provenance lives in its jsonb; `->>` compares it as text, and the id is a uuid
+    // this caller already resolved, never raw client input.
+    .eq('practice_plan->>templateId', templateId);
+
+  const { data, error, count } = await scoped().order('starts_at', { ascending: false }).limit(1);
+  if (error) throw error;
+  return { planCount: count ?? 0, lastPlannedAt: data?.[0]?.starts_at ?? null };
+}
+
+export async function getRepTeamPlanTemplateById(
+  id: string, teamId: string,
+): Promise<RepTeamPlanTemplate | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_plan_templates')
+    .select(PLAN_TEMPLATE_SELECT)
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .maybeSingle();
+  // ⚠ Check `error` before believing an empty result — a select naming a column that does not
+  // exist returns {data: null}, which reads exactly like "no such template".
+  if (error) throw error;
+  return data ? mapRepTeamPlanTemplate(data) : null;
+}
+
+/**
+ * Replace a template's tag links.
+ *
+ * ⚠ The tag ids are PROVED to belong to this org's 'focus' vocabulary rather than trusted. RLS on
+ * the join table is reached through the TEMPLATE, not the tag, so nothing at the database layer
+ * stops a route from linking one club's template to another club's tag — the same hole
+ * `syncDrillTags` closes for drills.
+ */
+async function syncPlanTemplateTags(
+  templateId: string, orgId: string, teamId: string, tagIds: string[],
+): Promise<void> {
+  await supabaseAdmin.from('rep_team_plan_template_tags').delete().eq('template_id', templateId);
+  if (!tagIds.length) return;
+  const { data: valid, error: tagErr } = await supabaseAdmin
+    .from('rep_team_tags')
+    .select('id, team_id')
+    .eq('org_id', orgId)
+    .eq('kind', 'focus')
+    .in('id', tagIds);
+  if (tagErr) throw tagErr;
+  /**
+   * ⚠ **THIS TEAM'S OWN TAGS, or the club's SHARED ones — the same rule `isTeamFocusTag` applies.**
+   *
+   * Proving only org + kind is not enough: a coach who once held another team in this org has seen
+   * that team's tag ids, and could submit one here. Nothing at the database layer stops it, because
+   * this join table is policed through the TEMPLATE, not the tag — so the other team's word would
+   * appear inside this team's library with no error anywhere.
+   *
+   * `team_id === null` is the club's shared vocabulary, which every team may legitimately use.
+   */
+  const rows = (valid ?? [])
+    .filter(t => t.team_id === null || t.team_id === teamId)
+    .map(t => ({ template_id: templateId, tag_id: t.id }));
+  if (!rows.length) return;
+  const { error } = await supabaseAdmin.from('rep_team_plan_template_tags').insert(rows);
+  if (error) throw error;
+}
+
+export async function createRepTeamPlanTemplate(fields: {
+  orgId: string;
+  teamId: string;
+  name: string;
+  plan: PracticePlan;
+  tagIds?: string[] | null;
+  createdBy?: string | null;
+}): Promise<RepTeamPlanTemplate> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_plan_templates')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      name: fields.name.trim(),
+      plan: fields.plan,
+      created_by: fields.createdBy ?? null,
+    })
+    .select('id')
+    .single();
+  if (error) throw error;
+  await syncPlanTemplateTags(data.id, fields.orgId, fields.teamId, fields.tagIds ?? []);
+  // Re-read so the caller gets the tags it just wrote, rather than a row that claims none.
+  const { data: full, error: readErr } = await supabaseAdmin
+    .from('rep_team_plan_templates').select(PLAN_TEMPLATE_SELECT).eq('id', data.id).single();
+  if (readErr) throw readErr;
+  return mapRepTeamPlanTemplate(full);
+}
+
+/** Scoped update — rename, re-tag, rewrite the shape, retire or restore. */
+export async function updateRepTeamPlanTemplate(
+  id: string,
+  scope: { orgId: string; teamId: string },
+  fields: { name?: string; plan?: PracticePlan; tagIds?: string[] | null; isActive?: boolean },
+): Promise<RepTeamPlanTemplate | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.plan !== undefined) patch.plan = fields.plan;
+  if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_plan_templates')
+    .update(patch)
+    .eq('id', id)
+    .eq('org_id', scope.orgId)
+    .eq('team_id', scope.teamId)
+    .select('id')
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+
+  // ⚠ Only when the caller actually said so. `undefined` means "not editing tags" — a retire or a
+  // rename must not silently strip a template's vocabulary.
+  if (fields.tagIds !== undefined) await syncPlanTemplateTags(data.id, scope.orgId, scope.teamId, fields.tagIds ?? []);
+
+  const { data: full, error: readErr } = await supabaseAdmin
+    .from('rep_team_plan_templates').select(PLAN_TEMPLATE_SELECT).eq('id', data.id).single();
+  if (readErr) throw readErr;
+  return mapRepTeamPlanTemplate(full);
 }
 
 // ── Evaluation Sessions (slice 3B — migration 190) ──
@@ -8866,11 +9337,16 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
     supabaseAdmin.from('rep_roster_players').select('program_year_id').in('program_year_id', yearIds),
     supabaseAdmin
       .from('rep_team_events')
-      .select('program_year_id, result')
+      .select('program_year_id, result, status')
       .in('program_year_id', yearIds)
       // The CANONICAL record rule (lib/season-wrapped.ts): league + tournament + legacy
       // external_tournament, scrimmage excluded. This tally previously used its own set
       // (scrimmage in, tournament_game out) and could disagree with the Overview/Wrapped.
+      // ⚠ `status` rides along so CANCELLED games can be dropped below. Cancelling an event keeps
+      // its row (dimmed + badged) and does NOT clear a score already entered, so without this a
+      // called-off game a coach had scored stayed in this record — while Wrapped, Season's End and
+      // the masthead all excluded it. One win too many, on the history page only (/review 2026-08-02).
+      // Filtered in JS, not as a SQL `.neq`, to match `computeSeasonWrapped`'s predicate exactly.
       .in('event_type', WRAPPED_RECORD_EVENT_TYPES)
       .not('result', 'is', null),
     supabaseAdmin
@@ -8891,6 +9367,7 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
   const losses: Record<string, number> = {};
   const ties: Record<string, number> = {};
   for (const e of eventRes.data ?? []) {
+    if (e.status === 'cancelled') continue;
     if (e.result === 'win') wins[e.program_year_id] = (wins[e.program_year_id] ?? 0) + 1;
     else if (e.result === 'loss') losses[e.program_year_id] = (losses[e.program_year_id] ?? 0) + 1;
     else if (e.result === 'tie') ties[e.program_year_id] = (ties[e.program_year_id] ?? 0) + 1;
@@ -8951,9 +9428,10 @@ export async function getRepCurrentSeasonSummary(teamId: string): Promise<RepCur
     supabaseAdmin.from('rep_roster_players').select('id').eq('program_year_id', py.id),
     supabaseAdmin
       .from('rep_team_events')
-      .select('result')
+      .select('result, status')
       .eq('program_year_id', py.id)
-      // Same canonical record rule as getRepTeamHistory/Wrapped (lib/season-wrapped.ts).
+      // Same canonical record rule as getRepTeamHistory/Wrapped (lib/season-wrapped.ts) —
+      // including dropping CANCELLED games that still carry a score (see the sibling above).
       .in('event_type', WRAPPED_RECORD_EVENT_TYPES)
       .not('result', 'is', null),
     supabaseAdmin.from('rep_tryout_registrations').select('status').eq('program_year_id', py.id),
@@ -8964,6 +9442,7 @@ export async function getRepCurrentSeasonSummary(teamId: string): Promise<RepCur
 
   let wins = 0, losses = 0, ties = 0;
   for (const e of eventRes.data ?? []) {
+    if (e.status === 'cancelled') continue;
     if (e.result === 'win') wins++;
     else if (e.result === 'loss') losses++;
     else if (e.result === 'tie') ties++;

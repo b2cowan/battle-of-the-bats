@@ -34,6 +34,15 @@ import styles from '../../../coaches.module.css';
  * Two rules from the plan doc show up as UI constraints rather than data ones:
  *  • Roster ORDER, everywhere, with no sort control offered anywhere, ever (§4).
  *  • Reorder with buttons, never drag — gloves and phones defeat drag (the Roster lesson).
+ *
+ * ⚠ **ONE editor, two callers** (Phase 3). The practice page passes a roster; the plan-template
+ * room passes `withoutPeople`, because a template carries the shape and the teaching and the
+ * practice supplies the people. Building a second editor for the template room would have split
+ * the behaviour of every block, station, rotation and drill-picker control in two — which is why
+ * frame 03's "New template at zero" ruling was the biggest reuse decision in this phase.
+ *
+ * ⚠ `withoutPeople` REMOVES the people controls; it never disables them. A control that exists
+ * only to refuse should not exist.
  */
 
 export type PracticeRosterPlayer = {
@@ -256,7 +265,7 @@ function DrillFacts({ station }: { station: PracticeStation }) {
 }
 
 function StationCard({
-  station, index, isRotation, startingGroups, readOnly, staffSuggestions, equipmentSuggestions,
+  station, index, isRotation, startingGroups, readOnly, withoutPeople, staffSuggestions, equipmentSuggestions,
   nameOf, onPatch, onRemove, onOpenPicker, onDetach, onSwapDrill, onPromote,
 }: {
   station: PracticeStation;
@@ -265,6 +274,8 @@ function StationCard({
   /** In a rotation, which group(s) begin here — the station's answer to "who do I start with?". */
   startingGroups: PracticeGroup[];
   readOnly: boolean;
+  /** A TEMPLATE has no roster and no staff — the practice supplies both. See the module header. */
+  withoutPeople: boolean;
   staffSuggestions: string[];
   equipmentSuggestions: string[];
   nameOf: (playerId: string) => string;
@@ -353,14 +364,19 @@ function StationCard({
           </>
         )}
 
-        <TagChips label="Who runs it" values={station.staff} suggestions={staffSuggestions}
-          readOnly={readOnly} onSet={next => onPatch({ staff: next })} placeholder="Add a name…"
-          max={MAX_STAFF_PER_ITEM} />
+        {/* ⚠ A template stores no staff and no players — the practice supplies both, which is what
+            lets one template work in April with twelve and July with nine. The controls are absent
+            rather than disabled: a control that exists only to refuse should not exist. */}
+        {!withoutPeople && (
+          <TagChips label="Who runs it" values={station.staff} suggestions={staffSuggestions}
+            readOnly={readOnly} onSet={next => onPatch({ staff: next })} placeholder="Add a name…"
+            max={MAX_STAFF_PER_ITEM} />
+        )}
 
         {/* People live at exactly ONE level. In a rotation that level is the block's groups, so the
             station shows which group it STARTS with rather than offering a second, contradictory
             roster. Everywhere else the station owns its own list. */}
-        {isRotation ? (
+        {!withoutPeople && (isRotation ? (
           <div className={styles.ppFieldRow}>
             <FieldLabel>Starts with</FieldLabel>
             {startingGroups.length === 0 ? (
@@ -384,7 +400,7 @@ function StationCard({
               <PlayerPickerButton count={station.playerIds?.length ?? 0} readOnly={readOnly} onOpen={onOpenPicker} />
             </div>
           </div>
-        )}
+        ))}
 
         {/* Rendered above by DrillFacts when this station came from one. */}
         {!fromDrill && (
@@ -394,14 +410,20 @@ function StationCard({
 
         {/* ⚠ ALWAYS editable, even on a drill-backed station — this is the one field that must
             never travel back to the library, so it is also the one that must never be locked. It
-            absorbs most "one word different tonight" cases with no detaching at all. */}
-        <label className={styles.ppField}>
-          <FieldLabel>Just for tonight</FieldLabel>
-          <input className={styles.input} value={station.note ?? ''} disabled={readOnly} maxLength={MAX_TEXT_LEN}
-            placeholder="A one-off note for this practice" onChange={e => onPatch({ note: e.target.value })} />
-        </label>
+            absorbs most "one word different tonight" cases with no detaching at all.
 
-        {!isRotation && (
+            ⚠ Absent on a TEMPLATE for exactly the same reason it is absent on a drill: "just for
+            tonight" is the one field that must never travel in either direction. A template is
+            every future Tuesday, which is the opposite of tonight. */}
+        {!withoutPeople && (
+          <label className={styles.ppField}>
+            <FieldLabel>Just for tonight</FieldLabel>
+            <input className={styles.input} value={station.note ?? ''} disabled={readOnly} maxLength={MAX_TEXT_LEN}
+              placeholder="A one-off note for this practice" onChange={e => onPatch({ note: e.target.value })} />
+          </label>
+        )}
+
+        {!isRotation && !withoutPeople && (
           <label className={styles.ppField}>
             <FieldLabel>Rotation note</FieldLabel>
             <input className={styles.input} value={station.rotationNote ?? ''} disabled={readOnly}
@@ -430,7 +452,7 @@ function StationCard({
 
 function RotationPanel({
   rotation, stations, blockMinutes, stationCount, blockStartMs, drawPool, notReplied, showNotReplied,
-  readOnly, nameOf, onSetRotation, onOpenGroupPicker,
+  readOnly, withoutPeople, nameOf, onSetRotation, onOpenGroupPicker,
 }: {
   rotation: PracticeRotation;
   stations?: PracticeStation[];
@@ -442,6 +464,12 @@ function RotationPanel({
   notReplied: PracticeRosterPlayer[];
   showNotReplied: boolean;
   readOnly: boolean;
+  /**
+   * ⚠ A TEMPLATE keeps the rotation's SHAPE — how often groups move is part of how the practice
+   * runs, and it is worth saving. It never keeps the GROUPS, because groups are children. So this
+   * panel keeps its interval control and drops everything below it.
+   */
+  withoutPeople: boolean;
   nameOf: (playerId: string) => string;
   onSetRotation: (patch: Partial<PracticeRotation>) => void;
   onOpenGroupPicker: (groupId: string) => void;
@@ -470,10 +498,19 @@ function RotationPanel({
         </span>
       </label>
 
+      {/* ⚠ A template stops here. Everything below assigns children to groups, and a template
+          supplies no children — the plan it starts draws its own groups from that night's roster,
+          which is exactly what lets one template work in April with twelve and July with nine. */}
+      {withoutPeople && (
+        <p className={styles.formHint}>
+          Groups are drawn on the practice itself — a template keeps the shape, not the players.
+        </p>
+      )}
+
       {/* ── Groups (D21) — the two ways to make them, said separately rather than crammed into
           one row where nothing explained what the controls belonged to. ── */}
-      <div className={styles.ppGroupsHead}><FieldLabel>Groups</FieldLabel></div>
-      {!readOnly && (
+      {!withoutPeople && <div className={styles.ppGroupsHead}><FieldLabel>Groups</FieldLabel></div>}
+      {!readOnly && !withoutPeople && (
         <div className={styles.ppGroupWays}>
           <div className={styles.ppGroupWay}>
             <span className={styles.ppGroupWayLabel}>Draw them at random</span>
@@ -508,7 +545,7 @@ function RotationPanel({
         </div>
       )}
 
-      {rotation.groups.length === 0 ? (
+      {!withoutPeople && (rotation.groups.length === 0 ? (
         <p className={styles.formHint}>
           Pick the groups yourself, or draw them at random. A draw is deliberately simple — it shuffles and
           deals, and never sorts anyone by ability.
@@ -547,7 +584,7 @@ function RotationPanel({
             ))}
           </div>
         </>
-      )}
+      ))}
 
       {/* ── The computed grid — the one artifact a shared document cannot produce ── */}
       <div className={styles.ppGridWrap}>
@@ -788,7 +825,8 @@ function PromoteDrillDialog({
 }
 
 function BlockCard({
-  block, index, blockCount, clock, blockStartMs, collapsed, readOnly, restTakenElsewhere, drawPool, notReplied,
+  block, index, blockCount, clock, blockStartMs, collapsed, readOnly, withoutPeople,
+  restTakenElsewhere, drawPool, notReplied,
   showNotReplied, staffSuggestions, equipmentSuggestions, nameOf,
   onToggleCollapse, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation, onSwapStation,
   onPromoteStation,
@@ -800,6 +838,8 @@ function BlockCard({
   blockStartMs?: number;
   collapsed: boolean;
   readOnly: boolean;
+  /** A TEMPLATE has no roster and no staff — the practice supplies both. */
+  withoutPeople: boolean;
   /** Another block already claims "rest of practice" (D13 allows exactly one). */
   restTakenElsewhere: boolean;
   drawPool: PracticeRosterPlayer[];
@@ -915,13 +955,15 @@ function BlockCard({
               placeholder="What this is for" onChange={e => onPatch({ goal: e.target.value })} />
           </label>
 
-          <TagChips label="Staff" values={block.staff} suggestions={staffSuggestions} readOnly={readOnly}
-            onSet={next => onPatch({ staff: next })} placeholder="Add a name…" max={MAX_STAFF_PER_ITEM} />
+          {!withoutPeople && (
+            <TagChips label="Staff" values={block.staff} suggestions={staffSuggestions} readOnly={readOnly}
+              onSet={next => onPatch({ staff: next })} placeholder="Add a name…" max={MAX_STAFF_PER_ITEM} />
+          )}
 
           {/* People live at exactly ONE level. With stations, they belong to the stations (or to
               the rotation's groups) — so the block-level list disappears rather than offering a
               second answer nobody can reconcile. */}
-          {stationCount === 0 && (
+          {stationCount === 0 && !withoutPeople && (
             <div className={styles.ppFieldRow}>
               <FieldLabel>Players</FieldLabel>
               <div className={styles.ppChipWrap}>
@@ -946,6 +988,7 @@ function BlockCard({
               notReplied={notReplied}
               showNotReplied={showNotReplied}
               readOnly={readOnly}
+              withoutPeople={withoutPeople}
               nameOf={nameOf}
               onSetRotation={patch => onPatch({ rotation: { ...rotation, ...patch } })}
               onOpenGroupPicker={groupId => onOpenPicker({ kind: 'group', blockId: block.id, groupId })}
@@ -982,6 +1025,7 @@ function BlockCard({
                 isRotation={isRotation}
                 startingGroups={startingGroupsForStation(block.rotation, stationCount, i)}
                 readOnly={readOnly}
+                withoutPeople={withoutPeople}
                 staffSuggestions={staffSuggestions}
                 equipmentSuggestions={equipmentSuggestions}
                 nameOf={nameOf}
@@ -1013,7 +1057,6 @@ interface Props {
   canViewAttendance: boolean;
   staffSuggestions: string[];
   equipmentSuggestions: string[];
-  practiceTypeSuggestions: string[];
   /** This team's own drills PLUS the club's shared set, already merged by the API. */
   drills: RepTeamDrill[];
   /** Saves a promoted station to the library (D18). Absent for a viewer who can't write drills. */
@@ -1027,16 +1070,30 @@ interface Props {
    */
   focusTags?: PickableTag[];
   onCreateFocusTag?: (name: string) => Promise<PickableTag | null>;
+  /**
+   * What THIS practice is about, in the team's shared vocabulary (Phase 3).
+   *
+   * ⚠ Not part of the plan's jsonb — a plan's tags are rows in `rep_team_event_tags`, told apart
+   * from a game's tags by the tag's kind, so the page owns them and saves them separately.
+   * Omitted entirely by the template room, whose tags live on the template row instead.
+   */
+  planTagIds?: string[];
+  onChangePlanTags?: (next: string[]) => void;
   eventStartsAt: string;
   eventEndsAt: string | null;
   readOnly: boolean;
+  /**
+   * ⚠ Editing a TEMPLATE, not a practice: no roster, no staff, no groups, no "just for tonight".
+   * The controls are ABSENT, not disabled — see the module header.
+   */
+  withoutPeople?: boolean;
 }
 
 export default function PracticePlanEditor({
   plan, onChange, roster, goals, canViewFocus, attendance, canViewAttendance,
-  staffSuggestions, equipmentSuggestions, practiceTypeSuggestions, drills, onCreateDrill,
-  focusTags = [], onCreateFocusTag,
-  eventStartsAt, eventEndsAt, readOnly,
+  staffSuggestions, equipmentSuggestions, drills, onCreateDrill,
+  focusTags = [], onCreateFocusTag, planTagIds, onChangePlanTags,
+  eventStartsAt, eventEndsAt, readOnly, withoutPeople = false,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
@@ -1094,7 +1151,7 @@ export default function PracticePlanEditor({
    */
   const { practiceCategories, derivedCategories } = useMemo(() => {
     // ONE walk of the blocks, producing both answers: the derived list the rail SHOWS, and the
-    // lookup it MATCHES against (which also folds in whatever the coach typed by hand).
+    // lookup it MATCHES against (which also folds in the tags the coach put on the practice).
     const derived: string[] = [];
     const seen = new Map<string, string>();
     const add = (v: string | null | undefined, isDerived: boolean) => {
@@ -1106,9 +1163,14 @@ export default function PracticePlanEditor({
       if (isDerived) derived.push(s);
     };
     for (const block of plan.blocks) for (const s of block.stations ?? []) for (const t of s.drillTags ?? []) add(t, true);
+    // The practice's own tags — what the coach SAID it is about, on top of what the drills imply.
+    for (const id of planTagIds ?? []) add(focusTags.find(t => t.id === id)?.name, false);
+    // ⚠ The legacy free-text "kind of practice" (slice 1a). READ, never written and never migrated:
+    // a plan typed before tags existed must keep matching the rail on the words it was given. The
+    // control that wrote these is gone — there is now ONE way to say what a practice is about.
     for (const t of plan.practiceTypes ?? []) add(t, false);
     return { practiceCategories: seen, derivedCategories: derived };
-  }, [plan.blocks, plan.practiceTypes]);
+  }, [plan.blocks, plan.practiceTypes, planTagIds, focusTags]);
 
   /**
    * Does this focus area match what tonight is about?
@@ -1346,12 +1408,43 @@ export default function PracticePlanEditor({
               placeholder="What the whole practice is for"
               onChange={e => onChange({ ...plan, goal: e.target.value })} />
           </label>
-          {/* Coach-typed, never a fixed list — "Hitting / Fielding / Pitching" is one sport talking,
-              and this platform serves several. A label for now: it does not filter the focus rail
-              until focus areas carry a category (Phase 2), and when it does they will DIM, not hide. */}
-          <TagChips label="Kind of practice" values={plan.practiceTypes} suggestions={practiceTypeSuggestions}
-            readOnly={readOnly} placeholder="e.g. what you're focusing on…" width="11rem"
-            onSet={next => onChange({ ...plan, practiceTypes: next })} />
+          {/**
+           * ⚠ **What this practice is about — TAGS, replacing slice 1a's free-text "Kind of
+           * practice"** (owner ruling 2026-08-01: categories became tags).
+           *
+           * The free-text version was a SECOND vocabulary sitting beside the one the drills and
+           * the focus areas already share, so "Hitting" typed here could never match "Hitting"
+           * chosen there. These are the same tags, which is exactly what makes the focus rail
+           * below soften truthfully and what makes "show me every hitting practice I've run"
+           * answerable at all.
+           *
+           * Absent in the template room, whose tags live on the template row: asking the same
+           * question in two places is how the two answers start disagreeing.
+           */}
+          {onChangePlanTags && (
+            <>
+              <TagPicker
+                label="What this practice is about"
+                all={focusTags}
+                selected={planTagIds ?? []}
+                onChange={onChangePlanTags}
+                onCreate={readOnly ? undefined : onCreateFocusTag}
+                disabled={readOnly}
+                emptyHint="No tags yet — type a word to make your first one."
+              />
+              {/* ⚠ Read-only, and only on a plan written before tags existed. Never editable and
+                  never migrated: the coach's old words keep matching the rail, and there is
+                  exactly ONE control for saying what a practice is about. */}
+              {(plan.practiceTypes?.length ?? 0) > 0 && (
+                <div className={styles.ppFieldRow}>
+                  <FieldLabel>Also tagged</FieldLabel>
+                  <div className={styles.ppChipWrap}>
+                    {plan.practiceTypes!.map(t => <span key={t} className={styles.ppChip}>{t}</span>)}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
           <TagChips label="Equipment" values={plan.equipment} suggestions={equipmentSuggestions}
             readOnly={readOnly} placeholder="Add kit…"
             onSet={next => onChange({ ...plan, equipment: next })} />
@@ -1368,6 +1461,7 @@ export default function PracticePlanEditor({
             blockStartMs={clockByBlock.get(block.id)?.startMs}
             collapsed={!!collapsed[block.id]}
             readOnly={readOnly}
+            withoutPeople={withoutPeople}
             restTakenElsewhere={restBlockId != null && restBlockId !== block.id}
             drawPool={drawPool}
             notReplied={notReplied}

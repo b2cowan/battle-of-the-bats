@@ -9,7 +9,7 @@ import {
   updateRepTeamEventSeries,
   deleteRepTeamEvent,
   deleteRepTeamEventsByRecurrenceParent,
-  setRepTeamEventTags,
+  setRepTeamEventTagsOfKind,
 } from '@/lib/db';
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
@@ -17,6 +17,7 @@ import { withObservability } from '@/lib/observability';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { ORGANIZER_OWNED_API_FIELDS } from '@/lib/tournament-game-mirror';
+import { notifyFamiliesOfGameUpdate } from '@/lib/family-notify';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -108,7 +109,26 @@ export const PATCH = withObservability(async (req: Request,
       if (tagIds === null) {
         return NextResponse.json({ error: 'tagIds must be an array of this team’s existing tag ids' }, { status: 400 });
       }
-      await setRepTeamEventTags(eventId, tagIds);
+      await setRepTeamEventTagsOfKind(eventId, 'game', tagIds);
+    }
+
+    // Tell families ONCE for the whole series (Chunk D 1.11). This path used to return
+    // before the notify block below ever ran, so moving a recurring practice from Tuesdays
+    // to Wednesdays — the single most disruptive edit a coach can make — reached nobody.
+    //
+    // One notification, not one per occurrence: a coach shifting a season of practices
+    // must not fire twenty emails at every family. It describes THIS event, which is the
+    // occurrence the coach was looking at and the one that makes the change concrete.
+    const seriesMoved =
+      (typeof body.startsAt === 'string' && body.startsAt)
+      || (typeof body.endsAt === 'string' && body.endsAt)
+      || body.location !== undefined;
+    if (seriesMoved) {
+      await notifyFamiliesOfGameUpdate({
+        eventId,
+        kind: 'schedule_change',
+        actorUserId: ctx.user.id,
+      });
     }
 
     const refreshed = await getRepTeamEventById(eventId);
@@ -160,8 +180,46 @@ export const PATCH = withObservability(async (req: Request,
 
   const updated = await updateRepTeamEvent(eventId, fields);
   if (tagIds !== null) {
-    await setRepTeamEventTags(eventId, tagIds);
+    await setRepTeamEventTagsOfKind(eventId, 'game', tagIds);
   }
+
+  // ── Tell connected families (Chunk D 1.11) ──
+  // Only the three changes a family actually needs to hear about: it moved, it's off, or it's
+  // over. Field number, uniform, notes and tags are coach-side detail and stay silent — a
+  // family layer that pings on every keystroke is one families mute in a week.
+  //
+  // AWAITED deliberately, not fired into `after()`: Amplify has no waitUntil bridge, so
+  // post-response work can silently never run (memory: reference_next_after_amplify). The
+  // dispatcher never throws, so awaiting it cannot fail the coach's save.
+  // `changed(key)` means "this save actually moved the field", so a no-op re-save stays
+  // silent. A score field counts only when it lands on a VALUE — clearing a score mid-
+  // correction should not announce a result.
+  const changed = <K extends keyof typeof fields & keyof typeof event>(key: K) =>
+    fields[key] !== undefined && (fields[key] as unknown) !== (event[key] as unknown);
+  const scoreLanded = <K extends keyof typeof fields>(key: K) =>
+    changed(key) && fields[key] !== null;
+
+  const familyUpdateKind =
+    changed('status') && fields.status === 'cancelled' ? 'cancelled' as const
+    // The reverse transition matters just as much: a family told the game was off needs to
+    // hear it is back on.
+    : changed('status') && fields.status === 'scheduled' ? 'reinstated' as const
+    // ALL THREE score fields, not just our own. A 4–2 corrected to 4–3 moves only the
+    // opponent's number, and leaving it out meant the correction never reached anyone.
+    : scoreLanded('result') || scoreLanded('teamScore') || scoreLanded('opponentScore')
+      ? 'final_score' as const
+    : changed('startsAt') || changed('location')
+      ? 'schedule_change' as const
+    : null;
+
+  if (familyUpdateKind) {
+    await notifyFamiliesOfGameUpdate({
+      eventId,
+      kind: familyUpdateKind,
+      actorUserId: ctx.user.id,
+    });
+  }
+
   return NextResponse.json({ event: updated });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]' });
 

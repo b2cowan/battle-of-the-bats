@@ -1,7 +1,9 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, CalendarDays, Check, ClipboardList, Copy, Play, Printer, Ruler, X } from 'lucide-react';
+import {
+  ArrowLeft, BookMarked, CalendarDays, Check, ClipboardList, Copy, NotebookPen, Play, Printer, Ruler, X,
+} from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -14,10 +16,17 @@ import {
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
+  MAX_RECAP_LEN,
   blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan,
   formatDuration, isPracticePlanEmpty, newPracticePlanId, resolveStationTeaching,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
+import {
+  MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateToPlan,
+} from '@/lib/rep-plan-templates';
+import { filterTagged } from '@/lib/rep-drills';
+import TagPicker from '@/components/coaches/TagPicker';
+import { useFocusTags } from '@/components/coaches/use-focus-tags';
 import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
@@ -34,9 +43,23 @@ type PreviousPlan = {
   plan: PracticePlan | null;
 };
 
+/** A template offered by "Start this plan from…" — the other half of the one picker (Phase 3). */
+type PlanTemplateOption = {
+  id: string;
+  name: string;
+  plan: PracticePlan;
+  tags: { id: string; name: string }[];
+};
+
 type LoadState = {
   event: RepTeamEvent;
   plan: PracticePlan | null;
+  /** "How it went" (D17) — null when nothing was written, which the UI states honestly. */
+  recap: string | null;
+  /** What this practice is about, in the team's shared 'focus' vocabulary. */
+  planTagIds: string[];
+  focusTags: PickableTag[];
+  templates: PlanTemplateOption[];
   roster: PracticeRosterPlayer[];
   goals: PracticeFocusGoal[];
   attendance: { playerId: string; status: RepAttendanceStatus }[];
@@ -44,7 +67,6 @@ type LoadState = {
   sessions: RepTeamEvaluationSession[];
   staffSuggestions: string[];
   equipmentSuggestions: string[];
-  practiceTypeSuggestions: string[];
   /** This team's own drills plus the club's shared set — the picker's source (Phase 2). */
   drills: RepTeamDrill[];
   canWrite: boolean;
@@ -83,14 +105,40 @@ export default function CoachPracticePlanPage({
 
   const [data, setData] = useState<LoadState | null>(null);
   const [plan, setPlan] = useState<PracticePlan>(emptyPracticePlan());
+  /**
+   * "How it went" and what the practice is about — both live on the EVENT, not in the plan's
+   * jsonb, so they are their own state and their own save path (the route's PATCH).
+   *
+   * ⚠ Kept out of `plan` deliberately. The plan autosaves about a second after the last keystroke;
+   * folding the recap in would mean every plan edit re-sent a recap it may not have loaded.
+   */
+  const [recap, setRecap] = useState('');
+  const [planTagIds, setPlanTagIds] = useState<string[]>([]);
+  /**
+   * The team's whole 'focus' vocabulary, owned here beside `drills` for the same reason: the editor
+   * is a controlled component and must not fetch its own reference data.
+   *
+   * ⚠ Every tag the team has, NOT only the ones already on a drill — a picker built from what is on
+   * screen would hide vocabulary a focus area or a template already uses, and quietly invite the
+   * coach to mint a duplicate. It arrives on the plan GET, so there is no second round trip.
+   */
+  // ⚠ `skipFetch`: the library arrives on this page's own plan GET, so re-fetching it would be a
+  // second round trip for data already in hand. The hook still owns creation and local merging,
+  // which is the part that must not differ between the four surfaces that offer a tag picker.
+  const { tags: focusTags, setTags: setFocusTags, createTag: createFocusTag } =
+    useFocusTags(orgSlug, teamId, { skipFetch: true });
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [copyOpen, setCopyOpen] = useState(false);
+  /** Which source the one picker is showing (frame 05). A template, or a previous practice. */
+  const [copySource, setCopySource] = useState<'template' | 'previous'>('template');
+  const [copyQuery, setCopyQuery] = useState('');
+  const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
-  useOverlayOpen(copyOpen);
+  useOverlayOpen(copyOpen || saveTemplateOpen);
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
 
   // Org PDF settings (branding) — optional; the sheet falls back to defaults.
@@ -117,6 +165,9 @@ export default function CoachPracticePlanPage({
       if (seq !== loadSeqRef.current) return;
       setData(body);
       setPlan(body.plan ?? emptyPracticePlan());
+      setRecap(body.recap ?? '');
+      setPlanTagIds(body.planTagIds ?? []);
+      setFocusTags(body.focusTags ?? []);
       setDirty(false);
     } catch (e: unknown) {
       if (seq !== loadSeqRef.current) return;
@@ -124,7 +175,9 @@ export default function CoachPracticePlanPage({
     } finally {
       if (seq === loadSeqRef.current) setLoading(false);
     }
-  }, [orgSlug, teamId, eventId]);
+    // `setFocusTags` comes from the shared vocabulary hook rather than a local `useState`, so the
+    // linter can't see that it is a stable setter — it is, and listing it re-runs nothing.
+  }, [orgSlug, teamId, eventId, setFocusTags]);
 
   useEffect(() => {
     if (!ctxLoading && canSchedule) void Promise.resolve().then(load);
@@ -214,46 +267,115 @@ export default function CoachPracticePlanPage({
     }
   }
 
-  /**
-   * The team's whole 'focus' vocabulary, owned here beside `drills` for the same reason: the editor
-   * is a controlled component and must not fetch its own reference data.
-   *
-   * ⚠ Every tag the team has, not only the ones already on a drill — a picker built from what is on
-   * screen would hide vocabulary a focus area or a template already uses, and quietly invite the
-   * coach to mint a duplicate.
-   */
-  const [focusTags, setFocusTags] = useState<PickableTag[]>([]);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`);
-        if (!res.ok) return;
-        const json = await res.json();
-        if (!cancelled) setFocusTags(json.tags ?? []);
-      } catch { /* the picker degrades to "no tags yet"; the plan still saves */ }
-    })();
-    return () => { cancelled = true; };
-  }, [orgSlug, teamId]);
-
-  const createFocusTag = useCallback(async (name: string): Promise<PickableTag | null> => {
-    const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/focus-tags`, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name }),
-    });
-    if (!res.ok) return null;
-    const json = await res.json();
-    const tag: PickableTag = json.tag;
-    setFocusTags(prev => (prev.some(t => t.id === tag.id) ? prev : [...prev, tag]));
-    return tag;
-  }, [orgSlug, teamId]);
-
   function applyPrevious(previous: PreviousPlan) {
     if (!previous.plan || !data) return;
     const rosterIds = new Set(data.roster.map(p => p.id));
     // A COPY, always (D7). Nothing about this writes to the source practice or to a series.
+    // ⚠ `copyPracticePlanForReuse` deliberately drops any `templateId`: this coach started from a
+    // PRACTICE, not from a template, and claiming otherwise would inflate that template's count.
     updatePlan(copyPracticePlanForReuse(previous.plan, rosterIds, newPracticePlanId));
     setCopyOpen(false);
+  }
+
+  /**
+   * Load a template onto this practice (D14) — **copy-on-load, fully editable**.
+   *
+   * ⚠ This is the opposite of the drill rule that lives one level down inside the very plan it
+   * produces, and both are right: a template is SCAFFOLDING (of course a coach adapts a practice),
+   * a drill is an IDENTITY CLAIM. `templateToPlan` preserves every station's `drillId`, so the
+   * drill-backed stations inside a loaded template arrive read-only and still count — stripping
+   * that would break every drill's count and nothing would fail loudly.
+   */
+  function applyTemplate(template: PlanTemplateOption) {
+    if (!data) return;
+    updatePlan(templateToPlan(template, newPracticePlanId));
+    // The practice inherits what the template is ABOUT. Ids the team no longer has are dropped
+    // rather than sent back and refused — a merged-away tag must not block loading a template.
+    const known = new Set(focusTags.map(t => t.id));
+    const inherited = template.tags.map(t => t.id).filter(id => known.has(id));
+    if (inherited.length > 0) savePlanTags([...new Set([...planTagIds, ...inherited])]);
+    setCopyOpen(false);
+  }
+
+  /**
+   * What this practice is about, and how it went — both PATCH the event, never the plan.
+   *
+   * ⚠ Saved eagerly on change rather than through the plan's autosave: they are a different act on
+   * a different schedule, and sharing the plan's debounce would let an editor that never loaded
+   * the recap send it back as empty.
+   */
+  const patchPractice = useCallback(async (body: Record<string, unknown>): Promise<boolean> => {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/practice-plan`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? 'That didn’t save.');
+      }
+      return true;
+    } catch (e) {
+      setSaveError(errorMessage(e, 'That didn’t save.'));
+      return false;
+    }
+  }, [orgSlug, teamId, eventId]);
+
+  /**
+   * ⚠ Optimistic, but it PUTS THE TAGS BACK if the save fails.
+   *
+   * The picker shows the new state instantly, which is right — but an earlier version never
+   * reverted, so a refused save left the chip on screen looking saved until the next reload
+   * quietly dropped it. That is the worst shape a failure can take: the coach is told nothing and
+   * believes the opposite of the truth.
+   */
+  function savePlanTags(next: string[]) {
+    const previous = planTagIds;
+    setPlanTagIds(next);
+    setSaveError('');
+    void patchPractice({ tagIds: next }).then(ok => {
+      if (!ok) setPlanTagIds(previous);
+    });
+  }
+
+  /**
+   * "How it went" — autosaved on the same rhythm as the plan, because it is a paragraph a coach
+   * types and then closes the phone on. `recapDirty` is separate from the plan's `dirty` so the
+   * two never clear each other's unsaved state.
+   */
+  const [recapDirty, setRecapDirty] = useState(false);
+  const [recapSaved, setRecapSaved] = useState(false);
+  useEffect(() => {
+    if (!recapDirty || !data?.canWrite) return;
+    const t = setTimeout(async () => {
+      // Trimmed to nothing is null, so "nothing written down for this one" has one representation.
+      const ok = await patchPractice({ recap: recap.trim() ? recap : null });
+      if (ok) { setRecapDirty(false); setRecapSaved(true); }
+    }, 900);
+    return () => clearTimeout(t);
+  }, [recap, recapDirty, data?.canWrite, patchPractice]);
+
+  /**
+   * "Save as template…" (frame 04) — explicit promotion, exactly like "Save to my drills…".
+   *
+   * ⚠ It COPIES. Tonight's plan is left exactly as it is and does NOT become template-backed, so
+   * nothing about the practice changes under the coach's hands the moment they save it. Editing
+   * this plan later cannot change the template, and editing the template cannot change this plan.
+   */
+  async function createTemplate(name: string, tagIds: string[]): Promise<{ ok: boolean; error?: string }> {
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/development/plan-templates`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, tagIds, plan }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: json.error ?? 'Could not save that template.' };
+      // Fold it into the picker immediately — a coach who saves one and then wonders where it
+      // went should find it there, without a reload they have no reason to expect.
+      setData(d => (d ? { ...d, templates: [...d.templates, json.template] } : d));
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: errorMessage(e, 'Could not save that template.') };
+    }
   }
 
   async function handlePrint() {
@@ -368,7 +490,14 @@ export default function CoachPracticePlanPage({
         dateLabel: event.startsAt ? fmtDate(event.startsAt) : '',
         whereLabel,
         goal: plan.goal ?? null,
-        practiceTypes: plan.practiceTypes ?? [],
+        // What the practice is ABOUT: its tags now, plus any legacy free-text labels a plan
+        // written before Phase 3 still carries. ⚠ The sheet is subject to the same vocabulary
+        // rule as the screen — these describe what was PLANNED, and the sheet says nothing about
+        // what was done.
+        practiceTypes: [
+          ...planTagIds.map(id => focusTags.find(t => t.id === id)?.name).filter((n): n is string => !!n),
+          ...(plan.practiceTypes ?? []),
+        ],
         equipment: plan.equipment ?? [],
         blocks, rotations, groups: groupRows, focus, settings,
       },
@@ -426,6 +555,9 @@ export default function CoachPracticePlanPage({
 
   const canWrite = data?.canWrite ?? false;
   const previousWithPlans = (data?.previousPlans ?? []).filter(p => p.plan);
+  // Read once here so the picker below (which renders outside the `!data` guard) never has to
+  // null-check the load state mid-JSX.
+  const templates = data?.templates ?? [];
   // ONE definition of "is there a plan here", shared with the save path — otherwise a
   // whitespace-only goal reads as a plan on screen while the save path nulls the column.
   const hasPlan = !isPracticePlanEmpty(plan);
@@ -474,15 +606,46 @@ export default function CoachPracticePlanPage({
                     <Play size={14} aria-hidden /> Run practice
                   </Link>
                 )}
-                {canWrite && previousWithPlans.length > 0 && (
-                  <button type="button" className={styles.btnSecondary} onClick={() => setCopyOpen(true)}>
-                    <Copy size={14} aria-hidden /> Copy from a previous practice
+                {/* ⚠ ONE control, two sources (frame 05) — not a second door. The "copy from a
+                    previous practice" half already shipped in 1a; this widens it. Offered when
+                    there is anything at all to start from. */}
+                {canWrite && (previousWithPlans.length > 0 || templates.length > 0) && (
+                  <button type="button" className={styles.btnSecondary}
+                    onClick={() => {
+                      setCopyQuery('');
+                      setCopySource(templates.length > 0 ? 'template' : 'previous');
+                      setCopyOpen(true);
+                    }}>
+                    <Copy size={14} aria-hidden /> Start this plan from…
+                  </button>
+                )}
+                {/* Explicit promotion, never automatic — the "Save to my drills…" bargain, one
+                    level up. Absent until there is something worth saving. */}
+                {canWrite && hasPlan && (
+                  <button type="button" className={styles.btnSecondary} onClick={() => setSaveTemplateOpen(true)}>
+                    <BookMarked size={14} aria-hidden /> Save as template…
                   </button>
                 )}
                 <button type="button" className={styles.btnSecondary} disabled={!hasPlan} onClick={handlePrint}>
                   <Printer size={14} aria-hidden /> Print the sheet
                 </button>
               </div>
+
+              {/* ── The provenance line (D14, frame 05) ──
+                  ⚠ It is doing real work, not decoration: without it a coach reasonably fears that
+                  fixing tonight's warm-up rewrites the template for every future Tuesday. It says
+                  the quiet part out loud — every edit here is THIS practice's. It survives every
+                  edit, because "this plan started from Standard Tuesday" stays true however much
+                  they change; that is the opposite of a drill's provenance, and deliberately so. */}
+              {plan.templateName && (
+                <p className={styles.ppProvenance}>
+                  <BookMarked size={14} aria-hidden />
+                  <span>
+                    Started from <strong>{plan.templateName}</strong>. This plan is yours now —{' '}
+                    <strong>edit anything</strong>. Changes here won&apos;t change the template.
+                  </span>
+                </p>
+              )}
 
               <PracticePlanEditor
                 plan={plan}
@@ -494,19 +657,63 @@ export default function CoachPracticePlanPage({
                 canViewAttendance={data.canViewAttendance}
                 staffSuggestions={data.staffSuggestions}
                 equipmentSuggestions={data.equipmentSuggestions}
-                practiceTypeSuggestions={data.practiceTypeSuggestions}
                 drills={data.drills}
                 // Absent for a viewer who can't write drills, which removes "Save to my drills…"
                 // entirely rather than offering a control that only exists to refuse.
                 onCreateDrill={canWrite ? createDrill : undefined}
                 focusTags={focusTags}
                 onCreateFocusTag={canWrite ? createFocusTag : undefined}
+                planTagIds={planTagIds}
+                onChangePlanTags={savePlanTags}
                 eventStartsAt={event?.startsAt ?? ''}
                 eventEndsAt={event?.endsAt ?? null}
                 readOnly={!canWrite}
               />
             </>
           )}
+
+          {/* ── "How it went" (D17, frame 07) ──
+              A SECOND, SEPARATE section beside the plan, on the same principle as "Recorded here"
+              below: the plan is what you INTENDED, this is what you thought afterwards. It is one
+              of only two things on this screen allowed to describe reality, and it earns that
+              because a coach sat down at home and typed it.
+
+              ⚠ **ABOUT THE PRACTICE, NEVER ABOUT A CHILD** — D17's hard guardrail. The placeholder
+              and the helper line both steer away from names, there is deliberately no per-player
+              equivalent, and none may be added: per-child commentary would drift into behavioural
+              profiling on minors.
+
+              ⚠ This does NOT reopen D4. An unhurried note written at home is a different act from
+              an abandoned tick-box mid-drill — nothing at the field records anything, and there
+              are still no per-block "we ran it" ticks. */}
+          <div className={styles.ppRecorded}>
+            <h2 className={styles.ppRecordedTitle}><NotebookPen size={15} aria-hidden /> How it went</h2>
+            <p className={styles.formHint}>For you and your staff. Families never see this.</p>
+            {canWrite ? (
+              <label className={styles.ppField}>
+                <span className="sr-only">How it went</span>
+                <textarea
+                  className={styles.textarea}
+                  rows={4}
+                  value={recap}
+                  maxLength={MAX_RECAP_LEN}
+                  placeholder="What would you do differently next time?"
+                  aria-label="How it went"
+                  onChange={e => { setRecap(e.target.value); setRecapDirty(true); setRecapSaved(false); }}
+                />
+                <span className={styles.formHint} aria-live="polite">
+                  {recapDirty ? 'Saving…' : recapSaved ? 'Saved · about the practice, not about a player'
+                    : 'About the practice, not about a player'}
+                </span>
+              </label>
+            ) : recap ? (
+              <p className={styles.ppReadTxt}>{recap}</p>
+            ) : (
+              // ⚠ Silence is stated, never rendered blank — a practice with nothing written must
+              // not read as a practice where nothing happened.
+              <p className={styles.ppRecapNone}>Nothing written down for this one.</p>
+            )}
+          </div>
 
           {/* ── "Recorded here" (§10.2) ──
               A SECOND, SEPARATE section beside the plan, deliberately: the plan is what you
@@ -549,38 +756,195 @@ export default function CoachPracticePlanPage({
         </div>
       )}
 
-      {/* ── Copy from a previous practice — the whole reuse story for slice 1a (D5) ── */}
+      {/* ── "Start this plan from…" — ONE picker, TWO sources (frame 05) ──
+          The "previous practice" half is slice 1a's control, widened rather than joined by a
+          rival door: a coach reaching for last Tuesday and a coach reaching for their standard
+          Tuesday are answering the same question, and two buttons would make them choose a
+          filing system before they could answer it. */}
       {copyOpen && (
-        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Copy from a previous practice"
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Start this plan from"
           onClick={e => { if (e.target === e.currentTarget) setCopyOpen(false); }}>
           <div className={`${styles.modal} ${styles.modalScrollBody}`}>
             <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Copy from a previous practice</h3>
+              <h3 className={styles.modalTitle}>Start this plan from…</h3>
               <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={() => setCopyOpen(false)}>
                 <X size={18} />
               </button>
             </div>
-            <p className={styles.formHint} style={{ padding: '0 0 0.5rem' }}>
-              This copies the plan onto tonight. The practice you copy from is left exactly as it is,
-              and anything you change here stays here.
+
+            {/* Both tabs are always offered when both sources exist; a source with nothing in it
+                says so inside rather than vanishing, so the two routes stay learnable. */}
+            <div className={styles.ppSourceTabs} role="tablist" aria-label="Where to start from">
+              <button type="button" role="tab" className={styles.ppSourceTab}
+                aria-selected={copySource === 'template'} data-on={copySource === 'template' ? 'on' : undefined}
+                onClick={() => { setCopySource('template'); setCopyQuery(''); }}>
+                A template
+              </button>
+              <button type="button" role="tab" className={styles.ppSourceTab}
+                aria-selected={copySource === 'previous'} data-on={copySource === 'previous' ? 'on' : undefined}
+                onClick={() => { setCopySource('previous'); setCopyQuery(''); }}>
+                A previous practice
+              </button>
+            </div>
+
+            <p className={styles.formHint} style={{ padding: '0.5rem 0' }}>
+              {copySource === 'template'
+                ? 'This copies the template onto tonight. The template is left exactly as it is, and anything you change here stays here.'
+                : 'This copies the plan onto tonight. The practice you copy from is left exactly as it is, and anything you change here stays here.'}
             </p>
+
+            <input className={styles.input} value={copyQuery} onChange={e => setCopyQuery(e.target.value)}
+              placeholder={copySource === 'template' ? 'Search templates…' : 'Search practices…'}
+              aria-label={copySource === 'template' ? 'Search templates' : 'Search practices'} />
+
             <div className={styles.ppPickList}>
-              {previousWithPlans.map(previous => (
-                <button key={previous.eventId} type="button" className={styles.ppPickRow}
-                  onClick={() => applyPrevious(previous)}>
-                  <span className={styles.ppPickBody}>
-                    <span className={styles.ppPickName}>{previous.name}</span>
-                    <span className={styles.ppPickMeta}>
-                      {fmtDate(previous.startsAt)} · {previous.plan!.blocks.length} block
-                      {previous.plan!.blocks.length === 1 ? '' : 's'}
-                    </span>
-                  </span>
-                </button>
-              ))}
+              {copySource === 'template' ? (
+                templates.length === 0 ? (
+                  <p className={styles.formHint}>
+                    No templates yet — save a practice that went well as a template and next Tuesday starts from it.
+                  </p>
+                ) : (
+                  // The SAME predicate the drill library and the template room use — one rule, so
+                  // the three lists can never drift on what the search box looks at.
+                  filterTagged(templates, copyQuery, null).map(template => (
+                    <button key={template.id} type="button" className={styles.ppPickRow}
+                      onClick={() => applyTemplate(template)}>
+                      <span className={styles.ppPickBody}>
+                        <span className={styles.ppPickName}>
+                          {template.name}
+                          {template.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
+                        </span>
+                        <span className={styles.ppPickMeta}>{templateShapeLabel(template.plan)}</span>
+                      </span>
+                    </button>
+                  ))
+                )
+              ) : previousWithPlans.length === 0 ? (
+                <p className={styles.formHint}>No other practice this season has a plan yet.</p>
+              ) : (
+                previousWithPlans
+                  .filter(p => !copyQuery.trim() || p.name.toLowerCase().includes(copyQuery.trim().toLowerCase()))
+                  .map(previous => (
+                    <button key={previous.eventId} type="button" className={styles.ppPickRow}
+                      onClick={() => applyPrevious(previous)}>
+                      <span className={styles.ppPickBody}>
+                        <span className={styles.ppPickName}>{previous.name}</span>
+                        <span className={styles.ppPickMeta}>
+                          {fmtDate(previous.startsAt)} · {previous.plan!.blocks.length} block
+                          {previous.plan!.blocks.length === 1 ? '' : 's'}
+                        </span>
+                      </span>
+                    </button>
+                  ))
+              )}
             </div>
           </div>
         </div>
       )}
+
+      {/* ── "Save as template…" (frame 04) — exactly ONE question, and it's optional ── */}
+      {saveTemplateOpen && (
+        <SaveAsTemplateDialog
+          defaultName={event?.name ?? ''}
+          tags={focusTags}
+          initialTagIds={planTagIds}
+          onCreateTag={canWrite ? createFocusTag : undefined}
+          onSave={createTemplate}
+          onClose={() => setSaveTemplateOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * "Save as template…" — one optional question, mirroring "Save to my drills…" from Phase 2.
+ *
+ * ⚠ **An empty name is REJECTED here and never in the plan editor**, and that asymmetry is
+ * deliberate: this is an explicit submit, so a nameless template is a mistake worth reporting.
+ * The autosaving editor never discards a row for being empty, because a coach pressed "Add" and is
+ * mid-typing. Same codebase, opposite rules — the distinguishing fact is whether a human pressed
+ * a button.
+ *
+ * ⚠ At MODULE level, never inside the page's render body: a component declared in a render body is
+ * a new type on every render, so React remounts its subtree and this form would lose focus on
+ * every keystroke.
+ */
+function SaveAsTemplateDialog({
+  defaultName, tags, initialTagIds, onCreateTag, onSave, onClose,
+}: {
+  defaultName: string;
+  tags: PickableTag[];
+  initialTagIds: string[];
+  onCreateTag?: (name: string) => Promise<PickableTag | null>;
+  onSave: (name: string, tagIds: string[]) => Promise<{ ok: boolean; error?: string }>;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(defaultName);
+  // Pre-filled from what the practice is already about — the coach has answered this once tonight
+  // and should not be made to answer it again. Still editable: a template is a broader thing.
+  const [tagIds, setTagIds] = useState<string[]>(initialTagIds);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+
+  async function submit() {
+    if (!name.trim() || busy) return;
+    setBusy(true); setError('');
+    const result = await onSave(name.trim(), tagIds);
+    setBusy(false);
+    if (!result.ok) { setError(result.error ?? 'Could not save that template.'); return; }
+    onClose();
+  }
+
+  return (
+    <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-label="Save as template"
+      onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className={`${styles.modal} ${styles.modalScrollBody}`}>
+        <div className={styles.modalHeader}>
+          <h3 className={styles.modalTitle}>Save as template</h3>
+          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
+            <X size={18} />
+          </button>
+        </div>
+        <div className={styles.ppDrillWrite}>
+          <label className={styles.ppField}>
+            <span className={styles.ppFieldLabel}>Name</span>
+            <input className={styles.input} value={name} maxLength={MAX_TEMPLATE_NAME_LEN} autoFocus
+              placeholder="What would you call this practice?"
+              onChange={e => setName(e.target.value)} />
+          </label>
+
+          <TagPicker
+            label="Tags — optional"
+            all={tags}
+            selected={tagIds}
+            onChange={setTagIds}
+            onCreate={onCreateTag}
+            emptyHint="No tags yet — type a word to make your first one."
+          />
+          <p className={styles.formHint}>
+            Your own words, shared with your drills and your players&apos; focus areas — so tagging a
+            template &ldquo;Hitting&rdquo; is the same &ldquo;Hitting&rdquo; everywhere.
+          </p>
+
+          {/* ⚠ Says what does NOT happen, on purpose. A coach saving a template mid-plan needs to
+              know tonight is untouched and that later edits won't leak either way. */}
+          <p className={styles.formHint}>
+            Saves the blocks, stations and timings as they are now. <strong>It does not change
+            tonight&apos;s practice</strong>, and editing this plan later won&apos;t change the template.
+            Players and staff aren&apos;t saved — the practice supplies those.
+          </p>
+
+          {error && <p className={styles.errorText} role="alert">{error}</p>}
+
+          <div className={styles.modalFooter}>
+            <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
+            <button type="button" className={styles.btnPrimary} disabled={busy || !name.trim()} onClick={submit}>
+              {busy ? 'Saving…' : 'Save template'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

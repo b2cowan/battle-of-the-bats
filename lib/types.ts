@@ -1170,6 +1170,17 @@ export interface RepTryoutRegistration {
   offerExpiresAt: string | null;
   offerResponse: 'accepted' | 'declined' | null;
   offerRespondedAt: string | null;
+  /**
+   * STICKY — when an offer was FIRST extended (mig 223). Stamped by a DB trigger on the first
+   * transition to 'offered' and never cleared.
+   *
+   * ⚠ NOT interchangeable with `offerSentAt`, which is the live offer-email state and is WIPED by
+   * `clearTryoutOffer` on any transition away from 'offered' (correct — a stale accept link must
+   * die). That wipe is why offer HISTORY was unprovable before this column, and why the tryout
+   * report's funnel could only claim current standing. NULL on rows whose record-only offer left
+   * no timestamp behind to backfill from — never inferred from `updatedAt`.
+   */
+  firstOfferedAt: string | null;
   submittedAt: string;
   updatedAt: string;
 }
@@ -1470,6 +1481,28 @@ export interface PracticePlan {
   /** Reusable equipment labels (tags) for the whole practice. */
   equipment?: string[];
   blocks: PracticePlanBlock[];
+
+  /**
+   * PROVENANCE ONLY — which plan TEMPLATE this practice was started from (Phase 3).
+   *
+   * ⚠ Exactly the `PracticeStation.drillId` idiom, one level up, and it means the same thing:
+   * nothing renders from the template row, because loading a template COPIES its shape. Editing
+   * the template later cannot rewrite a practice already written, and a retired template keeps
+   * reading for ever. The id answers "Started 8 plans".
+   *
+   * ⚠ **And here the two rules diverge, deliberately.** A loaded DRILL stays read-only and its id
+   * is cleared the moment a coach edits it, because a drill is an identity claim. A loaded
+   * TEMPLATE is fully editable from the first keystroke and KEEPS this id, because a template is
+   * scaffolding: "this plan started from Standard Tuesday" stays true however much the coach then
+   * changes. Making these two consistent would break one of them.
+   */
+  templateId?: string;
+  /**
+   * The template's NAME, snapshotted at load time — the same reason `drillTags` snapshots names.
+   * The provenance line must keep reading after the template is renamed or retired, with no
+   * dependency on the template table.
+   */
+  templateName?: string;
 }
 
 export interface RepTeamEvent {
@@ -1497,6 +1530,22 @@ export interface RepTeamEvent {
    * series write would wipe a season of per-practice thinking.
    */
   practicePlan: PracticePlan | null;
+  /**
+   * "How it went" — one free-text note a coach writes AFTER a practice, at home (D17, mig 221).
+   * Null means nothing was written, which the UI states honestly rather than rendering blank.
+   *
+   * ⚠ **ABOUT THE PRACTICE, NEVER ABOUT A CHILD** (D17's hard guardrail). *"Tees were too crowded,
+   * run four next time"* is the whole value. There is deliberately no per-player equivalent and
+   * none may be added — per-child commentary would drift into behavioural profiling on minors.
+   *
+   * ⚠ **This does NOT reopen D4.** Nothing at the field records anything, and there are still no
+   * per-block "ran it" ticks: an unhurried note written at home is a different act from an
+   * abandoned tick-box mid-drill. A recap existing therefore does NOT license any other surface to
+   * claim the plan happened — coverage still says "planned" (§4).
+   *
+   * ⚠ Coach-facing only. Families never see it.
+   */
+  practiceRecap: string | null;
   opponent: string | null;
   homeAway: 'home' | 'away' | 'neutral' | null;
   // Team-relative scoring (mig 158): your team's score vs the opponent's, NOT literal
@@ -1704,8 +1753,15 @@ export interface RepTeamPlanTemplate {
   name: string;
   /** Several, from the same 'focus' vocabulary as drills, plans and focus areas. */
   tags: RepTeamTag[];
-  /** The plan SHAPE — same structure as `rep_team_events.practice_plan`. Copied on load. */
-  plan: unknown;
+  /**
+   * The plan SHAPE — same structure as `rep_team_events.practice_plan`. Copied on load.
+   *
+   * ⚠ It carries NO PEOPLE: `planToTemplateShape` strips players, staff, rotation groups and
+   * "just for tonight" notes on every write. The same D20 divide a drill draws, one level up —
+   * the template supplies the shape and the teaching, the practice supplies the people and the
+   * moment, which is what lets one template work in April with twelve and July with nine.
+   */
+  plan: PracticePlan;
   isActive: boolean;
   createdBy: string | null;
   createdAt: string;
@@ -1716,11 +1772,12 @@ export interface RepTeamPlanTemplate {
 export interface RepTeamPlanTemplateWithUsage extends RepTeamPlanTemplate {
   /** ⚠ Plans STARTED from this template — never practices run. See the note above. */
   planCount: number;
-  /** ISO date of the most recent plan started from it, or null. */
+  /** ISO date of the most recent plan started from it, or null. ⚠ "last planned", never "last run". */
   lastPlannedAt: string | null;
-  /** Derived from `plan` for the list row — no second source of truth. */
-  blockCount: number;
-  totalMinutes: number | null;
+  // ⚠ The block count and total minutes are deliberately NOT fields here. They are derived from
+  // `plan` at render time by `templateShapeLabel`, which every surface shares — sending them as
+  // numbers alongside the plan they come from would be the second source of truth this row's
+  // original note already warned against.
 }
 
 /**
@@ -1865,6 +1922,54 @@ export interface RepPlayerDevelopmentGoal {
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+// ── Tryout development baseline (Tryout Insights Phase 2, mig 223) ───────────────────────────
+// "Where this player's season started": ONE frozen copy of their tryout evaluation, written once
+// by an explicit coach act. Shape only lives here (this file is a pure leaf); every rule — how a
+// snapshot is assembled, and which categories become suggestions — lives in lib/tryout-baseline.ts,
+// the same split RepEventResource/lib/rep-event-resources uses.
+
+export interface RepTryoutBaselineCategory {
+  key: string;
+  label: string;
+  /** Cross-evaluator average on the scorecard's scale; null when nobody scored this category. */
+  avg: number | null;
+}
+
+/**
+ * ⚠ A COPY, NOT A JOIN. Every label and number is snapshotted at seed time so a later rubric edit
+ * or corrected score can never rewrite a baseline the coach already chose focus areas from (R4).
+ * Bump `version` if the shape changes — stored rows are historic records and are never migrated
+ * in place.
+ */
+export interface RepTryoutBaselineSnapshot {
+  version: 1;
+  /** Provenance; null on a snapshot assembled without a tryout workspace row. */
+  tryoutId: string | null;
+  seasonLabel: string;
+  /** Human date span of the tryout ("Aug 12–13"), or null when no session dates existed. */
+  dateLabel: string | null;
+  scaleMax: number;
+  /** Weighted composite on the scorecard scale; null when this player was never scored. */
+  composite: number | null;
+  evaluatorCount: number;
+  /** Whether the evaluation was still blind when the snapshot was taken — a fairness fact. */
+  blindUsed: boolean;
+  categories: RepTryoutBaselineCategory[];
+}
+
+export interface RepPlayerTryoutBaseline {
+  id: string;
+  orgId: string;
+  teamId: string;
+  programYearId: string;
+  rosterPlayerId: string;
+  /** Provenance only — nullable, and null after a registration is purged. */
+  tryoutRegistrationId: string | null;
+  snapshot: RepTryoutBaselineSnapshot;
+  seededBy: string | null;
+  seededAt: string;
 }
 
 // Returning-player continuity (Player Development 3C, mig 191 — DBA Finding #31).

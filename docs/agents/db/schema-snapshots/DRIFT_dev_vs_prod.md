@@ -1,24 +1,25 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-08-02 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-08-03 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 198 divergence(s)** across dev/prod.
+**⚠️ 221 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
-| Tables | 9 | 0 | — |
-| Columns | 96 | 0 | 0 |
-| Indexes | 38 | 0 | 0 |
-| Constraints | 38 | 0 | — |
-| RLS / CHECK | 17 | 0 | 0 (RLS state) |
+| Tables | 10 | 0 | — |
+| Columns | 106 | 0 | 0 |
+| Indexes | 42 | 0 | 0 |
+| Constraints | 45 | 0 | — |
+| RLS / CHECK | 18 | 0 | 0 (RLS state) |
 
 ## Tables
-### Only in DEV (9)
+### Only in DEV (10)
 - `family_consents`
 - `family_email_optouts`
 - `family_links`
 - `family_recap_views`
 - `no_login_rate_limits`
+- `rep_player_tryout_baselines`
 - `rep_team_drill_tags`
 - `rep_team_drills`
 - `rep_team_plan_template_tags`
@@ -28,7 +29,7 @@
 _none_
 
 ## Columns
-### Only in DEV (96)
+### Only in DEV (106)
 - `family_consents.basis`
 - `family_consents.basis_started_at`
 - `family_consents.consent_ip`
@@ -85,6 +86,15 @@ _none_
 - `no_login_rate_limits.subject`
 - `no_login_rate_limits.window_started_at`
 - `rep_player_development_goals.tag_id`
+- `rep_player_tryout_baselines.id`
+- `rep_player_tryout_baselines.org_id`
+- `rep_player_tryout_baselines.program_year_id`
+- `rep_player_tryout_baselines.roster_player_id`
+- `rep_player_tryout_baselines.seeded_at`
+- `rep_player_tryout_baselines.seeded_by`
+- `rep_player_tryout_baselines.snapshot`
+- `rep_player_tryout_baselines.team_id`
+- `rep_player_tryout_baselines.tryout_registration_id`
 - `rep_team_drill_tags.created_at`
 - `rep_team_drill_tags.drill_id`
 - `rep_team_drill_tags.tag_id`
@@ -125,6 +135,7 @@ _none_
 - `rep_teams.family_link_created_by`
 - `rep_teams.family_link_token_hash`
 - `rep_teams.schedule_visibility`
+- `rep_tryout_registrations.first_offered_at`
 
 ### Only in PROD (0)
 _none_
@@ -133,7 +144,7 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (38)
+### Only in DEV (42)
 - `family_consents_live_uniq`
 - `family_consents_org_email_idx`
 - `family_consents_pkey`
@@ -155,6 +166,10 @@ _none_
 - `no_login_rate_limits_pkey`
 - `no_login_rate_limits_window_idx`
 - `rep_player_development_goals_tag_idx`
+- `rep_player_tryout_baselines_pkey`
+- `rep_player_tryout_baselines_player_year_uniq`
+- `rep_player_tryout_baselines_team_idx`
+- `rep_player_tryout_baselines_year_idx`
 - `rep_team_drill_tags_pkey`
 - `rep_team_drill_tags_tag_idx`
 - `rep_team_drills_org_idx`
@@ -180,7 +195,7 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (38)
+### Only in DEV (45)
 - `family_consents.family_consents_org_id_fkey`
 - `family_consents.family_consents_pkey`
 - `family_consents.family_consents_user_id_fkey`
@@ -202,6 +217,13 @@ _none_
 - `family_recap_views.family_recap_views_rep_team_id_fkey`
 - `no_login_rate_limits.no_login_rate_limits_pkey`
 - `rep_player_development_goals.rep_player_development_goals_tag_id_fkey`
+- `rep_player_tryout_baselines.rep_player_tryout_baselines_org_id_fkey`
+- `rep_player_tryout_baselines.rep_player_tryout_baselines_pkey`
+- `rep_player_tryout_baselines.rep_player_tryout_baselines_program_year_id_fkey`
+- `rep_player_tryout_baselines.rep_player_tryout_baselines_roster_player_id_fkey`
+- `rep_player_tryout_baselines.rep_player_tryout_baselines_seeded_by_fkey`
+- `rep_player_tryout_baselines.rep_player_tryout_baselines_team_id_fkey`
+- `rep_player_tryout_baselines.rep_player_tryout_baselines_tryout_registration_id_fkey`
 - `rep_team_drill_tags.rep_team_drill_tags_drill_id_fkey`
 - `rep_team_drill_tags.rep_team_drill_tags_pkey`
 - `rep_team_drill_tags.rep_team_drill_tags_tag_id_fkey`
@@ -227,13 +249,14 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (17)
+### CHECK only in DEV (18)
 - `family_consents.family_consents_basis_check`
 - `family_consents.family_consents_scope_check`
 - `family_links.family_links_role_check`
 - `family_links.family_links_role_player_ck`
 - `family_links.family_links_status_check`
 - `family_links.family_links_verified_via_check`
+- `rep_player_tryout_baselines.rep_player_tryout_baselines_snapshot_check`
 - `rep_team_drills.rep_team_drills_coaching_points_check`
 - `rep_team_drills.rep_team_drills_description_check`
 - `rep_team_drills.rep_team_drills_equipment_check`

@@ -12,7 +12,7 @@ import {
   createRepTeamEvents,
   getRepTeamTagLibrary,
   getRepTeamEventTagsMap,
-  setRepTeamEventTags,
+  setRepTeamEventTagsOfKind,
   getRepEventAwardCountsMap,
 } from '@/lib/db';
 import type { RepEventType } from '@/lib/types';
@@ -267,7 +267,7 @@ export const POST = withObservability(async (req: Request,
   });
 
   if (tagIds.length > 0) {
-    await setRepTeamEventTags(event.id, tagIds);
+    await setRepTeamEventTagsOfKind(event.id, 'game', tagIds);
   }
 
   return NextResponse.json({ event }, { status: 201 });

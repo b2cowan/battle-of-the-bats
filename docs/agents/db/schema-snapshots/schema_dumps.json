@@ -10316,6 +10316,87 @@
         "column_default": null
       },
       {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 4,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 5,
+        "column_name": "roster_player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 6,
+        "column_name": "tryout_registration_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 7,
+        "column_name": "snapshot",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 8,
+        "column_name": "seeded_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "pos": 9,
+        "column_name": "seeded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_program_years",
         "pos": 1,
         "column_name": "id",
@@ -13289,6 +13370,15 @@
         "table_name": "rep_tryout_registrations",
         "pos": 29,
         "column_name": "offer_responded_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_tryout_registrations",
+        "pos": 30,
+        "column_name": "first_offered_at",
         "data_type": "timestamp with time zone",
         "udt_name": "timestamptz",
         "is_nullable": "YES",
@@ -17280,20 +17370,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
@@ -17302,6 +17385,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -17350,20 +17440,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
@@ -17372,6 +17455,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -17581,14 +17671,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -17611,6 +17701,48 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_player_measurables_team_id_fkey"
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_tryout_baselines_org_id_fkey"
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_tryout_baselines_program_year_id_fkey"
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "column_name": "roster_player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_tryout_baselines_roster_player_id_fkey"
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "column_name": "seeded_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_player_tryout_baselines_seeded_by_fkey"
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_tryout_baselines_team_id_fkey"
+      },
+      {
+        "table_name": "rep_player_tryout_baselines",
+        "column_name": "tryout_registration_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_tryout_baselines_tryout_registration_id_fkey"
       },
       {
         "table_name": "rep_program_years",
@@ -20365,6 +20497,26 @@
         "indexdef": "CREATE INDEX rep_player_measurables_type_idx ON public.rep_player_measurables USING btree (measurable_type_id)"
       },
       {
+        "tablename": "rep_player_tryout_baselines",
+        "indexname": "rep_player_tryout_baselines_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_tryout_baselines_pkey ON public.rep_player_tryout_baselines USING btree (id)"
+      },
+      {
+        "tablename": "rep_player_tryout_baselines",
+        "indexname": "rep_player_tryout_baselines_player_year_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_player_tryout_baselines_player_year_uniq ON public.rep_player_tryout_baselines USING btree (roster_player_id, program_year_id)"
+      },
+      {
+        "tablename": "rep_player_tryout_baselines",
+        "indexname": "rep_player_tryout_baselines_team_idx",
+        "indexdef": "CREATE INDEX rep_player_tryout_baselines_team_idx ON public.rep_player_tryout_baselines USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_player_tryout_baselines",
+        "indexname": "rep_player_tryout_baselines_year_idx",
+        "indexdef": "CREATE INDEX rep_player_tryout_baselines_year_idx ON public.rep_player_tryout_baselines USING btree (program_year_id)"
+      },
+      {
         "tablename": "rep_program_years",
         "indexname": "rep_program_years_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_program_years_pkey ON public.rep_program_years USING btree (id)"
@@ -22593,6 +22745,18 @@
       {
         "kind": "RLS",
         "table_name": "rep_player_measurables",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_player_tryout_baselines",
+        "detail": "rep_player_tryout_baselines_snapshot_check",
+        "check_clause": "(jsonb_typeof(snapshot) = 'object'::text)"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_player_tryout_baselines",
         "detail": "ENABLED",
         "check_clause": null
       },

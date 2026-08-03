@@ -20,6 +20,20 @@ import { join } from 'node:path';
 import { CLOSED_TEAM_NAV_ITEMS, isCoachNavItemVisible } from '../../lib/coach-nav-visibility.ts';
 import { resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
 
+/**
+ * ⚠ SCOPE LIMIT, STATED SO IT IS NOT MISTAKEN FOR COVERAGE (/review 2026-08-02).
+ *
+ * This guard scans API ROUTES only. Since the desktop-shell masthead, a coach surface can also
+ * read via a SERVER LAYOUT that queries with the service-role client and never touches
+ * `lib/coach-season-read.ts` (`app/[orgSlug]/coaches/teams/[teamId]/layout.tsx`). That route is
+ * invisible to everything below.
+ *
+ * The masthead complies by construction — its live query is pinned to the ACTIVE program year and
+ * a closed season contributes only its own frozen final record — but nothing here would fail the
+ * build if a future edit added a live read for an archived season from a layout. If that pattern
+ * spreads beyond this one file, extend the scan to coach server components rather than trusting
+ * the comment.
+ */
 const COACH_API_ROOT = join(process.cwd(), 'app', 'api', 'coaches');
 const WRITE_VERBS = ['POST', 'PATCH', 'PUT', 'DELETE'] as const;
 
@@ -42,7 +56,7 @@ function routeFiles(dir: string, out: string[] = []): string[] {
 }
 
 /** The body of one exported handler, from its `export const VERB` to the next one (or EOF). */
-function handlerBody(src: string, verb: string): string | null {
+function ownHandlerBody(src: string, verb: string): string | null {
   const start = src.search(new RegExp(`export const ${verb}\\b`));
   if (start < 0) return null;
   const rest = src.slice(start + verb.length + 13);
@@ -50,11 +64,130 @@ function handlerBody(src: string, verb: string): string | null {
   return next < 0 ? src.slice(start) : src.slice(start, start + verb.length + 13 + next);
 }
 
+const TAG_ROUTE_FACTORY = join(process.cwd(), 'lib', 'coach-tag-routes.ts');
+
+/**
+ * ⚠ **A HANDLER MAY BE DELEGATED, AND THE GUARD MUST FOLLOW IT.**
+ *
+ * The three tag libraries collapsed into one factory, so nine route files now read
+ * `export const { GET, POST } = coachTagCollectionRoutes({…})`. The literal text
+ * `export const POST` no longer appears in ANY of them — which meant the two write-side tests
+ * below stopped finding a body to inspect and silently `continue`d on all nine. They still
+ * reported green. **A vacuous pass is worse than a failure**: it is the guard going blind while
+ * claiming the contract still holds, which is precisely the regression class Chunk F built this
+ * file to catch.
+ *
+ * So a delegated verb resolves to the FACTORY's implementation of it. Add a new factory here the
+ * day a second one appears; the assertion at the bottom of this file fails if a route delegates
+ * to something this map does not know about.
+ */
+const DELEGATED_HANDLERS: { call: RegExp; file: string; fn: string }[] = [
+  { call: /coachTagCollectionRoutes\s*\(/, file: TAG_ROUTE_FACTORY, fn: 'coachTagCollectionRoutes' },
+  { call: /coachTagItemRoutes\s*\(/, file: TAG_ROUTE_FACTORY, fn: 'coachTagItemRoutes' },
+  { call: /coachTagMergeRoute\s*\(/, file: TAG_ROUTE_FACTORY, fn: 'coachTagMergeRoute' },
+];
+
+/** The body of `const VERB = …` inside one exported factory function. */
+function factoryHandlerBody(factorySrc: string, fn: string, verb: string): string | null {
+  const fnStart = factorySrc.search(new RegExp(`export function ${fn}\\b`));
+  if (fnStart < 0) return null;
+  const body = factorySrc.slice(fnStart);
+  const start = body.search(new RegExp(`\\n\\s*const ${verb}\\s*=`));
+  if (start < 0) return null;
+  const rest = body.slice(start + verb.length + 10);
+  // Stop at the next handler in the same factory, or at its `return { … }`.
+  const next = rest.search(/\n\s*const (GET|POST|PATCH|PUT|DELETE)\s*=|\n\s*return \{/);
+  return next < 0 ? body.slice(start) : body.slice(start, start + verb.length + 10 + next);
+}
+
+/**
+ * The body that actually RUNS for `verb` in this route file — its own, or the factory's when the
+ * file delegates. Returns null only when the route genuinely has no such verb.
+ */
+function handlerBody(src: string, verb: string): string | null {
+  const own = ownHandlerBody(src, verb);
+  if (own) return own;
+  // `export const { GET, POST } = factory(…)` — the verb is delegated, so follow it.
+  if (!new RegExp(`export const \\{[^}]*\\b${verb}\\b[^}]*\\}`).test(src)) return null;
+  for (const d of DELEGATED_HANDLERS) {
+    if (!d.call.test(src)) continue;
+    const delegated = factoryHandlerBody(readFileSync(d.file, 'utf8'), d.fn, verb);
+    if (delegated) return delegated;
+  }
+  return null;
+}
+
 const files = routeFiles(COACH_API_ROOT);
+
+/**
+ * ⚠ **A route's season posture may also be DECLARED rather than called** (Practice Plans Phase 3).
+ *
+ * The three tag libraries collapsed into one factory (`lib/coach-tag-routes.ts`), so their route
+ * files no longer call `resolveCoachSeasonRead` themselves — they spread a descriptor that carries
+ * `seasonAwareRead: true | false`. A source scan that only looked for the CALL would have quietly
+ * lost sight of `tags` and `expense-tags`, which is the guard going blind rather than the rule
+ * changing. This reads the flag out of the descriptor so the contract still bites.
+ *
+ * The flag is deliberately FALSE for the 'focus' vocabulary (owner ruling 2026-08-01): a tag
+ * library is an INSTRUMENT, and the read-only past-plan page renders from tag NAMES snapshotted
+ * into the plan, so it needs nothing live.
+ */
+function seasonAwareTagLibraries(): Set<string> {
+  const src = readFileSync(TAG_ROUTE_FACTORY, 'utf8');
+  const aware = new Set<string>();
+  for (const match of src.matchAll(/export const (\w+_TAG_LIBRARY)\s*=\s*\{([\s\S]*?)\n\}/g)) {
+    if (/seasonAwareRead:\s*true/.test(match[2])) aware.add(match[1]);
+  }
+  return aware;
+}
+
+/**
+ * Does this route serve a past season — by calling the rail, or by declaring it?
+ *
+ * ⚠ Only `coachTagCollectionRoutes` carries a GET. The `[tagId]` and `merge` files spread the same
+ * descriptor but export write verbs only, and every write resolves the LIVE season regardless of
+ * the flag — so matching the descriptor alone would list four write-only routes as archive doors
+ * and make the allow-list mean less than it says.
+ */
+function servesPastSeason(src: string, awareLibraries: Set<string>): boolean {
+  if (/resolveCoachSeasonRead(Context)?\s*\(|resolveCoachSeasonCapabilityMap\s*\(/.test(src)) return true;
+  if (!/coachTagCollectionRoutes\s*\(/.test(src)) return false;
+  return [...awareLibraries].some(name => new RegExp(`\\.\\.\\.${name}\\b`).test(src));
+}
 
 describe('Chunk F — no write handler can address a past season', () => {
   it('finds the coach API routes at all (guards against a vacuous pass)', () => {
     assert.ok(files.length > 40, `expected the coach API tree, found ${files.length} route files`);
+  });
+
+  /**
+   * ⚠ **THE GUARD MUST NOT GO BLIND, and this is the test that says so.**
+   *
+   * The two rules below inspect a handler's BODY. If a route exports a verb the extractor cannot
+   * find a body for, those rules skip it and still report green — which is exactly what happened
+   * when nine tag routes moved to a factory: `export const POST` vanished from every one of them
+   * and the write-side contract stopped being checked at all, silently.
+   *
+   * So: every write verb a route file EXPORTS must resolve to a body, whether its own or the
+   * factory's. A delegation this file does not know how to follow fails here rather than
+   * disappearing.
+   */
+  it('every exported write verb resolves to a body the rules can actually inspect', () => {
+    const blind: string[] = [];
+    for (const file of files) {
+      const src = readFileSync(file, 'utf8');
+      for (const verb of WRITE_VERBS) {
+        const exported = new RegExp(`export const ${verb}\\b`).test(src)
+          || new RegExp(`export const \\{[^}]*\\b${verb}\\b[^}]*\\}`).test(src);
+        if (exported && !handlerBody(src, verb)) {
+          blind.push(`${file.replace(process.cwd(), '')} → ${verb}`);
+        }
+      }
+    }
+    assert.deepEqual(blind, [],
+      'These routes export a write verb whose body this guard cannot read, so the two rules below ' +
+      'are SKIPPING them and passing vacuously. If the handler was moved into a shared factory, ' +
+      'add that factory to DELEGATED_HANDLERS so the contract follows it.');
   });
 
   it('no write handler reads the ?year= season parameter', () => {
@@ -95,9 +228,22 @@ describe('Chunk F — no write handler can address a past season', () => {
   });
 
   it('the read rail is actually in use, so the rule is not guarding an empty set', () => {
-    const readers = files.filter(f => /resolveCoachSeasonRead/.test(readFileSync(f, 'utf8')));
+    const aware = seasonAwareTagLibraries();
+    const readers = files.filter(f => servesPastSeason(readFileSync(f, 'utf8'), aware));
     assert.ok(readers.length >= 10,
       `expected the season-read rail on the converted GET routes, found ${readers.length}`);
+  });
+
+  it('the tag-route factory declares a season posture for every library', () => {
+    const src = readFileSync(TAG_ROUTE_FACTORY, 'utf8');
+    const libraries = [...src.matchAll(/export const (\w+_TAG_LIBRARY)\s*=/g)].map(m => m[1]);
+    assert.ok(libraries.length >= 3, `expected the tag libraries, found ${libraries.length}`);
+    for (const name of libraries) {
+      const body = src.match(new RegExp(`export const ${name}\\s*=\\s*\\{([\\s\\S]*?)\\n\\}`))?.[1] ?? '';
+      assert.match(body, /seasonAwareRead:\s*(true|false)/,
+        `${name} must state seasonAwareRead explicitly. A tag library that reaches into a past `
+        + 'season is an archive decision, and the default is NO.');
+    }
   });
 });
 
@@ -142,7 +288,29 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
   const APPROVED_SEASON_AWARE_ROUTES = [
     'attendance', 'award-types', 'awards', 'budget', 'budget-plan', 'budget-vs-actual',
     'development/board', 'development/sessions', 'dues', 'events',
-    'events/[eventId]/lineup', 'expense-tags', 'expenses', 'fundraisers', 'history',
+    'events/[eventId]/lineup',
+    /**
+     * ⚠ **THE PRACTICE-PLANS ARCHIVE DOOR — ruled explicitly** (owner, 2026-08-01, plan §10.8
+     * ruling 1). A past practice plan is readable READ-ONLY in any season, reached ONLY from the
+     * Development report's "Practices you've run" list.
+     *
+     * The three questions this list demands, answered:
+     *   1. **RECORD or INSTRUMENT?** A written plan is a RECORD of what a coach intended on a
+     *      night that has happened. The instruments beside it — the drill library, the template
+     *      library, the tag vocabulary — all stay live-season-only and are absent from this list.
+     *   2. **Does the whole subtree carry the season?** Yes, and the subtree is one page: the
+     *      route is GET-only and the page it serves has exactly one outbound link, back to the
+     *      list, carrying `?year=`. Chunk F's expensive defects were all one level down; here
+     *      there is no level down.
+     *   3. **Does it show what the coach could see AT THE TIME?** Yes, by construction. Every word
+     *      renders from the plan's own jsonb, which COPIED the drill's text when the drill was
+     *      added — so editing that drill since cannot rewrite what June's practice says.
+     *
+     * ⚠ This does NOT reopen the schedule's practice-plan section, which stays hidden in a
+     * completed season exactly as slice 1b ruled (§11.1). The new door is narrow and one-way.
+     */
+    'events/[eventId]/practice-plan/read',
+    'expense-tags', 'expenses', 'fundraisers', 'history',
     'lineup-templates', 'milestones', 'money-summary', 'roster', 'roster/[playerId]',
     'season-surplus', 'staff', 'staff/[coachId]', 'tags', 'tryout-history', 'wrapped',
   ];
@@ -187,10 +355,55 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
     }
   });
 
+  /**
+   * The plan-template library (Practice Plans Phase 3) — the SAME decided absence as drills, for
+   * the same reason, recorded so a later session cannot assume the question was open.
+   *
+   * Owner ruling 2026-08-01: a template library is a reusable INSTRUMENT, not a record of a
+   * season. It gets no archive door — the Development hub hides it in a completed season, and the
+   * routes below resolve the live context. That costs a coach nothing, because the table is keyed
+   * by TEAM rather than by program year, so templates cross a rollover with nothing to import.
+   *
+   * ⚠ `plan-templates/past-seasons` is the ONE deliberate cross-season read: it copies a coach's
+   * own past plans FORWARD into the live library and writes nothing into the finished season, so
+   * it belongs off the rail exactly as its drill sibling does.
+   */
+  it('the plan-template library is live-season only, by decision (Practice Plans Phase 3)', () => {
+    const templateRoutes = files.filter(f => f.replace(/\\/g, '/').includes('/development/plan-templates'));
+    assert.ok(templateRoutes.length >= 3, 'expected the plan-template routes to exist');
+    for (const file of templateRoutes) {
+      const src = readFileSync(file, 'utf8');
+      assert.ok(
+        !/resolveCoachSeasonRead(Context)?\s*\(|resolveCoachSeasonCapabilityMap\s*\(/.test(src),
+        `${file} joined the season-read rail. A plan-template library is an INSTRUMENT and was `
+        + 'ruled live-season-only (owner, 2026-08-01). What IS readable in an archive is one past '
+        + 'PLAN, through events/[eventId]/practice-plan/read — a different, narrower door.',
+      );
+    }
+  });
+
+  /**
+   * ⚠ The LIVE practice-plan route must never gain the rail.
+   *
+   * It holds the PUT and the PATCH, so putting the season rail on its GET would make the whole
+   * editor addressable in an archive and leave one file carrying both postures. The read-only door
+   * is a separate GET-only route beside it, which is why that separation is worth a test rather
+   * than a comment.
+   */
+  it('the LIVE practice-plan route stays live-season only; only its /read sibling is a door', () => {
+    const live = files.find(f => f.replace(/\\/g, '/').endsWith('/practice-plan/route.ts'));
+    assert.ok(live, 'expected the live practice-plan route to exist');
+    assert.ok(
+      !/resolveCoachSeasonRead(Context)?\s*\(/.test(readFileSync(live!, 'utf8')),
+      'The live practice-plan route also writes. A past season must never be addressable from a '
+      + 'file that can write — the read-only door is events/[eventId]/practice-plan/read.',
+    );
+  });
+
   it('no route has learned to serve a past season without a decision', () => {
+    const aware = seasonAwareTagLibraries();
     const actual = files
-      .filter(f => /resolveCoachSeasonRead(Context)?\s*\(|resolveCoachSeasonCapabilityMap\s*\(/
-        .test(readFileSync(f, 'utf8')))
+      .filter(f => servesPastSeason(readFileSync(f, 'utf8'), aware))
       .map(f => f
         .replace(process.cwd(), '')
         .replace(/^[\\/]app[\\/]api[\\/]coaches[\\/]/, '')

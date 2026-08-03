@@ -311,12 +311,40 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
    * that dead-ends is the same bug wearing a politer face (CLAUDE.md), whether the wall is a
    * finished season or a missing grant.
    */
-  const drillsDoor = page.isReadOnly || !caps || !canManageSchedule(caps) ? null : (
+  const practiceRoomsOpen = !page.isReadOnly && !!caps && canManageSchedule(caps);
+
+  const drillsDoor = !practiceRoomsOpen ? null : (
     <Link href={`${base}/development/drills`} className={styles.insightsDoor}>
       <span className={styles.insightsDoorQ}>Your drills<span aria-hidden>→</span></span>
       <span className={styles.insightsDoorSum}>
         Write a drill once — the setup, what you&apos;re watching for, the coaching points — and
         adding it to a practice becomes four taps.
+      </span>
+    </Link>
+  );
+
+  /**
+   * The plan-template room (Practice Plans Phase 3) — the drill library's sibling, one level up:
+   * a drill is one activity, a template is a whole practice.
+   *
+   * ⚠ **HIDDEN IN A COMPLETED SEASON, on exactly the same reasoning as Drills** (owner ruling
+   * 2026-08-01). A template library is a reusable INSTRUMENT, not a record of a season, so it gets
+   * no archive door and its routes resolve the live context. Showing the door here would dead-end
+   * — a link that 404s is the same bug wearing a politer face.
+   *
+   * A coach loses nothing: templates are keyed by TEAM, not by program year, so they cross a
+   * rollover on their own, and what genuinely was season-locked (past PLANS) is reachable from
+   * inside the room via "Add from a past season".
+   *
+   * ⚠ Also gated on `schedule`, not only on the season: this page is reachable by an assistant
+   * granted `notes` alone, who would otherwise be shown a door that answers "you do not have
+   * access to the schedule".
+   */
+  const templatesDoor = !practiceRoomsOpen ? null : (
+    <Link href={`${base}/development/templates`} className={styles.insightsDoor}>
+      <span className={styles.insightsDoorQ}>Plan templates<span aria-hidden>→</span></span>
+      <span className={styles.insightsDoorSum}>
+        Save a practice you&apos;d run again. Start from it next Tuesday instead of rebuilding it.
       </span>
     </Link>
   );
@@ -348,6 +376,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
       </Link>
 
       {drillsDoor}
+      {templatesDoor}
     </div>
   );
 

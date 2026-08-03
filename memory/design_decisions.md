@@ -44,6 +44,60 @@ the player development page (Phase 2), the decision board (Phase 3),
 
 ---
 
+### 2026-08-02 — A TEMPLATE is scaffolding; a DRILL is an identity. Both rules are right, they sit one screen apart, and unifying them breaks one
+
+**Trigger:** Practice Plans Phase 3, frame 06 of the signed-off mockups — a fully editable practice plan with one read-only station inside it. The owner was asked to judge whether that divide reads as coherent or as a bug, and approved it.
+
+**BINDING RULES:**
+
+1. **A loaded TEMPLATE is fully editable from the first keystroke, and its provenance SURVIVES every edit.** Of course a coach adapts a practice — adapting it is the point. *"This plan started from Standard Tuesday"* stays true however much they change, so `PracticePlan.templateId` is never cleared.
+2. **A loaded DRILL stays read-only, and its provenance is CLEARED the moment a word changes.** A drill is a claim that you ran *that* drill, so "in 8 plans" has to mean eight of the same thing. "Edit just for this practice" keeps every word and detaches.
+3. **⚠ Loading a template MUST preserve each station's `drillId` and `drillTags`.** Stripping them would make every drill-backed station in a loaded template arrive editable and would silently break every drill's count — **and nothing would fail loudly.** This is the highest-value invariant in the feature and it has a unit test named after it.
+4. **A template carries NO PEOPLE** — no players, no staff, no rotation groups, no "just for tonight". It keeps the rotation's SHAPE (how often groups move) but never its groups. Same D20 divide a drill draws, one level up: the template supplies the shape and the teaching, the practice supplies the people and the moment. It is what lets one template work in April with twelve and July with nine.
+5. **ONE editor serves both.** `PracticePlanEditor` takes a `withoutPeople` flag; there is no second template editor. Building one would have split the behaviour of every block, station, rotation and drill-picker control in two, and the copies would have drifted within a season. ⚠ `withoutPeople` REMOVES controls; it never disables them — a control that exists only to refuse should not exist.
+
+**Do not "make these consistent."** A future session reading the two rules side by side will be tempted to unify them; unifying them destroys either the coach's ability to adapt a practice or the meaning of a drill's count.
+
+**Applies to:** `lib/rep-plan-templates.ts`, `lib/rep-drills.ts`, `app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticePlanEditor.tsx`, `tests/unit/rep-plan-templates.test.ts`.
+
+---
+
+### 2026-08-02 — The coverage answer names children, so it shows a FLAG or a BLANK — never a comparable number, and never at all when it cannot answer honestly
+
+**Trigger:** Practice Plans Phase 3, frames 08–09 — the first surface in the product that names a child who has been missed.
+
+**BINDING RULES:**
+
+1. **Roster order only. No sort affordance on any column, ever** — and emphatically not "least covered first". A probe asserts this at the DOM, not in a comment.
+2. **A flag or a quiet ✓, never a comparable number.** No count, percentage, streak or average beside a child's name; no team average and no percentile on the row. The wire format carries **one boolean** for exactly this reason — a number cannot leak through a field that does not exist.
+3. **The vocabulary is coverage of the COACH'S ATTENTION, not assessment of a player.** The column reads **"In a plan"** — never "worked on", "covered" or "did". The flag reads **"— not in a plan yet"**.
+4. **⚠ SILENCE BEATS A CONFIDENT LIE.** Assigning players to blocks is OPTIONAL — a coach whose practice is "everyone rotates through four stations" names nobody. So the question is only *answerable* once the season holds at least three plans **and** at least one names someone; otherwise the column, the flag and the finding are all **ABSENT**. Flagging a whole roster would be the product misreading its own data as a coaching failure.
+5. **The finding is COUNT-ONLY AND NAMELESS**, in place rather than as a seventh Insights tile (explicitly cut). It counts by INTERSECTING with the current roster — never `rosterCount − namedCount`, which under-counts when a plan names a departed player and goes negative on a team with enough departures, silently deleting the very warning it exists to give.
+6. **An UNTAGGED focus area is never reported as uncovered.** Absence of data must not read as absence of need — the same rule that keeps an untagged area at full strength in the focus rail.
+7. **TWO TRUTH STATUSES ON ONE SCREEN, DELIBERATELY KEPT APART** (the §10.2 "Recorded here" precedent). Coverage says *planned*. "Practices you've run" is the one section allowed to describe reality, and it earns that because a coach sat down afterwards and wrote it. **A recap existing does NOT license coverage to claim the plan happened.**
+
+**Applies to:** `lib/rep-practice-coverage.ts`, `app/[orgSlug]/coaches/teams/[teamId]/history/development/page.tsx`, `app/api/coaches/[orgSlug]/teams/[teamId]/development/board/route.ts`, `tests/unit/rep-practice-coverage.test.ts`.
+
+---
+
+### 2026-08-02 — "How it went" is about the PRACTICE, never about a child — and there is deliberately no per-player equivalent
+
+**Trigger:** Practice Plans Phase 3, D17, frame 07.
+
+**BINDING RULES:**
+
+1. **One free-text note per practice**, written at home afterwards. *"Tees were too crowded, run four next time"* is the whole value.
+2. **⚠ NO PER-PLAYER VERSION MAY EVER BE ADDED.** Per-child commentary would drift into behavioural profiling on minors. There is no column for it, and the absence is the design. The placeholder and the helper line both steer away from names.
+3. **This does NOT reopen D4.** An unhurried note written at home is a different act from an abandoned tick-box mid-drill. Nothing at the field records anything, and there are still no per-block "we ran it" ticks.
+4. **Silence is STATED, never rendered blank** — *"Nothing written down for this one."* A practice with no note must not read as a practice where nothing happened.
+5. **Coach-facing only.** Families never see it, and the UI says so on screen.
+
+**Why it gets written at all:** because plans carry tags, a coach filters past practices to "Hitting" and gets every one they have run, what was in it, and what they said afterwards. That reframes the recap from a diary (which a coach stops writing by June) into a body of experience they mine before planning — the first surface in this project that gets *better* the longer the product is used.
+
+**Applies to:** `rep_team_events.practice_recap` (mig 221), the practice plan page, the Development report's "Practices you've run".
+
+---
+
 ### 2026-08-02 — The admin rail carries NO identity and NO status: both were second copies of what the page header already says
 
 **Trigger:** owner, reading the tournament admin rail at 1440px — "the org name in the nav bar, do we need that? it is also in the headers"; then, one screenshot later, "do we need both of these LIVE pills?" Two separate looks at the same rail, landing on the same defect.

@@ -19,6 +19,12 @@
 > that bargain feels fair in your hand or like a wall. The §2.6 lines matter as much: the four-taps
 > claim is only true if it's true **on a phone**.
 
+> **Added 2026-08-02:** §5.1 — **the tournament creation live preview**, the first item in this
+> ledger that is NOT a coaches-portal surface. It needs a **wide desktop window** and about ten
+> minutes. Its sharpest step is the one that proves nothing broke: narrow the window and confirm the
+> setup wizard is exactly what it was. Second sharpest: the preview must never promise a look the
+> published page won't deliver — check the colours against a real public tournament page.
+
 > **How to use this:** work a session top-to-bottom, tick `[x]` as you go, jot defects inline under
 > the step that failed. When a project's section is fully ticked, tell the working agent "QA passed:
 > <project>" — it graduates the project (commit where still uncommitted, with your per-action OK,
@@ -324,6 +330,73 @@ and adding it to a practice becomes four taps instead of retyping the same warm-
 - [ ] **As an assistant coach** (schedule access, not head coach): the library should be **readable**
       with no write buttons, and **Save to my drills…** should not appear anywhere.
 
+### 1.9 Plan templates, the recap & looking back (Practice Plans Phase 3) — built + docs + probed, uncommitted
+
+> **Mockups you approved:** `claude.ai/code/artifact/7ac29440-1e16-4b0e-a22b-9e0093470107` (12 frames).
+> **Where:** Development → **Plan templates** · any practice plan · Insights → **Development**.
+> ⚠ **Migration 221 is applied to DEV only.** Prod must have it (and 213 + 218) *before* this ships.
+> ⚠ 18/18 layout probes green at 361 / 390 / desktop; 913 unit tests green.
+
+**The point of it:** you have a Tuesday you'd run again — keep it, and start from it next week. Then
+say how it went afterwards, so "what did we do about hitting last spring?" has an answer.
+
+- [ ] **Save one.** Open a practice with a plan → **Save as template…**. It should ask exactly one
+      question (tags, optional), pre-filled from what the practice is already about, and change
+      **nothing** about tonight. Check the wording says players and staff aren't saved.
+- [ ] **Build one from nothing.** Development → **Plan templates** → **New template** on a team with
+      none. You should land in a **full blocks-and-stations editor**, not a rename box.
+      *(You ruled this: refusing at zero while allowing it at one is arbitrary. Judge whether the
+      room earns its keep at zero, or whether it feels like a lot of screen for an empty list.)*
+- [ ] **⚠ A template holds no people.** In that editor confirm there is **no Choose players, no
+      "Who runs it", no group draw and no "Just for tonight"** — absent, not greyed out. The
+      rotation keeps *how often groups move* but not the groups.
+- [ ] **Use it.** On a practice → **Start this plan from…**. It should be **ONE control with two
+      tabs** — a template *or* a previous practice — not two buttons. The old "Copy from a previous
+      practice" wording should be gone.
+- [ ] **⚠ THE SEAM — judge this hardest.** After loading a template, the line at the top says
+      *"Started from X. This plan is yours now — edit anything."* Everything **is** editable — except
+      a station that came from **your drills**, which stays read-only inside it. **Two opposite rules,
+      one screen apart.** Does that read as coherent, or as a bug?
+- [ ] **Nothing leaks either way.** Change tonight heavily, then reopen the template — unchanged.
+      Edit the template, then reopen the practice — unchanged.
+- [ ] **Rename / Retire / Restore** in the room. A retired template **dims in place** rather than
+      vanishing, and a plan already started from it reads exactly as before.
+- [ ] **"Started 8 plans"**, never "Used 8×", and **"Not started a plan yet"**, never `0`. Same
+      honesty rule as the drill library. Tell me if it reads as pedantic on screen.
+- [ ] **The filter chips.** One flat list narrowed by tags — never headings. **"No tags"** appears
+      whenever it applies, so a template can't get lost by having none.
+- [ ] **Your tags** (button in the room, or in Your drills). Rename one and confirm it re-labels
+      **everywhere at once**. Then **Merge** two near-duplicates and confirm every drill, template,
+      practice and focus area came along. ⚠ Club-shared tags should not be listed here at all.
+- [ ] **How it went.** Under the plan, write a note. It should autosave, say *"about the practice,
+      not about a player"*, and say families never see it. ⚠ **Confirm there is no per-player
+      version anywhere** — that is a hard line, not an omission.
+- [ ] **A practice with no note says so** — *"Nothing written down for this one"*, never blank.
+- [ ] **⚠ The coverage answer — the one screen that names a child who's been missed.** Insights →
+      **Development**. Check: **roster order only**, **no sort control on any column**, and the
+      *In a plan* column shows a **tick or the words "— not in a plan yet"** — never a count, a
+      percentage or an average beside a name. **The exact flag wording is yours to approve.**
+- [ ] **⚠ It stays QUIET when it can't answer honestly.** On a team with fewer than three plans, or
+      where you never named players in one, that column and its finding should be **absent** — not a
+      screen of flags. *(This is deliberate: naming players in a plan is optional, so flagging your
+      whole roster would be us misreading our own data as a coaching failure.)*
+- [ ] **Practices you've run.** Filter to a tag and confirm you get every practice with that tag,
+      what was in it, and what you wrote. **This is the payoff for writing recaps at all** — judge
+      whether it feels worth the writing.
+- [ ] **⚠ Two kinds of truth, one page.** Coverage says *planned*; only this section describes what
+      happened. Tell me if that divide is legible or just looks inconsistent.
+- [ ] **⚠ THE NEW ARCHIVE DOOR.** Switch to a **completed season** and open Insights → Development →
+      **Open the plan →**. It should open **read-only**, with the season on the page and **no edit,
+      delete, run or save controls at all**. *(You ruled this door open explicitly — everything else
+      in Practice Plans stays live-season only.)*
+- [ ] **And the door stays narrow.** In that same completed season, the **Schedule** must still show
+      **no practice-plan section** — that was closed in 1b and is not reopened.
+- [ ] **In a completed season the Plan templates door is ABSENT** from Development, not a link that
+      errors. Templates belong to the team, not the season, so nothing is lost.
+- [ ] **As an assistant coach** (schedule access, not head coach): the template room is **readable**
+      with **no Rename, Retire, New or Your tags buttons at all**, and **Save as template…** doesn't
+      appear on a plan.
+
 
 ---
 
@@ -431,6 +504,18 @@ toolbar). No plan handy? Ask the agent to seed a probe practice — it prints a 
 - [ ] The drill library on a phone: a station that came from a drill should read as a **short block
       of text**, noticeably shorter than one you typed yourself — that contrast is deliberate, so
       you can tell at a glance where a station came from without reading a chip.
+- [ ] **Plan templates (§1.9) on a phone — this is where the whole feature is meant to pay off.**
+      The claim is *"next Tuesday starts from last Tuesday"*, and the moment it has to be true is a
+      coach on a couch with four minutes. Do it end-to-end: **Start this plan from… → A template →
+      the template → edit one block**. If it isn't faster than rebuilding, the feature hasn't
+      delivered its point and I'd rather know that than hear that it works.
+- [ ] **"How it went" on a phone, at home, after a practice** — that is the only moment it will ever
+      be written. If typing it there feels like paperwork, it won't get written, and everything the
+      looking-back list is for goes with it.
+- [ ] The Development report on a phone: the coverage table reflows to **stacked cards** at ~360,
+      and **Practices you've run** keeps its date, name and tags readable without sideways scroll.
+- [ ] The read-only past plan on a phone: it should read as a **record** — no controls anywhere, the
+      season visible, and one way back to the list.
 
 ---
 
@@ -468,6 +553,77 @@ Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
 - Deliberately NOT converted (don't file): chat reaction/poll popovers (needs its own approval),
   the coach team switcher (deferred — file was mid-edit elsewhere). Known pre-existing, ticketed:
   payee dropdown ignores Enter/Space for keyboard users.
+
+---
+
+## Session 5 — Tournament admin · DESKTOP (wide window, ~10 min)
+
+### 5.1 Tournament creation live preview (v1) — built, uncommitted
+*While an organizer fills in the setup wizard, a phone beside the form assembles their public
+tournament page in real time. Desktop-only; below ~1280px the wizard is untouched.*
+Plan (with build notes): `active/TOURNAMENT_CREATION_LIVE_PREVIEW_PLAN.md`.
+
+Sign in as an org admin. Do this at a window **wider than 1280px** unless a step says otherwise.
+
+- [ ] **Blank creation.** Create Tournament (from the sidebar, and again from Manage Tournaments).
+      The phone appears to the right. Type a name — it lands in the headline as you type; before you
+      type, the headline reads a grey "Your tournament name".
+- [ ] Set a start date a few weeks out. The badge forms a full date range AND a countdown —
+      "First pitch in N days". Sanity-check N against a calendar.
+- [ ] Edit the public link. The address under the phone follows it. Clear it → it shows a placeholder,
+      never a broken-looking URL.
+- [ ] Dates in the past/present: a tournament starting **today** reads "Tournament in progress" (no
+      countdown); one that already ended reads "Tournament complete".
+- [ ] Step 2 (divisions): the phone's stat row fills in — division count, total team spots, and the
+      event's length in days. Add/remove a division and watch it follow. **Skip** the divisions step
+      → the counts go back to "TBA" rather than claiming divisions that won't exist.
+- [ ] Walk through to the end. The preview stays beside you on every step and never blocks a button,
+      and creating the tournament still works exactly as before.
+- [ ] **Reuse path.** Create Tournament → reuse setup from a past event. The preview is **already
+      filled in** the moment that screen opens (name + dates carried over). Change the name/dates and
+      it follows. Its stat row stays "TBA" — divisions get copied after you create the draft, and the
+      preview deliberately doesn't guess at them.
+- [ ] **The no-change check (most important).** Narrow the browser below ~1280px on both paths: the
+      preview is *gone entirely* — no gap, no stacked panel, no shifted buttons. The wizard should
+      look and behave exactly as it does on today's shipped version. Also check a phone-width window.
+- [ ] **Honesty check.** Open a real published tournament page for this org in another tab and
+      compare: same colours, same date wording, same countdown wording. Note — an org whose plan
+      doesn't include custom branding will correctly see the FieldLogicHQ default colours in the
+      preview, because that's what its public pages actually publish in.
+- [ ] The "blank or reuse?" chooser screen has no preview — that's deliberate (nothing is filled in
+      yet), not a missing panel.
+
+**Colour presets (v1.1) — needs a Tournament Plus org AND a free-plan org to judge properly:**
+- [ ] **Plus org, blank creation.** A row of nine colour circles sits above the phone, starting on
+      your organization's current colours with that theme's name underneath. Click through a few —
+      the whole preview repaints (hero wash, date badge, Register button).
+- [ ] **The pick is real.** Choose a colour that is clearly *not* your org's, finish creating the
+      tournament, then open its public page (or Branding under tournament settings). It should have
+      the colour you picked.
+- [ ] **Untouched stays inherited.** Create another tournament without touching the row. Its Branding
+      screen should show no tournament-specific theme — it follows the organization. (This is the
+      point: change your org colours later and that event follows along; the one you deliberately
+      coloured does not.)
+- [ ] **Reuse path.** Reuse a past event that has its own colours, with "Public presence" ticked. The
+      swatch row and phone should show *that event's* colours, not your organization's. Untick
+      "Public presence" → both fall back to your org colours. Re-tick → back again.
+- [ ] **Override on reuse.** With "Public presence" ticked, pick a different swatch and create the
+      draft. The new tournament should have the colour you picked, not the copied one.
+- [ ] **Free-plan org: nothing at all.** Sign in as an org on the free Tournament plan and open the
+      wizard on a wide window. The preview appears, but there must be **no swatch row, no greyed-out
+      circles, and no upgrade prompt** — as if the feature doesn't exist.
+- [ ] **Permission check.** A member without the manage-branding permission (Members → permissions)
+      should also see no swatch row, even on Tournament Plus.
+- [ ] **Keyboard.** Tab into the swatch row and press Enter/Space — it should select, with a visible
+      focus ring.
+- Note: an organization using a *custom* colour rather than one of the nine presets will see no
+  circle highlighted and the caption "your organization's own colours" — correct, not a bug.
+- Note: the row only exists where the preview does, so a narrow window has no colour control.
+  Branding under tournament settings remains the full-time home for colours, logos, and banners.
+- Note: the phone shows the top of the page only (headline, dates, registration line, stats). No
+  schedule or standings — that's the agreed v1 scope, not an omission.
+- Note: there is deliberately **no colour picker** in the wizard. Custom colours are a paid feature
+  and putting the swatches in free signup is a pricing decision you haven't made yet.
 
 ---
 

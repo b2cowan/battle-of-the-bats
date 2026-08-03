@@ -71,6 +71,8 @@ export const MAX_TITLE_LEN = 120;
 export const MAX_TEXT_LEN = 600;
 export const MAX_SHORT_TEXT_LEN = 200;
 export const MAX_MINUTES = 600;
+/** "How it went" — matched to the CHECK constraint in mig 221. */
+export const MAX_RECAP_LEN = 2000;
 
 /** Practice plan schema version — bump only for a shape change that needs a read-time migration. */
 export const PRACTICE_PLAN_VERSION = 1;
@@ -385,6 +387,14 @@ export function sanitizePracticePlan(
   }
 
   const plan: PracticePlan = { version: PRACTICE_PLAN_VERSION, blocks };
+  // Provenance only — which TEMPLATE this plan started from, plus the name snapshotted at load
+  // time so the line keeps reading after a rename. Kept opaque and capped like `station.drillId`.
+  // ⚠ Unlike a drill's id this SURVIVES editing: a template is scaffolding, so "started from
+  // Standard Tuesday" stays true however much the coach then changes (see PracticePlan.templateId).
+  const templateId = optionalStr(raw.templateId, 64);
+  if (templateId) plan.templateId = templateId;
+  const templateName = optionalStr(raw.templateName, MAX_TITLE_LEN);
+  if (templateName) plan.templateName = templateName;
   const goal = optionalStr(raw.goal, MAX_TEXT_LEN);
   if (goal) plan.goal = goal;
   const practiceTypes = tagList(raw.practiceTypes, MAX_TAGS_PER_ITEM, MAX_TITLE_LEN);
@@ -938,7 +948,11 @@ export function formatRunClock(seconds: number): string {
 export interface PracticeTagSuggestions {
   staff: string[];
   equipment: string[];
-  practiceTypes: string[];
+  // ⚠ There is deliberately no `practiceTypes` here any more (Phase 3). What a practice is ABOUT
+  // stopped being free text and became a tag from the team's shared 'focus' vocabulary, which the
+  // picker fetches whole — so suggesting past free-text labels would offer a coach words from a
+  // vocabulary the product no longer writes into. The sanitiser still READS legacy
+  // `plan.practiceTypes` so old plans keep matching the focus rail; nothing suggests them.
 }
 
 export function collectStaffSuggestions(
@@ -949,12 +963,11 @@ export function collectStaffSuggestions(
 }
 
 /**
- * Every reusable label this team has already used — staff, equipment and practice types — in
- * offer order, gathered in ONE walk of the plans.
+ * Every reusable label this team has already used — staff and equipment — in offer order,
+ * gathered in ONE walk of the plans.
  *
- * ⚠ Practice types are coach-typed for a reason: "Hitting / Fielding / Pitching" is softball
- * talking. A fixed list would hard-code one sport into a platform that serves many, so the
- * vocabulary comes from what this team itself has typed before.
+ * ⚠ Both are coach-typed for a reason: a fixed list would hard-code one sport into a platform that
+ * serves many, so the vocabulary comes from what this team itself has typed before.
  */
 export function collectPracticeTagSuggestions(
   plans: readonly (PracticePlan | null)[],
@@ -962,7 +975,6 @@ export function collectPracticeTagSuggestions(
 ): PracticeTagSuggestions {
   const staff = new Map<string, string>();
   const equipment = new Map<string, string>();
-  const types = new Map<string, string>();
   const add = (into: Map<string, string>, value: string | undefined) => {
     const v = (value ?? '').trim();
     if (v && !into.has(v.toLowerCase())) into.set(v.toLowerCase(), v);
@@ -971,7 +983,6 @@ export function collectPracticeTagSuggestions(
   for (const name of leadingStaff) add(staff, name);
   for (const plan of plans) {
     if (!plan) continue;
-    for (const t of plan.practiceTypes ?? []) add(types, t);
     for (const e of plan.equipment ?? []) add(equipment, e);
     for (const block of plan.blocks) {
       for (const name of block.staff ?? []) add(staff, name);
@@ -984,7 +995,6 @@ export function collectPracticeTagSuggestions(
   return {
     staff: [...staff.values()],
     equipment: [...equipment.values()],
-    practiceTypes: [...types.values()],
   };
 }
 
@@ -996,6 +1006,11 @@ export function collectPracticeTagSuggestions(
  * ⚠ Copying is the ONLY reuse path in slice 1a, and it is deliberately a copy — a plan belongs
  * to ONE practice (D7). Nothing here writes to a series, and no caller may pass this through the
  * recurrence edit-scope machinery.
+ *
+ * ⚠ **`templateId` is deliberately NOT carried forward** (Phase 3). Provenance records the
+ * IMMEDIATE source, and this coach started from a PRACTICE, not from a template. Carrying it would
+ * inflate "Started 8 plans" with plans nobody started from that template, and the provenance line
+ * would claim a template the coach never opened.
  */
 export function copyPracticePlanForReuse(
   plan: PracticePlan,

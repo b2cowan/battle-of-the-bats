@@ -1,5 +1,50 @@
 # Practice Plans — Implementation Plan (Player Development, roadmap Phase 4)
 
+> ### ✅ PHASE 3 — "the visible half" BUILT 2026-08-02, UNCOMMITTED on `dev`, owner QA pending
+>
+> The foundation (migration **221**, the shared `kind='focus'` tag vocabulary) was committed
+> separately as `18f05650`; **everything a coach can SEE is this build.** Mockups
+> `claude.ai/code/artifact/7ac29440-1e16-4b0e-a22b-9e0093470107` (12 frames), signed off 2026-08-01.
+> ⚠ **Migrations 213, 218 and 221 are ALL DEV-ONLY** and every one must reach prod before any of
+> this promotes.
+>
+> **What shipped:**
+> · **The plan-template room** (`…/development/templates`) — one flat list narrowed by tag chips,
+>   rename / retire / restore, "Add from a past season", and its empty state offering all three
+>   routes · **its own full block-and-station editor** (`…/templates/[templateId]`), which is
+>   frame 03's accepted cost: "New template" is offered at zero, and a template built from scratch
+>   has no practice to inherit a shape from.
+> · **"Save as template…"** on a plan — one optional question, copies, changes nothing about tonight.
+> · **"Start this plan from…"** — 1a's copy-from-a-previous-practice control WIDENED to two tabs
+>   (a template *or* a previous practice), plus the D14 provenance line.
+> · **"How it went"** (D17) — one recap per practice, `rep_team_events.practice_recap`.
+> · **The plan's own tags** — the free-text "Kind of practice" control is RETIRED and replaced by
+>   the shared picker writing `rep_team_event_tags`. Legacy `plan.practiceTypes` is still READ (so
+>   old plans keep matching the focus rail) and rendered as "Also tagged"; nothing writes it.
+> · **Three new Development-report sections** — coverage ("In a plan"), the focus-area tags no plan
+>   was about, and the tag-filtered "Practices you've run". The report is now season-aware.
+> · **⚠ THE NEW ARCHIVE DOOR** — `…/history/development/practices/[eventId]`, one read-only past
+>   plan reached only from that list, served by a GET-only route
+>   (`events/[eventId]/practice-plan/read`) now in `APPROVED_SEASON_AWARE_ROUTES`.
+> · **Tag management** (frame 11) — the existing `TagManagerModal` pointed at new
+>   `focus-tags/[tagId]` + `focus-tags/merge` routes.
+>
+> **Also done, and asked for:** the `/simplify` TODO on `focus-tags/route.ts` is **discharged** —
+> the three near-identical tag route groups collapsed into `lib/coach-tag-routes.ts`, which now
+> serves all FIVE (game, expense, focus × collection/item/merge). ⚠ Its `seasonAwareRead` flag makes
+> each library's archive posture a declared decision, and the write-guard test was taught to read
+> that flag so collapsing the routes could not blind the guard.
+>
+> **Verification:** typecheck ✓ · lint 0 errors · **913 unit tests ✓** · all colour baselines still
+> ZERO · date-correctness ZERO · dictionary ✓ · org-context ✓ · **18/18 Playwright computed-style
+> probes green at 361 / 390 / desktop** (`tests/uat/scenarios/plan-templates-layout.spec.ts`) ·
+> clean dev restart. ⚠ Schema-parity fails as it did before this build — migs 213–221 are dev-only.
+>
+> **Two deliberate probe decisions, recorded so they are not re-litigated:** `.ppSuggestChip` is a
+> SHARED primitive shipped in Phase 2 at ~21px and is deliberately NOT in the tap-floor selector —
+> widening it would change four committed surfaces. And a `present: false` coverage column is a
+> PASS, not a skip: on a team with too few plans the column is *supposed* to be absent.
+>
 > **Status:** ✅ **PHASE 1a COMPLETE — owner QA PASSED 2026-08-01, committed on `dev` (`c0ecebe2`).**
 > ✅ **PHASE 1b ("Run it") BUILT 2026-08-01 — UNCOMMITTED on `dev`, owner QA pending. NOT on prod.**
 > ⚠ Migration 213 is dev-only and must reach prod before either is promoted. **1b adds no storage.**
@@ -425,7 +470,7 @@ sequencing question in §10.
 | **1a** | **Write it** | The plan on the practice — practice goal + kit · blocks (description/goal/duration D13) · staff tags (D12) · **stations** (D27) · **groups incl. the random draw** (D21) · **rotation blocks + computed grid** (D22–D26) · the focus rail · copy-from-a-previous-practice · the **printed sheet incl. the rotation grid** · **D10** (session date + practice link + "Recorded here") | One additive column (D6) |
 | **1b** | **Run it** | The field screen — block by block · rotation rounds + "Rotate now" · station cards · **"My station"** (D28) · coaching-points display | None |
 | **2** ✅ | **The drill library** — **BUILT on `dev` 2026-08-01, uncommitted, owner QA pending (§10.7)** | Drills w/ categories, coaching points, setup · the picker + preview · promotion (D18) · **the focus-rail filter** (D16) · **+ the club's shared drill set** and **"Add from a past season"** (owner rulings, §10.7). ⚠ "default stations" is retired — **a drill is ONE activity**, and two in a block is what makes a rotation. | `rep_team_drills` (mig 218, DEV ONLY) + `rep_player_development_goals.category` |
-| **3** | **The plan library & looking back** | Templates grouped by category (D14/D15) · usage history · **"how it went"** (D17) · **the coverage answer** folded into the existing development report | New table |
+| **3** ✅ | **The plan library & looking back** — foundation COMMITTED (`18f05650`); **the visible half BUILT on `dev` 2026-08-02, uncommitted, owner QA pending (§10.8)** | The template room as **ONE FLAT LIST filtered by tag chips** (⚠ NOT "grouped by category" — several tags per item would print one template under two headings) · its **own full editor** (frame 03's cost) · "Save as template…" · **ONE picker, two sources** · usage as **"Started 8 plans"** · **"how it went"** (D17) · **the coverage answer + uncovered focus tags + "Practices you've run"** folded into the existing development report · ⚠ **one NEW archive door**: a past plan, read-only, reached only from that list | `rep_team_plan_templates` + `rep_team_plan_template_tags` + `rep_team_events.practice_recap` (mig 221, DEV ONLY) |
 | **4** | **Helpers** ⚠ **GATED** | The "Helper" invite preset + their one-screen portal (D29/D30 · §8.1) | None |
 
 **Why 1a and 1b are one phase in two slices, not two phases:** 1a alone is already usable — a coach
@@ -946,6 +991,138 @@ the no-ranking rules on the coverage table · **club-wide TEMPLATES were never a
 built** — templates are team-scoped only. ⚠ If that question is raised, **route it, don't decide it**;
 the club-wide drill precedent (`BUSINESS_DECISIONS.md` 2026-08-01) and mig 184's nullable-`team_id`
 widening are the cheap path if the owner ever says yes.
+
+---
+
+## 10.9 · Phase 3 — build record and the deviations taken (2026-08-02)
+
+**Built in one pass, uncommitted on `dev`.** Frames 01–12 all implemented; nothing was redrawn.
+
+### The five decisions taken at build time that were NOT in the frames
+
+1. **"Kind of practice" (free text) is RETIRED, replaced by the shared tag picker.** The frames
+   never draw that control, but rulings 2 and 3 require a plan to carry tags from the ONE
+   vocabulary, and the focus rail to match on them. Leaving the free-text box beside the picker
+   would have been a second vocabulary that could never match the first — exactly the drift the tag
+   work removed. ⚠ **`plan.practiceTypes` is still READ** (so a plan written in 1a keeps softening
+   the rail on its own words) and renders read-only as **"Also tagged"**; nothing writes it, and its
+   suggestion pipeline was deleted rather than left dangling.
+2. **The read-only past plan lives under `history/development/practices/[eventId]`**, inside the
+   report's own subtree, so *"reached only from the looking-back list"* is structural rather than a
+   promise. Its API is a **separate GET-only route** (`…/practice-plan/read`), NOT the season rail
+   bolted onto the live editor's GET — that route also holds the PUT and the PATCH, and one file
+   carrying both postures is how a write eventually reaches an archive.
+3. **The three report sections ride `development/board?plans=1`** rather than a new route. All three
+   answers come from ONE walk of the season's plans, and a second copy of that walk is how two
+   sections start disagreeing. ⚠ The section is gated on `schedule` INDEPENDENTLY of the board's
+   own roster gate: an assistant who cannot open Tuesday's practice must not read its blocks here.
+4. **Tag management opens from the drills and template rooms**, not as a third Development door.
+   The frame draws the screen but not its entry point.
+5. **`setRepTeamEventTagsOfKind` was added.** The existing writer replaces EVERY tag on an event,
+   which was complete when game tags were the only kind — saving a plan's tags through it would
+   have silently deleted the game tags on the same practice.
+
+### The `/simplify` TODO, discharged
+
+`lib/coach-tag-routes.ts` collapses what were three hand-copied route groups into one, now serving
+**five** (game, expense, focus). ⚠ **`seasonAwareRead` is the load-bearing field**: it is `true` for
+game and expense (approved in Chunk F) and **`false` for focus BY DECISION** — a vocabulary is an
+INSTRUMENT, and a past plan renders from tag names snapshotted into it. The write-guard test now
+reads that flag, because a source scan that only looked for a `resolveCoachSeasonRead(` CALL would
+have gone blind to two routes the moment they were collapsed.
+
+### `/simplify` pass (2026-08-02) — 14 fixes, and it caught two REAL defects
+
+⚠ **The two that mattered were both quiet failures of the safety nets this codebase leans on
+hardest**, each introduced by an otherwise-good refactor that didn't carry its predecessor's
+protection all the way through:
+
+1. **The write-side archive guard went BLIND on all nine tag routes.** Collapsing them into a
+   factory removed the literal text `export const POST` from every file, so
+   `coach-season-write-guard.test.ts`'s two write-side rules found no body to inspect and silently
+   `continue`d — **still reporting green**. I had fixed the READ side of exactly this problem and
+   missed the write side. The guard now FOLLOWS delegation (`DELEGATED_HANDLERS`), and a new test
+   fails if any exported write verb resolves to no inspectable body — proven to bite by removing a
+   delegation entry and watching it name the three routes it could no longer see.
+   **A vacuous pass is worse than a failure.**
+2. **Migration 222** — the plan-template write policies did NOT gate on `coach_role = 'head_coach'`
+   the way their drill sibling (mig 218) does, while the route comment asserted "RLS mirrors both".
+   Any assigned assistant could have written templates directly from their own session, including
+   an unstripped `plan` carrying people. Applied to dev and verified against `pg_policies`.
+   ⚠ Policy-only, so `check:migrations` is a KNOWN FALSE GREEN for it — verify from `pg_policies`.
+
+Also fixed: the template read path now re-strips people (two layers, not one) · the coverage read
+was awaiting AFTER the board route's existing batch despite depending on none of it — a serial
+round trip on every report load, now inside the batch · a single-template GET was scanning up to
+400 plans to produce one integer, now a targeted count · `collectTags` and `totalPlannedMinutes`
+reused instead of re-implemented · the coach-team auth prefix extracted to
+`lib/coach-route-context.ts` (three copies, one already drifted) · the focus-tag vocabulary
+collapsed to one hook (`components/coaches/use-focus-tags.ts`, four client copies → one) ·
+disjoint tag delete/insert parallelised · two nested ternaries flattened · a stale PDF comment.
+
+**Skipped, with reasons:** the tag-filter-chip row is hand-copied three times, but only two call
+sites are in this diff — the third is the committed drill library, and extracting a shared
+component for two while leaving the third is half a job. Same for adopting the new tag hook there.
+Both are the next session's cheap win.
+
+### `/review` pass (2026-08-02, high-risk tier, 5 lenses) — 8 confirmed, all fixed
+
+Lenses: correctness · security/multi-tenant · capability parity · product-rule & vocabulary ·
+regression/blast-radius. **1 Critical, 2 High, 3 Medium, 2 Low. Zero refuted findings survived
+unfixed.** Every Critical/High was adjudicated in the main loop against the actual code, not taken
+on a subagent's word.
+
+**⚠ CRITICAL — the live practice-plan GET leaked every child's name and number to a coach with
+`roster: 'off'`.** `roster` is an INDEPENDENT grant from `schedule`, so an assistant trusted to run
+a station but not to hold the team list would still receive the full roster: the handler gated only
+on `schedule`, and `redactRoster` nulls PII/notes FIELDS without ever consulting `caps.roster` — a
+no-op on a `{id, name, number}` projection. **Pre-existing since slice 1a**, but in scope: this
+phase edited that exact handler and shipped a correctly-gated sibling (`…/practice-plan/read`)
+beside it. Now gated at the SOURCE — the list is never fetched, so no client mistake can surface it.
+
+**⚠ HIGH — a CANCELLED practice appeared under "Practices you've run".** Cancelling only flips
+`status`; it never clears the plan or the recap. So a rained-off practice rendered under the one
+heading licensed to assert something happened — the "planned quietly becomes done" trap §4 exists
+to prevent, and the same shape an earlier `/review` had already fixed for cancelled games in this
+very file. Excluded from the list AND 404'd on the archive door, so a kept link cannot open it.
+
+**⚠ HIGH — "focus areas that haven't appeared in a plan" skipped the thin-data gate its two
+neighbours use.** With one plan in the season it confidently named a gap the other two sections
+were refusing to claim. Worse: the practices read is deliberately non-fatal, so a SWALLOWED READ
+FAILURE would have listed EVERY active focus tag as uncovered — a confident wrong answer
+manufactured out of an error. Gated on `planCount` (not `answerable`: naming players is optional
+and this question is about tags, not people). Three unit tests pin it.
+
+**Medium ×3:** "Who ran it" / "Who was at it" on the read-only past plan asserted execution and
+attendance the product has never recorded (D4) — now "Who was assigned", matching the live editor;
+my defending comment conflated *the writing happened in the past* with *the plan was followed* ·
+the events routes still used an UNSCOPED tag writer that deletes every tag on an event regardless
+of kind — dormant only because one form happens not to send tags for a practice, so **the unscoped
+writer has been deleted outright** rather than left as a footgun · the tag picker saves on every
+click with no debounce, so two fast taps raced into a primary-key conflict that failed the WHOLE
+insert (dropping the second tag) with no client rollback — now an idempotent upsert, and the
+optimistic UI reverts on failure.
+
+**Low ×2:** template tag validation proved org but not TEAM, unlike `isTeamFocusTag` one screen
+over — a coach who once held another team in the org could have linked its word into this team's
+library · the unified cap message dropped "Delete or" on two committed surfaces where deleting
+still works.
+
+**Not defects, recorded so they are not mistaken for drift:** malformed JSON on three tag POSTs now
+answers 400 instead of 500 (an improvement from the factory's shared body parse) · the report
+sections gate on `schedule` rather than `notes` — a documented, strictly-more-conservative
+deviation (§10.9) · the archive door, the RLS posture after mig 222, and the nine tag routes'
+capability gates were all diffed against `HEAD` and confirmed unchanged.
+
+### Two probe decisions worth not re-litigating
+
+- **`.ppSuggestChip` is excluded from the tap-floor selector.** It is a SHARED primitive that
+  shipped in Phase 2 at ~21px, used by the drill library's chips, the plan editor's suggestions and
+  the tag picker. This phase reuses it correctly; failing on it would force a widening that four
+  committed surfaces depend on. Phase 2's own probe excluded it for the same reason.
+- **An absent "In a plan" column is a PASS.** On a team with fewer than three plans, or none that
+  name anyone, the column is *supposed* to be missing. A probe that demanded it exist would push the
+  product into the confident lie it refuses.
 
 ---
 

@@ -2729,6 +2729,51 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_tryout_registrations.offer_responded_at -->
 **`offer_token_hash` / `offer_sent_at` / `offer_expires_at` / `offer_response` / `offer_responded_at`** (text / timestamptz / timestamptz / text / timestamptz, all nullable; **mig 170**, Phase 2B.5) — the guardian OFFER-RESPONSE loop. When a coach/admin extends an offer, `offer_token_hash` stores the **SHA-256** of a no-login response token (raw token lives only in the email URL — same posture as `rep_tryout_evaluator_sessions.token_hash`; partial-unique index `rep_tryout_registrations_offer_token_uq WHERE offer_token_hash IS NOT NULL`), `offer_sent_at` stamps the send, and `offer_expires_at` is the **7-day (adjustable) deadline** — enforced **lazily on board view** (no scheduler), and a lapsed offer is surfaced as "expired" but **never auto-mutates `status`** (D2: flag the coach). `offer_response` is the family's self-serve answer via the token page — `'accepted'` / `'declined'` (CHECK), **distinct from `status`** because the coach still finalizes the roster add + fees (D1: accept = coach confirms); `offer_responded_at` stamps it and is the token's **single-use** guard. A non-offered transition clears all five so a re-offer mints a fresh link.
 
+<!-- dict:col:rep_tryout_registrations.first_offered_at -->
+**`first_offered_at`** (timestamptz, nullable; **mig 223**, Tryout Insights Phase 2) — **STICKY**: when an offer was **first** extended to this candidate. Stamped by trigger `trg_rep_tryout_first_offered` (function `stamp_rep_tryout_first_offered`) on the first transition to `status='offered'`, and **never cleared by anything** — including `clearTryoutOffer`, which wipes the five columns above. ⚠ **Not interchangeable with `offer_sent_at`.** That one is *live offer-email state*; this one is *history*. Before it existed, a coach who offered a candidate and then re-decided erased the only trace the offer ever happened, so the tryout report's funnel could claim **current standing** only. ⚠ The funnel counts the **union** of `first_offered_at IS NOT NULL` and currently offered/accepted ([lib/tryout-report.ts](../../../lib/tryout-report.ts)) — the backfill only set rows with a surviving `offer_sent_at`, so counting the stamp alone would make historic seasons *drop* below what they already reported. A record-only offer (family emails off, D-E9) left no timestamp behind and stays NULL rather than inventing one from `updated_at`. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+### `rep_player_tryout_baselines`
+<!-- dict:table:rep_player_tryout_baselines -->
+
+**Purpose:** ONE **frozen tryout snapshot per rostered player per season** — "where this player's season started". Written **once**, by an explicit coach act in the Build-stage seeding walkthrough, and read only by that player's development page. Added by migration 223 (Tryout Insights Phase 2, plan §5). It is the bridge from the acquisition feature (tryouts) to the retention feature (player development): the dev hub starts the season populated instead of empty. **⚠ DEV-ONLY / PROD-PENDING at author time** — ships behind the still-pending 214–222 queue.
+
+**Gotchas (read first):**
+1. **The snapshot is a COPY, not a join — and that is why the table exists.** The report (feature A) and candidate memory (feature C) compute snapshots at READ time from `rep_tryout_scores` × `rep_tryout_rubrics`. A baseline may not: the coach *looked at these numbers* and chose focus areas from them, so a later rubric rename or corrected score must never rewrite it (**R4**). Same posture as `rep_player_measurables.unit` and `station.drillTags` — the words that were true when the record was made.
+2. **CONTEXT, NEVER A MEASURABLE (R4).** Deliberately not a `rep_player_measurables` row and deliberately not shaped like one. A tryout composite is a subjective panel rating; feeding it into the measurables timeline would manufacture a trend from two unrelated kinds of number. The dashed-border card (mockups v1 frame 05, `components/coaches/TryoutSnapshotCard.tsx`) is that ruling made visible — **no surface may treat tryout-composite → in-season-measurable as a trend.**
+3. **COACH-EYES-ONLY, PERMANENTLY (R3).** No value from here may reach a family payload — recap, keepsake, offer page, any Chunk D surface. The recap may state the FACT that a player earned a roster spot, never a number. Enforced by `tests/unit/tryout-baseline.test.ts`, which scans every family payload builder's **source** (and every `lib/family-*.ts`) rather than trusting convention.
+4. **One per player per season, never overwritten.** `rep_player_tryout_baselines_player_year_uniq` is the mechanism; the API answers **409 `already_seeded`** rather than updating, and `createRepPlayerTryoutBaseline` uses `ignoreDuplicates` so a race between two open walkthroughs is a quiet "already set", not a 500. There is deliberately **no update and no delete helper, and no UPDATE/DELETE policy**.
+5. **Rostered players only, and only tryout-sourced ones.** The FK is to `rep_roster_players`, so a candidate who was never accepted structurally cannot have a baseline — their scores stay in tryout history. The walkthrough further filters to `source='tryout'`: a manually-added player has no tryout to be a baseline *of*.
+6. **Nothing is seeded and nothing is back-filled.** A row exists only because a coach walked the walkthrough and pressed Save for that player. **Focus areas are never auto-written either (R5)** — each suggestion is resolved through a coach-confirmed `TagPicker` against the team's existing `focus` vocabulary, and "Don't add" is a first-class answer.
+7. **Live season only.** The route is built on `resolveLiveCoachTeamContext`, never the season-read rail: seeding a season's development plan is an *instrument*, not a record, so a finished season cannot be addressed at all (archive-is-opt-in).
+
+**Fields** (boilerplate `id` omitted):
+
+<!-- dict:col:rep_player_tryout_baselines.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL, CASCADE) — tenant scope.
+
+<!-- dict:col:rep_player_tryout_baselines.team_id -->
+**`team_id`** (FK → `rep_teams.id`, NOT NULL, CASCADE) — the owning team; the key both write policies match on.
+
+<!-- dict:col:rep_player_tryout_baselines.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id`, NOT NULL, CASCADE) — the season. Redundant with the roster row (which is already season-scoped) and carried anyway: it makes "which baselines exist for this season" one indexed read for the walkthrough, and makes the one-per-season rule readable as the sentence it is.
+
+<!-- dict:col:rep_player_tryout_baselines.roster_player_id -->
+**`roster_player_id`** (FK → `rep_roster_players.id`, NOT NULL, CASCADE) — whose baseline. UNIQUE with `program_year_id` (gotcha 4). Cascade is the **only** deletion path.
+
+<!-- dict:col:rep_player_tryout_baselines.tryout_registration_id -->
+**`tryout_registration_id`** (FK → `rep_tryout_registrations.id`, nullable, **ON DELETE SET NULL**) — provenance only. The snapshot already carries everything the card renders, so purging a registration (the PII-retention policy, when it lands) must not take the baseline with it.
+
+<!-- dict:col:rep_player_tryout_baselines.snapshot -->
+**`snapshot`** (jsonb, NOT NULL; CHECK `jsonb_typeof = 'object'`) — `{version, tryoutId, seasonLabel, dateLabel, scaleMax, composite, evaluatorCount, blindUsed, categories:[{key,label,avg}]}`. Shape + assembly live in [lib/tryout-baseline.ts](../../../lib/tryout-baseline.ts), **not** in DB constraints (the `practice_plan` stance, mig 213). Averaging is delegated to `rankTryoutCandidates` — the single source shared with the live scoreboard and the report; there is deliberately no second averaging path. Unscored categories are `null`, **never 0**. `version` is bumped rather than migrated: stored rows are historic records.
+
+<!-- dict:col:rep_player_tryout_baselines.seeded_by -->
+**`seeded_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who confirmed it.
+
+<!-- dict:col:rep_player_tryout_baselines.seeded_at -->
+**`seeded_at`** (timestamptz, NOT NULL, default `now()`) — when. Shown as "✓ baseline set" on re-entry to the walkthrough.
+
+**RLS:** reads = org members + coaches of the assigned team (a guardian is neither). Writes = **INSERT only, head-coach-only**, matching the app gate (`tryouts` **and** `canWriteDevelopment` — both, because the route reads evaluation content *and* writes development goals). No UPDATE policy, no DELETE policy anywhere.
+
 ### `rep_tryouts`
 <!-- dict:table:rep_tryouts -->
 

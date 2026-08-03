@@ -499,7 +499,7 @@ describe('startingGroupsForStation', () => {
 });
 
 describe('collectPracticeTagSuggestions', () => {
-  it('gathers staff, equipment and practice types in one walk, coaches first', () => {
+  it('gathers staff and equipment in one walk, coaches first', () => {
     const a = sanitizePracticePlan({
       practiceTypes: ['Hitting'],
       equipment: ['balls'],
@@ -515,15 +515,65 @@ describe('collectPracticeTagSuggestions', () => {
     const out = collectPracticeTagSuggestions([a, b], ['Head Coach']);
     assert.deepEqual(out.staff, ['Head Coach', 'Craig', 'Adam']);
     assert.deepEqual(out.equipment, ['balls', 'tees'], 'case-insensitive de-dup, first spelling wins');
-    assert.deepEqual(out.practiceTypes, ['Hitting', 'Fielding']);
+  });
+
+  it('does NOT suggest legacy practice types (Phase 3 — what a practice is about became a tag)', () => {
+    const plan = sanitizePracticePlan({ practiceTypes: ['Hitting'], blocks: [{ title: 'A', duration: { minutes: 5 } }] });
+    // The stored value survives, because the focus rail still matches an old plan on its own
+    // words — but nothing offers it back, since there is no free-text control to offer it into.
+    assert.deepEqual(plan?.practiceTypes, ['Hitting']);
+    assert.deepEqual(
+      collectPracticeTagSuggestions([plan]),
+      { staff: [], equipment: [] },
+      'a suggestion list must not offer words from a vocabulary the product no longer writes',
+    );
   });
 
   it('tolerates practices with no plan', () => {
-    assert.deepEqual(collectPracticeTagSuggestions([null, null]), { staff: [], equipment: [], practiceTypes: [] });
+    assert.deepEqual(collectPracticeTagSuggestions([null, null]), { staff: [], equipment: [] });
+  });
+});
+
+describe('template provenance on a plan (Phase 3)', () => {
+  it('round-trips templateId and the snapshotted templateName', () => {
+    const plan = sanitizePracticePlan({
+      templateId: 'tpl-1',
+      templateName: 'Standard Tuesday',
+      blocks: [{ title: 'A', duration: { minutes: 10 } }],
+    });
+    assert.equal(plan?.templateId, 'tpl-1');
+    assert.equal(plan?.templateName, 'Standard Tuesday');
+    // Idempotent, like every other field — this sanitiser runs on read as well as on write.
+    assert.deepEqual(sanitizePracticePlan(plan), plan);
+  });
+
+  it('⚠ SURVIVES an edit, unlike a drill’s provenance — a template is scaffolding', () => {
+    // A drill's id is cleared the moment a coach changes its words, because a drill is an identity
+    // claim. "This plan started from Standard Tuesday" stays true however much they change, so
+    // this id is not cleared by anything. Both rules are right, one screen apart.
+    const edited = sanitizePracticePlan({
+      templateId: 'tpl-1', templateName: 'Standard Tuesday',
+      blocks: [{ title: 'Completely different', duration: { minutes: 45 } }],
+    });
+    assert.equal(edited?.templateId, 'tpl-1');
   });
 });
 
 describe('copyPracticePlanForReuse (D7 — a copy, never a series write)', () => {
+  it('⚠ does NOT carry template provenance forward', () => {
+    // Provenance records the IMMEDIATE source, and this coach started from a PRACTICE. Carrying it
+    // would inflate "Started 8 plans" with plans nobody started from that template, and the
+    // provenance line would name a template the coach never opened.
+    const source = sanitizePracticePlan({
+      templateId: 'tpl-1', templateName: 'Standard Tuesday',
+      blocks: [{ title: 'A', duration: { minutes: 10 } }],
+    })!;
+    let n = 0;
+    const copy = copyPracticePlanForReuse(source, new Set<string>(), () => `x${++n}`);
+    assert.equal(copy.templateId, undefined);
+    assert.equal(copy.templateName, undefined);
+  });
+
   it('gives every block, station and group a fresh id and drops departed players', () => {
     let n = 0;
     const source = sanitizePracticePlan({
