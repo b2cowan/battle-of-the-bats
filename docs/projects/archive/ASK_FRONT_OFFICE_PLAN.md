@@ -1,7 +1,19 @@
 # Ask the Front Office — Implementation Plan
 
-**Status:** **Phase A BUILT 2026-08-02** (dev, uncommitted, owner QA pending). Phase B still blocked
-on the privacy ruling. Companion brief: `ASK_FRONT_OFFICE_PM_BRIEF.md`.
+**Status:** ✅ **Phase A COMPLETE — committed to dev `5ce226a4` 2026-08-03.** Owner QA steps live in
+`OWNER_QA_LEDGER.md` §1.10. Not on prod.
+
+⛔ **Phases B and C are PARKED (owner, 2026-08-03).** "No need to extend this to an AI feature just
+yet." This is a deliberate stop, not a blocked task — do NOT pick Phase B up as the obvious next
+step. Everything below the Phase A section is preserved as the ready-to-go design if and when it is
+un-parked; the privacy ruling it needs has not been sought, because it isn't wanted yet.
+
+**What un-parking would cost, recorded while it's fresh:** the question library is already the
+router's tool menu, so Phase B is genuinely additive — no rework of Phase A. The real gate remains
+the privacy ruling (minors' first names to a third-party API vs. the pseudonymization mode), not
+engineering effort. The eight-chip ceiling is the natural trigger to revisit.
+
+Companion brief: `ASK_FRONT_OFFICE_PM_BRIEF.md`.
 Mockups (binding): Claude Artifact `14a812e8-1fe0-429c-9c54-beab7a581038`, source
 `ASK_FRONT_OFFICE_MOCKUPS.html`.
 **Origin:** Ideas Backlog shortlist (`docs/projects/IDEAS_BACKLOG.md`), grounded against code 2026-08-02.
@@ -156,9 +168,13 @@ Build items:
 Verification: unit tests for each aggregation module (fixtures incl. empty/sparse data);
 `npm run verify:changed`; UAT probe for the chips flow. No schema change anticipated in Phase A.
 
-## Phase B — free-text box (first AI integration)
+## Phase B — free-text box (first AI integration) — ⛔ PARKED (owner, 2026-08-03)
 
 **Gate: owner privacy ruling first** (see Decisions). This is the platform's first LLM dependency.
+
+⛔ **Parked by the owner on 2026-08-03** — the tappable questions are enough for now. The design
+below is complete and stays here for whenever it is wanted. Do not start it, and do not go seeking
+the privacy ruling on its behalf.
 
 - **SDK + model:** official Anthropic TypeScript SDK (`@anthropic-ai/sdk`), model `claude-opus-5`,
   server-side only (new env secret `ANTHROPIC_API_KEY`; never client-exposed). Prompt caching on
@@ -187,7 +203,7 @@ Verification: unit tests for each aggregation module (fixtures incl. empty/spars
   instructions cannot exfiltrate or fabricate — worst case is a wrong lookup with visibly wrong
   receipts.
 
-## Phase C — AI-drafted prose (later, optional)
+## Phase C — AI-drafted prose (later, optional) — ⛔ PARKED with Phase B (owner, 2026-08-03)
 
 The model drafts the answer sentence from the returned records (richer phrasing, multi-fact
 synthesis). Ship only with a deterministic verifier: every name, number, and date in the drafted

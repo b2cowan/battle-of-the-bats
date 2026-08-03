@@ -2166,15 +2166,16 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Insights: how your season is going (Premium)',
       summary: 'Your season read back to you — record and form, playing time, attendance, dues and development — built entirely from what you have already entered.',
-      keywords: ['insights', 'season insights', 'reports', 'what stands out', 'scoreboard', 'record', 'form', 'playing time', 'fair', 'attendance report', 'season review', 'history'],
-      searchText: 'insights season insights how is my season going scoreboard band record form streak run differential close games attendance percentage dues collected what stands out findings flags reports doorways is playing time fair who shows up where is the money who is earning it is everyone getting attention nothing to show yet empty insights fills in on its own no numbers invented read only derived',
+      keywords: ['insights', 'season insights', 'reports', 'what stands out', 'scoreboard', 'record', 'form', 'playing time', 'fair', 'attendance report', 'season review', 'history', 'ask about your team'],
+      searchText: 'insights season insights how is my season going scoreboard band record form streak run differential close games attendance percentage dues collected what stands out findings flags ask about your team ask bar questions reports doorways is playing time fair who shows up where is the money who is earning it is everyone getting attention nothing to show yet empty insights fills in on its own no numbers invented read only derived',
       content: (
         <>
           <p><strong>Insights</strong> (in the Season menu) is your season read back to you. You never enter anything here — every number is built from the games, lineups, attendance and dues you&rsquo;ve already recorded elsewhere in the portal.</p>
-          <p>It has three parts, top to bottom:</p>
+          <p>It has four parts, top to bottom:</p>
           <ul>
             <li><strong>The scoreboard band</strong> — the figures you&rsquo;d recite out loud: record, recent form, scoring difference, close games, attendance rate, dues collected. A block only appears once it has real data behind it.</li>
             <li><strong>What stands out</strong> — the reports read <em>for</em> you. A pitcher over their arm-care cap, a player who&rsquo;s sat the bench most, dues going overdue. Each one links straight to the report it came from.</li>
+            <li><strong>Ask about your team</strong> — a single bar you tap to ask one of a handful of ready-made questions and get a straight answer, with the records behind it. See <em>Asking about your team</em> below.</li>
             <li><strong>Report doorways</strong> — question-titled tiles (<em>&ldquo;Is playing time fair?&rdquo;</em>, <em>&ldquo;Who shows up?&rdquo;</em>) that open the full report.</li>
           </ul>
           <p><strong>Why it may look empty.</strong> Insights fills in on its own as the season runs — nothing is invented to make the page look busy. Enter a game result, save a lineup, or take attendance once, and the matching part appears. A brand-new season is legitimately blank here.</p>
@@ -2192,6 +2193,83 @@ const coachesHelp: HelpPageContent = {
               <p>Open <strong>Insights</strong> (in the <strong>Season</strong> menu) and tap <strong>&ldquo;Is playing time fair?&rdquo;</strong> — a report with <strong>one row per player</strong>, built from the lineups you&apos;ve saved: innings <strong>on the field vs. on the bench</strong>, <strong>back-to-back</strong> bench games, every <strong>position</strong> they&apos;ve played, and <strong>pitching</strong> innings against their arm-care cap, with a ⚠ flag on any game over it.</p>
               <p>Below the table, <strong>&ldquo;Which lineup wins?&rdquo;</strong> lists each batting order you&apos;ve reused with its win-loss record — counting only games with a score entered.</p>
               <p><strong>Every figure comes only from saved lineups</strong> — nothing is invented, and honest empty states show until you&apos;ve saved a few. The Insights page also flags standouts for you under <strong>&ldquo;What stands out&rdquo;</strong> (a pitcher over their cap, who&apos;s sat the bench most), so you don&apos;t have to go digging.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'premium-ask',
+      group: 'Premium Coaches Portal',
+      heading: 'Asking about your team (Premium)',
+      summary: 'Tap one of a handful of ready-made questions and get a straight answer, with the exact records it came from listed underneath.',
+      keywords: ['ask', 'ask about your team', 'ask the front office', 'questions', 'question bar', 'receipts', 'who has not played', 'what does each family owe', 'who missed practices', 'who has not paid', 'search my team'],
+      searchText: 'ask about your team ask the front office question bar tap a question ready-made questions receipts evidence proof who has not played catcher lately position recently what does each family still owe family dues who has not paid anything yet never paid who has missed the most practices attendance is playing time even whose arm needs a rest pitching cap choose a question cannot type free text no typing search box answers from your own records never a guess never outside data nothing recorded yet honest empty state assistant coach cannot see money question current season only',
+      links: [{ label: 'Insights', href: '#premium-insights' }],
+      content: (
+        <>
+          <p>On <strong>Insights</strong>, between <em>What stands out</em> and the report tiles, there&rsquo;s a single bar: <strong>Ask about your team</strong>. Tap it and a short list of ready-made questions opens. Tap one and you get a straight answer in a sentence, with the exact records it came from listed underneath — each linking to the full report.</p>
+          <p>The questions available today:</p>
+          <ul>
+            <li><strong>Who hasn&rsquo;t played a position lately?</strong> — pick a position and see who&rsquo;s waited longest for a turn there, and who&rsquo;s covered it since.</li>
+            <li><strong>What does each family still owe?</strong> — dues rolled up per family, so brothers and sisters count as one conversation instead of two.</li>
+            <li><strong>Who hasn&rsquo;t paid anything yet?</strong></li>
+            <li><strong>Who&rsquo;s missed the most practices?</strong> — over recent practices, with the specific dates.</li>
+            <li><strong>Is playing time even?</strong></li>
+            <li><strong>Whose arm needs a rest?</strong> — against the per-game cap <em>you</em> set. Diamond sports only.</li>
+          </ul>
+          <p><strong>You tap, you don&rsquo;t type.</strong> The bar is a list of questions to choose from, not a search box — that&rsquo;s why it says &ldquo;Choose a question&rdquo;.</p>
+          <p><strong>Every answer is built from your own records.</strong> Nothing is estimated, predicted, or compared against other teams, and no answer ever appears without its evidence. If there&rsquo;s nothing recorded yet, it says so plainly and tells you the one thing that would fill it in — it never shows a zero it can&rsquo;t stand behind.</p>
+          <p><strong>You only see what your access allows.</strong> A question you&rsquo;re not cleared for simply isn&rsquo;t on the list — an assistant without money access has no dues questions at all, rather than a locked one. If your access leaves no questions, the bar doesn&rsquo;t appear.</p>
+          <p><strong>Current season only.</strong> Opening a finished season shows no question bar.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-ask-typing',
+          question: 'Can I type my own question?',
+          answerText: 'Not yet. Today "Ask about your team" is a list of ready-made questions you tap — that is why the bar says "Choose a question" rather than showing a text box. Typing your question in your own words is planned for a later version. The tappable questions will keep working exactly as they do now.',
+          keywords: ['type a question', 'free text', 'search box', 'my own words', 'typing', 'ai', 'chatbot'],
+          answer: (
+            <>
+              <p>Not yet. Today <strong>Ask about your team</strong> is a list of ready-made questions you tap — which is why the bar says <em>&ldquo;Choose a question&rdquo;</em> rather than showing a text box.</p>
+              <p>Typing a question in your own words is planned for a later version. When it arrives, the tappable questions keep working exactly as they do now.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-ask-empty',
+          question: 'Why does a question say “nothing recorded yet”?',
+          answerText: 'Because it is true. Every answer is assembled from what you have recorded — saved lineups, attendance you have taken, dues you have set up. If none of that exists yet for a question, it says so and names the one thing that would fill it in, such as taking attendance at a single practice. It will never show a made-up figure or a zero it cannot stand behind, so a brand-new team is honestly blank here.',
+          keywords: ['nothing recorded', 'empty answer', 'no data', 'blank', 'why no answer', 'new team'],
+          answer: (
+            <>
+              <p>Because it&rsquo;s true. Every answer is assembled from what <em>you&rsquo;ve</em> recorded — saved lineups, attendance you&rsquo;ve taken, dues you&rsquo;ve set up.</p>
+              <p>If none of that exists yet for a question, it says so and names the one thing that would fill it in (take attendance at a single practice, save one lineup). It will never show an invented figure or a zero it can&rsquo;t stand behind — so a brand-new team is honestly blank here.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-ask-missing-question',
+          question: 'An assistant coach can’t see one of the questions — why?',
+          answerText: 'Questions are filtered by each coach\'s own access. An assistant without money access has no dues questions at all — they are absent from the list rather than shown locked, because a question they can never get an answer to is just a dead end. The same applies to lineup and player access. If a coach\'s access leaves no questions at all, the bar itself does not appear for them. Change what they can see under Staff.',
+          keywords: ['assistant cannot see', 'missing question', 'permissions', 'access', 'money access', 'hidden question', 'fewer questions'],
+          answer: (
+            <>
+              <p>Questions are filtered by each coach&rsquo;s own access. An assistant without <strong>money access</strong> has no dues questions at all — they&rsquo;re <em>absent</em> from the list rather than shown locked, because a question you can never get an answer to is just a dead end. The same applies to lineup and player access.</p>
+              <p>If a coach&rsquo;s access leaves no questions at all, the bar doesn&rsquo;t appear for them. Change what they can see under <strong>Staff</strong>.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-ask-family-names',
+          question: 'Why does the dues answer name players instead of families?',
+          answerText: 'Because that coach can see dues but not guardian contact details. Brothers and sisters are still correctly counted as one family — the grouping happens behind the scenes — but the family is labelled with the players\' names instead of the family surname, since those are names that coach already sees on every roster screen. A head coach, or an assistant granted guardian access, sees the family surname.',
+          keywords: ['family name', 'surname', 'guardian access', 'player names dues', 'siblings', 'brothers sisters'],
+          answer: (
+            <>
+              <p>Because that coach can see dues but not <strong>guardian contact details</strong>.</p>
+              <p>Brothers and sisters are still correctly counted as <em>one</em> family — the grouping happens behind the scenes — but the family is labelled with the players&rsquo; names rather than the family surname, since those are names that coach already sees on every roster screen. A head coach, or an assistant granted guardian access, sees the family surname.</p>
             </>
           ),
         },

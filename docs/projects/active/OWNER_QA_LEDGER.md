@@ -25,6 +25,23 @@
 > setup wizard is exactly what it was. Second sharpest: the preview must never promise a look the
 > published page won't deliver — check the colours against a real public tournament page.
 
+> **✅ PASSED 2026-08-03 — the coach portal DESKTOP SHELL chunk, QA'd live with the working agent
+> rather than through this ledger, so it has no step list here.** Covers: the pinned team masthead
+> **A2 status line** (record + Game day / Next / Complete, reshaped mid-QA to **Option B** —
+> identity left, today's status right, no eyebrow where it would only echo the sidebar) and the
+> **Option C rails** (Overview rail **cut** as duplicative; lineup + Dues rails kept and trimmed;
+> the Dues chase card reduced to one line with per-family Remind moved into the player's panel, and
+> it no longer raises an alarm before anything is actually due). Still uncommitted pending the
+> owner's per-action OK.
+>
+> ⚠ **Test data was deliberately RETAINED on `toronto blue jays5` for future runs** (owner,
+> 2026-08-03) — do not clean it up without asking. Everything seeded is marked **`[qa]`** in its
+> name: eight events on the live 2026 season (a game TODAY with attendance set — 10 in, 1 out
+> named, 1 no reply — plus a full week ahead and a scored-then-cancelled game), and an entire
+> **finished 2025 season** (`[qa] toronto blue jays5 2025`, final record **8–3–1**, containing a
+> scrimmage win and a scored-then-cancelled win that must never count). That team is now the
+> standing fixture for game-day, archive, and cancelled-game-record checks.
+
 > **How to use this:** work a session top-to-bottom, tick `[x]` as you go, jot defects inline under
 > the step that failed. When a project's section is fully ticked, tell the working agent "QA passed:
 > <project>" — it graduates the project (commit where still uncommitted, with your per-action OK,
@@ -397,6 +414,38 @@ say how it went afterwards, so "what did we do about hitting last spring?" has a
       with **no Rename, Retire, New or Your tags buttons at all**, and **Save as template…** doesn't
       appear on a plan.
 
+### 1.10 Ask the Front Office, Phase A — built + simplified + reviewed + docs, **COMMITTED** `5ce226a4`
+Archived plan: `archive/ASK_FRONT_OFFICE_PLAN.md` + `_PM_BRIEF.md`. Mockups (binding):
+https://claude.ai/code/artifact/14a812e8-1fe0-429c-9c54-beab7a581038
+
+On **Insights**, between "What stands out" and the report tiles, a one-line bar: **Ask about your
+team**. It opens six ready-made questions; each answers in a sentence with the records underneath.
+
+- [ ] **At rest it is ONE LINE.** Open Insights and confirm the bar costs almost no height and shows
+      no questions until you tap it. It should read as a bar to tap, **not a search box** — if your
+      instinct is to click and start typing, that's the defect, tell me.
+- [ ] Tap it. Six questions on a diamond team. Tap **"Who hasn't played a position lately?"** — a
+      position row opens **already on the position with the longest gap**, and the answer names a
+      player, a gap, and the last game they played there.
+- [ ] **⚠ THE SHARPEST STEP — the receipts must prove the sentence.** Whatever date the sentence
+      cites ("the last time was July 12 vs Falcons"), a receipt row for **that exact game** must be
+      in the list below. This broke in four places during review; it is the feature's whole promise.
+      Tap through several positions and check the citation every time.
+- [ ] Tap a **receipt link** — it should take you to the full report, and the back button should
+      return you to the page where you left it (this is why it expands in place, not in a pop-up).
+- [ ] **"What does each family still owe?"** — if you have siblings on the roster, they must appear
+      as **ONE family with a combined balance**, not two rows. Check a family whose surname differs
+      from the players'.
+- [ ] **"Who's missed the most practices?"** — the number must match the dates listed underneath.
+      If someone has an unrecorded (no-reply) practice, it must **not** count against them.
+- [ ] **On a brand-new team with nothing recorded:** every question says plainly that nothing is
+      recorded and names **the one thing** that would fill it in. No zeros, no blanks, no apology.
+- [ ] **As an assistant coach WITHOUT money access:** the two money questions are **absent from the
+      list entirely** — not greyed, not erroring on tap.
+- [ ] **As an assistant with money but NOT guardian contacts:** the family answer labels families by
+      **player names** ("Maya and Sam's family"), and siblings are still grouped as one.
+- [ ] **In a completed season:** the ask bar is **absent from Insights**, not an empty box.
+- [ ] Read the guide: **Help → Asking about your team**, and confirm the Insights help "?" opens it.
 
 ---
 

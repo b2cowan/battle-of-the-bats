@@ -1,6 +1,9 @@
 # Ask the Front Office — PM Brief
 
-**Status:** Planned (green-lit 2026-08-02). Plan: `ASK_FRONT_OFFICE_PLAN.md`.
+**Status:** ✅ **Version one SHIPPED to dev 2026-08-03** (owner QA pending, not on prod).
+⛔ **Version two — the typed box — is PARKED by the owner (2026-08-03).** The tappable questions are
+enough for now; the typed version is not queued and its privacy ruling has not been sought.
+Plan: `ASK_FRONT_OFFICE_PLAN.md`.
 
 ## What the coach sees
 
