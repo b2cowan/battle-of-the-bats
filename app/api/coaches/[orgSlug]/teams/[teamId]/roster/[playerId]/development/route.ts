@@ -12,6 +12,7 @@ import {
   getRepTeamContinuityLinks,
   getRepPlayerAttendanceSummary,
   getRepProgramYears,
+  getRepPlayerTryoutBaseline,
 } from '@/lib/db';
 import type { RepPlayerContinuityLink, RepRosterPlayer, RepTeamMeasurableType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -110,7 +111,7 @@ export const GET = withObservability(async (_req: Request,
   }
   const canWrite = canWriteDevelopment(caps);
 
-  const [types, measurables, goals, innings, links] = await Promise.all([
+  const [types, measurables, goals, innings, links, tryoutBaseline] = await Promise.all([
     showMeasurables ? getRepTeamMeasurableTypes(teamId, { includeRetired: true }) : Promise.resolve([]),
     showMeasurables ? getRepPlayerMeasurablesForPlayer(playerId) : Promise.resolve([]),
     showGoals ? getRepPlayerDevelopmentGoalsForPlayer(playerId) : Promise.resolve([]),
@@ -118,6 +119,11 @@ export const GET = withObservability(async (_req: Request,
     // become a side door around the Playing-time report's own gate.
     caps.lineups ? playerInningsContext(teamId, playerId) : Promise.resolve(null),
     getRepTeamContinuityLinks(teamId),
+    // ⚠ Gated on TRYOUTS, not on the development capabilities above (Tryout Insights Phase 2).
+    // The card carries tryout evaluation content, which is head-coach-only exactly as the rest of
+    // tryouts is; an assistant granted notes or roster access must not read a candidate's scores
+    // through the development page's back door. Absent ⇒ the card simply does not render.
+    caps.tryouts ? getRepPlayerTryoutBaseline(playerId) : Promise.resolve(null),
   ]);
 
   // ── Previous-seasons archive (3D): confirmed chain, oldest→newest, scrapbook only —
@@ -216,5 +222,8 @@ export const GET = withObservability(async (_req: Request,
     context: innings,
     archive,
     carry,
+    // The stored snapshot ONLY — never recomputed here. A rubric edited in September must not
+    // change what August's card says (R4).
+    tryoutBaseline: tryoutBaseline ? tryoutBaseline.snapshot : null,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]/development' });

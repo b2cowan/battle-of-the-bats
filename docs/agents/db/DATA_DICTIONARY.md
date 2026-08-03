@@ -2772,7 +2772,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_player_tryout_baselines.seeded_at -->
 **`seeded_at`** (timestamptz, NOT NULL, default `now()`) — when. Shown as "✓ baseline set" on re-entry to the walkthrough.
 
-**RLS:** reads = org members + coaches of the assigned team (a guardian is neither). Writes = **INSERT only, head-coach-only**, matching the app gate (`tryouts` **and** `canWriteDevelopment` — both, because the route reads evaluation content *and* writes development goals). No UPDATE policy, no DELETE policy anywhere.
+**RLS: ENABLED with NO POLICIES — service-role only**, the same posture as `rep_tryouts` / `rep_tryout_sessions` / `rep_tryout_scores` (migs 165/167), because a frozen **copy** of tryout evaluation data cannot be laxer than the original. ⚠ A permissive "org members / assigned coaches can read" pair was written and then removed before this ever reached prod (`/review` Critical, 2026-08-02): those predicates key on **assignment, never on capability**, and prod's `authenticated` role holds the default SELECT grant — so an assistant coach with `tryouts: false`, or any org member on any team, could have read every rostered player's composite and per-category averages straight from PostgREST, walking around the app gate. That is the door migration **212** closed on `rep_roster_players` / `rep_player_documents`, and R3 makes this content stricter than roster PII, not looser. The real gate is app-layer: `tryouts` **and** `canWriteDevelopment`, both, on every route that touches this table.
 
 ### `rep_tryouts`
 <!-- dict:table:rep_tryouts -->

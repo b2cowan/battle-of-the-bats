@@ -118,34 +118,23 @@
   color: rgba(255,255,255,0.45);
 }
 
-/* Class strength bars */
-.cats { display: flex; flex-direction: column; gap: 0.45rem; }
-.catRow {
-  display: grid; grid-template-columns: 150px 1fr 40px;
-  gap: 0.75rem; align-items: center;
+/* Returning-candidate improvement (Phase 3, C4) — a caption on the turnout block, not its own
+   section: it is a fact ABOUT the returning number sitting immediately above it. */
+.returningLine {
+  font-size: 0.76rem;
+  color: rgba(255,255,255,0.55);
+  margin: 0.55rem 0 0;
 }
-.catLabel { font-size: 0.8rem; color: rgba(255,255,255,0.65); }
-.catTrack {
-  position: relative; height: 12px; border-radius: 5px;
-  background: rgba(255,255,255,0.07);
-  overflow: hidden;
-}
-.catBar {
-  position: absolute; inset: 0 auto 0 0;
-  background: rgba(var(--logic-lime-rgb), 0.65);
-  border-radius: 5px;
-}
-.catBarThin { background: rgba(var(--warning-rgb), 0.75); }
-.catValue {
-  font-size: 0.82rem; font-weight: 700;
-  font-family: var(--font-data);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-  color: var(--white-90);
-}
+
+/* Class strength bars live in the shared CategoryBars widget (components/coaches/CategoryBars) —
+   only the flag caption below is the report's own. */
 .catFlag {
   font-size: 0.73rem; color: var(--warning);
-  margin: 0.2rem 0 0;
+  /* 0.65rem = the bar list's own 0.45rem row gap + this caption's original 0.2rem. The caption
+     used to sit INSIDE the bars' flex container and inherited that gap; now that the bars are the
+     shared CategoryBars widget it is a sibling, so the spacing is restored explicitly rather than
+     silently tightening (/review, 2026-08-02). */
+  margin: 0.65rem 0 0;
 }
 
 /* Fairness receipt */
@@ -191,7 +180,6 @@
 @media (max-width: 560px) {
   .funnelRow { grid-template-columns: 76px 1fr 36px; }
   .funnelCaption { margin-left: calc(76px + 0.75rem); }
-  .catRow { grid-template-columns: 108px 1fr 34px; }
 }
 
 /* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5, same pattern as TryoutFlowHeader/TryoutDayCard) ──
@@ -228,17 +216,16 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sectionLabel,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .statLabel,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .funnelCaption,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .returningLine,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .empty {
   color: var(--home-dim);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .funnelLabel,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catLabel,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .receiptList li {
   color: var(--home-ink-soft);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .funnelValue,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .statNum,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catValue,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .receiptTitle {
   color: var(--home-ink);
 }
@@ -250,12 +237,9 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .funnelTrack {
   background: var(--home-olive-soft);
 }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .funnelBar,
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catBar {
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .funnelBar {
   background: var(--home-olive);
 }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catTrack { background: var(--home-line); }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catBarThin { background: var(--home-amber); }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .receipt {
   border-color: rgba(var(--home-olive-rgb), 0.3);
   background: var(--home-olive-soft);

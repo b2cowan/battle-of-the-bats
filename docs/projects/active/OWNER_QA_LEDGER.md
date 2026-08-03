@@ -447,6 +447,78 @@ team**. It opens six ready-made questions; each answers in a sentence with the r
 - [ ] **In a completed season:** the ask bar is **absent from Insights**, not an empty box.
 - [ ] Read the guide: **Help → Asking about your team**, and confirm the Insights help "?" opens it.
 
+### 1.11 Tryout Insights — report · development baseline · candidate memory (all 3 phases) — built + simplified + reviewed + docs, Phase 1 **COMMITTED** `14969fbc`, Phases 2–3 uncommitted
+
+> **Mockups you approved (binding):** https://claude.ai/code/artifact/3b8bf1f9-c1c5-407c-9fa6-376a5bf8fee2
+> **Where:** Coaches → **Tryouts** → the **Decide** and **Build team** tabs, plus any player's
+> Development page.
+> ⚠ **Migration 223 is applied to DEV only** — the development-baseline half **will error until it
+> is applied**. It joins the 214–222 dev-only queue; prod needs all of them before any of this ships.
+> ⚠ **No rendered-layout check was run** (it needs a live dev server), so the memory strip's
+> appearance — **especially the phone stack** — has had no automated eyes on it at all. Judge it hard.
+> ⚠ **Needs a tryout with at least one PRIOR season of tryout data** to exercise the memory half.
+> A first-season team correctly shows none of it — which is right, but tests nothing.
+
+**The point of it:** the tryout stops being a one-day tool. It leaves behind a document you can hand
+your board, a starting point for every new player's season, and — at the moment you're deciding —
+what this kid looked like the last time they stood in front of you.
+
+**Phase 1 · the report** (Build team tab)
+- [ ] **The funnel tells the truth about drop-off.** Registered → Attended → Evaluated → Offers
+      extended → Accepted → On roster, with honest captions ("3 never checked in", "1 declined").
+      Check each number against what you know actually happened.
+- [ ] **⚠ "Offers extended" vs the Decide tab's "offered" — these are ALLOWED to differ**, and I
+      relabelled the report row so they stop looking like the same number arguing with itself. The
+      report counts every offer you **ever** made; the Decide tally counts who is offered **right
+      now**. Offer someone, then change your mind, and the report should still count that offer.
+      *(Frame 01 said just "Offered" — this is a deliberate deviation. Tell me if it reads wrong.)*
+- [ ] **The fairness receipt states only what's true.** Run a tryout with **no blind mode** and
+      confirm the blind line is **absent** rather than reworded. Never scored anyone? The whole
+      receipt block should be gone, not empty.
+- [ ] **Board summary (PDF)** — totals and roster names only. Confirm there is **no child's score and
+      no cut decision anywhere in it**; this is the one you'd hand a parent.
+- [ ] **Full detail (PDF/Excel)** sits behind a confirmation that names the consequence. While names
+      are still hidden it must be **unavailable** — not merely warned about.
+
+**Phase 2 · development baseline** (Build team tab, below the report)
+- [ ] **Seed one.** After accepting anyone, **Start development from tryouts → Begin**. Walk two or
+      three players.
+- [ ] **⚠ "Don't add" must write NOTHING.** Answer it for every suggestion on one player, finish, then
+      open that player's development page and confirm **no focus area was created**. This is the whole
+      promise of the step.
+- [ ] **A player nobody scored** should say so plainly and let you set focus by hand — never block.
+- [ ] **Re-run the walkthrough.** Already-seeded players should be marked done and skipped. Then edit
+      your scorecard and confirm an existing baseline is **not** rewritten.
+- [ ] **On the player's development page**, the snapshot is visually **apart** from measurables
+      (dashed edge) and says it's coach-eyes-only. Confirm it does **not** join any trend line.
+
+**Phase 3 · candidate memory** (Decide tab)
+- [ ] **⚠ THE FLOW THAT WAS BROKEN — test this first.** With names still hidden, open Decide (bibs
+      only, no history — correct). Go to **Set up → Reveal names**. Come back to **Decide
+      WITHOUT refreshing the browser**. Names must appear and the strips must load. *(This failed
+      until review caught it — a mount-once load meant you'd have concluded the feature didn't work.)*
+- [ ] **Confirm a returning player, still without refreshing.** Tap **Possible returning player —
+      verify**, confirm the match, and the memory strip must appear **immediately** on that row.
+- [ ] **The comparable case:** both years on the same scale → last season's score, this season's, and
+      a **▲ +0.7**-style change between them. **Compare categories** opens it skill by skill.
+- [ ] **⚠ The incomparable case — the honesty test.** Two seasons on **different scales** (1–10 then
+      1–5) must show **both cards and NO arithmetic**, with a line naming the two scorecards. If you
+      ever see a delta across mismatched scales, that's the defect.
+- [ ] **An unverified match shows NO scores.** A "Possible returning player" you haven't confirmed
+      gets the verify button and nothing else.
+- [ ] **⚠ THE BLINDFOLD — check the absence.** While blind evaluation is on, confirm there is **no
+      prior-season anything** on the **field scorer**, the **live scoreboard**, or **check-in**.
+      Check-in's existing "tried out in {season}" marker is identity only and unchanged — that one
+      stays. A bib number must be just a bib number.
+- [ ] **The report's group line** (Build tab, under Turnout): with **3+** verified returning
+      candidates comparable on one scale, it states how the group moved. With **1 or 2**, it must be
+      **absent entirely** — silence, not a hedged sentence.
+- [ ] **📱 Phone (390 and ~360).** The two seasons should **stack** with the change between them, and
+      the decision buttons stay full-width and reachable. **Nothing automated has looked at this.**
+- [ ] **As an assistant coach without tryouts access:** no tryout surface at all, as today.
+- [ ] Read the guide: **Help → How to run tryout day**, and the new FAQ *"Can I see how a returning
+      player did at last year's tryout?"*
+
 ---
 
 ## Session 2 — Premium Coaches Portal · PHONE (real device; 390 and ~360 widths)

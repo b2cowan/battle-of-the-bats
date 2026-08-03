@@ -8,6 +8,7 @@ import {
   getLatestClosedRepProgramYear,
   getCoachingAssignmentsForUser,
   getClosedCoachingAssignmentsForUser,
+  getCoachAssignmentCapabilitiesForTeam,
 } from './db';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import type { CoachCapabilities } from './coach-capabilities';
@@ -143,14 +144,12 @@ export async function resolveCoachSeasonCapabilityMap(
   userId: string,
   teamId: string,
 ): Promise<Map<string, CoachCapabilities>> {
-  const lookupOpts = { isTeamWorkspace: isTeamWorkspaceOrg(org) };
-  const [active, closed] = await Promise.all([
-    getCoachingAssignmentsForUser(org.id, userId, lookupOpts),
-    getClosedCoachingAssignmentsForUser(org.id, userId, lookupOpts),
-  ]);
-  const map = new Map<string, CoachCapabilities>();
-  for (const a of [...active, ...closed]) {
-    if (a.teamId === teamId) map.set(a.programYearId, a.capabilities);
-  }
-  return map;
+  // ⚠ ONE lean query, not the open+closed assignment pair this used to run (/simplify 2026-08-03).
+  // The open lookup also fetches money badges and nav signals — several sequential round trips
+  // that a capability question never reads. Callers pay this on ordinary page loads, and two of
+  // them now call it alongside a resolver that already loaded assignments for its own reasons.
+  const rows = await getCoachAssignmentCapabilitiesForTeam(
+    org.id, userId, teamId, { isTeamWorkspace: isTeamWorkspaceOrg(org) },
+  );
+  return new Map(rows.map(r => [r.programYearId, r.capabilities]));
 }

@@ -187,6 +187,11 @@
   border-radius: 8px;
   background: rgba(255,255,255,0.02);
 }
+/* Candidate memory (Phase 3) hangs under its candidate row, indented to the same 2.2rem the
+   continuity verify panel uses so the two follow-on panels line up under the rank column. */
+.memorySlot { margin: -0.1rem 0 0.5rem 2.2rem; }
+@media (max-width: 560px) { .memorySlot { margin-left: 0; } }
+
 .rank {
   flex: 0 0 auto;
   min-width: 2rem;

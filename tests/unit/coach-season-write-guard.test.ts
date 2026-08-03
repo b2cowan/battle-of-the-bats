@@ -312,7 +312,33 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
     'events/[eventId]/practice-plan/read',
     'expense-tags', 'expenses', 'fundraisers', 'history',
     'lineup-templates', 'milestones', 'money-summary', 'roster', 'roster/[playerId]',
-    'season-surplus', 'staff', 'staff/[coachId]', 'tags', 'tryout-history', 'wrapped',
+    'season-surplus', 'staff', 'staff/[coachId]', 'tags',
+    /**
+     * ⚠ **CANDIDATE MEMORY — ruled explicitly** (owner, 2026-08-02, ruling **R8**;
+     * `docs/projects/active/COACH_TRYOUT_INSIGHTS_PLAN.md` §2/§6). These two routes read a PRIOR
+     * season's tryout scores into a LIVE surface: `tryout-memory` serves the decision board's
+     * memory strip, `tryout-report` the "returning candidates improved +X" aggregate built from
+     * the same pairs. Both call `resolveCoachSeasonCapabilityMap`; neither accepts a `?year=`.
+     *
+     * The three questions this list demands, answered:
+     *   1. **RECORD or INSTRUMENT?** A finished tryout's scores are a RECORD of an evaluation that
+     *      happened. Both routes are GET-only and write nothing (neither even mints the lazy
+     *      tryout workspace row). The six live tryout INSTRUMENTS — check-in, scoring, evaluator
+     *      links, decisions, offers — stay live-season-only and are absent from this list.
+     *   2. **Does the whole subtree carry the season?** There is no subtree: the read renders as
+     *      one strip inside one existing card and one caption on the report. It opens no page and
+     *      adds NO archive door — nav is untouched and `/tryouts/history` remains the only way
+     *      into a finished tryout.
+     *   3. **Does it show what the coach could see AT THE TIME?** Yes. Prior averages are
+     *      recomputed from that season's own scores against that season's own scorecard, and each
+     *      prior season is gated on THAT year's assignment row (governing rule 1) — a coach who
+     *      wasn't cleared for tryouts in 2026 reads nothing from 2026.
+     *
+     * ⚠ Which past seasons get read is decided by the coach's own CONFIRMED continuity links,
+     * never by a query parameter — and nothing is assembled at all while blind evaluation is on
+     * (R6, enforced in `lib/tryout-memory.ts` before any fetch).
+     */
+    'tryout-history', 'tryout-memory', 'tryout-report', 'wrapped',
   ];
 
   it('no door has been added to a finished season without a decision', () => {

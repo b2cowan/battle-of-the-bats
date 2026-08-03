@@ -1,5 +1,8 @@
 import type { RepTryoutRegistration, RepTryoutRubricCategory, RepTryoutScore } from './types';
 
+const round2 = (n: number) => Math.round(n * 100) / 100;
+const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
+
 /** The status→bucket tally every tryout surface shares. Withdrawn candidates leave every count.
  *  Extracted (/simplify 2026-08-02) because the report became the 4th hand-copy of this loop —
  *  tryout-decisions/route.ts and TryoutDecisionBoard still carry their own; fold them in when touched. */
@@ -18,6 +21,41 @@ export function tallyTryoutDecisions(registrations: Pick<RepTryoutRegistration, 
   return counts;
 }
 
+/**
+ * The scored core of ONE candidate's snapshot, projected onto a scorecard — shared by the Phase 2
+ * development baseline (which STORES it) and the Phase 3 memory strip (which recomputes it per
+ * read). Extracted /simplify 2026-08-03, when the memory strip became a second hand-copy of the
+ * baseline's assembly, right down to the scale fallback.
+ *
+ * ⚠ The `scaleMax` fallback is the reason this is one function rather than two similar ones: a
+ * missing scorecard cannot mean "a scale of 0", because every consumer divides by it to draw a
+ * bar. 5 is the decision board's own fallback, so every tryout surface reads alike — and if that
+ * default ever changes it must change in exactly one place.
+ */
+export interface TryoutSnapshotCore {
+  scaleMax: number;
+  composite: number | null;
+  evaluatorCount: number;
+  categories: { key: string; label: string; avg: number | null }[];
+}
+
+export function tryoutSnapshotCore(
+  rubric: { scaleMax: number; categories: Pick<RepTryoutRubricCategory, 'key' | 'label'>[] } | null | undefined,
+  ranked: Pick<RankedTryoutCandidate, 'composite' | 'evaluatorCount' | 'categoryAverages'> | null | undefined,
+): TryoutSnapshotCore {
+  return {
+    scaleMax: rubric?.scaleMax && rubric.scaleMax > 0 ? rubric.scaleMax : 5,
+    composite: ranked?.composite ?? null,
+    evaluatorCount: ranked?.evaluatorCount ?? 0,
+    // Category LABELS are copied from the scorecard as it is now — a rename in September must not
+    // silently rewrite what August's card says, so consumers freeze or re-read deliberately.
+    categories: (rubric?.categories ?? []).map(def => {
+      const avg = ranked?.categoryAverages?.[def.key];
+      return { key: def.key, label: def.label, avg: avg == null ? null : round2(avg) };
+    }),
+  };
+}
+
 /** One candidate's aggregated standing across all evaluators (Phase 2B). */
 export interface RankedTryoutCandidate {
   registrationId: string;
@@ -29,9 +67,6 @@ export interface RankedTryoutCandidate {
   evaluatorCount: number;
   categoryAverages: Record<string, number | null>;
 }
-
-const round2 = (n: number) => Math.round(n * 100) / 100;
-const mean = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null);
 
 /**
  * Rank candidates by their weighted composite score — the single source of the tryout ranking math,

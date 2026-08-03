@@ -1,12 +1,28 @@
 # Coach Tryout Insights — Report · Development Baseline · Candidate Memory
 
-**Status:** 2026-08-02 — rulings R1–R8 ratified; **mockups v1 APPROVED = binding visual spec.**
-**Phase 1 (Report) ✅ BUILT on dev, uncommitted — owner QA pending.** Unit 928/928 · typecheck clean ·
+**Status:** 2026-08-03 — rulings R1–R8 ratified; **mockups v1 APPROVED = binding visual spec.**
+**ALL THREE PHASES BUILT.** The project is code-complete and awaits one owner QA pass.
+**Phase 3 (Candidate Memory) ✅ BUILT on dev, uncommitted — owner QA pending.** No migration. New
+`tryout-memory` read route + the report's returning-improvement line; **both joined
+`APPROVED_SEASON_AWARE_ROUTES` citing R8**, and **no archive door was added** (nav untouched;
+`/tryouts/history` is still the only way into a finished tryout). Unit 1125/1125 at build time
+(new: 20 memory cases in `tests/unit/tryout-report.test.ts` — R7 comparability, the ≥3 aggregate
+threshold, and the C5 blind-surface absence probes) · typecheck clean · lint 0 errors ·
+token/date/dictionary/observability guardrails green. Deliberate mockup deviations (recorded in
+§6): the strip's caption states the scorecard fact rather than frame 06's "cut last year, came
+back better" (a judgment R7 forbids), and the CURRENT-side card carries no decision label (it
+would go stale the instant a coach taps Offer — the buttons in the same row are the live truth).
+**Phase 2 (Development Baseline) ✅ BUILT on dev, uncommitted — owner QA pending.** Migration **223**
+(baseline table + the sticky `first_offered_at` ride-along) is **DEV-ONLY and must be applied before
+QA**; it joins the 214–222 dev-only queue. Unit 1094/1094 (new `tests/unit/tryout-baseline.test.ts`
+×26, incl. the B5 family-payload source guard) · typecheck clean · lint 0 errors · token/dictionary/
+date/observability guardrails green. Phase 3 (memory) remains a fresh chat.
+**Phase 1 (Report) ✅ COMMITTED dev `14969fbc` — owner QA pending.** Unit 928/928 · typecheck clean ·
 lint 0 errors · new suite `tests/unit/tryout-report.test.ts` (14) · catalog trued up. Deliberate
 deviations from mockups (recorded): colors follow the live tryout cards' dark-glass token idiom (the
 warm mockup styling was presentational); the Final chip carries no date (no trustworthy per-decision
-timestamp exists — the PDF's export-date stamp covers it). Phases 2–3 = fresh chats via
-`TRYOUT_INSIGHTS_PHASE2_BASELINE_BUILD_PROMPT.md` / `TRYOUT_INSIGHTS_PHASE3_MEMORY_BUILD_PROMPT.md`.
+timestamp exists — the PDF's export-date stamp covers it). Both phase build prompts are spent and
+now sit in `docs/projects/archive/`.
 **Scope:** Premium coaches portal only. Standalone-coach-first: nothing here depends on an org public
 page or the Club tier.
 **Sequencing:** Feature A (Tryout Report) → Feature B (Development Baseline) → Feature C (Candidate
@@ -148,10 +164,12 @@ Sections (board-safe by default, per R1):
 ### Edge cases
 - A tryout with decisions but no scores (coach skipped scoring): funnel + composition render;
   strength profile and fairness receipt absent — never fabricate.
-- **"Offered" states current standing, not offer history** (Phase-1 /simplify altitude finding):
-  a coach re-deciding an offered candidate clears the offer trace, so ever-offered is unprovable
-  today. The funnel counts currently-offered + accepted; a sticky `first_offered_at` rides the
-  Phase 2 migration to make the historical claim honest (see Phase 2 build prompt).
+- ~~**"Offered" states current standing, not offer history**~~ — **RESOLVED in Phase 2 (mig 223).**
+  A sticky `first_offered_at`, stamped by trigger on the first transition to `offered` and never
+  cleared, restores the honest "offers extended" claim. The funnel counts the **union** of the
+  stamp and current standing, because rows whose record-only offer left no `offer_sent_at` to
+  backfill from carry no timestamp — counting the stamp alone would make historic seasons drop
+  below what they already reported.
 - Walk-ups with no email / no DOB: counted normally; board-safe export unaffected.
 - Mixed check-in (scored but never checked in): keep the scoreboard's existing "didn't check in"
   distinction; the funnel counts attendance from check-in only.
@@ -190,14 +208,14 @@ Schema change ⇒ same-unit-of-work: `DATA_DICTIONARY.md` + `npm run refresh:sna
 
 ### Work items
 
-| # | Item |
-|---|---|
-| B1 | Migration: baseline table (+ dictionary + snapshots) |
-| B2 | Seeding walkthrough UI on Build stage (list + per-player card + skip/confirm; re-entry state) |
-| B3 | Suggestion engine (below-midpoint rule, max 2, mapping to focus vocabulary via coach-confirmed picker) |
-| B4 | Baseline context card on the player development page (distinct from measurables; coach-eyes-only note) |
-| B5 | Guard: no baseline data in any family-facing read (assert recap/keepsake payloads never include it — unit-level, same spirit as the coverage boolean rule) |
-| B6 | `/docs` sync |
+| # | Item | Built |
+|---|---|---|
+| B1 | Migration: baseline table (+ dictionary + snapshots) | ✅ mig 223 `rep_player_tryout_baselines` + sticky `first_offered_at` (trigger) + dictionary. ⚠ snapshots refresh pending until the migration is applied |
+| B2 | Seeding walkthrough UI on Build stage (list + per-player card + skip/confirm; re-entry state) | ✅ `components/rep-teams/TryoutBaselineCard.tsx` |
+| B3 | Suggestion engine (below-midpoint rule, max 2, mapping to focus vocabulary via coach-confirmed picker) | ✅ `lib/tryout-baseline.ts` (pure, tested) + the shared `TagPicker` in `single` mode — minting still rides the focus-tags route's own gate |
+| B4 | Baseline context card on the player development page (distinct from measurables; coach-eyes-only note) | ✅ `components/coaches/TryoutSnapshotCard.tsx` — ONE renderer for both frames 04 and 05; gated on the **tryouts** capability server-side |
+| B5 | Guard: no baseline data in any family-facing read | ✅ `tests/unit/tryout-baseline.test.ts` — scans every family payload builder's source **and** every `lib/family-*.ts`, plus a serialized-payload assertion |
+| B6 | `/docs` sync | ✅ already landed (status row was stale, corrected 2026-08-03): tryouts recipe step 15 + `faq-tryout-development-baseline`; the development guide carries the "Where the season started" snapshot paragraph + `faq-development-tryout-snapshot` |
 
 ### Edge cases
 - Player accepted with zero scores: seeding offers "no snapshot — set focus manually"; never blocks.
@@ -238,14 +256,29 @@ the existing "↩ returning · {season}" chip:
 
 ### Work items
 
-| # | Item |
-|---|---|
-| C1 | Prior-snapshot resolution (confirmed links → prior registration → snapshot recompute; shared math from §3) |
-| C2 | Memory strip UI on the decision board (side-by-side, delta-when-comparable, category expand; absent on blind surfaces by construction) |
-| C3 | Allow-list edit + season-read wiring, citing R8 |
-| C4 | Report aggregate line (≥3 comparable pairs rule) |
-| C5 | Probes: memory absent from scorer/scoreboard/check-in DOM; delta absent when scales differ; suggested-link shows no scores |
-| C6 | `/docs` sync |
+| # | Item | Built |
+|---|---|---|
+| C1 | Prior-snapshot resolution (confirmed links → prior registration → snapshot recompute; shared math from §3) | ✅ `lib/tryout-memory.ts` — one shared resolver behind BOTH consumers (strip + report aggregate). Prior averages recomputed through `rankTryoutCandidates`, never a second formula; `getPriorContinuityIdentities` gained `sourceRegistrationId` so a link whose prior side is a ROSTER row can still reach that season's scores |
+| C2 | Memory strip UI on the decision board (side-by-side, delta-when-comparable, category expand; absent on blind surfaces by construction) | ✅ `components/rep-teams/TryoutMemoryStrip.tsx` — renders only what the server settled; it holds no threshold and computes no delta |
+| C3 | Allow-list edit + season-read wiring, citing R8 | ✅ `tryout-memory` + `tryout-report` in `APPROVED_SEASON_AWARE_ROUTES` with the three archive questions answered in the entry comment. ⚠ **Neither route accepts `?year=`** — which past seasons are read is decided by the coach's own confirmed links. Prior seasons gated per-year via `resolveCoachSeasonCapabilityMap` (governing rule 1) |
+| C4 | Report aggregate line (≥3 comparable pairs rule) | ✅ `returningImprovementAggregate` — and the sentence ADAPTS TO THE SIGN, so a falling average can never print as "improved" |
+| C5 | Probes: memory absent from scorer/scoreboard/check-in DOM; delta absent when scales differ; suggested-link shows no scores | ✅ `tests/unit/tryout-report.test.ts` — source-scan over all 7 blind surfaces (3 client + 4 API), plus the fail-closed `canShowTryoutMemory` gate and an assertion that the route applies it BEFORE the continuity read. DOM-level confirmation is owner QA |
+| C6 | `/docs` sync | ✅ tryouts recipe gained a "See who's been here before" step + `faq-tryout-candidate-memory`; the report step now states the ≥3 aggregate line AND why "Offers extended" differs from the board's tally; keywords/searchText extended (search matches metadata, NOT prose) |
+
+### Deliberate deviations from mockups v1 frame 06 (recorded)
+
+- **The strip's caption states a fact, not a verdict.** Frame 06 reads "Cut last year, came back
+  better"; the product reads "Both tryouts used the same 1–5 scorecard." The mockup line is a
+  judgment about one specific candidate and would be false for most rows — R7 is "present, don't
+  judge", and the caption's real job is explaining *why the delta is allowed to exist*.
+- **The current-season card carries no decision label.** Frame 06 shows "Undecided" there. The
+  strip is fetched once; the decision buttons sit inches away in the same row and update
+  instantly, so a second copy would read "Undecided" the moment after a coach tapped Offer. A
+  stale decision beside a fresh one is worse than one truth. The PRIOR card keeps its decision —
+  that is the memory, and it cannot go stale.
+- **Expansion is an explicit "Compare categories" control**, not a tap-anywhere-on-the-strip
+  gesture — the row already carries three decision buttons and a notes toggle; a whole-strip tap
+  target beside them is a misfire waiting to happen.
 
 ## 7. Cross-cutting
 

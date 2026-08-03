@@ -4,11 +4,11 @@ import {
   getCoachingAssignmentsForUser,
   getRepRosterPlayer,
   createRepPlayerDevelopmentGoal,
-  isTeamFocusTag,
 } from '@/lib/db';
 import type { RepDevelopmentGoalStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteDevelopment } from '@/lib/coach-capabilities';
+import { readFocusArea, verifyFocusTag } from '@/lib/development-goal-input';
 
 const VALID_STATUSES: RepDevelopmentGoalStatus[] = ['working', 'achieved', 'parked'];
 
@@ -55,10 +55,15 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  const focusArea = typeof body.focusArea === 'string' ? body.focusArea.trim() : '';
-  if (!focusArea || focusArea.length > 80) {
-    return NextResponse.json({ error: 'Focus area is required (max 80 characters).' }, { status: 400 });
-  }
+  // ⚠ The focus area and its optional grouping tag are validated by the SHARED helpers — the
+  // tryout seeding route (Phase 2) writes goals too, and the 80-character rule and the
+  // tag-ownership check must not exist as two copies (/simplify 2026-08-02). They are called
+  // SEPARATELY, in the original order — focus → note → status → tag — because collapsing them
+  // changed which error a doubly-invalid payload gets back (/review, 2026-08-02).
+  const area = readFocusArea(body);
+  if ('error' in area) return area.error;
+  const { focusArea } = area;
+
   const note = typeof body.note === 'string' ? body.note.trim() : '';
   if (note.length > 280) {
     return NextResponse.json({ error: 'Note is too long (max 280 characters).' }, { status: 400 });
@@ -68,15 +73,9 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
   }
 
-  // ⚠ ONE optional grouping tag (mig 221) — the SAME 'focus' vocabulary the team's drills use, which
-  // is what lets the focus rail tell which areas match tonight. The focus text above stays the
-  // coach's own specific words and is never replaced by it.
-  // ⚠ Never inferred from the focus text: free text doesn't cluster, and guessing would be the
-  // confident lie §4 forbids.
-  const tagId = typeof body.tagId === 'string' && body.tagId.trim() ? body.tagId.trim() : null;
-  if (tagId && !(await isTeamFocusTag(tagId, ctx.org.id, teamId))) {
-    return NextResponse.json({ error: 'That tag is not one of this team’s.' }, { status: 400 });
-  }
+  const tag = await verifyFocusTag(body, { orgId: ctx.org.id, teamId });
+  if ('error' in tag) return tag.error;
+  const { tagId } = tag;
 
   const goal = await createRepPlayerDevelopmentGoal({
     orgId: ctx.org.id,

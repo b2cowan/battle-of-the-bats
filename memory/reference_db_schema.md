@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-08-02 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-08-03 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-08-02
+# DB Schema Reference — 2026-08-03
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -149,7 +149,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_player_awards_event_idx, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
 ### rep_player_continuity_links
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.team_id NOT NULL, current_roster_id (uuid) → rep_roster_players.team_id, current_registration_id (uuid) → rep_tryout_registrations.id, prior_roster_id (uuid) → rep_roster_players.team_id, prior_registration_id (uuid) → rep_tryout_registrations.id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.id NOT NULL, current_roster_id (uuid) → rep_roster_players.id, current_registration_id (uuid) → rep_tryout_registrations.team_id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
 - Indexes: rep_player_continuity_links_confirmed_uniq, rep_player_continuity_links_org_idx, rep_player_continuity_links_pair_uniq, rep_player_continuity_links_prior_idx, rep_player_continuity_links_team_idx
 
 ### rep_player_development_goals
@@ -169,8 +169,12 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (
 - Indexes: rep_player_dues_schedules_program_year_id_player_id_key
 
 ### rep_player_measurables
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.id
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.team_id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.id NOT NULL, value (numeric) NOT NULL, unit NOT NULL, recorded_on NOT NULL, note, created_by (uuid), created_at, updated_at, session_id (uuid) → rep_team_evaluation_sessions.id
 - Indexes: rep_player_measurables_org_idx, rep_player_measurables_player_idx, rep_player_measurables_session_entry_uniq, rep_player_measurables_session_idx, rep_player_measurables_team_idx, rep_player_measurables_type_idx
+
+### rep_player_tryout_baselines
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, roster_player_id (uuid) → rep_roster_players.id NOT NULL, tryout_registration_id (uuid) → rep_tryout_registrations.id, snapshot (jsonb) NOT NULL, seeded_by (uuid), seeded_at
+- Indexes: rep_player_tryout_baselines_player_year_uniq, rep_player_tryout_baselines_team_idx, rep_player_tryout_baselines_year_idx
 
 ### rep_program_years
 id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, name NOT NULL, year (integer) NOT NULL, status, tryout_open (boolean), tryout_description, budget_amount (numeric), created_at, updated_at, auto_reminders_enabled (boolean), lineup_settings (jsonb)
@@ -277,7 +281,7 @@ id (uuid), tryout_id (uuid) → rep_tryouts.id NOT NULL, program_year_id (uuid) 
 - Indexes: rep_tryout_evaluator_sessions_org_idx, rep_tryout_evaluator_sessions_token_uq, rep_tryout_evaluator_sessions_tryout_idx
 
 ### rep_tryout_registrations
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, admin_notes, submitted_at, updated_at, consent_data_collection (boolean), consent_email_comms (boolean), consent_eligibility (boolean), consent_at, consent_ip, bib_number, is_checked_in (boolean), checked_in_at, offer_token_hash, offer_sent_at, offer_expires_at, offer_response, offer_responded_at
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, player_first_name NOT NULL, player_last_name NOT NULL, player_date_of_birth, player_notes, guardian_first_name NOT NULL, guardian_last_name NOT NULL, guardian_email NOT NULL, guardian_phone, status, admin_notes, submitted_at, updated_at, consent_data_collection (boolean), consent_email_comms (boolean), consent_eligibility (boolean), consent_at, consent_ip, bib_number, is_checked_in (boolean), checked_in_at, offer_token_hash, offer_sent_at, offer_expires_at, offer_response, offer_responded_at, first_offered_at
 - Indexes: rep_tryout_registrations_bib_uq, rep_tryout_registrations_email_idx, rep_tryout_registrations_id_team_uniq, rep_tryout_registrations_offer_token_uq, rep_tryout_registrations_status_idx, rep_tryout_registrations_year_idx
 
 ### rep_tryout_rubrics
@@ -629,11 +633,11 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **153 tables** across 10 modules.
+Total: **154 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 47 tables
+- Rep Teams: 48 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

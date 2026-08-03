@@ -1,0 +1,160 @@
+/* Candidate memory strip (Tryout Insights Phase 3, mockups v1 frame 06) — lives INSIDE the
+   decision board's existing candidate row, so it carries no card chrome of its own.
+   Same dark-glass idiom as its tryout siblings: white-alpha literals + var()-based accents only. */
+
+.wrap { margin: 0.7rem 0 0.2rem; }
+
+/* Desktop: prior | delta | current. Phone: the two seasons stack with the delta between them
+   (frame 06's phone panel) — decisions happen on phones. */
+.memory {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 0.6rem;
+  align-items: stretch;
+}
+
+.card {
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: 9px;
+  background: rgba(255,255,255,0.03);
+  padding: 0.55rem 0.7rem;
+  min-width: 0;
+}
+.season {
+  font-size: 0.64rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 0.15rem;
+}
+.composite {
+  font-size: 1.15rem; font-weight: 700;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--white-90);
+  line-height: 1.15;
+}
+.scale { font-size: 0.72rem; font-weight: 600; color: rgba(255,255,255,0.4); }
+.decision { font-size: 0.72rem; color: rgba(255,255,255,0.55); margin-top: 0.1rem; }
+
+.mid { display: flex; align-items: center; justify-content: center; }
+.delta {
+  display: inline-flex; align-items: center;
+  font-size: 0.76rem; font-weight: 700;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.16);
+  color: rgba(255,255,255,0.6);
+  white-space: nowrap;
+}
+.deltaUp {
+  color: var(--success);
+  border-color: rgba(var(--success-rgb), 0.4);
+  background: rgba(var(--success-rgb), 0.08);
+}
+.deltaDown {
+  color: var(--warning);
+  border-color: rgba(251,191,36,0.35); /* token-exempt: warning alpha tint, no -rgb token exists */
+  background: rgba(251,191,36,0.07);   /* token-exempt: warning alpha tint, no -rgb token exists */
+}
+.sideBySide {
+  font-size: 0.68rem; font-weight: 600;
+  color: rgba(255,255,255,0.4);
+  white-space: nowrap;
+}
+
+.note {
+  font-size: 0.71rem;
+  color: rgba(255,255,255,0.42);
+  margin: 0.4rem 0 0;
+}
+
+.expandBtn {
+  margin-top: 0.35rem;
+  padding: 0;
+  border: none; background: none;
+  font-size: 0.72rem; font-weight: 700;
+  color: var(--logic-lime);
+  cursor: pointer;
+}
+.expandBtn:hover { text-decoration: underline; }
+
+.catList {
+  display: flex; flex-direction: column; gap: 0.25rem;
+  margin-top: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.02);
+}
+.catRow {
+  display: grid; grid-template-columns: 1fr auto 46px;
+  gap: 0.6rem; align-items: baseline;
+  font-size: 0.76rem;
+}
+.catLabel { color: rgba(255,255,255,0.6); min-width: 0; }
+.catNums {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--white-90);
+  white-space: nowrap;
+}
+.catArrow { color: rgba(255,255,255,0.35); }
+.catDelta {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  text-align: right;
+  color: rgba(255,255,255,0.45);
+}
+
+@media (max-width: 560px) {
+  .memory { grid-template-columns: 1fr; gap: 0.45rem; }
+  .mid { justify-content: flex-start; }
+}
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5, same pattern as TryoutReportCard) ──
+   Flat additive rules only; never edit a dark declaration. Without this block the strip's
+   white-alpha text is invisible on the warm theme's white cards. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .card {
+  border-color: var(--home-line-strong);
+  background: var(--home-paper);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .season,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .scale,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .note,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sideBySide,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catArrow,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catDelta {
+  color: var(--home-dim);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .composite,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catNums {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .decision,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catLabel {
+  color: var(--home-ink-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .delta {
+  color: var(--home-ink-soft);
+  border-color: var(--home-line-strong);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .deltaUp {
+  color: var(--home-win);
+  border-color: rgba(var(--home-win-rgb), 0.4);
+  background: rgba(var(--home-win-rgb), 0.08);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .deltaDown {
+  color: var(--home-amber);
+  border-color: rgba(var(--home-rust-rgb), 0.35);
+  background: rgba(var(--home-rust-rgb), 0.07);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .expandBtn {
+  color: var(--home-olive);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .catList {
+  border-color: var(--home-line);
+  background: var(--home-olive-soft);
+}

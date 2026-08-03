@@ -11,6 +11,7 @@ import TryoutEvaluatorsCard from '@/components/rep-teams/TryoutEvaluatorsCard';
 import TryoutScoreboardCard from '@/components/rep-teams/TryoutScoreboardCard';
 import TryoutDecisionBoard from '@/components/rep-teams/TryoutDecisionBoard';
 import TryoutReportCard from '@/components/rep-teams/TryoutReportCard';
+import TryoutBaselineCard from '@/components/rep-teams/TryoutBaselineCard';
 import TryoutFlowHeader, { type TryoutOverview, type TabKey } from '@/components/rep-teams/TryoutFlowHeader';
 import styles from '../../../coaches.module.css';
 import flow from '@/components/rep-teams/TryoutFlowHeader.module.css';
@@ -135,8 +136,12 @@ export default function CoachTryoutsPage({
       {/* Stage 3 — Decide */}
       <div className={hidden('decide')} role="tabpanel">
         <PanelIntro text="Offer, waitlist, or pass on each ranked player. Turn on family emails to have offers land with a secure reply link — or leave them off and reach out yourself. (If names are still hidden, reveal them back on the Set up tab first.)" />
+        {/* Phase 3 (frame 06): a confirmed returning candidate's prior tryout, beside this one.
+            The board only asks once names are revealed; the server only answers then too (R6). */}
         <TryoutDecisionBoard apiBase={`${base}/tryout-decisions`}
-          continuityApiBase={`${base}/development/continuity`} canWrite teamId={teamId} onError={fail} />
+          continuityApiBase={`${base}/development/continuity`}
+          memoryApiBase={`${base}/tryout-memory`} active={activeTab === 'decide'}
+          canWrite teamId={teamId} onError={fail} />
       </div>
 
       {/* Stage 4 — Build your team: the Tryout Report (Tryout Insights Phase 1, mockups v1
@@ -148,6 +153,16 @@ export default function CoachTryoutsPage({
           apiBase={`${base}/tryout-report`}
           orgSlug={orgSlug}
           rosterHref={rosterHref}
+          active={activeTab === 'build'}
+          onError={fail}
+        />
+        {/* Phase 2 (frame 04): the bridge from the tryout to the season — seed each new player's
+            development baseline and pick what to work on first. Renders nothing until at least
+            one player has been accepted onto the roster from this tryout. */}
+        <TryoutBaselineCard
+          apiBase={`${base}/tryout-baselines`}
+          orgSlug={orgSlug}
+          teamId={teamId}
           active={activeTab === 'build'}
           onError={fail}
         />

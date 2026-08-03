@@ -1,0 +1,82 @@
+/* The tryout snapshot, in the TWO places it is allowed to appear (Tryout Insights Phase 2,
+   mockups v1 frames 04 + 05): inline inside the seeding walkthrough, and as the dashed CONTEXT
+   card on a player's development page.
+
+   ⚠ THE DASHED BORDER IS THE RULING, NOT A STYLE CHOICE (R4). It is what stops the card reading
+   as a measurables panel. A solid border here would make a subjective panel rating look like a
+   measured result sitting beside real ones — which is precisely the confusion the ruling exists
+   to prevent. Do not "tidy" it to match the surrounding cards.
+
+   Dark-glass idiom (white-alpha literals + var() accents) with the warm sunlight floor at the
+   bottom, same contract as the sibling tryout cards. */
+
+.card {
+  border: 1px dashed rgba(255, 255, 255, 0.22);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  padding: 0.9rem 1rem;
+  margin: 0 0 1.1rem;
+}
+.head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.6rem; flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+.title {
+  margin: 0;
+  font-size: 0.9rem; font-weight: 700;
+  color: var(--white-90);
+  display: inline-flex; align-items: center; gap: 0.35rem;
+}
+.meta {
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+}
+
+/* Inline variant — inside the walkthrough step, where the card chrome already exists. */
+.inlineLabel {
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 1rem 0 0.5rem;
+}
+
+/* The bars themselves live in the shared CategoryBars widget — see CategoryBars.module.css. */
+
+.composite {
+  display: flex; align-items: baseline; gap: 0.35rem;
+  margin: 0.6rem 0 0;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+.compositeValue {
+  font-size: 1.05rem; font-weight: 700;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  color: var(--white-90);
+}
+
+/* The audience line — rendered ON the card, per R3's "state the audience on screen" precedent. */
+.note {
+  margin: 0.75rem 0 0;
+  font-size: 0.73rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5). Flat additive rules only. ── */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .card {
+  border-color: var(--home-line-strong);
+  background: transparent;
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .title,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .compositeValue {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .meta,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .inlineLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .composite,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .note {
+  color: var(--home-dim);
+}

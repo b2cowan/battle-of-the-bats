@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { buildTryoutReport, fairnessReceiptLines, decisionLabel } from '../../lib/tryout-report.ts';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+import {
+  buildTryoutReport, fairnessReceiptLines, decisionLabel,
+  buildTryoutMemoryPair, canShowTryoutMemory, returningImprovementAggregate,
+  inPlayTryoutCandidates, MIN_MEMORY_AGGREGATE_PAIRS,
+  type TryoutMemorySnapshot, type TryoutMemoryPair,
+} from '../../lib/tryout-report.ts';
 import type { RepTryoutRegistration } from '../../lib/types.ts';
 
 /**
@@ -32,6 +39,7 @@ function mkReg(over: Partial<RepTryoutRegistration> = {}): RepTryoutRegistration
     consentAt: null, consentIp: null,
     bibNumber: null, isCheckedIn: false, checkedInAt: null,
     offerSentAt: null, offerExpiresAt: null, offerResponse: null, offerRespondedAt: null,
+    firstOfferedAt: null,
     submittedAt: '2027-08-01T00:00:00Z', updatedAt: '2027-08-01T00:00:00Z',
     ...over,
   };
@@ -58,7 +66,7 @@ const BASE = {
 };
 
 describe('buildTryoutReport — funnel', () => {
-  it('counts the stages, names the drop-offs, and counts "offered" as current standing (offered + accepted)', () => {
+  it('counts the stages, names the drop-offs, and counts "offered" as offers EVER extended', () => {
     const regs = [
       mkReg({ id: 'a', status: 'accepted', isCheckedIn: true }),
       mkReg({ id: 'b', status: 'offered', isCheckedIn: true, offerSentAt: '2027-08-10T00:00:00Z', offerExpiresAt: '2027-08-20T00:00:00Z' }),
@@ -75,14 +83,31 @@ describe('buildTryoutReport — funnel', () => {
     assert.equal(r.funnel.attended, 5);
     assert.equal(r.funnel.neverCheckedIn, 1);
     assert.equal(r.funnel.evaluated, 2);
-    // Current standing: 3 currently offered + 1 accepted. NOT "ever offered" — a rescinded offer
-    // leaves no durable trace until Phase 2's first_offered_at (see TryoutReportFunnel.offered doc).
+    // 3 currently offered + 1 accepted, none with a sticky stamp — the union's legacy half.
     assert.equal(r.funnel.offered, 4);
     assert.equal(r.funnel.accepted, 1);
     assert.equal(r.funnel.familyDeclined, 1);
     // 'c' expired against the injected clock; 'b' still open
     assert.equal(r.funnel.offerExpired, 1);
     assert.equal(r.funnel.awaitingReply, 1);
+  });
+
+  // The whole point of the sticky stamp (mig 223): a coach who offers a player and then changes
+  // their mind used to erase the offer from the record entirely, because clearTryoutOffer wipes
+  // every live offer column. "Offers extended" must survive that.
+  it('counts a RESCINDED offer — the sticky stamp is what makes "ever offered" provable', () => {
+    const regs = [
+      // Offered, then re-decided to 'declined': every live offer column was cleared, only the
+      // sticky stamp remains.
+      mkReg({ id: 'a', status: 'declined', isCheckedIn: true, firstOfferedAt: '2027-08-10T00:00:00Z' }),
+      mkReg({ id: 'b', status: 'waitlisted', isCheckedIn: true }),
+    ];
+    const r = buildTryoutReport({ ...BASE, registrations: regs });
+    assert.equal(r.funnel.offered, 1);
+    assert.equal(r.funnel.accepted, 0);
+    // ⚠ And it must not leak into the CURRENT-standing tallies the decision board shows.
+    assert.equal(r.decisions.offered, 0);
+    assert.equal(r.decisions.declined, 1);
   });
 
   it('drops withdrawn candidates from every number', () => {
@@ -257,5 +282,252 @@ describe('hasAnything', () => {
   it('stays false for a tryout with only registrations — the stage keeps its payoff copy', () => {
     const r = buildTryoutReport({ ...BASE, registrations: [mkReg(), mkReg()] });
     assert.equal(r.hasAnything, false);
+  });
+});
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+ * Candidate memory — Tryout Insights Phase 3 (plan §6; rulings R6/R7/R8).
+ *
+ * The rules worth a test each are, again, the ones that would fail SILENTLY: a delta quietly
+ * appearing across two different scorecards reads as authoritative and is meaningless, and an
+ * "improved +X" line built from one lucky pair reads as a finding.
+ * ════════════════════════════════════════════════════════════════════════════════════════════ */
+
+function snap(over: Partial<TryoutMemorySnapshot> = {}): TryoutMemorySnapshot {
+  return {
+    seasonLabel: '2026', scaleMax: 5, composite: 3, evaluatorCount: 4,
+    categories: [
+      { key: 'hit', label: 'Hitting', avg: 3 },
+      { key: 'throw', label: 'Throwing', avg: 2 },
+    ],
+    decision: 'Waitlisted',
+    ...over,
+  };
+}
+
+describe('one definition of "in play"', () => {
+  /**
+   * The report derives its own candidate set; the two routes hand the SAME set to the memory
+   * resolver. Before /simplify those were two independently-written filters, so a future change
+   * to "in play" could have made the memory strip's current-season composite disagree with the
+   * composite the report shows for the same candidate. This test is the tie.
+   */
+  it('drops withdrawn candidates, and is the function the report itself uses', () => {
+    const regs = [mkReg({ id: 'a' }), mkReg({ id: 'w', status: 'withdrawn' }), mkReg({ id: 'b', status: 'accepted' })];
+    assert.deepEqual(inPlayTryoutCandidates(regs).map(r => r.id), ['a', 'b']);
+    // Same population the report counts — proven against the report's own output, not by reading it.
+    assert.equal(buildTryoutReport({ ...BASE, registrations: regs }).funnel.registered, 2);
+  });
+});
+
+describe('R6 — canShowTryoutMemory fails closed', () => {
+  it('refuses while blind, refuses without a tryout at all, allows once revealed', () => {
+    assert.equal(canShowTryoutMemory({ isAnonymous: true }), false);
+    assert.equal(canShowTryoutMemory(null), false);
+    assert.equal(canShowTryoutMemory(undefined), false);
+    assert.equal(canShowTryoutMemory({ isAnonymous: false }), true);
+  });
+});
+
+describe('R7 — present, don’t judge', () => {
+  it('computes a delta when the scales match, on the composite and on matched categories', () => {
+    const pair = buildTryoutMemoryPair(
+      'reg-1', 'prior-1',
+      snap({ composite: 2.9 }),
+      snap({ seasonLabel: 'This tryout', composite: 3.6, decision: 'Undecided', categories: [
+        { key: 'hit', label: 'Hitting', avg: 3.8 },
+        { key: 'throw', label: 'Throwing', avg: 3.4 },
+      ] }),
+    );
+    assert.equal(pair.delta, 0.7);
+    assert.deepEqual(pair.categories.map(c => [c.key, c.delta]), [['hit', 0.8], ['throw', 1.4]]);
+  });
+
+  it('refuses ALL arithmetic across different scales — the whole ruling in one assertion', () => {
+    const pair = buildTryoutMemoryPair(
+      'reg-1', 'prior-1',
+      snap({ scaleMax: 10, composite: 7.1, categories: [{ key: 'hit', label: 'Hitting', avg: 7 }] }),
+      snap({ seasonLabel: 'This tryout', scaleMax: 5, composite: 4 }),
+    );
+    // The ABSENCE of the number is the ruling — there is no separate `comparable` flag that could
+    // one day say "yes" while the delta says nothing.
+    assert.equal(pair.delta, null);
+    // ⚠ Not "no composite delta" — no category deltas either. Normalizing to a percentage would
+    // look like a comparison and would smuggle in a claim the club never made.
+    assert.deepEqual(pair.categories, []);
+    // Both cards still travel: side by side always.
+    assert.equal(pair.prior.composite, 7.1);
+    assert.equal(pair.current.composite, 4);
+  });
+
+  it('refuses a delta when either season has no composite — an unscored tryout is not a zero', () => {
+    const noPrior = buildTryoutMemoryPair('reg-1', 'prior-1', snap({ composite: null }), snap({ composite: 4 }));
+    assert.equal(noPrior.delta, null);
+    const noCurrent = buildTryoutMemoryPair('reg-1', 'prior-1', snap({ composite: 3 }), snap({ composite: null }));
+    assert.equal(noCurrent.delta, null);
+  });
+
+  it('compares categories by KEY only, and drops keys either season left unscored', () => {
+    const pair = buildTryoutMemoryPair(
+      'reg-1', 'prior-1',
+      snap({ categories: [
+        { key: 'hit', label: 'Hitting', avg: 3 },
+        { key: 'field', label: 'Fielding', avg: 4 },   // absent from this year's scorecard
+        { key: 'throw', label: 'Throwing', avg: null }, // matched key, nobody scored it then
+      ] }),
+      snap({ categories: [
+        { key: 'hit', label: 'Hitting', avg: 4 },
+        { key: 'throw', label: 'Throwing', avg: 3 },
+        { key: 'speed', label: 'Speed', avg: 5 },       // new category this year
+      ] }),
+    );
+    assert.deepEqual(pair.categories.map(c => c.key), ['hit']);
+  });
+
+  it('rounds deltas — a strip must never print a full-precision float', () => {
+    const pair = buildTryoutMemoryPair('reg-1', 'prior-1', snap({ composite: 2.9 }), snap({ composite: 3.2 }));
+    assert.equal(pair.delta, 0.3);
+  });
+});
+
+describe('C4 — the returning-improvement aggregate', () => {
+  let priorSeq = 0;
+  /** A comparable pair against a DISTINCT prior person unless one is named explicitly. */
+  const pairAt = (delta: number, priorKey = `prior-${++priorSeq}`): TryoutMemoryPair =>
+    buildTryoutMemoryPair('r', priorKey, snap({ composite: 3 }), snap({ composite: 3 + delta }));
+
+  it('does not exist below three comparable pairs — silence beats a confident lie', () => {
+    assert.equal(MIN_MEMORY_AGGREGATE_PAIRS, 3);
+    assert.equal(returningImprovementAggregate([]), null);
+    assert.equal(returningImprovementAggregate([pairAt(0.5), pairAt(0.7)]), null);
+  });
+
+  it('counts only COMPARABLE pairs toward the threshold', () => {
+    const incomparable = buildTryoutMemoryPair(
+      'r', 'prior-x', snap({ scaleMax: 10, composite: 8 }), snap({ scaleMax: 5, composite: 4 }),
+    );
+    // Three pairs on the table, but only two of them can be subtracted.
+    assert.equal(returningImprovementAggregate([pairAt(0.5), pairAt(0.7), incomparable]), null);
+  });
+
+  it('averages the deltas and names the pair count, not the candidate count', () => {
+    const agg = returningImprovementAggregate([pairAt(0.4), pairAt(0.6), pairAt(0.8)])!;
+    assert.equal(agg.pairs, 3);
+    assert.equal(agg.avg, 0.6);
+    assert.equal(agg.line, '3 returning candidates improved +0.6 on average since their last tryout.');
+  });
+
+  it('never says "improved" over a flat or falling average', () => {
+    const down = returningImprovementAggregate([pairAt(-0.2), pairAt(-0.4), pairAt(-0.6)])!;
+    assert.equal(down.avg, -0.4);
+    assert.match(down.line, /scored 0\.4 lower on average/);
+    assert.doesNotMatch(down.line, /improved/);
+
+    const flat = returningImprovementAggregate([pairAt(0), pairAt(0), pairAt(0)])!;
+    assert.match(flat.line, /scored the same on average/);
+  });
+
+  /**
+   * The database allows at most one confirmed link per CURRENT candidate — but nothing stops two
+   * different current candidates being confirmed against the SAME historical player (siblings on
+   * one guardian email, or a duplicated old record). Counting links instead of people would let a
+   * single person's improvement carry the line over its own three-pair floor (/review 2026-08-03).
+   */
+  it('counts one returning PERSON once, however many candidates claim them', () => {
+    const twice = [pairAt(0.4, 'prior-same'), pairAt(0.6, 'prior-same'), pairAt(0.8)];
+    assert.equal(returningImprovementAggregate(twice), null);
+
+    const three = [pairAt(0.4, 'prior-same'), pairAt(0.6, 'prior-same'), pairAt(0.8), pairAt(0.6)];
+    const agg = returningImprovementAggregate(three)!;
+    assert.equal(agg.pairs, 3);          // not 4
+    assert.equal(agg.avg, 0.6);          // mean(0.4, 0.8, 0.6) — the duplicate's 0.6 is dropped
+    assert.match(agg.line, /^3 returning candidates/);
+  });
+
+  it('rides into the report, and is absent when the route resolved no pairs', () => {
+    const withPairs = buildTryoutReport({
+      ...BASE, registrations: [mkReg({ status: 'accepted' })],
+      memoryPairs: [pairAt(0.4), pairAt(0.6), pairAt(0.8)],
+    });
+    assert.equal(withPairs.returningImprovement!.avg, 0.6);
+    assert.equal(buildTryoutReport({ ...BASE, registrations: [mkReg()] }).returningImprovement, null);
+  });
+});
+
+/**
+ * ── C5: R6 as a build-time contract ───────────────────────────────────────────────────────────
+ *
+ * "Memory never breaks the blindfold." The failure mode is not malice — it is a future session
+ * adding the strip to the live scoreboard because the data was already in hand, and nothing
+ * looking wrong. So the rule is stated over the SOURCE of every surface that runs while
+ * evaluation is blind, in the same spirit as the B5 family-payload guard and the coach-season
+ * write guard.
+ *
+ * ⚠ Check-in is on this list even though it shows an identity-only "tried out in {season}"
+ * marker. Identity is not a score, and that marker is UNCHANGED — what must never appear there
+ * is a number.
+ */
+describe('C5 — no blind surface can reach candidate memory (R6)', () => {
+  const ROOT = process.cwd();
+
+  /** Every surface an evaluator (or the coach) uses while names are still hidden. */
+  const BLIND_SURFACES = [
+    'components/rep-teams/TryoutScorerSurface.tsx',
+    'components/rep-teams/TryoutScoreboardCard.tsx',
+    'components/rep-teams/TryoutCheckIn.tsx',
+    'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-scoreboard/route.ts',
+    'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-self-score/route.ts',
+    'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-candidates/route.ts',
+    'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-evaluators/route.ts',
+  ];
+
+  /** Anything that would carry a PRIOR season's evaluation onto one of those screens. */
+  const FORBIDDEN = [
+    'TryoutMemoryStrip',
+    'tryout-memory',
+    'tryout-report',
+    'resolveTryoutMemoryPairs',
+    'buildTryoutMemoryPair',
+    'TryoutMemoryPair',
+    'resolveCoachSeasonCapabilityMap',
+    'getRepTeamContinuityLinks',
+  ];
+
+  for (const file of BLIND_SURFACES) {
+    it(`${file} names nothing that carries a prior season's evaluation`, () => {
+      const full = join(ROOT, file);
+      assert.ok(existsSync(full), `${file} has moved — update this guard rather than deleting it`);
+      const src = readFileSync(full, 'utf8');
+      for (const needle of FORBIDDEN) {
+        assert.equal(
+          src.includes(needle), false,
+          `${file} references "${needle}". Prior-year evaluation data appears ONLY at Decide, ` +
+          'post-reveal, and on the report (R6). A bib number is just a bib number.',
+        );
+      }
+    });
+  }
+
+  it('the memory route gates on canShowTryoutMemory BEFORE it reads anything', () => {
+    const src = readFileSync(join(ROOT,
+      'app/api/coaches/[orgSlug]/teams/[teamId]/tryout-memory/route.ts'), 'utf8');
+    assert.ok(src.includes('canShowTryoutMemory'),
+      'The memory route must apply the R6 gate itself. A client-side render gate does not ' +
+      'survive the network tab.');
+    // The gate has to precede the continuity read — pairing prior named records to bibs is the
+    // de-anonymization, and it happens at fetch time, not at render time. (Call sites, not the
+    // import block, or the assertion would pass on import order alone.)
+    const gate = src.indexOf('if (!canShowTryoutMemory(tryout))');
+    const read = src.indexOf('getRepTeamContinuityLinks(teamId)');
+    assert.ok(gate > 0 && read > 0 && gate < read,
+      'The blind check must come BEFORE the continuity links are fetched.');
+  });
+
+  it('the resolver refuses to build pairs while blind, whatever it was handed', () => {
+    // Belt and braces: even a caller that forgot the route-level gate gets nothing back.
+    // (The async resolver is exercised here only for its synchronous fail-closed branch.)
+    const src = readFileSync(join(ROOT, 'lib/tryout-memory.ts'), 'utf8');
+    assert.ok(src.includes('if (!canShowTryoutMemory(input.tryout)) return [];'),
+      'lib/tryout-memory.ts must fail closed on the blind gate before any DB read.');
   });
 });

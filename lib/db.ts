@@ -4135,6 +4135,36 @@ export async function getCoachingAssignmentsForUser(
 }
 
 /**
+ * Every season this coach holds an assignment on for ONE team — open or closed — in capability
+ * terms only. Extracted /simplify 2026-08-03.
+ *
+ * ⚠ **Deliberately lean, and that is the whole point.** The only other way to answer "what could
+ * this coach do in 2025?" was `getCoachingAssignmentsForUser` + `getClosedCoachingAssignmentsForUser`,
+ * and the open half of that pair is expensive: it also fetches money badges and nav signals
+ * (`getCoachingBadges` + `getCoachingNavSignals`, several sequential round trips) that a
+ * capability question has no use for. This is one query for all four statuses instead.
+ */
+export async function getCoachAssignmentCapabilitiesForTeam(
+  orgId: string,
+  userId: string,
+  teamId: string,
+  opts?: CoachAssignmentLookupOpts,
+): Promise<{ programYearId: string; capabilities: CoachCapabilities }[]> {
+  const rows = await loadCoachAssignmentRows(
+    orgId, userId, ['draft', 'active', 'completed', 'archived'], opts,
+  );
+  return rows
+    .filter(r => r.team_id === teamId)
+    .map(r => ({
+      programYearId: r.program_year_id,
+      capabilities: resolveCoachCapabilities(
+        r.coach_role as 'head_coach' | 'assistant_coach',
+        r.capabilities ?? null,
+      ),
+    }));
+}
+
+/**
  * A coaching assignment on a CLOSED (completed/archived) program year — the Season's End
  * access model (Coach Portal Batch 3, P0 #1). Deliberately a SEPARATE lookup from
  * `getCoachingAssignmentsForUser`: the active list feeds ~49 write-capable routes that all
@@ -8043,6 +8073,14 @@ export async function getPriorContinuityIdentities(
   preFetchedYears?: RepProgramYear[],
 ): Promise<{ priorProgramYearIds: string[]; identities: {
   kind: 'roster' | 'registration'; id: string; programYearId: string;
+  /**
+   * The tryout registration this identity's EVALUATION hangs off — itself for a registration,
+   * `tryout_registration_id` for a roster row (null when the player was added by hand and never
+   * tried out). Candidate memory (Phase 3) needs it: scores are keyed by registration, so a
+   * confirmed link whose prior side is a roster row has no other way back to that season's
+   * scorecard. The matcher ignores it.
+   */
+  sourceRegistrationId: string | null;
   firstName: string; lastName: string | null; dateOfBirth: string | null;
   guardianEmail: string | null; guardianFirstName: string | null; guardianLastName: string | null;
 }[] }> {
@@ -8071,10 +8109,14 @@ export async function getPriorContinuityIdentities(
   const acceptedRegIds = new Set((rosterRes.data ?? [])
     .map(r => r.tryout_registration_id).filter((id: string | null): id is string => !!id));
   const identities = [
-    ...(rosterRes.data ?? []).map(r => ({ kind: 'roster' as const, ...mapContinuityIdentityRow(r) })),
+    ...(rosterRes.data ?? []).map(r => ({
+      kind: 'roster' as const,
+      sourceRegistrationId: r.tryout_registration_id ?? null,
+      ...mapContinuityIdentityRow(r),
+    })),
     ...(regRes.data ?? [])
       .filter(r => !acceptedRegIds.has(r.id))
-      .map(r => ({ kind: 'registration' as const, ...mapContinuityIdentityRow(r) })),
+      .map(r => ({ kind: 'registration' as const, sourceRegistrationId: r.id, ...mapContinuityIdentityRow(r) })),
   ];
   return { priorProgramYearIds: priorIds, identities };
 }

@@ -14,7 +14,9 @@ import {
 } from '@/lib/db';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
-import { buildTryoutReport, pickPriorProgramYear } from '@/lib/tryout-report';
+import { resolveCoachSeasonCapabilityMap } from '@/lib/coach-season-read';
+import { buildTryoutReport, pickPriorProgramYear, inPlayTryoutCandidates } from '@/lib/tryout-report';
+import { resolveTryoutMemoryPairs } from '@/lib/tryout-memory';
 
 /**
  * The Tryout Report — the season's record of the selection, assembled for the Build-your-team
@@ -27,6 +29,13 @@ import { buildTryoutReport, pickPriorProgramYear } from '@/lib/tryout-report';
  *
  * R1/R6 enforcement happens server-side: while blind evaluation is on, `report.candidateRows` is
  * null — the name×score×decision mapping for the full-detail export does not leave the server.
+ *
+ * ⚠ **R8 — the returning-improvement line makes this a past-season reader** (Phase 3, work item
+ * C4), so this path is listed in `APPROVED_SEASON_AWARE_ROUTES`
+ * (tests/unit/coach-season-write-guard.test.ts) alongside `tryout-memory`, which carries the full
+ * three-question answer. The read is the same one: prior tryout averages, gated per prior season
+ * on THAT year's assignment row via `resolveCoachSeasonCapabilityMap` (governing rule 1). The
+ * report's own season stays the ACTIVE one — this route takes no `?year=` and never will.
  */
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
@@ -51,14 +60,33 @@ export const GET = withObservability(async (_req: Request,
   ]);
   const prior = pickPriorProgramYear(allYears, programYear.id);
 
-  const [rubric, registrations, scores, roster, continuityLinks, priorRegistrations] = await Promise.all([
+  const [rubric, registrations, scores, roster, continuityLinks, priorRegistrations, capabilityByYear] = await Promise.all([
     tryout ? getRepTryoutRubric(tryout.id) : Promise.resolve(null),
     getRepTryoutRegistrations(programYear.id),
     tryout ? getRepTryoutScores(tryout.id) : Promise.resolve([]),
     getRepRosterPlayers(programYear.id),
     getRepTeamContinuityLinks(teamId),
     prior ? getRepTryoutRegistrations(prior.id) : Promise.resolve(null),
+    resolveCoachSeasonCapabilityMap(ctx.org, ctx.user.id, teamId),
   ]);
+
+  // C4 — the returning-improvement aggregate. The resolver applies R6 itself and returns nothing
+  // while blind: an average over three candidates carries no name, but building it still means
+  // pairing prior named records to bib numbers, which is the de-anonymization blind mode exists
+  // to prevent. The line simply appears once names are revealed.
+  const memoryPairs = await resolveTryoutMemoryPairs({
+    teamId,
+    programYear,
+    allYears,
+    tryout,
+    // ONE shared definition of "in play" with buildTryoutReport below — the aggregate and the
+    // funnel must be counting the same people.
+    registrations: inPlayTryoutCandidates(registrations),
+    rubric,
+    scores,
+    continuityLinks,
+    capabilityByYear,
+  });
 
   const report = buildTryoutReport({
     tryout,
@@ -75,6 +103,7 @@ export const GET = withObservability(async (_req: Request,
       ? priorRegistrations.filter(r => r.status !== 'withdrawn').length
       : null,
     priorSeasonName: prior?.name ?? null,
+    memoryPairs,
     now: Date.now(),
   });
 

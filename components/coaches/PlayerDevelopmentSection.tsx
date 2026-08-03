@@ -7,6 +7,7 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import Sparkline from '@/components/charts/Sparkline';
 import TestTypesManager, { NewTypeFields } from '@/components/coaches/TestTypesManager';
 import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
+import TryoutSnapshotCard from '@/components/coaches/TryoutSnapshotCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
 import { formatValue, todayLocal, formatShortDate, formatShortInstant } from '@/lib/measurable-format';
 import {
@@ -14,6 +15,7 @@ import {
 } from '@/lib/export';
 import type {
   RepTeamMeasurableType, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus,
+  RepTryoutBaselineSnapshot,
 } from '@/lib/types';
 
 const STATUS_LABELS: Record<RepDevelopmentGoalStatus, string> = {
@@ -42,6 +44,14 @@ interface DevelopmentData {
   context: { fieldInnings: number; benchInnings: number } | null;
   archive: ArchiveSeason[];
   carry: { linkId: string; priorRosterId: string; priorSeasonLabel: string; workingCount: number } | null;
+  /**
+   * The frozen tryout snapshot, when this player was seeded from a tryout (Phase 2, R4).
+   *
+   * ⚠ Null for everyone else, AND null for any coach without the tryouts capability — the server
+   * decides that, not this component. It renders as a CONTEXT artifact above the focus areas and
+   * must never be folded into the measurables list or a trend.
+   */
+  tryoutBaseline: RepTryoutBaselineSnapshot | null;
 }
 
 // Returning-player continuity (3C) rides the shared useContinuityLinks hook + the
@@ -571,6 +581,11 @@ export default function PlayerDevelopmentSection({
           {carryErr && <p className={styles.errorText} role="alert" style={{ marginTop: '0.4rem' }}>{carryErr}</p>}
         </div>
       )}
+
+      {/* ── Tryout snapshot (Phase 2, frame 05) — where the season started. Deliberately ABOVE
+             the focus areas, because it is what those focus areas were chosen from, and
+             deliberately dashed so it can never be mistaken for a measurables panel (R4). ── */}
+      {data.tryoutBaseline && <TryoutSnapshotCard snapshot={data.tryoutBaseline} variant="card" />}
 
       {/* ── Focus areas (IDP) ── */}
       {data.showGoals && (

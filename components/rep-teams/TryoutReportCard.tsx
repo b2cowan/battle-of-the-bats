@@ -2,6 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { FileChartColumn, ChevronDown, ArrowRight, Lock, FileText, FileSpreadsheet } from 'lucide-react';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
+import CategoryBars from '@/components/coaches/CategoryBars';
 import { useOrg } from '@/lib/org-context';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
 import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
@@ -105,7 +106,12 @@ export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active,
       caption: f.neverCheckedIn > 0 ? `${f.neverCheckedIn} never checked in` : undefined,
     },
     { label: 'Evaluated', value: f.evaluated },
-    { label: 'Offered', value: f.offered },
+    // ⚠ "Offers extended", not "Offered" — a deliberate mockup deviation (frame 01 says "Offered")
+    // recorded /review 2026-08-03. Since Phase 2's sticky stamp this row counts offers EVER made,
+    // while the decision board one tab away tallies who is offered RIGHT NOW. Both are correct and
+    // both are wanted, but under one word they read as the same number disagreeing with itself —
+    // which is what a coach who rescinded an offer would have seen.
+    { label: 'Offers extended', value: f.offered },
     {
       label: 'Accepted', value: f.accepted,
       caption: [
@@ -319,35 +325,29 @@ export default function TryoutReportCard({ apiBase, orgSlug, rosterHref, active,
           </>
         )}
       </div>
+      {/* C4 — returning-candidate improvement. The server emits this only at three or more
+          comparable pairs and only once names are revealed; below that the line does not exist,
+          because an average built from one or two players is an anecdote wearing a number. */}
+      {report.returningImprovement && (
+        <p className={styles.returningLine}>{report.returningImprovement.line}</p>
+      )}
 
       {/* Class strength profile */}
       {profile && (
         <>
           <div className={styles.sectionLabel}>Where this class is strong — and thin</div>
-          <div className={styles.cats}>
-            {profile.categories.map(cat => {
-              const thin = thinnest.some(t => t.key === cat.key);
-              return (
-                <div key={cat.key} className={styles.catRow}>
-                  <span className={styles.catLabel}>{cat.label}</span>
-                  <span className={styles.catTrack}>
-                    {cat.avg != null && (
-                      <span
-                        className={`${styles.catBar} ${thin ? styles.catBarThin : ''}`}
-                        style={{ width: `${Math.min(100, (cat.avg / profile.scaleMax) * 100)}%` }}
-                      />
-                    )}
-                  </span>
-                  <span className={styles.catValue}>{cat.avg != null ? cat.avg.toFixed(1) : '—'}</span>
-                </div>
-              );
-            })}
-            {thinnest.length > 0 && (
-              <p className={styles.catFlag}>
-                {thinnest.map(t => t.label).join(' and ')} — thinnest area of the incoming class, a head start for practice planning.
-              </p>
-            )}
-          </div>
+          {/* The bars are the shared CategoryBars widget (extracted /simplify 2026-08-02, when the
+              per-player snapshot became a second hand-copy of them). What "thin" MEANS stays here:
+              on the report it is the class's weakest category, not a fixed threshold. */}
+          <CategoryBars
+            scaleMax={profile.scaleMax}
+            rows={profile.categories.map(cat => ({ ...cat, thin: thinnest.some(t => t.key === cat.key) }))}
+          />
+          {thinnest.length > 0 && (
+            <p className={styles.catFlag}>
+              {thinnest.map(t => t.label).join(' and ')} — thinnest area of the incoming class, a head start for practice planning.
+            </p>
+          )}
         </>
       )}
 

@@ -2,8 +2,10 @@
 import { useState, useEffect, useCallback, useRef, Fragment } from 'react';
 import { ListChecks, Check, EyeOff, Mail } from 'lucide-react';
 import TryoutAcceptDrawer, { type AcceptIdentity, type AcceptSuggestedDues, type AcceptPayload } from './TryoutAcceptDrawer';
+import TryoutMemoryStrip from './TryoutMemoryStrip';
 import ContinuityCompareCard from '@/components/coaches/ContinuityCompareCard';
 import { useContinuityLinks } from '@/lib/hooks/useContinuityLinks';
+import type { TryoutMemoryPair } from '@/lib/tryout-report';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import styles from './TryoutDayCard.module.css';
 // The email switch reuses the accept drawer's fee-toggle track/knob classes VERBATIM (warm
@@ -48,6 +50,20 @@ interface Props {
    *  render when provided AND the candidate's name is visible (never in blind mode: a
    *  prior-season name beside an anonymized bib would break blind integrity). */
   continuityApiBase?: string;
+  /**
+   * Candidate-memory API (Tryout Insights Phase 3), e.g.
+   * `/api/coaches/{orgSlug}/teams/{teamId}/tryout-memory`. Optional — the strip renders only for
+   * candidates the SERVER paired, which it does only post-reveal and only on confirmed links
+   * (R6/R7). This component adds no gate of its own beyond not asking while blind.
+   */
+  memoryApiBase?: string;
+  /**
+   * True while Decide is the visible stage. The hub keeps every stage MOUNTED and hides them with
+   * CSS, so without this the memory fetch — and the multi-season resolution behind it — would run
+   * on every visit to Tryouts, including visits that never open Decide. Same `active` contract the
+   * report and baseline cards on the Build stage already take.
+   */
+  active?: boolean;
   /** Keys the device-remembered email switch per team. */
   teamId?: string;
   /** Explicit per-component write gate (WI-11) — a no-op while tryouts is all-or-nothing. */
@@ -71,7 +87,7 @@ interface AcceptTarget { registrationId: string; identity: AcceptIdentity; sugge
  *  the switch on can never send anything (D-E9: the failure direction is always "no email"). */
 const emailSwitchKey = (teamId: string) => `tryout-email-decisions:${teamId}`;
 
-export default function TryoutDecisionBoard({ apiBase, continuityApiBase, teamId, canWrite = true, onError }: Props) {
+export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memoryApiBase, active = true, teamId, canWrite = true, onError }: Props) {
   const confirm = useConfirm();
   const [board, setBoard] = useState<Board | null>(null);
   const [loading, setLoading] = useState(true);
@@ -83,6 +99,9 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, teamId
     byCurrent: continuityByReg, decide: decideContinuityShared, dismiss: dismissContinuity,
     busy: continuityBusy, error: continuityErr,
   } = useContinuityLinks(continuityApiBase ?? null, 'registrations');
+  const [memoryByReg, setMemoryByReg] = useState<Record<string, TryoutMemoryPair>>({});
+  /** Bumped when a continuity link is CONFIRMED — see the memory effect. */
+  const [memoryEpoch, setMemoryEpoch] = useState(0);
   const [resendingId, setResendingId] = useState<string | null>(null);
   const [acceptLoadingId, setAcceptLoadingId] = useState<string | null>(null);
   const [acceptTarget, setAcceptTarget] = useState<AcceptTarget | null>(null);
@@ -117,7 +136,53 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, teamId
     }
   }, [apiBase, fail]);
 
-  useEffect(() => { load(); }, [load]);
+  /**
+   * ⚠ **Reload whenever Decide becomes the visible stage — not once on mount** (/review 2026-08-03).
+   *
+   * Revealing names happens on the SET UP stage, in a different card, which updates only its own
+   * state. The hub keeps every stage mounted, so a mount-only load meant the board a coach came
+   * back to still held the payload it fetched while blind: bib numbers, no names, the "Blind —
+   * reveal names" banner, and — once Phase 3 landed — no memory strips either, because the strip
+   * waits on `blind === false`. Reveal → Decide is the documented workflow, so the feature would
+   * simply not have appeared for the coach who followed it, until they happened to hard-refresh.
+   *
+   * Same `active`-driven refresh the report card on the Build stage already uses.
+   */
+  useEffect(() => { if (active) load(); }, [active, load]);
+
+  /**
+   * Candidate memory — fetched only when Decide is open AND the board says names are revealed
+   * (R6). The server refuses while blind anyway; not asking is the second lock, and it also
+   * spares every blind tryout a request that can only answer "nothing".
+   *
+   * Re-runs when `board.blind` flips, so revealing names fills the strips in without a reload.
+   * A failure is silent: memory is enrichment, and a candidate row must still be decidable.
+   *
+   * ⚠ It also re-runs on `memoryEpoch`, which CONFIRMING a returning-player match bumps
+   * (/review 2026-08-03). The verify card sits inside this very board, and a confirmed identity is
+   * exactly what creates a pair server-side — so without this, the coach who followed the intended
+   * "verify, then decide" flow confirmed the match and watched nothing happen, because the shared
+   * continuity hook updates only its own local state.
+   *
+   * The guarded path deliberately clears NOTHING: the map is only ever filled by the fetch below,
+   * and revealing names is one-way, so there is no transition that could strand stale memory on
+   * screen. Not clearing also means tabbing back to Decide keeps the strips up while they refresh
+   * instead of flashing empty.
+   */
+  const blind = board?.blind;
+  useEffect(() => {
+    if (!memoryApiBase || !active || blind !== false) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch(memoryApiBase);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled) setMemoryByReg(data.byRegistration ?? {});
+      } catch { /* non-blocking */ }
+    })();
+    return () => { cancelled = true; };
+  }, [memoryApiBase, active, blind, memoryEpoch]);
 
   // Surface the shared hook's decide errors through the board's own error channel.
   useEffect(() => { if (continuityErr) fail(continuityErr); }, [continuityErr, fail]);
@@ -233,7 +298,10 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, teamId
     setAcceptTarget(null);
   }
 
-  if (loading) return null;
+  // Only the FIRST load blanks the stage. A refresh triggered by returning to Decide keeps the
+  // board a coach was just looking at on screen until the new payload lands, rather than flashing
+  // the panel empty every time they tab away and back.
+  if (loading && !board) return null;
   if (!board) return null;
 
   if (board.total === 0) {
@@ -415,6 +483,14 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, teamId
                 </div>
               ) : null}
             </div>
+            {/* Candidate memory (Phase 3, frame 06). Gated on the SERVER's pairing plus a visible
+                name — the server pairs only post-reveal and only on confirmed links, so an
+                unverified match reaches this line with nothing to render, which is the spec. */}
+            {c.name && memoryByReg[c.registrationId] && (
+              <div className={styles.memorySlot}>
+                <TryoutMemoryStrip pair={memoryByReg[c.registrationId]} />
+              </div>
+            )}
             {continuityOpenId === c.registrationId && suggested.length > 0 && (
               <div style={{ margin: '0 0 0.6rem 2.2rem' }}>
                 {/* No manual panel-close on reject/dismiss: both remove the row from the
@@ -423,7 +499,13 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, teamId
                     (profile-card parity; 3C review fix). */}
                 {suggested.map(row => (
                   <ContinuityCompareCard key={row.linkId} row={row} busy={continuityBusy}
-                    onConfirm={() => decideContinuityShared(c.registrationId, row, 'confirm')}
+                    // A confirmed identity is what makes this candidate's history readable, so ask
+                    // for it the moment the coach vouches for them. A failed confirm just costs a
+                    // harmless re-read.
+                    onConfirm={async () => {
+                      await decideContinuityShared(c.registrationId, row, 'confirm');
+                      setMemoryEpoch(e => e + 1);
+                    }}
                     onReject={() => decideContinuityShared(c.registrationId, row, 'reject')}
                     onDismiss={() => dismissContinuity(c.registrationId, row.linkId)} />
                 ))}

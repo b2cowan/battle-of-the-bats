@@ -1,0 +1,151 @@
+/* Start development from tryouts — the seeding walkthrough (Tryout Insights Phase 2, mockups v1
+   frame 04). Card scaffold (.card/.head/.title) comes from TryoutDayCard.module.css like every
+   tryout card; the snapshot bars come from the shared TryoutSnapshotCard. Only the walkthrough's
+   own chrome lives here. Dark-glass idiom + warm sunlight floor, same contract as its siblings. */
+
+.intro {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0.3rem 0 0;
+}
+
+.beginBtn {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem; font-weight: 700;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  border-radius: 8px;
+  background: rgba(var(--logic-lime-rgb), 0.08);
+  color: var(--logic-lime);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.beginBtn:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
+.beginBtn:disabled { opacity: 0.6; cursor: default; }
+
+.doneChip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.74rem; font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  color: var(--success);
+  border: 1px solid rgba(var(--success-rgb), 0.4);
+  background: rgba(var(--success-rgb), 0.08);
+  white-space: nowrap;
+}
+
+/* ── The step ── */
+.stepHead {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 0.6rem; flex-wrap: wrap;
+}
+.stepCount {
+  font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  font-family: var(--font-data);
+  color: rgba(255, 255, 255, 0.4);
+}
+.stepProgress {
+  font-size: 0.74rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+.playerLine {
+  font-size: 1.02rem; font-weight: 700;
+  color: var(--white-90);
+  margin: 0.15rem 0 0.2rem;
+}
+
+.sectionLabel {
+  font-size: 0.68rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.4);
+  margin: 1.1rem 0 0.55rem;
+}
+
+.suggestion {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 0.7rem 0.85rem;
+  margin-bottom: 0.6rem;
+}
+.suggestionHead {
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+  margin-bottom: 0.4rem;
+}
+.weakChip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.74rem; font-weight: 600;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  color: var(--warning);
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  background: rgba(var(--warning-rgb), 0.07);
+  white-space: nowrap;
+}
+.suggestionArrow { color: rgba(255, 255, 255, 0.3); font-size: 0.8rem; }
+.notAdded {
+  font-size: 0.73rem;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0.35rem 0 0;
+}
+
+.rule {
+  font-size: 0.73rem; line-height: 1.45;
+  color: rgba(255, 255, 255, 0.45);
+  margin: 0.6rem 0 0;
+}
+
+.noSnapshot {
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.55);
+  margin: 0.9rem 0 0;
+}
+
+.actions {
+  display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+  margin-top: 1.1rem;
+}
+.spacer { flex: 1 1 auto; }
+.error { font-size: 0.78rem; color: var(--danger); margin: 0.5rem 0 0; }
+
+@media (max-width: 560px) {
+  .actions > button { flex: 1 1 auto; justify-content: center; }
+}
+
+/* ── Warm coaches portal — SUNLIGHT FLOOR (TH-5). Flat additive rules only. ── */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .intro,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepCount,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .stepProgress,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sectionLabel,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rule,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .notAdded,
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .noSnapshot {
+  color: var(--home-dim);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .playerLine {
+  color: var(--home-ink);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .beginBtn {
+  color: var(--home-olive);
+  border-color: rgba(var(--home-olive-rgb), 0.4);
+  background: var(--home-olive-soft);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .beginBtn:hover {
+  background: rgba(var(--home-olive-rgb), 0.16);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .doneChip {
+  color: var(--home-win);
+  border-color: rgba(var(--home-win-rgb), 0.4);
+  background: rgba(var(--home-win-rgb), 0.08);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .weakChip {
+  color: var(--home-amber);
+  border-color: rgba(var(--home-amber-rgb), 0.35);
+  background: rgba(var(--home-amber-rgb), 0.07);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .suggestion {
+  border-color: var(--home-line);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .suggestionArrow {
+  color: var(--home-dim);
+}
