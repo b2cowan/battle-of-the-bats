@@ -57,7 +57,12 @@ frontend:
         # Webpack production build (next build --webpack) uses far more heap than the
         # Turbopack default and OOMs the build worker on the 8GiB Standard instance.
         # NODE_OPTIONS is inherited by Next's build workers; raise the old-space limit.
-        - NODE_OPTIONS=--max-old-space-size=6144 pnpm run build
+        # Bumped 6144 -> 7168 (2026-08-03): this release's new page/component surface
+        # (Tournament Admin Sandbox, coach helper pages) pushed a clean compile past the
+        # point it used to fail at CSS/import errors, straight into an OOM SIGKILL during
+        # the heavier page-generation/cache-write phase. If 7168 still OOMs, the next lever
+        # is a bigger Amplify build compute instance (console-only setting), not a higher number here.
+        - NODE_OPTIONS=--max-old-space-size=7168 pnpm run build
   artifacts:
     baseDirectory: .next
     files:
