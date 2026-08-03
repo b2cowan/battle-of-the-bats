@@ -695,6 +695,13 @@
 @media (max-width: 900px) {
   .railCols { grid-template-columns: minmax(0, 1fr); }
   .rail { position: static; order: 2; }
+  /* ⚠ A REFERENCE RAIL DOES NOT EXIST BELOW THE WIDE BREAKPOINT (owner, 2026-08-03).
+     Moving it last was not enough: a rail earns its place by sitting BESIDE the work, where it
+     costs nothing to glance at. Stacked under the page it stops being a margin note and becomes
+     another block of the same information the coach already scrolled past — on the Overview it
+     landed directly beneath the very tiles it restates. Surfaces that need their rail's content
+     on a phone must put it in the page itself, not rely on the rail falling to the bottom. */
+  .railHideNarrow { display: none; }
 }
 
 /* Rail contents. Deliberately FLATTER than the cards beside them — hairlines and small labels,
@@ -743,13 +750,6 @@ a.railRow:focus-visible {
    allowed to wrap, or the rail scrolls sideways on the third name. */
 .railValueWrap { white-space: normal; text-align: right; flex-shrink: 1; }
 .railValueBig { font-size: 1.05rem; font-weight: 700; color: var(--home-ink, rgba(255, 255, 255, 0.9)); }
-/* A rail's own empty line — used only where the absence is the answer a coach wants
-   ("everyone is placed"). A GROUP with nothing in it is removed entirely, never shown as a zero. */
-.railClear {
-  font-size: 0.82rem;
-  color: var(--home-dim, rgba(255, 255, 255, 0.45));
-  padding: 0.32rem 0;
-}
 
 /* Collapsible deep-linkable section (portal-styled adoption of admin CollapsibleCard
    behavior): native <details> so children stay mounted; summary carries title + meta. */

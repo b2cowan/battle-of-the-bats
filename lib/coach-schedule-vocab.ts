@@ -8,7 +8,7 @@
 //
 // Pure data + pure functions, no React, no I/O. Relative WITH the .ts extension so the unit tests
 // can run under plain `node --test`.
-import type { RepEventType } from './types.ts';
+import type { RepEventType, RepAttendanceStatus } from './types.ts';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games.ts';
 
 /** Display label per event type. THIS IS THE EXPORT'S "Event Type" COLUMN — changing a string here
@@ -20,6 +20,36 @@ export const EVENT_LABELS: Record<RepEventType, string> = {
   league_game:         'League Game',
   practice:            'Practice',
   team_event:          'Team Event',
+};
+
+/**
+ * The short, lowercase word for an event type, for use INSIDE a sentence — "Next: Thu 6:00 p.m.
+ * practice" (the team masthead's status line, A2).
+ *
+ * Deliberately not `EVENT_LABELS`: those strings are the export/import column contract, so they
+ * are title-case headers ("Game (Tournament)") that read as a label rather than as the tail of a
+ * sentence. Sport-neutral by rule — a league game and a tournament game are both just a "game".
+ */
+export const EVENT_WORD: Record<RepEventType, string> = {
+  external_tournament: 'tournament',
+  tournament_game:     'game',
+  scrimmage:           'scrimmage',
+  league_game:         'game',
+  practice:            'practice',
+  team_event:          'team event',
+};
+
+/**
+ * The four words for the four attendance answers. Lives here, with the rest of the schedule's
+ * vocabulary, because more than one surface now says them: the Schedule's attendance control, and
+ * the lineup builder's bench rail. Two hand-kept copies of four words is how "Out" on one screen
+ * becomes "Absent" on the next.
+ */
+export const ATTENDANCE_WORD: Record<RepAttendanceStatus, string> = {
+  attending: 'In',
+  late:      'Late',
+  absent:    'Out',
+  unknown:   'No reply',
 };
 
 /** Prefix used to auto-name an event. Games derive "{prefix} vs {opponent}"; other types use it as

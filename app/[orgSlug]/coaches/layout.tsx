@@ -1,9 +1,12 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import { getAuthContext } from '@/lib/api-auth';
-import { getCoachingAssignmentsForUser, getClosedCoachingAssignmentsForUser } from '@/lib/db';
-import { resolveOrgHomeHref } from '@/lib/module-entitlements';
+import {
+  getCoachPortalAuth,
+  getCoachPortalAssignments,
+  getCoachPortalClosedAssignments,
+  getCoachPortalPublicHref,
+} from '@/lib/coach-portal-request';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { OrgRole } from '@/lib/types';
 import { buildCoachSeasons } from '@/lib/coach-season-view';
@@ -14,7 +17,6 @@ import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { COACHES_HOME_PATH } from '@/lib/coaches-portal-routes';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
-import CoachTeamHeader from '@/components/coaches/CoachTeamHeader';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import CoachTopStrip from '@/components/coaches/CoachTopStrip';
 import CoachWallSignOut from '@/components/coaches/CoachWallSignOut';
@@ -44,7 +46,10 @@ export default async function CoachesLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContext({ orgSlug });
+  // Request-cached (lib/coach-portal-request): the team layout below this one needs the same auth,
+  // the same assignments and the same public-site door to build the masthead's feed, and on a hard
+  // load both layouts render in ONE request — so the pair now costs one read, not two.
+  const authCtx = await getCoachPortalAuth(orgSlug);
   if (!authCtx) {
     redirect(`/auth/login?next=/${orgSlug}/coaches`);
   }
@@ -73,20 +78,16 @@ export default async function CoachesLayout({
   // account-scoped, so fetching them from the team Overview instead would repeat an identical
   // request on every team switch for data that cannot differ by team — and would flash the wrong
   // state while it resolved. Reading them here costs no extra latency.
-  const lookupOpts = { isTeamWorkspace: isTeamWorkspaceOrg(authCtx.org) };
-  // publicHref: the pinned team header's flip door (D2, 2026-08-01). Same resolver + same
-  // "is this org page real?" predicate as the event chrome and the wall below; a team
-  // workspace resolves to null and the header simply shows no flip.
-  // ⚠ .catch(() => null): the resolver runs an uncaught DB count, and this Promise.all is
-  // the portal's critical path — a query blip must cost the flip pill, never a 500 (the
-  // tournament layout guards the identical call the same way). /review 2026-08-02.
+  const isTeamWorkspace = isTeamWorkspaceOrg(authCtx.org);
+  // publicHref: the pinned team masthead's flip door (D2, 2026-08-01), and the wall's second door
+  // below. Same resolver + same "is this org page real?" predicate as the event chrome; a team
+  // workspace resolves to null and the masthead simply shows no flip. The wrapper carries the
+  // `.catch(() => null)` that keeps a DB blip off the portal's critical path (/review 2026-08-02).
   const [assignments, closedAll, onboardingPrefs, publicHref] = await Promise.all([
-    getCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id, lookupOpts),
-    getClosedCoachingAssignmentsForUser(authCtx.org.id, authCtx.user.id, lookupOpts),
+    getCoachPortalAssignments(authCtx.org.id, authCtx.user.id, isTeamWorkspace),
+    getCoachPortalClosedAssignments(authCtx.org.id, authCtx.user.id, isTeamWorkspace),
     getCoachOnboardingPrefs(authCtx.user.id),
-    lookupOpts.isTeamWorkspace
-      ? Promise.resolve(null)
-      : resolveOrgHomeHref(authCtx.org).catch(() => null),
+    isTeamWorkspace ? Promise.resolve(null) : getCoachPortalPublicHref(authCtx.org),
   ]);
   // Same shaping as the assignments API: one entry per team, only teams with no active year.
   const activeTeamIds = new Set(assignments.map(a => a.teamId));
@@ -103,7 +104,6 @@ export default async function CoachesLayout({
 
   if (assignments.length === 0 && closedAssignments.length === 0) {
     const { name: orgName, contactEmail } = authCtx.org;
-    const isTeamWorkspace = isTeamWorkspaceOrg(authCtx.org);
     // The wall's second door, by persona.
     //
     // A TEAM WORKSPACE has no meaningful public page — its shadow org can never own the
@@ -204,18 +204,13 @@ export default async function CoachesLayout({
                       flex flow. The shell pads down by the same var (coaches.module.css). */}
                   <CoachTopStrip />
                   <CoachesSidebar orgSlug={orgSlug} />
-                  <main className={styles.coachesMain}>
-                    {/* D2 Option A (owner-picked 2026-08-02): the pinned team MASTHEAD —
-                        eyebrow · team name · season/archive meta · flip, admin's hierarchy
-                        recipe. First child of <main> so position:sticky pins at every
-                        width; renders nothing outside /teams/{teamId} paths. */}
-                    <CoachTeamHeader
-                      orgName={authCtx.org.name}
-                      isTeamWorkspace={lookupOpts.isTeamWorkspace}
-                      publicHref={publicHref}
-                    />
-                    {children}
-                  </main>
+                  {/* The pinned team MASTHEAD (D2 Option A) is mounted by the TEAM layout, not
+                      here — that is the first place `teamId` exists server-side, so its record +
+                      status feed (A2) can ride down with the page instead of being fetched after
+                      paint. It still renders as the first child of this <main>: that layout
+                      returns a fragment, which the masthead's sticky pin + padding-cancelling
+                      negative margins depend on. */}
+                  <main className={styles.coachesMain}>{children}</main>
                 </div>
                 <CoachesBottomNav />
               </CoachesOverlayProvider>

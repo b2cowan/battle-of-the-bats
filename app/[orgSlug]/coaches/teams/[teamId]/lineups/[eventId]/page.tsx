@@ -439,6 +439,19 @@ export default function CoachLineupBuilderPage({
   const comingNotInLineup = attendanceRows.filter(r => (r.status === 'attending' || r.status === 'late') && !lineupRowIds.has(r.player.id));
   const outButInLineup = attendanceRows.filter(r => r.status === 'absent' && lineupRowIds.has(r.player.id));
 
+  // ── The attendance rail (Option C, owner-ratified 2026-08-02; trimmed 2026-08-03) ──────────
+  // Already fetched by this page and simply below the fold, which is why placing a player meant
+  // scrolling up to check who is even coming and back down to the grid on every name. READ-ONLY:
+  // the editor's own "Not in the lineup" list keeps the Add button, so exactly one place changes
+  // a lineup — and, since that list already names the unplaced, this rail no longer repeats them.
+  const headcount = {
+    // "In" is coming-or-late — the same pair `comingNotInLineup` above treats as available, so the
+    // rail's headcount can never disagree with the reconcile strip's.
+    in: attendanceRows.filter(r => r.status === 'attending' || r.status === 'late').length,
+    out: attendanceRows.filter(r => r.status === 'absent'),
+    noReply: attendanceRows.filter(r => r.status === 'unknown').length,
+  };
+
   // The Templates popover, injected into the editor's controls row via `controlsExtra`.
   const templatesControl = (
     <div className={styles.lineupAutoWrap} ref={templatesRef}>
@@ -512,6 +525,8 @@ export default function CoachLineupBuilderPage({
             </div>
           )}
 
+          <div className={styles.railCols}>
+          <div>
           <LineupEditor
             roster={attendanceRows.map(r => r.player)}
             rows={lineupRows}
@@ -538,6 +553,41 @@ export default function CoachLineupBuilderPage({
               onChange={e => { setLineupNotes(e.target.value); setLineupDirty(true); }}
               placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster" maxLength={1000} style={{ marginTop: '1rem' }} />
           )}
+          </div>
+
+          {/* Wide screens only: on a phone this would stack directly above the editor's own
+              "Not in the lineup" list, which carries the same names AND the Add button. */}
+          <aside className={`${styles.rail} ${styles.railHideNarrow}`}>
+            {/* ⚠ ATTENDANCE ONLY. A "Not placed yet" list was here and was removed (owner,
+                2026-08-03): the editor's own "Not in the lineup" list already names those players
+                AND carries the Add button, so this was the same names twice on one wide screen.
+                What survives is the half that is genuinely off-screen while you place players —
+                who is actually coming. */}
+            <div className={styles.railGroup}>
+              <span className={styles.railLabel}>Attendance</span>
+              <div className={styles.railRow}>
+                <span className={styles.railRowName}>In</span>
+                <span className={styles.railValue}>{headcount.in}</span>
+              </div>
+              {/* Anyone OUT is NAMED, never just counted — that is the one fact you act on, and a
+                  number alone makes you go looking for it. */}
+              {headcount.out.length > 0 && (
+                <div className={styles.railRow}>
+                  <span className={styles.railRowName}>Out</span>
+                  <span className={`${styles.railValue} ${styles.railValueWrap}`} data-warn="true">
+                    {headcount.out.map(r => playerDisplayName(r.player)).join(', ')}
+                  </span>
+                </div>
+              )}
+              {headcount.noReply > 0 && (
+                <div className={styles.railRow}>
+                  <span className={styles.railRowName}>No reply</span>
+                  <span className={styles.railValue}>{headcount.noReply}</span>
+                </div>
+              )}
+            </div>
+          </aside>
+          </div>
 
           {/* Chunk C: docked above the bottom nav on phones rather than sitting at the end of the
               page. This bar carries Undo — the control a coach reaches for immediately after a

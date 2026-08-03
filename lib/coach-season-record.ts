@@ -10,8 +10,6 @@
 //
 // A convention that two files must agree by hand is not a single source of truth. This is.
 
-import type { RepTeamEvent } from './types';
-
 /** Event types that can carry a result. Scrimmages count only when the coach opts in. */
 export const WLT_CATEGORIES = [
   { key: 'league_game', label: 'League' },
@@ -46,8 +44,15 @@ export function readWltPreference(teamId: string): Record<string, boolean> {
 
 export interface WltTally { w: number; l: number; t: number }
 
-/** Tally decided results. Cancelled events are excluded by the caller's candidate list. */
-export function tallyResults(events: readonly RepTeamEvent[]): WltTally {
+/**
+ * Tally decided results. Cancelled events are excluded by the caller's candidate list.
+ *
+ * Takes the STRUCTURAL minimum rather than `RepTeamEvent` so every surface that counts a record
+ * can call it — including the masthead's feed, which tallies raw `{ result }` rows straight from a
+ * multi-season query and would otherwise have hand-rolled this arithmetic a fourth time. Widening
+ * the parameter is what makes "one definition of how it is tallied" actually reachable.
+ */
+export function tallyResults(events: readonly { result: string | null }[]): WltTally {
   return {
     w: events.filter(e => e.result === 'win').length,
     l: events.filter(e => e.result === 'loss').length,

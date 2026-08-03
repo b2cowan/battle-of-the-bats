@@ -340,7 +340,7 @@ export default function PlayerDetailPage({
       {/* Two-column profile (D3, owner-ratified 2026-08-01): the long/working sections carry
           the main column as deep-linkable collapsible cards; the rail holds compact quick-facts
           that stay visible while scrolling (sticky below the pinned header). */}
-      <div className={styles.profileCols}>
+      <div className={styles.railCols}>
       <div>
       {/* Player info */}
       <CoachCollapseSection sectionId="player" title="Player">
@@ -591,7 +591,7 @@ export default function PlayerDetailPage({
       </CoachCollapseSection>
       </div>
 
-      <aside className={styles.profileRail}>
+      <aside className={styles.rail}>
       {/* Guardian info */}
       <div className={styles.detailSection}>
         <p className={styles.detailSectionTitle}>Guardian</p>

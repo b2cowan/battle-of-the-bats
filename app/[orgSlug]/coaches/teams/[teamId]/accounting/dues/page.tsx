@@ -558,6 +558,34 @@ export default function CoachesDuesPage({
   // Never-paid = same predicate as the Overview "N unpaid" badge, so the two always agree.
   const neverPaid = players.filter(isNeverPaidPlayer);
 
+  // ── Season totals rail (Option C, owner-ratified 2026-08-02) ──────────────────────────────
+  // Every figure is summed from `players`, which this page already has — the rail exists because
+  // on a fifteen-player table these numbers are off-screen exactly while you read the rows they
+  // summarise, not because anything new needed computing. Overdue reuses the SHARED installment
+  // predicate, so the rail can't disagree with the ⚠ flags on the rows beneath it.
+  const railTotals = (() => {
+    let collected = 0;
+    let outstanding = 0;
+    let overduePlayers = 0;
+    let nextDue: string | null = null;
+    for (const p of players) {
+      collected += p.paidAmount;
+      if (p.rollingBalance > 0.005) outstanding += p.rollingBalance;
+      let hasOverdue = false;
+      for (const inst of p.installments) {
+        if (inst.paidAt) continue;
+        if (isInstallmentOverdue(inst.dueDate, inst.paidAt)) { hasOverdue = true; continue; }
+        // "Next due" is the soonest date still AHEAD — an overdue date is not a plan, it's a debt,
+        // and it is already reported on its own line.
+        if (inst.dueDate && (!nextDue || inst.dueDate < nextDue)) nextDue = inst.dueDate;
+      }
+      if (hasOverdue) overduePlayers += 1;
+    }
+    return { collected, outstanding, overduePlayers, nextDue };
+  })();
+  /** Is anyone ACTUALLY late? Distinct from "hasn't paid" — see the chase card below. */
+  const anyoneLate = railTotals.overduePlayers > 0;
+
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Header */}
@@ -647,21 +675,37 @@ export default function CoachesDuesPage({
             </div>
           )}
 
-          {/* "Haven't paid anything yet" — the coach's who-do-I-chase list, with one-tap nudges.
-              Count mirrors the Overview "N unpaid" badge (shared isNeverPaidPlayer predicate). */}
+          {/* Who to chase — ONE LINE plus the bulk action (owner ruling 2026-08-03).
+              It used to list every never-paid player with a per-player Remind. On a team early in
+              its season that WAS the table: eleven names here, the same eleven a screen below with
+              "Unpaid" beside them. The table is the list; this is only the summary and the one
+              thing the table can't do — nudge everyone at once. Per-player Remind moved into the
+              player's own modal, beside Mark Paid, where the coach is already looking at them.
+
+              ⚠ AND IT ONLY RAISES AN ALARM WHEN SOMEONE IS ACTUALLY LATE. It fired on "nothing
+              paid yet" regardless of whether anything was DUE yet, so a roster four weeks ahead of
+              its first due date opened under a warning triangle and eleven flagged names. A status
+              surface that cries wolf gets ignored. Before the due date this is a quiet line. */}
           {neverPaid.length > 0 && (
             <div style={{
               marginBottom: '1.5rem', borderRadius: 10, overflow: 'hidden',
-              border: '1px solid color-mix(in srgb, var(--warning) 25%, transparent)', background: 'color-mix(in srgb, var(--warning) 6%, transparent)',
+              border: `1px solid ${anyoneLate ? 'color-mix(in srgb, var(--warning) 25%, transparent)' : 'var(--home-line, rgba(255,255,255,0.08))'}`,
+              background: anyoneLate ? 'color-mix(in srgb, var(--warning) 6%, transparent)' : 'transparent',
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap', padding: '0.85rem 1.1rem' }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--home-ink, #f0f0f0)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <AlertTriangle size={15} style={{ color: 'var(--warning)' }} />
-                    Haven&apos;t paid anything yet
+                    {anyoneLate && <AlertTriangle size={15} style={{ color: 'var(--warning)' }} />}
+                    {anyoneLate
+                      ? `${railTotals.overduePlayers} past their due date`
+                      : `${neverPaid.length} ${neverPaid.length !== 1 ? 'players have' : 'player has'} not paid yet`}
                   </div>
                   <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.5))' }}>
-                    {neverPaid.length} player{neverPaid.length !== 1 ? 's' : ''} {neverPaid.length !== 1 ? 'owe' : 'owes'} dues with no payment recorded.
+                    {anyoneLate
+                      ? `${neverPaid.length} ${neverPaid.length !== 1 ? 'players owe' : 'player owes'} dues with no payment recorded.`
+                      : railTotals.nextDue
+                        ? `Nothing is late — the first payment is due ${fmtDate(railTotals.nextDue)}.`
+                        : 'Nothing is late.'}
                   </p>
                 </div>
                 {moneyCanWrite && (
@@ -674,43 +718,6 @@ export default function CoachesDuesPage({
                     {remindingAll ? 'Sending…' : `Remind all ${neverPaid.length}`}
                   </button>
                 )}
-              </div>
-
-              <div>
-                {neverPaid.map(p => {
-                  // Show the unpaid DUES amount (credits-blind) so the figure matches the reminder
-                  // email and the "haven't paid" framing — never a post-credit $0 that reads green.
-                  const owed = p.outstanding ?? 0;
-                  return (
-                    <div
-                      key={p.player.id}
-                      style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.55rem 1.1rem', borderTop: '1px solid var(--home-line, rgba(255,255,255,0.05))' }}
-                    >
-                      <button
-                        className={styles.btnGhost}
-                        style={{ padding: 0, color: 'var(--home-ink, rgba(255,255,255,0.85))', fontSize: '0.86rem', fontWeight: 500 }}
-                        onClick={() => { setSelected(p); setEditingSchedule(false); setAddingCredit(false); setSaveError(''); }}
-                      >
-                        {[p.player.playerFirstName, p.player.playerLastName].filter(Boolean).join(' ')}
-                      </button>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', flexShrink: 0 }}>
-                        <span style={{ fontVariantNumeric: 'tabular-nums', color: 'var(--warning)', fontWeight: 600, fontSize: '0.84rem' }}>
-                          {fmt(owed)}
-                        </span>
-                        {moneyCanWrite && (
-                          <button
-                            className={styles.btnSecondary}
-                            style={{ fontSize: '0.78rem', padding: '0.25rem 0.6rem', minHeight: '40px' }}
-                            disabled={remindingAll || !!remindingId}
-                            onClick={() => remindUnpaid(p.player.id)}
-                          >
-                            {remindingId === p.player.id ? 'Sending…' : 'Remind'}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
               </div>
 
               {(unpaidResult || unpaidError) && (
@@ -730,6 +737,7 @@ export default function CoachesDuesPage({
             </div>
           )}
 
+          <div className={styles.railCols}>
           <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
             <table className={styles.table}>
               <thead>
@@ -779,6 +787,49 @@ export default function CoachesDuesPage({
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Season totals — the numbers the table is made of, kept beside the rows instead of
+              scrolling away above them. Read-only by design: "Remind all" stays with the list it
+              acts on, because a send button beside a total invites nudging people you haven't
+              looked at. Moves below the table on a phone (no rail there). */}
+          <aside className={styles.rail}>
+            <div className={styles.railGroup}>
+              <span className={styles.railLabel}>Season totals</span>
+              <div className={styles.railRow}>
+                <span className={styles.railRowName}>Collected</span>
+                <span className={`${styles.railValue} ${styles.railValueBig}`}>{fmt(railTotals.collected)}</span>
+              </div>
+              <div className={styles.railRow}>
+                <span className={styles.railRowName}>Outstanding</span>
+                <span className={`${styles.railValue} ${styles.railValueBig}`} data-warn={railTotals.outstanding > 0.005 ? 'true' : undefined}>
+                  {fmt(railTotals.outstanding)}
+                </span>
+              </div>
+              {railTotals.nextDue && (
+                <div className={styles.railRow}>
+                  <span className={styles.railRowName}>Next due</span>
+                  <span className={styles.railValue}>{fmtDate(railTotals.nextDue)}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Overdue ONLY. "Paid nothing yet" was here and was removed (owner, 2026-08-03): the
+                "Haven't paid anything yet" card sits a few hundred pixels above this, and it is
+                strictly better — it NAMES the families and carries the Remind-all button, where
+                this could only repeat its count. Overdue stays because nothing else on the page
+                totals it; it appears only as a ⚠ against individual installments.
+                Absent entirely when nobody is overdue — a zero here would read as a score. */}
+            {railTotals.overduePlayers > 0 && (
+              <div className={styles.railGroup}>
+                <span className={styles.railLabel}>Needs a nudge</span>
+                <div className={styles.railRow}>
+                  <span className={styles.railRowName}>Overdue</span>
+                  <span className={styles.railValue} data-warn="true">{railTotals.overduePlayers}</span>
+                </div>
+              </div>
+            )}
+          </aside>
           </div>
 
           {/* Season Refund Calculator */}
@@ -992,12 +1043,35 @@ export default function CoachesDuesPage({
                       </div>
                     )}
 
-                    {/* Edit schedule link */}
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+                    {/* Per-player actions. "Remind" lives HERE now (owner ruling 2026-08-03) rather
+                        than on a duplicated chase list above the table — this is where the coach is
+                        already looking at that one family, and it keeps the page from naming the
+                        same players twice. Offered only when there is something to chase. */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      {moneyCanWrite && isNeverPaidPlayer(selected) && (
+                        <button
+                          className={styles.btnSecondary}
+                          onClick={() => remindUnpaid(selected.player.id)}
+                          disabled={remindingAll || !!remindingId}
+                          style={{ fontSize: '0.78rem', opacity: (remindingAll || remindingId) ? 0.6 : 1 }}
+                        >
+                          {remindingId === selected.player.id ? 'Sending…' : 'Remind'}
+                        </button>
+                      )}
                       <button className={styles.btnGhost} onClick={() => openEdit(selected)} style={{ fontSize: '0.78rem' }}>
                         Edit schedule
                       </button>
                     </div>
+                    {/* The reminder's own result, beside the button that sent it. */}
+                    {(unpaidError || unpaidResult) && remindingId === null && (
+                      <p style={{ margin: '0 0 0.75rem', fontSize: '0.78rem', textAlign: 'right', color: unpaidError ? 'var(--danger-light)' : 'var(--home-dim, rgba(255,255,255,0.5))' }}>
+                        {unpaidError || (unpaidResult && unpaidResult.emailsSent > 0
+                          ? 'Reminder sent.'
+                          : unpaidResult?.playersMissingEmail
+                            ? 'No guardian email on file for this player.'
+                            : '')}
+                      </p>
+                    )}
 
                     {/* Installments */}
                     {selected.installments.length > 0 && (

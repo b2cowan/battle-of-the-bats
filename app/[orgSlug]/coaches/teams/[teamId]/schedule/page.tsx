@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, Upload, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOrg } from '@/lib/org-context';
@@ -40,7 +40,7 @@ import {
 import styles from '../../../coaches.module.css';
 import { tournamentToday, formatInOrgZone, orgDayKey, utcToZonedInputs } from '@/lib/timezone';
 import {
-  EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES,
+  EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES, ATTENDANCE_WORD,
   needsOpponent, needsRecurrence, RECURRABLE_TYPES, deriveGameName,
 } from '@/lib/coach-schedule-vocab';
 import { generateWeeklyOccurrences, type RecurrenceOccurrenceInput } from '@/lib/coach-recurrence';
@@ -129,10 +129,13 @@ const ATTENDANCE_OPTIONS: {
   label: string;
   icon: React.ElementType;
 }[] = [
-  { value: 'attending', label: 'In', icon: CheckCircle2 },
-  { value: 'late', label: 'Late', icon: Clock3 },
-  { value: 'absent', label: 'Out', icon: CircleSlash },
-  { value: 'unknown', label: 'No reply', icon: CircleHelp },
+  // Labels come from the shared vocabulary (lib/coach-schedule-vocab) — the lineup builder's bench
+  // rail says the same four words, and they must not drift apart. The ICONS stay here: they're this
+  // control's own affordance, not vocabulary.
+  { value: 'attending', label: ATTENDANCE_WORD.attending, icon: CheckCircle2 },
+  { value: 'late', label: ATTENDANCE_WORD.late, icon: Clock3 },
+  { value: 'absent', label: ATTENDANCE_WORD.absent, icon: CircleSlash },
+  { value: 'unknown', label: ATTENDANCE_WORD.unknown, icon: CircleHelp },
 ];
 
 // Quick status → {label, icon} lookup for the per-player status badge.
@@ -687,9 +690,21 @@ export default function CoachesSchedulePage({
     fullGuideHref: `/${orgSlug}/coaches/help#recipe-premium-schedule`,
   };
 
+  // ⚠ THE PINNED MASTHEAD IS SERVER-RENDERED BY THE TEAM LAYOUT, AND A LAYOUT DOES NOT RE-RENDER
+  // ON CLIENT NAVIGATION. That is what makes it free on every page after the first — and it is
+  // also why changing the schedule here would otherwise leave the bar announcing "Game day —
+  // Lions, 6:30" for a game the coach just cancelled, for the rest of their session. Every reload
+  // after the initial mount means something changed, so it asks the router to re-render the
+  // server layout too (client state is preserved — this is a data refresh, not a remount).
+  // /review 2026-08-02.
+  const router = useRouter();
+  const firstLoadRef = useRef(true);
+
   const fetchEvents = useCallback(async () => {
     setLoading(true);
     setError('');
+    if (firstLoadRef.current) firstLoadRef.current = false;
+    else router.refresh();
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
       if (!res.ok) throw new Error(await res.text());
@@ -728,7 +743,7 @@ export default function CoachesSchedulePage({
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, seasonQuery]);
+  }, [orgSlug, teamId, seasonQuery, router]);
 
   // Player Awards data — separate from fetchEvents (own endpoints), but loaded alongside it so
   // the give-award picker and the slide-over's "Awards given" section are ready without a
