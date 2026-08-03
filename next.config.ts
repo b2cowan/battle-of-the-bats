@@ -1,6 +1,15 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Amplify's build machine is a fixed 8GB, and this app's webpack production build was
+  // OOM-killing the build worker even at a 7GB Node heap. Webpack's persistent filesystem
+  // cache (serializing the whole compiled module graph to .next/cache after every build)
+  // is the likely spike: it holds the old and new graphs in memory at once to write it.
+  // Disabling it for production trades some build speed for actually finishing the build.
+  webpack(config, { dev }) {
+    if (!dev) config.cache = false;
+    return config;
+  },
   async redirects() {
     return [
       // Redirect .com to .ca (canonical domain)
