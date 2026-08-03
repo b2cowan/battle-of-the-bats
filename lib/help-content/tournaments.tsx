@@ -68,7 +68,7 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Create, edit, and launch a tournament',
       summary: 'Names, dates, public URLs, draft mode, and the launch checklist — plus how to open team registration.',
       keywords: ['new tournament', 'edit tournament', 'slug', 'dates', 'launch checklist', 'open registration', 'activate tournament', 'public form', 'division open', 'live preview', 'preview public page'],
-      searchText: 'new tournament name year slug URL public link dates draft active status activation checklist tournament slot limit open team registration activate public registration form accepted teams capacity fees contact live preview phone preview public page preview while typing side by side desktop wide window countdown first pitch days to go missing preview no preview',
+      searchText: 'new tournament name year slug URL public link dates draft active status activation checklist tournament slot limit open team registration activate public registration form accepted teams capacity fees contact live preview phone preview public page preview while typing side by side desktop wide window countdown first pitch days to go missing preview no preview tournament colours colors theme presets swatches pick colour while creating Tournament Plus manage branding permission',
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
         { label: 'Dashboard Checklist', href: '../tournaments/dashboard' },
@@ -77,7 +77,8 @@ const tournamentsHelp: HelpPageContent = {
       content: (
         <>
           <p>Click <strong>New Tournament</strong> from Manage Tournaments. The setup wizard saves the tournament as a draft so you can finish the details before anything appears publicly.</p>
-          <p>On a wide desktop window, a live preview of your public tournament page sits beside the form. The event name, the date range, the countdown to first pitch, and the public link appear in it as you type, and the division and team-spot counts fill in once you reach the divisions step. It is a preview only — nothing in it is editable, and nothing is published until you activate the tournament. On narrower screens the wizard fills the window and the preview is not shown.</p>
+          <p>On a wide desktop window, a live preview of your public tournament page sits beside the form. The event name, the date range, the countdown to first pitch, and the public link appear in it as you type, and the division and team-spot counts fill in once you reach the divisions step. Nothing is published until you activate the tournament. On narrower screens the wizard fills the window and the preview is not shown.</p>
+          <p>On Tournament Plus and above, a row of colour presets sits above the preview. It starts on the colours this event would publish in anyway, and choosing one repaints the preview and gives the new tournament those colours. Leave it alone and the event keeps following your organization&rsquo;s colours, so a later rebrand still reaches it. Full colour control, including custom colours, stays in <strong>Branding</strong> under tournament settings.</p>
           <p>For repeat events, Tournament Plus can start the draft from a previous tournament so divisions, locations, registration setup, public settings, and content are ready for review.</p>
           <p>The <strong>URL slug</strong> is used in every public tournament link. Choose it carefully. Changing it later can break links already shared by email, social media, or team communications.</p>
           <p>The dashboard launch checklist shows what is still required before activation. When every required item is complete, use Manage Tournaments to change the status from <strong>Draft</strong> to <strong>Active</strong>.</p>
@@ -97,12 +98,24 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-creation-live-preview',
           question: 'Why can I not see the live preview next to the setup wizard?',
-          answerText: 'The live preview of your public page needs a wide desktop window (about 1280 pixels or more). On a laptop with a narrow window, a tablet, or a phone the setup wizard fills the screen and the preview is hidden. Widen the browser window to bring it back. The preview is display only — you cannot edit anything inside it, and its colours come from the theme your public tournament pages already use.',
+          answerText: 'The live preview of your public page needs a wide desktop window (about 1280 pixels or more). On a laptop with a narrow window, a tablet, or a phone the setup wizard fills the screen and the preview is hidden. Widen the browser window to bring it back. Apart from the colour presets on Tournament Plus, the preview is display only, and its colours are the ones your public tournament pages already publish in.',
           keywords: ['live preview', 'preview missing', 'no preview', 'phone preview', 'window width', 'desktop'],
           answer: (
             <>
               <p>The preview needs the width to sit beside the form, so it appears on desktop windows of roughly 1280 pixels or more. On a narrow window, a tablet, or a phone the wizard fills the screen and the preview is hidden — widen the browser window to bring it back. Nothing else about setup changes either way.</p>
-              <p>The preview is display only: you cannot edit anything inside it, and its colours are the ones your public tournament pages already publish in. Organizations on plans that include custom tournament branding see their own colours; everyone else sees the FieldLogicHQ default.</p>
+              <p>Apart from the colour presets (Tournament Plus and above), the preview is display only. Its colours are the ones your public tournament pages already publish in: organizations on plans that include custom tournament branding see their own colours, and everyone else sees the FieldLogicHQ default.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-wizard-theme-swatches',
+          question: 'Can I choose my tournament colours while creating it?',
+          answerText: 'On Tournament Plus and above, a row of colour presets sits above the live preview in the setup wizard. Choosing one repaints the preview and creates the tournament with those colours. Leaving it alone means the event follows your organization colours, so a later organization rebrand still reaches it. Custom colours beyond the presets, logos, and banners stay in Branding under tournament settings. Members need the manage branding permission to see the row.',
+          keywords: ['tournament colours', 'colors', 'theme', 'presets', 'swatches', 'branding', 'wizard'],
+          answer: (
+            <>
+              <p>Yes, on Tournament Plus and above. A row of colour presets sits above the live preview while you create the tournament — choose one and the preview repaints, and the new tournament is created with those colours.</p>
+              <p>Leave it alone and the event simply follows your organization&rsquo;s colours, which means a later organization rebrand still reaches it. Choosing a colour is what gives an event an identity of its own. Custom colours beyond the nine presets, plus logos and banners, live in <strong>Branding</strong> under tournament settings. Members need the manage-branding permission to see the row.</p>
             </>
           ),
         },
@@ -136,7 +149,7 @@ const tournamentsHelp: HelpPageContent = {
         <>
           <p>Tournament Plus helps returning organizers turn a repeat event into review-and-adjust work instead of rebuilding from empty. Start from Manage Tournaments, the new tournament wizard, a draft dashboard prompt, or the completed tournament Summary page.</p>
           <p>The reused tournament is always created as a draft. Review dates, fees, registration questions, public page visibility, rules, and welcome content before activation.</p>
-          <p>On a wide desktop window, the live preview of the public page arrives already filled in with the new name and dates, so you can check how the returning event reads before creating the draft.</p>
+          <p>On a wide desktop window, the live preview of the public page arrives already filled in with the new name and dates, so you can check how the returning event reads before creating the draft. When <strong>Public presence</strong> is among the areas being reused, the preview also shows the colours carried over from that event; on Tournament Plus you can pick a different preset above the preview, and your choice replaces the copied colours.</p>
           <p>Default setup areas can include:</p>
           <ul>
             <li><strong>Event structure</strong> — divisions, pools, and empty schedule slots.</li>
@@ -352,10 +365,10 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-tournament-branding',
           question: 'Can one tournament have different branding from the organization site?',
-          answerText: 'Use tournament branding settings for tournament-specific public appearance.',
-          keywords: ['branding', 'logo', 'hero', 'public site'],
+          answerText: 'Use tournament branding settings for tournament-specific public appearance. On Tournament Plus you can also pick one of the colour presets while creating the tournament, in the setup wizard preview.',
+          keywords: ['branding', 'logo', 'hero', 'public site', 'colours', 'presets'],
           answer: (
-            <p>Yes. Use <strong>Branding</strong> under tournament settings when a tournament needs its own public identity separate from the default organization look.</p>
+            <p>Yes. Use <strong>Branding</strong> under tournament settings when a tournament needs its own public identity separate from the default organization look. On Tournament Plus you can also pick one of the colour presets while you create the event, from the row above the setup wizard&rsquo;s live preview.</p>
           ),
         },
         {

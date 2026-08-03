@@ -37,6 +37,18 @@ export const PRESETS: Record<string, Preset> = {
 
 import { relativeLuminance, pickInk } from './color-contrast';
 
+/**
+ * Is this string one of the nine presets?
+ *
+ * `key in PRESETS` is NOT this test — `in` walks the prototype chain, so "toString",
+ * "constructor" and friends pass it and then resolve to a Function, sailing past
+ * resolveTheme's `?? PRESETS.platform` fallback (a function is truthy) and leaving a
+ * tournament with undefined colours. Every preset validator must use this.
+ */
+export function isThemePresetKey(key: string): boolean {
+  return Object.hasOwn(PRESETS, key);
+}
+
 const HEX_RE = /^#[0-9A-Fa-f]{6}$/;
 
 function hexToRgb(hex: string): string {
@@ -102,7 +114,10 @@ export function resolveTheme(
   customPrimary: string | null | undefined,
   customAccent:  string | null | undefined,
 ): ResolvedTheme {
-  const base = PRESETS[preset ?? 'platform'] ?? PRESETS.platform;
+  // Own-property test, not `PRESETS[key] ?? …`: an inherited key ("toString") would return a
+  // truthy Function and skip the fallback, leaving every colour undefined. Belt and braces —
+  // callers validate too, but this is the sink that actually paints the page.
+  const base = preset && isThemePresetKey(preset) ? PRESETS[preset] : PRESETS.platform;
 
   let primary      = base.primary;
   let primaryLight = base.primaryLight;

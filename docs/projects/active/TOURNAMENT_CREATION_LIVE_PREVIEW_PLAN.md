@@ -59,6 +59,38 @@ future hero redesign silently diverges from the preview. Mitigations, in order:
 - Unit test for shared date/countdown helpers.
 - `npm run verify:changed`; offer `/review` post-build (touches a large shared wizard component).
 
+## v1.1 — the colour swatch row (owner decision 2026-08-02)
+
+The parked upsell question was answered: **entitlement-gated, no free tease.** Orgs whose plan
+includes `advanced_tournament_branding` get the nine presets above the phone; free-plan orgs see
+nothing at all — no row, no lock, no "upgrade to unlock". The member must also hold
+`manage_branding` (the same pair of gates the Branding screen uses), and **both gates are enforced
+server-side** in `setup-tournament` and the clone route: an unentitled request is refused (400/403),
+never silently dropped.
+
+Rules that make it honest rather than decorative:
+- **The pick is saved.** A control that discards the organizer's choice is worse than no control,
+  so the wizard now sends a preset and both create paths persist it.
+- **Untouched means untouched.** `chosenPreset` stays null until an actual click, and only then is
+  `theme_preset` written. Saving the inherited value would pin the draft and stop a future org
+  rebrand reaching it — invisible at creation, wrong six months later.
+- **The row starts on the truth.** Blank creation starts on the org's theme; the reuse screen reads
+  the SOURCE event's branding (`/api/admin/tournament-branding`) and starts there when "Public
+  presence" is being copied, falling back live when that box is unticked. This also closed a v1
+  fidelity gap: the reuse preview previously painted org colours for a draft that would publish in
+  the source's.
+- **An explicit pick beats the copy.** In `cloneTournament` the preset is applied after the branding
+  copy AND clears `theme_primary`/`theme_accent` — a copied custom hex out-ranks a preset when the
+  page resolves colours, so leaving it would have made the organizer's pick do nothing visible.
+- **Custom colours stay out.** Only the nine presets here; the hex pickers, logo and banner remain in
+  Branding. A wizard is not the place to grow a second branding screen.
+- **Accessibility:** the pane's `aria-hidden` moved onto the phone mock alone. Hiding a decorative
+  picture is right; hiding focusable buttons is not.
+
+Effective theme still resolves through the ONE shared rule (`resolvePublicTournamentTheme`), now
+called with the draft's own branding — so a non-entitled org cloning a branded source still previews
+the platform theme, exactly as its published page will render.
+
 ## Effort
 
 M. The wizard is a large existing component with two entry paths; layout restructuring plus a

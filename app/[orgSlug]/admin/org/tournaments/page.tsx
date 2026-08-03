@@ -4,6 +4,7 @@ import { RefreshCw, Plus, Check, X, Trash2, Pencil, ExternalLink, ChevronDown, C
 import Link from 'next/link';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
+import { hasCapability } from '@/lib/roles';
 import { Tournament, TournamentStatus, TournamentArchive, CloneCopiedCounts } from '@/lib/types';
 import { DEFAULT_SPORT } from '@/lib/sports';
 import { copiedSummary } from '@/lib/utils';
@@ -189,7 +190,7 @@ export default function AdminTournamentsPage({
   const [slugMessage, setSlugMessage] = useState('');
   const [createdTournament, setCreatedTournament] = useState<CreatedTournamentNotice | null>(null);
   const { refresh: refreshCtx } = useTournament();
-  const { currentOrg } = useOrg();
+  const { currentOrg, userRole, userCapabilities } = useOrg();
 
   const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
   const [customDivisionName, setCustomDivisionName] = useState('');
@@ -1152,6 +1153,7 @@ export default function AdminTournamentsPage({
         initialSourceTournamentId={selectedReuseSourceId}
         sourceSurface={setupWizardSurface}
         previewOrg={currentOrg}
+        canManageBranding={Boolean(userRole && hasCapability(userRole, userCapabilities, 'manage_branding'))}
         canClone={canReuseSetup}
         upgradeCopy={requiresTournamentPlusCopy('tournament_cloning')}
         onClose={() => {

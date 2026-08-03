@@ -5,7 +5,12 @@ import { AlertCircle, ArrowRight, Copy, Plus, Trash2, X } from 'lucide-react';
 import type { TournamentFormat } from '@/lib/types';
 import styles from './TournamentSetupWizard.module.css';
 import { tournamentToday } from '@/lib/timezone';
-import TournamentCreationPreview, { type PreviewOrg } from './TournamentCreationPreview';
+import TournamentCreationPreview, {
+  type PreviewOrg,
+  type PreviewTournamentTheme,
+} from './TournamentCreationPreview';
+import { PRESETS, isThemePresetKey } from '@/lib/themes';
+import { hasPlanFeature } from '@/lib/plan-features';
 
 const WIZARD_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'review'] as const;
 const CANADIAN_PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
@@ -148,6 +153,12 @@ type TournamentSetupWizardProps = {
    * needs the org's name and theme to show anything honest.
    */
   previewOrg?: PreviewOrg | null;
+  /**
+   * Whether this member may set tournament branding. Combined with the org's plan, this
+   * decides if the preview offers the colour swatches — the same pair of gates the
+   * Branding screen itself uses.
+   */
+  canManageBranding?: boolean;
   /** Whether the org's plan includes tournament cloning. */
   canClone?: boolean;
   /** Upgrade copy shown if canClone is false. */
@@ -448,6 +459,45 @@ function formatVenueAddress(venue: VenueFields) {
   return [normalized.street, cityLine, normalized.country].filter(Boolean).join(', ');
 }
 
+/**
+ * Which swatch reads as chosen — it must name the colours the phone beside it is ACTUALLY
+ * rendering, or the row lies about what is being published.
+ *
+ * The subtlety: a source event with no branding of its own arrives as a real object whose
+ * fields are all null. Testing the object's truthiness would read "platform" and highlight
+ * FieldLogicHQ blue while the phone renders the org's green. So this asks the same question
+ * the public page asks — does this tournament carry a theme of its OWN? — and falls through
+ * to the org's when it does not. A custom hex matches no swatch: nothing is highlighted and
+ * the caption says whose colours they are instead of naming one of the nine.
+ */
+function resolveSelectedPreset(
+  org: PreviewOrg,
+  tournamentTheme: PreviewTournamentTheme | null,
+): string | null {
+  const ownTheme = tournamentTheme && (tournamentTheme.themePreset || tournamentTheme.themePrimary)
+    ? tournamentTheme
+    : null;
+  const primary = ownTheme ? ownTheme.themePrimary : org.themePrimary;
+  if (primary) return null;
+  const preset = (ownTheme ? ownTheme.themePreset : org.themePreset) ?? 'platform';
+  // An unrecognised (legacy) preset publishes as the platform theme — resolveTheme falls
+  // back silently — so the row says the same thing rather than highlighting nothing.
+  return isThemePresetKey(preset) ? preset : 'platform';
+}
+
+/** The line under the swatches: name the preset, or say whose colours these are. */
+function describeTheme(
+  org: PreviewOrg,
+  tournamentTheme: PreviewTournamentTheme | null,
+  inheritsSourceBranding: boolean,
+): string {
+  const selected = resolveSelectedPreset(org, tournamentTheme);
+  if (selected) return `Theme: ${PRESETS[selected].name}`;
+  return inheritsSourceBranding
+    ? 'Theme: copied from the event you are reusing'
+    : 'Theme: your organization’s own colours';
+}
+
 async function requestJson<T>(input: RequestInfo | URL, init?: RequestInit): Promise<T> {
   const res = await fetch(input, init);
   const data = await res.json().catch(() => ({}));
@@ -463,6 +513,7 @@ export default function TournamentSetupWizard({
   initialSourceTournamentId,
   sourceSurface = 'unknown',
   previewOrg = null,
+  canManageBranding = false,
   canClone,
   upgradeCopy,
   onClose,
@@ -508,6 +559,17 @@ export default function TournamentSetupWizard({
   const [venueQueue, setVenueQueue] = useState<QueuedVenue[]>([]);
   const [closeConfirmOpen, setCloseConfirmOpen] = useState(false);
 
+  // ── Public-page colours ───────────────────────────────────────────────────
+  // `chosenPreset` stays null until the organizer actually picks one. That is the whole
+  // difference between "this event has its own colours" and "this event follows the org" —
+  // saving the inherited value would silently pin the draft and stop a future org rebrand
+  // from reaching it. `sourceTheme` is the branding a reuse would copy, read from the
+  // source event so the swatch row and the phone both start on the truth.
+  const [chosenPreset, setChosenPreset] = useState<string | null>(null);
+  // Kept WITH the id it was read for, so switching source events can never paint the new
+  // preview in the previous event's colours while the next read is in flight.
+  const [sourceTheme, setSourceTheme] = useState<{ id: string; theme: PreviewTournamentTheme } | null>(null);
+
   useEffect(() => {
     if (!isOpen) return;
     // Reset pre-step
@@ -548,6 +610,8 @@ export default function TournamentSetupWizard({
     setVenueDraft(buildVenueDraft());
     setVenueQueue([]);
     setCloseConfirmOpen(false);
+    setChosenPreset(null);
+    setSourceTheme(null);
     setDataLoading(true);
     Promise.all([
       requestJson<ExistingVenue[]>(`/api/admin/venues?scope=org${orgParam}`).catch(() => []),
@@ -566,6 +630,33 @@ export default function TournamentSetupWizard({
     }).catch(() => setDataLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, orgContactEmail, existingTournaments?.length, initialSourceTournamentId, canClone]);
+
+  // The branding a reuse would carry over. Without this the preview would paint the reused
+  // event in the ORG's colours while the draft actually publishes in the source event's —
+  // the preview telling a returning organizer the one thing it exists to get right.
+  useEffect(() => {
+    const sourceId = cloneSource?.id;
+    if (!isOpen || !sourceId) return;
+    let cancelled = false;
+    requestJson<PreviewTournamentTheme>(
+      `/api/admin/tournament-branding?tournamentId=${encodeURIComponent(sourceId)}${orgParam}`
+    )
+      .then(branding => {
+        if (cancelled) return;
+        setSourceTheme({
+          id: sourceId,
+          theme: {
+            themePreset: branding.themePreset ?? null,
+            themePrimary: branding.themePrimary ?? null,
+            themeAccent: branding.themeAccent ?? null,
+          },
+        });
+      })
+      // A failed read just means the preview keeps showing the org's colours — the draft
+      // itself is unaffected, so this must never block or error the wizard.
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isOpen, cloneSource?.id, orgParam]);
 
   if (!isOpen) return null;
 
@@ -850,7 +941,9 @@ export default function TournamentSetupWizard({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          tournament,
+          // A preset rides along ONLY when the organizer picked one. Left alone, the draft
+          // stores no theme and keeps inheriting the organization's.
+          tournament: chosenPreset ? { ...tournament, themePreset: chosenPreset } : tournament,
           divisions,
           announcement,
           migration: null,
@@ -904,8 +997,25 @@ export default function TournamentSetupWizard({
     startDate: string;
     endDate: string;
     bindDivisions: boolean;
+    /** True on the reuse screen while "Public presence" is among the areas being copied. */
+    inheritsSourceBranding?: boolean;
   }) {
     if (!previewOrg) return null;
+
+    // What this draft publishes in: an explicit pick first, then the branding a reuse would
+    // copy, then nothing at all — which means "follow the organization", the default that
+    // keeps a future org rebrand flowing through to the event.
+    const inheritedTheme = source.inheritsSourceBranding && sourceTheme?.id === cloneSource?.id
+      ? sourceTheme?.theme ?? null
+      : null;
+    const tournamentTheme: PreviewTournamentTheme | null = chosenPreset
+      ? { themePreset: chosenPreset, themePrimary: null, themeAccent: null }
+      : inheritedTheme;
+
+    // Only offer the row where the Branding screen itself would: the plan carries custom
+    // branding AND this member is allowed to set it. Free-plan orgs see no row and no tease.
+    const canChooseTheme =
+      canManageBranding && hasPlanFeature(previewOrg.planId, 'advanced_tournament_branding');
     // Count only the rows that will actually be created — a row whose name has been cleared
     // is dropped on save (getDivisionDraftRows), so counting it here would preview divisions
     // and team spots the published page never gets.
@@ -920,6 +1030,18 @@ export default function TournamentSetupWizard({
         endDate={source.endDate}
         divisionCount={divisionsBound ? realRows.length : null}
         teamSpots={divisionsBound ? realRows.reduce((sum, row) => sum + (row.capacity || 0), 0) : null}
+        tournamentTheme={tournamentTheme}
+        themePicker={canChooseTheme ? {
+          selected: resolveSelectedPreset(previewOrg, tournamentTheme),
+          onSelect: preset => setChosenPreset(preset),
+          caption: describeTheme(previewOrg, tournamentTheme, Boolean(inheritedTheme)),
+          // Offered only once a pick is in play: a way back to inheriting, so choosing a
+          // colour is not a one-way door that outlasts the rest of the form.
+          onClear: chosenPreset ? () => setChosenPreset(null) : null,
+          clearLabel: source.inheritsSourceBranding
+            ? 'Use the colours from the event you are reusing'
+            : 'Use my organization’s colours',
+        } : null}
       />
     );
   }
@@ -1066,6 +1188,10 @@ export default function TournamentSetupWizard({
                         setCloneSource(t);
                         setCloneNameForm(getRepeatNameForm(t));
                         setCloneCopyOptions(DEFAULT_CLONE_COPY_OPTIONS);
+                        // A colour chosen for a DIFFERENT source event does not carry over —
+                        // it would silently override this event's own branding without the
+                        // organizer ever having picked a colour for it.
+                        setChosenPreset(null);
                         setCloneError('');
                         setPreStep('clone-name');
                       }}
@@ -1150,6 +1276,9 @@ export default function TournamentSetupWizard({
             name, slug, year,
             startDate: cloneNameForm.startDate || null,
             endDate: cloneNameForm.endDate || null,
+            // Only sent when the organizer actually picked one — an explicit choice
+            // overrides whatever the copied branding would have set.
+            ...(chosenPreset ? { themePreset: chosenPreset } : {}),
             options: buildCloneApiOptions(cloneCopyOptions),
             analytics: {
               sourceSurface,
@@ -1343,6 +1472,9 @@ export default function TournamentSetupWizard({
           startDate: cloneNameForm.startDate,
           endDate: cloneNameForm.endDate,
           bindDivisions: false,
+          // Untick "Public presence" and the copied colours stop applying — the swatch row
+          // and the phone both fall back to the org's, live.
+          inheritsSourceBranding: cloneCopyOptions.publicPresence,
         })}
       </div>
     );

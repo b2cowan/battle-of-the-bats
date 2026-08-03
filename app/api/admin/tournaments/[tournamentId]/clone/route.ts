@@ -3,6 +3,7 @@ import { cloneTournament, type CloneTournamentOptions } from '@/lib/db';
 import { getAuthContextWithScope, forbidden, scopeGuard, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { isThemePresetKey } from '@/lib/themes';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -34,6 +35,7 @@ type CloneBody = {
   year?: unknown;
   startDate?: unknown;
   endDate?: unknown;
+  themePreset?: unknown;
   options?: Partial<Record<
     | 'includeDivisions'
     | 'includePools'
@@ -139,6 +141,8 @@ async function trackCloneEvent(input: {
   warningCount?: number;
   warningKeys?: string[];
   copied?: unknown;
+  /** Set when the organizer chose colours in the wizard instead of taking the copied ones. */
+  themePresetOverride?: string | null;
 }) {
   await writePlatformEvent({
     eventType: 'tournament_plus_feature_used',
@@ -161,6 +165,10 @@ async function trackCloneEvent(input: {
       warningCount: input.warningCount ?? 0,
       warningKeys: input.warningKeys ?? [],
       copied: input.copied,
+      // Without this, a clone whose colours were deliberately overridden is indistinguishable
+      // from one that took the source's — and this is a newly plan-gated control we want to
+      // know the uptake of.
+      themePresetOverride: input.themePresetOverride ?? null,
     },
   });
 }
@@ -197,6 +205,20 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
   if (startDate === undefined || endDate === undefined) return json({ error: 'Tournament dates must use YYYY-MM-DD format.' }, 400);
   if (startDate && endDate && endDate < startDate) return json({ error: 'End date cannot be before start date.' }, 400);
 
+  // A colour chosen in the wizard's preview. Entitlement is decided here, not by the UI that
+  // hid the row: unknown preset → 400, plan without custom branding or a member who may not
+  // set branding → 403. Absent means "whatever the copy options produce".
+  let themePreset: string | null = null;
+  if (body.themePreset != null) {
+    const requested = String(body.themePreset);
+    if (!isThemePresetKey(requested)) return json({ error: 'Unknown theme preset.' }, 400);
+    if (!hasPlanFeature(ctx.org.planId, 'advanced_tournament_branding')) {
+      return json({ error: 'Tournament colours require Tournament Plus or higher.' }, 403);
+    }
+    if (!hasCapability(ctx.role, ctx.capabilities, 'manage_branding')) return forbidden();
+    themePreset = requested;
+  }
+
   const { data: sourceMeta, error: sourceMetaError } = await supabaseAdmin
     .from('tournaments')
     .select('id, year, status')
@@ -230,6 +252,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
     includeFeeSchedule,
   });
   const analytics = {
+    themePresetOverride: themePreset,
     sourceSurface: cleanSourceSurface(body.analytics?.sourceSurface),
     selectedCopyGroups: cleanList(body.analytics?.selectedCopyGroups, COPY_GROUPS) ?? derivedCopyGroups,
     warningCount: cleanWarningCount(body.analytics?.warningCount),
@@ -303,6 +326,7 @@ export const POST = withObservability(async (req: NextRequest, { params }: Route
       includeRulesResources,
       includeRegistrationFields,
       includeFeeSchedule,
+      themePreset,
     } satisfies CloneTournamentOptions);
 
     await trackCloneEvent({

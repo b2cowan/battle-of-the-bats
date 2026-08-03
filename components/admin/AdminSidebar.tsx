@@ -622,6 +622,7 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
         }))}
         sourceSurface="sidebar_create"
         previewOrg={currentOrg}
+        canManageBranding={Boolean(userRole && hasCapability(userRole, userCapabilities, 'manage_branding'))}
         canClone={canClone}
         upgradeCopy={cloneUpgradeCopy}
         onClose={() => setShowCreateModal(false)}

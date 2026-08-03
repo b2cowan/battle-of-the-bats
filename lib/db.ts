@@ -159,6 +159,13 @@ export type CloneTournamentOptions = {
   includeRegistrationFields?: boolean;
   includeFeeSchedule?: boolean;
 };
+  /**
+   * A theme preset chosen in the setup wizard. Applied AFTER the branding copy and wins
+   * over it — an explicit pick is the organizer's latest word. It also clears any custom
+   * hex carried over from the source, which would otherwise out-rank the preset when the
+   * public page resolves its colours.
+   */
+  themePreset?: string | null;
 
 export type CloneTournamentResult = {
   tournament: Tournament;
@@ -276,6 +283,12 @@ export async function cloneTournament(
     }
 
     if (options.includePublicPages) {
+    if (options.themePreset) {
+      tournamentInsert.theme_preset = options.themePreset;
+      tournamentInsert.theme_primary = null;
+      tournamentInsert.theme_accent = null;
+    }
+
       tournamentInsert.public_hidden_pages = Array.isArray(source.public_hidden_pages)
         ? source.public_hidden_pages
         : [];

@@ -2,6 +2,8 @@ import { createClient } from '@supabase/supabase-js';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 import { tournamentToday } from '@/lib/timezone';
+import { isThemePresetKey } from '@/lib/themes';
+import { hasPlanFeature } from '@/lib/plan-features';
 
 type DivisionAgeConfig = {
   min: number | null;
@@ -204,6 +206,27 @@ export const POST = withObservability(async (req: Request) => {
       return Response.json({ error: 'A valid start date (or tournament year) is required.' }, { status: 400 });
     }
 
+    // Public-page colours, when the wizard's swatch row offered them. The UI only shows that
+    // row to entitled members, but entitlement is decided HERE: an unknown preset, a plan
+    // without custom branding, or a member who may not set branding is refused rather than
+    // quietly ignored (a silently dropped choice is worse than an error).
+    let themePreset: string | null = null;
+    if (tournament?.themePreset != null) {
+      const requested = String(tournament.themePreset);
+      if (!isThemePresetKey(requested)) {
+        return Response.json({ error: 'Unknown theme preset.' }, { status: 400 });
+      }
+      if (!hasPlanFeature(auth.org.planId, 'advanced_tournament_branding')) {
+        return Response.json(
+          { error: 'Tournament colours require Tournament Plus or higher.' },
+          { status: 403 },
+        );
+      }
+      const brandingDenied = await requireCapability(auth, 'manage_branding');
+      if (brandingDenied) return brandingDenied;
+      themePreset = requested;
+    }
+
     // Public contact defaults to the member creating the tournament; editable later in Event Settings.
     const { data: creatorMember } = await supabase
       .from('organization_members')
@@ -225,6 +248,8 @@ export const POST = withObservability(async (req: Request) => {
         end_date:        endDate,
         default_contact_member_id: creatorMember?.id ?? null,
         org_id: auth.org.id,
+        // Left NULL unless explicitly chosen, so the event keeps following the org's theme.
+        ...(themePreset ? { theme_preset: themePreset } : {}),
       })
       .select()
       .single();
