@@ -4,6 +4,8 @@ import Link from 'next/link';
 import { BarChart3 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachAskBar from '@/components/coaches/CoachAskBar';
+import { askReportHref } from '@/lib/coach-ask-questions';
 import HelpButton from '@/components/help/HelpButton';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
@@ -274,7 +276,7 @@ export default function CoachesInsightsPage({
 
   // ── The findings ──
   const findings: InsightFinding[] = computeInsightFindings({
-    vocab: { periodsWord, scoreUnitWord },
+    vocab: { periodsWord, scoreUnitWord, positionLabels: sportPack.positionLabels },
     analytics,
     games: scopedGames > 0 ? gamesSummary : null,
     attendance: attendanceRows?.map(r => ({
@@ -288,13 +290,9 @@ export default function CoachesInsightsPage({
     development: canDevelopment ? devSummary : null,
     todayISO: todayISO || undefined,
   });
-  const REPORT_HREF: Record<InsightReport, string> = {
-    'playing-time': `${base}/history/playing-time`,
-    results: `${base}/history/results`,
-    attendance: `${base}/attendance`,
-    money: `${base}/accounting`,
-    development: `${base}/history/development`,
-  };
+  // Hrefs come from the ONE shared resolver the ask bar's receipts use — the local copy of this
+  // map covered five of the same seven destinations, which is how a finding and a receipt end up
+  // pointing at different pages for the same word.
   const REPORT_CHIP: Record<InsightReport, string> = {
     'playing-time': 'Playing time', results: 'Results', attendance: 'Attendance', money: 'Money',
     development: 'Development',
@@ -316,7 +314,7 @@ export default function CoachesInsightsPage({
         <HelpButton
           iconOnly
           label="Insights"
-          help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
+          help={{ module: 'coaches', sectionIds: ['premium-insights', 'premium-ask'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
         />
       </div>
 
@@ -401,7 +399,7 @@ export default function CoachesInsightsPage({
               <p className={styles.insightsCoQuiet}>Nothing stands out yet — as you log games, lineups and attendance, this is where we&apos;ll flag what&apos;s worth knowing.</p>
             ) : (
               findings.map((f, i) => (
-                <Link key={i} href={REPORT_HREF[f.report]} className={styles.insightsCo}>
+                <Link key={i} href={askReportHref(base, f.report)} className={styles.insightsCo}>
                   <span className={styles.insightsCoDot} data-tone={f.tone} aria-hidden />
                   <span className={styles.insightsCoText}>{f.text}</span>
                   <span className={styles.insightsCoChip}>{REPORT_CHIP[f.report]} →</span>
@@ -409,6 +407,23 @@ export default function CoachesInsightsPage({
               ))
             )}
           </section>
+
+          {/* ── 2b · Ask the Front Office (Phase A) ──
+              The page's three voices, in order: the season PUSHES what stands out (above), the bar
+              offers to be ASKED (here), and the doorways let the coach GO LOOK (below). Collapsed
+              at rest, so the questions cost nothing until a coach wants them (owner 2026-08-02).
+              Renders nothing at all when this coach's capabilities leave no questions to ask. */}
+          {/* key={teamId} matches the pattern the Development pages already use: a team switch
+              must REMOUNT this, never hand it a new team while it still holds the old team's
+              answer. Today the page's `loadedFor` gate happens to unmount it anyway, but that is
+              the parent's branch structure, not a property of the bar. */}
+          <CoachAskBar
+            key={teamId}
+            orgSlug={orgSlug}
+            teamId={teamId}
+            capabilities={assignment.capabilities}
+            sport={assignment.teamSport}
+          />
 
           {/* ── 3 · Report doorways (depth is always a page, never an expansion) ── */}
           <div className={styles.insightsDoors}>

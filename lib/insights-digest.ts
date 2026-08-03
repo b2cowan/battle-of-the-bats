@@ -56,6 +56,7 @@ import {
   type FindingsDuesRow,
 } from './insight-findings';
 import { resolveCoachCapabilities, canViewMoney, canViewRoster } from './coach-capabilities';
+import { outstandingForSchedule } from './dues-status';
 import type { RepTeamEvent } from './types';
 
 /** One digest per team per window — just under a week so a Sunday job never
@@ -164,9 +165,9 @@ async function digestTeam(
   const duesRows: FindingsDuesRow[] = players.map(p => {
     const schedule = scheduleMap.get(p.id) ?? null;
     const installments = schedule ? (installmentsBySchedule.get(schedule.id) ?? []) : [];
-    const paidAmount = installments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
     return {
-      outstanding: schedule ? schedule.totalAmount - paidAmount : 0,
+      // ONE shared definition (lib/dues-status.ts), matching the dues route and the Ask answers.
+      outstanding: outstandingForSchedule(schedule, installments),
       installments: installments.map(i => ({ paidAt: i.paidAt, dueDate: i.dueDate, amount: i.amount })),
     };
   });
@@ -211,6 +212,9 @@ async function digestTeam(
   const vocab = {
     periodsWord: sportPack.periodLabelPlural.toLowerCase(),
     scoreUnitWord: sportPack.score.unit.toLowerCase(),
+    // The digest quotes the same sentences the dashboard renders, so it needs the same prose
+    // position names — otherwise a push notification says "SS" where the page says "shortstop".
+    positionLabels: sportPack.positionLabels,
   };
 
   let sent = 0;

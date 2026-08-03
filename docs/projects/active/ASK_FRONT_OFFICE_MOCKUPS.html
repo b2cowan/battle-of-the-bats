@@ -1,0 +1,795 @@
+<title>Ask the Front Office — Phase A decision sheet</title>
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   TWO VISUAL LAYERS, DELIBERATELY UNALIKE.
+   1. The SHEET — blueprint blue on a cool, blue-biased neutral: the document.
+   2. The SPECIMENS (.fl) — FieldLogicHQ's real warm portal palette, verbatim
+      from app/globals.css. They never follow the sheet's theme, because the
+      coach portal is warm in every theme.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root{
+  --ground:#EDEFF2; --panel:#FFFFFF; --panel-2:#F5F7F9;
+  --ink:#151922; --ink-2:#3D4655; --mute:#66707F;
+  --rule:#D3D8E0; --rule-2:#BFC6D1;
+  --accent:#1E3A8A; --accent-soft:rgba(30,58,138,.08);
+  --yes:#15703C; --yes-soft:rgba(21,112,60,.10); --yes-rule:rgba(21,112,60,.32);
+  --done:#1E3A8A; --done-soft:rgba(30,58,138,.09); --done-rule:rgba(30,58,138,.34);
+  --shadow:0 1px 2px rgba(20,28,45,.06), 0 12px 28px -14px rgba(20,28,45,.30);
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Code","Cascadia Mono",Consolas,"Liberation Mono",monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --ground:#0F1218; --panel:#171C25; --panel-2:#1D2330;
+    --ink:#E3E8F0; --ink-2:#AEB8C7; --mute:#8592A5;
+    --rule:#262D3A; --rule-2:#394354;
+    --accent:#8FA6E8; --accent-soft:rgba(143,166,232,.10);
+    --yes:#63D18E; --yes-soft:rgba(99,209,142,.12); --yes-rule:rgba(99,209,142,.34);
+    --done:#8FA6E8; --done-soft:rgba(143,166,232,.12); --done-rule:rgba(143,166,232,.36);
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 16px 34px -16px rgba(0,0,0,.7);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0F1218; --panel:#171C25; --panel-2:#1D2330;
+  --ink:#E3E8F0; --ink-2:#AEB8C7; --mute:#8592A5;
+  --rule:#262D3A; --rule-2:#394354;
+  --accent:#8FA6E8; --accent-soft:rgba(143,166,232,.10);
+  --yes:#63D18E; --yes-soft:rgba(99,209,142,.12); --yes-rule:rgba(99,209,142,.34);
+  --done:#8FA6E8; --done-soft:rgba(143,166,232,.12); --done-rule:rgba(143,166,232,.36);
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 16px 34px -16px rgba(0,0,0,.7);
+}
+:root[data-theme="light"]{
+  --ground:#EDEFF2; --panel:#FFFFFF; --panel-2:#F5F7F9;
+  --ink:#151922; --ink-2:#3D4655; --mute:#66707F;
+  --rule:#D3D8E0; --rule-2:#BFC6D1;
+  --accent:#1E3A8A; --accent-soft:rgba(30,58,138,.08);
+  --yes:#15703C; --yes-soft:rgba(21,112,60,.10); --yes-rule:rgba(21,112,60,.32);
+  --done:#1E3A8A; --done-soft:rgba(30,58,138,.09); --done-rule:rgba(30,58,138,.34);
+  --shadow:0 1px 2px rgba(20,28,45,.06), 0 12px 28px -14px rgba(20,28,45,.30);
+}
+
+*{box-sizing:border-box}
+body{background:var(--ground); color:var(--ink); font:16px/1.65 var(--sans); margin:0; -webkit-font-smoothing:antialiased}
+.sheet{max-width:1120px; margin:0 auto; padding:0 24px 110px}
+a{color:var(--accent)}
+:where(a,button):focus-visible{outline:2px solid var(--accent); outline-offset:3px; border-radius:4px}
+
+.lab{font:700 .655rem/1.4 var(--mono); letter-spacing:.15em; text-transform:uppercase; color:var(--mute)}
+
+.head{display:flex; flex-direction:column; gap:14px; padding:64px 0 0}
+.head .crumb{display:flex; flex-wrap:wrap; gap:0 10px; color:var(--accent)}
+.head .crumb span::after{content:" /"; color:var(--rule-2)}
+.head .crumb span:last-child::after{content:""}
+h1{font-size:clamp(2rem,4.6vw,3rem); font-weight:800; letter-spacing:-.032em; line-height:1.05; margin:0; text-wrap:balance}
+.lede{margin:0; max-width:66ch; color:var(--ink-2); font-size:1.06rem}
+.lede b{color:var(--ink); font-weight:650}
+.facts{display:flex; flex-wrap:wrap; gap:0 8px; padding:12px 0 0; border-top:1px solid var(--rule); margin-top:4px}
+.facts span{font:700 .655rem/1.9 var(--mono); letter-spacing:.13em; text-transform:uppercase; color:var(--mute)}
+.facts span::after{content:"·"; padding-left:8px; color:var(--rule-2)}
+.facts span:last-child::after{content:""}
+nav.jump{display:flex; flex-wrap:wrap; gap:8px; padding:22px 0 0}
+nav.jump a{font:700 .72rem/1 var(--mono); letter-spacing:.04em; text-decoration:none; color:var(--accent); background:var(--panel); border:1px solid var(--rule); padding:9px 13px; border-radius:3px}
+nav.jump a:hover{border-color:var(--accent); background:var(--accent-soft)}
+
+section{padding-top:76px}
+.rule{display:grid; grid-template-columns:auto 1fr; align-items:center; gap:14px}
+.rule::after{content:""; height:1px; background:var(--rule-2)}
+h2{font-size:1.6rem; font-weight:760; letter-spacing:-.022em; margin:18px 0 0; text-wrap:balance}
+.intro{margin:8px 0 0; max-width:70ch; color:var(--ink-2)}
+
+.opt{display:grid; grid-template-columns:200px minmax(0,1fr); gap:26px; padding-top:44px; align-items:start}
+.rail{display:flex; flex-direction:column; gap:12px; position:sticky; top:22px}
+.mark{display:flex; align-items:baseline; gap:9px; font:800 2.4rem/.85 var(--mono); letter-spacing:-.04em; color:var(--ink)}
+.mark em{font:700 .655rem/1.4 var(--mono); letter-spacing:.15em; text-transform:uppercase; color:var(--mute); font-style:normal}
+.verdict{align-self:flex-start; font:700 .625rem/1 var(--mono); letter-spacing:.13em; text-transform:uppercase; padding:6px 9px; border-radius:3px; border:1px solid var(--rule-2); color:var(--mute); background:var(--panel)}
+.verdict[data-v="yes"]{color:var(--yes); border-color:var(--yes-rule); background:var(--yes-soft)}
+.verdict[data-v="done"]{color:var(--done); border-color:var(--done-rule); background:var(--done-soft)}
+.opt h3{font-size:1.1rem; font-weight:720; letter-spacing:-.015em; margin:0; text-wrap:balance}
+.cost{margin:0; font-size:.87rem; color:var(--ink-2)}
+.try{font:700 .655rem/1.4 var(--mono); letter-spacing:.1em; text-transform:uppercase; color:var(--accent)}
+
+.order{display:flex; flex-direction:column; gap:0; margin-top:4px; border-top:1px solid var(--rule); padding-top:10px}
+.order .lab{padding-bottom:5px}
+.order ol{margin:0; padding:0}
+.order li{list-style:none; font:600 .72rem/1 var(--mono); color:var(--mute); padding:6px 0 6px 14px; position:relative}
+.order li::before{content:""; position:absolute; left:0; top:50%; width:6px; height:1px; background:var(--rule-2)}
+.order li[data-me]{color:var(--accent); font-weight:800}
+.order li[data-me]::before{background:var(--accent); width:9px; height:2px}
+
+.spec{display:flex; flex-direction:column; gap:12px; min-width:0}
+.capbar{display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; font:700 .625rem/1.4 var(--mono); letter-spacing:.13em; text-transform:uppercase; color:var(--mute)}
+.deep{margin:0; font-size:.87rem; color:var(--ink-2); max-width:72ch; border-left:2px solid var(--rule-2); padding-left:14px}
+.deep b{color:var(--ink); font-weight:680}
+
+/* ══ SPECIMEN FRAMES — the real product ═══════════════════════════════════ */
+.fl{
+  --paper:#F8F4ED; --pcard:#FFFFFF; --pink:#241E15; --pink-soft:#4A4235;
+  --pline:rgba(70,55,30,.12); --pline-2:rgba(70,55,30,.20);
+  --olive:#57651E; --olive-soft:rgba(87,101,30,.10);
+  --live:#D9482B; --amber:#A16207; --win:#3E7A32;
+  --r:14px; --r-sm:9px;
+  position:relative; background:var(--paper); color:var(--pink);
+  border:1px solid rgba(70,55,30,.28); border-radius:var(--r);
+  overflow:hidden; box-shadow:var(--shadow);
+}
+.fl-body{display:flex; flex-direction:column; gap:16px; padding:18px 22px 22px}
+.fl p{margin:0}
+.fl .mast{display:flex; align-items:center; gap:12px; padding:12px 22px; background:var(--pcard); border-bottom:1px solid var(--pline); flex-wrap:wrap}
+.fl .tdot{width:30px; height:30px; border-radius:8px; background:var(--olive); color:#F0F3E2; display:grid; place-items:center; font:800 .68rem/1 var(--sans); flex:none}
+.fl .tn{font-size:.94rem; font-weight:700; letter-spacing:-.01em}
+.fl .yr{font-size:.7rem; color:var(--pink-soft)}
+.fl .kick{font:800 .635rem/1.4 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--pink-soft)}
+.fl .stack{display:flex; flex-direction:column; gap:8px}
+
+.fl .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(126px,1fr)); gap:9px}
+.fl .tile{background:var(--pcard); border:1px solid var(--pline); border-radius:var(--r-sm); padding:10px 12px}
+.fl .tile .tl{font:700 .615rem/1.4 var(--sans); letter-spacing:.08em; text-transform:uppercase; color:var(--pink-soft)}
+.fl .tile .tv{font-size:1.4rem; font-weight:800; letter-spacing:-.02em; line-height:1.14; margin-top:2px; font-variant-numeric:tabular-nums}
+.fl .tile .ts{font-size:.68rem; color:var(--pink-soft); margin-top:2px}
+
+/* findings — the PUSH voice */
+.fl .fnd{display:flex; align-items:flex-start; gap:10px; padding:7px 4px; font-size:.83rem; color:var(--pink); border-radius:6px}
+.fl .fnd .dot{width:8px; height:8px; border-radius:50%; margin-top:.42rem; flex:none; background:var(--olive)}
+.fl .fnd .dot[data-t="warn"]{background:var(--amber)}
+.fl .fnd .to{margin-left:auto; font-size:.68rem; font-weight:700; color:var(--olive); white-space:nowrap; padding-top:.16rem}
+
+/* doorways — the NAVIGATE voice */
+.fl .doors{display:grid; grid-template-columns:repeat(auto-fit,minmax(215px,1fr)); gap:9px}
+.fl .door{display:flex; flex-direction:column; gap:3px; background:var(--pcard); border:1px solid var(--pline); border-radius:var(--r-sm); padding:11px 13px}
+.fl .door .q{display:flex; justify-content:space-between; gap:8px; font-size:.83rem; font-weight:700; letter-spacing:-.01em}
+.fl .door .q i{font-style:normal; color:var(--olive)}
+.fl .door .s{font-size:.7rem; color:var(--pink-soft)}
+
+/* ── THE ASK BAR — collapsed by default ─────────────────────────────────── */
+.fl .askbar{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  background:var(--pcard); border:1px solid var(--pline-2); border-radius:var(--r);
+  padding:13px 15px; cursor:pointer; font:inherit; color:var(--pink);
+  transition:border-color .12s, background .12s;
+}
+.fl .askbar:hover{border-color:var(--olive); background:#FFFDF9}
+.fl .askbar:focus-visible{outline:2px solid var(--olive); outline-offset:2px}
+.fl .askbar .t{font-size:.9rem; font-weight:640; letter-spacing:-.01em}
+.fl .askbar .hint{margin-left:auto; display:flex; align-items:center; gap:6px; font-size:.72rem; color:var(--pink-soft); white-space:nowrap}
+.fl .askbar .chev{transition:transform .16s}
+.fl .askbar[aria-expanded="true"]{border-bottom-left-radius:0; border-bottom-right-radius:0; border-bottom-color:transparent}
+.fl .askbar[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.fl .mag{width:19px; height:19px; border-radius:50%; border:1.7px solid var(--olive); position:relative; flex:none}
+.fl .mag::after{content:""; position:absolute; width:7px; height:1.7px; background:var(--olive); transform:rotate(45deg); right:-5px; bottom:1px; border-radius:2px}
+
+/* the disclosed panel (inline variant) */
+.fl .askpanel{
+  display:flex; flex-direction:column; gap:10px;
+  background:var(--pcard); border:1px solid var(--pline-2); border-top:1px dashed var(--pline-2);
+  border-radius:0 0 var(--r) var(--r); padding:13px 15px 15px; margin-top:-1px;
+}
+.fl .askpanel[hidden]{display:none}
+.fl .askgroup{display:flex; flex-direction:column}
+
+.fl .chips{display:flex; flex-wrap:wrap; gap:7px}
+.fl .chip{background:var(--paper); border:1px solid var(--pline-2); border-radius:999px; font:640 .755rem/1.35 var(--sans); color:var(--pink); padding:7px 14px; cursor:pointer; transition:border-color .12s, background .12s, color .12s}
+.fl .chip:hover{border-color:var(--olive)}
+.fl .chip[aria-pressed="true"]{background:var(--pink); color:#F8F4ED; border-color:var(--pink)}
+.fl .chip:focus-visible{outline:2px solid var(--olive); outline-offset:2px}
+
+.fl .posrow{display:flex; flex-wrap:wrap; gap:6px; align-items:center; padding-top:9px; border-top:1px dashed var(--pline-2)}
+.fl .posrow .pl{font:800 .615rem/1.4 var(--sans); letter-spacing:.1em; text-transform:uppercase; color:var(--pink-soft); margin-right:3px}
+.fl .pchip{background:var(--paper); border:1px solid var(--pline-2); border-radius:8px; font:700 .72rem/1 var(--mono); color:var(--pink-soft); padding:6px 10px; min-width:38px; cursor:pointer; font-variant-numeric:tabular-nums}
+.fl .pchip:hover{border-color:var(--olive); color:var(--pink)}
+.fl .pchip[aria-pressed="true"]{background:var(--olive); color:#F4F7E6; border-color:var(--olive)}
+.fl .pchip:focus-visible{outline:2px solid var(--olive); outline-offset:2px}
+
+.fl .ans{display:flex; flex-direction:column; padding:13px 15px; background:var(--paper); border:1px solid var(--pline); border-radius:var(--r-sm)}
+.fl .ans .a{font-size:.925rem; font-weight:640; line-height:1.5; letter-spacing:-.005em; text-wrap:pretty; margin-bottom:11px}
+.fl .rlab{font:800 .6rem/1.4 var(--sans); letter-spacing:.12em; text-transform:uppercase; color:var(--pink-soft); margin-bottom:2px}
+.fl .r{display:flex; justify-content:space-between; gap:12px; align-items:baseline; font-size:.775rem; padding:6px 0; border-top:1px dashed var(--pline-2); color:var(--pink-soft)}
+.fl .r > span:first-child{color:var(--pink)}
+.fl .r .d{font:.715rem/1.4 var(--mono); white-space:nowrap; font-variant-numeric:tabular-nums}
+.fl .r a{color:var(--olive); text-decoration:none; border-bottom:1px solid rgba(87,101,30,.34)}
+.fl .foot{display:flex; align-items:center; gap:6px; font-size:.685rem; color:var(--pink-soft); font-style:italic; margin-top:10px}
+.fl .foot::before{content:"✓"; font-style:normal; font-weight:800; color:var(--win)}
+
+.fl .rot{display:grid; grid-template-columns:auto 1fr auto auto; gap:0 12px; font-size:.775rem}
+.fl .rot > div{padding:6px 0; border-top:1px dashed var(--pline-2)}
+.fl .rot .p{font:800 .775rem/1.5 var(--mono); color:var(--pink); font-variant-numeric:tabular-nums}
+.fl .rot .who{color:var(--pink)}
+.fl .rot .dt{font:.715rem/1.65 var(--mono); color:var(--pink-soft); white-space:nowrap}
+.fl .rot .ago{font-size:.715rem; text-align:right; white-space:nowrap; color:var(--pink-soft)}
+.fl .rot .ago[data-stale]{color:var(--amber); font-weight:700}
+.fl .aside{font-size:.79rem; color:var(--pink-soft); border-left:2px solid var(--pline-2); padding-left:12px}
+.fl .aside b{color:var(--pink)}
+
+/* ── MODAL variant — scoped to the frame, not the viewport ──────────────── */
+.fl .scrim{position:absolute; inset:0; background:rgba(36,30,21,.42); display:flex; align-items:flex-start; justify-content:center; padding:26px 18px; z-index:5}
+.fl .scrim[hidden]{display:none}
+.fl .modal{width:min(560px,100%); max-height:100%; overflow-y:auto; display:flex; flex-direction:column; gap:11px; background:var(--pcard); border:1px solid rgba(70,55,30,.3); border-radius:var(--r); padding:15px 17px 17px; box-shadow:0 24px 60px -20px rgba(36,30,21,.6)}
+.fl .modalhead{display:flex; align-items:center; gap:9px}
+.fl .modalhead .t{font-size:.95rem; font-weight:730; letter-spacing:-.012em}
+.fl .xbtn{margin-left:auto; background:var(--paper); border:1px solid var(--pline-2); border-radius:999px; width:28px; height:28px; display:grid; place-items:center; cursor:pointer; color:var(--pink-soft); font:700 .95rem/1 var(--sans)}
+.fl .xbtn:hover{border-color:var(--olive); color:var(--pink)}
+.fl .xbtn:focus-visible{outline:2px solid var(--olive); outline-offset:2px}
+
+/* reference table */
+.tablewrap{overflow-x:auto; margin-top:20px; border:1px solid var(--rule); border-radius:6px; background:var(--panel)}
+table{width:100%; border-collapse:collapse; font-size:.875rem; min-width:640px}
+th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--rule); vertical-align:top}
+tr:last-child td{border-bottom:none}
+th{font:700 .625rem/1.4 var(--mono); letter-spacing:.13em; text-transform:uppercase; color:var(--mute); background:var(--panel-2)}
+td.cap{font:600 .74rem/1.5 var(--mono); color:var(--mute); white-space:nowrap}
+
+footer{margin-top:88px; padding-top:20px; border-top:1px solid var(--rule); font-size:.8rem; color:var(--mute); max-width:78ch}
+footer b{color:var(--ink-2)}
+
+@media (prefers-reduced-motion:reduce){*{transition:none !important; animation:none !important}}
+@media (max-width:860px){
+  .opt{grid-template-columns:1fr; gap:16px; padding-top:38px}
+  .rail{position:static}
+  .mark{font-size:1.7rem}
+  .order{display:none}
+}
+@media (max-width:600px){
+  .sheet{padding:0 16px 80px}
+  .head{padding-top:44px}
+  .fl-body{padding:14px 14px 18px}
+  .fl .mast{padding:11px 14px}
+  .fl .askbar .hint span{display:none}
+  .fl .scrim{padding:14px 10px}
+  .fl .rot{grid-template-columns:auto 1fr}
+  .fl .rot .dt,.fl .rot .ago{grid-column:2; padding-top:0; border-top:none; text-align:left}
+}
+</style>
+
+<div class="sheet">
+
+<header class="head">
+  <p class="lab crumb"><span>FieldLogicHQ</span><span>Coaches portal</span><span>Ask the Front Office</span></p>
+  <h1>One decision left, and it's about the door</h1>
+  <p class="lede">Placement is settled: the ask bar lives on <b>Insights</b>, between “What stands out” and the report doorways. It sits <b>collapsed</b> — one line, no questions on show until a coach asks for them. What's still open is <b>how it opens</b>, and how a coach picks a position.</p>
+  <p class="facts"><span>Phase A</span><span>No AI</span><span>No free text</span><span>Active season only</span><span>Fictional team &amp; families</span></p>
+  <nav class="jump">
+    <a href="#placed">1 — Where it sits</a>
+    <a href="#open">2 — How it opens</a>
+    <a href="#position">3 — The position ask</a>
+    <a href="#states">4 — Honest states</a>
+    <a href="#set">5 — The launch six</a>
+  </nav>
+</header>
+
+<!-- ═══════════════ 1 · SETTLED PLACEMENT ═══════════════ -->
+<section id="placed">
+  <p class="rule"><span class="lab">Settled 2026-08-02</span></p>
+  <h2>Where it sits, and what it looks like at rest</h2>
+  <p class="intro">Insights now reads in three voices, in the right order: the season <em>pushes</em> what stands out, the bar offers to be <em>asked</em>, and the doorways let the coach <em>go look</em>. At rest the whole feature is one line of the page.</p>
+
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">✓<em>Settled</em></p>
+      <span class="verdict" data-v="done">Insights · mid-page</span>
+      <h3>Collapsed bar, between the findings and the doors</h3>
+      <p class="cost">Roughly 48&nbsp;px at rest. Nothing about the questions is visible until a coach decides to ask.</p>
+      <div class="order">
+        <p class="lab">Page order</p>
+        <ol>
+          <li>Insights header</li>
+          <li>Scoreboard band</li>
+          <li>What stands out</li>
+          <li data-me>Ask bar</li>
+          <li>Report doorways</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="spec">
+      <p class="capbar"><span>Insights — head coach</span><span>At rest</span></p>
+      <div class="fl">
+        <div class="mast">
+          <span class="tdot">RR</span>
+          <div><div class="tn">Insights</div><div class="yr">Riverdale Ridge 12U — how your season is going</div></div>
+        </div>
+        <div class="fl-body">
+          <div class="tiles">
+            <div class="tile"><p class="tl">Record</p><p class="tv">14–3–1</p><p class="ts">All games</p></div>
+            <div class="tile"><p class="tl">Form</p><p class="tv">W W L W W</p><p class="ts">Won 2 straight</p></div>
+            <div class="tile"><p class="tl">Run diff</p><p class="tv">+31</p><p class="ts">96 for · 65 against</p></div>
+            <div class="tile"><p class="tl">Attendance</p><p class="tv">86%</p><p class="ts">games + practices</p></div>
+            <div class="tile"><p class="tl">Dues</p><p class="tv">93%</p><p class="ts">$3,160 of $3,400</p></div>
+          </div>
+
+          <div class="stack">
+            <p class="kick">What stands out</p>
+            <div class="fnd"><span class="dot" data-t="warn" aria-hidden></span><span>Dev went over the pitching cap in 1 game.</span><span class="to">Playing time →</span></div>
+            <div class="fnd"><span class="dot" data-t="warn" aria-hidden></span><span>2 dues installments are overdue.</span><span class="to">Money →</span></div>
+            <div class="fnd"><span class="dot" aria-hidden></span><span>You&apos;ve won 4 of your last 6.</span><span class="to">Results →</span></div>
+          </div>
+
+          <button class="askbar" type="button" aria-expanded="false" disabled>
+            <span class="mag" aria-hidden></span>
+            <span class="t">Ask about your team</span>
+            <span class="hint"><span>Choose a question</span> <span class="chev" aria-hidden>⌄</span></span>
+          </button>
+
+          <div class="doors">
+            <div class="door"><span class="q">How are we doing?<i aria-hidden>→</i></span><span class="s">14–3–1 this season · 1 past season on file</span></div>
+            <div class="door"><span class="q">Is playing time fair?<i aria-hidden>→</i></span><span class="s">18 lineups saved · 1 arm-care flag</span></div>
+            <div class="door"><span class="q">Who shows up?<i aria-hidden>→</i></span><span class="s">86% team rate · 1 player below 60%</span></div>
+            <div class="door"><span class="q">Where&apos;s the money?<i aria-hidden>→</i></span><span class="s">93% collected · 2 families overdue</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="deep"><b>Why the bar must not look like a text box:</b> Phase A can't accept typing. A bar styled as an input invites a coach to tap and type, then do nothing — the one interaction the whole feature's honesty promise can't afford. So it reads as a bar with a “Choose a question” hint. Phase B drops the hint and the same bar becomes typeable, with no relearning.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══════════════ 2 · HOW IT OPENS ═══════════════ -->
+<section id="open">
+  <p class="rule"><span class="lab">Decision · how it opens</span></p>
+  <h2>Expand in place, or open a panel over the page</h2>
+  <p class="intro">Both are wired below — click the bar in each frame, and close the second one with its × or by clicking the dimmed area. Same six chips, same answer, same receipts; what differs is what happens to the page underneath.</p>
+
+  <!-- A -->
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">A<em>Option</em></p>
+      <span class="verdict" data-v="yes">Recommended</span>
+      <h3>Expands in place</h3>
+      <p class="cost">The page grows downward; the doorways slide down. Nothing is covered, nothing to dismiss.</p>
+      <p class="try">Click the bar ↓</p>
+      <div class="order">
+        <p class="lab">On close</p>
+        <ol>
+          <li>Page returns to one line</li>
+          <li data-me>Coach keeps their place</li>
+        </ol>
+      </div>
+    </div>
+    <div class="spec">
+      <p class="capbar"><span>Live — click to open and close</span><span>Inline disclosure</span></p>
+      <div class="fl">
+        <div class="mast">
+          <span class="tdot">RR</span>
+          <div><div class="tn">Insights</div><div class="yr">Riverdale Ridge 12U — how your season is going</div></div>
+        </div>
+        <div class="fl-body">
+          <div class="stack">
+            <p class="kick">What stands out</p>
+            <div class="fnd"><span class="dot" data-t="warn" aria-hidden></span><span>Dev went over the pitching cap in 1 game.</span><span class="to">Playing time →</span></div>
+            <div class="fnd"><span class="dot" data-t="warn" aria-hidden></span><span>2 dues installments are overdue.</span><span class="to">Money →</span></div>
+          </div>
+
+          <div class="askgroup">
+            <button class="askbar" type="button" aria-expanded="false" data-toggle="inlinePanel">
+              <span class="mag" aria-hidden></span>
+              <span class="t">Ask about your team</span>
+              <span class="hint"><span>Choose a question</span> <span class="chev" aria-hidden>⌄</span></span>
+            </button>
+            <div class="askpanel" id="inlinePanel" hidden>
+              <div class="chips">
+                <button class="chip" aria-pressed="true" type="button">Who hasn&apos;t played a position lately?</button>
+                <button class="chip" type="button">What does each family still owe?</button>
+                <button class="chip" type="button">Who&apos;s missed the most practices?</button>
+                <button class="chip" type="button">Who hasn&apos;t paid anything yet?</button>
+                <button class="chip" type="button">Is playing time even?</button>
+                <button class="chip" type="button">Whose arm needs a rest?</button>
+              </div>
+              <div class="ans">
+                <p class="a">Maya hasn&apos;t caught in 3 weeks — her last game behind the plate was July 12. Jordan and Priya have covered every game since.</p>
+                <p class="rlab">Receipts — from your saved lineups</p>
+                <div class="r"><span>vs Falcons — Maya at catcher, 5 innings</span><span class="d">Jul 12</span></div>
+                <div class="r"><span>vs Storm — Jordan at catcher, 7 innings</span><span class="d">Jul 19</span></div>
+                <div class="r"><span>vs Comets — Priya at catcher, 7 innings</span><span class="d">Jul 26</span></div>
+                <p class="foot">Assembled from your own records — never a guess, never outside data.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="doors">
+            <div class="door"><span class="q">How are we doing?<i aria-hidden>→</i></span><span class="s">14–3–1 this season · 1 past season on file</span></div>
+            <div class="door"><span class="q">Is playing time fair?<i aria-hidden>→</i></span><span class="s">18 lineups saved · 1 arm-care flag</span></div>
+            <div class="door"><span class="q">Who shows up?<i aria-hidden>→</i></span><span class="s">86% team rate · 1 player below 60%</span></div>
+            <div class="door"><span class="q">Where&apos;s the money?<i aria-hidden>→</i></span><span class="s">93% collected · 2 families overdue</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="deep"><b>Why this one:</b> every receipt is a link to a report. A coach who taps one is meant to leave — and inline, they simply leave, with the page behind them still where they left it. It also lets the answer and the matching doorway be on screen together, which is exactly the hand-off the page is built for.</p>
+    </div>
+  </article>
+
+  <!-- B -->
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">B<em>Option</em></p>
+      <span class="verdict">Focused layer</span>
+      <h3>Opens a panel over the page</h3>
+      <p class="cost">Page never reflows, and long answers get their own scroll. The coach must dismiss it to get back.</p>
+      <p class="try">Click the bar ↓</p>
+      <div class="order">
+        <p class="lab">On close</p>
+        <ol>
+          <li data-me>Must dismiss first</li>
+          <li>Page never moved</li>
+        </ol>
+      </div>
+    </div>
+    <div class="spec">
+      <p class="capbar"><span>Live — click the bar, then × or the dimmed area</span><span>Overlay panel</span></p>
+      <div class="fl" id="modalFrame">
+        <div class="mast">
+          <span class="tdot">RR</span>
+          <div><div class="tn">Insights</div><div class="yr">Riverdale Ridge 12U — how your season is going</div></div>
+        </div>
+        <div class="fl-body">
+          <div class="stack">
+            <p class="kick">What stands out</p>
+            <div class="fnd"><span class="dot" data-t="warn" aria-hidden></span><span>Dev went over the pitching cap in 1 game.</span><span class="to">Playing time →</span></div>
+            <div class="fnd"><span class="dot" data-t="warn" aria-hidden></span><span>2 dues installments are overdue.</span><span class="to">Money →</span></div>
+          </div>
+
+          <button class="askbar" type="button" aria-expanded="false" data-open="askModal">
+            <span class="mag" aria-hidden></span>
+            <span class="t">Ask about your team</span>
+            <span class="hint"><span>Choose a question</span> <span class="chev" aria-hidden>⌄</span></span>
+          </button>
+
+          <div class="doors">
+            <div class="door"><span class="q">How are we doing?<i aria-hidden>→</i></span><span class="s">14–3–1 this season · 1 past season on file</span></div>
+            <div class="door"><span class="q">Is playing time fair?<i aria-hidden>→</i></span><span class="s">18 lineups saved · 1 arm-care flag</span></div>
+            <div class="door"><span class="q">Who shows up?<i aria-hidden>→</i></span><span class="s">86% team rate · 1 player below 60%</span></div>
+            <div class="door"><span class="q">Where&apos;s the money?<i aria-hidden>→</i></span><span class="s">93% collected · 2 families overdue</span></div>
+          </div>
+        </div>
+
+        <div class="scrim" id="askModal" hidden>
+          <div class="modal" role="dialog" aria-modal="true" aria-label="Ask about your team">
+            <div class="modalhead">
+              <span class="mag" aria-hidden></span>
+              <span class="t">Ask about your team</span>
+              <button class="xbtn" type="button" data-close="askModal" aria-label="Close">×</button>
+            </div>
+            <div class="chips">
+              <button class="chip" aria-pressed="true" type="button">Who hasn&apos;t played a position lately?</button>
+              <button class="chip" type="button">What does each family still owe?</button>
+              <button class="chip" type="button">Who&apos;s missed the most practices?</button>
+              <button class="chip" type="button">Who hasn&apos;t paid anything yet?</button>
+              <button class="chip" type="button">Is playing time even?</button>
+              <button class="chip" type="button">Whose arm needs a rest?</button>
+            </div>
+            <div class="ans">
+              <p class="a">Maya hasn&apos;t caught in 3 weeks — her last game behind the plate was July 12. Jordan and Priya have covered every game since.</p>
+              <p class="rlab">Receipts — from your saved lineups</p>
+              <div class="r"><span>vs Falcons — Maya at catcher, 5 innings</span><span class="d">Jul 12</span></div>
+              <div class="r"><span>vs Storm — Jordan at catcher, 7 innings</span><span class="d">Jul 19</span></div>
+              <div class="r"><span>vs Comets — Priya at catcher, 7 innings</span><span class="d">Jul 26</span></div>
+              <p class="foot">Assembled from your own records — never a guess, never outside data.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="deep"><b>What it costs:</b> the receipts are links out, so following one means leaving from inside a layer — the coach comes back to a page they never actually saw change. It also can't show the answer and its matching doorway together. Where it wins: a long answer (the nine-row rotation table in option 2 below) scrolls inside the panel instead of pushing the doorways far down the page.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══════════════ 3 · POSITION ═══════════════ -->
+<section id="position">
+  <p class="rule"><span class="lab">Decision · still open</span></p>
+  <h2>How a coach asks about a position</h2>
+  <p class="intro">“Who hasn't played catcher recently?” needs a position, and Phase A has no typing. Nine diamond positions can't each be a chip. This choice interacts with the one above — option 2's nine-row answer is the case that most rewards a panel.</p>
+
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">1<em>Option</em></p>
+      <span class="verdict" data-v="yes">Recommended</span>
+      <h3>The question opens a position row</h3>
+      <p class="cost">Positions come from the sport, so a hockey team never sees “catcher”.</p>
+      <p class="try">Tap the positions ↓</p>
+    </div>
+    <div class="spec">
+      <p class="capbar"><span>Live — inside the opened panel</span><span>Short answer</span></p>
+      <div class="fl"><div class="fl-body">
+        <div class="askpanel" style="border-radius:var(--r); border-top:1px solid var(--pline-2)">
+          <div class="chips">
+            <button class="chip" aria-pressed="true" type="button">Who hasn&apos;t played a position lately?</button>
+            <button class="chip" type="button">What does each family still owe?</button>
+            <button class="chip" type="button">Who&apos;s missed the most practices?</button>
+          </div>
+          <div class="posrow" id="posrow">
+            <span class="pl">Position</span>
+            <button class="pchip" data-p="P" type="button">P</button>
+            <button class="pchip" data-p="C" aria-pressed="true" type="button">C</button>
+            <button class="pchip" data-p="1B" type="button">1B</button>
+            <button class="pchip" data-p="2B" type="button">2B</button>
+            <button class="pchip" data-p="3B" type="button">3B</button>
+            <button class="pchip" data-p="SS" type="button">SS</button>
+            <button class="pchip" data-p="LF" type="button">LF</button>
+            <button class="pchip" data-p="CF" type="button">CF</button>
+            <button class="pchip" data-p="RF" type="button">RF</button>
+          </div>
+          <div class="ans">
+            <p class="a" id="posAns">Maya hasn&apos;t caught in 3 weeks — her last game behind the plate was July 12. Jordan and Priya have covered every game since.</p>
+            <p class="rlab" id="posLab">Receipts — catcher, from your saved lineups</p>
+            <div id="posRec"></div>
+            <p class="foot">Assembled from your own records — never a guess, never outside data.</p>
+          </div>
+        </div>
+      </div></div>
+      <p class="deep"><b>What it costs:</b> one extra row of controls and one extra tap. It is the only option whose sentence matches the concept everyone has already seen, and the answer stays short — three receipts — which is what makes expanding in place comfortable. The row opens on the position with the longest gap, so the first tap is often the only tap.</p>
+    </div>
+  </article>
+
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">2<em>Option</em></p>
+      <span class="verdict">Fewest taps</span>
+      <h3>One chip, the whole rotation</h3>
+      <p class="cost">Answers every position at once — but it is the tallest answer in the set.</p>
+    </div>
+    <div class="spec">
+      <p class="capbar"><span>Static</span><span>Nine-row answer</span></p>
+      <div class="fl"><div class="fl-body">
+        <div class="askpanel" style="border-radius:var(--r); border-top:1px solid var(--pline-2)">
+          <div class="chips">
+            <button class="chip" aria-pressed="true" type="button">Who&apos;s overdue for a turn at a position?</button>
+            <button class="chip" type="button">What does each family still owe?</button>
+            <button class="chip" type="button">Who&apos;s missed the most practices?</button>
+          </div>
+          <div class="ans">
+            <p class="a">Catcher has your longest gap — Maya hasn&apos;t been behind the plate since July 12, three weeks ago. Every other position has been covered within the last two games.</p>
+            <p class="rlab">Receipts — last played, by position</p>
+            <div class="rot">
+              <div class="p">C</div><div class="who">Maya</div><div class="dt">Jul 12</div><div class="ago" data-stale>3 weeks</div>
+              <div class="p">RF</div><div class="who">Sam</div><div class="dt">Jul 19</div><div class="ago">2 weeks</div>
+              <div class="p">P</div><div class="who">Dev</div><div class="dt">Jul 26</div><div class="ago">6 days</div>
+              <div class="p">SS</div><div class="who">Jordan</div><div class="dt">Jul 26</div><div class="ago">6 days</div>
+              <div class="p">1B</div><div class="who">Priya</div><div class="dt">Jul 26</div><div class="ago">6 days</div>
+              <div class="p">2B</div><div class="who">Ainsley</div><div class="dt">Jul 26</div><div class="ago">6 days</div>
+              <div class="p">3B</div><div class="who">Noor</div><div class="dt">Jul 26</div><div class="ago">6 days</div>
+              <div class="p">LF</div><div class="who">Tess</div><div class="dt">Jul 26</div><div class="ago">6 days</div>
+              <div class="p">CF</div><div class="who">Bea</div><div class="dt">Jul 26</div><div class="ago">6 days</div>
+            </div>
+            <p class="foot">Assembled from your own records — never a guess, never outside data.</p>
+          </div>
+        </div>
+      </div></div>
+      <p class="deep"><b>What it costs:</b> the coach can't steer it — someone wondering about right field reads nine rows to find it, and the headline is about catcher. It also answers “who played it last”, a subtly different question from “who hasn't played it”. And expanding this in place pushes the doorways well down the page, which is the one argument for the panel.</p>
+    </div>
+  </article>
+
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">3<em>Option</em></p>
+      <span class="verdict">Defer to Phase B</span>
+      <h3>Drop it from the launch set</h3>
+      <p class="cost">Five questions now; typed questions supply the position naturally later.</p>
+    </div>
+    <div class="spec">
+      <p class="capbar"><span>Static</span><span>Five chips</span></p>
+      <div class="fl"><div class="fl-body">
+        <div class="askpanel" style="border-radius:var(--r); border-top:1px solid var(--pline-2)">
+          <div class="chips">
+            <button class="chip" aria-pressed="true" type="button">What does each family still owe?</button>
+            <button class="chip" type="button">Who hasn&apos;t paid anything yet?</button>
+            <button class="chip" type="button">Who&apos;s missed the most practices?</button>
+            <button class="chip" type="button">Is playing time even?</button>
+            <button class="chip" type="button">Whose arm needs a rest?</button>
+          </div>
+          <div class="ans">
+            <p class="a">Two families still owe a combined $240: the Marches owe $150 (installment 2 of 3, due July 25) and the Okaris owe $90 (installment 3 of 3, due August 1).</p>
+            <p class="rlab">Receipts — from your dues ledger</p>
+            <div class="r"><span>March family — installment 2 of 3, $150</span><span class="d">due Jul 25</span></div>
+            <div class="r"><span>Okari family — installment 3 of 3, $90</span><span class="d">due Aug 1</span></div>
+            <div class="r"><span>10 of 12 families fully paid</span><span class="d">—</span></div>
+            <p class="foot">Assembled from your own records — never a guess, never outside data.</p>
+          </div>
+        </div>
+      </div></div>
+      <p class="deep"><b>What it costs:</b> the launch loses the one question the concept is known by. Position recency is also the only launch question that pays back saved lineups specifically, which is the habit the portal most wants to encourage.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══════════════ 4 · STATES ═══════════════ -->
+<section id="states">
+  <p class="rule"><span class="lab">Already settled — shown for completeness</span></p>
+  <h2>What it says when it can't answer</h2>
+  <p class="intro">Three states that ship regardless of the choices above. A blank answer, a wrong zero, or a dead-end error would each break the promise the footer line makes.</p>
+
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">i<em>State</em></p>
+      <span class="verdict">Nothing recorded yet</span>
+      <h3>A brand-new season</h3>
+      <p class="cost">Honestly blank, and it names the one action that would fill it in.</p>
+    </div>
+    <div class="spec">
+      <p class="capbar"><span>Head coach · no attendance taken</span><span>Empty state</span></p>
+      <div class="fl"><div class="fl-body">
+        <div class="askpanel" style="border-radius:var(--r); border-top:1px solid var(--pline-2)">
+          <div class="chips">
+            <button class="chip" aria-pressed="true" type="button">Who&apos;s missed the most practices?</button>
+            <button class="chip" type="button">Is playing time even?</button>
+          </div>
+          <div class="ans">
+            <p class="a">No attendance has been taken yet this season, so there&apos;s nothing to compare.</p>
+            <p class="rlab">What would fill this in</p>
+            <div class="r"><span>Take attendance at one practice or game</span><span class="d"><a href="#states">Schedule →</a></span></div>
+            <p class="foot">Assembled from your own records — never a guess, never outside data.</p>
+          </div>
+        </div>
+      </div></div>
+    </div>
+  </article>
+
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">ii<em>State</em></p>
+      <span class="verdict">Filtered, not blocked</span>
+      <h3>An assistant without money access</h3>
+      <p class="cost">The money questions are absent — not greyed out, not error-on-tap.</p>
+    </div>
+    <div class="spec">
+      <p class="capbar"><span>Assistant coach · lineups + roster only</span><span>Two chips hidden</span></p>
+      <div class="fl"><div class="fl-body">
+        <div class="askpanel" style="border-radius:var(--r); border-top:1px solid var(--pline-2)">
+          <div class="chips">
+            <button class="chip" aria-pressed="true" type="button">Who hasn&apos;t played a position lately?</button>
+            <button class="chip" type="button">Who&apos;s missed the most practices?</button>
+            <button class="chip" type="button">Is playing time even?</button>
+            <button class="chip" type="button">Whose arm needs a rest?</button>
+          </div>
+          <p class="aside">The two money questions are <b>not shown at all</b>. The answer route refuses them independently, so nothing changes if a chip is reached another way. If a coach's access leaves <em>no</em> questions at all, the bar itself doesn't render.</p>
+        </div>
+      </div></div>
+    </div>
+  </article>
+
+  <article class="opt">
+    <div class="rail">
+      <p class="mark">iii<em>State</em></p>
+      <span class="verdict" data-v="yes">Your ruling</span>
+      <h3>Money access, no guardian contacts</h3>
+      <p class="cost">Siblings still roll up into one family — only the label changes, to player names.</p>
+    </div>
+    <div class="spec">
+      <p class="capbar"><span>Assistant coach · money, no guardian PII</span><span>Degraded labels</span></p>
+      <div class="fl"><div class="fl-body">
+        <div class="askpanel" style="border-radius:var(--r); border-top:1px solid var(--pline-2)">
+          <div class="chips">
+            <button class="chip" aria-pressed="true" type="button">What does each family still owe?</button>
+            <button class="chip" type="button">Who hasn&apos;t paid anything yet?</button>
+          </div>
+          <div class="ans">
+            <p class="a">Two families still owe a combined $240: Maya&apos;s family owes $150 (installment 2 of 3, due July 25) and Dev&apos;s owes $90 (installment 3 of 3, due August 1).</p>
+            <p class="rlab">Receipts — from your dues ledger</p>
+            <div class="r"><span>Maya R. — installment 2 of 3, $150</span><span class="d">due Jul 25</span></div>
+            <div class="r"><span>Dev O. — installment 3 of 3, $90</span><span class="d">due Aug 1</span></div>
+            <p class="foot">Assembled from your own records — never a guess, never outside data.</p>
+          </div>
+        </div>
+      </div></div>
+      <p class="deep">Grouping happens on the server using the guardian contact, so two siblings never appear as two families. A coach who can't see guardian surnames sees player names they already see on every roster screen — useful, and nothing new is disclosed.</p>
+    </div>
+  </article>
+</section>
+
+<!-- ═══════════════ 5 · THE SET ═══════════════ -->
+<section id="set">
+  <p class="rule"><span class="lab">For reference</span></p>
+  <h2>The launch six</h2>
+  <p class="intro">What each question is assembled from, what access it needs, and where its receipts lead.</p>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th scope="col">Question</th><th scope="col">Assembled from</th><th scope="col">Needs</th><th scope="col">Receipts link to</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Who hasn&apos;t played a position lately?</td><td>Saved lineups + game dates</td><td class="cap">Lineups</td><td class="cap">Playing time</td></tr>
+        <tr><td>What does each family still owe?</td><td>Dues ledger, grouped per family</td><td class="cap">Money</td><td class="cap">Money → Dues</td></tr>
+        <tr><td>Who hasn&apos;t paid anything yet?</td><td>Dues ledger</td><td class="cap">Money</td><td class="cap">Money → Dues</td></tr>
+        <tr><td>Who&apos;s missed the most practices?</td><td>Attendance on practice events</td><td class="cap">Roster</td><td class="cap">Attendance</td></tr>
+        <tr><td>Is playing time even?</td><td>Saved lineups, bench time</td><td class="cap">Lineups</td><td class="cap">Playing time</td></tr>
+        <tr><td>Whose arm needs a rest?</td><td>Saved lineups + your own caps</td><td class="cap">Lineups</td><td class="cap">Playing time</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="deep" style="margin-top:18px"><b>Sport-neutral by construction:</b> positions and the pitching question both come from the sport's own vocabulary. A sport with no pitching role simply never shows the arm-care question — it isn't hidden by a rule written for softball.</p>
+</section>
+
+<footer>
+  Phase A only — no AI, no free text, active season only. Fictional team, players and families; real portal palette and real copy rules. The warm frames deliberately stay warm in light and dark, because the coach portal does. Built 2026-08-02 alongside <b>the Ask the Front Office plan</b>; revised after the placement ruling to a collapsed bar on Insights.
+</footer>
+</div>
+
+<script>
+(function(){
+  /* ── inline disclosure ── */
+  document.querySelectorAll('[data-toggle]').forEach(function(bar){
+    var panel = document.getElementById(bar.getAttribute('data-toggle'));
+    if(!panel) return;
+    bar.addEventListener('click', function(){
+      var open = bar.getAttribute('aria-expanded') === 'true';
+      bar.setAttribute('aria-expanded', String(!open));
+      panel.hidden = open;
+    });
+  });
+
+  /* ── overlay panel, scoped to its frame ── */
+  document.querySelectorAll('[data-open]').forEach(function(bar){
+    var scrim = document.getElementById(bar.getAttribute('data-open'));
+    if(!scrim) return;
+    function close(){ scrim.hidden = true; bar.setAttribute('aria-expanded','false'); bar.focus(); }
+    bar.addEventListener('click', function(){
+      scrim.hidden = false;
+      bar.setAttribute('aria-expanded','true');
+      var x = scrim.querySelector('[data-close]');
+      if(x) x.focus();
+    });
+    scrim.addEventListener('click', function(e){ if(e.target === scrim) close(); });
+    var xbtn = scrim.querySelector('[data-close]');
+    if(xbtn) xbtn.addEventListener('click', close);
+    document.addEventListener('keydown', function(e){
+      if(e.key === 'Escape' && !scrim.hidden) close();
+    });
+  });
+
+  /* ── position row ── */
+  var DATA = {
+    P:  { a:"Every pitcher has thrown in the last two games — Dev on July 26, Ainsley on July 19.",
+          r:[["vs Comets — Dev pitching, 4 innings","Jul 26"],["vs Storm — Ainsley pitching, 3 innings","Jul 19"],["vs Storm — Dev pitching, 4 innings","Jul 19"]] },
+    C:  { a:"Maya hasn't caught in 3 weeks — her last game behind the plate was July 12. Jordan and Priya have covered every game since.",
+          r:[["vs Falcons — Maya at catcher, 5 innings","Jul 12"],["vs Storm — Jordan at catcher, 7 innings","Jul 19"],["vs Comets — Priya at catcher, 7 innings","Jul 26"]] },
+    "1B":{a:"Priya has played every inning at first base for the last four games. Nobody else has been there this season.",
+          r:[["vs Comets — Priya at first, 7 innings","Jul 26"],["vs Storm — Priya at first, 7 innings","Jul 19"],["vs Falcons — Priya at first, 6 innings","Jul 12"]] },
+    "2B":{a:"Ainsley last played second base on July 26. Tess and Noor have also covered it this season.",
+          r:[["vs Comets — Ainsley at second, 7 innings","Jul 26"],["vs Storm — Tess at second, 4 innings","Jul 19"],["vs Falcons — Noor at second, 7 innings","Jul 12"]] },
+    "3B":{a:"Noor last played third base on July 26 and has held it for three straight games.",
+          r:[["vs Comets — Noor at third, 7 innings","Jul 26"],["vs Storm — Noor at third, 7 innings","Jul 19"],["vs Falcons — Noor at third, 5 innings","Jul 12"]] },
+    SS: { a:"Jordan last played shortstop on July 26. Only Jordan and Bea have played there this season.",
+          r:[["vs Comets — Jordan at short, 7 innings","Jul 26"],["vs Storm — Jordan at short, 7 innings","Jul 19"],["vs Falcons — Bea at short, 7 innings","Jul 12"]] },
+    LF: { a:"Tess last played left field on July 26. Five different players have covered left this season.",
+          r:[["vs Comets — Tess in left, 5 innings","Jul 26"],["vs Storm — Sam in left, 7 innings","Jul 19"],["vs Falcons — Maya in left, 2 innings","Jul 12"]] },
+    CF: { a:"Bea last played centre field on July 26 and has started there in four of the last five games.",
+          r:[["vs Comets — Bea in centre, 7 innings","Jul 26"],["vs Storm — Bea in centre, 7 innings","Jul 19"],["vs Falcons — Tess in centre, 7 innings","Jul 12"]] },
+    RF: { a:"Sam hasn't played right field in 2 weeks — the last time was July 19. Maya and Tess have covered it since.",
+          r:[["vs Storm — Sam in right, 7 innings","Jul 19"],["vs Comets — Maya in right, 4 innings","Jul 26"],["vs Comets — Tess in right, 3 innings","Jul 26"]] }
+  };
+  var LABEL = { P:"pitcher", C:"catcher", "1B":"first base", "2B":"second base", "3B":"third base",
+                SS:"shortstop", LF:"left field", CF:"centre field", RF:"right field" };
+
+  var row = document.getElementById('posrow');
+  if(!row) return;
+  var ansEl = document.getElementById('posAns'),
+      labEl = document.getElementById('posLab'),
+      recEl = document.getElementById('posRec');
+
+  function paint(pos){
+    var d = DATA[pos];
+    if(!d) return;
+    ansEl.textContent = d.a;
+    labEl.textContent = 'Receipts — ' + LABEL[pos] + ', from your saved lineups';
+    recEl.textContent = '';
+    d.r.forEach(function(x){
+      var line = document.createElement('div');
+      line.className = 'r';
+      var what = document.createElement('span');
+      what.textContent = x[0];
+      var when = document.createElement('span');
+      when.className = 'd';
+      when.textContent = x[1];
+      line.appendChild(what);
+      line.appendChild(when);
+      recEl.appendChild(line);
+    });
+  }
+
+  row.querySelectorAll('.pchip').forEach(function(b){
+    b.addEventListener('click', function(){
+      row.querySelectorAll('.pchip').forEach(function(x){ x.setAttribute('aria-pressed','false'); });
+      b.setAttribute('aria-pressed','true');
+      paint(b.getAttribute('data-p'));
+    });
+  });
+  paint('C');
+})();
+</script>

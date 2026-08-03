@@ -12,6 +12,7 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/lib/coach-capabilities';
+import { outstandingForSchedule } from '@/lib/dues-status';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -71,7 +72,10 @@ export const GET = withObservability(async (req: Request,
       const schedule = scheduleMap.get(p.id) ?? null;
       const installments = schedule ? await getRepPlayerDuesInstallments(schedule.id) : [];
       const paidAmount = installments.filter(i => i.paidAt).reduce((s, i) => s + i.amount, 0);
-      const outstanding = schedule ? schedule.totalAmount - paidAmount : 0;
+      // ONE shared definition (lib/dues-status.ts) — this figure is also quoted by the weekly
+      // digest and by an Ask the Front Office answer, and three hand-copies each promised in a
+      // comment that they matched, with nothing enforcing it.
+      const outstanding = outstandingForSchedule(schedule, installments);
 
       const rawCredits = creditsMap.get(p.id) ?? [];
       const credits = rawCredits.map(c => ({

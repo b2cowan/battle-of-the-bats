@@ -73,6 +73,15 @@ export interface FindingsVocab {
   periodsWord: string;
   /** e.g. "run" / "point" (lowercase singular score unit). */
   scoreUnitWord: string;
+  /**
+   * Sport Pack position code → the word a SENTENCE uses ('C' → 'catcher'). Optional: absent simply
+   * leaves the raw code, which is what every finding printed before this existed.
+   *
+   * Added because Ask the Front Office renders directly below this strip on the same page and
+   * writes prose position names — so "Only Maya has played SS this season" sat inches above
+   * "Maya hasn't played shortstop in 3 weeks", about potentially the same fact.
+   */
+  positionLabels?: Record<string, string>;
 }
 
 /** Development coverage (3D) — counts only, never names: the rule is a coverage nudge,
@@ -102,7 +111,10 @@ export const MAX_FINDINGS = 6;
 // judges reliability by the same bar and can never disagree.
 export const ATTENDANCE_MIN_KNOWN = 4;      // don't judge reliability on <4 tracked sessions
 export const ATTENDANCE_FLAG_BELOW = 0.6;   // flag under 60% of tracked sessions
-const BENCH_MIN_GAMES = 3;           // fairness needs ≥3 saved lineups to mean anything
+// EXPORTED for the same reason as the two attendance bars above: Ask the Front Office answers a
+// playing-time question from the same analytics, and a second opinion about how many saved lineups
+// make fairness meaningful would let the strip and the answer contradict each other.
+export const BENCH_MIN_GAMES = 3;    // fairness needs ≥3 saved lineups to mean anything
 const BENCH_MIN_INNINGS = 6;         // and a real amount of bench time
 const STREAK_MIN = 3;                // "won N straight" only from 3 up
 const ROAD_SPLIT_MIN_LOSSES = 2;     // home/away story needs ≥2 losses, all away…
@@ -120,12 +132,26 @@ const DEV_MIN_GAP = 2;               // …AND ≥2 players have none (a real ga
 
 const TIER_ORDER: InsightTier[] = ['safety', 'money', 'attendance', 'fairness', 'development', 'good-news'];
 
-function plural(n: number, word = 's'): string {
+/** EXPORTED for Ask the Front Office, which writes sentences about the same figures on the same
+ *  page — two copies of the money format would have let a finding and an answer render the same
+ *  dollar amount differently. */
+export function plural(n: number, word = 's'): string {
   return n === 1 ? '' : word;
 }
 
-function money(n: number): string {
-  return `$${Math.round(n).toLocaleString('en-CA')}`;
+/**
+ * Whole dollars when the amount IS whole, cents when it isn't.
+ *
+ * ⚠ It used to always `Math.round`, which let one sentence contradict itself: two families owing
+ * $79.50 each rendered as "a combined $159: … owe $80 and … owe $80". Dues genuinely carry cents
+ * ($250 across three installments), so rounding was never safe on a figure shown beside its parts.
+ */
+export function money(n: number): string {
+  const cents = Math.round(n * 100) / 100;
+  return `$${cents.toLocaleString('en-CA', {
+    minimumFractionDigits: Number.isInteger(cents) ? 0 : 2,
+    maximumFractionDigits: 2,
+  })}`;
 }
 
 function daysBetweenISO(fromISO: string, toISO: string): number | null {
@@ -266,7 +292,7 @@ export function computeInsightFindings(inputs: FindingsInputs): InsightFinding[]
         tier: 'fairness',
         tone: 'info',
         report: 'playing-time',
-        text: `Only ${names[0]} has played ${pos} this season — one absence from a gap` +
+        text: `Only ${names[0]} has played ${vocab.positionLabels?.[pos] ?? pos} this season — one absence from a gap` +
           (extra > 0 ? ` (${extra} more position${plural(extra)} ${extra === 1 ? 'has' : 'have'} single coverage).` : '.'),
       });
     }

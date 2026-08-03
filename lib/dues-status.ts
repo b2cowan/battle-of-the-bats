@@ -44,3 +44,23 @@ export function isNeverPaidPlayer(p: PlayerDuesLike): boolean {
   const paidNothing = !insts.some(i => i.paidAt);
   return hasDues && paidNothing;
 }
+
+/**
+ * ONE definition of what a player still owes: their schedule total minus the installments marked
+ * paid. Credits are deliberately EXCLUDED — the dues table, the Insights dashboard and the weekly
+ * digest have always quoted this figure, and `rollingBalance` (which does subtract credits) is a
+ * separate, separately-labelled number.
+ *
+ * These two lines lived in three places (the dues route, the insights digest, and now the Ask
+ * route), each carrying a comment promising it matched the others and nothing enforcing it. A
+ * change to how, say, a waived installment counts would otherwise have desynced a coach's answer
+ * from the Money page while all three comments still claimed parity.
+ */
+export function outstandingForSchedule(
+  schedule: { totalAmount: number } | null | undefined,
+  installments: ReadonlyArray<{ amount: number; paidAt: string | null }>,
+): number {
+  if (!schedule) return 0;
+  const paid = installments.filter(i => i.paidAt).reduce((sum, i) => sum + i.amount, 0);
+  return schedule.totalAmount - paid;
+}

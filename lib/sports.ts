@@ -162,6 +162,21 @@ export interface SportPack {
    *  builder (e.g. 'P' for the diamond). null when the sport has no such role — the pitching
    *  UI and generator pitching logic are then skipped entirely. */
   pitcherPosition: string | null;
+  /**
+   * Position code → the words a SENTENCE uses for it ('C' → 'catcher'). Grids, chips and depth
+   * charts keep the codes; only running prose needs this, because "hasn't played C in 3 weeks"
+   * reads as a typo. Added for Ask the Front Office (Phase A), whose whole output is prose.
+   *
+   * Lower-case, because these are common nouns inside a sentence, never headings. A code with no
+   * entry falls back to the code itself via {@link positionLabel} — a new position is never a
+   * crash, just a less pretty sentence.
+   */
+  positionLabels: Record<string, string>;
+}
+
+/** The words a sentence uses for a position, falling back to the raw code. */
+export function positionLabel(pack: SportPack, code: string): string {
+  return pack.positionLabels[code] ?? code;
 }
 
 /** Diamond field positions the lineup auto-fill assigns — the 9 standard defensive spots,
@@ -169,6 +184,12 @@ export interface SportPack {
 const DIAMOND_FIELD_POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'];
 /** Full diamond roster vocabulary — the 9 field spots plus the generic OF catch-all and DH. */
 const DIAMOND_POSITIONS = [...DIAMOND_FIELD_POSITIONS, 'OF', 'DH'];
+/** Prose names for the diamond codes. en-CA spelling ("centre"), matching the rest of the app. */
+const DIAMOND_POSITION_LABELS: Record<string, string> = {
+  P: 'pitcher', C: 'catcher', '1B': 'first base', '2B': 'second base', '3B': 'third base',
+  SS: 'shortstop', LF: 'left field', CF: 'centre field', RF: 'right field',
+  OF: 'outfield', DH: 'designated hitter',
+};
 
 const SOFTBALL_PACK: SportPack = {
   id: 'softball',
@@ -199,6 +220,7 @@ const SOFTBALL_PACK: SportPack = {
   positions: DIAMOND_POSITIONS,
   fieldPositions: DIAMOND_FIELD_POSITIONS,
   pitcherPosition: 'P',
+  positionLabels: DIAMOND_POSITION_LABELS,
 };
 
 // Baseball ≈ softball scoring (runs, innings, first pitch, diamond, mercy/diff cap), so it
@@ -233,6 +255,7 @@ const BASEBALL_PACK: SportPack = {
   positions: DIAMOND_POSITIONS,
   fieldPositions: DIAMOND_FIELD_POSITIONS,
   pitcherPosition: 'P',
+  positionLabels: DIAMOND_POSITION_LABELS,
 };
 
 // First differently-scored pack — proves the model. Basketball: points (not runs), four
@@ -266,6 +289,9 @@ const BASKETBALL_PACK: SportPack = {
   positions: ['PG', 'SG', 'SF', 'PF', 'C'],
   fieldPositions: ['PG', 'SG', 'SF', 'PF', 'C'],
   pitcherPosition: null,
+  positionLabels: {
+    PG: 'point guard', SG: 'shooting guard', SF: 'small forward', PF: 'power forward', C: 'centre',
+  },
 };
 
 // Neutral fallback for any sport without a tailored pack yet (incl. 'other'). Sport-safe
@@ -300,6 +326,7 @@ const GENERIC_PACK: SportPack = {
   positions: [],
   fieldPositions: [],
   pitcherPosition: null,
+  positionLabels: {},
 };
 
 const TAILORED_PACKS: Partial<Record<SportId, SportPack>> = {

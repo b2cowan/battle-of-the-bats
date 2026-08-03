@@ -35,6 +35,19 @@ export async function computeTeamSeasonLineupAnalytics(
      * pitcher position — is already loaded here.
      */
     armCareForEventId?: string | null;
+    /**
+     * Anything the CALLER already holds, passed through so this helper doesn't fetch it twice.
+     * Same contract as `team` above, extended to the rest of the wave (Ask the Front Office
+     * Phase A: its route already loads the season, lineups, events and roster to answer a
+     * position question, and re-fetching all four here cost a second full round-trip wave).
+     *
+     * ⚠ Anything passed MUST belong to `programYear` — this helper cannot re-verify that. Pass
+     * only what you fetched for the SAME active season.
+     */
+    programYear?: { id: string; lineupSettings?: { pitcherMaxInningsDefault?: number | null } | null } | null;
+    lineups?: Awaited<ReturnType<typeof getRepTeamSeasonLineups>>;
+    events?: Awaited<ReturnType<typeof getRepTeamEvents>>;
+    players?: Awaited<ReturnType<typeof getRepRosterPlayers>>;
   },
 ): Promise<{
   analytics: SeasonLineupAnalytics;
@@ -42,14 +55,14 @@ export async function computeTeamSeasonLineupAnalytics(
   armCare?: ArmCareConcern[];
   periodLabelPlural?: string;
 } | null> {
-  const programYear = await getActiveRepProgramYear(teamId);
+  const programYear = opts?.programYear ?? (await getActiveRepProgramYear(teamId));
   if (!programYear) return null;
 
   const [team, lineups, events, players, templates] = await Promise.all([
     opts?.team !== undefined ? Promise.resolve(opts.team) : getRepTeam(teamId),
-    getRepTeamSeasonLineups(programYear.id),
-    getRepTeamEvents(programYear.id),
-    getRepRosterPlayers(programYear.id),
+    opts?.lineups ?? getRepTeamSeasonLineups(programYear.id),
+    opts?.events ?? getRepTeamEvents(programYear.id),
+    opts?.players ?? getRepRosterPlayers(programYear.id),
     getRepTeamLineupTemplates(teamId, programYear.id),
   ]);
 
