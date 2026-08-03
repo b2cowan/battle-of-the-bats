@@ -1600,7 +1600,9 @@ export default function AdminDashboard() {
         : { value: health.conflicts, label: 'Conflicts', tone: health.conflicts > 0 ? 'danger' as const : 'good' as const };
 
     return (
-      <section className={`${styles.analyticsPanel} ${styles.scheduleHealthPanel}`} data-tone={health.tone}>
+      // data-sandbox-tour: the beat the "Break the schedule" tour chip points at in the
+      // "See it live" sandbox. An inert attribute — nothing reads it outside a demo org.
+      <section className={`${styles.analyticsPanel} ${styles.scheduleHealthPanel}`} data-tone={health.tone} data-sandbox-tour="schedule-health">
         <div className={styles.panelHeader}>
           <Activity size={16} style={{ color: 'var(--logic-lime)' }} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Schedule Health</h2>
@@ -1904,7 +1906,9 @@ export default function AdminDashboard() {
 
     return (
       // Full-width command strip across the board (not a uniform gauge cell).
-      <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
+      // data-sandbox-tour: the beat the "Watch a score land" tour chip points at in the
+      // "See it live" sandbox. An inert attribute — nothing reads it outside a demo org.
+      <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`} data-sandbox-tour="now-playing">
         <div className={styles.panelHeader}>
           <Activity size={16} style={{ color: 'var(--logic-lime)' }} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>

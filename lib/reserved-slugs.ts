@@ -30,6 +30,9 @@ export const RESERVED_ORG_SLUGS: ReadonlySet<string> = new Set([
   'pricing', 'blog', 'changelog', 'about', 'contact', 'support', 'help', 'legal',
   'privacy', 'terms', 'unsubscribe',
   'for-tournament-organizers', 'for-leagues', 'for-clubs', 'for-coaches',
+  // The sandbox door (app/see-it-live) — a static route, so an org holding this slug would be
+  // shadowed by it and lose every page it owns.
+  'see-it-live',
   // Framework / asset paths that must never be shadowed
   'icons', 'favicon', 'manifest', 'sw', 'offline', 'robots', 'sitemap',
   'static', 'public', '_next', 'assets', 'images', 'fonts',

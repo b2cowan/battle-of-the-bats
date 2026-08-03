@@ -13,6 +13,7 @@ import { Division, Communication, Team } from '@/lib/types';
 import s from '../../admin-common.module.css';
 import styles from './communication.module.css';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
+import { SandboxLockNote, useSandboxLock } from '@/components/sandbox/SandboxLock';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -86,6 +87,9 @@ export default function AdminCommunicationPage() {
   const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '?';
   const orgParam = orgSlug ? `&orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const billingHref = `/${orgSlug}/admin/tournaments/settings/subscription`;
+  // "See it live" sandbox: outbound is disabled before the press, not caught after. False for
+  // every real org, so nothing about a customer's compose screen changes.
+  const sandboxLocked = useSandboxLock();
 
   // ── Data ────────────────────────────────────────────────────────────────────
   const [communications, setCommunications] = useState<Communication[]>([]);
@@ -553,6 +557,12 @@ export default function AdminCommunicationPage() {
 
               </div>
 
+              {/* "See it live" sandbox: compose works exactly as it does for a real organizer —
+                  the visitor can see what they would write and who it would reach — but the send
+                  is disabled BEFORE it is pressed, with the honest line beneath. A send that
+                  visibly fails teaches a prospect the product is flaky; a send that is honestly
+                  locked teaches them we are careful with other people's inboxes. */}
+              <SandboxLockNote />
               <div className="modal-footer">
                 <button type="button" className="btn btn-ghost btn-data" onClick={cancelCompose}>
                   Cancel
@@ -560,7 +570,7 @@ export default function AdminCommunicationPage() {
                 <button
                   type="submit"
                   className="btn btn-lime btn-data"
-                  disabled={sending || (!channelSite && !channelEmail && !channelPush)}
+                  disabled={sandboxLocked || sending || (!channelSite && !channelEmail && !channelPush)}
                 >
                   {sending
                     ? <><RefreshCw className="spin" size={16} /> Sending…</>

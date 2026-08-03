@@ -191,6 +191,23 @@ therefore "does the platform need a guardian identity, and what does it cost (PI
 *"the ingredients already exist, this is presentation work"* is true for team-level items and **false
 for anything player-level**. A no-login private-link pattern (tryout offers, evaluator links) already
 exists and is the likely delivery rail to a parent with no account.
+📋 **DISCOVERY COMPLETE + OWNER RULED 2026-08-01 (discovery §10, binding) + STRATEGY LOGGED +
+MOCKUPS v3 APPROVED (artifact `2b0cbcab-9848-4a69-a0e6-a8c90cc85eb2` = binding visual spec) +
+BUILD-READY PLAN FINALIZED.** Deliverables: `COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_DISCOVERY.md`
+(§9 decisions + §10 rulings) + `_PLAN.md` (Slices 0–4, work-item tables) + `_PM_BRIEF.md`.
+**The ruled model:** PREMIUM PORTALS ONLY · two tiers — guardian (player-linked, ≤2/player;
+money/registration contact; recap/keepsake/announcements/chat later) vs family follower
+(team-level, never player-linked, uncapped; schedule/results/game pages/ICS/game alerts) ·
+parent-initiated via coach-shared team family link + coach approval (GameChanger model, NO public
+search) · per-team schedule visibility setting staff/families(default)/public-link. Recap =
+growth not stats (no per-player game stats exist, verified); trading card folded into recap on
+the shipped share-card rail; chat = its own gated slice (no ban/remove in the engine; G4
+any-portal clause reconciled then). Strategy entry 2026-08-01 in BUSINESS_DECISIONS.md (supersedes
+G3's ~5 cap; closes the tier-gating question). **Build gates: Slices 0–1 (substrate + follower
+experience) startable NOW; Slice 2 (guardian tier) waits on the PIPEDA/CASL counsel sign-off;
+hardening decision #9 (tryout-offer page shows a child's full name to any token holder) rides
+Slice 0.** ▶ **BUILD PROMPT READY: `COACH_PORTAL_CHUNK_D_SLICE_0_1_BUILD_PROMPT.md` — run in a
+FRESH chat (owner call 2026-08-01).**
 *(original entry below)*
 *Original:* — *large; the commercial upside; needs an owner decision first*
 Wow #4 (no-login "follow this game" link — the review's pick for most likely to spread), #5 (player

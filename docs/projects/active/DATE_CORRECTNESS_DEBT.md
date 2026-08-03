@@ -1,11 +1,3 @@
-# Date Correctness — Debt Inventory
+﻿# Date-Correctness Debt Ledger
 
-> Auto-generated: `node scripts/check-date-correctness.mjs --report`.
-> Calendar-day reasoning derived from the RUNTIME timezone (UTC in production).
-
-## Summary
-
-- **0** site(s) across **0** file(s)
-
-| File:line | Rule | Code |
-|---|---|---|
+No open items - the guardrail is at ZERO (all calendar logic routes through lib/timezone.ts; see memory/date_correctness_guardrail.md). This file stays as the ledger: new date-math debt gets logged here when found.

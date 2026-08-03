@@ -19,7 +19,7 @@ import type { RepEventType } from '@/lib/types';
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
-import { denyUnless } from '@/lib/coach-capabilities';
+import { denyUnless, canViewSchedule, canManageSchedule } from '@/lib/coach-capabilities';
 import { syncTournamentGameMirrorSafely } from '@/lib/rep-tournament-game-mirror';
 import {
   generateWeeklyOccurrences, reviewRecurrenceOccurrences,
@@ -58,7 +58,8 @@ export const GET = withObservability(async (req: Request,
   const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
   if ('error' in resolved) return resolved.error;
   const { ctx, capabilities, programYear } = resolved;
-  const denied = denyUnless(capabilities.schedule, 'You do not have access to the schedule.');
+  // READ half of the 2026-08-03 split: a helper may see the schedule they are turning up to.
+  const denied = denyUnless(canViewSchedule(capabilities), 'You do not have access to the schedule.');
   if (denied) return denied;
 
   const url = new URL(req.url);
@@ -117,7 +118,8 @@ export const POST = withObservability(async (req: Request,
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, team, assignment, programYear } = resolved;
-  const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
+  // WRITE half of the split — seeing the schedule is no longer the same answer as changing it.
+  const denied = denyUnless(canManageSchedule(assignment.capabilities), 'You cannot add events to this schedule.');
   if (denied) return denied;
 
   const body = await req.json();

@@ -478,6 +478,25 @@ function probeInPage(opts) {
         if (!hit || el.contains(hit) || hit.contains(el)) continue;
         if (hit.closest('nextjs-portal')) continue;
 
+        // ⚠ AND THE ELEMENT MUST ACTUALLY BE PAINTED THERE. Widening this rule to prose (§10.2)
+        // immediately produced a plausible false positive: the practice-run screen's attendance
+        // accordion keeps its children MOUNTED while closed, so they carry real boxes — non-zero
+        // size, visibility:visible, opacity:1 — that land in the bottom nav's band. Every check
+        // above agreed, and the finding read exactly like a trapped row on the one screen a coach
+        // uses one-handed outdoors. It was not: discounting the bar showed <main> at that point,
+        // never the paragraph. Layout geometry is not proof of paint.
+        //
+        // elementsFromPoint returns the full z-ordered stack, so an element that is genuinely
+        // UNDERNEATH the bar appears in it below the bar, while one that is merely laid out there
+        // does not appear at all. Non-mutating, unlike hiding the bar to look behind it.
+        //
+        // ⚠ THE ELEMENT OR ONE OF ITS DESCENDANTS — never an ancestor. <main> contains the
+        // unpainted paragraph and sits in the stack at that point, so accepting ancestors would
+        // wave the false positive straight through.
+        const stack = document.elementsFromPoint(cx, cy);
+        const painted = stack.some((s) => s === el || el.contains(s));
+        if (!painted) continue;
+
         add('hidden-behind-chrome', sigOf(el), `centre (${cx},${cy}) sits under fixed ${sigOf(bar)}; hit test returns ${sigOf(hit)}`);
       }
     }

@@ -23,6 +23,7 @@ import { hasPlanFeature } from './plan-features';
 import { filterUsersWithCategoryOn } from './fan-alert-prefs';
 import { filterUnpausedUsers } from './notification-pause';
 import { captureError } from './observability';
+import { isDemoOrgId } from './demo-org-server';
 import type { GameStatus, OrgPlan } from './types';
 
 interface FanPushTarget {
@@ -236,6 +237,18 @@ async function fanPushContext(tournamentId: string): Promise<{
     .eq('id', tournament.org_id)
     .maybeSingle();
   if (!org) return null;
+
+  // Sandbox outbound silence. Every fan dispatcher funnels through this one context builder, and
+  // it already returns null on any gate miss — so refusing here silences the whole anonymous-fan
+  // push pipeline for a demo ("See it live") org in one place. This pipeline matters especially:
+  // the demo's scores change on a schedule, and without this a comped demo org (which passes the
+  // plan gate below) would push a score alert to every real device following anything.
+  // FAIL-CLOSED — an unresolvable allow-list means no push.
+  try {
+    if (await isDemoOrgId(tournament.org_id as string)) return null;
+  } catch {
+    return null;
+  }
 
   // Plan gate — the signature halo feature is Tournament Plus+.
   if (!hasPlanFeature(org.plan_id as OrgPlan, 'fan_score_alerts')) return null;

@@ -70,8 +70,11 @@
        handles all scrolling. Prevents body-scroll / overscroll into empty flex
        space when page content is shorter than the screen. */
     height: 100vh;
-    /* dvh adjusts for mobile browser chrome (URL bar showing/hiding) */
-    height: 100dvh;
+    /* dvh adjusts for mobile browser chrome (URL bar showing/hiding).
+       --sandbox-chrome-h is set ONLY inside the "See it live" sandbox, where a demo banner is
+       pinned above the shell (globals.css) — subtracting it keeps the locked shell inside the
+       viewport instead of pushing its bottom nav off-screen. 0px for every real customer. */
+    height: calc(100dvh - var(--sandbox-chrome-h, 0px));
     overflow: hidden;
   }
 

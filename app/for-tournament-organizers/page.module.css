@@ -55,6 +55,54 @@
   margin-bottom: 2.5rem;
 }
 
+/* ── "See it live" — the sandbox door (mockups 6A) ─────────────────────────
+   Lime OUTLINE with a live dot: it has to read as a live thing without out-shouting the
+   solid-lime primary beside it. Same type spec and padding as the other hero actions, so
+   the row still reads as one row. */
+.seeItLive {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-data);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.06);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.55);
+  padding: 1rem 1.5rem;
+  transition: background 0.15s;
+}
+
+.seeItLive:hover { background: rgba(var(--logic-lime-rgb), 0.14); }
+.seeItLive:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
+
+.seeItLiveDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  flex-shrink: 0;
+  animation: seeItLivePulse 1.9s infinite;
+}
+
+@keyframes seeItLivePulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .seeItLiveDot { animation: none; }
+}
+
+.seeItLiveNote {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+  margin: -1.5rem 0 2rem;
+}
+
 .trustRow {
   display: flex;
   flex-wrap: wrap;

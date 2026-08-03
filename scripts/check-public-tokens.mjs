@@ -137,7 +137,9 @@ const SCOPES = {
   marketing: {
     // Logged-out marketing site. 'app/for-*' is a prefix glob so a new segment page is
     // guarded from the moment it exists.
-    dirs: ['app/for-*', 'app/pricing', 'app/changelog', 'components/marketing'],
+    // app/see-it-live is the sandbox door's confirm screen — a funnel surface between the
+    // marketing site and the demo, wearing the marketing ground.
+    dirs: ['app/for-*', 'app/pricing', 'app/changelog', 'components/marketing', 'app/see-it-live'],
     files: [
       'app/page.module.css',
       'components/PricingSection.module.css',
@@ -154,7 +156,9 @@ const SCOPES = {
     // Given their own scope (owner call 2026-07-25) rather than double-listed, so the debt
     // is counted once and cross-cutting screens are obvious. app/system-screens.module.css is
     // root chrome (error/404/offline) reachable from every shell, so it lives here too.
-    dirs: ['components/chat', 'components/shared', 'components/help', 'components/whats-new', 'components/bracket'],
+    // components/sandbox is here for the same reason: the "See it live" chrome mounts over the
+    // PUBLIC tournament pages and the OPERATOR admin shell from one place in the org layout.
+    dirs: ['components/chat', 'components/shared', 'components/help', 'components/whats-new', 'components/bracket', 'components/sandbox'],
     files: [
       'components/InstallAppPrompt.module.css',
       'components/TeamAvatar.module.css',

@@ -67,15 +67,44 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
     case 'Email families':
     case 'Announcements': return caps.announcementsSend;
     case 'Money':         return caps.money !== 'off';
-    // Open to any assigned coach: the hub shows record / roster size / tryout trend to everyone;
-    // the money rows inside stay money-gated server-side (Phase 4 F2 split) and the lineup /
-    // attendance sections gate per-section on their own capabilities.
-    case 'Insights':      return true;
+    /**
+     * Open to any assigned COACH: the hub shows record / roster size / tryout trend to everyone;
+     * the money rows inside stay money-gated server-side (Phase 4 F2 split) and the lineup /
+     * attendance sections gate per-section on their own capabilities.
+     *
+     * ⚠ 2026-08-03: `return true` was the only door in this switch that no grant governed, which
+     * made it the one door a HELPER would have kept. A helper holds none of the five below, so this
+     * closes for them and for nobody else — every real assistant carries `roster: 'view'` from the
+     * defaults, and any assistant hand-stripped of all five is looking at a hub of sections they
+     * cannot see the contents of anyway.
+     */
+    case 'Insights':
+      return caps.isHeadCoach || caps.roster !== 'off' || caps.lineups
+        || caps.attendance || caps.money !== 'off';
     // Player Development (3B): the hub is useful with EITHER goals (notes) or measurables
     // (roster view); all writes stay head-coach-only server-side (D1).
     case 'Development':   return caps.notes || caps.roster !== 'off';
     case 'Documents':     return caps.documents !== 'off';
     case 'Staff':         return caps.isHeadCoach;
+    /**
+     * ── The three doors that used to fall through to `true` (closed 2026-08-03) ──────────────
+     *
+     * `default: return true` is the right posture for a portal whose every member is a coach. The
+     * HELPER preset ends that assumption, and an un-gated door is precisely the "door a persona can
+     * SEE but not USE" that this portal treats as a bug. Each is keyed on a grant **every existing
+     * assistant already holds**, so nothing moves for anyone but a helper:
+     *
+     *   · Chat — a helper is deliberately not in the staff room, so the door would open on a room
+     *     they are not a member of. Keyed on the same grant that decides the seat, so the door and
+     *     the room can never disagree.
+     *   · Settings + Tournaments — both configure or administer the team, which is a managing act.
+     *     `scheduleManage` defaults true for every assistant invited before the split existed.
+     *
+     * Overview is deliberately NOT here: it is where a helper lands, and it renders their practice.
+     */
+    case 'Chat':          return caps.staffChat;
+    case 'Settings':
+    case 'Tournaments':   return caps.isHeadCoach || caps.scheduleManage;
     default:              return true;
   }
 }

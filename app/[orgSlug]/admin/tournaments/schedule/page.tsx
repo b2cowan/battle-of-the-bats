@@ -715,7 +715,7 @@ export default function AdminSchedulePage() {
     const locationStr = facility
       ? `${venue!.name} — ${facility.name}`
       : (venue?.name || undefined);
-    await fetch(`/api/admin/games${orgParam}`, {
+    const saveRes = await fetch(`/api/admin/games${orgParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -734,6 +734,42 @@ export default function AdminSchedulePage() {
         awayPlaceholder:  isPlayoffGame ? (data.awayPlaceholder ?? undefined) : undefined,
       }),
     });
+
+    // ── "See it live" sandbox: keep the move, skip the refresh ────────────────────────────────
+    // The write was refused BY DESIGN (lib/demo-guard.ts), and the banner said so before the
+    // visitor touched anything — so this is not an error path. Two things happen here, and the
+    // second is the one that matters:
+    //
+    //   • the change is applied to the in-memory list, so a hands-on edit stays on screen;
+    //   • we do NOT refresh, because refreshing pulls the server's untouched copy back and snaps
+    //     the card home — the "looks broken" failure the whole drag beat exists to avoid.
+    //
+    // The schedule-health engine recomputes in the browser against this same list, so a
+    // moved-but-unsaved game scores correctly with no new maths. The "nothing is saved" toast is
+    // raised by the shared sandbox chrome, which watches every fetch for this same marker.
+    if (saveRes.headers.get('X-Sandbox-Blocked') === '1') {
+      setGames(prev => prev.map((g): Game => {
+        if (g.id !== gameId) return g;
+        const moved: Game = {
+          ...g,
+          date:            data.date || g.date,
+          time:            data.time,
+          venueId:         data.venueId || undefined,
+          venueFacilityId: data.venueFacilityId || undefined,
+          notes:           data.notes || undefined,
+          homeTeamId:      data.homeTeamId,
+          awayTeamId:      data.awayTeamId,
+        };
+        if (locationStr) moved.location = locationStr;
+        if (isPlayoffGame) {
+          moved.homePlaceholder = data.homePlaceholder ?? g.homePlaceholder;
+          moved.awayPlaceholder = data.awayPlaceholder ?? g.awayPlaceholder;
+        }
+        return moved;
+      }));
+      return;
+    }
+
     await refresh();
   }
 
@@ -1667,6 +1703,10 @@ export default function AdminSchedulePage() {
           onSaveRules={saveHealthRules}
           onResetRules={() => setHealthRules(savedHealthRules)}
           onRestoreDefaultRules={() => setHealthRules(DEFAULT_HEALTH_RULES)}
+          // The sandbox's own undo. Nothing was ever persisted, so "put it back" is simply a
+          // re-read of the server's untouched copy — which also means a visitor can never wedge
+          // the demo for themselves. The panel renders this only inside a demo org.
+          onSandboxReset={() => { void refresh(); }}
         />
       )}
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, getRepTeam, getActiveRepProgramYear } from '@/lib/db';
-import { denyUnless } from '@/lib/coach-capabilities';
+import { denyUnless, HELPER_PRESET } from '@/lib/coach-capabilities';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { createAssistantInvite, orgRequiresAssistantApproval } from '@/lib/assistant-invites';
 import { sendEmail, assistantCoachInviteHtml } from '@/lib/email';
@@ -27,7 +27,7 @@ export const POST = withObservability(async (req: Request,
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   const assignment = assignments.find(a => a.teamId === teamId);
   if (!assignment) return forbidden();
-  const denied = denyUnless(assignment.capabilities.isHeadCoach, 'Only the head coach can invite assistant coaches.');
+  const denied = denyUnless(assignment.capabilities.isHeadCoach, 'Only the head coach can invite staff.');
   if (denied) return denied;
 
   const programYear = await getActiveRepProgramYear(teamId);
@@ -36,6 +36,18 @@ export const POST = withObservability(async (req: Request,
   const body = await req.json().catch(() => ({}));
   const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
   if (!EMAIL_RE.test(email)) return NextResponse.json({ error: 'Enter a valid email address.' }, { status: 400 });
+
+  /**
+   * Which PRESET is being invited (Phase 4, 2026-08-03). An unrecognised value — including the
+   * absent one every caller sent before today — means "assistant coach", which is the behaviour
+   * this route has always had.
+   *
+   * ⚠ This picks a bundle of grants; it does NOT pick a role. Both land on the same
+   * `assistant_coach` row, and from the moment the invite is accepted the head coach can move any
+   * individual grant on either of them. The word chosen here is not stored anywhere.
+   */
+  const isHelper = body.preset === 'helper';
+  const initialCapabilities = isHelper ? { ...HELPER_PRESET } : null;
 
   // The head coach's own display name for the email ("Jane invited you…").
   const { data: inviterMember } = await supabaseAdmin
@@ -54,16 +66,22 @@ export const POST = withObservability(async (req: Request,
     invitedByName,
     invitedEmail: email,
     teamName: team.name,
+    initialCapabilities,
     requireApproval,
   });
 
   if (status === 'pending_approval') {
-    // Tell the org so an admin can approve (their bell). Assistant is NOT emailed until approval.
+    // Tell the org so an admin can approve (their bell). The invitee is NOT emailed until approval.
+    // ⚠ The notification names WHICH kind was invited: an admin approving "a helper — a parent who
+    // runs a station" is being asked a different question from one approving an assistant coach,
+    // and a generic line would hide the difference at the only moment someone can object to it.
     await notify({
       orgId: ctx.org.id,
       eventType: 'assistant_coach_approval_requested',
-      title: 'Assistant coach invite awaiting approval',
-      body: `${invitedByName ?? 'A head coach'} invited ${email} to ${team.name}.`,
+      title: isHelper ? 'Helper invite awaiting approval' : 'Assistant coach invite awaiting approval',
+      body: isHelper
+        ? `${invitedByName ?? 'A head coach'} invited ${email} to ${team.name} as a helper — they will see practice plans and players' names, and nothing else.`
+        : `${invitedByName ?? 'A head coach'} invited ${email} to ${team.name}.`,
       link: `/${orgSlug}/admin/rep-teams`,
       metadata: { inviteId },
     }).catch(() => {});
@@ -71,9 +89,11 @@ export const POST = withObservability(async (req: Request,
   }
 
   const inviteUrl = `${APP_URL}/auth/accept-assistant-invite?token=${rawToken}`;
-  await sendEmail(email, `You're invited to help coach ${team.name}`, assistantCoachInviteHtml({
-    teamName: team.name, invitedByName, inviteUrl,
-  }));
+  await sendEmail(
+    email,
+    isHelper ? `You're invited to help out at ${team.name}` : `You're invited to help coach ${team.name}`,
+    assistantCoachInviteHtml({ teamName: team.name, invitedByName, inviteUrl, asHelper: isHelper }),
+  );
 
   return NextResponse.json({ ok: true, pendingApproval: false });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/staff/invite' });

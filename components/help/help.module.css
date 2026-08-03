@@ -630,8 +630,16 @@
   line-height: 1.6;
 }
 
+/* ⚠ The RAMP TOKEN, not the literal it used to be. `--white-75` is byte-identical to
+   rgba(255,255,255,0.75) on dark and remaps to --home-ink-soft inside the coach warm gate. As a
+   literal this made EVERY bolded phrase in EVERY guide render at ~1.1:1 on the cream ground —
+   1,654 of them on the help hub alone, while the surrounding <p>/<em>/<li> resolved correctly, so
+   the guides read as sentences with holes and the page still looked populated. Warm is the coach
+   portal's DEFAULT theme, so this was the shipped experience. Found by the layout sweep only after
+   its contrast rule stopped declining on the portal's gradient ground (plan §10.1 / §10.2b A) —
+   help body copy sits on that ground, never inside a card, so nothing had ever measured it. */
 .helpSectionContent strong {
-  color: rgba(255, 255, 255, 0.75);
+  color: var(--white-75);
   font-weight: 600;
 }
 
@@ -703,8 +711,10 @@
   margin: 0;
 }
 
+/* Same defect, same fix. The 0.76 was a hand-typed near-twin of the 0.75 above with no reason to
+   differ; both now take the one ramp step, so FAQ bold and body bold cannot drift apart again. */
 .helpFaqAnswer strong {
-  color: rgba(255, 255, 255, 0.76);
+  color: var(--white-75);
 }
 
 /* ── Search results panel (replaces scroll body when query active) ─────────── */

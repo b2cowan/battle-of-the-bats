@@ -23,6 +23,8 @@ import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import ChatUnreadBadge from '@/components/chat/ChatUnreadBadge';
 import { TOUR_GROUPS, type TourNavItem, type TourGroup } from './admin-nav-config';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
+import { isNavKeyHiddenInSandbox } from '@/lib/sandbox-curation';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import styles from './AdminSidebar.module.css';
 
@@ -52,6 +54,8 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
   const { tournaments, currentTournament, setCurrentTournament, refresh: refreshTournaments } = useTournament();
   const worklist = useAdminWorklist();
+  // "See it live" sandbox — drives the curated-surface hiding below. False for every real org.
+  const isSandbox = useIsSandbox();
 
   // Tournament / Tournament Plus tiers have no org-admin concept — never treat them as
   // being "in org admin" even if a URL slips through (proxy.ts + the org layout redirect them).
@@ -134,11 +138,19 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
   // which include 'club_large' (Club · Association) — omitting it hid the nav for that paid band.
   const hasOrgVenueLibrary = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
-  const tournamentGroups = TOUR_GROUPS.map(group =>
-    group.key === 'operations' && showTournamentSummary
-      ? { ...group, items: [...group.items, { key: 'summary', icon: FileText, label: 'Summary' } as TourNavItem] }
-      : group
-  );
+  const tournamentGroups = TOUR_GROUPS
+    .map(group =>
+      group.key === 'operations' && showTournamentSummary
+        ? { ...group, items: [...group.items, { key: 'summary', icon: FileText, label: 'Summary' } as TourNavItem] }
+        : group
+    )
+    // The sandbox's four curated corners — billing, staff invitations, exports, deep settings forms
+    // (lib/sandbox-curation.ts). HIDE the entry point rather than let a stranger dead-end on it.
+    // A group left with nothing in it drops out entirely rather than rendering an empty header.
+    .map(group => isSandbox
+      ? { ...group, items: group.items.filter(item => !isNavKeyHiddenInSandbox(true, item.key)) }
+      : group)
+    .filter(group => group.items.length > 0);
 
   // Collapsible nav groups — persisted to localStorage
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set<string>());

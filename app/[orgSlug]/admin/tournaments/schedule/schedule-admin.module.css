@@ -692,6 +692,42 @@
   padding: 0 0.75rem 0.72rem;
 }
 
+/* The sandbox's one added line: an invitation to a stranger who doesn't yet know this panel
+   reacts to what they do. Renders only inside a demo org (components/sandbox/SandboxProvider). */
+.healthSandboxPrompt {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin: 0;
+  padding: 0.5rem 0.65rem;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.32);
+  border-radius: 6px;
+}
+
+/* "Put it back" — a local reset, because nothing was ever written down. */
+.healthSandboxReset {
+  margin-left: auto;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--fl-text);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2px;
+  padding: 0.35rem 0.6rem;
+  cursor: pointer;
+}
+
+.healthSandboxReset:hover { border-color: var(--logic-lime); }
+.healthSandboxReset:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
 /* ── Schedule Health rules editor ──────────────────────────────────────────── */
 .healthGear {
   margin-left: auto;

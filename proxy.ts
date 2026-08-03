@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
 import { isTournamentTier } from './lib/billing-urls';
+import { shouldBlockSandboxWrite, sandboxRejectionResponse } from './lib/demo-guard';
 
 export async function proxy(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('Proxy Supabase client');
@@ -27,6 +28,18 @@ export async function proxy(request: NextRequest) {
   // adopts this same id when a wrapped route runs, so the stored error_events.request_id matches.
   const requestId = crypto.randomUUID();
   requestHeaders.set('x-request-id', requestId);
+
+  // ── Sandbox write block ────────────────────────────────────────────────────────────────────
+  // THE chokepoint for demo ("See it live") organizations: nothing that changes anything gets
+  // through, for any route, including ones written after this line. Deliberately placed ABOVE the
+  // API fast-path below and above every redirect and session check, so no future reordering can
+  // let a write slip past it, and so a blocked write costs no Supabase round-trip.
+  //
+  // The response carries `sandbox: true`, which the client fetch layer turns into the
+  // "not saved in the sandbox" nudge rather than an error. See lib/demo-guard.ts.
+  if (shouldBlockSandboxWrite(request.method, request.nextUrl)) {
+    return sandboxRejectionResponse();
+  }
 
   // Cheap fast-path for API routes that don't need the session work below: stamp the id and return
   // immediately — no Supabase getUser() round-trip. /api/admin/* is excluded so it keeps the full

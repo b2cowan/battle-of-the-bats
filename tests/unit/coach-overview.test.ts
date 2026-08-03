@@ -17,6 +17,9 @@ import type { CoachCapabilities } from '../../lib/coach-capabilities.ts';
 const HEAD_CAPS: CoachCapabilities = {
   isHeadCoach: true,
   schedule: true,
+  scheduleManage: true,
+  staffChat: true,
+  planPlayerNames: true,
   attendance: true,
   lineups: true,
   roster: 'view',

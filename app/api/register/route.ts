@@ -11,6 +11,7 @@ import { linkTournamentRegistrationToBasicCoachTeam } from '@/lib/basic-coach-te
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { notify } from '@/lib/notify';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
+import { assertNotDemoOrg } from '@/lib/demo-guard';
 import { tournamentToday } from '@/lib/timezone';
 import type { OrgPlan, TournamentRegistrationField } from '@/lib/types';
 import {
@@ -308,6 +309,13 @@ export const POST = withObservability(async (req: NextRequest) => {
     if (!organization || organization.subscription_status === 'canceled') {
       return NextResponse.json({ error: 'Tournament registration is not open.' }, { status: 403 });
     }
+
+    // Sandbox write block, body-identified branch. This is one of the few write endpoints whose
+    // org is named in the REQUEST BODY (via the tournament id) rather than the URL, so the proxy
+    // chokepoint cannot see it — the guard has to be called here, at the first point the org is
+    // actually known. Without it, a visitor could register a real team into the demo tournament.
+    const sandboxBlocked = assertNotDemoOrg(organization.slug);
+    if (sandboxBlocked) return sandboxBlocked;
 
     const registrationFields = organization && hasPlanFeature(organization.plan_id, 'custom_registration_fields')
       ? await getTournamentRegistrationFields(tournamentId)

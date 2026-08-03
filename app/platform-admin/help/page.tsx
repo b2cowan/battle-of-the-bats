@@ -148,6 +148,7 @@ export default function PlatformAdminHelpPage() {
         { label: 'Track team fees', href: '/platform-admin/help/coaches#recipe-track-dues' },
         { label: 'Coach tournament chat', href: '/platform-admin/help/coaches#recipe-tournament-chat' },
         { label: 'Team staff room (Premium)', href: '/platform-admin/help/coaches#recipe-staff-room' },
+        { label: 'Family access & sharing a game (Premium)', href: '/platform-admin/help/coaches#premium-family-access' },
       ],
     },
     {

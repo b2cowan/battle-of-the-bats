@@ -8,7 +8,7 @@ import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import {
   blockRotates, buildRunSteps, computeBlockClocks, computeRotation, formatDuration, formatRunClock,
-  runRemainingSeconds, runStepAt,
+  resolveStationTeaching, runRemainingSeconds, runStepAt,
   type PracticePlan, type PracticePlanBlock, type RotationGrid, type RunStep,
 } from '@/lib/rep-practice-plan';
 import PracticeStationView from '../../_PracticeStationView';
@@ -48,6 +48,14 @@ type RunData = {
   attendance: { playerId: string; status: RepAttendanceStatus }[];
   viewerName: string | null;
   canViewAttendance: boolean;
+  /**
+   * May this viewer move the practice on? False for a HELPER (Phase 4) — they run one station and
+   * do not decide when the whole team rotates. ⚠ Optional so a client holding a cached response
+   * from before this shipped still gets its controls; a missing field must never read as "no".
+   */
+  canAdvance?: boolean;
+  /** Who does move it on, for the line that replaces the button. Null when unknown — never guessed. */
+  headCoachName?: string | null;
 };
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
@@ -366,7 +374,25 @@ export default function CoachPracticeRunPage({
 
   if (!step || !block) return null;
 
-  const actionRow = (
+  /**
+   * ⚠ A HELPER DOES NOT DRIVE THE PRACTICE (Phase 4, frame H3).
+   *
+   * Everything on this screen is client state and writes nothing (D4), so this is not a permission —
+   * it is honesty. A parent volunteer running the tee does not decide when all three groups rotate,
+   * and handing them a button that looks like it moves everybody would be worse than no button.
+   *
+   * ⚠ It must NOT be a disabled control either: an amber "rotation due" state above a greyed-out
+   * "Rotate now" is a screen telling someone off for not doing a thing they were never able to do.
+   * They get a sentence naming who does it — which is information they can act on, by looking up.
+   *
+   * `!== false` deliberately: a response cached from before this field existed still gets controls.
+   */
+  const canAdvance = data?.canAdvance !== false;
+  const whoAdvances = data?.headCoachName?.trim()
+    ? `${data.headCoachName.trim()} moves everyone on.`
+    : 'Your coach moves everyone on.';
+
+  const actionRow = canAdvance ? (
     <div className={styles.ppRunActions}>
       <button type="button" className={styles.ppRunSecondary} disabled={index === 0} onClick={() => go(-1)}>
         Back
@@ -377,6 +403,8 @@ export default function CoachPracticeRunPage({
         <button type="button" className={styles.ppRunPrimary} onClick={() => go(1)}>{advance.label}</button>
       )}
     </div>
+  ) : (
+    <p className={styles.ppRunHandedOff}>{whoAdvances}</p>
   );
 
   if (openStation) {
@@ -396,8 +424,11 @@ export default function CoachPracticeRunPage({
           onBack={() => chooseStation(null)}
           actions={
             /* The same tap as on the block screen, so a station coach never has to back out to a
-               list to move the round on. It moves the screen and records nothing. */
-            advance.disabled ? null : (
+               list to move the round on. It moves the screen and records nothing.
+               ⚠ A helper gets the sentence instead — see `canAdvance` above. */
+            !canAdvance ? (
+              <p className={styles.ppRunHandedOff}>{whoAdvances}</p>
+            ) : advance.disabled ? null : (
               <div className={styles.ppRunActions}>
                 <button type="button" className={styles.ppRunPrimary} onClick={() => go(1)}>{advance.label}</button>
               </div>
@@ -408,7 +439,18 @@ export default function CoachPracticeRunPage({
     );
   }
 
-  const points = block.coachingPoints ?? [];
+  /**
+   * What a plain stop teaches.
+   *
+   * ⚠ A block built by picking ONE drill holds its teaching on the STATION, not the block — so
+   * reading `block.description` alone would show a blank screen for exactly the block a coach
+   * assembled in four taps. With a single station the station IS the block, so its words are
+   * resolved through; with two or more they differ from each other and the station list below is
+   * the honest answer, so the block keeps its own.
+   */
+  const soleStation = (block.stations ?? []).length === 1 ? block.stations![0] : null;
+  const { description: stopDescription, goal: stopGoal, coachingPoints: points } =
+    resolveStationTeaching(soleStation ?? {}, block);
 
   // What the small line under the clock says. Read top to bottom: the most specific state wins.
   let clockLabel: string;
@@ -495,8 +537,8 @@ export default function CoachPracticeRunPage({
             the description, goal and coaching points the coach had already typed just vanished. */}
         {step.round == null && (
           <>
-            {block.description && <p className={styles.ppRunNote}>{block.description}</p>}
-            {block.goal && <p className={styles.ppRunGoal}>{block.goal}</p>}
+            {stopDescription && <p className={styles.ppRunNote}>{stopDescription}</p>}
+            {stopGoal && <p className={styles.ppRunGoal}>{stopGoal}</p>}
             {points.length > 0 && (
               <ol className={styles.ppRunPoints}>
                 {points.map((point, i) => <li key={i}>{point}</li>)}
@@ -527,7 +569,7 @@ export default function CoachPracticeRunPage({
                 >
                   <span>
                     <span className={styles.ppRunStationName}>
-                      {station.name.trim() || `Station ${i + 1}`}{station.count ? ` ×${station.count}` : ''}
+                      {station.name.trim() || `Station ${i + 1}`}
                     </span>
                     {(staffLine || mine) && (
                       <span className={styles.ppRunStationMeta}>

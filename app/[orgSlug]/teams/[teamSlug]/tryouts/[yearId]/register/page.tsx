@@ -35,7 +35,7 @@ export default async function TryoutRegisterPage({
         style={{
           maxWidth: '640px',
           margin: '0 auto',
-          padding: 'calc(var(--nav-height, 64px) + 2rem) 1.5rem 5rem',
+          padding: 'calc(var(--nav-height) + 2rem) 1.5rem 5rem',
         }}
       >
         <Link

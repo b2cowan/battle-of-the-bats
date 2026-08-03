@@ -14,7 +14,7 @@ The sections below document all copy changes applied to the live pages after the
 > ### ⛔ SUPERSEDED — all "Free Trial" copy in this document (added 2026-06-08)
 > Every "14-Day Free Trial" / "Start Free Trial" badge, CTA, FAQ answer, and trial-length row in the body sections below (Section 4 cards, Section 9 FAQ, the Comparison/Availability tables, etc.) is **superseded and must not be used.** Two changes overrode the original trial model:
 > 1. **Founding Season comp** — paid tiers are **free through Dec 31, 2026, no credit card** (no clock, no card-at-signup). Use "Free through Dec 31, 2026 · no credit card required" framing.
-> 2. **Free-floor model** — each operator type starts on a **free-forever scoped floor** (Free Tournament / Free League Starter / Free Basic Coaches Portal), not a time-limited trial. Conversion is driven by scope/scale walls, not a trial expiry. See `docs/projects/active/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
+> 2. **Free-floor model** — each operator type starts on a **free-forever scoped floor** (Free Tournament / Free League Starter / Free Basic Coaches Portal), not a time-limited trial. Conversion is driven by scope/scale walls, not a trial expiry. See `docs/projects/archive/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
 >
 > Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
 
@@ -32,7 +32,7 @@ The sections below document all copy changes applied to the live pages after the
 
 Owner-ratified from the 2026-06-22 pricing & product review. **Canonical numbers/names live in `docs/agents/strategy/PLAN_PRICING_FACTS.md` — this doc references, it does not restate.**
 
-**Status (2026-06-22, dev/unpushed):** the **officials-don't-count** copy (pricing FAQ, comparison table, members page) and the **free-email-limit** copy (in-app help) already shipped with billing **Group A**. The **Club band** copy below (cards, comparison rows, coach bridge) still waits for the **Club Repackaging** build (`docs/projects/active/CLUB_REPACKAGING_PLAN.md`); apply it there.
+**Status (2026-06-22, dev/unpushed):** the **officials-don't-count** copy (pricing FAQ, comparison table, members page) and the **free-email-limit** copy (in-app help) already shipped with billing **Group A**. The **Club band** copy below (cards, comparison rows, coach bridge) still waits for the **Club Repackaging** build (`docs/projects/archive/CLUB_REPACKAGING_PLAN.md`); apply it there.
 
 **Club → two capacity bands (per-team "$19/additional team" meter retired):**
 - **Club** — whole coaching staff included, up to 15 teams. **Club · Association** — 15–30 teams (custom above 30). Never write "Club Large" in customer copy.

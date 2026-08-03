@@ -42,6 +42,18 @@
 > scrimmage win and a scored-then-cancelled win that must never count). That team is now the
 > standing fixture for game-day, archive, and cancelled-game-record checks.
 
+> **Added 2026-08-03:** §5.2 — **the "See it live" sandbox**, all eight slices of its Phase 1. It is
+> the longest section in this ledger and the only one where the *absence* of things is most of the
+> point: no form at the door, no saved change, no email ever sent, no banner or nav change on a real
+> customer's screen. Two prerequisites are genuinely load-bearing and easy to skip — **start the
+> tick in watch mode** (without it the demo freezes and half the section can't happen) and **use a
+> fresh private window** (signed in as yourself you get a deliberately shorter experience).
+> Its sharpest steps: **B** — the banner must never be covered, which is exactly the defect the
+> first QA pass found; **E** — a dragged game must stay on screen while the health score reacts, and
+> **J** — proof that none of this touched a real customer.
+> It also carries the one **open decision** on the project: what the door should do for a visitor
+> who is already signed in.
+
 > **How to use this:** work a session top-to-bottom, tick `[x]` as you go, jot defects inline under
 > the step that failed. When a project's section is fully ticked, tell the working agent "QA passed:
 > <project>" — it graduates the project (commit where still uncommitted, with your per-action OK,
@@ -414,6 +426,60 @@ say how it went afterwards, so "what did we do about hitting last spring?" has a
       with **no Rename, Retire, New or Your tags buttons at all**, and **Save as template…** doesn't
       appear on a plan.
 
+### 1.9b Helpers — the parent who runs a station (Practice Plans Phase 4) — built + simplified + reviewed + docs + probed, uncommitted. **THIS CLOSES PRACTICE PLANS.**
+
+> **Mockups you approved:** `claude.ai/code/artifact/ebf2b469-88d7-4b09-b1e8-151c3e7d4773` (10 frames).
+> **Where:** Team → **Staff** (the invite) · and a second sign-in as the helper.
+> **No migration.** Nothing to apply. ⚠ 22/22 layout probes green at 361 / 390 / desktop; 1165 unit tests green.
+
+**The point of it:** you can hand a parent the station they're running, on their own phone, without
+printing a sheet with ten children's names on it that then goes home in someone's pocket.
+
+**⚠ THIS ONE NEEDS A SECOND ACCOUNT.** The helper's own screens can only be judged by signing in as
+one — invite an address you control, accept it, and look at the portal through their eyes. **The
+probes could not cover any of this** (the test harness has one coach, and he's a head coach), so
+what you see is the only verification these screens will get.
+
+**The coach's side**
+
+- [ ] **The choice comes first.** Open **Staff**. Before the email box there's *"Who are you
+      inviting?"* with **Helper** and **Assistant coach**. Helper is preselected — that's deliberate,
+      it's the smaller grant. Tell me if that default feels wrong.
+- [ ] **Read the card underneath, as if you didn't build this.** It says what a helper *gets* and
+      what they *never* get, in sentences. **Does it tell you enough to hand a stranger this access
+      without worrying?** That is the entire job of that card — if it doesn't, say so.
+- [ ] **The chat line.** One item on that card is marked differently: *"Your staff chat — helpers are
+      never in it."* Until now, everyone on your staff list was in that room automatically. Check the
+      line actually lands — it's the one thing you'd otherwise assume wrong.
+- [ ] Switch to **Assistant coach** and the card changes to what an assistant gets, and the email
+      label changes with it.
+- [ ] **On your phone at 361/390.** The two options stack, both descriptions are readable, and
+      nothing scrolls sideways.
+- [ ] **A helper in the list has no permission grid.** Not a greyed-out one — none. That's on
+      purpose: they hold none of those switches. **Make assistant coach** widens them in one tap with
+      no re-invitation. Confirm removing one still reads clearly.
+- [ ] **⚠ Your existing assistants are untouched.** Open an assistant's card: **Schedule** is now two
+      switches (*see* it, and *change* it) and **Staff chat** is a switch too — **all of them still
+      on**. Nothing should have been taken away from anyone. If any assistant lost anything, stop and
+      tell me.
+
+**The helper's side — sign in as them**
+
+- [ ] **They land on the practice, not a dashboard.** One button: **Open my station**. Count how many
+      taps it takes them to see their group. It should be one.
+- [ ] **What's in the sidebar.** Should be the schedule and essentially nothing else. **No roster, no
+      Development, no Insights, no Chat, no Settings, no Money.** If you can see a door they can't
+      use, that's a bug — tell me which one.
+- [ ] **Inside their station:** their group by name and number, what they're doing, what they're
+      watching for, the coaching points. **No focus areas, no notes about any child.**
+- [ ] **⚠ No Rotate now / Next block.** Instead a line naming you: *"<your name> moves everyone on."*
+      Judge whether that reads as helpful or as a limitation being explained at them.
+- [ ] **A day with no practice** — they should see when the next one is, with a real date and place.
+- [ ] **A practice with no plan written yet** — they're told so, and told there's nothing to do. Make
+      sure it doesn't look broken.
+- [ ] **Try to get somewhere they shouldn't.** Paste a roster or Development URL into their browser.
+      It must refuse, not show a blank page with the data underneath.
+
 ### 1.10 Ask the Front Office, Phase A — built + simplified + reviewed + docs, **COMMITTED** `5ce226a4`
 Archived plan: `archive/ASK_FRONT_OFFICE_PLAN.md` + `_PM_BRIEF.md`. Mockups (binding):
 https://claude.ai/code/artifact/14a812e8-1fe0-429c-9c54-beab7a581038
@@ -677,7 +743,7 @@ Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
 
 ---
 
-## Session 5 — Tournament admin · DESKTOP (wide window, ~10 min)
+## Session 5 — Tournament admin · DESKTOP (wide window; §5.1 ~10 min, §5.2 ~30 min)
 
 ### 5.1 Tournament creation live preview (v1) — built, uncommitted
 *While an organizer fills in the setup wizard, a phone beside the form assembles their public
@@ -745,6 +811,128 @@ Sign in as an org admin. Do this at a window **wider than 1280px** unless a step
   schedule or standings — that's the agreed v1 scope, not an omission.
 - Note: there is deliberately **no colour picker** in the wizard. Custom colours are a paid feature
   and putting the swatches in free signup is a pricing decision you haven't made yet.
+
+### 5.2 The "See it live" sandbox (Tournament Admin Sandbox, Phase 1) — all eight slices built, uncommitted
+*A stranger with no login and no email walks into a real tournament that is running right now, on
+both sides of the product: the fan pages ticking on their own, and the actual admin portal as a
+demo organizer. Nothing they do is saved and nothing is ever sent to anyone.*
+Plan (with build notes 1–18): `active/TOURNAMENT_ADMIN_SANDBOX_PLAN.md`.
+Binding visual spec: `active/TOURNAMENT_SANDBOX_MOCKUPS.html`.
+
+**Before you start — two prerequisites, both easy to forget:**
+
+- [ ] **The clock now runs itself** (migration 224, every two minutes, applied to dev 2026-08-03) —
+      so you should NOT need to start anything. Confirm it by watching the banner countdown move and
+      a live score change on its own within ~2 minutes. If the demo looks frozen, the scheduled job
+      has stopped: it reports itself on the platform-admin observability freshness panel like every
+      other timed job, and you can always run the tick by hand (command in the plan).
+- [ ] **Check it's presentable.** Run the sandbox health probe. It asserts that a game is live right
+      now, the dashboard has work in it, the bracket is correct, and the schedule reads HEALTHY.
+      If it reports a problem, fix that before judging anything else — you'd be QA-ing a broken set.
+- [ ] **Use a FRESH private window.** The door deliberately refuses to replace an existing session,
+      so if you are already signed in as yourself you will get the fan side only and a shorter tour.
+      That is correct behaviour, not a bug — but it is not the experience a prospect gets.
+
+**A · The door (no login, no email)**
+- [ ] From a signed-out window go to `/see-it-live`. You arrive on the **fan page** of the Riverdale
+      Summer Classic. **No form, no modal, no email field appears at any point** — if one ever does,
+      that is a breach of a binding decision, not a preference.
+- [ ] It takes **under a minute** from pressing the door to seeing a score that moved on its own.
+      Watch a live game for ~30–60 seconds without touching anything.
+- [ ] Press it a second time from the same window — you land in the same place, nothing breaks.
+
+**B · The banner (this is the honesty claim; it has to be visible)**
+- [ ] The dark sandbox banner sits **above everything**, including the FieldLogicHQ navbar. It reads
+      "Live sandbox", the promise, a **counting `mm:ss`** and **Start your own — free**.
+      ⚠ *This was the first QA defect: the navbar painted over it and the promise vanished. If any
+      bar covers it again on any page, that is the same class of bug.*
+- [ ] The countdown actually counts down, second by second, and does not reset when you change page.
+- [ ] Scroll a long page (Schedule, Standings). The banner **never scrolls away** and there is **no
+      way to dismiss it** — no ✕, no collapse.
+- [ ] Nothing underneath is hidden or cut off: the navbar, the score ticker and the page's own
+      heading all sit fully below the banner, on the fan side AND in the admin portal.
+- [ ] Narrow the window to phone width. The banner still reads sensibly, the chip rail scrolls
+      sideways rather than eating the screen, and no control is lost.
+
+**C · The tour chips**
+- [ ] Chips are numbered and say **Try this**. A chip with an **arrow** takes you somewhere; a chip
+      **without** one points at something already on this page.
+- [ ] Press the "Scores tick on their own" chip. The page moves to the live scores and puts a lime
+      ring around them that **holds long enough to notice** — even if they were already on screen.
+- [ ] A chip only gets its **✓ after it has delivered** — after you've seen the beat, or after the
+      page it sends you to has loaded. Pressing and immediately pressing back should not leave a
+      trail of ticks for things you never saw.
+- [ ] Ticks last the visit and are gone in a brand-new private window.
+- [ ] **Signed out via the door:** three chips, including "See the organizer's side".
+      **Signed in as yourself:** two chips, and the organizer one is absent — deliberately, because
+      your session cannot open it. ⚠ *Pending your ruling below, this is the interim shape.*
+
+**D · The operator side (the beat that sells)**
+- [ ] From the fan page, "See the organizer's side" lands you on the **real game-day dashboard** —
+      Now Playing, Up Next, Needs a Score, Schedule Health. It is the shipped dashboard, not a mock.
+- [ ] **Needs a Score is not empty** and **Up Next is not empty**. A dashboard with nothing to do
+      sells nothing; the seed guarantees both.
+- [ ] The banner's wording changes on this side to "You're signed in as a demo organizer. Changes
+      show on your screen but are never saved."
+- [ ] Flip back to the fan view from the header pill. Both directions work.
+
+**E · Try to break it (the moment the sandbox is built around)**
+- [ ] Open the Schedule. In the Schedule Health panel you should see a lime invitation line —
+      *"Try it — drag a game onto another team's slot"* — with a **Put it back** button.
+- [ ] Drag a game onto a slot that creates a clash. **Your move stays on screen** and the health
+      score and conflict count **react immediately**. It must NOT snap back.
+- [ ] A quiet toast appears: *"Nothing is saved in the sandbox."* It never says "error" or "failed",
+      never blames you, and disappears on its own.
+- [ ] Press **Put it back** — the schedule returns to how it was. You cannot wedge the demo.
+- [ ] Reload the page. Your change is gone, because it was never written down.
+- [ ] Try a few other saves anywhere in the portal (edit a team, change a setting). Every one of them
+      should produce the same calm toast — **never a raw error screen**.
+
+**F · Locked, not broken**
+- [ ] Open Communications and compose a message to coaches. Subject and body type normally — you can
+      see exactly what an organizer would write and who it would reach.
+- [ ] The **Send button is greyed out before you press it**, with a line beneath: *"🔒 The sandbox
+      never sends anything to anyone."* It must not look like a send that failed.
+
+**G · The curated corners (hidden, never dead-ended)**
+- [ ] In the sandbox's admin sidebar there is **no Data Tools, no Settings & Access, and no Event
+      Settings**. Everything else — dashboard, teams, schedule, results, check-in, staff kit,
+      communications, chat, venues, divisions, rules, public site — is present and reachable.
+- [ ] Check the same on a phone-width window: the More sheet must not offer them either.
+- [ ] ⚠ *Judgement call for you:* hiding **Event Settings** follows the ratified "deep settings
+      forms" wording but costs the demo a genuinely product-y screen. If you'd rather show it, say
+      so — it is a one-line change.
+
+**H · It cannot be mistaken for a real association**
+- [ ] Every contact you can find in the demo is an obviously invented `@example.com` address.
+- [ ] The demo tournament does **not** appear on Discover or in public search on this site.
+- [ ] View the fan page source and confirm it asks search engines not to index it.
+
+**I · The marketing doors (development only)**
+- [ ] On the homepage, the **Tournament** persona card carries a second link — *"See it live — no
+      signup →"* with a pulsing dot — and the card as a whole still goes to the organizer page when
+      you click anywhere else on it.
+- [ ] On `/for-tournament-organizers`, a lime-outlined **"See it live →"** sits beside "Start Free",
+      with the line *"No signup. Walk into a tournament that's running right now."* underneath.
+      "Start Free" is still visibly the primary action.
+- [ ] The other three persona cards are unchanged.
+- [ ] ⚠ These are **hidden in production by default**. Turning them on for real customers is a
+      separate release step you and I do together, with its own decisions-log entry.
+
+**J · No collateral damage to real customers** *(the most important section)*
+- [ ] Open a **real** org's public tournament page and its admin portal. No banner, no chips, no
+      toast, nothing moved by a pixel — the navbar, sidebar, event header and score ticker sit
+      exactly where they always did.
+- [ ] The full nav (Data Tools, Settings & Access, Event Settings) is present for a real org.
+- [ ] Sign in as a real org admin, then type a **different** org's `/admin` URL. You should land on
+      **your own workspace** — not a login page, and above all not a flashing loop. *(This loop was
+      pre-existing and hit anyone doing this; the sandbox just found it.)*
+
+**⬜ Decision I need from you before this project can close:** what should the door do when a
+visitor is **already signed in**? Today it protects their session and gives them the fan side only.
+Options: **(a)** ask them once with a plain warning *(recommended — it warns a customer rather than
+asking anything of a stranger, so the ungated ruling is untouched)*; **(b)** always take over the
+session; **(c)** keep today's behaviour permanently.
 
 ---
 

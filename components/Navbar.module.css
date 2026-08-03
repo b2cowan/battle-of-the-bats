@@ -2,7 +2,10 @@
   position: fixed;
   /* Offset below the Phase 3 desktop global strip on tournament routes (the tournament
      layout publishes --desktop-strip-h ≥901px); 0 on org/preview/marketing (var unset). */
-  top: var(--desktop-strip-h, 0px);
+  /* --sandbox-chrome-h is published ONLY inside the "See it live" sandbox, where a demo banner
+     owns the top of the viewport (app/globals.css). Unset everywhere else → 0px → today's exact
+     geometry. Every public bar that pins to the viewport top carries the same term. */
+  top: calc(var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px));
   left: 0;
   right: 0;
   z-index: 100;

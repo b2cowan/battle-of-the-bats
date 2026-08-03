@@ -323,23 +323,81 @@ three fire correctly: re-adding `overflow-y` to `.coachesMain` reports the masth
 both overflow rules. **All six rules have now been seen red on a defect** — none of the zeroes is
 still unfalsified.
 
-### 10.2b What the two fixes surfaced — 9 findings, no noise
+### 10.2b What the two fixes surfaced — FULL PASS, 112/112 measured, nothing skipped
 
-Sampled 13 screen-widths across all four widths after the fix: **9 new `contrast` findings, zero
-`hidden-behind-chrome` false positives.** Every one is a genuine near-miss on the AA floor, and none
-would have been visible before:
+Complete sweep after the fixes, all 28 screens × 4 widths, **zero unmeasured combinations** (the dev
+server was restarted between passes; it had reached an 8.1 GB working set and died once, exactly as
+§4.4 predicts). Raw new-finding counts: **1,375 / 1,356 / 1,365 / 1,366** at 361 / 390 / 768 / 1440.
 
-| Screen | Text | Ratio |
-|---|---|---|
-| coach-roster | "12 without a position · 12 without guardian" | 4.49:1 |
-| coach-roster @1440 | "Active" status pill | 4.08:1 |
-| coach-roster @1440 | "Deactivate" | 4.39:1 |
-| coach-tryouts | session count chips (×3) | 4.39:1 |
-| coach-dues @361 | the em-dash placeholder cell | 4.14:1 |
+**Those numbers are one defect counted 1,347 times.** Deduped, the pass found:
 
-**The baseline was deliberately NOT re-snapshotted.** Absorbing nine real accessibility findings into
-the ratchet is exactly the comfortable number §4.1 warns about — they are near-misses on the same
-warm palette §8 already tuned once, so they are a design call, not a tooling one.
+#### A. Every bolded phrase in every in-app help guide is invisible in warm — 1,347–1,353 per width
+
+`components/help/help.module.css` sets `.helpSectionContent strong { color: rgba(255,255,255,0.75) }`
+and `.helpFaqAnswer strong { rgba(255,255,255,0.76) }` — hard-coded dark-theme literals that never
+remap under the warm gate. Measured on the help hub: **1,654 `<strong>` elements at ~1.1:1 on cream**,
+while the surrounding `<p>` (639), `<em>` (140) and `<li>` (117) all resolve correctly to
+`rgb(106,99,92)`. So the guides render as sentences with holes where the emphasis was — which is
+precisely why it survived: the page looks populated.
+
+Warm is the coach portal's default, so this is what a coach actually sees. **This is the single
+highest-value thing the backtest produced**, and it was invisible to the old rule for the exact reason
+§10.1 documents: help body copy sits on the portal's gradient ground, never inside a card.
+
+⚠ The colour guardrail covers `components/help` (the `shared` scope) but did not catch these —
+`rgba(255,255,255,x)` is a plain white literal, not a brand-coloured one. Worth a look on its own.
+
+#### B. ~~The last attendance row is trapped under the bottom nav~~ — **FALSE POSITIVE, rule fixed**
+
+This was `hidden-behind-chrome`'s first finding ever, at 361 and 390, and it was wrong. Every check
+the rule makes agreed: the element was fully in view, its centre (195,789) sat inside the nav's
+772–844 band, and the hit test returned the nav's glyph. It read exactly like a trapped row on the
+one screen a coach uses one-handed outdoors — the most alarming possible place for one.
+
+It is content inside a **closed accordion**. The practice-run attendance fold keeps its children
+mounted, so they carry real boxes — non-zero size, `visibility: visible`, `opacity: 1` — 215px below
+their own `<details>` box, landing in the nav's band. Discounting the bar showed `<main>` painted at
+that point, never the paragraph. **Layout geometry is not proof of paint**, and `visible()` cannot
+tell the difference.
+
+Widening the rule to prose (§10.2) is what exposed it: closed-accordion content is `<p>`, which the
+old controls-only selector never reached. This is §4.2 repeating exactly — *a correction that removes
+a real blind spot introduces a plausible new false positive, and only an independent measurement
+tells them apart.*
+
+**Fixed in the rule, not the product.** A finding now additionally requires the element (or a
+descendant — never an ancestor, which would wave this straight through) to appear in
+`elementsFromPoint`'s z-ordered stack, proving it is genuinely painted underneath the bar rather than
+merely laid out there. Non-mutating, unlike hiding the bar to look behind it. **Verified both ways:**
+the practice-run false positive is gone at 361 and 390, and the real `/coaches/join` overlap still
+reports its `h1`.
+
+#### C. Nine distinct contrast near-misses — but only THREE colours
+
+| Colour | Token | Where | Ratio |
+|---|---|---|---|
+| `rgb(161,98,7)` | `--warning-strong` (amber) | roster "12 without a position", practice-run "Over by", announcements "No one to email yet" | 4.06–4.49:1 |
+| `rgb(62,122,50)` | warm win/green | roster "Active" pill, dues em-dash cell | 4.08–4.14:1 |
+| `rgb(106,99,92)` | **`--home-dim`** | roster "Deactivate", tryout count chips ×3 | 4.39:1 |
+
+**The third row is the important one.** `--home-dim` is the token §8 raised to `#6A635C` last week and
+`warm-palette-contrast.test.ts` asserts against **four grounds**. These fail on grounds the test does
+not know about — `rgb(226,221,212)` and `rgb(231,229,216)`, the tinted chip and row surfaces. The
+palette test is not wrong; **its ground list is incomplete**, and that is a cheaper fix than any of
+the individual findings.
+
+#### D. Not findings — two measurement artifacts worth recording
+
+- **A 19-finding cluster on `coach-team-hub` @361 did not reproduce.** Every colour in it was from
+  the DARK ramp (`rgba(255,255,255,0.4)` on `rgb(10,10,10)`, navy on near-black) — the page was
+  measured mid-theme-resolution on the server that later died. §6's "determinism confirmed" claim
+  should be read as *usually*, not *always*.
+- **Signatures containing dates rot daily.** The known practice-plan `content-overflow` re-reported as
+  new because its signature embeds "Mon, Aug 3" — any baseline entry whose text carries a date breaks
+  itself every day. Worth normalising dates out of `sigOf`.
+
+**The baseline is deliberately NOT re-snapshotted.** Absorbing A and B into the ratchet would hide a
+help system nobody can read and a row nobody can reach. C is three colour decisions, not nine.
 
 ### 10.3 What the misses have in common
 
@@ -362,8 +420,28 @@ warm palette §8 already tuned once, so they are a design call, not a tooling on
 - [x] **Fix the `contrast` gradient blindness** (§10.1) — done 2026-08-03, verified red then green.
 - [x] **Extend `hidden-behind-chrome` to headings and text blocks** (§10.2) — done 2026-08-03,
       verified red then green.
-- [ ] **Owner/design call on the 9 findings the fixes surfaced** (§10.2b). Baseline deliberately not
-      re-snapshotted until this is decided.
+- [x] **Fix the help-guide bold literals** (§10.2b A) — done 2026-08-03. Both took the ramp token
+      `--white-75`, byte-identical on dark. Help hub findings **1,347 → 11**.
+- [x] **The "trapped attendance row" was a false positive** (§10.2b B) — the RULE was fixed, not the
+      product; verified both ways.
+- [x] **Add the tinted grounds to `warm-palette-contrast.test.ts`** (§10.2b C) — done 2026-08-03.
+      Five grounds added; accent grounds made **per accent** and evidence-driven rather than one
+      shared list, so the test cannot cross-produce combinations the product does not have.
+- [ ] **⚠ DESIGN CALL OWED — five parked shortfalls.** The five below are in `ACCEPTED` **only** so
+      the always-run gate stays usable for other sessions; they are explicitly marked UNRESOLVED and
+      are not signed off. They are three colours, not five decisions. **Whoever answers should delete
+      those five entries, not extend them.**
+      · `--home-dim` on the chip surface 4.37:1 · `--home-amber` on the warm chip 4.05:1 ·
+      `--home-win` on the status pill 4.06:1 and the table row 4.11:1 · `--home-blue` on the help
+      link row 4.47:1.
+- [ ] **The other nine raw white text literals in the help stylesheet** — the sweep flagged only the
+      two `strong` rules, so the rest either do not render on the help hub or sit on dark-filled
+      drawer surfaces. Same class of latent bug; worth converting to ramp tokens on their own merits.
+      Related: the colour guardrail covers that file but does not flag plain `rgba(255,255,255,x)`.
+- [ ] **Normalise dates out of finding signatures** (§10.2b D) — a baseline entry whose text carries
+      a date invalidates itself every day. Deliberately not done here: changing `sigOf` orphans
+      existing baseline entries, so it wants its own pass.
+- [ ] **Baseline still deliberately NOT re-snapshotted**, pending the design call above.
 - [ ] **Extend the screen list beyond the coach portal** (admin, consumer, marketing, the free
       portal, the coach tournament record) — one line each. This is 9 of the 21 misses, and the
       corpus names the exact surfaces.

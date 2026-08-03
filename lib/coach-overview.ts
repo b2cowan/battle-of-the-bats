@@ -27,6 +27,7 @@ import {
   canViewMoney,
   canViewRoster,
   canManageSchedule,
+  canViewSchedule,
   canViewDevelopmentGoals,
 } from './coach-capabilities';
 import { isCoachNavItemVisible } from './coach-nav-visibility';
@@ -123,7 +124,10 @@ export interface AnchorDecision {
  * morning of a game.
  */
 function eventActions(nextIsGame: boolean, caps: CoachCapabilities): Pick<AnchorDecision, 'primary' | 'answers'> {
-  const canSchedule = canManageSchedule(caps);
+  // ⚠ 2026-08-03: this door OPENS the schedule, so it wants the VIEW half of the split — not the
+  // half that adds and cancels events. Both are true for every coach invited before the split, so
+  // this changes no behaviour; it stops the wrong one being inherited by the next reader.
+  const canSchedule = canViewSchedule(caps);
   if (!nextIsGame) {
     // A practice or team event: there is no lineup and attendance is the only real preparation.
     if (caps.attendance) return { primary: 'take_attendance', answers: canSchedule ? ['open_schedule'] : [] };
@@ -154,7 +158,12 @@ function eventActions(nextIsGame: boolean, caps: CoachCapabilities): Pick<Anchor
  */
 export function resolveOverviewAnchor(input: AnchorInput): AnchorDecision | null {
   const { phase, hasNextEvent, nextIsGame, seasonWindingDown, hasOpenSetupStep, hasUpcomingTournament, caps, canManageSeasons, isColdStart } = input;
+  // ⚠ TWO answers since the 2026-08-03 split, and this function needs both. `canSchedule` gates the
+  // "add an event" DOOR (a write); `canSeeSchedule` gates any card that makes a CLAIM about what is
+  // or isn't on the calendar. Conflating them is how a coach who cannot see the schedule gets told,
+  // confidently, that there is nothing on it.
   const canSchedule = canManageSchedule(caps);
+  const canSeeSchedule = canViewSchedule(caps);
 
   // (0) Chunk B (P1 #12). A cold-signup coach IS a pre-season coach plus two extra facts, so this is
   // the same superset relation as (3)→(4): the specific state REPLACES the general one rather than
@@ -209,7 +218,16 @@ export function resolveOverviewAnchor(input: AnchorInput): AnchorDecision | null
     };
   }
 
-  if (canSchedule && phase === 'in_season' && !hasNextEvent) {
+  /**
+   * ⚠ Needs BOTH halves, and for two different reasons.
+   *
+   * "Nothing on your schedule" is a CLAIM — without view access there is no event data, so it would
+   * be a confident wrong answer rather than a fact. And the card's whole shape is a single next
+   * step, "Add an event": to someone who can see the schedule but not change it, it would be a
+   * statement with no action, which is a control that exists only to refuse. Neither half alone
+   * earns this card, so it yields to the board rather than rendering half of itself.
+   */
+  if (canSeeSchedule && canSchedule && phase === 'in_season' && !hasNextEvent) {
     return {
       kind: 'lull',
       shape: 'next_step',
@@ -342,7 +360,10 @@ export function resolveBoard(input: BoardInput): BoardDecision {
   const { phase, anchorKind, caps, moneyStarted } = input;
 
   const selected: TileKey[] = [];
-  const canSchedule = canManageSchedule(caps);
+  // ⚠ VIEW half (2026-08-03). Both tiles below REPORT — the record and what is next — and neither
+  // asks the coach to change anything, so they ride the ability to see the schedule rather than the
+  // ability to edit it. Unchanged for every coach invited before the split, who holds both.
+  const canSchedule = canViewSchedule(caps);
 
   // Always-on four (capability-filtered).
   // The record is derived from the season's games, so without schedule access it would read as

@@ -8,6 +8,7 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
+import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
 const MODULE_CARDS = [
   {
@@ -176,6 +177,9 @@ export default async function HomePage({
   }
 
   const gatingMap = await getPlanGatingMap();
+  // The sandbox door, on the ONE persona card that has a working product behind it. Hidden in a
+  // production build until the owner turns it on deliberately (lib/sandbox-door.ts).
+  const showSandboxDoor = sandboxDoorsVisible();
   return (
     <>
       {/* ── Hero ──────────────────────────────────────────────────────── */}
@@ -211,27 +215,50 @@ export default async function HomePage({
 
           <AnimateIn>
             <div className={styles.heroPersonaGrid}>
-              {PERSONAS.map((p) => (
-                <Link
-                  key={p.id}
-                  href={p.href}
-                  className={styles.heroPersonaCard}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <span className="font-mono text-[10px] text-logic-lime uppercase tracking-widest font-bold">
-                      {p.label}
-                    </span>
-                    <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray/40'}`}>
-                      {p.badge}
-                    </span>
-                  </div>
-                  <p className="font-mono text-sm font-bold text-fl-text leading-snug">{p.question}</p>
-                  <p className="font-mono text-xs text-data-gray/70 leading-relaxed flex-1">{p.body}</p>
-                  <span className={`font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray/50'}`}>
-                    {p.cta} →
-                  </span>
-                </Link>
-              ))}
+              {PERSONAS.map((p) => {
+                const body = (
+                  <>
+                    <div className="flex items-start justify-between gap-4">
+                      <span className="font-mono text-[10px] text-logic-lime uppercase tracking-widest font-bold">
+                        {p.label}
+                      </span>
+                      <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray/40'}`}>
+                        {p.badge}
+                      </span>
+                    </div>
+                    <p className="font-mono text-sm font-bold text-fl-text leading-snug">{p.question}</p>
+                    <p className="font-mono text-xs text-data-gray/70 leading-relaxed flex-1">{p.body}</p>
+                  </>
+                );
+                const ctaClass = `font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray/50'}`;
+
+                // The Tournament card carries a SECOND door in the sandbox era. Two links cannot
+                // nest, so that one card becomes a div and the persona link stretches over it
+                // (::after) to keep whole-card clickability. Every other card is untouched.
+                if (showSandboxDoor && p.id === 'tournament') {
+                  return (
+                    <div key={p.id} className={`${styles.heroPersonaCard} ${styles.heroPersonaCardStack}`}>
+                      {body}
+                      <Link href={p.href} className={`${ctaClass} ${styles.heroPersonaStretch}`}>
+                        {p.cta} →
+                      </Link>
+                      {/* The live dot makes the one card with a working product visibly different
+                          from the three that don't — honest, and the strongest thing on the page. */}
+                      <Link href={SEE_IT_LIVE_PATH} className={`${ctaClass} ${styles.heroPersonaSecondary}`}>
+                        <span className={styles.heroPersonaLiveDot} aria-hidden="true" />
+                        See it live — no sign-up →
+                      </Link>
+                    </div>
+                  );
+                }
+
+                return (
+                  <Link key={p.id} href={p.href} className={styles.heroPersonaCard}>
+                    {body}
+                    <span className={ctaClass}>{p.cta} →</span>
+                  </Link>
+                );
+              })}
             </div>
           </AnimateIn>
 

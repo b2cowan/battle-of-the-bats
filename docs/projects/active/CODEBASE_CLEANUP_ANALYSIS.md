@@ -246,7 +246,7 @@ Sibling CTAs sharing acquisition helper ARE mounted elsewhere — only this cons
 ### A22. lib/chat-service.ts: ensureCoachMembership + countOpenReportsForRoom built defensively, never called
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** dead-export | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 30
-- **Where:** lib/chat-service.ts:600; lib/chat-service.ts:1908; docs/projects/active/TOURNAMENT_CHAT_PLAN.md:82
+- **Where:** lib/chat-service.ts:600; lib/chat-service.ts:1908; docs/projects/archive/TOURNAMENT_CHAT_PLAN.md:82
 - **Evidence (finder):** TOURNAMENT_CHAT_PLAN.md:82 itself says: 'Membership helper made self-guarding -- ensureCoachMembership verifies participation before inserting (safe for any future caller); the hot path uses an unchecked internal helper to avoid double-resolution.' i.e. it was written for a hypothetical future caller that doesn't exist yet. Repo-wide grep for both names finds only their own declarations plus this doc mention.
 - **Verification:** Both functions exist at cited lines; grep finds no callers anywhere besides own declarations and the accurately-quoted TOURNAMENT_CHAT_PLAN.md:82 line. Note countOpenReportsForRoom's own comment claims it 'drives the Reports badge' — worth a closer look, but exact-name grep across ts/tsx shows zero call sites today.
 
@@ -254,7 +254,7 @@ Sibling CTAs sharing acquisition helper ARE mounted elsewhere — only this cons
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** other | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 19
 - **Where:** lib/coach-warm-preview.ts:19; app/[orgSlug]/coaches/layout.tsx:103; components/coaches/CoachPortalShell.tsx:153; components/coaches/CoachPortalShell.tsx:280
-- **Evidence (finder):** Module's own docstring: 'that gate is retired now that warm coverage is complete... The marker is unconditional.' The file now only exports `export const coachWarmAttr = {'data-coach-warm-enabled': ''}` — no branching logic, no env read. It has exactly 2 real consumers (both spreading the same static object). docs/projects/active/CODEBASE_CLEANUP_INVESTIGATION_PROMPT.md itself flags this exact question: 'is the module still earning its name or should be renamed/inlined/removed?'
+- **Evidence (finder):** Module's own docstring: 'that gate is retired now that warm coverage is complete... The marker is unconditional.' The file now only exports `export const coachWarmAttr = {'data-coach-warm-enabled': ''}` — no branching logic, no env read. It has exactly 2 real consumers (both spreading the same static object). docs/projects/archive/CODEBASE_CLEANUP_INVESTIGATION_PROMPT.md itself flags this exact question: 'is the module still earning its name or should be renamed/inlined/removed?'
 - **Verification:** lib/coach-warm-preview.ts contains only the docstring plus a static `coachWarmAttr` object — no branching/env logic. Grep confirms exactly 2 real consumers at the cited lines, both merely spreading the static object.
 
 ### A24. lib/admin-density.tsx: useAdminDensity() hook orphaned per an explicit 2026-06-05 design decision
@@ -297,8 +297,8 @@ Sibling CTAs sharing acquisition helper ARE mounted elsewhere — only this cons
 
 - **Verdict:** CONFIRMED | **Risk:** owner-decision | **Type:** other | **Removal:** no (consolidation/hygiene)
 - **Where:** app/dev/email-preview/page.tsx
-- **Evidence (finder):** No href/Link/router.push anywhere in app/, components/, lib/ points at /dev/email-preview (0 boundary-match hits repo-wide) — reached only by typing the URL directly. Self-documented as intentional: 'DEV-ONLY coach email gallery ... Blocked in production' with `if (process.env.NODE_ENV === 'production') notFound();` at line 241. Referenced as a workflow step in docs/projects/active/COACH_EXPERIENCE_WALKTHROUGH_PLAN.md. Verdict: orphaned-from-nav but intentional — not a removal candidate, flagged only because it matched the zero-inbound-links scan.
-- **Verification:** page.tsx L241 has NODE_ENV===production notFound() guard. Zero href/Link refs repo-wide. Referenced only in docs/projects/active/COACH_EXPERIENCE_WALKTHROUGH_PLAN.md + archived audit doc, matching claim exactly.
+- **Evidence (finder):** No href/Link/router.push anywhere in app/, components/, lib/ points at /dev/email-preview (0 boundary-match hits repo-wide) — reached only by typing the URL directly. Self-documented as intentional: 'DEV-ONLY coach email gallery ... Blocked in production' with `if (process.env.NODE_ENV === 'production') notFound();` at line 241. Referenced as a workflow step in docs/projects/archive/COACH_EXPERIENCE_WALKTHROUGH_PLAN.md. Verdict: orphaned-from-nav but intentional — not a removal candidate, flagged only because it matched the zero-inbound-links scan.
+- **Verification:** page.tsx L241 has NODE_ENV===production notFound() guard. Zero href/Link refs repo-wide. Referenced only in docs/projects/archive/COACH_EXPERIENCE_WALKTHROUGH_PLAN.md + archived audit doc, matching claim exactly.
 
 ### A30. LegacyInstallBanner is NOT dead / NOT a duplicate of InstallAppPrompt — owner-decision lead
 
@@ -310,14 +310,14 @@ Sibling CTAs sharing acquisition helper ARE mounted elsewhere — only this cons
 ### A31. lib/stripe-prices.ts: isPlanCheckoutPriceConfigured() is unwired WIP, not legacy dead code — do not remove
 
 - **Verdict:** CONFIRMED | **Risk:** owner-decision | **Type:** other | **Removal:** no (consolidation/hygiene)
-- **Where:** lib/stripe-prices.ts:43; docs/projects/active/STRIPE_PRICE_VALIDATION_PLAN.md:27-28
+- **Where:** lib/stripe-prices.ts:43; docs/projects/archive/STRIPE_PRICE_VALIDATION_PLAN.md:27-28
 - **Evidence (finder):** STRIPE_PRICE_VALIDATION_PLAN.md: 'Phase 3 -- H8 in-app price-guard wiring -- NOT BUILT... Use isPlanCheckoutPriceConfigured in the in-app upgrade card's gating.' Zero current callers, but the plan explicitly earmarks it for imminent use -- flag to /billing or the plan owner instead of deleting.
 - **Verification:** isPlanCheckoutPriceConfigured defined at lib/stripe-prices.ts:43 with exact 'H8 price-guard (runtime)' docstring; grep finds zero call sites in app/lib/components, only plan-doc/TODO mentions. TODO.md:37 confirms Phase 3 (the consumer of this fn) is explicitly not yet built.
 
 ### A32. lib/sports.ts: TOURNAMENT_SPORT_OPTIONS unused because the Phase 2 sport-picker is paused, not retired
 
 - **Verdict:** CONFIRMED | **Risk:** owner-decision | **Type:** other | **Removal:** no (consolidation/hygiene)
-- **Where:** lib/sports.ts:75; docs/projects/active/MULTISPORT_TOURNAMENTS_PLAN.md:173
+- **Where:** lib/sports.ts:75; docs/projects/archive/MULTISPORT_TOURNAMENTS_PLAN.md:173
 - **Evidence (finder):** MULTISPORT_TOURNAMENTS_PLAN.md:173 marks this 'checked-done: Encoded as TAILORED_SPORT_IDS + TOURNAMENT_SPORT_OPTIONS in lib/sports.ts', but the project memory records 'Phase 2 picker PAUSED (softball first)' -- the consuming picker was never built. Zero repo-wide references outside lib/sports.ts itself. Do not delete -- paused in-flight feature scaffolding.
 - **Verification:** lib/sports.ts:75 confirms the export; zero refs outside the file. Plan doc:173 confirms it's Phase 0 scaffolding for a paused Phase 2 picker (project memory: 'Phase 2 picker PAUSED, softball first'). Correctly paused work, not dead code.
 
@@ -795,7 +795,7 @@ Sibling CTAs sharing acquisition helper ARE mounted elsewhere — only this cons
 ### C26. --fl-surface CSS custom property is a fully-resolved ghost token (0 definitions, 0 consumers)
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** dead-flag | **Removal:** no (consolidation/hygiene)
-- **Where:** docs/projects/active/OPERATOR_TOKEN_JUDGMENT_TRANCHE_PLAN.md:81; app/platform-admin/customer-users/customer-users.module.css:1
+- **Where:** docs/projects/archive/OPERATOR_TOKEN_JUDGMENT_TRANCHE_PLAN.md:81; app/platform-admin/customer-users/customer-users.module.css:1
 - **Evidence (finder):** `grep -rn -- "--fl-surface" **/*.css` returns zero hits repo-wide. The plan doc confirms it was already replaced: customer-users.module.css:1 now defines `--cu-surface: #1a1a1a` (was `var(--fl-surface,#1a1a1a)`). No action needed — reported per the workstream C brief which named this token; confirms the P3-era fix is complete and nothing remains to remove.
 - **Verification:** grep -- '--fl-surface' repo-wide: only doc mentions, zero CSS/TSX hits. customer-users.module.css:1 confirmed: '.page { max-width: 1300px; --cu-surface: #1a1a1a; }', matching plan doc line 81 exactly. Already-resolved, no action needed as reported.
 
@@ -1291,7 +1291,7 @@ BUT change_request_id FK has confdeltype='r' (RESTRICT, live pg_constraint check
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** script | **Removal:** yes
 - **Where:** scripts/seed-coach-nav-test.mjs
-- **Evidence (finder):** Docstring: 'Throwaway seed for the Coach Nav Rebuild test (dev only). Creates a clean coach account pre-loaded with the scenarios b2cowan@outlook.com can't show...' Committed in the SAME commit as the feature and its plan doc: 9da4a176 'feat(coaches): rebuild team workspace nav — sectioned shell + roster/schedule/fees/tournaments/announcements/explore pages' (2026-06-16), which also added docs/projects/active/COACH_NAV_REBUILD_PLAN.md.
+- **Evidence (finder):** Docstring: 'Throwaway seed for the Coach Nav Rebuild test (dev only). Creates a clean coach account pre-loaded with the scenarios b2cowan@outlook.com can't show...' Committed in the SAME commit as the feature and its plan doc: 9da4a176 'feat(coaches): rebuild team workspace nav — sectioned shell + roster/schedule/fees/tournaments/announcements/explore pages' (2026-06-16), which also added docs/projects/archive/COACH_NAV_REBUILD_PLAN.md.
 - **Verification:** Read full file: self-labeled throwaway dev-only seed. git log -- scripts/seed-coach-nav-test.mjs: only commit 9da4a176, same commit shipping CoachPortalShell rebuild + plan doc. Grep "seed-coach-nav-test" repo-wide: only other hit is .claude/settings.json:285, a Bash-permission allowlist grouping it with other known-throwaway seed scripts (not a runtime dep). Grep coach-navtest@dev.local + package.json: no refs. tests/: no UAT refs. git grep on master: file present there too (already shipped, no dev-only hidden risk). git log -5 CoachPortalShell.tsx: 5 later commits build on the shipped nav rebuild, confirming feature is live/stable not still in flux.
 - **Verifier notes:** No live reference found via any trap check. Standalone node script, never imported by app code — zero runtime risk to delete.
 - **Proposed action:** Delete. Names the file the vague 'self-described one-time/throwaway QA fixture scripts' finding didn't enumerate. The Coach Nav Rebuild it validated shipped over a month ago in the same commit as this script. (COACH_NAV_REBUILD_PLAN.md's stale 'Planning' status header is a separate docs-hygiene nit, not a script finding.)
@@ -1369,7 +1369,7 @@ git log --follow: 1 commit ever each, no recent activity.
 - **Verdict:** REFUTED | **Risk:** judgment | **Type:** script | **Removal:** yes
 - **Where:** scripts/seed-free-tier-org.mjs
 - **Evidence (finder):** Docstring: 'Seed a FREE-tier tournament org with a REAL owner login, ready for manually building a playoff bracket... playoffs left EMPTY → log in and build the bracket by hand.' Committed 2026-06-13 alongside 8564624c 'feat(coaches): free-tier coaches portal + inline playoff bracket editor'. Per project memory, the free-tier / inline tiered bracket editor feature is already built and largely shipped.
-- **Verification:** Script seeds org slug=free-test-org, owner free-owner@dev.local. Live dev DB query confirms org EXISTS NOW (created 2026-06-12). Grep hits docs/projects/active/PLATFORM_ADMIN_WALKTHROUGHS.md (ACTIVE, touched 2026-07-09): "log in as a free-test-org member" (L220); "Upgrading free-test-org -> Tournament Plus" (L264); "carry forward: grant a section to free-test-org" (L222). TODO.md lists that project OPEN `[ ]`; doc headers say "Phase B/E/F in progress". Sibling seed-fp5-cluster4.mjs says it "Does NOT touch the existing free-cup fixture" - deliberately preserved.
+- **Verification:** Script seeds org slug=free-test-org, owner free-owner@dev.local. Live dev DB query confirms org EXISTS NOW (created 2026-06-12). Grep hits docs/projects/archive/PLATFORM_ADMIN_WALKTHROUGHS.md (ACTIVE, touched 2026-07-09): "log in as a free-test-org member" (L220); "Upgrading free-test-org -> Tournament Plus" (L264); "carry forward: grant a section to free-test-org" (L222). TODO.md lists that project OPEN `[ ]`; doc headers say "Phase B/E/F in progress". Sibling seed-fp5-cluster4.mjs says it "Does NOT touch the existing free-cup fixture" - deliberately preserved.
 - **Verifier notes:** Narrow "build bracket by hand" purpose is done, but the org this script provisions/resets is now the standard free-tier test org for the still-OPEN Platform-Admin Walkthroughs project. Re-check once that doc is archived and free-test-org is unreferenced.
 - **Proposed action:** Delete. One-time manual-QA fixture for hand-testing the free-tier bracket builder, which shipped in the same commit as this script over a month ago.
 
@@ -1445,28 +1445,28 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G02. Theming/Warm-Coaches-Portal build docs are fully shipped to prod — archive the build-tracking set
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 8
-- **Where:** docs/projects/active/THEME_TOGGLE_FOUNDATION_PLAN.md; docs/projects/active/THEME_TOGGLE_FOUNDATION_PM_BRIEF.md; docs/projects/active/THEME_TOGGLE_FOUNDATION_BUILD_PROMPT.md; docs/projects/active/WARM_PORTAL_THEME_OPTION_PLAN.md; docs/projects/active/WARM_PORTAL_THEME_OPTION_PM_BRIEF.md; docs/projects/active/WARM_PORTAL_THEME_OPTION_BUILD_PROMPT.md; docs/projects/active/WARM_PORTAL_STAGE2_BUILD_PROMPT.md; docs/projects/active/WARM_PORTAL_STAGE5_6_BUILD_PROMPT.md
+- **Where:** docs/projects/archive/THEME_TOGGLE_FOUNDATION_PLAN.md; docs/projects/archive/THEME_TOGGLE_FOUNDATION_PM_BRIEF.md; docs/projects/archive/THEME_TOGGLE_FOUNDATION_BUILD_PROMPT.md; docs/projects/archive/WARM_PORTAL_THEME_OPTION_PLAN.md; docs/projects/archive/WARM_PORTAL_THEME_OPTION_PM_BRIEF.md; docs/projects/archive/WARM_PORTAL_THEME_OPTION_BUILD_PROMPT.md; docs/projects/archive/WARM_PORTAL_STAGE2_BUILD_PROMPT.md; docs/projects/archive/WARM_PORTAL_STAGE5_6_BUILD_PROMPT.md
 - **Evidence (finder):** Docs describe Stage 3/'next=Stage4-then-S5-then-S6' as latest state, but git log (dev) shows Stage 4 (71ec4245,1616a72f), Stage5 chat+tryouts (289f651e), Stage6 QA (929589b2), and the public release (c23feb82 'warm coaches portal public release + Warm as the default') all landed. reference_prod_release_history.md confirms the whole warm portal Stages1-6 + mig195 shipped in the 2026-07-22 prod promote (c743c276).
 - **Verification:** All 8 docs exist, none already archived. All 5 cited commits verified exact (71ec4245/1616a72f Stage4, 289f651e Stage5, 929589b2 Stage6, c23feb82 public release). reference_prod_release_history.md:12 confirms verbatim: mig195 + Stages1-6 shipped in the 2026-07-22 prod promote c743c276. Docs themselves describe Stage2-6 as pending, confirming staleness.
 
 ### G03. Role Flip P1-P3 build prompts done and shipped; only P4 remains open
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 3
-- **Where:** docs/projects/active/ROLE_FLIP_P1_BUILD_PROMPT.md; docs/projects/active/ROLE_FLIP_P2_BUILD_PROMPT.md; docs/projects/active/ROLE_FLIP_P3_BUILD_PROMPT.md
+- **Where:** docs/projects/archive/ROLE_FLIP_P1_BUILD_PROMPT.md; docs/projects/archive/ROLE_FLIP_P2_BUILD_PROMPT.md; docs/projects/archive/ROLE_FLIP_P3_BUILD_PROMPT.md
 - **Evidence (finder):** reference_prod_release_history.md: 'PROMOTE 2026-07-23 (f064712d)... The Flip P1-P3 complete'. TODO.md line 281 itself already says 'P1-P3 SHIPPED to prod 2026-07-23 (promote f064712d); remaining: P4' with ROLE_FLIP_P4_BUILD_PROMPT.md as the next step (untracked file already created). Keep ROLE_FLIP_NAVIGATION_PLAN.md + PM_BRIEF + P4 prompt active; the P1/P2/P3 prompts are spent.
 - **Verification:** TODO.md:282 verbatim: 'P1-P3 SHIPPED to prod 2026-07-23 (promote f064712d)...remaining: P4...build prompt ready: ROLE_FLIP_P4_BUILD_PROMPT.md'. That P4 file already exists (untracked). git log -3 on P1/P3 prompts shows only their own feature commits (cb52d118, 31bba4c5) as last touch.
 
 ### G04. Unified Home Phase 6 built and shipped, but plan doc still says 'BUILD NOT STARTED'
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 3
-- **Where:** docs/projects/active/UNIFIED_HOME_PHASE6_FOLLOWS_PLAN.md; docs/projects/active/UNIFIED_HOME_PHASE6_FOLLOWS_PM_BRIEF.md; docs/projects/active/UNIFIED_HOME_PHASE6_BUILD_PROMPT.md
+- **Where:** docs/projects/archive/UNIFIED_HOME_PHASE6_FOLLOWS_PLAN.md; docs/projects/archive/UNIFIED_HOME_PHASE6_FOLLOWS_PM_BRIEF.md; docs/projects/archive/UNIFIED_HOME_PHASE6_BUILD_PROMPT.md
 - **Evidence (finder):** UNIFIED_HOME_PHASE6_FOLLOWS_PLAN.md status: 'RATIFIED, BUILD NOT STARTED.' But git log shows commit 2a2d2685 'feat(consumer): Unified Home Phase 6 - follow whole tournaments & organizations (free-first)' (2026-07-20), and reference_prod_release_history.md's 2026-07-22 promote explicitly lists 'follow whole tournaments & organizations free-first' among shipped Unified Home IA items. Directly contradicted.
 - **Verification:** Plan status verbatim: 'RATIFIED, BUILD NOT STARTED.' Commit 2a2d2685 'Unified Home Phase 6 - follow whole tournaments & organizations (free-first)' exists on dev; release history's 2026-07-22 promote lists this exact feature as shipped. TODO.md:13 has identical stale 'build NOT started' text — systemic drift, not a one-off; confirmed by git log.
 
 ### G05. SCHEDULE_HEALTH_RULES_PLAN.md header stale (uncommitted) — actually shipped to prod, zero memory tracking
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** yes | **~LOC/objects:** 3
-- **Where:** docs/projects/active/SCHEDULE_HEALTH_RULES_PLAN.md:3; docs/projects/archive/PLAYOFF_POTENTIAL_SCHEDULE_HEALTH_PLAN.md
+- **Where:** docs/projects/archive/SCHEDULE_HEALTH_RULES_PLAN.md:3; docs/projects/archive/PLAYOFF_POTENTIAL_SCHEDULE_HEALTH_PLAN.md
 - **Evidence (finder):** Header: 'BUILT 2026-06-12 on feat/free-tier-coaches (== dev), uncommitted — awaiting browser verification.' Actual: the feature (schedule_health_rules JSONB, maxGamesPerDay/minRestMinutes/targetGamesPerTeam) shipped in commit 8564624c (2026-06-13), confirmed `git merge-base --is-ancestor 8564624c origin/master` = true. This is a DIFFERENT feature from the already-correctly-archived docs/projects/archive/PLAYOFF_POTENTIAL_SCHEDULE_HEALTH_PLAN.md (which memory/project_playoff_schedule_health.md tracks, built 2026-07-09, also shipped). No memory/project_*.md file exists for THIS rules-config feature at all.
 - **Verification:** Header claims "uncommitted"; `git status --porcelain`+`git diff HEAD` on file = clean/empty → actually committed. `git show --stat 8564624c` lists SCHEDULE_HEALTH_RULES_PLAN.md+PM_BRIEF.md added alongside schedule-metrics.ts, ScheduleHealthPanel.tsx, Generator.tsx, tournaments/route.ts. `git merge-base --is-ancestor 8564624c origin/master`/`master` both true → on prod. Grep confirms full wiring: schedule_health_rules in ALLOWED_SETTINGS_KEYS+sanitizer, type+getter in lib/types.ts+schedule-metrics.ts, gear-editor UI in panel, Generator seeding. No archive-name collision. memory/*.md grep for schedule_health_rules = zero hits.
 - **Verifier notes:** Doc-only move, zero runtime risk, reversible via git. Bonus: TODO.md:307 still lists this as an open unchecked task pointing at the plan — strike/update it in the same archive pass, not just the file move + memory note.
@@ -1475,7 +1475,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G06. TRUST_INTEGRITY_HARDENING_PLAN.md header stale — project already [x] complete in TODO.md
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** todo-stale | **Removal:** yes | **~LOC/objects:** 3
-- **Where:** docs/projects/active/TRUST_INTEGRITY_HARDENING_PLAN.md:3; TODO.md:51; memory/project_trust_integrity_phase_c.md
+- **Where:** docs/projects/archive/TRUST_INTEGRITY_HARDENING_PLAN.md:3; TODO.md:51; memory/project_trust_integrity_phase_c.md
 - **Evidence (finder):** Plan header: 'SCOPED 2026-06-13 — spun out of the User Journey Audit (Phase 5). Awaiting owner go-ahead to build. FIX-NOW headline project.' But TODO.md:51 already reads '[x] Trust & Integrity Hardening ... COMPLETE 2026-06-15 (Phases A+B+C) ... Browser-verified + migration 127 confirmed applied to prod (live-DB check 2026-06-17)'. memory/project_trust_integrity_phase_c.md: 'FP-1 COMPLETE (Phases A+B+C)' as of 2026-06-15, citing this exact plan file. The plan doc's own header is over a month stale relative to both its tracking TODO line and memory.
 - **Verification:** Plan header (line 3): "SCOPED 2026-06-13 ... Awaiting owner go-ahead ... FIX-NOW headline project" but every item in Phases A/B/C is [x] DONE w/ commits, and doc body (line 70) says "FP-1 COMPLETE (Phases A+B+C) 2026-06-15." TODO.md:51 confirms [x] COMPLETE, browser-verified, mig 127 on prod 2026-06-17. memory/project_trust_integrity_phase_c.md confirms COMPLETE. git log: last edit 2026-06-25, 1-line change; git status clean, no concurrent edit. git grep across all .md: zero refs outside the plan/brief + archived synthesis doc. Tranche 1 deferred to FP-5, itself COMPLETE per TODO.md:55 - no open dependency.
 - **Verifier notes:** Doc-hygiene fix, zero runtime risk. Proposal correct: update header to COMPLETE, move plan+PM brief to archive, update TODO.md:51 link.
@@ -1484,28 +1484,28 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G07. Operator token-debt judgment tranche (P2+P3) committed and shipped
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 2
-- **Where:** docs/projects/active/OPERATOR_TOKEN_JUDGMENT_TRANCHE_PLAN.md; docs/projects/active/OPERATOR_TOKEN_JUDGMENT_TRANCHE_PROMPT.md
+- **Where:** docs/projects/archive/OPERATOR_TOKEN_JUDGMENT_TRANCHE_PLAN.md; docs/projects/archive/OPERATOR_TOKEN_JUDGMENT_TRANCHE_PROMPT.md
 - **Evidence (finder):** git log: fadfb2ee 'refactor(tokens): operator P2 mechanical sweep - 136 value-identical token swaps', 97da8989 'refactor(tokens): operator P3 judgment tranche - 365->74 literals, zero visual change'. reference_prod_release_history.md lists 'operator token-debt tranches (P2/P3, zero-visual)' among items shipped in the 2026-07-22 promote. OPERATOR_VISUAL_TOKEN_DEBT.md (the underlying inventory, still lists platform-admin/coaches hex values outside this tranche's scope) should stay active.
 - **Verification:** git log confirms fadfb2ee 'operator P2 mechanical sweep - 136 swaps' and 97da8989 'operator P3 judgment tranche - 365->74 literals' both on dev. Re-running the inventory doc now shows 'Summary: 74 literal hex colors across 26 files' matching P3's end-state, confirming completion; OPERATOR_VISUAL_TOKEN_DEBT.md is current and correctly recommended to stay active.
 
 ### G08. Notification Center Rework shipped to prod 18 days ago; plan doc never archived
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 2
-- **Where:** docs/projects/active/NOTIFICATION_CENTER_REWORK_PLAN.md; docs/projects/active/NOTIFICATION_CENTER_REWORK_PM_BRIEF.md
+- **Where:** docs/projects/archive/NOTIFICATION_CENTER_REWORK_PLAN.md; docs/projects/archive/NOTIFICATION_CENTER_REWORK_PM_BRIEF.md
 - **Evidence (finder):** Plan status: '...on dev 2026-07-06 (unpushed;...) Feature-complete - ready for owner browser test -> release.' reference_prod_release_history.md: 'Prior promotion 58eec6f0 (2026-07-06 via /release promote...) shipped Notification Centre rework (redesigned bell...)'. Confirms this shipped to prod on 2026-07-06 (today 2026-07-24); the doc's 'unpushed' status is ~18 days stale.
 - **Verification:** Plan says 'Feature-complete - ready for owner browser test -> release', dated 2026-07-06. Commit 58eec6f0 exists and release history attributes 'Notification Centre rework' to that same 2026-07-06 promote. 07-06 to 07-24 = 18 days as claimed; no remaining ambiguity.
 
 ### G09. One-shot kickoff prompts already consumed
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 2
-- **Where:** docs/projects/active/UNIFIED_HOME_BUILD_P01_PROMPT.md; docs/projects/active/FOUNDING_SEASON_COACHES_WARM_RESTYLE_BUILD_PROMPT.md
+- **Where:** docs/projects/archive/UNIFIED_HOME_BUILD_P01_PROMPT.md; docs/projects/archive/FOUNDING_SEASON_COACHES_WARM_RESTYLE_BUILD_PROMPT.md
 - **Evidence (finder):** UNIFIED_HOME_BUILD_P01_PROMPT.md is the kickoff for Phases 0+1, which shipped (commit 9d727ad0, part of the 2026-07-22 promote). FOUNDING_SEASON_COACHES_WARM_RESTYLE_BUILD_PROMPT.md is the kickoff for the warm sign-up journey, shipped via commit 50c09ab5 'feat(coaches): warm the Premium sign-up journey (Founding Season S1-2)' + d8c35f74 'mark Founding Season S1-2 warm sign-up journey built + reviewed'. Both are one-time prompts whose work is done.
 - **Verification:** Both files exist, still in active/. UNIFIED_HOME_BUILD_P01_PROMPT.md scope matches commit 9d727ad0 (Phases 0+1). FOUNDING_SEASON_COACHES_WARM_RESTYLE_BUILD_PROMPT.md scope matches commits 50c09ab5 + d8c35f74 (both in git log --all). No concurrent session has archived/moved these files.
 
 ### G10. STRIPE_PRICE_VALIDATION_PLAN.md has no status header; Phases 1-2 shipped, Phase 3 pending
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 2
-- **Where:** docs/projects/active/STRIPE_PRICE_VALIDATION_PLAN.md; TODO.md:37
+- **Where:** docs/projects/archive/STRIPE_PRICE_VALIDATION_PLAN.md; TODO.md:37
 - **Evidence (finder):** File opens with '# Stripe Price-Configuration Validation...' then '> Created: 2026-06-29' with no Status line anywhere. TODO.md:37: 'Phases 1+2 BUILT on dev 2026-06-29 ... Phase 3 (in-app card price-guard) lands with the H8 build'. Commit 38abab23 ('...stripe price validation') confirmed `git merge-base --is-ancestor 38abab23 origin/master` = true (shipped to prod). TODO.md tracks this correctly but the plan doc itself has no status marker at all, unlike its peers.
 - **Verification:** STRIPE_PRICE_VALIDATION_PLAN.md has no Status field; body shows Phase1+2 BUILT, Phase3 NOT BUILT. TODO.md:37 matches almost verbatim. Commit 38abab23 exists and is a confirmed ancestor of origin/master (shipped to prod).
 - **Proposed action:** Add a Status line matching TODO.md ('Phases 1-2 SHIPPED TO PROD 2026-06-29 via 38abab23; Phase 3 in-app card price-guard pending, ships with H8'); keep active since Phase 3 is open.
@@ -1541,7 +1541,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G15. PLAYOFF_TIEBREAKER_COINTOSS_RUNDIFF_PLAN.md header contradicts its own body
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 1
-- **Where:** docs/projects/active/PLAYOFF_TIEBREAKER_COINTOSS_RUNDIFF_PLAN.md:3; docs/projects/active/PLAYOFF_TIEBREAKER_COINTOSS_RUNDIFF_PLAN.md:166; memory/project_tiebreaker_coin_rundiff.md; TODO.md:313
+- **Where:** docs/projects/archive/PLAYOFF_TIEBREAKER_COINTOSS_RUNDIFF_PLAN.md:3; docs/projects/archive/PLAYOFF_TIEBREAKER_COINTOSS_RUNDIFF_PLAN.md:166; memory/project_tiebreaker_coin_rundiff.md; TODO.md:313
 - **Evidence (finder):** Line 3 top header: 'Status: Planned — awaiting build greenlight'. Line 166 same file: '## Build status — BUILT 2026-06-10 on feat/free-tier-coaches (dev only)' with full adversarial-review detail below it. memory/project_tiebreaker_coin_rundiff.md and TODO.md:313 both correctly say BUILT dev-only, awaiting browser verification. lib/tie-breakers.ts exists live. Only the top-of-file header line was never updated after the build.
 - **Verification:** Line 3 = 'Status: Planned — awaiting build greenlight'; line 166 = 'Build status — BUILT 2026-06-10 on feat/free-tier-coaches (dev only)' with full review detail. TODO.md:313 verbatim matches: 'BUILT 2026-06-10 ... awaiting browser verification.' Contradiction confirmed.
 - **Proposed action:** Rewrite line 3 header to match the file's own §Build status + memory/TODO: 'BUILT 2026-06-10 on dev, no migration, awaiting browser verification' — do not archive yet (browser verification still open).
@@ -1549,7 +1549,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G16. FREE_TIER_LEAGUE_STARTER_PLAN.md Status line contradicts its own build log above it
 
 - **Verdict:** CONFIRMED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 1
-- **Where:** docs/projects/active/FREE_TIER_LEAGUE_STARTER_PLAN.md:10; docs/projects/active/FREE_TIER_LEAGUE_STARTER_PLAN.md:8; TODO.md:109
+- **Where:** docs/projects/archive/FREE_TIER_LEAGUE_STARTER_PLAN.md:10; docs/projects/archive/FREE_TIER_LEAGUE_STARTER_PLAN.md:8; TODO.md:109
 - **Evidence (finder):** Line 10: '> Status: Planning (6.0-6.4 built; 6.5-6.7 remaining)'. But line 8 (same file, the build log directly above): '6.7 DONE 2026-06-13: browser QA passed (owner) + migration 125 APPLIED TO PROD... Phase 6 BUILD COMPLETE + prod-DB-ready — a flag-off, unlisted beta. Remaining = Phase 9 launch.' TODO.md:109 agrees: '6.0-6.6 BUILT... 6.7 DONE... mig 125 APPLIED TO PROD... Remaining = Phase 9 launch.' Same internal-contradiction pattern as the tiebreaker plan — the summary Status line predates the build log and was never synced.
 - **Verification:** Confirmed: FREE_TIER_LEAGUE_STARTER_PLAN.md line 8 says 'Phase 6 BUILD COMPLETE; Remaining = Phase 9 launch' while line 10 Status still says 'Planning (6.0-6.4 built; 6.5-6.7 remaining)'. TODO.md:109 corroborates completed status. Fix proposal is sound.
 - **Proposed action:** Rewrite line 10 to 'Phase 6.0-6.7 BUILD COMPLETE + prod-DB-ready (flag off, unlisted beta); remaining = Phase 9 launch (flag flip + League Starter->League branding rename)' — do not archive, Phase 9 is still open.
@@ -1599,14 +1599,14 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G23. Theming exploration + promotion-checklist docs — scope decided, build shipped, checklist executed
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 4
-- **Where:** docs/projects/active/WARM_PORTAL_PROD_PROMOTION_CHECKLIST.md; docs/projects/active/WARM_COACHES_PORTAL_AND_THEMING_ANALYSIS.md; docs/projects/active/WARM_COACHES_PORTAL_AND_THEMING_EXPLORATION_PROMPT.md; docs/projects/active/WARM_COACHES_PORTAL_AND_THEMING_PM_BRIEF.md
+- **Where:** docs/projects/archive/WARM_PORTAL_PROD_PROMOTION_CHECKLIST.md; docs/projects/archive/WARM_COACHES_PORTAL_AND_THEMING_ANALYSIS.md; docs/projects/archive/WARM_COACHES_PORTAL_AND_THEMING_EXPLORATION_PROMPT.md; docs/projects/archive/WARM_COACHES_PORTAL_AND_THEMING_PM_BRIEF.md
 - **Evidence (finder):** WARM_PORTAL_PROD_PROMOTION_CHECKLIST.md status line reads 'READY on dev..., NOT on prod. Prepared 2026-07-22' but the 2026-07-22 promote (c743c276, confirmed via reference_prod_release_history.md + origin/master) shipped exactly this bundle. The ANALYSIS/EXPLORATION_PROMPT/PM_BRIEF trio are the upstream scoping docs whose decisions were folded into the (now-shipped) THEME_TOGGLE/WARM_PORTAL plans.
 - **Verification:** Checklist listed migs 193-196 to apply pre-promote; release history confirms 193-196 applied to prod ahead of the 2026-07-22 promote and warm portal Stages 1-6 shipped as required — checklist stale/executed. ANALYSIS/PROMPT/PM_BRIEF are upstream docs that unlocked WARM_PORTAL_THEME_OPTION_PLAN.md, also shipped. Downgraded: ANALYSIS §9 keeps a facts index with residual reference value.
 
 ### G24. HELP_PHASE2_INCONTEXT_PLAN.md + its TODO.md line both say 'awaiting go' — feature is shipped
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** todo-stale | **Removal:** yes | **~LOC/objects:** 4
-- **Where:** docs/projects/active/HELP_PHASE2_INCONTEXT_PLAN.md:3; TODO.md:463; memory/project_help_system_redesign.md
+- **Where:** docs/projects/archive/HELP_PHASE2_INCONTEXT_PLAN.md:3; TODO.md:463; memory/project_help_system_redesign.md
 - **Evidence (finder):** Plan header: 'Approved-pending-build ... awaiting the owner's final "go" to start Wave 0. No code until that go.' TODO.md:463: 'Phase 2 — In-context ("?") help — PLANNED 2026-06-18 ... awaiting owner sign-off'. But memory/project_help_system_redesign.md documents Parts 1, 2, 3B, 3C, and Deliverable E all BUILT + committed (commits 44cfde0, ee798a5, 2f522ec, 3532a6c, 9738c4b, 6ced4ba, 6fe8f50), each independently verified via `git merge-base --is-ancestor <commit> origin/master` = true (all shipped to prod). Both the plan doc AND the TODO.md tracking line are stale in the same direction — this is not just a doc-header slip, the master task list itself is wrong.
 - **Verification:** Read plan:3 fresh - still "awaiting the owner's final 'go'"; last edited 2026-06-18, never since. Read TODO.md:463 fresh (status/diff empty, no concurrent edit) - still "awaiting owner sign-off." Memory names commits 44cfde0/ee798a5/2f522ec/3532a6c/9738c4b/6ced4ba/6fe8f50/0b560ca/747f539/f07b53d as the build; all 10 verified real via git log. Claimed files (HelpDrawer.tsx, FieldHint.tsx, HelpButton.tsx, HelpSectionBlock.tsx, registry.ts, app/coaches/help/page.tsx) exist in tree. Shipped to prod: master contains ee798a5 and has HelpDrawer.tsx. Provider mounted (git grep) in 3 live layouts, not orphaned.
 - **Verifier notes:** No refuting evidence; every check corroborates further - shipped to prod, actively mounted. One nuance: memory shows Phase 5b left cross-device dismiss + page-level spotlights deferred pending owner go, so full archival isn't warranted yet, only a status correction - finder's proposal already hedges this way.
@@ -1615,7 +1615,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G25. FOUNDING_SEASON_COACHES_FREE_PLAN.md says 'PROPOSED' — feature is fully built and live on prod
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 4
-- **Where:** docs/projects/active/FOUNDING_SEASON_COACHES_FREE_PLAN.md:3; memory/project_founding_season_coaches_free.md; TODO.md:199
+- **Where:** docs/projects/archive/FOUNDING_SEASON_COACHES_FREE_PLAN.md:3; memory/project_founding_season_coaches_free.md; TODO.md:199
 - **Evidence (finder):** Header: 'PROPOSED (owner directive 2026-07-20; awaiting plan approval to start build)'. memory/project_founding_season_coaches_free.md: 'Phases 0-3 commits (8ea30fe3/e1028b0a/26380896) are ALL on origin/master... LAUNCHED 2026-07-23... prod plan_gating.team -> live... The $0 comp enrollment is OPEN.' Verified `git merge-base --is-ancestor` true for 8ea30fe3, e1028b0a, 26380896, 06d37b6f against origin/master. TODO.md:199 already correctly states 'Phases 0-3 SHIPPED + LAUNCHED 2026-07-23'. The plan doc's own top header is the only place still saying pre-build.
 - **Verification:** Line 3 = 'PROPOSED ... awaiting plan approval to start build'. memory shows Phases 0-3 + mig-198 committed (8ea30fe3/e1028b0a/26380896/06d37b6f), all confirmed ancestors of origin/master, plus explicit 'LAUNCHED 2026-07-23' prod flip. Genuine open items remain (warm restyle, safeguard, runbook) supporting keep-active.
 - **Proposed action:** Rewrite header to reflect Phases 0-3 SHIPPED + LAUNCHED 2026-07-23 (matching TODO.md wording); keep active — S1-2 warm restyle, one-per-owner safeguard decision, January runbook, and Stripe smoke test remain genuinely open per memory's '⚠ STILL OPEN' list.
@@ -1623,7 +1623,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G26. FREE_TIER_COACHES_UNIFIED_PLAN.md says 'build not started' — Phases 0-4+ built and shipped
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 4
-- **Where:** docs/projects/active/FREE_TIER_COACHES_UNIFIED_PLAN.md:3; memory/project_free_tier_strategy.md; lib/basic-coach-roster.ts; lib/basic-coach-schedule.ts
+- **Where:** docs/projects/archive/FREE_TIER_COACHES_UNIFIED_PLAN.md:3; memory/project_free_tier_strategy.md; lib/basic-coach-roster.ts; lib/basic-coach-schedule.ts
 - **Evidence (finder):** Header: 'SCOPED 2026-06-08 ... planning complete, build not started'. memory/project_free_tier_strategy.md documents Phase 0/1/2/3/4 all BUILT (through 2026-06-09) plus Phase 6 League Starter 6.0-6.7 built with mig 125 applied to prod. Verified lib/basic-coach-roster.ts and lib/basic-coach-schedule.ts (Phase 3/4 deliverables) both exist in origin/master via `git show origin/master:<path>` succeeding — i.e. shipped to prod. The unified plan is the canonical execute-in-order doc per memory yet its header never advanced past the initial scoping note.
 - **Verification:** Line 3 = 'SCOPED 2026-06-08 ... build not started'. memory documents Phase 0-4 built with migs 114/115. git show origin/master:lib/basic-coach-roster.ts and lib/basic-coach-schedule.ts both succeed = shipped to prod. TODO.md carries multiple live entries confirming ongoing project, not abandoned.
 - **Proposed action:** Rewrite header to summarize actual phase completion (Phases 0-4 built+shipped; Phase 5 tournament-coach experience and later phases per memory/TODO); do not archive — still the canonical umbrella doc with open phases, but the header is actively misleading in its current form.
@@ -1631,7 +1631,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G27. ADMIN_ROLE_PARITY_PLAN.md header understates reality — already shipped to prod
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 3
-- **Where:** docs/projects/active/ADMIN_ROLE_PARITY_PLAN.md:3; memory/project_admin_role_parity.md
+- **Where:** docs/projects/archive/ADMIN_ROLE_PARITY_PLAN.md:3; memory/project_admin_role_parity.md
 - **Evidence (finder):** Header: 'Phase 1 + Phase 2 BUILT (2026-06-09)... awaiting browser verification. (Phase 1 = commit ec64b17; Phase 2 = follow-up commit 247a16b.)' Verified via `git merge-base --is-ancestor ec64b17 origin/master` and same for 247a16b: both return true — both commits are ancestors of origin/master (prod). memory/project_admin_role_parity.md also stops at 'BUILT' with no shipped marker; §Still deferred lists real remaining org-level-route work.
 - **Verification:** Line 3 = 'Phase 1+2 BUILT (2026-06-09) ... awaiting browser verification' (header doesn't literally name 247a16b, minor over-quote). git merge-base --is-ancestor confirms BOTH ec64b17 and 247a16b are ancestors of origin/master = shipped to prod. memory confirms a real deferred org-route item remains.
 - **Proposed action:** Correct header to 'Phase 1+2 SHIPPED TO PROD (commits ec64b17, 247a16b)'. Keep active (not archived) because the file's own 'Still deferred (NOT built)' org-level-route items remain open; consider splitting into a smaller follow-up doc and archiving the Phase 1+2 portion.
@@ -1639,15 +1639,15 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G28. ROLE_FLIP_NAVIGATION_PLAN.md header only reflects P1-uncommitted; P1-P3 shipped to prod
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 3
-- **Where:** docs/projects/active/ROLE_FLIP_NAVIGATION_PLAN.md:3; memory/project_role_flip_navigation.md; TODO.md:282; docs/projects/active/ROLE_FLIP_P4_BUILD_PROMPT.md
-- **Evidence (finder):** Top header (line 3): 'P1 BUILT on dev (uncommitted)'. memory/project_role_flip_navigation.md: 'P1-P3 SHIPPED TO PROD 2026-07-23 (promote f064712d...)'. Verified `git merge-base --is-ancestor f064712d origin/master` = true (local master ref was stale/behind — origin/master is the correct prod-truth source; confirmed FlipPill.tsx/AdminEventHeader.tsx exist in origin/master but not local master). TODO.md:282 already correctly says 'P1–P3 SHIPPED to prod 2026-07-23 (promote f064712d)'. The untracked docs/projects/active/ROLE_FLIP_P4_BUILD_PROMPT.md (git status ??) is the live next-step doc; the parent PLAN.md's header was simply never updated past its original P1 entry.
+- **Where:** docs/projects/archive/ROLE_FLIP_NAVIGATION_PLAN.md:3; memory/project_role_flip_navigation.md; TODO.md:282; docs/projects/archive/ROLE_FLIP_P4_BUILD_PROMPT.md
+- **Evidence (finder):** Top header (line 3): 'P1 BUILT on dev (uncommitted)'. memory/project_role_flip_navigation.md: 'P1-P3 SHIPPED TO PROD 2026-07-23 (promote f064712d...)'. Verified `git merge-base --is-ancestor f064712d origin/master` = true (local master ref was stale/behind — origin/master is the correct prod-truth source; confirmed FlipPill.tsx/AdminEventHeader.tsx exist in origin/master but not local master). TODO.md:282 already correctly says 'P1–P3 SHIPPED to prod 2026-07-23 (promote f064712d)'. The untracked docs/projects/archive/ROLE_FLIP_P4_BUILD_PROMPT.md (git status ??) is the live next-step doc; the parent PLAN.md's header was simply never updated past its original P1 entry.
 - **Verification:** Line 3 = 'P1 BUILT on dev (uncommitted)'. memory: 'P1-P3 SHIPPED TO PROD 2026-07-23 (f064712d)'; confirmed ancestor of origin/master. Independently verified local master (8f8b9e1b) != origin/master (f064712d); FlipPill.tsx/AdminEventHeader.tsx exist only in origin/master, exactly as claimed.
 - **Proposed action:** Rewrite the top Status line to 'P1-P3 SHIPPED TO PROD 2026-07-23; P4 in progress via ROLE_FLIP_P4_BUILD_PROMPT.md' — keep active (P4 open) but correct the header so it's not misleading at a glance; the mid-document Status(2026-07-23)/historical entries already have the truth, just not surfaced at the top.
 
 ### G29. REGISTRATION_COMMAND_CENTER_V1_PLAN.md has no status header; feature shipped, untracked in memory
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** doc-archive | **Removal:** yes | **~LOC/objects:** 2
-- **Where:** docs/projects/active/REGISTRATION_COMMAND_CENTER_V1_PLAN.md; docs/projects/archive/REGISTRATION_HEALTH_PANEL_PLAN.md; lib/registration-attention.ts
+- **Where:** docs/projects/archive/REGISTRATION_COMMAND_CENTER_V1_PLAN.md; docs/projects/archive/REGISTRATION_HEALTH_PANEL_PLAN.md; lib/registration-attention.ts
 - **Evidence (finder):** File opens straight into '## Scope' with no Status line. Its implementation (lib/registration-attention.ts, six attention buckets, dashboard panel + registrations-page strip) was added in commit 02e78b10; `git merge-base --is-ancestor 02e78b10 origin/master` = true (shipped to prod). This is a DISTINCT feature from the already-archived REGISTRATION_HEALTH_PANEL_PLAN.md (lib/registration-health.ts, memory/project_registration_health_panel.md, a different score-card component) — confirmed by different lib files/components in git grep.
 - **Verification:** Plan opens at '## Scope', no Status line. `merge-base --is-ancestor 02e78b10 origin/master`=true: shipped to prod. Last touch to lib/registration-attention.ts is f697d31c, ~7wks old, not recent. Grep: file is live, imported by tournament-dashboard route, dashboard page, registrations page, RegistrationHealthPanel.tsx, plus coach-status-model.ts, coaches-status.ts, registration-health.ts, slot-claim.ts. `git show master:lib/registration-attention.ts` returns content. Distinct from REGISTRATION_HEALTH_PANEL_PLAN.md per its own status header. No V2 doc found. TODO.md:176 still `[ ]` since 02e78b10; sweep commit 46be2ea3 fixed sibling lines but missed this one. git status clean.
 - **Verifier notes:** Extend the fix: also flip TODO.md:176 from `[ ]`"implementation underway" to `[x]`/Completed with archive-repointed links — that's the actual tracking gap the title flags, and the latest docs-sweep commit (46be2ea3) missed this exact line while fixing sibling stale entries.
@@ -1656,7 +1656,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G30. GAME_DAY_BOARD_CUSTOMIZE_PLAN.md says 'awaiting sign-off' — shipped over a month ago, zero tracking
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** doc-archive | **Removal:** yes | **~LOC/objects:** 2
-- **Where:** docs/projects/active/GAME_DAY_BOARD_CUSTOMIZE_PLAN.md:3
+- **Where:** docs/projects/archive/GAME_DAY_BOARD_CUSTOMIZE_PLAN.md:3
 - **Evidence (finder):** Header: 'Branch: dev (single shared branch). Status: Awaiting sign-off before build.' Commit 3f20ed5b ('feat(gameday): make the live board customizable (drag/hide/+Add)', 2026-06-15) implements exactly this plan's described feature (GameDayPanelId set, DEFAULT_LAYOUT.gameDayPanels, layout v2 migration). `git merge-base --is-ancestor 3f20ed5b origin/master` = true (shipped to prod). No TODO.md line references GAME_DAY_BOARD_CUSTOMIZE_PLAN.md (grep returns nothing) and no memory/project_*.md file documents this feature — it is completely untracked despite being live in production.
 - **Verification:** Plan header: "Awaiting sign-off," describes GameDayPanelId/gameDayPanels/v2 migration/renderGameDayZone. `git show --stat 3f20ed5b` = "make the live board customizable (drag/hide/+Add)" (2026-06-15) implements exactly this. `git merge-base --is-ancestor 3f20ed5b origin/master`=true, on both dev+master (prod). Live page.tsx grep confirms machinery present, now evolved to v3 w/ extra panels via later commits. `git status --porcelain` on plan/brief/dashboard=clean. TODO.md grep "customiz"+"game.?day" combo=0 hits. memory grep=only tangential same-day design_decisions.md entry (different CSS decision). Only referencer anywhere is its own paired PM_BRIEF.md.
 - **Verifier notes:** Proposal should also archive the paired GAME_DAY_BOARD_CUSTOMIZE_PM_BRIEF.md (only other file referencing the plan). Corrected header should note the feature was later extended beyond this plan's scope (v2→v3, panels 'upNext'/'needsScore'/'gdScheduleHealth' added by commit 54af8f6c and others).
@@ -1665,7 +1665,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G31. Several shipped features tracked only in docs/projects/active plans have no memory/project_*.md file
 
 - **Verdict:** CONFIRMED | **Risk:** judgment | **Type:** memory-marker | **Removal:** no (consolidation/hygiene)
-- **Where:** docs/projects/active/SCHEDULE_HEALTH_RULES_PLAN.md; docs/projects/active/REGISTRATION_COMMAND_CENTER_V1_PLAN.md; docs/projects/active/GAME_DAY_BOARD_CUSTOMIZE_PLAN.md; docs/projects/active/STRIPE_PRICE_VALIDATION_PLAN.md
+- **Where:** docs/projects/archive/SCHEDULE_HEALTH_RULES_PLAN.md; docs/projects/archive/REGISTRATION_COMMAND_CENTER_V1_PLAN.md; docs/projects/archive/GAME_DAY_BOARD_CUSTOMIZE_PLAN.md; docs/projects/archive/STRIPE_PRICE_VALIDATION_PLAN.md
 - **Evidence (finder):** For each of these four docs, `grep -rl` across the full memory/ directory for the plan's distinctive implementation terms (schedule_health_rules/maxGamesPerDay, registration-attention/registrationAttention, gameday board customize, H8 price-guard) returns zero project_*.md hits. All four features are independently confirmed shipped to origin/master (see sibling findings) yet leave no memory trail — future sweeps would have to re-derive their status from git archaeology, exactly as this investigation had to.
 - **Verification:** All 4 docs exist; grep of memory/ for distinctive terms returns zero project_*.md hits, confirming the gap. Independently verified all 4 features shipped to origin/master (schedule-metrics.ts, registration-attention.ts, gameDayPanels via 3f20ed5b, Stripe validation via 38abab23) despite one plan's own header still falsely reading 'awaiting sign-off' - docs even more stale than assumed.
 - **Proposed action:** As each doc is archived, add a short memory/project_*.md entry (or fold into an existing adjacent topic file) recording what shipped and in which commit, so status isn't only recoverable via git log.
@@ -1673,7 +1673,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G32. Notification Pause master switch shipped to prod 2026-07-22
 
 - **Verdict:** CONFIRMED | **Risk:** owner-decision | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 2
-- **Where:** docs/projects/active/NOTIFICATION_PAUSE_SWITCH_PLAN.md; docs/projects/active/NOTIFICATION_PAUSE_SWITCH_PM_BRIEF.md
+- **Where:** docs/projects/archive/NOTIFICATION_PAUSE_SWITCH_PLAN.md; docs/projects/archive/NOTIFICATION_PAUSE_SWITCH_PM_BRIEF.md
 - **Evidence (finder):** Plan status line says 'In build (dev)...NOT owner-tested...joins the pending Unified Home prod bundle'; but reference_prod_release_history.md's 2026-07-22 promote (c743c276) explicitly lists 'Pause-notifications master switch' as shipped (commit 5a6f20a8) and mig 194 was applied to prod ahead of that promote. Owner post-deploy device verification may still be open (not resolvable from this evidence) — flagged owner-decision rather than a clean archive.
 - **Verification:** Plan says 'NOT owner-tested...joins pending Unified Home prod bundle' but commit 5a6f20a8 matches release history's 'Pause-notifications master switch' shipped 2026-07-22 (mig 194 applied same batch). Separate memory topic file still says 'mig 194 dev-only...pending owner test' — same staleness; owner device-verification unresolved from docs.
 
@@ -1687,7 +1687,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G34. HELP_SYSTEM_REDESIGN_PLAN.md (parent doc) header stuck at 'Proposed' though child phases built
 
 - **Verdict:** DOWNGRADED | **Risk:** judgment | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 3
-- **Where:** docs/projects/active/HELP_SYSTEM_REDESIGN_PLAN.md:3; memory/project_help_system_redesign.md; docs/projects/active/HELP_PHASE5_DISCOVERY_PLAN.md
+- **Where:** docs/projects/archive/HELP_SYSTEM_REDESIGN_PLAN.md:3; memory/project_help_system_redesign.md; docs/projects/archive/HELP_PHASE5_DISCOVERY_PLAN.md
 - **Evidence (finder):** Header: 'Proposed — review complete, awaiting owner direction on the open decisions in §10.' memory/project_help_system_redesign.md documents Phase 1 committed+approved, Phase 1.5 committed, Phase 2 substantially complete (multiple commits shipped to prod per the HELP_PHASE2 finding above), and Phase 5a+5b built+committed (bea5558/747f539/f07b53d). The six §10 decisions were in fact resolved 2026-06-17/18 per HELP_PHASE2_INCONTEXT_PLAN.md's own §9 'all six owner decisions RESOLVED'. The master roadmap doc's header was never revisited after the initial synthesis.
 - **Verification:** Header confirmed stale; memory confirms Phases 1/1.5/2/5a/5b built+committed, cited hashes verified ancestors of origin/master. But 'six decisions resolved per Phase2's own §9' conflates two distinct lists (master §10 vs Phase2's internal 9.1-9.6); only 2 of master's 6 explicitly logged resolved in-doc. Core recommendation survives; citation imprecise.
 - **Proposed action:** Update header to point at child-phase status (Phase 1/1.5/2/5a/5b built, decisions resolved 2026-06-17/18) rather than 'awaiting owner direction'; keep active as the umbrella doc since Phase 3/4/5b-remainder are still open.
@@ -1695,7 +1695,7 @@ git log --follow: 1 commit ever each, no recent activity.
 ### G35. FREE_TIER_STRATEGY_PLAN.md doesn't note it was superseded by the unified plan
 
 - **Verdict:** REFUTED | **Risk:** safe-mechanical | **Type:** doc-archive | **Removal:** no (consolidation/hygiene) | **~LOC/objects:** 2
-- **Where:** docs/projects/active/FREE_TIER_STRATEGY_PLAN.md:3; docs/projects/active/FREE_TIER_COACHES_UNIFIED_PLAN.md; memory/project_free_tier_strategy.md
+- **Where:** docs/projects/active/FREE_TIER_STRATEGY_PLAN.md:3; docs/projects/archive/FREE_TIER_COACHES_UNIFIED_PLAN.md; memory/project_free_tier_strategy.md
 - **Evidence (finder):** Header: 'SCOPED 2026-06-07 (planning session — nothing built) · awaiting sign-off to sequence into build'. memory/project_free_tier_strategy.md: 'MERGED into ONE execution plan 2026-06-08: FREE_TIER_COACHES_UNIFIED_PLAN.md is now the canonical execute-in-order plan... The two source plans (FREE_TIER_STRATEGY_PLAN.md, COACHES_EXPERIENCE_EVAL_PLAN.md) are retained as DETAIL references only.' The header gives no indication the plan was superseded a day after being scoped, and that its content has since been executed via the successor doc.
 - **Verification:** File line 3 (above the Status line) already reads: 'Execution sequence now lives in FREE_TIER_COACHES_UNIFIED_PLAN.md ... this doc is retained as the strategy/detail reference ... Build in the order the unified plan defines.' git blame shows committed 2026-06-08 (2d6a557c2), not stale/uncommitted. Finding's core claim is false.
 - **Proposed action:** Add a superseded-by note pointing at FREE_TIER_COACHES_UNIFIED_PLAN.md (kept as detail reference, not archived, matching memory's framing).

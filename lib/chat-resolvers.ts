@@ -1,6 +1,11 @@
 import 'server-only';
 
 import { supabaseAdmin } from './supabase-admin';
+import {
+  resolveCoachCapabilities,
+  canJoinStaffChat,
+  type AssistantCapabilityGrants,
+} from './coach-capabilities';
 
 /**
  * lib/chat-resolvers.ts — Tournament Chat participant resolution.
@@ -194,12 +199,20 @@ export async function resolveTournamentChatParticipants(
       if (repTeamIds.length > 0) {
         const { data: repCoaches } = await supabaseAdmin
           .from('rep_team_coaches')
-          .select('user_id, program_year_id')
+          .select('user_id, coach_role, capabilities, program_year_id')
           .in('team_id', repTeamIds);
         const activeYears = await activeProgramYearIds((repCoaches ?? []).map(rc => rc.program_year_id as string));
         for (const rc of repCoaches ?? []) {
           // CURRENT-season staff only — a former coach's row persists across completed seasons.
-          if (rc.user_id && activeYears.has(rc.program_year_id as string)) userIds.add(rc.user_id as string);
+          if (!rc.user_id || !activeYears.has(rc.program_year_id as string)) continue;
+          // ⚠ And staff-chat-eligible only, for the same reason as the staff room below: a helper
+          // running a station has no place in an organizer↔coach tournament room either.
+          const caps = resolveCoachCapabilities(
+            rc.coach_role === 'head_coach' ? 'head_coach' : 'assistant_coach',
+            (rc.capabilities ?? null) as AssistantCapabilityGrants | null,
+          );
+          if (!canJoinStaffChat(caps)) continue;
+          userIds.add(rc.user_id as string);
         }
       }
     } catch (err) {
@@ -333,7 +346,7 @@ export type StaffRoomParticipant = { userId: string; isHead: boolean };
 export async function resolveStaffRoomParticipants(repTeamId: string): Promise<StaffRoomParticipant[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_coaches')
-    .select('user_id, coach_role, program_year_id')
+    .select('user_id, coach_role, capabilities, program_year_id')
     .eq('team_id', repTeamId);
   if (error) throw error;
   const rows = data ?? [];
@@ -342,6 +355,24 @@ export async function resolveStaffRoomParticipants(repTeamId: string): Promise<S
   for (const r of rows) {
     const userId = r.user_id as string | null;
     if (!userId || !activeYears.has(r.program_year_id as string)) continue;
+    /**
+     * ⚠ THE ONE PLACE STAFF-ROOM MEMBERSHIP CONSULTS A CAPABILITY (Phase 4, 2026-08-03).
+     *
+     * Membership here is otherwise DERIVED from the staff assignment, and `syncStaffChatRoom` says
+     * in as many words that chat is not a capability toggle. That was true while every person on a
+     * team's staff list was a coach. A HELPER is not: they are a parent volunteer invited to run one
+     * station, and seating them in the room where coaches discuss children is exactly the exposure
+     * the 2026-08-01 family-chat cut was made to avoid, arriving through a side door.
+     *
+     * `staffChat` defaults TRUE, so every assistant and every head coach resolves as before —
+     * only the helper preset switches it off. And because `syncStaffChatRoom` removes any seat it
+     * no longer finds here, revoking the grant later empties the chair rather than leaving it warm.
+     */
+    const caps = resolveCoachCapabilities(
+      r.coach_role === 'head_coach' ? 'head_coach' : 'assistant_coach',
+      (r.capabilities ?? null) as AssistantCapabilityGrants | null,
+    );
+    if (!canJoinStaffChat(caps)) continue;
     byUser.set(userId, (byUser.get(userId) ?? false) || r.coach_role === 'head_coach');
   }
   return [...byUser].map(([userId, isHead]) => ({ userId, isHead }));

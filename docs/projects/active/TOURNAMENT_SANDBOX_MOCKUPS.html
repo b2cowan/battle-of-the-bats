@@ -1,0 +1,1132 @@
+<title>Tournament Admin Sandbox — Phase 1 Mockups</title>
+<style>
+  /* ─────────────────────────────────────────────────────────────────────────
+     DOC SHELL — the review paper. Theme-aware, deliberately quiet, so the
+     product screens inside it carry all the colour.
+     ───────────────────────────────────────────────────────────────────────── */
+  :root{
+    --pg:#F6F6F3; --card:#FFFFFF; --ink:#1B1D24; --dim:#5D6372; --line:#E2E3DF;
+    --acc:#1E3A8A; --acc-ink:#1E3A8A; --acc-soft:rgba(30,58,138,.07);
+    --good:#15803D; --warn:#B45309; --bad:#B91C1C;
+    --new:#1E3A8A; --restyled:#7C3F00; --unchanged:#4B5563;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --pg:#0F1013; --card:#171922; --ink:#E9EAEE; --dim:#9BA1AE; --line:#272A33;
+      --acc:#93A9EA; --acc-ink:#AFC0F2; --acc-soft:rgba(147,169,234,.09);
+      --good:#4ADE80; --warn:#FBBF24; --bad:#F87171;
+      --new:#AFC0F2; --restyled:#FBBF24; --unchanged:#9BA1AE; }
+  }
+  :root[data-theme="dark"]{ --pg:#0F1013; --card:#171922; --ink:#E9EAEE; --dim:#9BA1AE; --line:#272A33;
+    --acc:#93A9EA; --acc-ink:#AFC0F2; --acc-soft:rgba(147,169,234,.09);
+    --good:#4ADE80; --warn:#FBBF24; --bad:#F87171;
+    --new:#AFC0F2; --restyled:#FBBF24; --unchanged:#9BA1AE; }
+  :root[data-theme="light"]{ --pg:#F6F6F3; --card:#FFFFFF; --ink:#1B1D24; --dim:#5D6372; --line:#E2E3DF;
+    --acc:#1E3A8A; --acc-ink:#1E3A8A; --acc-soft:rgba(30,58,138,.07);
+    --good:#15803D; --warn:#B45309; --bad:#B91C1C;
+    --new:#1E3A8A; --restyled:#7C3F00; --unchanged:#4B5563; }
+
+  *{box-sizing:border-box}
+  body{background:var(--pg);color:var(--ink);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px 110px}
+  .mono{font-family:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  header.top{padding:56px 0 6px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  h1{font-size:clamp(1.6rem,3.4vw,2.35rem);line-height:1.14;margin:.4rem 0 .6rem;letter-spacing:-.022em;text-wrap:balance}
+  .lede{color:var(--dim);max-width:64ch;margin:0 0 22px}
+  .lede b{color:var(--ink)}
+
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 26px}
+  nav.toc a{font-size:.79rem;font-weight:600;color:var(--acc-ink);text-decoration:none;border:1px solid var(--line);background:var(--card);padding:7px 13px;border-radius:999px}
+  nav.toc a:hover{border-color:var(--acc)}
+  nav.toc a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+  section{margin-top:66px;scroll-margin-top:20px}
+  .sec-eyebrow{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--acc-ink);margin:0}
+  .sec-eyebrow .tag{color:var(--dim);font-weight:600;letter-spacing:.08em}
+  h2{font-size:1.42rem;letter-spacing:-.016em;margin:.32rem 0 .5rem;text-wrap:balance}
+  h3{font-size:1rem;letter-spacing:-.008em;margin:34px 0 .35rem}
+  .sec-intro{color:var(--dim);max-width:72ch;margin:0}
+  p.body{max-width:72ch;color:var(--ink)}
+
+  .note{font-size:.84rem;color:var(--dim);border-left:3px solid var(--line);padding:3px 0 3px 13px;max-width:74ch;margin:16px 0 0}
+  .note b{color:var(--ink)}
+  .note.warn{border-left-color:var(--warn)}
+  .note.good{border-left-color:var(--good)}
+
+  /* label chips: the workspace spec vocabulary */
+  .lab{display:inline-flex;align-items:center;gap:5px;font-family:ui-monospace,Consolas,monospace;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid currentColor;white-space:nowrap;vertical-align:1px}
+  .lab-new{color:var(--new)}
+  .lab-re{color:var(--restyled)}
+  .lab-un{color:var(--unchanged)}
+
+  /* annotation list beside/below a frame */
+  .anno{display:grid;grid-template-columns:auto 1fr;gap:9px 12px;margin:16px 0 0;font-size:.86rem;max-width:80ch}
+  .anno dt{margin:0}
+  .anno dd{margin:0;color:var(--dim)}
+  .anno dd b{color:var(--ink);font-weight:600}
+  .anno dd code{font-family:ui-monospace,Consolas,monospace;font-size:.82em;background:var(--acc-soft);padding:1px 4px;border-radius:3px;color:var(--acc-ink)}
+
+  table.dec{width:100%;border-collapse:collapse;margin:18px 0 0;font-size:.87rem}
+  table.dec th,table.dec td{text-align:left;vertical-align:top;padding:9px 12px 9px 0;border-bottom:1px solid var(--line)}
+  table.dec th{font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  table.dec td b{font-weight:650}
+  .tbl-scroll{overflow-x:auto}
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     PRODUCT WORLD — real FieldLogicHQ tokens. Everything inside .pd renders
+     the actual dark operator/fan chrome, so the frames read as screenshots.
+     ───────────────────────────────────────────────────────────────────────── */
+  .pd{
+    --pitch:#0A0A0A; --slate:#111827; --surf:#0F1523; --surf2:#141A2A;
+    --lime:#D9F99D; --blue:#1E3A8A; --blue-lt:#7B94E8;
+    --gray:#94A3B8; --text:#F1F5F9; --hair:rgba(255,255,255,.11);
+    --ok:#22C55E; --warn2:#F59E0B; --bad2:#EF4444;
+    background:var(--pitch);color:var(--text);border:1px solid #23262E;border-radius:12px;
+    overflow:hidden;margin-top:20px;font-size:15px;line-height:1.5
+  }
+  .pd .g{color:var(--gray)}
+  .pd .pad{padding:16px 18px}
+  .pd .mono{font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+  .pd button{font:inherit}
+
+  .cap{font-size:.74rem;color:var(--dim);margin:9px 0 0;font-style:italic}
+
+  /* — sandbox banner (the shared chrome) — */
+  .sb{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:#101623;border-bottom:1px solid rgba(217,249,157,.28);padding:10px 18px}
+  .sb-eye{display:inline-flex;align-items:center;gap:7px;font-family:ui-monospace,Consolas,monospace;font-size:.63rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--lime)}
+  .sb-eye .bulb{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px rgba(217,249,157,.7)}
+  .sb-msg{font-size:.82rem;color:#CBD5E1}
+  .sb-msg b{color:#fff;font-weight:600}
+  .sb-rst{font-size:.75rem;color:var(--gray);margin-left:auto}
+  .sb-cta{background:var(--lime);color:#0A0A0A;border:none;border-radius:2px;font-family:ui-monospace,Consolas,monospace;font-size:.66rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:8px 14px;cursor:pointer}
+  .sb-cta:hover{background:#fff}
+  .sb-cta:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+  .sb-x{background:none;border:none;color:var(--gray);cursor:pointer;font-size:1rem;line-height:1;padding:4px 2px}
+
+  /* — tour chips — */
+  .chips{display:flex;flex-wrap:wrap;gap:7px;padding:11px 18px;background:#0C1119;border-bottom:1px solid var(--hair)}
+  .chip{display:inline-flex;align-items:center;gap:7px;background:var(--surf);border:1px solid var(--hair);color:#CBD5E1;border-radius:999px;font-size:.75rem;padding:6px 13px 6px 8px;cursor:pointer}
+  .chip .n{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;border-radius:50%;background:rgba(217,249,157,.16);color:var(--lime);font-family:ui-monospace,Consolas,monospace;font-size:.62rem;font-weight:800}
+  .chip:hover{border-color:rgba(217,249,157,.6);color:#fff}
+  .chip:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+  .chip[aria-pressed="true"]{border-color:var(--lime);color:#fff;background:rgba(217,249,157,.08)}
+  .chip .done{color:var(--lime);font-size:.7rem}
+  .chips .tour-lab{font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gray);font-weight:700;align-self:center;margin-right:3px;font-family:ui-monospace,Consolas,monospace}
+
+  .spot{animation:spot 1.5s ease 2}
+  @keyframes spot{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 2px var(--lime),0 0 22px rgba(217,249,157,.35)}}
+  @media (prefers-reduced-motion:reduce){ .spot,.tick,.dot{animation:none!important} }
+
+  /* — public/fan chrome — */
+  .fanbar{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--hair);background:rgba(10,10,10,.9)}
+  .fanbar .brandmark{width:24px;height:24px;border-radius:4px;background:linear-gradient(135deg,#1E3A8A,#2D4FB8);display:inline-flex;align-items:center;justify-content:center;font-family:ui-monospace,Consolas,monospace;font-size:.62rem;font-weight:800;color:#fff}
+  .fanbar .nm{font-size:.86rem;font-weight:650}
+  .fantabs{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+  .fantabs span{font-size:.72rem;color:var(--gray);padding:5px 10px;border-radius:3px}
+  .fantabs span.on{color:var(--text);background:rgba(255,255,255,.07)}
+  .fanhero{padding:24px 18px 20px;background:radial-gradient(120% 100% at 50% 0%, rgba(30,58,138,.42) 0%, rgba(10,10,10,0) 70%)}
+  .fanhero .badge{display:inline-flex;align-items:center;gap:6px;font-size:.63rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--lime);border:1px solid rgba(217,249,157,.35);border-radius:999px;padding:4px 11px}
+  .fanhero h4{font-size:1.5rem;letter-spacing:-.02em;margin:.55rem 0 .2rem;font-weight:800}
+  .fanhero p{margin:0;font-size:.82rem;color:#B9C2D4}
+
+  .scorecards{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:11px;padding:16px 18px}
+  .sc{background:var(--surf);border:1px solid var(--hair);border-radius:8px;padding:12px 14px}
+  .sc[data-state="live"]{border-color:rgba(239,68,68,.45)}
+  .sc-top{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .b-live{display:inline-flex;align-items:center;gap:5px;font-family:ui-monospace,Consolas,monospace;font-size:.58rem;font-weight:800;letter-spacing:.11em;color:#F87171}
+  .dot{width:6px;height:6px;border-radius:50%;background:#F87171;animation:pulse 1.7s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+  .b-final{font-family:ui-monospace,Consolas,monospace;font-size:.58rem;font-weight:800;letter-spacing:.11em;color:var(--gray)}
+  .b-time{font-family:ui-monospace,Consolas,monospace;font-size:.6rem;font-weight:800;letter-spacing:.06em;color:var(--lime)}
+  .sc-vs{font-size:.6rem;color:#68738A;margin-left:auto;letter-spacing:.06em;text-transform:uppercase}
+  .sc-row{display:flex;justify-content:space-between;align-items:baseline;padding:3px 0;font-size:.87rem}
+  .sc-row .s{font-family:ui-monospace,Consolas,monospace;font-weight:800;font-size:1.02rem}
+  .sc-row.win{color:#fff}
+  .sc-row.lose{color:#9AA4B5}
+  .sc-meta{font-size:.68rem;color:#68738A;margin-top:8px;border-top:1px solid rgba(255,255,255,.07);padding-top:7px}
+  .tick{animation:tick .5s ease}
+  @keyframes tick{0%{transform:translateY(-8px);opacity:0;color:#D9F99D}100%{transform:none;opacity:1}}
+
+  /* — bracket — */
+  .brk{display:flex;gap:0;align-items:center;padding:4px 18px 20px}
+  .brkcol{display:flex;flex-direction:column;gap:14px;flex:1;min-width:0}
+  .conn{width:24px;align-self:stretch;display:flex;flex-direction:column}
+  .conn i{flex:1;border-right:1.5px solid rgba(217,249,157,.35)}
+  .conn i:first-child{border-bottom:1.5px solid rgba(217,249,157,.35)}
+  .conn::after{content:"";width:12px;border-top:1.5px solid rgba(217,249,157,.35);align-self:center}
+  .bg{background:var(--surf);border:1px solid var(--hair);border-radius:6px;padding:11px 12px 9px;position:relative}
+  .bg .code{position:absolute;top:-8px;left:11px;background:var(--blue);color:#E7ECF7;font-family:ui-monospace,Consolas,monospace;font-size:.55rem;font-weight:800;letter-spacing:.09em;border-radius:2px;padding:2px 6px}
+  .bg .meta{font-size:.62rem;color:#68738A;margin-bottom:6px}
+  .bg .t{display:flex;justify-content:space-between;gap:10px;font-size:.81rem;padding:2px 0}
+  .bg .t .s{font-family:ui-monospace,Consolas,monospace;font-weight:800}
+  .bg .t.win{color:#fff;font-weight:650}
+  .bg .t.dimd{color:#68738A}
+  .bg .st{font-family:ui-monospace,Consolas,monospace;font-size:.56rem;font-weight:800;letter-spacing:.11em;margin-top:7px}
+  .bg .st.live{color:#F87171}
+  .bg .st.fin{color:var(--gray)}
+  .bg .st.pend{color:#5A6478}
+
+  /* — admin chrome — */
+  .adbar{display:flex;align-items:center;gap:10px;padding:10px 18px;background:var(--slate);border-bottom:1px solid var(--hair);flex-wrap:wrap}
+  .adbar .wm{font-family:ui-monospace,Consolas,monospace;font-size:.64rem;font-weight:800;letter-spacing:.14em;color:var(--lime)}
+  .adbar .sep{color:#3A4152}
+  .adbar .ev{font-size:.84rem;font-weight:650}
+  .adbar .evsub{font-size:.68rem;color:var(--gray)}
+  .flip{margin-left:auto;display:inline-flex;align-items:center;gap:7px;background:rgba(30,58,138,.3);border:1px solid rgba(123,148,232,.45);color:#C7D4F8;border-radius:999px;font-size:.73rem;padding:6px 13px;cursor:pointer}
+  .flip:hover{border-color:var(--blue-lt);color:#fff}
+  .flip:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+  .adnav{display:flex;gap:2px;padding:0 18px;border-bottom:1px solid var(--hair);overflow-x:auto;background:#0C0F16}
+  .adnav span{font-size:.75rem;color:var(--gray);padding:9px 11px;white-space:nowrap;border-bottom:2px solid transparent}
+  .adnav span.on{color:var(--text);border-bottom-color:var(--lime)}
+
+  .panel{background:var(--slate);border:1px solid var(--hair);border-radius:8px;padding:13px 15px}
+  .phead{display:flex;align-items:center;gap:9px;margin-bottom:11px}
+  .phead h5{margin:0;font-size:.79rem;font-weight:750;letter-spacing:.03em}
+  .phead .ic{font-size:.85rem;line-height:1}
+  .phead .lnk{margin-left:auto;font-size:.7rem;color:var(--blue-lt)}
+  .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px;padding:16px 18px}
+  .rows{display:grid;gap:8px}
+  .lrow{background:var(--surf);border:1px solid var(--hair);border-radius:6px;padding:9px 11px;display:grid;gap:5px}
+  .lrow[data-k="live"]{border-left:3px solid var(--bad2)}
+  .lrow[data-k="next"]{border-left:3px solid var(--blue-lt)}
+  .lrow[data-k="overdue"]{border-left:3px solid var(--warn2)}
+  .badge{display:inline-block;font-family:ui-monospace,Consolas,monospace;font-size:.55rem;font-weight:800;letter-spacing:.11em;padding:2px 6px;border-radius:2px}
+  .badge.b1{background:rgba(239,68,68,.16);color:#F87171}
+  .badge.b2{background:rgba(245,158,11,.16);color:#FBBF24}
+  .badge.b3{background:rgba(148,163,184,.14);color:#B6C0CF}
+  .lrow .mu{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:.83rem}
+  .lrow .mu .at{color:#68738A;font-size:.72rem}
+  .lrow .mu .sc2{font-family:ui-monospace,Consolas,monospace;font-weight:800;font-size:.95rem}
+  .lrow .mt{font-size:.67rem;color:#68738A}
+
+  /* — health — */
+  .hsum{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap}
+  .hsum .v{font-family:ui-monospace,Consolas,monospace;font-size:2.05rem;font-weight:800;line-height:1}
+  .hsum .v.good{color:var(--ok)} .hsum .v.warn{color:var(--warn2)} .hsum .v.bad{color:var(--bad2)}
+  .hsum .of{color:#5A6478;font-size:.85rem}
+  .hsum .tone{font-family:ui-monospace,Consolas,monospace;font-size:.58rem;font-weight:800;letter-spacing:.12em;padding:3px 8px;border-radius:2px}
+  .hsum .tone.good{background:rgba(34,197,94,.14);color:#4ADE80}
+  .hsum .tone.warn{background:rgba(245,158,11,.16);color:#FBBF24}
+  .hsub{font-size:.73rem;color:var(--gray);margin:7px 0 11px}
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .kpi{background:var(--surf);border:1px solid var(--hair);border-radius:5px;padding:8px 6px;text-align:center}
+  .kpi .v{font-family:ui-monospace,Consolas,monospace;font-size:1.02rem;font-weight:750}
+  .kpi .v.hot{color:var(--warn2)}
+  .kpi .l{font-size:.55rem;letter-spacing:.08em;text-transform:uppercase;color:#68738A;margin-top:2px}
+  .issue{display:flex;gap:7px;align-items:flex-start;font-size:.76rem;color:#FBBF24;background:rgba(245,158,11,.09);border:1px solid rgba(245,158,11,.28);border-radius:5px;padding:8px 10px;margin-top:11px}
+
+  /* — schedule grid / drag — */
+  .sched{padding:14px 18px 18px}
+  .slotgrid{display:grid;grid-template-columns:66px 1fr 1fr;gap:7px;font-size:.78rem}
+  .sh{font-family:ui-monospace,Consolas,monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#68738A;padding-bottom:4px}
+  .slot{background:rgba(255,255,255,.02);border:1px dashed rgba(255,255,255,.1);border-radius:5px;min-height:52px;padding:7px 9px}
+  .tm{font-family:ui-monospace,Consolas,monospace;font-size:.72rem;color:#8C97A9;padding-top:9px}
+  .gcard{background:var(--surf2);border:1px solid var(--hair);border-radius:5px;padding:7px 9px;min-height:52px;cursor:grab}
+  .gcard .cd{font-family:ui-monospace,Consolas,monospace;font-size:.55rem;font-weight:800;letter-spacing:.08em;color:var(--blue-lt)}
+  .gcard .mu2{font-size:.76rem;margin-top:3px}
+  .gcard.moved{border-color:var(--lime);box-shadow:0 0 0 1px rgba(217,249,157,.5),0 8px 20px rgba(0,0,0,.5);transform:rotate(-.6deg)}
+  .gcard.clash{border-color:var(--bad2);background:rgba(239,68,68,.1)}
+  .gcard.ghost{opacity:.32;border-style:dashed;cursor:default}
+
+  /* — nudge — */
+  .nudge{display:flex;gap:12px;align-items:flex-start;background:#121A2B;border:1px solid rgba(217,249,157,.4);border-left:3px solid var(--lime);border-radius:7px;padding:13px 15px;max-width:560px;box-shadow:0 14px 38px rgba(0,0,0,.5)}
+  .nudge .ni{font-size:1.05rem;line-height:1.2}
+  .nudge h6{margin:0 0 4px;font-size:.85rem;font-weight:750;color:#fff}
+  .nudge p{margin:0;font-size:.79rem;color:#B9C2D4;line-height:1.5}
+  .nudge .acts{display:flex;gap:8px;margin-top:11px;flex-wrap:wrap}
+  .nudge .keep{background:none;border:1px solid var(--hair);color:#CBD5E1;border-radius:2px;font-size:.68rem;font-family:ui-monospace,Consolas,monospace;font-weight:700;letter-spacing:.07em;text-transform:uppercase;padding:7px 12px;cursor:pointer}
+  .nudge .keep:hover{border-color:var(--gray);color:#fff}
+  .nudge .go{background:var(--lime);color:#0A0A0A;border:none;border-radius:2px;font-size:.68rem;font-family:ui-monospace,Consolas,monospace;font-weight:800;letter-spacing:.07em;text-transform:uppercase;padding:7px 12px;cursor:pointer}
+  .nudge .go:hover{background:#fff}
+  .nudge .keep:focus-visible,.nudge .go:focus-visible{outline:2px solid var(--lime);outline-offset:2px}
+  .nudge-wrap{padding:18px;display:flex;justify-content:center}
+
+  .disabled-act{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.04);border:1px solid var(--hair);color:#5F6A7C;border-radius:2px;font-family:ui-monospace,Consolas,monospace;font-size:.66rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:9px 14px;cursor:not-allowed}
+  .lockline{font-size:.72rem;color:#68738A;margin:7px 0 0;display:flex;gap:6px;align-items:center}
+
+  /* — marketing — */
+  .mk{background:#0A0A0A;padding:30px 22px 26px;background-image:radial-gradient(90% 80% at 12% 0%, rgba(30,58,138,.28) 0%, rgba(10,10,10,0) 65%)}
+  .mk .eyeb{font-family:ui-monospace,Consolas,monospace;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--lime);font-weight:700}
+  .mk h4{font-size:clamp(1.35rem,3.4vw,1.95rem);line-height:1.12;letter-spacing:-.025em;margin:.5rem 0 .55rem;font-weight:800}
+  .mk h4 em{font-style:normal;color:var(--lime)}
+  .mk .sub{font-size:.86rem;color:#B9C2D4;max-width:52ch;margin:0 0 18px}
+  .mkacts{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .mk-pri{background:var(--lime);color:#0A0A0A;border:none;font-family:ui-monospace,Consolas,monospace;font-size:.68rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;padding:14px 26px;cursor:pointer}
+  .mk-see{background:rgba(217,249,157,.06);border:1px solid rgba(217,249,157,.55);color:var(--lime);font-family:ui-monospace,Consolas,monospace;font-size:.68rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;padding:14px 24px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .mk-see:hover{background:rgba(217,249,157,.14)}
+  .mk-see .lv{width:7px;height:7px;border-radius:50%;background:var(--lime);animation:pulse 1.9s infinite}
+  .mk-gh{background:none;border:1px solid rgba(30,58,138,.5);color:var(--gray);font-family:ui-monospace,Consolas,monospace;font-size:.68rem;letter-spacing:.13em;text-transform:uppercase;padding:14px 24px;cursor:pointer}
+  .mk-pri:focus-visible,.mk-see:focus-visible,.mk-gh:focus-visible{outline:2px solid var(--lime);outline-offset:3px}
+  .trust{display:flex;gap:16px;flex-wrap:wrap;margin-top:18px}
+  .trust i{font-style:normal;font-size:.7rem;color:#68738A;display:inline-flex;align-items:center;gap:6px}
+  .trust i::before{content:"";width:4px;height:4px;border-radius:50%;background:var(--lime);opacity:.7}
+  .noemail{font-size:.71rem;color:#68738A;margin:12px 0 0}
+
+  .personas{display:grid;grid-template-columns:repeat(auto-fit,minmax(238px,1fr));gap:12px;padding:20px 18px}
+  .pc{background:var(--slate);border:1px solid var(--hair);border-radius:8px;padding:15px 16px;display:flex;flex-direction:column;gap:8px}
+  .pc[data-live="1"]{border-color:rgba(217,249,157,.32)}
+  .pc .pl{font-family:ui-monospace,Consolas,monospace;font-size:.58rem;letter-spacing:.13em;text-transform:uppercase;color:var(--lime);font-weight:800}
+  .pc .pq{font-size:.98rem;font-weight:700;letter-spacing:-.01em;margin:0}
+  .pc .pb{font-size:.77rem;color:#9AA4B5;margin:0;flex:1}
+  .pc .pbadge{font-size:.63rem;color:#68738A}
+  .pc .pcta{font-family:ui-monospace,Consolas,monospace;font-size:.64rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text);border-top:1px solid var(--hair);padding-top:10px}
+  .pc .psee{font-family:ui-monospace,Consolas,monospace;font-size:.63rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--lime);display:inline-flex;align-items:center;gap:7px}
+  .pc .psee .lv{width:6px;height:6px;border-radius:50%;background:var(--lime);animation:pulse 1.9s infinite}
+
+  .flow{display:grid;gap:0;margin-top:18px;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .flow div{padding:11px 14px;font-size:.84rem;border-bottom:1px solid var(--line);background:var(--card);display:flex;gap:11px;align-items:baseline}
+  .flow div:last-child{border-bottom:none}
+  .flow .st{font-family:ui-monospace,Consolas,monospace;font-size:.62rem;font-weight:800;color:var(--acc-ink);letter-spacing:.09em;flex:0 0 22px}
+  .flow div b{font-weight:650}
+  .flow div span{color:var(--dim)}
+
+  ul.tight{max-width:74ch;padding-left:1.15rem}
+  ul.tight li{margin:.3rem 0}
+  ul.tight li b{font-weight:650}
+
+  footer.end{margin-top:78px;border-top:1px solid var(--line);padding-top:20px;font-size:.8rem;color:var(--dim)}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="eyebrow">✅ Approved 2026-08-02 · Phase 1 · binding visual spec</p>
+  <h1>Tournament Admin Sandbox</h1>
+  <p class="lede">
+    The visual spec for the "See it live" sandbox: a real, ticking demo tournament a prospect can
+    walk into with no login and no email — <b>on both sides of the product</b>. Everything below is
+    drawn in the app's real chrome, so approved screens can be built to directly.
+    <b>Approved = binding.</b> Every annotated element carries one of three labels:
+    <span class="lab lab-new">New</span> <span class="lab lab-re">Restyled</span>
+    <span class="lab lab-un">Unchanged</span>.
+  </p>
+
+  <nav class="toc">
+    <a href="#chrome">1 · Sandbox chrome</a>
+    <a href="#fan">2 · The fan side</a>
+    <a href="#dash">3 · Game-day dashboard</a>
+    <a href="#editor">4 · Schedule editor</a>
+    <a href="#nudge">5 · The nudge</a>
+    <a href="#doors">6 · Marketing doors</a>
+    <a href="#decide">7 · Decisions for you</a>
+  </nav>
+</header>
+
+<!-- ══════════════════════════════════ 1 ══════════════════════════════════ -->
+<section id="chrome">
+  <p class="sec-eyebrow">Shared machinery · <span class="tag">one component, both sandboxes</span></p>
+  <h2>The sandbox chrome</h2>
+  <p class="sec-intro">
+    One banner and one chip rail, mounted by the org shell whenever the org being viewed is a demo
+    org. It is org-agnostic on purpose — the coach sandbox mounts the same two pieces with its own
+    chip list. It sits <em>above</em> everything the product already draws and never rearranges the
+    page underneath it.
+  </p>
+
+  <h3>1A · On the fan side <span class="lab lab-new">New</span></h3>
+  <div class="pd">
+    <div class="sb">
+      <span class="sb-eye"><span class="bulb"></span>Live sandbox</span>
+      <span class="sb-msg">Nothing here is saved — this is a real tournament we run for you to poke at.</span>
+      <span class="sb-rst mono">Resets in <span id="rst1">41:32</span></span>
+      <button class="sb-cta" type="button">Start your own — free</button>
+    </div>
+    <div class="chips">
+      <span class="tour-lab">Try this</span>
+      <button class="chip" type="button" aria-pressed="false"><span class="n">1</span>Scores tick on their own</button>
+      <button class="chip" type="button" aria-pressed="false"><span class="n">2</span>The bracket fills itself in</button>
+      <button class="chip" type="button" aria-pressed="false"><span class="n">3</span>Try to break the schedule</button>
+      <button class="chip" type="button" aria-pressed="false"><span class="n">4</span>See what parents see</button>
+    </div>
+    <div class="pad g" style="font-size:.8rem">… the real public tournament page renders below, untouched …</div>
+  </div>
+
+  <h3>1B · On the operator side <span class="lab lab-new">New</span></h3>
+  <div class="pd">
+    <div class="sb">
+      <span class="sb-eye"><span class="bulb"></span>Live sandbox</span>
+      <span class="sb-msg">You're signed in as a demo organizer. <b>Changes show on your screen but are never saved.</b></span>
+      <span class="sb-rst mono">Resets in <span id="rst2">41:32</span></span>
+      <button class="sb-cta" type="button">Start your own — free</button>
+    </div>
+    <div class="chips">
+      <span class="tour-lab">Try this</span>
+      <button class="chip" type="button" aria-pressed="false"><span class="n">1</span>Watch a score land</button>
+      <button class="chip" type="button" aria-pressed="false"><span class="n">2</span>Break the schedule</button>
+      <button class="chip" type="button" aria-pressed="false"><span class="n">3</span>Flip to the fan view</button>
+    </div>
+    <div class="pad g" style="font-size:.8rem">… the real admin shell renders below, untouched …</div>
+  </div>
+
+  <dl class="anno">
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Sandbox banner.</b> Full-bleed, sticky at the top of the viewport, above the product's own
+      header. Lime eyebrow + plain-language promise + reset countdown + the one CTA. Never
+      dismissible — the honesty claim has to stay visible.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Tour chips.</b> 3–4 per side, numbered. Tapping one scrolls to the beat and puts a
+      one-and-a-half-second lime ring on it, then marks the chip done with a check. Progress is
+      remembered for the visit only.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Reset countdown.</b> Live <code>mm:ss</code> to the next replay. It is the proof that the
+      demo is running, not a recording. <em>Decision D3 below</em> — exact clock vs. "resets a few
+      times a day".</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>Everything beneath the chrome. The fan page, the admin shell, the nav, the data — all the
+      real product. The sandbox adds a hat, it does not build a replica.</dd>
+  </dl>
+
+  <p class="note"><b>Why one component, not two.</b> The banner, chip rail, countdown, blocked-save
+  nudge, and demo-session door are written once against "is this org a demo org?" — never against
+  "is this a tournament?". The coach sandbox then costs a chip list and a seed, not a second build.</p>
+</section>
+
+<!-- ══════════════════════════════════ 2 ══════════════════════════════════ -->
+<section id="fan">
+  <p class="sec-eyebrow">The fan side · <span class="tag">interactive — the score moves</span></p>
+  <h2>What parents see, ticking</h2>
+  <p class="sec-intro">
+    The landing screen. Semifinal morning at the Riverdale Summer Classic: pool play complete, the
+    bracket seeded, one semi already final and the other live. Scores move without the visitor
+    touching anything — the beat that proves this is running, not a screenshot.
+  </p>
+
+  <div class="pd">
+    <div class="sb">
+      <span class="sb-eye"><span class="bulb"></span>Live sandbox</span>
+      <span class="sb-msg">Nothing here is saved — this is a real tournament we run for you to poke at.</span>
+      <span class="sb-rst mono">Resets in <span id="rst3">41:32</span></span>
+      <button class="sb-cta" type="button">Start your own — free</button>
+    </div>
+    <div class="chips">
+      <span class="tour-lab">Try this</span>
+      <button class="chip" type="button" data-tgt="cards" aria-pressed="false"><span class="n">1</span>Scores tick on their own</button>
+      <button class="chip" type="button" data-tgt="bracket" aria-pressed="false"><span class="n">2</span>The bracket fills itself in</button>
+      <button class="chip" type="button" data-tgt="flipnote" aria-pressed="false"><span class="n">3</span>See the organizer's side</button>
+    </div>
+
+    <div class="fanbar">
+      <span class="brandmark">R</span>
+      <div>
+        <div class="nm">Riverdale Summer Classic</div>
+        <div class="g" style="font-size:.68rem">Riverdale Minor Ball Association</div>
+      </div>
+      <div class="fantabs">
+        <span class="on">Scores</span><span>Schedule</span><span>Standings</span>
+        <span>Playoffs</span><span>Teams</span>
+      </div>
+    </div>
+
+    <div class="fanhero">
+      <span class="badge">🏆 Playoff day</span>
+      <h4>The bracket is set</h4>
+      <p>Semifinals underway at Riverdale Community Park · Final at 2:15 PM</p>
+    </div>
+
+    <div class="scorecards" id="cards">
+      <div class="sc" data-state="live">
+        <div class="sc-top"><span class="b-live"><span class="dot"></span>LIVE</span><span class="sc-vs">Semifinal 1</span></div>
+        <div class="sc-row lose"><span>Silver Creek Sharks</span><span class="s" id="scA">2</span></div>
+        <div class="sc-row win"><span>Riverdale Rapids</span><span class="s" id="scH">4</span></div>
+        <div class="sc-meta">Diamond 1 · U11 · top of the 5th</div>
+      </div>
+      <div class="sc">
+        <div class="sc-top"><span class="b-final">FINAL</span><span class="sc-vs">Semifinal 2</span></div>
+        <div class="sc-row lose"><span>Maple Ridge Marauders</span><span class="s">4</span></div>
+        <div class="sc-row win"><span>Cedar Hollow Cyclones</span><span class="s">5</span></div>
+        <div class="sc-meta">Diamond 2 · U11</div>
+      </div>
+      <div class="sc">
+        <div class="sc-top"><span class="b-time">2:15 PM</span><span class="sc-vs">Championship</span></div>
+        <div class="sc-row lose"><span id="finSlot">Winner of Semifinal 1</span><span class="s">–</span></div>
+        <div class="sc-row"><span>Cedar Hollow Cyclones</span><span class="s">–</span></div>
+        <div class="sc-meta">Diamond 2 · U11</div>
+      </div>
+    </div>
+
+    <div style="padding:0 18px"><p class="mono" style="font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:#68738A;margin:6px 0 14px">Playoff bracket · U11</p></div>
+    <div class="brk" id="bracket">
+      <div class="brkcol">
+        <div class="bg">
+          <span class="code">SF1</span>
+          <div class="meta">Today 9:00 AM · Riverdale Community Park — Diamond 1</div>
+          <div class="t win"><span>Riverdale Rapids <span class="g">(1)</span></span><span class="s" id="bH">4</span></div>
+          <div class="t"><span>Silver Creek Sharks <span class="g">(4)</span></span><span class="s" id="bA">2</span></div>
+          <div class="st live">● LIVE</div>
+        </div>
+        <div class="bg">
+          <span class="code">SF2</span>
+          <div class="meta">Today 9:00 AM · Riverdale Community Park — Diamond 2</div>
+          <div class="t win"><span>🏆 Cedar Hollow Cyclones <span class="g">(2)</span></span><span class="s">5</span></div>
+          <div class="t"><span>Maple Ridge Marauders <span class="g">(3)</span></span><span class="s">4</span></div>
+          <div class="st fin">FINAL</div>
+        </div>
+      </div>
+      <div class="conn"><i></i><i></i></div>
+      <div class="brkcol">
+        <div class="bg">
+          <span class="code">FIN</span>
+          <div class="meta">Today 2:15 PM · Riverdale Community Park — Diamond 2</div>
+          <div class="t dimd" id="finRow"><span>Winner of SF1</span><span class="s">–</span></div>
+          <div class="t"><span>Cedar Hollow Cyclones</span><span class="s">–</span></div>
+          <div class="st pend">AWAITING SF1</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pad" id="flipnote" style="border-top:1px solid var(--hair);background:#0C1119">
+      <span class="g" style="font-size:.79rem">Curious what the organizer is looking at right now?</span>
+      <button class="flip" type="button" style="margin-left:12px">⇄ See the organizer's view</button>
+    </div>
+  </div>
+
+  <dl class="anno">
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>The whole fan page — hero, score cards, bracket, tabs. This is the shipped public tournament
+      site rendering the demo event's real data. No sandbox-only fan UI at all.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>The tick.</b> A scheduled driver moves the live semifinal forward every few minutes and,
+      when it ends, the champion slides into the Final on its own — the page's existing ~30-second
+      refresh picks it up. A visitor who stays two minutes sees something change.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>"See the organizer's view" invitation.</b> The dual-view beat is the sale, so on the demo
+      it gets an explicit sentence rather than only the corner pill. Signed-out visitors never see
+      this control on a real event — it exists only in the sandbox.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>The corner flip pill itself and everything it does. The sandbox reuses the shipped Flip.</dd>
+  </dl>
+
+  <p class="note warn"><b>Honest pacing.</b> The public pages refresh on their existing interval —
+  we are not building a websocket for a demo. The tick cadence is tuned <em>to</em> that interval so
+  "alive" reads as alive and never as broken.</p>
+</section>
+
+<!-- ══════════════════════════════════ 3 ══════════════════════════════════ -->
+<section id="dash">
+  <p class="sec-eyebrow">The operator side · <span class="tag">the real admin portal</span></p>
+  <h2>Game-day dashboard, as a demo organizer</h2>
+  <p class="sec-intro">
+    One tap from the fan page and the prospect is standing where the organizer stands: the same
+    dashboard, the same panels, the same live data — with the sandbox hat on. This is the screen
+    that has to feel like software they'd run a Saturday on.
+  </p>
+
+  <div class="pd">
+    <div class="sb">
+      <span class="sb-eye"><span class="bulb"></span>Live sandbox</span>
+      <span class="sb-msg">You're signed in as a demo organizer. <b>Changes show on your screen but are never saved.</b></span>
+      <span class="sb-rst mono">Resets in <span id="rst4">41:32</span></span>
+      <button class="sb-cta" type="button">Start your own — free</button>
+    </div>
+    <div class="chips">
+      <span class="tour-lab">Try this</span>
+      <button class="chip" type="button" data-tgt="np" aria-pressed="false"><span class="n">1</span>Watch a score land</button>
+      <button class="chip" type="button" data-tgt="hp" aria-pressed="false"><span class="n">2</span>Break the schedule</button>
+      <button class="chip" type="button" data-tgt="flip2" aria-pressed="false"><span class="n">3</span>Flip to the fan view</button>
+    </div>
+
+    <div class="adbar">
+      <span class="wm">FIELDLOGICHQ</span>
+      <span class="sep">/</span>
+      <div>
+        <div class="ev">Riverdale Summer Classic <span class="g mono" style="font-size:.62rem">· ACTIVE</span></div>
+        <div class="evsub">Riverdale Minor Ball Association · Today, playoff day</div>
+      </div>
+      <button class="flip" type="button" id="flip2">⇄ See what parents see</button>
+    </div>
+    <div class="adnav">
+      <span class="on">Dashboard</span><span>Schedule</span><span>Results</span><span>Registrations</span>
+      <span>Divisions</span><span>Venues</span><span>Communication</span><span>Settings</span>
+    </div>
+
+    <div class="grid2">
+      <div class="panel" id="np">
+        <div class="phead"><span class="ic">📡</span><h5>Now Playing</h5><span class="lnk">Enter scores →</span></div>
+        <div class="rows">
+          <div class="lrow" data-k="live">
+            <span class="badge b1">LIVE</span>
+            <div class="mu"><span>Silver Creek Sharks <span class="at">@</span> Riverdale Rapids</span><span class="sc2" id="npScore">2–4</span></div>
+            <div class="mt">Diamond 1 · U11 · Semifinal 1</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="phead"><span class="ic">🕐</span><h5>Up Next</h5><span class="lnk">View schedule →</span></div>
+        <div class="rows">
+          <div class="lrow" data-k="next">
+            <span class="badge b3">2:15 PM</span>
+            <div class="mu"><span>Winner SF1 <span class="at">@</span> Cedar Hollow Cyclones</span></div>
+            <div class="mt">Diamond 2 · U11 · Championship</div>
+          </div>
+          <div class="lrow" data-k="next">
+            <span class="badge b3">4:30 PM</span>
+            <div class="mu"><span>Maple Ridge Marauders <span class="at">@</span> Silver Creek Sharks</span></div>
+            <div class="mt">Diamond 1 · U11 · Consolation</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="phead"><span class="ic">⚠️</span><h5>Needs a Score</h5><span class="lnk">Enter scores →</span></div>
+        <div class="rows">
+          <div class="lrow" data-k="overdue">
+            <span class="badge b2">NEEDS SCORE</span>
+            <div class="mu"><span>Hawks U13 <span class="at">@</span> Cedar Hollow Cyclones U13</span><span class="mt" style="padding:0">11:15 AM</span></div>
+            <div class="mt">Diamond 2 · U13 · Pool B</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="hp">
+        <div class="phead"><span class="ic">🩺</span><h5>Schedule Health</h5><span class="lnk">Open schedule →</span></div>
+        <div class="hsum">
+          <span class="v good" id="dashScore">92</span><span class="of">/100</span>
+          <span class="tone good" id="dashTone">HEALTHY</span>
+        </div>
+        <p class="hsub">12 of 12 games timed · 3 games per team · no team plays twice in a row</p>
+        <div class="kpis">
+          <div class="kpi"><div class="v">0</div><div class="l">Back-to-back</div></div>
+          <div class="kpi"><div class="v">2</div><div class="l">Max / day</div></div>
+          <div class="kpi"><div class="v">1</div><div class="l">Venue moves</div></div>
+          <div class="kpi"><div class="v" id="dashConf">0</div><div class="l">Conflicts</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <dl class="anno">
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>Every panel — Now Playing, Up Next, Needs a Score, Schedule Health — plus the event header,
+      the section nav, and the panel layout. The demo organizer sees the shipped dashboard.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>"See what parents see."</b> The shipped Flip control, already in the event header. In the
+      sandbox a tour chip points at it; the control itself is not modified.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Needs a Score is deliberately seeded non-empty.</b> A dashboard with nothing to do sells
+      nothing. The seed always leaves one finished-but-unscored game so the action bucket has a job
+      in it — and so the visitor has somewhere to try typing a score.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>The score-entry screen itself. Typing a score works, the local view updates — the save is
+      what gets caught (section 5).</dd>
+  </dl>
+
+  <p class="note"><b>What the demo organizer can reach.</b> The demo account is an ordinary organizer
+  on exactly one fictional org. It has no platform-admin powers, no second org, and nothing in the
+  account is real — so the worst case for a shared, no-login session is a stranger looking at made-up
+  teams.</p>
+
+  <h3>What the sandbox deliberately doesn't show <span class="lab lab-new">New</span></h3>
+  <p class="body">Added 2026-08-02. A short list of admin areas is <b>hidden in the sandbox rather
+  than left to dead-end</b> — for the demo's own quality, not for secrecy. This is the same rule
+  already binding for archived coach seasons: <em>hide the entry point rather than let it 404.</em></p>
+
+  <div class="tbl-scroll"><table class="dec">
+    <tr><th style="width:26%">Hidden in the sandbox</th><th>Why it's bad demo real estate</th></tr>
+    <tr><td><b>Billing &amp; subscription</b></td>
+      <td>A comped demo org's billing page answers a question nobody is asking ninety seconds in.</td></tr>
+    <tr><td><b>Staff invitations</b></td>
+      <td>Entirely outbound, so every control would be locked. A screen made only of locked buttons
+        reads as a broken product, not a careful one.</td></tr>
+    <tr><td><b>Data tools &amp; exports</b></td>
+      <td>Exporting invented data is a dead end with nothing to learn from it.</td></tr>
+    <tr><td><b>Deep settings forms</b></td>
+      <td>Long forms where a stranger can't tell what changed, or why it mattered.</td></tr>
+  </table></div>
+
+  <p class="note good"><b>Everything else stays reachable.</b> The tournament module is meant to be
+  shown deeply, not defensively — this list is four corners, not a curtain. The competitive question
+  was asked and closed on 2026-08-02: the door itself is <b>ungated, permanently</b>, because a
+  competitor already gets more by signing up free than the sandbox ever shows.</p>
+</section>
+
+<!-- ══════════════════════════════════ 4 ══════════════════════════════════ -->
+<section id="editor">
+  <p class="sec-eyebrow">The operator side · <span class="tag">slice 1b — interactive, drag the game</span></p>
+  <h2>Schedule editor: break it on purpose</h2>
+  <p class="sec-intro">
+    The moment the whole sandbox is built around. The visitor drags the Championship on top of the
+    9:00 AM slot, the health score falls in real time, the conflict names itself — and only then does
+    the sandbox admit the change isn't being kept. <b>The reaction is free; the save is the nudge.</b>
+  </p>
+
+  <div class="pd">
+    <div class="sb">
+      <span class="sb-eye"><span class="bulb"></span>Live sandbox</span>
+      <span class="sb-msg">You're signed in as a demo organizer. <b>Changes show on your screen but are never saved.</b></span>
+      <span class="sb-rst mono">Resets in <span id="rst5">41:32</span></span>
+      <button class="sb-cta" type="button">Start your own — free</button>
+    </div>
+
+    <div class="adbar">
+      <span class="wm">FIELDLOGICHQ</span><span class="sep">/</span>
+      <div><div class="ev">Riverdale Summer Classic</div><div class="evsub">Schedule · Today, playoff day</div></div>
+      <button class="flip" type="button">⇄ See what parents see</button>
+    </div>
+    <div class="adnav"><span>Dashboard</span><span class="on">Schedule</span><span>Results</span><span>Registrations</span><span>Divisions</span><span>Venues</span></div>
+
+    <div class="sched">
+      <div class="slotgrid">
+        <div class="sh"></div><div class="sh">Diamond 1</div><div class="sh">Diamond 2</div>
+
+        <div class="tm">9:00 AM</div>
+        <div class="slot"><div class="gcard"><div class="cd">SF1 · LIVE</div><div class="mu2">Sharks @ Rapids</div></div></div>
+        <div class="slot" id="dropSlot"><div class="gcard"><div class="cd">SF2 · FINAL</div><div class="mu2">Marauders @ Cyclones</div></div></div>
+
+        <div class="tm">11:15 AM</div>
+        <div class="slot"><div class="gcard"><div class="cd">U13 · POOL B</div><div class="mu2">Hawks @ Cyclones U13</div></div></div>
+        <div class="slot"></div>
+
+        <div class="tm">2:15 PM</div>
+        <div class="slot"></div>
+        <div class="slot" id="finHome"><div class="gcard" id="finCard"><div class="cd">FIN · CHAMPIONSHIP</div><div class="mu2">Winner SF1 @ Cyclones</div></div></div>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <div class="phead"><span class="ic">🩺</span><h5>Schedule Health</h5></div>
+        <div class="hsum">
+          <span class="v good" id="hVal">92</span><span class="of">/100</span>
+          <span class="tone good" id="hTone">HEALTHY</span>
+        </div>
+        <p class="hsub" id="hSub">12 of 12 games timed · 3 games per team · no team plays twice in a row</p>
+        <div class="kpis">
+          <div class="kpi"><div class="v">0</div><div class="l">Back-to-back</div></div>
+          <div class="kpi"><div class="v">2</div><div class="l">Max / day</div></div>
+          <div class="kpi"><div class="v">1</div><div class="l">Venue moves</div></div>
+          <div class="kpi"><div class="v" id="hConf">0</div><div class="l">Conflicts</div></div>
+        </div>
+        <div class="issue" id="hIssue" hidden><span>⚠</span><span id="hIssueTxt"></span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:13px">
+          <button class="sb-cta" id="btnBreak" type="button" style="background:rgba(255,255,255,.06);color:#CBD5E1;border:1px solid rgba(255,255,255,.14)">Try it → drag the Final onto 9:00 AM</button>
+          <button class="sb-cta" id="btnUndo" type="button" hidden style="background:rgba(255,255,255,.06);color:#CBD5E1;border:1px solid rgba(255,255,255,.14)">Put it back</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="nudge-wrap" id="nudgeWrap" hidden>
+      <div class="nudge">
+        <span class="ni">✋</span>
+        <div>
+          <h6>Not saved — this is the sandbox</h6>
+          <p>Your move is showing on your screen, and the health score reacted exactly the way it
+             would on your own event. It just isn't written down. Start your own tournament — free —
+             to keep changes like this.</p>
+          <div class="acts">
+            <button class="go" type="button">Start free — no credit card</button>
+            <button class="keep" type="button" id="keepBtn">Keep poking</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">Interactive: press <em>Try it</em> (or drag the Championship card) to run the beat.</p>
+
+  <dl class="anno">
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>The schedule grid, the drag interaction, the health panel, and the conflict copy. The health
+      engine already recomputes in the browser against the in-memory game list, so a moved-but-unsaved
+      game scores correctly with no new maths.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Keep-my-move-on-a-blocked-save.</b> Today a rejected save snaps the card back. In the
+      sandbox the rejection is recognised and the local move is kept, so the visitor's hands-on
+      change stays on screen while the nudge explains it.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>"Put it back."</b> The sandbox's own undo. Nothing persisted, so this is a local reset —
+      it also means the visitor can never wedge the demo for themselves.</dd>
+    <dt><span class="lab lab-re">Restyled</span></dt>
+    <dd><b>The "Try it" prompt in the health panel.</b> The panel exists; on the demo it grows one
+      inviting line that tells a stranger what to do with it. Sandbox-only.</dd>
+  </dl>
+
+  <p class="note warn"><b>This is the risky slice — and it is fenced.</b> Everything above except the
+  drag beat is Phase 1. If keeping local state on a blocked save fights the editors, Phase 1 ships
+  the editors read-only (with the "try it" prompt pointing at the public what-if beats instead) and
+  this slice follows immediately after. That call gets made in the build, not now.</p>
+</section>
+
+<!-- ══════════════════════════════════ 5 ══════════════════════════════════ -->
+<section id="nudge">
+  <p class="sec-eyebrow">The moment · <span class="tag">copy + placement rules</span></p>
+  <h2>The blocked-save nudge</h2>
+  <p class="sec-intro">
+    Every dead end in the sandbox is a sales moment, and every one of them tells the truth first.
+    The rule: <b>never say "error", never say "failed", never blame the visitor</b> — the change
+    didn't fail, it was never going to be kept, and we said so in the banner.
+  </p>
+
+  <h3>Anatomy <span class="lab lab-new">New</span></h3>
+  <div class="pd"><div class="nudge-wrap">
+    <div class="nudge">
+      <span class="ni">✋</span>
+      <div>
+        <h6>Not saved — this is the sandbox</h6>
+        <p>Your move is showing on your screen, and the health score reacted exactly the way it would
+           on your own event. It just isn't written down. Start your own tournament — free — to keep
+           changes like this.</p>
+        <div class="acts">
+          <button class="go" type="button">Start free — no credit card</button>
+          <button class="keep" type="button">Keep poking</button>
+        </div>
+      </div>
+    </div>
+  </div></div>
+
+  <h3>The three shapes it takes</h3>
+  <div class="tbl-scroll"><table class="dec">
+    <tr><th style="width:15%">Shape</th><th style="width:26%">When</th><th>Copy</th></tr>
+    <tr>
+      <td><b>Card</b><br><span class="lab lab-new">New</span></td>
+      <td>A change the visitor can <em>see</em> take effect — a dragged game, an edited time, a typed
+        score. Appears anchored under the thing they touched.</td>
+      <td><b>Not saved — this is the sandbox.</b><br>Your move is showing on your screen, and the health
+        score reacted exactly the way it would on your own event. It just isn't written down.
+        <em>Start your own tournament — free — to keep changes like this.</em>
+        <br><span class="g">→ Start free — no credit card · Keep poking</span></td>
+    </tr>
+    <tr>
+      <td><b>Toast</b><br><span class="lab lab-new">New</span></td>
+      <td>Any other blocked save anywhere in the portal — the catch-all, so no screen can ever show a
+        raw failure. Auto-dismisses.</td>
+      <td><b>Nothing is saved in the sandbox.</b> Your own tournament is free to start. <span class="g">→ Start free</span></td>
+    </tr>
+    <tr>
+      <td><b>Locked</b><br><span class="lab lab-new">New</span></td>
+      <td>Actions that reach the outside world — send email, publish results, invite staff, take a
+        payment. The button is visibly disabled <em>before</em> it is pressed.</td>
+      <td>Control reads as normal but greyed, with a line beneath:
+        <b>🔒 The sandbox never sends anything to anyone.</b></td>
+    </tr>
+  </table></div>
+
+  <h3>Locked, not broken <span class="lab lab-new">New</span></h3>
+  <div class="pd"><div class="pad">
+    <div class="phead" style="margin-bottom:9px"><span class="ic">✉️</span><h5>Email all coaches — Riverdale Summer Classic</h5></div>
+    <p class="g" style="font-size:.79rem;margin:0 0 12px;max-width:60ch">Subject and message compose
+      normally — the visitor can see exactly what an organizer would write and who it would reach.</p>
+    <button class="disabled-act" type="button" disabled>Send to 4 coaches</button>
+    <p class="lockline">🔒 The sandbox never sends anything to anyone. Every contact in this
+      tournament is invented.</p>
+  </div></div>
+
+  <dl class="anno">
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Disable outbound before the press, don't catch it after.</b> A "send" that visibly fails
+      teaches a prospect the product is flaky. A send that is honestly locked teaches them we're
+      careful with other people's inboxes.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Two independent guarantees, not one.</b> The block sits at a single chokepoint every
+      change passes through, <em>and</em> the outbound paths refuse the demo org on their own. Either
+      one alone would be enough; both is what makes "it can never email anyone" a statement rather
+      than a hope.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>The compose screens, the recipient counts, the previews. A prospect should see the real tool.</dd>
+  </dl>
+
+  <p class="note good"><b>Copy status.</b> The wording above is a working draft written to the brand
+  rules (plain, specific, no hype, no apologies). It goes through <code>/marketing</code> before the
+  door opens — the <em>shapes and placements</em> are what I'm asking you to approve here.</p>
+</section>
+
+<!-- ══════════════════════════════════ 6 ══════════════════════════════════ -->
+<section id="doors">
+  <p class="sec-eyebrow">Acquisition · <span class="tag">where the door goes</span></p>
+  <h2>"See it live" on the marketing site</h2>
+  <p class="sec-intro">
+    Two doors in Phase 1. Both sit <em>beside</em> the free-signup CTA, never in front of it — the
+    sandbox is the proof, signup is still the ask.
+  </p>
+
+  <h3>6A · /for-tournament-organizers — hero</h3>
+  <div class="pd"><div class="mk">
+    <p class="eyeb">For tournament organizers</p>
+    <h4>From first registration<br><em>to final standings.</em></h4>
+    <p class="sub">Register teams, build your schedule, run the bracket, and post live scores — all in
+      one place. Free to start, no credit card required.</p>
+    <div class="mkacts">
+      <button class="mk-pri" type="button">Start Free — No Credit Card</button>
+      <button class="mk-see" type="button"><span class="lv"></span>See it live →</button>
+      <button class="mk-gh" type="button">See all plans →</button>
+    </div>
+    <p class="noemail">No signup. Walk into a tournament that's running right now.</p>
+    <div class="trust"><i>Free plan — no time limit</i><i>No credit card required</i><i>Billed in CAD</i></div>
+  </div></div>
+
+  <dl class="anno">
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>"See it live →"</b> in the hero action row, second position: lime outline with a pulsing
+      dot, so it reads as a live thing without out-shouting the solid-lime primary.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>"No signup. Walk into a tournament that's running right now."</b> One line under the
+      buttons. The objection this answers — <em>is this another form?</em> — is the whole reason the
+      door converts.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>Headline, subhead, the primary CTA, "See all plans", and the trust row. The hero grows one
+      button and one line; nothing is displaced.</dd>
+  </dl>
+
+  <h3>6B · Homepage — the Tournament persona card</h3>
+  <div class="pd"><div class="personas">
+    <div class="pc" data-live="1">
+      <span class="pl">Tournament</span>
+      <p class="pq">Running a tournament?</p>
+      <p class="pb">From team registration to final standings — brackets, schedule, live scores, all
+        in one place.</p>
+      <span class="pbadge">Free to start · no credit card</span>
+      <span class="pcta">I'm a tournament organizer →</span>
+      <span class="psee"><span class="lv"></span>See it live — no signup →</span>
+    </div>
+    <div class="pc">
+      <span class="pl" style="color:#94A3B8">League Plus</span>
+      <p class="pq">Running a house league?</p>
+      <p class="pb">Divisions, draft tools, schedules, standings, and parent notifications in one
+        dashboard.</p>
+      <span class="pbadge">Coming soon · express interest</span>
+      <span class="pcta">I run a league →</span>
+    </div>
+    <div class="pc">
+      <span class="pl" style="color:#94A3B8">Club</span>
+      <p class="pq">Running a club with rep teams?</p>
+      <p class="pb">Tournaments, house league, rep teams, and accounting in one place.</p>
+      <span class="pbadge">Coming soon · express interest</span>
+      <span class="pcta">I run a club →</span>
+    </div>
+  </div></div>
+
+  <dl class="anno">
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>"See it live — no signup →"</b> as a second link on the Tournament card only. The live dot
+      makes the one card that has a working product visibly different from the two that don't — which
+      is honest and happens to be the strongest thing on the page.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd>Card copy, badges, the primary persona link, and both other cards.</dd>
+  </dl>
+
+  <h3>What happens when they press it</h3>
+  <div class="flow">
+    <div><span class="st">1</span><span><b>Press "See it live"</b> — no form, no modal, no email field.</span></div>
+    <div><span class="st">2</span><span>A single fixed demo organizer is signed in server-side. <b>Nothing about the visitor's request chooses who that is</b> — no account parameter, no redirect target, and the door is rate-limited.</span></div>
+    <div><span class="st">3</span><span>They land on the <b>fan page</b> — the friendlier half, and the one that proves it's live within seconds.</span></div>
+    <div><span class="st">4</span><span>Chip 3 (or the pill) flips them to the <b>organizer's dashboard</b>. The dual view is the beat that sells.</span></div>
+    <div><span class="st">5</span><span>Every dead end offers <b>Start your own — free</b>.</span></div>
+  </div>
+
+  <p class="note warn"><b>Shipping the doors is a separate decision.</b> Phase 1 builds and verifies
+  everything on dev. Creating the demo org on production and turning these two buttons on is a
+  release step you and I do together — with a <code>/strategy</code> log entry, since it changes how
+  the funnel works.</p>
+</section>
+
+<!-- ══════════════════════════════════ 7 ══════════════════════════════════ -->
+<section id="decide">
+  <p class="sec-eyebrow">Settled 2026-08-02 · <span class="tag">all ratified — do not re-litigate</span></p>
+  <h2>The decisions, as ratified</h2>
+  <p class="sec-intro">
+    Approved by the owner on 2026-08-02 together with the screens above. The competitive-exposure
+    question was raised and closed in the same session; the full reasoning is in the Business
+    Decisions Log. <b>The door is ungated, permanently — no email, no form, no lead capture</b> —
+    with a revisit trigger in January 2027, when Tournament Plus stops being free.
+  </p>
+
+  <div class="tbl-scroll"><table class="dec">
+    <tr><th style="width:5%">#</th><th style="width:24%">Decision</th><th style="width:33%">Ratified</th><th>Why / what it changes</th></tr>
+    <tr>
+      <td class="mono">D0</td>
+      <td><b>Gate the door?</b> — whether "See it live" asks for anything first</td>
+      <td><b>No. Ungated, permanently.</b> No email, no form, no interstitial, no lead capture.</td>
+      <td>Tournament is free with no card and Tournament Plus is free to everyone until Jan 2027 — a
+        competitor gets <em>more</em> by signing up than the sandbox shows, so a gate protects
+        nothing and only filters honest prospects. Accepted cost: <b>no attribution</b> — we won't
+        know who visited unless they convert. Revisit Jan 2027.</td>
+    </tr>
+    <tr>
+      <td class="mono">D1</td>
+      <td><b>Naming</b> — what the demo org and tournament are called</td>
+      <td><b>Riverdale Minor Ball Association</b> running the <b>Riverdale Summer Classic</b>, with
+        Rapids / Cyclones / Marauders / Sharks. Follows the existing "Riverdale" fictional convention
+        already used in the coach budget sample.</td>
+      <td>Realistic enough to be believable, invented enough that nobody can mistake it for a real
+        association. Also keeps both sandboxes speaking one fictional world.</td>
+    </tr>
+    <tr>
+      <td class="mono">D2</td>
+      <td><b>Plan tier</b> for the demo org</td>
+      <td><b>Comped Tournament Plus</b> — show the full product.</td>
+      <td>A free-tier demo undersells us and makes the sandbox argue against the upgrade. The brand
+        rule still holds: anything Plus-only stays labelled as such, so nobody is misled about what
+        the free plan includes.</td>
+    </tr>
+    <tr>
+      <td class="mono">D3</td>
+      <td><b>Reset cadence</b> and how visibly we count it</td>
+      <td><b>Replay every 2 hours, re-anchor dates nightly</b>, with an exact <code>mm:ss</code>
+        countdown in the banner.</td>
+      <td>The visible clock is what makes "live" credible. Alternative if it feels gimmicky: "resets
+        a few times a day" with no numbers — cheaper to trust, weaker as proof.</td>
+    </tr>
+    <tr>
+      <td class="mono">D4</td>
+      <td><b>Phase 2 moments dock</b> (Registration week / Game day / The morning after)</td>
+      <td><b>Later.</b> Ship the one perfect moment first.</td>
+      <td>Registration week needs a second seeded state with pending teams and payments. Worth doing —
+        after we've watched real prospects use the first one.</td>
+    </tr>
+  </table></div>
+
+  <h3>Slice order I'd build in</h3>
+  <div class="flow">
+    <div><span class="st">S1</span><span><b>The seed, standing on its own.</b> <span>A self-contained canonical tournament — no cloning the dev fixture, no inherited clutter, no test payment copy, invented contacts only. Deterministic results extended through the bracket so every replay lands identically. Nothing is visible yet; everything downstream depends on this being clean.</span></span></div>
+    <div><span class="st">S2</span><span><b>The safety machinery.</b> <span>Demo-org identification, the single chokepoint that refuses every change, and outbound silence. Built org-agnostic so the coach sandbox inherits it. <em>Verified before the door exists</em> — the block is proven before anyone can walk in.</span></span></div>
+    <div><span class="st">S3</span><span><b>The door.</b> <span>The one fixed demo organizer, signed in server-side, rate-limited, with nothing about the request able to influence who gets signed in.</span></span></div>
+    <div><span class="st">S4</span><span><b>The chrome.</b> <span>Banner, chips, countdown, the toast catch-all, and the locked outbound controls — public and admin.</span></span></div>
+    <div><span class="st">S5</span><span><b>The clock.</b> <span>Tick / replay / nightly re-anchor, each alerting loudly on failure. A frozen "live" demo is worse than no demo.</span></span></div>
+    <div><span class="st">S6</span><span><b>Hygiene.</b> <span>The demo org kept out of the public directory, out of our own metrics, out of error alerting — and <b>out of search results</b>, since its fan pages are genuine public tournament pages that could otherwise be indexed or mistaken for a real association. Plus the four hidden admin corners from section 3.</span></span></div>
+    <div><span class="st">S7</span><span><b>The doors, on dev only.</b> <span>Marketing buttons wired but not promoted to production until you say so.</span></span></div>
+    <div><span class="st">1b</span><span><b>The drag beat.</b> <span>Fenced on purpose. If it fights, everything above still ships and this follows.</span></span></div>
+  </div>
+
+  <h3>Standing guardrails these mockups are built to honour</h3>
+  <ul class="tight">
+    <li><b>One account, hardcoded.</b> The door can sign in exactly one fixed demo organizer and nothing in the visitor's request can change that.</li>
+    <li><b>One chokepoint.</b> Every change for the demo org is refused in a single place, not route by route — so a route built next year is blocked by default.</li>
+    <li><b>Silence, twice over.</b> The demo org cannot email or notify, guaranteed independently at the notification and email paths. Every contact in the seed is invented.</li>
+    <li><b>No schema changes expected.</b> If one turns out to be necessary, I stop and ask before touching the database.</li>
+    <li><b>Dev only.</b> Nothing runs against production; the production demo org and the live marketing doors are a release step we do together.</li>
+    <li><b>Ungated door, curated room.</b> Nothing is ever asked of a visitor before they walk in; four admin corners are hidden inside rather than allowed to dead-end.</li>
+    <li><b>No commits without your say-so</b>, on the shared <code>dev</code> branch, staying clear of the coaches-portal and setup-wizard work other chats have open.</li>
+  </ul>
+
+  <p class="note good"><b>Approved 2026-08-02 — this is the spec.</b> Building to it now. Anything the
+  code forces me to deviate from gets flagged rather than quietly changed. The wording throughout is
+  a working draft pending the marketing pass; the shapes and placements are what's binding.</p>
+</section>
+
+<footer class="end">
+  Tournament Admin Sandbox · Phase 1 mockups · drawn in the product's real chrome ·
+  companion documents: <span class="mono">TOURNAMENT_ADMIN_SANDBOX_PLAN.md</span> ·
+  <span class="mono">TOURNAMENT_ADMIN_SANDBOX_PM_BRIEF.md</span>
+</footer>
+
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ── reset countdowns (all banners share one clock) ────────────────────────
+  var secs = 41 * 60 + 32;
+  var clocks = ['rst1','rst2','rst3','rst4','rst5'].map(function(id){ return document.getElementById(id); });
+  function paintClock(){
+    if (secs < 0) secs = 2 * 60 * 60;
+    var m = Math.floor(secs / 60), s = secs % 60;
+    var txt = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    clocks.forEach(function(el){ if (el) el.textContent = txt; });
+    secs -= 1;
+  }
+  paintClock();
+  setInterval(paintClock, 1000);
+
+  // ── tour chips: scroll + spotlight + mark done ────────────────────────────
+  document.querySelectorAll('.chip').forEach(function(chip){
+    chip.addEventListener('click', function(){
+      var tgt = chip.getAttribute('data-tgt');
+      var el = tgt ? document.getElementById(tgt) : null;
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.remove('spot');
+        void el.offsetWidth;
+        el.classList.add('spot');
+      }
+      if (chip.getAttribute('aria-pressed') !== 'true') {
+        chip.setAttribute('aria-pressed', 'true');
+        var tick = document.createElement('span');
+        tick.className = 'done';
+        tick.textContent = '✓';
+        chip.appendChild(tick);
+      }
+    });
+  });
+
+  // ── the fan-side tick: live semifinal moves, then the Final seeds itself ──
+  var scH = document.getElementById('scH'), scA = document.getElementById('scA');
+  var bH  = document.getElementById('bH'),  bA  = document.getElementById('bA');
+  var npScore = document.getElementById('npScore');
+  var home = 4, away = 2, beats = 0;
+  function bump(el, val){
+    if (!el) return;
+    el.textContent = val;
+    el.classList.remove('tick');
+    void el.offsetWidth;
+    el.classList.add('tick');
+  }
+  setInterval(function(){
+    if (beats > 3) return;
+    beats += 1;
+    if (beats % 2 === 1) { home += 1; } else { away += 1; }
+    bump(scH, home); bump(bH, home);
+    bump(scA, away); bump(bA, away);
+    if (npScore) npScore.textContent = away + '–' + home;
+    if (beats === 4) {
+      var slot = document.getElementById('finSlot');
+      var row  = document.getElementById('finRow');
+      if (slot) slot.textContent = 'Riverdale Rapids';
+      if (row) { row.classList.remove('dimd'); row.innerHTML = '<span>Riverdale Rapids</span><span class="s">–</span>'; }
+    }
+  }, 6000);
+
+  // ── the drag beat: move the Final onto 9:00 AM, health reacts, nudge ──────
+  var finCard = document.getElementById('finCard');
+  var finHome = document.getElementById('finHome');
+  var dropSlot = document.getElementById('dropSlot');
+  var hVal = document.getElementById('hVal'), hTone = document.getElementById('hTone');
+  var hSub = document.getElementById('hSub'), hConf = document.getElementById('hConf');
+  var hIssue = document.getElementById('hIssue'), hIssueTxt = document.getElementById('hIssueTxt');
+  var nudgeWrap = document.getElementById('nudgeWrap');
+  var btnBreak = document.getElementById('btnBreak'), btnUndo = document.getElementById('btnUndo');
+  var ghost = null;
+
+  function breakIt(){
+    if (!finCard || !dropSlot || finCard.parentElement === dropSlot) return;
+    ghost = document.createElement('div');
+    ghost.className = 'gcard ghost';
+    ghost.innerHTML = '<div class="cd">FIN · MOVED</div><div class="mu2">was 2:15 PM</div>';
+    if (finHome) finHome.appendChild(ghost);
+    dropSlot.appendChild(finCard);
+    finCard.classList.add('moved', 'clash');
+
+    hVal.textContent = '61'; hVal.className = 'v warn';
+    hTone.textContent = 'NEEDS WORK'; hTone.className = 'tone warn';
+    hConf.textContent = '1'; hConf.classList.add('hot');
+    hSub.textContent = '12 of 12 games timed · Diamond 2 double-booked at 9:00 AM';
+    hIssueTxt.textContent = 'Diamond 2 has two games at 9:00 AM — the Championship overlaps Semifinal 2. Cedar Hollow Cyclones would also play back-to-back.';
+    hIssue.hidden = false;
+    btnBreak.hidden = true; btnUndo.hidden = false;
+
+    setTimeout(function(){
+      nudgeWrap.hidden = false;
+      nudgeWrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 700);
+  }
+
+  function putBack(){
+    if (!finCard || !finHome) return;
+    if (ghost && ghost.parentElement) ghost.parentElement.removeChild(ghost);
+    ghost = null;
+    finHome.appendChild(finCard);
+    finCard.classList.remove('moved', 'clash');
+    hVal.textContent = '92'; hVal.className = 'v good';
+    hTone.textContent = 'HEALTHY'; hTone.className = 'tone good';
+    hConf.textContent = '0'; hConf.classList.remove('hot');
+    hSub.textContent = '12 of 12 games timed · 3 games per team · no team plays twice in a row';
+    hIssue.hidden = true;
+    nudgeWrap.hidden = true;
+    btnBreak.hidden = false; btnUndo.hidden = true;
+  }
+
+  if (btnBreak) btnBreak.addEventListener('click', breakIt);
+  if (btnUndo) btnUndo.addEventListener('click', putBack);
+  if (finCard) finCard.addEventListener('click', breakIt);
+  var keepBtn = document.getElementById('keepBtn');
+  if (keepBtn) keepBtn.addEventListener('click', function(){ nudgeWrap.hidden = true; });
+})();
+</script>

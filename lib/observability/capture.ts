@@ -9,6 +9,12 @@
  */
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '../supabase-admin';
+import { isDemoOrgSlug } from '../demo-org';
+// The synchronous, cache-only companion. Deliberately the weaker check: capture must never throw
+// and must never await something that can, so a request that only knows the org ID gets the
+// suppression when the cache is warm (notify/fan-notify warm it) and pages as normal when it
+// isn't. The slug check above is the one that carries this on the routes that matter.
+import { isKnownDemoOrgId } from '../demo-org-server';
 import { maybeSendCriticalAlert, type RecordErrorFlags } from './alerts';
 import { observabilityEnv } from './env';
 import { fingerprint } from './fingerprint';
@@ -153,6 +159,12 @@ export async function captureError(err: unknown, opts: CaptureOptions = {}): Pro
     });
     if (error) {
       console.error('[observability] record_error_event failed:', error.message);
+    } else if (isDemoOrgSlug(orgSlug) || isKnownDemoOrgId(orgId)) {
+      // Sandbox ("See it live") orgs are RECORDED but never ALERT. The demo is ours, it is
+      // fictional, and its traffic is strangers poking at it — a stranger tripping a 500 in the
+      // sandbox is a bug report, not a customer outage, and must not page anyone at 2am. The event
+      // is still stored (attributed to the demo org) so we can actually go and fix it.
+      console.warn(`[observability] sandbox org ${orgSlug} — recorded, alert suppressed (fp=${fp})`);
     } else if (data && typeof data === 'object' && !Array.isArray(data)) {
       // Phase-4 critical alerting. The object check is deliberate: if the code ever outruns
       // migration 122 (pre-122 RPC returns a uuid string), alerting silently skips while

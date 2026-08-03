@@ -39,6 +39,7 @@ import {
 } from '@/lib/fan-follows';
 import { resolveFollowableOrgBySlug } from '@/lib/directory';
 import { withObservability } from '@/lib/observability';
+import { assertNotDemoOrg } from '@/lib/demo-guard';
 
 const NO_STORE = { 'Cache-Control': 'no-store' };
 
@@ -96,6 +97,22 @@ export const POST = withObservability(async (req: Request) => {
   const entityType = body.entityType ?? 'team';
   const isFollow = body.action !== 'unfollow';
   const { teamId, orgSlug, tournamentSlug } = body;
+
+  // Sandbox write block, body-identified branch — the org is named in the BODY here, so the
+  // request-layer chokepoint in proxy.ts cannot see it (same blind spot as public registration).
+  //
+  // Following the demo ("See it live") event is not a dangerous write — it changes the visitor's
+  // own account, not the tournament, and the demo can never send them an alert anyway. It is
+  // blocked because it would leave a made-up tournament sitting in a real person's Following list
+  // indefinitely, which is precisely the kind of small mess that makes a demo feel careless.
+  //
+  // UNFOLLOW is deliberately still allowed: every follow path above requires `orgSlug` while the
+  // unfollow paths do not, so gating on `isFollow` blocks all three entity types on the way in
+  // while leaving anyone who already picked up a demo follow able to get rid of it.
+  if (isFollow) {
+    const sandboxBlocked = assertNotDemoOrg(orgSlug);
+    if (sandboxBlocked) return sandboxBlocked;
+  }
 
   // ── Whole tournament ──────────────────────────────────────────────────────
   if (entityType === 'tournament') {

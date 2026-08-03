@@ -1,0 +1,152 @@
+import { isDemoOrgSlug } from './demo-org';
+
+/**
+ * lib/demo-guard.ts — the central write block for sandbox organizations.
+ *
+ * ONE rule: **for a demo org, nothing that changes anything is allowed through.** Enforced at the
+ * request layer (`proxy.ts`) so a route written next year is blocked by default, without anybody
+ * remembering to opt it in. That default-closed property is the entire value of putting it here
+ * rather than in the routes.
+ *
+ * The rejection is a structured 403 carrying `sandbox: true`. That flag is a contract with the
+ * client: the shared fetch layer recognises it and shows the "not saved in the sandbox" nudge
+ * instead of an error, and — for the schedule and bracket editors — keeps the visitor's change on
+ * screen so the health score can react to it. A plain 403 would make the sandbox feel broken;
+ * this is what makes it feel honest.
+ *
+ * ── What this module does NOT claim ─────────────────────────────────────────────────────────
+ *
+ * This layer identifies the org from the URL — a path segment or the `orgSlug` query parameter,
+ * which is how every authenticated admin and coach route carries it. A request that names its org
+ * only in its BODY cannot be identified here, because middleware cannot read a body without
+ * consuming it. Those routes are a short, enumerable list (public registration and token-based
+ * score submission), and they carry their own guard via `assertNotDemoOrg`. `lib/demo-org.ts`
+ * describes the layering; the honest summary is: this is the chokepoint, plus a handful of
+ * body-identified public endpoints that must call the guard themselves.
+ *
+ * Outbound silence (email/notifications) is a SEPARATE and independent guarantee — see
+ * `lib/notify.ts` and `lib/email.ts`. Either layer alone would stop the demo org contacting
+ * anyone; both is what makes it a statement rather than a hope.
+ */
+
+/** Methods that cannot change anything and are therefore always allowed. */
+const READ_ONLY_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+export const SANDBOX_REJECTION_STATUS = 403;
+
+/** The body every blocked write returns. `sandbox: true` is what the client keys off. */
+export interface SandboxRejectionBody {
+  sandbox: true;
+  error: string;
+  /** Short, human, and safe to surface directly if a caller has no better copy to hand. */
+  message: string;
+}
+
+export const SANDBOX_REJECTION_BODY: SandboxRejectionBody = {
+  sandbox: true,
+  error: 'SandboxReadOnly',
+  message: 'Nothing is saved here. To keep your changes, start your own tournament — it\'s free.',
+};
+
+/** Does this request method attempt to change something? */
+export function isWriteMethod(method: string | null | undefined): boolean {
+  if (!method) return false;
+  return !READ_ONLY_METHODS.has(method.toUpperCase());
+}
+
+/**
+ * Which org does this request act on, as far as the URL can tell?
+ *
+ * Three shapes cover every authenticated write in the app:
+ *   `/{orgSlug}/admin/…`             → org pages, scorekeeper, check-in (server actions)
+ *   `/api/coaches/{orgSlug}/…`       → the coaches portal API
+ *   `/api/**?orgSlug={orgSlug}`      → the admin API, which carries it in the query string
+ *
+ * Returns the FIRST demo slug it finds, so a request cannot dodge the block by also naming a
+ * real org somewhere else in the URL.
+ */
+/**
+ * One percent-decode of a path segment, matching what the router does when it builds `params`.
+ *
+ * ⚠ **This is load-bearing, and it was missing.** `URL.pathname` preserves `%XX` exactly as sent,
+ * but Next's route matcher `decodeURIComponent`s each dynamic segment before a handler sees it. So
+ * `POST /api/coaches/%72iverdale-minor-ball/…` arrived here as the literal `%72iverdale-minor-ball`
+ * (no match, write allowed) and reached the handler as `riverdale-minor-ball` (the real, seeded
+ * demo org). Verified live during the 2026-08-03 review: the encoded form returned the route's own
+ * 401 instead of this module's 403, proving the chokepoint had been stepped around. With a demo
+ * session — which the door hands to anyone who asks — that is a real write against the sandbox,
+ * defeating the one promise the whole feature rests on.
+ *
+ * Decoding ONCE is exactly right, not a guess: it mirrors the router's single decode. A
+ * double-encoded `%2572…` decodes here to `%72…` and reaches the handler as `%72…` too — neither is
+ * the demo org, and they still agree. Agreement with the router is the property that matters.
+ *
+ * A malformed escape (`%`, `%zz`) throws; the raw segment is then compared instead, which is also
+ * what the router will fail to decode, so the two still cannot disagree.
+ */
+function decodePathSegment(segment: string): string {
+  if (!segment.includes('%')) return segment; // the overwhelmingly common case, untouched
+  try {
+    return decodeURIComponent(segment);
+  } catch {
+    return segment;
+  }
+}
+
+export function demoOrgSlugFromRequest(url: URL): string | null {
+  // EVERY path segment is checked, not just the ones we can name today.
+  //
+  // The org slug sits in position 0 for org pages (`/{orgSlug}/admin/…`) and in position 2 for
+  // the several API families that scope by org in the path — `/api/coaches/{orgSlug}/…`,
+  // `/api/scorekeeper/{orgSlug}/…`, `/api/official/{orgSlug}/…`. Enumerating those prefixes
+  // would mean this guard silently stopped covering the next family somebody adds. Scanning
+  // every segment costs nothing (the allow-list is two entries and slugs are a closed
+  // vocabulary that cannot collide with a route word — see lib/reserved-slugs.ts) and cannot
+  // fall behind the routing table.
+  for (const rawSegment of url.pathname.split('/')) {
+    const segment = decodePathSegment(rawSegment);
+    if (isDemoOrgSlug(segment)) return segment;
+  }
+
+  // ?orgSlug= — how the admin API names its org. Checked for every path, because a route that
+  // takes orgSlug in the query is a write target wherever it lives.
+  const queryOrg = url.searchParams.get('orgSlug');
+  if (isDemoOrgSlug(queryOrg)) return queryOrg;
+
+  return null;
+}
+
+/**
+ * Should this request be refused as a sandbox write?
+ * True only when it both targets a demo org AND attempts to change something.
+ */
+export function shouldBlockSandboxWrite(method: string, url: URL): boolean {
+  if (!isWriteMethod(method)) return false;
+  return demoOrgSlugFromRequest(url) !== null;
+}
+
+/** The structured rejection returned to a blocked write. */
+export function sandboxRejectionResponse(): Response {
+  return new Response(JSON.stringify(SANDBOX_REJECTION_BODY), {
+    status: SANDBOX_REJECTION_STATUS,
+    headers: {
+      'Content-Type': 'application/json',
+      // Lets a client (and a human reading a network tab) tell this apart from a real 403 without
+      // parsing the body.
+      'X-Sandbox-Blocked': '1',
+      'Cache-Control': 'no-store',
+    },
+  });
+}
+
+/**
+ * Guard for the handful of public write endpoints that identify their org from the request BODY
+ * rather than the URL, and so cannot be caught by the proxy chokepoint above.
+ *
+ * Returns a rejection Response to return immediately, or null when the write may proceed.
+ * Deliberately takes an already-resolved slug: the caller has just looked the org up, so this
+ * adds no query of its own.
+ */
+export function assertNotDemoOrg(orgSlug: string | null | undefined): Response | null {
+  return isDemoOrgSlug(orgSlug) ? sandboxRejectionResponse() : null;
+}

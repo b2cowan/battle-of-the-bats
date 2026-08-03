@@ -13,7 +13,7 @@ Current rule:
 - Use `/coaches` as the product route. Legacy coach/team signup routes should redirect into `/coaches` before launch.
 - Customer-facing copy should say Coaches Portal, not Team plan, Team subscription, or standalone Team.
 
-See `docs/projects/active/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md` for the canonical implementation direction.
+See `docs/projects/archive/COACHES_PORTAL_UNIFIED_PROJECT_PLAN.md` for the canonical implementation direction.
 
 *Last updated: 2026-05-24 — established in marketing strategy session*
 

@@ -61,6 +61,48 @@
   background: rgba(var(--logic-lime-rgb), 0.03);
 }
 
+/* ── A persona card carrying two doors (Tournament + "See it live") ─────────
+   Links can't nest, so this variant is a div: the persona link stretches over the whole
+   card via ::after (whole-card clickability preserved), and the sandbox link sits above it.
+   Only the Tournament card uses this, and only while the sandbox door is visible. */
+.heroPersonaCardStack {
+  position: relative;
+}
+
+.heroPersonaStretch::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.heroPersonaSecondary {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+}
+
+.heroPersonaLiveDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  flex-shrink: 0;
+  animation: heroPersonaPulse 1.9s infinite;
+}
+
+@keyframes heroPersonaPulse {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.2; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .heroPersonaLiveDot { animation: none; }
+}
+
 /* Inline "already know what you need?" footnote */
 .heroFooterNote {
   position: relative;

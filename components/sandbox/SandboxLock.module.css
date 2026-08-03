@@ -1,0 +1,11 @@
+/* The line beneath a locked outbound control. Quiet on purpose: it explains, it doesn't warn. */
+
+.lockLine {
+  display: flex;
+  gap: 0.375rem;
+  align-items: baseline;
+  margin: 0.4375rem 0 0;
+  font-size: 0.72rem;
+  line-height: 1.45;
+  color: var(--data-gray);
+}

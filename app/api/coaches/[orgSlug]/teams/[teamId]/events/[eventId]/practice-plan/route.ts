@@ -22,8 +22,8 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import {
-  denyUnless, canManageSchedule, canWriteDevelopment, canViewDevelopmentGoals, canViewRoster,
-  redactRoster,
+  denyUnless, canManageSchedule, canViewSchedule, canWriteDevelopment, canViewDevelopmentGoals,
+  canSeePlanPlayers, redactRoster,
 } from '@/lib/coach-capabilities';
 import {
   MAX_RECAP_LEN, collectPracticeTagSuggestions, sanitizePracticePlan,
@@ -98,7 +98,9 @@ export const GET = withObservability(async (_req: Request,
   const { ctx, assignment, programYear, event } = resolved;
   const caps = assignment.capabilities;
 
-  const denied = denyUnless(canManageSchedule(caps), 'You do not have access to the schedule.');
+  // READ half of the 2026-08-03 split. Reading the plan is what a helper is here for; the PUT below
+  // is unchanged and still head-coach-only, so opening this door widens nothing that can be written.
+  const denied = denyUnless(canViewSchedule(caps), 'You do not have access to the schedule.');
   if (denied) return denied;
 
   const showFocus = canViewDevelopmentGoals(caps);
@@ -118,8 +120,13 @@ export const GET = withObservability(async (_req: Request,
    * can surface it. The plan still renders — blocks, stations and groups simply show no names,
    * which is exactly what the read-only past-plan route beside this one already does, and what
    * `/roster`, `/attendance` and the development board have always done.
+   *
+   * ⚠ 2026-08-03: now `canSeePlanPlayers`, not `canViewRoster`. A HELPER holds `roster: 'off'` with
+   * `planPlayerNames: true` — names here, nowhere else — which is the owner ruling of the same date
+   * expressed as a grant. For every other coach the two predicates return the same answer, because
+   * `canSeePlanPlayers` still opens on roster visibility first.
    */
-  const showRoster = canViewRoster(caps);
+  const showRoster = canSeePlanPlayers(caps);
 
   // Only `goals` depends on the roster, so it chains off that read; everything else starts
   // immediately rather than queuing behind a round trip it has no need of.
@@ -247,6 +254,23 @@ export const GET = withObservability(async (_req: Request,
     canWrite: canWriteDevelopment(caps),
     canViewFocus: showFocus,
     canViewAttendance: showAttendance,
+    /**
+     * May this viewer move the practice on — "Next block" and "Rotate now"?
+     *
+     * ⚠ It records NOTHING (D4); the run screen's cursor is client state. So this is not a security
+     * gate, it is an honesty one: a HELPER runs one station and does not decide when the whole team
+     * rotates, and a button that looks like it moves everybody but is theirs to press would be
+     * worse than no button. Keyed on `scheduleManage` as the nearest thing already true — someone
+     * trusted to change the team's schedule is trusted to move tonight's practice along — rather
+     * than minting a grant for a control that writes nothing.
+     */
+    canAdvance: canManageSchedule(caps),
+    /**
+     * Who DOES move it on, named, so the helper's screen can say so instead of showing an amber
+     * "rotation due" state with no action and no explanation. Falls back to null rather than to a
+     * guess: an invented name on the one line a helper would act on is worse than a vaguer sentence.
+     */
+    headCoachName: staff.find(s => s.coachRole === 'head_coach')?.displayName ?? null,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/practice-plan' });
 

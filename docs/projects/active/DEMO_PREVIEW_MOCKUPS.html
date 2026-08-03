@@ -1,0 +1,633 @@
+<title>FieldLogicHQ — Demo &amp; Preview Mockups</title>
+<style>
+  :root{
+    --pg:#F6F6F3; --card:#FFFFFF; --ink:#1B1D24; --dim:#5D6372; --line:#E2E3DF;
+    --acc:#1E3A8A; --acc-ink:#1E3A8A; --acc-soft:rgba(30,58,138,.07);
+    --good:#15803D; --warn:#B45309;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --pg:#0F1013; --card:#171922; --ink:#E9EAEE; --dim:#9BA1AE; --line:#272A33;
+      --acc:#93A9EA; --acc-ink:#AFC0F2; --acc-soft:rgba(147,169,234,.09);
+      --good:#4ADE80; --warn:#FBBF24; }
+  }
+  :root[data-theme="dark"]{ --pg:#0F1013; --card:#171922; --ink:#E9EAEE; --dim:#9BA1AE; --line:#272A33;
+    --acc:#93A9EA; --acc-ink:#AFC0F2; --acc-soft:rgba(147,169,234,.09); --good:#4ADE80; --warn:#FBBF24; }
+  :root[data-theme="light"]{ --pg:#F6F6F3; --card:#FFFFFF; --ink:#1B1D24; --dim:#5D6372; --line:#E2E3DF;
+    --acc:#1E3A8A; --acc-ink:#1E3A8A; --acc-soft:rgba(30,58,138,.07); --good:#15803D; --warn:#B45309; }
+
+  *{box-sizing:border-box}
+  body{background:var(--pg);color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 20px 96px}
+  .mono{font-family:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  header.top{padding:56px 0 8px}
+  .eyebrow{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:600}
+  h1{font-size:clamp(1.6rem,3.4vw,2.3rem);line-height:1.15;margin:.35rem 0 .6rem;letter-spacing:-.02em;text-wrap:balance}
+  .lede{color:var(--dim);max-width:62ch;margin:0}
+
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:26px 0 8px}
+  nav.toc a{font-size:.8rem;font-weight:600;color:var(--acc-ink);text-decoration:none;border:1px solid var(--line);background:var(--card);padding:7px 13px;border-radius:999px}
+  nav.toc a:hover{border-color:var(--acc)}
+
+  section{margin-top:64px}
+  .sec-eyebrow{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;color:var(--acc-ink)}
+  .sec-eyebrow .tag{color:var(--dim);font-weight:600}
+  h2{font-size:1.45rem;letter-spacing:-.015em;margin:.3rem 0 .5rem;text-wrap:balance}
+  .sec-intro{color:var(--dim);max-width:70ch;margin:0 0 4px}
+  .note{font-size:.82rem;color:var(--dim);border-left:3px solid var(--line);padding:2px 0 2px 12px;max-width:66ch;margin:14px 0 0}
+  .note b{color:var(--ink)}
+
+  /* ---------- dark product world (admin + public surfaces) ---------- */
+  .dk{background:#0A0A0C;color:#F1F5F9;border:1px solid #23262E;border-radius:14px;overflow:hidden;margin-top:22px}
+  .dk .dim{color:#94A3B8}
+  .dk-pad{padding:18px 20px}
+
+  /* wizard two-pane */
+  .duo{display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap;padding:26px}
+  .wiz{flex:1 1 380px;min-width:320px;background:#080B12;border:1px solid rgba(30,58,138,.35);border-radius:4px;padding:18px 18px 14px}
+  .wiz-chrome{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:6px}
+  .wiz-chrome .step{font-size:.66rem;letter-spacing:.1em;color:#94A3B8;text-transform:uppercase;font-weight:700}
+  .wiz-bar{flex:1;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+  .wiz-bar i{display:block;height:100%;width:20%;background:#D9F99D}
+  .wiz h3{font-size:1.05rem;margin:.55rem 0 .15rem;color:#F1F5F9}
+  .wiz .sub{font-size:.8rem;color:#94A3B8;margin:0 0 14px}
+  .blurb{background:rgba(30,58,138,.14);border:1px solid rgba(30,58,138,.4);border-radius:4px;padding:10px 12px;margin-bottom:14px}
+  .blurb b{font-size:.78rem;color:#D9F99D}
+  .blurb ul{margin:.35rem 0 0;padding-left:1.1rem;font-size:.76rem;color:#CBD5E1}
+  .blurb li{margin:.15rem 0}
+  .f{margin-bottom:12px}
+  .f label{display:block;font-size:.7rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;margin-bottom:5px}
+  .f input{width:100%;background:#0F1523;border:1px solid rgba(255,255,255,.14);border-radius:3px;color:#F1F5F9;font:inherit;font-size:.9rem;padding:9px 11px}
+  .f input:focus-visible{outline:2px solid #D9F99D;outline-offset:1px;border-color:transparent}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .hint{font-size:.72rem;color:#7C8698;margin:6px 0 0}
+  .stylecards{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .stylecard{background:#0F1523;border:1px solid rgba(255,255,255,.14);border-radius:3px;padding:10px 12px;cursor:pointer;text-align:left;color:#F1F5F9;font:inherit}
+  .stylecard b{display:block;font-size:.82rem}
+  .stylecard span{font-size:.72rem;color:#94A3B8}
+  .stylecard.sel{border-color:#D9F99D;box-shadow:0 0 0 1px #D9F99D inset}
+  .stylecard:focus-visible{outline:2px solid #D9F99D;outline-offset:2px}
+  .wiz-foot{display:flex;justify-content:space-between;align-items:center;margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,255,255,.08)}
+  .btn-ghost{background:none;border:none;color:#94A3B8;font:inherit;font-size:.8rem;cursor:pointer;padding:8px 10px}
+  .btn-lime{background:#D9F99D;color:#0F1123;border:none;border-radius:2px;font:inherit;font-size:.72rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:10px 18px;cursor:pointer}
+  .btn-lime:focus-visible,.btn-ghost:focus-visible{outline:2px solid #D9F99D;outline-offset:2px}
+
+  /* phone preview */
+  .phone-col{flex:0 1 330px;min-width:300px;display:flex;flex-direction:column;gap:12px;align-items:center}
+  .swatches{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  .sw{width:26px;height:26px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;position:relative}
+  .sw i{position:absolute;right:-1px;bottom:-1px;width:10px;height:10px;border-radius:50%;border:1.5px solid #0A0A0C}
+  .sw.sel{border-color:#F1F5F9}
+  .sw:focus-visible{outline:2px solid #D9F99D;outline-offset:2px}
+  .sw-cap{font-size:.68rem;color:#94A3B8;text-align:center;margin:0}
+  .phone{width:300px;border:1px solid #2A2E38;border-radius:26px;background:#05060A;padding:10px 10px 16px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+  .notch{width:86px;height:5px;border-radius:3px;background:#23262E;margin:2px auto 10px}
+  .pscreen{--pp:#1E3A8A;--pa:#D9F99D;border-radius:16px;overflow:hidden;background:
+    radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--pp) 42%, #05060A) 0%, #07080D 68%);
+    padding:18px 14px 16px;min-height:430px}
+  .pbadge{display:inline-flex;align-items:center;gap:6px;font-size:.62rem;font-weight:700;letter-spacing:.05em;color:var(--pa);border:1px solid color-mix(in srgb, var(--pa) 45%, transparent);border-radius:999px;padding:4px 10px;background:rgba(0,0,0,.25)}
+  .ph1{font-size:1.28rem;font-weight:800;letter-spacing:-.01em;line-height:1.2;margin:.6rem 0 .3rem;color:#FFF;min-height:3.1rem;text-wrap:balance}
+  .ph1.ghost{color:rgba(255,255,255,.35);font-weight:600}
+  .psub{font-size:.72rem;color:#B9C2D4;margin:0 0 .8rem}
+  .psub strong{color:#E7ECF7}
+  .preg{font-size:.7rem;color:#CBD5E1;margin:0 0 .5rem}
+  .preg b{color:#FFF;display:block;font-size:.74rem}
+  .pcta{display:block;width:100%;background:var(--pa);color:#0F1123;border:none;border-radius:8px;font:inherit;font-weight:800;font-size:.84rem;padding:11px 0;cursor:default;margin:2px 0 6px}
+  .pcta-note{font-size:.6rem;color:#8E99AC;line-height:1.45;margin:0 0 14px}
+  .pstats{display:flex;border-top:1px solid rgba(255,255,255,.12);padding-top:12px}
+  .pstat{flex:1;text-align:center;border-left:1px solid rgba(255,255,255,.12)}
+  .pstat:first-child{border-left:none}
+  .pstat .v{font-family:ui-monospace,Consolas,monospace;font-size:1.15rem;font-weight:700;color:#FFF}
+  .pstat .l{font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:#8E99AC}
+  .purl{margin-top:14px;font-size:.6rem;color:#68738A;text-align:center;word-break:break-all}
+
+  /* sandbox */
+  .sand-banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:#101623;border-bottom:1px solid #23262E;padding:12px 20px}
+  .sand-banner .lab{font-size:.68rem;font-weight:800;letter-spacing:.12em;color:#D9F99D}
+  .sand-banner .rst{font-size:.72rem;color:#94A3B8}
+  .sand-cta{background:#D9F99D;color:#0F1123;border:none;border-radius:2px;font:inherit;font-size:.68rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:8px 14px;cursor:pointer}
+  .tour{display:flex;flex-wrap:wrap;gap:8px;padding:14px 20px 4px}
+  .tchip{background:#0F1523;border:1px solid rgba(255,255,255,.14);color:#CBD5E1;border-radius:999px;font:inherit;font-size:.72rem;padding:6px 12px;cursor:pointer}
+  .tchip b{color:#D9F99D;margin-right:4px}
+  .tchip:hover{border-color:#D9F99D}
+  .tchip:focus-visible{outline:2px solid #D9F99D;outline-offset:2px}
+  .flash{animation:flash 1.2s ease 2}
+  @keyframes flash{0%,100%{box-shadow:none}50%{box-shadow:0 0 0 2px #D9F99D}}
+
+  .ticker{display:flex;gap:10px;overflow-x:auto;padding:14px 20px}
+  .tk{flex:0 0 auto;display:flex;align-items:center;gap:10px;background:#0F1523;border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:9px 14px;font-size:.8rem}
+  .tk .b-live{display:inline-flex;align-items:center;gap:5px;font-size:.58rem;font-weight:800;letter-spacing:.1em;color:#F87171}
+  .dot{width:6px;height:6px;border-radius:50%;background:#F87171;animation:pulse 1.6s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .tk .b-final{font-size:.58rem;font-weight:800;letter-spacing:.1em;color:#94A3B8}
+  .tk .b-time{font-size:.62rem;font-weight:700;color:#D9F99D}
+  .tk .sc{font-family:ui-monospace,Consolas,monospace;font-weight:700;display:inline-block}
+  .bump{animation:bump .45s ease}
+  @keyframes bump{0%{transform:translateY(-9px);opacity:0;color:#D9F99D}100%{transform:none;opacity:1}}
+
+  .sand-grid{display:flex;gap:22px;flex-wrap:wrap;padding:8px 20px 24px}
+  .brk{flex:1 1 400px;min-width:320px}
+  .panel-t{font-size:.66rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#94A3B8;margin:10px 0 10px}
+  .brk-lay{display:flex;gap:0;align-items:center}
+  .brk-col{display:flex;flex-direction:column;gap:14px;flex:1}
+  .conn{width:22px;align-self:stretch;display:flex;flex-direction:column}
+  .conn i{flex:1;border-right:1.5px solid rgba(217,249,157,.4)}
+  .conn i:first-child{border-bottom:1.5px solid rgba(217,249,157,.4);border-right:none;margin-right:0;border-right:1.5px solid rgba(217,249,157,.4);border-bottom-right-radius:0}
+  .conn::after{content:"";width:11px;border-top:1.5px solid rgba(217,249,157,.4);align-self:center}
+  .g{background:#0F1523;border:1px solid rgba(255,255,255,.12);border-radius:6px;padding:10px 12px;position:relative}
+  .g .code{position:absolute;top:-8px;left:10px;background:#1E3A8A;color:#E7ECF7;font-size:.56rem;font-weight:800;letter-spacing:.08em;border-radius:2px;padding:2px 6px}
+  .g .meta{font-size:.6rem;color:#7C8698;margin-bottom:6px}
+  .g .t{display:flex;justify-content:space-between;font-size:.8rem;padding:2px 0}
+  .g .t .s{font-family:ui-monospace,Consolas,monospace;font-weight:700}
+  .g .t.win{color:#D9F99D;font-weight:700}
+  .g .t.dim{color:#68738A}
+  .g .stat{font-size:.58rem;font-weight:800;letter-spacing:.1em;margin-top:5px}
+  .g .stat.live{color:#F87171}.g .stat.fin{color:#94A3B8}.g .stat.pend{color:#D9F99D}
+  .brk-cap{font-size:.72rem;color:#94A3B8;margin-top:12px;max-width:44ch}
+
+  .health{flex:1 1 300px;min-width:290px;background:#0F1523;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:16px;align-self:flex-start}
+  .health .hrow{display:flex;align-items:baseline;gap:10px}
+  .health .score{font-family:ui-monospace,Consolas,monospace;font-size:2rem;font-weight:800}
+  .health .of{color:#68738A;font-size:.9rem}
+  .tone{font-size:.6rem;font-weight:800;letter-spacing:.1em;border-radius:2px;padding:3px 8px}
+  .tone.ok{background:rgba(34,197,94,.15);color:#4ADE80}
+  .tone.rev{background:rgba(245,158,11,.18);color:#FBBF24}
+  .health .subt{font-size:.7rem;color:#94A3B8;margin:4px 0 12px}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .kpi{background:rgba(255,255,255,.04);border-radius:4px;padding:8px 10px}
+  .kpi .v{font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:.95rem}
+  .kpi .l{font-size:.58rem;letter-spacing:.08em;text-transform:uppercase;color:#7C8698}
+  .issue{display:none;font-size:.74rem;color:#FBBF24;margin-top:12px}
+  .issue.on{display:block}
+  .hbtns{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .hbtn{background:#131B2C;border:1px solid rgba(255,255,255,.16);color:#E7ECF7;border-radius:3px;font:inherit;font-size:.74rem;padding:9px 12px;cursor:pointer;text-align:left}
+  .hbtn:hover{border-color:#D9F99D}
+  .hbtn:focus-visible{outline:2px solid #D9F99D;outline-offset:2px}
+
+  /* ---------- warm coach world ---------- */
+  .warm{background:#F6F1E8;color:#241F18;border:1px solid #E4DCCB;border-radius:14px;overflow:hidden;margin-top:22px}
+  .warm-banner{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;background:#EFE7D8;border-bottom:1px solid #E4DCCB;padding:11px 20px}
+  .warm-banner .lab{font-size:.66rem;font-weight:800;letter-spacing:.12em;color:#8A6A1F}
+  .warm-cta{background:#241F18;color:#F6F1E8;border:none;border-radius:999px;font:inherit;font-size:.7rem;font-weight:700;padding:8px 16px;cursor:pointer}
+  .mast{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:16px 22px;border-bottom:1px solid #E4DCCB}
+  .tdot{width:30px;height:30px;border-radius:8px;background:#1E3A8A;color:#FFF;display:grid;place-items:center;font-size:.66rem;font-weight:800}
+  .mast .tn{font-weight:800;font-size:1.02rem;letter-spacing:-.01em}
+  .mast .yr{font-size:.76rem;color:#8A8177}
+  .mast .rec{font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:.9rem;margin-left:auto}
+  .mast .st{font-size:.74rem;color:#6E6759;background:#EFE7D8;border-radius:999px;padding:4px 11px}
+  .one{margin:18px 22px 6px;background:#FFFDF8;border:1px solid #E4DCCB;border-left:4px solid #1E3A8A;border-radius:10px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+  .one b{display:block;font-size:.92rem}
+  .one p{margin:2px 0 0;font-size:.78rem;color:#6E6759;max-width:46ch}
+  .one button{background:#1E3A8A;color:#FFF;border:none;border-radius:8px;font:inherit;font-size:.78rem;font-weight:700;padding:9px 16px;cursor:pointer}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;padding:14px 22px 22px}
+  .tile{background:#FFFDF8;border:1px solid #E4DCCB;border-radius:10px;padding:12px 13px}
+  .tile .tl{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8A8177}
+  .tile .tv{font-family:ui-monospace,Consolas,monospace;font-weight:700;font-size:1.06rem;margin:3px 0 1px}
+  .tile .ts{font-size:.7rem;color:#6E6759}
+  .tile .ts.warn{color:#B45309;font-weight:600}
+  .gauges{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+  .gauge{height:4px;border-radius:2px;background:#EFE7D8;overflow:hidden}
+  .gauge i{display:block;height:100%;background:#1E3A8A;opacity:.75}
+  .tour-rail{display:flex;flex-wrap:wrap;gap:8px;padding:0 22px 8px}
+  .wchip{background:#FFFDF8;border:1px solid #E4DCCB;border-radius:999px;font:inherit;font-size:.74rem;color:#241F18;padding:6px 13px;cursor:pointer}
+  .wchip.sel{background:#241F18;color:#F6F1E8;border-color:#241F18}
+  .wchip:focus-visible{outline:2px solid #1E3A8A;outline-offset:2px}
+  .tour-cap{padding:0 22px 20px;font-size:.8rem;color:#6E6759;max-width:70ch;min-height:2.4em}
+
+  /* ask */
+  .askbox{margin:20px 22px 8px;background:#FFFDF8;border:1px solid #E4DCCB;border-radius:12px;padding:12px 16px;font-size:.86rem;color:#8A8177;display:flex;align-items:center;gap:10px}
+  .askbox::before{content:"⌕";font-size:1.05rem;color:#8A8177}
+  .qchips{display:flex;flex-wrap:wrap;gap:8px;padding:6px 22px 12px}
+  .ans{margin:4px 22px 22px;background:#FFFDF8;border:1px solid #E4DCCB;border-radius:12px;padding:16px 18px}
+  .ans .a{font-size:.94rem;font-weight:600;margin:0 0 10px}
+  .ans .rlab{font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#8A8177;margin-bottom:6px}
+  .r{display:flex;justify-content:space-between;gap:10px;font-size:.76rem;padding:6px 0;border-top:1px dashed #E4DCCB}
+  .r .d{font-family:ui-monospace,Consolas,monospace;color:#6E6759;white-space:nowrap}
+  .ans .foot{font-size:.68rem;color:#8A8177;margin-top:10px;font-style:italic}
+
+  footer{margin-top:70px;padding-top:18px;border-top:1px solid var(--line);font-size:.76rem;color:var(--dim)}
+
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">FieldLogicHQ · Shortlist exploration · August 2026</p>
+    <h1>Demo &amp; Preview Mockups</h1>
+    <p class="lede">Four proposed experiences, built from the product's real copy, real layouts, and the actual seeded demo tournament. The first two are interactive — type in them, click things.</p>
+    <nav class="toc">
+      <a href="#wizard">1 · Creation live preview</a>
+      <a href="#sandbox">2 · Organizer sandbox</a>
+      <a href="#coach">3 · Coach demo tour</a>
+      <a href="#ask">4 · Ask the Front Office</a>
+    </nav>
+  </header>
+
+  <!-- ============ 1. WIZARD ============ -->
+  <section id="wizard">
+    <p class="sec-eyebrow">Tournament admin · <span class="tag">interactive — type in it</span></p>
+    <h2>Watch your event come alive while you type</h2>
+    <p class="sec-intro">The real 5-step setup wizard gains a live phone preview of the tournament's public page. Type a name, set the dates, tap a colour — the organizer watches their event assemble itself before anything is saved. Every label and sentence in the dark modal below is the wizard's actual shipped copy.</p>
+
+    <div class="dk">
+      <div class="duo">
+        <div class="wiz" aria-label="Tournament setup wizard mockup">
+          <div class="wiz-chrome"><span class="step">Step 1/5</span><span class="wiz-bar"><i></i></span></div>
+          <h3>Create your tournament</h3>
+          <p class="sub">Start with core tournament details. The tournament stays private as a draft.</p>
+          <div class="blurb">
+            <b>New here? Here's what you're building</b>
+            <ul>
+              <li>A public tournament page teams can find and register on.</li>
+              <li>Your schedule, scores, and standings update live for coaches and parents on game day.</li>
+              <li>Nothing is visible to anyone until you choose to activate — you're always in control.</li>
+            </ul>
+          </div>
+          <div class="f">
+            <label for="wName">Tournament name</label>
+            <input id="wName" type="text" placeholder="e.g. Spring Classic 2026" autocomplete="off">
+          </div>
+          <div class="f">
+            <div class="row2">
+              <div><label for="wStart">Start date</label><input id="wStart" type="date"></div>
+              <div><label for="wEnd">End date</label><input id="wEnd" type="date"></div>
+            </div>
+            <p class="hint">Start and end dates are required. You can change them later if they are still being finalized.</p>
+          </div>
+          <div class="f">
+            <label>Tournament style</label>
+            <div class="stylecards">
+              <button class="stylecard sel" id="styleA" type="button"><b>Round robin + playoffs</b><span>Teams play a round robin, then a bracket seeded from the standings.</span></button>
+              <button class="stylecard" id="styleB" type="button"><b>Bracket only</b><span>No round robin — seed teams straight into a playoff bracket.</span></button>
+            </div>
+          </div>
+          <div class="f">
+            <label for="wSlug">Public link</label>
+            <input id="wSlug" type="text" placeholder="spring-classic-2026" readonly>
+          </div>
+          <div class="wiz-foot">
+            <button class="btn-ghost" type="button">Back</button>
+            <button class="btn-lime" type="button">Next</button>
+          </div>
+        </div>
+
+        <div class="phone-col">
+          <div class="swatches" id="swatches" aria-label="Theme presets"></div>
+          <p class="sw-cap" id="swName">Theme: FieldLogicHQ</p>
+          <div class="phone">
+            <div class="notch"></div>
+            <div class="pscreen" id="pscreen">
+              <span class="pbadge">★ <span id="pDates">Dates To Be Determined</span><span id="pCd"></span></span>
+              <div class="ph1 ghost" id="pName">Your tournament name</div>
+              <p class="psub">Hosted by <strong>Riverside Valley Softball</strong>. View tournament details and updates in one place.</p>
+              <p class="preg"><b>Registration open</b>Team spots available across 3 divisions.</p>
+              <button class="pcta" type="button">Register</button>
+              <p class="pcta-note">Registering also sets up your free Coaches Portal — your team's schedule, status, and updates from the organizer in one place.</p>
+              <div class="pstats">
+                <div class="pstat"><div class="v">3</div><div class="l">Divisions</div></div>
+                <div class="pstat"><div class="v">24</div><div class="l">Team Spots</div></div>
+                <div class="pstat"><div class="v" id="pDays">–</div><div class="l">Days</div></div>
+              </div>
+              <p class="purl" id="pUrl">fieldlogichq.ca/riverside-valley/…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>One flag for v1:</b> custom colours are a Tournament&nbsp;Plus feature today. Showing the full swatch row during free signup is a deliberate taste-of-premium upsell moment — the alternative is showing only the nine free presets. That's an owner call, not a default.</p>
+  </section>
+
+  <!-- ============ 2. SANDBOX ============ -->
+  <section id="sandbox">
+    <p class="sec-eyebrow">Public + tournament admin · <span class="tag">interactive — scores tick, schedule breaks</span></p>
+    <h2>Play with a live one first</h2>
+    <p class="sec-intro">One tap from the marketing site into a real, ticking demo tournament — no signup, no email. Everything below is the actual seeded demo event (four U11 teams, one park, semifinal morning): scores move on their own, the bracket fills itself in, and the visitor is invited to <em>break</em> the schedule and watch the health score react. Nothing they touch is saved.</p>
+
+    <div class="dk">
+      <div class="sand-banner">
+        <span class="lab">LIVE SANDBOX — NOTHING HERE IS SAVED</span>
+        <span class="rst">Resets in <span class="mono" id="rst">41:32</span></span>
+        <button class="sand-cta" type="button">Start your own — free</button>
+      </div>
+      <div class="tour">
+        <button class="tchip" data-tgt="tkr" type="button"><b>1</b> Scores tick on their own</button>
+        <button class="tchip" data-tgt="brk" type="button"><b>2</b> The bracket fills itself in</button>
+        <button class="tchip" data-tgt="hlt" type="button"><b>3</b> Try to break the schedule</button>
+        <button class="tchip" data-tgt="tkr" type="button"><b>4</b> This is what parents see</button>
+      </div>
+
+      <div class="ticker" id="tkr" aria-label="Live score ticker">
+        <div class="tk"><span class="b-live"><span class="dot"></span>LIVE</span>
+          Bears U11 <span class="sc" id="tAway">2</span> – <span class="sc" id="tHome">4</span> Halton Hawks U11
+          <span class="dim" style="font-size:.66rem">diamond #1</span></div>
+        <div class="tk"><span class="b-final">FINAL</span>
+          Milton Bats U11 <span class="sc">4</span> – <span class="sc">5</span> Lions U11
+          <span class="dim" style="font-size:.66rem">diamond #2</span></div>
+        <div class="tk"><span class="b-time">2:15 PM</span> U11 Final · Winner SF1 vs Lions U11
+          <span class="dim" style="font-size:.66rem">diamond #2</span></div>
+      </div>
+
+      <div class="sand-grid">
+        <div class="brk" id="brk">
+          <p class="panel-t">Playoff Bracket · U11</p>
+          <div class="brk-lay">
+            <div class="brk-col">
+              <div class="g"><span class="code">SF1</span>
+                <div class="meta">Today 9:00 AM · lions park — diamond #1</div>
+                <div class="t"><span>Halton Hawks U11 <span class="dim">(1)</span></span><span class="s" id="bHome">4</span></div>
+                <div class="t"><span>Bears U11 <span class="dim">(4)</span></span><span class="s" id="bAway">2</span></div>
+                <div class="stat live">● LIVE</div>
+              </div>
+              <div class="g"><span class="code">SF2</span>
+                <div class="meta">Today 9:00 AM · lions park — diamond #2</div>
+                <div class="t win"><span>🏆 Lions U11 <span class="dim">(2)</span></span><span class="s">5</span></div>
+                <div class="t"><span>Milton Bats U11 <span class="dim">(3)</span></span><span class="s">4</span></div>
+                <div class="stat fin">FINAL</div>
+              </div>
+            </div>
+            <div class="conn"><i></i><i></i></div>
+            <div class="brk-col">
+              <div class="g"><span class="code">FIN</span>
+                <div class="meta">Today 2:15 PM · lions park — diamond #2</div>
+                <div class="t dim"><span>Winner SF1</span><span class="s">–</span></div>
+                <div class="t"><span>Lions U11</span><span class="s">–</span></div>
+                <div class="stat pend">SEEDING…</div>
+              </div>
+            </div>
+          </div>
+          <p class="brk-cap">SF2 just ended — Lions U11 slid into the final on its own. When SF1 finishes, the visitor watching this page sees the last slot fill in live.</p>
+        </div>
+
+        <div class="health" id="hlt">
+          <p class="panel-t" style="margin-top:0">Schedule Health</p>
+          <div class="hrow"><span class="score" id="hScore">92</span><span class="of">/100</span><span class="tone ok" id="hTone">HEALTHY</span></div>
+          <p class="subt" id="hSub">6/6 timed games · 2–3 games per team</p>
+          <div class="kpis">
+            <div class="kpi"><div class="v">0</div><div class="l">Back-to-back</div></div>
+            <div class="kpi"><div class="v">2</div><div class="l">Max/day</div></div>
+            <div class="kpi"><div class="v">1</div><div class="l">Venue moves</div></div>
+            <div class="kpi"><div class="v" id="hConf">0</div><div class="l">Conflicts</div></div>
+          </div>
+          <p class="issue" id="hIssue">⚠ Overlaps U11 semifinal at 9:00 AM.</p>
+          <div class="hbtns">
+            <button class="hbtn" id="hBreak" type="button">Try it → drag the Final onto 9:00 AM</button>
+            <button class="hbtn" id="hFix" type="button" hidden>Use next free slot (11:15 AM)</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="note"><b>Why this sells:</b> competitors pitch with a feature list and a sales call. This lets a skeptical organizer break a fake tournament with their own hands in the first 90 seconds — before anyone asks for an email — and every beat above runs on infrastructure that already exists.</p>
+  </section>
+
+  <!-- ============ 3. COACH ============ -->
+  <section id="coach">
+    <p class="sec-eyebrow">Coaches portal · <span class="tag">guided tour — tap the stops</span></p>
+    <h2>The coach demo: a real team, read-only</h2>
+    <p class="sec-intro">The coach side of the funnel has no "see it working" door at all today. A live coach sandbox is a bigger build than the organizer one (it sits behind sign-in), so the proposal is phased: a guided walkthrough of a seeded example team first, the auto-opened read-only workspace as the follow-up. Fictional "Riverdale" data, real portal.</p>
+
+    <div class="warm">
+      <div class="warm-banner">
+        <span class="lab">EXAMPLE TEAM — READ-ONLY PREVIEW</span>
+        <button class="warm-cta" type="button">Start your own team — free</button>
+      </div>
+      <div class="mast">
+        <span class="tdot">RR</span>
+        <div><div class="tn">Riverdale Ridge 12U</div><div class="yr">2026 season</div></div>
+        <span class="rec">14–3–1</span>
+        <span class="st">Game day — Falcons, 9:00 a.m.</span>
+      </div>
+      <div class="one">
+        <div><b>Saturday's lineup isn't set</b>
+        <p>11 players confirmed after attendance. Build the batting order now and the depth chart fills itself in.</p></div>
+        <button type="button">Build lineup</button>
+      </div>
+      <div class="tiles">
+        <div class="tile"><div class="tl">Record</div><div class="tv">14–3–1</div><div class="ts">Won 4 of the last 5</div></div>
+        <div class="tile"><div class="tl">Roster</div><div class="tv">12</div><div class="ts warn">1 waiver still unsigned</div></div>
+        <div class="tile"><div class="tl">Schedule</div><div class="tv">Sat 9:00</div><div class="ts">vs Falcons · 3 events this week</div></div>
+        <div class="tile"><div class="tl">Money</div><div class="tv">$240</div><div class="ts warn">2 families overdue</div></div>
+        <div class="tile"><div class="tl">Attendance</div><div class="tv">86%</div><div class="ts">Tuesday dipped to 71%</div></div>
+        <div class="tile"><div class="tl">Playing time</div><div class="tv">Even</div>
+          <div class="gauges"><span class="gauge"><i style="width:88%"></i></span><span class="gauge"><i style="width:81%"></i></span><span class="gauge"><i style="width:74%"></i></span></div></div>
+      </div>
+      <div class="tour-rail" id="coachRail">
+        <button class="wchip sel" data-cap="0" type="button">① Overview</button>
+        <button class="wchip" data-cap="1" type="button">② Lineups</button>
+        <button class="wchip" data-cap="2" type="button">③ Practice plans</button>
+        <button class="wchip" data-cap="3" type="button">④ Money</button>
+        <button class="wchip" data-cap="4" type="button">⑤ Season Wrapped</button>
+      </div>
+      <p class="tour-cap" id="coachCap">One important thing, then six tiles that never move — a coach builds spatial memory in a week. This is the screen they open every morning.</p>
+    </div>
+    <p class="note"><b>Honest scoping:</b> the portal requires a signed-in coach on every screen, and every visitor of a shared demo team would be the <em>same</em> user — so a click-anywhere live sandbox needs new auth and write-safety work. The tour above needs neither, ships fast, and the read-only live workspace becomes its own funded phase.</p>
+  </section>
+
+  <!-- ============ 4. ASK ============ -->
+  <section id="ask">
+    <p class="sec-eyebrow">Coaches portal · <span class="tag">concept — tap a question</span></p>
+    <h2>Ask the Front Office</h2>
+    <p class="sec-intro">A single question box at the top of the portal, answered only from the team's own recorded data — with the receipts shown underneath. Version one ships as tappable pre-built questions (no AI needed); the typed free-text version is the AI build detailed alongside this page.</p>
+
+    <div class="warm">
+      <div class="askbox">Ask about your team…</div>
+      <div class="qchips" id="qchips">
+        <button class="wchip sel" data-q="0" type="button">Who hasn't played catcher recently?</button>
+        <button class="wchip" data-q="1" type="button">What does each family still owe?</button>
+        <button class="wchip" data-q="2" type="button">Who's missed the most practices?</button>
+      </div>
+      <div class="ans">
+        <p class="a" id="ansText">Maya hasn't caught in 3 weeks — her last game behind the plate was July 12. Jordan and Priya have covered every game since.</p>
+        <p class="rlab">Receipts — from your recorded lineups</p>
+        <div id="ansRec">
+          <div class="r"><span>vs Falcons — Maya at catcher, 5 innings</span><span class="d">Jul 12</span></div>
+          <div class="r"><span>vs Storm — Jordan at catcher</span><span class="d">Jul 19</span></div>
+          <div class="r"><span>vs Comets — Priya at catcher</span><span class="d">Jul 26</span></div>
+        </div>
+        <p class="foot">Answers are assembled from your own records — never a guess, never outside data.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Mockups use the product's real copy, layouts, and seeded demo-tournament data (Battle of the Bats clone). All player, family, and coach team names are fictional. Built 2026-08-02 for the shortlist exploration — companion to the Ideas Backlog.
+  </footer>
+</div>
+
+<script>
+(function(){
+  var rm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ---------- 1. wizard ---------- */
+  var PRESETS = [
+    ["FieldLogicHQ","#1E3A8A","#D9F99D"],
+    ["Battle Purple","#8B2FC9","#C084FC"],
+    ["Ocean Blue","#075985","#38BDF8"],
+    ["Forest Green","#166534","#86EFAC"],
+    ["Sunset Orange","#9A3412","#FDBA74"],
+    ["Crimson","#9F1239","#FB7185"],
+    ["Championship Gold","#92400E","#FACC15"],
+    ["Teal","#115E59","#5EEAD4"],
+    ["Midnight Blue","#1E40AF","#93C5FD"]
+  ];
+  var sw = document.getElementById('swatches');
+  var swName = document.getElementById('swName');
+  var pscreen = document.getElementById('pscreen');
+  PRESETS.forEach(function(p,i){
+    var b = document.createElement('button');
+    b.className = 'sw' + (i===0 ? ' sel' : '');
+    b.type = 'button';
+    b.style.background = p[1];
+    b.setAttribute('aria-label', p[0]);
+    b.innerHTML = '<i style="background:'+p[2]+'"></i>';
+    b.addEventListener('click', function(){
+      sw.querySelectorAll('.sw').forEach(function(x){x.classList.remove('sel');});
+      b.classList.add('sel');
+      pscreen.style.setProperty('--pp', p[1]);
+      pscreen.style.setProperty('--pa', p[2]);
+      swName.textContent = 'Theme: ' + p[0];
+    });
+    sw.appendChild(b);
+  });
+
+  var wName = document.getElementById('wName'), wStart = document.getElementById('wStart'),
+      wEnd = document.getElementById('wEnd'), wSlug = document.getElementById('wSlug');
+  var pName = document.getElementById('pName'), pDates = document.getElementById('pDates'),
+      pCd = document.getElementById('pCd'), pDays = document.getElementById('pDays'),
+      pUrl = document.getElementById('pUrl');
+
+  function slugify(s){ return s.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+  function fmt(d){ return d.toLocaleDateString('en-US',{month:'long',day:'numeric'}); }
+  function fmtY(d){ return d.toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'}); }
+  function parseLocal(v){ var p=v.split('-'); return new Date(+p[0], +p[1]-1, +p[2]); }
+
+  function sync(){
+    var n = wName.value.trim();
+    if(n){ pName.textContent = n; pName.classList.remove('ghost'); }
+    else { pName.textContent = 'Your tournament name'; pName.classList.add('ghost'); }
+    var slug = n ? slugify(n) : '';
+    wSlug.value = slug;
+    pUrl.textContent = 'fieldlogichq.ca/riverside-valley/' + (slug || '…');
+    if(wStart.value && wEnd.value){
+      var s = parseLocal(wStart.value), e = parseLocal(wEnd.value);
+      pDates.textContent = (s.getFullYear()===e.getFullYear())
+        ? fmt(s)+' – '+fmtY(e) : fmtY(s)+' – '+fmtY(e);
+      var days = Math.max(1, Math.round((e-s)/864e5)+1);
+      pDays.textContent = days;
+      var today = new Date(); today.setHours(0,0,0,0);
+      var until = Math.round((s-today)/864e5);
+      if(until > 0){
+        pCd.textContent = ' · First pitch in ' + (until===1?'1 day':until+' days');
+      } else { pCd.textContent = ' · Tournament in progress'; }
+    } else { pDates.textContent='Dates To Be Determined'; pCd.textContent=''; pDays.textContent='–'; }
+  }
+  wName.addEventListener('input', sync);
+  wStart.addEventListener('change', function(){ if(!wEnd.value && wStart.value){ var s=parseLocal(wStart.value); s.setDate(s.getDate()+2); wEnd.value = s.toISOString().slice(0,10);} sync(); });
+  wEnd.addEventListener('change', sync);
+
+  var defS = new Date(); defS.setDate(defS.getDate()+21);
+  var defE = new Date(defS); defE.setDate(defE.getDate()+2);
+  wStart.value = defS.toISOString().slice(0,10);
+  wEnd.value = defE.toISOString().slice(0,10);
+  sync();
+
+  var sA = document.getElementById('styleA'), sB = document.getElementById('styleB');
+  [sA,sB].forEach(function(c){ c.addEventListener('click', function(){
+    sA.classList.toggle('sel', c===sA); sB.classList.toggle('sel', c===sB); }); });
+
+  /* ---------- 2. sandbox ---------- */
+  var rstEl = document.getElementById('rst'), rstT = 41*60+32;
+  setInterval(function(){ rstT = rstT>0 ? rstT-1 : 45*60;
+    rstEl.textContent = Math.floor(rstT/60)+':'+String(rstT%60).padStart(2,'0'); }, 1000);
+
+  document.querySelectorAll('.tchip').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      var t = document.getElementById(ch.getAttribute('data-tgt'));
+      t.scrollIntoView({behavior: rm?'auto':'smooth', block:'center'});
+      t.classList.remove('flash'); void t.offsetWidth; t.classList.add('flash');
+    });
+  });
+
+  var tHome=document.getElementById('tHome'), tAway=document.getElementById('tAway'),
+      bHome=document.getElementById('bHome'), bAway=document.getElementById('bAway');
+  var scH=4, scA=2;
+  function bumpSc(el,v){ el.textContent=v; if(!rm){ el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); } }
+  setInterval(function(){
+    if(scH>=9) return;
+    if(Math.random()<0.6){ scH++; bumpSc(tHome,scH); bumpSc(bHome,scH); }
+    else { scA++; bumpSc(tAway,scA); bumpSc(bAway,scA); }
+  }, 6000);
+
+  var hScore=document.getElementById('hScore'), hTone=document.getElementById('hTone'),
+      hSub=document.getElementById('hSub'), hConf=document.getElementById('hConf'),
+      hIssue=document.getElementById('hIssue'), hBreak=document.getElementById('hBreak'),
+      hFix=document.getElementById('hFix');
+  function setScore(target){
+    if(rm){ hScore.textContent = target; return; }
+    var cur = +hScore.textContent, step = cur<target?1:-1;
+    var iv = setInterval(function(){
+      cur += step*2; if((step>0&&cur>=target)||(step<0&&cur<=target)){cur=target;clearInterval(iv);}
+      hScore.textContent = cur;
+    }, 26);
+  }
+  hBreak.addEventListener('click', function(){
+    setScore(61);
+    hTone.textContent='REVIEW'; hTone.className='tone rev';
+    hConf.textContent='1'; hIssue.classList.add('on');
+    hSub.textContent='6/6 timed games · 1 issue found';
+    hBreak.hidden = true; hFix.hidden = false;
+  });
+  hFix.addEventListener('click', function(){
+    setScore(92);
+    hTone.textContent='HEALTHY'; hTone.className='tone ok';
+    hConf.textContent='0'; hIssue.classList.remove('on');
+    hSub.textContent='6/6 timed games · 2–3 games per team';
+    hFix.hidden = true; hBreak.hidden = false;
+  });
+
+  /* ---------- 3. coach tour ---------- */
+  var CAPS = [
+    "One important thing, then six tiles that never move — a coach builds spatial memory in a week. This is the screen they open every morning.",
+    "Drag players into a batting order that already knows who showed up — and warns you before an arm gets overworked.",
+    "Timed stations, a reusable drill library, and a plan an assistant can run from their phone at the field.",
+    "Per-family dues with installments, credits, and a budget that tracks plan vs. actual — the treasurer job, absorbed.",
+    "When the season closes, it becomes a story: the record, the milestones, and a private recap every family actually opens."
+  ];
+  var rail = document.getElementById('coachRail'), cap = document.getElementById('coachCap');
+  rail.querySelectorAll('.wchip').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      rail.querySelectorAll('.wchip').forEach(function(x){x.classList.remove('sel');});
+      ch.classList.add('sel');
+      cap.textContent = CAPS[+ch.getAttribute('data-cap')];
+    });
+  });
+
+  /* ---------- 4. ask ---------- */
+  var QA = [
+    { a:"Maya hasn't caught in 3 weeks — her last game behind the plate was July 12. Jordan and Priya have covered every game since.",
+      lab:"Receipts — from your recorded lineups",
+      r:[["vs Falcons — Maya at catcher, 5 innings","Jul 12"],["vs Storm — Jordan at catcher","Jul 19"],["vs Comets — Priya at catcher","Jul 26"]] },
+    { a:"Two families still owe a combined $240: the Marches owe $150 (installment 2 of 3, due Jul 25) and the Okaris owe $90 (installment 3 of 3, due Aug 1).",
+      lab:"Receipts — from your dues ledger",
+      r:[["March family — installment 2 of 3, $150","due Jul 25"],["Okari family — installment 3 of 3, $90","due Aug 1"],["10 of 12 families fully paid","—"]] },
+    { a:"Dev has missed 4 of the last 6 practices — all Tuesdays. Everyone else has missed 1 or fewer in the same stretch.",
+      lab:"Receipts — from your attendance records",
+      r:[["Tuesday practice — Dev absent","Jul 8"],["Tuesday practice — Dev absent","Jul 15"],["Tuesday practice — Dev absent","Jul 22"],["Tuesday practice — Dev absent","Jul 29"]] }
+  ];
+  var qc = document.getElementById('qchips'), ansText = document.getElementById('ansText'),
+      ansRec = document.getElementById('ansRec'),
+      rlab = document.querySelector('.ans .rlab');
+  qc.querySelectorAll('.wchip').forEach(function(ch){
+    ch.addEventListener('click', function(){
+      qc.querySelectorAll('.wchip').forEach(function(x){x.classList.remove('sel');});
+      ch.classList.add('sel');
+      var q = QA[+ch.getAttribute('data-q')];
+      ansText.textContent = q.a; rlab.textContent = q.lab;
+      ansRec.innerHTML = q.r.map(function(row){
+        return '<div class="r"><span>'+row[0]+'</span><span class="d">'+row[1]+'</span></div>';
+      }).join('');
+    });
+  });
+})();
+</script>

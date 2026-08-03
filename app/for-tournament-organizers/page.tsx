@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -52,6 +53,9 @@ const CROSS_SELLS = [
 ];
 
 export default function ForTournamentOrganizersPage() {
+  // The sandbox door. Hidden in a production build until the owner turns it on deliberately —
+  // see lib/sandbox-door.ts for why that release step is a decision and not a merge.
+  const showSandboxDoor = sandboxDoorsVisible();
   return (
     <main className="bg-pitch-black min-h-screen">
 
@@ -75,6 +79,15 @@ export default function ForTournamentOrganizersPage() {
             >
               Start Free — No Credit Card
             </Link>
+            {/* Second position, deliberately: lime OUTLINE with a live dot, so it reads as a live
+                thing without out-shouting the solid-lime primary. The sandbox is the proof;
+                signup is still the ask. */}
+            {showSandboxDoor && (
+              <Link href={SEE_IT_LIVE_PATH} className={styles.seeItLive}>
+                <span className={styles.seeItLiveDot} aria-hidden="true" />
+                See it live →
+              </Link>
+            )}
             <Link
               href="/pricing"
               className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
@@ -82,6 +95,11 @@ export default function ForTournamentOrganizersPage() {
               See all plans →
             </Link>
           </div>
+          {/* The objection this answers — "is this another form?" — is the whole reason the door
+              converts. It is also literally true: no email, no form, no lead capture, ever. */}
+          {showSandboxDoor && (
+            <p className={styles.seeItLiveNote}>No sign-up, no email. Walk into a tournament that&apos;s running right now.</p>
+          )}
           <div className={styles.trustRow}>
             {['Free plan — no time limit', 'No credit card required', 'Billed in CAD'].map(s => (
               <div key={s} className={styles.trustItem}>

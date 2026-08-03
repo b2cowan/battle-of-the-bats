@@ -20,6 +20,7 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { buildUnsubscribeUrl, buildUserUnsubscribeUrl } from '@/lib/unsubscribe-token';
 import { FOUNDING_SEASON_END } from '@/lib/plan-config';
+import { isDemoOrgId } from '@/lib/demo-org-server';
 
 const RESEND_API = 'https://api.resend.com/emails';
 const FROM = process.env.RESEND_FROM ?? 'FieldLogicHQ <hello@fieldlogichq.ca>';
@@ -112,6 +113,18 @@ export async function sendMarketingEmail(opts: SendEmailOptions): Promise<SendRe
     recipientUserId,
     scheduledAt,
   } = opts;
+
+  // ── 0. Sandbox outbound silence ──────────────────────────────────────────────
+  // A demo ("See it live") org can never send email to anyone. Reported as 'suppressed', the
+  // existing outcome for "we deliberately did not send this", so callers and the send log treat
+  // it exactly like an opt-out rather than as a failure. FAIL-CLOSED: if the demo-org list cannot
+  // be resolved we suppress, because the cost of wrongly staying silent is a missed email and the
+  // cost of wrongly sending is the sandbox mailing a stranger.
+  try {
+    if (await isDemoOrgId(orgId)) return 'suppressed';
+  } catch {
+    return 'suppressed';
+  }
 
   // ── 1. Opt-out check — per-person for individual (coach) sends, else per-org ──
   if (!skipOptOutCheck) {

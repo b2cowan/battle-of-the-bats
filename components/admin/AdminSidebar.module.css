@@ -2,9 +2,11 @@
   width: 240px;
   /* Stage C: sit below the fixed AdminTopStrip (var defined on .adminShell; 0 on mobile
      and focused shells, so those keep today's exact geometry). */
-  height: calc(100vh - var(--admin-topstrip-h, 0px));
+  /* --sandbox-chrome-h is set ONLY inside the "See it live" sandbox, where a demo banner is
+     pinned above everything (globals.css); it resolves to 0px for every real customer. */
+  height: calc(100vh - var(--admin-topstrip-h, 0px) - var(--sandbox-chrome-h, 0px));
   position: sticky;
-  top: var(--admin-topstrip-h, 0px);
+  top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px));
   background: var(--pitch-black);
   border-right: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
   display: flex;

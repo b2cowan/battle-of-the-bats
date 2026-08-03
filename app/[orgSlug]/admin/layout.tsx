@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { getAuthContextWithRole } from '@/lib/api-auth';
+import { getAuthUserCached } from '@/lib/supabase-server';
+import { getAuthDestination } from '@/lib/auth-destination';
 import { getOrganizationBySlug } from '@/lib/db';
 import { TournamentProvider } from '@/lib/tournament-context';
 import { OrgProvider } from '@/lib/org-context';
@@ -44,6 +46,23 @@ export default async function AdminLayout({
 
   const authCtx = await getAuthContextWithRole({ orgSlug });
   if (!authCtx) {
+    // Two very different situations wear the same `null` here, and sending BOTH to the login page
+    // is what closes the J8-018 / J10-019 loop from this side:
+    //
+    //   • nobody is signed in            → login is exactly right;
+    //   • somebody IS signed in but has no membership in THIS org → login sees a valid session
+    //     with a workspace, honours the `next` we just handed it, and sends them straight back
+    //     here. Login ↔ admin, forever.
+    //
+    // The login page already refuses to walk a session into a destination it can't reach; this is
+    // the same rule stated on the other end. A signed-in stranger goes to their OWN workspace.
+    // (Found while QA-ing the "See it live" sandbox, where the demo's operator URL is one tap from
+    // a public page — but the loop was reachable by any signed-in visitor typing any org's
+    // /admin URL.)
+    const signedIn = await getAuthUserCached();
+    if (signedIn) {
+      redirect(await getAuthDestination());
+    }
     redirect(`/auth/login?next=/${orgSlug}/admin`);
   }
 

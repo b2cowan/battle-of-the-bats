@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronDown, Info, ShieldAlert, SlidersHorizontal } from 'lucide-react';
 import type { ScheduleIssue, ScheduleMetrics } from '@/lib/schedule-metrics';
 import { formatRestMinutes } from '@/lib/schedule-metrics';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import styles from '../schedule-admin.module.css';
 
 type MetricTone = 'good' | 'warning' | 'danger' | 'neutral';
@@ -43,6 +44,11 @@ interface ScheduleHealthPanelProps {
   onResetRules?: () => void;
   /** Set the rules back to the engine defaults (2 / 15 / no target). */
   onRestoreDefaultRules?: () => void;
+  /**
+   * The sandbox's own undo — discard local, never-persisted changes by re-reading the server.
+   * Rendered only inside a demo org; omitting it just hides the button.
+   */
+  onSandboxReset?: () => void;
 }
 
 export default function ScheduleHealthPanel({
@@ -60,9 +66,12 @@ export default function ScheduleHealthPanel({
   onSaveRules,
   onResetRules,
   onRestoreDefaultRules,
+  onSandboxReset,
 }: ScheduleHealthPanelProps) {
   const [expanded, setExpanded] = useState(defaultOpen);
   const [editing, setEditing] = useState(false);
+  // "See it live" sandbox — false for every real org, so nothing below changes for a customer.
+  const isSandbox = useIsSandbox();
   const showRulesEditor = canEditRules && !!rules && !!onRuleChange;
   const conflictTotal = metrics.venueConflictCount + metrics.bufferConflictCount;
   const scoreClass = metrics.healthTone === 'good'
@@ -75,6 +84,8 @@ export default function ScheduleHealthPanel({
     <details
       className={styles.healthPanel}
       open={expanded}
+      // The beat the sandbox's "Break the schedule" tour chip points at. Inert everywhere else.
+      data-sandbox-tour="schedule-health"
       onToggle={event => setExpanded(event.currentTarget.open)}
     >
       <summary className={styles.healthSummary} aria-label={`${expanded ? 'Collapse' : 'Expand'} ${title}`}>
@@ -119,6 +130,20 @@ export default function ScheduleHealthPanel({
       </summary>
 
       <div className={styles.healthBody}>
+        {/* Sandbox-only invitation. The panel already exists and is untouched for customers; on the
+            demo it grows one line that tells a stranger what to do with it. The score genuinely
+            reacts to a dragged game — the health engine recomputes in the browser — so this is a
+            promise the product keeps. */}
+        {isSandbox && (
+          <p className={styles.healthSandboxPrompt}>
+            <span>Try it — drag a game onto a slot that&apos;s already busy, and watch this score react.</span>
+            {onSandboxReset && (
+              <button type="button" className={styles.healthSandboxReset} onClick={onSandboxReset}>
+                Put it back
+              </button>
+            )}
+          </p>
+        )}
         {showRulesEditor && editing && rules && (
           <div className={styles.healthRules}>
             <div className={styles.healthRulesGrid}>

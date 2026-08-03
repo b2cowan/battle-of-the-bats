@@ -1,0 +1,122 @@
+/**
+ * The sandbox confirm screen. Marketing-funnel surface, so it wears the dark marketing ground
+ * rather than any operator chrome — the visitor is between two places and belongs to neither yet.
+ */
+
+.page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1.25rem;
+  background: var(--pitch-black);
+  background-image: radial-gradient(
+    90% 70% at 50% 0%,
+    rgba(var(--blueprint-blue-rgb), 0.28) 0%,
+    transparent 65%
+  );
+}
+
+.card {
+  width: 100%;
+  max-width: 34rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  background: var(--hud-surface);
+  padding: 2rem 1.75rem;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4375rem;
+  margin: 0 0 1rem;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.bulb {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--logic-lime);
+  box-shadow: 0 0 8px rgba(var(--logic-lime-rgb), 0.7);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 4vw, 1.85rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  color: var(--fl-text);
+  margin: 0 0 0.75rem;
+}
+
+.body {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--data-gray);
+  margin: 0 0 1.5rem;
+}
+
+.body strong {
+  color: var(--fl-text);
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.primary {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--pitch-black);
+  background: var(--logic-lime);
+  border: none;
+  padding: 0.9rem 1.5rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.primary:hover { background: var(--fl-text); }
+.primary:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
+
+.secondary {
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.5);
+  padding: 0.9rem 1.5rem;
+  text-decoration: none;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.secondary:hover { border-color: var(--blueprint-blue); color: var(--fl-text); }
+.secondary:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 3px; }
+
+.note {
+  margin: 1.5rem 0 0;
+  padding-top: 1.25rem;
+  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  font-size: 0.78rem;
+  line-height: 1.6;
+  color: var(--data-gray);
+}
+
+@media (max-width: 480px) {
+  .card { padding: 1.5rem 1.25rem; }
+  .actions { flex-direction: column; align-items: stretch; }
+  .primary, .secondary { text-align: center; }
+}

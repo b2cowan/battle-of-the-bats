@@ -4,7 +4,7 @@
   position: fixed;
   left: 50%;
   /* Clear the desktop global strip (≥901px); 0 on mobile where the strip is hidden. */
-  top: calc(var(--desktop-strip-h, 0px) + env(safe-area-inset-top) + 0.6rem);
+  top: calc(var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px) + env(safe-area-inset-top) + 0.6rem);
   transform: translateX(-50%);
   z-index: 500;
   display: flex;

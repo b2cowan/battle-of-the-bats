@@ -265,7 +265,11 @@
      tournament routes and unset elsewhere; --ticker-h by the ScoreTicker on
      game day; --desktop-strip-h by the tournament layout ≥901px (the Phase 3
      global strip). All fall back cleanly to the plain fixed bar. */
-  --chrome-top-h: calc(var(--nav-visual-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px));
+  /* --sandbox-chrome-h rides in --chrome-top-h (whose consumers are sticky/fixed tops, which a
+     body padding cannot move) but deliberately NOT in --chrome-top-static-h, whose consumers are
+     page PADDING — the sandbox rule below already pads the document, and adding it twice would
+     open a gap. Unset outside a demo org, so both resolve to today's exact geometry. */
+  --chrome-top-h: calc(var(--nav-visual-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px));
   --chrome-top-static-h: calc(var(--nav-event-h, var(--nav-height)) + var(--ticker-h, 0px) + var(--desktop-strip-h, 0px));
 
   /* Opacity-alpha text tokens used by some component CSS */
@@ -379,6 +383,20 @@ body {
   color: var(--white);
   min-height: 100vh;
   line-height: 1.6;
+}
+
+/* ─── Sandbox chrome geometry (demo orgs only) ──────────────────────────────────
+   The "See it live" sandbox pins a banner + tour rail to the top of the viewport
+   (components/sandbox/SandboxChrome). It measures itself and publishes its height as
+   --sandbox-chrome-h, plus this attribute, so the document can make room for it.
+
+   Everything else that has to move is a FIXED or STICKY element, which a body padding
+   cannot shift — those (the operator top strip, the sticky sidebar, the sticky event
+   header) each add the var to their own `top` in their own stylesheet. Off a demo org
+   the var is never set, every one of those calc()s resolves to today's exact geometry,
+   and this rule never matches. */
+html[data-sandbox-chrome='true'] body {
+  padding-top: var(--sandbox-chrome-h, 0px);
 }
 
 /* Full-bleed app route (the coach-portal chat) — the chat owns the dynamic viewport and

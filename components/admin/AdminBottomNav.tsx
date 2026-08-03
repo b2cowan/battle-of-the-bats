@@ -20,6 +20,8 @@ import { useChatUnread } from '@/lib/use-chat-unread';
 import { useAdminFlip } from '@/lib/use-admin-flip';
 import { primaryTarget } from '@/lib/flip-twins';
 import { TOUR_GROUPS, type TourNavItem } from './admin-nav-config';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
+import { isNavKeyHiddenInSandbox } from '@/lib/sandbox-curation';
 import AdminContextStrip from './AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
 import styles from './AdminBottomNav.module.css';
@@ -55,6 +57,8 @@ export default function AdminBottomNav({ notifUnread = 0 }: { notifUnread?: numb
   const moreRef   = useRef<HTMLDivElement>(null);
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
+  // "See it live" sandbox — drives the curated-surface hiding below. False for every real org.
+  const isSandbox = useIsSandbox();
   const tournamentIsLive = currentTournament?.status === 'active' || currentTournament?.status === 'completed';
   const inactiveTournamentCtaLabel =
     currentTournament?.status === 'draft'
@@ -77,10 +81,14 @@ export default function AdminBottomNav({ notifUnread = 0 }: { notifUnread?: numb
   const coachDoor = coachDoorFor(coachAccess, currentOrgSlug);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
 
-  // Derive sections from shared config so labels stay in sync with the desktop sidebar.
-  const opsItems   = TOUR_GROUPS.find(g => g.key === 'operations')!.items;
-  const setupItems = TOUR_GROUPS.find(g => g.key === 'setup')!.items;
-  const adminItems = TOUR_GROUPS.find(g => g.key === 'admin')!.items;
+  // Derive sections from shared config so labels stay in sync with the desktop sidebar — including
+  // the "See it live" sandbox's four curated corners (lib/sandbox-curation.ts), which must be
+  // hidden on BOTH bars or the mobile More sheet would still walk a stranger into them.
+  const curate = (items: TourNavItem[]) =>
+    isSandbox ? items.filter(item => !isNavKeyHiddenInSandbox(true, item.key)) : items;
+  const opsItems   = curate(TOUR_GROUPS.find(g => g.key === 'operations')!.items);
+  const setupItems = curate(TOUR_GROUPS.find(g => g.key === 'setup')!.items);
+  const adminItems = curate(TOUR_GROUPS.find(g => g.key === 'admin')!.items);
 
   // Lifecycle-aware primary tabs. Dashboard lives on the top-bar title ("home").
   // Draft ("getting ready") leans setup + the customer-facing page: Setup · Teams · Schedule · Site,

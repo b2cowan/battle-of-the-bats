@@ -15,7 +15,7 @@
     position: fixed;
     /* Sit below the Phase 3 desktop global strip (--desktop-strip-h, published by the
        tournament layout ≥901px); 0 in the admin preview, which has no strip. */
-    top: var(--desktop-strip-h, 0px);
+    top: calc(var(--desktop-strip-h, 0px) + var(--sandbox-chrome-h, 0px));
     left: 0;
     bottom: 0;
     width: 248px;

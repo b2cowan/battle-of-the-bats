@@ -286,6 +286,46 @@ const repTeamsHelp: HelpPageContent = {
       ),
     },
     {
+      // Chunk D Slice 3. The club's only window onto family adoption. Deliberately documented
+      // as COUNTS — an admin who expects to click through to a list of parents needs to be told
+      // plainly that there isn't one, and why.
+      id: 'family-adoption',
+      group: 'Org-level tools',
+      heading: 'Seeing which teams have families connected',
+      summary: 'Each team card shows how many families are connected and how many requests are waiting on a coach — counts only, never who.',
+      keywords: ['families', 'family', 'connected families', 'guardians', 'followers', 'waiting', 'requests waiting', 'family access', 'adoption', 'which teams are using it', 'parents connected', 'rep teams list'],
+      searchText: 'families connected count per team rep teams list card guardians followers waiting requests pending a coach club wide line how many families across teams adoption read only counts never names never email addresses coaches keep the contacts premium coaches portal family access hidden when zero',
+      links: [
+        { label: 'Coaches Portal guide — family access', href: '../help/coaches#premium-family-access' },
+      ],
+      content: (
+        <>
+          <p>On your <strong>Rep Teams</strong> list, a team that has started connecting families shows two extra numbers on its card:</p>
+          <ul>
+            <li><strong>Families</strong> — how many people are connected to that team, counting both a player&apos;s parents or guardians and relatives who follow the team.</li>
+            <li><strong>Waiting</strong> — requests that have arrived and are sitting with the coach. This is the one worth watching: a coach who never opens their queue leaves families waiting, and this is the only place that&apos;s visible from outside the team.</li>
+          </ul>
+          <p>A club-wide line under the page title totals the same thing across every team, so you can see at a glance how far the feature has actually spread.</p>
+          <p><strong>These are counts, and only counts.</strong> No name, email address or relationship appears here, and there&apos;s nothing to click through to — the club sees adoption, the coach keeps the contacts. The numbers are hidden on a team that hasn&apos;t connected anyone, so a list of teams that never turned it on isn&apos;t a column of zeros.</p>
+          <p>Family access is a <strong>Premium Coaches Portal</strong> feature and is set up by the coach on their own team — see the <a href="../help/coaches#premium-family-access">Coaches Portal guide</a>.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-family-adoption-who',
+          question: 'Can I see which families are connected to a team?',
+          answerText: 'No. The Rep Teams list shows counts only — how many families are connected to each team, and how many requests are waiting on a coach. There is no list of names or email addresses behind those numbers, by design: the coach approves and manages their own team\'s families, and the club sees whether it is being used, not who is in it. If you need to reach a family, that goes through their coach.',
+          keywords: ['who is connected', 'list of families', 'family names', 'parent emails', 'see the families'],
+          answer: (
+            <>
+              <p>No. The list shows <strong>counts only</strong> — how many families each team has connected, and how many requests are waiting on a coach. There&apos;s no list of names or addresses behind those numbers.</p>
+              <p>That&apos;s deliberate: the coach approves and manages their own team&apos;s families, and the club sees <em>whether</em> it&apos;s being used, not <em>who</em> is in it. If you need to reach a family, that goes through their coach.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'team-urls-past',
       group: 'Org-level tools',
       heading: 'Team URLs and past seasons',

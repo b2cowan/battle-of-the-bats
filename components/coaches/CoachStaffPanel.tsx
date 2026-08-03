@@ -4,28 +4,26 @@ import { UserPlus, Trash2, Check, Lock } from 'lucide-react';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { ASSISTANT_DEFAULTS } from '@/lib/coach-capabilities';
+import {
+  ASSISTANT_DEFAULTS,
+  HELPER_PRESET,
+  resolveCoachCapabilities,
+  staffKindLabel,
+  type CoachCapabilities,
+  type AssistantCapabilityGrants,
+  type RosterAccess,
+  type DocsAccess,
+} from '@/lib/coach-capabilities';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './CoachStaffPanel.module.css';
 
-type MoneyAccess = 'off' | 'read' | 'write';
-type DocsAccess = 'off' | 'view' | 'manage';
-type RosterAccess = 'off' | 'view';
-
-interface Caps {
-  isHeadCoach: boolean;
-  schedule: boolean;
-  attendance: boolean;
-  lineups: boolean;
-  roster: RosterAccess;
-  rosterWrite: boolean; // server-derived (assistants always false); present in the resolved response
-  rosterPii: boolean;
-  notes: boolean;
-  money: MoneyAccess;
-  documents: DocsAccess;
-  announcementsSend: boolean;
-  tryouts: boolean;
-}
+/**
+ * ⚠ The SERVER's type, not a copy of it. This file used to redeclare the whole capability shape
+ * (plus its three string unions) as a structural twin — which compiled happily while silently
+ * disagreeing, and had to be hand-extended every time a grant was added. It is an alias now, so a
+ * new grant is a type error here until this panel decides what to do about it.
+ */
+type Caps = CoachCapabilities;
 
 interface StaffMember {
   coachId: string;
@@ -60,9 +58,19 @@ const EVERYDAY_SEGMENTS: Segment[] = [
 ];
 
 const EVERYDAY_TOGGLES: Toggle[] = [
-  { key: 'schedule', label: 'Schedule', hint: 'View + manage events' },
+  /**
+   * ⚠ Two controls since 2026-08-03, not one. `schedule` used to mean *see it* AND *change it*, so
+   * there was no way to grant someone the practice they are turning up to without also handing them
+   * the power to delete a game. Both default ON for an assistant, so this reads as one grant split
+   * in two rather than as anything taken away.
+   */
+  { key: 'schedule', label: 'Schedule', hint: 'See the schedule + practice plans' },
+  { key: 'scheduleManage', label: 'Change the schedule', hint: 'Add, edit and cancel events' },
   { key: 'attendance', label: 'Attendance', hint: 'Record attendance' },
   { key: 'lineups', label: 'Lineups', hint: 'Build game lineups' },
+  // Chat used to be un-toggleable and was named as such in the rail below. It is a grant now,
+  // because a helper must be able to be staff without being in the room where coaches talk.
+  { key: 'staffChat', label: 'Staff chat', hint: 'In the team’s staff room' },
 ];
 
 const SENSITIVE_SEGMENTS: Segment[] = [
@@ -160,15 +168,53 @@ const GRANT_LABELS: ReadonlyArray<{ key: keyof Caps; label: string }> =
     .map(({ key, label }) => ({ key, label }));
 
 /** Granted = a toggle that is true, or a segment set to anything other than 'off'. */
-const grantedByDefault = (key: keyof Caps) => {
-  const v = ASSISTANT_DEFAULTS[key];
+const grantedIn = (caps: Caps, key: keyof Caps) => {
+  const v = caps[key];
   return v !== false && v !== 'off';
 };
+const grantedByDefault = (key: keyof Caps) => grantedIn(ASSISTANT_DEFAULTS, key);
 
-// Chat is named explicitly because it is NOT a capability toggle — every coach on a team becomes a
-// chat member on reconcile, so there is no default to derive it from.
-const DEFAULT_ON = ['Chat', ...GRANT_LABELS.filter(g => grantedByDefault(g.key)).map(g => g.label)];
+// Chat used to be hard-coded into this list because it was NOT a capability — membership was derived
+// from the staff assignment. It is `staffChat` now (2026-08-03) and derives like everything else.
+const DEFAULT_ON = GRANT_LABELS.filter(g => grantedByDefault(g.key)).map(g => g.label);
 const DEFAULT_OFF = GRANT_LABELS.filter(g => !grantedByDefault(g.key)).map(g => g.label);
+
+/**
+ * What the HELPER preset hands over, in the head coach's words rather than in grant names.
+ *
+ * ⚠ **WHICH side each item falls on is DERIVED from `HELPER_PRESET` itself** — only the wording is
+ * chosen here. Hand-listing both halves was the first version of this, and copy describing a
+ * permission bundle is exactly the kind of thing that drifts silently: widen the preset and the
+ * card keeps promising the old boundary, which mis-briefs a head coach about a stranger's access to
+ * children. Deriving the membership makes that failure structurally impossible; the day someone
+ * adds a grant to the preset, this card moves it across on its own.
+ */
+const HELPER_CAPS = resolveCoachCapabilities('assistant_coach', HELPER_PRESET);
+
+/** Plainer words than the duty grid's control labels, which are written for a coach mid-edit. */
+const HELPER_PHRASING: Partial<Record<keyof Caps, string>> = {
+  schedule: 'The practice schedule, and the plan for each practice',
+  scheduleManage: 'Adding, changing or cancelling anything on the schedule',
+  roster: 'The team roster',
+  documents: 'Team documents',
+  money: 'Team money — budget, dues and expenses',
+  rosterPii: 'Guardian contacts, birthdates and medical details',
+  notes: 'Your notes about any player',
+  announcementsSend: 'Emailing your families',
+};
+
+/** Staff chat is excluded from BOTH derived lists — it gets its own, louder line in the markup. */
+const helperGrantLabels = (held: boolean) => GRANT_LABELS
+  .filter(g => g.key !== 'staffChat' && grantedIn(HELPER_CAPS, g.key) === held)
+  .map(g => HELPER_PHRASING[g.key] ?? g.label);
+
+const HELPER_GETS = [
+  ...helperGrantLabels(true),
+  // Not derivable from GRANT_LABELS because it has no control in the duty grid: `planPlayerNames`
+  // is meaningless once roster visibility is on, so it is a preset detail rather than a switch.
+  'Players’ names, numbers and positions at their station',
+];
+const HELPER_NEVER = helperGrantLabels(false);
 
 /**
  * Count of sensitive grants currently in effect — shown on the collapsed group so it never hides one.
@@ -180,14 +226,34 @@ function sensitiveGrantCount(c: Caps): number {
   return [...SENSITIVE_SEGMENTS, ...SENSITIVE_TOGGLES].filter(t => granted(c[t.key])).length;
 }
 
-function grantsFrom(c: Caps) {
+/**
+ * ⚠ EVERY grant the server understands must appear here, including the ones this panel has no
+ * control for. A PATCH replaces the whole stored bundle, so an omitted key is not "left alone" —
+ * it is dropped, and the server then resolves it from the defaults. Leaving `planPlayerNames` out
+ * would silently take a helper's names away the first time anyone touched any other switch.
+ *
+ * ⚠ The `Required<>` return type is what ENFORCES that, rather than this comment asking nicely:
+ * every key of `AssistantCapabilityGrants` is mandatory here, so adding a grant to the server is a
+ * compile error in this function until someone decides how the panel persists it. That is the
+ * whole defence — the failure mode is silent, and a reviewer would have to know to look for it.
+ */
+function grantsFrom(c: Caps): Required<AssistantCapabilityGrants> {
   return {
-    schedule: c.schedule, attendance: c.attendance, lineups: c.lineups,
+    schedule: c.schedule, scheduleManage: c.scheduleManage,
+    attendance: c.attendance, lineups: c.lineups,
     roster: c.roster, rosterPii: c.rosterPii, notes: c.notes,
     money: c.money, documents: c.documents,
     announcementsSend: c.announcementsSend, tryouts: c.tryouts,
+    staffChat: c.staffChat, planPlayerNames: c.planPlayerNames,
   };
 }
+
+/**
+ * DISPLAY ONLY — the server's own labeller, not a second copy of its rules. ⚠ It picks a WORD,
+ * never an access decision. A head coach who hand-edits a helper's grants stops seeing "Helper" on
+ * their card; nothing about what they can open changes, because the word never governed it.
+ */
+const isHelperBundle = (c: Caps) => staffKindLabel(c) === 'helper';
 
 export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = false, seasonQuery = '' }: {
   orgSlug: string;
@@ -211,6 +277,12 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
 
   // Invite form
   const [inviteEmail, setInviteEmail] = useState('');
+  /**
+   * Which preset is being invited. Defaults to `helper` — deliberately, and it is the smaller of
+   * the two grants: if a head coach picks without reading, the accident is that someone got LESS
+   * access than intended and comes back to ask, rather than more than anyone decided.
+   */
+  const [invitePreset, setInvitePreset] = useState<'helper' | 'assistant'>('helper');
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState('');
   const [inviteError, setInviteError] = useState('');
@@ -320,7 +392,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
       const res = await fetch(`${base}/invite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: inviteEmail.trim() }),
+        body: JSON.stringify({ email: inviteEmail.trim(), preset: invitePreset }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) { setInviteError(json.error ?? 'Could not send the invite.'); return; }
@@ -335,7 +407,42 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
     }
   }
 
-  const assistants = (staff ?? []).filter(s => s.coachRole === 'assistant_coach');
+  /**
+   * ⚠ ONE role, two presets. Both lists below are `assistant_coach` rows — the split is read from
+   * the GRANTS, never from a column, because there is no helper column and adding one would turn
+   * this preset into the third role the 2026-08-03 ruling forbade.
+   */
+  const everyAssistant = (staff ?? []).filter(s => s.coachRole === 'assistant_coach');
+  const helpers = everyAssistant.filter(s => isHelperBundle(s.capabilities));
+  const assistants = everyAssistant.filter(s => !isHelperBundle(s.capabilities));
+
+  /** Promote a helper to a full assistant coach: same person, same sign-in, a wider bundle. */
+  async function promoteToAssistant(member: StaffMember) {
+    const who = member.displayName || member.email || 'This helper';
+    const ok = await confirm({
+      title: `Make ${who} an assistant coach?`,
+      message: `${who} will get everything an assistant starts with — the schedule, attendance, lineups, the roster and your staff chat — and you can grant more from their card. Nothing sensitive is granted by this.`,
+      confirmText: 'Make assistant coach',
+      cancelText: 'Cancel',
+      tone: 'warning',
+    });
+    if (!ok) return;
+    // The server's own least-privilege bundle, not a hand-written copy of it: a change to the
+    // assistant defaults must reach this path too, or a promoted helper quietly diverges from
+    // everyone invited as an assistant on the same day.
+    await saveCaps(member, {
+      ...member.capabilities,
+      schedule: ASSISTANT_DEFAULTS.schedule,
+      scheduleManage: ASSISTANT_DEFAULTS.scheduleManage,
+      attendance: ASSISTANT_DEFAULTS.attendance,
+      lineups: ASSISTANT_DEFAULTS.lineups,
+      roster: ASSISTANT_DEFAULTS.roster as RosterAccess,
+      documents: ASSISTANT_DEFAULTS.documents as DocsAccess,
+      staffChat: ASSISTANT_DEFAULTS.staffChat,
+      // Their names now come from roster visibility, exactly as every other assistant's do.
+      planPlayerNames: false,
+    });
+  }
 
   return (
     <section className={css.wrap} aria-labelledby={`${uid}-title`}>
@@ -360,20 +467,53 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
         {!readAccessOnly && (
         <div className={`${css.inviteArea} ${css.card} ${css.inviteCard}`}>
           <form onSubmit={sendInvite} className={css.inviteForm}>
+            {/*
+              The role choice comes BEFORE the email field, because it changes what every line under
+              it means — including the field's own label. Radios rather than a select: there are two
+              options, each needs a sentence, and a select hides the one you didn't pick.
+            */}
+            <fieldset className={css.presetSet}>
+              <legend className={css.label}>Who are you inviting?</legend>
+              {([
+                { key: 'helper' as const, name: 'Helper', desc: 'Runs a station. Sees the practice, nothing else.' },
+                { key: 'assistant' as const, name: 'Assistant coach', desc: 'Coaches the team. You choose what they can open.' },
+              ]).map(opt => (
+                <label
+                  key={opt.key}
+                  className={invitePreset === opt.key ? `${css.presetOpt} ${css.presetOptOn}` : css.presetOpt}
+                >
+                  <input
+                    type="radio"
+                    name={`${uid}-preset`}
+                    value={opt.key}
+                    checked={invitePreset === opt.key}
+                    onChange={() => { setInvitePreset(opt.key); setInviteMsg(''); setInviteError(''); }}
+                  />
+                  <span>
+                    <span className={css.presetName}>{opt.name}</span>
+                    <span className={css.presetDesc}>{opt.desc}</span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+
             <div className={css.field}>
-              <label className={css.label} htmlFor={`${uid}-invite-email`}>Assistant&apos;s email</label>
+              <label className={css.label} htmlFor={`${uid}-invite-email`}>
+                {invitePreset === 'helper' ? 'Helper’s email' : 'Assistant’s email'}
+              </label>
               <input
                 id={`${uid}-invite-email`}
                 type="email"
                 required
                 className={styles.input}
-                placeholder="assistant@email.com"
+                placeholder={invitePreset === 'helper' ? 'helper@email.com' : 'assistant@email.com'}
                 value={inviteEmail}
                 onChange={e => { setInviteEmail(e.target.value); setInviteMsg(''); setInviteError(''); }}
               />
             </div>
             <button type="submit" className={styles.btnPrimary} disabled={inviting}>
-              <UserPlus size={15} /> {inviting ? 'Sending…' : 'Invite assistant'}
+              <UserPlus size={15} />
+              {inviting ? 'Sending…' : invitePreset === 'helper' ? 'Invite helper' : 'Invite assistant'}
             </button>
           </form>
           {inviteMsg && <p className={css.inviteNote}>{inviteMsg}</p>}
@@ -381,10 +521,63 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
         </div>
         )}
 
+        {/*
+          What the chosen preset actually hands over, in sentences. This lives in the PAGE and not
+          in the rail beside it, because a reference rail does not exist below the wide breakpoint
+          (design decision 2026-08-03) — and a head coach on a phone is the one who most needs to
+          read what a stranger is about to be able to see.
+        */}
+        {!readAccessOnly && (
+          <div className={`${css.accessArea} ${css.card}`}>
+            <p className={css.groupLabel}>
+              {invitePreset === 'helper' ? 'What a helper gets' : 'What an assistant gets'}
+            </p>
+            <h4 className={css.railGroupLabel}>
+              {invitePreset === 'helper' ? 'All they can see' : 'On from the start'}
+            </h4>
+            <ul className={css.railList}>
+              {(invitePreset === 'helper' ? HELPER_GETS : DEFAULT_ON).map(label => (
+                <li key={label} className={css.railItem}>
+                  <span className={css.railIconOn}><Check size={13} aria-hidden /></span>
+                  {label}
+                </li>
+              ))}
+            </ul>
+            <h4 className={css.railGroupLabel}>
+              {invitePreset === 'helper' ? 'Never' : 'Off until you turn it on'}
+            </h4>
+            <ul className={css.railList}>
+              {(invitePreset === 'helper' ? HELPER_NEVER : DEFAULT_OFF).map(label => (
+                <li key={label} className={css.railItem}>
+                  <span className={css.railIconOff}><Lock size={12} aria-hidden /></span>
+                  {label}
+                </li>
+              ))}
+              {invitePreset === 'helper' && (
+                /*
+                  ⚠ The loudest line on the card, and the only one drawn as an exclusion rather than
+                  a lock. Every other "never" here is something a head coach would EXPECT a stranger
+                  not to have; the staff room is the one they would assume wrong, because until this
+                  release everybody on a team's staff list was in it automatically.
+                */
+                <li className={`${css.railItem} ${css.railItemNever}`}>
+                  <span className={css.railIconNever} aria-hidden>✕</span>
+                  <span><strong>Your staff chat</strong> — helpers are never in it</span>
+                </li>
+              )}
+            </ul>
+            <p className={css.railFoot}>
+              {invitePreset === 'helper'
+                ? 'A helper can’t change anything — not the plan, not the schedule, not a single game. They sign in as themselves, and you can take this back any time.'
+                : 'Every assistant signs in as themselves — you never share a password — and you can take any of this back the moment you need to.'}
+            </p>
+          </div>
+        )}
+
         <div className={css.listArea}>
           {!staff && !loadError && <p className={styles.muted}>Loading staff…</p>}
 
-          {staff && assistants.length === 0 && (
+          {staff && everyAssistant.length === 0 && (
             // Quiet, not the glowing illustration: the invite sits directly above and the rail
             // beside it, so this is a note at the weight of the panels around it, not a hero.
             // The description no longer says an assistant "sees only the areas you switch on" —
@@ -399,9 +592,11 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
             />
           )}
 
-          {staff && assistants.length > 0 && (
+          {staff && everyAssistant.length > 0 && (
             <p className={css.count}>
-              {assistants.length} {assistants.length === 1 ? 'assistant' : 'assistants'}
+              {assistants.length > 0 && `${assistants.length} ${assistants.length === 1 ? 'assistant' : 'assistants'}`}
+              {assistants.length > 0 && helpers.length > 0 && ' · '}
+              {helpers.length > 0 && `${helpers.length} ${helpers.length === 1 ? 'helper' : 'helpers'}`}
             </p>
           )}
 
@@ -506,44 +701,90 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
               </div>
             );
           })}
+
+          {/*
+            HELPERS. ⚠ A helper card carries NO capability grid — not a disabled one, an absent one.
+            Ten controls that a helper by definition does not hold is a set of switches that exist
+            only to refuse, and this portal's rule is that such a control must be absent rather than
+            disabled. What a helper has is one sentence; what a head coach can do about it is widen
+            it in one tap or take it away in one tap.
+          */}
+          {helpers.map(member => (
+            <div key={member.coachId} className={`${css.card} ${css.helperCard}`}>
+              <div className={css.person}>
+                <div>
+                  <p className={css.personName}>{member.displayName || member.email || 'Helper'}</p>
+                  {member.email && member.displayName && <p className={css.personEmail}>{member.email}</p>}
+                </div>
+                <div className={css.personActions}>
+                  <span className={css.helperChip}>Helper</span>
+                  <span role="status" aria-live="polite">
+                    {savingId === member.coachId && <span className={css.saveState}>Saving…</span>}
+                    {savedId === member.coachId && <span className={css.saveStateDone}>Saved</span>}
+                  </span>
+                </div>
+              </div>
+
+              <p className={css.helperSummary}>
+                Sees the practice schedule and plans, and players’ names. Can’t change anything.
+                Not in staff chat.
+              </p>
+
+              {!readAccessOnly && (
+                <div className={css.helperActions}>
+                  <button type="button" className={styles.btnSecondary}
+                    disabled={savingId === member.coachId}
+                    onClick={() => { void promoteToAssistant(member); }}>
+                    Make assistant coach
+                  </button>
+                  <button type="button" className={`${styles.btnSecondary} ${css.removeBtn}`}
+                    disabled={removingId === member.coachId}
+                    onClick={() => removeAssistant(member)}>
+                    <Trash2 size={13} /> Remove
+                  </button>
+                </div>
+              )}
+              {readAccessOnly && (
+                <div className={css.helperActions}>
+                  <button type="button" className={`${styles.btnSecondary} ${css.removeBtn}`}
+                    disabled={removingId === member.coachId}
+                    onClick={() => removeAssistant(member)}>
+                    <Trash2 size={13} /> Remove access
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
         </div>
 
-        {/* Standing access reference — see DEFAULT_ON / DEFAULT_OFF above. */}
-        <aside className={`${css.railArea} ${css.rail}`} aria-label="What an assistant gets">
-          <h3 className={css.railTitle}>What an assistant gets</h3>
+        {/*
+          The rail no longer lists the defaults — that list moved INTO the page (see the access card
+          above), where it is preset-aware and survives a phone. What is left here is the question a
+          head coach actually has at this screen and can happily miss on a narrow viewport: which of
+          the two am I inviting? That is exactly the altitude a reference rail is for.
+        */}
+        <aside className={`${css.railArea} ${css.rail}`} aria-label="Helper or assistant coach?">
+          <h3 className={css.railTitle}>Helper or assistant?</h3>
 
-          {/* Real lists, each tied to its own heading. The check and lock glyphs are decorative
-              (aria-hidden), so before this the on/off distinction reached assistive tech ONLY as
-              reading order — fine read top-to-bottom, useless to anyone jumping by list or
-              heading. The headings now carry the state, and the lists announce their length.
-              (/review 2026-07-31) */}
           <div className={css.railGroup}>
-            <h4 className={css.railGroupLabel} id={`${uid}-rail-on`}>On from the start</h4>
-            <ul className={css.railList} aria-labelledby={`${uid}-rail-on`}>
-              {DEFAULT_ON.map(label => (
-                <li key={label} className={css.railItem}>
-                  <span className={css.railIconOn}><Check size={13} aria-hidden /></span>
-                  {label}
-                </li>
-              ))}
-            </ul>
+            <h4 className={css.railGroupLabel} id={`${uid}-rail-helper`}>A helper</h4>
+            <p className={css.railProse} aria-labelledby={`${uid}-rail-helper`}>
+              A parent or an outside instructor who turns up to run a station. One screen,
+              read-only, no staff chat. Perfect for the person doing the tee for an hour.
+            </p>
           </div>
 
           <div className={css.railGroup}>
-            <h4 className={css.railGroupLabel} id={`${uid}-rail-off`}>Off until you turn it on</h4>
-            <ul className={css.railList} aria-labelledby={`${uid}-rail-off`}>
-              {DEFAULT_OFF.map(label => (
-                <li key={label} className={css.railItem}>
-                  <span className={css.railIconOff}><Lock size={12} aria-hidden /></span>
-                  {label}
-                </li>
-              ))}
-            </ul>
+            <h4 className={css.railGroupLabel} id={`${uid}-rail-assistant`}>An assistant coach</h4>
+            <p className={css.railProse} aria-labelledby={`${uid}-rail-assistant`}>
+              Staff. They start with the schedule, attendance, lineups and the roster, they’re in
+              your staff chat, and you can grant more from their card.
+            </p>
           </div>
 
           <p className={css.railFoot}>
-            Every assistant signs in as themselves — you never share a password — and you can take
-            any of this back the moment you need to.
+            Both sign in as themselves — you never share a password. You can promote a helper to an
+            assistant coach later without inviting them again, and take any of it back at any time.
           </p>
         </aside>
       </div>

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { Archive, ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
+import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachHelperHome from '@/components/coaches/CoachHelperHome';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import CoachTournamentAwarenessBanner from '@/components/marketing/CoachTournamentAwarenessBanner';
@@ -27,6 +29,7 @@ import {
   type PlayingTimeSummary,
   type TileKey,
 } from '@/lib/coach-overview';
+import { hasNoTeamRecordAccess } from '@/lib/coach-capabilities';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
@@ -35,9 +38,10 @@ import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
+import { EVENT_WORD } from '@/lib/coach-schedule-vocab';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
 import styles from '../../coaches.module.css';
-import type { RepRosterPlayer, RepTeamEvent } from '@/lib/types';
+import type { RepRosterPlayer, RepTeamEvent, RepEventType } from '@/lib/types';
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 
@@ -171,7 +175,22 @@ export default function TeamOverviewPage({
   // wall). Computed HERE, above the data effects, so they can skip their fetches: every
   // endpoint this page reads is active-year-scoped and would just 403/404 for a closed
   // team. Shared predicate with the navs (lib/coaches-context.tsx).
-  const isClosedTeam = !loading && !!resolveClosedAssignment(assignments, closedAssignments, teamId);
+  const closedAssignment = !loading ? resolveClosedAssignment(assignments, closedAssignments, teamId) : null;
+  /**
+   * ⚠ A HELPER HAS NO ARCHIVE (Phase 4, /review finding, 2026-08-03).
+   *
+   * A closed team lands on Season's End — which serves Season Wrapped, and Wrapped labels **every
+   * player on the roster by first name and jersey number**, gated on nothing. That is correct for
+   * a coach looking back at their own season. It is not something a parent volunteer invited to
+   * run one station on one Tuesday was ever meant to receive, and nobody would have decided to
+   * give it to them: they would simply have been redirected into it the day the season closed.
+   *
+   * The house rule for exactly this shape is "if a surface is not archive-ready, hide its entry
+   * point in an archive rather than letting it dead-end" (CLAUDE.md). So a helper is not redirected
+   * at all — they get the plain truth below, and the redirect stays for everyone it was built for.
+   */
+  const closedCapsAreHelperShaped = !!closedAssignment && hasNoTeamRecordAccess(closedAssignment.capabilities);
+  const isClosedTeam = !loading && !!closedAssignment && !closedCapsAreHelperShaped;
   const [setupStats, setSetupStats] = useState<SetupStats | null>(null);
   const [setupLoading, setSetupLoading] = useState(true);
   const [setupError, setSetupError] = useState('');
@@ -181,8 +200,19 @@ export default function TeamOverviewPage({
   // Whole days until the next event (computed at load; null when nothing upcoming) → stat strip.
   const [nextEventDays, setNextEventDays] = useState<number | null>(null);
   const [seasonGames, setSeasonGames] = useState<RepTeamEvent[]>([]);
-  // Events in the next 7 days (grouped) for the "This week" line.
-  const [weekSummary, setWeekSummary] = useState<{ practices: number; games: number; other: number; total: number } | null>(null);
+  // The next 7 days of events, chronological — ONE piece of state serving both the "This week" tile
+  // (which wants counts) and the reference rail (which wants the list). Null until the fetch lands,
+  // so an unloaded week still reads as unknown rather than as an empty one. Two states set from the
+  // same array in the same line was a desync waiting for the next person to edit one path.
+  const [weekEvents, setWeekEvents] = useState<RepTeamEvent[] | null>(null);
+  // The "This week" tile's counts — DERIVED from that one list, never stored beside it. Null while
+  // the week is unknown, which is the distinction the tile's "…" state depends on.
+  const weekSummary = (() => {
+    if (!weekEvents) return null;
+    const games = weekEvents.filter(e => GAME_EVENT_TYPES.includes(e.eventType)).length;
+    const practices = weekEvents.filter(e => e.eventType === 'practice').length;
+    return { games, practices, other: weekEvents.length - games - practices, total: weekEvents.length };
+  })();
   // Active players with no guardian email (blocks dues reminders + announcements) → Roster nudge.
   const [missingEmailCount, setMissingEmailCount] = useState(0);
   // Whether the next game already has a lineup set → Next-up tile flag (null = unknown / not a game).
@@ -320,15 +350,14 @@ export default function TeamOverviewPage({
         .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime())[0] ?? null;
       setLastPastEventAt(lastPast?.startsAt ?? null);
 
-      // Events in the next 7 days, grouped for the "This week" line.
+      // Events in the next 7 days — chronological, and the ONE source for both the "This week"
+      // tile's counts and the rail's list.
       const weekAhead = now + 7 * 86400000;
       const thisWeek = events.filter(e => {
         const t = new Date(e.startsAt).getTime();
         return e.status === 'scheduled' && t >= now && t <= weekAhead;
       });
-      const wkGames = thisWeek.filter(e => GAME_EVENT_TYPES.includes(e.eventType)).length;
-      const wkPractices = thisWeek.filter(e => e.eventType === 'practice').length;
-      setWeekSummary({ games: wkGames, practices: wkPractices, other: thisWeek.length - wkGames - wkPractices, total: thisWeek.length });
+      setWeekEvents([...thisWeek].sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()));
 
       // Player birthdays in the next 7 days (active roster).
       // Dated in the ORG timezone, not the viewer's device, so a coach travelling out of
@@ -747,6 +776,23 @@ export default function TeamOverviewPage({
   if (loading) return <p className={styles.muted}>Loading...</p>;
   if (isClosedTeam) return <p className={styles.muted}>Opening Season&apos;s End…</p>;
 
+  /**
+   * The helper's end of the road. Their whole reason to be here was a practice on a live season;
+   * with the season closed there is no practice, and every archive surface is deliberately shut to
+   * them. Say so plainly rather than redirecting them into a season review of other people's
+   * children — and offer no door, because there genuinely isn't one.
+   */
+  if (closedCapsAreHelperShaped) {
+    return (
+      <CoachEmptyState
+        quiet
+        icon={<Archive size={18} aria-hidden />}
+        headline="This season has finished"
+        description="Thanks for helping out. There are no more practices to open here — if you help again next season, your coach will invite you back."
+      />
+    );
+  }
+
   const assignment = assignments.find(a => a.teamId === teamId);
 
   if (!assignment) {
@@ -755,6 +801,35 @@ export default function TeamOverviewPage({
         <h2>Team not found</h2>
         <p>You are not assigned to this team.</p>
       </div>
+    );
+  }
+
+  /**
+   * ⚠ THE HELPER'S HOME (Practice Plans Phase 4, 2026-08-03, frames H1 / H4 / H5).
+   *
+   * The Overview below is a board of six tiles about the roster, attendance, playing time, dues and
+   * lineups. When a coach holds NONE of the capabilities those tiles read, every one of them
+   * resolves to nothing and the screen becomes a page of empty boxes with a setup checklist they
+   * cannot action — which is what a HELPER would have met on their first sign-in.
+   *
+   * ⚠ **Keyed on the capabilities themselves, not on "is this person a helper".** There is no helper
+   * role to ask about, and there must not be: a bundle that can render the board gets the board, and
+   * one that can't gets the thing it CAN do. If a head coach later grants a helper the roster, this
+   * branch stops matching by itself and they get the ordinary Overview — no list to update, nothing
+   * to keep in step.
+   *
+   * This grants nothing and hides nothing the server would have served: it chooses an altitude.
+   */
+  if (hasNoTeamRecordAccess(assignment.capabilities) && assignment.capabilities.schedule) {
+    return (
+      // No zone passed, exactly as every other date on this page does it: the helpers default to
+      // the org zone, and the date-correctness guardrail exists to stop anyone reaching for `new
+      // Date()` arithmetic instead.
+      <CoachHelperHome
+        orgSlug={orgSlug}
+        teamId={teamId}
+        teamName={assignment.teamName ?? 'Your team'}
+      />
     );
   }
 
@@ -1495,6 +1570,14 @@ export default function TeamOverviewPage({
     got_it: 'Got it',
     skip_step: 'Skip this step',
   };
+
+  // ⚠ THE OVERVIEW HAS NO REFERENCE RAIL, DELIBERATELY (owner ruling 2026-08-03, after seeing it
+  // built). Every line of it restated a tile the board already carries — the week's counts, the
+  // missing-guardian-email count, the overdue-dues count — in a second column beside those very
+  // tiles. This page answers ONE question at a time; a parallel column of the same answers works
+  // against that, and it read as crowded. The lineup builder and Dues keep their rails, because
+  // those carry facts that are genuinely not on screen. If a rail is proposed here again, it has
+  // to hold something the six tiles cannot.
 
   return (
     <div className={styles.page}>

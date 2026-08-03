@@ -1,5 +1,66 @@
 # Practice Plans — Implementation Plan (Player Development, roadmap Phase 4)
 
+> ### ✅ PHASE 4 — "HELPERS" BUILT 2026-08-03, UNCOMMITTED on `dev`, owner QA pending — **THIS CLOSES THE PROJECT**
+>
+> **BOTH GATES CLEARED AND LOGGED** — `BUSINESS_DECISIONS.md`, top entry, 2026-08-03. Mockups round 1
+> `claude.ai/code/artifact/ebf2b469-88d7-4b09-b1e8-151c3e7d4773` (10 frames), **approved the same day
+> = binding visual spec**. **No migration. No new storage. No third `coach_role`.**
+>
+> **The owner's three rulings.** (1) A helper sees **FULL roster basics** — first name, last name,
+> jersey, position — same as any assistant; the narrower "first names only" scope was offered and
+> declined. (2) Two additive capability changes approved to make "preset, not a role" *true*. (3)
+> Phase 4 is built before one QA sweep across Phases 2–4 together.
+>
+> **⚠ THE PREMISE DID NOT HOLD AS WRITTEN, and that is the whole story of this phase.** §8.1 promised
+> the screens were small "because the permission machinery exists". Verification found **three ways
+> it did not**:
+> · `schedule` was ONE switch covering *see it* and *create/edit/delete events* — so the stated preset
+>   ("schedule visibility on, all writes off") **was not expressible**; a helper could have deleted a game.
+> · Team staff-chat membership is **derived from the staff assignment** and documented as explicitly
+>   *not* a capability toggle — so a parent volunteer would have been **auto-seated in the room where
+>   coaches discuss children**. Same exposure class as the 2026-08-01 family-chat cut, via a side door.
+> · Roster visibility is on/off only, and every record surface reads it — so granting names on the plan
+>   via `roster: 'view'` would also have opened the **roster page, the development board and Insights**.
+>
+> **THREE ADDITIVE GRANTS, chosen so the portal fails CLOSED:** `scheduleManage` (defaults TRUE, and
+> falls back to `schedule` for bundles stored before the split — or every live assistant loses event
+> editing on deploy) · `staffChat` (defaults TRUE; the ONE place chat membership consults a capability)
+> · `planPlayerNames` (defaults **FALSE**; lets the practice-plan surfaces show names while `roster`
+> stays **off**, which is why the roster page, the board and Insights needed **no new gate at all**).
+> ⚠ None is a role. `staffKindLabel()` picks a WORD and is contractually forbidden from gating.
+>
+> **What shipped:** the **Helper preset on the staff invite path** (role choice *above* the email
+> field, defaulting to the smaller grant) · an access card stating what the chosen preset grants **in
+> the page, not the rail** (rails don't exist below the wide breakpoint) · **helper cards with NO
+> capability grid** — absent, not disabled · **Make assistant coach** (same person, same sign-in) ·
+> the rail rewritten as the helper-vs-assistant explainer · **`CoachHelperHome`** — the helper's
+> landing: tonight's practice + one 56px "Open my station", the next date when there's no practice
+> today, an honest "plan isn't written yet", and "This season has finished" · **no Rotate now for a
+> helper** — a line naming who does move everyone on · a helper-specific invitation email.
+>
+> **⚠ ONE DEFECT FOUND BY `/review`, FIXED:** a helper whose season closed was **redirected into
+> Season's End**, which serves **Season Wrapped — every player's first name and jersey number, gated
+> on nothing**. Nobody would have decided that; they'd simply have been walked into it. A helper is
+> no longer redirected at all. **⚠ ADVISORY, NOT FIXED, needs its own decision:** Wrapped labels the
+> whole roster with **no roster-capability check whatsoever**, which also affects any assistant whose
+> roster access is off. Pre-existing; left alone rather than silently changing what assistants see.
+>
+> **Verification:** `/simplify` (5 cleanups — incl. a **false claim that a test kept the helper copy
+> in step with the preset**; the lists are now *derived* from `HELPER_PRESET`, so drift is
+> structurally impossible) → `/review` high-risk, 6 lenses incl. capability parity probed as the
+> helper AND the read-only assistant, the no-shareable-link audit, and grant-bundle persistence (2
+> confirmed + fixed, 0 refuted) → `/docs` (helper coverage + **two corrections to shipped copy**:
+> Schedule is two switches now, and staff chat is no longer automatic) → **22/22 Playwright
+> computed-style probes green at 361 / 390 / desktop** (`tests/uat/scenarios/staff-helper-layout.spec.ts`).
+> typecheck ✓ · lint 0 errors · **1165 unit tests ✓** · colour baselines **ZERO** · contrast AA ✓ ·
+> date-correctness ZERO. ⚠ Schema-parity fails as before — migs 213/218/221 + the family layer are
+> dev-only; **this phase adds none**.
+>
+> **⚠ NOT PROBED, resting on owner QA:** the helper's OWN screens. They render only for a signed-in
+> helper, and the UAT harness has one coach fixture who is a HEAD coach — probing them needs a second
+> seeded account with its own storage state, which would change shared UAT infrastructure while other
+> sessions are using it. Stated in the spec file and in the QA ledger rather than left to look green.
+>
 > ### ✅ PHASE 3 — "the visible half" BUILT 2026-08-02, UNCOMMITTED on `dev`, owner QA pending
 >
 > The foundation (migration **221**, the shared `kind='focus'` tag vocabulary) was committed
@@ -383,19 +444,50 @@ machinery already shipped:
   people's children — the same gate that already governs the focus rail (§8).
 - **The printed sheet remains the no-account option** for a helper who won't accept an invitation.
 
-**Two gates before build — neither is a screen:**
+**Two gates before build — neither is a screen:** ✅ **BOTH CLEARED 2026-08-03** — logged as the top
+entry in `BUSINESS_DECISIONS.md`, which is the binding record; this section is the history of the ask.
 
 1. **A privacy sign-off.** A non-coach adult reading minors' first names is a new category of access.
    This is the same class of gate that Player Development's D2 had to clear (existing tryout consent
    accepted for coach-authored records, logged in `BUSINESS_DECISIONS.md`) — route via `/strategy`.
+   ✅ **RULED: a helper sees FULL roster basics** — first name, last name, jersey, position, the same
+   as any assistant. The narrower "first names and a number only" scope this section anticipated was
+   **put to the owner and declined**. The decisive argument: a helper's alternative is the **printed
+   sheet**, which already carries every child's full name, the date, the time and the address — and
+   which can never be taken back. The screen version is not a wider disclosure than the paper one it
+   replaces, and it **is revocable**.
 2. **Reconcile against the verified-family decision** (`BUSINESS_DECISIONS.md` 2026-07-11 G3/G4:
    verified family links + **practice-schedule visibility** at Premium, blocked on PIPEDA/CASL). A
    parent volunteer sits directly on that seam. ⚠ **The platform must not end up with two different
    doors by which a parent reaches a team's practice.**
+   ✅ **RECONCILE PASSED, verified in code, not assumed:** a helper **cannot** see or approve family
+   connections (that queue rides `rosterPii`, which the preset does not grant), so a helper grant does
+   not widen the family layer and the family layer does not widen staff access. The tier distinction
+   holds — **a family follower sees the schedule ENTRY; only staff see the PLAN.** Helper is
+   Premium-only by inheritance. ⚠ **ONE ACCEPTED LIMITATION, recorded rather than resolved:** a parent
+   who is *both* a family follower and a helper is **two unrelated records** the coach meets in two
+   lists, with nothing saying they are the same person. **No merge is being built.** When the guardian
+   tier is switched on the same adult could hold three — logged as a known seam for whoever scopes
+   that switch-on.
 
 **Sequencing (D30):** the screens are genuinely small because the permission machinery exists; the
 decisions are not. **Plan it as the CLOSING PHASE of this project, with the sign-off as a gate that
 clears before the build starts** — in scope, but not shipping on momentum.
+
+> ### ⚠ POST-BUILD CORRECTION TO THE SENTENCE ABOVE (2026-08-03) — the one thing to carry forward
+>
+> **"The screens are genuinely small because the permission machinery exists" was WRONG**, and the
+> gate is what caught it. The machinery existed for *coaches*. A helper is the first person on a
+> team's staff list who is **not** one, and three separate mechanisms had quietly assumed otherwise:
+> `schedule` was one switch, not two · staff-chat membership was derived from the assignment and
+> documented as **not** a capability · roster visibility was the single grant every record surface
+> reads. The preset survived as a preset only because **three additive grants were built to make it
+> true** (see §9.2 and the status header).
+>
+> **The generalisable lesson:** when a new PERSONA is added to an existing permission model, the
+> question is never "which switches do they get?" — it is **"which mechanisms assumed everyone here
+> was the old persona?"** Those assumptions are invisible in the capability table and live in
+> derivations, defaults, and doors that `return true`.
 
 ---
 
@@ -471,7 +563,7 @@ sequencing question in §10.
 | **1b** | **Run it** | The field screen — block by block · rotation rounds + "Rotate now" · station cards · **"My station"** (D28) · coaching-points display | None |
 | **2** ✅ | **The drill library** — **BUILT on `dev` 2026-08-01, uncommitted, owner QA pending (§10.7)** | Drills w/ categories, coaching points, setup · the picker + preview · promotion (D18) · **the focus-rail filter** (D16) · **+ the club's shared drill set** and **"Add from a past season"** (owner rulings, §10.7). ⚠ "default stations" is retired — **a drill is ONE activity**, and two in a block is what makes a rotation. | `rep_team_drills` (mig 218, DEV ONLY) + `rep_player_development_goals.category` |
 | **3** ✅ | **The plan library & looking back** — foundation COMMITTED (`18f05650`); **the visible half BUILT on `dev` 2026-08-02, uncommitted, owner QA pending (§10.8)** | The template room as **ONE FLAT LIST filtered by tag chips** (⚠ NOT "grouped by category" — several tags per item would print one template under two headings) · its **own full editor** (frame 03's cost) · "Save as template…" · **ONE picker, two sources** · usage as **"Started 8 plans"** · **"how it went"** (D17) · **the coverage answer + uncovered focus tags + "Practices you've run"** folded into the existing development report · ⚠ **one NEW archive door**: a past plan, read-only, reached only from that list | `rep_team_plan_templates` + `rep_team_plan_template_tags` + `rep_team_events.practice_recap` (mig 221, DEV ONLY) |
-| **4** | **Helpers** ⚠ **GATED** | The "Helper" invite preset + their one-screen portal (D29/D30 · §8.1) | None |
+| **4** ✅ | **Helpers** — **BUILT on `dev` 2026-08-03, uncommitted, owner QA pending. BOTH GATES CLEARED + LOGGED (`BUSINESS_DECISIONS.md` 2026-08-03).** | The "Helper" invite preset + their one-screen portal (D29/D30 · §8.1) · **+ three additive capability grants** the preset turned out to require — `scheduleManage`, `staffChat`, `planPlayerNames` — because "the permission machinery already exists" was **false in three places** (see the status header). ⚠ Helper sees **full** roster basics (owner ruling); the narrower scope was declined. | **None** — no migration, no column, no role. ⚠ If a future change needs one, the preset has become a role and the ruling no longer covers it. |
 
 **Why 1a and 1b are one phase in two slices, not two phases:** 1a alone is already usable — a coach
 can author a plan and **print it**, which is a real artifact on a real Tuesday. 1b is the
@@ -1212,3 +1304,51 @@ small and the pattern is already built and proven on the roster-player and lineu
 - **`/docs`** ships with the build: a Practice plans guide in `lib/help-content/coaches.tsx` indexed by keywords (search matches keywords, not body), plus the help entry on both new routes.
 - **`/strategy`:** no pricing or packaging change — confirm the Premium gate against `PLAN_PRICING_FACTS.md` at build and run the drift check if anything about the gate turns out to differ. **No business decision to log unless the owner changes the parent-facing posture** (§0.4).
 - **No commits/pushes without explicit per-action owner OK.** Stage explicit `:(literal)` pathspecs (bracketed route dirs are glob-hostile); audit `git show --stat HEAD`.
+
+---
+
+## ADDENDUM — hand this forward when Phase 4 is done
+
+### A1. Retire the "Roster: Hidden" grant — player names are baseline for everyone
+
+**Owner ruling 2026-08-03** (logged: `docs/agents/strategy/BUSINESS_DECISIONS.md`, top entry —
+*"Player NAMES, NUMBERS and POSITIONS are BASELINE for everyone with portal access"*).
+
+**⚠ This is parked behind Phase 4 on purpose.** It was ruled while Phase 4 was mid-build, and it
+touches the same five files: the capability resolver, the staff duty grid, the nav visibility gate,
+the practice-plan route, and the helper home screen. Starting it before Phase 4 lands would collide.
+**When Phase 4 is committed, this is the next thing this project owes.**
+
+**What changes**
+- A player's **first name, last name, jersey number and position** are visible to anyone with portal
+  access to that team — head coach, assistant, or Helper. They stop being grantable.
+- The **Roster: Hidden / View** control is removed from the head coach's duty grid; `roster: 'off'`
+  stops being a reachable state for a person.
+- **`planPlayerNames` is retired with it.** That grant exists only so a Helper holding `roster: 'off'`
+  can see names on the plan; once roster basics are baseline, a Helper simply has roster visibility
+  and the special case has nothing left to do. ⚠ Remember it is also in `grantsFrom()` in the staff
+  panel — a PATCH replaces the whole bundle, so removing it from one place and not the other is the
+  documented way to silently drop a grant.
+- ~8 route gates that call `canViewRoster` / compare `roster !== 'off'` stop needing to ask a
+  question with one possible answer.
+
+**Why — the finding that prompted it.** Audited 2026-08-03: with **Roster: Hidden** set, an assistant
+was blocked from the roster page, attendance and the development board, and *still* saw every
+player's full name and number in the **lineup builder**, the **playing-time report**, the **dues
+page** and **awards** — each gates on its own capability and never consults `roster`. Four surfaces
+honoured the switch, four ignored it. The control made a safety claim the product could not keep.
+
+**⚠ The one way this could go wrong.** The `roster` capability feeds the same redaction helper that
+protects **guardian contacts, DOB, medical notes and emergency contacts**. Those must remain exactly
+as protected as they are today, behind the separate **Contacts & birthdates** grant. Prove that with
+a test before calling this done — a simplification that quietly widened family PII would be a far
+worse outcome than the inconsistency it set out to fix.
+
+**⚠ Re-audit, do not trust the list above.** Phase 4 was actively changing these gates when this was
+written (`canSeePlanPlayers` was added the same day). Re-run the surface audit against the code as it
+then stands.
+
+**Verification:** unit tests for the resolver (no reachable `roster: 'off'`), the guardian-PII test
+above, `npm run verify:changed`, and a pass of the assistant-coaches help section — it currently
+describes the Roster grant as a switch a head coach can turn off. No schema change expected; if one
+appears, something has drifted.

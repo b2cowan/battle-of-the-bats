@@ -1205,12 +1205,26 @@ export function assistantCoachInviteHtml(p: {
   teamName: string;
   invitedByName: string | null;
   inviteUrl: string;
+  /** Phase 4: the HELPER preset — a parent volunteer or outside instructor running one station. */
+  asHelper?: boolean;
 }) {
   const by = p.invitedByName ? `<strong>${p.invitedByName}</strong>` : 'The head coach';
+  /**
+   * ⚠ The helper's email promises what the HELPER PRESET actually grants, not what an assistant
+   * gets. Telling a parent volunteer they are getting "the team's chat, attendance and lineups"
+   * would be false on all three counts, and the first thing they'd do is go looking for them.
+   */
+  const heading = p.asHelper ? 'You’re invited to help out' : 'You’re invited to help coach';
+  const line = p.asHelper
+    ? `${by} invited you to help out at <strong>${p.teamName}</strong> on <strong>FieldLogicHQ</strong>.`
+    : `${by} invited you to join <strong>${p.teamName}</strong> as an <strong>assistant coach</strong> on <strong>FieldLogicHQ</strong>.`;
+  const what = p.asHelper
+    ? 'Accept below to set up your account. On a practice day you’ll see the plan, the station you’re running and the players with you — on your own phone, at the field. That’s all it does.'
+    : 'Accept below to set up your account. You’ll get the team’s chat, schedule, attendance and lineups; the head coach chooses anything more.';
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You're invited to help coach</h2>
-    <p>${by} invited you to join <strong>${p.teamName}</strong> as an <strong>assistant coach</strong> on <strong>FieldLogicHQ</strong>.</p>
-    <p style="color:rgba(241,245,249,0.7);">Accept below to set up your account. You'll get the team's chat, schedule, attendance and lineups; the head coach chooses anything more.</p>
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${heading}</h2>
+    <p>${line}</p>
+    <p style="color:rgba(241,245,249,0.7);">${what}</p>
     <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">Accept invite &rarr;</a>
     <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This link expires in 7 days. If you weren't expecting this, you can safely ignore this email.</p>
   `);

@@ -6,7 +6,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
-import { denyUnless, canManageSchedule, canViewRoster, redactRoster } from '@/lib/coach-capabilities';
+import { denyUnless, canViewSchedule, canViewRoster, redactRoster } from '@/lib/coach-capabilities';
 
 /**
  * ⚠ **THE NEW ARCHIVE DOOR — one read-only past plan, and nothing else** (owner ruling
@@ -47,7 +47,22 @@ export const GET = withObservability(async (req: Request,
   if ('error' in seasonCtx) return seasonCtx.error;
   const { programYear, capabilities, isReadOnly } = seasonCtx;
 
-  const denied = denyUnless(canManageSchedule(capabilities), 'You do not have access to the schedule.');
+  /**
+   * ⚠ THE ARCHIVE DOOR IS NOT A HELPER'S DOOR (Phase 4, 2026-08-03).
+   *
+   * This route serves a PAST season's plan, and its only entry point is the "Practices you've run"
+   * list inside the Development report — a door that shows on `notes || roster`. A helper turns up
+   * to run a station on a Tuesday; they hold neither, and they have no business reading last
+   * season's plans, so the gate here mirrors the door that leads to it rather than resting on the
+   * schedule alone. **Matching the gate to its own entry point is what keeps this from becoming a
+   * URL a helper can type.**
+   *
+   * Every coach who can reach this in the UI today passes unchanged: they arrived through that list,
+   * which means they already hold one of the two.
+   */
+  const canOpenPastPlans =
+    canViewSchedule(capabilities) && (capabilities.notes || capabilities.roster !== 'off');
+  const denied = denyUnless(canOpenPastPlans, 'You do not have access to past practice plans.');
   if (denied) return denied;
 
   const event = await getRepTeamEventById(eventId);

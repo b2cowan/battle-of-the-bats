@@ -148,6 +148,7 @@ export default function AdminHelpHubPage() {
           { label: 'Track team fees', href: `${helpBase}/coaches#recipe-track-dues` },
           { label: 'Track player documents', href: `${helpBase}/coaches#recipe-track-documents` },
           { label: 'Chat with the tournament organizer', href: `${helpBase}/coaches#recipe-tournament-chat` },
+          { label: 'Let families follow the team', href: `${helpBase}/coaches#premium-family-access` },
         ],
       },
     ] : []),

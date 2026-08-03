@@ -1,0 +1,104 @@
+# Product Ideas Backlog
+
+A standing, curated list of product ideas to pick from when there's downtime. This is a **living document** — it never archives. When an idea graduates to real work, it gets a proper `_PLAN.md` + `_PM_BRIEF.md` pair in `docs/projects/active/` and its status here changes to **Planned** with a link.
+
+- **Provenance:** 2026-08-02 wow-factor brainstorm (six surface surveys + six creative lenses, 54 raw ideas, deduped below).
+- **Scope at time of capture:** coaches portal, tournament admin, main app pages (Home/Scores/Chat/Account), login/signup, public tournament pages. Club-admin and house-league-admin surfaces deliberately out of scope for now.
+- **Ratings:** Wow is 1–5 (5 = someone physically shows their phone to the person beside them). Effort is S/M/L at concept level — real sizing happens at planning time.
+- **Statuses:** `New` → `Shortlisted` (owner flagged interest) → `Planned` (has a plan doc) → `Built` / `Passed` (decided against — keep the entry, note why).
+
+## Owner shortlist (2026-08-02)
+
+Flagged for detailed exploration, in the owner's order:
+
+1. The Big Board
+2. The Bracket Draws Itself
+3. The Draft Brief
+4. Ask the Front Office
+5. The Motion Pack
+6. Play With a Live One First
+7. Watch Your Event Come Alive While You Type
+8. Meet Your Team
+
+### Grounding notes (2026-08-02, code-verified)
+
+One-line reality check per shortlisted idea — full detail lives in the conversation that produced this; each graduates to a proper plan before build.
+
+- **The Big Board** — public live-score data, the 30s live-refresh pattern, a broadcast-style ticker precedent, and the admin ops stats all exist. Slim v1 (big-font auto-cycling board + existing announcement banner as the delay notice) is **S/M**; "biggest moments" detector and a no-login staff ops toggle are the L-makers — cut both to fast-follows. Open: free vs plan-gated; how staff unlock ops mode on a shared tablet.
+- **The Bracket Draws Itself** — **~80% already built**: the public bracket already has a draw-itself reveal animation, instant live score updates, and tier handling. Slim v1 = **S**: make winner-advancement instant (today it rides the 30s refresh) + a pulse on the live matchup. Open: when organizers generate the bracket relative to pool play; fate of the separate static "Playoff Picture" page.
+- **The Draft Brief** — per-evaluator scores AND notes are already stored separately; the live tryout board already polls every 6s and ships an analogous evaluator-bias flag. Catches: "scoring closes" isn't a real event yet, and AI prose = the platform's **first AI dependency + minors'-PII egress ruling**. Slim v1 = split-opinion flag + template-built (non-AI) synthesis paragraph — most of the promise, zero new dependency.
+- **Ask the Front Office** — zero AI in the codebase today; the insights engine ("assemble, never generate", capability-filtered per assistant) is the exact ancestor. Some asked-for answers need data shapes that don't exist yet (per-position recency beyond pitchers; family-grouped dues). Slim v1 = **"Quick Asks"**: ~6–8 tappable pre-written questions, each backed by real math, answer + receipts. Open free-text goes L→XL and forces the AI decision.
+- **The Motion Pack** — a production odometer/flip primitive already exists on several score surfaces, reduced-motion is globally handled, and standings already detect who moved up/down. New: the color wash, the row slide (risky inside sticky-column tables), per-card change detection on the admin board, haptics (Android-only). Catch: "team color" on public surfaces is a generated tint from the name, not a set color. Slim v1 = color wash on the already-animated surfaces + admin card glow. **M**.
+- **Play With a Live One First** — public pages are already anonymous with live refresh, and a seeded demo tournament already exists as a dev tool — but it's a frozen snapshot. New: an always-on prod demo org, a scheduled "tick + reset" driver, and a **client-side-only** draggable bracket (never real writes — concurrent visitors would clobber each other). Cut the compressed pre-event→live→finished time flip (credibility risk). **L** even slim, but the spine exists.
+- **Watch Your Event Come Alive While You Type** — creation is a one-shot modal wizard; colors/branding live on a separate post-creation page and custom colors are Tournament-Plus-gated, so the "colors repaint" beat is a plan-gating decision, not a freebie. The real public hero can't be reused live (server-rendered), so the preview is a hand-built mimic → drift risk to manage. Slim v1 = desktop-only phone frame with name, date range, live countdown in the org's current theme. **M** (L with a color step).
+- **Meet Your Team** — most shovel-ready of the eight: teams already carry a real coach-set color, record + next-game are already computed at team entry, and the share-a-PNG mechanism (with the kid-safe first-name+jersey rule) has shipped twice. The invite-accept seam is clean and empty today. Catch: a brand-new head coach's team is empty and that moment is already owned by the cold-start welcome card — v1 should fire on assistant-invite accept only. **M**.
+
+---
+
+## Signature moments — season close, champions, keepsakes
+
+- **Season Wrapped, the Story** (Wow 5 · L · New) — A closed season opens as a full-screen, swipeable five-or-six-slide sequence — record, attendance milestone, most-worked focus area, an honest standout moment — each slide animating its one number into place, ending on a shareable image. Connected parents get the same story format for their own kid's recap. The platform's Spotify-Wrapped moment; nothing in it is a ranking or a grade.
+- **The Season Reel / Champion Reel** (Wow 5 · L · New) — At tournament or season close, the platform auto-assembles a 30–60 second vertical video from data it already has (score progression, standout stat, photo timeline, final result) in the org's colors, sized for Instagram/TikTok. One tap, no editing skill. Every share is branded marketing.
+- **Trading Cards** (Wow 5 · M · New) — Every rostered player gets an auto-generated trading card: jersey-number front in team colors, season stat line + one honest standout fact on the back. One tap generates the team set; parents can share their own kid's card. Cheapest viral moment in the whole list.
+- **The Yearbook Page** (Wow 4 · M · New) — At season close, teammates' families and staff each get a one-time chance to leave a short signed note per player. Notes collect into a yearbook-style page per kid, coach-previewed before release (same preview pattern the family recap already uses), unlocked with the closing recap.
+- **Memory Lane** (Wow 4 · M · New) — One-tap, caption-optional photo drops by staff (and, if the coach opts in, parents) build a season-long visual timeline beside the record book. Becomes the visual spine of Season Wrapped, and the raw material for cards/reels/books. Closes the read-only family gap as a side effect.
+- **Bound & Mailed** (Wow 5 · L · New) — From a closed season's Wrapped card, order a real printed photo book (or cheaper poster) auto-laid-out from the season's data, previewed live in the browser, delivered to the family's door. New emotionally-anchored revenue line that doesn't compete with the subscription.
+- **The Career Book** (Wow 5 · L · New) — Once a player has multiple seasons under one org, their profile grows a "Career" tab stringing every season together; when they age out, a one-time "Career Wrapped" retrospective spans every year they played. The strongest anti-churn feature a family can experience.
+- **The Locker Room Poster** (Wow 3 · S · New) — One-tap printable commemorative team poster at season close: photo strip, final record, honestly-earned team facts (practices run, most-used drill, longest attendance streak). Zero writing required from the coach.
+- **Alumni Wall** (Wow 3 · M · New) — For orgs with the public-site module: a standing public hall-of-fame page of aged-out rep players (photo, years, highlights), shown only with family consent. Turns private roster history into club brand equity for recruiting season.
+- **On This Day** (Wow 4 · S · New) — A year after a sealed tournament/season moment, a gentle push or email resurfaces it ("One year ago today, the Lions beat the Hawks 7–4 in the semifinal"), opening the frozen record exactly as it was. Respects existing notification preferences.
+
+## Live game day — fans & parents
+
+- **The Bracket Draws Itself** (Wow 5 · L · **Shortlisted**) — The playoff bracket lives on the public page all day, filling in seed by seed as pool results land, a soft pulse on whichever matchup is live. When the last pool game ends, viewers watch the final line draw itself and the last team slide into place — a broadcast-style reveal instead of a silent page-state flip. During playoffs, winners' lines visibly travel to the next round in real time.
+- **Crunch Time** (Wow 5 · L · New) — When a live game reaches a genuinely tense moment (close score, late stage — defined sport-neutrally), the game page itself changes: subtle color pulse, a "This Is It" banner, and a window-limited "cheer" button feeding a shared energy meter everyone on the page watches rise together. Earned by real drama, never manufactured.
+- **Instant Game Story** (Wow 4 · M · New) — Every final becomes a one-line story ("Final: Lions 7, Hawks 4 — Lions led wire-to-wire after a 3-run 2nd"), automatically. Dramatic finishes (walk-off, blown lead, comeback) earn a bold badge and their own distinct push to followers.
+- **This Morning's Storylines** (Wow 4 · M · New) — Each morning of a live event, the tournament home page opens with a short, warmly-written paragraph built from real results ("Riverside hasn't allowed a run since Friday…"), refreshed as games finish, with a native share button. Reads like the local paper covered the tournament.
+- **The Schedule Tells the Truth** (Wow 3 · M · New) — When a field runs long, public "Up Next" times quietly shift to the real predicted start (the schedule-health engine already computes this for admins). One admin button texts the corrected time to the next teams.
+- **Command Your Day** (Wow 3 · M · New) — Multi-kid families get one merged live rundown ("Field 3 now (Emma) — Field 1 in 40 min (Jake)") with walking-buffer math that recalculates in real time when a game runs long.
+- **Listen Along** (Wow 3 · S · New) — A live game page left open in a tab reads like a radio transcript, updating line by line ("Top 6, 2 outs, Lions lead 4-3") with an optional soft chime on score changes.
+- **Kickoff Clock** (Wow 2 · S · New) — Followers get one precise nudge — "Lions take the field in 8 minutes" — with one tap landing them on the live page at first pitch.
+- **The Star That Proves Itself** (Wow 3 · S · New) — First-ever Follow tap: the team dock slides up in the same motion already carrying a live score or countdown — immediate visible proof the follow is working, no toast.
+
+## Visual craft & motion
+
+- **The Motion Pack** (Wow 4 · M · **Shortlisted**) — Three coordinated live-data behaviors, identical everywhere a score can appear: (1) score digits physically flip like stadium tiles with a brief color wash in the scoring team's colors + a light haptic tap; (2) standings rows visibly slide past each other when ranks change, lifting with a soft shadow and settling with a small bounce; (3) on the admin game-day board, the specific card whose score just changed gets a quiet border glow that fades in about a second — a peripheral-vision cue, no toast.
+- **The Fairness Gauge** (Wow 3 · S · New) — Overview's playing-time and attendance tiles replace their one-word verdicts with thin per-player horizontal gauges that fill in on load; outliers get a slow, quiet pulse. The whole team's shape at a glance, no extra click.
+- **Watch the Rotation** (Wow 4 · M · New) — Any practice-plan station block gets a "preview" tap that plays a short looping diagram — player-group dots moving between labelled stations on a field outline, in the plan's actual order and timing.
+- **This Is What It'll Look Like** (Wow 3 · M · New) — Genuinely empty Overview/Scores tiles briefly render a clearly-labelled example version in the team's own colors and sport before fading to the true empty state. The promise shown, not described.
+- **The Front Door, Warming Up** (Wow 2 · S · New) — The /start role-picker cards arrive with a soft staggered entrance over cream paper with faint grain and a light-shift on cursor move / phone tilt. The first half-second feels considered.
+
+## Coach intelligence — the portal that thinks
+
+- **The Monday Morning Brief** (Wow 4 · M · New) — A coach returning after days away gets one dismissible card ahead of the six tiles: a two-or-three-sentence written brief of what changed ("3 dues payments landed, Emma's medical form is still outstanding, Tuesday attendance hit a season low"), each clause tapping through to the record behind it. Quiet weeks produce a short brief or none.
+- **The Lineup Whisperer** (Wow 4 · M · New) — While dragging a player into a batting-order or fielding slot, an inline chip speaks up before the click lands ("Jordan threw 62 pitches Tuesday — recommend Thursday") and ranks the best rested, fairness-balanced alternatives at the top of the picker. Advisory only; one tap accepts or overrides.
+- **Team Readiness Score** (Wow 3 · S · New) — A tile that merges everything that could silently block game day — unsigned waivers, missing medical forms, no guardian email, unpaid roster spot — into one score with a one-line reason it isn't 100, sharpening as a real deadline nears.
+- **Collection Forecast** (Wow 3 · S · New) — The Dues tile predicts ("At this pace you'll collect 100% by October 3rd — 12 days late"), names the families driving the shortfall, and offers a ready-drafted personalized reminder the coach reads and approves before anything sends.
+- **The Draft Brief** (Wow 5 · L · **Shortlisted**) — During live tryout scoring, far-apart evaluator scores flag in the moment ("Split opinion — worth a second look"). When scoring closes, every prospect gets a short plain-English paragraph synthesized from all evaluators' scores and notes, so cut-day opens with a defensible case per player instead of a raw spreadsheet.
+- **Ask the Front Office** (Wow 5 · L · **Planned** → `docs/projects/active/ASK_FRONT_OFFICE_PLAN.md`) — A single question box at the top of the portal: "Who hasn't played catcher in three weeks?" "How much has the Nguyen family paid?" Answered only from that team's own recorded data, with the exact records used shown underneath as proof. Never a guess, never outside data.
+
+## Tournament director command center
+
+- **Storm Mode** (Wow 5 · L · New) — One button: "Declare a Delay." Pick the kind and affected games (pre-selected from the live board); every affected game tags "Delayed" everywhere, the schedule drops into a reflow view surfacing every new conflict with accept/adjust per game, a plain-English mass message is pre-drafted, **and every public page for the event grows/drops the same truth banner automatically while followers get a push.** Three taps instead of forty-five frantic minutes. (Absorbs "Live Status Bridge" — the public auto-sync half is non-negotiable to the concept.)
+- **The Big Board** (Wow 5 · L · **Shortlisted**) — One tap casts the tournament to any TV/tablet propped at the gate, concessions, or coaches' tent: a slow, auto-rotating, broadcast-style board of field-by-field live scores, up-next call times, today's biggest moments, and any active delay notice. No login on the display, readable from thirty feet, updating itself. A toggle flips the same screen into an internal ops board (schedule health, games missing scores) for staff rooms.
+- **Schedule Weather Radar** (Wow 4 · L · New) — While building a schedule, a forward-looking layer flags venue-specific risk from that venue's own history ("Field 3 historically runs 12+ minutes over — your 2:00 game will likely bump"), directly on the timeline as games are dragged into place.
+- **Official/Volunteer No-Show Radar** (Wow 4 · M · New) — 15 minutes before game time, any assigned umpire/scorekeeper who hasn't checked in turns amber, then red at 5 — with one tap to blast the backup pool and auto-swap the assignment the instant someone accepts.
+- **"What Changed Today" Auto-Recap** (Wow 4 · S · New) — One tap: an auto-drafted plain-English digest of everything that moved today (reschedules, forfeits, field swaps, delays declared/lifted), ready to post as one clean announcement or read aloud at a coaches' meeting.
+- **Smart-Audience & Triggered Announcements** (Wow 3 · M · New) — The composer's audience list grows live condition-based groups ("everyone with a game in the next hour," "teams still on Field 3"), plus schedule-for-later and fire-on-condition options.
+- **Ripple Preview for Field & Time Swaps** (Wow 3 · S · New) — The existing drag-conflict warning grows a "who's affected" panel (teams + following-family counts) and a "Notify only these families" button, so the fix and the heads-up happen in one motion.
+- **Guided Forfeit & Dispute Resolution** (Wow 3 · S · New) — Declaring a forfeit opens a short guided flow with a locked, pre-approved neutral message auto-filled for both coaches, while standings and bracket update in the same motion. Protects everyone from off-the-cuff wording on a high-emotion day.
+
+## The first five minutes — login, signup, onboarding
+
+- **Play With a Live One First** (Wow 5 · L · **split, both Planned**) — coach track expanded + **Planned** as the Season-Phase Coach Sandbox (→ `docs/projects/active/COACH_SANDBOX_SEASON_PHASES_PLAN.md`); organizer track **Planned** as the Tournament Admin Sandbox (→ `docs/projects/active/TOURNAMENT_ADMIN_SANDBOX_PLAN.md`). Original pitch: From the /start picker: "See it running live" — no signup, no email. One tap into a real ticking demo tournament: live scores updating, a bracket you can drag a game inside, a schedule-health score that visibly reacts when you create a conflict, a fan page flipping pre-event → live → finished. Banner: "live sandbox — nothing here is saved," with a CTA to start your own.
+- **Watch Your Event Come Alive While You Type** (Wow 5 · M-slim · **Planned** → `docs/projects/active/TOURNAMENT_CREATION_LIVE_PREVIEW_PLAN.md`) — The first tournament-creation wizard gains a live phone-frame beside the form that updates in real time as the organizer types: event name lands in the hero, colors repaint the page, dates populate a countdown. By "Create," they've watched their actual public page assemble itself.
+- **Meet Your Team** (Wow 4 · M · **Shortlisted**) — When an invited assistant accepts, or a new coach's first signup completes, one animated one-time reveal precedes the dashboard: team colors and name fill the frame, record and next-game countdown drop in, player initials tile in like a lineup card. Screenshot-shaped by design.
+- **Peek Before You Sign In** (Wow 3 · S · New) — Invite links open with a warm preview card — who invited you, to what, one concrete real detail ("next game Saturday," "3 teammates already here") — before any form appears.
+- **You've Already Been Found** (Wow 3 · S · New) — While typing an email into org signup, a matching existing invite/account surfaces inline mid-type ("Looks like you were invited to coach the Lions — join instead?") with a one-tap swap. No submit-then-error.
+- **You're Live** (Wow 3 · S · New) — Flipping a first tournament from Draft to Active becomes a moment: the status pill turns live-green, and a ready-to-copy public link + QR code appear framed as "text this to your coaches right now."
+- **The First Question Isn't a Form** (Wow 3 · M · New) — Three quick ungraded taps after choosing "Run a tournament" (sport, rough team count, how they run things today) and the next screen already has divisions roughed in, a dues structure suggested, and the checklist reordered around what they said.
+
+## Main app & cross-workspace
+
+- **Your Morning, Across Every Team** (Wow 3 · M · New) — Multi-workspace users get one ranked "3 things need you today" card on Home spanning every hat they wear, instead of a row of workspace tiles to individually scan.
+- **Welcome Back, Here's What Changed** (Wow 3 · M · New) — The first screen after a returning sign-in is a single warm summary card ("Since you were last here: 2 new messages, dues due Friday, next game in 3 days"), once per session, each line tapping straight through.

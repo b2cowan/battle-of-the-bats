@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase-server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
+import { isDemoOrganizerEmail } from '@/lib/demo-org';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { FixedWindowRateLimiter } from '@/lib/rate-limit';
 import { withObservability } from '@/lib/observability';
@@ -22,9 +23,17 @@ const eventLimiter = new FixedWindowRateLimiter(60_000, 40);
 export const POST = withObservability(async (req: Request) => {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  // No user / staff session → silently accept-and-drop (202). Instrumentation is fire-and-forget;
-  // the client never reacts to the response, so we don't leak auth state via status codes.
-  if (!user?.id || !user.email || await isPlatformAdminEmail(user.email)) {
+  // No user / staff / SANDBOX session → silently accept-and-drop (202). Instrumentation is
+  // fire-and-forget; the client never reacts to the response, so we don't leak auth state via
+  // status codes.
+  //
+  // The sandbox arm is a body-identified write the central chokepoint cannot see: this route takes
+  // its org from the request BODY, so `proxy.ts` has no slug to match on (lib/demo-guard.ts says as
+  // much). It is guarded on the ACTOR rather than the org because that is the honest invariant —
+  // the demo organizer's session must never write anything, anywhere, whatever it names in a body.
+  // Found by the 2026-08-03 adversarial review; pinned by the decision-point list in
+  // tests/unit/demo-sandbox-write-guard.test.ts.
+  if (!user?.id || !user.email || await isPlatformAdminEmail(user.email) || isDemoOrganizerEmail(user.email)) {
     return NextResponse.json({ ok: true }, { status: 202 });
   }
 

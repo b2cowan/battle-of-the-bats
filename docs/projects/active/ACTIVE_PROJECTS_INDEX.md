@@ -6,6 +6,40 @@
 
 ---
 
+## 0. Sweep 2 — 2026-08-01 (owner-approved)
+
+The folder had regrown to 110 files in four days. Moved to `archive/`: **19 executed build/run
+prompts** (re-applying the standing 2026-07-28 rule — prompts are single-use and never live here;
+the three UNRUN prompts stay: `TOP_NAV_REPAIR_BUILD_PROMPT`, `COACH_PORTAL_CHUNK_D_SLICE_0_1_BUILD_PROMPT`,
+`ADMIN_DROPDOWN_CONSOLIDATION_PROMPT`, plus the live `COACH_PRACTICE_PLANS_PHASE1B_BUILD_PROMPT`) and
+**14 completed/superseded plans+briefs** (chunk C schedule intelligence · chunk E tryouts tidy-up ·
+free-coach onboarding · Desktop Public UX Phase 1 · Desktop Phase 2 · the superseded
+NAVIGATION_MODEL plan/brief/prompt + PUBLIC_NAV_FRAME plan — `NAVIGATION_MODEL_FINDINGS.md` stays
+active as the nav program's cited evidence base). Sideways move executed at last:
+`ACCOUNT_MODEL_FREEDOM_ANALYSIS.md` → `docs/agents/strategy/` (ruled 2026-07-28, §5 below).
+All cross-references in TODO.md / BUSINESS_DECISIONS / PLAN_PRICING_FACTS updated to the new paths.
+`DATE_CORRECTNESS_DEBT.md` was a 0-byte file — now carries its one-line "ledger at zero" statement.
+
+**Folder now: 74 files** — 11 program docs + this index · 10 retained specs (§5 list, incl. the
+codebase-cleanup pair) · the rest are genuinely in-flight (built-awaiting-owner-QA or build-ready).
+⚠ Sections 1–2 below describe the 2026-07-28 state and are kept as history; trust this section and
+TODO.md for current state.
+
+**Sweep 2b (same day): the QA queue consolidated into ONE ledger.** All built-awaiting-owner-QA
+work now lives in **`OWNER_QA_LEDGER.md`** (4 sessions grouped by surface/device, step-by-step,
+checkboxes) — launch batches 1–2, chunks A/B/F/H/I, the dismiss sweep, free-coach overview
+coherence. Their 18 source plan/brief files moved to `archive/` (stale status headers corrected
+before the move: chunks B + I brief + coherence brief + player-docs PII all claimed "planned/not
+built" — all four were code-verified BUILT). Kept active with reasons: **chunk G** (review funnel
+still owed) · **player-docs PII** + **Quiet Mode** (owner-QA'able / QA-passed but each gates a
+release on a dev-only migration reaching prod first). Also fixed en route: **56 dangling
+references** left by the 2026-07-28 consolidation (links in the brand/db/strategy reference docs
+still pointing at long-archived plans); two remaining stale references live in files concurrent
+sessions have mid-edit (`COACH_PRACTICE_PLANS_PLAN.md`, `DATA_DICTIONARY.md`) — fix when those
+sessions land. **Folder after sweep 2b: 57 files.**
+
+---
+
 ## 1. How this folder is organised now
 
 **Three kinds of file live here:**
@@ -30,6 +64,8 @@ lifted into `PROGRAM_PLATFORM_SURFACES.md` §1.1 before it moved. **Do not write
 
 | Project | State |
 |---------|-------|
+| `COACH_PRACTICE_PLANS_PLAN.md` | ✅ **ALL FOUR PHASES BUILT — feature-complete on `dev` 2026-08-03, uncommitted.** Remaining = ONE owner QA sweep across Phases 2–4 (`OWNER_QA_LEDGER.md` §1.8 / §1.9 / §1.9b) → commit → **archive this plan + its PM brief**. ⚠ Blocked from prod by migs **213 + 218 + 221** (dev-only); Phase 4 itself adds none. ⚠ Its Phase-4 build prompt is now **spent** — archive it with the plan. |
+| `COACH_SEASON_REVIEW_AND_DOUBLE_RECORD_RECOMMENDATION.md` | ✅ **Recommendations delivered 2026-08-03 — awaiting owner ruling on A–E (§3). No code written.** Recommends Season's End / Wrapped stay coach-only (6 doors open, not 1), closes the Wrapped-share question on evidence, and recommends **no** identity merge for the follower/helper/guardian seam. ⚠ **Carries one finding into A1's scope:** both helper-recognition mechanisms are keyed on `roster === 'off'`, the state A1 retires. Its prompt (`…_PROMPT.md`) is now **spent** — archive both together once ruled + logged via `/strategy`. |
 | `COACH_PORTAL_LAUNCH_BATCH1_PLAN.md` | Built on dev; remaining = owner phone QA → commit |
 | `COACH_PORTAL_LAUNCH_BATCH2_PLAN.md` | Built on dev; remaining = dev restart → phone QA → `/simplify` → `/review` → commit |
 | `FREE_COACH_PORTAL_EXPERIENCE_PLAN.md` | All phases built; B2.3 ships migration 205 — **apply to prod before promoting** |

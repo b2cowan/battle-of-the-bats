@@ -1,0 +1,248 @@
+/* The standing public team schedule + the shared game page (Chunk D 1.8 / 1.9).
+   Design tokens only — no literal colours. These surfaces render on the org's permanently
+   dark public pages, so they read the platform dark tokens directly rather than the warm
+   consumer set. */
+
+.section {
+  margin-bottom: 2.5rem;
+}
+
+.kicker {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--white-35);
+  margin: 0 0 0.75rem;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.25rem;
+  border-bottom: 1px solid var(--white-8);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowDone {
+  opacity: 0.6;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--white-85);
+}
+
+.rowSub {
+  font-size: 0.78rem;
+  color: var(--white-45);
+  margin-top: 0.12rem;
+}
+
+.rowCancelled {
+  text-decoration: line-through;
+}
+
+.score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--white-85);
+  white-space: nowrap;
+}
+
+.scoreWin  { color: var(--success); }
+.scoreLoss { color: var(--danger); }
+
+.upNext {
+  border: 1px solid var(--white-10);
+  border-radius: 12px;
+  background: var(--white-5);
+  padding: 0.8rem 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.upNextLabel {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary-light);
+  margin-bottom: 0.3rem;
+}
+
+.link {
+  color: var(--primary-light);
+  font-weight: 600;
+  font-size: 0.8rem;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* ── The shared game page (S4) ────────────────────────────────────────────── */
+
+.gamePage {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--white-85);
+  font-family: var(--font-sans, Inter, sans-serif);
+}
+
+.gameInner {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: calc(var(--nav-height) + 1.5rem) 1.25rem 4rem;
+}
+
+.eyebrow {
+  text-align: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--white-40);
+  margin-bottom: 1rem;
+}
+
+.card {
+  border: 1px solid var(--white-10);
+  border-radius: 16px;
+  background: var(--bg-card);
+  padding: 1.25rem 1rem;
+}
+
+.card + .card {
+  margin-top: 0.75rem;
+}
+
+.pill {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.7rem;
+  border-radius: 999px;
+  background: var(--white-8);
+  color: var(--white-60);
+}
+
+.pillFinal {
+  background: rgba(var(--success-rgb), 0.15);
+  color: var(--success);
+}
+
+.scoreboard {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1.1rem;
+  margin-top: 0.9rem;
+}
+
+.side {
+  flex: 1;
+  text-align: center;
+  min-width: 0;
+}
+
+.sideName {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--white-85);
+  margin-top: 0.4rem;
+  overflow-wrap: anywhere;
+}
+
+.mono {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  background: var(--white-8);
+  color: var(--white-75);
+}
+
+.bigScore {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  font-size: 2.4rem;
+  color: var(--white-90);
+  white-space: nowrap;
+}
+
+.kickoff {
+  text-align: center;
+  font-size: 0.85rem;
+  color: var(--white-50);
+  margin-top: 0.8rem;
+}
+
+.centered {
+  text-align: center;
+}
+
+.venueRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.venueMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.note {
+  margin-top: 1rem;
+  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  background: var(--white-5);
+  border: 1px solid var(--white-8);
+  color: var(--white-45);
+  font-size: 0.8rem;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin-top: 1rem;
+  padding: 0.65rem 1.4rem;
+  border-radius: 999px;
+  border: 1.5px solid var(--primary-light);
+  color: var(--primary-light);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-decoration: none;
+}
+
+.cta:hover {
+  background: var(--primary-faint);
+}

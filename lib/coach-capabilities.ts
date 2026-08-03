@@ -28,7 +28,8 @@ export type RosterAccess = 'off' | 'view';
  * Completely ignored for head coaches (who always receive full access).
  */
 export interface AssistantCapabilityGrants {
-  schedule?: boolean;            // view + manage events / game-day
+  schedule?: boolean;            // SEE the schedule + a practice plan
+  scheduleManage?: boolean;      // create / edit / delete events, import, share (see the split below)
   attendance?: boolean;          // record attendance
   lineups?: boolean;             // build game lineups + templates
   roster?: RosterAccess;         // basics (names/jersey/position) visibility
@@ -38,12 +39,41 @@ export interface AssistantCapabilityGrants {
   documents?: DocsAccess;        // team + player documents
   announcementsSend?: boolean;   // send guardian announcements (else draft-only)
   tryouts?: boolean;             // tryout candidates + decisions (guardian PII, roster-building)
+  staffChat?: boolean;           // a seat in the team's staff chat room (see the note below)
+  planPlayerNames?: boolean;     // names on a PRACTICE PLAN without team-wide roster access
 }
 
-/** Fully-resolved capabilities for one coach on one team. */
+/**
+ * Fully-resolved capabilities for one coach on one team.
+ *
+ * ── The three grants added for HELPERS (Practice Plans Phase 4, 2026-08-03) ──────────────────
+ * A "Helper" is a non-coach adult — a parent volunteer, an outside instructor — invited to run a
+ * station at one practice. The owner ruling (`BUSINESS_DECISIONS.md`, 2026-08-03) is that a Helper
+ * is a **named PRESET of these grants and never a third `coach_role`**, so that "what can this
+ * person see?" keeps exactly one answer in one place. Three additive grants make that true, because
+ * verification found it was NOT true as originally planned:
+ *
+ *   1. `scheduleManage` — `schedule` was ONE switch covering *see the schedule* and *create / edit /
+ *      delete events*. The preset "schedule visibility on, all writes off" was therefore not
+ *      expressible: a helper would have been able to delete a game. Defaults TRUE for assistants, so
+ *      every existing coach keeps both halves and nobody's access changes.
+ *   2. `staffChat` — team staff-chat membership is DERIVED from the staff assignment and was
+ *      documented as explicitly not a capability toggle, so a parent volunteer would have been
+ *      auto-seated in the room where coaches discuss children. Defaults TRUE for the same reason.
+ *   3. `planPlayerNames` — the owner ruled a helper sees full roster basics **on the plan**. Doing
+ *      that by granting `roster: 'view'` would also have opened the roster page, the development
+ *      board and Insights, because every record surface reads that one grant. This grant instead
+ *      lets the practice-plan surfaces show names while `roster` stays OFF, so the rest of the
+ *      portal **fails closed with no new gate anywhere**. Defaults FALSE — it grants nothing to an
+ *      existing coach, whose names still come from `roster` exactly as before.
+ *
+ * ⚠ None of the three is a role. `resolveCoachCapabilities` and `isCoachNavItemVisible` learn no new
+ * vocabulary about *who* someone is — only about what a bundle allows.
+ */
 export interface CoachCapabilities {
   isHeadCoach: boolean;
-  schedule: boolean;
+  schedule: boolean;             // SEE the schedule + a practice plan
+  scheduleManage: boolean;       // create / edit / delete events, import, share
   attendance: boolean;
   lineups: boolean;
   roster: RosterAccess;          // basics visibility
@@ -54,12 +84,17 @@ export interface CoachCapabilities {
   documents: DocsAccess;
   announcementsSend: boolean;    // else draft-only (Phase 2 surfaces the draft flow)
   tryouts: boolean;              // head only in V1
+  staffChat: boolean;            // a seat in the team's staff chat room
+  planPlayerNames: boolean;      // names on a practice plan without team-wide roster access
 }
 
 /** The least-privilege bundle a freshly-invited assistant gets before any grant. */
 export const ASSISTANT_DEFAULTS: Readonly<CoachCapabilities> = {
   isHeadCoach: false,
   schedule: true,
+  // TRUE by default: `schedule` used to mean both halves, and every assistant already invited holds
+  // it. Defaulting this to false would silently take event editing away from every existing coach.
+  scheduleManage: true,
   attendance: true,
   lineups: true,
   roster: 'view',
@@ -70,12 +105,19 @@ export const ASSISTANT_DEFAULTS: Readonly<CoachCapabilities> = {
   documents: 'view',
   announcementsSend: false,
   tryouts: false,
+  // TRUE by default for the same reason — an assistant coach is staff, and staff chat has never been
+  // something a head coach had to switch on.
+  staffChat: true,
+  // FALSE by default, and deliberately so: an assistant's names come from `roster`, exactly as they
+  // always have. This grant exists only to let a bundle show names on a plan while `roster` is off.
+  planPlayerNames: false,
 };
 
 /** A head coach's full-access bundle. */
 const HEAD_COACH_ALL: Readonly<CoachCapabilities> = {
   isHeadCoach: true,
   schedule: true,
+  scheduleManage: true,
   attendance: true,
   lineups: true,
   roster: 'view',
@@ -86,7 +128,55 @@ const HEAD_COACH_ALL: Readonly<CoachCapabilities> = {
   documents: 'manage',
   announcementsSend: true,
   tryouts: true,
+  staffChat: true,
+  planPlayerNames: true,
 };
+
+/**
+ * THE HELPER PRESET (Phase 4) — a named bundle of the grants above, nothing more.
+ *
+ * What it hands over: the schedule, read-only · a practice plan · the names, numbers and positions
+ * of the players at their station. What it withholds: every write, the staff chat room, coaching
+ * notes, guardian contacts, attendance, lineups, documents, money, tryouts, and — because `roster`
+ * stays OFF — the roster page, the development board and Insights.
+ *
+ * ⚠ Stored as ordinary per-assistant grants on an `assistant_coach` row. There is no helper column,
+ * no helper role, and no migration. If a future change needs one, the preset has become a role and
+ * the ruling that authorised this phase no longer covers it.
+ */
+export const HELPER_PRESET: Readonly<AssistantCapabilityGrants> = {
+  schedule: true,
+  scheduleManage: false,
+  attendance: false,
+  lineups: false,
+  roster: 'off',
+  rosterPii: false,
+  notes: false,
+  money: 'off',
+  documents: 'off',
+  announcementsSend: false,
+  tryouts: false,
+  staffChat: false,
+  planPlayerNames: true,
+};
+
+/**
+ * DISPLAY ONLY — which word describes this bundle on a staff list ("Helper" vs "Assistant").
+ *
+ * ⚠ **NEVER gate anything on this.** It reads a bundle and returns a label; it does not decide
+ * access, and no route may call it. Access decisions go through the predicates below, one grant at a
+ * time, which is the whole reason a Helper is a preset instead of a role. A head coach who hand-edits
+ * a helper's grants simply stops seeing the "Helper" word — nothing about their access changes,
+ * because the word was never what governed it.
+ */
+export function staffKindLabel(c: CoachCapabilities): 'head' | 'assistant' | 'helper' {
+  if (c.isHeadCoach) return 'head';
+  const looksLikeHelper =
+    c.schedule && !c.scheduleManage && !c.staffChat && c.planPlayerNames
+    && c.roster === 'off' && !c.attendance && !c.lineups && !c.notes && !c.rosterPii
+    && !c.tryouts && !c.announcementsSend && c.money === 'off' && c.documents === 'off';
+  return looksLikeHelper ? 'helper' : 'assistant';
+}
 
 /**
  * Resolve a coach's effective capabilities from their role + stored per-assistant grants.
@@ -103,6 +193,14 @@ export function resolveCoachCapabilities(
   return {
     isHeadCoach: false,
     schedule: g.schedule ?? ASSISTANT_DEFAULTS.schedule,
+    /**
+     * ⚠ Falls back to `schedule`, not to the default, for grants stored BEFORE the split existed.
+     * Every assistant invited before 2026-08-03 has `{schedule: true}` and no `scheduleManage` key,
+     * and they have been managing events all season — resolving that to "view only" would take a
+     * capability away from a live team the first time this code deployed. A helper's bundle writes
+     * `scheduleManage: false` explicitly, so it is never the one falling back.
+     */
+    scheduleManage: g.scheduleManage ?? g.schedule ?? ASSISTANT_DEFAULTS.scheduleManage,
     attendance: g.attendance ?? ASSISTANT_DEFAULTS.attendance,
     lineups: g.lineups ?? ASSISTANT_DEFAULTS.lineups,
     roster: g.roster ?? ASSISTANT_DEFAULTS.roster,
@@ -113,6 +211,8 @@ export function resolveCoachCapabilities(
     documents: g.documents ?? ASSISTANT_DEFAULTS.documents,
     announcementsSend: g.announcementsSend ?? ASSISTANT_DEFAULTS.announcementsSend,
     tryouts: g.tryouts ?? ASSISTANT_DEFAULTS.tryouts,
+    staffChat: g.staffChat ?? ASSISTANT_DEFAULTS.staffChat,
+    planPlayerNames: g.planPlayerNames ?? ASSISTANT_DEFAULTS.planPlayerNames,
   };
 }
 
@@ -185,8 +285,49 @@ export const canWriteDevelopment = (c: CoachCapabilities) => c.isHeadCoach;
  * `rosterWrite` deliberately has NO wrapper: unlike `schedule`/`tryouts`, its name already says
  * "write", so there is no view-vs-manage ambiguity for a caller to get wrong.
  */
-/** Create/edit events. The events POST 403s without it, and the sidebar hides Schedule too. */
-export const canManageSchedule = (c: CoachCapabilities) => c.schedule;
+/**
+ * Create / edit / delete events, import a schedule, share a game.
+ *
+ * ⚠ SPLIT FROM `canViewSchedule` on 2026-08-03. Before that this predicate WAS `c.schedule`, so
+ * every caller below inherited "can see it" and "can change it" as one answer. Read the JSDoc on
+ * `CoachCapabilities` for why that had to end. **When adding a schedule gate, ask which half you
+ * mean** — a GET wants `canViewSchedule`, anything that mutates wants this.
+ */
+export const canManageSchedule = (c: CoachCapabilities) => c.scheduleManage;
+/** See the schedule and open a practice plan. The sidebar's Schedule door keys on this. */
+export const canViewSchedule = (c: CoachCapabilities) => c.schedule;
+/**
+ * Does this person get a seat in the team's staff chat room?
+ *
+ * ⚠ Membership of that room is DERIVED from the staff assignment (`syncStaffChatRoom`), which is why
+ * this predicate exists at all: without it, inviting a parent volunteer to run a station would seat
+ * them in the room where coaches discuss children. `syncStaffChatRoom` is the only caller, and it
+ * removes an existing seat when this turns false — a grant taken back must empty the chair.
+ */
+export const canJoinStaffChat = (c: CoachCapabilities) => c.staffChat;
+/**
+ * May a practice plan show this person the players' names, numbers and positions?
+ *
+ * TRUE for anyone with roster visibility (unchanged for every existing coach), and separately for a
+ * bundle holding `planPlayerNames` with `roster: 'off'` — which is a Helper, and only a Helper. This
+ * is the ONLY predicate that opens on the new grant; the roster page, the development board and
+ * Insights all keep reading `roster`, so they stay shut for a helper without a single new gate.
+ */
+export const canSeePlanPlayers = (c: CoachCapabilities) => c.roster !== 'off' || c.planPlayerNames;
+/**
+ * Can this bundle open ANY of the team's record surfaces — the roster, the development board,
+ * attendance, lineups, documents, money, tryouts?
+ *
+ * ⚠ **NOT A GATE.** Every one of those surfaces gates itself, individually, on its own grant; this
+ * decides ALTITUDE — whether there is a board worth rendering at all. The coach Overview is six
+ * tiles reading exactly these capabilities, so a bundle that holds none of them meets a page of
+ * empty boxes and a setup checklist it cannot action, and a closed season redirects it into a
+ * season review of other people's children. Both callers use it to choose a screen, never to
+ * decide access, and it is expressed in grants so a widened bundle stops matching by itself.
+ */
+export const hasNoTeamRecordAccess = (c: CoachCapabilities) =>
+  !c.isHeadCoach && c.roster === 'off' && !c.attendance && !c.lineups && !c.notes
+  && c.money === 'off' && c.documents === 'off' && !c.tryouts;
 /** Run tryout day (sessions, scorecard, decisions). Head-coach-only in V1 — candidate PII. */
 export const canManageTryouts = (c: CoachCapabilities) => c.tryouts;
 
@@ -204,6 +345,9 @@ export function sanitizeAssistantGrants(input: unknown): AssistantCapabilityGran
   const out: AssistantCapabilityGrants = {};
   const bool = (v: unknown): boolean | undefined => (typeof v === 'boolean' ? v : undefined);
   const b = bool(src.schedule); if (b !== undefined) out.schedule = b;
+  const sm = bool(src.scheduleManage); if (sm !== undefined) out.scheduleManage = sm;
+  const sc = bool(src.staffChat); if (sc !== undefined) out.staffChat = sc;
+  const pn = bool(src.planPlayerNames); if (pn !== undefined) out.planPlayerNames = pn;
   const a = bool(src.attendance); if (a !== undefined) out.attendance = a;
   const l = bool(src.lineups); if (l !== undefined) out.lineups = l;
   const p = bool(src.rosterPii); if (p !== undefined) out.rosterPii = p;

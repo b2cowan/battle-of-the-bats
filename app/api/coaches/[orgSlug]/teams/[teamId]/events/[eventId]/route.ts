@@ -14,7 +14,7 @@ import {
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
-import { denyUnless } from '@/lib/coach-capabilities';
+import { denyUnless, canManageSchedule } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { ORGANIZER_OWNED_API_FIELDS } from '@/lib/tournament-game-mirror';
 import { notifyFamiliesOfGameUpdate } from '@/lib/family-notify';
@@ -47,7 +47,8 @@ export const PATCH = withObservability(async (req: Request,
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { ctx, assignment, programYear } = resolved;
-  const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
+  // Editing an event is the WRITE half of the 2026-08-03 schedule split.
+  const denied = denyUnless(canManageSchedule(assignment.capabilities), 'You cannot change this schedule.');
   if (denied) return denied;
 
   const event = await getRepTeamEventById(eventId);
@@ -229,7 +230,8 @@ export const DELETE = withObservability(async (req: Request,
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
   const { assignment, programYear } = resolved;
-  const denied = denyUnless(assignment.capabilities.schedule, 'You do not have access to the schedule.');
+  // Deleting an event is the WRITE half of the 2026-08-03 schedule split.
+  const denied = denyUnless(canManageSchedule(assignment.capabilities), 'You cannot change this schedule.');
   if (denied) return denied;
 
   const event = await getRepTeamEventById(eventId);

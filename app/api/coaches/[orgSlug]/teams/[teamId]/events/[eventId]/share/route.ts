@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { denyUnless } from '@/lib/coach-capabilities';
+import { denyUnless, canManageSchedule } from '@/lib/coach-capabilities';
 import { resolveFamilyCoachContext } from '@/lib/family-coach-route';
 import { withObservability } from '@/lib/observability';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -40,7 +40,7 @@ export const POST = withObservability(async (req: Request,
   // Sharing is a schedule act, so it rides the schedule capability rather than the
   // guardian-contacts one — an assistant who runs the schedule can share a game without
   // being trusted with family contact details.
-  const denied = denyUnless(assignment.capabilities.schedule, 'Only coaches who manage the schedule can share a game.');
+  const denied = denyUnless(canManageSchedule(assignment.capabilities), 'Only coaches who manage the schedule can share a game.');
   if (denied) return denied;
 
   const event = await loadShareableEvent(teamId, eventId);
@@ -84,7 +84,7 @@ export const DELETE = withObservability(async (_req: Request,
   if ('error' in resolved) return resolved.error!;
   const { assignment } = resolved;
 
-  const denied = denyUnless(assignment.capabilities.schedule, 'Only coaches who manage the schedule can share a game.');
+  const denied = denyUnless(canManageSchedule(assignment.capabilities), 'Only coaches who manage the schedule can share a game.');
   if (denied) return denied;
 
   const { error } = await supabaseAdmin

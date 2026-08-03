@@ -1,4 +1,5 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { listDemoOrgIdsQuietly } from '@/lib/demo-org-server';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 import { tournamentToday } from './timezone';
@@ -83,7 +84,44 @@ function enabledModulesFor(org: OrgMetricRow) {
   return new Set([...(org.enabled_addons ?? []), ...planModules]);
 }
 
+/**
+ * The sandbox ("See it live") org and everything it owns, so the platform's own numbers describe
+ * CUSTOMERS. A demo org we run ourselves is not a customer, its seeded event is not an event
+ * somebody chose to run, and its eight invented teams are not registrations — counted, they quietly
+ * inflate every headline on this page and every snapshot taken from it.
+ *
+ * Two ids, resolved once and reused across the queries below: the org (which scopes most tables
+ * directly) and its tournaments (which is how `teams` is scoped — teams hang off a tournament, not
+ * an org). Fails quiet: if either lookup breaks, the metrics are momentarily off by one sandbox,
+ * which is the right failure for a reporting page.
+ */
+async function resolveSandboxExclusions(): Promise<{ orgIds: string[]; tournamentIds: string[] }> {
+  const orgIds = await listDemoOrgIdsQuietly();
+  if (orgIds.length === 0) return { orgIds, tournamentIds: [] };
+  const { data, error } = await supabaseAdmin
+    .from('tournaments')
+    .select('id')
+    .in('org_id', orgIds);
+  if (error) {
+    console.warn('[platform-admin] sandbox tournament exclusion failed', error);
+    return { orgIds, tournamentIds: [] };
+  }
+  return { orgIds, tournamentIds: (data ?? []).map(row => row.id as string) };
+}
+
+/** PostgREST's `in` list literal. Returns null when there is nothing to exclude. */
+function notInList(ids: string[]): string | null {
+  return ids.length > 0 ? `(${ids.join(',')})` : null;
+}
+
 export async function getCommandCenterStats(options: { since?: string | null } = {}) {
+  const { orgIds: sandboxOrgIds, tournamentIds: sandboxTournamentIds } = await resolveSandboxExclusions();
+  const notSandboxOrg = notInList(sandboxOrgIds);
+  const notSandboxTournament = notInList(sandboxTournamentIds);
+  /** Apply an org exclusion to a count query, or leave it exactly as it was. */
+  const exOrg = <T extends { not: (col: string, op: string, val: string) => T }>(q: T, column = 'org_id'): T =>
+    notSandboxOrg ? q.not(column, 'in', notSandboxOrg) : q;
+
   const now = new Date().toISOString();
   const sevenDaysAgo = daysAgo(7);
   const thirtyDaysAgo = daysAgo(30);
@@ -115,6 +153,8 @@ export async function getCommandCenterStats(options: { since?: string | null } =
   ] = await Promise.all([
     supabaseAdmin
       .from('organizations')
+      // No `slug`: the sandbox filter below keys on row id, so fetching the slug would be a column
+      // pulled on every platform-admin dashboard load and read by nobody.
       .select('id, name, plan_id, subscription_status, current_period_end, created_at, enabled_addons, free_floor')
       .order('created_at', { ascending: false })
       .limit(5000),
@@ -124,16 +164,20 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .eq('role', 'owner')
       .limit(5000),
     supabaseAdmin.auth.admin.listUsers({ page: 1, perPage: 1000 }),
-    safeCount('tournaments total', supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true })),
-    safeCount('tournaments non-archived', supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).neq('status', 'archived')),
-    safeCount('tournaments active', supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).eq('status', 'active')),
-    safeCount('tournaments created 30 days', supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo)),
-    safeCount('teams total', supabaseAdmin.from('teams').select('*', { count: 'exact', head: true })),
-    safeCount('league seasons total', supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true })),
-    safeCount('league seasons active', supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true }).in('status', ['registration_open', 'registration_closed', 'active'])),
+    safeCount('tournaments total', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }))),
+    safeCount('tournaments non-archived', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).neq('status', 'archived'))),
+    safeCount('tournaments active', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
+    safeCount('tournaments created 30 days', exOrg(supabaseAdmin.from('tournaments').select('*', { count: 'exact', head: true }).gte('created_at', thirtyDaysAgo))),
+    safeCount('teams total', (() => {
+      // `teams` hangs off a tournament, not an org — so the sandbox exclusion is by its event.
+      const q = supabaseAdmin.from('teams').select('*', { count: 'exact', head: true });
+      return notSandboxTournament ? q.not('tournament_id', 'in', notSandboxTournament) : q;
+    })()),
+    safeCount('league seasons total', exOrg(supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true }))),
+    safeCount('league seasons active', exOrg(supabaseAdmin.from('league_seasons').select('*', { count: 'exact', head: true }).in('status', ['registration_open', 'registration_closed', 'active']))),
     safeCount('league active registrations', supabaseAdmin.from('league_registrations').select('*', { count: 'exact', head: true }).eq('status', 'active')),
-    safeCount('rep teams total', supabaseAdmin.from('rep_teams').select('*', { count: 'exact', head: true }).eq('is_archived', false)),
-    safeCount('rep program years active', supabaseAdmin.from('rep_program_years').select('*', { count: 'exact', head: true }).eq('status', 'active')),
+    safeCount('rep teams total', exOrg(supabaseAdmin.from('rep_teams').select('*', { count: 'exact', head: true }).eq('is_archived', false))),
+    safeCount('rep program years active', exOrg(supabaseAdmin.from('rep_program_years').select('*', { count: 'exact', head: true }).eq('status', 'active'))),
     safeCount('accounting entries total', supabaseAdmin.from('accounting_entries').select('*', { count: 'exact', head: true })),
     supabaseAdmin
       .from('early_access_leads')
@@ -167,10 +211,15 @@ export async function getCommandCenterStats(options: { since?: string | null } =
       .limit(5000),
   ]);
 
-  const orgs = ((orgsRes.data ?? []) as OrgMetricRow[]);
-  const members = ((membersRes.data ?? []) as MemberRow[]);
+  // Sandbox orgs are dropped here rather than in the query so the exclusion is stated in one place
+  // and reads the same hardcoded allow-list everything else does.
+  const sandboxOrgIdSet = new Set(sandboxOrgIds);
+  const orgs = ((orgsRes.data ?? []) as OrgMetricRow[]).filter(org => !sandboxOrgIdSet.has(org.id));
+  const members = ((membersRes.data ?? []) as MemberRow[])
+    .filter(member => !sandboxOrgIdSet.has(member.organization_id));
   const earlyLeads = ((earlyLeadsRes.data ?? []) as EarlyAccessLeadRow[]);
-  const overrides = ((overridesRes.data ?? []) as OverrideRow[]);
+  const overrides = ((overridesRes.data ?? []) as OverrideRow[])
+    .filter(row => !sandboxOrgIdSet.has(row.org_id));
   if (eventsRes.error) console.warn('[platform-admin] platform events metric failed', eventsRes.error);
   const events = eventsRes.error ? [] : ((eventsRes.data ?? []) as PlatformEventRow[]);
   const ownerOrgIds = new Set(

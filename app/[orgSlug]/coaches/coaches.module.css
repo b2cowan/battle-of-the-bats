@@ -2809,7 +2809,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-size: 0.73rem; line-height: 1.35;
 }
 .bulkFlagWarn { background: rgba(var(--home-amber-rgb, 161,98,7), 0.12); color: var(--warning-strong, var(--warning)); }
-.bulkFlagError { background: rgba(var(--home-live-rgb, 217,72,43), 0.12); color: var(--danger-strong, var(--danger)); }
+.bulkFlagError { background: rgba(var(--home-live-rgb, 176,58,34), 0.12); color: var(--danger-strong, var(--danger)); }
 .bulkRowError .input { border-color: var(--danger); }
 
 .bulkDrop {
@@ -6364,6 +6364,17 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 /* ≥56px, well above the 44px floor — and no swipe, drag or long-press anywhere on this screen:
    gloves defeat all three, and a swipe collides with the browser's own back gesture. */
 .ppRunActions { display: flex; gap: 0.55rem; margin-top: 0.9rem; }
+
+/* What a HELPER sees where the "Next block" / "Rotate now" pair would be (Phase 4, frame H3).
+   Quiet on purpose — it is the answer to "why is this amber and what do I do", not a control, and
+   it must never read as a button that failed. Centred so it does not sit where a control was. */
+.ppRunHandedOff {
+  margin: 0.9rem 0 0;
+  text-align: center;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--white-45);
+}
 .ppRunPrimary {
   flex: 1 1 auto; min-height: 3.5rem; display: grid; place-items: center; text-align: center;
   padding: 0.5rem 0.9rem; border-radius: 10px; cursor: pointer;

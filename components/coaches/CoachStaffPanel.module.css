@@ -49,12 +49,17 @@
   grid-template-columns: minmax(0, 1fr) 288px;
   grid-template-areas:
     "invite rail"
+    "access rail"
     "list   rail";
   gap: 1rem 1.5rem;
   align-items: start;
 }
 
 .inviteArea { grid-area: invite; min-width: 0; }
+/* What the chosen preset grants, in sentences. Sits directly under the control it describes and
+   ABOVE the staff list, because it answers a question asked while inviting, not while reviewing.
+   Deliberately in the working column and not in the rail — the rail disappears on a phone. */
+.accessArea { grid-area: access; min-width: 0; max-width: 520px; }
 .listArea   { grid-area: list;   min-width: 0; display: flex; flex-direction: column; gap: 0.9rem; }
 .railArea   { grid-area: rail;   min-width: 0; }
 
@@ -63,6 +68,7 @@
     grid-template-columns: 1fr;
     grid-template-areas:
       "invite"
+      "access"
       "list"
       "rail";
   }
@@ -107,6 +113,49 @@
   .inviteForm input,
   .inviteForm button { height: 44px; }
 }
+
+/* ── The preset choice (Phase 4) ──────────────────────────────────────────────
+   Takes the full width of the invite row and sits above the email field, so the
+   decision that changes every label below it is made first. A fieldset because
+   these are radios answering one question, and the legend is that question. */
+.presetSet {
+  flex-basis: 100%;
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.presetSet legend { padding: 0; margin-bottom: 0.15rem; }
+
+/* Each option carries a sentence, so they stack rather than sitting side by side —
+   two-up inside a 520px card leaves ~240px each, which cannot hold the description,
+   and a role choice stripped of its description is a guess. */
+.presetOpt {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  padding: 0.6rem 0.7rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  /* The whole card is the tap target, not the 16px radio inside it. */
+  min-height: 44px;
+}
+
+.presetOpt input { margin-top: 3px; flex-shrink: 0; }
+
+.presetOptOn { border-color: var(--primary); background: var(--primary-faint); }
+
+.presetName { display: block; font-size: 0.86rem; font-weight: 700; color: var(--white-90); }
+.presetDesc { display: block; font-size: 0.76rem; line-height: 1.45; color: var(--white-45); }
+
+/* The height pins on .inviteForm apply to `input` and `button` descendants, which would
+   otherwise squash the radios' own boxes and, worse, force the option rows to 38px and clip
+   the description line. Radios are exempt and keep their intrinsic size. */
+.inviteForm .presetOpt input[type="radio"] { height: auto; }
 
 .field {
   display: flex;
@@ -292,4 +341,64 @@
   font-size: 0.8rem;
   line-height: 1.5;
   color: var(--white-45);
+}
+
+/* The rail's two explainer paragraphs (it no longer lists grants — that moved into the page). */
+.railProse { margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--white-70); }
+
+/* ── The one exclusion a head coach would otherwise assume wrong ──────────────
+   Until this release everyone on a team's staff list was in the staff chat room
+   automatically, so "not in your staff chat" is the single line on the access card
+   that contradicts prior behaviour. It gets the only warning-coloured mark on the
+   screen; every other "never" is a lock glyph, because every other "never" is what
+   a head coach already expects. */
+.railItemNever { align-items: flex-start; color: var(--white-70); }
+
+.railIconNever {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 13px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.4;
+  color: var(--danger);
+}
+
+/* Warm portal: --danger is not part of the white→ink remap, and reads hot on paper.
+   Mirrors the .segBtnOn treatment above — same gate, same reason. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .railIconNever {
+  color: var(--home-live);
+}
+
+/* ── Helper cards ─────────────────────────────────────────────────────────────
+   A helper card has NO capability grid — see the component for why. What it needs
+   instead is to be tellable-apart from an assistant card at a glance, without a
+   legend and without relying on colour alone: hence a worded chip. */
+.helperCard { border-style: dashed; }
+
+.helperChip {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.15rem 0.45rem;
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius-sm);
+  color: var(--white-45);
+  white-space: nowrap;
+}
+
+.helperSummary {
+  margin: 0.7rem 0 0;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  color: var(--white-70);
+}
+
+.helperActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
 }

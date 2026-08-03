@@ -10,7 +10,10 @@
 
 .strip {
   position: fixed;
-  top: 0;
+  /* Normally 0. In the "See it live" sandbox the demo banner owns the top of the viewport, so the
+     strip drops below it — --sandbox-chrome-h is only ever set on a demo org (see globals.css),
+     and resolves to 0px everywhere else. */
+  top: var(--sandbox-chrome-h, 0px);
   left: 0;
   right: 0;
   /* The ONE height definition is --admin-topstrip-h on .adminShell (the strip mounts
