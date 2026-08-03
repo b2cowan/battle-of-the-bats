@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Next's own build-time TypeScript check is a second, memory-heavy full-project typecheck on
+  // top of webpack compilation - and it's redundant with the `npx tsc --noEmit` the /release
+  // pre-flight already runs locally before every push. Skipping it here removes that duplicate
+  // memory spike from the Amplify build; type safety is still gated, just before the push instead
+  // of during it.
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   // Amplify's build machine is a fixed 8GB, and this app's webpack production build was
   // OOM-killing the build worker even at a 7GB Node heap. Webpack's persistent filesystem
   // cache (serializing the whole compiled module graph to .next/cache after every build)
