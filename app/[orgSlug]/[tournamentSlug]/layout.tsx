@@ -6,6 +6,8 @@ import { getOrganizationBySlug, getPublicTournamentBySlug, getDivisions, getTeam
 import { resolveOrgHomeHref } from '@/lib/module-entitlements';
 import { getRegistrationState } from '@/lib/registration-state';
 import { isPlayoffOnly } from '@/lib/tournament-phase';
+import { isPublicBracketVisible } from '@/lib/public-pages';
+import { isDemoOrgSlug } from '@/lib/demo-org';
 import { tournamentToday } from '@/lib/timezone';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { isFreePlan } from '@/lib/plan-config';
@@ -181,18 +183,54 @@ export default async function TournamentLayout({
     : (tournament.publicHiddenPages ?? []);
 
   const registerHidden = (tournament.publicHiddenPages ?? []).includes('register');
-  let registerCta: 'register' | 'waitlist' | null = null;
-  if (!registerHidden) {
-    const [regDivisions, regTeams] = await Promise.all([
-      getDivisions(tournament.id, { admin: true }),
-      getTeams(tournament.id, { admin: true }),
-    ]);
-    registerCta = getRegistrationState(
-      tournament,
-      regDivisions,
-      regTeams.filter(t => t.status !== 'rejected'),
-    ).cta;
-  }
+  // Divisions answer two independent questions now (the register CTA's capacity maths and whether
+  // this event has a public bracket), so they are fetched unconditionally — but STILL raced against
+  // teams rather than awaited in front of them. Awaiting them in sequence would have turned one
+  // round-trip into two on the layout that wraps every public tournament page. The only added cost
+  // is one query on the tournaments that hide their register page, which previously fetched neither.
+  const [divisions, regTeams] = await Promise.all([
+    getDivisions(tournament.id, { admin: true }),
+    registerHidden ? Promise.resolve(null) : getTeams(tournament.id, { admin: true }),
+  ]);
+
+  const registerCta: 'register' | 'waitlist' | null = regTeams
+    ? getRegistrationState(
+        tournament,
+        divisions,
+        regTeams.filter(t => t.status !== 'rejected'),
+      ).cta
+    : null;
+
+  /**
+   * Does this tournament have a bracket a fan should be able to navigate to?
+   *
+   * The bracket has always had a public page and has NEVER had a way in — no entry in the side
+   * rail, the phone tabs or the desktop top bar, on any tournament. The overview offers a link
+   * only after pool play finishes completely, so for most of an event the page is reachable only
+   * by typing the URL. The "See it live" demo made that visible (its tour sends a stranger there
+   * and stranded them), but the gap is every customer's, not the sandbox's.
+   *
+   * The test is STRUCTURAL — has the organizer configured a bracket? — deliberately, not
+   * "have playoff games been played?". A tab that appears and disappears as pool play finishes is
+   * worse than one that is honestly there from the start, and the page itself renders the seeding
+   * picture perfectly well before any bracket game exists.
+   *
+   * Visibility comes from `isPublicBracketVisible`, the SAME predicate the page itself uses, so the
+   * tab appears exactly when the page renders — never a link to a wall, never a page with no way
+   * in. That shared rule also carries the bracket-only carve-out: those events hide Standings by
+   * format rather than by choice, and their bracket is the whole tournament.
+   */
+  /**
+   * ⚠ "Configured a bracket" means the playoff config EXISTS — not that it names a qualifying
+   * count. `teamsQualifying` is optional in practice however the type reads: a real customer
+   * tournament with twenty-nine playoff games already built carries
+   * `{type:'single', crossover:'standard', hasThirdPlace:false}` and no count at all, and a gate
+   * keyed on that number silently denied it the tab. Same bug as the bracket-only case, wearing
+   * different clothes — which is why the test is now presence, not shape.
+   */
+  const hasPublicBracket =
+    isPublicBracketVisible(tournament) &&
+    divisions.some(d => d.playoffConfig != null);
 
   // Light mode: override :root tokens so body background and all descendants flip.
   // Shared with the admin preview layout via lib/public-tournament-theme so the
@@ -229,6 +267,7 @@ export default async function TournamentLayout({
         finished={effectivelyFinished}
         tournamentId={tournament.id}
         fanAlertsEnabled={hasPlanFeature(org.planId, 'fan_score_alerts')}
+        hasPublicBracket={hasPublicBracket}
       />
       {isFreeTournamentPlan && (
         <PoweredByBadge
@@ -281,7 +320,10 @@ export default async function TournamentLayout({
             `position: fixed` and so don't care about DOM order, this is a static in-flow block.
             Mounted earlier it rendered at the TOP of the page, tucked under the nav strip and
             covered by it — a "quiet path back to the platform" that was 100% unclickable. */}
-        {!isFreeTournamentPlan && <BuiltOnCredit />}
+        {/* …and never inside the "See it live" demo, where this quiet path back to the platform
+            is a way OUT of the thing a prospect was brought here to look at. The banner's own
+            "Start your own — free" is the intended door, and it is always on screen. */}
+        {!isFreeTournamentPlan && !isDemoOrgSlug(orgSlug) && <BuiltOnCredit />}
       </div>
       {/* Game-day "now playing" dock for the followed team (self-gates: followers
           on game day only; mobile-only). */}

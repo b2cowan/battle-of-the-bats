@@ -4,7 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { getDemoOrgByKind, isDemoOrganizerEmail } from '../../lib/demo-org.ts';
 import { isReservedOrgSlug } from '../../lib/reserved-slugs.ts';
 import {
-  formatResetCountdown, msUntilSandboxReset, sandboxBannerCopy, sandboxTourChips,
+  formatResetCountdown, msUntilSandboxReset, sandboxBannerCopy, sandboxTourSteps,
 } from '../../lib/sandbox-chrome.ts';
 import {
   SANDBOX_HIDDEN_TOURNAMENT_NAV_KEYS, isNavKeyHiddenInSandbox,
@@ -146,42 +146,58 @@ describe('the chrome (S4)', () => {
     }
   });
 
-  test('the tour is org-agnostic — an unbuilt sandbox renders no chips rather than the wrong ones', () => {
-    assert.deepEqual(sandboxTourChips('coach', 'public', demo), []);
-    assert.deepEqual(sandboxTourChips('coach', 'operator', demo), []);
+  test('the tour is org-agnostic — an unbuilt sandbox renders no tour rather than the wrong one', () => {
+    assert.deepEqual(sandboxTourSteps('coach', demo), []);
   });
 
-  test('every tournament chip can do something wherever it is pressed', () => {
-    for (const side of ['public', 'operator'] as const) {
-      const chips = sandboxTourChips('tournament', side, demo);
-      assert.ok(chips.length >= 3, `${side} needs at least three beats`);
-      for (const chip of chips) {
-        // A chip with neither an anchor nor an href is a dead button.
-        assert.ok(chip.href, `${side} chip "${chip.label}" has no fallback destination`);
-        assert.ok(chip.href!.startsWith('/'), chip.href);
+  test('EVERY step narrates — the defect that made the first tour read as dead buttons', () => {
+    // The regression this pins, measured against the running app on 2026-08-03: two steps anchored
+    // to panels the product removes whenever no game is live (the fan page's Live Now section, the
+    // dashboard's Now Playing strip). With the anchor gone each fell back to its href — which for
+    // both was the page the visitor was already standing on — so pressing produced no scroll, no
+    // navigation and no feedback whatsoever.
+    //
+    // The fix is that `said` is the deliverable and `anchor` is decoration: the narration strip
+    // appearing is itself a visible change, on the spot the visitor just pressed. So a step
+    // without a sentence is the bug, whatever else it carries.
+    const steps = sandboxTourSteps('tournament', demo);
+    assert.ok(steps.length >= 3, 'the tour needs at least three beats');
+    for (const step of steps) {
+      assert.ok(step.said && step.said.trim().length > 20,
+        `step "${step.label}" has no sentence to show — it can read as a dead button`);
+      assert.ok(step.href?.startsWith('/'), `step "${step.label}" has no destination`);
+      // Written for a stranger: no vocabulary that only we use.
+      for (const ours of ['sandbox', 'seed', 'reconcile', 'tick']) {
+        assert.ok(!step.said.toLowerCase().includes(ours),
+          `step "${step.label}" says "${ours}" to a visitor`);
       }
-      assert.deepEqual(chips.map(c => c.n), chips.map((_, i) => i + 1), 'chips must be numbered in order');
     }
+    assert.deepEqual(steps.map(s => s.n), steps.map((_, i) => i + 1), 'steps must be numbered in order');
   });
 
-  test('each side points at the OTHER side — the dual view is the beat that sells', () => {
-    const publicChips = sandboxTourChips('tournament', 'public', demo);
-    const operatorChips = sandboxTourChips('tournament', 'operator', demo);
-    assert.ok(publicChips.some(c => c.href?.includes('/admin/')), 'the fan side must offer the operator view');
-    assert.ok(operatorChips.some(c => c.href === demo.landingPath), 'the operator side must offer the fan view');
+  test('one tour spans BOTH halves — the flip is the climax, not a second tour', () => {
+    // The first build ran two unrelated three-chip tours, so a visitor who flipped lost their
+    // place and started again, which made the dual view read as a detour rather than the sale.
+    const steps = sandboxTourSteps('tournament', demo);
+    assert.ok(steps.some(s => s.href === demo.landingPath), 'the tour must start on the fan side');
+    assert.ok(steps.some(s => s.href.includes('/admin/')), 'the tour must reach the operator side');
+    // And it must get there in that order — watching a score arrive as a parent is what makes
+    // the organizer's seat mean anything.
+    const firstAdmin = steps.findIndex(s => s.href.includes('/admin/'));
+    const firstFan = steps.findIndex(s => s.href.startsWith(demo.landingPath));
+    assert.ok(firstFan < firstAdmin, 'the fan beats must come before the operator ones');
   });
 
-  test('the operator step points at the DOOR for anyone not holding the demo session', () => {
+  test('the operator steps point at the DOOR for anyone not holding the demo session', () => {
     // Anonymous (arrived by a shared link) or signed in as themselves: the admin shell would bounce
-    // them, so the step must route through the door, which knows how to place each of them. The
-    // step is never removed — the dual view is the beat that sells.
-    const chips = sandboxTourChips('tournament', 'public', demo, { isDemoOrganizer: false });
-    const operatorStep = chips.find(c => c.label.includes("organizer's side"));
-    assert.ok(operatorStep, 'the operator step must always be offered');
-    assert.equal(operatorStep!.href, SEE_IT_LIVE_PATH);
-    assert.ok(!chips.some(c => c.href?.includes('/admin/')), 'no direct admin link without the session');
-    // The fan side's own beats are untouched.
-    assert.ok(chips.some(c => c.anchor === '#live-now'));
+    // them, so those steps must route through the door, which knows how to place each of them. No
+    // step is ever removed — the dual view is the beat that sells.
+    const steps = sandboxTourSteps('tournament', demo, { isDemoOrganizer: false });
+    assert.ok(!steps.some(s => s.href.includes('/admin/')), 'no direct admin link without the session');
+    assert.ok(steps.some(s => s.href === SEE_IT_LIVE_PATH), 'the operator steps must route via the door');
+    // The fan side's own beats are untouched, and the step count never changes with who is looking.
+    assert.equal(steps.length, sandboxTourSteps('tournament', demo).length);
+    assert.ok(steps.some(s => s.href === demo.landingPath));
   });
 });
 

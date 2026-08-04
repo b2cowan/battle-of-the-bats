@@ -36,9 +36,31 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  /* Reserve the fixed navbar (+ score ticker on game day) so centered content is
-     centred BELOW it and the badge always clears the chrome with a consistent gap. */
-  padding-top: calc(var(--nav-height) + var(--ticker-h, 0px));
+  /* Reserve the whole fixed top stack so centred content sits BELOW it and the badge always
+     clears the chrome with a consistent gap.
+     ⚠ This used to hand-compose `--nav-height + --ticker-h` and so MISSED `--desktop-strip-h`,
+     the 48px platform strip added above the navbar on desktop — exactly the double-counting trap
+     the composed tokens exist to end ("no consumer has to hand-compose nav + ticker again",
+     globals.css). It went unseen because a pre-event hero is 70vh tall and centres its content,
+     which absorbs a 48px shortfall invisibly. On an IN-PROGRESS event the hero collapses to
+     `min-height: auto` (.heroCompact) and the score ticker appears — and the shortfall becomes the
+     ticker sitting on top of the event title. Affects every customer on game day, not just the
+     demo, which is simply where it was noticed.
+     `--chrome-top-static-h` composes nav + ticker + strip, and deliberately excludes
+     `--sandbox-chrome-h` because the document is already padded by that — adding it here would
+     open a gap in the demo instead. Below 900px the live shell hides this hero entirely and
+     `.page` does the clearing, so there is no double-count there either. */
+  padding-top: var(--chrome-top-static-h);
+}
+
+/* …and NOT below 900px, where `.page` above already reserves the same thing — the two would stack.
+   On the live tournament page the hero is hidden at this width so it never showed; the ADMIN
+   PREVIEW deliberately keeps its hero (no unified event header to hand identity to — see the
+   display:none rule near the bottom of this file), and there they did stack. True before the hero
+   moved to the composed token too; the move widened the gap, which is how it surfaced.
+   ⚠ Must sit AFTER the rule above: a media query adds no specificity, so the later rule wins. */
+@media (max-width: 900px) {
+  .hero { padding-top: 0; }
 }
 
 .heroBg {

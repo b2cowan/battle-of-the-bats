@@ -4,30 +4,44 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { DemoOrgKind } from '@/lib/demo-org';
+import type { DemoLiveBeat } from '@/lib/demo-tournament';
 import {
   formatResetCountdown,
   msUntilSandboxReset,
   sandboxBannerCopy,
-  sandboxTourChips,
+  sandboxTourSteps,
   type SandboxSide,
-  type SandboxTourChip,
+  type SandboxTourStep,
 } from '@/lib/sandbox-chrome';
 import styles from './SandboxChrome.module.css';
 
 /**
- * SandboxChrome — the banner, the tour chips, the reset countdown and the blocked-save toast.
+ * SandboxChrome — the banner, the guided tour, the reset countdown and the blocked-save toast.
  * Mounted by the org shell for demo orgs only, and org-agnostic by construction: the coach
- * sandbox mounts this same component and gets its own chips from `lib/sandbox-chrome.ts`.
+ * sandbox mounts this same component and gets its own steps from `lib/sandbox-chrome.ts`.
  *
- * Three jobs, deliberately in one component because they share one piece of state — how tall the
- * chrome is:
+ * ── Why this was rebuilt (2026-08-03) ───────────────────────────────────────────────────────
  *
- *  1. **The promise.** Never dismissible. The banner is the reason nothing else in the sandbox has
- *     to apologise: it said up front that nothing is saved.
- *  2. **The tour.** Three numbered beats. See "The tour, and what it took to stop it lying" below.
- *  3. **The catch-all.** A `window.fetch` wrapper watching for the sandbox rejection
- *     (`X-Sandbox-Blocked`, from `lib/demo-guard.ts`) so no screen anywhere in the portal can
- *     surface a raw failure — including screens written next year that know nothing about this.
+ * The first build was a rail of numbered chips that scrolled to a beat and ringed it. The owner's
+ * verdict after using it: *"I don't know what these buttons are supposed to accomplish, they
+ * don't seem to do anything."* Measured against the running app, that was literally true. Two of
+ * the chips anchored to panels the product removes whenever no game is live — the fan page's Live
+ * Now section and the dashboard's Now Playing strip. With the anchor gone each chip fell back to
+ * its href, which for both was the page the visitor was already on, so pressing it produced no
+ * scroll, no navigation and no feedback at all.
+ *
+ * Three things changed, and they are the whole design:
+ *
+ *  1. **Narration, not rings.** Every step now ends in a sentence in the chrome saying what just
+ *     happened — where the finger just was, not on a section the visitor isn't looking at. The
+ *     strip appearing is itself a visible change, so no step can read as dead again.
+ *  2. **One tour across both halves.** Four steps, not two disconnected sets of three, so the
+ *     flip into the organizer's seat arrives having watched a score come in as a parent. The
+ *     continuity is the sale.
+ *  3. **A live pill that proves the demo is running between score changes.** Measured, the score
+ *     moves about nine times in the semifinal's eighty-eight minutes; a prospect watching for
+ *     ninety seconds usually sees nothing at all. "Changed 1:12 ago" is a claim that re-proves
+ *     itself every second without anyone having to wait.
  *
  * ── The geometry contract ───────────────────────────────────────────────────────────────────
  *
@@ -38,16 +52,30 @@ import styles from './SandboxChrome.module.css';
  * alert prompts. Off a demo org the var is never set and every one of those `calc()`s resolves to
  * exactly today's geometry. **If you add new top-pinned chrome, add the term to it too** — the
  * failure mode is silent and ugly: the banner keeps its space but something paints over it, so the
- * visitor sees an orphaned chip rail and never sees the promise.
+ * visitor sees an orphaned tour rail and never sees the promise. The narration strip changes the
+ * chrome's height as it appears, which the ResizeObserver below already republishes.
  */
 
 const SPOTLIGHT_CLASS = 'sandboxSpotlight';
 /** Long enough that a visitor who looked away still sees the ring when they look back. */
 const SPOTLIGHT_MS = 2400;
 const TOAST_MS = 6000;
-/** v2: the v1 key ticked chips on click, so old progress would read as a tour nobody took. */
-const TOUR_DONE_KEY = 'flhq_sandbox_tour_done_v2';
-const TOUR_PENDING_KEY = 'flhq_sandbox_tour_pending';
+/**
+ * How often the live pill re-asks what is on the field.
+ *
+ * Ten seconds, not thirty. The whole promise of step one is "keep this open and you'll see it move",
+ * so up to half a minute of lag between the run landing and the pill noticing is exactly the wrong
+ * place to economise. The endpoint touches no database — it computes the answer from the clock — so
+ * the extra polling costs essentially nothing.
+ */
+const BEAT_POLL_MS = 10_000;
+/** How long the pill celebrates a run after it lands. Long enough to catch a glance back. */
+const JUST_SCORED_MS = 12_000;
+/**
+ * v3: v1 ticked chips on click and v2 tracked a per-side chip list. This is a single four-step
+ * tour across both sides, so old progress cannot be mapped onto it and must not be inherited.
+ */
+const TOUR_STATE_KEY = 'flhq_sandbox_tour_v3';
 
 // ── The blocked-save bus ────────────────────────────────────────────────────────────────────
 // A module-level subscriber list rather than component state, because the thing doing the
@@ -95,40 +123,58 @@ function installSandboxFetchWatcher(): void {
   window.fetch = wrapped;
 }
 
-/** A chip that was clicked and is travelling: which beat, and where it was sending the visitor. */
-interface PendingChip { label: string; href: string }
+// ── Tour progress ───────────────────────────────────────────────────────────────────────────
 
-function readStoredList(key: string): string[] {
-  try {
-    const raw = window.sessionStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as string[]) : [];
-  } catch {
-    return []; // a visitor with storage disabled simply gets no ticks
-  }
+interface TourState {
+  /** The step the visitor is on, 1-based. */
+  current: number;
+  /** Steps delivered so far. */
+  done: number[];
+  /** Which step's sentence the narration strip is showing, if any. */
+  narrating: number | null;
+  /** A step that navigated and is waiting to arrive — carries where it was going. */
+  pending: { n: number; href: string } | null;
 }
 
-function readStoredPending(): PendingChip[] {
+const EMPTY_TOUR: TourState = { current: 1, done: [], narrating: null, pending: null };
+
+function readTourState(): TourState {
   try {
-    const raw = window.sessionStorage.getItem(TOUR_PENDING_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
+    const raw = window.sessionStorage.getItem(TOUR_STATE_KEY);
+    if (!raw) return EMPTY_TOUR;
+    const parsed = JSON.parse(raw) as Partial<TourState>;
     // Shape-check rather than trust: session storage is the visitor's to edit, and a malformed
-    // entry must cost a tick, never a crash in the chrome that carries the honesty claim.
-    return Array.isArray(parsed)
-      ? parsed.filter((p): p is PendingChip =>
-          !!p && typeof p.label === 'string' && typeof p.href === 'string')
-      : [];
+    // entry must cost progress, never a crash in the chrome that carries the honesty claim.
+    return {
+      current: typeof parsed.current === 'number' ? parsed.current : 1,
+      done: Array.isArray(parsed.done) ? parsed.done.filter(n => typeof n === 'number') : [],
+      narrating: typeof parsed.narrating === 'number' ? parsed.narrating : null,
+      pending:
+        parsed.pending && typeof parsed.pending.n === 'number' && typeof parsed.pending.href === 'string'
+          ? { n: parsed.pending.n, href: parsed.pending.href }
+          : null,
+    };
   } catch {
-    return [];
+    return EMPTY_TOUR; // a visitor with storage disabled simply starts the tour each page
   }
 }
 
-function writeStored(key: string, value: unknown): void {
+function writeTourState(state: TourState): void {
   try {
-    window.sessionStorage.setItem(key, JSON.stringify(value));
+    window.sessionStorage.setItem(TOUR_STATE_KEY, JSON.stringify(state));
   } catch {
     /* nothing here is worth failing a click over */
   }
 }
+
+/** Are we standing on the page this step lives on? */
+function isOnStepPage(pathname: string | null, href: string): boolean {
+  if (!pathname) return false;
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+/** `m:ss` since the score last moved. Unpadded — this is prose ("1:31 ago"), not a scoreboard. */
+const formatSince = (ms: number) => formatResetCountdown(ms, false);
 
 export default function SandboxChrome({
   kind,
@@ -143,8 +189,8 @@ export default function SandboxChrome({
   /** DEMO_CYCLE_MINUTES, passed from the server so the countdown and the reconcile job cannot
    *  drift apart — and so the client bundle doesn't pull in the whole seed definition. */
   cycleMinutes: number;
-  /** Is this visitor holding the demo organizer's session? Decides where the operator step POINTS
-   *  — straight at the dashboard for them, at the door for everybody else. */
+  /** Is this visitor holding the demo organizer's session? Decides where the operator steps POINT
+   *  — straight at the real screens for them, at the door for everybody else. */
   isDemoOrganizer: boolean;
 }) {
   const pathname = usePathname();
@@ -155,9 +201,9 @@ export default function SandboxChrome({
   // and, being a Server Component, cannot read the pathname — so the side is decided here.
   const side: SandboxSide = pathname?.startsWith(`/${slug}/admin`) ? 'operator' : 'public';
   const copy = sandboxBannerCopy(side);
-  const chips = useMemo(
-    () => sandboxTourChips(kind, side, { slug, landingPath }, { isDemoOrganizer }),
-    [kind, side, slug, landingPath, isDemoOrganizer],
+  const steps = useMemo(
+    () => sandboxTourSteps(kind, { slug, landingPath }, { isDemoOrganizer }),
+    [kind, slug, landingPath, isDemoOrganizer],
   );
 
   // ── The countdown ───────────────────────────────────────────────────────────────────────────
@@ -171,12 +217,121 @@ export default function SandboxChrome({
     return () => window.clearInterval(id);
   }, [cycleMinutes]);
 
+  // ── The live pill ───────────────────────────────────────────────────────────────────────────
+  // What is on the field, and how long since the score moved. Polled rather than passed as a prop
+  // because a visitor sits on one page for minutes: a value baked in at render would freeze while
+  // its "N ago" kept climbing, which would make the pill lie about the one thing it exists to
+  // prove. `now` ticks every second so the reading counts up between polls.
+  const [beat, setBeat] = useState<DemoLiveBeat | null>(null);
+  const [now, setNow] = useState<number | null>(null);
+  /**
+   * When a run landed while the visitor was watching. This is the payoff the whole first step is
+   * built around and it used to pass in complete silence — the pill simply held a different number
+   * the next time anyone looked. Announcing it is the difference between "this is live" as a claim
+   * and as something the visitor saw happen.
+   */
+  const [scoredAt, setScoredAt] = useState<number | null>(null);
+  /** The previous reading, so a run can be told apart from the story simply moving on. */
+  const lastBeatRef = useRef<DemoLiveBeat | null>(null);
+  /** Set while the tab is hidden: the first reading after returning re-baselines, silently. */
+  const skipCelebrationRef = useRef(false);
+  /** Monotonic request id — a slow response that lands after a newer one must not overwrite it. */
+  const beatRequestRef = useRef(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      const request = ++beatRequestRef.current;
+      try {
+        const res = await fetch(`/api/sandbox/live-beat?org=${encodeURIComponent(slug)}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = (await res.json()) as DemoLiveBeat;
+        // Ignore a response overtaken by a newer one — otherwise a slow reply can put an older
+        // score back on screen, on the one element whose whole job is being current.
+        if (cancelled || request !== beatRequestRef.current) return;
+
+        /**
+         * Announce a RUN — not merely a different reading.
+         *
+         * Keying on "the score string changed" was wrong in three ways, all of which fire every
+         * single cycle: at the semifinal→final handover the reading goes 14–6 → 0–0, at the replay
+         * rollover it goes 9–7 → 0–0, and returning to a backgrounded tab shows a score that moved
+         * while nobody was watching. Each announced "There it is — now 0–0", which is the exact
+         * class of false claim this whole redesign exists to remove.
+         *
+         * A run is: the same two teams, still playing, with more runs on the board than last time.
+         */
+        const previous = lastBeatRef.current;
+        lastBeatRef.current = data;
+        const sameGameStillLive =
+          previous !== null &&
+          previous.kind === 'live' && data.kind === 'live' &&
+          previous.homeName === data.homeName && previous.awayName === data.awayName;
+        const scored = sameGameStillLive &&
+          data.homeScore + data.awayScore > previous.homeScore + previous.awayScore;
+
+        if (scored && !skipCelebrationRef.current) setScoredAt(Date.now());
+        skipCelebrationRef.current = false;
+
+        // Stamped together so the pill's score and its freshness reading can never come from two
+        // different instants — and so the clock is seeded from a callback rather than
+        // synchronously in the effect body.
+        setBeat(data); setNow(Date.now());
+      } catch {
+        // A demo whose pill is missing is still a working demo; never surface a fetch failure in
+        // the chrome that carries the honesty claim.
+      }
+    };
+    // A backgrounded tab has nobody watching the pill, and this runs for as long as a visitor
+    // leaves the demo open — a fetch every ten seconds and a re-render of the whole chrome every
+    // second, forever. Stop both while hidden and resync on return, so coming back shows the
+    // current score rather than a stale one catching up. Starting is guarded on visibility too,
+    // so an effect that re-runs while the tab is already hidden stays paused.
+    let poll = 0;
+    let tick = 0;
+    const start = () => {
+      window.clearInterval(poll);
+      window.clearInterval(tick);
+      if (document.hidden) return;
+      poll = window.setInterval(load, BEAT_POLL_MS);
+      tick = window.setInterval(() => setNow(Date.now()), 1000);
+    };
+
+    if (!document.hidden) load();
+    start();
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        // Whatever happens next happened off-screen; the reading on return re-baselines quietly.
+        skipCelebrationRef.current = true;
+        window.clearInterval(poll);
+        window.clearInterval(tick);
+        return;
+      }
+      load();
+      start();
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.clearInterval(poll);
+      window.clearInterval(tick);
+    };
+  }, [slug]);
+
   // ── The geometry ────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
     const node = chromeRef.current;
     if (!node) return;
     const root = document.documentElement;
     root.dataset.sandboxChrome = 'true';
+    // Which half the visitor is standing in, published for CSS that must differ between them —
+    // notably reclaiming the phone's bottom tab bar, which the demo hides on the fan side (every
+    // one of its tabs leaves the sandbox) but not on the operator side, where the admin shell
+    // owns that bar and already handles itself.
+    root.dataset.sandboxSide = side;
 
     const publish = () => root.style.setProperty('--sandbox-chrome-h', `${node.offsetHeight}px`);
     publish();
@@ -186,94 +341,128 @@ export default function SandboxChrome({
     return () => {
       observer.disconnect();
       delete root.dataset.sandboxChrome;
+      delete root.dataset.sandboxSide;
       root.style.removeProperty('--sandbox-chrome-h');
     };
+  }, [side]);
+
+  // ── The tour ────────────────────────────────────────────────────────────────────────────────
+  // `null` until session storage has been read — NOT the same as "the tour hasn't started".
+  // Rendering the default first would flash "Step 1 of 4" at a visitor who is on step 3, on every
+  // single page they open.
+  const [tour, setTour] = useState<TourState | null>(null);
+
+  const update = useCallback((next: TourState) => {
+    setTour(next);
+    writeTourState(next);
   }, []);
 
-  // ── The tour, and what it took to stop it lying ─────────────────────────────────────────────
-  //
-  // The first build ticked a chip the instant it was clicked. That reads as "you've done the
-  // tour" to somebody who has seen nothing — and because two of the three beats live on other
-  // pages, a visitor could end up with three ticks and no idea what happened. So:
-  //
-  //   • **A chip earns its tick on DELIVERY, not on click.** An on-page beat ticks once it has
-  //     been scrolled to and ringed. An off-page beat records itself as PENDING, and ticks after
-  //     the navigation has landed and this component has remounted on the new page.
-  //   • **A chip says which kind it is.** One that moves you somewhere carries an arrow; one that
-  //     points at something here does not. Pressing a chip should never be a surprise.
-  //
-  // Progress lasts the visit only, which is what session storage is for.
-  const [done, setDone] = useState<Set<string>>(new Set());
-  /** Labels whose anchor is present on THIS page — so we know which chips look vs. go.
-   *  `null` until the first measurement, which is NOT the same as "measured, none present". */
-  const [onThisPage, setOnThisPage] = useState<Set<string> | null>(null);
+  /**
+   * Ring the step's beat if it happens to be on this page. Supporting act — never the proof.
+   *
+   * Two pieces of patience, both earned the hard way. The beat a step points at is usually rendered
+   * from data the page fetches AFTER it routes, so looking for it on the next frame finds nothing
+   * (the bracket, in particular, arrives late). And even once it exists, the page keeps growing for
+   * a moment — a single scroll lands the target far from centre, which for the bracket meant a
+   * visitor arriving with the thing they were promised half below the fold. So: wait for it to
+   * appear, then settle it again once the layout has stopped moving.
+   */
+  const ringTimersRef = useRef<number[]>([]);
 
-  const markDone = useCallback((label: string) => {
-    setDone(prev => {
-      if (prev.has(label)) return prev;
-      const next = new Set(prev).add(label);
-      writeStored(TOUR_DONE_KEY, [...next]);
-      return next;
-    });
-  }, []);
+  const ringAnchor = useCallback((step: SandboxTourStep) => {
+    // Abandon any ring still in flight. Without this, a visitor who presses two steps quickly (or
+    // navigates away mid-retry) leaves a search running that can ring whatever the same selector
+    // happens to match on the page they have already moved to.
+    ringTimersRef.current.forEach(window.clearTimeout);
+    ringTimersRef.current = [];
+    if (!step.anchor) return;
 
-  // Load progress, and settle a chip that was mid-navigation when we left the last page — but ONLY
-  // if we actually arrived where that chip was sending us.
-  //
-  // The first build flushed every pending label on the next route change, whatever the destination.
-  // Press two travelling chips quickly, or press one and then navigate somewhere else yourself, and
-  // both ticked for beats never seen — which is the same lie the click-ticking had, moved one step
-  // later. The pending record now carries its destination and is only redeemed against it.
-  useEffect(() => {
-    const stored = new Set(readStoredList(TOUR_DONE_KEY));
-    const pending = readStoredPending();
-    const arrived = pending.filter(p => pathname === p.href || pathname?.startsWith(`${p.href}/`));
-    const stillTravelling = pending.filter(p => !arrived.includes(p));
+    const selector = step.anchor;
+    const later = (fn: () => void, ms: number) => ringTimersRef.current.push(window.setTimeout(fn, ms));
+    const settle = (target: Element) => target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    let attempts = 0;
 
-    if (arrived.length > 0) {
-      arrived.forEach(p => stored.add(p.label));
-      writeStored(TOUR_DONE_KEY, [...stored]);
-      writeStored(TOUR_PENDING_KEY, stillTravelling);
-    }
-    setDone(stored);
-  }, [pathname]);
-
-  // Which beats are actually on this page? Re-measured per route, after paint, because the answer
-  // decides whether a chip shows its "go" arrow.
-  useEffect(() => {
-    const frame = window.requestAnimationFrame(() => {
-      setOnThisPage(new Set(
-        chips.filter(c => c.anchor && document.querySelector(c.anchor)).map(c => c.label),
-      ));
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [chips, pathname]);
-
-  const onChip = useCallback((chip: SandboxTourChip) => {
-    const target = chip.anchor ? document.querySelector(chip.anchor) : null;
-
-    if (target) {
-      // Always move the page, even when the beat is already visible: a chip that produces no
-      // motion at all reads as a broken button. `center` also keeps the target clear of the
-      // fixed chrome at the top of the viewport.
-      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const tryFind = () => {
+      const target = document.querySelector(selector);
+      if (!target) {
+        // ~3 seconds of looking. Beyond that the beat genuinely isn't on this page, and the
+        // narration has already delivered the step on its own.
+        if (attempts++ < 12) later(tryFind, 250);
+        return;
+      }
+      settle(target);
       target.classList.remove(SPOTLIGHT_CLASS);
-      // Force a reflow so the ring restarts when the same chip is pressed twice.
+      // Force a reflow so the ring restarts when the same step is delivered twice.
       void (target as HTMLElement).offsetWidth;
       target.classList.add(SPOTLIGHT_CLASS);
-      window.setTimeout(() => target.classList.remove(SPOTLIGHT_CLASS), SPOTLIGHT_MS);
-      markDone(chip.label); // delivered: it is on screen and ringed
+      // Re-centre once the rest of the page has finished arriving.
+      later(() => settle(target), 600);
+      later(() => target.classList.remove(SPOTLIGHT_CLASS), SPOTLIGHT_MS);
+    };
+
+    tryFind();
+  }, []);
+
+  // And drop them whenever the page changes, not just on unmount. This component is mounted once by
+  // the org shell and survives every client-side navigation inside the demo, so a search still
+  // retrying when the visitor leaves under their own steam would keep hunting — and could scroll
+  // and ring whatever the same selector happens to match on the page they moved to.
+  useEffect(() => () => {
+    ringTimersRef.current.forEach(window.clearTimeout);
+    ringTimersRef.current = [];
+  }, [pathname]);
+
+  /** Mark a step delivered: narrate it, bank it, and move the tour on. */
+  const deliver = useCallback((state: TourState, n: number): TourState => ({
+    current: Math.min(n + 1, Math.max(steps.length, 1)),
+    done: state.done.includes(n) ? state.done : [...state.done, n],
+    narrating: n,
+    pending: null,
+  }), [steps.length]);
+
+  // Load progress, and settle a step that was mid-navigation when we left the last page — but ONLY
+  // if we actually arrived where it was sending us.
+  //
+  // The pending record carries its destination and is redeemed only against it. An earlier build
+  // flushed every pending label on the next route change whatever the destination, so pressing two
+  // travelling steps quickly — or pressing one and then navigating somewhere else — ticked beats
+  // that were never seen.
+  useEffect(() => {
+    const stored = readTourState();
+    if (stored.pending && isOnStepPage(pathname, stored.pending.href)) {
+      const arrived = stored.pending.n;
+      const next = deliver(stored, arrived);
+      // Session storage is an external system that exists only on the client, so it cannot be read
+      // in a state initializer without either breaking SSR or guaranteeing a hydration mismatch.
+      // This is the one-shot read on mount and on arrival, never a render loop.
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only external read
+      update(next);
+      // Let the destination paint before reaching for its beat.
+      const step = steps.find(s => s.n === arrived);
+      if (step) window.requestAnimationFrame(() => ringAnchor(step));
       return;
     }
+    setTour(stored);
+    // `pathname` is the trigger: this runs on first mount and on every arrival.
+  }, [pathname, deliver, update, ringAnchor, steps]);
 
-    if (!chip.href) return;
-    // Off-page beat: bank the tick WITH its destination, and let it land only if the visitor
-    // actually arrives there.
-    const pending = readStoredPending().filter(p => p.label !== chip.label);
-    pending.push({ label: chip.label, href: chip.href });
-    writeStored(TOUR_PENDING_KEY, pending);
-    router.push(chip.href);
-  }, [markDone, router]);
+  const onStep = useCallback((step: SandboxTourStep) => {
+    if (!tour) return; // unreachable: the stepper only renders once progress has been read
+    if (isOnStepPage(pathname, step.href)) {
+      // Already here: deliver in place. The narration strip appearing is the visible change, so
+      // this branch is never silent even when the anchor is absent.
+      update(deliver(tour, step.n));
+      ringAnchor(step);
+      return;
+    }
+    update({ ...tour, pending: { n: step.n, href: step.href } });
+    router.push(step.href);
+  }, [pathname, tour, deliver, update, ringAnchor, router]);
+
+  const jumpTo = useCallback((n: number) => {
+    if (!tour) return;
+    update({ ...tour, current: n, narrating: null });
+  }, [tour, update]);
 
   // ── The catch-all ───────────────────────────────────────────────────────────────────────────
   const [toastAt, setToastAt] = useState<number | null>(null);
@@ -288,6 +477,21 @@ export default function SandboxChrome({
     const id = window.setTimeout(() => setToastAt(null), TOAST_MS);
     return () => window.clearTimeout(id);
   }, [toastAt]);
+
+  const currentStep = tour ? steps.find(s => s.n === tour.current) ?? null : null;
+  const narratedStep = tour?.narrating != null ? steps.find(s => s.n === tour.narrating) ?? null : null;
+  const tourComplete = !!tour && steps.length > 0 && tour.done.length >= steps.length;
+  // A step that travelled deserves a marked way back. The fan page is the tour's home and the one
+  // place every visitor recognises, so that is where "back" means.
+  const showBack = narratedStep != null && !isOnStepPage(pathname, landingPath);
+
+  const sinceMs = beat && now != null ? now - beat.lastChangedAtMs : null;
+  const untilMs = beat?.nextStartsAtMs != null && now != null ? beat.nextStartsAtMs - now : null;
+  const justScored = scoredAt != null && now != null && now - scoredAt < JUST_SCORED_MS;
+  // The demo's state is a pure function of the clock, so this is exact rather than a guess — which
+  // is what makes it worth saying out loud. Waiting for something you've been told is coming is a
+  // completely different experience from staring at a number that may never move.
+  const nextRunMs = beat?.nextChangeAtMs != null && now != null ? beat.nextChangeAtMs - now : null;
 
   return (
     <>
@@ -306,40 +510,118 @@ export default function SandboxChrome({
             {copy.emphasis ? <> <strong>{copy.emphasis}</strong></> : null}
           </span>
           <span className={styles.reset}>
-            {/* Reserve the row even before the first tick so the banner doesn't jump on mount. */}
-            {countdown ? `Resets in ${countdown}` : ' '}
+            {/* "Replays", not "resets": a stranger reading "resets in 38:45" has no idea what
+                resets, or whether it costs them something. Reserve the row even before the first
+                tick so the banner doesn't jump on mount. */}
+            {countdown ? `Replays in ${countdown}` : ' '}
           </span>
           <Link href="/auth/signup" className={styles.cta}>Start your own — free</Link>
         </div>
 
-        {chips.length > 0 && (
-          <div className={styles.chips}>
-            <span className={styles.chipsLabel}>Try this</span>
-            {chips.map(chip => {
-              // A chip whose beat is on this page points at it; anything else travels. UNTIL the
-              // first measurement (`onThisPage === null`) an anchored chip is assumed to be an
-              // on-page beat — which is true on the page it was written for. The first build
-              // measured against an empty Set instead, so every anchored chip flashed the "go"
-              // arrow on load and then dropped it: the exact flicker the comment claimed to avoid.
-              const travels = chip.anchor
-                ? (onThisPage !== null && !onThisPage.has(chip.label))
-                : true;
-              const isDone = done.has(chip.label);
-              return (
+        {steps.length > 0 && tour && (
+          <div className={styles.stepper}>
+            <span className={styles.stepperLabel}>Guided tour</span>
+            <span className={styles.stepCount}>
+              {tourComplete ? 'Done' : `Step ${tour.current} of ${steps.length}`}
+            </span>
+
+            {/* The standing proof that the demo is running, between the score changes. */}
+            {beat && sinceMs != null && (
+              <span
+                className={[
+                  styles.pill,
+                  beat.kind === 'between' ? styles.pillSeam : '',
+                  justScored ? styles.pillScored : '',
+                ].filter(Boolean).join(' ')}
+                title={beat.kind === 'between'
+                  ? 'The semifinal has ended and the final has not started yet.'
+                  : `${beat.label} in progress`}
+              >
+                <span className={styles.pillBulb} aria-hidden="true" />
+                {beat.kind === 'between' ? (
+                  <>
+                    <span className={styles.pillScore}>Between games</span>
+                    <span className={styles.pillFresh}>
+                      {untilMs != null && untilMs > 0 ? `final in ${formatSince(untilMs)}` : 'final about to start'}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className={styles.pillScore}>
+                      <span className={styles.pillTeam}>{beat.homeName}</span>
+                      {' '}{beat.homeScore}–{beat.awayScore}{' '}
+                      <span className={styles.pillTeam}>{beat.awayName}</span>
+                    </span>
+                    <span className={styles.pillFresh}>
+                      {justScored ? 'just scored' : `changed ${formatSince(sinceMs)} ago`}
+                    </span>
+                  </>
+                )}
+              </span>
+            )}
+
+            <span className={styles.dots}>
+              {steps.map(step => (
                 <button
-                  key={chip.label}
+                  key={step.n}
                   type="button"
-                  className={styles.chip}
-                  aria-pressed={isDone}
-                  onClick={() => onChip(chip)}
+                  className={styles.dot}
+                  aria-current={step.n === tour.current && !tourComplete ? 'step' : undefined}
+                  data-done={tour.done.includes(step.n) ? 'true' : undefined}
+                  aria-label={`Step ${step.n}: ${step.label}${tour.done.includes(step.n) ? ' (done)' : ''}`}
+                  onClick={() => jumpTo(step.n)}
                 >
-                  <span className={styles.chipNum} aria-hidden="true">{chip.n}</span>
-                  {chip.label}
-                  {travels && <span className={styles.chipGo} aria-hidden="true">→</span>}
-                  {isDone && <span className={styles.chipDone} aria-hidden="true">✓</span>}
+                  {tour.done.includes(step.n) ? '✓' : step.n}
                 </button>
-              );
-            })}
+              ))}
+            </span>
+
+            {tourComplete ? (
+              // The one dead end that should sell. Every other surface offers the CTA; the end of
+              // the tour is where a convinced visitor actually is.
+              <Link href="/auth/signup" className={styles.stepGo}>Start your own — free →</Link>
+            ) : currentStep ? (
+              <button type="button" className={styles.stepGo} onClick={() => onStep(currentStep)}>
+                {currentStep.label} →
+              </button>
+            ) : null}
+          </div>
+        )}
+
+        {narratedStep && (
+          // The core of the redesign: what just happened, said in words, in the place the visitor
+          // just pressed. A ring on a section they are not looking at was never feedback.
+          <div className={styles.said} role="status" aria-live="polite">
+            <span className={styles.saidTick} aria-hidden="true">✓</span>
+            <span className={styles.saidText}>
+              {narratedStep.said}
+              {/* The payoff for a step whose reward arrives on the tournament's clock rather than
+                  on the click. Without this the visitor is told to "keep this page open" and given
+                  nothing to watch — which is how a working demo got reported as broken. */}
+              {narratedStep.watchesLiveScore && beat?.kind === 'live' && (
+                justScored ? (
+                  <strong className={styles.saidNow}>
+                    {' '}There it is — now {beat.homeScore}–{beat.awayScore}.
+                  </strong>
+                ) : nextRunMs != null && nextRunMs > 0 ? (
+                  <span className={styles.saidWait}>
+                    {' '}Next run in about <strong>{formatSince(nextRunMs)}</strong>
+                    {/* Under two minutes it is worth waiting for; beyond that, telling somebody to
+                        wait is telling them to leave. Measured gaps run four to seven minutes. */}
+                    {nextRunMs <= 120_000 ? ' — watch it land.' : ' — carry on, and it will flag itself.'}
+                  </span>
+                ) : null
+              )}
+            </span>
+            {showBack && (
+              <button
+                type="button"
+                className={styles.saidBack}
+                onClick={() => router.push(landingPath)}
+              >
+                ← Back to the tournament
+              </button>
+            )}
           </div>
         )}
       </div>

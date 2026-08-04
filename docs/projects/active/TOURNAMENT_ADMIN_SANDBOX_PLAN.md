@@ -273,6 +273,303 @@ None change an approved *shape or placement*; all are consequences of how the re
     pays for it. ⚠ **This is the fallback shape while the open question below is unanswered** — if
     the door is later allowed to take over a session, the chip becomes universal again on its own.
 
+### Recorded 2026-08-03, the demo-UX investigation and rebuild
+
+**Mockups rev 1:** artifact `f1fcaff5-7777-4a9f-a166-8557686214fc`. Approved by the owner
+("go ahead") with the recommendations on Q1–Q6 taken as written. The Phase 1 mockups
+(`118b8d75-…`) remain binding for everything this file does not supersede — the banner, the
+blocked-save nudge family, the curated corners and both marketing doors are unchanged.
+
+26. **The tour chips were not "subtle". Two of them were dead buttons, and the owner was right.**
+    The previous investigation concluded the chips worked and only read as unclear. Measured against
+    the running app, that was wrong, and the mechanism is worth remembering: a chip carried an
+    `anchor` and an `href`, and fell back to the `href` when the anchor matched nothing. Both
+    "watch a score" chips anchored to panels **the product removes whenever no game is live** — the
+    fan page's Live Now section (`liveNowGames.length > 0`) and the dashboard's Now Playing strip
+    (`if (gd.liveGames.length === 0) return null`). Their fallback href was *the page the visitor
+    was already standing on*, so `router.push` produced **no scroll, no navigation, no tick and no
+    feedback at all**. Measured: `scrollY 0 → 0`, URL unchanged.
+    **The generalised rule, now pinned by a test: a tour step's proof may never be a panel the
+    product is free to remove, and a fallback destination may never be the current page.**
+
+27. **The redesign, in three moves.** (a) **Narration replaces rings** — every step ends in a
+    sentence in the chrome saying what just happened, so the strip appearing is itself the visible
+    change and no step can read as dead again. (b) **One four-step tour spans both halves** instead
+    of two disconnected three-chip tours, so the flip into the organizer's seat arrives having
+    watched a score come in as a parent; the continuity is the sale. (c) **A live pill** carries the
+    score and a running *"changed 1:12 ago"*. Progress key bumped to `_v3` — the old per-side shape
+    cannot be mapped onto the new one.
+    **Deviation from the approved mockups:** the mockups showed a "Next →" control in the narration
+    strip *and* the primary control in the stepper row. Built with one — two buttons doing the same
+    thing eight pixels apart is the confusion this redesign exists to remove. The strip keeps the
+    "← Back to the tournament" control, which is not a duplicate.
+
+28. **The demo had been frozen for a full cycle, and three instruments called it healthy.** The
+    database sat exactly 120 minutes behind the clock. Causes, all measured: migration 183's
+    scheduler heartbeats on **dispatch** (`pg_net` is fire-and-forget), so `demo_sandbox_tick` read
+    green one minute old while the app had not run the reconcile in hours; the probe's "anchored to
+    today" compared only the **date** when the drift is in the **time**; and its "live score is
+    current" tolerated ±2 while a stale row **saturates at the game's final score**, always within
+    tolerance. Fixed: the reconcile now writes its own **`demo_sandbox_reconcile` arrival
+    heartbeat** (from the core, so the command-line runner counts too), and the probe compares the
+    semifinal's full timestamp and its **status**, which flips once per cycle and cannot coincide.
+    The probe also now names the failure — dispatched N minutes ago, arrived never.
+    ⚠ **The underlying delivery failure is environmental and still open:** the scheduler posts to
+    the Vault-held `app_cron_base_url`, which does not reach this dev environment. Verified after
+    the fix: dispatch 2 minutes ago, arrival 23 minutes ago (a manual run). **Until that URL is
+    right for an environment, the demo only moves when somebody runs the tick by hand.**
+
+29. **The fan side could never show its own bracket — and it was every customer's bug.** The
+    overview gates the whole playoff presentation on `poolPlayComplete` (every non-playoff game
+    terminal), but the seed deliberately leaves two U13 pool games open so "Needs a Score" and "Up
+    Next" are not empty. So `playoffsSet` was **false forever**: zero `/playoffs` links on any page,
+    and the generic hero instead of the playoff one. The tour's bracket step teleported strangers to
+    a page the product had decided not to advertise.
+    **Fixed for everyone, not routed around:** the bracket now has a **Playoffs tab** in all four
+    nav surfaces (desktop rail, phone tabs, desktop top bar, and the shared list they now all read
+    from). The test is **structural** — the organizer configured a bracket AND Standings is public —
+    so the tab does not appear and disappear as pool play finishes, and it appears **exactly when
+    the page renders**, which is the anti-dead-end rule. Costs one divisions query on tournaments
+    whose register page is hidden; the common path is unchanged.
+    ⚠ **Left alone deliberately:** the hero takeover still waits for pool play to finish. That
+    rationale is sound for real customers (organizers pre-build brackets before the event) and
+    changing it is a product decision, not a demo fix. ⚠ **Pre-existing and untouched:** a
+    *playoff-only* tournament's `/playoffs` page hides itself, because it inherits Standings
+    visibility and `isPublicPageEnabled` returns false for standings on playoff-only events. The tab
+    correctly does not appear there either. Worth a separate look.
+
+30. **The live score moved far slower than the promise.** Measured: during `semifinal-live` — 73% of
+    every cycle — the visible score changed **9 times in 88 minutes**, a mean gap near ten minutes
+    and a worst gap of thirteen, against a definition of done that says "a visitor sees a score move
+    within two minutes". Two fixes, deliberately both: the pill's freshness reading (which re-proves
+    the demo every second without anyone waiting), and **`deterministicBracketScore`**, which doubles
+    the runs in bracket games only. Semifinal now ~18 changes / 88 min (mean ≈ 5 min, worst 7); the
+    final ≈ 2 min. **Pool play is untouched on purpose** — standings, run differential and therefore
+    the bracket's seeding come from pool games alone, so the seeding this change affects is provably
+    none of it, and the probe's canonical-seeding check proves it on every run. Health stays 89.
+
+31. **The "try to break it" beat landed on a closed drawer.** The schedule page collapses the
+    Schedule Health panel by default (right for an organizer who opens the screen daily), so the
+    tour rang a 53px strip reading "Show" with the drag invitation hidden behind a click nobody knew
+    to make. In a demo org the panel now arrives expanded. Real customers untouched.
+
+32. **⚠ Build notes 17 and the QA ledger were STALE and would have misled the QA pass.** Both said a
+    visitor without the demo session sees two chips and no operator step. The shipped code — and its
+    own unit test — always rendered three, pointing the third at the door. Verified in a clean
+    window. The rule now: **the step count never changes with who is looking**; only where the
+    operator steps point does.
+
+33. **The rebuilt step 1 still lied, just more politely — owner's second QA pass.** *"When I clicked
+    'watch the score change' the score did not change, it stayed 3-8."* The clock was running and the
+    score DID move (8–3 → 9–3) — **five minutes later**. The button was written in the imperative
+    present (*"Watch the score change by itself"*) for a payoff that arrives on the tournament's
+    clock, so pressing it handed the visitor a static number and an unbounded wait. **Same class of
+    defect as the original complaint, one layer up: a control whose label promises more than the
+    press delivers.** Three fixes, and the third is the one that was missing all along:
+    - **The label now names what the press does** — *"Show me the game that is live"*. The payoff is
+      promised in the sentence beneath, not in the button.
+    - **The wait is bounded and stated.** Because the demo's state is a pure function of the clock,
+      the next run is not a guess: the beat now carries `nextChangeAtMs` and the narration reads
+      *"Next run in about 1:32 — watch it land"*, or, past two minutes, *"— carry on, and it will
+      flag itself."* A told wait is a countdown; an untold one is a dead demo.
+    - **The run announces itself when it lands.** Previously the single most important moment in the
+      whole sandbox passed in complete silence — the number was simply different next time anyone
+      looked. The pill now highlights, reads *"just scored"*, and the sentence becomes *"There it is
+      — now 11–4."* Polling dropped 30s → 10s so the announcement is prompt (the endpoint touches no
+      database, so this costs nothing). **Verified live: pressed the step, waited 396 seconds without
+      touching anything, and watched 10–4 become 11–4 with the highlight and the sentence.**
+    ⚠ **Measured gaps between runs are four to seven minutes even after the ×2 bracket scoring.**
+    Reaching the plan's "within two minutes" by scoring alone would need finals around 30–14, which
+    is not a baseball score. The honest resolution is the countdown plus the announcement, plus the
+    fact that the remaining three steps occupy the visitor while runs land behind them. **The copy no
+    longer tells anyone to sit and watch.**
+
+34. **Step 2 was pointing at the wrong page — the bracket isn't on the Playoffs page.** Owner, third
+    QA pass: *"'see the bracket fill itself in' brings me to this screen, which doesn't show the
+    brackets."* Correct. The product has two playoff surfaces and I sent the step to the wrong one:
+    - **`/playoffs` is the Playoff Picture** — seeding, matchups and the numbers behind them. Its
+      own "Full Bracket →" button points at Standings.
+    - **The bracket DIAGRAM renders at the top of `/standings`** whenever playoffs are underway.
+    So a visitor was told *"that final slot read Winner of SF1"* while looking at a page that never
+    draws the slot. Step 2 now goes to `/standings`, rings the bracket block (a new inert
+    `data-sandbox-tour="playoff-bracket"` hook), and the sentence says "championship slot" rather
+    than naming a page. Verified: lands with the bracket centred, SEMIFINALS/FINALS and the
+    unresolved "Semifinal 1 winner" slot on screen.
+    **Also fixed, and it was a general defect in the tour machinery:** the ring fired on the next
+    animation frame, before the destination had fetched its data — so a late-rendering beat was
+    missed entirely, and when it did land the page was still growing, leaving the target half below
+    the fold (measured: bracket at 568px of a 900px viewport). It now waits up to three seconds for
+    the beat to appear and re-centres once the layout settles (measured after: 225px — centred).
+    ⚠ **Product question for the owner, NOT changed here:** a fan looking for the bracket has to go
+    to *Standings*, and the new **Playoffs** tab lands on the seeding write-up instead. That is the
+    shipped information architecture, not something this project introduced — but the demo makes it
+    obvious. Worth deciding whether the Playoffs tab should lead with the bracket.
+
+35. **The demo is now SEALED — every door out is closed but two.** Owner request, 2026-08-03. Build
+    note 25 had deliberately let a visitor walk out onto `/pricing` or `/discover` with the hat
+    correctly coming off; the owner's ruling reverses that. **A prospect who wanders out of a demo
+    they were told was a demo has simply been lost.** Audited live at 1440 and 390 across four fan
+    pages and two operator pages, then re-audited to zero:
+    - **Fan strip:** the FieldLogicHQ wordmark goes inert (plain text, not a disabled link — a
+      control that looks pressable and isn't is worse than one that never invited the press);
+      **Discover**, the **chat** icon, the **account** icon and **Sign In** are hidden.
+    - **Phone bottom bar** (Home · Scores · Chat · Account) is **removed entirely** — all four were
+      exits — and `--bottom-nav-height` drops to `0px` on the fan side so the page reclaims the 72px
+      rather than ending in a blank strip. Scoped by a new `data-sandbox-side` marker on `<html>`,
+      so the operator half (whose own admin bar already handles the sandbox) is untouched.
+    - **Operator strip:** the shared brand lockup goes inert and the **account** door is hidden.
+    - **"Built on FieldLogicHQ"** footer credit is not rendered in a demo.
+    - **Kept, deliberately:** the ⇄ operator flip (the tour's own beat) and **"Start your own —
+      free"** (the conversion path, always on screen).
+    ⚠ **The nav bar is mounted by the ROOT layout, above the org layout that provides the sandbox
+    context**, so it cannot use `useIsSandbox()`. It derives the answer from the first path segment
+    via the same hardcoded allow-list — synchronous, so there is no flash of a door that then
+    vanishes. Verified untouched for a real customer at both widths (wordmark still a link,
+    Discover present, bottom bar visible, `--bottom-nav-height: 4.5rem`, `main` padding 72px).
+
+36. **Walkthrough delivered in chat, not as a file** (owner preference, 2026-08-03): the narrative
+    evaluation script — what you do, what you should see, what you are being asked to judge at each
+    beat — as distinct from the ledger's tick-boxes. The open decisions it raised are recorded in
+    the ledger's §5.2 judgement-call notes.
+
+37. **✅ FIXED — "Up Next" used to empty in the late-evening cycles, and the sweep that proves it is
+    now a script.** The `isUpNextToday` filler sat at `cycleStart + FINAL_STARTS_AT_MINUTE + 150` =
+    **242 minutes**, two hours beyond the 120-minute cycle. For replays starting late in the evening
+    that landed past midnight, on the day AFTER `eventDate`, so the dashboard's "today and still to
+    come" bucket found nothing — about an hour a day, on the one screen the demo uses to argue that
+    running a tournament is work. **Pre-existing; not introduced by the tour rebuild.** It survived
+    because every spot check happened in the afternoon.
+    **Fix:** the filler moves to `cycleStart + 150` — past the 120-minute cycle, so it stays ahead
+    for the whole replay — and when a late start pushes even that past midnight it is clamped to
+    `23:58` on the event date. A 10pm replay simply cannot have a game both later-today and two
+    hours out; the day runs out first. The clamp leaves a gap only in the closing minute of that one
+    replay, against roughly an hour before.
+    **✅ `scripts/sweep-demo-sandbox.mjs` (NEW) — the guard that should have existed.**
+    `check-demo-sandbox.mjs` asks "presentable right now?"; this asks "presentable at every hour?"
+    across **84 moments** (12 cycle starts × 7 points, chosen to sit on the seam and the final-live
+    tail). Asserts a live game, non-empty Up Next and Needs-a-Score, HEALTHY, zero conflicts, and
+    the 89–92 band. **Negative-tested: reinstating the old placement produces exactly 4 failures,
+    all "UP NEXT EMPTY" in the 00:00Z/02:00Z final-live tails.** After the fix: 84/84 pass and the
+    **health range is unchanged at 89–92**, so the hard-won baseline survived the move.
+    ⚠ **Run it after ANY change to the demo's times, durations, facilities or cycle structure.**
+
+38. **The score ticker was sitting on the event title — and it was every customer's bug, on game
+    day.** Owner, fourth QA pass: *"I don't think the header spacing was adjusted properly."* Right
+    again, and it was not the sandbox chrome's fault. The tournament home's hero hand-composed its
+    top clearance as `--nav-height + --ticker-h`, **omitting `--desktop-strip-h`** — the 48px
+    platform strip that sits above the navbar on desktop. That is precisely the double-counting trap
+    the composed `--chrome-top-*` tokens were introduced to end (*"no consumer has to hand-compose
+    nav + ticker again"*, globals.css); this one consumer never migrated.
+    **Why it hid for so long:** a pre-event hero is `70vh` and centres its content, which absorbs a
+    48px shortfall invisibly. Only when the event is IN PROGRESS does the hero collapse to
+    `min-height: auto` **and** the score ticker appear — and then the shortfall becomes the ticker
+    painting over the event title. The demo is permanently in that state, which is why it surfaced
+    there. **Measured on a real customer's in-progress event too: the title sat at 104px with the
+    navbar spanning 48–120px — under the chrome, same bug.**
+    **Fix:** the hero uses `--chrome-top-static-h`, which already composes nav + ticker + strip and
+    deliberately excludes `--sandbox-chrome-h` (the document is padded by that separately, so adding
+    it here would open a gap instead). Measured after: clearance **160px** = 72 + 40 + 48, title
+    clears the ticker by 32px, `elementFromPoint` at the title's top edge returns the title itself.
+    Real customer without a ticker: 120px = 72 + 0 + 48, also correct. **Below 900px nothing
+    changed** — the live shell hides this hero and the page does the clearing.
+    ⚠ **Fifth defect in this geometry band.** Every one has been an offset composed by hand instead
+    of through the shared token. **Use `--chrome-top-static-h` for page padding and `--chrome-top-h`
+    for fixed/sticky tops; never re-add the parts.**
+
+39. **Dev server cache corruption during the session** (not a code defect): two `next dev` processes
+    briefly co-existed, leaving `.next` corrupted and every route 500ing with *"Jest worker
+    encountered N child process exceptions"*. Repaired by the documented sequence — stop the server,
+    delete `.next`, restart. Recorded because the symptom looks exactly like a code failure and is
+    not one.
+
+40. **Results opened on an empty screen — changed for EVERY customer, at the owner's direction.**
+    *"Default landing on results tab in admin is empty which is initially confusing as a user…
+    maybe make that the default in production as well."* The page opened on `pending + submitted`,
+    a scorekeeper's worklist. That reads well mid-game-day and badly at every other moment: land on
+    a division whose games are all played — the morning after, a finished pool, or the demo, where
+    every U11 pool game is complete — and it says **"No games found."** on a tournament with fifteen
+    games in it. Untrue, and it arrives before anyone has learned a status filter exists.
+    **Now opens on all three buckets.** Costs an organizer nothing — the chips sit above with live
+    counts, so narrowing to "needs a score" is one click AND that click teaches the control, whereas
+    an empty screen teaches nothing. **Existing organizers are unaffected:** the choice is remembered
+    per tournament in the browser, so only a first visit to an unfiltered tournament changes.
+    **Plus: the empty state is no longer a dead end.** Filter everything out and it now says
+    *"6 games here — all hidden by the status filters above"* with a **Show all games** button; pick
+    a stage with nothing in it and it says how many games are in the other stage and offers to
+    switch. Verified live: lands with 10 rows and scores showing; forcing the empty state produces
+    the message and the button, and pressing it restores the list.
+    ⚠ **This is a production behaviour change on a shared admin screen, not a sandbox-only tweak.**
+
+41. **`/simplify` + `/review` (2026-08-04) — the review caught the redesign telling the same lie in
+    a new place, twice per cycle, for ever.**
+
+    **`/simplify` (4 lenses): 10 applied, 3 skipped.** Notably: the bracket change had
+    **de-parallelised** the tournament layout's two queries (one round-trip became two on the layout
+    wrapping every public tournament page) → back to `Promise.all`; the live-beat poll and 1s tick
+    now pause on a hidden tab; ring-retry timers got a ref + cleanup; `minuteOfNextRun` defers to
+    `minuteScoreReached`; `formatSince` collapsed into `formatResetCountdown(ms, padMinutes)`;
+    `ALL_RESULT_STATUSES` extracted; the five `!inSandbox` guards grouped; **`setTournamentNav` went
+    from EIGHT positional args to an options object** (it had grown twice, and most params share
+    types — a transposition would compile and fail silently); `poolKeyFor` exported and reused; the
+    sweep now imports the app's real `isGameLive` (needed `lib/game-status.ts` to use an explicit
+    `.ts` import — the very reason the older probe hand-mirrored the rule).
+    *Skipped:* the pill's pulsing dot "duplicating" `.live-dot` (that glyph is the RED live marker;
+    this is a green/amber freshness signal — reuse would misstate state); the row→metrics mapper
+    shared by the two demo scripts (needs a home belonging to neither); refactoring the older probe's
+    copied liveness rule (now unblocked, but the wrong moment mid-QA).
+
+    **`/review` — high-risk tier, 4 lenses. Two HIGH findings, both real, both mine, both fixed:**
+    - ⚠ **"Just scored" fired where nothing scored.** It keyed on "the score string changed", so the
+      semifinal→final handover (14–6 → 0–0) and every replay rollover (9–7 → 0–0) announced
+      ***"There it is — now 0–0."*** **The exact class of false claim this redesign exists to
+      remove.** A run now means *the same two teams, still playing, with more runs on the board*,
+      plus a silent re-baseline on returning from a hidden tab. Verified over a full cycle:
+      **0 celebrations at 0–0, 32 genuine runs still announced**, both transitions silent.
+    - ⚠ **The "next run in about m:ss" countdown promised a run that never lands.** The closing two
+      minutes of every cycle predict minute 120 — but the Final is deliberately never completed, so
+      the countdown hit zero and the tournament reset to 0–0 instead. Suppressed at the boundary;
+      the banner's "Replays in mm:ss" already tells that truth.
+    - **Regression caught by the blast-radius lens:** the admin tournament PREVIEW keeps its hero
+      below 900px (the live page hides it), so `.page` and `.hero` both reserved the chrome — a
+      **pre-existing double-pad my token change widened by 45px**. Zeroing the hero's padding under
+      900px fixes both. ⚠ **The override had to sit AFTER the base rule** — a media query adds no
+      specificity, so file order decides. Measured 174px → 0px at 390 and 860.
+    - **Security/tenancy: clean.** The new public live-beat route touches no database and cannot be
+      steered by its query param; `admin: true` on divisions was pre-existing and still org-scoped
+      (only a boolean and an enum reach the browser); the Playoffs tab and the bracket page enforce
+      the same predicate, so seeding cannot leak.
+    - ⬜ **Confirmed real, pre-existing, NOT fixed:** a playoff-only tournament still cannot show its
+      bracket (the page hides itself; the tab matches it, so nothing dead-ends), and the arrival
+      heartbeat can move backwards if a manual reconcile races the cron (observability only).
+
+    ⚠ **`check:layout` could NOT be completed.** Another agent's shared-stylesheet edits widened it
+    to all 28 coach screens and it exhausted the dev server's heap mid-run. **None of those 28 is a
+    surface this work touches.** These surfaces were verified by direct rendered measurement instead.
+
+42. **✅ CLOSED — the bracket-only gap, plus a second miss it exposed in my own gate (2026-08-04).**
+    Two tournaments could not show a bracket they plainly had, for two different reasons:
+    - **Bracket-only events.** The playoffs page inherited `isPublicPageEnabled(…, 'standings')`,
+      which force-returns false for that format — conflating *"the organizer hid Standings"* (a
+      privacy choice that SHOULD take the bracket with it) with *"this format has no round robin"*
+      (where the bracket is the entire tournament). So the one format most defined by having a
+      bracket was the only one that could never show it. New `isPublicBracketVisible()` separates
+      the two; a bracket-only organizer can still hide it, since Standings is their only lever.
+      **The page and the tab now read the SAME predicate**, so the anti-dead-end invariant holds by
+      construction rather than by two rules agreeing.
+    - ⚠ **`visibleTournamentTabs` dropped Playoffs whenever Standings was absent** — it `continue`d
+      past a hidden tab before reaching the insert. Bracket-only events strip Standings from the
+      nav by definition, so the tab would still have been missing even after the fix above.
+    - ⚠ **And my own structural gate was wrong.** `teamsQualifying >= 2` looked reasonable but that
+      field is optional in real data: **a live customer tournament with twenty-nine playoff games
+      already built** carries `{type:'single', crossover:'standard', hasThirdPlace:false}` and no
+      count, so it was silently denied the tab. Now the test is presence of a playoff config, not
+      its shape. *Found only because a browser check disagreed with an assumption.*
+    Pinned by `tests/unit/public-bracket-visibility.test.ts` (8 tests). Verified live on all three
+    shapes — bracket-only, round-robin-with-playoffs, and the real customer — with tab and page
+    agreeing in every case. `lib/public-pages.ts` + `lib/tournament-phase.ts` moved to explicit
+    `.ts` relative imports so these visibility rules are unit-testable at all (the third time today
+    that extension blocked verification). Help guide updated with the bracket-only exception.
+
 **⬜ OPEN QUESTION FOR THE OWNER (raised 2026-08-03):** what should the door do when the visitor is
 ALREADY SIGNED IN? Today it refuses to replace their session (Build note 7), which costs them the
 operator half. Options put to the owner: (a) ask once, with a plain warning — the recommendation,

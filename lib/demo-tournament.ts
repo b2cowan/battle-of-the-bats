@@ -176,6 +176,32 @@ export function deterministicScore(
 }
 
 /**
+ * The final score of a BRACKET game — the one the visitor actually watches tick.
+ *
+ * Same rule as `deterministicScore`, scaled up, and the scaling is the whole point. A semifinal
+ * ending 7–3 is ten runs spread across eighty-eight minutes, so the visible score steps about nine
+ * times: a mean gap near ten minutes and a worst gap of thirteen. The plan's definition of done is
+ * that a visitor sees the score move within two minutes, and measured against the real clock that
+ * was met roughly one time in five — a prospect watches, nothing happens, and they leave.
+ *
+ * Doubling the runs roughly halves every gap. 14–6 and 10–8 are ordinary youth-ball scores, so
+ * nothing about the demo reads as staged.
+ *
+ * ⚠ Deliberately NOT applied to pool play. Standings, run differential and therefore the bracket's
+ * seeding are computed from pool games alone, so leaving them at their original scale means the
+ * seeding this changes is provably none of it — the health probe's "standings order matches the
+ * canonical seeding" check proves that on every run. It also keeps the round robin's scores looking
+ * like a round robin rather than every game being a slugfest.
+ */
+export function deterministicBracketScore(
+  homeStrength: number,
+  awayStrength: number,
+): { homeScore: number; awayScore: number } {
+  const base = deterministicScore(homeStrength, awayStrength);
+  return { homeScore: base.homeScore * 2, awayScore: base.awayScore * 2 };
+}
+
+/**
  * A partial score `progress` (0…1) of the way to its final.
  *
  * Runs only ever go up, and the leader is never behind — a live demo that showed a score
@@ -305,6 +331,36 @@ function fixedClock(anchor: Date, dayOffset: number, hour: number): { date: stri
 }
 
 /**
+ * How far past the cycle's start the "Up Next" filler game sits.
+ *
+ * Must exceed the 120-minute cycle, or the game slips into the past before the replay is over and
+ * the dashboard's "still to come today" bucket empties out. 150 minutes clears it by half an hour.
+ */
+const UP_NEXT_MINUTES_AFTER_CYCLE_START = 150;
+
+/**
+ * When the "Up Next" filler game is played.
+ *
+ * The dashboard's Up Next bucket means "on the event date, and still ahead of us", so this game has
+ * to satisfy BOTH for the whole replay — and the second condition is where the original placement
+ * broke. It sat at cycle start + 242 minutes, four hours out, which for the replays that begin late
+ * in the evening lands after midnight, on the day AFTER the event date. Measured across a full day
+ * of cycle starts: the card emptied for the last stretch of the 8pm and 10pm replays, roughly an
+ * hour a day, on the one screen the demo uses to argue that running a tournament is work.
+ *
+ * A replay that starts at 10pm cannot have a game that is both later today and more than two hours
+ * away — the day runs out first. So the late case is clamped to the last minutes of the event date
+ * instead, which keeps the card populated for all but the closing moment of that one replay. The
+ * demo's games already float with the clock (a 10pm replay is a tournament playing at midnight), so
+ * a late game there reads no stranger than the rest of it.
+ */
+function upNextClock(cycleStart: Date, eventDate: string): { date: string; time: string } {
+  const natural = shiftedClock(cycleStart, UP_NEXT_MINUTES_AFTER_CYCLE_START);
+  if (natural.date === eventDate) return natural;
+  return { date: eventDate, time: '23:58:00' };
+}
+
+/**
  * What should the demo tournament look like at this instant?
  *
  * Pure: no I/O, no randomness, no hidden state. Given the same `now` it always returns the same
@@ -357,7 +413,7 @@ export function resolveDemoState(now: Date = new Date()): DemoState {
       const isUpNextToday = !division.hasBracket && index === 5;
 
       if (isUpNextToday) {
-        const clock = shiftedClock(cycleStart, FINAL_STARTS_AT_MINUTE + 150);
+        const clock = upNextClock(cycleStart, eventDate);
         games.push({ key, ...clock, status: 'scheduled', homeScore: null, awayScore: null });
         return;
       }
@@ -378,9 +434,9 @@ export function resolveDemoState(now: Date = new Date()): DemoState {
   const byStrength = [...bracketDivision.teams].sort((a, b) => b.strength - a.strength);
   const [seed1, seed2, seed3, seed4] = byStrength;
 
-  const sf1Final = deterministicScore(seed1.strength, seed4.strength);
-  const sf2Final = deterministicScore(seed2.strength, seed3.strength);
-  const finFinal = deterministicScore(seed1.strength, seed2.strength);
+  const sf1Final = deterministicBracketScore(seed1.strength, seed4.strength);
+  const sf2Final = deterministicBracketScore(seed2.strength, seed3.strength);
+  const finFinal = deterministicBracketScore(seed1.strength, seed2.strength);
 
   // SF2 was played earlier and is already in the books — it is what makes the bracket look like a
   // morning already in progress rather than one that has not started.
@@ -414,6 +470,166 @@ export function resolveDemoState(now: Date = new Date()): DemoState {
   });
 
   return { phase, cycleStart, minuteInCycle, eventDate, finalIsSeeded, games };
+}
+
+// ── What the sandbox chrome shows about the live game ────────────────────────────────────────
+
+/**
+ * The live beat: what is happening in the demo right now, and — the part that matters — WHEN the
+ * score last moved.
+ *
+ * The demo's headline claim is "scores update on their own", but measured against the real clock
+ * the visible score changes about nine times in the semifinal's eighty-eight minutes: a mean gap
+ * near ten minutes and a worst gap of thirteen. A prospect who watches for ninety seconds usually
+ * sees nothing, concludes the demo is a screenshot, and leaves. Making the score race would be a
+ * lie; showing how fresh it is, is not. "Changed 1:12 ago" is a claim that keeps proving itself
+ * every second, between the changes.
+ *
+ * Computed purely from the clock, exactly like every other demo fact — so the API route that
+ * serves it touches no database at all.
+ */
+export interface DemoLiveBeat {
+  /** `live` — a game is in progress. `between` — the four-minute seam while the bracket seeds. */
+  kind: 'live' | 'between';
+  /** Fan-language round name, e.g. "Semifinal". */
+  label: string;
+  homeName: string;
+  awayName: string;
+  homeScore: number;
+  awayScore: number;
+  /**
+   * Epoch ms of the most recent moment either score stepped up — or first pitch, while the game
+   * is still scoreless. Never null: "0:00 since the first pitch" is a truthful freshness reading.
+   */
+  lastChangedAtMs: number;
+  /**
+   * Epoch ms of the next moment the score will step up. Null only when this game has no runs left
+   * to score before its phase ends.
+   *
+   * This exists because a demo that says "watch the score change by itself" and then shows a static
+   * number for the next five minutes has told a lie the visitor can catch. Owner, second QA pass:
+   * *"when I clicked watch the score change, the score did not change, it stayed 3-8."* It had in
+   * fact moved five minutes later — but the promise was made in the present tense.
+   *
+   * We can be exact about this, which is unusual and worth using: the demo's entire state is a pure
+   * function of the clock, so the next run is not a guess. Telling a stranger "the next one lands in
+   * about ninety seconds" turns dead waiting into something to watch for.
+   */
+  nextChangeAtMs: number | null;
+  /** `between` only: epoch ms of the Final's first pitch, so the seam can count down to it. */
+  nextStartsAtMs: number | null;
+}
+
+/**
+ * The minute at which a scoreboard reading of `value` first appeared, given a game that runs from
+ * `startMinute` for `spanMinutes` and finishes on `finalValue`.
+ *
+ * `partialScore` floors `finalValue × progress`, so the reading steps up to `value` at the first
+ * whole minute where that product reaches it — the inverse being `ceil(span × value / final)`.
+ * A scoreless reading has never stepped, so its answer is first pitch.
+ */
+function minuteScoreReached(
+  value: number,
+  finalValue: number,
+  startMinute: number,
+  spanMinutes: number,
+): number {
+  if (value <= 0 || finalValue <= 0) return startMinute;
+  return startMinute + Math.ceil((spanMinutes * value) / finalValue);
+}
+
+/**
+ * The minute at which this side's score will next step up, or null when it has none left to score.
+ *
+ * The same question as `minuteScoreReached`, asked one run ahead — so it defers to that function
+ * rather than restating the rounding rule, which would then have to be corrected in two places.
+ */
+function minuteOfNextRun(
+  value: number,
+  finalValue: number,
+  startMinute: number,
+  spanMinutes: number,
+): number | null {
+  if (value >= finalValue) return null;
+  return minuteScoreReached(value + 1, finalValue, startMinute, spanMinutes);
+}
+
+/** What the sandbox chrome should say about the game on the field right now. */
+export function resolveDemoLiveBeat(now: Date = new Date()): DemoLiveBeat {
+  const state = resolveDemoState(now);
+  const cycleStartMs = state.cycleStart.getTime();
+  const atMinute = (minute: number) => cycleStartMs + minute * 60_000;
+
+  const [seed1, seed2, , seed4] = demoBracketSeeds();
+
+  if (state.phase === 'bracket-seeded') {
+    // Nothing is on the field, and that is the single most interesting moment in the demo: the
+    // semifinal has just ended and the bracket is filling itself in. The chrome says so rather
+    // than going quiet, which is what used to make the tour's first step look broken.
+    const sf1 = deterministicBracketScore(seed1.strength, seed4.strength);
+    return {
+      kind: 'between',
+      label: 'Semifinal just ended',
+      homeName: seed1.name,
+      awayName: seed4.name,
+      homeScore: sf1.homeScore,
+      awayScore: sf1.awayScore,
+      lastChangedAtMs: atMinute(SF1_ENDS_AT_MINUTE),
+      // The next thing that moves in the seam is the final's first pitch, not a run.
+      nextChangeAtMs: atMinute(FINAL_STARTS_AT_MINUTE),
+      nextStartsAtMs: atMinute(FINAL_STARTS_AT_MINUTE),
+    };
+  }
+
+  const isSemifinal = state.phase === 'semifinal-live';
+  const opponent = isSemifinal ? seed4 : seed2;
+  const startMinute = isSemifinal ? 0 : FINAL_STARTS_AT_MINUTE;
+  const spanMinutes = isSemifinal
+    ? SF1_ENDS_AT_MINUTE
+    : DEMO_CYCLE_MINUTES - FINAL_STARTS_AT_MINUTE;
+
+  const final = deterministicBracketScore(seed1.strength, opponent.strength);
+  const shown = partialScore(final, (state.minuteInCycle - startMinute) / spanMinutes);
+
+  // Whichever side stepped most recently is when the scoreboard last changed.
+  const lastChangedMinute = Math.max(
+    minuteScoreReached(shown.homeScore, final.homeScore, startMinute, spanMinutes),
+    minuteScoreReached(shown.awayScore, final.awayScore, startMinute, spanMinutes),
+  );
+
+  // Whichever side scores SOONEST is the next thing the visitor will see move.
+  const nextRunMinutes = [
+    minuteOfNextRun(shown.homeScore, final.homeScore, startMinute, spanMinutes),
+    minuteOfNextRun(shown.awayScore, final.awayScore, startMinute, spanMinutes),
+  ].filter((m): m is number => m !== null);
+  const nextRunMinute = nextRunMinutes.length > 0 ? Math.min(...nextRunMinutes) : null;
+
+  /**
+   * A run predicted AT or PAST the cycle boundary never actually lands.
+   *
+   * The Final's last runs are scheduled for minute 120 by the arithmetic — but the demo never
+   * completes the Final (see the header: a landing state of "this tournament is over" sells
+   * nothing), so at minute 120 the whole thing replays instead. Left unguarded, the chrome spent
+   * the closing two minutes of every cycle counting down to a run that resolves as the tournament
+   * resetting to 0–0 — which is precisely the "watch the score change" promise-then-don't that this
+   * countdown was added to eliminate. Null here means the chrome simply says nothing; the banner's
+   * own "Replays in mm:ss" is already telling the truth about what happens next.
+   */
+  const nextChangeAtMs = nextRunMinute !== null && nextRunMinute < DEMO_CYCLE_MINUTES
+    ? atMinute(nextRunMinute)
+    : null;
+
+  return {
+    kind: 'live',
+    label: isSemifinal ? 'Semifinal' : 'Championship',
+    homeName: seed1.name,
+    awayName: opponent.name,
+    homeScore: shown.homeScore,
+    awayScore: shown.awayScore,
+    lastChangedAtMs: atMinute(lastChangedMinute),
+    nextChangeAtMs,
+    nextStartsAtMs: null,
+  };
 }
 
 /** The seeds, strongest first — the order the bracket is built from. */

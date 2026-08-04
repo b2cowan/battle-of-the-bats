@@ -59,6 +59,10 @@ const RESULTS_EXPORT_COLS: ExportColumnDef[] = [
 
 type ResultsFilter = 'pending' | 'submitted' | 'completed';
 
+/** Every status bucket — the opening view, and what "Show all games" restores. Named once so the
+ *  two can never drift, and so adding a fourth bucket is a single edit. */
+const ALL_RESULT_STATUSES: ResultsFilter[] = ['pending', 'submitted', 'completed'];
+
 export default function AdminResultsPage() {
   const { currentTournament, loading: tournamentLoading } = useTournament();
   const { currentOrg } = useOrg();
@@ -73,7 +77,24 @@ export default function AdminResultsPage() {
   const [loading, setLoading] = useState(true);
 
   const [filterGroup, setFilterGroup] = useState('');
-  const [selectedStatuses, setSelectedStatuses] = useState<ResultsFilter[]>(['pending', 'submitted']);
+  /**
+   * All three buckets, not just the outstanding work — owner ruling 2026-08-04.
+   *
+   * This used to open on `['pending', 'submitted']`, a scorekeeper's worklist: only games still
+   * needing something. It reads beautifully mid-game-day and terribly at every other moment. Land
+   * on a division whose games are all played — the morning after, a finished pool, or the demo,
+   * where every U11 pool game is complete — and the screen says **"No games found."** on a
+   * tournament with fifteen games in it. That sentence is not just unhelpful, it is untrue, and it
+   * arrives before the visitor has learned that a status filter exists.
+   *
+   * Showing everything costs an organizer nothing: the chips sit directly above with live counts,
+   * so narrowing to "needs a score" is one click AND that click teaches the control. The reverse —
+   * discovering that an empty screen is a filter, not an empty tournament — teaches nothing.
+   *
+   * Existing organizers are unaffected: their choice is remembered per tournament (below), so this
+   * only changes the first visit to a tournament they have not filtered before.
+   */
+  const [selectedStatuses, setSelectedStatuses] = useState<ResultsFilter[]>(ALL_RESULT_STATUSES);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'pool' | 'playoff'>('pool');
   const [groupMode, setGroupMode] = useState<'flat' | 'pools'>('pools');
@@ -207,6 +228,12 @@ export default function AdminResultsPage() {
     setSelectedStatuses(prev => (prev.includes(key) ? prev.filter(x => x !== key) : [...prev, key]));
   }, []);
 
+  /** The empty state's way out: drop every narrowing the organizer may have applied. */
+  const showEverything = useCallback(() => {
+    setSelectedStatuses(ALL_RESULT_STATUSES);
+    setSearchQuery('');
+  }, []);
+
   function getTeamName(id: string) {
     return teams.find(t => t.id === id)?.name ?? 'TBD';
   }
@@ -289,6 +316,17 @@ export default function AdminResultsPage() {
 
     return matchesGroup && matchesStatus && matchesSearch && matchesView;
   });
+
+  // Why is the list empty? "No games found." is the wrong sentence on a tournament that has games —
+  // it reads as "there are none" when it means "your filters hid them", and it lands before anyone
+  // has noticed the filters exist. These three counts turn a dead end into an explanation with a
+  // one-click fix.
+  const gamesInDivision = games.filter(g => g.divisionId === filterGroup);
+  // `divisionGames` is already this division AND this stage — so when the visible list is empty and
+  // that count is not, status or search is what hid them.
+  /** This division's games that sit in the other stage (pool ↔ playoffs). */
+  const inOtherStage = gamesInDivision.length - divisionGames.length;
+  const inOtherDivisions = games.length - gamesInDivision.length;
 
   // ── Export handlers ────────────────────────────────────────────────────
   function buildResultsRows() {
@@ -707,7 +745,40 @@ export default function AdminResultsPage() {
       ) : filtered.length === 0 && games.length > 0 ? (
         <div className="empty-state">
           <Trophy size={40} style={{ opacity: 0.2 }} />
-          <p>{searchQuery ? 'No games matching search.' : 'No games found.'}</p>
+          {divisionGames.length > 0 ? (
+            <>
+              <p>
+                {searchQuery
+                  ? `No games match “${searchQuery}”.`
+                  : `${divisionGames.length} game${divisionGames.length === 1 ? '' : 's'} here — all hidden by the status filters above.`}
+              </p>
+              <button type="button" className="btn btn-outline btn-sm" onClick={showEverything}>
+                Show all games
+              </button>
+            </>
+          ) : inOtherStage > 0 ? (
+            <>
+              <p>
+                No {viewMode === 'pool' ? 'pool' : 'playoff'} games in this division — its{' '}
+                {inOtherStage} game{inOtherStage === 1 ? ' is' : 's are'} in the{' '}
+                {viewMode === 'pool' ? 'playoffs' : 'pool round'}.
+              </p>
+              <button
+                type="button"
+                className="btn btn-outline btn-sm"
+                onClick={() => setViewMode(viewMode === 'pool' ? 'playoff' : 'pool')}
+              >
+                Show {viewMode === 'pool' ? 'playoff' : 'pool'} games
+              </button>
+            </>
+          ) : (
+            <p>
+              No games in this division
+              {inOtherDivisions > 0
+                ? ` — ${inOtherDivisions} game${inOtherDivisions === 1 ? '' : 's'} in the others.`
+                : '.'}
+            </p>
+          )}
         </div>
       ) : games.length > 0 ? (
         <div className={s.compactList}>

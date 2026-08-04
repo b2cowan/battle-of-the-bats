@@ -34,6 +34,7 @@ import BrandLockup from '@/components/shared/BrandLockup';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import { useRoleSummary } from '@/lib/use-role-summary';
 import { useOrg } from '@/lib/org-context';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { getNotificationSettingsHref } from '@/lib/billing-urls';
 import styles from './AdminTopStrip.module.css';
 
@@ -45,6 +46,11 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
   const { currentOrg } = useOrg();
   // The admin shell only renders signed-in — the hook may run unconditionally.
   const roleSummary = useRoleSummary(true);
+  /** "See it live" demo: the account door leads out of the sandbox into the real platform, and a
+   *  prospect who wanders out of a demo has simply been lost. Hidden rather than disabled — the
+   *  binding sandbox rule is hide the entry point, never let it dead-end. The wordmark beside it
+   *  goes inert for the same reason (BrandLockup). False for every real org. */
+  const inSandbox = useIsSandbox();
 
   return (
     <header className={styles.strip}>
@@ -64,9 +70,11 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
             panelPlacement="topStrip"
           />
         )}
-        <Link href="/account" className={styles.iconDoor} aria-label="Account">
-          <User size={17} strokeWidth={1.8} />
-        </Link>
+        {!inSandbox && (
+          <Link href="/account" className={styles.iconDoor} aria-label="Account">
+            <User size={17} strokeWidth={1.8} />
+          </Link>
+        )}
         <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} />
       </div>
     </header>

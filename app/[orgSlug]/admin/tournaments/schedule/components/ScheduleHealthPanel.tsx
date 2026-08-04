@@ -68,10 +68,17 @@ export default function ScheduleHealthPanel({
   onRestoreDefaultRules,
   onSandboxReset,
 }: ScheduleHealthPanelProps) {
-  const [expanded, setExpanded] = useState(defaultOpen);
-  const [editing, setEditing] = useState(false);
   // "See it live" sandbox — false for every real org, so nothing below changes for a customer.
   const isSandbox = useIsSandbox();
+  /**
+   * The schedule page collapses this panel by default, which is right for an organizer who opens
+   * the screen twenty times a day — and wrong for the demo, where this panel IS the destination.
+   * The tour's "try to break the schedule" step used to land on a 53px strip reading "Show", with
+   * the drag invitation the whole beat depends on hidden behind a click nobody knew to make.
+   * Measured 2026-08-03. In a demo org the panel arrives open; a real customer is untouched.
+   */
+  const [expanded, setExpanded] = useState(isSandbox || defaultOpen);
+  const [editing, setEditing] = useState(false);
   const showRulesEditor = canEditRules && !!rules && !!onRuleChange;
   const conflictTotal = metrics.venueConflictCount + metrics.bufferConflictCount;
   const scoreClass = metrics.healthTone === 'good'
@@ -84,7 +91,7 @@ export default function ScheduleHealthPanel({
     <details
       className={styles.healthPanel}
       open={expanded}
-      // The beat the sandbox's "Break the schedule" tour chip points at. Inert everywhere else.
+      // The beat the sandbox's "try to break the schedule" step rings. Inert everywhere else.
       data-sandbox-tour="schedule-health"
       onToggle={event => setExpanded(event.currentTarget.open)}
     >

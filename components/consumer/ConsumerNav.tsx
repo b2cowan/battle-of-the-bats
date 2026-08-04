@@ -28,6 +28,7 @@ import flip from '@/components/shared/FlipPill.module.css';
 import WorkspacesPill from '@/components/shared/WorkspacesPill';
 import type { WorkspaceDoor } from '@/lib/user-contexts';
 import { isWarmSkinPath, isConsumerShellPath, showsTournamentChrome, showsOrgPublicChrome } from '@/lib/consumer-routes';
+import { isDemoOrgSlug } from '@/lib/demo-org';
 import StartMenu from './StartMenu';
 import styles from './ConsumerShell.module.css';
 import warm from './warmTheme.module.css';
@@ -99,6 +100,22 @@ export default function ConsumerNav({
   const pathname = usePathname();
   const params = useParams();
   const isActive = (href: string) => underPrefix(pathname, href);
+
+  /**
+   * Is the visitor inside the "See it live" demo?
+   *
+   * Read from the URL rather than the sandbox context, because this bar is mounted by the ROOT
+   * layout — above the org layout that provides that context — so the hook every other component
+   * uses is unavailable here. The org allow-list is the same single source of truth either way,
+   * and deriving it from the path keeps it synchronous: no flash of a door that then disappears.
+   *
+   * Everything this bar offers — the wordmark, Discover, Chat, Account, Sign In, and all four
+   * bottom tabs — leaves the sandbox for the real platform. A prospect who wandered out of a demo
+   * they were told was a demo has simply been lost, and the honest sandbox rule (hide the entry
+   * point, never dead-end it) says to close those doors rather than let them dead-end.
+   * The ONE door that stays is the operator flip, because that is the tour's own beat.
+   */
+  const inSandbox = isDemoOrgSlug(pathname?.split('/')[1]);
 
   // Phase 5 tournament variant self-gates to REAL public tournament routes, needing
   // BOTH signals: showsTournamentChrome excludes org pages + every operator shell —
@@ -230,6 +247,8 @@ export default function ConsumerNav({
   // BEFORE the tournament branch so none of the strip's door/flip machinery is built for a
   // surface that never renders it — the org navbar already owns the operator door here.
   if (onOrgPublicRoute && !onTournamentRoute) {
+    // Same rule as the tournament bar below: in the demo every one of these tabs is an exit.
+    if (inSandbox) return null;
     return (
       <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">
         {bottomTabs}
@@ -256,11 +275,21 @@ export default function ConsumerNav({
     );
   });
   // The one wordmark block — shared by the consumer top bar and the tournament strip.
-  const wordmark = (
-    <Link href="/discover" className={styles.wordmark} aria-label="FieldLogicHQ home">
+  const wordmarkText = (
+    <>
       <span className={styles.wm1}>FIELD</span>
       <span className={styles.wm2}>LOGIC</span>
       <span className={styles.wm3}>HQ</span>
+    </>
+  );
+  // In the demo the mark stays — whose product this is, is the whole point — but it stops being a
+  // door out. Rendered as plain text rather than a disabled link: a control that looks pressable
+  // and isn't is worse than one that never invited the press.
+  const wordmark = inSandbox ? (
+    <span className={styles.wordmark}>{wordmarkText}</span>
+  ) : (
+    <Link href="/discover" className={styles.wordmark} aria-label="FieldLogicHQ home">
+      {wordmarkText}
     </Link>
   );
   // The nav skin decision, shared by the pill popover and the bar classes below (pure,
@@ -361,38 +390,53 @@ export default function ConsumerNav({
         <header className={`${styles.topbar} ${styles.topbarStrip}`}>
           <div className={styles.topLeft}>
             {wordmark}
-            <nav className={styles.topNav} aria-label="FieldLogicHQ">
-              <Link href="/discover" className={styles.topLink}>Discover</Link>
-            </nav>
+            {!inSandbox && (
+              <nav className={styles.topNav} aria-label="FieldLogicHQ">
+                <Link href="/discover" className={styles.topLink}>Discover</Link>
+              </nav>
+            )}
           </div>
           <div className={styles.topUtil}>
-            {/* Membership-gated chat door — unread>0 also opens it, so a fan added to a
-                room AFTER the one-shot role-summary fetch never has live messages with
-                no visible way in (the unread hook is realtime; hasChat is not). */}
-            {signedIn && (roleSummary?.hasChat || chatUnread > 0) && (
-              <Link
-                href="/chat"
-                className={styles.stripIcon}
-                aria-label={chatUnread > 0 ? `Chat — ${cap(chatUnread)} unread` : 'Chat'}
-              >
-                <MessageCircle size={17} strokeWidth={1.8} />
-                {chatUnread > 0 && (
-                  <span className={`${styles.topBadge} ${styles.stripBadge}`} aria-hidden>{cap(chatUnread)}</span>
+            {/* Everything in this cluster is a door OUT of the sandbox, so the demo closes the
+                whole group at once rather than gating each item — one decision, and a new door
+                added here inherits it instead of having to remember. */}
+            {!inSandbox && (
+              <>
+                {/* Membership-gated chat door — unread>0 also opens it, so a fan added to a
+                    room AFTER the one-shot role-summary fetch never has live messages with
+                    no visible way in (the unread hook is realtime; hasChat is not). */}
+                {signedIn && (roleSummary?.hasChat || chatUnread > 0) && (
+                  <Link
+                    href="/chat"
+                    className={styles.stripIcon}
+                    aria-label={chatUnread > 0 ? `Chat — ${cap(chatUnread)} unread` : 'Chat'}
+                  >
+                    <MessageCircle size={17} strokeWidth={1.8} />
+                    {chatUnread > 0 && (
+                      <span className={`${styles.topBadge} ${styles.stripBadge}`} aria-hidden>{cap(chatUnread)}</span>
+                    )}
+                  </Link>
                 )}
-              </Link>
+                {signedIn && (
+                  <Link href="/account" className={styles.stripIcon} aria-label="Account">
+                    <User size={17} strokeWidth={1.8} />
+                  </Link>
+                )}
+                {!signedIn && <Link href="/auth/login" className={styles.utilCta}>Sign In</Link>}
+              </>
             )}
-            {signedIn && (
-              <Link href="/account" className={styles.stripIcon} aria-label="Account">
-                <User size={17} strokeWidth={1.8} />
-              </Link>
-            )}
-            {!signedIn && <Link href="/auth/login" className={styles.utilCta}>Sign In</Link>}
+            {/* The operator flip stays. It is the tour's third beat and the demo's whole point. */}
             {doorSlot}
           </div>
         </header>
-        <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">
-          {bottomTabs}
-        </nav>
+        {/* Every tab in this bar leaves the sandbox, so the demo does without it — the tournament's
+            own tab row carries navigation on a phone, and `--bottom-nav-height` drops to 0 so the
+            page reclaims the space instead of ending in a blank strip. */}
+        {!inSandbox && (
+          <nav className={`${styles.bottomNav} ${styles.bottomNavTournament}`} aria-label="Primary">
+            {bottomTabs}
+          </nav>
+        )}
       </>
     );
   }

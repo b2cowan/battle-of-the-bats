@@ -20,7 +20,7 @@ import { usePathname, useParams } from 'next/navigation';
 import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
 import type { PublicPageKey } from '@/lib/public-pages';
-import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
+import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
 import DesktopMyTeamRailCard from '@/components/public/DesktopMyTeamRailCard';
 import styles from './TournamentSideRail.module.css';
 
@@ -56,7 +56,11 @@ export default function TournamentSideRail({
   const resolvedHeading = heading !== undefined ? heading : (ctx.tournamentName || ctx.orgName);
   const resolvedColorMode = colorMode ?? ctx.tournamentColorMode ?? 'dark';
   const resolvedHidden = hiddenPages ?? ctx.tournamentHiddenPages;
-  const items = TOURNAMENT_PAGE_TABS.filter(i => !resolvedHidden.includes(i.key));
+  // The admin preview passes its own hidden-page list but has no bracket signal to pass, so it
+  // falls back to the context — which the preview never populates, leaving the preview without a
+  // Playoffs tab. That is correct: the preview's own rail links inside `/preview/…`, where there
+  // is no bracket route to point at.
+  const items = visibleTournamentTabs(resolvedHidden, !basePath && ctx.tournamentHasBracket);
 
   return (
     <aside

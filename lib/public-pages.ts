@@ -1,5 +1,9 @@
-import type { Tournament } from '@/lib/types';
-import { isPlayoffOnly } from '@/lib/tournament-phase';
+// Relative, with the explicit `.ts` extension (repo convention, `allowImportingTsExtensions`), so
+// these visibility rules can be imported by a plain Node unit test as well as by the app. They
+// decide what the public can see, which is exactly the kind of rule that should be pinned by tests
+// rather than only by rendering a page.
+import type { Tournament } from './types.ts';
+import { isPlayoffOnly } from './tournament-phase.ts';
 
 export const PUBLIC_PAGE_OPTIONS = [
   { key: 'news', label: 'News' },
@@ -24,6 +28,34 @@ export function isPublicPageEnabled(tournament: Pick<Tournament, 'publicHiddenPa
   // Bracket-only tournaments have no round-robin standings.
   if (key === 'standings' && isPlayoffOnly(tournament)) return false;
   return !normalizeHiddenPublicPages(tournament?.publicHiddenPages).includes(key);
+}
+
+/**
+ * Should the public playoff bracket be visible?
+ *
+ * The bracket has no hideable page key of its own — it borrows the Standings page's visibility,
+ * because a bracket gives the seeding away and an organizer who hid Standings must not have it leak
+ * through this URL. That rule is right, but asking `isPublicPageEnabled(…, 'standings')` for the
+ * answer conflated two very different reasons Standings can be unavailable:
+ *
+ *   • **the organizer hid it** — a privacy choice, which should take the bracket with it; and
+ *   • **the format has no round robin** — a bracket-only event, where Standings is meaningless and
+ *     force-hidden above… and the bracket is the ENTIRE tournament.
+ *
+ * So the one format most defined by having a bracket was the only one that could never show it: the
+ * page hid itself, and the nav tab (correctly matching the page, so nothing dead-ends) never
+ * appeared either. Found while adding that tab, 2026-08-04.
+ *
+ * A bracket-only event therefore reads the organizer's RAW choice rather than the derived answer —
+ * hiding Standings there is still respected as "hide the bracket", since it is the only lever they
+ * have over it, but the format alone no longer suppresses it.
+ */
+export function isPublicBracketVisible(
+  tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined,
+): boolean {
+  const hiddenByOrganizer = normalizeHiddenPublicPages(tournament?.publicHiddenPages).includes('standings');
+  if (isPlayoffOnly(tournament)) return !hiddenByOrganizer;
+  return isPublicPageEnabled(tournament, 'standings');
 }
 
 export function visiblePublicPages(tournament: Pick<Tournament, 'publicHiddenPages' | 'settings'> | null | undefined) {

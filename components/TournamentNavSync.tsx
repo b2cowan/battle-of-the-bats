@@ -15,6 +15,7 @@ export default function TournamentNavSync({
   finished = false,
   tournamentId = null,
   fanAlertsEnabled = false,
+  hasPublicBracket = false,
 }: {
   slug: string;
   tournamentName: string;
@@ -27,17 +28,29 @@ export default function TournamentNavSync({
   finished?: boolean;
   tournamentId?: string | null;
   fanAlertsEnabled?: boolean;
+  /** True when the organizer has configured a bracket and Standings is public — adds the
+   *  Playoffs tab to every nav surface. Resolved in the layout; see the note there. */
+  hasPublicBracket?: boolean;
 }) {
   const { setTournamentNav, setTournamentStatus } = useOrgNav();
 
   useEffect(() => {
-    setTournamentNav(slug, tournamentName, colorMode ?? 'dark', hiddenPages, registerCta, tournamentId, fanAlertsEnabled);
+    setTournamentNav({
+      slug,
+      name: tournamentName,
+      colorMode: colorMode ?? 'dark',
+      hiddenPages,
+      registerCta,
+      tournamentId,
+      fanAlertsEnabled,
+      hasBracket: hasPublicBracket,
+    });
     setTournamentStatus(startDate, endDate, status, finished);
     return () => {
-      setTournamentNav(null, null);
+      setTournamentNav(null);
       setTournamentStatus(null, null, null);
     };
-  }, [slug, tournamentName, colorMode, hiddenPages, registerCta, startDate, endDate, status, finished, tournamentId, fanAlertsEnabled, setTournamentNav, setTournamentStatus]);
+  }, [slug, tournamentName, colorMode, hiddenPages, registerCta, startDate, endDate, status, finished, tournamentId, fanAlertsEnabled, hasPublicBracket, setTournamentNav, setTournamentStatus]);
 
   return null;
 }

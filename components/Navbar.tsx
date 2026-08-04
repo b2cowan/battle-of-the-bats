@@ -18,7 +18,7 @@ import { showsOrgPublicChrome } from '@/lib/consumer-routes';
 import { orgSectionCrumb } from '@/lib/org-public-sections';
 import { reportNavClick } from '@/lib/nav-beacon';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
-import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
+import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
 import styles from './Navbar.module.css';
 
 const MARKETING_NAV_LINKS = [
@@ -53,7 +53,7 @@ export default function Navbar() {
   const params   = useParams();
   const orgSlug           = (params?.orgSlug as string) || '';
   const urlTournamentSlug = params?.tournamentSlug as string | undefined;
-  const { logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta } = useOrgNav();
+  const { logoUrl, orgName, orgHomeHref, tournamentSlug, tournamentName, tournamentFinished, tournamentColorMode, tournamentHiddenPages, tournamentHasBracket, tournamentStartDate, tournamentEndDate, tournamentStatus, tournamentRegisterCta } = useOrgNav();
   const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
 
@@ -340,7 +340,7 @@ export default function Navbar() {
         </div>
 
         <div className={styles.links}>
-          {TOURNAMENT_PAGE_TABS.filter(l => !tournamentHiddenPages.includes(l.key)).map(l => {
+          {visibleTournamentTabs(tournamentHiddenPages, tournamentHasBracket).map(l => {
             const href = `/${orgSlug}/${eventSlug}/${l.key}`;
             const isActive = pathname.startsWith(href);
             return (

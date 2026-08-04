@@ -1748,6 +1748,13 @@ tbody tr:hover { background: var(--white-10); }
   :root { --bottom-nav-height: 72px; }
   main { padding-bottom: var(--bottom-nav-height); }
   footer { padding-bottom: calc(var(--bottom-nav-height) + 1rem); }
+
+  /* The "See it live" demo hides that bar on the FAN side, because every one of its tabs — Home,
+     Scores, Chat, Account — walks the visitor out of the sandbox and into the real platform. With
+     no bar there is no space to reserve, and the demo gets 72px of a phone screen back. Scoped to
+     the fan side: the operator half keeps its own admin bar, which handles the sandbox itself.
+     Set only on a demo org, so a real customer's phone layout is byte-identical. */
+  :root[data-sandbox-side='public'] { --bottom-nav-height: 0px; }
 }
 
 @media (max-width: 768px) {

@@ -476,7 +476,10 @@ export default function StandingsContent({ orgSlug, tournamentSlug, isPreview = 
 
   // Playoff day / completed: the bracket is the headline — expanded on top, as shipped.
   const bracketSection = hasPlayoffGames ? (
-    <div className={styles.bracketSection}>
+    // data-sandbox-tour: the beat the "See the bracket fill itself in" step rings in the
+    // "See it live" demo — this is where the unresolved "Winner of SF1" slot resolves into a real
+    // team. An inert attribute; nothing reads it outside a demo org.
+    <div className={styles.bracketSection} data-sandbox-tour="playoff-bracket">
       <div className={styles.bracketSectionHeader}>
         <Trophy size={16} className={styles.bracketSectionIcon} />
         <span className={styles.bracketSectionTitle}>PLAYOFF BRACKET</span>

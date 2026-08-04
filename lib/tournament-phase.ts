@@ -15,8 +15,10 @@
  * edge-case difference.
  */
 
-import type { TournamentFormat } from './types';
-import { tournamentToday } from './timezone';
+// Explicit `.ts` extensions (repo convention) so this module — and everything that depends on it,
+// notably the public-page visibility rules — stays importable from a plain Node test or script.
+import type { TournamentFormat } from './types.ts';
+import { tournamentToday } from './timezone.ts';
 
 export type TournamentPhase = 'draft' | 'open' | 'gameday' | 'completed' | 'archived';
 

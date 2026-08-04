@@ -28,7 +28,7 @@ import { useEffect, useRef } from 'react';
 import { usePathname, useParams } from 'next/navigation';
 import { PanelsTopLeft } from 'lucide-react';
 import { useOrgNav } from '@/components/OrgNavContext';
-import { TOURNAMENT_PAGE_TABS } from '@/lib/tournament-page-tabs';
+import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
 import type { PublicPageKey } from '@/lib/public-pages';
 import styles from './TournamentTopTabs.module.css';
 
@@ -47,13 +47,15 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: Tour
   const params = useParams();
   const orgSlug = (params?.orgSlug as string) || '';
   const tournamentSlug = (params?.tournamentSlug as string) || '';
-  const { tournamentHiddenPages } = useOrgNav();
+  const { tournamentHiddenPages, tournamentHasBracket } = useOrgNav();
   const resolvedHidden = hiddenPages ?? tournamentHiddenPages;
+  // Preview links stay inside `/preview/…`, which has no bracket route — so no Playoffs tab there.
+  const hasBracket = !basePath && tournamentHasBracket;
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const activeRef = useRef<HTMLAnchorElement | null>(null);
   // Stable key for the visible-tab SET — changes only when its contents change (a raw
   // array dep would re-fire on every context update; join is content-stable).
-  const visibleTabsKey = resolvedHidden.join(',');
+  const visibleTabsKey = `${resolvedHidden.join(',')}|${hasBracket}`;
 
   // Keep the current tab in view when the row overflows: centre the active tab in the
   // scroller (only ever scrolls the row horizontally — never the page). Re-runs on route
@@ -73,7 +75,7 @@ export default function TournamentTopTabs({ basePath, hiddenPages, fixed }: Tour
   if (!homeHref) return null;
 
   const overviewActive = pathname === homeHref;
-  const tabs = TOURNAMENT_PAGE_TABS.filter(t => !resolvedHidden.includes(t.key));
+  const tabs = visibleTournamentTabs(resolvedHidden, hasBracket);
 
   return (
     <nav className={`${styles.tabs}${fixed ? ` ${styles.tabsFixed}` : ''}`} aria-label="Tournament pages">

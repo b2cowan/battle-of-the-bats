@@ -10,6 +10,7 @@
  */
 
 import Link from 'next/link';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import styles from './BrandLockup.module.css';
 
 export default function BrandLockup({
@@ -21,8 +22,14 @@ export default function BrandLockup({
   logicClassName?: string;
   hqClassName?: string;
 }) {
-  return (
-    <Link href="/discover" className={styles.lockup} aria-label="FieldLogicHQ Home">
+  // Inside a "See it live" demo the mark stays — whose product this is, is the whole point — but
+  // it stops being a door out to the real platform. Plain text rather than a disabled link: a
+  // control that looks pressable and isn't is worse than one that never invited the press.
+  // False for every real org, and false by default outside a demo shell, so nothing else moves.
+  const inSandbox = useIsSandbox();
+
+  const inner = (
+    <>
       {/* eslint-disable-next-line @next/next/no-img-element -- tiny static SVG logo */}
       <img className={styles.brandLogo} src="/favicon.svg" alt="" width={22} height={22} aria-hidden />
       <span className={styles.logoMain}>
@@ -30,6 +37,14 @@ export default function BrandLockup({
         <span className={logicClassName}>Logic</span>
         <span className={hqClassName}>HQ</span>
       </span>
+    </>
+  );
+
+  if (inSandbox) return <span className={styles.lockup}>{inner}</span>;
+
+  return (
+    <Link href="/discover" className={styles.lockup} aria-label="FieldLogicHQ Home">
+      {inner}
     </Link>
   );
 }

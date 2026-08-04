@@ -55,7 +55,14 @@
    bar is the app nav and the branded event header owns the top. */
 .topbarStrip {
   position: fixed;
-  top: 0;
+  /* Normally 0. Inside the "See it live" sandbox a demo banner owns the top of the viewport, so
+     this strip drops below it — the same term every other top-pinned bar carries, and 0px for
+     every real customer (--sandbox-chrome-h is only ever set on a demo org; see globals.css).
+     ⚠ This one was MISSED in the first pass because it reads --desktop-strip-h as a HEIGHT rather
+     than a top, so it didn't turn up with the other offsets — and at z-index 200 it sat ON TOP of
+     the banner, hiding the sandbox's entire honesty claim while the space the strip vacated read
+     as a 48px gap further down. Measured, not guessed (Playwright, 2026-08-03). */
+  top: var(--sandbox-chrome-h, 0px);
   left: 0;
   right: 0;
   /* Both this fallback and the tournament layout's own seed now read the ONE platform chrome-bar

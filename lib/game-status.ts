@@ -18,7 +18,11 @@
  * the org doesn't require finalization) → unofficial (submitted, finalization
  * required, not live) → upcoming.
  */
-import { zonedWallClockToUtc } from './timezone';
+// Explicit `.ts` extension (repo convention, `allowImportingTsExtensions`) so this module can be
+// imported both by the app and directly by a plain Node script under type stripping. That matters
+// here more than most: this file is THE definition of "is this game live?", and without it the
+// demo's verification scripts had to hand-copy the time window and hope it stayed in step.
+import { zonedWallClockToUtc } from './timezone.ts';
 import type { Game, PublicTeam } from './types';
 
 /** Minutes after a game's scheduled end during which it still reads LIVE — covers

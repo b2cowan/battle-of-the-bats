@@ -95,20 +95,22 @@
 .cta:hover { background: var(--fl-text); }
 .cta:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 
-/* ── The tour chips ───────────────────────────────────────────────────────── */
+/* ── The guided tour ──────────────────────────────────────────────────────── */
+/* One row, one obvious control. This replaced a rail of four equal chips that gave a visitor no
+   order to follow, no sense of position, and — when a chip's beat happened not to be on the page —
+   no feedback at all. See the component header for the measurements behind that. */
 
-.chips {
+.stepper {
   display: flex;
-  gap: 0.4375rem;
-  padding: 0.6875rem 1.125rem;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5625rem 1.125rem;
   background: rgba(var(--blueprint-blue-rgb), 0.07);
   border-bottom: 1px solid rgba(255, 255, 255, 0.11);
-  overflow-x: auto;
+  min-width: 0;
 }
 
-.chipsLabel {
-  align-self: center;
-  margin-right: 0.1875rem;
+.stepperLabel {
   font-family: var(--font-data);
   font-size: 0.62rem;
   font-weight: 700;
@@ -118,57 +120,220 @@
   white-space: nowrap;
 }
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4375rem;
-  flex: none;
-  white-space: nowrap;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  color: var(--fl-text);
-  border-radius: 999px;
-  font: inherit;
-  font-size: 0.75rem;
-  padding: 0.375rem 0.8125rem 0.375rem 0.5rem;
-  cursor: pointer;
-  text-decoration: none;
-  transition: border-color 0.15s ease;
-}
-
-.chip:hover { border-color: rgba(var(--logic-lime-rgb), 0.6); }
-.chip:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
-
-.chip[aria-pressed='true'] {
-  border-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.08);
-}
-
-.chipNum {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 17px;
-  height: 17px;
-  border-radius: 50%;
-  background: rgba(var(--logic-lime-rgb), 0.16);
-  color: var(--logic-lime);
+.stepCount {
   font-family: var(--font-data);
   font-size: 0.62rem;
   font-weight: 800;
-}
-
-/* Says which kind of chip this is BEFORE it is pressed: an arrow means it takes you somewhere,
-   no arrow means it points at something on this page. Pressing a chip should never surprise. */
-.chipGo {
-  color: var(--data-gray);
-  font-size: 0.72rem;
-  line-height: 1;
-}
-
-.chipDone {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: var(--logic-lime);
+  white-space: nowrap;
+}
+
+/* ── The live pill ───────────────────────────────────────────────────────────
+   The demo's headline claim is that scores move on their own, but they only step every few
+   minutes — so between the changes this is the proof. The freshness reading matters more than
+   the score: it re-proves itself every second without anyone having to wait. */
+
+.pill {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.25rem 0.6875rem 0.25rem 0.5625rem;
+  border-radius: 999px;
+  background: rgba(var(--success-rgb), 0.09);
+  border: 1px solid rgba(var(--success-rgb), 0.45);
+  font-size: 0.75rem;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.pillSeam {
+  background: rgba(var(--warning-rgb), 0.09);
+  border-color: rgba(var(--warning-rgb), 0.45);
+}
+
+.pillBulb {
+  align-self: center;
+  flex: none;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 8px rgba(var(--success-rgb), 0.8);
+  animation: sandboxPulse 2.4s ease-in-out infinite;
+}
+
+.pillSeam .pillBulb {
+  background: var(--warning);
+  box-shadow: 0 0 8px rgba(var(--warning-rgb), 0.8);
+  animation: none;
+}
+
+@keyframes sandboxPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+/* A run just landed while the visitor was watching. The one moment the demo has to sell itself,
+   and it used to pass in complete silence — the number was simply different next time anyone
+   looked. Holds for twelve seconds so a glance back still catches it. */
+.pillScored {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  border-color: var(--logic-lime);
+  animation: sandboxScored 0.6s ease-out 2;
+}
+
+.pillScored .pillFresh { color: var(--logic-lime); font-weight: 800; }
+
+@keyframes sandboxScored {
+  0%, 100% { box-shadow: none; }
+  50% { box-shadow: 0 0 0 3px rgba(var(--logic-lime-rgb), 0.35); }
+}
+
+.pillScore {
+  font-family: var(--font-data);
+  font-weight: 800;
+  color: var(--fl-text);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The team names carry the story; the digits carry the proof. Weighting them apart keeps a long
+   pairing from swamping the score at narrow widths. */
+.pillTeam { font-weight: 500; color: var(--data-gray); }
+
+.pillFresh {
+  font-family: var(--font-data);
   font-size: 0.7rem;
+  color: var(--data-gray);
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+/* ── Position, and the way back into the sequence ─────────────────────────── */
+
+.dots {
+  display: flex;
+  gap: 0.3125rem;
+  align-items: center;
+  margin-left: auto;
+}
+
+.dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.dot:hover { border-color: rgba(var(--logic-lime-rgb), 0.6); color: var(--fl-text); }
+.dot:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+.dot[data-done='true'] { border-color: var(--logic-lime); color: var(--logic-lime); }
+.dot[aria-current='step'] {
+  background: var(--logic-lime);
+  border-color: var(--logic-lime);
+  color: var(--pitch-black);
+}
+
+/* The single primary control. It carries the step's own label, so there is never a generic
+   button whose effect the visitor has to guess at. */
+.stepGo {
+  flex: none;
+  max-width: 22rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid var(--logic-lime);
+  color: var(--logic-lime);
+  border-radius: 999px;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.375rem 0.8125rem;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.stepGo:hover { background: var(--logic-lime); color: var(--pitch-black); }
+.stepGo:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+/* ── "What just happened" ─────────────────────────────────────────────────────
+   The core of the redesign. A ring on a section the visitor is not looking at was never
+   feedback; a sentence where their finger just was, is. */
+
+.said {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  padding: 0.5625rem 1.125rem;
+  background: rgba(var(--logic-lime-rgb), 0.07);
+  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.3);
+  border-left: 3px solid var(--logic-lime);
+  min-width: 0;
+}
+
+.saidTick {
+  flex: none;
+  color: var(--logic-lime);
+  font-weight: 800;
+  font-size: 0.85rem;
+}
+
+.saidText {
+  font-size: 0.82rem;
+  color: var(--fl-text);
+  line-height: 1.45;
+  min-width: 0;
+}
+
+.saidBack {
+  flex: none;
+  margin-left: auto;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: var(--data-gray);
+  border-radius: 999px;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.3125rem 0.6875rem;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.saidBack:hover { color: var(--fl-text); border-color: var(--data-gray); }
+.saidBack:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
+/* "Next run in about 1:40" — the difference between waiting and staring. Deliberately quieter
+   than the sentence it follows: it is a thing to glance at, not to read. */
+.saidWait { color: var(--data-gray); }
+.saidWait strong { color: var(--fl-text); font-variant-numeric: tabular-nums; font-weight: 700; }
+
+/* And the moment it lands. */
+.saidNow { color: var(--logic-lime); font-weight: 700; }
+
+@media (prefers-reduced-motion: reduce) {
+  .pillScored { animation: none; }
 }
 
 /* ── The toast catch-all ──────────────────────────────────────────────────── */
@@ -216,11 +381,51 @@
 
 .toastCta:hover { text-decoration: underline; }
 
-/* ── Narrow screens ───────────────────────────────────────────────────────── */
+/* ── Narrow screens ───────────────────────────────────────────────────────────
+   Measured on a 390×844 viewport, the first build's chrome was 170px tall — a fifth of the
+   screen, permanently — and its chip rail scrolled to 713px inside a 390px window, so nearly half
+   the tour sat off-screen with nothing indicating it existed. Showing one step at a time fixes
+   both: there is nothing to scroll sideways, so nothing can hide. */
 
 @media (max-width: 640px) {
   .banner { padding: 0.5rem 0.75rem; gap: 0.375rem 0.625rem; }
-  .chips { padding: 0.5rem 0.75rem; }
-  /* The promise wraps to its own line rather than squeezing the countdown or the CTA out. */
-  .message { font-size: 0.75rem; flex-basis: 100%; order: 3; }
+  /* The promise moves into the first narration line, where it is read rather than skimmed.
+     Owner call, 2026-08-03: it buys back roughly a fifth of the hat on a phone. */
+  .message { display: none; }
+  .reset { font-size: 0.7rem; }
+  .cta { padding: 0.375rem 0.625rem; font-size: 0.6rem; }
+
+  .stepper { padding: 0.5rem 0.75rem; gap: 0.4375rem; flex-wrap: wrap; }
+  /* "Guided tour" is self-evident from the numbering once space is tight. The dots go too:
+     the counter carries position, and four tap targets would crowd out the one control that
+     matters. */
+  .stepperLabel, .dots { display: none; }
+  /* The pill takes its own line rather than competing with the step button for one.
+     Measured first attempt: sharing the row squeezed it to 35px wide — the freshness reading,
+     which is the entire point of the pill, was the part that got cut. Costs ~26px of hat and
+     buys back a legible score on the surface where the demo is most often opened. */
+  .pill {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    font-size: 0.7rem;
+    padding: 0.1875rem 0.5rem 0.1875rem 0.4375rem;
+    gap: 0.375rem;
+  }
+  .stepGo { margin-left: auto; padding: 0.375rem 0.625rem; font-size: 0.6rem; }
+
+  /* While a sentence is showing it is the thing the visitor just asked for, and the pill is
+     describing the same game it names. Two attention-getters plus three lines of text pushed the
+     hat to a quarter of the screen; standing one down keeps it near a fifth. The pill returns as
+     soon as they advance. Browsers without :has() simply keep both, which is harmless. */
+  .chrome:has(.said) .pill { display: none; }
+
+  .said { padding: 0.5rem 0.75rem; }
+  .saidText { font-size: 0.76rem; }
+  /* A phone has the browser's own back gesture; the marked way back would cost a line here. */
+  .saidBack { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pillBulb { animation: none; }
 }

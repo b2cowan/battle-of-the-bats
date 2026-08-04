@@ -14,7 +14,7 @@ import { toPublicTeam } from '@/lib/public-tournament-data';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { buildPlayoffPicture, type PlayoffStatCallout } from '@/lib/playoff-picture';
 import type { DivisionStandingRow } from '@/lib/tie-breakers';
-import { isPublicPageEnabled } from '@/lib/public-pages';
+import { isPublicPageEnabled, isPublicBracketVisible } from '@/lib/public-pages';
 import { formatTime, formatPoolName, splitTeamQualifier } from '@/lib/utils';
 import PublicTournamentState from '@/components/public/PublicTournamentState';
 import SharePageButton from '@/components/public/SharePageButton';
@@ -50,10 +50,11 @@ export default async function PlayoffsPage({
   if (!tournament) notFound();
 
   const publicBaseEarly = `/${orgSlug}/${tournamentSlug}`;
-  // The Playoff Picture is a seeding/standings view, so it inherits the Standings
-  // page's visibility — an organizer who hid Standings must not have the seeding
-  // leaked through this URL.
-  if (!isPublicPageEnabled(tournament, 'standings')) {
+  // The Playoff Picture is a seeding view, so it inherits the Standings page's visibility — an
+  // organizer who HID Standings must not have the seeding leak through this URL. But a bracket-only
+  // event has Standings force-hidden by format rather than by choice, and there the bracket is the
+  // whole tournament: see `isPublicBracketVisible`, which separates the two.
+  if (!isPublicBracketVisible(tournament)) {
     return (
       <div className="page-content">
         <div className="section">

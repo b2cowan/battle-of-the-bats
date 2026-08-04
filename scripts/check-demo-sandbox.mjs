@@ -154,12 +154,53 @@ check(liveGames.length <= 2, 'not implausibly many games live at once', `${liveG
 
 // Staleness: the rows must agree with what the clock says they should be. If they don't, the
 // reconcile job has not run recently and the demo is drifting toward looking abandoned.
+//
+// ⚠ Both checks here USED to pass on a demo that was a full cycle behind, which is how a frozen
+// sandbox reached an owner QA pass on 2026-08-03 with a clean bill of health:
+//   • the date check compared only `game_date`, and the drift is in the TIME — a demo exactly one
+//     120-minute cycle stale still falls on the same calendar day for most of the day;
+//   • the score check tolerated ±2, and a stale row SATURATES at the game's final score, which is
+//     always within 2 of the late-cycle partial it is being compared against.
+// They now compare the semifinal's full timestamp and its STATUS, which is what actually moves.
 const expectedSf1 = state.games.find(g => g.key === DEMO_BRACKET_CODES.SF1);
-check(sf1.game_date === expectedSf1.date, 'the semifinal is anchored to today',
-  `row says ${sf1.game_date}, the clock says ${expectedSf1.date}`);
+const sf1Time = (sf1.game_time ?? '').slice(0, 8);
+check(
+  sf1.game_date === expectedSf1.date && sf1Time === expectedSf1.time,
+  'the semifinal is anchored to the current cycle',
+  `row says ${sf1.game_date} ${sf1Time}, the clock says ${expectedSf1.date} ${expectedSf1.time}`,
+);
+// Status is the honest staleness signal: it flips exactly once per cycle, at minute 88, and a
+// stale row therefore disagrees for most of the cycle rather than coincidentally matching.
+check(
+  sf1.status === expectedSf1.status,
+  'the reconcile job is actually running (semifinal status matches the clock)',
+  `row is ${sf1.status}, the clock says ${expectedSf1.status} at minute ${state.minuteInCycle}`,
+);
 const scoreDrift = Math.abs((sf1.home_score ?? 0) - (expectedSf1.homeScore ?? 0));
-check(scoreDrift <= 2, 'the live score is current (reconcile job is running)',
+check(scoreDrift <= 2, 'the live score is current',
   `row ${sf1.home_score}-${sf1.away_score}, clock expects ${expectedSf1.homeScore}-${expectedSf1.awayScore}`);
+
+// Who is at fault when the demo IS stale? The scheduler heartbeats on dispatch and the reconcile
+// heartbeats on arrival, so comparing the two separates "nothing is scheduled" from "the schedule
+// fires but never reaches the app" — the failure that actually happened.
+const { data: beats } = await db
+  .from('observability_cron_heartbeat')
+  .select('job_name, last_run_at')
+  .in('job_name', ['demo_sandbox_tick', 'demo_sandbox_reconcile']);
+const minutesAgo = (name) => {
+  const row = (beats ?? []).find(b => b.job_name === name);
+  if (!row?.last_run_at) return null;
+  return Math.round((now.getTime() - Date.parse(row.last_run_at)) / 60_000);
+};
+const dispatched = minutesAgo('demo_sandbox_tick');
+const arrived = minutesAgo('demo_sandbox_reconcile');
+if (dispatched !== null && (arrived === null || arrived > dispatched + 10)) {
+  notes.push(
+    `the scheduler dispatched ${dispatched} min ago but the app last reconciled ` +
+    `${arrived === null ? 'never' : `${arrived} min ago`} — the schedule is firing and not ` +
+    'arriving. Check the Vault base URL for this environment (migration 183).',
+  );
+}
 check(
   state.finalIsSeeded ? !!fin.home_team_id : !fin.home_team_id,
   state.finalIsSeeded ? 'the Final has seeded itself' : 'the Final still reads "Winner SF1"',
