@@ -421,6 +421,36 @@ report. The standing rule this earns: **a finding alarming enough to act on imme
 re-measure first** — and *a number moving the wrong way is not a regression until you have checked the
 number is real.*
 
+### 10.5 The colour guardrail's "gap" is not statically closable — and the check was right
+
+The help bug looked like a guardrail miss: `components/help` is inside the `shared` scope, yet
+`rgba(255,255,255,0.75)` on a text colour sailed through. The guardrail excludes white/black alphas
+by design, on the stated reasoning that they *are* the `--white-NN` family. The obvious fix was a
+narrow new rule: flag raw white/black literals on `color:` declarations.
+
+**Building it would have made things worse.** Ten of the twelve literals in that file were genuine
+bugs — their surfaces follow the theme, so a literal that never remaps goes invisible on cream. The
+other two are on `.tooltipPopover`, which paints a hard dark `#1a1f2e` in **both** themes. The warm
+gate remaps `--white-NN` to dark **ink**, correct only on a light ground — so "fixing" those two
+would paint dark ink on a dark popover. A rule that flagged all twelve would have been demanding the
+inverse of the bug on the two that were already right.
+
+Repo-wide there are **161 such declarations across 26 files**, and which of them are dangerous
+depends entirely on whether the surface behind each one follows the theme. **That is not visible in
+the source text** — it is a property of the rendered page. Baselining all 161 would record the number
+without separating the dangerous from the correct, which is worse than not measuring.
+
+So the division of labour in §8.2 holds, with a third line added:
+
+| | Question | Can it answer? |
+|---|---|---|
+| Colour-literal guardrail | Is this a **brand** colour written as a literal? | Yes — statically |
+| Palette test | Can this token *ever* be legible on that ground? | Yes — arithmetic |
+| Browser sweep | Does this **actual string** clear AA on what is **actually painted** behind it? | Yes — and **only** this one |
+
+**The sweep is the check for this class, and it now works.** The right follow-up is not a new static
+rule; it is §11's screen-list extension, so the sweep looks at more of the product.
+
 ### 10.3 What the misses have in common
 
 - **9 of 21 misses are pure coverage** — the right rule existed, the screen was not listed.
@@ -461,10 +491,12 @@ number is real.*
 - [x] **The "unreadable Active badge" was the THIRD false positive of the day** — see §10.4. Fixed in
       the rule's compositing maths, not the product. The badge was genuinely failing at 3.52:1 before
       the accent ruling, which took it to 4.61:1.
-- [ ] **Flagged, not fixed: more raw dark-theme literals in the help stylesheet** — "For: Coach" at
-      **2.03:1** on cream, the search-results heading, and seven raw white values. The colour
-      guardrail covers that file but does not flag plain white / platform-blue literals, which is why
-      none were caught.
+- [x] **Help stylesheet literals — 10 fixed, 2 deliberately kept** (2026-08-03). "For: Coach" was
+      **2.03:1** on cream; it and nine siblings now take the ramp tokens. The two tooltip labels
+      **stay literal on purpose** and now say why in the file.
+- [x] **⚠ "Close the colour-guardrail gap" — INVESTIGATED, AND THE ANSWER IS NO.** See §10.5. A rule
+      flagging raw white text literals would have demanded tokenising the tooltip, which paints a
+      hard dark navy in both themes — inverting the exact bug it was meant to catch.
 - [ ] **The other nine raw white text literals in the help stylesheet** — the sweep flagged only the
       two `strong` rules, so the rest either do not render on the help hub or sit on dark-filled
       drawer surfaces. Same class of latent bug; worth converting to ramp tokens on their own merits.

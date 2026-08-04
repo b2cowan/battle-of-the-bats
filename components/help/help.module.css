@@ -48,13 +48,13 @@
 .calloutTitle {
   font-weight: 600;
   font-size: 0.88rem;
-  color: rgba(255, 255, 255, 0.85);
+  color: var(--white-85);
   margin: 0 0 0.25rem;
   line-height: 1.4;
 }
 
 .calloutText {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--white-60);
   font-size: 0.85rem;
   line-height: 1.6;
   margin: 0;
@@ -79,7 +79,7 @@
   flex-shrink: 0;
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.25);
+  color: var(--white-35);
   cursor: pointer;
   padding: 0.1rem;
   line-height: 1;
@@ -137,7 +137,7 @@
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.45);
+  color: var(--white-45);
   font-weight: 700;
   cursor: pointer;
   line-height: 1;
@@ -221,6 +221,16 @@
   margin-bottom: 1px;
 }
 
+/* ⚠ THESE TWO STAY LITERAL — DO NOT "TOKENISE" THEM (2026-08-03).
+   Ten sibling labels in this file moved to the --white-NN ramp the same day, because a raw white
+   literal never remaps and rendered invisible on the warm portal's cream ground. These two are the
+   exception, and the reason is one line up: .tooltipPopover paints `#1a1f2e`, a HARD DARK navy in
+   BOTH themes (itself token-exempt, "no central token"). The warm gate remaps --white-NN to dark
+   INK, which is correct only on a light ground — so tokenising this text would paint dark ink on a
+   dark popover and invert the exact bug the sweep just fixed.
+   The rule this encodes: a colour literal is only wrong when its SURFACE follows the theme. That is
+   not statically decidable, which is why the browser sweep — not a source scan — is the check that
+   catches it. */
 .tooltipTitle {
   font-size: 0.8rem;
   font-weight: 700;
@@ -508,7 +518,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  color: rgba(79, 163, 224, 0.78);
+  color: var(--info);
   margin: 0 0 0.7rem;
 }
 
@@ -754,7 +764,7 @@
 
 .helpResultGroup h3 {
   margin: 0 0 0.65rem;
-  color: rgba(79, 163, 224, 0.85);
+  color: var(--info);
   font-size: 0.72rem;
   font-weight: 850;
   letter-spacing: 0.07em;
@@ -790,7 +800,7 @@
 }
 
 .helpResultButton span {
-  color: rgba(79, 163, 224, 0.82);
+  color: var(--info);
   font-size: 0.68rem;
   font-weight: 850;
   letter-spacing: 0.06em;
@@ -1220,7 +1230,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 2rem;
-  color: rgba(255, 255, 255, 0.35);
+  color: var(--white-35);
   font-size: 0.85rem;
 }
 
@@ -1242,13 +1252,13 @@
 .emptyStateTitle {
   font-size: 0.95rem;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--white-50);
   margin: 0 0 0.4rem;
 }
 
 .emptyStateSub {
   font-size: 0.82rem;
-  color: rgba(255, 255, 255, 0.3);
+  color: var(--white-35);
   margin: 0 auto;
   max-width: 280px;
   line-height: 1.5;

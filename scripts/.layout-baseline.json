@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-03T13:29:31.979Z",
+  "generated": "2026-08-04T02:14:59.524Z",
   "entries": {
     "coach-overview|1440|tap-floor|a·FieldLogicHQ Home": {
       "reason": null,
@@ -193,38 +193,6 @@
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
-    "coach-team-hub|1440|contrast|p·Coaches Portal·rgba(255, 255, 255, 0.25)on17,24,39": {
-      "reason": null,
-      "detail": "2.25:1 (needs 4.5:1) — rgba(255, 255, 255, 0.25) on rgb(17, 24, 39) at 10px"
-    },
-    "coach-team-hub|1440|contrast|a·Overview·rgb(30, 58, 138)on18,27,48": {
-      "reason": null,
-      "detail": "1.65:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(18, 27, 48) at 14px"
-    },
-    "coach-team-hub|1440|contrast|p·Squad·rgba(255, 255, 255, 0.22)on17,24,39": {
-      "reason": null,
-      "detail": "2.02:1 (needs 4.5:1) — rgba(255, 255, 255, 0.22) on rgb(17, 24, 39) at 10px"
-    },
-    "coach-team-hub|1440|contrast|p·Season·rgba(255, 255, 255, 0.22)on17,24,39": {
-      "reason": null,
-      "detail": "2.02:1 (needs 4.5:1) — rgba(255, 255, 255, 0.22) on rgb(17, 24, 39) at 10px"
-    },
-    "coach-team-hub|1440|contrast|p·Money·rgba(255, 255, 255, 0.22)on17,24,39": {
-      "reason": null,
-      "detail": "2.02:1 (needs 4.5:1) — rgba(255, 255, 255, 0.22) on rgb(17, 24, 39) at 10px"
-    },
-    "coach-team-hub|1440|contrast|p·Communication·rgba(255, 255, 255, 0.22)on17,24,39": {
-      "reason": null,
-      "detail": "2.02:1 (needs 4.5:1) — rgba(255, 255, 255, 0.22) on rgb(17, 24, 39) at 10px"
-    },
-    "coach-team-hub|1440|contrast|p·Team admin·rgba(255, 255, 255, 0.22)on17,24,39": {
-      "reason": null,
-      "detail": "2.02:1 (needs 4.5:1) — rgba(255, 255, 255, 0.22) on rgb(17, 24, 39) at 10px"
-    },
-    "coach-team-hub|1440|contrast|p·Explore·rgba(255, 255, 255, 0.22)on17,24,39": {
-      "reason": null,
-      "detail": "2.02:1 (needs 4.5:1) — rgba(255, 255, 255, 0.22) on rgb(17, 24, 39) at 10px"
-    },
     "coach-notifications|1440|tap-floor|a·FieldLogicHQ Home": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -374,6 +342,10 @@
       "detail": "40px tall (floor 44)"
     },
     "coach-help|1440|tap-floor|summary·Can I share tryout results with my club ": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|1440|tap-floor|summary·Can I see how a returning player did at ": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
@@ -805,6 +777,34 @@
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
+    "coach-help|1440|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|1440|tap-floor|summary·Can I type my own question?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|1440|tap-floor|summary·Why does a question say “nothing recorde": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|1440|tap-floor|summary·An assistant coach can’t see one of the ": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|1440|tap-floor|summary·Why does the dues answer name players in": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|1440|tap-floor|summary·A parent is running a station on Tuesday": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|1440|tap-floor|summary·Can I just send a helper a link to the p": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
     "coach-help|1440|tap-floor|summary·An assistant left the club — can I stop ": {
       "reason": null,
       "detail": "40px tall (floor 44)"
@@ -1005,7 +1005,7 @@
       "reason": null,
       "detail": "27px tall (floor 44)"
     },
-    "coach-schedule|1440|tap-floor|button·Aug 2 · 12:24 p.m.UAT probe practice": {
+    "coach-schedule|1440|tap-floor|button·Aug 3 · 10:19 a.m.UAT probe practice": {
       "reason": null,
       "detail": "31px tall (floor 44)"
     },
@@ -2721,7 +2721,7 @@
       "reason": null,
       "detail": "33px tall (floor 44)"
     },
-    "coach-practice-plan|1440|content-overflow|div·ScheduleUAT probe practiceSun, Aug 2, 20": {
+    "coach-practice-plan|1440|content-overflow|div·ScheduleUAT probe practiceMon, Aug 3, 20": {
       "reason": null,
       "detail": "content spills 24px with overflow-x:visible — no scroller owns it"
     },
@@ -3521,11 +3521,15 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-staff|1440|tap-floor|input·assistant@email.com": {
+    "coach-staff|1440|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "13px tall (floor 44)"
+    },
+    "coach-staff|1440|tap-floor|input·helper@email.com": {
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
-    "coach-staff|1440|tap-floor|button·Invite assistant": {
+    "coach-staff|1440|tap-floor|button·Invite helper": {
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
@@ -4053,2182 +4057,6 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-overview|361|tap-floor|button·Season setup2/5": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|361|tap-floor|button·Help: Premium Coaches Portal": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|361|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|361|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|361|tap-floor|a·No guardian email12": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|361|tap-floor|button·Season setup2/5": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|361|tap-floor|button·Help: Premium Coaches Portal": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|361|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|361|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|361|tap-floor|a·No guardian email12": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|a·Notification settings": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|button·All": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|button·Needs attention": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|button·Activity": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|361|tap-floor|button·Unread": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·What’s New": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|input·Search this guide": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|button·Sections": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·← All guides": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Why don’t I see my team?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How do I score players myself?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Why does it say there’s no one to email?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How do I pay the tournament entry fee?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How do I join a tournament’s chat?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Will I be notified of new chat messages?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Can I report a message or mute a chat?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Where are my notifications on my phone?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·What can I keep on each player?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How do I set up my pitchers?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Where do I start with my team’s money?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·What should my season budget include?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How do I set every player’s dues at once": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Can I read my budget on my phone?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How do I add games to a tournament?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How do I tag a game?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Can I rename, merge, or delete a tag?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How do I give a player an award?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Can I rename or retire an award?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Why won’t it accept my dates?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Can I save and reuse lineups (templates)": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·Running it at the field": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·Plan templates": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·Player Development": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·Repeating practices": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Where do I write a practice plan?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·Writing the plan": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Can I get drills from last season?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·What are the drills marked “Club”?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·Your drills": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Why is “New session” switched off?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·What is the keepsake card?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·How many people can follow my team?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Who can open a game link I share?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Why can’t I change my division?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|tap-floor|summary·Can I change my team’s division?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|361|contrast|a·What’s New·rgb(87, 101, 30)on8,12,20": {
-      "reason": null,
-      "detail": "3.06:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(8, 12, 20) at 12px"
-    },
-    "coach-help|361|contrast|button·Sections·rgb(87, 101, 30)on17,21,29": {
-      "reason": null,
-      "detail": "2.84:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(17, 21, 29) at 12px"
-    },
-    "coach-schedule|361|tap-floor|button·List": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Month": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Help: Schedule": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|361|tap-floor|button·Add event": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-attendance|361|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-attendance|361|tap-floor|button·Help: Attendance": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-attendance|361|tap-floor|a·Take attendance": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Add player": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Help: Roster": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Create link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Staff only": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Families": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Public link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Avery Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Avery Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Avery Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Blake Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Blake Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Blake Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Casey Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Casey Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Casey Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Devon Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Devon Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Devon Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Emerson Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Emerson Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Emerson Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Frankie Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Frankie Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Frankie Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Gray Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Gray Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Gray Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Harper Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Harper Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Harper Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Indigo Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Indigo Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Indigo Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Jules Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Jules Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Jules Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Kai Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Kai Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Kai Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|a·Logan Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Logan Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|tap-floor|button·Move Logan Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|361|contrast|span·Active·rgb(62, 122, 50)on84,103,32": {
-      "reason": null,
-      "detail": "1.20:1 (needs 4.5:1) — rgb(62, 122, 50) on rgb(84, 103, 32) at 12px"
-    },
-    "coach-lineups|361|tap-floor|button·Help: Lineups": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-lineups|361|tap-floor|button·Games": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|361|tap-floor|button·Templates": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|361|tap-floor|button·How lineups work": {
-      "reason": null,
-      "detail": "41px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|button·Help: Roster": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|a·Edit in Settings →": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|button·Undo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|button·Redo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|361|tap-floor|a·Prepare a game lineup →": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|button·Help: Development": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|input·e.g. 60-yd sprint": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|input·seconds": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|button·Add test": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|button·New session": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-development|361|tap-floor|a·Schedule →": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|361|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-development-drills|361|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|361|tap-floor|button·Help: Your drills": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-development-drills|361|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-drills|361|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-board|361|tap-floor|a·← Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|button·Help: Plan templates": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|button·All 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|button·No tags 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 10": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 11": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 12": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 13": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 14": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 15": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 2": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 3": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 4": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 5": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 6": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 7": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 8": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·New template 9": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|a·View on schedule": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Help: Practice plan": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|a·Run practice": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Start this plan from…": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Save as template…": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Print the sheet": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·What the whole practice is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Search or add a tag": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Cones": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Bibs": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Spare balls": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Equipment": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Block 1 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Minutes": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·What this is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove UAT Coach": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Staff": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Coaching point 1": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Coaching point 2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Block 2 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Minutes between moves": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|select·Draw by": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Number for the draw": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Draw again": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Add a group": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Group name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Station 1 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·What good looks like here": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Who runs it": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·A one-off note for this practice": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Station 2 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Sam Assistant": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·UAT Coach": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Station 3 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Remove Jordan Helper": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|input·Block 3 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Add a block": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-accounting|361|tap-floor|button·Help: Money": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-accounting|361|tap-floor|a·Build your budget": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-accounting|361|tap-floor|a·Skip — set dues directly": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-accounting|361|tap-floor|a·See what's outstanding": {
-      "reason": null,
-      "detail": "18px tall (floor 44)"
-    },
-    "coach-accounting|361|tap-floor|button·30d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-accounting|361|tap-floor|button·60d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-accounting|361|tap-floor|button·90d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-accounting|361|tap-floor|a·See the full payment schedule →": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|button·Add Line": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|button·Start — about a minute": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|button·See a finished example": {
-      "reason": null,
-      "detail": "41px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|button·Or add lines yourself": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|button·Import a spreadsheet": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget|361|tap-floor|button·Set a season total instead": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget|361|contrast|span·Overview·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-budget|361|contrast|span·Schedule·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-budget|361|contrast|span·Chat·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-budget|361|contrast|span·Roster·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-budget|361|contrast|span·More·rgb(30, 58, 138)on12,16,25": {
-      "reason": null,
-      "detail": "1.83:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-budget-vs-actual|361|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|361|tap-floor|button·See a finished example": {
-      "reason": null,
-      "detail": "41px tall (floor 44)"
-    },
-    "coach-expenses|361|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-expenses|361|tap-floor|button·Expenses (0)": {
-      "reason": null,
-      "detail": "43px tall (floor 44)"
-    },
-    "coach-expenses|361|tap-floor|button·Payables (0)": {
-      "reason": null,
-      "detail": "43px tall (floor 44)"
-    },
-    "coach-expenses|361|tap-floor|button·Payment schedule": {
-      "reason": null,
-      "detail": "43px tall (floor 44)"
-    },
-    "coach-dues|361|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-dues|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-dues|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-dues|361|tap-floor|a·Open budget plan": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-dues|361|tap-floor|button·Enabled": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-announcements|361|tap-floor|button·Help: Email families": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-announcements|361|tap-floor|button·Refresh contacts": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-announcements|361|tap-floor|input·Announcement subject": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-announcements|361|tap-floor|button·Send announcement": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "coach-documents|361|tap-floor|button·Help: Documents": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-staff|361|tap-floor|button·Help: Coaching staff": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-settings|361|tap-floor|button·Help: Team settings": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-settings|361|tap-floor|a·Season Review": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-settings|361|tap-floor|input·No limit": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-settings|361|tap-floor|button·Save rules": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|button·Help: Tryouts": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|button·How tryouts work": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|button·Take me there": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|button·Reveal player names (one-way — can’t swi": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|button·Add session": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|a·Open day-of check-in": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|button·Set up scorecard": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|button·Add evaluator": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history|361|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-history|361|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-history-development|361|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#1 Avery Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#2 Blake Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#3 Casey Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#4 Devon Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#5 Emerson Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#6 Frankie Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#7 Gray Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#8 Harper Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#9 Indigo Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#10 Jules Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#11 Kai Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|a·#12 Logan Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-history-development|361|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-history-results|361|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-results|361|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|390|tap-floor|button·Season setup2/5": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|390|tap-floor|button·Help: Premium Coaches Portal": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|390|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|390|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-overview|390|tap-floor|a·No guardian email12": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|390|tap-floor|button·Season setup2/5": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|390|tap-floor|button·Help: Premium Coaches Portal": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|390|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|390|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|390|tap-floor|a·No guardian email12": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|a·Notification settings": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|button·All": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|button·Needs attention": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|button·Activity": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-notifications|390|tap-floor|button·Unread": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·What’s New": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|input·Search this guide": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|button·Sections": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·← All guides": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Why don’t I see my team?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I score players myself?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Why does it say there’s no one to email?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·What is “Draft the family email” after a": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I resend or reuse a past announcemen": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I get score alerts for my own tea": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I pay the tournament entry fee?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I join a tournament’s chat?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Will I be notified of new chat messages?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I report a message or mute a chat?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Where are my notifications on my phone?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·What can I keep on each player?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I set up my pitchers?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Where do I build game lineups on Premium": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I change or turn off my notificat": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Where do I start with my team’s money?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·What should my season budget include?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I set every player’s dues at once": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I read my budget on my phone?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I add games to a tournament?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I tag a game?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I rename, merge, or delete a tag?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I give a player an award?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I rename or retire an award?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How do I add a note to a player’s attend": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Why won’t it accept my dates?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How does Auto-fill decide who plays wher": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I save and reuse lineups (templates)": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·Running it at the field": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·Plan templates": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·Player Development": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·Repeating practices": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Where do I write a practice plan?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can my assistant coach see the practice ": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·Writing the plan": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I get drills from last season?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·What are the drills marked “Club”?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·Your drills": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Why can I edit a template freely but not": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Why is “New session” switched off?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·What is the keepsake card?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·How many people can follow my team?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Who can open a game link I share?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I take a shared game page back down?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Why can’t I change my division?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I change my team’s division?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|tap-floor|summary·Can I add my own blank form for my team?": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-help|390|contrast|a·What’s New·rgb(87, 101, 30)on8,12,20": {
-      "reason": null,
-      "detail": "3.06:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(8, 12, 20) at 12px"
-    },
-    "coach-help|390|contrast|button·Sections·rgb(87, 101, 30)on17,21,29": {
-      "reason": null,
-      "detail": "2.84:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(17, 21, 29) at 12px"
-    },
-    "coach-schedule|390|tap-floor|button·List": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Week": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Month": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Help: Schedule": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-schedule|390|tap-floor|button·Add event": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-attendance|390|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-attendance|390|tap-floor|button·Help: Attendance": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-attendance|390|tap-floor|a·Take attendance": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Attendance": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Add player": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Help: Roster": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Create link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Staff only": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Families": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Public link": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Avery Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Avery Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Avery Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Blake Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Blake Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Blake Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Casey Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Casey Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Casey Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Devon Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Devon Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Devon Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Emerson Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Emerson Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Emerson Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Frankie Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Frankie Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Frankie Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Gray Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Gray Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Gray Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Harper Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Harper Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Harper Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Indigo Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Indigo Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Indigo Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Jules Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Jules Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Jules Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Kai Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Kai Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Kai Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|a·Logan Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Logan Test up": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|tap-floor|button·Move Logan Test down": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-roster|390|contrast|span·Active·rgb(62, 122, 50)on84,103,32": {
-      "reason": null,
-      "detail": "1.20:1 (needs 4.5:1) — rgb(62, 122, 50) on rgb(84, 103, 32) at 12px"
-    },
-    "coach-lineups|390|tap-floor|button·Help: Lineups": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-lineups|390|tap-floor|button·Games": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|390|tap-floor|button·Templates": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|390|tap-floor|button·How lineups work": {
-      "reason": null,
-      "detail": "41px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·Help: Roster": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·List": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·Depth chart": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|a·Edit in Settings →": {
-      "reason": null,
-      "detail": "19px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·Undo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|button·Redo": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-depth-chart|390|tap-floor|a·Prepare a game lineup →": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|button·Help: Development": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|input·e.g. 60-yd sprint": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|input·seconds": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|button·Add test": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|button·New session": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-development|390|tap-floor|a·Schedule →": {
-      "reason": null,
-      "detail": "15px tall (floor 44)"
-    },
-    "coach-development|390|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-development-drills|390|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|390|tap-floor|button·Help: Your drills": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-development-drills|390|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-drills|390|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-board|390|tap-floor|a·← Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|button·Help: Plan templates": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|button·All 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|button·No tags 15": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 10": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 11": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 12": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 13": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 14": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 15": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 2": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 3": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 4": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 5": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 6": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 7": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 8": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·New template 9": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|a·View on schedule": {
-      "reason": null,
-      "detail": "23px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Help: Practice plan": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|a·Run practice": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Start this plan from…": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Save as template…": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Print the sheet": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·What the whole practice is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Search or add a tag": {
-      "reason": null,
-      "detail": "28px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Cones": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Bibs": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Spare balls": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Equipment": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Block 1 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Minutes": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·What this is for": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove UAT Coach": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Staff": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Coaching point 1": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Coaching point 2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Block 2 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Minutes between moves": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|select·Draw by": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Number for the draw": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Draw again": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Add a group": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Group name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Station 1 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·What good looks like here": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Who runs it": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·A one-off note for this practice": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Station 2 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Sam Assistant": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·UAT Coach": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Station 3 name": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Remove Jordan Helper": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|input·Block 3 title": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Add a block": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-accounting|390|tap-floor|button·Help: Money": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-accounting|390|tap-floor|a·Build your budget": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-accounting|390|tap-floor|a·Skip — set dues directly": {
-      "reason": null,
-      "detail": "22px tall (floor 44)"
-    },
-    "coach-accounting|390|tap-floor|a·See what's outstanding": {
-      "reason": null,
-      "detail": "18px tall (floor 44)"
-    },
-    "coach-accounting|390|tap-floor|button·30d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-accounting|390|tap-floor|button·60d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-accounting|390|tap-floor|button·90d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "coach-accounting|390|tap-floor|a·See the full payment schedule →": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Import": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Add Line": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Start — about a minute": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·See a finished example": {
-      "reason": null,
-      "detail": "41px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Or add lines yourself": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Import a spreadsheet": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget|390|tap-floor|button·Set a season total instead": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|390|tap-floor|button·See a finished example": {
-      "reason": null,
-      "detail": "41px tall (floor 44)"
-    },
-    "coach-expenses|390|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-expenses|390|tap-floor|button·Expenses (0)": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|390|tap-floor|button·Payables (0)": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-expenses|390|tap-floor|button·Payment schedule": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "coach-dues|390|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-dues|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-dues|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-dues|390|tap-floor|a·Open budget plan": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-dues|390|tap-floor|button·Enabled": {
-      "reason": null,
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-announcements|390|tap-floor|button·Help: Email families": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-announcements|390|tap-floor|button·Refresh contacts": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-announcements|390|tap-floor|input·Announcement subject": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-announcements|390|tap-floor|button·Send announcement": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "coach-documents|390|tap-floor|button·Help: Documents": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-staff|390|tap-floor|button·Help: Coaching staff": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-settings|390|tap-floor|button·Help: Team settings": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-settings|390|tap-floor|a·Season Review": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "coach-settings|390|tap-floor|input·No limit": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-settings|390|tap-floor|button·Save rules": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|button·Help: Tryouts": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|button·How tryouts work": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|button·Take me there": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|button·Reveal player names (one-way — can’t swi": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|button·Add session": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|a·Open day-of check-in": {
-      "reason": null,
-      "detail": "42px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|button·Set up scorecard": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|button·Add evaluator": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history|390|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-history|390|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
-      "reason": null,
-      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-history-development|390|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#1 Avery Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#2 Blake Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#3 Casey Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#4 Devon Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#5 Emerson Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#6 Frankie Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#7 Gray Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#8 Harper Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#9 Indigo Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#10 Jules Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#11 Kai Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|a·#12 Logan Test": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|button·All 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-history-development|390|tap-floor|button·No tags 1": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-history-results|390|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-results|390|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-overview|768|tap-floor|button·Season setup2/5": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -6245,10 +4073,6 @@
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
-    "coach-overview|768|tap-floor|a·No guardian email12": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-team-hub|768|tap-floor|button·Season setup2/5": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -6262,10 +4086,6 @@
       "detail": "32px tall (floor 44)"
     },
     "coach-team-hub|768|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|768|tap-floor|a·No guardian email12": {
       "reason": null,
       "detail": "32px tall (floor 44)"
     },
@@ -6354,6 +4174,10 @@
       "detail": "40px tall (floor 44)"
     },
     "coach-help|768|tap-floor|summary·Can I share tryout results with my club ": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|768|tap-floor|summary·Can I see how a returning player did at ": {
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
@@ -6785,6 +4609,34 @@
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
+    "coach-help|768|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|768|tap-floor|summary·Can I type my own question?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|768|tap-floor|summary·Why does a question say “nothing recorde": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|768|tap-floor|summary·An assistant coach can’t see one of the ": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|768|tap-floor|summary·Why does the dues answer name players in": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|768|tap-floor|summary·A parent is running a station on Tuesday": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|768|tap-floor|summary·Can I just send a helper a link to the p": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
     "coach-help|768|tap-floor|summary·An assistant left the club — can I stop ": {
       "reason": null,
       "detail": "40px tall (floor 44)"
@@ -6913,7 +4765,7 @@
       "reason": null,
       "detail": "27px tall (floor 44)"
     },
-    "coach-schedule|768|tap-floor|button·Aug 2 · 12:24 p.m.UAT probe practice": {
+    "coach-schedule|768|tap-floor|button·Aug 3 · 10:19 a.m.UAT probe practice": {
       "reason": null,
       "detail": "31px tall (floor 44)"
     },
@@ -7769,30 +5621,6 @@
       "reason": null,
       "detail": "22px tall (floor 44)"
     },
-    "coach-development-templates|768|contrast|span·0 blocks · Not started a plan yet·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 12px"
-    },
-    "coach-development-templates|768|contrast|span·Overview·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-development-templates|768|contrast|span·Schedule·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-development-templates|768|contrast|span·Chat·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-development-templates|768|contrast|span·Roster·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-development-templates|768|contrast|span·More·rgb(30, 58, 138)on12,16,25": {
-      "reason": null,
-      "detail": "1.83:1 (needs 4.5:1) — rgb(30, 58, 138) on rgb(12, 16, 25) at 10px"
-    },
     "coach-practice-plan|768|tap-floor|a·Schedule": {
       "reason": null,
       "detail": "34px tall (floor 44)"
@@ -7948,206 +5776,6 @@
     "coach-practice-plan|768|tap-floor|button·Add a block": {
       "reason": null,
       "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|768|contrast|span·Tonight's goal·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·What this practice is about·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·No tags yet — type a word to make your f·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·Also tagged·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Equipment·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Minutes·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Description·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Goal·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Staff·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Players·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Coaching points·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·1·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·2·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·Stations·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Groups move every·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·min·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·Groups·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|button·Draw again·rgba(255, 255, 255, 0.75)on254,254,254": {
-      "reason": null,
-      "detail": "1.00:1 (needs 4.5:1) — rgba(255, 255, 255, 0.75) on rgb(254, 254, 254) at 14px"
-    },
-    "coach-practice-plan|768|contrast|button·Add a group·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 14px"
-    },
-    "coach-practice-plan|768|contrast|p·Not in the draw (hasn't replied yes): #1·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·Where everyone is·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|th·Round·rgba(255, 255, 255, 0.45)on15,23,42": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(15, 23, 42) at 11px"
-    },
-    "coach-practice-plan|768|contrast|th·Group A·rgba(255, 255, 255, 0.45)on15,23,42": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(15, 23, 42) at 11px"
-    },
-    "coach-practice-plan|768|contrast|th·Group B·rgba(255, 255, 255, 0.45)on15,23,42": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(15, 23, 42) at 11px"
-    },
-    "coach-practice-plan|768|contrast|th·Group C·rgba(255, 255, 255, 0.45)on15,23,42": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(15, 23, 42) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·12:39 p.m.·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·12:54 p.m.·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·1:09 p.m.·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·1·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·What you're doing·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·What you're watching for·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Setup·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|textarea·How it's laid out — where things go, and·rgba(255, 255, 255, 0.9)on255,255,255": {
-      "reason": null,
-      "detail": "1.00:1 (needs 4.5:1) — rgba(255, 255, 255, 0.9) on rgb(255, 255, 255) at 14px"
-    },
-    "coach-practice-plan|768|contrast|span·Equipment·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Who runs it·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Starts with·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·4·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·Coaching points·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·2·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·Just for tonight·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 11px"
-    },
-    "coach-practice-plan|768|contrast|span·3·rgba(255, 255, 255, 0.45)on21,28,43": {
-      "reason": null,
-      "detail": "4.42:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(21, 28, 43) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·Nothing set yet·rgba(255, 255, 255, 0.35)on17,24,39": {
-      "reason": null,
-      "detail": "3.21:1 (needs 4.5:1) — rgba(255, 255, 255, 0.35) on rgb(17, 24, 39) at 12px"
-    },
-    "coach-practice-plan|768|contrast|p·For you and your staff. Families never s·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·About the practice, not about a player·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 12px"
-    },
-    "coach-practice-plan|768|contrast|span·Saved·rgba(255, 255, 255, 0.45)on17,24,39": {
-      "reason": null,
-      "detail": "4.48:1 (needs 4.5:1) — rgba(255, 255, 255, 0.45) on rgb(17, 24, 39) at 13px"
-    },
-    "coach-practice-plan|768|contrast|span·Overview·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-practice-plan|768|contrast|span·Schedule·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-practice-plan|768|contrast|span·Chat·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-practice-plan|768|contrast|span·Roster·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
-    },
-    "coach-practice-plan|768|contrast|span·More·rgba(255, 255, 255, 0.4)on12,16,25": {
-      "reason": null,
-      "detail": "3.82:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(12, 16, 25) at 10px"
     },
     "coach-accounting|768|tap-floor|button·Help: Money": {
       "reason": null,
@@ -8305,11 +5933,15 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-staff|768|tap-floor|input·assistant@email.com": {
+    "coach-staff|768|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "13px tall (floor 44)"
+    },
+    "coach-staff|768|tap-floor|input·helper@email.com": {
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
-    "coach-staff|768|tap-floor|button·Invite assistant": {
+    "coach-staff|768|tap-floor|button·Invite helper": {
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
@@ -8436,6 +6068,2162 @@
     "coach-history-results|768|tap-floor|button·Help: Insights": {
       "reason": null,
       "detail": "34px tall (floor 44)"
+    },
+    "coach-overview|390|tap-floor|button·Season setup2/5": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-overview|390|tap-floor|button·Help: Premium Coaches Portal": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-overview|390|tap-floor|button·Skip this step": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-overview|390|tap-floor|button·Take the 2-minute tour": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|button·Season setup2/5": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|button·Help: Premium Coaches Portal": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|button·Skip this step": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|button·Take the 2-minute tour": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-notifications|390|tap-floor|a·Notification settings": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-notifications|390|tap-floor|button·All": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-notifications|390|tap-floor|button·Needs attention": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-notifications|390|tap-floor|button·Activity": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-notifications|390|tap-floor|button·Unread": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|input·Search this guide": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|button·Sections": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·← All guides": {
+      "reason": null,
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Why don’t I see my team?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I score players myself?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Why does it say there’s no one to email?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·What is “Draft the family email” after a": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I resend or reuse a past announcemen": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I get score alerts for my own tea": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I pay the tournament entry fee?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I join a tournament’s chat?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Will I be notified of new chat messages?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I report a message or mute a chat?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Where are my notifications on my phone?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·What can I keep on each player?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I set up my pitchers?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Where do I build game lineups on Premium": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I change or turn off my notificat": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Where do I start with my team’s money?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·What should my season budget include?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I set every player’s dues at once": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I read my budget on my phone?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I add games to a tournament?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I tag a game?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I rename, merge, or delete a tag?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I give a player an award?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I rename or retire an award?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How do I add a note to a player’s attend": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Why won’t it accept my dates?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How does Auto-fill decide who plays wher": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I save and reuse lineups (templates)": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·Running it at the field": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·Plan templates": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·Player Development": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·Repeating practices": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Where do I write a practice plan?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can my assistant coach see the practice ": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·Writing the plan": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I get drills from last season?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·What are the drills marked “Club”?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·Your drills": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Why can I edit a template freely but not": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·Attendance": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Why is “New session” switched off?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I type my own question?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·What is the keepsake card?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·How many people can follow my team?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Who can open a game link I share?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I take a shared game page back down?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Why can’t I change my division?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I change my team’s division?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|tap-floor|summary·Can I add my own blank form for my team?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|390|contrast|a·What’s New·rgb(87, 101, 30)on8,12,20": {
+      "reason": null,
+      "detail": "3.06:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(8, 12, 20) at 12px"
+    },
+    "coach-help|390|contrast|button·Sections·rgb(87, 101, 30)on17,21,29": {
+      "reason": null,
+      "detail": "2.84:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(17, 21, 29) at 12px"
+    },
+    "coach-schedule|390|tap-floor|button·List": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|390|tap-floor|button·Week": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|390|tap-floor|button·Month": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|390|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-schedule|390|tap-floor|button·Export as Excel": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule|390|tap-floor|button·More export formats": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule|390|tap-floor|button·Help: Schedule": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule|390|tap-floor|button·Add event": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-attendance|390|tap-floor|a·← Insights": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-attendance|390|tap-floor|button·Help: Attendance": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-attendance|390|tap-floor|a·Take attendance": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Attendance": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Export as Excel": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·More export formats": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Add player": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Help: Roster": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Create link": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Staff only": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Families": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Public link": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·List": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Depth chart": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Avery Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Avery Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Avery Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Blake Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Blake Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Blake Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Casey Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Casey Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Casey Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Devon Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Devon Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Devon Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Emerson Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Emerson Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Emerson Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Frankie Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Frankie Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Frankie Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Gray Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Gray Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Gray Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Harper Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Harper Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Harper Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Indigo Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Indigo Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Indigo Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Jules Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Jules Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Jules Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Kai Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Kai Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Kai Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|a·Logan Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Logan Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|390|tap-floor|button·Move Logan Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-lineups|390|tap-floor|button·Help: Lineups": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-lineups|390|tap-floor|button·Games": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-lineups|390|tap-floor|button·Templates": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-lineups|390|tap-floor|button·How lineups work": {
+      "reason": null,
+      "detail": "41px tall (floor 44)"
+    },
+    "coach-depth-chart|390|tap-floor|button·Help: Roster": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-depth-chart|390|tap-floor|button·List": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-depth-chart|390|tap-floor|button·Depth chart": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-depth-chart|390|tap-floor|a·Edit in Settings →": {
+      "reason": null,
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-depth-chart|390|tap-floor|button·Undo": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-depth-chart|390|tap-floor|button·Redo": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-depth-chart|390|tap-floor|a·Prepare a game lineup →": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-development|390|tap-floor|button·Help: Development": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-development|390|tap-floor|input·e.g. 60-yd sprint": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development|390|tap-floor|input·seconds": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development|390|tap-floor|button·Add test": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "coach-development|390|tap-floor|button·New session": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-development|390|tap-floor|a·Schedule →": {
+      "reason": null,
+      "detail": "15px tall (floor 44)"
+    },
+    "coach-development|390|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
+      "reason": null,
+      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
+    },
+    "coach-development-drills|390|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-drills|390|tap-floor|button·Help: Your drills": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-development-drills|390|tap-floor|button·All 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-drills|390|tap-floor|button·No tags 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-board|390|tap-floor|a·← Development": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|button·Help: Plan templates": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|button·All 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|button·No tags 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 10": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 11": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 12": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 13": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 14": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 15": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 2": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 3": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 4": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 5": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 6": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 7": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 8": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|390|tap-floor|a·New template 9": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|a·Schedule": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|a·View on schedule": {
+      "reason": null,
+      "detail": "23px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Help: Practice plan": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|a·Run practice": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Start this plan from…": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Save as template…": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Print the sheet": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·What the whole practice is for": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Search or add a tag": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Remove Cones": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Remove Bibs": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Remove Spare balls": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Equipment": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Block 1 title": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Minutes": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·What this is for": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Remove UAT Coach": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Staff": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Coaching point 1": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Coaching point 2": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Block 2 title": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Minutes between moves": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|select·Draw by": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Number for the draw": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Draw again": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Add a group": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Group name": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Station 1 name": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·What good looks like here": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Who runs it": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·A one-off note for this practice": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Station 2 name": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Remove Sam Assistant": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·UAT Coach": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Station 3 name": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Remove Jordan Helper": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|input·Block 3 title": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|390|tap-floor|button·Add a block": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-accounting|390|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-accounting|390|tap-floor|a·Build your budget": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-accounting|390|tap-floor|a·Skip — set dues directly": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-accounting|390|tap-floor|a·See what's outstanding": {
+      "reason": null,
+      "detail": "18px tall (floor 44)"
+    },
+    "coach-accounting|390|tap-floor|button·30d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-accounting|390|tap-floor|button·60d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-accounting|390|tap-floor|button·90d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-accounting|390|tap-floor|a·See the full payment schedule →": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|a·Back to Money": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·Add Line": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·Start — about a minute": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·See a finished example": {
+      "reason": null,
+      "detail": "41px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·Or add lines yourself": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·Import a spreadsheet": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget|390|tap-floor|button·Set a season total instead": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|a·Back to Money": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|button·Export as Excel": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|button·More export formats": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|390|tap-floor|button·See a finished example": {
+      "reason": null,
+      "detail": "41px tall (floor 44)"
+    },
+    "coach-expenses|390|tap-floor|a·Back to Money": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-expenses|390|tap-floor|button·Expenses (0)": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|390|tap-floor|button·Payables (0)": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-expenses|390|tap-floor|button·Payment schedule": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-dues|390|tap-floor|a·Back to Money": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-dues|390|tap-floor|button·Export as Excel": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-dues|390|tap-floor|button·More export formats": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-dues|390|tap-floor|a·Open budget plan": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-dues|390|tap-floor|button·Enabled": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-announcements|390|tap-floor|button·Help: Email families": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-announcements|390|tap-floor|button·Refresh contacts": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-announcements|390|tap-floor|input·Announcement subject": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-announcements|390|tap-floor|button·Send announcement": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "coach-documents|390|tap-floor|button·Help: Documents": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-staff|390|tap-floor|button·Help: Coaching staff": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-staff|390|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "13px tall (floor 44)"
+    },
+    "coach-settings|390|tap-floor|button·Help: Team settings": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-settings|390|tap-floor|a·Season Review": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-settings|390|tap-floor|input·No limit": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-settings|390|tap-floor|button·Save rules": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-tryouts|390|tap-floor|button·Help: Tryouts": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-tryouts|390|tap-floor|button·How tryouts work": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-tryouts|390|tap-floor|button·Take me there": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-tryouts|390|tap-floor|button·Reveal player names (one-way — can’t swi": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-tryouts|390|tap-floor|button·Add session": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-tryouts|390|tap-floor|a·Open day-of check-in": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "coach-tryouts|390|tap-floor|button·Set up scorecard": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-tryouts|390|tap-floor|button·Add evaluator": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history|390|tap-floor|button·Help: Insights": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-history|390|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
+      "reason": null,
+      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
+    },
+    "coach-history-development|390|tap-floor|a·← Insights": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#1 Avery Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#2 Blake Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#3 Casey Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#4 Devon Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#5 Emerson Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#6 Frankie Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#7 Gray Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#8 Harper Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#9 Indigo Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#10 Jules Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#11 Kai Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|a·#12 Logan Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|button·All 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-history-development|390|tap-floor|button·No tags 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-history-results|390|tap-floor|a·← Insights": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-results|390|tap-floor|button·Help: Insights": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-overview|361|tap-floor|button·Season setup2/5": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-overview|361|tap-floor|button·Help: Premium Coaches Portal": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-overview|361|tap-floor|button·Skip this step": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-overview|361|tap-floor|button·Take the 2-minute tour": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|361|tap-floor|button·Season setup2/5": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|361|tap-floor|button·Help: Premium Coaches Portal": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|361|tap-floor|button·Skip this step": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|361|tap-floor|button·Take the 2-minute tour": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-notifications|361|tap-floor|a·Notification settings": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-notifications|361|tap-floor|button·All": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-notifications|361|tap-floor|button·Needs attention": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-notifications|361|tap-floor|button·Activity": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-notifications|361|tap-floor|button·Unread": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·What’s New": {
+      "reason": null,
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|input·Search this guide": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|button·Sections": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·← All guides": {
+      "reason": null,
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Why don’t I see my team?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How do I score players myself?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Why does it say there’s no one to email?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How do I pay the tournament entry fee?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How do I join a tournament’s chat?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Will I be notified of new chat messages?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Can I report a message or mute a chat?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Where are my notifications on my phone?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·What can I keep on each player?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How do I set up my pitchers?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Where do I start with my team’s money?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·What should my season budget include?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How do I set every player’s dues at once": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Can I read my budget on my phone?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How do I add games to a tournament?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How do I tag a game?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Can I rename, merge, or delete a tag?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How do I give a player an award?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Can I rename or retire an award?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Why won’t it accept my dates?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Can I save and reuse lineups (templates)": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·Running it at the field": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·Plan templates": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·Player Development": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·Repeating practices": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Where do I write a practice plan?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·Writing the plan": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Can I get drills from last season?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·What are the drills marked “Club”?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·Your drills": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·Attendance": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Why is “New session” switched off?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Can I type my own question?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·What is the keepsake card?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·How many people can follow my team?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Who can open a game link I share?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Why can’t I change my division?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|tap-floor|summary·Can I change my team’s division?": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-help|361|contrast|a·What’s New·rgb(87, 101, 30)on8,12,20": {
+      "reason": null,
+      "detail": "3.06:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(8, 12, 20) at 12px"
+    },
+    "coach-help|361|contrast|button·Sections·rgb(87, 101, 30)on17,21,29": {
+      "reason": null,
+      "detail": "2.84:1 (needs 4.5:1) — rgb(87, 101, 30) on rgb(17, 21, 29) at 12px"
+    },
+    "coach-schedule|361|tap-floor|button·List": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|361|tap-floor|button·Week": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|361|tap-floor|button·Month": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule|361|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-schedule|361|tap-floor|button·Export as Excel": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule|361|tap-floor|button·More export formats": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule|361|tap-floor|button·Help: Schedule": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule|361|tap-floor|button·Add event": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-attendance|361|tap-floor|a·← Insights": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-attendance|361|tap-floor|button·Help: Attendance": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-attendance|361|tap-floor|a·Take attendance": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Attendance": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Export as Excel": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·More export formats": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Add player": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Help: Roster": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Create link": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Staff only": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Families": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Public link": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·List": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Depth chart": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Avery Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Avery Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Avery Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Blake Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Blake Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Blake Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Casey Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Casey Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Casey Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Devon Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Devon Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Devon Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Emerson Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Emerson Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Emerson Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Frankie Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Frankie Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Frankie Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Gray Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Gray Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Gray Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Harper Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Harper Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Harper Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Indigo Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Indigo Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Indigo Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Jules Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Jules Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Jules Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Kai Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Kai Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Kai Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|a·Logan Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Logan Test up": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-roster|361|tap-floor|button·Move Logan Test down": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-lineups|361|tap-floor|button·Help: Lineups": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-lineups|361|tap-floor|button·Games": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-lineups|361|tap-floor|button·Templates": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-lineups|361|tap-floor|button·How lineups work": {
+      "reason": null,
+      "detail": "41px tall (floor 44)"
+    },
+    "coach-depth-chart|361|tap-floor|button·Help: Roster": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-depth-chart|361|tap-floor|button·List": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-depth-chart|361|tap-floor|button·Depth chart": {
+      "reason": null,
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-depth-chart|361|tap-floor|a·Edit in Settings →": {
+      "reason": null,
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-depth-chart|361|tap-floor|button·Undo": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-depth-chart|361|tap-floor|button·Redo": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-depth-chart|361|tap-floor|a·Prepare a game lineup →": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-development|361|tap-floor|button·Help: Development": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-development|361|tap-floor|input·e.g. 60-yd sprint": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development|361|tap-floor|input·seconds": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development|361|tap-floor|button·Add test": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "coach-development|361|tap-floor|button·New session": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-development|361|tap-floor|a·Schedule →": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-development|361|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
+      "reason": null,
+      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
+    },
+    "coach-development-drills|361|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-drills|361|tap-floor|button·Help: Your drills": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-development-drills|361|tap-floor|button·All 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-drills|361|tap-floor|button·No tags 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-board|361|tap-floor|a·← Development": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|button·Help: Plan templates": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|button·All 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|button·No tags 15": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 10": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 11": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 12": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 13": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 14": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 15": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 2": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 3": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 4": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 5": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 6": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 7": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 8": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-development-templates|361|tap-floor|a·New template 9": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|a·Schedule": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|a·View on schedule": {
+      "reason": null,
+      "detail": "23px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Help: Practice plan": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|a·Run practice": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Start this plan from…": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Save as template…": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Print the sheet": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·What the whole practice is for": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Search or add a tag": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Remove Cones": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Remove Bibs": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Remove Spare balls": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Equipment": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Block 1 title": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Minutes": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·What this is for": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Remove UAT Coach": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Staff": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Coaching point 1": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Coaching point 2": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Block 2 title": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Minutes between moves": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|select·Draw by": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Number for the draw": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Draw again": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Add a group": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Group name": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Station 1 name": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·What good looks like here": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Who runs it": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·A one-off note for this practice": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Station 2 name": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Remove Sam Assistant": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·UAT Coach": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Station 3 name": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Remove Jordan Helper": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|input·Block 3 title": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-practice-plan|361|tap-floor|button·Add a block": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-accounting|361|tap-floor|button·Help: Money": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-accounting|361|tap-floor|a·Build your budget": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-accounting|361|tap-floor|a·Skip — set dues directly": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-accounting|361|tap-floor|a·See what's outstanding": {
+      "reason": null,
+      "detail": "18px tall (floor 44)"
+    },
+    "coach-accounting|361|tap-floor|button·30d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-accounting|361|tap-floor|button·60d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-accounting|361|tap-floor|button·90d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "coach-accounting|361|tap-floor|a·See the full payment schedule →": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|a·Back to Money": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·Import": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·Add Line": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·Start — about a minute": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·See a finished example": {
+      "reason": null,
+      "detail": "41px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·Or add lines yourself": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·Import a spreadsheet": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget|361|tap-floor|button·Set a season total instead": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|a·Back to Money": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|button·Export as Excel": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|button·More export formats": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-budget-vs-actual|361|tap-floor|button·See a finished example": {
+      "reason": null,
+      "detail": "41px tall (floor 44)"
+    },
+    "coach-expenses|361|tap-floor|a·Back to Money": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-expenses|361|tap-floor|button·Expenses (0)": {
+      "reason": null,
+      "detail": "43px tall (floor 44)"
+    },
+    "coach-expenses|361|tap-floor|button·Payables (0)": {
+      "reason": null,
+      "detail": "43px tall (floor 44)"
+    },
+    "coach-expenses|361|tap-floor|button·Payment schedule": {
+      "reason": null,
+      "detail": "43px tall (floor 44)"
+    },
+    "coach-dues|361|tap-floor|a·Back to Money": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-dues|361|tap-floor|button·Export as Excel": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-dues|361|tap-floor|button·More export formats": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-dues|361|tap-floor|a·Open budget plan": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-dues|361|tap-floor|button·Enabled": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-announcements|361|tap-floor|button·Help: Email families": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-announcements|361|tap-floor|button·Refresh contacts": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-announcements|361|tap-floor|input·Announcement subject": {
+      "reason": null,
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-announcements|361|tap-floor|button·Send announcement": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "coach-documents|361|tap-floor|button·Help: Documents": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-staff|361|tap-floor|button·Help: Coaching staff": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-staff|361|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "13px tall (floor 44)"
+    },
+    "coach-settings|361|tap-floor|button·Help: Team settings": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-settings|361|tap-floor|a·Season Review": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-settings|361|tap-floor|input·No limit": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-settings|361|tap-floor|button·Save rules": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "coach-tryouts|361|tap-floor|button·Help: Tryouts": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-tryouts|361|tap-floor|button·How tryouts work": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-tryouts|361|tap-floor|button·Take me there": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-tryouts|361|tap-floor|button·Reveal player names (one-way — can’t swi": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-tryouts|361|tap-floor|button·Add session": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-tryouts|361|tap-floor|a·Open day-of check-in": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "coach-tryouts|361|tap-floor|button·Set up scorecard": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-tryouts|361|tap-floor|button·Add evaluator": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history|361|tap-floor|button·Help: Insights": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-history|361|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
+      "reason": null,
+      "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
+    },
+    "coach-history-development|361|tap-floor|a·← Insights": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#1 Avery Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#2 Blake Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#3 Casey Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#4 Devon Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#5 Emerson Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#6 Frankie Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#7 Gray Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#8 Harper Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#9 Indigo Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#10 Jules Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#11 Kai Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|a·#12 Logan Test": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|button·All 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-history-development|361|tap-floor|button·No tags 1": {
+      "reason": null,
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-history-results|361|tap-floor|a·← Insights": {
+      "reason": null,
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-results|361|tap-floor|button·Help: Insights": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
     }
   }
 }
