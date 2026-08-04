@@ -1,5 +1,15 @@
 import type { DemoOrgKind } from './demo-org';
+import { DEMO_TOURNAMENT_SLUG, DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG } from './demo-org';
 import { SEE_IT_LIVE_PATH } from './sandbox-door';
+
+// The dock ↔ tournament-provider contract constants live in `lib/demo-org.ts` (the neutral module
+// both sides already import — the shared provider must never depend on THIS file). Re-exported
+// here so chrome-side consumers keep one import.
+export {
+  SANDBOX_TOURNAMENT_DATASET_KEY,
+  SANDBOX_TOURNAMENT_CHANGED_EVENT,
+  SANDBOX_SELECT_TOURNAMENT_EVENT,
+} from './demo-org';
 
 /**
  * lib/sandbox-chrome.ts — what the sandbox hat SAYS, for any demo org.
@@ -15,6 +25,89 @@ import { SEE_IT_LIVE_PATH } from './sandbox-door';
 
 /** Which half of the product the visitor is standing in. Decided from the URL, client-side. */
 export type SandboxSide = 'public' | 'operator';
+
+// ── The moments dock (Phase 2, ratified 2026-08-04) ─────────────────────────────────────────
+//
+// The sandbox's ONE org runs three events in three lifecycle states, and the dock is plain
+// navigation between them.
+
+/** The three moment keys, in the order the year happens. The type derives from this array so a
+ *  fourth moment cannot be added to one without the other (the chrome's storage shape-check
+ *  reads the array; the definitions below carry the type). */
+export const SANDBOX_MOMENT_KEYS = ['registration-week', 'game-day', 'morning-after'] as const;
+export type SandboxMomentKey = (typeof SANDBOX_MOMENT_KEYS)[number];
+
+export interface SandboxMoment {
+  key: SandboxMomentKey;
+  /** The tab's name — a moment in the year, never a feature. */
+  label: string;
+  /** The time anchor under the label: where in the year this moment sits. */
+  sub: string;
+  /** This moment's event. The dock highlights whichever moment owns the page the visitor is on. */
+  tournamentSlug: string;
+  /** Where a fan-side press lands: the event's public home. */
+  fanPath: string;
+  /** Where an operator-side press lands: the moment's flagship admin screen (or the door). */
+  operatorPath: string;
+  /** Only Game day carries the live dot — it is the only moment that moves. */
+  isLive?: boolean;
+  /** What the narration strip says on arrival, per side. Time named first, always. */
+  saidPublic: string;
+  saidOperator: string;
+  /**
+   * What the banner's countdown slot shows while standing in this moment. Null = Game day's
+   * own replay countdown. A stranger at a finished event must never read "Replays in 38:12" —
+   * that countdown belongs to the Summer Classic's loop and would be a lie anywhere else.
+   */
+  bannerNote: string | null;
+}
+
+/** The three moments of the demo's year, in the order the year happens. */
+export function sandboxMoments(
+  kind: DemoOrgKind,
+  org: { slug: string; landingPath: string },
+  access: SandboxTourAccess = { isDemoOrganizer: true },
+): SandboxMoment[] {
+  if (kind !== 'tournament') return [];
+  const adminBase = `/${org.slug}/admin/tournaments`;
+  const operatorPath = (path: string) => (access.isDemoOrganizer ? path : SEE_IT_LIVE_PATH);
+  return [
+    {
+      key: 'registration-week',
+      label: 'Registration week',
+      sub: '3 weeks before',
+      tournamentSlug: DEMO_INVITATIONAL_SLUG,
+      fanPath: `/${org.slug}/${DEMO_INVITATIONAL_SLUG}`,
+      operatorPath: operatorPath(`${adminBase}/registrations`),
+      saidPublic: 'You’ve jumped three weeks back. Registration is open — eleven teams are in, U11 is already full, and this page is what families are watching fill up.',
+      saidOperator: 'You’ve jumped three weeks back. Fifteen teams are in the pipeline, U11 is full with a waitlist, and this screen is where that week gets managed.',
+      bannerNote: 'First pitch in 3 weeks',
+    },
+    {
+      key: 'game-day',
+      label: 'Game day',
+      sub: 'happening now',
+      tournamentSlug: DEMO_TOURNAMENT_SLUG,
+      fanPath: org.landingPath,
+      operatorPath: operatorPath(`${adminBase}/dashboard`),
+      isLive: true,
+      saidPublic: 'Back to game day — the Summer Classic is live right now.',
+      saidOperator: 'Back to game day — the Summer Classic is live right now, and this dashboard is running it.',
+      bannerNote: null,
+    },
+    {
+      key: 'morning-after',
+      label: 'The morning after',
+      sub: 'ended yesterday',
+      tournamentSlug: DEMO_OPENER_SLUG,
+      fanPath: `/${org.slug}/${DEMO_OPENER_SLUG}`,
+      operatorPath: operatorPath(`${adminBase}/summary`),
+      saidPublic: 'This one wrapped yesterday. The champion is crowned and the final record is preserved — nobody had to type it up.',
+      saidOperator: 'The day after it all ended: every score in, the champion crowned, and the summary already written. Next year starts from one button.',
+      bannerNote: 'Wrapped up yesterday',
+    },
+  ];
+}
 
 /**
  * One beat of the guided tour.
@@ -45,6 +138,13 @@ export interface SandboxTourStep {
   anchor?: string;
   /** What the chrome says once the step has been delivered. Written for a stranger. */
   said: string;
+  /**
+   * Which of the org's tournaments this step's screen must be editing (operator steps only).
+   * The admin half addresses screens by context, not URL, so "on the page" is only half of
+   * "arrived" — a step that lands on the Teams screen of the WRONG event has not delivered.
+   * The chrome pins navigation with `?tournamentSlug=` and checks the provider's stamp.
+   */
+  tournamentSlug?: string;
   /**
    * This step's payoff is the live score moving, which happens on the tournament's clock rather
    * than on the visitor's click. The chrome adds a live countdown to the next run underneath the
@@ -164,6 +264,9 @@ export function sandboxTourSteps(
       n: 3,
       label: "Step into the organizer's seat",
       href: operatorHref(`${adminBase}/dashboard`),
+      // The org now runs THREE events, so every operator step names its event — otherwise the
+      // admin context opens whichever tournament it last edited, which may be the wrong moment.
+      ...(access.isDemoOrganizer ? { tournamentSlug: DEMO_TOURNAMENT_SLUG } : {}),
       anchor: '[data-sandbox-tour="now-playing"]',
       said: 'Same tournament, your side of it. The scores you just watched arrive are the ones sitting in "Needs a score".',
       nextLabel: 'Next: try to break it',
@@ -172,10 +275,40 @@ export function sandboxTourSteps(
       n: 4,
       label: 'Try to break the schedule',
       href: operatorHref(`${adminBase}/schedule`),
+      ...(access.isDemoOrganizer ? { tournamentSlug: DEMO_TOURNAMENT_SLUG } : {}),
       anchor: '[data-sandbox-tour="schedule-health"]',
       said: 'Drag any game onto a slot that is already busy. The health score reacts as you drop it — and nothing you do here is saved.',
+      nextLabel: 'Next: three weeks back',
+    },
+    // Steps 5–6 are the moments dock wearing its guided handle: same jumps, same arrival
+    // narration discipline. The tour now walks the year, not just the Saturday.
+    {
+      n: 5,
+      label: 'Go back three weeks',
+      href: operatorHref(`${adminBase}/registrations`),
+      ...(access.isDemoOrganizer ? { tournamentSlug: DEMO_INVITATIONAL_SLUG } : {}),
+      anchor: '[data-sandbox-tour="registration-health"]',
+      said: 'Three weeks before first pitch, the work looks like this: fifteen teams in the pipeline, U11 full with a waitlist forming, and the health score naming exactly who still owes what.',
+      nextLabel: 'Next: the morning after',
+    },
+    {
+      n: 6,
+      label: 'Skip to the morning after',
+      href: operatorHref(`${adminBase}/summary`),
+      ...(access.isDemoOrganizer ? { tournamentSlug: DEMO_OPENER_SLUG } : {}),
+      anchor: '[data-sandbox-tour="post-event-summary"]',
+      said: 'The day after it all ended: every score in, the champion crowned, and the summary already written. Next year starts from one button.',
     },
   ];
+}
+
+/**
+ * The narration strip's return label. Names the moment for the tournament sandbox; stays generic
+ * for any other kind — this chrome is org-agnostic, and the coach sandbox's home is not "game
+ * day" (latent-label finding from the Phase 2 review).
+ */
+export function sandboxBackLabel(kind: DemoOrgKind): string {
+  return kind === 'tournament' ? '← Back to game day' : '← Back to the demo';
 }
 
 /**

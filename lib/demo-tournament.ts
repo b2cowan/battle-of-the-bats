@@ -244,7 +244,9 @@ export const ROUND_ROBIN_PAIRS: readonly (readonly [number, number])[] = [
  * there is no spread to punish. 12:00 and 14:00 are also simply what a summer ball tournament
  * looks like.
  */
-const ROUND_ROBIN_SLOTS: readonly { dayOffset: number; facility: number; hour: number }[] = [
+// Exported so the Season Opener (lib/demo-moments.ts) derives its slots from this pattern with a
+// day shift, instead of retyping the six rows and silently drifting from the Classic's.
+export const ROUND_ROBIN_SLOTS: readonly { dayOffset: number; facility: number; hour: number }[] = [
   { dayOffset: -2, facility: 0, hour: 12 },
   { dayOffset: -2, facility: 1, hour: 12 },
   { dayOffset: -1, facility: 0, hour: 12 },
@@ -312,8 +314,9 @@ export interface DemoState {
   games: DemoGameState[];
 }
 
-/** The date `dayOffset` days from `anchor`, as a wall-clock date in the org's zone. */
-function shiftedDate(anchor: Date, dayOffset: number): string {
+/** The date `dayOffset` days from `anchor`, as a wall-clock date in the org's zone.
+ *  Exported for `lib/demo-moments.ts` — one copy of the demo's date arithmetic, not two. */
+export function shiftedDate(anchor: Date, dayOffset: number): string {
   const shifted = new Date(anchor.getTime() + dayOffset * 86_400_000);
   return utcToZonedInputs(shifted.toISOString(), ORG_TIME_ZONE).date;
 }

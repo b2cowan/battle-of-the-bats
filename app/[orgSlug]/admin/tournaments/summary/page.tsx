@@ -430,7 +430,10 @@ export default function TournamentSummaryPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
+      {/* data-sandbox-tour: inert hook for the demo tour's closing beat ("Skip to the morning
+          after"). On the header, not a sub-panel — the header renders in every state of this
+          page, and a tour step's proof may never be a panel the product is free to remove. */}
+      <div className={styles.pageHeader} data-sandbox-tour="post-event-summary">
         <div className={styles.headerIcon}><FileText size={21} /></div>
         <div>
           <h1 className={styles.pageTitle}>Post-Event Summary</h1>

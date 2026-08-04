@@ -148,9 +148,24 @@ was approved; final wording goes through `/marketing` before the door opens.
 - **Measured, not assumed:** the schedule scores **89–92 and reads HEALTHY at every hour of the
   day with zero conflicts**, verified across all 72 cycle-start × phase combinations.
 - **Phase 1b (flagged slice):** what-if drags in schedule/bracket editors with graceful nudge.
-- **Phase 2 (owner call):** moments dock (Registration week / Game day / The morning after) —
-  registration-week needs a second seeded tournament state with pending teams/payments in the
-  command center.
+- **Phase 2 — the moments dock. ✅ MOCKUPS APPROVED 2026-08-04, cleared to build.**
+  Mockups: `TOURNAMENT_SANDBOX_PHASE2_MOCKUPS.html` (artifact
+  `f8a2d820-31cb-409a-bbf0-91b7ceed933c`, rev 1) — **BINDING** for the dock, the jump, both new
+  moments and the six-step tour; Phase 1 mockups + the tour-rebuild rev stay binding for
+  everything else. Owner ratified, same message ("I agree with your recommendations"):
+  - **Shape B — ONE org, THREE tournaments** (not three orgs, not a per-visitor overlay). The
+    product's native multi-event model does the heavy lifting; every org-level Phase 1 guarantee
+    carries over untouched. Both new moments are STATIC — they re-anchor dates through the same
+    stateless reconcile, no cursor, no migration.
+  - **Dock = slim third chrome row** ("The year": Registration week / Game day / The morning
+    after), moment-aware countdown slot, jump narration through the existing strip.
+  - **Tour 4 → 6 steps**; step 6 ends on the operator's Post-Event Summary (not the fan
+    champions banner).
+  - **Fee AMOUNTS shown in registration week** ($600 / $150 deposit / one past due); payment
+    INSTRUCTIONS stay banned, as Phase 1 ruled.
+  - **Names:** Riverdale **Season Opener** (ended yesterday) · **Summer Classic** (today,
+    untouched) · **Invitational** (3 weeks out).
+  - **No Digital Ledger sealing in Phase 2** (possible Phase 3 beat).
 - **Phase 3:** polish — QR/share collateral, /see-it-live chooser if coach sandbox hasn't built
   it.
 
@@ -569,6 +584,116 @@ blocked-save nudge family, the curated corners and both marketing doors are unch
     agreeing in every case. `lib/public-pages.ts` + `lib/tournament-phase.ts` moved to explicit
     `.ts` relative imports so these visibility rules are unit-testable at all (the third time today
     that extension blocked verification). Help guide updated with the bracket-only exception.
+
+### Recorded 2026-08-04, building Phase 2 (the moments dock)
+
+**Mockups:** `TOURNAMENT_SANDBOX_PHASE2_MOCKUPS.html` (artifact `f8a2d820-31cb-409a-bbf0-91b7ceed933c`,
+rev 1) — approved with all five recommendations taken as drawn. Built same day. Phase 1 + tour-rebuild
+specs stay binding for everything Phase 2 does not supersede.
+
+43. **Shape B built: ONE org, THREE tournaments — and the product did most of the work.** The
+    handoff leaned toward three orgs; measured against the product, that inverted. Multi-event
+    orgs are the native model: the sidebar's "Editing Tournament" dropdown appears by itself at
+    two events, fan URLs are per-event, `tournament_plus` has unlimited slots. Every org-keyed
+    Phase 1 guarantee (write block, outbound silence, curation, chrome, sealed exits) covers all
+    three events with zero changes. **Verified, not assumed:** platform-metrics excludes ALL of a
+    demo org's tournaments (it queries the list, not the one slug), and robots excludes by org
+    path prefix — both already covered the new events.
+44. **The two new moments are STILL — dates only — and the reconcile stays ONE stateless job.**
+    `lib/demo-moments.ts` defines them as pure functions of the clock (Opener always ended
+    yesterday; Invitational always three weeks out, registrations re-anchored per team). The same
+    diff-only reconcile drags their dates along: **proven by a future(+2d)/restore/steady
+    round-trip against the dev DB — every date moved, moved back, then zero writes.** No cursor,
+    no migration; mig 224's every-2-min schedule now carries the moments at ~zero cost.
+45. **The chrome and the admin's tournament context talk through a narrow contract.** The chrome
+    mounts ABOVE the provider, so: the provider stamps its current event on `<html>` + announces
+    changes; the dock/tour announce selections; `?tournamentSlug=` was added to the provider's
+    existing deep-link resolution (slug beats id for shareability — ids differ per environment;
+    a general improvement, customer-usable). **Every sandbox link into the admin pins its event**
+    because the tournaments list orders by year with unspecified tie order — an unpinned link
+    lands on whichever event the context last held.
+46. **The champion is crowned by the seed, never by the scoring path.** `announceChampionsIfComplete`
+    fires only from the app's scoring service; the seed writes rows directly and sets
+    `champions_crowned_at` itself — so the crown exists, no notification can ever fire, and the
+    real announce path can never later claim an already-claimed timestamp. Champion is **Cedar
+    Hollow Cyclones** — deliberately not the Classic's leading club; pinned by probe + test.
+47. **Registration week's money story is division-level fee schedules, and one date does the
+    work.** The U13 deposit deadline sits 5 days in the PAST (re-anchored daily), so exactly one
+    accepted team that never paid its deposit reads Past Due, while U11's future deadlines keep
+    its unpaid teams at Pending. The mockups' exact buckets — 2 review / 2 waitlist / 3 unpaid /
+    **1 past due** / 0 missing-email — are pinned three ways, all through the app's REAL
+    attention engine: the probe (live DB), the sweep (84 moments incl. midnight/DST seams), and
+    unit tests. Fee amounts $600/$150 shown; payment instructions still banned (probe asserts).
+48. **The Registration Health panel arrives expanded in a demo** (mirror of note 31's schedule
+    panel — the panel IS step 5's destination). Tour anchors: `registration-health` on the
+    panel (renders whenever teams exist — seed guarantees it), `post-event-summary` on the
+    summary PAGE HEADER (renders in every page state), both chosen against the
+    never-a-removable-panel rule.
+49. **Deviations from the drawn mockups, all copy-detail:** the Opener's final is the engine's
+    5–4 (Cyclones def. Rapids), not the illustrative 8–6; the pipeline holds 15 registrations
+    (11 accepted + 2 pending + 2 waitlisted), not the drawn "13" — narration sentences updated to
+    the seeded truth; the org home's "Upcoming Events" lists the Invitational and the Classic but
+    not the completed Opener (product rule — the dock is its door, as ratified with no sealing).
+50. **Verified by rendered measurement, not screenshots** (the standing rule): at 1440 and 390,
+    both halves — chrome publishes its measured height, nothing paints over the banner
+    (`elementFromPoint` at the banner), dock renders three moments with the right active tab and
+    banner slot on all three fan pages; operator-side dock presses navigate, switch the editing
+    context, flip the active tab + banner slot, and narrate ("three weeks back" / "day after it
+    all ended"); health panel arrives open; summary anchor rings. ⚠ First measurement run showed
+    two "failures" that were **dev-server cold-compile latency**, not defects — re-measured warm,
+    all green. Contract tests: 43 existing pass unchanged + **17 new** in
+    `tests/unit/demo-sandbox-moments.test.ts` (shape-B pin: the allow-list must still hold
+    exactly one tournament org; year-order invariants; bucket counts; dock/tour rules).
+    `sweep-demo-sandbox.mjs` extended per sample: **84/84, health range unchanged at 89–92.**
+51. **Accepted, deliberately:** the Opener's team `registered_at` stamps sit at seed time and
+    drift (visible only inside expanded rows of a locked, completed event); the operator ⇄ flip
+    resolver was left untouched (product truth for multi-event orgs — dock/tour pins carry the
+    moment alignment); the fan-side register form renders fully and submits into the Phase 1
+    write block's existing refusal + toast.
+
+52. **✅ `/simplify` + `/review` + `/docs` (2026-08-04, Phase 2).**
+    **`/simplify` (4 lenses): 10 applied, 4 skipped.** Applied: pool-key formula unified into ONE
+    parameterized `poolKeyFor` (its own docstring had warned against a second copy — and a second
+    copy existed); the chrome↔provider contract constants moved to `lib/demo-org.ts` so the shared
+    provider never imports from the demo chrome's module (dependency direction); date math,
+    coach-email formula, and the Opener's slot pattern now derive from the Classic's exports
+    instead of retyped copies; the seed's wipe + venue blocks became shared helpers used by all
+    three events; the probe's contact rule extracted; the Invitational bucket plumbing became ONE
+    helper in `demo-moments.ts` used by sweep + tests (an inline copy had already drifted onto
+    hardcoded fee literals); the tour state became discriminated unions (`strip`, `pendingNav`) so
+    "one strip, one voice" is type-enforced; moment keys derive from one array.
+    *Skipped with reasons:* gating reconcile child-reads behind the window diff (would trade the
+    2-minute self-heal for a 24-hour one to save ~5 tiny selects/2min on a demo cron); parallelizing
+    the two moment blocks and per-row writes (non-issues per the efficiency lens's own weighing);
+    a shared "demo-expanded panel" hook at two call sites (promote at the third).
+    **`/review` — high-risk tier, 5 lenses (correctness, security, data-contract, concurrency,
+    regression). Security and regression came back CLEAN — no path from sandbox machinery to a
+    real customer. 7 findings confirmed and FIXED:**
+    - ⚠ **[High] The dock's active-moment press was a silent no-op from that moment's own
+      subpages** — prefix matching made `/standings` read as "already at game day", so the strip
+      claimed "Back to game day" while nothing moved: the exact false-claim class this project
+      exists to remove, reintroduced by my own "narrate in place" branch. Now "here" means the
+      exact page; a subpage press navigates home. Verified live.
+    - **[Med] A dock/tour selection arriving before the provider's first fetch resolved was
+      silently dropped** (the press navigated but the editing context never switched and the
+      narration never fired — a few-hundred-ms window exactly where a fast fan→operator visitor
+      lives). Unmatched selections are now stashed and honoured when the list lands.
+    - **[Med] The Opener's self-heal restored a hand-edited game's status/scores but not its
+      submission trail** — contradicting the shared helper's own docstring; heals whole now, and
+      the probe asserts provenance on every run.
+    - [Low] 0-row updates during a reconcile-vs-reseed race logged as successful re-anchors
+      (writes now confirm a row changed); leaving the operator half cleared the tournament stamp
+      without announcing it (announced now); the probe's bucket check used an implicit "today"
+      (explicit now); "← Back to game day" was hardcoded in org-agnostic chrome (per-kind now).
+    *Refuted:* "payment_status mislabels deposit-paid teams" — the column's legal domain is two
+    values; richer states are computed by the display layer. *Confirmed-as-intended:* dock presses
+    narrate but don't ring anchors (the tour is the guided path); the slug deep-link is guessable
+    but crosses no boundary (server-side org+assignment scoping); two tabs share the per-org
+    editing memory (pre-existing product semantics).
+    **Post-fix gate:** tsc 0 errors · lint 0 · 60/60 tests · probe all-green (incl. the new
+    provenance assertion) · sweep 84/84 at 89–92 · High fix proven in the browser.
+    **`/docs`: no help changes** — the demo stays undocumented while the doors are env-hidden
+    (Phase 1 precedent), and no real-customer flow moved; nothing any guide says became wrong.
 
 **⬜ OPEN QUESTION FOR THE OWNER (raised 2026-08-03):** what should the door do when the visitor is
 ALREADY SIGNED IN? Today it refuses to replace their session (Build note 7), which costs them the

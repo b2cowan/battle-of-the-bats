@@ -1,4 +1,7 @@
-import { tournamentToday } from './timezone';
+// Explicit `.ts` extension (repo convention, `allowImportingTsExtensions`) so the demo sandbox's
+// probe/sweep scripts can import THIS module — the registration-week moment is verified with the
+// app's real attention engine, not a hand-copied rule (the same reason public-pages.ts moved).
+import { tournamentToday } from './timezone.ts';
 export type RegistrationAttentionKey =
   | 'pending_review'
   | 'waitlist'

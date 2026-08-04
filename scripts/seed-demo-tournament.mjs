@@ -41,6 +41,14 @@ import {
   DEMO_BRACKET_CODES, ROUND_ROBIN_PAIRS,
   resolveDemoState, demoCoachEmail, roundRobinFacilityIndex,
 } from '../lib/demo-tournament.ts';
+import {
+  DEMO_OPENER_SLUG, DEMO_OPENER_NAME, OPENER_DIVISIONS, OPENER_REJECTED_TEAM,
+  OPENER_PLAYOFF_CONFIG, OPENER_FEE, OPENER_TOURNAMENT_SETTINGS, openerBracketSeeds,
+  resolveOpenerState,
+  DEMO_INVITATIONAL_SLUG, DEMO_INVITATIONAL_NAME, INVITATIONAL_FEE,
+  INVITATIONAL_TOURNAMENT_SETTINGS, resolveInvitationalState,
+  registeredAtIsoFor,
+} from '../lib/demo-moments.ts';
 
 const PROD_PROJECT_REF = 'qcttcboqysynwcdyghil';
 const allowProd = process.argv.includes('--allow-prod');
@@ -131,20 +139,9 @@ if (!membership) {
 }
 
 // ── 4. wipe any prior demo tournament ────────────────────────────────────────────────────────
-const prior = (await db.from('tournaments').select('id').eq('org_id', org.id).eq('slug', DEMO_TOURNAMENT_SLUG)).data;
-if (prior?.length) {
-  const oldId = prior[0].id;
-  const oldDivs = (await db.from('divisions').select('id').eq('tournament_id', oldId)).data ?? [];
-  const oldVenues = (await db.from('diamonds').select('id').eq('tournament_id', oldId)).data ?? [];
-  await db.from('games').delete().eq('tournament_id', oldId);
-  if (oldVenues.length) await db.from('venue_facilities').delete().in('venue_id', oldVenues.map(v => v.id));
-  await db.from('diamonds').delete().eq('tournament_id', oldId);
-  await db.from('teams').delete().eq('tournament_id', oldId);
-  if (oldDivs.length) await db.from('pools').delete().in('division_id', oldDivs.map(d => d.id));
-  await db.from('divisions').delete().eq('tournament_id', oldId);
-  await db.from('tournaments').delete().eq('id', oldId);
-  console.log('wiped prior demo tournament');
-}
+// One wipe routine for all three events — `wipeTournamentBySlug` is declared with the Phase 2
+// sections below (function declarations hoist), so the delete order lives in exactly one place.
+await wipeTournamentBySlug(DEMO_TOURNAMENT_SLUG);
 
 // ── 5. the state the clock implies right now ─────────────────────────────────────────────────
 const state = resolveDemoState(new Date());
@@ -169,21 +166,8 @@ die('insert tournament', (await db.from('tournaments').insert({
 })).error);
 
 // ── 7. venue + diamonds ──────────────────────────────────────────────────────────────────────
-const venueId = randomUUID();
-die('insert venue', (await db.from('diamonds').insert({
-  id: venueId, tournament_id: tournamentId, name: DEMO_VENUE_NAME,
-  address: '1 Riverdale Park Road, Riverdale ON',
-})).error);
-
-const facilityIds = [];
-for (let i = 0; i < DEMO_FACILITIES.length; i++) {
-  const id = randomUUID();
-  facilityIds.push(id);
-  die('insert facility', (await db.from('venue_facilities').insert({
-    id, venue_id: venueId, tournament_id: tournamentId,
-    name: DEMO_FACILITIES[i], facility_type: 'diamond', display_order: i,
-  })).error);
-}
+// Shared with the Phase 2 events below — every demo event plays at the same fictional park.
+const { venueId, facilityIds } = await insertDemoVenue(tournamentId);
 
 // ── 8. divisions + teams ─────────────────────────────────────────────────────────────────────
 const divisionIds = new Map();     // division name → id
@@ -310,6 +294,238 @@ for (const row of bracketRows) {
   })).error);
 }
 
+// ═════════════════════════ Phase 2 — the two STILL moments of the year ═══════════════════════
+// One org, three tournaments (ratified 2026-08-04). The Opener finished yesterday; the
+// Invitational is three weeks out. Neither ever ticks — the reconcile job only re-anchors their
+// dates — so everything below is written once and stays put until the calendar moves.
+
+/** The one fictional park, with its four diamonds (or none, for an event with nothing scheduled). */
+async function insertDemoVenue(tournamentId, { withFacilities = true } = {}) {
+  const venueId = randomUUID();
+  die('insert venue', (await db.from('diamonds').insert({
+    id: venueId, tournament_id: tournamentId, name: DEMO_VENUE_NAME,
+    address: '1 Riverdale Park Road, Riverdale ON',
+  })).error);
+  const facilityIds = [];
+  if (withFacilities) {
+    for (let i = 0; i < DEMO_FACILITIES.length; i++) {
+      const id = randomUUID();
+      facilityIds.push(id);
+      die('insert facility', (await db.from('venue_facilities').insert({
+        id, venue_id: venueId, tournament_id: tournamentId,
+        name: DEMO_FACILITIES[i], facility_type: 'diamond', display_order: i,
+      })).error);
+    }
+  }
+  return { venueId, facilityIds };
+}
+
+/** Wipe a prior demo tournament by slug — the ONE delete order for all three events. */
+async function wipeTournamentBySlug(slug) {
+  const rows = (await db.from('tournaments').select('id').eq('org_id', org.id).eq('slug', slug)).data;
+  if (!rows?.length) return;
+  const oldId = rows[0].id;
+  const oldDivs = (await db.from('divisions').select('id').eq('tournament_id', oldId)).data ?? [];
+  const oldVenues = (await db.from('diamonds').select('id').eq('tournament_id', oldId)).data ?? [];
+  await db.from('games').delete().eq('tournament_id', oldId);
+  if (oldVenues.length) await db.from('venue_facilities').delete().in('venue_id', oldVenues.map(v => v.id));
+  await db.from('diamonds').delete().eq('tournament_id', oldId);
+  await db.from('teams').delete().eq('tournament_id', oldId);
+  if (oldDivs.length) await db.from('pools').delete().in('division_id', oldDivs.map(d => d.id));
+  await db.from('divisions').delete().eq('tournament_id', oldId);
+  await db.from('tournaments').delete().eq('id', oldId);
+  console.log(`wiped prior ${slug}`);
+}
+
+// ── The Season Opener — finished yesterday, champion crowned ────────────────────────────────
+await wipeTournamentBySlug(DEMO_OPENER_SLUG);
+const opener = resolveOpenerState(new Date());
+
+const openerId = randomUUID();
+die('insert opener', (await db.from('tournaments').insert({
+  id: openerId, org_id: org.id,
+  slug: DEMO_OPENER_SLUG, name: DEMO_OPENER_NAME,
+  year: Number(opener.endDate.slice(0, 4)),
+  status: 'completed', is_active: false,
+  start_date: opener.startDate, end_date: opener.endDate,
+  sport: 'baseball',
+  settings: OPENER_TOURNAMENT_SETTINGS,
+  fee_schedule_mode: 'tournament',
+  total_fee_amount: OPENER_FEE.totalFee,
+  deposit_amount: OPENER_FEE.deposit,
+  list_in_directory: false,
+  require_score_finalization: false,
+  notify_teams_on_complete: false,
+  // Crowned at seed time, directly — NEVER through the scoring path, which is the one that
+  // notifies. A set timestamp also means the real announce path could never claim it later.
+  champions_crowned_at: `${opener.crownedDate}T21:00:00.000Z`,
+})).error);
+
+const { venueId: openerVenueId, facilityIds: openerFacilityIds } = await insertDemoVenue(openerId);
+
+const openerDivisionIds = new Map();
+const openerTeamIds = new Map();
+const openerDomainTeams = [];
+for (let d = 0; d < OPENER_DIVISIONS.length; d++) {
+  const division = OPENER_DIVISIONS[d];
+  const divisionId = randomUUID();
+  openerDivisionIds.set(division.name, divisionId);
+  die('insert opener division', (await db.from('divisions').insert({
+    id: divisionId, tournament_id: openerId, name: division.name,
+    display_order: d, settings: {},
+    playoff_config: division.hasBracket ? OPENER_PLAYOFF_CONFIG : null,
+  })).error);
+  for (const team of division.teams) {
+    const teamId = randomUUID();
+    openerTeamIds.set(`${division.name}::${team.name}`, teamId);
+    // Same clubs as the Summer Classic, same coaches, same contact formula — one invented world.
+    die('insert opener team', (await db.from('teams').insert({
+      id: teamId, tournament_id: openerId, division_id: divisionId,
+      name: team.name, coach: team.coach, email: demoCoachEmail(team.name),
+      coach_email: demoCoachEmail(team.name),
+      status: 'accepted', payment_status: 'paid',
+      deposit_paid: OPENER_FEE.deposit, total_paid: OPENER_FEE.totalFee,
+      registered_at: nowIso,
+    })).error);
+    openerDomainTeams.push({ id: teamId, name: team.name, divisionId, status: 'accepted', poolId: null });
+  }
+}
+// The one turned-away registration, so the Post-Event Summary's "Rejected" row tells the truth.
+die('insert opener rejected team', (await db.from('teams').insert({
+  id: randomUUID(), tournament_id: openerId,
+  division_id: openerDivisionIds.get(OPENER_REJECTED_TEAM.division),
+  name: OPENER_REJECTED_TEAM.name, coach: OPENER_REJECTED_TEAM.coach,
+  email: demoCoachEmail(OPENER_REJECTED_TEAM.name),
+  coach_email: demoCoachEmail(OPENER_REJECTED_TEAM.name),
+  status: 'rejected', payment_status: 'pending', deposit_paid: 0, total_paid: 0,
+  registered_at: nowIso,
+})).error);
+
+const openerGameByKey = new Map(opener.games.map(g => [g.key, g]));
+const openerDomainGames = [];
+for (let divisionIndex = 0; divisionIndex < OPENER_DIVISIONS.length; divisionIndex++) {
+  const division = OPENER_DIVISIONS[divisionIndex];
+  const divisionId = openerDivisionIds.get(division.name);
+  for (let index = 0; index < ROUND_ROBIN_PAIRS.length; index++) {
+    const [homeIdx, awayIdx] = ROUND_ROBIN_PAIRS[index];
+    const home = division.teams[homeIdx];
+    const away = division.teams[awayIdx];
+    const desired = openerGameByKey.get(`RR-${division.name}-${index}`);
+    const gameId = randomUUID();
+    die('insert opener pool game', (await db.from('games').insert({
+      id: gameId, tournament_id: openerId, division_id: divisionId,
+      home_team_id: openerTeamIds.get(`${division.name}::${home.name}`),
+      away_team_id: openerTeamIds.get(`${division.name}::${away.name}`),
+      game_date: desired.date, game_time: desired.time,
+      diamond_id: openerVenueId, venue_facility_id: openerFacilityIds[desired.facilityIndex],
+      duration_minutes: DEMO_GAME_DURATION_MINUTES,
+      status: 'completed', is_playoff: false,
+      home_score: desired.homeScore, away_score: desired.awayScore,
+      score_submission_source: 'admin_results', score_submitted_at: nowIso,
+    })).error);
+    openerDomainGames.push({
+      id: gameId, divisionId,
+      homeTeamId: openerTeamIds.get(`${division.name}::${home.name}`),
+      awayTeamId: openerTeamIds.get(`${division.name}::${away.name}`),
+      homeScore: desired.homeScore, awayScore: desired.awayScore,
+      status: 'completed', isPlayoff: false,
+    });
+  }
+}
+
+// Seed the Opener's bracket through the app's OWN standings engine, exactly like the Classic —
+// then verify the engine agrees with the strengths, because the champion depends on it.
+const openerBracketDivision = OPENER_DIVISIONS.find(d => d.hasBracket);
+const openerBracketDivisionId = openerDivisionIds.get(openerBracketDivision.name);
+const openerStandings = computeTournamentStandings(
+  openerBracketDivisionId, openerDomainTeams, openerDomainGames,
+  OPENER_PLAYOFF_CONFIG, OPENER_TOURNAMENT_SETTINGS,
+);
+const openerSeeds = openerBracketSeeds();
+if (openerStandings[0]?.teamName !== openerSeeds[0].name) {
+  console.error(`❌ Opener standings disagree with strengths: engine #1 is ${openerStandings[0]?.teamName}, expected ${openerSeeds[0].name}`);
+  process.exit(1);
+}
+const openerSeedId = (rank) => openerStandings[rank - 1]?.teamId ?? null;
+
+const openerBracketRows = [
+  { code: DEMO_BRACKET_CODES.SF1, facility: 0, homeTeamId: openerSeedId(1), awayTeamId: openerSeedId(4),
+    homePlaceholder: 'Seed #1', awayPlaceholder: 'Seed #4' },
+  { code: DEMO_BRACKET_CODES.SF2, facility: 1, homeTeamId: openerSeedId(2), awayTeamId: openerSeedId(3),
+    homePlaceholder: 'Seed #2', awayPlaceholder: 'Seed #3' },
+  { code: DEMO_BRACKET_CODES.FIN, facility: 0, homeTeamId: openerSeedId(1), awayTeamId: openerSeedId(2),
+    homePlaceholder: `Winner ${DEMO_BRACKET_CODES.SF1}`, awayPlaceholder: `Winner ${DEMO_BRACKET_CODES.SF2}` },
+];
+for (const row of openerBracketRows) {
+  const desired = openerGameByKey.get(row.code);
+  die('insert opener bracket game', (await db.from('games').insert({
+    id: randomUUID(), tournament_id: openerId, division_id: openerBracketDivisionId,
+    home_team_id: row.homeTeamId, away_team_id: row.awayTeamId,
+    home_placeholder: row.homePlaceholder, away_placeholder: row.awayPlaceholder,
+    bracket_code: row.code,
+    game_date: desired.date, game_time: desired.time,
+    diamond_id: openerVenueId, venue_facility_id: openerFacilityIds[row.facility],
+    duration_minutes: DEMO_GAME_DURATION_MINUTES,
+    status: 'completed', is_playoff: true,
+    home_score: desired.homeScore, away_score: desired.awayScore,
+    score_submission_source: 'admin_results', score_submitted_at: nowIso,
+  })).error);
+}
+
+// ── The Invitational — three weeks out, mid-registration ────────────────────────────────────
+await wipeTournamentBySlug(DEMO_INVITATIONAL_SLUG);
+const invitational = resolveInvitationalState(new Date());
+
+const invitationalId = randomUUID();
+die('insert invitational', (await db.from('tournaments').insert({
+  id: invitationalId, org_id: org.id,
+  slug: DEMO_INVITATIONAL_SLUG, name: DEMO_INVITATIONAL_NAME,
+  year: Number(invitational.startDate.slice(0, 4)),
+  status: 'active', is_active: true,
+  start_date: invitational.startDate, end_date: invitational.endDate,
+  sport: 'baseball',
+  settings: INVITATIONAL_TOURNAMENT_SETTINGS,
+  // Fees live on the DIVISIONS (ratified: amounts shown, instructions never) — see demo-moments.
+  fee_schedule_mode: 'division',
+  list_in_directory: false,
+  require_score_finalization: false,
+  notify_teams_on_complete: false,
+})).error);
+
+// The park without diamonds — nothing is scheduled yet, but the fan page names the venue.
+await insertDemoVenue(invitationalId, { withFacilities: false });
+
+const invitationalDivisionIds = new Map();
+for (let d = 0; d < invitational.divisions.length; d++) {
+  const division = invitational.divisions[d];
+  const divisionId = randomUUID();
+  invitationalDivisionIds.set(division.name, divisionId);
+  die('insert invitational division', (await db.from('divisions').insert({
+    id: divisionId, tournament_id: invitationalId, name: division.name,
+    display_order: d, settings: {},
+    capacity: division.capacity, is_closed: false,
+    playoff_config: null,
+    deposit_amount: INVITATIONAL_FEE.deposit,
+    total_fee_amount: INVITATIONAL_FEE.totalFee,
+    deposit_due_date: division.depositDueDate,
+    total_fee_due_date: division.balanceDueDate,
+  })).error);
+}
+
+for (const team of invitational.teams) {
+  die('insert invitational team', (await db.from('teams').insert({
+    id: randomUUID(), tournament_id: invitationalId,
+    division_id: invitationalDivisionIds.get(team.division),
+    name: team.name, coach: team.coach,
+    email: demoCoachEmail(team.name), coach_email: demoCoachEmail(team.name),
+    status: team.status,
+    waitlist_position: team.waitlistPosition,
+    payment_status: team.totalPaid >= INVITATIONAL_FEE.totalFee ? 'paid' : 'pending',
+    deposit_paid: team.depositPaid, total_paid: team.totalPaid,
+    registered_at: registeredAtIsoFor(team.registeredDate),
+  })).error);
+}
+
 // ── report ───────────────────────────────────────────────────────────────────────────────────
 console.log(`\n✅ Seeded the sandbox — "${DEMO_TOURNAMENT_NAME}" for ${DEMO_ORG_NAME}`);
 console.log(`   Plan: tournament_plus (comped) · not discoverable · not in the directory`);
@@ -319,6 +535,9 @@ console.log(`   Cycle phase: ${state.phase} (minute ${state.minuteInCycle} of ${
 console.log(`   ${unscoredCount} pool game(s) intentionally unscored → "Needs a Score" is never empty`);
 console.log(`\n   ${bracketDivision.name} seeding from the real standings engine:`);
 standings.forEach((s, i) => console.log(`     #${i + 1} ${s.teamName}  (${s.w}-${s.l}${s.t ? '-' + s.t : ''}, ${s.pts} pts, RD ${s.rd >= 0 ? '+' : ''}${s.rd})`));
+console.log(`\n✅ Seeded the moments (Phase 2) — one org, three tournaments:`);
+console.log(`   "${DEMO_OPENER_NAME}" (${DEMO_OPENER_SLUG}) — completed ${opener.startDate} → ${opener.endDate}, champion ${openerStandings[0]?.teamName}`);
+console.log(`   "${DEMO_INVITATIONAL_NAME}" (${DEMO_INVITATIONAL_SLUG}) — registration open, first pitch ${invitational.startDate} (${invitational.teams.length} registrations)`);
 console.log(`\n   Fan side:  /${ORG_SLUG}/${DEMO_TOURNAMENT_SLUG}`);
 console.log(`   Operator:  /${ORG_SLUG}/admin/tournaments/dashboard`);
 console.log(`\n   Next: the reconcile job keeps this live. Nothing here is writable through the app.`);

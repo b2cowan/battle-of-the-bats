@@ -8,8 +8,16 @@ import type { DemoLiveBeat } from '@/lib/demo-tournament';
 import {
   formatResetCountdown,
   msUntilSandboxReset,
+  sandboxBackLabel,
   sandboxBannerCopy,
+  sandboxMoments,
   sandboxTourSteps,
+  SANDBOX_MOMENT_KEYS,
+  SANDBOX_SELECT_TOURNAMENT_EVENT,
+  SANDBOX_TOURNAMENT_CHANGED_EVENT,
+  SANDBOX_TOURNAMENT_DATASET_KEY,
+  type SandboxMoment,
+  type SandboxMomentKey,
   type SandboxSide,
   type SandboxTourStep,
 } from '@/lib/sandbox-chrome';
@@ -72,10 +80,11 @@ const BEAT_POLL_MS = 10_000;
 /** How long the pill celebrates a run after it lands. Long enough to catch a glance back. */
 const JUST_SCORED_MS = 12_000;
 /**
- * v3: v1 ticked chips on click and v2 tracked a per-side chip list. This is a single four-step
- * tour across both sides, so old progress cannot be mapped onto it and must not be inherited.
+ * v4: the tour grew from four steps to six (the moments dock, Phase 2), and progress gained the
+ * dock's own pending/narration records. v3's four-step shape cannot be mapped onto it.
+ * (v1 ticked chips on click; v2 tracked a per-side chip list.)
  */
-const TOUR_STATE_KEY = 'flhq_sandbox_tour_v3';
+const TOUR_STATE_KEY = 'flhq_sandbox_tour_v4';
 
 // ── The blocked-save bus ────────────────────────────────────────────────────────────────────
 // A module-level subscriber list rather than component state, because the thing doing the
@@ -125,18 +134,59 @@ function installSandboxFetchWatcher(): void {
 
 // ── Tour progress ───────────────────────────────────────────────────────────────────────────
 
+/**
+ * What the narration strip is saying — one union, because the strip has ONE voice. Encoding the
+ * exclusivity in the type (rather than two nullable fields every transition must remember to
+ * null out) is what makes "a step's sentence displaces a moment's" impossible to get wrong.
+ */
+type StripVoice =
+  | { kind: 'step'; n: number }
+  | { kind: 'moment'; key: SandboxMomentKey };
+
+/**
+ * A press that navigated and is waiting to arrive — carries where it was going, and (for an
+ * operator destination) WHICH event's screen counts as arriving. Redeemed only against its own
+ * destination, never against the next route change.
+ */
+type PendingNav =
+  | { kind: 'step'; n: number; href: string; slug: string | null }
+  | { kind: 'moment'; key: SandboxMomentKey; href: string; slug: string | null };
+
 interface TourState {
   /** The step the visitor is on, 1-based. */
   current: number;
   /** Steps delivered so far. */
   done: number[];
-  /** Which step's sentence the narration strip is showing, if any. */
-  narrating: number | null;
-  /** A step that navigated and is waiting to arrive — carries where it was going. */
-  pending: { n: number; href: string } | null;
+  /** What the strip is narrating, if anything. */
+  strip: StripVoice | null;
+  /** The one navigation waiting to be delivered, if any. */
+  pendingNav: PendingNav | null;
 }
 
-const EMPTY_TOUR: TourState = { current: 1, done: [], narrating: null, pending: null };
+const EMPTY_TOUR: TourState = { current: 1, done: [], strip: null, pendingNav: null };
+
+function isMomentKey(value: unknown): value is SandboxMomentKey {
+  return typeof value === 'string' && (SANDBOX_MOMENT_KEYS as readonly string[]).includes(value);
+}
+
+/** Shape-check one union member from untrusted storage; anything malformed reads as null. */
+function parseStrip(value: unknown): StripVoice | null {
+  if (!value || typeof value !== 'object') return null;
+  const v = value as Partial<StripVoice> & { n?: unknown; key?: unknown };
+  if (v.kind === 'step' && typeof v.n === 'number') return { kind: 'step', n: v.n };
+  if (v.kind === 'moment' && isMomentKey(v.key)) return { kind: 'moment', key: v.key };
+  return null;
+}
+
+function parsePendingNav(value: unknown): PendingNav | null {
+  if (!value || typeof value !== 'object') return null;
+  const v = value as { kind?: unknown; n?: unknown; key?: unknown; href?: unknown; slug?: unknown };
+  if (typeof v.href !== 'string') return null;
+  const slug = typeof v.slug === 'string' ? v.slug : null;
+  if (v.kind === 'step' && typeof v.n === 'number') return { kind: 'step', n: v.n, href: v.href, slug };
+  if (v.kind === 'moment' && isMomentKey(v.key)) return { kind: 'moment', key: v.key, href: v.href, slug };
+  return null;
+}
 
 function readTourState(): TourState {
   try {
@@ -148,11 +198,8 @@ function readTourState(): TourState {
     return {
       current: typeof parsed.current === 'number' ? parsed.current : 1,
       done: Array.isArray(parsed.done) ? parsed.done.filter(n => typeof n === 'number') : [],
-      narrating: typeof parsed.narrating === 'number' ? parsed.narrating : null,
-      pending:
-        parsed.pending && typeof parsed.pending.n === 'number' && typeof parsed.pending.href === 'string'
-          ? { n: parsed.pending.n, href: parsed.pending.href }
-          : null,
+      strip: parseStrip(parsed.strip),
+      pendingNav: parsePendingNav(parsed.pendingNav),
     };
   } catch {
     return EMPTY_TOUR; // a visitor with storage disabled simply starts the tour each page
@@ -205,6 +252,35 @@ export default function SandboxChrome({
     () => sandboxTourSteps(kind, { slug, landingPath }, { isDemoOrganizer }),
     [kind, slug, landingPath, isDemoOrganizer],
   );
+  const moments = useMemo(
+    () => sandboxMoments(kind, { slug, landingPath }, { isDemoOrganizer }),
+    [kind, slug, landingPath, isDemoOrganizer],
+  );
+
+  // ── Which moment is the visitor standing in? ────────────────────────────────────────────────
+  // Fan side: the event is named by the URL's second segment. Operator side: the admin half
+  // addresses screens by CONTEXT, not URL, so the tournament provider stamps its selection on
+  // <html> and announces changes — the dock highlights what is actually being edited, including
+  // when the visitor switches through the sidebar's own dropdown.
+  const [adminTournamentSlug, setAdminTournamentSlug] = useState<string | null>(null);
+  useEffect(() => {
+    const read = () =>
+      setAdminTournamentSlug(document.documentElement.dataset[SANDBOX_TOURNAMENT_DATASET_KEY] || null);
+    read();
+    window.addEventListener(SANDBOX_TOURNAMENT_CHANGED_EVENT, read);
+    return () => window.removeEventListener(SANDBOX_TOURNAMENT_CHANGED_EVENT, read);
+  }, []);
+
+  const activeMoment: SandboxMoment | null = useMemo(() => {
+    if (moments.length === 0) return null;
+    if (side === 'operator') {
+      return moments.find(m => m.tournamentSlug === adminTournamentSlug)
+        ?? moments.find(m => m.key === 'game-day')  // the door and the flip both land on game day
+        ?? null;
+    }
+    const eventSegment = pathname?.split('/')[2] ?? '';
+    return moments.find(m => m.tournamentSlug === eventSegment) ?? null;
+  }, [moments, side, adminTournamentSlug, pathname]);
 
   // ── The countdown ───────────────────────────────────────────────────────────────────────────
   // Starts empty and fills in after mount: the cycle boundary is a function of the wall clock, so
@@ -416,52 +492,115 @@ export default function SandboxChrome({
   const deliver = useCallback((state: TourState, n: number): TourState => ({
     current: Math.min(n + 1, Math.max(steps.length, 1)),
     done: state.done.includes(n) ? state.done : [...state.done, n],
-    narrating: n,
-    pending: null,
+    strip: { kind: 'step', n },
+    pendingNav: null,
   }), [steps.length]);
 
-  // Load progress, and settle a step that was mid-navigation when we left the last page — but ONLY
-  // if we actually arrived where it was sending us.
+  /** The admin half's current event, read fresh — state can lag the change event by a render. */
+  const currentAdminSlug = () =>
+    document.documentElement.dataset[SANDBOX_TOURNAMENT_DATASET_KEY] || null;
+
+  /**
+   * Has the visitor arrived at this destination? With three events in the org, "arrived" means
+   * being on the page AND — for an operator destination — editing the right event: the same
+   * admin pathname serving the wrong tournament has not delivered.
+   */
+  const arrivedAt = (href: string, slug: string | null) =>
+    isOnStepPage(pathname, href) && (slug === null || currentAdminSlug() === slug);
+
+  // Load progress, and settle a press that was mid-navigation when we left the last page — but
+  // ONLY if we actually arrived where it was sending us.
   //
-  // The pending record carries its destination and is redeemed only against it. An earlier build
+  // A pending record carries its destination and is redeemed only against it. An earlier build
   // flushed every pending label on the next route change whatever the destination, so pressing two
   // travelling steps quickly — or pressing one and then navigating somewhere else — ticked beats
-  // that were never seen.
-  useEffect(() => {
+  // that were never seen. This settlement runs on BOTH route changes and the provider's
+  // tournament-changed announcements (a same-pathname jump changes only the edited event).
+  const settleArrivals = useCallback(() => {
     const stored = readTourState();
-    if (stored.pending && isOnStepPage(pathname, stored.pending.href)) {
-      const arrived = stored.pending.n;
-      const next = deliver(stored, arrived);
-      // Session storage is an external system that exists only on the client, so it cannot be read
-      // in a state initializer without either breaking SSR or guaranteeing a hydration mismatch.
-      // This is the one-shot read on mount and on arrival, never a render loop.
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only external read
-      update(next);
-      // Let the destination paint before reaching for its beat.
-      const step = steps.find(s => s.n === arrived);
-      if (step) window.requestAnimationFrame(() => ringAnchor(step));
+    const nav = stored.pendingNav;
+
+    if (nav && arrivedAt(nav.href, nav.slug)) {
+      if (nav.kind === 'step') {
+        update(deliver(stored, nav.n));
+        // Let the destination paint before reaching for its beat.
+        const step = steps.find(s => s.n === nav.n);
+        if (step) window.requestAnimationFrame(() => ringAnchor(step));
+      } else {
+        update({ ...stored, strip: { kind: 'moment', key: nav.key }, pendingNav: null });
+      }
       return;
     }
+
     setTour(stored);
-    // `pathname` is the trigger: this runs on first mount and on every arrival.
+    // arrivedAt closes over pathname, which is already a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, deliver, update, ringAnchor, steps]);
+
+  // `pathname` (via settleArrivals) is the trigger: first mount and every route arrival.
+  // Session storage is an external system that exists only on the client, so it cannot be read in
+  // a state initializer without either breaking SSR or guaranteeing a hydration mismatch. This is
+  // the one-shot read on mount and on arrival, never a render loop.
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- client-only external read
+  useEffect(() => { settleArrivals(); }, [settleArrivals]);
+  // And the provider's announcement is the second trigger, for jumps that change only the
+  // edited tournament while the pathname stays put (e.g. Teams screen → Teams screen).
+  useEffect(() => {
+    const onChanged = () => settleArrivals();
+    window.addEventListener(SANDBOX_TOURNAMENT_CHANGED_EVENT, onChanged);
+    return () => window.removeEventListener(SANDBOX_TOURNAMENT_CHANGED_EVENT, onChanged);
+  }, [settleArrivals]);
+
+  /** Navigate to an operator screen, pinning WHICH event it should be editing. */
+  const goToOperatorScreen = useCallback((href: string, tournamentSlug: string | null) => {
+    router.push(tournamentSlug ? `${href}?tournamentSlug=${encodeURIComponent(tournamentSlug)}` : href);
+    if (tournamentSlug) {
+      // The URL param only resolves on a full load; the live provider listens for this instead.
+      window.dispatchEvent(new CustomEvent(SANDBOX_SELECT_TOURNAMENT_EVENT, {
+        detail: { slug: tournamentSlug },
+      }));
+    }
+  }, [router]);
 
   const onStep = useCallback((step: SandboxTourStep) => {
     if (!tour) return; // unreachable: the stepper only renders once progress has been read
-    if (isOnStepPage(pathname, step.href)) {
+    const slug = step.tournamentSlug ?? null;
+    if (arrivedAt(step.href, slug)) {
       // Already here: deliver in place. The narration strip appearing is the visible change, so
       // this branch is never silent even when the anchor is absent.
       update(deliver(tour, step.n));
       ringAnchor(step);
       return;
     }
-    update({ ...tour, pending: { n: step.n, href: step.href } });
-    router.push(step.href);
-  }, [pathname, tour, deliver, update, ringAnchor, router]);
+    update({ ...tour, pendingNav: { kind: 'step', n: step.n, href: step.href, slug } });
+    goToOperatorScreen(step.href, slug);
+    // arrivedAt closes over pathname, which is already a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, tour, deliver, update, ringAnchor, goToOperatorScreen]);
+
+  /** A dock press: same jumps as tour steps 5–6, wearing the self-serve handle. */
+  const onMoment = useCallback((moment: SandboxMoment) => {
+    if (!tour) return;
+    const target = side === 'operator' ? moment.operatorPath : moment.fanPath;
+    // Only a real operator screen can be pinned to an event — the door (the non-organizer
+    // fallback) takes no tournament and hands out its own session flow.
+    const navSlug = side === 'operator' && target.startsWith(`/${slug}/`) ? moment.tournamentSlug : null;
+    // "Already standing in it" means THIS page exactly — not any page of the moment. Prefix
+    // matching here made "Game day" a silent no-op from the Classic's own subpages: a visitor on
+    // /standings was told "Back to game day" while nothing moved, which is precisely the false
+    // claim this chrome exists to remove (caught in review). A subpage press navigates home.
+    const here = pathname === target && (navSlug === null || currentAdminSlug() === navSlug);
+    if (here) {
+      update({ ...tour, strip: { kind: 'moment', key: moment.key }, pendingNav: null });
+      return;
+    }
+    update({ ...tour, pendingNav: { kind: 'moment', key: moment.key, href: target, slug: navSlug } });
+    goToOperatorScreen(target, navSlug);
+  }, [tour, side, slug, pathname, update, goToOperatorScreen]);
 
   const jumpTo = useCallback((n: number) => {
     if (!tour) return;
-    update({ ...tour, current: n, narrating: null });
+    update({ ...tour, current: n, strip: null });
   }, [tour, update]);
 
   // ── The catch-all ───────────────────────────────────────────────────────────────────────────
@@ -479,11 +618,15 @@ export default function SandboxChrome({
   }, [toastAt]);
 
   const currentStep = tour ? steps.find(s => s.n === tour.current) ?? null : null;
-  const narratedStep = tour?.narrating != null ? steps.find(s => s.n === tour.narrating) ?? null : null;
+  // One strip, one voice — the union guarantees at most one of these is non-null.
+  const strip = tour?.strip ?? null;
+  const narratedStep = strip?.kind === 'step' ? steps.find(s => s.n === strip.n) ?? null : null;
+  const jumpMoment = strip?.kind === 'moment' ? moments.find(m => m.key === strip.key) ?? null : null;
   const tourComplete = !!tour && steps.length > 0 && tour.done.length >= steps.length;
-  // A step that travelled deserves a marked way back. The fan page is the tour's home and the one
-  // place every visitor recognises, so that is where "back" means.
-  const showBack = narratedStep != null && !isOnStepPage(pathname, landingPath);
+  // A step that travelled deserves a marked way back. Game day's fan page is the tour's home and
+  // the one place every visitor recognises, so that is where "back" means — and the label names
+  // the moment now that there is more than one to be standing in.
+  const showBack = (narratedStep != null || jumpMoment != null) && !isOnStepPage(pathname, landingPath);
 
   const sinceMs = beat && now != null ? now - beat.lastChangedAtMs : null;
   const untilMs = beat?.nextStartsAtMs != null && now != null ? beat.nextStartsAtMs - now : null;
@@ -512,11 +655,38 @@ export default function SandboxChrome({
           <span className={styles.reset}>
             {/* "Replays", not "resets": a stranger reading "resets in 38:45" has no idea what
                 resets, or whether it costs them something. Reserve the row even before the first
-                tick so the banner doesn't jump on mount. */}
-            {countdown ? `Replays in ${countdown}` : ' '}
+                tick so the banner doesn't jump on mount. In the two still moments this slot tells
+                THAT moment's truth instead — a visitor at a finished event must never read a
+                countdown that belongs to the Summer Classic's replay loop. */}
+            {activeMoment?.bannerNote ?? (countdown ? `Replays in ${countdown}` : ' ')}
           </span>
           <Link href="/auth/signup" className={styles.cta}>Start your own — free</Link>
         </div>
+
+        {moments.length > 0 && (
+          // The moments dock (Phase 2): the year as three tabs. Plain navigation — same demo,
+          // same session, a different event of the same association — with the active moment
+          // underlined and Game day carrying the only live dot, because it is the only moment
+          // that moves.
+          <div className={styles.dock} role="group" aria-label="Moments in the tournament's year">
+            <span className={styles.dockLabel}>The year</span>
+            {moments.map(moment => (
+              <button
+                key={moment.key}
+                type="button"
+                className={styles.moment}
+                aria-current={activeMoment?.key === moment.key ? 'true' : undefined}
+                onClick={() => onMoment(moment)}
+              >
+                <span className={styles.momentLabel}>
+                  {moment.isLive && <span className={styles.momentLive} aria-hidden="true" />}
+                  {moment.label}
+                </span>
+                <span className={styles.momentSub}>{moment.sub}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
         {steps.length > 0 && tour && (
           <div className={styles.stepper}>
@@ -588,17 +758,20 @@ export default function SandboxChrome({
           </div>
         )}
 
-        {narratedStep && (
+        {(narratedStep || jumpMoment) && (
           // The core of the redesign: what just happened, said in words, in the place the visitor
-          // just pressed. A ring on a section they are not looking at was never feedback.
+          // just pressed. A ring on a section they are not looking at was never feedback. Dock
+          // jumps share the strip — one voice — and their sentences always name the time first,
+          // because the thing that just changed is WHEN the visitor is standing.
           <div className={styles.said} role="status" aria-live="polite">
             <span className={styles.saidTick} aria-hidden="true">✓</span>
             <span className={styles.saidText}>
-              {narratedStep.said}
+              {narratedStep ? narratedStep.said
+                : side === 'operator' ? jumpMoment!.saidOperator : jumpMoment!.saidPublic}
               {/* The payoff for a step whose reward arrives on the tournament's clock rather than
                   on the click. Without this the visitor is told to "keep this page open" and given
                   nothing to watch — which is how a working demo got reported as broken. */}
-              {narratedStep.watchesLiveScore && beat?.kind === 'live' && (
+              {narratedStep?.watchesLiveScore && beat?.kind === 'live' && (
                 justScored ? (
                   <strong className={styles.saidNow}>
                     {' '}There it is — now {beat.homeScore}–{beat.awayScore}.
@@ -619,7 +792,7 @@ export default function SandboxChrome({
                 className={styles.saidBack}
                 onClick={() => router.push(landingPath)}
               >
-                ← Back to the tournament
+                {sandboxBackLabel(kind)}
               </button>
             )}
           </div>

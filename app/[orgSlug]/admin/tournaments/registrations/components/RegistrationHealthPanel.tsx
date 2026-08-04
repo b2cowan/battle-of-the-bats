@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, ChevronDown, Info, Lock, ShieldAlert } from 'lucide-react';
 import type { RegistrationAttentionKey } from '@/lib/registration-attention';
 import type { RegistrationHealthIssue, RegistrationHealthMetrics } from '@/lib/registration-health';
+import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import styles from '../teams-admin.module.css';
 
 type KpiTone = 'good' | 'warning' | 'danger' | 'neutral';
@@ -29,7 +30,15 @@ export default function RegistrationHealthPanel({
   onJumpToCapacity,
   onUpgrade,
 }: RegistrationHealthPanelProps) {
-  const [expanded, setExpanded] = useState(defaultOpen);
+  // "See it live" sandbox — false for every real org, so nothing below changes for a customer.
+  const isSandbox = useIsSandbox();
+  /**
+   * In the demo this panel IS the destination: tour step 5 ("Go back three weeks") lands here to
+   * show the week's work, and a collapsed strip reading "Registration Health" hides the whole
+   * argument behind a click nobody knows to make — the same trap the schedule-health panel
+   * already escaped (plan build note 31). A real customer keeps the page's own default.
+   */
+  const [expanded, setExpanded] = useState(isSandbox || defaultOpen);
 
   if (!metrics.hasTeams) return null;
 
@@ -64,6 +73,10 @@ export default function RegistrationHealthPanel({
       className={styles.regHealthPanel}
       open={expanded}
       onToggle={event => setExpanded(event.currentTarget.open)}
+      // Inert hook for the sandbox tour's "Go back three weeks" beat. Safe to ring: unlike the
+      // panels that burned the first tour, this one renders whenever the tournament has teams,
+      // and the demo's registration-week seed guarantees it does.
+      data-sandbox-tour="registration-health"
     >
       <summary className={styles.regHealthSummary} aria-label={`${expanded ? 'Collapse' : 'Expand'} Registration Health`}>
         <div className={styles.regHealthHeader}>

@@ -63,8 +63,29 @@ stops being free.
 **Riverdale Minor Ball Association** running the **Riverdale Summer Classic** — Rapids, Cyclones,
 Marauders and Sharks — on a comped Tournament Plus account, replaying every two hours and
 re-anchoring its dates nightly so it is always "today". Every person and contact in it is
-invented. A "moments" picker (registration week / game day / the morning after) is deferred to a
-possible follow-up, not cut.
+invented.
+
+## Phase 2 — the moments dock (built 2026-08-04, mockups approved same day)
+
+An organizer's year is not one Saturday, so the demo stopped being one. The same association now
+runs **three events in three moments of its life**, and a slim "The year" band in the demo's
+banner moves a visitor between them in one press:
+
+- **Registration week** — the *Riverdale Invitational*, always three weeks from first pitch: one
+  division full with a waitlist forming, one still filling, fifteen registrations in the
+  pipeline, money part-collected and one balance overdue — the week most organizers dread, with
+  the product visibly doing the managing.
+- **Game day** — the Summer Classic, exactly as before. Untouched.
+- **The morning after** — the *Riverdale Season Opener*, always ended yesterday: champion
+  crowned on the public page, the final record preserved, and the organizer's Post-Event Summary
+  showing the paperwork already done, with "next year starts in one step."
+
+The guided tour grew from four steps to six ("Go back three weeks" → "Skip to the morning
+after"), so a stranger walks the whole year inside two minutes. Every jump is narrated in plain
+words, and the banner's clock tells each moment's truth ("Replays in 38:12" / "First pitch in
+3 weeks" / "Wrapped up yesterday"). Nothing about the safety story changed: same org, same
+write-block, same outbound silence, and the two new moments never tick — the demo still repairs
+itself with no stored state.
 
 ## Mockups came first — and they're approved
 

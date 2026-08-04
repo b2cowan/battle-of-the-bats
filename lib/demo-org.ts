@@ -62,6 +62,31 @@ export const DEMO_ORGS: readonly DemoOrgDefinition[] = [
 /** Slug of the demo tournament event, used by the seed and the scheduled jobs. */
 export const DEMO_TOURNAMENT_SLUG = 'summer-classic';
 
+/**
+ * Phase 2 (the moments dock): the SAME demo org runs two more events in other lifecycle states.
+ * These are tournament slugs under `riverdale-minor-ball`, NOT new demo orgs — the allow-list
+ * above stays exactly as short as it is, and every org-level guarantee covers all three events.
+ */
+export const DEMO_OPENER_SLUG = 'season-opener';        // finished yesterday — "the morning after"
+export const DEMO_INVITATIONAL_SLUG = 'invitational';   // three weeks out — "registration week"
+
+/**
+ * The moments dock ↔ admin tournament-context contract (Phase 2).
+ *
+ * The sandbox chrome mounts ABOVE the admin's tournament provider, so the two talk through
+ * `<html>` dataset + window events instead of React context. The names live HERE — the one
+ * sandbox module the provider already imports — so the shared provider never has to import
+ * from the demo chrome's own module (the dependency would otherwise point the wrong way).
+ * All three are inert for real customers: the provider installs nothing unless the org is in
+ * the allow-list above.
+ */
+/** `document.documentElement.dataset` key carrying the admin half's current tournament slug. */
+export const SANDBOX_TOURNAMENT_DATASET_KEY = 'sandboxAdminTournament';
+/** Fired by the tournament provider whenever the admin's editing selection changes. */
+export const SANDBOX_TOURNAMENT_CHANGED_EVENT = 'flhq-sandbox-admin-tournament';
+/** Fired by the chrome when the dock (or a tour step) asks the admin half to switch events. */
+export const SANDBOX_SELECT_TOURNAMENT_EVENT = 'flhq-sandbox-select-tournament';
+
 const BY_SLUG: ReadonlyMap<string, DemoOrgDefinition> = new Map(
   DEMO_ORGS.map(org => [org.slug, org]),
 );

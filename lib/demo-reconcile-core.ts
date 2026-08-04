@@ -4,6 +4,11 @@ import {
   resolveDemoState, demoBracketSeeds, DEMO_BRACKET_CODES, DEMO_DIVISIONS, ROUND_ROBIN_PAIRS,
   type DemoState,
 } from './demo-tournament.ts';
+import {
+  DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG, OPENER_DIVISIONS,
+  resolveOpenerState, resolveInvitationalState, registeredAtIsoFor,
+} from './demo-moments.ts';
+import { ORG_TIME_ZONE, utcToZonedInputs } from './timezone.ts';
 
 /**
  * lib/demo-reconcile.ts — drag the demo tournament back to the state the clock implies.
@@ -119,14 +124,187 @@ async function recordArrival(
  *
  * Exported because the demo's verification scripts need the same key to match a database row to the
  * state the clock implies — and a second copy of this formula would let them disagree about which
- * row is which, which is the one thing a smoke test must never do.
+ * row is which, which is the one thing a smoke test must never do. The division list defaults to
+ * the Summer Classic's; the Season Opener passes its own — ONE formula for every demo event.
  */
-export function poolKeyFor(divisionName: string, homeTeamName: string, awayTeamName: string): string | null {
-  const division = DEMO_DIVISIONS.find(d => d.name === divisionName);
+export function poolKeyFor(
+  divisionName: string,
+  homeTeamName: string,
+  awayTeamName: string,
+  divisions: typeof DEMO_DIVISIONS = DEMO_DIVISIONS,
+): string | null {
+  const division = divisions.find(d => d.name === divisionName);
   if (!division) return null;
   const index = ROUND_ROBIN_PAIRS.findIndex(([h, a]) =>
     division.teams[h]?.name === homeTeamName && division.teams[a]?.name === awayTeamName);
   return index === -1 ? null : `RR-${divisionName}-${index}`;
+}
+
+/**
+ * The field-by-field diff between a stored game row and the state the clock implies. Shared by
+ * the Classic's live loop and the Opener's re-anchor loop, which layer their own extras
+ * (provenance, Final seeding) on top — one comparison, not two drifting copies.
+ */
+function gameFieldPatch(
+  game: Pick<GameRow, 'game_date' | 'game_time' | 'status' | 'home_score' | 'away_score'>,
+  desired: { date: string; time: string; status: string; homeScore: number | null; awayScore: number | null },
+): Record<string, unknown> {
+  const patch: Record<string, unknown> = {};
+  if (game.game_date !== desired.date) patch.game_date = desired.date;
+  if ((game.game_time ?? '').slice(0, 8) !== desired.time) patch.game_time = desired.time;
+  if (game.status !== desired.status) patch.status = desired.status;
+  if (game.home_score !== desired.homeScore) patch.home_score = desired.homeScore;
+  if (game.away_score !== desired.awayScore) patch.away_score = desired.awayScore;
+  return patch;
+}
+
+/** Apply a non-empty patch and record the outcome. Returns true when a write actually landed. */
+async function patchIfChanged(
+  db: DemoReconcileDb,
+  table: string,
+  id: string,
+  patch: Record<string, unknown>,
+  label: string,
+  changes: string[],
+  errors: string[],
+): Promise<boolean> {
+  if (Object.keys(patch).length === 0) return false;
+  // `.select('id')` so a row a concurrent reseed just deleted reads as "nothing written", not as
+  // a successful re-anchor — the audit trail must never overstate what happened (review finding).
+  const { data, error } = await db.from(table).update(patch).eq('id', id).select('id');
+  if (error) {
+    errors.push(`${label}: ${error.message}`);
+    return false;
+  }
+  if (!data || data.length === 0) return false;
+  changes.push(label);
+  return true;
+}
+
+/** Org-zone date part of a stored timestamptz, or null. Used for once-a-day re-anchor diffs. */
+function orgDateOf(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  try {
+    return utcToZonedInputs(iso, ORG_TIME_ZONE).date;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Drag the two still moments' DATES back to what the clock implies. Diff-only, so on every run
+ * but the first of a day this reads three small tables and writes nothing.
+ *
+ * Statuses and scores are asserted for the Opener too (they are constants), so a half-finished
+ * seed or a hand-edit heals on the next run — the same self-repair stance as the live loop.
+ */
+async function reconcileMoments(
+  db: DemoReconcileDb,
+  orgId: string,
+  now: Date,
+  changes: string[],
+  errors: string[],
+): Promise<void> {
+  // Both still moments live in the same table — one lookup serves the pair.
+  const { data: momentRows, error: momentError } = await db
+    .from('tournaments').select('id, slug, start_date, end_date, champions_crowned_at')
+    .eq('org_id', orgId).in('slug', [DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG]);
+  if (momentError) {
+    errors.push(`moments lookup: ${momentError.message}`);
+    return;
+  }
+  const openerRow = momentRows?.find(row => row.slug === DEMO_OPENER_SLUG);
+  const invRow = momentRows?.find(row => row.slug === DEMO_INVITATIONAL_SLUG);
+
+  // ── The Season Opener — finished yesterday, forever ─────────────────────────────────────────
+  const opener = resolveOpenerState(now);
+  if (openerRow) {
+    const patch: Record<string, unknown> = {};
+    if (openerRow.start_date !== opener.startDate) patch.start_date = opener.startDate;
+    if (openerRow.end_date !== opener.endDate) patch.end_date = opener.endDate;
+    // 21:00 UTC is late afternoon in the org's zone in both DST states, so the org-zone date of
+    // this timestamp is always exactly `crownedDate` — the comparison can never flap.
+    if (orgDateOf(openerRow.champions_crowned_at as string | null) !== opener.crownedDate) {
+      patch.champions_crowned_at = `${opener.crownedDate}T21:00:00.000Z`;
+    }
+    await patchIfChanged(db, 'tournaments', openerRow.id as string, patch,
+      `Opener re-anchored → ${opener.startDate} … ${opener.endDate}`, changes, errors);
+
+    const [{ data: openerDivisions }, { data: openerTeams }, { data: openerGames }] = await Promise.all([
+      db.from('divisions').select('id, name').eq('tournament_id', openerRow.id),
+      db.from('teams').select('id, name').eq('tournament_id', openerRow.id),
+      db.from('games')
+        .select('id, division_id, home_team_id, away_team_id, bracket_code, game_date, game_time, status, home_score, away_score, score_submission_source')
+        .eq('tournament_id', openerRow.id)
+        .returns<(GameRow & { score_submission_source: string | null })[]>(),
+    ]);
+    const divisionName = new Map((openerDivisions ?? []).map(d => [d.id as string, d.name as string]));
+    const teamName = new Map((openerTeams ?? []).map(t => [t.id as string, t.name as string]));
+    const desiredByKey = new Map(opener.games.map(g => [g.key, g]));
+
+    let openerMoved = 0;
+    for (const game of openerGames ?? []) {
+      const key = game.bracket_code
+        ?? poolKeyFor(
+          divisionName.get(game.division_id) ?? '',
+          teamName.get(game.home_team_id ?? '') ?? '',
+          teamName.get(game.away_team_id ?? '') ?? '',
+          OPENER_DIVISIONS,
+        );
+      const desired = key ? desiredByKey.get(key) : undefined;
+      if (!desired) continue;
+      const patchGame = gameFieldPatch(game, desired);
+      // The provenance layer the docstring on gameFieldPatch promises: every Opener game is
+      // permanently completed, so a hand-edit that reverted one (and cleared its submission
+      // trail) must heal WHOLE — status, scores AND the trail the admin Results screen shows.
+      // The Classic's loop does the same on its completed-transitions (review finding).
+      if (game.status !== 'completed' || game.score_submission_source == null) {
+        patchGame.score_submission_source = 'admin_results';
+        patchGame.score_submitted_at = now.toISOString();
+      }
+      const wrote = await patchIfChanged(db, 'games', game.id, patchGame,
+        `opener ${key}`, [], errors);
+      if (wrote) openerMoved++;
+    }
+    if (openerMoved > 0) changes.push(`Opener: ${openerMoved} game(s) re-anchored`);
+  }
+
+  // ── The Invitational — three weeks out, forever ─────────────────────────────────────────────
+  const invitational = resolveInvitationalState(now);
+  if (invRow) {
+    const windowPatch: Record<string, unknown> = {};
+    if (invRow.start_date !== invitational.startDate) windowPatch.start_date = invitational.startDate;
+    if (invRow.end_date !== invitational.endDate) windowPatch.end_date = invitational.endDate;
+    await patchIfChanged(db, 'tournaments', invRow.id as string, windowPatch,
+      `Invitational re-anchored → ${invitational.startDate} … ${invitational.endDate}`, changes, errors);
+
+    const [{ data: invDivisions }, { data: invTeams }] = await Promise.all([
+      db.from('divisions').select('id, name, deposit_due_date, total_fee_due_date').eq('tournament_id', invRow.id),
+      db.from('teams').select('id, name, registered_at').eq('tournament_id', invRow.id),
+    ]);
+
+    for (const division of invDivisions ?? []) {
+      const desired = invitational.divisions.find(d => d.name === division.name);
+      if (!desired) continue;
+      const patchDivision: Record<string, unknown> = {};
+      if (division.deposit_due_date !== desired.depositDueDate) patchDivision.deposit_due_date = desired.depositDueDate;
+      if (division.total_fee_due_date !== desired.balanceDueDate) patchDivision.total_fee_due_date = desired.balanceDueDate;
+      await patchIfChanged(db, 'divisions', division.id as string, patchDivision,
+        `Invitational ${division.name} deadlines re-anchored`, changes, errors);
+    }
+
+    let regsMoved = 0;
+    for (const team of invTeams ?? []) {
+      const desired = invitational.teams.find(t => t.name === team.name);
+      if (!desired) continue;
+      if (orgDateOf(team.registered_at as string | null) === desired.registeredDate) continue;
+      const wrote = await patchIfChanged(db, 'teams', team.id as string,
+        { registered_at: registeredAtIsoFor(desired.registeredDate) },
+        `invitational ${team.name}`, [], errors);
+      if (wrote) regsMoved++;
+    }
+    if (regsMoved > 0) changes.push(`Invitational: ${regsMoved} registration date(s) re-anchored`);
+  }
 }
 
 export async function reconcileDemoTournament(
@@ -195,12 +373,7 @@ export async function reconcileDemoTournament(
     const desired = desiredByKey.get(key);
     if (!desired) continue;
 
-    const patch: Record<string, unknown> = {};
-    if (game.game_date !== desired.date) patch.game_date = desired.date;
-    if ((game.game_time ?? '').slice(0, 8) !== desired.time) patch.game_time = desired.time;
-    if (game.status !== desired.status) patch.status = desired.status;
-    if (game.home_score !== desired.homeScore) patch.home_score = desired.homeScore;
-    if (game.away_score !== desired.awayScore) patch.away_score = desired.awayScore;
+    const patch = gameFieldPatch(game, desired);
 
     // A completed game needs the provenance a real completed game carries, or the admin score
     // screens show a result with no submission trail. A reverted one must lose it again.
@@ -246,6 +419,13 @@ export async function reconcileDemoTournament(
     if (error) errors.push(`tournament window: ${error.message}`);
     else changes.push(`event window → ${startDate} … ${state.eventDate}`);
   }
+
+  // ── Phase 2: the two STILL moments — dates only, same stateless diff-and-patch ─────────────
+  // The Opener must always have ended yesterday and the Invitational must always be three weeks
+  // out, so their date fields ride the same run. An environment seeded before Phase 2 simply has
+  // neither tournament and skips quietly — the health probe, not the reconcile, is what insists
+  // they exist.
+  await reconcileMoments(db, org.id as string, now, changes, errors);
 
   // Only heartbeat where a sandbox actually exists. An environment with nothing seeded returns
   // early above and never reaches here, so it grows no freshness chip for a demo it doesn't run.

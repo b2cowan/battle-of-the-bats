@@ -1,0 +1,700 @@
+<title>Tournament Sandbox — Phase 2 Mockups (the moments dock)</title>
+<style>
+  /* ─────────────────────────────────────────────────────────────────────────
+     DOC SHELL — same review paper as the Phase 1 mockups. Theme-aware, quiet,
+     so the product frames inside it carry all the colour.
+     ───────────────────────────────────────────────────────────────────────── */
+  :root{
+    --pg:#F6F6F3; --card:#FFFFFF; --ink:#1B1D24; --dim:#5D6372; --line:#E2E3DF;
+    --acc:#1E3A8A; --acc-ink:#1E3A8A; --acc-soft:rgba(30,58,138,.07);
+    --good:#15803D; --warn:#B45309; --bad:#B91C1C;
+    --new:#1E3A8A; --restyled:#7C3F00; --unchanged:#4B5563;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --pg:#0F1013; --card:#171922; --ink:#E9EAEE; --dim:#9BA1AE; --line:#272A33;
+      --acc:#93A9EA; --acc-ink:#AFC0F2; --acc-soft:rgba(147,169,234,.09);
+      --good:#4ADE80; --warn:#FBBF24; --bad:#F87171;
+      --new:#AFC0F2; --restyled:#FBBF24; --unchanged:#9BA1AE; }
+  }
+  :root[data-theme="dark"]{ --pg:#0F1013; --card:#171922; --ink:#E9EAEE; --dim:#9BA1AE; --line:#272A33;
+    --acc:#93A9EA; --acc-ink:#AFC0F2; --acc-soft:rgba(147,169,234,.09);
+    --good:#4ADE80; --warn:#FBBF24; --bad:#F87171;
+    --new:#AFC0F2; --restyled:#FBBF24; --unchanged:#9BA1AE; }
+  :root[data-theme="light"]{ --pg:#F6F6F3; --card:#FFFFFF; --ink:#1B1D24; --dim:#5D6372; --line:#E2E3DF;
+    --acc:#1E3A8A; --acc-ink:#1E3A8A; --acc-soft:rgba(30,58,138,.07);
+    --good:#15803D; --warn:#B45309; --bad:#B91C1C;
+    --new:#1E3A8A; --restyled:#7C3F00; --unchanged:#4B5563; }
+
+  *{box-sizing:border-box}
+  body{background:var(--pg);color:var(--ink);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px 110px}
+  .mono{font-family:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  header.top{padding:56px 0 6px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  h1{font-size:clamp(1.6rem,3.4vw,2.35rem);line-height:1.14;margin:.4rem 0 .6rem;letter-spacing:-.022em;text-wrap:balance}
+  .lede{color:var(--dim);max-width:64ch;margin:0 0 22px}
+  .lede b{color:var(--ink)}
+
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 26px}
+  nav.toc a{font-size:.79rem;font-weight:600;color:var(--acc-ink);text-decoration:none;border:1px solid var(--line);background:var(--card);padding:7px 13px;border-radius:999px}
+  nav.toc a:hover{border-color:var(--acc)}
+  nav.toc a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+
+  section{margin-top:66px;scroll-margin-top:20px}
+  .sec-eyebrow{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--acc-ink);margin:0}
+  .sec-eyebrow .tag{color:var(--dim);font-weight:600;letter-spacing:.08em}
+  h2{font-size:1.42rem;letter-spacing:-.016em;margin:.32rem 0 .5rem;text-wrap:balance}
+  h3{font-size:1rem;letter-spacing:-.008em;margin:34px 0 .35rem}
+  .sec-intro{color:var(--dim);max-width:72ch;margin:0}
+  p.body{max-width:72ch;color:var(--ink)}
+
+  .note{font-size:.84rem;color:var(--dim);border-left:3px solid var(--line);padding:3px 0 3px 13px;max-width:74ch;margin:16px 0 0}
+  .note b{color:var(--ink)}
+  .note.warn{border-left-color:var(--warn)}
+  .note.good{border-left-color:var(--good)}
+
+  .lab{display:inline-flex;align-items:center;gap:5px;font-family:ui-monospace,Consolas,monospace;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid currentColor;white-space:nowrap;vertical-align:1px}
+  .lab-new{color:var(--new)}
+  .lab-re{color:var(--restyled)}
+  .lab-un{color:var(--unchanged)}
+
+  .anno{display:grid;grid-template-columns:auto 1fr;gap:9px 12px;margin:16px 0 0;font-size:.86rem;max-width:80ch}
+  .anno dt{margin:0}
+  .anno dd{margin:0;color:var(--dim)}
+  .anno dd b{color:var(--ink);font-weight:600}
+  .anno dd code{font-family:ui-monospace,Consolas,monospace;font-size:.82em;background:var(--acc-soft);padding:1px 4px;border-radius:3px;color:var(--acc-ink)}
+
+  table.dec{width:100%;border-collapse:collapse;margin:18px 0 0;font-size:.87rem}
+  table.dec th,table.dec td{text-align:left;vertical-align:top;padding:9px 12px 9px 0;border-bottom:1px solid var(--line)}
+  table.dec th{font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  table.dec td b{font-weight:650}
+  .tbl-scroll{overflow-x:auto}
+
+  /* ─────────────────────────────────────────────────────────────────────────
+     PRODUCT WORLD — real FieldLogicHQ tokens, so frames read as screenshots.
+     ───────────────────────────────────────────────────────────────────────── */
+  .pd{
+    --pitch:#0A0A0A; --slate:#111827; --surf:#0F1523; --surf2:#141A2A;
+    --lime:#D9F99D; --blue:#1E3A8A; --blue-lt:#7B94E8;
+    --gray:#94A3B8; --text:#F1F5F9; --hair:rgba(255,255,255,.11);
+    --ok:#22C55E; --warn2:#F59E0B; --bad2:#EF4444;
+    background:var(--pitch);color:var(--text);border:1px solid #23262E;border-radius:12px;
+    overflow:hidden;margin-top:20px;font-size:15px;line-height:1.5
+  }
+  .pd .g{color:var(--gray)}
+  .pd .pad{padding:16px 18px}
+  .pd .mono{font-family:ui-monospace,Consolas,monospace;font-variant-numeric:tabular-nums}
+  .cap{font-size:.74rem;color:var(--dim);margin:9px 0 0;font-style:italic}
+  .phone{max-width:400px;margin-left:auto;margin-right:auto}
+
+  /* — banner row (unchanged from Phase 1) — */
+  .sb{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;background:#101623;border-bottom:1px solid rgba(217,249,157,.28);padding:10px 18px}
+  .sb-eye{display:inline-flex;align-items:center;gap:7px;font-family:ui-monospace,Consolas,monospace;font-size:.63rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--lime)}
+  .sb-eye .bulb{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px rgba(217,249,157,.7)}
+  .sb-msg{font-size:.82rem;color:#CBD5E1}
+  .sb-msg b{color:#fff;font-weight:600}
+  .sb-rst{font-size:.75rem;color:var(--gray);margin-left:auto}
+  .sb-cta{background:var(--lime);color:#0A0A0A;border:none;border-radius:2px;font-family:ui-monospace,Consolas,monospace;font-size:.66rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;padding:8px 14px;cursor:pointer}
+
+  /* — NEW: the moments dock — */
+  .dock{display:flex;align-items:stretch;gap:0;background:#0B0F17;border-bottom:1px solid var(--hair);padding:0 10px;overflow-x:auto}
+  .dock-lab{font-family:ui-monospace,Consolas,monospace;font-size:.6rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--gray);align-self:center;padding:0 8px;white-space:nowrap}
+  .mo{appearance:none;background:none;border:none;border-bottom:2px solid transparent;color:#AEB6C6;display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:8px 14px 7px;cursor:pointer;white-space:nowrap;font:inherit}
+  .mo:hover{color:#fff}
+  .mo:focus-visible{outline:2px solid var(--lime);outline-offset:-2px}
+  .mo b{font-size:.8rem;font-weight:650;color:inherit;display:inline-flex;align-items:center;gap:6px}
+  .mo small{font-size:.63rem;color:var(--gray);letter-spacing:.03em}
+  .mo[aria-current="true"]{border-bottom-color:var(--lime);color:#fff}
+  .mo[aria-current="true"] small{color:rgba(217,249,157,.75)}
+  .mo .ld{width:6px;height:6px;border-radius:50%;background:#F87171;animation:pulse 1.7s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.2}}
+  @media (prefers-reduced-motion:reduce){ .ld,.dot{animation:none!important} }
+
+  /* — stepper row (Phase 1 rebuild shape, unchanged) — */
+  .stp{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:#0C1119;border-bottom:1px solid var(--hair);padding:9px 18px}
+  .stp-lab{font-family:ui-monospace,Consolas,monospace;font-size:.6rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--gray)}
+  .stp-count{font-size:.72rem;color:#CBD5E1}
+  .pill{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(239,68,68,.4);border-radius:999px;padding:4px 11px;font-size:.72rem;color:#E6EAF2}
+  .pill .pb{width:6px;height:6px;border-radius:50%;background:#F87171;animation:pulse 1.7s infinite}
+  .pill .fresh{color:var(--gray);font-size:.66rem}
+  .dots{display:inline-flex;gap:5px}
+  .dt{display:inline-flex;align-items:center;justify-content:center;width:19px;height:19px;border-radius:50%;border:1px solid var(--hair);background:var(--surf);color:#CBD5E1;font-family:ui-monospace,Consolas,monospace;font-size:.6rem;font-weight:800}
+  .dt[data-done]{color:var(--lime);border-color:rgba(217,249,157,.5)}
+  .dt[aria-current]{border-color:var(--lime);background:rgba(217,249,157,.1);color:#fff}
+  .stp-go{margin-left:auto;background:none;border:1px solid rgba(217,249,157,.5);color:var(--lime);border-radius:999px;font-size:.74rem;font-weight:650;padding:6px 14px;cursor:pointer}
+  .stp-go:hover{background:rgba(217,249,157,.08)}
+
+  /* — narration strip (Phase 1 rebuild shape, unchanged) — */
+  .said{display:flex;align-items:flex-start;gap:10px;background:rgba(217,249,157,.07);border-bottom:1px solid rgba(217,249,157,.25);padding:10px 18px;font-size:.8rem;color:#DCE3EF}
+  .said .tk{color:var(--lime);font-weight:800}
+  .said b{color:#fff;font-weight:650}
+  .said .back{margin-left:auto;background:none;border:none;color:var(--gray);font-size:.72rem;cursor:pointer;white-space:nowrap;padding:2px 0}
+  .said .back:hover{color:#fff}
+
+  /* — operator shell bits — */
+  .opbar{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:1px solid var(--hair);background:#0D1220}
+  .opbar .brandmark{width:24px;height:24px;border-radius:4px;background:linear-gradient(135deg,#1E3A8A,#2D4FB8);display:inline-flex;align-items:center;justify-content:center;font-family:ui-monospace,Consolas,monospace;font-size:.62rem;font-weight:800;color:#fff}
+  .opbar .nm{font-size:.84rem;font-weight:650}
+  .opbar .role{font-size:.66rem;color:var(--gray);border:1px solid var(--hair);border-radius:999px;padding:2px 9px}
+  .opgrid{display:grid;grid-template-columns:190px 1fr}
+  @media (max-width:760px){ .opgrid{grid-template-columns:1fr} .oprail{display:none} }
+  .oprail{border-right:1px solid var(--hair);background:#0C1017;padding:12px 0}
+  .oprail .ed{margin:0 12px 10px;padding:8px 10px;background:var(--surf);border:1px solid var(--hair);border-radius:6px}
+  .oprail .ed .edl{font-size:.58rem;letter-spacing:.11em;text-transform:uppercase;color:var(--gray);font-weight:800;font-family:ui-monospace,Consolas,monospace}
+  .oprail .ed .edv{font-size:.76rem;color:#fff;display:flex;align-items:center;gap:6px;margin-top:2px}
+  .oprail .ed .edv:after{content:"▾";color:var(--gray);font-size:.6rem;margin-left:auto}
+  .oprail a{display:block;font-size:.78rem;color:#AEB6C6;text-decoration:none;padding:6px 16px}
+  .oprail a.on{color:#fff;background:rgba(217,249,157,.07);border-left:2px solid var(--lime);padding-left:14px}
+  .oprail .grp{font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:#5B6474;font-weight:800;padding:10px 16px 4px;font-family:ui-monospace,Consolas,monospace}
+
+  .ophead{display:flex;align-items:center;gap:10px;padding:14px 18px 0}
+  .ophead h4{margin:0;font-size:1.1rem;letter-spacing:-.01em}
+  .ophead .sub{font-size:.74rem;color:var(--gray)}
+
+  /* — registration health panel — */
+  .rh{margin:14px 18px 0;border:1px solid var(--hair);border-radius:8px;background:var(--surf)}
+  .rh-top{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--hair)}
+  .rh-top b{font-size:.82rem}
+  .rh-top .g{font-size:.7rem}
+  .rh-score{margin-left:auto;font-family:ui-monospace,Consolas,monospace;font-size:.72rem;font-weight:800;color:#F59E0B;border:1px solid rgba(245,158,11,.45);border-radius:999px;padding:2px 10px}
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:9px;padding:12px 14px}
+  .kpi{background:var(--surf2);border:1px solid var(--hair);border-radius:6px;padding:9px 11px;cursor:pointer}
+  .kpi .kl{font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;color:var(--gray);font-weight:700}
+  .kpi .kv{font-family:ui-monospace,Consolas,monospace;font-size:1.15rem;font-weight:800;margin-top:1px}
+  .kpi .kd{font-size:.66rem;color:var(--gray)}
+  .kpi[data-tone="warn"] .kv{color:#F59E0B}
+  .kpi[data-tone="bad"] .kv{color:#F87171}
+  .kpi[data-tone="ok"] .kv{color:#4ADE80}
+  .issues{padding:0 14px 12px;font-size:.74rem;color:#C4CBD9}
+  .issues div{display:flex;gap:8px;padding:3px 0}
+  .issues .ic{width:14px;text-align:center}
+
+  /* — capacity strip + team table — */
+  .capstrip{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 18px 0;padding:9px 13px;border:1px solid var(--hair);border-radius:6px;background:var(--surf);font-size:.76rem}
+  .capstrip .full{color:#F59E0B;font-weight:650}
+  .capstrip .closebtn{margin-left:auto;background:none;border:1px solid var(--hair);color:#CBD5E1;border-radius:5px;font-size:.68rem;padding:5px 11px;cursor:pointer}
+  .toolrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 18px 0;font-size:.72rem}
+  .toolrow .sel{background:var(--surf);border:1px solid var(--hair);border-radius:5px;color:#E6EAF2;padding:5px 10px}
+  .toolrow .fchip{border:1px solid var(--hair);border-radius:999px;color:#AEB6C6;padding:4px 11px}
+  .toolrow .fchip.on{border-color:rgba(217,249,157,.5);color:#fff}
+  .tt{margin:12px 18px 16px;border:1px solid var(--hair);border-radius:8px;overflow:hidden}
+  .tt table{width:100%;border-collapse:collapse;font-size:.78rem}
+  .tt th{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);font-weight:800;text-align:left;padding:8px 12px;background:var(--surf);border-bottom:1px solid var(--hair);font-family:ui-monospace,Consolas,monospace}
+  .tt td{padding:9px 12px;border-bottom:1px solid rgba(255,255,255,.05)}
+  .tt tr:last-child td{border-bottom:none}
+  .bdg{display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.05em;border-radius:4px;padding:2px 8px}
+  .bdg.ok{color:#4ADE80;background:rgba(34,197,94,.12)}
+  .bdg.wn{color:#F59E0B;background:rgba(245,158,11,.12)}
+  .bdg.bd{color:#F87171;background:rgba(239,68,68,.12)}
+  .bdg.nt{color:#AEB6C6;background:rgba(148,163,184,.12)}
+
+  /* — fan chrome — */
+  .fanbar{display:flex;align-items:center;gap:12px;padding:11px 18px;border-bottom:1px solid var(--hair);background:rgba(10,10,10,.9)}
+  .fanbar .brandmark{width:24px;height:24px;border-radius:4px;background:linear-gradient(135deg,#1E3A8A,#2D4FB8);display:inline-flex;align-items:center;justify-content:center;font-family:ui-monospace,Consolas,monospace;font-size:.62rem;font-weight:800;color:#fff}
+  .fanbar .nm{font-size:.86rem;font-weight:650}
+  .fantabs{display:flex;gap:2px;margin-left:auto;flex-wrap:wrap}
+  .fantabs span{font-size:.72rem;color:var(--gray);padding:5px 10px;border-radius:3px}
+  .fantabs span.on{color:var(--text);background:rgba(255,255,255,.07)}
+  .fanhero{padding:24px 18px 20px;background:radial-gradient(120% 100% at 50% 0%, rgba(30,58,138,.42) 0%, rgba(10,10,10,0) 70%)}
+  .fanhero .badge{display:inline-flex;align-items:center;gap:6px;font-size:.63rem;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--lime);border:1px solid rgba(217,249,157,.35);border-radius:999px;padding:4px 11px}
+  .fanhero h4{font-size:1.5rem;letter-spacing:-.02em;margin:.55rem 0 .2rem;font-weight:800}
+  .fanhero p{margin:0;font-size:.82rem;color:#B9C2D4}
+  .reg-cta{display:inline-block;margin-top:14px;background:var(--lime);color:#0A0A0A;border:none;border-radius:4px;font-size:.8rem;font-weight:800;padding:10px 20px;cursor:pointer}
+  .statrow{display:flex;gap:22px;padding:14px 18px;border-top:1px solid var(--hair);font-size:.76rem;flex-wrap:wrap}
+  .statrow b{display:block;font-family:ui-monospace,Consolas,monospace;font-size:1.05rem}
+  .statrow span{color:var(--gray)}
+
+  /* — champion banner + record panel — */
+  .champ{padding:22px 18px;border-top:1px solid var(--hair);text-align:center;background:radial-gradient(90% 100% at 50% 0%, rgba(217,249,157,.09) 0%, rgba(10,10,10,0) 75%)}
+  .champ .eye{font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--lime);font-weight:800;font-family:ui-monospace,Consolas,monospace}
+  .champ .cup{font-size:1.6rem;margin:8px 0 2px}
+  .champ h5{font-size:1.35rem;margin:0;letter-spacing:-.015em}
+  .champ .def{font-size:.76rem;color:var(--gray);margin-top:3px}
+  .champ .btns{display:flex;gap:9px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+  .champ .btns button{background:none;border:1px solid var(--hair);color:#CBD5E1;border-radius:6px;font-size:.72rem;padding:7px 14px;cursor:pointer}
+  .recgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:11px;padding:16px 18px;border-top:1px solid var(--hair)}
+  .rec{background:var(--surf);border:1px solid var(--hair);border-radius:8px;padding:12px 14px;font-size:.76rem}
+  .rec .rl{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);font-weight:800;font-family:ui-monospace,Consolas,monospace;margin-bottom:7px}
+  .rec div+div{margin-top:4px}
+  .rec .n{font-family:ui-monospace,Consolas,monospace;font-weight:700;float:right}
+
+  /* — post-event summary — */
+  .sumgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:11px;padding:14px 18px}
+  .sum{background:var(--surf);border:1px solid var(--hair);border-radius:8px;padding:12px 14px;font-size:.76rem}
+  .sum .rl{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gray);font-weight:800;font-family:ui-monospace,Consolas,monospace;margin-bottom:7px}
+  .sum div+div{margin-top:4px}
+  .sum .n{font-family:ui-monospace,Consolas,monospace;font-weight:700;float:right}
+  .sum .n.ok{color:#4ADE80}
+  .reuse{margin:2px 18px 16px;border:1px solid rgba(217,249,157,.3);border-radius:8px;background:rgba(217,249,157,.05);padding:12px 14px;font-size:.78rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .reuse b{color:#fff}
+  .reuse button{margin-left:auto;background:var(--lime);color:#0A0A0A;border:none;border-radius:5px;font-size:.7rem;font-weight:800;padding:7px 13px;cursor:pointer}
+
+  footer.doc-end{margin-top:80px;border-top:1px solid var(--line);padding-top:14px;font-size:.78rem;color:var(--dim)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <p class="eyebrow">FieldLogicHQ · Tournament Admin Sandbox · Phase 2 · 2026-08-04</p>
+  <h1>The moments dock — three moments in a tournament's life</h1>
+  <p class="lede">Phase 1 shows one canonical moment: semifinal morning, a game live, the bracket filling itself in.
+  Phase 2 lets a visitor stand in <b>three moments of an organizer's year</b> — the week teams are registering,
+  game day itself, and the morning after it all ended — without ever leaving the demo.
+  <b>Game day is untouched.</b> Every element is labelled
+  <span class="lab lab-new">New</span> <span class="lab lab-re">Restyled</span> <span class="lab lab-un">Unchanged</span>.
+  The Phase 1 mockups and the 2026-08-03 tour rebuild remain binding for everything this file does not supersede.</p>
+  <nav class="toc">
+    <a href="#dock">1 · The dock</a>
+    <a href="#jump">2 · The jump</a>
+    <a href="#regweek">3 · Registration week</a>
+    <a href="#morning">4 · The morning after</a>
+    <a href="#tour">5 · The tour, extended</a>
+    <a href="#shape">6 · The shape underneath</a>
+  </nav>
+</header>
+
+<!-- ══════════════════════════ 1 · THE DOCK ══════════════════════════ -->
+<section id="dock">
+  <p class="sec-eyebrow">The chrome · <span class="tag">one new row, everything else stays</span></p>
+  <h2>The dock: a third, slimmer row in the sandbox hat</h2>
+  <p class="sec-intro">Three tabs named for moments in the year, not for features. The active moment is underlined
+  and carries its time anchor; game day carries the live dot. Pressing a tab is plain navigation —
+  same demo, same session, a different event of the same association.</p>
+
+  <div class="pd">
+    <div class="sb">
+      <span class="sb-eye"><span class="bulb"></span>Live demo</span>
+      <span class="sb-msg">You're in the organizer's seat. <b>Changes show on screen, but nothing is saved.</b></span>
+      <span class="sb-rst mono">Replays in 38:12</span>
+      <button class="sb-cta">Start your own — free</button>
+    </div>
+    <div class="dock">
+      <span class="dock-lab">The year</span>
+      <button class="mo"><b>Registration week</b><small>3 weeks before</small></button>
+      <button class="mo" aria-current="true"><b><span class="ld"></span>Game day</b><small>happening now</small></button>
+      <button class="mo"><b>The morning after</b><small>ended yesterday</small></button>
+    </div>
+    <div class="stp">
+      <span class="stp-lab">Guided tour</span>
+      <span class="stp-count">Step 5 of 6</span>
+      <span class="pill"><span class="pb"></span>Riverdale Rapids 9–3 Silver Creek Sharks <span class="fresh">changed 1:12 ago</span></span>
+      <span class="dots">
+        <span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" aria-current="step">5</span><span class="dt">6</span>
+      </span>
+      <button class="stp-go">Go back three weeks →</button>
+    </div>
+  </div>
+  <p class="cap">Desktop, operator side, standing in Game day. The dock sits between the banner and the tour — the year above, the guidance below.</p>
+
+  <dl class="anno">
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>The dock row.</b> A slim (~36px) third band: a quiet "The year" label and three moment tabs. Active = lime underline + white;
+    inactive = grey, hover white. Game day's tab keeps a red live dot at all times — it is the only moment that moves.
+    Each tab carries its time anchor (<i>3 weeks before / happening now / ended yesterday</i>) so a stranger reads the
+    year at a glance without pressing anything.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>Banner row</b> (promise, countdown, CTA) and <b>stepper row</b> (tour label, step count, live pill, dots, action)
+    keep their Phase 1 rebuild shapes exactly. The live pill shows the Summer Classic's score <b>in every moment</b> —
+    it is the standing proof the demo is alive, and it keeps proving it while the visitor stands three weeks away.</dd>
+    <dt><span class="lab lab-re">Restyled</span></dt>
+    <dd><b>The countdown slot</b> becomes moment-aware — see section 2. In Game day it still reads
+    <code>Replays in mm:ss</code>, unchanged.</dd>
+  </dl>
+
+  <h3>Phone width</h3>
+  <div class="pd phone">
+    <div class="sb" style="padding:9px 12px">
+      <span class="sb-eye"><span class="bulb"></span>Live demo</span>
+      <span class="sb-rst mono" style="margin-left:auto">Replays in 38:12</span>
+      <span class="sb-msg" style="flex-basis:100%">Nothing you do here is saved.</span>
+    </div>
+    <div class="dock" style="padding:0 4px">
+      <button class="mo" style="padding:7px 10px 6px"><b>Registration week</b><small>3 wks before</small></button>
+      <button class="mo" aria-current="true" style="padding:7px 10px 6px"><b><span class="ld"></span>Game day</b><small>now</small></button>
+      <button class="mo" style="padding:7px 10px 6px"><b>Morning after</b><small>yesterday</small></button>
+    </div>
+    <div class="stp" style="padding:8px 12px">
+      <span class="stp-count">Step 5 of 6</span>
+      <span class="dots"><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" aria-current="step">5</span><span class="dt">6</span></span>
+      <button class="stp-go" style="flex-basis:100%;margin-left:0">Go back three weeks →</button>
+    </div>
+  </div>
+  <p class="cap">~390px. The dock scrolls horizontally if it must, but these three labels fit. The banner drops the long promise to its second line (existing wrap behaviour); the pill yields to the dots on the narrowest rows (existing stepper wrap).</p>
+
+  <div class="note warn"><b>Geometry.</b> The chrome already measures itself and publishes its height, and every top-pinned bar
+  in both halves of the product consumes the shared token (build notes 14 &amp; 38). The dock adds ~36px inside the same
+  measured element, so nothing new needs teaching — but the rendered page must be <b>measured</b> at 1440 and 390 on both
+  halves after build, per the standing rule. This is the sixth defect-prone band; we verify, not assume.</div>
+
+  <div class="note"><b>Considered and set aside — folding the dock into an existing row.</b> Cramming three moment tabs into the
+  banner or stepper keeps the chrome at two rows but costs the one thing Phase 2 exists to buy: legibility. The whole lesson of
+  the tour rebuild is that a control a stranger can't parse reads as broken. A dedicated row that says "the year" and names
+  three moments is the legible version. If the owner prefers the two-row variant, it is drawable — say so and this file gets a rev.</div>
+</section>
+
+<!-- ══════════════════════════ 2 · THE JUMP ══════════════════════════ -->
+<section id="jump">
+  <p class="sec-eyebrow">The transition · <span class="tag">navigation + narration, no theatre</span></p>
+  <h2>What pressing a moment does</h2>
+  <p class="sec-intro">No overlay, no animation, no loading theatre. A press navigates — fan side to that event's public
+  home, operator side to that moment's most telling admin screen — and the <b>narration strip</b> (the tour's existing
+  feedback voice) says what just happened and when "now" is. The strip appearing is itself the visible change,
+  which is the rule the whole tour was rebuilt on.</p>
+
+  <div class="pd">
+    <div class="sb">
+      <span class="sb-eye"><span class="bulb"></span>Live demo</span>
+      <span class="sb-msg">You're in the organizer's seat. <b>Changes show on screen, but nothing is saved.</b></span>
+      <span class="sb-rst mono">First pitch in 21 days</span>
+      <button class="sb-cta">Start your own — free</button>
+    </div>
+    <div class="dock">
+      <span class="dock-lab">The year</span>
+      <button class="mo" aria-current="true"><b>Registration week</b><small>3 weeks before</small></button>
+      <button class="mo"><b><span class="ld"></span>Game day</b><small>happening now</small></button>
+      <button class="mo"><b>The morning after</b><small>ended yesterday</small></button>
+    </div>
+    <div class="stp">
+      <span class="stp-lab">Guided tour</span>
+      <span class="stp-count">Step 5 of 6</span>
+      <span class="pill"><span class="pb"></span>Riverdale Rapids 9–3 Silver Creek Sharks <span class="fresh">changed 0:41 ago</span></span>
+      <span class="dots"><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" data-done>✓</span><span class="dt" aria-current="step">6</span></span>
+      <button class="stp-go">Skip to the morning after →</button>
+    </div>
+    <div class="said">
+      <span class="tk">✓</span>
+      <span>You've jumped <b>three weeks back</b>. Thirteen teams are in, U11 is full with a waitlist,
+      and three entries are still waiting on payment — this screen is where that week gets managed.</span>
+      <button class="back">← Back to game day</button>
+    </div>
+  </div>
+  <p class="cap">Just after pressing "Registration week" from the operator side. The dock's active tab moved, the countdown slot changed its truth, and the narration said where — and <i>when</i> — the visitor now stands.</p>
+
+  <dl class="anno">
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Jump narration.</b> One sentence per arrival, written for a stranger, always naming the time
+    (<i>"three weeks back"</i>, <i>"the day after"</i>) and the two or three facts the screen proves. Arrivals via the
+    dock and via tour steps 5–6 share these sentences — one voice, two doors.</dd>
+    <dt><span class="lab lab-re">Restyled</span></dt>
+    <dd><b>The countdown slot tells each moment's truth.</b> Game day: <code>Replays in 38:12</code> (unchanged).
+    Registration week: <code>First pitch in 21 days</code>. Morning after: <code>Wrapped up yesterday</code>.
+    A stranger standing at a finished tournament must not read "Replays in 38:12" — that countdown belongs to the
+    Summer Classic's loop and would be a lie anywhere else.</dd>
+    <dt><span class="lab lab-re">Restyled</span></dt>
+    <dd><b>"← Back to game day."</b> The narration strip's existing return control, re-aimed: its home is the
+    Summer Classic fan page, and its label now names the moment rather than "the tournament".</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>Which side you're on survives the jump.</b> A visitor on the fan side lands on the target event's public home;
+    a visitor in the organizer's seat lands on that moment's flagship admin screen (Teams for registration week,
+    Dashboard for game day, Post-Event Summary for the morning after). The ⇄ flip keeps working inside every moment.</dd>
+  </dl>
+
+  <div class="note"><b>Where operator jumps land.</b> The admin half selects its "current tournament" through the product's own
+  switcher — the same control every multi-event customer uses (it appears in the sidebar automatically once an org has more than
+  one event). A dock press on the operator side sets that selection and lands on the moment's flagship screen; the sidebar
+  switcher stays visible and honest, so a curious visitor who uses <i>it</i> instead of the dock gets the same product truth.</div>
+</section>
+
+<!-- ══════════════════════════ 3 · REGISTRATION WEEK ══════════════════════════ -->
+<section id="regweek">
+  <p class="sec-eyebrow">Moment one · <span class="tag">the Riverdale Invitational, 3 weeks out</span></p>
+  <h2>Registration week: the part of the year most organizers dread</h2>
+  <p class="sec-intro">A second seeded event, three weeks before first pitch, mid-registration: one division full with a
+  waitlist forming, one still filling, payments part-collected, two entries waiting on review. Every screen is the
+  <b>real product surface, unchanged</b> — what is new is a seeded world in which those screens have believable work in them.</p>
+
+  <h3>The organizer's side — the Teams screen with real work in it</h3>
+  <div class="pd">
+    <div class="opgrid">
+      <div class="oprail">
+        <div class="ed"><div class="edl">Editing tournament</div><div class="edv">Riverdale Invitational</div></div>
+        <div class="grp">Operations</div>
+        <a>Dashboard</a>
+        <a class="on">Teams</a>
+        <a>Schedule</a>
+        <a>Results</a>
+        <a>Check-in</a>
+      </div>
+      <div>
+        <div class="ophead"><h4>Teams</h4><span class="sub">Manage all teams and signups in one place</span></div>
+        <div class="rh">
+          <div class="rh-top"><b>Registration Health</b><span class="g">13 teams in the pipeline</span><span class="rh-score">78</span></div>
+          <div class="kpis">
+            <div class="kpi"><div class="kl">Teams</div><div class="kv">11</div><div class="kd">11/16 · 69% filled</div></div>
+            <div class="kpi" data-tone="warn"><div class="kl">Payments</div><div class="kv">4</div><div class="kd">3 unpaid · 1 past due</div></div>
+            <div class="kpi" data-tone="warn"><div class="kl">Needs action</div><div class="kv">2</div><div class="kd">2 pending review</div></div>
+            <div class="kpi" data-tone="ok"><div class="kl">Missing email</div><div class="kv">0</div><div class="kd">all reachable</div></div>
+          </div>
+          <div class="issues">
+            <div><span class="ic">⚠</span> U13 Tier A has 3 open spots — registration closes in 9 days</div>
+            <div><span class="ic">$</span> Maple Ridge Miners' balance is past due — deposit paid 12 days ago</div>
+          </div>
+        </div>
+        <div class="capstrip"><b>U11</b> <span class="mono">8/8</span> <span class="full">Full — 2 teams on the waitlist</span> <button class="closebtn">Close Registration</button></div>
+        <div class="toolrow">
+          <span class="sel">Division: U13 ▾</span>
+          <span class="fchip on">Pending · 2</span>
+          <span class="fchip on">Accepted · 3</span>
+          <span class="fchip">Waitlist · 0</span>
+          <span class="fchip">Unpaid · 2</span>
+        </div>
+        <div class="tt"><table>
+          <tr><th>Team</th><th>Coach</th><th>Status</th><th>Payment</th></tr>
+          <tr><td>Riverdale Otters</td><td class="g">J. Castellano</td><td><span class="bdg ok">Accepted</span></td><td><span class="bdg ok">Paid</span></td></tr>
+          <tr><td>Cedar Hollow Kestrels</td><td class="g">M. Osei</td><td><span class="bdg ok">Accepted</span></td><td><span class="bdg nt">Deposit Paid</span></td></tr>
+          <tr><td>Maple Ridge Miners</td><td class="g">T. Lindqvist</td><td><span class="bdg ok">Accepted</span></td><td><span class="bdg bd">Past Due</span></td></tr>
+          <tr><td>Silver Creek Sabres</td><td class="g">A. Duval</td><td><span class="bdg wn">Pending</span></td><td><span class="bdg nt">Pending</span></td></tr>
+          <tr><td>Riverdale Bears</td><td class="g">P. Whitcombe</td><td><span class="bdg wn">Pending</span></td><td><span class="bdg nt">Pending</span></td></tr>
+        </table></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">The Teams screen, Riverdale Invitational, U13 selected. Accepting the Sabres shows on screen — and the familiar "Nothing is saved here" toast appears, exactly as it does on game day.</p>
+
+  <dl class="anno">
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>The whole surface.</b> Teams page, Registration Health panel, capacity strip, status chips, table, accept/reject
+    actions — all the real product. The write block already covers this screen; pressing <b>Accept</b> produces the
+    Phase 1 nudge, no new machinery.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>The seeded state.</b> 13 entries across two divisions: U11 <b>8/8 full + 2 waitlisted</b> (the "close registration?"
+    moment), U13 <b>3 accepted + 2 pending</b> with 3 spots open. Payments: fee $600 with a $150 deposit — 6 paid in full,
+    3 deposit-paid, 3 pending, <b>1 past due</b>. Health score sits deliberately mid-70s: a screen with nothing wrong
+    teaches nothing.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Health panel arrives expanded in the demo</b> — same demo-only default the schedule-health panel already earned
+    in the tour rebuild (build note 31). Real customers keep the collapsed default.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>Curation.</b> The four hidden corners stay hidden here too — the nav rule is org-level and carries over untouched.</dd>
+  </dl>
+
+  <div class="note warn"><b>Fee amounts, never payment instructions.</b> The Phase 1 seed banned payment copy because the old
+  fixture leaked a real-looking e-transfer address. The registration-week story needs money to exist — a fee of $600, a deposit
+  of $150, a past-due balance — and <b>amounts are safe</b>. What stays banned is any "how to pay" instruction text, which the
+  register form only shows if the organizer writes one. We don't. <b>Owner call to confirm this line.</b></div>
+
+  <h3>The fan side — three weeks before first pitch</h3>
+  <div class="pd">
+    <div class="fanbar">
+      <span class="brandmark">R</span><span class="nm">Riverdale Invitational</span>
+      <div class="fantabs"><span class="on">Home</span><span>Teams</span><span>Rules</span><span>Register</span></div>
+    </div>
+    <div class="fanhero">
+      <span class="badge">Registration is open</span>
+      <h4>Riverdale Invitational</h4>
+      <p>Hosted by Riverdale Minor Ball Association. Teams can register for available divisions now.</p>
+      <button class="reg-cta">Register a Team</button>
+    </div>
+    <div class="statrow">
+      <div><b>2</b><span>Divisions</span></div>
+      <div><b>11</b><span>Teams accepted</span></div>
+      <div><b class="mono">21</b><span>Days to first pitch</span></div>
+    </div>
+  </div>
+  <p class="cap">The public home, pre-event: the register CTA is the page's one job. Schedule and Standings tabs aren't shown — nothing is scheduled yet, and an empty tab is a dead end (the product already hides them pre-event).</p>
+
+  <dl class="anno">
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>The pre-event home</b> is the real product's pre-event state: registration status line, register CTA, facts row.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>Registering is honestly blocked.</b> The register form renders (it is a genuinely good screen), and submitting meets
+    the write block's existing refusal + the "nothing is saved" toast. Phase 1 already pinned this route's guard; nothing changes.</dd>
+  </dl>
+</section>
+
+<!-- ══════════════════════════ 4 · THE MORNING AFTER ══════════════════════════ -->
+<section id="morning">
+  <p class="sec-eyebrow">Moment three · <span class="tag">the Riverdale Season Opener, ended yesterday</span></p>
+  <h2>The morning after: the record kept itself</h2>
+  <p class="sec-intro">A third seeded event that finished yesterday: every score in, champion crowned, standings final.
+  The product already built this whole experience — the complete-tournament hero, the champions banner, the final public
+  record, and the organizer's Post-Event Summary. The demo just needs to stand a finished tournament inside it.</p>
+
+  <h3>The fan side — what families see the next day</h3>
+  <div class="pd">
+    <div class="fanbar">
+      <span class="brandmark">R</span><span class="nm">Riverdale Season Opener</span>
+      <div class="fantabs"><span class="on">Home</span><span>Schedule</span><span>Standings</span><span>Teams</span></div>
+    </div>
+    <div class="fanhero" style="padding-bottom:14px">
+      <span class="badge" style="color:#AEB6C6;border-color:var(--hair)">Tournament complete</span>
+      <h4>Riverdale Season Opener</h4>
+      <p>Thanks for following along — final scores and standings are preserved below.</p>
+    </div>
+    <div class="champ">
+      <div class="eye">Tournament Champions</div>
+      <div class="cup">🏆</div>
+      <h5>Cedar Hollow Cyclones</h5>
+      <div class="def">def. Riverdale Rapids 8–6 · U11</div>
+      <div class="btns"><button>Champions Recap</button><button>Share results</button></div>
+    </div>
+    <div class="recgrid">
+      <div class="rec"><div class="rl">Event summary</div>
+        <div>Final scores <span class="n">15/15</span></div>
+        <div>Teams <span class="n">8</span></div>
+        <div>Not played <span class="n">0</span></div>
+      </div>
+      <div class="rec"><div class="rl">Top standings</div>
+        <div>U11 · Cedar Hollow <span class="n">4–1</span></div>
+        <div>U13 · Riverdale Thunder <span class="n">3–0</span></div>
+      </div>
+      <div class="rec"><div class="rl">Latest finals</div>
+        <div>Final · CHC 8, RR 6 <span class="n">FIN</span></div>
+        <div>SF2 · RR 7, MRM 4 <span class="n">SF</span></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">The completed-tournament home: compact hero, champions banner, final public record. All of it exists in the product today — this is a seed, not a build.</p>
+
+  <h3>The organizer's side — the Post-Event Summary</h3>
+  <div class="pd">
+    <div class="opgrid">
+      <div class="oprail">
+        <div class="ed"><div class="edl">Editing tournament</div><div class="edv">Riverdale Season Opener</div></div>
+        <div class="grp">Operations</div>
+        <a>Dashboard</a>
+        <a>Teams</a>
+        <a>Schedule</a>
+        <a>Results</a>
+        <a class="on">Summary</a>
+      </div>
+      <div>
+        <div class="ophead"><h4>Post-Event Summary</h4><span class="sub">Tournament complete — nice work</span></div>
+        <div class="sumgrid">
+          <div class="sum"><div class="rl">Registration</div>
+            <div>Accepted <span class="n">8</span></div>
+            <div>Waitlisted <span class="n">0</span></div>
+            <div>Rejected <span class="n">1</span></div>
+          </div>
+          <div class="sum"><div class="rl">Payments</div>
+            <div>Expected <span class="n">$4,800</span></div>
+            <div>Collected <span class="n ok">$4,800</span></div>
+            <div>Outstanding <span class="n ok">$0</span></div>
+          </div>
+          <div class="sum"><div class="rl">Schedule</div>
+            <div>Games played <span class="n">15/15</span></div>
+            <div>Pool · Playoff <span class="n">12 · 3</span></div>
+            <div>Cancelled <span class="n">0</span></div>
+          </div>
+          <div class="sum"><div class="rl">Divisions</div>
+            <div>U11 champion <span class="n">Cyclones</span></div>
+            <div>U13 leader <span class="n">Thunder</span></div>
+          </div>
+        </div>
+        <div class="reuse">🔁 <span><b>Reuse this entire setup.</b> Divisions, venues, rules, fees and branding — next year starts in one step.</span> <button>Reuse setup</button></div>
+      </div>
+    </div>
+  </div>
+  <p class="cap">The real Post-Event Summary — a Tournament Plus surface the demo org's plan already includes, honestly labelled as Plus where the product labels it. The "Reuse setup" nudge is the closing argument: the year loops, and the paperwork is already done.</p>
+
+  <dl class="anno">
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>Every surface</b>: completed hero, champions banner, Champions Recap page, final record, Post-Event Summary,
+    the dashboard's "🏆 Champion" division rows, the locked read-only admin state a completed event already gets.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>The seeded state.</b> Ended yesterday, always — the date re-anchors nightly so it is permanently "the morning
+    after". U11 bracket fully resolved (champion <b>Cedar Hollow Cyclones</b> — deliberately <i>not</i> the same club that
+    is winning the Summer Classic, so the world doesn't read as scripted); U13 round-robin complete with a standings leader.
+    Payments fully collected: the morning after should feel like relief, not a chase.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>Nobody gets congratulated.</b> The champions announcement only fires through the live scoring path. The demo's
+    seeding writes the record directly, exactly like Phase 1's seed — so the crowned champion exists, and no notification
+    of any kind is ever sent. Same guarantee, third chokepoint untouched.</dd>
+  </dl>
+</section>
+
+<!-- ══════════════════════════ 5 · THE TOUR ══════════════════════════ -->
+<section id="tour">
+  <p class="sec-eyebrow">The spine · <span class="tag">four steps become six</span></p>
+  <h2>The tour grows two steps — and now walks the year</h2>
+  <p class="sec-intro">Steps 1–4 are untouched. Steps 5 and 6 use the dock's own jumps, so the guided path and the
+  self-serve path are the same mechanism wearing two handles. Labels name what the press does; the payoff lives in the
+  narration — the rule the rebuild established.</p>
+
+  <div class="tbl-scroll"><table class="dec">
+    <tr><th></th><th>Button says</th><th>Lands on</th><th>The narration then says</th></tr>
+    <tr><td><b>1–4</b> <span class="lab lab-un">Unchanged</span></td><td colspan="3">The live game → the bracket filling in → the organizer's seat → try to break the schedule. Exactly as rebuilt and QA'd.</td></tr>
+    <tr><td><b>5</b> <span class="lab lab-new">New</span></td><td>Go back three weeks</td><td>Registration week · Teams screen (operator)</td><td>"You've jumped three weeks back. Thirteen teams are in, U11 is full with a waitlist, and three entries are still waiting on payment — this screen is where that week gets managed."</td></tr>
+    <tr><td><b>6</b> <span class="lab lab-new">New</span></td><td>Skip to the morning after</td><td>Morning after · Post-Event Summary (operator)</td><td>"The day after it all ended: every score in, the champion crowned, and the summary already written. Next year starts from one button."</td></tr>
+    <tr><td><b>Done</b> <span class="lab lab-un">Unchanged</span></td><td colspan="3">"Start your own — free →" — the tour still ends on the one dead end that should sell, now arriving right after the "next year in one step" beat.</td></tr>
+  </table></div>
+
+  <dl class="anno">
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>All tour machinery</b>: delivery-on-arrival, pending-step redemption, narration, the door fallback for visitors
+    who don't hold the demo session, the versioned progress key (bumped once more, since the step list changes shape).</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Step 6 ends in the organizer's seat, not at the champions banner.</b> Deliberate: the visitor is a prospect
+    <i>organizer</i>, steps 3–5 already have them in that seat, and "the paperwork did itself + next year is one button"
+    is the strongest closing argument we own. The fan-side champions banner is one ⇄ flip away and the narration can
+    point at it. <b>Owner call</b> — the alternative (end on the champions banner) is drawn in section 4 and is a
+    one-line change.</dd>
+  </dl>
+
+  <div class="note good"><b>Definition of done, restated.</b> A visitor moves through all three moments inside two minutes —
+  steps 5 and 6 are one press each, so the tour now does it for them. Each moment looks like a day somebody actually lived;
+  the demo still repairs itself with no cursor; nothing a visitor does is saved or sent.</div>
+</section>
+
+<!-- ══════════════════════════ 6 · THE SHAPE ══════════════════════════ -->
+<section id="shape">
+  <p class="sec-eyebrow">The decision underneath · <span class="tag">priced honestly, as the handoff asked</span></p>
+  <h2>One org, three tournaments — why shape B wins</h2>
+  <p class="sec-intro">The Phase 2 handoff named three shapes and asked for honest pricing. Measured against the product
+  as it actually is, the answer moved: the product's own multi-event support does most of Phase 2's work for free.</p>
+
+  <div class="tbl-scroll"><table class="dec">
+    <tr><th>Shape</th><th>What it is</th><th>Honest price</th><th>Verdict</th></tr>
+    <tr>
+      <td><b>A</b> · Three orgs</td>
+      <td>Each moment its own demo org; the dock navigates between them.</td>
+      <td>Three organizer accounts — so switching moments in the operator seat means a session swap through the door on
+      every press. Three entries in an allow-list whose safety story is "short and boring". Three hygiene surfaces
+      (search, metrics, discovery). The world fragments into three associations, or three confusingly identical ones.
+      The chrome unmounts at every switch.</td>
+      <td>Only simpler for one file. Heavier everywhere a visitor actually stands.</td>
+    </tr>
+    <tr>
+      <td><b>B</b> · One org, three tournaments <span class="lab lab-new">Recommended</span></td>
+      <td>Three events of the same association, in three lifecycle states. The dock is navigation between them.</td>
+      <td>Two new seeds, two new one-sentence "what should this look like today" rules (dates only — neither new moment
+      ticks), the sweep extended to prove each moment presentable at every hour. That's the bill.</td>
+      <td>The product's native model: the admin's event switcher appears by itself, fan pages are already per-event,
+      the plan has unlimited slots. One session, one world, one hat. <b>Every Phase 1 guarantee is org-level and
+      carries over untouched</b> — write block, outbound silence, curation, hygiene, the self-healing no-cursor loop.</td>
+    </tr>
+    <tr>
+      <td><b>C</b> · Per-visitor overlay</td>
+      <td>One event; the dock changes what each visitor sees without changing what is stored.</td>
+      <td>Per-session state in a sandbox whose deepest property is having none.</td>
+      <td>Rejected. The self-healing invariant is worth more than the dock — the handoff said so, and it's right.</td>
+    </tr>
+  </table></div>
+
+  <dl class="anno">
+    <dt><span class="lab lab-un">Untouched</span></dt>
+    <dd><b>Game day's two-hour loop</b>, its 89–92 HEALTHY baseline, the "break the schedule" beat, the door, the ungated
+    ruling, the marketing doors, and both new moments' safety: same org, same write block, same silence.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>Both new moments are still, by design.</b> Registration week and the morning after don't tick — they re-anchor
+    their dates nightly through the same stateless reconcile run, so the Invitational is always 21 days out and the
+    Opener always ended yesterday. No cursor, no migration, no schema change.</dd>
+  </dl>
+
+  <h3>Open calls for the owner</h3>
+  <div class="tbl-scroll"><table class="dec">
+    <tr><th>#</th><th>Question</th><th>Recommendation</th></tr>
+    <tr><td>1</td><td>Dock placement</td><td>The slim third row (drawn here). Alternative: fold into an existing row — two rows of hat, less legible.</td></tr>
+    <tr><td>2</td><td>Where step 6 ends</td><td>Post-Event Summary (organizer's close). Alternative: the fan champions banner.</td></tr>
+    <tr><td>3</td><td>Money in registration week</td><td>Show fee <i>amounts</i> ($600 / $150 deposit / one past-due) — never payment instructions. Without amounts the payments story is empty.</td></tr>
+    <tr><td>4</td><td>Event names</td><td><b>Riverdale Season Opener</b> (ended yesterday) · <b>Riverdale Summer Classic</b> (today, unchanged) · <b>Riverdale Invitational</b> (3 weeks out). Season-neutral, one invented world.</td></tr>
+    <tr><td>5</td><td>Seal the Opener into the Digital Ledger?</td><td>Not in Phase 2 — the summary tells the story. Sealing (and the public archives shelf) is a good Phase 3 beat if wanted.</td></tr>
+  </table></div>
+</section>
+
+<footer class="doc-end">
+  Tournament Admin Sandbox · Phase 2 mockups rev 1 · 2026-08-04 · Companion to
+  TOURNAMENT_ADMIN_SANDBOX_PLAN.md (build notes 1–42) and the Phase 1 binding spec.
+  Nothing here is built; nothing gets built until these are approved.
+</footer>
+</div>

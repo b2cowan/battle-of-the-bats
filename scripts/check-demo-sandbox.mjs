@@ -23,12 +23,17 @@
 import { createClient } from '@supabase/supabase-js';
 import { buildScheduleMetrics } from '../lib/schedule-metrics.ts';
 import { computeTournamentStandings } from '../lib/tie-breakers.ts';
-import { zonedWallClockToUtc } from '../lib/timezone.ts';
+import { zonedWallClockToUtc, utcToZonedInputs, ORG_TIME_ZONE } from '../lib/timezone.ts';
 import { getDemoOrgByKind, DEMO_TOURNAMENT_SLUG } from '../lib/demo-org.ts';
 import {
   resolveDemoState, demoBracketSeeds, DEMO_GAME_DURATION_MINUTES,
   DEMO_BRACKET_CODES, DEMO_PLAYOFF_CONFIG, DEMO_TOURNAMENT_SETTINGS,
 } from '../lib/demo-tournament.ts';
+import {
+  DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG, INVITATIONAL_FEE,
+  resolveOpenerState, resolveInvitationalState, openerBracketSeeds,
+} from '../lib/demo-moments.ts';
+import { buildRegistrationAttentionSummary } from '../lib/registration-attention.ts';
 
 const LIVE_GRACE_MINUTES = 30;   // mirrors lib/game-status.ts
 const failures = [];
@@ -46,6 +51,10 @@ const db = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY,
   { auth: { persistSession: false } },
 );
+
+/** The one contact rule, asserted for every demo event: unreachable reserved-domain addresses only. */
+const firstRealLookingContact = (teams) => (teams ?? []).find(t =>
+  (t.email && !t.email.endsWith('@example.com')) || (t.coach_email && !t.coach_email.endsWith('@example.com')));
 
 const demoOrg = getDemoOrgByKind('tournament');
 if (!demoOrg) { console.error('No tournament demo org registered in lib/demo-org.ts'); process.exit(1); }
@@ -82,8 +91,7 @@ const byCode = Object.fromEntries(games.filter(g => g.bracket_code).map(g => [g.
 
 // ── 2. contacts are fictional ────────────────────────────────────────────────────────────────
 console.log('\nContacts');
-const realLookingContact = teams.find(t =>
-  (t.email && !t.email.endsWith('@example.com')) || (t.coach_email && !t.coach_email.endsWith('@example.com')));
+const realLookingContact = firstRealLookingContact(teams);
 check(!realLookingContact, 'every team contact is an unreachable example.com address',
   realLookingContact ? `${realLookingContact.name} → ${realLookingContact.email ?? realLookingContact.coach_email}` : undefined);
 
@@ -249,6 +257,121 @@ if (metrics.issues?.length) {
   metrics.issues.forEach(i => notes.push(`schedule issue: ${i.message ?? JSON.stringify(i)}`));
 }
 
+// ── 7. the two still moments (Phase 2) ───────────────────────────────────────────────────────
+// The Opener must read "ended yesterday, champion crowned"; the Invitational must read "three
+// weeks out, registration open, with work in the pipeline". Both are staleness checks too: if
+// the reconcile stops re-anchoring them, their dates drift away from what the resolvers say.
+console.log('\nThe morning after — Riverdale Season Opener');
+const openerWant = resolveOpenerState(now);
+const { data: opener } = await db.from('tournaments')
+  .select('*').eq('org_id', org.id).eq('slug', DEMO_OPENER_SLUG).maybeSingle();
+if (check(!!opener, 'the Season Opener exists', 'run scripts/seed-demo-tournament.mjs')) {
+  check(opener.status === 'completed', 'it is COMPLETED', `status=${opener.status}`);
+  check(
+    opener.start_date === openerWant.startDate && opener.end_date === openerWant.endDate,
+    'it always ended yesterday (dates re-anchored)',
+    `row ${opener.start_date}…${opener.end_date}, clock says ${openerWant.startDate}…${openerWant.endDate}`,
+  );
+  check(!!opener.champions_crowned_at, 'a champion is crowned');
+  check(opener.list_in_directory === false, 'excluded from the tournament directory');
+
+  const [{ data: openerTeams }, { data: openerGames }] = await Promise.all([
+    db.from('teams').select('*').eq('tournament_id', opener.id),
+    db.from('games').select('*').eq('tournament_id', opener.id),
+  ]);
+  check(
+    (openerGames ?? []).length === openerWant.games.length
+      && (openerGames ?? []).every(g => g.status === 'completed' && g.home_score != null && g.away_score != null),
+    'every game is final and scored — nothing dangles',
+    `${(openerGames ?? []).filter(g => g.status !== 'completed').length} not completed`,
+  );
+  check(
+    (openerGames ?? []).every(g => g.score_submission_source != null && g.score_submitted_at != null),
+    'every final carries its submission trail — the results screen shows provenance',
+  );
+  const openerTeamName = Object.fromEntries((openerTeams ?? []).map(t => [t.id, t.name]));
+  const openerFin = (openerGames ?? []).find(g => g.bracket_code === DEMO_BRACKET_CODES.FIN);
+  const expectedChampion = openerBracketSeeds()[0].name;
+  const finWinner = openerFin
+    ? (openerFin.home_score > openerFin.away_score
+      ? openerTeamName[openerFin.home_team_id]
+      : openerTeamName[openerFin.away_team_id])
+    : null;
+  check(finWinner === expectedChampion, `the champion is ${expectedChampion}`, `final's winner is ${finWinner}`);
+  check(
+    expectedChampion !== demoBracketSeeds()[0].name,
+    'a DIFFERENT club than the Summer Classic\'s leader — the world must not read as scripted',
+  );
+  check(!firstRealLookingContact(openerTeams), 'every Opener contact is an unreachable example.com address');
+  check((openerTeams ?? []).some(t => t.status === 'rejected'), 'the summary has a rejected row to report');
+}
+
+console.log('\nRegistration week — Riverdale Invitational');
+const invWant = resolveInvitationalState(now);
+const { data: invitational } = await db.from('tournaments')
+  .select('*').eq('org_id', org.id).eq('slug', DEMO_INVITATIONAL_SLUG).maybeSingle();
+if (check(!!invitational, 'the Invitational exists', 'run scripts/seed-demo-tournament.mjs')) {
+  check(invitational.status === 'active', 'it is ACTIVE (registration can be open)', `status=${invitational.status}`);
+  check(
+    invitational.start_date === invWant.startDate,
+    'first pitch is always three weeks out (dates re-anchored)',
+    `row ${invitational.start_date}, clock says ${invWant.startDate}`,
+  );
+  check(invitational.list_in_directory === false, 'excluded from the tournament directory');
+  check(
+    !JSON.stringify(invitational.settings ?? {}).toLowerCase().includes('e-transfer'),
+    'fee AMOUNTS only — no payment instructions anywhere near a prospect',
+  );
+
+  const [{ data: invDivisions }, { data: invTeams }, { count: invGameCount }] = await Promise.all([
+    db.from('divisions').select('*').eq('tournament_id', invitational.id),
+    db.from('teams').select('*').eq('tournament_id', invitational.id),
+    db.from('games').select('id', { count: 'exact', head: true }).eq('tournament_id', invitational.id),
+  ]);
+  check((invGameCount ?? 0) === 0, 'nothing is scheduled yet — that is the moment');
+
+  const u11 = (invDivisions ?? []).find(d => d.name === 'U11');
+  const u13 = (invDivisions ?? []).find(d => d.name === 'U13');
+  const accepted = (division) => (invTeams ?? []).filter(t => t.division_id === division?.id && t.status === 'accepted').length;
+  check(!!u11 && accepted(u11) === u11.capacity, 'U11 is FULL (the close-registration moment)',
+    u11 ? `${accepted(u11)}/${u11.capacity}` : 'no U11');
+  check((invTeams ?? []).filter(t => t.status === 'waitlist').length >= 2, 'a waitlist is forming');
+  check(!!u13 && accepted(u13) < u13.capacity, 'U13 still has open spots — registration reads OPEN',
+    u13 ? `${accepted(u13)}/${u13.capacity}` : 'no U13');
+
+  // The buckets the Registration Health panel computes, through the app's REAL attention engine —
+  // the exact numbers the mockups promised: 2 to review, 2 waitlisted, 3 unpaid, exactly 1 past due.
+  const attention = buildRegistrationAttentionSummary(
+    (invTeams ?? []).map(t => ({
+      id: t.id, divisionId: t.division_id, status: t.status,
+      paymentStatus: t.payment_status, depositPaid: t.deposit_paid, totalPaid: t.total_paid,
+      slotId: t.slot_id, waitlistPosition: t.waitlist_position, email: t.email,
+    })),
+    {
+      divisions: (invDivisions ?? []).map(d => ({
+        id: d.id, name: d.name,
+        depositAmount: d.deposit_amount, depositDueDate: d.deposit_due_date,
+        totalFeeAmount: d.total_fee_amount, totalFeeDueDate: d.total_fee_due_date,
+      })),
+      feeMode: 'division',
+      // Explicit, from the same clock as every other assertion in this run — never the engine's
+      // own implicit "today", which could disagree at a midnight boundary.
+      today: utcToZonedInputs(now.toISOString(), ORG_TIME_ZONE).date,
+    },
+  );
+  const bucket = (key) => attention.buckets.find(b => b.key === key)?.count ?? -1;
+  check(bucket('pending_review') === 2, '2 teams wait for review', `${bucket('pending_review')}`);
+  check(bucket('waitlist') === 2, '2 teams sit on the waitlist', `${bucket('waitlist')}`);
+  check(bucket('unpaid') === 3, '3 accepted teams have not paid yet', `${bucket('unpaid')}`);
+  check(bucket('past_due') === 1, 'exactly ONE team is past due (the Miners)', `${bucket('past_due')}`);
+  check(bucket('missing_email') === 0, 'no missing-email noise', `${bucket('missing_email')}`);
+  check(
+    (invDivisions ?? []).every(d => d.total_fee_amount === INVITATIONAL_FEE.totalFee && d.deposit_amount === INVITATIONAL_FEE.deposit),
+    `fees are $${INVITATIONAL_FEE.totalFee} with a $${INVITATIONAL_FEE.deposit} deposit, on both divisions`,
+  );
+  check(!firstRealLookingContact(invTeams), 'every Invitational contact is an unreachable example.com address');
+}
+
 // ── verdict ──────────────────────────────────────────────────────────────────────────────────
 console.log('');
 if (notes.length) { notes.forEach(n => console.log(`  · ${n}`)); console.log(''); }
@@ -258,5 +381,7 @@ if (failures.length) {
   process.exit(1);
 }
 console.log('✅ The sandbox is presentable.');
-console.log(`   Fan side:  /${demoOrg.slug}/${DEMO_TOURNAMENT_SLUG}`);
-console.log(`   Operator:  /${demoOrg.slug}/admin/tournaments/dashboard`);
+console.log(`   Game day:          /${demoOrg.slug}/${DEMO_TOURNAMENT_SLUG}`);
+console.log(`   Registration week: /${demoOrg.slug}/${DEMO_INVITATIONAL_SLUG}`);
+console.log(`   Morning after:     /${demoOrg.slug}/${DEMO_OPENER_SLUG}`);
+console.log(`   Operator:          /${demoOrg.slug}/admin/tournaments/dashboard`);

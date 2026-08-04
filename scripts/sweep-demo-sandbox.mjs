@@ -34,6 +34,8 @@ import { isGameLive } from '../lib/game-status.ts';
 import { getDemoOrgByKind, DEMO_TOURNAMENT_SLUG } from '../lib/demo-org.ts';
 import { poolKeyFor } from '../lib/demo-reconcile-core.ts';
 import { resolveDemoState, DEMO_GAME_DURATION_MINUTES, DEMO_CYCLE_MINUTES } from '../lib/demo-tournament.ts';
+import { resolveOpenerState, resolveInvitationalState, invitationalAttentionBuckets } from '../lib/demo-moments.ts';
+import { utcToZonedInputs, ORG_TIME_ZONE } from '../lib/timezone.ts';
 const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false } });
 const demoOrg = getDemoOrgByKind('tournament');
 
@@ -103,6 +105,30 @@ for (let c = 0; c < 12; c++) {
     if (metrics.venueConflictCount + metrics.bufferConflictCount > 0) failures.push(`${where} CONFLICTS ${metrics.venueConflictCount}+${metrics.bufferConflictCount}`);
     if (metrics.healthScore < 85) failures.push(`${where} health dropped to ${metrics.healthScore}`);
     scores.push(metrics.healthScore);
+
+    // ── The two still moments, at this same instant (Phase 2) ──────────────────────────────────
+    // Their dates are pure functions of the clock, so the seams to guard are midnight and DST:
+    // the year must stay in order at every sampled moment (morning-after strictly before game
+    // day's date, registration week strictly after), the Opener must always read "over", and the
+    // Invitational's payment buckets must hold their exact counts — the U13 deposit deadline
+    // sits in the past and U11's in the future BY CONSTRUCTION, and a date-arithmetic slip at a
+    // boundary would silently change who reads Past Due.
+    const opener = resolveOpenerState(now);
+    const invitational = resolveInvitationalState(now);
+    const localToday = utcToZonedInputs(now.toISOString(), ORG_TIME_ZONE).date;
+    if (!(opener.endDate < localToday)) failures.push(`${where} OPENER NOT OVER (${opener.endDate} vs today ${localToday})`);
+    if (!(opener.startDate < opener.endDate)) failures.push(`${where} OPENER WINDOW INVERTED`);
+    if (!(invitational.startDate > localToday)) failures.push(`${where} INVITATIONAL NOT AHEAD (${invitational.startDate})`);
+    if (opener.games.some(g => g.status !== 'completed')) failures.push(`${where} OPENER GAME DANGLING`);
+
+    // The shared mapping in lib/demo-moments.ts — the same buckets the unit tests pin, computed
+    // through the app's real attention engine (an inline copy here had already drifted onto
+    // hardcoded fee literals).
+    const buckets = invitationalAttentionBuckets(invitational, localToday);
+    const wantBuckets = { pending_review: 2, waitlist: 2, unpaid: 3, past_due: 1, missing_email: 0 };
+    for (const [key, want] of Object.entries(wantBuckets)) {
+      if ((buckets[key] ?? -1) !== want) failures.push(`${where} INVITATIONAL ${key.toUpperCase()} = ${buckets[key]}, want ${want}`);
+    }
   }
 }
 
