@@ -38,9 +38,15 @@
                                                    4.28:1 on white); as a fill it only improves,
                                                    since --home-on-live is a light glyph */
   --home-live-soft:    rgba(176, 58, 34, 0.10);
-  --home-amber:        #A16207;                 /* upcoming amber */
-  --home-blue:         #2563EB;                 /* admin-blue chips */
-  --home-win:          #3E7A32;                 /* win green (loss = --home-live; tie = --home-dim) */
+  /* ⚠ AA-corrected 2026-08-03 (owner-approved, mockup artifact 501936c4) — see the long note in
+     app/globals.css. Darkened along LIGHTNESS ONLY; hue/saturation byte-identical. These three were
+     only ever AA-safe as text on a white card; amber failed 8 of the 9 grounds the portal paints.
+     MUST MOVE TOGETHER WITH THE globals.css COPY — the palette test asserts the two agree. */
+  --home-amber:        #835006;                 /* upcoming amber */
+  --home-blue:         #134FD3;                 /* admin-blue chips */
+  --home-win:          #34662A;                 /* win green (loss = --home-live; tie = --home-dim) */
+  /* A tinted SURFACE, distinct from the hairline --home-line that used to do both jobs. */
+  --home-fill:         rgba(70, 55, 30, 0.08);
   --home-radius:       14px;
   --home-radius-sm:    9px;
   --home-radius-pill:  999px;
@@ -65,9 +71,9 @@
   --home-on-live:      #FFFFFF;
   --home-olive-rgb:    87, 101, 30;
   --home-live-rgb:     176, 58, 34;
-  --home-amber-rgb:    161, 98, 7;
-  --home-blue-rgb:     37, 99, 235;
-  --home-win-rgb:      62, 122, 50;
+  --home-amber-rgb:    131, 80, 6;
+  --home-blue-rgb:     19, 79, 211;
+  --home-win-rgb:      52, 102, 42;
   --home-line-rgb:     70, 55, 30;
   --home-paper-rgb:    248, 244, 237;  /* for translucent paper grounds (e.g. the sticky search bar) */
 }

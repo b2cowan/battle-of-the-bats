@@ -399,6 +399,28 @@ the individual findings.
 **The baseline is deliberately NOT re-snapshotted.** Absorbing A and B into the ratchet would hide a
 help system nobody can read and a row nobody can reach. C is three colour decisions, not nine.
 
+### 10.4 ⚠ Fault 7 — a translucent badge on a translucent row, and the day's third false positive
+
+Straight after the accent ruling the sweep reported the roster's "Active" badge at **1.05:1** —
+green on solid olive, an unreadable label on a shipped screen. It was about to be fixed.
+
+`over()` hard-coded `a: 1`, which is correct only when the backing layer is already opaque. The badge
+is a 12% green wash on a **10% olive table-row tint** — the commonest badge pattern in the portal —
+so the maths declared the result fully opaque *at the row tint's own colour*. Worse, the walk uses
+that alpha to decide it has found opaque ground, so it **stopped early**: the error compounded rather
+than merely mis-shading. True ground is a pale sage `rgb(210,214,195)`.
+
+**The real numbers ran the other way.** On the true ground the old green measured **3.52:1** — a
+genuine shipped failure nobody knew about — and the darkened `--home-win` takes it to **4.61:1**. A
+bug in the measurement hid a real defect and then invented a fake one on the same element.
+
+That is **three false positives in one day, two of them nearly acted on** (the closed-accordion "row
+trapped under the nav", the gradient-ground blindness, and this). Each looked more plausible than the
+truth; each was settled only by measuring the element directly rather than reasoning about the
+report. The standing rule this earns: **a finding alarming enough to act on immediately is the one to
+re-measure first** — and *a number moving the wrong way is not a regression until you have checked the
+number is real.*
+
 ### 10.3 What the misses have in common
 
 - **9 of 21 misses are pure coverage** — the right rule existed, the screen was not listed.
@@ -427,13 +449,22 @@ help system nobody can read and a row nobody can reach. C is three colour decisi
 - [x] **Add the tinted grounds to `warm-palette-contrast.test.ts`** (§10.2b C) — done 2026-08-03.
       Five grounds added; accent grounds made **per accent** and evidence-driven rather than one
       shared list, so the test cannot cross-produce combinations the product does not have.
-- [ ] **⚠ DESIGN CALL OWED — five parked shortfalls.** The five below are in `ACCEPTED` **only** so
-      the always-run gate stays usable for other sessions; they are explicitly marked UNRESOLVED and
-      are not signed off. They are three colours, not five decisions. **Whoever answers should delete
-      those five entries, not extend them.**
-      · `--home-dim` on the chip surface 4.37:1 · `--home-amber` on the warm chip 4.05:1 ·
-      `--home-win` on the status pill 4.06:1 and the table row 4.11:1 · `--home-blue` on the help
-      link row 4.47:1.
+- [x] **DESIGN CALL MADE 2026-08-03** (owner-approved, mockup artifact `501936c4`; ratified in
+      `memory/design_decisions.md`). Measured across all nine grounds it was never five near-misses:
+      **amber failed 8 of 9, blue and win 6 of 9** — hidden because the palette test held the accents
+      to the two grounds they passed on. Ruling: the three accents **darkened along lightness only**
+      (`--home-amber` → `#835006`, `--home-blue` → `#134FD3`, `--home-win` → `#34662A`, each clearing
+      5.0 on its worst ground); `--home-dim` and `--home-live` **unchanged**; the chip surface moved
+      onto a **new `--home-fill` token** because a hairline was doing duty as a surface. **`ACCEPTED`
+      is now empty** — the five parked entries were deleted, not extended, along with a sixth
+      long-standing exemption whose premise the un-blinded sweep disproved.
+- [x] **The "unreadable Active badge" was the THIRD false positive of the day** — see §10.4. Fixed in
+      the rule's compositing maths, not the product. The badge was genuinely failing at 3.52:1 before
+      the accent ruling, which took it to 4.61:1.
+- [ ] **Flagged, not fixed: more raw dark-theme literals in the help stylesheet** — "For: Coach" at
+      **2.03:1** on cream, the search-results heading, and seven raw white values. The colour
+      guardrail covers that file but does not flag plain white / platform-blue literals, which is why
+      none were caught.
 - [ ] **The other nine raw white text literals in the help stylesheet** — the sweep flagged only the
       two `strong` rules, so the rest either do not render on the help hub or sit on dark-filled
       drawer surfaces. Same class of latent bug; worth converting to ramp tokens on their own merits.

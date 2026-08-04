@@ -90,7 +90,9 @@ const GROUNDS: Record<string, RGB> = {
   // test had never heard of — chips, table rows, status pills, the help hub's link ground. The
   // test was not wrong; its GROUND LIST was incomplete, which is the cheaper thing to fix than any
   // individual finding. Each value below is what the sweep measured on the rendered page.
-  'chip surface': parseHex('#E2DDD4'),   // roster "Deactivate", tryout count chips
+  // Was #E2DDD4 — the hairline token used as a fill, and the one ground --home-dim failed on.
+  // The RULING moved the surface (2026-08-03): --home-fill at 0.08 gives #EAE5DC on paper.
+  'chip surface': parseHex('#EAE5DC'),   // roster "Deactivate", tryout count chips
   'table row': parseHex('#E7E5D8'),      // dues table cells
   'status pill': parseHex('#E1E5D6'),    // roster "Active"
   'warm chip': parseHex('#F1E8DA'),      // announcements empty-state chip
@@ -135,30 +137,12 @@ const ACCENT_GROUNDS: Record<(typeof ACCENTS)[number], readonly string[]> = {
  * zero where you can; every entry is debt someone has to re-argue later.
  */
 const ACCEPTED: Record<string, string> = {
-  // ── UNRESOLVED, parked 2026-08-03 — these are NOT signed off ────────────────────────────────
-  // The five below were found by the browser sweep the day the contrast rule stopped declining on
-  // the portal's gradient ground (plan §10.2b C), and they are parked ONLY so the always-run gate
-  // stays usable for every other session while the design call is made. They are the SAME
-  // question, not five: three colours land a few hundredths under AA on grounds that were added to
-  // this test on the same day. Whoever answers it should delete these five lines, not extend them.
-  'dim on chip surface':
-    'UNRESOLVED. 4.37:1. --home-dim is the muted ink §8 raised to #6A635C against four grounds; ' +
-    'this fifth ground did not exist in the list then. Renders on the roster "Deactivate" control ' +
-    'and the tryout count chips.',
-  'amber on warm chip':
-    'UNRESOLVED. 4.05:1. Renders on the announcements empty-state chip ("No one to email yet"). ' +
-    'Same token as the accepted cream-paper shortfall below, one ground further.',
-  'win on status pill':
-    'UNRESOLVED. 4.06:1. Renders on the roster "Active" pill.',
-  'win on table row':
-    'UNRESOLVED. 4.11:1. Renders in the dues table.',
-  'blue on help link row':
-    'UNRESOLVED. 4.47:1 — three hundredths under. Renders on the help hub topic links.',
-
-  'amber on cream paper':
-    '4.49:1 — one hundredth under the floor. --home-amber is a status accent ("upcoming"), and the ' +
-    'browser sweep finds no instance of it rendering as text on the paper ground. Revisit the moment ' +
-    'one appears, or when the amber is next touched for any other reason.',
+  // ⚠ EMPTY ON PURPOSE, and worth keeping that way. Five entries lived here for a few hours on
+  // 2026-08-03 while the design call was outstanding; the ruling DELETED them rather than extending
+  // them — the three accents were darkened and the chip surface moved. The sixth, a long-standing
+  // 'amber on cream paper' at 4.49:1, went with them: it was accepted on the argument that no amber
+  // text rendered on paper, which the un-blinded sweep then disproved. An acceptance whose premise
+  // is "the checker has never seen it" is only as good as the checker's eyesight.
 };
 
 // ── the tests ────────────────────────────────────────────────────────────────

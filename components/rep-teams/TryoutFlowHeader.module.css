@@ -124,8 +124,11 @@
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .howNum {
   background: var(--home-olive-soft);
 }
+/* ⚠ --home-FILL, not --home-line (2026-08-03). The hairline token filling this chip made a ground
+   darker than the bottom nav, and the --home-dim numeral on it measured 4.37:1. A line and a
+   surface are different jobs; this one is a surface. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabNum {
-  background: var(--home-line);
+  background: var(--home-fill);
 }
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tabBar {
   border-bottom-color: var(--home-line);

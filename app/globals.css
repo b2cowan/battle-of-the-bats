@@ -603,12 +603,30 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --home-live:        #B03A22;
   --home-live-soft:   rgba(176, 58, 34, 0.10);
   --home-live-rgb:    176, 58, 34;
-  --home-amber:       #A16207;
-  --home-amber-rgb:   161, 98, 7;
-  --home-blue:        #2563EB;
-  --home-blue-rgb:    37, 99, 235;
-  --home-win:         #3E7A32;
-  --home-win-rgb:     62, 122, 50;
+  /* ⚠ AA-corrected 2026-08-03 (owner-approved, mockup artifact 501936c4). The three status accents
+     were only ever AA-safe as TEXT on a white card: measured across all NINE grounds the portal
+     paints, amber failed on 8 of 9 (worst 3.64), blue and win on 6 of 9. This stayed hidden because
+     warm-palette-contrast.test.ts held the accents to two grounds — white and cream — which are
+     exactly the two they passed on. Darkened along LIGHTNESS ONLY; hue and saturation are byte-
+     identical, so the semantic reading (amber = upcoming, blue = admin, green = win) is unchanged.
+     Each clears 5.0 on its WORST ground, not the ~4.6 that merely scrapes past — the --home-live
+     lesson directly above: the lightest passing value fails again the moment anything behind it
+     shifts. As FILLS these only improve; the badges pair them with a light glyph. */
+  --home-amber:       #835006;
+  --home-amber-rgb:   131, 80, 6;
+  --home-blue:        #134FD3;
+  --home-blue-rgb:    19, 79, 211;
+  --home-win:         #34662A;
+  --home-win-rgb:     52, 102, 42;
+
+  /* ⚠ A TINTED SURFACE IS NOT A HAIRLINE (new 2026-08-03, same ruling). --home-line was doing both
+     jobs: drawing 1px rules AND filling chips/ghost controls. Those pull opposite ways — a line
+     wants to be seen, a fill wants to stay light enough to carry text — and the line won, producing
+     a chip ground DARKER than the bottom nav (#E2DDD4), the single surface --home-dim failed on.
+     Rather than darken the muted ink a second time in two days (it has one step of runway left
+     before the three-tier ink ramp collapses below its 1.5 separation), the SURFACE moves.
+     Same ink, one step lighter. --home-line stays a line. */
+  --home-fill:        rgba(70, 55, 30, 0.08);
   --home-line-rgb:    70, 55, 30;
   --home-paper-rgb:   248, 244, 237;
   /* True lime kept for the few LIME FILLS that survive on paper (CTAs / "on" toggles) with
@@ -857,6 +875,19 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline {
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:hover {
   background: var(--home-olive-soft);
   box-shadow: none;
+}
+
+/* Warm ghost button (.btn-ghost) — its base fill is var(--white-10), which the warm gate remaps to
+   --home-line, the HAIRLINE. As a fill that produced #E2DDD4 on cream: darker than the bottom nav,
+   and the --home-dim label on it measured 4.37:1 (the roster's "Deactivate" is the shipped case).
+   ⚠ Deliberately NOT fixed by remapping --white-10 itself — that step is used as a BORDER in 53
+   places against 42 as a background, so remapping it would silently lighten every one of those
+   hairlines. The fill moves; the line does not. Owner-approved 2026-08-03, mockup 501936c4. */
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost {
+  background: var(--home-fill);
+}
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:hover {
+  background: var(--home-line);
 }
 
 /* Warm card hover — the global .card hover borders in platform navy; soften to a warm hairline + drop

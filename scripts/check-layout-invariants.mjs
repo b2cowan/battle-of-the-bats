@@ -225,12 +225,29 @@ function probeInPage(opts) {
     const p = m[1].split(',').map((x) => parseFloat(x));
     return { r: p[0], g: p[1], b: p[2], a: p.length > 3 ? p[3] : 1 };
   };
-  const over = (fg, bg) => ({
-    r: fg.r * fg.a + bg.r * (1 - fg.a),
-    g: fg.g * fg.a + bg.g * (1 - fg.a),
-    b: fg.b * fg.a + bg.b * (1 - fg.a),
-    a: 1,
-  });
+  /**
+   * Source-over compositing. ⚠ THE RESULT IS NOT AUTOMATICALLY OPAQUE.
+   *
+   * The first version hard-coded `a: 1`, which is only correct when the BACKING layer is already
+   * opaque. Composite a translucent foreground over a translucent backing — a 12% badge wash on a
+   * 10% tinted table row, the commonest badge pattern in the portal — and it declared the result
+   * fully opaque at the backing's own colour. The roster's "Active" badge therefore reported as
+   * green-on-solid-olive at 1.05:1, an alarming and completely fictional finding: the row tint is
+   * 10% olive over cream, so the true ground is a pale sage and the badge is fine.
+   *
+   * The walk above relies on this alpha to decide when it has found opaque ground, so getting it
+   * wrong also stopped the walk early — the error compounded rather than merely mis-shading.
+   */
+  const over = (fg, bg) => {
+    const a = fg.a + bg.a * (1 - fg.a);
+    if (a === 0) return { r: 0, g: 0, b: 0, a: 0 };
+    return {
+      r: (fg.r * fg.a + bg.r * bg.a * (1 - fg.a)) / a,
+      g: (fg.g * fg.a + bg.g * bg.a * (1 - fg.a)) / a,
+      b: (fg.b * fg.a + bg.b * bg.a * (1 - fg.a)) / a,
+      a,
+    };
+  };
   const lum = (c) => {
     const f = (v) => { const s = v / 255; return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4); };
     return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
