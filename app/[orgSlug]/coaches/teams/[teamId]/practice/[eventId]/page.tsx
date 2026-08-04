@@ -2,7 +2,7 @@
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  ArrowLeft, BookMarked, CalendarDays, Check, ClipboardList, Copy, NotebookPen, Play, Printer, Ruler, X,
+  ArrowLeft, BookMarked, CalendarDays, Check, ClipboardList, Copy, NotebookPen, Play, Printer, Ruler, Telescope, X,
 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
@@ -31,6 +31,7 @@ import PracticePlanEditor, {
   type PracticeFocusGoal, type PracticeRosterPlayer,
 } from '../_PracticePlanEditor';
 import type { DrillInput, RepTeamDrill } from '@/lib/rep-drills';
+import type { PracticeWeekScoutingBridge } from '@/lib/coach-opponent-nudge';
 import type { PickableTag } from '@/components/coaches/TagPicker';
 import styles from '../../../../coaches.module.css';
 import type { RepAttendanceStatus, RepTeamEvaluationSession, RepTeamEvent } from '@/lib/types';
@@ -65,6 +66,9 @@ type LoadState = {
   attendance: { playerId: string; status: RepAttendanceStatus }[];
   previousPlans: PreviousPlan[];
   sessions: RepTeamEvaluationSession[];
+  /** The game-week scouting bridge (Scouting Book P3) — null when the week has no booked
+   *  opponent with book content, which is most weeks. */
+  scoutingBridge: PracticeWeekScoutingBridge | null;
   staffSuggestions: string[];
   equipmentSuggestions: string[];
   /** This team's own drills plus the club's shared set — the picker's source (Phase 2). */
@@ -573,6 +577,44 @@ export default function CoachPracticePlanPage({
         <p className={styles.errorText}>{loadError}</p>
       ) : !data ? null : (
         <>
+          {/* ── The practice-week bridge (Scouting Book P3, plan §4.9) ──
+              One quiet line above the blocks: Saturday's intelligence while Tuesday's plan is
+              being built. Read-only glance — capture and curation stay on the book's own
+              surfaces. Absent when the week has no booked opponent with book content, absent
+              in archives (this screen is the LIVE planner; the read-only past-plan door is a
+              different route that never assembles the bridge), and never a pop-up. */}
+          {data.scoutingBridge && (
+            <div className={styles.ppScoutBridge}>
+              <p className={styles.ppScoutBridgeLead}>
+                <Telescope size={14} aria-hidden />
+                <span>
+                  You play <strong>{data.scoutingBridge.opponentName}</strong>{' '}
+                  {formatInOrgZone(data.scoutingBridge.gameStartsAt, { weekday: 'long' })} — the book:
+                </span>
+              </p>
+              {data.scoutingBridge.summary && (
+                <p className={styles.ppScoutBridgeLine}>&ldquo;{data.scoutingBridge.summary}&rdquo;</p>
+              )}
+              {data.scoutingBridge.latestObservation && (
+                <p className={styles.ppScoutBridgeObs}>
+                  {data.scoutingBridge.latestObservation.body}
+                  {data.scoutingBridge.latestObservation.createdByName && (
+                    <span> — {data.scoutingBridge.latestObservation.createdByName}</span>
+                  )}
+                </p>
+              )}
+              <Link
+                href={`${base}/history/opponents/${encodeURIComponent(data.scoutingBridge.opponentKey)}`}
+                className={styles.ppScoutBridgeLink}
+              >
+                Full book
+                {data.scoutingBridge.observationCount > 0
+                  ? ` · ${data.scoutingBridge.observationCount} observation${data.scoutingBridge.observationCount === 1 ? '' : 's'}`
+                  : ''} ›
+              </Link>
+            </div>
+          )}
+
           {/* An honest empty state: what a plan is, what it unlocks, and what's blocking. */}
           {!hasPlan && !canWrite && (
             <CoachEmptyState

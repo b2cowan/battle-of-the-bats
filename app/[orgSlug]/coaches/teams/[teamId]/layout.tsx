@@ -7,7 +7,8 @@ import {
   getCoachPortalPublicHref,
 } from '@/lib/coach-portal-request';
 import { getCoachMastheadFeed, EMPTY_MASTHEAD_FEED } from '@/lib/coach-masthead';
-import { resolveMastheadStatus } from '@/lib/coach-masthead-status';
+import { getScoutingNudgeForNextGame } from '@/lib/coach-opponent-nudge';
+import { resolveMastheadStatus, type MastheadScoutingNudge } from '@/lib/coach-masthead-status';
 import CoachTeamHeader from '@/components/coaches/CoachTeamHeader';
 
 /**
@@ -74,6 +75,19 @@ export default async function CoachTeamLayout({
       })
     : null;
 
+  // Game-week scouting nudge (Scouting Book P2): only when the masthead is already talking
+  // about a live season's game — the nudge can never outlive the status that justifies it.
+  let scoutingNudge: MastheadScoutingNudge | null = null;
+  if (status) {
+    const nudge = await getScoutingNudgeForNextGame(teamId, feed.next);
+    if (nudge) {
+      scoutingNudge = {
+        ...nudge,
+        href: `/${orgSlug}/coaches/teams/${teamId}/schedule?event=${nudge.eventId}&tab=scouting`,
+      };
+    }
+  }
+
   return (
     <>
       <CoachTeamHeader
@@ -83,6 +97,7 @@ export default async function CoachTeamLayout({
         publicHref={publicHref}
         records={feed.records}
         status={status}
+        scoutingNudge={scoutingNudge}
         // ⚠ WHICH season the status describes. A layout cannot read `?year=`, so this feed is
         // always built for the DEFAULT season — while the client resolves the season on screen
         // from the URL. A team mid-rollover can hold two live seasons at once, and a hand-typed

@@ -66,7 +66,7 @@ export async function getCoachMastheadFeed(opts: CoachMastheadFeedOpts): Promise
       activeYearId
         ? supabaseAdmin
             .from('rep_team_events')
-            .select('event_type, starts_at, opponent, name')
+            .select('id, event_type, starts_at, opponent, name')
             .eq('program_year_id', activeYearId)
             .eq('status', 'scheduled')
             // Same window the Overview's own "next up" uses: scheduled, and not already started.
@@ -95,6 +95,7 @@ export async function getCoachMastheadFeed(opts: CoachMastheadFeedOpts): Promise
     const nextRow = (nextRes.data ?? [])[0];
     const next: MastheadEvent | null = nextRow
       ? {
+          id: nextRow.id,
           eventType: nextRow.event_type,
           startsAt: nextRow.starts_at,
           opponent: nextRow.opponent ?? null,

@@ -680,8 +680,10 @@ export default function CoachesSchedulePage({
 
   // Opponent Scouting Book roll-up (one fetch, no N+1): powers the record chip on upcoming
   // game rows and the Scouting tab's availability. Non-fatal — a failed load just means no
-  // chips this visit. Keys are the book's normalized names; a P2 alias merge folds spellings
-  // server-side, so a direct normalize-lookup here can miss an aliased spelling until then.
+  // chips this visit. The map is keyed by the book's normalized names AND every merged-away
+  // alias (P2): an aliased spelling's events fold into the owner server-side, but the event
+  // string a row renders from still normalizes to the alias — without the alias keys, the
+  // chip would vanish from exactly the rows a merge was meant to unify.
   // ⚠ ABSENT IN AN ARCHIVE, per "the archive is OPT-IN": the book is a live-season
   // INSTRUMENT (owner ruling 2026-08-04) — a frozen season shows no scouting UI. ONE derived
   // flag gates BOTH the roll-up fetch and the tab/key computation below, so the two can
@@ -698,7 +700,10 @@ export default function CoachesSchedulePage({
       if (!res.ok) return;
       const data = await res.json();
       const map = new Map<string, OpponentBookEntry>();
-      for (const e of (data.opponents ?? []) as OpponentBookEntry[]) map.set(e.key, e);
+      for (const e of (data.opponents ?? []) as OpponentBookEntry[]) {
+        map.set(e.key, e);
+        for (const alias of e.aliasKeys ?? []) map.set(alias, e);
+      }
       setBookByKey(map);
     } catch { /* chips are a convenience, never a blocker */ }
   }, [orgSlug, teamId, scoutingAvailable]);
@@ -2620,6 +2625,7 @@ export default function CoachesSchedulePage({
                 teamId={teamId}
                 eventId={selectedEvent.id}
                 opponentName={selectedEvent.opponent!}
+                mirrored={isMirroredEvent(selectedEvent)}
               />
             )}
 

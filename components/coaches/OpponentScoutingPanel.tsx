@@ -1,13 +1,29 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { Check, Share2, Trophy } from 'lucide-react';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   recordChip, recordTone, resultLetter, normalizeOpponentName,
   OPPONENT_OBSERVATION_MAX, type OpponentBookEntry,
 } from '@/lib/coach-opponents';
+import { ordinal } from '@/lib/playoff-bracket';
+import type { OpponentTournamentIntel, OpponentTournamentIntelGame } from '@/lib/coach-tournament-intel';
 import type { RepTeamOpponentObservation } from '@/lib/types';
+import ScoutTagFilter from './ScoutTagFilter';
 import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
+
+/** The intel payload as the route serves it — the pure shape, whose results additionally
+ *  carry the two schedule labels the route attaches. Only that field is re-stated, so the
+ *  pinned server shape stays the single definition. */
+type TournamentIntel = Omit<OpponentTournamentIntel, 'results'> & {
+  results: (OpponentTournamentIntelGame & { dateLabel: string; timeLabel: string | null })[];
+};
+
+/** Four fetch sites in this file share one error idiom — one copy of it, not four. */
+async function throwIfNotOk(res: Response, fallback: string): Promise<void> {
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? fallback);
+}
 
 /**
  * The schedule drawer's Scouting tab — the GLANCE surface of the Opponent Scouting Book
@@ -17,13 +33,15 @@ import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
  * attributed — owner-ratified 2026-08-04).
  */
 export default function OpponentScoutingPanel({
-  orgSlug, teamId, eventId, opponentName,
+  orgSlug, teamId, eventId, opponentName, mirrored = false,
 }: {
   orgSlug: string;
   teamId: string;
   /** The game this tab is open on — new observations link to it. */
   eventId: string;
   opponentName: string;
+  /** Mirrored tournament game? Only then does "Their tournament so far" have a source (P3). */
+  mirrored?: boolean;
 }) {
   const key = encodeURIComponent(normalizeOpponentName(opponentName));
   const apiBase = `/api/coaches/${orgSlug}/teams/${teamId}/opponents/${key}`;
@@ -33,11 +51,22 @@ export default function OpponentScoutingPanel({
     opponent: OpponentBookEntry;
     observations: RepTeamOpponentObservation[];
     tags: string[];
+    canShareToStaffChat?: boolean;
   } | null>(null);
   const [error, setError] = useState('');
   const [obsBody, setObsBody] = useState('');
   const [obsTag, setObsTag] = useState<string | null>(null);
   const [logging, setLogging] = useState(false);
+  /** Tag filter over the log (P2, mockup Stage 6) — mirrors the card page's filter. */
+  const [filterTag, setFilterTag] = useState<string | null>(null);
+  /** How many observations went in THIS sitting (S5) — the saved-line + add-another cue. */
+  const [savedCount, setSavedCount] = useState(0);
+  const [shareStatus, setShareStatus] = useState<'idle' | 'sharing' | 'shared' | 'error'>('idle');
+  const obsInputRef = useRef<HTMLTextAreaElement>(null);
+  // Synchronous re-entry guards: `disabled` reflects committed state, so a fast double-tap
+  // fires twice before the re-render — and neither POST is idempotent (two identical
+  // observations / two chat snapshots).
+  const busyRef = useRef({ log: false, share: false });
 
   // The panel unmounts on every tab/event switch; a slow fetch resolving afterwards must
   // not call setState on the corpse. One ref covers both load() and logObservation().
@@ -50,7 +79,7 @@ export default function OpponentScoutingPanel({
   const load = useCallback(async () => {
     try {
       const res = await fetch(apiBase);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not load the book');
+      await throwIfNotOk(res, 'Could not load the book');
       const payload = await res.json();
       if (!mountedRef.current) return;
       setData(payload);
@@ -63,9 +92,34 @@ export default function OpponentScoutingPanel({
 
   useEffect(() => { load(); }, [load]);
 
+  /**
+   * "Their tournament so far" (P3) — assembled server-side from the SAME tournament's
+   * organizer data, refreshed every time the tab opens (that's the point: Sunday's tab
+   * carries this morning's scores). Fails soft in both directions: a blip costs the block,
+   * never the tab, and `{ intel: null }` (external tournament, no results yet) is a state
+   * — the block is simply absent, not apologized for.
+   */
+  const [intel, setIntel] = useState<TournamentIntel | null>(null);
+  useEffect(() => {
+    // Non-mirrored games never fetch, and the render below gates on `mirrored` too — no
+    // state reset needed here (the panel remounts per event; see the mountedRef note above).
+    if (!mirrored) return;
+    let live = true;
+    (async () => {
+      try {
+        const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/tournament-intel`);
+        if (!res.ok) return;
+        const payload = await res.json();
+        if (live && mountedRef.current) setIntel(payload.intel ?? null);
+      } catch { /* absent, never an error state */ }
+    })();
+    return () => { live = false; };
+  }, [mirrored, orgSlug, teamId, eventId]);
+
   async function logObservation() {
     const body = obsBody.trim();
-    if (!body) return;
+    if (!body || busyRef.current.log) return;
+    busyRef.current.log = true;
     setLogging(true);
     try {
       const res = await fetch(`${apiBase}/observations`, {
@@ -73,15 +127,37 @@ export default function OpponentScoutingPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body, tag: obsTag, eventId, opponentName }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save');
+      await throwIfNotOk(res, 'Could not save');
       if (!mountedRef.current) return;
       setObsBody('');
       setObsTag(null);
+      // The one-sitting loop (S5, mockup 1b): confirm in place and hand the keyboard back —
+      // several observations in a row without re-finding the input.
+      setSavedCount(c => c + 1);
+      obsInputRef.current?.focus();
       await load();
     } catch (e: unknown) {
       if (mountedRef.current) setError(e instanceof Error ? e.message : 'Could not save');
     } finally {
+      busyRef.current.log = false;
       if (mountedRef.current) setLogging(false);
+    }
+  }
+
+  async function shareToStaffChat() {
+    if (busyRef.current.share) return;
+    busyRef.current.share = true;
+    setShareStatus('sharing');
+    try {
+      const res = await fetch(`${apiBase}/share-to-staff-chat`, { method: 'POST' });
+      await throwIfNotOk(res, 'Could not share');
+      if (mountedRef.current) setShareStatus('shared');
+    } catch (e: unknown) {
+      if (!mountedRef.current) return;
+      setShareStatus('error');
+      setError(e instanceof Error ? e.message : 'Could not share');
+    } finally {
+      busyRef.current.share = false;
     }
   }
 
@@ -89,7 +165,12 @@ export default function OpponentScoutingPanel({
   if (!data) return <div className={styles.loadingState}>Loading…</div>;
 
   const { opponent, observations, tags } = data;
-  const latest = observations.slice(0, 2);
+  // Tag chips filter the log (All + only tags in use), exactly as the card page does.
+  const usedTags = tags.filter(t => observations.some(o => o.tag === t));
+  const shownObs = filterTag ? observations.filter(o => o.tag === filterTag) : observations;
+  const latest = shownObs.slice(0, 2);
+  // One day of intel results → clock times tell them apart; a multi-day event → dates do.
+  const intelSameDay = intel ? new Set(intel.results.map(r => r.gameDate ?? '')).size <= 1 : true;
 
   return (
     <div className={styles.scoutPanel}>
@@ -120,6 +201,37 @@ export default function OpponentScoutingPanel({
         <p className={styles.scoutFootnote}>Nothing in the book line yet — the full page has the editor.</p>
       )}
 
+      {mirrored && intel && (
+        <div className={styles.scoutIntel}>
+          <span className={styles.scoutIntelLabel}>
+            <Trophy size={11} aria-hidden /> Their tournament so far
+          </span>
+          {intel.results.map(r => (
+            <div key={r.gameId} className={`${styles.scoutMeetingRow} ${styles.scoutIntelRow}`}>
+              <span className={styles.scoutMeetingRes} data-r={r.result}>{resultLetter(r.result)}</span>
+              <span className={styles.scoutMeetingScore}>{r.theirScore}–{r.otherScore}</span>
+              <span className={styles.scoutIntelOpp}>
+                vs {r.otherTeamName}
+                {/* The scoreline is a nominal margin, and the totals below skip it — say so. */}
+                {r.isForfeit && <span className={styles.scoutIntelFlag}>forfeit</span>}
+              </span>
+              <span className={styles.scoutMeetingDate}>{intelSameDay ? (r.timeLabel ?? r.dateLabel) : r.dateLabel}</span>
+            </div>
+          ))}
+          <p className={styles.scoutIntelStanding}>
+            {intel.standing
+              ? `${ordinal(intel.standing.rank)} ${intel.standing.poolName ? `in ${intel.standing.poolName}` : 'in their division'} · `
+              : ''}
+            {intel.unitFor} for / {intel.unitAgainst} against
+          </p>
+          <p className={styles.scoutIntelSource}>
+            From {intel.tournamentName}&rsquo;s live results — refreshed each time you open this.
+          </p>
+        </div>
+      )}
+
+      <ScoutTagFilter tags={usedTags} value={filterTag} onChange={setFilterTag} />
+
       {latest.map(o => (
         <div key={o.id} className={styles.scoutObs}>
           <span className={styles.scoutObsBody}>
@@ -129,11 +241,17 @@ export default function OpponentScoutingPanel({
           {o.tag && <span className={styles.scoutObsTag}>{o.tag}</span>}
         </div>
       ))}
-      {observations.length > 2 && (
-        <p className={styles.scoutFootnote}>+ {observations.length - 2} more on the full page.</p>
+      {shownObs.length > 2 && (
+        <p className={styles.scoutFootnote}>+ {shownObs.length - 2} more on the full page.</p>
       )}
 
+      {savedCount > 0 && (
+        <p className={styles.scoutSavedLine} aria-live="polite">
+          <Check size={12} aria-hidden /> {savedCount === 1 ? 'Saved' : `${savedCount} saved this sitting`} — add another?
+        </p>
+      )}
       <textarea
+        ref={obsInputRef}
         className={styles.scoutLogInput}
         value={obsBody}
         maxLength={OPPONENT_OBSERVATION_MAX}
@@ -153,6 +271,12 @@ export default function OpponentScoutingPanel({
         <button type="button" className={styles.scoutPanelLink} disabled={logging || obsBody.trim().length === 0} onClick={logObservation}>
           {logging ? 'Saving…' : 'Save observation'}
         </button>
+        {data.canShareToStaffChat && (
+          <button type="button" className={styles.scoutPanelLink} disabled={shareStatus === 'sharing'} onClick={shareToStaffChat}>
+            <Share2 size={12} aria-hidden />{' '}
+            {shareStatus === 'sharing' ? 'Sharing…' : shareStatus === 'shared' ? 'Shared ✓' : 'Share to staff chat'}
+          </button>
+        )}
         <Link href={`${base}/history/opponents/${key}`} className={styles.scoutPanelLink}>
           Everything we know ›
         </Link>

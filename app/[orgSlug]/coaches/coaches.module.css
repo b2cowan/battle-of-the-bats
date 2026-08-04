@@ -6757,6 +6757,29 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .ppProvenance svg { flex: none; margin-top: 0.15rem; color: var(--blueprint-blue); }
 .ppProvenance strong { color: var(--white-90); font-weight: 700; }
 
+/* The practice-week scouting bridge (Scouting Book P3) — the game-week nudge's lime-spined
+   card shape (.scoutNudge), grown one quiet line taller for the book line + observation. */
+.ppScoutBridge {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  margin: 0 0 0.9rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--border-2);
+  border-left: 3px solid var(--logic-lime);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.ppScoutBridgeLead {
+  display: flex; align-items: flex-start; gap: 0.4rem;
+  margin: 0;
+  font-size: 0.82rem; font-weight: 600; color: var(--white-90); line-height: 1.4;
+}
+.ppScoutBridgeLead svg { flex: none; margin-top: 0.1rem; color: var(--logic-lime); }
+.ppScoutBridgeLine { margin: 0; font-size: 0.82rem; line-height: 1.45; color: var(--white-80); font-style: italic; }
+.ppScoutBridgeObs { margin: 0; font-size: 0.78rem; line-height: 1.4; color: var(--white-70); }
+.ppScoutBridgeObs span { color: var(--white-45); }
+.ppScoutBridgeLink { align-self: flex-start; font-size: 0.78rem; font-weight: 600; color: var(--logic-lime); text-decoration: none; }
+.ppScoutBridgeLink:hover { text-decoration: underline; }
+
 /* -- ONE picker, TWO sources (frame 05). Not a second door: the tabs sit inside the
    control 1a already ships. -- */
 .ppSourceTabs {
@@ -7058,9 +7081,121 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .scoutToastDoor:hover { text-decoration: underline; }
 
+/* "The numbers vs them" (P2) — derived lines, each wearing its provenance chip. */
+.scoutNumbers {
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  background: var(--card-bg);
+  padding: 0.6rem 0.85rem;
+  margin: 0.6rem 0 0;
+  display: flex; flex-direction: column; gap: 0.35rem;
+}
+.scoutNumbersLabel { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white-45); }
+.scoutNumbersLine { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
+.scoutNumbersText { font-size: 0.84rem; color: var(--white-80); line-height: 1.45; }
+.scoutProvChip {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--white-45); background: var(--white-10);
+  border-radius: 999px; padding: 0.2em 0.55em;
+  white-space: nowrap;
+}
+
+/* "Their tournament so far" (P3) — the moat block on a mirrored game's Scouting tab.
+   Dashed border on purpose: assembled from the tournament's live results, not written by
+   anyone — visibly a different substance than the coach-authored book around it. */
+.scoutIntel {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  border: 1px dashed var(--border-2);
+  border-radius: 10px;
+  background: var(--card-bg);
+  padding: 0.55rem 0.7rem;
+}
+.scoutIntelLabel {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--white-45);
+}
+/* Modifier on .scoutMeetingRow — the row layout is the meeting row's, only the size differs. */
+.scoutIntelRow { font-size: 0.78rem; }
+.scoutIntelFlag {
+  margin-left: 0.4rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  color: var(--white-45); background: var(--white-10);
+  border-radius: 4px; padding: 0.2em 0.45em;
+}
+.scoutIntelOpp {
+  flex: 1; min-width: 0;
+  color: var(--white-80);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.scoutIntelStanding { margin: 0.1rem 0 0; font-size: 0.76rem; font-weight: 600; color: var(--white-80); font-variant-numeric: tabular-nums; }
+.scoutIntelSource { margin: 0; font-size: 0.68rem; color: var(--white-45); }
+
+/* Game-plan share row (P2) — a quiet action, not a card of its own. */
+.scoutShareRow { display: flex; align-items: center; gap: 0.6rem; margin: 0.15rem 0.15rem 0.5rem; }
+
+/* S5 — the one-sitting capture cue in the drawer tab. */
+.scoutSavedLine {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  margin: 0;
+  font-size: 0.75rem; font-weight: 600; color: var(--success);
+}
+
+/* "Same team as…" (P2) — identity housekeeping at the foot of the card. */
+.scoutMerge { margin-top: 0.9rem; display: flex; flex-direction: column; gap: 0.4rem; align-items: flex-start; }
+.scoutAliasList { display: flex; flex-direction: column; gap: 0.2rem; }
+.scoutAliasRow { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.78rem; color: var(--white-60); font-style: italic; }
+.scoutMergePicker { display: flex; flex-direction: column; gap: 0.45rem; align-items: flex-start; width: 100%; }
+.scoutMergeList { display: flex; flex-direction: column; gap: 0.3rem; width: 100%; max-height: 16rem; overflow-y: auto; }
+.scoutMergeOption {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  width: 100%;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border-2);
+  border-radius: 8px;
+  background: var(--card-bg);
+  color: var(--white-90);
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+}
+.scoutMergeOption:hover { border-color: var(--white-30); }
+.scoutMergeOptionName { font-size: 0.85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* The merge CONFIRM card reuses the .dupeNotice family (schedule's duplicate-event notice)
+   — same warning-accent confirm shape, one pattern to maintain, not a parallel set. */
+
+/* Game-week nudge under the masthead (P2) — one quiet line, dismissable once per game. */
+.scoutNudge {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  padding: 0.4rem 0.85rem;
+  margin: 0.35rem 0 0;
+  border: 1px solid var(--border-2);
+  border-left: 3px solid var(--logic-lime);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.scoutNudgeLink { font-size: 0.8rem; font-weight: 600; color: var(--white-80); text-decoration: none; min-width: 0; }
+.scoutNudgeLink:hover { color: var(--logic-lime); }
+.scoutNudgeDismiss {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--white-35);
+  cursor: pointer;
+}
+.scoutNudgeDismiss:hover { color: var(--white-70); background: var(--white-10); }
+
 /* 640 = CONTENT reflow: stats keep three-up (they're small); the log save button goes
-   full-width so the tap target isn't squeezed by the tag chips. */
+   full-width so the tap target isn't squeezed by the tag chips. The numbers lines stack so
+   a long insight never squeezes its provenance chip off-screen. */
 @media (max-width: 640px) {
   .scoutLogSave { margin-left: 0; width: 100%; }
   .scoutMeetingName { white-space: normal; }
+  .scoutNumbersLine { flex-direction: column; align-items: flex-start; gap: 0.15rem; }
 }

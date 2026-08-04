@@ -22,11 +22,27 @@ export type MastheadRecord = WltTally;
 
 /** The one upcoming event the status line can talk about. */
 export interface MastheadEvent {
+  /** rep_team_events id — the scouting nudge's deep link + once-per-game dismiss key. */
+  id: string;
   eventType: string;
   /** ISO datetime. */
   startsAt: string;
   opponent: string | null;
   name: string;
+}
+
+/**
+ * The game-week scouting nudge (Scouting Book P2, mockup Stage 6): one quiet line under
+ * the masthead when the NEXT game's opponent has observations in the book. Assembled
+ * server-side beside the feed (lib/coach-masthead); declared here so the client masthead
+ * can name the type without importing the `server-only` module that fills it.
+ */
+export interface MastheadScoutingNudge {
+  eventId: string;
+  opponentName: string;
+  observationCount: number;
+  /** The game's Scouting tab (?event=…&tab=scouting), built by the layout. */
+  href: string;
 }
 
 export interface MastheadStatusInput {

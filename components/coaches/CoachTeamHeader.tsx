@@ -2,12 +2,16 @@
 import { Suspense, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeftRight } from 'lucide-react';
+import { ArrowLeftRight, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { resolveSeasonView } from '@/lib/coach-season-view';
 import { formatRecord } from '@/lib/coach-season-record';
-import { mastheadWhen, type MastheadStatus, type MastheadRecord } from '@/lib/coach-masthead-status';
+import {
+  mastheadWhen, type MastheadStatus, type MastheadRecord, type MastheadScoutingNudge,
+} from '@/lib/coach-masthead-status';
 import { EVENT_WORD } from '@/lib/coach-schedule-vocab';
+import { formatInOrgZone } from '@/lib/timezone';
+import { useCoachNudgeDismiss } from '@/components/coaches/useCoachNudgeDismiss';
 import type { RepEventType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -47,6 +51,7 @@ function CoachTeamHeaderInner({
   records,
   status: rawStatus,
   statusYearId,
+  scoutingNudge,
 }: {
   teamId: string;
   orgName: string;
@@ -56,11 +61,17 @@ function CoachTeamHeaderInner({
   status: MastheadStatus;
   /** The season `status` was computed for — see the layout's note. Null when there is none. */
   statusYearId: string | null;
+  /** Game-week book nudge (Scouting Book P2) — computed only for the status's own season. */
+  scoutingNudge: MastheadScoutingNudge | null;
 }) {
   const searchParams = useSearchParams();
   const { assignments, closedAssignments, seasons } = useCoaches();
   const headerRef = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
+  // Once per GAME, on-device (the portal's one dismiss idiom) — a new game week mints a new
+  // event id, so the nudge returns for the next opponent without any expiry bookkeeping.
+  // Called unconditionally (rules of hooks); the placeholder key is never written.
+  const nudgeDismiss = useCoachNudgeDismiss(teamId, `scouting_book:${scoutingNudge?.eventId ?? 'none'}`);
 
   // Publish the bar's real height for stacked sticky elements; clean up when the bar leaves
   // (team → hub navigation) so a stale value can't offset anything.
@@ -120,8 +131,9 @@ function CoachTeamHeaderInner({
   const status = season.current?.programYearId === statusYearId ? rawStatus : null;
 
   return (
-    // role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event
-    // header sets this explicitly for the identical mount position (AdminEventHeader:137).
+    <>
+    {/* role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event
+        header sets this explicitly for the identical mount position (AdminEventHeader:137). */}
     <header
       ref={headerRef}
       role="banner"
@@ -180,7 +192,35 @@ function CoachTeamHeaderInner({
         )}
       </div>
     </header>
+    {/* Game-week book nudge (Scouting Book P2, mockup Stage 6): one quiet line, once per
+        game. Gated on the SAME `status` the bar renders from, so it can never speak for an
+        archive or a mismatched ?year= season — and only for the very game the status names. */}
+    {status && scoutingNudge && scoutingNudge.eventId === status.event.id && !nudgeDismiss.dismissed && (
+      <div className={styles.scoutNudge}>
+        <Link href={scoutingNudge.href} className={styles.scoutNudgeLink}>
+          You play {scoutingNudge.opponentName} {nudgeDay(status.event.startsAt, status.daysAway)} —{' '}
+          {scoutingNudge.observationCount} observation{scoutingNudge.observationCount === 1 ? '' : 's'} in the book ›
+        </Link>
+        <button
+          type="button"
+          className={styles.scoutNudgeDismiss}
+          aria-label="Dismiss book reminder"
+          title="Dismiss"
+          onClick={nudgeDismiss.dismiss}
+        >
+          <X size={13} />
+        </button>
+      </div>
+    )}
+    </>
   );
+}
+
+/** "today" / "tomorrow" / "Saturday" — the nudge is a sentence, so the day is a word in it. */
+function nudgeDay(startsAt: string, daysAway: number): string {
+  if (daysAway === 0) return 'today';
+  if (daysAway === 1) return 'tomorrow';
+  return formatInOrgZone(startsAt, { weekday: 'long' });
 }
 
 /**
@@ -210,6 +250,8 @@ export default function CoachTeamHeader(props: {
   status: MastheadStatus;
   /** The season `status` was computed for — see the layout's note. Null when there is none. */
   statusYearId: string | null;
+  /** Game-week book nudge (Scouting Book P2) — computed only for the status's own season. */
+  scoutingNudge: MastheadScoutingNudge | null;
 }) {
   // useSearchParams requires a Suspense boundary when rendered from a layout.
   return (

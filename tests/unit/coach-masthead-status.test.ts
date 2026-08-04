@@ -17,6 +17,7 @@ import {
 const NOW = new Date('2026-06-18T14:00:00-04:00');
 
 const event = (over: Partial<MastheadEvent> = {}): MastheadEvent => ({
+  id: 'evt-1',
   eventType: 'league_game',
   startsAt: '2026-06-18T18:30:00-04:00',
   opponent: 'Lions',

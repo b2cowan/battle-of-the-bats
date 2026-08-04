@@ -424,7 +424,9 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
    */
   it('the opponent scouting book is live-season only, by decision (Scouting Book P1)', () => {
     const bookRoutes = files.filter(f => f.replace(/\\/g, '/').includes('/opponents/'));
-    assert.ok(bookRoutes.length >= 3, 'expected the scouting-book routes to exist');
+    // P1 shipped four routes; P2 added merge, aliases/[aliasId], and share-to-staff-chat —
+    // all of them live-season instruments like their siblings, none of them archive doors.
+    assert.ok(bookRoutes.length >= 7, `expected the scouting-book routes to exist, found ${bookRoutes.length}`);
     for (const file of bookRoutes) {
       const src = readFileSync(file, 'utf8');
       assert.ok(

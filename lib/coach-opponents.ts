@@ -13,6 +13,7 @@
  * away. Scrimmages are listed as meetings but never counted.
  */
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
+import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import { tallyResults, formatRecord } from './coach-season-record';
 import type { SportPack } from './sports';
 import type { RepTeamOpponent } from './types';
@@ -27,12 +28,17 @@ export const OPPONENT_OBSERVATION_MAX = 500;
  */
 export function normalizeOpponentName(name: string | null | undefined): string {
   if (!name) return '';
-  const collapsed = name
+  let collapsed = name
     .toLowerCase()
     .replace(/[^\p{L}\p{N}]+/gu, ' ')
     .replace(/\s+/g, ' ')
     .trim();
-  return collapsed.startsWith('the ') ? collapsed.slice(4) : collapsed;
+  // Strip leading "the " to a FIXED POINT, not once: already-normalized keys round-trip
+  // through this function (URL params, merge payloads), and a single strip made
+  // f(f("the the sharks")) ≠ f("the the sharks") — a re-normalized key could silently
+  // address a DIFFERENT opponent. Idempotence is load-bearing; a bare "the" survives.
+  while (collapsed.startsWith('the ')) collapsed = collapsed.slice(4);
+  return collapsed;
 }
 
 /** Decode + normalize a `[opponentKey]` URL param. '' = nothing addressable (route 404s). */
@@ -89,6 +95,13 @@ export interface OpponentBookEntry {
   /** normalized name of the group's owning opponent — the URL key. */
   key: string;
   displayName: string;
+  /**
+   * Every merged-away spelling that resolves to this entry. Client lookups keyed on an
+   * event's own normalized opponent name (the schedule's record chips) must consult these
+   * too — an aliased spelling's events are folded in server-side, but the event string a
+   * row renders from still normalizes to the ALIAS, not the owning key.
+   */
+  aliasKeys: string[];
   /** minted book row id, or null when the entry is aggregation-only (no writes yet). */
   opponentId: string | null;
   summary: string | null;
@@ -134,10 +147,15 @@ export function buildOpponentBook(opts: {
 
   const byId = new Map(opponents.map(o => [o.id, o]));
   const keyForNormalized = new Map<string, string>();
+  const aliasKeysByOwner = new Map<string, string[]>();
   for (const o of opponents) keyForNormalized.set(o.normalizedName, o.normalizedName);
   for (const a of aliases) {
     const target = byId.get(a.opponentId);
-    if (target) keyForNormalized.set(a.normalizedAlias, target.normalizedName);
+    if (!target) continue;
+    keyForNormalized.set(a.normalizedAlias, target.normalizedName);
+    const list = aliasKeysByOwner.get(target.normalizedName) ?? [];
+    list.push(a.normalizedAlias);
+    aliasKeysByOwner.set(target.normalizedName, list);
   }
 
   const groups = new Map<string, { meetings: OpponentMeeting[]; spellings: string[] }>();
@@ -190,6 +208,7 @@ export function buildOpponentBook(opts: {
     }
     entries.push({
       key,
+      aliasKeys: aliasKeysByOwner.get(key) ?? [],
       // Events arrive newest-first, so spellings[0] is the MOST RECENT spelling — the one
       // an un-minted opponent should wear (a minted row's display_name always wins).
       displayName: minted?.displayName ?? g.spellings[0] ?? key,
@@ -239,8 +258,153 @@ export function resultLetter(r: 'win' | 'loss' | 'tie' | null, fallback = '·'):
 export function hasBookContent(e: { summary: string | null; observationCount: number }): boolean {
   return e.summary != null || e.observationCount > 0;
 }
-
 /** "Have we actually played them?" — list/tile visibility rule for aggregation-only entries. */
 export function hasMeetings(e: { meetings: readonly unknown[] }): boolean {
   return e.meetings.length > 0;
+}
+
+// ── Practice-week bridge (P3, plan §4.9) ────────────────────────────────────────────────
+
+export interface PracticeWeekGameCandidate {
+  id: string;
+  eventType: string;
+  startsAt: string;
+  opponent: string | null;
+  status: string;
+}
+
+/**
+ * The game a practice prepares for: the SOONEST game at-or-after the practice within 6
+ * calendar days (the masthead nudge's own "game week" window), carrying a real opponent
+ * name. A TBD bracket slot or a cancelled game never anchors the bridge, and a game already
+ * played before the practice is not something Tuesday can prepare for.
+ *
+ * `daysBetween` is injected (callers pass lib/timezone's `calendarDaysBetween`) so the
+ * window is counted in the ORG's zone — the date-correctness guardrail — while this file
+ * stays pure and unit-testable without a timezone dependency.
+ */
+export function pickPracticeWeekOpponentGame(
+  practiceStartsAt: string,
+  events: PracticeWeekGameCandidate[],
+  daysBetween: (from: Date, to: Date) => number,
+): PracticeWeekGameCandidate | null {
+  const practiceMs = Date.parse(practiceStartsAt);
+  const candidates = events
+    .filter(e =>
+      e.status !== 'cancelled' &&
+      COACH_GAME_EVENT_TYPES.includes(e.eventType) &&
+      normalizeOpponentName(e.opponent) !== '' &&
+      Date.parse(e.startsAt) >= practiceMs &&
+      daysBetween(new Date(practiceStartsAt), new Date(e.startsAt)) <= 6,
+    )
+    // Epoch comparison, not string comparison — same reason as buildOpponentBook's nowMs:
+    // timestamptz serializations diverge after the seconds field.
+    .sort((a, b) => Date.parse(a.startsAt) - Date.parse(b.startsAt));
+  return candidates[0] ?? null;
+}
+
+// ── Merge ("Same team as…", P2) ─────────────────────────────────────────────────────────
+
+/**
+ * The loser's book line survives a merge as a LABELLED appendix to the winner's — merging
+ * identities must never silently discard a coach's words. Returns the winner's summary
+ * untouched when the loser had none (undefined = "no write needed").
+ */
+export function mergeSummaries(
+  winnerSummary: string | null, loserSummary: string | null, loserLabel: string,
+): string | undefined {
+  if (!loserSummary) return undefined;
+  const appendix = `[${loserLabel}] ${loserSummary}`;
+  // Idempotence under RETRY: a merge that failed between its summary write and its
+  // loser-row delete leaves the winner already carrying this appendix; the coach's only
+  // recovery is clicking Merge again, and a blind re-append would silently duplicate
+  // their words in the book line.
+  if (winnerSummary?.includes(appendix)) return undefined;
+  const merged = winnerSummary ? `${winnerSummary}\n${appendix}` : appendix;
+  return merged.slice(0, OPPONENT_SUMMARY_MAX);
+}
+
+export interface OpponentMergePlan {
+  /** Loser row to fold in: re-point its observations + aliases, then delete it. Null = the
+   *  loser was never minted, so only the alias row is needed. */
+  absorbOpponentId: string | null;
+  /** The spelling that becomes an alias of the winner (the loser's normalized name). */
+  aliasToInsert: string;
+  /** Winner's post-merge book line; undefined = leave it untouched. */
+  mergedSummary: string | undefined;
+}
+
+/**
+ * What a merge DOES, decided pure so the round-trip is unit-testable: the db helper only
+ * executes this plan. Returns null when the pair is not mergeable (same entry, or the
+ * loser already resolves to the winner).
+ */
+export function planOpponentMerge(opts: {
+  winner: { id: string; normalizedName: string; summary: string | null };
+  loser: { id: string; normalizedName: string; summary: string | null; displayName: string } | null;
+  /** The picker key the coach chose — used when the loser was never minted. */
+  loserKey: string;
+}): OpponentMergePlan | null {
+  const { winner, loser, loserKey } = opts;
+  const aliasToInsert = loser?.normalizedName ?? loserKey;
+  if (!aliasToInsert || aliasToInsert === winner.normalizedName) return null;
+  if (loser && loser.id === winner.id) return null;
+  return {
+    absorbOpponentId: loser?.id ?? null,
+    aliasToInsert,
+    mergedSummary: loser ? mergeSummaries(winner.summary, loser.summary, loser.displayName) : undefined,
+  };
+}
+
+// ── Staff-chat game-plan snapshot (P2) ──────────────────────────────────────────────────
+
+/**
+ * The message "Share to staff chat" posts — a SNAPSHOT, deliberately: later book edits
+ * must never rewrite chat history. Sections render only when they have content (the
+ * Ask-the-Front-Office honesty rule: nothing hedged, nothing padded). Pure and capped so
+ * the format is unit-testable and can never exceed the chat layer's message limit.
+ */
+export function formatGamePlanSnapshot(opts: {
+  displayName: string;
+  record: { wins: number; losses: number; ties: number };
+  lastMeeting: { result: 'win' | 'loss' | 'tie' | null; teamScore: number | null; opponentScore: number | null } | null;
+  summary: string | null;
+  /** Newest first, as the card serves them. */
+  observations: { body: string; tag: string | null }[];
+  insights: { text: string; fromGames: number }[];
+  /** The chat layer's cap (lib/chat-service MAX_MESSAGE_LENGTH). */
+  maxLength: number;
+}): string {
+  const { displayName, record, lastMeeting, summary, insights, maxLength } = opts;
+
+  const headBits = [`All-time ${recordChip(record)}`];
+  if (lastMeeting?.result && lastMeeting.teamScore != null && lastMeeting.opponentScore != null) {
+    headBits.push(`Last meeting ${resultLetter(lastMeeting.result)} ${lastMeeting.teamScore}–${lastMeeting.opponentScore}`);
+  }
+
+  const build = (obsShown: number) => {
+    const lines: string[] = [`Game plan — vs ${displayName}`, headBits.join(' · ')];
+    if (summary) lines.push('', 'The book line', summary);
+    if (insights.length > 0) {
+      lines.push('', 'The numbers');
+      for (const i of insights) lines.push(`• ${i.text} (from ${i.fromGames} games)`);
+    }
+    if (obsShown > 0) {
+      lines.push('', 'Observations');
+      for (const o of opts.observations.slice(0, obsShown)) {
+        lines.push(`• ${o.tag ? `[${o.tag}] ` : ''}${o.body}`);
+      }
+      const hidden = opts.observations.length - obsShown;
+      if (hidden > 0) lines.push(`(+${hidden} more in the book)`);
+    }
+    return lines.join('\n');
+  };
+
+  // Recent-first and bounded: 8 observations is a briefing, 40 is a wall. If even the
+  // bounded snapshot overruns the chat cap (500-char observations can), shed observations
+  // before truncating anyone's words mid-sentence.
+  let shown = Math.min(opts.observations.length, 8);
+  let message = build(shown);
+  while (message.length > maxLength && shown > 0) message = build(--shown);
+  return message.length > maxLength ? `${message.slice(0, maxLength - 1)}…` : message;
 }

@@ -1429,6 +1429,30 @@ export async function getStandings(tournamentId: string, divisionId: string, con
   return computeTournamentStandings(divisionId, teams, games, config, tournamentSettings);
 }
 
+/**
+ * One organizer-side game row's identity: which tournament owns it and its two sides.
+ * The tournament-intel route's entry point from a mirrored event's `source_tournament_game_id`
+ * (Scouting Book P3) — identity only, so the full games read stays scoped to ONE tournament.
+ */
+export async function getTournamentGameSides(gameId: string): Promise<{
+  tournamentId: string;
+  homeTeamId: string | null;
+  awayTeamId: string | null;
+} | null> {
+  const { data, error } = await supabaseAdmin
+    .from('games')
+    .select('id, tournament_id, home_team_id, away_team_id')
+    .eq('id', gameId)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    tournamentId: data.tournament_id as string,
+    homeTeamId: (data.home_team_id as string | null) ?? null,
+    awayTeamId: (data.away_team_id as string | null) ?? null,
+  };
+}
+
 // --- Announcements ---
 export async function getAnnouncements(tournamentId?: string, options: ReadOptions = {}): Promise<Announcement[]> {
   const client = options.admin ? supabaseAdmin : supabase;
@@ -9663,11 +9687,129 @@ export async function getRepTeamOpponents(teamId: string): Promise<RepTeamOppone
 
 export async function getRepTeamOpponentAliases(
   teamId: string,
-): Promise<{ opponentId: string; normalizedAlias: string }[]> {
+): Promise<{ id: string; opponentId: string; normalizedAlias: string }[]> {
   const { data, error } = await supabaseAdmin
-    .from('rep_team_opponent_aliases').select('opponent_id, normalized_alias').eq('team_id', teamId);
+    .from('rep_team_opponent_aliases').select('id, opponent_id, normalized_alias').eq('team_id', teamId);
   if (error) throw error;
-  return (data ?? []).map(r => ({ opponentId: r.opponent_id, normalizedAlias: r.normalized_alias }));
+  return (data ?? []).map(r => ({ id: r.id, opponentId: r.opponent_id, normalizedAlias: r.normalized_alias }));
+}
+
+/** Idempotent alias write: the (team, alias) pair is unique, and re-declaring it is a no-op. */
+export async function createRepTeamOpponentAlias(opts: {
+  opponentId: string; teamId: string; orgId: string; normalizedAlias: string;
+}): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_team_opponent_aliases')
+    .insert({
+      opponent_id: opts.opponentId, team_id: opts.teamId, org_id: opts.orgId,
+      normalized_alias: opts.normalizedAlias,
+    });
+  if (error && (error as { code?: string }).code !== '23505') throw error;
+}
+
+/** Un-merge: names regroup naturally on the next read. Returns false when nothing matched. */
+export async function deleteRepTeamOpponentAlias(teamId: string, aliasId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponent_aliases').delete()
+    // team_id scoping alongside the PK: defense-in-depth like every sibling delete helper.
+    .eq('id', aliasId).eq('team_id', teamId)
+    .select('id');
+  if (error) throw error;
+  return (data ?? []).length > 0;
+}
+
+/**
+ * Execute a merge plan (lib/coach-opponents planOpponentMerge — the decisions live there,
+ * unit-tested; this is transport). Supabase has no client transactions, so the sequence is
+ * ordered for crash-safety: observations and aliases move first (re-running the merge
+ * recovers a partial one), the loser row goes before its name becomes an alias, and the
+ * alias insert is idempotent.
+ */
+export async function executeRepTeamOpponentMerge(opts: {
+  teamId: string; orgId: string; winnerId: string; updatedBy: string;
+  plan: { absorbOpponentId: string | null; aliasToInsert: string; mergedSummary: string | undefined };
+}): Promise<void> {
+  const { teamId, orgId, winnerId, plan } = opts;
+  if (plan.absorbOpponentId) {
+    const { error: obsErr } = await supabaseAdmin
+      .from('rep_team_opponent_observations')
+      .update({ opponent_id: winnerId })
+      .eq('opponent_id', plan.absorbOpponentId).eq('team_id', teamId);
+    if (obsErr) throw obsErr;
+    const { error: aliasErr } = await supabaseAdmin
+      .from('rep_team_opponent_aliases')
+      .update({ opponent_id: winnerId })
+      .eq('opponent_id', plan.absorbOpponentId).eq('team_id', teamId);
+    if (aliasErr) throw aliasErr;
+    if (plan.mergedSummary !== undefined) {
+      await updateRepTeamOpponentSummary({
+        opponentId: winnerId, teamId, summary: plan.mergedSummary, updatedBy: opts.updatedBy,
+      });
+    }
+    // ⚠ Concurrency guard, right before the one destructive step. Two coaches merging the
+    // SAME pair in OPPOSITE directions can each pass the route's pre-check (both reads
+    // precede both executions); unguarded, both deletes would land and the FK cascade
+    // would eat both observation histories. Re-verifying the winner still exists here
+    // narrows that window to the millisecond between this check and the delete — not a
+    // transaction (supabase-js has none; an atomic RPC needs a migration this feature was
+    // scoped not to add), but it turns the realistic race into a loud abort. The
+    // observation-POST-during-merge race is likewise accepted: its window is the same
+    // milliseconds, its stake is one observation, and the book is low-stakes by ruling.
+    const { data: winnerStillThere, error: winnerErr } = await supabaseAdmin
+      .from('rep_team_opponents').select('id')
+      .eq('id', winnerId).eq('team_id', teamId).maybeSingle();
+    if (winnerErr) throw winnerErr;
+    if (!winnerStillThere) {
+      throw new Error('Merge aborted: the target opponent was changed by someone else — reload and retry.');
+    }
+    const { error: delErr } = await supabaseAdmin
+      .from('rep_team_opponents').delete()
+      .eq('id', plan.absorbOpponentId).eq('team_id', teamId);
+    if (delErr) throw delErr;
+  }
+  await createRepTeamOpponentAlias({
+    opponentId: winnerId, teamId, orgId, normalizedAlias: plan.aliasToInsert,
+  });
+}
+
+/** One opponent's observation total — the masthead nudge's "N observations in the book". */
+export async function countRepTeamOpponentObservationsForOpponent(
+  teamId: string, opponentId: string,
+): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('rep_team_opponent_observations')
+    .select('id', { count: 'exact', head: true })
+    .eq('team_id', teamId).eq('opponent_id', opponentId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * Saved lineups for a SET of events, entries nested — ONE batched read for the card's
+ * "what worked" insights (plan §4.6), never a per-meeting loop. Returns only events that
+ * actually have a saved lineup with entries.
+ */
+export async function getRepTeamLineupsForEvents(
+  teamId: string, eventIds: string[],
+): Promise<Record<string, { playerId: string; starter: boolean; battingOrder: number | null; inningPositions: Record<string, string> }[]>> {
+  if (eventIds.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineups')
+    .select('event_id, rep_team_lineup_entries(player_id, starter, batting_order, inning_positions)')
+    .eq('team_id', teamId)
+    .in('event_id', eventIds);
+  if (error) throw error;
+  const byEvent: Record<string, { playerId: string; starter: boolean; battingOrder: number | null; inningPositions: Record<string, string> }[]> = {};
+  for (const row of data ?? []) {
+    const entries = ((row.rep_team_lineup_entries as Record<string, unknown>[] | null) ?? []).map(e => ({
+      playerId: e.player_id as string,
+      starter: (e.starter as boolean | null) ?? false,
+      battingOrder: (e.batting_order as number | null) ?? null,
+      inningPositions: (e.inning_positions as Record<string, string> | null) ?? {},
+    }));
+    if (entries.length > 0) byEvent[row.event_id as string] = entries;
+  }
+  return byEvent;
 }
 
 /** Per-opponent observation totals for the list/summary surfaces (one query, counted in-process). */
@@ -9749,11 +9891,16 @@ export async function updateRepTeamOpponentSummary(opts: {
 
 export async function getRepTeamOpponentObservations(
   teamId: string, opponentId: string,
+  /** `limit` for the surfaces that only glance (the P3 practice bridge reads ONE) —
+   *  an opponent's whole observation history should not ride along to show its newest line. */
+  opts: { limit?: number } = {},
 ): Promise<RepTeamOpponentObservation[]> {
-  const { data, error } = await supabaseAdmin
+  let q = supabaseAdmin
     .from('rep_team_opponent_observations').select('*')
     .eq('team_id', teamId).eq('opponent_id', opponentId)
     .order('created_at', { ascending: false });
+  if (opts.limit != null) q = q.limit(opts.limit);
+  const { data, error } = await q;
   if (error) throw error;
   return (data ?? []).map(mapRepTeamOpponentObservation);
 }

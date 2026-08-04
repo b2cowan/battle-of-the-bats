@@ -21,6 +21,7 @@ import {
   updateRepTeamEventPracticeRecap,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { getScoutingBridgeForPractice } from '@/lib/coach-opponent-nudge';
 import {
   denyUnless, canManageSchedule, canViewSchedule, canWriteDevelopment, canViewDevelopmentGoals,
   canSeePlanPlayers, redactRoster,
@@ -135,7 +136,7 @@ export const GET = withObservability(async (_req: Request,
     : Promise.resolve([]);
   const [
     players, goals, attendance, previousEvents, sessions, staff, drills,
-    templates, focusTags, eventTagMap,
+    templates, focusTags, eventTagMap, scoutingBridge,
   ] = await Promise.all([
     playersPromise,
     // ⚠ Gated at the SOURCE: an assistant without `notes` never receives focus text, so no client
@@ -167,6 +168,11 @@ export const GET = withObservability(async (_req: Request,
     // THIS practice's own tags. ⚠ The same `rep_team_event_tags` rows a game's tags live in, told
     // apart by the tag's kind — a practice carrying a 'focus' tag IS a tagged plan (mig 221).
     getRepTeamEventTagsMap([eventId]).catch(() => ({} as Record<string, string[]>)),
+    // The practice-week scouting bridge (Scouting Book P3): the booked game this practice
+    // prepares for, when its opponent's book has content. Rides `schedule` with the rest of
+    // the plan read — the book's own glance surfaces gate exactly the same way. Fails soft
+    // internally (null), so it can never take the plan screen down with it.
+    getScoutingBridgeForPractice(teamId, programYear.id, event.startsAt),
   ]);
 
   // Roster ORDER, always — never sorted by anything, and no sort affordance is ever offered
@@ -243,6 +249,7 @@ export const GET = withObservability(async (_req: Request,
       eventId: e.id, name: e.name, startsAt: e.startsAt, eventType: e.eventType, plan: e.practicePlan,
     })),
     sessions,
+    scoutingBridge,
     staffSuggestions: tagSuggestions.staff,
     equipmentSuggestions: tagSuggestions.equipment,
     // ⚠ Sent to anyone who can READ the plan (`schedule`), which is deliberate: an assistant sees

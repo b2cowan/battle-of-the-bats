@@ -1,74 +1,62 @@
 import { NextResponse } from 'next/server';
 import {
-  getRepTeamGameEventsForOpponentBook,
-  getRepTeamOpponents,
-  getRepTeamOpponentAliases,
-  getRepTeamOpponentObservations,
   getRepTeamOpponentByKey,
   ensureRepTeamOpponent,
   updateRepTeamOpponentSummary,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { denyUnless, canViewScoutingBook, canWriteScoutingSummary } from '@/lib/coach-capabilities';
+import { denyUnless, canViewScoutingBook, canWriteScoutingSummary, canJoinStaffChat } from '@/lib/coach-capabilities';
 import {
-  buildOpponentBook, normalizeOpponentName, normalizeOpponentKeyParam,
+  normalizeOpponentName, normalizeOpponentKeyParam,
   scoutingTagsForSport, OPPONENT_SUMMARY_MAX,
 } from '@/lib/coach-opponents';
+import { assembleOpponentCard } from '@/lib/coach-opponent-card';
+import { getStaffChatRoom } from '@/lib/chat-service';
 import { getSportPack } from '@/lib/sports';
 
 /**
- * One opponent's card: cross-season meetings + the observation log + "the book line".
- * Keyed by NORMALIZED NAME (URL-encoded), not row id — entries exist before any write
- * mints a row, and aliases resolve to the owning entry. INSTRUMENT: off the season rail
- * by decision (see the list route's header comment).
+ * One opponent's card: cross-season meetings + the observation log + "the book line" +
+ * the derived "numbers vs them" insight lines (P2). Keyed by NORMALIZED NAME
+ * (URL-encoded), not row id — entries exist before any write mints a row, and aliases
+ * resolve to the owning entry. Assembly lives in lib/coach-opponent-card so the staff-chat
+ * share posts exactly what this serves. INSTRUMENT: off the season rail by decision (see
+ * the list route's header comment).
  */
-async function loadEntry(teamId: string, key: string) {
-  const [events, opponents, aliases] = await Promise.all([
-    getRepTeamGameEventsForOpponentBook(teamId),
-    getRepTeamOpponents(teamId),
-    getRepTeamOpponentAliases(teamId),
-  ]);
-  // Observation counts are NOT fetched here: this route serves ONE opponent, and its count
-  // is just `observations.length` from the per-opponent read below — a team-wide count scan
-  // would be a redundant round trip on every card view.
-  const entries = buildOpponentBook({
-    events, opponents, aliases,
-    nowIso: new Date().toISOString(),
-  });
-  // The key may be an alias of the owning entry — normalize then look both ways.
-  const direct = entries.find(e => e.key === key);
-  if (direct) return direct;
-  const aliased = aliases.find(a => a.normalizedAlias === key);
-  if (!aliased) return null;
-  const owner = opponents.find(o => o.id === aliased.opponentId);
-  return owner ? entries.find(e => e.key === owner.normalizedName) ?? null : null;
-}
-
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; opponentKey: string }> },) => {
   const { orgSlug, teamId, opponentKey } = await params;
   const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
-  const { ctx, team, assignment } = resolved;
+  const { ctx, team, assignment, programYear } = resolved;
   const denied = denyUnless(canViewScoutingBook(assignment.capabilities), 'You do not have access to the scouting book.');
   if (denied) return denied;
 
   const key = normalizeOpponentKeyParam(opponentKey);
   if (!key) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  const entry = await loadEntry(teamId, key);
-  if (!entry) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-
-  const observations = entry.opponentId
-    ? await getRepTeamOpponentObservations(teamId, entry.opponentId)
-    : [];
+  const sportPack = getSportPack(team.sport);
+  // The room lookup is independent of the card — its one indexed query rides under the
+  // heavier assembly instead of adding a round trip after it.
+  const [card, staffRoom] = await Promise.all([
+    assembleOpponentCard({ teamId, key, activeYearId: programYear.id, sportPack }),
+    canJoinStaffChat(assignment.capabilities) ? getStaffChatRoom(ctx.org.id, teamId) : Promise.resolve(null),
+  ]);
+  if (!card) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  const { entry, observations, insights } = card;
 
   return NextResponse.json({
     opponent: { ...entry, observationCount: observations.length },
     observations,
-    tags: scoutingTagsForSport(getSportPack(team.sport)),
+    insights,
+    // This entry's merged-away spellings (un-merge list) — served from the assembly's own
+    // alias read, never a second fetch of the table.
+    aliases: card.aliases,
+    tags: scoutingTagsForSport(sportPack),
     canWriteSummary: canWriteScoutingSummary(assignment.capabilities),
+    // The share door renders only where it can succeed: grant held AND the staff room
+    // exists (a team below the staff-chat plan gate, or not yet healed, shows no button).
+    canShareToStaffChat: staffRoom !== null,
     isHeadCoach: assignment.capabilities.isHeadCoach,
     viewerId: ctx.user.id,
   });

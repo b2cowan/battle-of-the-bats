@@ -1,11 +1,23 @@
 # Opponent Scouting Book — Implementation Plan
 
 **Status:** APPROVED — owner greenlit as the next project 2026-08-04 (v3 mockup).
-**✅ PHASE 1 BUILT on dev 2026-08-04, uncommitted — owner QA = OWNER_QA_LEDGER.md §1.12.**
+**✅ PHASE 1 COMMITTED to dev at `72034c15` (2026-08-04) — owner QA = OWNER_QA_LEDGER.md §1.12 still owed.**
+**✅ PHASE 2 BUILT on dev 2026-08-04 (owner cleared the mockup gate in-conversation by ordering
+execution of the build prompt) — all five slices: merge/aliases ("Same team as…" + un-merge +
+alias-aware schedule chips), auto-insights ("The numbers vs them" + "what worked" lineup join),
+staff-chat game-plan snapshot share, drawer tag filters + game-week masthead nudge, and the
+one-sitting capture polish. Owner QA = OWNER_QA_LEDGER.md §1.13. No new migration (P1's three
+tables carry P2, as planned).**
 ⚠ Migration 225 is DEV-ONLY (apply to prod before promoting this code). Parity baseline
-re-initialized to accept the three dev-only tables. P2 (merge/aliases UI, tag filters on the
-drawer, auto-insights, staff-chat share, masthead nudge) and P3 (tournament intel, planner
-panel, Game-Day integration) not started.
+re-initialized to accept the three dev-only tables.
+**✅ PHASE 3 BUILT on dev 2026-08-04 (owner cleared both gates in-conversation: mockup v3
+stage 7 approved + QA gate waived by ordering the build) — two slices: the tournament-intel
+block ("Their tournament so far", same-tournament only per §9 Q4, assembled through the real
+tie-break engine + the mirrored-chip reveal rules, no-names payload pinned by unit test) and
+the practice-week planner bridge (game ≤6 org-days after the practice, alias-aware via the
+book's key resolution). The Game-Day handoff slice was SKIPPED — Game-Day Mode is still
+Proposed; it remains the cross-plan integration point. Owner QA = OWNER_QA_LEDGER.md §1.14.
+No new migration (P1's three tables still carry everything).**
 Ratified with that approval (all three were shown in the approved mockups): the INSTRUMENT
 ruling (§1 — live-only, no archive door), the open-contribution model (§4.5 — all
 `schedule`-holders incl. Helpers log attributed observations; head coach removes any;

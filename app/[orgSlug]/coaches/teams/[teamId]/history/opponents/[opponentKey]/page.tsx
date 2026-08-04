@@ -1,16 +1,30 @@
 'use client';
-import { useState, useEffect, useCallback, useMemo, use } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
 import Link from 'next/link';
-import { Telescope, Check, X } from 'lucide-react';
+import { Telescope, Check, X, Share2, GitMerge } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   recordChip, recordTone, resultLetter,
   OPPONENT_SUMMARY_MAX, OPPONENT_OBSERVATION_MAX, type OpponentBookEntry,
 } from '@/lib/coach-opponents';
+import type { OpponentInsightLine } from '@/lib/coach-opponent-insights';
 import type { RepTeamOpponentObservation } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
+import ScoutTagFilter from '@/components/coaches/ScoutTagFilter';
 import styles from '../../../../../coaches.module.css';
+
+/** Seven fetch sites in this file share one error idiom — one copy of it, not seven. */
+async function throwIfNotOk(res: Response, fallback: string): Promise<void> {
+  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? fallback);
+}
+
+/** The "Same team as…" flow is one linear walk — closed → picking → confirming — so it is
+ *  ONE state, not five booleans that could disagree about where the coach is. */
+type MergeFlow =
+  | { step: 'closed' }
+  | { step: 'picking'; candidates: OpponentBookEntry[] | null }
+  | { step: 'confirming'; target: OpponentBookEntry; merging: boolean };
 
 /** One observation row — shared by the per-meeting and "General" groups so the shape
  *  (author chip, tag, eraser) can never drift between them. */
@@ -41,8 +55,13 @@ function ObservationRow({ o, showDate, manyAuthors, canErase, onRemove }: {
 interface CardPayload {
   opponent: OpponentBookEntry;
   observations: RepTeamOpponentObservation[];
+  /** "The numbers vs them" (P2) — derived lines, each above its confidence floor. */
+  insights: OpponentInsightLine[];
+  /** This entry's merged-away spellings, for the "Same team as…" control's un-merge list. */
+  aliases: { id: string; normalizedAlias: string }[];
   tags: string[];
   canWriteSummary: boolean;
+  canShareToStaffChat: boolean;
   isHeadCoach: boolean;
   viewerId: string;
 }
@@ -75,17 +94,37 @@ export default function CoachOpponentCardPage({
   const [logError, setLogError] = useState('');
   const [filterTag, setFilterTag] = useState<string | null>(null);
 
+  const [shareStatus, setShareStatus] = useState<'idle' | 'sharing' | 'shared' | 'error'>('idle');
+  const [shareError, setShareError] = useState('');
+
+  const [mergeFlow, setMergeFlow] = useState<MergeFlow>({ step: 'closed' });
+  const [mergeError, setMergeError] = useState('');
+
+  // Synchronous re-entry guards: `disabled={…}` reflects COMMITTED state, so a fast
+  // double-tap fires the handler twice before the re-render lands — and none of these
+  // POSTs is idempotent (two identical observations / two chat snapshots).
+  const busyRef = useRef({ log: false, share: false, merge: false });
+  // Response sequencing: only the NEWEST load()'s payload may win. An un-merge's reload
+  // racing an earlier, slower load would otherwise repaint the just-deleted alias.
+  const loadSeqRef = useRef(0);
+  // Which "Same team as…" opening the in-flight picker fetch belongs to — a response (or
+  // error) from a session the coach already cancelled must change nothing.
+  const mergeSeqRef = useRef(0);
+
   const load = useCallback(async () => {
+    const seq = ++loadSeqRef.current;
     try {
       const res = await fetch(apiBase);
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not load this opponent');
+      await throwIfNotOk(res, 'Could not load this opponent');
       const payload: CardPayload = await res.json();
+      if (seq !== loadSeqRef.current) return; // a newer load owns the screen
       setData(payload);
       setError('');
     } catch (e: unknown) {
+      if (seq !== loadSeqRef.current) return;
       setError(e instanceof Error ? e.message : 'Could not load this opponent');
     } finally {
-      setLoading(false);
+      if (seq === loadSeqRef.current) setLoading(false);
     }
   }, [apiBase]);
 
@@ -141,7 +180,7 @@ export default function CoachOpponentCardPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ summary: summaryDraft, displayName: opponent.displayName }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save');
+      await throwIfNotOk(res, 'Could not save');
       setSummaryStatus('saved');
       setSummaryDraft(null);
       await load();
@@ -152,7 +191,8 @@ export default function CoachOpponentCardPage({
 
   async function logObservation() {
     const body = obsBody.trim();
-    if (!body) return;
+    if (!body || busyRef.current.log) return;
+    busyRef.current.log = true;
     setLogging(true);
     setLogError('');
     try {
@@ -161,13 +201,14 @@ export default function CoachOpponentCardPage({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ body, tag: obsTag, opponentName: opponent.displayName }),
       });
-      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not save the observation');
+      await throwIfNotOk(res, 'Could not save the observation');
       setObsBody('');
       setObsTag(null);
       await load();
     } catch (e: unknown) {
       setLogError(e instanceof Error ? e.message : 'Could not save the observation');
     } finally {
+      busyRef.current.log = false;
       setLogging(false);
     }
   }
@@ -185,6 +226,76 @@ export default function CoachOpponentCardPage({
   const canErase = (o: RepTeamOpponentObservation) =>
     data.isHeadCoach || (o.createdBy != null && o.createdBy === data.viewerId);
   const manyAuthors = new Set(observations.map(o => o.createdByName ?? '?')).size > 1;
+
+  async function shareToStaffChat() {
+    if (busyRef.current.share) return;
+    busyRef.current.share = true;
+    setShareStatus('sharing');
+    setShareError('');
+    try {
+      const res = await fetch(`${apiBase}/share-to-staff-chat`, { method: 'POST' });
+      await throwIfNotOk(res, 'Could not share');
+      setShareStatus('shared');
+    } catch (e: unknown) {
+      setShareStatus('error');
+      setShareError(e instanceof Error ? e.message : 'Could not share');
+    } finally {
+      busyRef.current.share = false;
+    }
+  }
+
+  async function openMerge() {
+    const session = ++mergeSeqRef.current;
+    setMergeFlow({ step: 'picking', candidates: null });
+    setMergeError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/opponents`);
+      await throwIfNotOk(res, 'Could not load the book');
+      const payload = await res.json();
+      if (session !== mergeSeqRef.current) return; // the coach cancelled this opening
+      const all = (payload.opponents ?? []) as OpponentBookEntry[];
+      const candidates = all.filter(e => e.key !== opponent.key);
+      setMergeFlow(f => (f.step === 'picking' ? { step: 'picking', candidates } : f));
+    } catch (e: unknown) {
+      if (session !== mergeSeqRef.current) return; // a cancelled opening owes no error
+      setMergeError(e instanceof Error ? e.message : 'Could not load the book');
+    }
+  }
+
+  async function confirmMerge(target: OpponentBookEntry) {
+    if (busyRef.current.merge) return;
+    busyRef.current.merge = true;
+    setMergeFlow({ step: 'confirming', target, merging: true });
+    setMergeError('');
+    try {
+      const res = await fetch(`${apiBase}/merge`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // The winner is the card in the URL; its display spelling rides along only for a
+        // lazy mint. The loser's row (and its display name) is the server's to resolve.
+        body: JSON.stringify({ winnerName: opponent.displayName, loserKey: target.key }),
+      });
+      await throwIfNotOk(res, 'Could not merge');
+      setMergeFlow({ step: 'closed' });
+      await load();
+    } catch (e: unknown) {
+      setMergeError(e instanceof Error ? e.message : 'Could not merge');
+      setMergeFlow({ step: 'confirming', target, merging: false });
+    } finally {
+      busyRef.current.merge = false;
+    }
+  }
+
+  async function removeAlias(aliasId: string) {
+    setMergeError('');
+    try {
+      const res = await fetch(`${apiBase}/aliases/${aliasId}`, { method: 'DELETE' });
+      await throwIfNotOk(res, 'Could not un-merge');
+      await load();
+    } catch (e: unknown) {
+      setMergeError(e instanceof Error ? e.message : 'Could not un-merge');
+    }
+  }
 
   return (
     <div className={styles.page}>
@@ -223,6 +334,20 @@ export default function CoachOpponentCardPage({
         </p>
       )}
 
+      {/* "The numbers vs them" (P2, mockup 5a) — derived lines, each with its provenance
+          chip. Below-floor lines are ABSENT server-side, never hedged (§4.6 honesty rule). */}
+      {data.insights.length > 0 && (
+        <div className={styles.scoutNumbers}>
+          <div className={styles.scoutNumbersLabel}>The numbers vs them</div>
+          {data.insights.map(line => (
+            <div key={line.id} className={styles.scoutNumbersLine}>
+              <span className={styles.scoutNumbersText}>{line.text}</span>
+              <span className={styles.scoutProvChip}>from {line.fromGames} games</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* The book line — the coach's distilled read; what every glance surface shows first. */}
       <div className={styles.scoutBookLine}>
         <div className={styles.scoutBookHead}>
@@ -253,6 +378,26 @@ export default function CoachOpponentCardPage({
           <span className={styles.scoutBookMeta}>updated {formatInOrgZone(opponent.lastNoteUpdatedAt, { month: 'short', day: 'numeric' })}</span>
         )}
       </div>
+
+      {/* Game-plan share (P2, mockup 5c): a SNAPSHOT into the existing staff room — later
+          edits never rewrite chat history. Absent without the grant or a staff room. */}
+      {data.canShareToStaffChat && (
+        <div className={styles.scoutShareRow}>
+          <button
+            type="button"
+            className={styles.scoutPanelLink}
+            disabled={shareStatus === 'sharing'}
+            onClick={shareToStaffChat}
+          >
+            <Share2 size={13} aria-hidden />{' '}
+            {shareStatus === 'sharing' ? 'Sharing…' : 'Share to staff chat'}
+          </button>
+          <span className={styles.saveStatus} aria-live="polite">
+            {shareStatus === 'shared' && <><Check size={13} /> Shared</>}
+            {shareStatus === 'error' && shareError}
+          </span>
+        </div>
+      )}
 
       {/* Log an observation — open to every schedule-holder, attributed (owner-ratified). */}
       <div className={styles.scoutLog}>
@@ -292,14 +437,11 @@ export default function CoachOpponentCardPage({
       </div>
 
       {/* Filter + timeline */}
-      {observations.length > 0 && (
-        <div className={styles.scoutTagRow} role="group" aria-label="Filter observations by tag">
-          <button type="button" className={styles.scoutTagChip} data-on={filterTag === null ? 'yes' : 'no'} onClick={() => setFilterTag(null)}>All</button>
-          {tags.filter(t => observations.some(o => o.tag === t)).map(t => (
-            <button key={t} type="button" className={styles.scoutTagChip} data-on={filterTag === t ? 'yes' : 'no'} onClick={() => setFilterTag(t)}>{t}</button>
-          ))}
-        </div>
-      )}
+      <ScoutTagFilter
+        tags={tags.filter(t => observations.some(o => o.tag === t))}
+        value={filterTag}
+        onChange={setFilterTag}
+      />
 
       {opponent.meetings.length === 0 && observations.length === 0 && (
         <p className={styles.scoutFootnote}>No games against {opponent.displayName} on file yet — observations you log now will be waiting when you meet them.</p>
@@ -335,6 +477,94 @@ export default function CoachOpponentCardPage({
           {derived.generalObs.map(o => (
             <ObservationRow key={o.id} o={o} showDate manyAuthors={manyAuthors} canErase={canErase(o)} onRemove={removeObservation} />
           ))}
+        </div>
+      )}
+
+      {/* "Same team as…" (P2, mockup Stage 6) — identity housekeeping, notes-gated. The
+          quiet control opens a picker of other book entries; the confirm step shows the two
+          records unifying BEFORE anything happens. Existing aliases un-merge from here too. */}
+      {data.canWriteSummary && (
+        <div className={styles.scoutMerge}>
+          <div className={styles.scoutSeasonLabel}>Identity</div>
+          {data.aliases.length > 0 && (
+            <div className={styles.scoutAliasList}>
+              {data.aliases.map(a => (
+                <span key={a.id} className={styles.scoutAliasRow}>
+                  also answers to “{a.normalizedAlias}”
+                  <button
+                    type="button"
+                    className={styles.scoutObsDelete}
+                    aria-label={`Un-merge ${a.normalizedAlias}`}
+                    title="Un-merge — this spelling becomes its own entry again"
+                    onClick={() => removeAlias(a.id)}
+                  >
+                    <X size={13} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          {mergeFlow.step === 'closed' ? (
+            <button type="button" className={styles.scoutPanelLink} onClick={openMerge}>
+              <GitMerge size={13} aria-hidden /> Same team as…
+            </button>
+          ) : mergeFlow.step === 'confirming' ? (
+            <div className={styles.dupeNotice}>
+              <p className={styles.dupeNoticeText}>
+                <strong>{mergeFlow.target.displayName}</strong> ({recordChip(mergeFlow.target.record)}) will fold into{' '}
+                <strong>{opponent.displayName}</strong> ({recordChip(opponent.record)}) — one record of{' '}
+                <strong>
+                  {recordChip({
+                    wins: opponent.record.wins + mergeFlow.target.record.wins,
+                    losses: opponent.record.losses + mergeFlow.target.record.losses,
+                    ties: opponent.record.ties + mergeFlow.target.record.ties,
+                  })}
+                </strong>. Their observations and book line move here, and
+                “{mergeFlow.target.displayName}” keeps working as another name for this team.
+              </p>
+              <div className={styles.dupeNoticeActions}>
+                <button type="button" className="btn btn-lime" disabled={mergeFlow.merging} onClick={() => confirmMerge(mergeFlow.target)}>
+                  {mergeFlow.merging ? 'Merging…' : 'Merge'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.scoutPanelLink}
+                  disabled={mergeFlow.merging}
+                  onClick={openMerge /* back to the picker, list refetched */}
+                >
+                  Back
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={styles.scoutMergePicker}>
+              <p className={styles.scoutFootnote}>
+                Pick the entry that is really this same team — its record and observations fold into this card.
+              </p>
+              {mergeFlow.candidates === null ? (
+                <div className={styles.loadingState}>Loading…</div>
+              ) : mergeFlow.candidates.length === 0 ? (
+                <p className={styles.scoutFootnote}>No other opponents in the book yet.</p>
+              ) : (
+                <div className={styles.scoutMergeList}>
+                  {mergeFlow.candidates.map(c => (
+                    <button key={c.key} type="button" className={styles.scoutMergeOption} onClick={() => setMergeFlow({ step: 'confirming', target: c, merging: false })}>
+                      <span className={styles.scoutMergeOptionName}>{c.displayName}</span>
+                      <span className={styles.scoutRecChip} data-tone={recordTone(c.record)}>{recordChip(c.record)}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+              <button
+                type="button"
+                className={styles.scoutPanelLink}
+                onClick={() => { mergeSeqRef.current++; setMergeFlow({ step: 'closed' }); }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+          {mergeError && <p className={styles.errorText}>{mergeError}</p>}
         </div>
       )}
     </div>
