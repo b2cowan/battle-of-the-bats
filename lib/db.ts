@@ -9578,3 +9578,216 @@ export async function deletePlatformUser(id: string): Promise<void> {
   const { error } = await supabaseAdmin.from('platform_users').delete().eq('id', id);
   if (error) throw error;
 }
+
+// ─── Opponent Scouting Book (mig 225) ────────────────────────────────────────────────────
+// Overlay tables keyed on normalized opponent names — rep_team_events is never written here.
+// Coach-API-only (service role); capability gating lives in the routes.
+import type { RepTeamOpponent, RepTeamOpponentObservation } from './types';
+import { normalizeOpponentName as normalizeOpponentNameForBook } from './coach-opponents';
+import { COACH_GAME_EVENT_TYPES as BOOK_GAME_EVENT_TYPES } from './coach-tournament-games';
+
+function mapRepTeamOpponent(row: Record<string, unknown>): RepTeamOpponent {
+  return {
+    id: row.id as string,
+    teamId: row.team_id as string,
+    orgId: row.org_id as string,
+    displayName: row.display_name as string,
+    normalizedName: row.normalized_name as string,
+    summary: (row.summary as string | null) ?? null,
+    lastNoteUpdatedAt: (row.last_note_updated_at as string | null) ?? null,
+    updatedBy: (row.updated_by as string | null) ?? null,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function mapRepTeamOpponentObservation(row: Record<string, unknown>): RepTeamOpponentObservation {
+  return {
+    id: row.id as string,
+    opponentId: row.opponent_id as string,
+    teamId: row.team_id as string,
+    orgId: row.org_id as string,
+    eventId: (row.event_id as string | null) ?? null,
+    body: row.body as string,
+    tag: (row.tag as string | null) ?? null,
+    createdBy: (row.created_by as string | null) ?? null,
+    createdByName: (row.created_by_name as string | null) ?? null,
+    createdAt: row.created_at as string,
+  };
+}
+
+/**
+ * ⚠ Cross-season read feeding a LIVE instrument (the Scouting Book) — the
+ * getRepTeamPracticePlansAcrossSeasons pattern, owner-ratified 2026-08-04: team-scoped
+ * because a team is permanent and only its program year turns over; reads game events from
+ * EVERY season so "our record vs them" spans years; writes nothing anywhere. Deliberately
+ * OFF the season-read rail (tests/unit/coach-season-write-guard.test.ts asserts the routes).
+ * Capped like its precedent — an unbounded read grows with every game a team ever plays.
+ */
+export async function getRepTeamGameEventsForOpponentBook(
+  teamId: string, opts?: { limit?: number },
+): Promise<{
+  id: string; name: string; eventType: string; startsAt: string; programYearId: string | null;
+  opponent: string | null; homeAway: 'home' | 'away' | 'neutral' | null;
+  teamScore: number | null; opponentScore: number | null;
+  result: 'win' | 'loss' | 'tie' | null; status: string;
+}[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('id, name, event_type, starts_at, program_year_id, opponent, home_away, team_score, opponent_score, result, status')
+    .eq('team_id', teamId)
+    // COACH_GAME_EVENT_TYPES plus legacy `external_tournament`: the wrapped record rule
+    // counts those toward the record, so excluding them from the FETCH would make the
+    // book's "2–1 vs them" disagree with Wrapped for teams with legacy history — the exact
+    // invariant buildOpponentBook promises. Rows without an opponent name are still
+    // excluded below (a multi-day container with no opponent can't be attributed anyway).
+    .in('event_type', [...BOOK_GAME_EVENT_TYPES, 'external_tournament'])
+    .not('opponent', 'is', null)
+    .order('starts_at', { ascending: false })
+    .limit(opts?.limit ?? 1000);
+  if (error) throw error;
+  return (data ?? []).map(r => ({
+    id: r.id, name: r.name, eventType: r.event_type, startsAt: r.starts_at,
+    programYearId: r.program_year_id ?? null, opponent: r.opponent ?? null,
+    homeAway: r.home_away ?? null, teamScore: r.team_score ?? null,
+    opponentScore: r.opponent_score ?? null, result: r.result ?? null, status: r.status,
+  }));
+}
+
+export async function getRepTeamOpponents(teamId: string): Promise<RepTeamOpponent[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponents').select('*').eq('team_id', teamId);
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamOpponent);
+}
+
+export async function getRepTeamOpponentAliases(
+  teamId: string,
+): Promise<{ opponentId: string; normalizedAlias: string }[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponent_aliases').select('opponent_id, normalized_alias').eq('team_id', teamId);
+  if (error) throw error;
+  return (data ?? []).map(r => ({ opponentId: r.opponent_id, normalizedAlias: r.normalized_alias }));
+}
+
+/** Per-opponent observation totals for the list/summary surfaces (one query, counted in-process). */
+export async function getRepTeamOpponentObservationCounts(teamId: string): Promise<Record<string, number>> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponent_observations').select('opponent_id').eq('team_id', teamId);
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const r of data ?? []) counts[r.opponent_id] = (counts[r.opponent_id] ?? 0) + 1;
+  return counts;
+}
+
+/** Resolve a minted opponent by normalized-name key, following aliases. Null = not minted yet. */
+export async function getRepTeamOpponentByKey(teamId: string, key: string): Promise<RepTeamOpponent | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponents').select('*')
+    .eq('team_id', teamId).eq('normalized_name', key).maybeSingle();
+  if (error) throw error;
+  if (data) return mapRepTeamOpponent(data);
+  const { data: alias, error: aliasErr } = await supabaseAdmin
+    .from('rep_team_opponent_aliases').select('opponent_id')
+    .eq('team_id', teamId).eq('normalized_alias', key).maybeSingle();
+  if (aliasErr) throw aliasErr;
+  if (!alias) return null;
+  const { data: owner, error: ownerErr } = await supabaseAdmin
+    .from('rep_team_opponents').select('*').eq('id', alias.opponent_id).maybeSingle();
+  if (ownerErr) throw ownerErr;
+  return owner ? mapRepTeamOpponent(owner) : null;
+}
+
+/**
+ * Lazy mint: return the existing row for this normalized name (via aliases too) or create
+ * it. Concurrent first-writes race on the unique pair — 23505 resolves to a re-read (the
+ * team-workspace slug-race lesson). Never clobbers an existing display_name.
+ */
+export async function ensureRepTeamOpponent(opts: {
+  teamId: string; orgId: string; displayName: string;
+}): Promise<RepTeamOpponent> {
+  const normalized = normalizeOpponentNameForBook(opts.displayName);
+  if (!normalized) throw new Error('Opponent name is empty');
+  const existing = await getRepTeamOpponentByKey(opts.teamId, normalized);
+  if (existing) return existing;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponents')
+    .insert({
+      team_id: opts.teamId, org_id: opts.orgId,
+      display_name: opts.displayName.trim(), normalized_name: normalized,
+    })
+    .select().single();
+  if (error) {
+    if ((error as { code?: string }).code === '23505') {
+      const raced = await getRepTeamOpponentByKey(opts.teamId, normalized);
+      if (raced) return raced;
+    }
+    throw error;
+  }
+  return mapRepTeamOpponent(data);
+}
+
+export async function updateRepTeamOpponentSummary(opts: {
+  opponentId: string; teamId: string; summary: string | null; displayName?: string; updatedBy: string;
+}): Promise<RepTeamOpponent> {
+  const patch: Record<string, unknown> = {
+    summary: opts.summary,
+    last_note_updated_at: new Date().toISOString(),
+    updated_by: opts.updatedBy,
+    updated_at: new Date().toISOString(),
+  };
+  if (opts.displayName !== undefined) patch.display_name = opts.displayName;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponents').update(patch)
+    // team_id scoping alongside the PK: defense-in-depth like every sibling helper — the
+    // helper must not rely on its callers having resolved the id through a scoped read.
+    .eq('id', opts.opponentId).eq('team_id', opts.teamId)
+    .select().single();
+  if (error) throw error;
+  return mapRepTeamOpponent(data);
+}
+
+export async function getRepTeamOpponentObservations(
+  teamId: string, opponentId: string,
+): Promise<RepTeamOpponentObservation[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponent_observations').select('*')
+    .eq('team_id', teamId).eq('opponent_id', opponentId)
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamOpponentObservation);
+}
+
+export async function createRepTeamOpponentObservation(opts: {
+  opponentId: string; teamId: string; orgId: string; eventId: string | null;
+  body: string; tag: string | null; createdBy: string; createdByName: string | null;
+}): Promise<RepTeamOpponentObservation> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponent_observations')
+    .insert({
+      opponent_id: opts.opponentId, team_id: opts.teamId, org_id: opts.orgId,
+      event_id: opts.eventId, body: opts.body, tag: opts.tag,
+      created_by: opts.createdBy, created_by_name: opts.createdByName,
+    })
+    .select().single();
+  if (error) throw error;
+  return mapRepTeamOpponentObservation(data);
+}
+
+export async function getRepTeamOpponentObservationById(
+  teamId: string, observationId: string,
+): Promise<RepTeamOpponentObservation | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponent_observations').select('*')
+    .eq('team_id', teamId).eq('id', observationId).maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamOpponentObservation(data) : null;
+}
+
+export async function deleteRepTeamOpponentObservation(teamId: string, observationId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_team_opponent_observations').delete()
+    // team_id scoping alongside the PK: defense-in-depth like every sibling delete helper.
+    .eq('id', observationId).eq('team_id', teamId);
+  if (error) throw error;
+}

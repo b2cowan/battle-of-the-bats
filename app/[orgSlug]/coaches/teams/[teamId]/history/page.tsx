@@ -17,6 +17,7 @@ import styles from '../../../coaches.module.css';
 import type { RepTeamEvent, RepPlayerAward } from '@/lib/types';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
 import { canManageAwards, canViewMeasurables } from '@/lib/coach-capabilities';
+import { hasMeetings, hasBookContent } from '@/lib/coach-opponents';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Insights V3 — "Scoreboard + What stands out" (design log 2026-07-09).
@@ -118,6 +119,28 @@ export default function CoachesInsightsPage({
       .catch(() => { /* non-fatal — the tile just shows its sparse state */ });
     return () => { cancelled = true; };
   }, [canDevelopment, orgSlug, teamId]);
+
+  // "Who are we up against?" tile summary — same self-contained-fetch pattern as the
+  // awards tile. Gated on schedule (the book's own open-contribution gate), never record
+  // access. Non-fatal on failure: the tile just shows its sparse state.
+  const canScouting = !!assignment?.capabilities.schedule;
+  const [oppSummary, setOppSummary] = useState<{ total: number; withBook: number } | null>(null);
+  useEffect(() => {
+    if (!canScouting) return;
+    let cancelled = false;
+    fetch(`/api/coaches/${orgSlug}/teams/${teamId}/opponents`)
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (cancelled || !data) return;
+        const entries: { summary: string | null; observationCount: number; meetings: unknown[] }[] = data.opponents ?? [];
+        setOppSummary({
+          total: entries.filter(hasMeetings).length,
+          withBook: entries.filter(hasBookContent).length,
+        });
+      })
+      .catch(() => { /* non-fatal — the tile just shows its sparse state */ });
+    return () => { cancelled = true; };
+  }, [canScouting, orgSlug, teamId]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -494,6 +517,20 @@ export default function CoachesInsightsPage({
                   {devSummary && (devSummary.withMeasurable > 0 || devSummary.withFocus > 0)
                     ? `${devSummary.withMeasurable} of ${devSummary.rosterCount} player${devSummary.rosterCount === 1 ? '' : 's'} have a measurable · ${devSummary.withFocus} with an active focus area`
                     : 'Run an evaluation session or add a focus area to start the coverage picture'}
+                </span>
+              </Link>
+            )}
+            {/* Seventh tile — Opponent Scouting Book, owner-sanctioned with the project
+                approval 2026-08-04 (the tile was in the approved mockups; new analytics
+                land as Insights sections per the 2026-07-08 IA ruling). Gated on schedule
+                (open-contribution model), NOT record access — Helpers read the book too. */}
+            {canScouting && (
+              <Link href={`${base}/history/opponents`} className={`${styles.insightsDoor} ${!oppSummary || oppSummary.total === 0 ? styles.insightsDoorSoft : ''}`}>
+                <span className={styles.insightsDoorQ}>Who are we up against?<span aria-hidden>→</span></span>
+                <span className={styles.insightsDoorSum}>
+                  {oppSummary && oppSummary.total > 0
+                    ? `${oppSummary.total} opponent${oppSummary.total === 1 ? '' : 's'} on file · ${oppSummary.withBook} in the book`
+                    : 'Play a game with an opponent named to start your book'}
                 </span>
               </Link>
             )}

@@ -409,6 +409,35 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
   });
 
   /**
+   * The Opponent Scouting Book — the SAME decided absence as drills and plan templates,
+   * ratified with the project approval (owner, 2026-08-04).
+   *
+   * The book is an INSTRUMENT: it reads game events from EVERY season (team-scoped, the
+   * drills-past-seasons query shape) to feed the LIVE season's preparation — "our record vs
+   * them", the observation log, the book line. Notes update in place; nothing is written
+   * into a finished season, and an archived season shows no scouting UI anywhere. The
+   * per-season FACTS (game logs) stay reachable through the already-approved Schedule and
+   * Insights doors, so the archive loses nothing by this absence.
+   *
+   * ⚠ This test exists so a later session cannot quietly put the book on the rail and
+   * assume the archive question was open. It was answered at approval: INSTRUMENT, no door.
+   */
+  it('the opponent scouting book is live-season only, by decision (Scouting Book P1)', () => {
+    const bookRoutes = files.filter(f => f.replace(/\\/g, '/').includes('/opponents/'));
+    assert.ok(bookRoutes.length >= 3, 'expected the scouting-book routes to exist');
+    for (const file of bookRoutes) {
+      const src = readFileSync(file, 'utf8');
+      assert.ok(
+        !/resolveCoachSeasonRead(Context)?\s*\(|resolveCoachSeasonCapabilityMap\s*\(/.test(src),
+        `${file} joined the season-read rail. The scouting book is an INSTRUMENT and was ruled `
+        + 'live-season-only (owner, 2026-08-04, with the project approval). If that has genuinely '
+        + 'changed, get the decision, add its routes to APPROVED_SEASON_AWARE_ROUTES, and give the '
+        + 'Insights hub an archive-aware Opponents door.',
+      );
+    }
+  });
+
+  /**
    * ⚠ The LIVE practice-plan route must never gain the rail.
    *
    * It holds the PUT and the PATCH, so putting the season rail on its GET would make the whole

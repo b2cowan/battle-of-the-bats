@@ -2329,6 +2329,55 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'premium-scouting',
+      group: 'Premium Coaches Portal',
+      heading: 'The opponent book: scouting the teams you play (Premium)',
+      summary: 'A page per opponent — your record against them across every season, every past meeting, and the notes your staff logs right after each game.',
+      keywords: ['scouting', 'opponent', 'opponents', 'opponent book', 'scouting book', 'tendencies', 'rival', 'record against', 'who are we up against', 'observation', 'observations', 'book line', 'add to the book'],
+      searchText: 'scouting book opponent book opponents who are we up against record against them last meeting tendencies notes on other teams rival scouting tab add to the book observation log book line head coach remove observation helper assistant contribute jersey number not names merge duplicate spelling scrimmage not counted exhibition record rule archived season no scouting',
+      content: (
+        <>
+          <p>The <strong>opponent book</strong> keeps what you know about the teams you play — in the portal instead of a notes app on your phone. Open <strong>Insights → &ldquo;Who are we up against?&rdquo;</strong> for the list: every opponent you&rsquo;ve ever named on a game, your all-time record against them (across seasons), when you last met, and an amber dot wherever something&rsquo;s written.</p>
+          <p>Each opponent has a page with three layers:</p>
+          <ul>
+            <li><strong>The numbers</strong> — record, runs for and against, streak, and every past meeting season by season. Scrimmages are listed with an <strong>EXH</strong> badge but never counted, so the record here always matches Season Wrapped and Insights.</li>
+            <li><strong>The book line</strong> — one distilled sentence (<em>&ldquo;Beatable when we run early&rdquo;</em>), written by the head coach (or an assistant granted notes access). It leads every scouting surface.</li>
+            <li><strong>Observations</strong> — one-line notes logged after games (<em>&ldquo;their shortstop cheats up with runners on&rdquo;</em>), each dated, tagged, and signed by whoever wrote it.</li>
+          </ul>
+          <p><strong>Writing happens right after the score.</strong> When you save a final score, a quiet <strong>&ldquo;Add to the book&rdquo;</strong> link appears beside it — it opens the game&rsquo;s <strong>Scouting</strong> tab, where you can log observations in a few seconds. That tab is also where the book resurfaces before you play them again: your record shows on the schedule row, and the tab holds the book line and freshest notes the night before.</p>
+          <p><strong>The whole bench can scout.</strong> Assistants and helpers can log observations too — every entry shows who wrote it, and the head coach can remove any entry (writers can remove their own). One house rule: refer to opposing players by <strong>jersey number or position, never by name</strong> — they&rsquo;re someone else&rsquo;s kids.</p>
+          <p><strong>Past seasons:</strong> the book remembers every season&rsquo;s games, but it serves the season you&rsquo;re coaching now — an archived season doesn&rsquo;t show scouting screens.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-opponent-book-who-writes',
+          question: 'Who can write in the opponent book — and who can delete a note?',
+          answerText: 'Anyone on your staff who can see the schedule — assistants and helpers included — can log observations, and every entry is signed with their name. The head coach can remove any observation; everyone else can remove only their own. The book line (the one-sentence summary at the top of an opponent page) is different: only the head coach, or an assistant granted notes access, can edit it. Many people scout, one voice decides.',
+          keywords: ['who can write scouting', 'helper observation', 'assistant scouting', 'delete observation', 'remove note', 'book line access', 'notes access'],
+          answer: (
+            <>
+              <p><strong>Logging observations:</strong> anyone on your staff who can see the schedule — assistants and helpers included. Every entry is signed with their name.</p>
+              <p><strong>Removing them:</strong> the head coach can remove any observation; everyone else only their own.</p>
+              <p><strong>The book line</strong> — the one-sentence summary at the top — is head-coach territory (or an assistant granted notes access). Many people scout; one voice decides.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-opponent-book-duplicate',
+          question: 'The same team shows up twice under two spellings. Why?',
+          answerText: 'The book groups games by the opponent name typed on each game, so "Thunder 12U" and "Oakville Thunder" read as two different opponents until the spellings are brought together. Tidying the spelling on the games themselves keeps future games grouping correctly. A merge control that combines two spellings into one opponent page is coming in a follow-up phase.',
+          keywords: ['duplicate opponent', 'two spellings', 'merge opponents', 'same team twice', 'opponent name'],
+          answer: (
+            <>
+              <p>The book groups games by the opponent name typed on each game — so <em>&ldquo;Thunder 12U&rdquo;</em> and <em>&ldquo;Oakville Thunder&rdquo;</em> read as two different opponents until the spellings are brought together.</p>
+              <p>Tidying the spelling on the games themselves keeps future games grouping correctly. A <strong>merge</strong> control that combines two spellings into one opponent page is coming in a follow-up phase.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'premium-staff',
       group: 'Premium Coaches Portal',
       heading: 'Adding assistant coaches and helpers (Premium)',

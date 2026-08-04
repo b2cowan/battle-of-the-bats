@@ -38,6 +38,8 @@ import {
   type MovedGame, type DuplicateGamePair,
 } from '@/lib/coach-tournament-games';
 import styles from '../../../coaches.module.css';
+import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
+import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { tournamentToday, formatInOrgZone, orgDayKey, utcToZonedInputs } from '@/lib/timezone';
 import {
   EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES, ATTENDANCE_WORD,
@@ -495,7 +497,7 @@ function TournamentGameChip({ game, dayKey }: { game: CoachScheduleTournamentGam
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -541,6 +543,11 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved }: { ev
         )}
         {mismatch && !cancelled && (
           <TriangleAlert size={12} style={{ color: 'var(--warning)', flexShrink: 0 }} aria-label="Lineup and attendance don't match" />
+        )}
+        {/* Scouting Book glance: your record vs this opponent, upcoming games only (the
+            caller passes null once a score exists — the trail slot is the score's then). */}
+        {bookRecord && !cancelled && (
+          <span className={styles.scoutRecChip} data-tone="even" title={`Your record vs ${event.opponent}`}>{bookRecord}</span>
         )}
         {cancelled ? (
           <span className={styles.eventChipResult} style={{ color: 'var(--warning)' }}>CANCELLED</span>
@@ -606,7 +613,7 @@ export default function CoachesSchedulePage({
   // Mobile month view: a tapped day with >1 event opens this bottom-sheet day list (a single
   // event opens its detail directly). Desktop keeps the in-cell text chips, so this stays null.
   const [daySheet, setDaySheet] = useState<{ dateKey: string; events: RepTeamEvent[] } | null>(null);
-  const [slideTab, setSlideTab] = useState<'attendance' | 'lineup'>('attendance');
+  const [slideTab, setSlideTab] = useState<'attendance' | 'lineup' | 'scouting'>('attendance');
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   // Whether the event being edited belongs to a recurring series (drives the "this / future / all"
@@ -670,6 +677,43 @@ export default function CoachesSchedulePage({
   // and `page.canWrite()` folds in read-only, so write flags go through it.
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
+
+  // Opponent Scouting Book roll-up (one fetch, no N+1): powers the record chip on upcoming
+  // game rows and the Scouting tab's availability. Non-fatal — a failed load just means no
+  // chips this visit. Keys are the book's normalized names; a P2 alias merge folds spellings
+  // server-side, so a direct normalize-lookup here can miss an aliased spelling until then.
+  // ⚠ ABSENT IN AN ARCHIVE, per "the archive is OPT-IN": the book is a live-season
+  // INSTRUMENT (owner ruling 2026-08-04) — a frozen season shows no scouting UI. ONE derived
+  // flag gates BOTH the roll-up fetch and the tab/key computation below, so the two can
+  // never diverge (e.g. a tab that opens onto a panel whose data never loads).
+  const scoutingAvailable = !page.isReadOnly;
+  const [bookByKey, setBookByKey] = useState<Map<string, OpponentBookEntry>>(new Map());
+  const loadBook = useCallback(async () => {
+    // CLEAR, not just skip: a coach can flip live → archived season on this same mount
+    // (?year= re-render, no remount), and a populated map would keep painting record
+    // chips onto the frozen calendar.
+    if (!scoutingAvailable) { setBookByKey(new Map()); return; }
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/opponents`);
+      if (!res.ok) return;
+      const data = await res.json();
+      const map = new Map<string, OpponentBookEntry>();
+      for (const e of (data.opponents ?? []) as OpponentBookEntry[]) map.set(e.key, e);
+      setBookByKey(map);
+    } catch { /* chips are a convenience, never a blocker */ }
+  }, [orgSlug, teamId, scoutingAvailable]);
+  useEffect(() => { loadBook(); }, [loadBook]);
+  /** Record chip text for a game row: prior meetings only, upcoming games only (the trail
+   *  slot is the score's once one exists). Empty map in an archive ⇒ always null there. */
+  const bookRecordFor = useCallback((e: RepTeamEvent): string | null => {
+    if (!COACH_GAME_EVENT_TYPES.includes(e.eventType) || !e.opponent) return null;
+    if (e.teamScore != null || e.status === 'cancelled') return null;
+    const entry = bookByKey.get(normalizeOpponentName(e.opponent));
+    if (!entry || entry.meetings.length === 0) return null;
+    const r = entry.record;
+    if (r.wins + r.losses + r.ties === 0) return null;
+    return recordChip(r);
+  }, [bookByKey]);
   const seasonQuery = page.query;
   const assignment = assignments.find(a => a.teamId === teamId);
   // An assistant who reaches this page read-only must not be handed an "Add Event" button. Fails
@@ -814,6 +858,9 @@ export default function CoachesSchedulePage({
       if (!ev) return;
       openEvent(ev);
       if (sp.get('tab') === 'lineup') setSlideTab('lineup');
+      // ?tab=scouting deep-links (the Opponents card's meeting rows, shared links). If the
+      // event turns out to have no Scouting tab, activeSlideTab falls back to Attendance.
+      if (sp.get('tab') === 'scouting') setSlideTab('scouting');
     } catch { /* ignore malformed params */ }
   }, [loading, events]);
 
@@ -1185,8 +1232,16 @@ export default function CoachesSchedulePage({
     }));
   }, [selectedEvent, isGameEvent, page.capabilities, page.isReadOnly, page.teamName, events, base]);
 
-  const slideTabs: { key: 'attendance' | 'lineup'; label: string }[] = [{ key: 'attendance', label: 'Attendance' }];
+  const slideTabs: { key: 'attendance' | 'lineup' | 'scouting'; label: string }[] = [{ key: 'attendance', label: 'Attendance' }];
   if (isLineupEvent(selectedEvent)) slideTabs.push({ key: 'lineup', label: 'Lineup' });
+  // Scouting Book glance (owner-approved 2026-08-04): games with a real opponent name only —
+  // a TBD bracket slot gets no tab, never a dead end. Read gates on `schedule`, which is
+  // everyone who can open this page, so no extra capability check here. Archive absence
+  // rides `scoutingAvailable`, the same flag that gates the roll-up fetch.
+  const scoutingKey = selectedEvent && isGameEvent && selectedEvent.opponent && scoutingAvailable
+    ? normalizeOpponentName(selectedEvent.opponent)
+    : '';
+  if (scoutingKey) slideTabs.push({ key: 'scouting', label: 'Scouting' });
   const activeSlideTab = slideTabs.some(t => t.key === slideTab) ? slideTab : 'attendance';
 
   // Compact one-line summary for the slide-over header (replaces the tall label/value list).
@@ -1523,6 +1578,9 @@ export default function CoachesSchedulePage({
       setSelectedEvent(updated);
       setScoreForm(null);
       await fetchEvents();
+      // The book's record vs this opponent just changed; refresh the roll-up so the
+      // capture door + chips reflect tonight's result. Non-blocking convenience.
+      loadBook();
     } catch (e: unknown) {
       setSaveError(errorMessage(e, 'Save failed'));
     } finally {
@@ -1800,7 +1858,7 @@ export default function CoachesSchedulePage({
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
             {(grouped[mk] ?? []).map(e => (
-              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} />
+              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} />
             ))}
             {games.map(g => (
               <TournamentGameChip key={`g-${g.id}`} game={g} />
@@ -1856,7 +1914,7 @@ export default function CoachesSchedulePage({
                   : (
                     <>
                       {dayEvents.map(e => (
-                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} />
+                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} />
                       ))}
                       {dayGames.map(g => (
                         <TournamentGameChip key={`g-${g.id}`} game={g} dayKey={key} />
@@ -2147,7 +2205,7 @@ export default function CoachesSchedulePage({
             </div>
             <div className={styles.calEventList}>
               {sortDayEvents(daySheet.events).map(e => (
-                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} />
+                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} />
               ))}
             </div>
           </div>
@@ -2294,6 +2352,14 @@ export default function CoachesSchedulePage({
                     <button className={styles.eventScoreEdit} onClick={() => setScoreForm({ teamScore: String(selectedEvent.teamScore ?? ''), opponentScore: String(selectedEvent.opponentScore ?? '') })}>
                       Edit score
                     </button>
+                    {/* The Scouting Book's capture door — a quiet link at the one moment every
+                        coach reliably visits after every game (score entry), never a modal
+                        (owner ruling). The tab itself is the capture sheet. */}
+                    {scoutingKey && activeSlideTab !== 'scouting' && (
+                      <button type="button" className={styles.scoutToastDoor} onClick={() => setSlideTab('scouting')}>
+                        Add to the book on {selectedEvent.opponent} ›
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <button className={styles.eventScoreAdd} onClick={() => setScoreForm({ teamScore: '', opponentScore: '' })}>
@@ -2546,6 +2612,15 @@ export default function CoachesSchedulePage({
                   </button>
                 ))}
               </div>
+            )}
+
+            {activeSlideTab === 'scouting' && scoutingKey && selectedEvent && (
+              <OpponentScoutingPanel
+                orgSlug={orgSlug}
+                teamId={teamId}
+                eventId={selectedEvent.id}
+                opponentName={selectedEvent.opponent!}
+              />
             )}
 
             {activeSlideTab === 'attendance' && (() => {

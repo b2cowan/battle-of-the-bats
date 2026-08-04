@@ -297,6 +297,19 @@ export const canManageSchedule = (c: CoachCapabilities) => c.scheduleManage;
 /** See the schedule and open a practice plan. The sidebar's Schedule door keys on this. */
 export const canViewSchedule = (c: CoachCapabilities) => c.schedule;
 /**
+ * Opponent Scouting Book (owner-ratified 2026-08-04): reading the book AND logging
+ * observations are OPEN to every schedule-holder — assistants and Helpers included —
+ * because the best observations come from the bench, entries are always attributed, and
+ * the head coach curates (delete-any). Deliberately looser than hasRecordAccess: the book
+ * is about opposing teams, never roster records or PII. The curated "book line" summary
+ * stays on the `notes` grant (canWriteScoutingSummary); observation deletion is
+ * head-coach-any / author-own, enforced in the route (needs the row's author, not just
+ * capabilities).
+ */
+export const canViewScoutingBook = (c: CoachCapabilities) => c.schedule;
+export const canLogScoutingObservation = (c: CoachCapabilities) => c.schedule;
+export const canWriteScoutingSummary = (c: CoachCapabilities) => c.notes;
+/**
  * Does this person get a seat in the team's staff chat room?
  *
  * ⚠ Membership of that room is DERIVED from the staff assignment (`syncStaffChatRoom`), which is why

@@ -1579,6 +1579,41 @@ export interface RepTeamEvent {
   updatedAt: string;
 }
 
+/**
+ * Opponent Scouting Book (mig 225) — one row per (team, normalized opponent name).
+ * An overlay: NO FK from events; identity resolved at read via normalizeOpponentName()
+ * + aliases (lib/coach-opponents.ts). Rows are minted lazily on first write.
+ */
+export interface RepTeamOpponent {
+  id: string;
+  teamId: string;
+  orgId: string;
+  displayName: string;
+  normalizedName: string;
+  /** "The book line" — coach-distilled read (≤500, `notes`-gated). Null renders honestly. */
+  summary: string | null;
+  lastNoteUpdatedAt: string | null;
+  updatedBy: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Scouting Book capture log — attributed, append-only in spirit (delete = head coach / author-own). */
+export interface RepTeamOpponentObservation {
+  id: string;
+  opponentId: string;
+  teamId: string;
+  orgId: string;
+  /** The game it was learned in; null = logged from the card ("General"). */
+  eventId: string | null;
+  body: string;
+  /** Sport-pack-supplied vocab (scoutingTagsForSport), app-validated — no DB CHECK. */
+  tag: string | null;
+  createdBy: string | null;
+  createdByName: string | null;
+  createdAt: string;
+}
+
 export interface RepTeamEventAttendance {
   id: string;
   eventId: string;

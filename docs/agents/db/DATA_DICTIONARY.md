@@ -2209,6 +2209,94 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_lineup_templates.created_by -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — the coach who saved the template.
 
+### `rep_team_opponents`
+<!-- dict:table:rep_team_opponents -->
+
+**Purpose:** the Opponent Scouting Book's per-opponent record — one row per (team, normalized opponent name), holding the coach's curated **book line** (`summary`). An **overlay** over `rep_team_events.opponent` free text: there is deliberately **NO FK from events to opponents**; identity is resolved at read time by `normalizeOpponentName()` (`lib/coach-opponents.ts`) + the aliases table. Added by migration 225 (owner-approved plan `COACH_OPPONENT_SCOUTING_BOOK_PLAN.md`). **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **Rows are minted LAZILY** — first summary write or observation against a grouped name creates the row (plain INSERT; a concurrent first-write's `23505` on the unique pair resolves by re-reading, the slug-race pattern — deliberately NOT a Supabase upsert, so an existing `display_name` is never clobbered). An opponent with games but no writes has NO row; the book list still shows them (aggregation-only entries) from the cross-season events read.
+2. **This feature never writes `rep_team_events`** — game rows (incl. organizer-mirrored ones) are read-only inputs. Record tallies route through `WRAPPED_RECORD_EVENT_TYPES` (scrimmages listed, never counted).
+3. **INSTRUMENT, not record (owner ruling, ratified 2026-08-04)** — live-season-only surfaces; routes must never join the season-read rail / `APPROVED_SEASON_AWARE_ROUTES` (asserted by `tests/unit/coach-season-write-guard.test.ts`).
+4. **Coach-API-only via service role; RLS enabled with NO policies** — anon's default SELECT grant cannot reach it.
+5. **`summary` is the `notes`-capability surface** ("the book line", ≤500 app-enforced); observation logging is deliberately looser (see `rep_team_opponent_observations` gotcha 1).
+
+**Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
+
+<!-- dict:col:rep_team_opponents.team_id -->
+<!-- dict:col:rep_team_opponents.org_id -->
+**`team_id` / `org_id`** (FK, NOT NULL, CASCADE) — scope; sourced from URL/context, not the request body. Team-scoped: this is one team's book, not an org registry. Indexed (`idx_rep_team_opponents_team/_org`).
+
+<!-- dict:col:rep_team_opponents.display_name -->
+**`display_name`** (text, NOT NULL) — the spelling shown in UI; defaults to the most recent event's spelling at mint time. A same-normalized-key respelling (capitalization/punctuation) persists via the summary PUT; renames that change the normalized key are the P2 merge UI's job.
+
+<!-- dict:col:rep_team_opponents.normalized_name -->
+**`normalized_name`** (text, NOT NULL; **`UNIQUE(team_id, normalized_name)`**) — output of `normalizeOpponentName()` (casefold, collapse whitespace/punctuation, strip leading "the"); the grouping key and upsert conflict target.
+
+<!-- dict:col:rep_team_opponents.summary -->
+**`summary`** (text, nullable; ≤500 app-enforced) — "the book line": the coach's distilled read, edited in place (live intelligence; history lives in observations). NULL renders honestly, never blank.
+
+<!-- dict:col:rep_team_opponents.last_note_updated_at -->
+**`last_note_updated_at`** (timestamptz, nullable) — when `summary` last changed (shown as "updated Jun 15").
+
+<!-- dict:col:rep_team_opponents.updated_by -->
+**`updated_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — last summary writer.
+
+### `rep_team_opponent_aliases`
+<!-- dict:table:rep_team_opponent_aliases -->
+
+**Purpose:** spelling-drift merges for the Scouting Book — "Thunder 12U" IS "Oakville Thunder". An alias's `normalized_alias` groups those events under the target opponent at read time. Created by migration 225; **management UI is P2** (table lands first so P1 reads honor aliases from day one). **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **`UNIQUE(team_id, normalized_alias)`** — an alias resolves to exactly one opponent per team. Unmerge = delete the alias row; events regroup under their own name on the next read (nothing else to undo).
+2. **Merging never edits events or observations' text** — the loser's observations are re-pointed to the winner (`opponent_id` update) and its normalized name becomes an alias row; game rows are untouched.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_team_opponent_aliases.opponent_id -->
+**`opponent_id`** (FK → `rep_team_opponents.id` CASCADE, NOT NULL) — the surviving/merge-target opponent.
+
+<!-- dict:col:rep_team_opponent_aliases.team_id -->
+<!-- dict:col:rep_team_opponent_aliases.org_id -->
+**`team_id` / `org_id`** (FK, NOT NULL, CASCADE) — scope, mirrors the parent row (kept denormalized for the per-team unique index + RLS-shaped queries).
+
+<!-- dict:col:rep_team_opponent_aliases.normalized_alias -->
+**`normalized_alias`** (text, NOT NULL) — a `normalizeOpponentName()` output that maps to this opponent.
+
+### `rep_team_opponent_observations`
+<!-- dict:table:rep_team_opponent_observations -->
+
+**Purpose:** the Scouting Book's capture log — dated one-line observations ("their SS cheats up with runners on"), logged per game right after the score is entered (or any time from the card/Scouting tab), aggregating under the opponent automatically. Added by migration 225. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **Open contribution (owner-ratified 2026-08-04):** the POST gates on `schedule` capability — assistants AND Helpers can log; entries appear immediately (deliberately NO review queue). Attribution is mandatory (`created_by` + `created_by_name` snapshot).
+2. **Append-only in spirit:** no UPDATE path at the app layer. DELETE = head coach (any row) or author (own rows) — the curation "eraser", game-moments convention.
+3. **"Numbers, not names":** capture UI instructs staff to reference opposing players by jersey/position, never name — guidance + culture, deliberately NOT a text filter. No photo attachment column may be added.
+4. **`event_id` is nullable + SET NULL** — set when captured against a specific game (renders nested under that meeting); NULL = logged from the card ("General"). A deleted event orphans the observation to General rather than destroying it.
+5. **`created_by_name` is a display snapshot** taken at write time (the practice-plan `viewerName` pattern) — it does not chase later name changes; `created_by` remains the identity for author-own deletion.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_team_opponent_observations.opponent_id -->
+**`opponent_id`** (FK → `rep_team_opponents.id` CASCADE, NOT NULL) — the book entry this belongs to (parent row is lazily minted by the same write when absent).
+
+<!-- dict:col:rep_team_opponent_observations.team_id -->
+<!-- dict:col:rep_team_opponent_observations.org_id -->
+**`team_id` / `org_id`** (FK, NOT NULL, CASCADE) — scope; sourced from URL/context.
+
+<!-- dict:col:rep_team_opponent_observations.event_id -->
+**`event_id`** (FK → `rep_team_events.id` ON DELETE SET NULL, nullable) — the game it was learned in (gotcha 4). Indexed.
+
+<!-- dict:col:rep_team_opponent_observations.body -->
+**`body`** (text, NOT NULL; ≤500 app-enforced) — one observation, one line.
+
+<!-- dict:col:rep_team_opponent_observations.tag -->
+**`tag`** (text, nullable) — sport-pack-supplied vocabulary (e.g. softball `Pitching|Hitting|Defense|Baserunning|Coaching`), app-validated against `scoutingTagsForSport()` — **no DB CHECK** (vocab varies by sport).
+
+<!-- dict:col:rep_team_opponent_observations.created_by -->
+<!-- dict:col:rep_team_opponent_observations.created_by_name -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) / **`created_by_name`** (text, nullable) — attribution: identity for author-own deletion + display snapshot (gotcha 5).
+
 ### `rep_team_tags`
 <!-- dict:table:rep_team_tags -->
 

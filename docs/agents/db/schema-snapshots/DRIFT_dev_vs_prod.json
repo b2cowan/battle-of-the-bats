@@ -1,12 +1,241 @@
 {
-  "generated": "2026-08-03",
-  "total": 0,
+  "generated": "2026-08-04",
+  "total": 57,
   "counts": {
-    "tables": 0,
-    "columns": 0,
-    "indexes": 0,
-    "constraints": 0,
+    "tables": 3,
+    "columns": 26,
+    "indexes": 12,
+    "constraints": 16,
     "rls": 0
   },
-  "items": []
+  "items": [
+    {
+      "key": "column:only-dev:rep_team_opponent_aliases.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_aliases.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_aliases.normalized_alias",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_aliases.opponent_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_aliases.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_aliases.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.body",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.created_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.opponent_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.tag",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponent_observations.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.display_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.last_note_updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.normalized_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.summary",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_opponents.updated_by",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_aliases.fk_rep_team_opponent_aliases_opponent",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_aliases.fk_rep_team_opponent_aliases_org",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_aliases.fk_rep_team_opponent_aliases_team",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_aliases.rep_team_opponent_aliases_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_aliases.rep_team_opponent_aliases_team_alias_uq",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_observations.fk_rep_team_opponent_obs_created_by",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_observations.fk_rep_team_opponent_obs_event",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_observations.fk_rep_team_opponent_obs_opponent",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_observations.fk_rep_team_opponent_obs_org",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_observations.fk_rep_team_opponent_obs_team",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponent_observations.rep_team_opponent_observations_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponents.fk_rep_team_opponents_org",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponents.fk_rep_team_opponents_team",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponents.fk_rep_team_opponents_updated_by",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponents.rep_team_opponents_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_opponents.rep_team_opponents_team_name_uq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_opponent_aliases_opponent",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_opponent_aliases_org",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_opponent_obs_event",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_opponent_obs_opponent",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_opponent_obs_team",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_opponents_org",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_opponents_team",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_opponent_aliases_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_opponent_aliases_team_alias_uq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_opponent_observations_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_opponents_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_opponents_team_name_uq",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_opponent_aliases",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_opponent_observations",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_opponents",
+      "sig": ""
+    }
+  ]
 }

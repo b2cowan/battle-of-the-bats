@@ -6841,3 +6841,226 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .reportRecapLink { margin-left: 0; }
   .ppSourceTab { margin-right: 0.5rem; }
 }
+
+/* ─── Opponent Scouting Book (P1, owner-approved 2026-08-04) ─────────────────────────────
+   Every colour is a token, so the warm gate re-skins this with no rules of its own.
+   List rows follow the lineupFront idiom; the record chip is data-tone'd like
+   lineupFrontChip (up = success, down = danger, even = neutral). */
+.scoutSearch {
+  width: 100%;
+  padding: 0.55rem 0.95rem;
+  margin-bottom: 0.65rem;
+  background: var(--white-8);
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  color: var(--white-90);
+  font-size: 0.85rem;
+}
+.scoutSearch::placeholder { color: var(--white-45); }
+.scoutList { display: flex; flex-direction: column; gap: 0.5rem; }
+.scoutRow {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  padding: 0.7rem 0.9rem;
+  background: var(--white-8);
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+  text-decoration: none;
+  color: var(--white-90);
+  transition: border-color 0.15s, background 0.15s, transform 0.12s;
+}
+.scoutRow:hover {
+  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
+  background: var(--white-10);
+  transform: translateY(-1px);
+}
+/* Presence dot: "there's something in the book on them" — amber = written, dashed = not yet. */
+.scoutNoteDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.scoutNoteDot[data-has="yes"] { background: var(--warning); }
+.scoutNoteDot[data-has="no"] { background: transparent; border: 1.5px dashed var(--white-30); }
+.scoutRowMain { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; flex: 1; }
+.scoutRowName { font-size: 0.92rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.scoutRowMeta { font-size: 0.75rem; color: var(--white-45); }
+.scoutRecChip {
+  flex-shrink: 0;
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 0.3rem 0.55rem;
+  border-radius: 6px;
+}
+.scoutRecChip[data-tone="up"]   { color: var(--success); background: rgba(var(--success-rgb), 0.12); }
+.scoutRecChip[data-tone="down"] { color: var(--danger);  background: rgba(var(--danger-rgb), 0.12); }
+.scoutRecChip[data-tone="even"] { color: var(--white-70); background: var(--white-10); }
+.scoutListNone { font-size: 0.85rem; color: var(--white-45); margin: 0.5rem 0.2rem; }
+.scoutFootnote { font-size: 0.75rem; color: var(--white-45); margin: 0.55rem 0.15rem; line-height: 1.5; }
+.scoutBackLink { color: var(--white-45); text-decoration: none; font-size: 0.8rem; }
+.scoutBackLink:hover { color: var(--white-70); }
+
+/* Card stats */
+.scoutStatRow { display: flex; gap: 0.55rem; margin-bottom: 0.35rem; }
+.scoutStat {
+  flex: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 0.2rem;
+  padding: 0.6rem 0.4rem;
+  background: var(--white-8);
+  border: 1px solid var(--border-2);
+  border-radius: var(--radius);
+}
+.scoutStatV { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: 1.15rem; font-weight: 700; color: var(--white-90); }
+.scoutStatL { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--white-45); text-align: center; }
+
+/* The book line — the one curated field; a left accent marks it as the headline. */
+.scoutBookLine {
+  border: 1px solid var(--border-2);
+  border-left: 3px solid var(--logic-lime);
+  border-radius: 10px;
+  background: var(--card-bg);
+  padding: 0.65rem 0.85rem;
+  margin: 0.6rem 0;
+  display: flex; flex-direction: column; gap: 0.35rem;
+}
+.scoutBookHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.scoutBookLabel { font-size: 0.62rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--white-45); }
+.scoutBookInput {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  resize: vertical;
+  color: var(--white-90);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-family: inherit;
+}
+.scoutBookInput:focus { outline: none; }
+.scoutBookInput::placeholder { color: var(--white-35); font-style: italic; }
+.scoutBookRead { margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--white-80); }
+.scoutBookMeta { font-size: 0.68rem; color: var(--white-35); align-self: flex-end; }
+
+/* Observation logger */
+.scoutLog { display: flex; flex-direction: column; gap: 0.45rem; margin: 0.4rem 0 0.7rem; }
+.scoutLogInput {
+  width: 100%;
+  padding: 0.55rem 0.75rem;
+  background: var(--white-8);
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  color: var(--white-90);
+  font-size: 0.88rem;
+  line-height: 1.45;
+  resize: vertical;
+  font-family: inherit;
+}
+.scoutLogInput::placeholder { color: var(--white-40); }
+.scoutTagRow { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.scoutTagChip {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.32rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--white-20);
+  background: transparent;
+  color: var(--white-70);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.scoutTagChip:hover { border-color: var(--white-30); color: var(--white-90); }
+/* Active = the rsvpOptionActive recipe (soft tokenized fill + colored border/text), so the
+   warm gate re-skins it with no rules of its own — never a solid lime fill with hand-picked ink. */
+.scoutTagChip[data-on="yes"] { background: rgba(var(--success-rgb), 0.16); border-color: var(--success); color: var(--success); }
+.scoutLogSave { margin-left: auto; }
+
+/* Timeline: meetings with observations nested beneath */
+.scoutSeason { margin-bottom: 0.7rem; }
+.scoutSeasonLabel {
+  font-family: var(--font-data);
+  font-size: 0.62rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--white-45);
+  margin: 0.55rem 0.15rem 0.35rem;
+}
+.scoutMeeting {
+  border: 1px solid var(--border-2);
+  border-radius: 10px;
+  background: var(--card-bg);
+  padding: 0.5rem 0.7rem;
+  margin-bottom: 0.4rem;
+}
+.scoutMeetingRow { display: flex; align-items: center; gap: 0.55rem; }
+.scoutMeetingRes {
+  width: 1.55em; text-align: center;
+  font-family: var(--font-data); font-size: 0.68rem; font-weight: 700;
+  border-radius: 4px; padding: 0.22em 0;
+  flex-shrink: 0;
+}
+.scoutMeetingRes[data-r="win"]  { color: var(--success); background: rgba(var(--success-rgb), 0.12); }
+.scoutMeetingRes[data-r="loss"] { color: var(--danger); background: rgba(var(--danger-rgb), 0.12); }
+.scoutMeetingRes[data-r="tie"]  { color: var(--white-70); background: var(--white-10); }
+.scoutMeetingRes[data-r="none"] { color: var(--white-35); }
+.scoutMeetingScore { font-family: var(--font-data); font-variant-numeric: tabular-nums; font-size: 0.8rem; font-weight: 600; color: var(--white-90); min-width: 2.6em; }
+.scoutMeetingName { font-size: 0.8rem; color: var(--white-70); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
+.scoutExh {
+  font-family: var(--font-data); font-size: 0.55rem; font-weight: 700; letter-spacing: 0.08em;
+  color: var(--white-45); background: var(--white-10); border-radius: 4px; padding: 0.2em 0.4em; margin-left: 0.4em;
+}
+.scoutMeetingDate { font-size: 0.7rem; color: var(--white-45); flex-shrink: 0; }
+.scoutObs {
+  display: flex; align-items: flex-start; gap: 0.45rem;
+  padding: 0.3rem 0 0.15rem 1.9em;
+  position: relative;
+  font-size: 0.8rem; color: var(--white-80); line-height: 1.45;
+}
+.scoutObs::before {
+  content: "";
+  position: absolute; left: 0.95em; top: 0.72em;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: var(--white-30);
+}
+.scoutObsBody { flex: 1; min-width: 0; }
+.scoutObsAuthor { color: var(--white-45); font-size: 0.72rem; }
+.scoutObsTag {
+  flex-shrink: 0;
+  font-family: var(--font-data); font-size: 0.55rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--white-60); background: var(--white-10); border-radius: 4px; padding: 0.25em 0.45em;
+  margin-top: 0.15em;
+}
+/* The eraser — quiet until hovered; destructive red on intent only. */
+.scoutObsDelete {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--white-35);
+  cursor: pointer;
+}
+.scoutObsDelete:hover { color: var(--danger); border-color: rgba(var(--danger-rgb), 0.35); background: rgba(var(--danger-rgb), 0.08); }
+
+/* Schedule drawer — Scouting tab panel */
+.scoutPanel { display: flex; flex-direction: column; gap: 0.55rem; padding: 0.25rem 0; }
+.scoutPanelHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.scoutPanelTitle { font-size: 0.85rem; font-weight: 700; color: var(--white-90); }
+.scoutPanelLinks { display: flex; justify-content: space-between; gap: 0.6rem; }
+.scoutPanelLink { font-size: 0.8rem; font-weight: 700; color: var(--logic-lime); background: none; border: 0; cursor: pointer; padding: 0; text-decoration: none; }
+.scoutPanelLink:hover { text-decoration: underline; }
+/* The capture door in the score-saved confirmation — a quiet link, never a modal. */
+.scoutToastDoor {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.8rem; font-weight: 700;
+  color: var(--logic-lime);
+  background: none; border: 0; cursor: pointer; padding: 0.15rem 0;
+}
+.scoutToastDoor:hover { text-decoration: underline; }
+
+/* 640 = CONTENT reflow: stats keep three-up (they're small); the log save button goes
+   full-width so the tap target isn't squeezed by the tag chips. */
+@media (max-width: 640px) {
+  .scoutLogSave { margin-left: 0; width: 100%; }
+  .scoutMeetingName { white-space: normal; }
+}
