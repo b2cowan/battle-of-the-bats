@@ -71,7 +71,7 @@
      top: var(--coach-top-strip)) — a fragment navigation must clear both. The var is
      defined at every width but only offsets the header ≥901px, hence the media split. */
   .zone {
-    scroll-margin-top: calc(var(--coach-top-strip, 0px) + var(--coach-mhead-h, 0px) + 42px);
+    scroll-margin-top: calc(var(--coach-top-strip, 0px) + var(--coach-mhead-h, 0px) + var(--sandbox-chrome-h, 0px) + 42px);
   }
 }
 

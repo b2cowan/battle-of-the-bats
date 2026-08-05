@@ -28,6 +28,17 @@
 export const SEE_IT_LIVE_PATH = '/see-it-live';
 
 /**
+ * The coach sandbox's door — a sibling under the same reserved path
+ * (`COACH_SANDBOX_SEASON_PHASES_PLAN.md`). Same rules, same posture, different world: it signs in
+ * the ONE demo coach and lands on the mid-season team. Each sandbox keeps its own door, confirm
+ * screen and switch endpoint rather than sharing parameterized ones — "which account" must stay a
+ * compile-time constant on every path that can establish a session.
+ */
+export const SEE_IT_LIVE_COACHES_PATH = '/see-it-live/coaches';
+export const COACH_CONFIRM_PATH = '/see-it-live/coaches/switch';
+export const COACH_SWITCH_ENDPOINT = '/api/sandbox/switch-coach';
+
+/**
  * The confirm screen, shown to the ONE kind of visitor the door has to ask something of: somebody
  * already signed in as themselves, whose session would be replaced by the demo's.
  *

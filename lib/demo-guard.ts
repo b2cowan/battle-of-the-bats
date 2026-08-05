@@ -1,4 +1,4 @@
-import { isDemoOrgSlug } from './demo-org';
+import { isDemoOrgSlug, getDemoOrgBySlug } from './demo-org';
 
 /**
  * lib/demo-guard.ts — the central write block for sandbox organizations.
@@ -47,6 +47,22 @@ export const SANDBOX_REJECTION_BODY: SandboxRejectionBody = {
   error: 'SandboxReadOnly',
   message: 'Nothing is saved here. To keep your changes, start your own tournament — it\'s free.',
 };
+
+/** The coach sandbox's variant — same contract, its own ask. */
+const COACH_REJECTION_BODY: SandboxRejectionBody = {
+  sandbox: true,
+  error: 'SandboxReadOnly',
+  message: 'Nothing is saved here. To keep your changes, start your own team — it\'s free.',
+};
+
+/**
+ * The rejection body for a given demo org — each sandbox nudges toward ITS OWN signup, because a
+ * coach reading "start your own tournament" has just been told the demo wasn't for them. Falls
+ * back to the tournament body so a caller without a slug is never worse than before.
+ */
+export function sandboxRejectionBodyFor(slug?: string | null): SandboxRejectionBody {
+  return getDemoOrgBySlug(slug)?.kind === 'coach' ? COACH_REJECTION_BODY : SANDBOX_REJECTION_BODY;
+}
 
 /** Does this request method attempt to change something? */
 export function isWriteMethod(method: string | null | undefined): boolean {
@@ -117,17 +133,25 @@ export function demoOrgSlugFromRequest(url: URL): string | null {
 }
 
 /**
- * Should this request be refused as a sandbox write?
- * True only when it both targets a demo org AND attempts to change something.
+ * The demo-org slug this request writes against, or null when it may proceed — THE composition
+ * `proxy.ts` calls, returning the slug so the rejection can carry that sandbox's own copy.
  */
-export function shouldBlockSandboxWrite(method: string, url: URL): boolean {
-  if (!isWriteMethod(method)) return false;
-  return demoOrgSlugFromRequest(url) !== null;
+export function demoOrgSlugForBlockedWrite(method: string, url: URL): string | null {
+  if (!isWriteMethod(method)) return null;
+  return demoOrgSlugFromRequest(url);
 }
 
-/** The structured rejection returned to a blocked write. */
-export function sandboxRejectionResponse(): Response {
-  return new Response(JSON.stringify(SANDBOX_REJECTION_BODY), {
+/**
+ * Should this request be refused as a sandbox write?
+ * The boolean face of `demoOrgSlugForBlockedWrite` — one definition, two shapes.
+ */
+export function shouldBlockSandboxWrite(method: string, url: URL): boolean {
+  return demoOrgSlugForBlockedWrite(method, url) !== null;
+}
+
+/** The structured rejection returned to a blocked write. Pass the slug for sandbox-true copy. */
+export function sandboxRejectionResponse(slug?: string | null): Response {
+  return new Response(JSON.stringify(sandboxRejectionBodyFor(slug)), {
     status: SANDBOX_REJECTION_STATUS,
     headers: {
       'Content-Type': 'application/json',

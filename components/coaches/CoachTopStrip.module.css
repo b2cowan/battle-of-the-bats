@@ -11,7 +11,10 @@
 
 .strip {
   position: fixed;
-  top: 0;
+  /* Normally 0. In the "See it live" coach sandbox the demo banner owns the top of the viewport,
+     so the strip drops below it — --sandbox-chrome-h is only ever set on a demo org (see
+     globals.css), and resolves to 0px everywhere else. Same term as AdminTopStrip. */
+  top: var(--sandbox-chrome-h, 0px);
   left: 0;
   right: 0;
   /* The ONE height definition is --coach-topstrip-h on .coachesShell (the strip mounts

@@ -520,3 +520,77 @@
 @media (prefers-reduced-motion: reduce) {
   .pillBulb, .momentLive { animation: none; }
 }
+
+/* ── The coach coat ───────────────────────────────────────────────────────────
+   One chrome, two coats (approved mockups 2026-08-04): dark over the dark tournament world,
+   warm over the warm coach portal — a dark lime strip stapled onto the cream portal read as
+   someone else's chrome, and the demo's whole argument is "this IS the product". Same bones,
+   same behavior; only the palette changes, through the --sandbox-warm-* tokens (globals.css),
+   which mirror the AA-ratified warm values. Elements the coach sandbox never renders (stepper,
+   live pill, moment dot) need no coat. */
+
+.chrome[data-kind='coach'] { background: var(--sandbox-warm-band); }
+
+.chrome[data-kind='coach'] .banner {
+  background: var(--sandbox-warm-band);
+  border-bottom-color: rgba(var(--sandbox-warm-line-rgb), 0.2);
+}
+
+.chrome[data-kind='coach'] .eyebrow { color: var(--sandbox-warm-gold); }
+.chrome[data-kind='coach'] .bulb { background: var(--sandbox-warm-gold); box-shadow: none; }
+
+.chrome[data-kind='coach'] .message { color: var(--sandbox-warm-dim); opacity: 1; }
+.chrome[data-kind='coach'] .message strong { color: var(--sandbox-warm-ink); }
+.chrome[data-kind='coach'] .reset { color: var(--sandbox-warm-dim); }
+
+.chrome[data-kind='coach'] .cta {
+  background: var(--sandbox-warm-ink);
+  color: var(--sandbox-warm-paper);
+  border-radius: 999px;
+}
+.chrome[data-kind='coach'] .cta:hover { background: var(--sandbox-warm-gold); }
+.chrome[data-kind='coach'] .cta:focus-visible { outline-color: var(--sandbox-warm-blue); }
+
+.chrome[data-kind='coach'] .dock {
+  background: var(--sandbox-warm-paper);
+  border-bottom-color: rgba(var(--sandbox-warm-line-rgb), 0.16);
+}
+.chrome[data-kind='coach'] .dockLabel { color: var(--sandbox-warm-dim); }
+
+/* Chips, not underline tabs — the approved phase-dock shape. */
+.chrome[data-kind='coach'] .moment {
+  border-bottom: none;
+  border-radius: 9px;
+  margin: 0.25rem 0.125rem;
+  color: var(--sandbox-warm-dim);
+}
+.chrome[data-kind='coach'] .moment:hover {
+  color: var(--sandbox-warm-ink);
+  background: rgba(var(--sandbox-warm-line-rgb), 0.08);
+}
+.chrome[data-kind='coach'] .moment:focus-visible { outline-color: var(--sandbox-warm-blue); }
+.chrome[data-kind='coach'] .moment[aria-current='true'] {
+  background: var(--sandbox-warm-ink);
+  color: var(--sandbox-warm-paper);
+}
+.chrome[data-kind='coach'] .momentSub { color: var(--sandbox-warm-dim); }
+.chrome[data-kind='coach'] .moment[aria-current='true'] .momentSub {
+  color: rgba(var(--sandbox-warm-paper-rgb), 0.8);
+}
+
+.chrome[data-kind='coach'] .said {
+  background: var(--sandbox-warm-card);
+  border-left-color: var(--sandbox-warm-blue);
+  border-bottom-color: rgba(var(--sandbox-warm-line-rgb), 0.16);
+}
+.chrome[data-kind='coach'] .saidTick { color: var(--sandbox-warm-blue); }
+.chrome[data-kind='coach'] .saidText { color: var(--sandbox-warm-ink); }
+.chrome[data-kind='coach'] .saidBack {
+  border-color: rgba(var(--sandbox-warm-line-rgb), 0.28);
+  color: var(--sandbox-warm-dim);
+}
+.chrome[data-kind='coach'] .saidBack:hover {
+  color: var(--sandbox-warm-ink);
+  border-color: var(--sandbox-warm-dim);
+}
+.chrome[data-kind='coach'] .saidBack:focus-visible { outline-color: var(--sandbox-warm-blue); }

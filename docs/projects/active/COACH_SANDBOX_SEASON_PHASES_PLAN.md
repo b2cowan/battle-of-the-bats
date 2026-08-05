@@ -1,7 +1,63 @@
 # Coach Sandbox with Season Phases — Implementation Plan
 
-**Status:** Planned (owner agreed to recommendations 2026-08-02). Companion brief:
+**Status:** **PHASE 1 BUILT 2026-08-04 (dev, uncommitted) — awaiting owner QA (ledger §5.4).**
+Mockups approved 2026-08-04 (phase dock, warm chrome). Companion brief:
 `COACH_SANDBOX_SEASON_PHASES_PM_BRIEF.md`.
+
+## Phase 1 build record (2026-08-04)
+
+Built in five slices, each verified before the next:
+
+1. **Seed** — `scripts/seed-demo-coach.mjs` materializes `lib/demo-coach.ts` (the pure fictional
+   world + date resolvers, `demo-tournament.ts` pattern): org `riverdale-ridge` ("Riverdale Ridge
+   Baseball", plan `club`, member role **coach** not owner), fixed team ids
+   (`DEMO_COACH_TEAM_IDS` in `lib/demo-org.ts`), three teams — 11U tryout-day (28 candidates,
+   partial blind scores, split opinion bib 14), 12U mid-season (14-3-1, Saturday game, dip,
+   outlier, arm-care cap, $240 overdue, 1 unsigned waiver), 13U Season's End (26-game 2025 year
+   closed **active → completed**, the real transition; Wrapped renders live from data; 9/12
+   family recap views). Idempotent; refuses prod without `--allow-prod`.
+   Verifier: `scripts/check-demo-coach.mjs` (37 assertions, doubles as the staleness detector).
+2. **Door** — `/see-it-live/coaches` (+ `/see-it-live/coaches/switch`,
+   `/api/sandbox/switch-coach`): parallel twins of the tournament door, same hardcoded-account /
+   no-params / trusted-origin / rate-limit discipline. Cross-sandbox presses swap silently (a
+   shared demo session is not a customer's).
+3. **Write block + silence** — proxy chokepoint already covered coach URLs; closed the gaps it
+   cannot see: `getInsightsDigestTeams` consumers (insights digest + dues sweep) now exclude
+   demo orgs fail-closed (`excludeDemoOrgTeams`), and the token-identified
+   `/api/tryout-score/[token]` write refuses demo orgs (new `TOKEN_IDENTIFIED_WRITES` registry in
+   the write-guard test). Rejection copy is kind-aware ("start your own team").
+4. **Phase dock** — coach moments in `lib/sandbox-chrome.ts` (three chips, plain navigation by
+   team id); `SandboxChrome` gains the warm coat (`data-kind='coach'`, `--sandbox-warm-*` tokens
+   in globals.css mirroring the AA-ratified warm values); coach-shell pinned surfaces carry
+   `--sandbox-chrome-h` (CoachTopStrip, CoachPortalShell mhead/rail, coaches.module.css
+   stickies) — 0px-inert for customers.
+5. **Re-anchor** — `lib/demo-coach-reconcile-core.ts` (stateless, diff-only, wall-clock-
+   preserving day shifts; arrival heartbeat `coach_sandbox_reconcile`) +
+   `/api/platform-admin/coach-sandbox-tick` + migration **226** (nightly 08:20 UTC).
+   Verified: steady state writes zero rows; ±3-day round-trip shifts 34 rows each way.
+
+**Deviations from mockups (flag at QA):** no pulsing dot on Tryout day (the chrome never claims
+motion the clock won't deliver — scores re-anchor nightly); tryout scores are integers 1–5 (the
+product rejects halves); "1 waiver unsigned" lives on the player profile (no roster-tile
+aggregate exists in the product).
+
+**Hardened at /simplify + /review (2026-08-04, same day):** demo date/rubric logic now reuses the
+platform's own helpers (no drift); send-list exclusion became a PURE slug filter in
+`lib/demo-org.ts` (zero DB coupling — a resolver failure can no longer kill the dues/insights
+sweeps, and partial-seed states are moot); the re-anchor applies its ANCHOR ROW FIRST with
+per-row conditional guards (concurrent runs idempotent; partial failures never compound — they
+alert, and a reseed repairs); the reconcile also asserts the 11U/12U program-year LABELS so a
+calendar rollover pages instead of rotting; demo slugs are refused by every org-creation slug
+check and the seed refuses to adopt an org with non-demo members (squatting/hijack closed); the
+reseed wipe covers every coach-writable child table (tolerant of unmigrated ones); tour/dock
+session state is namespaced per sandbox; arrival-heartbeat discipline extracted to
+`lib/demo-sandbox-heartbeat.ts` (both sandboxes). An encoding corruption in
+`coaches.module.css` (mojibake re-save, 1173-line diff) was repaired losslessly in passing.
+
+**PROD-PENDING (release step, owner decision):** seed on prod (`--allow-prod`), migration 226
+(invisible to the drift gate — no schema change), marketing doors (`sandboxDoorsVisible` flag) +
+/marketing copy pass + /strategy log. **Dev-pending:** migration 226 not yet applied to the dev
+DB either (cron entry needs SQL access) — until then the tick runs by hand or a reseed re-anchors.
 **Sibling project:** `TOURNAMENT_ADMIN_SANDBOX_PLAN.md` — **mockups approved 2026-08-02; it IS
 building first.** The demo-mode machinery — demo-session entry pattern, central write block,
 outbound silence, demo-org hygiene, re-anchor job pattern — is SHARED between the two sandboxes

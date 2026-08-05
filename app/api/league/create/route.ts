@@ -5,6 +5,7 @@ import { FOUNDING_SEASON_END, isFoundingSeasonActive } from '@/lib/plan-config';
 import { isPlatformAdminEmail } from '@/lib/platform-auth';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
+import { isDemoOrgSlug } from '@/lib/demo-org';
 import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { captureError, withObservability } from '@/lib/observability';
 import { writePlatformEvent } from '@/lib/platform-events';
@@ -30,6 +31,9 @@ function slugify(name: string) {
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
   if (isReservedOrgSlug(slug)) return false;
+  // Demo-org slugs are never available to a real signup — a real org squatting one would be
+  // adopted, and overwritten, by the demo seed the day the sandbox ships to this environment.
+  if (isDemoOrgSlug(slug)) return false;
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .select('id')

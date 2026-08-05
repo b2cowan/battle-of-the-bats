@@ -136,12 +136,14 @@ describe('the chrome (S4)', () => {
   });
 
   test('the banner never blames the visitor and never says a change failed', () => {
-    for (const side of ['public', 'operator'] as const) {
-      const copy = sandboxBannerCopy(side);
-      const text = `${copy.lead} ${copy.emphasis ?? ''}`.toLowerCase();
-      assert.ok(text.length > 0);
-      for (const forbidden of ['error', 'failed', 'sorry', 'unable']) {
-        assert.ok(!text.includes(forbidden), `${side} banner said "${forbidden}": ${text}`);
+    for (const kind of ['tournament', 'coach'] as const) {
+      for (const side of ['public', 'operator'] as const) {
+        const copy = sandboxBannerCopy(side, kind);
+        const text = `${copy.lead} ${copy.emphasis ?? ''} ${copy.toastText}`.toLowerCase();
+        assert.ok(text.length > 0);
+        for (const forbidden of ['error', 'failed', 'sorry', 'unable']) {
+          assert.ok(!text.includes(forbidden), `${kind}/${side} banner said "${forbidden}": ${text}`);
+        }
       }
     }
   });

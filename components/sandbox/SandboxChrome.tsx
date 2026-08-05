@@ -188,9 +188,9 @@ function parsePendingNav(value: unknown): PendingNav | null {
   return null;
 }
 
-function readTourState(): TourState {
+function readTourState(storageKey: string): TourState {
   try {
-    const raw = window.sessionStorage.getItem(TOUR_STATE_KEY);
+    const raw = window.sessionStorage.getItem(storageKey);
     if (!raw) return EMPTY_TOUR;
     const parsed = JSON.parse(raw) as Partial<TourState>;
     // Shape-check rather than trust: session storage is the visitor's to edit, and a malformed
@@ -206,9 +206,9 @@ function readTourState(): TourState {
   }
 }
 
-function writeTourState(state: TourState): void {
+function writeTourState(storageKey: string, state: TourState): void {
   try {
-    window.sessionStorage.setItem(TOUR_STATE_KEY, JSON.stringify(state));
+    window.sessionStorage.setItem(storageKey, JSON.stringify(state));
   } catch {
     /* nothing here is worth failing a click over */
   }
@@ -247,7 +247,7 @@ export default function SandboxChrome({
   // Which half of the product is this? The org layout wraps the public pages AND the admin shell
   // and, being a Server Component, cannot read the pathname — so the side is decided here.
   const side: SandboxSide = pathname?.startsWith(`/${slug}/admin`) ? 'operator' : 'public';
-  const copy = sandboxBannerCopy(side);
+  const copy = sandboxBannerCopy(side, kind);
   const steps = useMemo(
     () => sandboxTourSteps(kind, { slug, landingPath }, { isDemoOrganizer }),
     [kind, slug, landingPath, isDemoOrganizer],
@@ -273,6 +273,11 @@ export default function SandboxChrome({
 
   const activeMoment: SandboxMoment | null = useMemo(() => {
     if (moments.length === 0) return null;
+    if (kind === 'coach') {
+      // The coach dock's moments are TEAMS, and the URL names the team — no provider contract
+      // needed. A page outside any team (the portal root, mid-redirect) highlights nothing.
+      return moments.find(m => m.teamId && pathname?.includes(`/teams/${m.teamId}`)) ?? null;
+    }
     if (side === 'operator') {
       return moments.find(m => m.tournamentSlug === adminTournamentSlug)
         ?? moments.find(m => m.key === 'game-day')  // the door and the flip both land on game day
@@ -280,18 +285,23 @@ export default function SandboxChrome({
     }
     const eventSegment = pathname?.split('/')[2] ?? '';
     return moments.find(m => m.tournamentSlug === eventSegment) ?? null;
-  }, [moments, side, adminTournamentSlug, pathname]);
+  }, [moments, kind, side, adminTournamentSlug, pathname]);
 
   // ── The countdown ───────────────────────────────────────────────────────────────────────────
   // Starts empty and fills in after mount: the cycle boundary is a function of the wall clock, so
   // rendering it on the server would guarantee a hydration mismatch every single time.
   const [countdown, setCountdown] = useState<string | null>(null);
   useEffect(() => {
+    // The replay cycle is the TOURNAMENT sandbox's clock. The coach sandbox re-anchors nightly —
+    // a "Replays in 38:12" there would be a countdown to nothing, the exact false claim the
+    // banner-note slot exists to avoid (its moments all carry their own note instead). No state
+    // write needed on this branch: countdown starts null and this effect is its only writer.
+    if (kind !== 'tournament') return;
     const paint = () => setCountdown(formatResetCountdown(msUntilSandboxReset(cycleMinutes, Date.now())));
     paint();
     const id = window.setInterval(paint, 1000);
     return () => window.clearInterval(id);
-  }, [cycleMinutes]);
+  }, [cycleMinutes, kind]);
 
   // ── The live pill ───────────────────────────────────────────────────────────────────────────
   // What is on the field, and how long since the score moved. Polled rather than passed as a prop
@@ -315,6 +325,9 @@ export default function SandboxChrome({
   const beatRequestRef = useRef(0);
 
   useEffect(() => {
+    // The live pill is the tournament sandbox's proof-of-motion; the coach sandbox has no ticking
+    // score to poll, so it never spends the fetch.
+    if (kind !== 'tournament') return;
     let cancelled = false;
     const load = async () => {
       const request = ++beatRequestRef.current;
@@ -395,7 +408,7 @@ export default function SandboxChrome({
       window.clearInterval(poll);
       window.clearInterval(tick);
     };
-  }, [slug]);
+  }, [slug, kind]);
 
   // ── The geometry ────────────────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -428,10 +441,16 @@ export default function SandboxChrome({
   // single page they open.
   const [tour, setTour] = useState<TourState | null>(null);
 
+  // Progress is PER SANDBOX. One shared key let a walk between the two demos (a sanctioned path —
+  // the doors swap sessions silently) overwrite the other sandbox's strip/pending records, and
+  // the day the coach tour ships its own numbered steps a shared key would inherit the
+  // tournament's done-list as false progress. Keyed by kind, each demo remembers its own story.
+  const tourStorageKey = `${TOUR_STATE_KEY}_${kind}`;
+
   const update = useCallback((next: TourState) => {
     setTour(next);
-    writeTourState(next);
-  }, []);
+    writeTourState(tourStorageKey, next);
+  }, [tourStorageKey]);
 
   /**
    * Ring the step's beat if it happens to be on this page. Supporting act — never the proof.
@@ -517,7 +536,7 @@ export default function SandboxChrome({
   // that were never seen. This settlement runs on BOTH route changes and the provider's
   // tournament-changed announcements (a same-pathname jump changes only the edited event).
   const settleArrivals = useCallback(() => {
-    const stored = readTourState();
+    const stored = readTourState(tourStorageKey);
     const nav = stored.pendingNav;
 
     if (nav && arrivedAt(nav.href, nav.slug)) {
@@ -535,7 +554,7 @@ export default function SandboxChrome({
     setTour(stored);
     // arrivedAt closes over pathname, which is already a dependency.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname, deliver, update, ringAnchor, steps]);
+  }, [pathname, deliver, update, ringAnchor, steps, tourStorageKey]);
 
   // `pathname` (via settleArrivals) is the trigger: first mount and every route arrival.
   // Session storage is an external system that exists only on the client, so it cannot be read in
@@ -584,7 +603,7 @@ export default function SandboxChrome({
     const target = side === 'operator' ? moment.operatorPath : moment.fanPath;
     // Only a real operator screen can be pinned to an event — the door (the non-organizer
     // fallback) takes no tournament and hands out its own session flow.
-    const navSlug = side === 'operator' && target.startsWith(`/${slug}/`) ? moment.tournamentSlug : null;
+    const navSlug = side === 'operator' && target.startsWith(`/${slug}/`) ? moment.tournamentSlug ?? null : null;
     // "Already standing in it" means THIS page exactly — not any page of the moment. Prefix
     // matching here made "Game day" a silent no-op from the Classic's own subpages: a visitor on
     // /standings was told "Back to game day" while nothing moved, which is precisely the false
@@ -638,7 +657,10 @@ export default function SandboxChrome({
 
   return (
     <>
-      <div className={styles.chrome} ref={chromeRef} data-sandbox-banner>
+      {/* data-kind picks the coat: the tournament chrome is dark over the dark admin world; the
+          coach chrome is warm over the warm portal (approved mockups 2026-08-04) — same bones,
+          same behavior, different palette. */}
+      <div className={styles.chrome} ref={chromeRef} data-sandbox-banner data-kind={kind}>
         <div className={styles.banner}>
           <span className={styles.eyebrow}>
             <span className={styles.bulb} aria-hidden="true" />
@@ -660,7 +682,7 @@ export default function SandboxChrome({
                 countdown that belongs to the Summer Classic's replay loop. */}
             {activeMoment?.bannerNote ?? (countdown ? `Replays in ${countdown}` : ' ')}
           </span>
-          <Link href="/auth/signup" className={styles.cta}>Start your own — free</Link>
+          <Link href="/auth/signup" className={styles.cta}>{copy.cta}</Link>
         </div>
 
         {moments.length > 0 && (
@@ -668,8 +690,8 @@ export default function SandboxChrome({
           // same session, a different event of the same association — with the active moment
           // underlined and Game day carrying the only live dot, because it is the only moment
           // that moves.
-          <div className={styles.dock} role="group" aria-label="Moments in the tournament's year">
-            <span className={styles.dockLabel}>The year</span>
+          <div className={styles.dock} role="group" aria-label={copy.dockAriaLabel}>
+            <span className={styles.dockLabel}>{copy.dockLabel}</span>
             {moments.map(moment => (
               <button
                 key={moment.key}
@@ -804,7 +826,7 @@ export default function SandboxChrome({
         // never going to be kept, and the banner said so. Mockup section 5, the Toast shape.
         <div className={styles.toast} role="status" aria-live="polite">
           <span className={styles.toastText}>
-            <strong>Nothing is saved here.</strong> Starting your own tournament is free.
+            <strong>Nothing is saved here.</strong> {copy.toastText}
           </span>
           <Link href="/auth/signup" className={styles.toastCta}>Start free →</Link>
         </div>

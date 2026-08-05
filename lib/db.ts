@@ -5,6 +5,7 @@ import { createClient as createBrowserSupabaseClient } from './supabase-browser'
 import { getActiveTeamEntitledRepTeamIds } from './team-workspace-entitlements';
 import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
+import { isDemoOrgSlug } from './demo-org';
 import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
@@ -1929,6 +1930,10 @@ export async function generateUniqueOrgSlug(name: string): Promise<string> {
     // A slug that collides with a top-level app route is "taken" — treat it so the
     // loop below appends a suffix (e.g. "scores" → "scores-2") rather than shadowing a route.
     if (isReservedOrgSlug(slug)) return true;
+    // Demo-org slugs are never available to a real signup, even in an environment where the
+    // sandbox is not seeded yet: a real org squatting one would be adopted — and overwritten —
+    // by the demo seed's "org exists" branch the day the sandbox ships there.
+    if (isDemoOrgSlug(slug)) return true;
     const { data, error } = await supabaseAdmin
       .from('organizations')
       .select('id')
@@ -3535,6 +3540,12 @@ export interface InsightsDigestTeam {
  * (draft is the DB default — a never-promoted season is fully live for its coaches), newest
  * created_at wins when a team somehow has both. Three plain queries composed in JS (no
  * cross-table join dependency); optional filters narrow a manual/test run to one org or team.
+ *
+ * ⚠ Every consumer is an outbound SENDER (the Insights digest emails coaches; the dues sweep
+ * emails guardians), and demo/sandbox orgs must never be on a send list. The exclusion lives in
+ * the consumers (`lib/insights-digest.ts`, `lib/dues-reminders.ts`) via `excludeDemoOrgTeams`,
+ * NOT here — this module is bundled by client pages, and the demo-org id resolver is
+ * `server-only`. A new consumer of this list must apply the same filter.
  */
 export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?: string }): Promise<InsightsDigestTeam[]> {
   let yearQuery = supabaseAdmin

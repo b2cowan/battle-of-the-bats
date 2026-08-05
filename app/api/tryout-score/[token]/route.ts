@@ -6,6 +6,8 @@ import {
 import { hashEvaluatorToken } from '@/lib/tryout-evaluator-token';
 import { buildTryoutScoreContext, writeTryoutScore } from '@/lib/tryout-score-session';
 import { withObservability } from '@/lib/observability';
+import { demoOrgSlugForId } from '@/lib/demo-org-server';
+import { sandboxRejectionResponse } from '@/lib/demo-guard';
 import type { RepTryout, RepTryoutEvaluatorSession } from '@/lib/types';
 
 /**
@@ -55,6 +57,19 @@ export const POST = withObservability(async (req: Request,
   const { token } = await params;
   const r = await resolveEvaluator(token);
   if (!r.ok) return r.res;
+
+  // TOKEN-identified write: the URL names no org, so the proxy chokepoint cannot see this one —
+  // the token itself resolves to the org, and the demo org's evaluations must stay read-only like
+  // everything else in the sandbox (the seed's evaluator links have discarded raw tokens, so this
+  // is defense in depth, not the only wall). Fail CLOSED: if the allow-list cannot be resolved,
+  // refuse the write rather than let "unknown" mean "allowed" — a real evaluator retries.
+  // The resolved SLUG rides into the rejection so the copy is the right sandbox's ask.
+  try {
+    const demoSlug = await demoOrgSlugForId(r.session.orgId);
+    if (demoSlug) return sandboxRejectionResponse(demoSlug);
+  } catch {
+    return sandboxRejectionResponse();
+  }
 
   const body = await req.json().catch(() => ({}));
   const result = await writeTryoutScore(r.session, r.tryout, body);

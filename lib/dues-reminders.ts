@@ -30,6 +30,7 @@ import {
 } from './db';
 import type { RepDueReminderCandidate } from './types';
 import { sendEmail } from './email';
+import { excludeDemoOrgTeams } from './demo-org';
 
 // URGENT WAVE FIRST. The two windows overlap (30-day fires within 32 days, 7-day within 9),
 // so an installment due in ~8 days qualifies for both. Running the 7-day wave first and
@@ -187,7 +188,10 @@ export async function runDuesRemindersSweep(
 ): Promise<DuesRemindersSweepResult> {
   // Same platform-wide enumerator as the Insights digest (current program year per
   // team, draft|active, newest wins) — one definition of "a team the platform serves".
-  const teams = await getInsightsDigestTeams({ orgId: opts.orgId, teamId: opts.teamId });
+  // Sandbox teams are never on a send list (pure slug filter — see excludeDemoOrgTeams).
+  const teams = excludeDemoOrgTeams(
+    await getInsightsDigestTeams({ orgId: opts.orgId, teamId: opts.teamId }),
+  );
   const dryRun = !!opts.dryRun;
 
   const result: DuesRemindersSweepResult = {

@@ -777,6 +777,74 @@ tournament (published division) whose opponent has 2+ scored games that weekend.
 
 ---
 
+### 1.15 📱🖥 Game-Day Mode P1 — the bench console — **BUILT dev, UNCOMMITTED** · no migration
+*One phone screen for running a game: who's on the field right now, tap-to-substitute, the
+score, attendance — every change saved into the same lineup the reports already read. Families
+hear exactly once, at End game.*
+
+Where: on a game day (window: arrival/2h-before-start → 3h after the end), the **schedule row**
+and **Lineups hub row** grow a lime `Game day` pill, and the **masthead's "Game day" line**
+becomes the door. Deep link: `…/teams/{teamId}/game/{eventId}`. **Test on a phone (≤640)** —
+this screen is built for a bench, one-handed. ⚠ Dev-server **restart required** first (new
+files + shared modules). ⚠ To test "live", set a game's start time near now (the window is
+arithmetic, nothing is stored).
+
+- [ ] **📱 Entry points appear only in the window:** a game later this week shows NO pill
+      anywhere; edit its start to ~now → schedule + lineups rows grow the pill, masthead line
+      links (“Open the bench ›”). Cancelled game: no pill even mid-window.
+- [ ] **📱 The bench swap (two taps, one decision):** open the console → tap a bench player →
+      tap an on-field player → sheet offers **From inning N on** / **This inning only**.
+      Confirm → board updates, “Saved ✓” appears, and the **lineup builder shows the same
+      change** (it wrote the one real grid). An open field position shows as a dashed
+      “Open — RF” target while choosing.
+- [ ] **📱 Abandonment is harmless (the D4 property):** make a swap in inning 2, close the
+      tab mid-game, reopen the lineup builder → innings 3+ still hold the pre-game plan;
+      nothing else changed anywhere.
+- [ ] **📱 Quiet score:** tap the score → +1 a few runs on each side (as a FAMILY-connected
+      account, confirm **no notification arrives per run**). The sheet says so in words.
+- [ ] **📱 End game = the one notification:** End game → confirm sheet shows final score
+      (editable), derived **WIN/LOSS/TIE** badge, tonight’s counts → Confirm & notify →
+      family gets exactly ONE final-score notification; the schedule row now shows the score
+      + result (result was derived server-side — set a score via the console only and check
+      the row still gets W/L).
+- [ ] **📱 Review mode:** after ending (or reopening the link tomorrow) the same URL is a
+      read-only recap: playing-time-tonight bars + a door labelled **“Playing time — season
+      report”** (NEW VOCABULARY — it must NOT say “Is playing time fair?”). Never a 404.
+- [ ] **📱 Scouting handoff, door 1:** the opponent’s name in the console header is dotted-
+      underlined → tap → your book on them as a sheet (observations, and on a platform-
+      tournament game “Their tournament so far”). A TBD-opponent game shows a plain title, no
+      door.
+- [ ] **📱 Scouting handoff, door 2:** after End game, the recap carries the quiet line
+      “While it’s fresh — add to the book on {opponent}?” → same capture sheet (log an
+      observation right there). It’s a passive line — skipping never re-asks, nothing pops.
+- [ ] **📱 Who’s here:** the sheet’s four words are the schedule tab’s exactly — **In · Late ·
+      Out · No reply**. Mark an ON-FIELD player Out → the board immediately asks who covers
+      their position (bench players become the targets).
+- [ ] **📱 No-lineup fallback:** open the console for a game with no saved lineup → three
+      doors (Start from a template / Everyone plays / Skip lineup). “Everyone plays”
+      auto-fills a rotation and the board lights up; “Skip” runs score+attendance only.
+- [ ] **🖥📱 Mirrored tournament game:** score zone is read-only (“Scored by the tournament —
+      standings update automatically”), End game is absent; subs + attendance + the book door
+      still work.
+- [ ] **📱 Helper view (needs the helper test account):** schedule-only helper opens the
+      console → “{Head coach} runs the bench.” banner, no steppers, no footer, board
+      read-only. An attendance-only assistant gets Who’s here + score view, no subs.
+- [ ] **🖥 Archived season shows no entry point:** flip to a completed season — no Game day
+      pill on any surface, and the masthead stays “Complete”. (The console route itself
+      resolves only the ACTIVE season by construction.)
+- [x] 🤖 Unit coverage (54 new tests): window boundaries incl. arrival-time math; swap math
+      (inherit-the-remaining-schedule, single-inning, open-slot, immutability, no-ops);
+      result derivation; quiet-flag guard (score-fields-only / window-only / never mirrored —
+      rejected, not silently honored); review-mode selection. Existing mirrored-game 409
+      tests + the season-write-guard contract green **with no list edits** (the console joins
+      neither archive list — live-season instrument by ruling). typecheck ✓ · 1,322 unit
+      tests ✓ · verify:changed ✓ · 0 lint errors in the touched files. ⚠ Rendered
+      `check:layout` NOT run (needs a dev server + a seeded probe GAME — the screen list has
+      no game event in its fixture yet); worth one visual pass here. `/simplify` + `/review`
+      + `/docs` offered at handoff.
+
+---
+
 ### 1.2 🖥 Budget starter (Chunk G) — **LIVE ON PRODUCTION** · ⚠ review funnel still owed
 *First-season coach answers 5 tap-only questions → seeded budget worksheet; no dollar figure ever comes from us.*
 Plan stays ACTIVE (its /simplify → /review → /docs pass is still owed; QA can proceed — expect a
@@ -1571,6 +1639,48 @@ run the tick by hand before QA if the countdown looks stale.*
       Invitational is blocked with the toast; no email of any kind arrives for anything above.
 
 ---
+
+### 5.4 🖥📱 The Coach Sandbox — Phase 1, three season moments — **BUILT 2026-08-04, dev, UNCOMMITTED**
+
+The coach twin of the "See it live" demo: one tap, no login, into the real premium Coaches Portal
+on the fictional **Riverdale Ridge Baseball** — three teams frozen at three moments, a warm demo
+banner, and the **phase dock** ("The season · Tryout day / Mid-season / Season's End").
+⚠ *Prep: the dev server needs a restart before this QA (new files + shared modules). The nightly
+re-anchor's schedule (migration 226) is NOT yet applied to the dev DB — if dates look stale, re-run
+the seed (`node --env-file=.env.local scripts/seed-demo-coach.mjs`) or the tick by hand.*
+
+**A · The door** (private/incognito window, signed out)
+1. Open `/see-it-live/coaches` → you land on the 12U team's Overview, signed in as the demo
+   coach, with the WARM banner ("You're in the coach's seat, on a fictional team…") and the
+   three-chip phase dock under it. No login, no email, no interstitial.
+2. The dock highlights **Mid-season**; the banner's right slot reads "There's a game this
+   Saturday" — never a countdown.
+
+**B · The three moments** (one tap each; a narration line appears on arrival)
+1. **Tryout day** → the live scoring board: 28 candidates by bib (never names), two evaluators
+   partway through, one split opinion (bib 14, Hitting: 5 vs 2). Sessions dated TODAY.
+2. **Mid-season** → Overview: record 14-3-1, "Saturday's lineup isn't set" as the one thing,
+   attendance dip on Tuesdays, $240 overdue across two families, 1 waiver missing (on the
+   player's profile), playing-time outlier + a pitcher at the arm-care cap under Lineups.
+3. **Season's End** → the closed 2025 year: Season Wrapped (18-6-2, a 6-game streak, 9 of 12
+   families opened the recap), and every archive door opens read-only.
+
+**C · Look, don't keep**
+1. Try to save anything — build Saturday's lineup, score a candidate, edit the budget. The
+   change shows on screen, the warm toast says nothing is saved, and a refresh proves it.
+2. "Email families" style sends: composable, never delivered (fictional example.com people,
+   plus the send paths refuse the demo org).
+
+**D · A signed-in customer presses the door**
+1. While signed into YOUR account, open `/see-it-live/coaches` → the "Step into the coach's
+   seat?" confirm screen. Declining keeps your session; continuing swaps to the demo.
+
+**E · The calendar holds** (after the re-anchor runs)
+1. Come back tomorrow: the tryout is still "today", the game still "this Saturday".
+
+**F · Hygiene**
+1. Riverdale Ridge appears nowhere public: not in /discover, not in the sitemap, no public org
+   pages.
 
 ---
 

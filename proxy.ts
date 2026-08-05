@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
 import { isTournamentTier } from './lib/billing-urls';
-import { shouldBlockSandboxWrite, sandboxRejectionResponse } from './lib/demo-guard';
+import { demoOrgSlugForBlockedWrite, sandboxRejectionResponse } from './lib/demo-guard';
 
 export async function proxy(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('Proxy Supabase client');
@@ -37,8 +37,10 @@ export async function proxy(request: NextRequest) {
   //
   // The response carries `sandbox: true`, which the client fetch layer turns into the
   // "not saved in the sandbox" nudge rather than an error. See lib/demo-guard.ts.
-  if (shouldBlockSandboxWrite(request.method, request.nextUrl)) {
-    return sandboxRejectionResponse();
+  {
+    // The slug picks the copy (each sandbox nudges toward its own signup) — never the verdict.
+    const demoSlug = demoOrgSlugForBlockedWrite(request.method, request.nextUrl);
+    if (demoSlug) return sandboxRejectionResponse(demoSlug);
   }
 
   // Cheap fast-path for API routes that don't need the session work below: stamp the id and return

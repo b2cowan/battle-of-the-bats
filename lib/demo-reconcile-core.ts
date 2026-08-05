@@ -9,6 +9,7 @@ import {
   resolveOpenerState, resolveInvitationalState, registeredAtIsoFor,
 } from './demo-moments.ts';
 import { ORG_TIME_ZONE, utcToZonedInputs } from './timezone.ts';
+import { recordSandboxArrival } from './demo-sandbox-heartbeat.ts';
 
 /**
  * lib/demo-reconcile.ts — drag the demo tournament back to the state the clock implies.
@@ -77,47 +78,12 @@ interface GameRow {
 }
 
 /**
- * The heartbeat this job writes ITSELF, once it has actually run.
- *
- * Migration 183's scheduler wrapper heartbeats `demo_sandbox_tick` when it *dispatches* the HTTP
- * request. `pg_net` is fire-and-forget, so that row proves the database asked — never that the app
- * answered. The gap is not theoretical: on 2026-08-03 the demo sat a full two-hour cycle behind the
- * clock while `demo_sandbox_tick` reported a run one minute earlier, because the scheduler was
- * posting to a base URL that does not reach that environment. The platform-admin freshness panel
- * read green on a demo that was, to any visitor, a screenshot.
- *
- * Two halves, two rows. `demo_sandbox_tick` = asked. `demo_sandbox_reconcile` = arrived and did the
- * work. A widening gap between them names the failure precisely — the schedule is fine, the
- * delivery isn't — which is the one thing a single row could never say. Written here rather than in
- * the route so the command-line runner counts as an arrival too: what matters is that the demo's
- * clock moved, not who moved it.
+ * The heartbeat this job writes ITSELF, once it has actually run — `demo_sandbox_tick` = asked,
+ * this row = arrived and did the work. The full 2026-08-03 incident story and the discipline it
+ * bought live with the shared writer, `lib/demo-sandbox-heartbeat.ts`, which the coach sandbox's
+ * reconcile also calls: one incident, one definition.
  */
 const ARRIVAL_HEARTBEAT_JOB = 'demo_sandbox_reconcile';
-
-async function recordArrival(
-  db: DemoReconcileDb,
-  now: Date,
-  status: 'ok' | 'error',
-  errorDetail: string | null,
-): Promise<void> {
-  try {
-    await db.from('observability_cron_heartbeat').upsert(
-      {
-        job_name: ARRIVAL_HEARTBEAT_JOB,
-        // Only a run that actually reconciled moves the clock forward — migration 183's discipline.
-        // A failure records the reason and leaves `last_run_at` alone, so the chip goes stale
-        // rather than reporting a healthy failure.
-        ...(status === 'ok' ? { last_run_at: now.toISOString() } : {}),
-        status,
-        error_detail: errorDetail,
-      },
-      { onConflict: 'job_name' },
-    );
-  } catch {
-    // Never let bookkeeping fail the tick. A missed heartbeat costs visibility for one cycle; a
-    // thrown one would cost the demo its clock, which is the thing being protected.
-  }
-}
 
 /**
  * Stable identity for a pool game: a round-robin pairing occurs exactly once per division.
@@ -429,7 +395,7 @@ export async function reconcileDemoTournament(
 
   // Only heartbeat where a sandbox actually exists. An environment with nothing seeded returns
   // early above and never reaches here, so it grows no freshness chip for a demo it doesn't run.
-  await recordArrival(db, now, errors.length === 0 ? 'ok' : 'error', errors.join('; ') || null);
+  await recordSandboxArrival(db, ARRIVAL_HEARTBEAT_JOB, now, errors.length === 0 ? 'ok' : 'error', errors.join('; ') || null);
 
   return {
     ok: errors.length === 0,

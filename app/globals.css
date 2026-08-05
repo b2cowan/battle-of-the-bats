@@ -483,6 +483,22 @@ body:has([data-chat-fullbleed]) {
        must keep using --logic-lime. Pair with --on-lime / --home-lime-ink for the ink. */
   --logic-lime-fixed:     #D9F99D;
   --logic-lime-fixed-rgb: 217, 249, 157;
+
+  /* ── Coach sandbox chrome coat (COACH_SANDBOX_SEASON_PHASES_PLAN.md, approved mockups
+     2026-08-04). The "See it live" chrome mounts ABOVE the coach shell, so it cannot consume
+     the [data-coach-warm-enabled]-scoped --home-* tokens; these are its own copy of the
+     ratified warm values (ink/dim/amber/blue are byte-identical to the AA-corrected --home-*
+     set — if those move, move these). Band is the one value of its own: the banner ground,
+     a step deeper than paper so the chrome reads as a hat, not a card. */
+  --sandbox-warm-paper: #F8F4ED;
+  --sandbox-warm-band:  #EFE7DB;
+  --sandbox-warm-card:  #FFFFFF;
+  --sandbox-warm-ink:   #241E15;
+  --sandbox-warm-dim:   #6A635C;
+  --sandbox-warm-gold:  #835006;
+  --sandbox-warm-blue:  #134FD3;
+  --sandbox-warm-line-rgb: 70, 55, 30;
+  --sandbox-warm-paper-rgb: 248, 244, 237;
   /* Dark ink for TEXT/GLYPHS on a bright fill (lime / gold / amber chips + the
      .btn-lime CTA) — the on-fill counterpart to --on-primary (text on --primary).
      Consolidates the hand-copied #0f1123 "dark text on lime" literal across the

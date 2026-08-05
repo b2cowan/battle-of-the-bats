@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { FOUNDING_SEASON_END, isFoundingSeasonActive } from '@/lib/plan-config';
 import { createOrganization, createOrganizationMember, generateUniqueOrgSlug } from '@/lib/db';
 import { isReservedOrgSlug } from '@/lib/reserved-slugs';
+import { isDemoOrgSlug } from '@/lib/demo-org';
 import { safeNextPath } from '@/lib/safe-redirect';
 import { signupVerificationHtml } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
@@ -36,6 +37,9 @@ function shouldRequireEmailVerification() {
 async function isSlugAvailable(slug: string) {
   // Never hand out a slug that collides with a top-level app route (it would shadow the org's pages).
   if (isReservedOrgSlug(slug)) return false;
+  // Demo-org slugs are never available to a real signup — a real org squatting one would be
+  // adopted, and overwritten, by the demo seed the day the sandbox ships to this environment.
+  if (isDemoOrgSlug(slug)) return false;
   const { data, error } = await supabaseAdmin
     .from('organizations')
     .select('id')

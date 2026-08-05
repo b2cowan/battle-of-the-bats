@@ -44,6 +44,7 @@ import {
 } from './db';
 import type { RepPlayerDuesInstallment } from './types';
 import { notify } from './notify';
+import { excludeDemoOrgTeams } from './demo-org';
 import { getSportPack, DEFAULT_SPORT } from './sports';
 import { playerDisplayName } from './coach-roster-name';
 import { computeSeasonLineupAnalytics } from './lineup-season-analytics';
@@ -55,7 +56,7 @@ import {
   type FindingsAttendanceRow,
   type FindingsDuesRow,
 } from './insight-findings';
-import { resolveCoachCapabilities, canViewMoney, canViewRoster } from './coach-capabilities';
+import { resolveCoachCapabilities, canViewMoney } from './coach-capabilities';
 import { outstandingForSchedule } from './dues-status';
 import type { RepTeamEvent } from './types';
 
@@ -225,7 +226,9 @@ async function digestTeam(
       vocab,
       analytics: caps.lineups ? analytics : null,
       games: caps.schedule ? gamesSummary : null,
-      attendance: canViewRoster(caps) ? attendanceRows : null,
+      // A1 (2026-08-03): keyed on the attendance grant, matching the report and its route. It read
+      // roster visibility because the rows name players; names are baseline now.
+      attendance: caps.attendance ? attendanceRows : null,
       dues: canViewMoney(caps) ? duesSummary : null,
       todayISO,
     });
@@ -258,7 +261,10 @@ async function digestTeam(
 export async function runInsightsDigestSweep(
   opts: InsightsDigestSweepOptions = {},
 ): Promise<InsightsDigestSweepResult> {
-  const teams = await getInsightsDigestTeams({ orgId: opts.orgId, teamId: opts.teamId });
+  // Sandbox teams are never on a send list (pure slug filter — see excludeDemoOrgTeams).
+  const teams = excludeDemoOrgTeams(
+    await getInsightsDigestTeams({ orgId: opts.orgId, teamId: opts.teamId }),
+  );
   const now = new Date();
   const todayISO = localDateISO(now);
   const sinceISO = new Date(now.getTime() - DIGEST_DEDUPE_DAYS * 86400000).toISOString();

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from '@/lib/supabase-safety';
-import { getDemoOrgByKind } from '@/lib/demo-org';
+import { getDemoOrgByKind, isDemoOrganizerEmail } from '@/lib/demo-org';
 import { demoOrgIdForSlug } from '@/lib/demo-org-server';
 import { attachDemoSession, currentSessionUser } from '@/lib/demo-session';
 import { resolveTrustedAppOrigin } from '@/lib/app-origin';
@@ -137,6 +137,19 @@ export async function GET(request: NextRequest) {
     if (session.email === demo.organizerEmail) {
       // Already the demo organizer — a second press, or a returning visitor. Nothing to do.
       return NextResponse.redirect(landing);
+    }
+    if (session.email && isDemoOrganizerEmail(session.email)) {
+      // The coach sandbox's shared demo account. Nothing of theirs to protect — swap silently,
+      // so a prospect walking from one demo to the other never meets a warning about "their"
+      // account that was never theirs.
+      const response = NextResponse.redirect(landing);
+      try {
+        await attachDemoSession(request, response, demo.organizerEmail);
+      } catch (err) {
+        await captureError(err, { route: '/see-it-live', method: 'GET', severity: 'critical' });
+        return NextResponse.redirect(landing);
+      }
+      return response;
     }
     // Somebody else's account. Ask before touching it.
     return NextResponse.redirect(new URL(SANDBOX_CONFIRM_PATH, origin));

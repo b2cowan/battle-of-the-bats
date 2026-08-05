@@ -1,5 +1,7 @@
 import type { DemoOrgKind } from './demo-org';
-import { DEMO_TOURNAMENT_SLUG, DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG } from './demo-org';
+import {
+  DEMO_TOURNAMENT_SLUG, DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG, DEMO_COACH_TEAM_IDS,
+} from './demo-org';
 import { SEE_IT_LIVE_PATH } from './sandbox-door';
 
 // The dock ↔ tournament-provider contract constants live in `lib/demo-org.ts` (the neutral module
@@ -31,10 +33,15 @@ export type SandboxSide = 'public' | 'operator';
 // The sandbox's ONE org runs three events in three lifecycle states, and the dock is plain
 // navigation between them.
 
-/** The three moment keys, in the order the year happens. The type derives from this array so a
- *  fourth moment cannot be added to one without the other (the chrome's storage shape-check
- *  reads the array; the definitions below carry the type). */
-export const SANDBOX_MOMENT_KEYS = ['registration-week', 'game-day', 'morning-after'] as const;
+/** The moment keys, per sandbox, in the order each year happens. The type derives from this
+ *  array so a new moment cannot be added to one without the other (the chrome's storage
+ *  shape-check reads the array; the definitions below carry the type). */
+export const SANDBOX_MOMENT_KEYS = [
+  // The tournament's year (Phase 2, ratified 2026-08-04)
+  'registration-week', 'game-day', 'morning-after',
+  // The coach's season (COACH_SANDBOX_SEASON_PHASES_PLAN.md Phase 1 — the phase dock)
+  'tryout-day', 'mid-season', 'seasons-end',
+] as const;
 export type SandboxMomentKey = (typeof SANDBOX_MOMENT_KEYS)[number];
 
 export interface SandboxMoment {
@@ -43,8 +50,10 @@ export interface SandboxMoment {
   label: string;
   /** The time anchor under the label: where in the year this moment sits. */
   sub: string;
-  /** This moment's event. The dock highlights whichever moment owns the page the visitor is on. */
-  tournamentSlug: string;
+  /** This moment's event (tournament sandbox). The dock highlights the moment being edited. */
+  tournamentSlug?: string;
+  /** This moment's team (coach sandbox). The dock highlights the team the URL is standing in. */
+  teamId?: string;
   /** Where a fan-side press lands: the event's public home. */
   fanPath: string;
   /** Where an operator-side press lands: the moment's flagship admin screen (or the door). */
@@ -62,12 +71,13 @@ export interface SandboxMoment {
   bannerNote: string | null;
 }
 
-/** The three moments of the demo's year, in the order the year happens. */
+/** The moments of the demo's year, in the order the year happens. */
 export function sandboxMoments(
   kind: DemoOrgKind,
   org: { slug: string; landingPath: string },
   access: SandboxTourAccess = { isDemoOrganizer: true },
 ): SandboxMoment[] {
+  if (kind === 'coach') return coachSandboxMoments(org);
   if (kind !== 'tournament') return [];
   const adminBase = `/${org.slug}/admin/tournaments`;
   const operatorPath = (path: string) => (access.isDemoOrganizer ? path : SEE_IT_LIVE_PATH);
@@ -106,6 +116,59 @@ export function sandboxMoments(
       saidOperator: 'The day after it all ended: every score in, the champion crowned, and the summary already written. Next year starts from one button.',
       bannerNote: 'Wrapped up yesterday',
     },
+  ];
+}
+
+/**
+ * The phase dock (coach sandbox): one club, three teams, each frozen at a different moment of a
+ * season. Every press is plain navigation to that team's showcase screen — the coach portal has
+ * no public/operator split (it all sits behind the demo session), so both paths agree.
+ *
+ * ⚠ No moment carries the live dot, deliberately, including Tryout day. The dot is a claim that
+ * the screen moves WHILE YOU WATCH, and the tryout's scores re-anchor nightly, not live — the
+ * tournament sandbox's hardest-won lesson is that the chrome never promises motion the clock
+ * won't deliver ("they don't seem to do anything", owner QA, three times). The approved mockup
+ * drew a pulse here; dropping it is an honesty deviation to flag at owner review, not a whim.
+ */
+function coachSandboxMoments(org: { slug: string; landingPath: string }): SandboxMoment[] {
+  const teamPath = (teamId: string, rest = '') => `/${org.slug}/coaches/teams/${teamId}${rest}`;
+  const moment = (m: Omit<SandboxMoment, 'fanPath' | 'operatorPath'> & { path: string }): SandboxMoment => {
+    const { path, ...fields } = m;
+    return { ...fields, fanPath: path, operatorPath: path };
+  };
+  return [
+    moment({
+      key: 'tryout-day',
+      label: 'Tryout day',
+      sub: 'today, mid-scoring',
+      teamId: DEMO_COACH_TEAM_IDS.tryoutDay,
+      path: teamPath(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts/score'),
+      saidPublic: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
+      saidOperator: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
+      bannerNote: 'Evaluations are mid-flight',
+    }),
+    moment({
+      key: 'mid-season',
+      label: 'Mid-season',
+      sub: 'game this Saturday',
+      teamId: DEMO_COACH_TEAM_IDS.midSeason,
+      // Built from the team id like its siblings (this IS the door's landing path — the door's
+      // constant and this one agree by both deriving from DEMO_COACH_TEAM_IDS).
+      path: teamPath(DEMO_COACH_TEAM_IDS.midSeason),
+      saidPublic: 'The heart of the year: 14-3-1, three events this week, and the Overview holding the one thing that needs doing — Saturday\'s lineup isn\'t set.',
+      saidOperator: 'The heart of the year: 14-3-1, three events this week, and the Overview holding the one thing that needs doing — Saturday\'s lineup isn\'t set.',
+      bannerNote: 'There\'s a game this Saturday',
+    }),
+    moment({
+      key: 'seasons-end',
+      label: 'Season\'s End',
+      sub: 'last season, closed',
+      teamId: DEMO_COACH_TEAM_IDS.seasonsEnd,
+      path: teamPath(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
+      saidPublic: 'A finished year, kept: 18-6-2, the recap nine families opened, and every screen of the season still browsable — read-only, exactly as it ended.',
+      saidOperator: 'A finished year, kept: 18-6-2, the recap nine families opened, and every screen of the season still browsable — read-only, exactly as it ended.',
+      bannerNote: 'A finished year, kept',
+    }),
   ];
 }
 
@@ -179,21 +242,48 @@ export interface SandboxBannerCopy {
   lead: string;
   /** The half that must not be skimmed past — rendered bold. */
   emphasis?: string;
+  /** The banner CTA's label — each sandbox asks for ITS OWN signup. */
+  cta: string;
+  /** The moments dock's visible label, and its accessible name. */
+  dockLabel: string;
+  dockAriaLabel: string;
+  /** The blocked-save toast's sentence, after the bolded "Nothing is saved here." */
+  toastText: string;
 }
 
 /**
  * The banner's promise, per side. The operator side says something stronger because it has to:
  * a visitor on the fan page is only reading, but a visitor in the admin portal is about to try
  * changing something, and the honest thing is to say what happens BEFORE they do.
+ *
+ * The coach sandbox has no public half — every page of it is the coach's seat — so it carries
+ * the stronger promise everywhere, plus the one fact a stranger needs first: the team is made up.
  */
-export function sandboxBannerCopy(side: SandboxSide): SandboxBannerCopy {
+export function sandboxBannerCopy(side: SandboxSide, kind: DemoOrgKind = 'tournament'): SandboxBannerCopy {
+  if (kind === 'coach') {
+    return {
+      lead: "You're in the coach's seat, on a fictional team.",
+      emphasis: 'Changes show on screen, but nothing is saved.',
+      cta: 'Start your own team — free',
+      dockLabel: 'The season',
+      dockAriaLabel: "Moments in the team's season",
+      toastText: 'Starting your own team is free.',
+    };
+  }
+  const tournament = {
+    cta: 'Start your own — free',
+    dockLabel: 'The year',
+    dockAriaLabel: "Moments in the tournament's year",
+    toastText: 'Starting your own tournament is free.',
+  };
   if (side === 'operator') {
     return {
       lead: "You're in the organizer's seat.",
       emphasis: 'Changes show on screen, but nothing is saved.',
+      ...tournament,
     };
   }
-  return { lead: 'A real tournament, running right now. Nothing you do here is saved.' };
+  return { lead: 'A real tournament, running right now. Nothing you do here is saved.', ...tournament };
 }
 
 /**

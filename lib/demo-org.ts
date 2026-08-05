@@ -48,6 +48,23 @@ export interface DemoOrgDefinition {
  * coaches-portal budget sample), so nothing here can be mistaken for a real association and both
  * sandboxes speak one invented world.
  */
+/**
+ * The coach sandbox's three teams — one per season moment — with FIXED ids.
+ *
+ * Hardcoded (like the slugs, unlike every other row id) because the coach portal addresses teams
+ * by row id in the URL: a stable id is what lets the demo door's landing path, the phase dock's
+ * links, and the seed all name the same team across reseeds and across environments. The seed
+ * inserts these ids verbatim; `lib/demo-coach.ts` builds each team's world around them.
+ */
+export const DEMO_COACH_TEAM_IDS = {
+  /** Riverdale Ridge 11U — tryout day, evaluations mid-flight. */
+  tryoutDay: '5eed0c0a-c111-4d3e-9a01-000000000011',
+  /** Riverdale Ridge 12U — mid-season, game this Saturday. The landing team. */
+  midSeason: '5eed0c0a-c112-4d3e-9a01-000000000012',
+  /** Riverdale Ridge 13U — last year's team, season closed, Wrapped ready. */
+  seasonsEnd: '5eed0c0a-c113-4d3e-9a01-000000000013',
+} as const;
+
 export const DEMO_ORGS: readonly DemoOrgDefinition[] = [
   {
     slug: 'riverdale-minor-ball',
@@ -56,7 +73,14 @@ export const DEMO_ORGS: readonly DemoOrgDefinition[] = [
     landingPath: '/riverdale-minor-ball/summer-classic',
     label: 'Riverdale Minor Ball Association (tournament sandbox)',
   },
-  // The coach sandbox registers here when it builds. Do not add anything else.
+  {
+    slug: 'riverdale-ridge',
+    kind: 'coach',
+    organizerEmail: 'demo-coach@example.com',
+    // The phase dock's default moment: the mid-season team's Overview (owner-approved 2026-08-04).
+    landingPath: `/riverdale-ridge/coaches/teams/${DEMO_COACH_TEAM_IDS.midSeason}`,
+    label: 'Riverdale Ridge Baseball (coach sandbox)',
+  },
 ];
 
 /** Slug of the demo tournament event, used by the seed and the scheduled jobs. */
@@ -112,6 +136,18 @@ export function getDemoOrgBySlug(slug: string | null | undefined): DemoOrgDefini
 /** The single demo org for a given sandbox, or null if that sandbox hasn't been built yet. */
 export function getDemoOrgByKind(kind: DemoOrgKind): DemoOrgDefinition | null {
   return DEMO_ORGS.find(org => org.kind === kind) ?? null;
+}
+
+/**
+ * Drop every demo-org team from a platform sweep list (the Insights digest and the dues-reminder
+ * sweep enumerate "every team the platform serves" and then email people — a sandbox's fictional
+ * teams must never be on that list). Slug-keyed on purpose: the enumerator already carries each
+ * team's org slug, and the allow-list above IS slugs, so this is pure, synchronous and cannot
+ * fail — no id resolution, no availability risk to the platform-wide sweep, no partially-seeded
+ * environment to reason about. A new consumer of the enumerator must apply the same filter.
+ */
+export function excludeDemoOrgTeams<T extends { orgSlug: string }>(teams: readonly T[]): T[] {
+  return teams.filter(team => !isDemoOrgSlug(team.orgSlug));
 }
 
 /**

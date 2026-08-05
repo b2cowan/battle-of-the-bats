@@ -273,4 +273,29 @@ describe('the body-identified guard (public writes the proxy cannot see)', () =>
       );
     });
   }
+
+  /**
+   * The same decision point, for TOKEN-identified writes.
+   *
+   * `/api/tryout-score/[token]` is a no-account scoring endpoint: the URL names no org and there
+   * is no session — the capability token IS the credential, and it resolves to an org id only
+   * after a DB lookup. The proxy cannot see it and `assertNotDemoOrg` has no slug to take, so the
+   * route resolves the org itself and refuses the demo org via `isDemoOrgId` (fail-closed).
+   * Found by the coach-sandbox build (2026-08-04): the coach demo is the first sandbox with a
+   * tryout, so it is the first org this route could ever have written to.
+   */
+  const TOKEN_IDENTIFIED_WRITES = [
+    'app/api/tryout-score/[token]/route.ts',
+  ] as const;
+
+  for (const routeFile of TOKEN_IDENTIFIED_WRITES) {
+    test(`${routeFile} refuses the demo org via its resolved org id`, async () => {
+      const { readFile } = await import('node:fs/promises');
+      const source = await readFile(new URL(`../../${routeFile}`, import.meta.url), 'utf8');
+      assert.ok(
+        source.includes('demoOrgSlugForId') && source.includes('sandboxRejectionResponse'),
+        `${routeFile} identifies its org from a capability token, so it must resolve and refuse the demo org itself — the proxy cannot see it (slug-resolving, so the rejection carries that sandbox's own copy)`,
+      );
+    });
+  }
 });

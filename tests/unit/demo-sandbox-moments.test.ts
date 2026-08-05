@@ -151,8 +151,38 @@ describe('the dock', () => {
     assert.equal(asOrganizer.length, asVisitor.length, 'the dock never changes shape with who is looking');
   });
 
-  test('a coach sandbox renders no tournament dock', () => {
-    assert.deepEqual(sandboxMoments('coach', org), []);
+  /**
+   * The coach sandbox's phase dock (built 2026-08-04, replacing the earlier "renders no dock"
+   * stub-state assertion). Same dock component, its own contract: three moments in season
+   * order, every press a plain in-org navigation, and — deliberately — NO live dot and NO
+   * countdown anywhere: nothing in the coach demo moves while you watch (nightly re-anchor),
+   * and the chrome never claims motion the clock won't deliver.
+   */
+  const coachDemo = getDemoOrgByKind('coach')!;
+  const coachOrg = { slug: coachDemo.slug, landingPath: coachDemo.landingPath };
+
+  test("the coach dock: three moments of a season, in order, all inside the coach portal", () => {
+    const moments = sandboxMoments('coach', coachOrg);
+    assert.deepEqual(moments.map(m => m.key), ['tryout-day', 'mid-season', 'seasons-end']);
+    for (const moment of moments) {
+      assert.ok(moment.teamId, `${moment.key} names no team — the dock could not highlight it`);
+      assert.ok(moment.fanPath.startsWith(`/${coachDemo.slug}/coaches/teams/`),
+        `${moment.key} leaves the coach portal`);
+      assert.equal(moment.fanPath, moment.operatorPath,
+        `${moment.key} splits sides — the coach portal has no public half`);
+    }
+    // The dock's default moment and the door agree by construction: both derive from the team id.
+    assert.equal(moments.find(m => m.key === 'mid-season')!.fanPath, coachDemo.landingPath);
+  });
+
+  test('the coach dock claims no motion: no live dot, and every moment carries its own banner note', () => {
+    const moments = sandboxMoments('coach', coachOrg);
+    assert.deepEqual(moments.filter(m => m.isLive), [],
+      'a live dot promises movement while you watch; the coach demo re-anchors nightly');
+    for (const moment of moments) {
+      assert.ok(moment.bannerNote && moment.bannerNote.length > 0,
+        `${moment.key} would fall back to a replay countdown that belongs to the tournament demo`);
+    }
   });
 });
 

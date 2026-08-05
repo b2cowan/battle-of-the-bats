@@ -7199,3 +7199,293 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .scoutMeetingName { white-space: normal; }
   .scoutNumbersLine { flex-direction: column; align-items: flex-start; gap: 0.15rem; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════
+   GAME-DAY MODE — the bench console (P1). Phone-first (30rem column, the practice-run
+   precedent), tokens only: `--home-*` with dark fallbacks, so warm and dark both come from the
+   gate remap — no per-theme blocks. Primary controls are 56px (3.5rem) like the practice run:
+   the 44px `--tap-min` is a floor, and these are hit without looking, at arm's length, in sun.
+   The save pill is the portal's shared `.saveStatus`; sheets are deliberately NON-modal bottom
+   cards (no backdrop): the board must stay visible behind the substitution flow.
+   ══════════════════════════════════════════════════════════════════════════════════════════ */
+.gdPage { max-width: 30rem; margin: 0 auto; display: flex; flex-direction: column; gap: 0.65rem; }
+
+.gdBar {
+  display: flex; align-items: center; gap: 0.75rem;
+  font-family: var(--font-data); font-size: 0.7rem; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--white-45); padding-bottom: 0.2rem;
+}
+.gdBar b { color: var(--home-ink, var(--white-90)); font-weight: 700; }
+.gdBarNote { margin-left: auto; color: var(--white-45); }
+.gdBack {
+  display: inline-flex; align-items: center; gap: 0.3rem; min-height: var(--tap-min, 44px);
+  color: var(--white-55); font-family: inherit; font-size: inherit; letter-spacing: inherit;
+  text-transform: inherit; text-decoration: none;
+}
+.gdBack:hover { color: var(--home-ink, var(--white-90)); }
+.gdLivePill {
+  background: var(--home-live, var(--danger)); color: rgba(255, 247, 242, 0.98); font-weight: 700;
+  letter-spacing: 0.12em; padding: 0.35em 0.7em; border-radius: 999px;
+}
+
+.gdHandedOff { margin: 0; text-align: center; font-size: 0.85rem; line-height: 1.5; color: var(--white-45); }
+
+.gdCard {
+  background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
+  border-radius: var(--radius, 12px); padding: 0.8rem 0.9rem;
+}
+.gdCard[data-sticky="head"] { position: sticky; top: 0.5rem; z-index: 3; }
+
+.gdMatch { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
+.gdOpp { font-weight: 700; font-size: 1rem; color: var(--home-ink, var(--white-90)); }
+.gdOppDoor {
+  background: none; border: none; padding: 0; cursor: pointer; text-align: left;
+  font-weight: 700; font-size: 1rem; color: var(--home-ink, var(--white-90));
+  border-bottom: 2px dotted var(--home-olive, var(--logic-lime)); min-height: var(--tap-min, 44px);
+}
+.gdOppDoor::after { content: " ›"; color: var(--home-olive, var(--logic-lime)); }
+.gdHa { color: var(--white-45); font-size: 0.75rem; }
+.gdChips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+.gdChip {
+  font-size: 0.68rem; color: var(--white-70); background: var(--white-10);
+  border-radius: 999px; padding: 0.25em 0.7em;
+}
+.gdScoreRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.7rem; }
+.gdScore { background: none; border: none; padding: 0; cursor: pointer; text-align: left; min-height: var(--tap-min, 44px); }
+.gdScore:disabled { cursor: default; }
+.gdScoreLbl {
+  display: block; font-family: var(--font-data); font-size: 0.58rem; font-weight: 600;
+  letter-spacing: 0.12em; color: var(--white-45);
+}
+.gdScoreVal {
+  font-family: var(--font-data); font-size: 1.7rem; font-weight: 700; line-height: 1.1;
+  font-variant-numeric: tabular-nums; color: var(--home-ink, var(--white-90));
+}
+.gdScoreDash { color: var(--white-45); font-weight: 400; }
+.gdPeriod { display: flex; align-items: center; gap: 0.45rem; }
+.gdPeriodChip {
+  background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
+  font-family: var(--font-data); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.04em;
+  border-radius: 999px; padding: 0.45em 0.8em; white-space: nowrap;
+}
+.gdStepper {
+  width: var(--tap-min, 44px); height: var(--tap-min, 44px); border-radius: 9px;
+  border: 1px solid var(--border-2); background: var(--home-card, var(--card-bg));
+  color: var(--white-70); font-size: 1rem; display: grid; place-items: center; cursor: pointer;
+}
+.gdStepper:disabled { opacity: 0.35; cursor: default; }
+
+.gdHint {
+  display: flex; align-items: center; justify-content: center; gap: 0.6rem;
+  font-size: 0.8rem; color: var(--white-70); text-align: center; padding: 0.1rem 0;
+}
+.gdHint b { color: var(--home-ink, var(--white-90)); }
+.gdHintCancel {
+  background: none; border: 1px solid var(--border-2); border-radius: 999px;
+  color: var(--white-55); font-size: 0.72rem; padding: 0.3em 0.8em; cursor: pointer;
+  min-height: var(--tap-min, 44px);
+}
+
+.gdGroup { display: flex; flex-direction: column; gap: 0.4rem; }
+.gdGroupLbl {
+  margin: 0.3rem 0.2rem 0.1rem; font-family: var(--font-data); font-size: 0.6rem; font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--white-45);
+}
+.gdRow {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
+  background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
+  border-radius: 9px; padding: 0.62rem 0.7rem; min-height: 3.5rem; cursor: pointer;
+  color: var(--home-ink, var(--white-90));
+}
+.gdRow:disabled { cursor: default; }
+.gdRow[data-selected="yes"] { outline: 2px solid var(--home-olive, var(--logic-lime)); outline-offset: 1px; background: var(--home-olive-soft, rgba(190,242,100,0.1)); }
+.gdRow[data-target="yes"] { border-style: dashed; border-color: var(--home-olive, var(--logic-lime)); }
+.gdRow[data-open="yes"] { border-style: dashed; color: var(--white-55); }
+.gdNum { font-family: var(--font-data); font-size: 0.78rem; font-weight: 700; color: var(--white-45); min-width: 1.7em; }
+.gdName { font-weight: 600; font-size: 0.88rem; flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.gdWarn {
+  font-family: var(--font-data); font-size: 0.62rem; font-weight: 600; line-height: 1.2;
+  color: var(--warning); background: var(--home-amber-soft, rgba(217,165,74,0.12));
+  border-radius: 6px; padding: 0.35em 0.55em;
+}
+.gdWarn[data-tone="red"] { color: var(--home-live, var(--danger)); background: var(--home-live-soft, rgba(217,72,43,0.12)); }
+.gdPos {
+  font-family: var(--font-data); font-size: 0.66rem; font-weight: 700;
+  background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
+  border-radius: 6px; padding: 0.35em 0.6em;
+}
+
+.gdFooter { display: flex; gap: 0.5rem; padding-top: 0.6rem; margin-top: 0.4rem; }
+.gdFbtn {
+  flex: 1; min-height: 3.5rem; border: 1px solid var(--border-2); border-radius: 9px;
+  background: var(--home-card, var(--card-bg)); color: var(--home-ink, var(--white-90));
+  font-size: 0.78rem; font-weight: 600; text-align: center; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.2rem;
+}
+.gdFbtn small { font-family: var(--font-data); font-size: 0.6rem; font-weight: 600; color: var(--white-45); }
+.gdFbtn[data-tone="end"] { color: var(--home-live, var(--danger)); border-color: var(--home-live-soft, rgba(217,72,43,0.4)); }
+
+/* Bottom sheets: one at a time, above the bottom nav on phones, centered column on desktop.
+   Deliberately NOT `.modalOverlay` (the portal's modal-with-backdrop idiom): these sheets must
+   leave the board visible and tappable context behind them — a bench decision is made while
+   looking at the bench. */
+.gdSheet {
+  position: fixed; left: 50%; transform: translateX(-50%); width: min(30rem, calc(100vw - 1.5rem));
+  bottom: 1rem; z-index: 45; max-height: 70dvh; overflow-y: auto;
+  background: var(--home-card, var(--card-bg)); border: 1px solid var(--border);
+  border-radius: 16px; padding: 0.9rem 0.9rem 1.1rem;
+  box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.35);
+}
+@media (max-width: 900px) {
+  .gdSheet { bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + 0.5rem); max-height: 62dvh; }
+}
+.gdSheetHead {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
+  margin-bottom: 0.6rem; font-size: 0.92rem; color: var(--home-ink, var(--white-90));
+}
+.gdSheetClose {
+  background: none; border: none; color: var(--white-55); cursor: pointer;
+  min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); display: grid; place-items: center;
+}
+.gdSheetActions { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
+.gdBigBtn {
+  flex: 1; min-height: 3.5rem; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 0.15rem; text-align: center; text-decoration: none;
+  border-radius: 9px; border: 1px solid var(--border-2); background: var(--home-card, var(--card-bg));
+  color: var(--home-ink, var(--white-90)); font-size: 0.85rem; font-weight: 700; cursor: pointer;
+  padding: 0.6rem 0.5rem;
+}
+.gdBigBtn small { font-size: 0.68rem; font-weight: 500; color: var(--white-45); }
+.gdBigBtn[data-primary="yes"] {
+  background: var(--home-ink, var(--white-90)); color: var(--home-paper, var(--bg));
+  border-color: var(--home-ink, var(--white-90));
+}
+.gdBigBtn[data-primary="yes"] small { color: inherit; opacity: 0.7; }
+.gdBigBtn:disabled { opacity: 0.5; cursor: default; }
+.gdFallbackLead { margin: 0 0 0.6rem; font-size: 0.85rem; color: var(--white-70); text-align: center; }
+.gdFallbackDoors { display: flex; flex-direction: column; gap: 0.5rem; }
+
+.gdScorePad { display: flex; gap: 0.6rem; }
+.gdScoreCol {
+  flex: 1; background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
+  border-radius: var(--radius, 12px); padding: 0.8rem 0.6rem 1rem; text-align: center;
+  display: flex; flex-direction: column; gap: 0.4rem; align-items: stretch;
+}
+.gdScoreInput {
+  width: 100%; text-align: center; font-family: var(--font-data); font-size: 2.2rem; font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--home-ink, var(--white-90));
+  background: none; border: none; border-bottom: 1px dashed var(--border-2); padding: 0.1em 0;
+}
+.gdPlus {
+  min-height: 3.5rem; border-radius: 9px; border: none; cursor: pointer;
+  background: var(--home-lime, var(--logic-lime)); color: rgba(16, 19, 10, 0.95);
+  font-family: var(--font-data); font-size: 1.05rem; font-weight: 700;
+}
+.gdPlus[data-side="them"] { background: var(--white-10); color: var(--home-ink, var(--white-90)); }
+.gdMinus {
+  min-height: var(--tap-min, 44px); border-radius: 9px; border: 1px solid var(--border-2);
+  background: none; color: var(--white-55); font-family: var(--font-data); font-size: 0.8rem;
+  font-weight: 600; cursor: pointer;
+}
+.gdQuietNote {
+  margin: 0.6rem 0 0; font-size: 0.72rem; line-height: 1.5; color: var(--white-45);
+  background: var(--white-10); border-radius: 9px;
+  padding: 0.55rem 0.7rem; text-align: center;
+}
+
+.gdAttRow {
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;
+  border-bottom: 1px solid var(--border-2);
+}
+.gdAttRow:last-of-type { border-bottom: 0; }
+.gdAttSeg { display: flex; gap: 0.25rem; flex-shrink: 0; }
+.gdAttOpt {
+  display: inline-flex; align-items: center; gap: 0.25em; font-family: var(--font-data);
+  font-size: 0.62rem; font-weight: 600; color: var(--white-55);
+  border: 1px solid var(--border-2); border-radius: 6px; background: none; cursor: pointer;
+  padding: 0.5em 0.55em; min-height: var(--tap-min, 44px);
+}
+.gdAttOpt[data-on="yes"] { font-weight: 700; }
+.gdAttOpt[data-on="yes"][data-status="attending"] { background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime)); border-color: var(--home-olive, var(--logic-lime)); }
+.gdAttOpt[data-on="yes"][data-status="late"] { background: var(--home-amber-soft, rgba(217,165,74,0.12)); color: var(--warning); border-color: var(--warning); }
+.gdAttOpt[data-on="yes"][data-status="absent"] { background: var(--home-live-soft, rgba(217,72,43,0.12)); color: var(--home-live, var(--danger)); border-color: var(--home-live, var(--danger)); }
+.gdAttOpt[data-on="yes"][data-status="unknown"] { background: var(--white-10); color: var(--white-70); border-color: var(--white-45); }
+
+.gdFinal { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; }
+.gdFinalScores { display: flex; align-items: center; gap: 0.6rem; justify-content: center; }
+.gdFinalScores .gdScoreInput { width: 4.5ch; }
+.gdSumLines { display: flex; flex-direction: column; margin-top: 0.6rem; }
+.gdSumLine {
+  display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.8rem;
+  color: var(--white-70); padding: 0.3rem 0.1rem;
+}
+.gdSumLine b { color: var(--home-ink, var(--white-90)); }
+.gdResBadge {
+  display: inline-block; font-family: var(--font-data); font-size: 0.7rem; font-weight: 700;
+  letter-spacing: 0.1em; border-radius: 6px; padding: 0.4em 0.7em;
+  background: var(--white-10); color: var(--home-ink, var(--white-90));
+}
+.gdResBadge[data-result="win"] { background: var(--home-win-soft, rgba(74,163,86,0.15)); color: var(--success); }
+.gdResBadge[data-result="loss"] { background: var(--home-live-soft, rgba(217,72,43,0.12)); color: var(--home-live, var(--danger)); }
+
+.gdPtRow { display: flex; align-items: center; gap: 0.6rem; font-size: 0.78rem; padding: 0.28rem 0; }
+.gdPtName { flex: 0 0 7.2em; font-weight: 600; color: var(--home-ink, var(--white-90)); overflow-wrap: anywhere; }
+.gdPtBar { flex: 1; height: 8px; border-radius: 4px; background: var(--white-10); overflow: hidden; }
+.gdPtBar i { display: block; height: 100%; background: var(--home-olive, var(--logic-lime)); border-radius: 4px; }
+.gdPtN { font-family: var(--font-data); font-size: 0.72rem; font-weight: 600; color: var(--white-45); width: 2.6em; text-align: right; }
+
+.gdDoorRow {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+  background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
+  border-radius: var(--radius, 12px); padding: 0.7rem 0.9rem; min-height: var(--tap-min, 44px);
+  color: var(--home-ink, var(--white-90)); font-size: 0.82rem; font-weight: 600; text-decoration: none;
+  margin-top: 0.65rem;
+}
+.gdDoorRow span:last-child { color: var(--home-olive, var(--logic-lime)); font-weight: 700; }
+.gdBookLine {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; width: 100%;
+  text-align: left; background: var(--white-10); border: none;
+  border-radius: 9px; padding: 0.55rem 0.7rem; min-height: var(--tap-min, 44px);
+  color: var(--white-70); font-size: 0.78rem; cursor: pointer;
+}
+.gdBookLine b { color: var(--home-olive, var(--logic-lime)); }
+
+.gdGridTable { border-collapse: collapse; font-size: 0.72rem; min-width: 100%; }
+.gdGridTable th, .gdGridTable td {
+  border: 1px solid var(--border-2); padding: 0.25rem 0.3rem; text-align: center;
+  color: var(--white-70); font-variant-numeric: tabular-nums;
+}
+.gdGridTable th[data-now="yes"], .gdGridTable td[data-now="yes"] { background: var(--home-olive-soft, rgba(190,242,100,0.1)); }
+.gdGridName { text-align: left; font-weight: 600; color: var(--home-ink, var(--white-90)); white-space: nowrap; }
+.gdGridTable select {
+  background: var(--home-card, var(--card-bg)); color: var(--home-ink, var(--white-90));
+  border: 1px solid var(--border-2); border-radius: 6px; padding: 0.2rem; font-size: 0.72rem;
+  min-height: 2rem;
+}
+
+/* Game-Day entry on a schedule/lineups row: the row stays one interactive element; the action
+   is a sibling link. Lime pill + live dot, the mockup's shape. */
+.eventChipRow { display: flex; align-items: stretch; gap: 0.4rem; }
+.eventChipRow > :first-child { flex: 1 1 auto; min-width: 0; }
+.gdEntryBtn {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.4em;
+  background: var(--home-lime, var(--logic-lime)); color: rgba(16, 19, 10, 0.95);
+  border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-decoration: none;
+  padding: 0 0.95em; min-height: var(--tap-min, 44px); white-space: nowrap;
+}
+.gdEntryBtn::before { content: "●"; color: var(--home-live, var(--danger)); font-size: 0.7em; }
+
+/* The masthead status as a door (Game-Day Mode P1): same layout as the plain status slot, plus
+   link affordance. Inherits colors so the bar reads identically whether or not it links. */
+.teamHeaderConsoleLink {
+  display: inline-flex; align-items: center; gap: 0.9rem; text-decoration: none; color: inherit;
+  min-height: var(--tap-min, 44px); border-radius: 8px;
+}
+.teamHeaderConsoleLink:hover .teamHeaderStackValue { color: var(--home-olive, var(--logic-lime)); }
+
+/* 640 = CONTENT reflow: attendance rows stack so four segments never squeeze a name away. */
+@media (max-width: 640px) {
+  .gdAttRow { flex-wrap: wrap; }
+  .gdAttRow .gdName { flex: 1 1 100%; }
+  .gdScoreVal { font-size: 1.9rem; }
+}
