@@ -8,7 +8,11 @@ import {
 } from '@/lib/coach-portal-request';
 import { getCoachMastheadFeed, EMPTY_MASTHEAD_FEED } from '@/lib/coach-masthead';
 import { getScoutingNudgeForNextGame } from '@/lib/coach-opponent-nudge';
-import { resolveMastheadStatus, type MastheadScoutingNudge } from '@/lib/coach-masthead-status';
+import { getGameDayConsoleForNextGame } from '@/lib/coach-game-day-nudge';
+import { gameDayConsolePath } from '@/lib/coach-game-day';
+import {
+  resolveMastheadStatus, type MastheadGameDayConsole, type MastheadScoutingNudge,
+} from '@/lib/coach-masthead-status';
 import CoachTeamHeader from '@/components/coaches/CoachTeamHeader';
 
 /**
@@ -75,18 +79,24 @@ export default async function CoachTeamLayout({
       })
     : null;
 
-  // Game-week scouting nudge (Scouting Book P2): only when the masthead is already talking
-  // about a live season's game — the nudge can never outlive the status that justifies it.
-  let scoutingNudge: MastheadScoutingNudge | null = null;
-  if (status) {
-    const nudge = await getScoutingNudgeForNextGame(teamId, feed.next);
-    if (nudge) {
-      scoutingNudge = {
-        ...nudge,
-        href: `/${orgSlug}/coaches/teams/${teamId}/schedule?event=${nudge.eventId}&tab=scouting`,
-      };
-    }
-  }
+  // Two independent quiet additions to the masthead, fetched IN PARALLEL — this is the
+  // busiest day for this code path (an actual game), so their reads must not queue.
+  //  · Game-week scouting nudge (Scouting Book P2): only when the masthead is already talking
+  //    about a live season's game — the nudge can never outlive the status that justifies it.
+  //  · Game-Day Mode (P1): on game day, the status line itself links to the bench console —
+  //    but only inside the game's live window (the feature module owns that clock).
+  const [nudge, console_] = await Promise.all([
+    status ? getScoutingNudgeForNextGame(teamId, feed.next) : Promise.resolve(null),
+    status?.kind === 'game_day' ? getGameDayConsoleForNextGame(feed.next) : Promise.resolve(null),
+  ]);
+  const scoutingNudge: MastheadScoutingNudge | null = nudge && {
+    ...nudge,
+    href: `/${orgSlug}/coaches/teams/${teamId}/schedule?event=${nudge.eventId}&tab=scouting`,
+  };
+  const gameDayConsole: MastheadGameDayConsole | null = console_ && {
+    ...console_,
+    href: gameDayConsolePath(orgSlug, teamId, console_.eventId),
+  };
 
   return (
     <>
@@ -98,6 +108,7 @@ export default async function CoachTeamLayout({
         records={feed.records}
         status={status}
         scoutingNudge={scoutingNudge}
+        gameDayConsole={gameDayConsole}
         // ⚠ WHICH season the status describes. A layout cannot read `?year=`, so this feed is
         // always built for the DEFAULT season — while the client resolves the season on screen
         // from the URL. A team mid-rollover can hold two live seasons at once, and a hand-typed

@@ -45,6 +45,19 @@ export interface MastheadScoutingNudge {
   href: string;
 }
 
+/**
+ * Game-Day Mode (P1): the bench-console link the masthead's "Game day" line carries while the
+ * game's live window is open. Assembled server-side by the FEATURE module
+ * (lib/coach-game-day-nudge — the coach-opponent-nudge posture); declared here so the client
+ * masthead can name the type without importing anything server-only. Absent outside the
+ * window: the line goes back to being plain text, never a disabled control.
+ */
+export interface MastheadGameDayConsole {
+  eventId: string;
+  /** The console URL, built by the layout (the layout owns URLs). */
+  href: string;
+}
+
 export interface MastheadStatusInput {
   /** `rep_program_years.status` of the season being shown. */
   programYearStatus: string;

@@ -8,6 +8,34 @@
 
 ---
 
+### 2026-08-04 — Playing time is MEASUREMENT, never a fairness verdict: the app describes where minutes go and stops implying every team owes everyone equal ones
+**Status:** Decided (owner, 2026-08-04, in the Game-Day Mode P1 session — reword set approved as proposed).
+
+**Decision:** All customer-facing copy about **playing time** describes and measures; it never judges or implies the platform expects "fair" (equal) distribution across the roster. Rep teams deliberately lean on stronger players — a coach reviewing playing time wants **context** ("of our top 3 pitchers, who has pitched the most this week?"), not an audit against a fairness standard the team never promised. Approved reword set (exact words, owner-ratified):
+
+| Surface | Today | Becomes |
+|---|---|---|
+| Insights doorway + report title | "Is playing time fair?" | **"Where is playing time going?"** |
+| Overview tile verdicts | "Fairly even" / "Uneven" | **"Evenly spread" / "Leans on a few"** |
+| Family-facing player recap | "the team's fair-play band" | **"the team's typical range"** |
+| Lineup auto-fill copy | "a fresh fair arrangement" | **"a fresh arrangement with even bench rotation"** |
+
+**Boundaries, decided with it:** (1) **Tryout fairness vocabulary is KEPT** — blind evaluation and the fairness receipt are an *evaluation-integrity* promise (everyone scored on one scorecard before names were revealed), a different concept coaches actively want to show parents. (2) **Features are unchanged** — bench-sit warnings, pitching caps, the even-rotation lineup option and the A-squad skew modes all stay; only the moral framing goes. (3) **Old release notes stay as written** — they are a historical record. (4) The family recap line is the highest-stakes instance: telling parents their child sat "in the fair-play band" sets an expectation a rep team never made, and invites the complaint at exactly the audience most likely to file it.
+
+**Rationale:** The platform's paying rep segment runs deliberately unequal minutes. Copy that frames the metric as "fairness" makes the product take a side against its own customer's coaching model, and (worse) arms parents with the platform's own vocabulary in playing-time disputes. Descriptive language keeps the same data useful to both coaching styles: a balance-minded coach still sees "Leans on a few" and acts; a skew-by-design coach sees the same words as confirmation, not accusation.
+
+**Affects:** In-app copy across the coaches portal (Insights doorway + playing-time report, Overview tile, family player recap, lineup auto-fill, related help-guide entries) — a copy sweep, no price/plan/gate/schema change. Game-Day Mode P1 (in flight) builds with the new vocabulary from day one. Future idea recorded separately in the ideas backlog: contextual playing-time queries ("who has pitched the most this week among X?") — a feature, not part of this ruling.
+
+**Handoff:**
+HANDOFF → build (new chat) — execute the app-wide copy sweep as its own unit of work: `docs/projects/active/PLAYING_TIME_VOCAB_SWEEP_PLAN.md`. Tryout-fairness copy explicitly out of scope.
+HANDOFF → `/docs` — help-guide entries that quote "Is playing time fair?" (Insights, lineups, recap guides) update **in the same sweep**, not before.
+HANDOFF → `/marketing` — check brand/marketing surfaces (persona pages, feature copy) for "fair playing time" framing; align anything found to descriptive vocabulary. No pricing surface is implicated.
+HANDOFF → `/billing` — **nothing.** No gate, key or plan config. Recorded so nobody goes hunting.
+
+**Supersedes:** nothing. **Relates to:** the Game-Day Mode P1 build (first surface to ship the new vocabulary); the Tryout Insights / tryout-report work (whose fairness-receipt vocabulary this ruling deliberately protects).
+
+---
+
 ### 2026-08-03 — A SEASON REVIEW is a coach's, not a helper's: the archive's door set becomes per-PERSON as well as per-season. And one adult's staff and family records stay SEPARATE — the fix for the seam is one honest sentence, not a merge
 **Status:** Decided (owner, 2026-08-03 — all three recommendations in `COACH_SEASON_REVIEW_AND_DOUBLE_RECORD_RECOMMENDATION.md` accepted as written, from a recommendation session that deliberately wrote **no code**. Closes both questions the Practice Plans Phase 4 session raised and declined to resolve.)
 

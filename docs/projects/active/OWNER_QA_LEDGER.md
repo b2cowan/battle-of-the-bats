@@ -827,11 +827,19 @@ arithmetic, nothing is stored).
       standings update automatically”), End game is absent; subs + attendance + the book door
       still work.
 - [ ] **📱 Helper view (needs the helper test account):** schedule-only helper opens the
-      console → “{Head coach} runs the bench.” banner, no steppers, no footer, board
-      read-only. An attendance-only assistant gets Who’s here + score view, no subs.
+      console → “{Head coach} runs the bench.” banner, no steppers, no footer, and **no board
+      at all** — the lineup data itself rides the `lineups` grant (adversarial review
+      tightened this: strategy data must not flow to a bundle the capability model excludes).
+      ⚠ DEVIATION from mockup frame 10, which drew the helper seeing the board read-only —
+      capability model won; re-draw or re-rule if you want the board back. An attendance-only
+      assistant gets Who’s here + score view, no board, no subs.
 - [ ] **🖥 Archived season shows no entry point:** flip to a completed season — no Game day
       pill on any surface, and the masthead stays “Complete”. (The console route itself
       resolves only the ACTIVE season by construction.)
+- [ ] **Read the guide:** Help → the Premium Coaches Portal group gains **“Game day: running
+      the bench from your phone”** — the one-notification promise, the abandonment honesty,
+      and the helper/assistant zone answers are all stated. Search the hub for “game day”,
+      “substitution”, and “end game” (all should land on it).
 - [x] 🤖 Unit coverage (54 new tests): window boundaries incl. arrival-time math; swap math
       (inherit-the-remaining-schedule, single-inning, open-slot, immutability, no-ops);
       result derivation; quiet-flag guard (score-fields-only / window-only / never mirrored —
@@ -840,8 +848,19 @@ arithmetic, nothing is stored).
       neither archive list — live-season instrument by ruling). typecheck ✓ · 1,322 unit
       tests ✓ · verify:changed ✓ · 0 lint errors in the touched files. ⚠ Rendered
       `check:layout` NOT run (needs a dev server + a seeded probe GAME — the screen list has
-      no game event in its fixture yet); worth one visual pass here. `/simplify` + `/review`
-      + `/docs` offered at handoff.
+      no game event in its fixture yet); worth one visual pass here.
+      ✅ `/simplify` run (9 cleanups: one shared window/URL source for every entry point,
+      memoized schedule map, parallel masthead fetches, ONE shared attendance-options module,
+      shared save pill/ordinal/result rule, deduped sheets). ✅ `/review` run (high-risk
+      funnel, 5 lenses, 25→17 confirmed findings ALL FIXED, 1 refuted, 3 accepted-by-design.
+      The two Criticals: a console attendance tap silently ERASED a player's stored
+      attendance note; and one deactivated player left in an old lineup poisoned every save
+      for the whole game while End game proceeded silently. Also fixed: in-flight-save edit
+      loss (score + lineup), End game accepting a cleared field as 0–0, stale substitution
+      decisions applying over a changed board, pocket-the-phone save flush, helper lineup
+      leak above.) Worth re-testing during QA: mark attendance from the console then check
+      the schedule tab still shows the player's note; deactivate a rostered player who's in
+      tonight's lineup, open the console, make a sub, confirm it saves.
 
 ---
 

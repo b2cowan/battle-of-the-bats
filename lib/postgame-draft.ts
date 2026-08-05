@@ -17,6 +17,7 @@
  */
 
 import { opponentPhrase, scheduleDayLabel, scheduleTimeLabel } from './family-schedule-format';
+import { deriveGameResult } from './coach-game-day';
 
 export interface PostgameDraftGame {
   opponent: string | null;
@@ -42,10 +43,11 @@ export interface PostgameDraft {
   body: string;
 }
 
+/** One rule for "how a final score becomes a result" — shared with the server's End-game
+ *  derivation (lib/coach-game-day). Callers here guarantee both scores are present, so the
+ *  null branch (missing scores) is unreachable; `?? 'tie'` only satisfies the type. */
 function resultOf(teamScore: number, opponentScore: number): 'win' | 'loss' | 'tie' {
-  if (teamScore > opponentScore) return 'win';
-  if (teamScore < opponentScore) return 'loss';
-  return 'tie';
+  return deriveGameResult(teamScore, opponentScore) ?? 'tie';
 }
 
 /**

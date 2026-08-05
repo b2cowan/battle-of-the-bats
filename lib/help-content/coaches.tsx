@@ -1731,6 +1731,76 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      id: 'premium-game-day',
+      group: 'Premium Coaches Portal',
+      heading: 'Game day: running the bench from your phone (Premium)',
+      summary: 'On game day the schedule grows a Game day button — who’s on the field right now, tap-to-substitute, the running score, and one End game tap that tells families the final.',
+      // "game day" / "bench" / "substitute" / "live score" are what a coach searches for mid-game,
+      // and search never reads the prose — so they all have to live here.
+      keywords: ['game day', 'game-day', 'bench console', 'run the game', 'live game', 'substitution', 'substitute', 'sub', 'swap players', 'who is on the field', 'bench', 'running score', 'keep score', 'score the game', 'plus one', 'end game', 'final score', 'notify families', 'one notification', 'who covers', 'skip lineup', 'everyone plays', 'game recap', 'playing time tonight', 'scored by the tournament', 'your coach runs the bench'],
+      searchText: 'game day button schedule row lineups masthead bench console phone at the field on the field bench right now current inning tap to substitute sub swap from this inning on this inning only saves into the lineup playing time report player recap running score plus one run families not notified per run one notification final score end game win loss tie decided who is here in late out no reply mark absent who covers no lineup start from a template everyone plays skip lineup just score and attendance read only recap playing time tonight season report opponent name scouting book their tournament so far add to the book tournament game scored by the tournament organizer archived season no button helper read only your coach runs the bench',
+      content: (
+        <>
+          <p><strong>On game day, the game itself grows a door.</strong> From about two hours before first pitch (or your arrival time, whichever is earlier) until a few hours after the end, the game&rsquo;s row on the <strong>Schedule</strong> and in <strong>Lineups</strong> wears a <strong>Game day</strong> pill, and the team masthead&rsquo;s &ldquo;Game day&rdquo; line becomes a link. No setup, no &ldquo;start game&rdquo; ceremony — the button appears when it&rsquo;s useful and retires when it isn&rsquo;t. A finished season never shows it.</p>
+          <p><strong>The console is one phone screen:</strong> the matchup and score up top with an inning stepper, then your roster split <strong>On the field / Bench</strong> for the inning you&rsquo;re in. Tap a bench player, tap who they go in for, and choose <strong>from this inning on</strong> or <strong>this inning only</strong>. Every change saves into <strong>the same lineup you built before the game</strong> — so the playing-time report and each player&rsquo;s season recap reflect what actually happened, not just the plan. If you stop tapping mid-game, nothing breaks: the plan simply stands in for the rest, exactly as if you&rsquo;d never opened the screen.</p>
+          <p><strong>The score is two big +1 buttons</strong> (tap the score to open them). Families are <strong>not</strong> pinged run-by-run — they get <strong>exactly one notification, the final score, when you tap End game</strong>. That&rsquo;s also the moment the win/loss/tie is decided and your season record updates. Until then the running score just quietly keeps itself saved.</p>
+          <p><strong>Who&rsquo;s here</strong> opens the attendance sheet — the same four words as the schedule tab (<strong>In &middot; Late &middot; Out &middot; No reply</strong>), one tap each. Mark a player who&rsquo;s on the field as <strong>Out</strong> and the board immediately asks who covers their position.</p>
+          <p><strong>No lineup saved yet?</strong> The console offers three doors: <strong>Start from a template</strong> (opens the builder), <strong>Everyone plays</strong> (auto-fills an even rotation on the spot), or <strong>Skip lineup</strong> — the screen then runs as score-and-attendance only for the night.</p>
+          <p><strong>Scouting at the bench:</strong> the opponent&rsquo;s name in the header opens your book on them — and on a platform tournament game it includes <strong>Their tournament so far</strong>, their other results this weekend. After the game, the recap offers a quiet <em>add to the book</em> line while it&rsquo;s fresh.</p>
+          <p><strong>After End game</strong> (or any time outside the live window) the same link is a <strong>read-only recap</strong>: innings on the field per player from the lineup you actually ran, and a door to the <strong>Playing time</strong> season report.</p>
+          <p><strong>Tournament games run by an organizer</strong> keep their score with the tournament — the score area says so and steps back, and there&rsquo;s no End game (the organizer&rsquo;s result is the record). Substitutions, attendance and the book all still work.</p>
+          <p><strong>Who can do what:</strong> substitutions need <strong>lineups</strong> access, Who&rsquo;s here needs <strong>attendance</strong>, and the score and End game need <strong>schedule</strong> (manage) access — the same permissions as everywhere else. A schedule-only helper who opens the console sees the matchup and score with <em>&ldquo;Your coach runs the bench.&rdquo;</em> — and no lineup board, because the lineup itself follows lineup access.</p>
+        </>
+      ),
+      links: [
+        { label: 'Building the lineup', href: '#premium-lineups' },
+        { label: 'Attendance', href: '#recipe-attendance' },
+        { label: 'Tournament games on your schedule', href: '#premium-tournament-games' },
+      ],
+      faqs: [
+        {
+          id: 'faq-game-day-notifications',
+          question: 'Will families get a notification every time I score a run?',
+          answerText: 'No. While the game is live, the console saves the running score quietly — no notification goes out per run, on purpose. Families get exactly one notification for the night: the final score, sent when you tap End game and confirm. That is also the moment the win, loss or tie is decided and your season record updates. If you never tap End game, no final-score notification is sent at all — you can still enter or fix the score later from the schedule, which notifies as it always has.',
+          keywords: ['notification', 'notify families', 'every run', 'score notification', 'spam', 'one notification', 'final score', 'end game', 'when do families hear'],
+          popular: true,
+          answer: (
+            <>
+              <p>No. While the game is live, the console saves the running score <strong>quietly</strong> — nothing goes out per run, on purpose.</p>
+              <p>Families get <strong>exactly one notification for the night: the final score</strong>, sent when you tap <strong>End game</strong> and confirm. That&rsquo;s also the moment the win/loss/tie is decided and your season record updates.</p>
+              <p>If you never tap End game, no final-score notice is sent — you can still enter or fix the score later from the schedule, which notifies as it always has.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-game-day-abandon',
+          question: 'I stopped using the console in the fourth inning — did I break anything?',
+          answerText: 'No. The console edits the same lineup you built before the game, one substitution at a time, and each change saves within a second or two. Whatever you did not change simply keeps the plan — exactly the data you would have had if you had never opened the screen. Nothing is half-recorded, and the playing-time report reads the one lineup either way. If you did not end the game, no family notification went out; enter the final score from the schedule whenever you like.',
+          keywords: ['abandoned', 'stopped using', 'closed the app', 'mid game', 'forgot to end', 'did not end the game', 'half finished', 'is my data wrong'],
+          answer: (
+            <>
+              <p>No. The console edits the <strong>same lineup you built before the game</strong>, one substitution at a time, and each change saves within a second or two of the tap.</p>
+              <p>Whatever you didn&rsquo;t change simply keeps the plan — exactly the data you&rsquo;d have if you&rsquo;d never opened the screen. Nothing is half-recorded, and the playing-time report reads the one lineup either way.</p>
+              <p>If you didn&rsquo;t end the game, no family notification went out; enter the final score from the schedule whenever you like.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-game-day-helper',
+          question: 'What does an assistant or helper see on the game-day screen?',
+          answerText: 'Exactly what their permissions say, zone by zone. Substitutions need lineups access; the Who is here sheet needs attendance access; the score buttons and End game need schedule manage access. An attendance-only assistant gets the score view and Who is here, with no lineup board. A schedule-only helper sees the matchup and score, read-only, with the line "Your coach runs the bench" — and no board at all, because the lineup itself follows lineup access. Nobody ever sees a disabled button they cannot use; controls they do not have are simply not there.',
+          keywords: ['assistant', 'helper', 'permissions', 'read only', 'your coach runs the bench', 'who can substitute', 'who can score', 'attendance only'],
+          answer: (
+            <>
+              <p>Exactly what their permissions say, zone by zone: substitutions need <strong>lineups</strong>, the Who&rsquo;s here sheet needs <strong>attendance</strong>, the score and <strong>End game</strong> need <strong>schedule (manage)</strong>.</p>
+              <p>An attendance-only assistant gets the score view and Who&rsquo;s here — no lineup board. A schedule-only <strong>helper</strong> sees the matchup and score, read-only, with the line <em>&ldquo;Your coach runs the bench.&rdquo;</em> — and no board at all, because the lineup itself follows lineup access.</p>
+              <p>Nobody sees a disabled button: controls someone doesn&rsquo;t have simply aren&rsquo;t there.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       id: 'premium-practice-plans',
       group: 'Premium Coaches Portal',
       heading: 'Practice plans: what you’re doing Tuesday, and who’s where (Premium)',

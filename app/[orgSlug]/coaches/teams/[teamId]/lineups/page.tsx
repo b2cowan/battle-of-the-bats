@@ -16,6 +16,7 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import styles from '../../../coaches.module.css';
+import { gameDayEntryHref } from '@/lib/coach-game-day';
 import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
@@ -60,6 +61,8 @@ export default function CoachesLineupsPage({
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
   const seasonQuery = page.query;
+  // Clock snapshot, once per mount (render must stay pure) — see the schedule page's twin note.
+  const [gameDayNowMs] = useState(() => Date.now());
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
@@ -347,7 +350,11 @@ export default function CoachesLineupsPage({
   const renderRow = (e: RepTeamEvent, action: string) => {
     const r = ready[e.id];
     const isPrimary = e.id === primaryGameId;
-    return (
+    // Game-Day Mode entry (P1): inside a game's live window the row gains a sibling `Game day`
+    // link (the row itself keeps one destination — the builder). Absent outside the window and
+    // in an archived season: the console is a live-season instrument.
+    const gameDayHref = page.isReadOnly ? null : gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
+    const row = (
       <Link key={e.id} href={`${base}/lineups/${e.id}${seasonQuery}`} className={styles.lineupFrontRow}>
         <span className={styles.lineupFrontDate}>
           <span className={styles.lineupFrontDay}>{new Date(e.startsAt).getDate()}</span>
@@ -368,6 +375,13 @@ export default function CoachesLineupsPage({
           </span>
         )}
       </Link>
+    );
+    if (!gameDayHref) return row;
+    return (
+      <div key={e.id} className={styles.eventChipRow}>
+        {row}
+        <Link href={gameDayHref} className={styles.gdEntryBtn}>Game day</Link>
+      </div>
     );
   };
 

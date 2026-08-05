@@ -18,6 +18,7 @@ import { denyUnless, canManageSchedule } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
 import { ORGANIZER_OWNED_API_FIELDS } from '@/lib/tournament-game-mirror';
 import { notifyFamiliesOfGameUpdate } from '@/lib/family-notify';
+import { deriveGameResult, toGameDayEventShape, validateQuietScoreWrite } from '@/lib/coach-game-day';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -77,10 +78,31 @@ export const PATCH = withObservability(async (req: Request,
     }
   }
 
+  // Game-Day Mode P1: the bench console saves the RUNNING score debounced with `quiet: true`,
+  // suppressing the per-save family notification (a run scored must not ping every family; the
+  // one final-score notification fires at End game through an ordinary non-quiet write). The
+  // flag is server-checked and NARROW by design — score fields only, live game-day window only,
+  // never a mirrored game — and an ineligible quiet request is REFUSED rather than silently
+  // un-quieted (which would spam) or silently honored (which would make it a notification
+  // bypass for schedule changes). The notify() chokepoint is untouched: a quiet save simply
+  // never reaches the dispatcher.
+  const quiet = body.quiet === true;
+  if (quiet) {
+    const verdict = validateQuietScoreWrite({
+      bodyKeys: Object.keys(body).filter(k => k !== 'quiet'),
+      event: { ...toGameDayEventShape(event), mirrored: isMirroredEvent(event) },
+      nowMs: Date.now(),
+    });
+    if (!verdict.ok) return NextResponse.json({ error: verdict.reason }, { status: 400 });
+  }
+
   // Series edit: when a recurring event is saved with scope 'remaining' (this + future) or 'all',
   // bulk-apply the shared fields + time-of-day across the series (each occurrence keeps its date).
+  // A validated QUIET write is score-only and a score belongs to ONE occurrence — routing it into
+  // the series branch (which has no score fields) would 200 while writing nothing. It falls
+  // through to the single-occurrence write instead, whatever scope rode along.
   const scope = new URL(req.url).searchParams.get('scope') ?? 'one';
-  if (scope !== 'one' && event.isRecurring) {
+  if (scope !== 'one' && event.isRecurring && !quiet) {
     if (scope !== 'remaining' && scope !== 'all') {
       return NextResponse.json({ error: 'scope must be one, remaining, or all' }, { status: 400 });
     }
@@ -169,6 +191,18 @@ export const PATCH = withObservability(async (req: Request,
     fields.status = s;
   }
 
+  // Game-Day Mode P1: when a score lands WITHOUT an explicit `result`, derive it server-side —
+  // this closes the long-standing gap where API-set scores left `result` NULL (derivation lived
+  // only in the schedule page's client, which keeps sending all three fields and is unaffected).
+  // Quiet (mid-game) writes deliberately do NOT derive: a running 4–2 in the 3rd is not a "win"
+  // yet, and a mid-game result would lie to the Season Record until End game finalizes it.
+  if (!quiet && body.result === undefined
+      && (fields.teamScore !== undefined || fields.opponentScore !== undefined)) {
+    const effectiveTeam = fields.teamScore !== undefined ? fields.teamScore : event.teamScore;
+    const effectiveOpp = fields.opponentScore !== undefined ? fields.opponentScore : event.opponentScore;
+    fields.result = deriveGameResult(effectiveTeam, effectiveOpp);
+  }
+
   // Game tags — full replace-on-save, same as the create route. Not offered on the series-scope
   // edit above (a coach tags one specific game, not a whole recurring run at once).
   let tagIds: string[] | null = null;
@@ -213,7 +247,9 @@ export const PATCH = withObservability(async (req: Request,
       ? 'schedule_change' as const
     : null;
 
-  if (familyUpdateKind) {
+  // A validated quiet write is score-only inside the live window, so the only kind it can
+  // suppress is its own running-score 'final_score' — End game's non-quiet write still lands here.
+  if (familyUpdateKind && !quiet) {
     await notifyFamiliesOfGameUpdate({
       eventId,
       kind: familyUpdateKind,

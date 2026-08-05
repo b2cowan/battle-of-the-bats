@@ -1,6 +1,6 @@
 'use client';
 import { use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Clock3, Plus, Upload, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, Swords, Shield, Dumbbell, Users, TriangleAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
@@ -38,11 +38,13 @@ import {
   type MovedGame, type DuplicateGamePair,
 } from '@/lib/coach-tournament-games';
 import styles from '../../../coaches.module.css';
+import { gameDayEntryHref } from '@/lib/coach-game-day';
+import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { tournamentToday, formatInOrgZone, orgDayKey, utcToZonedInputs } from '@/lib/timezone';
 import {
-  EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES, ATTENDANCE_WORD,
+  EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES,
   needsOpponent, needsRecurrence, RECURRABLE_TYPES, deriveGameName,
 } from '@/lib/coach-schedule-vocab';
 import { generateWeeklyOccurrences, type RecurrenceOccurrenceInput } from '@/lib/coach-recurrence';
@@ -126,19 +128,9 @@ const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
 
 // Attendance statuses, ordered present → not-present → unset. Drives BOTH the per-player icon
 // control and the metric/filter chips (label used by the chips; control is icon-only).
-const ATTENDANCE_OPTIONS: {
-  value: RepAttendanceStatus;
-  label: string;
-  icon: React.ElementType;
-}[] = [
-  // Labels come from the shared vocabulary (lib/coach-schedule-vocab) — the lineup builder's bench
-  // rail says the same four words, and they must not drift apart. The ICONS stay here: they're this
-  // control's own affordance, not vocabulary.
-  { value: 'attending', label: ATTENDANCE_WORD.attending, icon: CheckCircle2 },
-  { value: 'late', label: ATTENDANCE_WORD.late, icon: Clock3 },
-  { value: 'absent', label: ATTENDANCE_WORD.absent, icon: CircleSlash },
-  { value: 'unknown', label: ATTENDANCE_WORD.unknown, icon: CircleHelp },
-];
+// Value + word + icon + order now live in ONE shared module (components/coaches/attendanceOptions)
+// because the Game-Day console's Who's here sheet renders the identical rows — two hand-kept
+// copies of four rows is how one screen's control quietly stops matching the other's.
 
 // Quick status → {label, icon} lookup for the per-player status badge.
 const ATTENDANCE_BY_VALUE = Object.fromEntries(
@@ -497,7 +489,7 @@ function TournamentGameChip({ game, dayKey }: { game: CoachScheduleTournamentGam
   );
 }
 
-function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null }) {
+function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRecord, gameDayHref }: { event: RepTeamEvent; onClick: () => void; dayKey?: string; mismatch?: boolean; awardCount?: number; moved?: boolean; bookRecord?: string | null; gameDayHref?: string | null }) {
   const color = EVENT_COLORS[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
@@ -524,7 +516,10 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
   const oppSuffix = opponentSuffix(event);
   // Final score (team-relative: your team first) for a played game.
   const hasScore = !span && event.teamScore != null && event.opponentScore != null;
-  return (
+  // The row stays ONE interactive element (it opens the drawer); the Game day action is a
+  // SIBLING link beside it, never a control nested inside the button — invalid HTML and a
+  // mis-tap magnet on a phone. Outside the live window the sibling simply isn't there.
+  const chip = (
     <button
       className={styles.eventChip}
       style={{ borderLeftColor: color, ...(cancelled ? { opacity: 0.55 } : {}) }}
@@ -568,6 +563,13 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
         )}
       </span>
     </button>
+  );
+  if (!gameDayHref) return chip;
+  return (
+    <div className={styles.eventChipRow}>
+      {chip}
+      <Link href={gameDayHref} className={styles.gdEntryBtn}>Game day</Link>
+    </div>
   );
 }
 
@@ -720,6 +722,28 @@ export default function CoachesSchedulePage({
     return recordChip(r);
   }, [bookByKey]);
   const seasonQuery = page.query;
+  /**
+   * Game-Day Mode entry (P1): a game row grows a `Game day` action inside its live window —
+   * ABSENT outside the window (never disabled), absent on cancelled rows (the predicate checks
+   * type + status), and absent in an archived season: the console is a live-season INSTRUMENT
+   * (same ruling as the scouting book above), so a frozen calendar never offers a bench to run.
+   *
+   * Clock snapshot, taken once per mount (render must stay pure): the action appears on the
+   * visit that falls inside the window; the server guard, not this affordance, enforces it.
+   * Memoized as a per-event map — the list view renders the whole season's rows, and the
+   * window arithmetic (Intl timezone math when an arrival time is set) must not be re-paid
+   * per game row on every unrelated re-render.
+   */
+  const [gameDayNowMs] = useState(() => Date.now());
+  const gameDayHrefById = useMemo(() => {
+    const map = new Map<string, string>();
+    if (page.isReadOnly) return map;
+    for (const e of events) {
+      const href = gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
+      if (href) map.set(e.id, href);
+    }
+    return map;
+  }, [events, page.isReadOnly, orgSlug, teamId, gameDayNowMs]);
   const assignment = assignments.find(a => a.teamId === teamId);
   // An assistant who reaches this page read-only must not be handed an "Add Event" button. Fails
   // CLOSED while the assignment resolves — the empty state only renders past the !assignment guard.
@@ -1863,7 +1887,7 @@ export default function CoachesSchedulePage({
           <div className={styles.calMonthLabel}>{label}</div>
           <div className={styles.calEventList}>
             {(grouped[mk] ?? []).map(e => (
-              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} />
+              <EventChip key={e.id} event={e} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} gameDayHref={gameDayHrefById.get(e.id) ?? null} />
             ))}
             {games.map(g => (
               <TournamentGameChip key={`g-${g.id}`} game={g} />
@@ -1919,7 +1943,7 @@ export default function CoachesSchedulePage({
                   : (
                     <>
                       {dayEvents.map(e => (
-                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} />
+                        <EventChip key={e.id} event={e} onClick={() => openEvent(e)} dayKey={key} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} gameDayHref={gameDayHrefById.get(e.id) ?? null} />
                       ))}
                       {dayGames.map(g => (
                         <TournamentGameChip key={`g-${g.id}`} game={g} dayKey={key} />
@@ -2210,7 +2234,7 @@ export default function CoachesSchedulePage({
             </div>
             <div className={styles.calEventList}>
               {sortDayEvents(daySheet.events).map(e => (
-                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} />
+                <EventChip key={e.id} event={e} dayKey={daySheet.dateKey} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} gameDayHref={gameDayHrefById.get(e.id) ?? null} />
               ))}
             </div>
           </div>

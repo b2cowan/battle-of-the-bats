@@ -7,7 +7,8 @@ import { useCoaches } from '@/lib/coaches-context';
 import { resolveSeasonView } from '@/lib/coach-season-view';
 import { formatRecord } from '@/lib/coach-season-record';
 import {
-  mastheadWhen, type MastheadStatus, type MastheadRecord, type MastheadScoutingNudge,
+  mastheadWhen,
+  type MastheadGameDayConsole, type MastheadStatus, type MastheadRecord, type MastheadScoutingNudge,
 } from '@/lib/coach-masthead-status';
 import { EVENT_WORD } from '@/lib/coach-schedule-vocab';
 import { formatInOrgZone } from '@/lib/timezone';
@@ -52,6 +53,7 @@ function CoachTeamHeaderInner({
   status: rawStatus,
   statusYearId,
   scoutingNudge,
+  gameDayConsole,
 }: {
   teamId: string;
   orgName: string;
@@ -63,6 +65,8 @@ function CoachTeamHeaderInner({
   statusYearId: string | null;
   /** Game-week book nudge (Scouting Book P2) — computed only for the status's own season. */
   scoutingNudge: MastheadScoutingNudge | null;
+  /** Game-Day Mode (P1): the console link, present only inside the game's live window. */
+  gameDayConsole: MastheadGameDayConsole | null;
 }) {
   const searchParams = useSearchParams();
   const { assignments, closedAssignments, seasons } = useCoaches();
@@ -130,6 +134,26 @@ function CoachTeamHeaderInner({
   // default one — saying nothing beats describing the wrong season's game day (/review 2026-08-02).
   const status = season.current?.programYearId === statusYearId ? rawStatus : null;
 
+  // Game-Day Mode (P1): inside the live window the status line becomes the door to the bench
+  // console — gated on the SAME status it decorates, and on the very event it names, so it can
+  // never link a different game than the words describe. Outside the window it is plain text
+  // again, absent rather than disabled. ONE copy of the line; only the wrapper changes.
+  const consoleHref = status?.kind === 'game_day' && gameDayConsole?.eventId === status.event.id
+    ? gameDayConsole.href
+    : null;
+  const gameDayLine = status?.kind === 'game_day' ? (
+    <>
+      <span className={styles.teamHeaderToday}>Game day</span>
+      <span className={styles.teamHeaderStack}>
+        <span className={styles.teamHeaderStackKey}>{gameDayWho(status.event)}</span>
+        <span className={styles.teamHeaderStackValue}>
+          {mastheadWhen(status.event.startsAt, status.daysAway).time}
+          {consoleHref ? ' · Open the bench ›' : ''}
+        </span>
+      </span>
+    </>
+  ) : null;
+
   return (
     <>
     {/* role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event
@@ -167,16 +191,10 @@ function CoachTeamHeaderInner({
             <span className={styles.seasonChip}>Complete</span>
             {record && <span className={styles.teamHeaderStat}>Final {formatRecord(record)}</span>}
           </>
-        ) : status?.kind === 'game_day' ? (
-          <>
-            <span className={styles.teamHeaderToday}>Game day</span>
-            <span className={styles.teamHeaderStack}>
-              <span className={styles.teamHeaderStackKey}>{gameDayWho(status.event)}</span>
-              <span className={styles.teamHeaderStackValue}>
-                {mastheadWhen(status.event.startsAt, status.daysAway).time}
-              </span>
-            </span>
-          </>
+        ) : gameDayLine ? (
+          consoleHref
+            ? <Link href={consoleHref} className={styles.teamHeaderConsoleLink}>{gameDayLine}</Link>
+            : gameDayLine
         ) : status ? (
           <span className={styles.teamHeaderStack}>
             <span className={styles.teamHeaderStackKey}>Next</span>
@@ -252,6 +270,8 @@ export default function CoachTeamHeader(props: {
   statusYearId: string | null;
   /** Game-week book nudge (Scouting Book P2) — computed only for the status's own season. */
   scoutingNudge: MastheadScoutingNudge | null;
+  /** Game-Day Mode (P1): the console link, present only inside the game's live window. */
+  gameDayConsole: MastheadGameDayConsole | null;
 }) {
   // useSearchParams requires a Suspense boundary when rendered from a layout.
   return (
