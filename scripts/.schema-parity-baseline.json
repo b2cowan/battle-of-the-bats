@@ -1,6 +1,7 @@
 {
   "_comment": "ACCEPTED dev↔prod divergences (scripts/check-schema-parity.mjs). Every entry is debt, not a decision — the target is an empty object. A NEW divergence, or an accepted one whose signature changes, fails the gate. Lower this as items are reconciled; re-init only after refreshing the snapshots.",
   "accepted": {
+    "column:only-dev:organizations.club_book_sharing_enabled": "",
     "column:only-dev:rep_team_opponent_aliases.created_at": "",
     "column:only-dev:rep_team_opponent_aliases.id": "",
     "column:only-dev:rep_team_opponent_aliases.normalized_alias": "",
@@ -27,6 +28,7 @@
     "column:only-dev:rep_team_opponents.team_id": "",
     "column:only-dev:rep_team_opponents.updated_at": "",
     "column:only-dev:rep_team_opponents.updated_by": "",
+    "column:only-dev:rep_teams.share_club_book": "",
     "constraint:only-dev:rep_team_opponent_aliases.fk_rep_team_opponent_aliases_opponent": "",
     "constraint:only-dev:rep_team_opponent_aliases.fk_rep_team_opponent_aliases_org": "",
     "constraint:only-dev:rep_team_opponent_aliases.fk_rep_team_opponent_aliases_team": "",
@@ -50,6 +52,7 @@
     "index:only-dev:idx_rep_team_opponent_obs_team": "",
     "index:only-dev:idx_rep_team_opponents_org": "",
     "index:only-dev:idx_rep_team_opponents_team": "",
+    "index:only-dev:idx_rep_teams_org_share_club_book": "",
     "index:only-dev:rep_team_opponent_aliases_pkey": "",
     "index:only-dev:rep_team_opponent_aliases_team_alias_uq": "",
     "index:only-dev:rep_team_opponent_observations_pkey": "",

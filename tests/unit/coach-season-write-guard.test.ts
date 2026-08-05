@@ -426,6 +426,8 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
     const bookRoutes = files.filter(f => f.replace(/\\/g, '/').includes('/opponents/'));
     // P1 shipped four routes; P2 added merge, aliases/[aliasId], and share-to-staff-chat —
     // all of them live-season instruments like their siblings, none of them archive doors.
+    // ⚠ The Club Shared Book (P1, 2026-08-04) added NO route here on purpose: the club layer
+    // rides the existing card + list GETs, so this floor deliberately did not move.
     assert.ok(bookRoutes.length >= 7, `expected the scouting-book routes to exist, found ${bookRoutes.length}`);
     for (const file of bookRoutes) {
       const src = readFileSync(file, 'utf8');
@@ -435,6 +437,32 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
         + 'live-season-only (owner, 2026-08-04, with the project approval). If that has genuinely '
         + 'changed, get the decision, add its routes to APPROVED_SEASON_AWARE_ROUTES, and give the '
         + 'Insights hub an archive-aware Opponents door.',
+      );
+    }
+  });
+
+  /**
+   * The Club Shared Book inherits the book's INSTRUMENT ruling whole (owner, 2026-08-04) — and
+   * it adds a NEW way to be wrong, which is why it gets its own test: the club layer reads
+   * OTHER teams' books, so a season rail bolted onto it would let one team address another
+   * team's past season. Neither module may ever touch the rail, and the club layer must not
+   * become an archive door of its own.
+   */
+  it('the club shared book is live-season only, and never a door into a sibling’s past', () => {
+    for (const rel of ['lib/coach-club-book.ts', 'lib/coach-club-book-server.ts']) {
+      const src = readFileSync(join(process.cwd(), rel), 'utf8');
+      assert.ok(
+        !/resolveCoachSeasonRead(Context)?\s*\(|resolveCoachSeasonCapabilityMap\s*\(/.test(src),
+        `${rel} joined the season-read rail. The club layer is an INSTRUMENT over other teams' `
+        + 'books — putting it on the rail would make a SIBLING team’s finished season addressable, '
+        + 'which no ruling has ever granted. Take that question to the owner first.',
+      );
+      // The club layer is read-only by construction: curation stays with the team that wrote
+      // the words. A write helper reaching another team's book would be the ruling breaking.
+      assert.ok(
+        !/\.(update|insert|delete|upsert)\s*\(/.test(src),
+        `${rel} performs a write. The club layer is READ-ONLY — no cross-team edit or delete of `
+        + 'any kind (owner ruling, plan §4.4). Curation is each head coach’s, on their own book.',
       );
     }
   });
@@ -485,20 +513,34 @@ describe('the archive is opt-in — nothing reaches a past season by default', (
  */
 describe('Chunk F — every closed-season door is actually gated', () => {
   /** Doors deliberately open to any assigned coach — each is a conscious decision, not a gap. */
-  const INTENTIONALLY_UNGATED = new Set(["Season's End", 'Insights']);
+  /**
+   * ⚠ A1 (2026-08-03) removed **Insights** from this exemption. Its nav case used to be a
+   * hand-written union that a denied-everything bundle still satisfied; it is `hasRecordAccess`
+   * now, so it is genuinely gated and exempting it would silently stop testing it.
+   *
+   * ⚠ **Season's End left this set on 2026-08-03 too**, when the season-review ruling closed it to
+   * non-coaches. **The set is now EMPTY, and that is the point** — every closed-season door is
+   * governed by a grant, so a label the switch fails to recognise falls through to
+   * `default: return true` and this test catches it. Re-adding an entry here means re-opening a
+   * door to a persona who cannot use it, which needs an owner ruling, not an exemption.
+   */
+  const INTENTIONALLY_UNGATED = new Set<string>();
 
   /**
    * Everything OFF. Not a real grant bundle — an assistant's floor legitimately includes
-   * schedule/attendance/lineups/roster-view/documents-view, so testing against the floor would
-   * pass regardless. This tests the thing that actually matters: that the switch RECOGNISES each
+   * schedule/attendance/lineups/documents-view, so testing against the floor would pass
+   * regardless. This tests the thing that actually matters: that the switch RECOGNISES each
    * label at all. A label it doesn't recognise falls through to `default: return true` and stays
    * visible even here.
+   *
+   * ⚠ Written out in full rather than spread from a helper, so adding a grant to the model is a
+   * compile error here — which is how A1 (2026-08-03) surfaced this fixture at all.
    */
-  const deniedEverything = {
-    isHeadCoach: false, schedule: false, attendance: false, lineups: false,
-    roster: 'off', rosterWrite: false, rosterPii: false, notes: false,
+  const deniedEverything: ReturnType<typeof resolveCoachCapabilities> = {
+    isHeadCoach: false, schedule: false, scheduleManage: false, attendance: false, lineups: false,
+    rosterWrite: false, rosterPii: false, notes: false, staffChat: false,
     money: 'off', documents: 'off', announcementsSend: false, tryouts: false,
-  } as ReturnType<typeof resolveCoachCapabilities>;
+  };
 
   it('the closed-season nav is the full record set, not Batch 3’s two doors', () => {
     assert.ok(CLOSED_TEAM_NAV_ITEMS.length >= 10,

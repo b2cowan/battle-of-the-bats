@@ -8,6 +8,25 @@
 
 ---
 
+### 2026-08-04 — The Club Shared Book is a CLUB-PLAN EXCLUSIVE: the first coaches-portal feature gated by the ORG's plan rather than the team's portal tier
+**Status:** Decided (owner, 2026-08-04 — "let's go with your recommendations", all five §8 rulings in `docs/projects/active/COACH_CLUB_SHARED_BOOK_PLAN.md` ratified as recommended). Feature itself is **mockup-gated, not yet built** — this entry binds the packaging, not a ship date.
+
+**Decision:** When the Club Shared Book ships (teams inside one org opt in to share their opponent scouting books — labelled, read-only, revocable), it is available **only to organizations on the Club plan**. Non-Club orgs and standalone Premium-portal teams see **nothing anywhere** — no switches, no locked teaser (absent, not upsold in-app; the selling happens on marketing surfaces, not as a dangling lock in a coach's settings). The other four ratified rulings shape the product, not the packaging: admin-enables + head-coach-opts-in, see-only-while-sharing reciprocity, book line + observations + per-team records travel, and no cross-team blended stats.
+
+**Rationale:** This is the clearest "you run a CLUB" feature the coaches portal has — its value literally scales with the number of teams an org runs, which is the Club plan's defining trait. It strengthens the tier's identity ("your club's collective scouting memory") with a benefit that **compounds each season the club stays**, i.e. it is retention and upgrade leverage, not a checkbox. Precedent boundary, stated deliberately: the scouting book itself (P1–P3) rides the per-team Premium portal entitlement with **no new billing gate** (Insights-hub precedent) — the *club layer on top* is the first coach feature keyed to the **org's** plan, and that is the right seam: individual teams buy the book; the club buys the sharing.
+
+**Affects:** Plan packaging/inclusions (Club gains a named exclusive; **no price, band, or SKU change**). `PLAN_PRICING_FACTS.md` + `lib/plan-config.ts`/`lib/plan-features.ts` gain the feature key **at build time, in the build's same unit of work** — deliberately NOT edited today, so the Facts doc never advertises a gate that doesn't exist yet; the build prompt carries this obligation. Marketing positioning for the Club tier gains its coaches-portal headline when the feature ships.
+
+**Handoff:**
+HANDOFF → `/plan` — **done** (plan + PM brief exist; mockups published for sign-off, artifact `def742fe-…` stage 8). **P1 BUILT on dev 2026-08-05**, owner QA = ledger §1.16.
+HANDOFF → `/billing` — **done 2026-08-05, at build:** feature key `club_shared_book` → `club` in `lib/plan-features.ts` (both Club bands via the rank ladder; **deliberately not granted to `team`**), org-level enable (`organizations.club_book_sharing_enabled`) + per-team opt-in (`rep_teams.share_club_book`), both re-checked server-side on every read and write. `PLAN_PRICING_FACTS.md` inclusions + reconcile line updated and the drift check run in the same change; **`lib/plan-config.ts` needed no edit** (it holds no per-feature list), and no price, name, band or SKU moved.
+HANDOFF → `/marketing` — at ship (not before): Club plan card/persona gains the collective-book story; convey "your club's scouting memory compounds with every team and every season" without promising cross-club or automatic sharing.
+HANDOFF → `/docs` — at ship: the scouting guide's club section states the opt-in deal (what travels, reciprocity, revocation) in the coach's language.
+
+**Supersedes:** nothing — extends the scouting-book packaging posture (no-gate, per-team) with the org-level exception it always anticipated (scouting plan §9 Q5).
+
+---
+
 ### 2026-08-04 — Playing time is MEASUREMENT, never a fairness verdict: the app describes where minutes go and stops implying every team owes everyone equal ones
 **Status:** Decided (owner, 2026-08-04, in the Game-Day Mode P1 session — reword set approved as proposed).
 

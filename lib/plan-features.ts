@@ -59,7 +59,18 @@ export type PlanFeature =
    *  rank ladder + an explicit grant to the standalone Premium Coaches Portal ('team'). League is
    *  deliberately excluded — it has no rep teams, so it has no coaching staffs to chat. Gates room
    *  CREATION only; reading/posting stays membership-gated, mirroring tournament_chat. */
-  | 'coach_peer_chat';
+  | 'coach_peer_chat'
+  // ── Club Shared Book ─────────────────────────────────────────────────────
+  /**
+   * A club's teams reading each other's opponent scouting books — CLUB PLAN EXCLUSIVE
+   * (owner ruling 2026-08-04, logged in BUSINESS_DECISIONS.md; plan §8 Q3).
+   *
+   * ⚠ Deliberately NOT in PLAN_FEATURE_GRANTS for `team`: the value of this feature is a club
+   * with several teams, so a standalone Premium Coaches Portal has no siblings to share with
+   * and gets NOTHING — no switches, no layer, and no locked tease. Absent, not upsold: the
+   * ruling is that a single-team customer should never see a door they cannot use.
+   */
+  | 'club_shared_book';
 
 export const PLAN_RANK: Record<OrgPlan, number> = {
   tournament:      0,
@@ -107,6 +118,8 @@ export const FEATURE_MIN_PLAN: Record<PlanFeature, OrgPlan> = {
   // ── Coach Chat ───────────────────────────────────────────────────────────
   tournament_chat:                   'tournament_plus',
   coach_peer_chat:                   'club',
+  // ── Club Shared Book ─────────────────────────────────────────────────────
+  club_shared_book:                  'club',
 };
 
 /**
@@ -160,6 +173,11 @@ export function requiresPlanCopy(feature: PlanFeature): string {
       // Explicit case REQUIRED: both copy helpers forward unknown features to each other, so a
       // missing case here would recurse forever.
       return 'A team staff room — a standing chat for the head coach and assistants — is included with the Premium Coaches Portal and Club.';
+    case 'club_shared_book':
+      // ⚠ This string should never reach a customer: the ruling is ABSENT, not locked — no
+      // surface renders an upsell for it. The case exists because both copy helpers forward
+      // unknown features to each other and a missing one recurses forever.
+      return 'Teams sharing their opponent scouting books with each other across the club is included with Club.';
     case 'live_score_refresh':
     case 'fan_following':
     case 'pwa_install':

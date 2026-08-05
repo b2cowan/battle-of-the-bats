@@ -6993,7 +6993,12 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .scoutBookInput:focus { outline: none; }
 .scoutBookInput::placeholder { color: var(--white-35); font-style: italic; }
-.scoutBookRead { margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--white-80); }
+/* `pre-line` because a book line can legitimately contain newlines and both producers of one
+   already do: a P2 merge keeps the folded entry's words as a labelled appendix on its own line,
+   and a club block joins a sibling team's two un-merged lines. Without this they ran together
+   into one paragraph. Single-line summaries are unaffected — pre-line still collapses runs of
+   spaces, so nothing else re-flows. */
+.scoutBookRead { margin: 0; font-size: 0.9rem; line-height: 1.5; color: var(--white-80); white-space: pre-line; }
 .scoutBookMeta { font-size: 0.68rem; color: var(--white-35); align-self: flex-end; }
 
 /* Observation logger */
@@ -7197,6 +7202,44 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .scoutMergeOption:hover { border-color: var(--white-30); }
 .scoutMergeOptionName { font-size: 0.85rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* ── Club Shared Book — "From your club" (mockup 8b) ─────────────────────────────────────
+   AMBER SPINE = SOMEONE ELSE'S VOICE; the lime spine above stays your own book line. That one
+   colour difference is the whole read: a coach glancing at this page must never mistake a
+   sibling team's note for something their own bench wrote. Section label reuses
+   .scoutSeasonLabel and the expander reuses .scoutPanelLink — same words, same shapes. */
+.scoutClubTeam {
+  border: 1px solid var(--border-2);
+  border-left: 3px solid var(--home-amber, var(--warning-strong, var(--warning)));
+  border-radius: 10px;
+  background: var(--card-bg);
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 0.5rem;
+  display: flex; flex-direction: column; gap: 0.3rem;
+}
+.scoutClubTeamHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.scoutClubTeamName { font-size: 0.85rem; font-weight: 700; color: var(--white-90); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Modifier on .scoutBookLine: same block, their colour. */
+.scoutClubBookLine {
+  border-left-color: var(--home-amber, var(--warning-strong, var(--warning)));
+  margin: 0.15rem 0 0.1rem;
+}
+/* The drawer's one quiet line (mockup 8c) — amber like the section it opens. */
+.scoutClubTease {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-size: 0.78rem; font-weight: 700;
+  color: var(--home-amber, var(--warning-strong, var(--warning)));
+  background: none; border: 0; padding: 0; cursor: pointer;
+  text-align: left; text-decoration: none;
+}
+.scoutClubTease:hover { text-decoration: underline; }
+/* Opponents-list marker: the club knows this team. Sits beside .scoutNoteDot (your own book)
+   and is deliberately a different shape, not a second count — one glance, two facts. */
+.scoutClubBadge {
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--home-amber, var(--warning-strong, var(--warning)));
+}
+
 /* The merge CONFIRM card reuses the .dupeNotice family (schedule's duplicate-event notice)
    — same warning-accent confirm shape, one pattern to maintain, not a parallel set. */
 

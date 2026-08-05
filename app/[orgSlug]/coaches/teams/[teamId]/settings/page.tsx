@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Archive, CalendarPlus, Link2, Pencil, SlidersHorizontal } from 'lucide-react';
+import { Archive, CalendarPlus, Library, Link2, Pencil, SlidersHorizontal } from 'lucide-react';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import HelpButton from '@/components/help/HelpButton';
 import type { LineupSettings } from '@/lib/types';
@@ -17,6 +17,9 @@ interface SettingsData {
     canManageSeasons: boolean;
     canEditDivision: boolean;
   };
+  /** Club Shared Book. `showSwitch` false ⇒ the whole section is absent — either the club is
+   *  not on the Club plan, or its admin has not turned sharing on. Never a locked tease. */
+  clubBook: { showSwitch: boolean; sharing: boolean; canEdit: boolean };
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -47,6 +50,10 @@ export default function TeamSettingsPage({
   const [capsError, setCapsError] = useState('');
 
   const [modalOpen, setModalOpen] = useState(false);
+
+  // Club Shared Book — the head coach's switch.
+  const [savingShare, setSavingShare] = useState(false);
+  const [shareError, setShareError] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -130,6 +137,33 @@ export default function TeamSettingsPage({
       setCapsError('Could not save.');
     } finally {
       setSavingCaps(false);
+    }
+  }
+
+  async function toggleClubBookSharing(next: boolean) {
+    setSavingShare(true);
+    setShareError('');
+    // Optimistic: the switch is the answer to a question the coach just asked. A failure
+    // reverts it and says so — sharing state must never LOOK on while it is off.
+    setData(prev => prev ? { ...prev, clubBook: { ...prev.clubBook, sharing: next } } : prev);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shareClubBook: next }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? 'Could not change sharing.');
+      setData(prev => prev ? { ...prev, clubBook: { ...prev.clubBook, sharing: json.shareClubBook === true } } : prev);
+    } catch (e) {
+      setShareError(e instanceof Error ? e.message : 'Could not change sharing.');
+      // ⚠ Re-read the SERVER's answer rather than assuming the pre-toggle value. A request that
+      // committed but whose response was lost would otherwise leave this switch reading "Not
+      // sharing" while the club could in fact read this team's notes — of the two ways to be
+      // wrong, that is the one that matters, so the recovery asks rather than guesses.
+      await load();
+    } finally {
+      setSavingShare(false);
     }
   }
 
@@ -297,6 +331,53 @@ export default function TeamSettingsPage({
           </div>
         </form>
       </section>
+
+      {/* ── Club shared book (mockup 8a) ─────────────────────────────────── */}
+      {data.clubBook.showSwitch && (
+        <section className={styles.setupPanel} aria-labelledby="club-book-title">
+          <div className={styles.setupHeader}>
+            <div>
+              <p className={styles.setupKicker}>Scouting</p>
+              <h2 id="club-book-title" className={styles.setupTitle}>Share our book with the club</h2>
+            </div>
+            <Library size={18} style={{ color: 'var(--home-dim, rgba(255,255,255,0.3))' }} />
+          </div>
+          <p style={{ margin: '0 0 0.8rem', fontSize: '0.88rem', color: 'var(--white-70)', maxWidth: 560 }}>
+            Your book line and observations become readable by your club&apos;s other sharing
+            teams, labelled with your team and each writer&apos;s name.{' '}
+            <strong>You&apos;ll see their shared books while you share yours.</strong> Stop sharing
+            any time — your book disappears from their pages immediately.
+          </p>
+          {data.clubBook.canEdit ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={data.clubBook.sharing}
+                  disabled={savingShare}
+                  onChange={e => toggleClubBookSharing(e.target.checked)}
+                />
+                <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                  {data.clubBook.sharing ? 'Sharing with the club' : 'Not sharing'}
+                </span>
+              </label>
+              {shareError && <span className={styles.errorText}>{shareError}</span>}
+            </div>
+          ) : (
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--white-55)' }}>
+              {data.clubBook.sharing
+                ? 'This team is sharing its book with the club.'
+                : 'This team is not sharing its book with the club.'}{' '}
+              Only coaches with notes access can change it.
+            </p>
+          )}
+          <p style={{ margin: '0.7rem 0 0', fontSize: '0.8rem', color: 'var(--white-45)', maxWidth: 560 }}>
+            Each head coach decides for their own team — nothing is shared by surprise. Other
+            teams can read your book; they can never edit or remove anything in it, and you
+            can never change theirs. Sharing stops at your club&apos;s walls.
+          </p>
+        </section>
+      )}
 
       {/* ── Organization ─────────────────────────────────────────────────── */}
       {scope.isStandalone && (

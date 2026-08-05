@@ -12,6 +12,8 @@ import {
   scoutingTagsForSport, OPPONENT_SUMMARY_MAX,
 } from '@/lib/coach-opponents';
 import { assembleOpponentCard } from '@/lib/coach-opponent-card';
+import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
+import { assembleClubBookBlock } from '@/lib/coach-club-book-server';
 import { getStaffChatRoom } from '@/lib/chat-service';
 import { getSportPack } from '@/lib/sports';
 
@@ -45,6 +47,24 @@ export const GET = withObservability(async (_req: Request,
   if (!card) return NextResponse.json({ error: 'Not found' }, { status: 404 });
   const { entry, observations, insights } = card;
 
+  /**
+   * The club layer (Club Shared Book P1). Three keys open it and all three are checked HERE,
+   * server-side: the Club plan, the club admin's switch, and — reciprocity — this team's own
+   * sharing switch. A non-sharing team gets `club: null` in the payload, not a hidden block:
+   * content it may not read never leaves the database.
+   *
+   * Resolved AFTER the card so the sibling lookup can use the viewer's whole key space
+   * (`entry.key` plus every spelling merged into it) rather than the raw URL key alone.
+   */
+  const clubAccess = resolveClubBookAccessFor(ctx.org, team);
+  const club = clubAccess.canSeeClubLayer
+    ? await assembleClubBookBlock({
+        orgId: ctx.org.id,
+        viewerTeamId: teamId,
+        matchKeys: [entry.key, ...entry.aliasKeys],
+      })
+    : null;
+
   return NextResponse.json({
     opponent: { ...entry, observationCount: observations.length },
     observations,
@@ -53,6 +73,9 @@ export const GET = withObservability(async (_req: Request,
     // alias read, never a second fetch of the table.
     aliases: card.aliases,
     tags: scoutingTagsForSport(sportPack),
+    // The club's other sharing teams on this same opponent — read-only, labelled per team,
+    // never blended. Null = nothing to show (or no access), and the section is then absent.
+    club,
     canWriteSummary: canWriteScoutingSummary(assignment.capabilities),
     // The share door renders only where it can succeed: grant held AND the staff room
     // exists (a team below the staff-chat plan gate, or not yet healed, shows no button).

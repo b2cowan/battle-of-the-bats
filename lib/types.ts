@@ -260,6 +260,13 @@ export interface Organization {
   /** Optional external privacy-policy URL. The consent gate links to it when set (see
    *  lib/privacy-policy.ts getOrgPrivacyPolicyHref). NULL/undefined = no policy → no link. */
   privacyPolicyUrl?: string | null;
+  /**
+   * Club Shared Book (mig 227): has the club admin allowed this org's teams to share their
+   * opponent books with each other? Half of a two-key switch — each head coach still opts
+   * their own team in (`RepTeam.shareClubBook`). Defaults FALSE, including for a row that
+   * predates the migration, so the feature is absent until someone decides otherwise.
+   */
+  clubBookSharingEnabled: boolean;
 }
 
 export interface OrganizationMember {
@@ -1066,6 +1073,13 @@ export interface RepTeam {
    * It is NOT the enforcement point: every family/public read re-checks it server-side.
    */
   scheduleVisibility: 'staff' | 'families' | 'public_link';
+  /**
+   * Club Shared Book (mig 227): is this team sharing its opponent book with the club's other
+   * sharing teams? The head coach's own switch, and also the RECIPROCITY key — a team reads
+   * its siblings' books only while this is true for itself (owner ruling §8 Q2, enforced
+   * server-side, never in the client). Lives on the TEAM, not the season: a book spans years.
+   */
+  shareClubBook: boolean;
   createdAt: string;
   updatedAt: string;
 }

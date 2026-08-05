@@ -30,6 +30,8 @@ type OrganizationRow = {
   team_workspace_status: Organization['teamWorkspaceStatus'] | null;
   is_discoverable: boolean | null;
   free_floor: Organization['freeFloor'] | null;
+  /** Club Shared Book (mig 227). Optional so an unapplied migration reads false, not throws. */
+  club_book_sharing_enabled?: boolean | null;
 };
 
 function mapOrganization(row: OrganizationRow): Organization {
@@ -60,6 +62,7 @@ function mapOrganization(row: OrganizationRow): Organization {
     teamWorkspaceStatus: row.team_workspace_status ?? null,
     isDiscoverable: row.is_discoverable ?? true,
     freeFloor: row.free_floor ?? null,
+    clubBookSharingEnabled: row.club_book_sharing_enabled === true,
   };
 }
 

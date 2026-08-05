@@ -1,14 +1,66 @@
 {
-  "generated": "2026-08-04",
-  "total": 57,
+  "generated": "2026-08-05",
+  "total": 83,
   "counts": {
-    "tables": 3,
-    "columns": 26,
-    "indexes": 12,
-    "constraints": 16,
-    "rls": 0
+    "tables": 4,
+    "columns": 39,
+    "indexes": 16,
+    "constraints": 23,
+    "rls": 1
   },
   "items": [
+    {
+      "key": "check:only-dev:rep_team_game_moments.rep_team_game_moments_body_len",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:organizations.club_book_sharing_enabled",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.body",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.created_by_name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.event_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.happened_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.player_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.program_year_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_game_moments.team_id",
+      "sig": ""
+    },
     {
       "key": "column:only-dev:rep_team_opponent_aliases.created_at",
       "sig": ""
@@ -114,6 +166,38 @@
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_teams.share_club_book",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_game_moments.fk_rep_team_game_moments_created_by",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_game_moments.fk_rep_team_game_moments_event",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_game_moments.fk_rep_team_game_moments_org",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_game_moments.fk_rep_team_game_moments_player",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_game_moments.fk_rep_team_game_moments_team",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_game_moments.fk_rep_team_game_moments_year",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_game_moments.rep_team_game_moments_pkey",
+      "sig": ""
+    },
+    {
       "key": "constraint:only-dev:rep_team_opponent_aliases.fk_rep_team_opponent_aliases_opponent",
       "sig": ""
     },
@@ -178,6 +262,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:idx_rep_team_game_moments_event",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:idx_rep_team_game_moments_season_player",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:idx_rep_team_opponent_aliases_opponent",
       "sig": ""
     },
@@ -206,6 +298,14 @@
       "sig": ""
     },
     {
+      "key": "index:only-dev:idx_rep_teams_org_share_club_book",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_game_moments_pkey",
+      "sig": ""
+    },
+    {
       "key": "index:only-dev:rep_team_opponent_aliases_pkey",
       "sig": ""
     },
@@ -223,6 +323,10 @@
     },
     {
       "key": "index:only-dev:rep_team_opponents_team_name_uq",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_game_moments",
       "sig": ""
     },
     {

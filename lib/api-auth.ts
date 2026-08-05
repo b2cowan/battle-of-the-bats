@@ -57,6 +57,9 @@ type AuthOrgRow = {
   team_workspace_status: Organization['teamWorkspaceStatus'] | null;
   is_discoverable: boolean | null;
   free_floor: Organization['freeFloor'] | null;
+  /** Club Shared Book (mig 227). Optional on the row type so an unapplied migration reads as
+   *  undefined → false rather than throwing; the gate must fail CLOSED, never open. */
+  club_book_sharing_enabled?: boolean | null;
 };
 
 type AuthMemberOrgRow = {
@@ -153,6 +156,7 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     teamWorkspaceStatus: orgRow.team_workspace_status ?? null,
     isDiscoverable: orgRow.is_discoverable ?? true,
     freeFloor: orgRow.free_floor ?? null,
+    clubBookSharingEnabled: orgRow.club_book_sharing_enabled === true,
   };
 
   return { user, org: await applyEntitlementGrants(org) };

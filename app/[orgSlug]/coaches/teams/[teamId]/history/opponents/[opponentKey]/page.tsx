@@ -9,6 +9,10 @@ import {
   OPPONENT_SUMMARY_MAX, OPPONENT_OBSERVATION_MAX, type OpponentBookEntry,
 } from '@/lib/coach-opponents';
 import type { OpponentInsightLine } from '@/lib/coach-opponent-insights';
+import {
+  CLUB_TEAM_PREVIEW_COUNT, clubTeamExpanderLabel, clubObservationAttribution,
+  type ClubBookBlock, type ClubBookTeamBlock,
+} from '@/lib/coach-club-book';
 import type { RepTeamOpponentObservation } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
 import ScoutTagFilter from '@/components/coaches/ScoutTagFilter';
@@ -52,6 +56,63 @@ function ObservationRow({ o, showDate, manyAuthors, canErase, onRemove }: {
   );
 }
 
+/**
+ * One sibling team's block in "From your club" (mockup 8b) — READ-ONLY by construction: there
+ * is no eraser, no editor and no tag filter here, because curation stays with the team that
+ * wrote the words. Amber spine marks it as someone else's voice.
+ */
+function ClubTeamBlock({ block }: { block: ClubBookTeamBlock }) {
+  const [expanded, setExpanded] = useState(false);
+  const expander = clubTeamExpanderLabel(block);
+  const shown = expanded ? block.observations : block.observations.slice(0, CLUB_TEAM_PREVIEW_COUNT);
+
+  return (
+    <div className={styles.scoutClubTeam}>
+      <div className={styles.scoutClubTeamHead}>
+        <span className={styles.scoutClubTeamName}>{block.teamName}</span>
+        <span className={styles.scoutRecChip} data-tone={recordTone(block.record)}>
+          {recordChip(block.record)}
+        </span>
+      </div>
+      {block.summary && (
+        <div className={`${styles.scoutBookLine} ${styles.scoutClubBookLine}`}>
+          <span className={styles.scoutBookLabel}>Their book line</span>
+          <p className={styles.scoutBookRead}>{block.summary}</p>
+        </div>
+      )}
+      {shown.map(o => (
+        <div key={o.id} className={styles.scoutObs}>
+          <span className={styles.scoutObsBody}>
+            {o.body}
+            <span className={styles.scoutObsAuthor}> — {clubObservationAttribution(o, block.teamName)}</span>
+          </span>
+          {o.tag && <span className={styles.scoutObsTag}>{o.tag}</span>}
+        </div>
+      ))}
+      {expander && !expanded && (
+        <button type="button" className={styles.scoutPanelLink} onClick={() => setExpanded(true)}>
+          {expander}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** "From your club" — absent entirely when the club has nothing, never an empty shell. */
+function ClubSection({ club }: { club: ClubBookBlock }) {
+  return (
+    <div id="club" className={styles.scoutSeason}>
+      <div className={styles.scoutSeasonLabel}>From your club</div>
+      {club.teams.map(t => <ClubTeamBlock key={t.teamId} block={t} />)}
+      <p className={styles.scoutFootnote}>
+        Shared by your club&rsquo;s teams — each team curates its own book. Records stay each
+        team&rsquo;s own and are never averaged together; you can&rsquo;t edit or remove another
+        team&rsquo;s notes, and they can&rsquo;t touch yours.
+      </p>
+    </div>
+  );
+}
+
 interface CardPayload {
   opponent: OpponentBookEntry;
   observations: RepTeamOpponentObservation[];
@@ -59,6 +120,9 @@ interface CardPayload {
   insights: OpponentInsightLine[];
   /** This entry's merged-away spellings, for the "Same team as…" control's un-merge list. */
   aliases: { id: string; normalizedAlias: string }[];
+  /** The club's other sharing teams on this opponent (Club Shared Book). Null = nothing to
+   *  show, or this team isn't sharing — either way the section is absent. */
+  club: ClubBookBlock | null;
   tags: string[];
   canWriteSummary: boolean;
   canShareToStaffChat: boolean;
@@ -479,6 +543,10 @@ export default function CoachOpponentCardPage({
           ))}
         </div>
       )}
+
+      {/* The club layer (mockup 8b) — below the team's OWN timeline, deliberately: your bench's
+          words come first, the club's memory follows. */}
+      {data.club && <ClubSection club={data.club} />}
 
       {/* "Same team as…" (P2, mockup Stage 6) — identity housekeeping, notes-gated. The
           quiet control opens a picker of other book entries; the confirm step shows the two

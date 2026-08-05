@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, use } from 'react';
 import Link from 'next/link';
-import { Telescope } from 'lucide-react';
+import { Telescope, Library } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { recordChip, recordTone, resultLetter, hasMeetings, hasBookContent, type OpponentBookEntry } from '@/lib/coach-opponents';
@@ -26,6 +26,10 @@ export default function CoachesOpponentsPage({
   const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
 
   const [entries, setEntries] = useState<OpponentBookEntry[]>([]);
+  /** Club Shared Book: the keys the club has content on — ONE batched lookup served with the
+   *  list, never a query per row. Empty unless this team is itself sharing (reciprocity).
+   *  Held as a Set so typing in the search box (which re-renders) never rebuilds it. */
+  const [clubKeys, setClubKeys] = useState<Set<string>>(() => new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [query, setQuery] = useState('');
@@ -38,7 +42,12 @@ export default function CoachesOpponentsPage({
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Could not load opponents');
         return res.json();
       })
-      .then(data => { if (!cancelled) { setEntries(data.opponents ?? []); setError(''); } })
+      .then(data => {
+        if (cancelled) return;
+        setEntries(data.opponents ?? []);
+        setClubKeys(new Set<string>(data.clubKeys ?? []));
+        setError('');
+      })
       .catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : 'Could not load opponents'); })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
@@ -105,6 +114,18 @@ export default function CoachesOpponentsPage({
                     {e.observationCount > 0 && ` · ${e.observationCount} observation${e.observationCount === 1 ? '' : 's'}`}
                   </span>
                 </span>
+                {/* Club Shared Book: your club knows this opponent too. A marker, not a second
+                    count — the number lives on the card, where the teams are named. */}
+                {clubKeys.has(e.key) && (
+                  <span
+                    className={styles.scoutClubBadge}
+                    role="img"
+                    aria-label={`Your club has shared notes on ${e.displayName}`}
+                    title={`Your club has shared notes on ${e.displayName}`}
+                  >
+                    <Library size={13} aria-hidden />
+                  </span>
+                )}
                 <span className={styles.scoutRecChip} data-tone={recordTone(e.record)} title={`Record vs ${e.displayName} (${sportPack.label.toLowerCase()} record rule — scrimmages not counted)`}>
                   {recordChip(e.record)}
                 </span>

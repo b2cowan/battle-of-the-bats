@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Check, Share2, Trophy } from 'lucide-react';
+import { Check, Share2, Trophy, Library } from 'lucide-react';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   recordChip, recordTone, resultLetter, normalizeOpponentName,
@@ -52,6 +52,9 @@ export default function OpponentScoutingPanel({
     observations: RepTeamOpponentObservation[];
     tags: string[];
     canShareToStaffChat?: boolean;
+    /** Club Shared Book: only the COUNT is used here — the drawer stays a glance, and no
+     *  sibling prose is rendered inline (plan §4.3). */
+    club?: { observationCount: number } | null;
   } | null>(null);
   const [error, setError] = useState('');
   const [obsBody, setObsBody] = useState('');
@@ -243,6 +246,18 @@ export default function OpponentScoutingPanel({
       ))}
       {shownObs.length > 2 && (
         <p className={styles.scoutFootnote}>+ {shownObs.length - 2} more on the full page.</p>
+      )}
+
+      {/* Club Shared Book (mockup 8c) — ONE quiet line, only when the club actually has
+          something, deep-linking to the card's club section. No sibling prose inline: the
+          drawer is Friday night's glance, and the masthead nudge + practice bridge keep
+          speaking for this team's own book only. */}
+      {(data.club?.observationCount ?? 0) > 0 && (
+        <Link href={`${base}/history/opponents/${key}#club`} className={styles.scoutClubTease}>
+          <Library size={13} aria-hidden />
+          Your club has {data.club!.observationCount} more observation
+          {data.club!.observationCount === 1 ? '' : 's'} on {opponent.displayName} ›
+        </Link>
       )}
 
       {savedCount > 0 && (

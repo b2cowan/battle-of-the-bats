@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { Tag, ChevronLeft, Pencil, Trash2, GitMerge, Plus, Check, X, Archive, RotateCcw } from 'lucide-react';
+import { Tag, ChevronLeft, Pencil, Trash2, GitMerge, Plus, Check, X, Archive, RotateCcw, Library } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
 import type { RepTeamTag, RepTeamAwardType, RepTeamDrill } from '@/lib/types';
@@ -467,6 +467,98 @@ function SharedDrillSection({ orgQuery, canWrite }: { orgQuery: string; canWrite
   );
 }
 
+/**
+ * Club Shared Book — the club admin's half of the two-key switch (owner ruling §8 Q1). Lives
+ * here because this page is already "what crosses team lines in this club". Off = the per-team
+ * switch does not appear for any head coach and no club layer is assembled anywhere.
+ *
+ * ⚠ ABSENT, not locked, off the Club plan: the whole section renders nothing when the server
+ * says the feature isn't included — the ruling is that a customer never sees a door they
+ * cannot open. The server GET is the only source of that answer; the client never guesses
+ * from a plan id.
+ */
+function ClubBookSharingSection({ orgQuery }: { orgQuery: string }) {
+  const [available, setAvailable] = useState(false);
+  const [enabled, setEnabled] = useState(false);
+  const [canWrite, setCanWrite] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  /** Re-read the server's answer. Used on mount, and as the recovery path after a failed
+   *  toggle — the switch must never settle on a value the client merely assumed. */
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/org/coach-settings${orgQuery}`);
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      setAvailable(!!data.club_book?.available);
+      setEnabled(!!data.club_book?.enabled);
+      setCanWrite(!!data.can_write);
+    } catch {
+      /* absent rather than an error state — a settings switch that failed to load is not
+         news the admin can act on, and showing it wrongly-off would be worse. */
+    } finally {
+      setLoaded(true);
+    }
+  }, [orgQuery]);
+
+  // Deferred a microtask, the idiom the other coach settings screens use — the first setState
+  // then lands outside the effect's own commit rather than inside it.
+  useEffect(() => { void Promise.resolve().then(load); }, [load]);
+
+  if (!loaded || !available) return null;
+
+  async function toggle(next: boolean) {
+    setSaving(true);
+    setError('');
+    setEnabled(next); // optimistic
+    try {
+      const res = await fetch(`/api/admin/org/coach-settings${orgQuery}`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ club_book_sharing_enabled: next }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? 'Could not change this setting.');
+      setEnabled(json.club_book_sharing_enabled === true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not change this setting.');
+      // Ask the server rather than assuming the pre-toggle value: a write that committed but
+      // whose response was lost would otherwise show "Off" while the club is in fact sharing.
+      await load();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <section style={{ padding: '1rem', marginBottom: '1.25rem', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', justifyContent: 'space-between', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '0.6rem' }}>
+          <Library size={18} style={{ color: 'var(--white-45)', marginTop: 2 }} />
+          <div>
+            <p style={{ margin: 0, fontWeight: 600 }}>Teams can share their opponent books with each other</p>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.85rem', color: 'var(--white-55)', maxWidth: 620 }}>
+              When on, each head coach can choose to share their team&apos;s scouting book — book
+              line, observations, and their record against each opponent — with your club&apos;s
+              other sharing teams. A coach sees the club&apos;s books only while sharing their own,
+              every note stays labelled with its team and writer, and no team can ever edit or
+              delete another team&apos;s notes. Nothing is shared until a head coach opts in, and
+              nothing ever leaves your club.
+            </p>
+          </div>
+        </div>
+        <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', cursor: canWrite ? 'pointer' : 'default', opacity: canWrite ? 1 : 0.6 }}>
+          <input type="checkbox" checked={enabled} disabled={!canWrite || saving}
+            onChange={e => toggle(e.target.checked)} />
+          <span style={{ fontSize: '0.85rem' }}>{enabled ? 'On' : 'Off'}</span>
+        </label>
+      </div>
+      {error && <p className={styles.errorText} style={{ marginTop: '0.5rem' }}>{error}</p>}
+    </section>
+  );
+}
+
 export default function AdminSharedLibraryPage() {
   const { currentOrg, userRole } = useOrg();
   const orgSlug = currentOrg?.slug ?? '';
@@ -492,6 +584,8 @@ export default function AdminSharedLibraryPage() {
       <p className={styles.muted} style={{ margin: '0 0 1.25rem', fontSize: '0.85rem', maxWidth: 640 }}>
         Curate a small set of tags, award types and drills shared across every team in your organization. They appear in each team&rsquo;s picker alongside that team&rsquo;s own private ones. Teams can use them but can&rsquo;t rename or delete them — that stays here.
       </p>
+
+      <ClubBookSharingSection orgQuery={orgQuery} />
 
       <TagSection kind="game" label="Game tags" hint="Applied to games on the schedule (e.g. Provincials, Rivalry Week)." orgQuery={orgQuery} canWrite={canWrite} />
       <TagSection kind="expense" label="Money tags" hint="Applied to expenses in the money area (e.g. Winter dome, Fundraiser)." orgQuery={orgQuery} canWrite={canWrite} />

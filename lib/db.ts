@@ -2034,6 +2034,9 @@ function mapOrg(r: any): Organization {
     isDiscoverable:        r.is_discoverable ?? true,
     freeFloor:             r.free_floor ?? null,
     privacyPolicyUrl:      r.privacy_policy_url ?? null,
+    // Club Shared Book (mig 227). Absent column / null → FALSE, never "on": the gate must
+    // fail closed while the migration is unapplied, not open a cross-team read by accident.
+    clubBookSharingEnabled: r.club_book_sharing_enabled === true,
   };
 }
 
@@ -3147,6 +3150,8 @@ function mapRepTeam(r: any): RepTeam {
     // Defaults to the column default when a row predates mig 215 — never to something more
     // permissive.
     scheduleVisibility: r.schedule_visibility ?? 'families',
+    // Club Shared Book (mig 227) — same fail-closed default as the org flag above.
+    shareClubBook: r.share_club_book === true,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -9652,6 +9657,13 @@ function mapRepTeamOpponentObservation(row: Record<string, unknown>): RepTeamOpp
 }
 
 /**
+ * How much of a team's history the opponent book reads. ONE constant, because the club layer
+ * recomputes a SIBLING team's record with the same builder: two different caps would let the
+ * same team's record read differently on its own page and in a club block.
+ */
+const OPPONENT_BOOK_EVENT_LIMIT = 1000;
+
+/**
  * ⚠ Cross-season read feeding a LIVE instrument (the Scouting Book) — the
  * getRepTeamPracticePlansAcrossSeasons pattern, owner-ratified 2026-08-04: team-scoped
  * because a team is permanent and only its program year turns over; reads game events from
@@ -9679,7 +9691,7 @@ export async function getRepTeamGameEventsForOpponentBook(
     .in('event_type', [...BOOK_GAME_EVENT_TYPES, 'external_tournament'])
     .not('opponent', 'is', null)
     .order('starts_at', { ascending: false })
-    .limit(opts?.limit ?? 1000);
+    .limit(opts?.limit ?? OPPONENT_BOOK_EVENT_LIMIT);
   if (error) throw error;
   return (data ?? []).map(r => ({
     id: r.id, name: r.name, eventType: r.event_type, startsAt: r.starts_at,
@@ -9948,6 +9960,175 @@ export async function deleteRepTeamOpponentObservation(teamId: string, observati
     // team_id scoping alongside the PK: defense-in-depth like every sibling delete helper.
     .eq('id', observationId).eq('team_id', teamId);
   if (error) throw error;
+}
+
+// ─── Club Shared Book (mig 227) — the sibling reads ──────────────────────────────────────
+// The club layer is a READ-TIME overlay: these five helpers fetch other teams' existing book
+// rows, and nothing here writes to any book.
+//
+// ⚠ **EVERY ONE OF THEM TAKES `orgId` AND FILTERS ON IT**, even where the team-id list was
+// already resolved from an org-scoped query. The whole feature is one promise — book content
+// never crosses an organization — and a promise enforced only by the caller is a promise that
+// survives exactly until someone writes a second caller. The redundant predicate is the point
+// (tests/unit/coach-club-book.test.ts asserts the two-org fixture).
+
+/** How far back a SIBLING team's history is read for its record against one opponent. Same
+ *  shape as the viewer's own book cap, one notch lower: a club block is a briefing. */
+/** The teams in this org that are SHARING, excluding the viewer's own. Archived teams keep
+ *  their history out of the club layer — a folded team is not a voice in this season. */
+export async function getClubSharingSiblingTeams(
+  orgId: string, excludeTeamId: string,
+): Promise<{ id: string; name: string }[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams').select('id, name')
+    .eq('org_id', orgId)
+    .eq('share_club_book', true)
+    .eq('is_archived', false)
+    .neq('id', excludeTeamId)
+    .order('name');
+  if (error) throw error;
+  return (data ?? []).map(r => ({ id: r.id as string, name: r.name as string }));
+}
+
+/** Minted opponent rows for a SET of teams — one batched read, never a per-team loop. */
+export async function getRepTeamOpponentsForTeams(
+  orgId: string, teamIds: string[],
+): Promise<RepTeamOpponent[]> {
+  if (teamIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponents').select('*')
+    .eq('org_id', orgId).in('team_id', teamIds);
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamOpponent);
+}
+
+/** Aliases for a SET of teams — the sibling side of "their spelling of the same team". */
+export async function getRepTeamOpponentAliasesForTeams(
+  orgId: string, teamIds: string[],
+): Promise<{ opponentId: string; teamId: string; normalizedAlias: string }[]> {
+  if (teamIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponent_aliases').select('opponent_id, team_id, normalized_alias')
+    .eq('org_id', orgId).in('team_id', teamIds);
+  if (error) throw error;
+  return (data ?? []).map(r => ({
+    opponentId: r.opponent_id as string,
+    teamId: r.team_id as string,
+    normalizedAlias: r.normalized_alias as string,
+  }));
+}
+
+/**
+ * Observations for a SET of minted opponents, newest first, grouped by opponent id. `cap`
+ * bounds what any ONE sibling team can contribute to a single card — the club layer is a
+ * briefing, and an unbounded read grows with every note every team ever wrote.
+ * `total` is the true count per opponent (what the "All {n} from {team}" label promises),
+ * counted from the same read rather than a second round trip.
+ */
+export async function getRepTeamOpponentObservationsForOpponents(
+  orgId: string, opponentIds: string[], cap: number,
+): Promise<Record<string, { observations: RepTeamOpponentObservation[]; total: number }>> {
+  if (opponentIds.length === 0) return {};
+  // ⚠ The cap is applied by the QUERY, per opponent — not by slicing an unbounded result.
+  // A shared `.in(…).limit(cap)` cannot do this: one prolific opponent would eat the budget
+  // and silently understate every other. `opponentIds` is 1–3 in practice (the matched
+  // siblings only), so a bounded read each, concurrently, is cheaper than one read that
+  // drags every note a club ever wrote about this team across the wire. The true totals come
+  // from a separate id-only pass — uuids, no bodies.
+  const pages = await Promise.all(opponentIds.map(async id => {
+    // The page and its own total, asked together: a `head: true` count returns no rows at all,
+    // so the true total can never be understated by a page-size ceiling the way counting
+    // returned rows would be — and `Math.max` keeps the label honest if a concurrent delete
+    // lands between the two reads (the count may only ever describe MORE than we are showing).
+    const [{ data, error }, { count, error: countError }] = await Promise.all([
+      supabaseAdmin
+        .from('rep_team_opponent_observations').select('*')
+        .eq('org_id', orgId).eq('opponent_id', id)
+        .order('created_at', { ascending: false })
+        .limit(cap),
+      supabaseAdmin
+        .from('rep_team_opponent_observations').select('id', { count: 'exact', head: true })
+        .eq('org_id', orgId).eq('opponent_id', id),
+    ]);
+    if (error) throw error;
+    if (countError) throw countError;
+    const rows = (data ?? []).map(mapRepTeamOpponentObservation);
+    return { id, rows, total: Math.max(count ?? rows.length, rows.length) };
+  }));
+
+  const out: Record<string, { observations: RepTeamOpponentObservation[]; total: number }> = {};
+  for (const page of pages) {
+    if (page.rows.length === 0) continue;
+    out[page.id] = { observations: page.rows, total: page.total };
+  }
+  return out;
+}
+
+/** Observation totals by opponent id across a SET of teams — the opponents-list badge's one
+ *  batched lookup (never a query per row). Ids only; no bodies leave the database. */
+export async function getRepTeamOpponentObservationCountsForTeams(
+  orgId: string, teamIds: string[],
+): Promise<Record<string, number>> {
+  if (teamIds.length === 0) return {};
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_opponent_observations').select('opponent_id')
+    .eq('org_id', orgId).in('team_id', teamIds);
+  if (error) throw error;
+  const counts: Record<string, number> = {};
+  for (const r of data ?? []) counts[r.opponent_id] = (counts[r.opponent_id] ?? 0) + 1;
+  return counts;
+}
+
+/**
+ * Game events for a SET of teams, grouped by team — the sibling records, computed through the
+ * SAME buildOpponentBook the viewer's own card uses so a club block can never spell a record
+ * differently than that team's own page does.
+ *
+ * Called only for teams that ALREADY matched the opponent (usually one or two), never for
+ * every sharing team in the club: the match is decided from the cheap opponent/alias read
+ * first, and this heavier read follows it.
+ */
+export async function getRepTeamGameEventsForOpponentBookByTeam(
+  teamIds: string[],
+): Promise<Record<string, Awaited<ReturnType<typeof getRepTeamGameEventsForOpponentBook>>>> {
+  const out: Record<string, Awaited<ReturnType<typeof getRepTeamGameEventsForOpponentBook>>> = {};
+  if (teamIds.length === 0) return out;
+  // Deliberately per-team rather than one `.in()` query: the per-team cap that keeps a single
+  // team's history bounded (getRepTeamGameEventsForOpponentBook's own limit) cannot be
+  // expressed in a combined query — a shared LIMIT would let one long-running team starve
+  // the others of rows and silently understate their records. The list is short by
+  // construction (matched siblings only), and the reads run concurrently.
+  const results = await Promise.all(
+    // ⚠ The SAME cap the team's own page reads under. A club block states another team's
+    // record; reading fewer of their games than their own opponent page does would print a
+    // different number for the same team on two screens one tap apart — which is exactly the
+    // disagreement `buildOpponentBook` reuse exists to prevent.
+    teamIds.map(id => getRepTeamGameEventsForOpponentBook(id, { limit: OPPONENT_BOOK_EVENT_LIMIT })),
+  );
+  teamIds.forEach((id, i) => { out[id] = results[i]; });
+  return out;
+}
+
+/** The head coach's own switch (`notes`-gated in the route). Returns the stored value. */
+export async function setRepTeamShareClubBook(teamId: string, sharing: boolean): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_teams')
+    .update({ share_club_book: sharing, updated_at: new Date().toISOString() })
+    .eq('id', teamId)
+    .select('share_club_book').single();
+  if (error) throw error;
+  return data.share_club_book === true;
+}
+
+/** The club admin's switch (owner/admin-gated in the route). Returns the stored value. */
+export async function setOrgClubBookSharingEnabled(orgId: string, enabled: boolean): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('organizations')
+    .update({ club_book_sharing_enabled: enabled })
+    .eq('id', orgId)
+    .select('club_book_sharing_enabled').single();
+  if (error) throw error;
+  return data.club_book_sharing_enabled === true;
 }
 
 import type { RepTeamGameMoment } from './types';

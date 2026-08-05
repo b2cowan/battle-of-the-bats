@@ -7011,6 +7011,15 @@
     "ordinal_position": 36
   },
   {
+    "table_name": "organizations",
+    "column_name": "club_book_sharing_enabled",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 37
+  },
+  {
     "table_name": "plan_config_overrides",
     "column_name": "id",
     "data_type": "uuid",
@@ -12051,6 +12060,105 @@
     "ordinal_position": 24
   },
   {
+    "table_name": "rep_team_game_moments",
+    "column_name": "id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": "gen_random_uuid()",
+    "ordinal_position": 1
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "team_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 2
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "org_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 3
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "program_year_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 4
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "event_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 5
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "player_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 6
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "body",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": null,
+    "ordinal_position": 7
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "happened_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 8
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "created_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "created_by_name",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_team_game_moments",
+    "column_name": "created_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "NO",
+    "column_default": "now()",
+    "ordinal_position": 11
+  },
+  {
     "table_name": "rep_team_groups",
     "column_name": "id",
     "data_type": "uuid",
@@ -13255,6 +13363,15 @@
     "is_nullable": "NO",
     "column_default": "'families'::text",
     "ordinal_position": 17
+  },
+  {
+    "table_name": "rep_teams",
+    "column_name": "share_club_book",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 18
   },
   {
     "table_name": "rep_tryout_evaluator_sessions",

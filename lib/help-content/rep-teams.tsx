@@ -207,16 +207,21 @@ const repTeamsHelp: HelpPageContent = {
     {
       id: 'shared-library',
       group: 'Org-level tools',
-      heading: 'Shared tags & awards library',
-      summary: 'Curate game tags, money tags, and award types that every team shares — so your whole club or league speaks one vocabulary.',
-      keywords: ['shared library', 'shared tags', 'shared awards', 'org tags', 'org award types', 'standardize tags', 'organization wide tags', 'game tags', 'money tags', 'award types'],
-      searchText: 'shared library shared tags shared awards org tags organization wide tags money tags game tags award types standardize vocabulary across teams provincials rivalry winter dome mvp hustle blue chip curate rename merge retire admin owner shared tag every team picker',
+      heading: 'Shared library: tags, awards & opponent books',
+      summary: 'Curate game tags, money tags, and award types that every team shares — and decide whether your teams may share their opponent scouting books with each other.',
+      keywords: ['shared library', 'shared tags', 'shared awards', 'org tags', 'org award types', 'standardize tags', 'organization wide tags', 'game tags', 'money tags', 'award types',
+        // Club Shared Book — an admin looks for this by what a coach asked them for ("let the
+        // teams share scouting"), not by the feature's name. Search reads keywords, not prose.
+        'share opponent books', 'club shared book', 'teams share scouting', 'scouting across teams',
+        'opponent book sharing', 'let coaches see each other', 'club scouting memory'],
+      searchText: 'shared library shared tags shared awards org tags organization wide tags money tags game tags award types standardize vocabulary across teams provincials rivalry winter dome mvp hustle blue chip curate rename merge retire admin owner shared tag every team picker teams can share their opponent books with each other club shared book scouting across teams opponent book sharing switch off by default two switches admin enables head coach opts in each team decides read only cannot edit another team notes labelled with team and writer see theirs while sharing yours stop sharing immediately never leaves the organization club plan only',
       content: (
         <>
           <p>Coaches build their own <strong>tags</strong> (labels on games and expenses) and <strong>award types</strong> (MVP, Hustle, etc.) team by team. If you&apos;d rather every team use the same vocabulary — one &ldquo;Provincials&rdquo; game tag, one &ldquo;Winter dome&rdquo; money tag, one league-wide &ldquo;MVP&rdquo; award — curate them once in the <strong>Shared library</strong>.</p>
           <p>Open <strong>Rep Teams → Shared Library</strong>. Three lists sit side by side: <strong>Game tags</strong>, <strong>Money tags</strong>, and <strong>Award types</strong>. Add, rename, merge, or delete tags; add award types (with an icon), edit them, and retire or restore them — the same tools a coach has for their own, but applied org-wide.</p>
           <p>Whatever you add here appears in <strong>every team&apos;s</strong> picker in <strong>blue</strong> (each team&apos;s own private tags stay green, with a small legend). Coaches can <strong>apply</strong> shared tags and hand out shared awards, but they can&apos;t rename or remove them — that stays with you. A team&apos;s own tags keep working exactly as before, right alongside the shared ones.</p>
           <p>Managing the shared library is limited to <strong>owners and admins</strong>. It replaces the idea of a coach &ldquo;promoting&rdquo; their own tag — instead of collecting tags from many teams, you author the shared set from one place.</p>
+          <p><strong>Opponent books: letting your teams pool what they know (Club plan).</strong> At the top of the same page sits <strong>&ldquo;Teams can share their opponent books with each other&rdquo;</strong>. Off by default. Turn it on and each head coach gets a switch of their own in <strong>Team settings</strong> — nothing is shared until a coach opts their team in, so no coach&apos;s candid notes become club-visible by surprise. Once two teams are sharing, each sees a labelled, <strong>read-only</strong> &ldquo;From your club&rdquo; section on an opponent&apos;s page: the other team&apos;s record, book line and observations, each signed with the team and the writer. No team can edit or delete another team&apos;s notes — curation stays with the coach who wrote them. A coach sees the club&apos;s books only <em>while</em> sharing their own, and switching off removes their book from everyone else&apos;s pages straight away. It never crosses your organization: another club&apos;s books are never visible here, and yours are never visible there. This switch is part of the <strong>Club plan</strong>; on other plans it isn&apos;t shown.</p>
         </>
       ),
       faqs: [
@@ -228,6 +233,19 @@ const repTeamsHelp: HelpPageContent = {
           ),
           answerText: 'Go to Rep Teams then Shared Library and add them under Game tags, Money tags, or Award types. Anything you add shows in every team\'s picker in blue; coaches can apply it but only an owner or admin can rename, merge, retire, or remove it. Each team\'s own tags still work alongside the shared ones. This is the org-wide alternative to each team inventing its own near-duplicate labels. Managing the shared library is limited to owners and admins.',
           keywords: ['shared library', 'org wide tags', 'standardize tags', 'shared awards', 'every team same tags', 'promote tag'],
+        },
+        {
+          id: 'faq-club-book-sharing',
+          question: 'A coach asked me to let our teams see each other’s scouting notes. How?',
+          answer: (
+            <>
+              <p>Go to <strong>Rep Teams → Shared Library</strong> and turn on <strong>&ldquo;Teams can share their opponent books with each other&rdquo;</strong>. That switch alone shares nothing — it gives each head coach a switch of their own in <strong>Team settings</strong>, and only the teams that opt in take part.</p>
+              <p>Once two teams are sharing, each sees the other&apos;s record, book line and observations on an opponent&apos;s page, labelled with the team and the writer, and <strong>read-only</strong> — nobody can edit or delete another team&apos;s notes. A coach sees the club&apos;s books only while sharing their own, and switching off removes their book from everyone else&apos;s pages straight away.</p>
+              <p>It never crosses your organization, and it&apos;s part of the <strong>Club plan</strong> — on other plans the switch isn&apos;t shown.</p>
+            </>
+          ),
+          answerText: 'Go to Rep Teams then Shared Library and turn on "Teams can share their opponent books with each other". That switch alone shares nothing — it gives each head coach a switch of their own in Team settings, and only the teams that opt in take part. Once two teams are sharing, each sees the other\'s record, book line and observations on an opponent\'s page, labelled with the team and the writer, and read-only: nobody can edit or delete another team\'s notes. A coach sees the club\'s books only while sharing their own, and switching off removes their book from everyone else\'s pages straight away. It never crosses your organization, and it is part of the Club plan — on other plans the switch is not shown. Only owners and admins can change it.',
+          keywords: ['share opponent books', 'teams share scouting', 'club shared book', 'scouting across teams', 'let coaches see each other', 'opponent book sharing', 'club scouting memory'],
         },
       ],
     },

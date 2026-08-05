@@ -6,12 +6,14 @@ import {
   getActiveRepProgramYear,
   updateRepTeam,
   updateRepProgramYear,
+  setRepTeamShareClubBook,
 } from '@/lib/db';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import type { Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { denyUnless } from '@/lib/coach-capabilities';
+import { denyUnless, canWriteScoutingSummary } from '@/lib/coach-capabilities';
+import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -63,6 +65,7 @@ export const GET = withObservability(async (_req: Request,
   const { ctx, team, assignment, programYear } = resolved;
 
   const scope = computeScope(ctx.org, assignment.coachRole);
+  const clubAccess = resolveClubBookAccessFor(ctx.org, team);
 
   return NextResponse.json({
     team: { id: team.id, name: team.name, division: team.division, sport: team.sport },
@@ -72,6 +75,17 @@ export const GET = withObservability(async (_req: Request,
     },
     nextYearDefault: programYear.year + 1,
     scope,
+    /**
+     * Club Shared Book — the head coach's switch. `showSwitch` is false unless BOTH the Club
+     * plan includes the feature and the club admin has turned sharing on for the org: a coach
+     * must never be offered a switch that would do nothing, and a non-Club org sees no trace
+     * of the feature at all (absent, not locked — owner ruling §8 Q3).
+     */
+    clubBook: {
+      showSwitch: clubAccess.showTeamSwitch,
+      sharing: clubAccess.teamSharing,
+      canEdit: canWriteScoutingSummary(assignment.capabilities),
+    },
     // Assistant Coaches: the caller's effective capability set + their role, so the client can
     // hide/disable ungranted areas (defense-in-depth — the routes also enforce server-side).
     coachRole: assignment.coachRole,
@@ -85,9 +99,44 @@ export const PATCH = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error!;
-  const { ctx, assignment, programYear } = resolved;
+  const { ctx, team, assignment, programYear } = resolved;
 
   const body = await req.json().catch(() => ({}));
+
+  /**
+   * Club Shared Book — "Share our book with the club" (owner ruling §8 Q1: the club admin
+   * enables, each head coach opts their own team in). `notes`-gated, the same grant that owns
+   * the book line, because this decides whose words become club-readable.
+   *
+   * ⚠ The org-level switch is re-checked HERE and not merely on the GET: a stale tab, or a
+   * hand-rolled request, must not be able to turn on sharing in an org that never allowed it.
+   */
+  if ('shareClubBook' in body) {
+    const denied = denyUnless(
+      canWriteScoutingSummary(assignment.capabilities),
+      'Only coaches with notes access can change book sharing.',
+    );
+    if (denied) return denied;
+    const access = resolveClubBookAccessFor(ctx.org, team);
+    if (!access.showTeamSwitch) {
+      return NextResponse.json(
+        { error: 'Your club has not turned on opponent-book sharing.' },
+        { status: 403 },
+      );
+    }
+    if (typeof body.shareClubBook !== 'boolean') {
+      return NextResponse.json({ error: 'shareClubBook must be true or false' }, { status: 400 });
+    }
+    // A JSON error rather than an unhandled throw: the client reverts its optimistic switch on
+    // any non-ok response, and a switch that governs who may read this team's notes must never
+    // be left showing a state the server did not accept.
+    try {
+      const sharing = await setRepTeamShareClubBook(teamId, body.shareClubBook);
+      return NextResponse.json({ ok: true, shareClubBook: sharing });
+    } catch {
+      return NextResponse.json({ error: 'Could not change book sharing.' }, { status: 500 });
+    }
+  }
 
   // Lineup season-default caps (P3) — an OPERATIONAL setting, gated on the lineups capability
   // (a head coach or an assistant granted lineups). Program-year scoped.

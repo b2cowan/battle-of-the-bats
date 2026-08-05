@@ -878,6 +878,99 @@ arithmetic, nothing is stored).
 
 ---
 
+### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **BUILT 2026-08-05, dev, UNCOMMITTED** · ⚠ mig 227 DEV-ONLY
+*Teams inside one club can opt in to read each other's opponent books. The 12U B coach opens
+Thunder's page and inherits the A team's read on them — labelled, read-only, never blended.*
+
+**Two switches have to be on before anything appears**, which is most of what this QA proves.
+Setup, in order: (1) the org must be on the **Club** plan; (2) **Rep Teams → Shared library →
+"Teams can share their opponent books with each other" → On**; (3) on **each** team, **Team
+settings → "Share our book with the club" → on**. You need **two teams in the same club** with
+some scouting content, ideally on the **same opponent name**. ⚠ Dev-server **restart required**
+first (new files + shared modules + a migration). ⚠ **mig 227 is applied to DEV only** — do not
+promote this to master before applying it to prod.
+
+- [ ] **🖥 The admin's key:** on a Club-plan org, Rep Teams → Shared library shows the sharing
+      switch at the top with the plain-language deal. Turn it **off** → open any team's
+      **Team settings**: the "Share our book with the club" section is **absent entirely**
+      (not greyed, not locked). Turn it back on → the section appears.
+- [ ] **🖥 The coach's key + the words:** on team A, Team settings → the section reads *"Your
+      book line and observations become readable by your club's other sharing teams, labelled
+      with your team and each writer's name. **You'll see their shared books while you share
+      yours.** Stop sharing any time — your book disappears from their pages immediately."*
+      Switch it on → "Sharing with the club".
+- [ ] **🖥 Both ways:** turn sharing on for team A **and** team B. On team B, open
+      **Insights → Opponents → {shared opponent}**: below B's own timeline a **"From your club"**
+      section appears with an **amber left edge** (your own book line stays lime/olive), showing
+      **A's name**, **A's record chip**, **A's book line** labelled *"Their book line"*, and
+      A's latest observations each signed **"— {writer} · {team}"**. Now do the reverse on team
+      A — B's block should appear there. **Records are separate per team, never added together.**
+- [ ] **🖥 Read-only across team lines:** in that club block there is **no eraser, no editor,
+      no tag filter** — nothing you can click to change another team's words. Your own timeline
+      above still has all of its controls.
+- [ ] **🖥 "All N from {team}":** give one team **3+ observations** on the shared opponent →
+      the sibling block shows **two**, then an "All 5 from 12U A ›" link that expands the rest
+      in place.
+- [ ] **📱 The glance (phone, ≤640):** on a game against that opponent, open the schedule
+      drawer's **Scouting** tab → one quiet **amber** line: *"Your club has N more observations
+      on {opponent} ›"*. Tap it → lands on the opponent card's club section. **No sibling notes
+      are shown inline in the drawer**, and the masthead nudge / practice-week panel still
+      speak only for your own team's book.
+- [ ] **🖥 The list marker:** Insights → Opponents — the row for that opponent wears a small
+      amber book icon (hover: "Your club has shared notes on …"). A row the club knows nothing
+      about wears none.
+- [ ] **⚠ RECIPROCITY (the one most likely to be got wrong):** turn team B's switch **off**,
+      leaving A's on. On B: the opponent card's club section is **gone**, the drawer line is
+      **gone**, the list marker is **gone** — immediately, no cache to clear. Meanwhile on
+      **A**, B's block has also disappeared (B stopped sharing). Turn B back on → everything
+      returns.
+- [ ] **⚠ THE GATE (non-Club org):** on a **Team-plan / standalone Premium** team, or any
+      non-Club org: Shared library has **no** sharing switch, Team settings has **no** section,
+      opponent cards have **no** club layer, and there is **no locked tease or upsell anywhere**.
+      The feature should be completely invisible.
+- [ ] **🖥 The archive is untouched:** switch to a **completed** season — no club layer appears
+      anywhere, and Opponents is still absent from the archived-season nav (the book is a
+      live-season instrument, unchanged by this build).
+- [ ] **🖥 Different spellings still find each other:** on team A, merge a second spelling
+      ("Thunder 12U") into the shared opponent via "Same team as…". On team B, open the
+      opponent under **its** spelling → A's block should still appear.
+- [ ] **🖥 Nothing leaks between clubs:** if you have a second organization with scouting
+      content, confirm none of it ever appears in this club's layer. *(A two-org fixture test
+      asserts this in code as well.)*
+- [ ] **🖥 The record agrees on both screens** *(review fix — the one you'd most likely notice)*:
+      note the record chip on team A's block inside team B's club section, then open **team A's
+      own** opponent page for that same opponent. **The two must read the same.** Best tested on
+      a club team with several seasons of games behind it.
+- [ ] **🖥 Two spellings, two book lines, neither lost** *(review fix)*: on team A, write a book
+      line on the opponent, then write a **different** book line on a second spelling of the same
+      team (don't merge them). On team B, A's block should show **both lines**, one per line —
+      not just the first.
+- [ ] **🖥 A club hiccup can't break your own page** *(review fix, best-effort to test)*: the
+      club section is an extra, never a blocker. If it ever fails to load, your own record, book
+      line and observations must still render normally — you'd see the page minus the club
+      section, never an error page.
+- [ ] **🖥 The guide explains it:** open the coaches **Help** guide → search *"from your club"*.
+      The scouting section should describe the club layer and the two switches, and two FAQs
+      should answer *"what exactly do the other coaches see?"* and *"why don't I have that
+      section?"*. On the admin side, the **Rep Teams** guide's Shared library section should
+      describe your switch. *(Search only matches keywords, so this is a real check.)*
+
+*(Built to mockup artifact `def742fe-…` Stage 8, owner-signed-off 2026-08-04. Deviation to flag:
+none — 8a/8b/8c are built as drawn. The one added judgement is the sibling-block ORDER: the team
+with the most observations reads first, then alphabetical.)*
+
+*(✅ Post-build funnel run 2026-08-05: `/simplify` → `/review` → `/docs`. The review was
+high-risk tier, 5 lenses, and **could not break any of the three gates** — cross-org leakage,
+plan-gate bypass and reciprocity bypass all held under direct attack. Six defects found and
+fixed; the four user-visible ones are checkbox items above. The fifth and sixth need no manual
+test: observation totals are now counted exactly, and **both sharing switches re-read the
+server's answer if a save fails** rather than assuming — so a switch can never sit showing "not
+sharing" while the club can in fact read that team's notes. If you want to exercise that last
+one, kill your network mid-toggle: the switch should settle on whatever the server actually
+recorded, not on a guess.)*
+
+---
+
 ### 1.17 📱 Game-Day Mode P2 — moments — **BUILT 2026-08-05, dev, UNCOMMITTED** · ⚠ mig 228 DEV-ONLY
 *One line a coach types at the bench because they want to remember it. It reads back in the
 end-game wrap, on the tagged player's page, and as one quoted line on Season Wrapped — and it

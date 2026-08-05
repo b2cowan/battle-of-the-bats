@@ -41,6 +41,8 @@ function mapOrgRow(row: OrgRow): Organization {
     isPublic: false,
     createdAt: new Date().toISOString(),
     isDiscoverable: false,
+    // Billing-only projection of the org — no coach-facing setting is read from it.
+    clubBookSharingEnabled: false,
   };
 }
 
