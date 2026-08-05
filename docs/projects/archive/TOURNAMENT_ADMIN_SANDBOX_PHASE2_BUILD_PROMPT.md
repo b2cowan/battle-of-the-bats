@@ -5,6 +5,51 @@ uncommitted, and has not had owner browser QA. This document is the handoff for 
 
 ---
 
+## ⛔ STOP — read this before anything else
+
+**Phase 2 does NOT start with code. It starts with mockups, and they must be approved before a
+single component, stylesheet or copy string changes.**
+
+The required order, and it is not negotiable:
+
+1. **Understand the existing sandbox** — read, measure the running app, form a view. No edits.
+2. **Present an Implementation Plan / task list, and a plain-language PM UX summary** — written for
+   a product manager, not an engineer: what a visitor sees and does differently, and why.
+   `AGENCY_RULES.md` makes this a **blocking step**: no code may begin until it has been presented.
+3. **Produce mockups**, published as a **Claude Artifact**, every element labelled
+   **NEW / RESTYLED / UNCHANGED**. Phase 2 has **no approved visual spec** — see "The gate" below
+   for what they must cover.
+4. **Get the owner's explicit approval.**
+5. **Only then build** — then `/simplify` if the diff grew a new abstraction, `/review`, and
+   `/docs` if a user-facing flow changed.
+
+You MAY, before approval: **read anything**, and **measure the running app** (Playwright, curl,
+probes — measurement is how Phase 1's worst defects were actually found, after screenshots misled
+twice). You may fix an **outright defect you trip over** — something visibly broken, not something
+you would redesign — provided you say so plainly and keep it separate from the design work.
+
+If you cannot tell which side of that line something falls on, **it is design. Put it in the mockups
+and ask.**
+
+---
+
+## ⚠ SEQUENCING — do not start Phase 2 cold
+
+**A demo-UX investigation runs BEFORE this** —
+`TOURNAMENT_SANDBOX_DEMO_UX_INVESTIGATION_PROMPT.md`, opened 2026-08-03 after the owner's first QA
+pass ("*I honestly still don't know what these buttons are supposed to accomplish*").
+
+That is not a separate concern from Phase 2 — **it is the same surface**. The moments dock would be
+a **third** piece of fixed chrome, stacked on a band that has already produced three defects, and it
+answers the same question the tour does: *how does a stranger move through this demo?* Design them
+apart and they will fight.
+
+**Confirm with the owner that the UX investigation has landed before you begin.** Its outcome may
+change what the dock should be — or may make the dock the answer it arrives at, in which case much
+of this document is already satisfied and you should say so rather than rebuild it.
+
+---
+
 ## Read these first, in this order
 
 1. `TOURNAMENT_ADMIN_SANDBOX_PLAN.md` — the plan, ratified decisions D0–D4, and **build notes 1–24**,
@@ -63,9 +108,11 @@ still stands: **registration week needs a second seeded state**, and that is the
 
 ---
 
-## The gate you must clear FIRST
+## The gate (restated — it is the top of this document, and it is the first deliverable)
 
-**Mockups are binding in this project, and Phase 2 has none.**
+**Mockups are binding in this project, and Phase 2 has none.** Phase 1's approved spec covers the
+banner, the chip rail, the fan side, the dashboard, the schedule editor, the nudge family and the
+marketing doors — **it says nothing about a dock**, so there is nothing to build to yet.
 
 Before writing a line of feature code, produce and get approval for:
 

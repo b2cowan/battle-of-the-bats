@@ -1,0 +1,302 @@
+<title>Tournament Sandbox — the door decision & three Phase 3 calls</title>
+<style>
+  :root{
+    --pg:#F6F6F3; --card:#FFFFFF; --ink:#1B1D24; --dim:#5D6372; --line:#E2E3DF;
+    --acc:#1E3A8A; --acc-ink:#1E3A8A; --acc-soft:rgba(30,58,138,.07);
+    --good:#15803D; --warn:#B45309; --bad:#B91C1C;
+    --new:#1E3A8A; --restyled:#7C3F00; --unchanged:#4B5563;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --pg:#0F1013; --card:#171922; --ink:#E9EAEE; --dim:#9BA1AE; --line:#272A33;
+      --acc:#93A9EA; --acc-ink:#AFC0F2; --acc-soft:rgba(147,169,234,.09);
+      --good:#4ADE80; --warn:#FBBF24; --bad:#F87171;
+      --new:#AFC0F2; --restyled:#FBBF24; --unchanged:#9BA1AE; }
+  }
+  :root[data-theme="dark"]{ --pg:#0F1013; --card:#171922; --ink:#E9EAEE; --dim:#9BA1AE; --line:#272A33;
+    --acc:#93A9EA; --acc-ink:#AFC0F2; --acc-soft:rgba(147,169,234,.09);
+    --good:#4ADE80; --warn:#FBBF24; --bad:#F87171;
+    --new:#AFC0F2; --restyled:#FBBF24; --unchanged:#9BA1AE; }
+  :root[data-theme="light"]{ --pg:#F6F6F3; --card:#FFFFFF; --ink:#1B1D24; --dim:#5D6372; --line:#E2E3DF;
+    --acc:#1E3A8A; --acc-ink:#1E3A8A; --acc-soft:rgba(30,58,138,.07);
+    --good:#15803D; --warn:#B45309; --bad:#B91C1C;
+    --new:#1E3A8A; --restyled:#7C3F00; --unchanged:#4B5563; }
+
+  *{box-sizing:border-box}
+  body{background:var(--pg);color:var(--ink);font:16px/1.62 system-ui,-apple-system,"Segoe UI",sans-serif;margin:0;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 20px 110px}
+  .mono{font-family:ui-monospace,"SF Mono","Cascadia Code",Consolas,monospace;font-variant-numeric:tabular-nums}
+
+  header.top{padding:56px 0 6px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  h1{font-size:clamp(1.6rem,3.4vw,2.35rem);line-height:1.14;margin:.4rem 0 .6rem;letter-spacing:-.022em;text-wrap:balance}
+  .lede{color:var(--dim);max-width:64ch;margin:0 0 22px}
+  .lede b{color:var(--ink)}
+  nav.toc{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 26px}
+  nav.toc a{font-size:.79rem;font-weight:600;color:var(--acc-ink);text-decoration:none;border:1px solid var(--line);background:var(--card);padding:7px 13px;border-radius:999px}
+  nav.toc a:hover{border-color:var(--acc)}
+
+  section{margin-top:66px;scroll-margin-top:20px}
+  .sec-eyebrow{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:var(--acc-ink);margin:0}
+  .sec-eyebrow .tag{color:var(--dim);font-weight:600;letter-spacing:.08em}
+  h2{font-size:1.42rem;letter-spacing:-.016em;margin:.32rem 0 .5rem;text-wrap:balance}
+  h3{font-size:1rem;margin:34px 0 .35rem}
+  .sec-intro{color:var(--dim);max-width:72ch;margin:0}
+  .note{font-size:.84rem;color:var(--dim);border-left:3px solid var(--line);padding:3px 0 3px 13px;max-width:74ch;margin:16px 0 0}
+  .note b{color:var(--ink)}
+  .note.warn{border-left-color:var(--warn)}
+  .note.good{border-left-color:var(--good)}
+
+  .lab{display:inline-flex;align-items:center;gap:5px;font-family:ui-monospace,Consolas,monospace;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:3px;border:1px solid currentColor;white-space:nowrap;vertical-align:1px}
+  .lab-new{color:var(--new)}
+  .lab-re{color:var(--restyled)}
+  .lab-un{color:var(--unchanged)}
+
+  .anno{display:grid;grid-template-columns:auto 1fr;gap:9px 12px;margin:16px 0 0;font-size:.86rem;max-width:80ch}
+  .anno dt{margin:0}
+  .anno dd{margin:0;color:var(--dim)}
+  .anno dd b{color:var(--ink);font-weight:600}
+
+  table.dec{width:100%;border-collapse:collapse;margin:18px 0 0;font-size:.87rem}
+  table.dec th,table.dec td{text-align:left;vertical-align:top;padding:9px 12px 9px 0;border-bottom:1px solid var(--line)}
+  table.dec th{font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);font-weight:700}
+  table.dec td b{font-weight:650}
+  .tbl-scroll{overflow-x:auto}
+
+  /* product world */
+  .pd{
+    --pitch:#0A0A0A; --surf:#0F1523; --surf2:#141A2A;
+    --lime:#D9F99D; --blue:#1E3A8A;
+    --gray:#94A3B8; --text:#F1F5F9; --hair:rgba(255,255,255,.11);
+    background:var(--pitch);color:var(--text);border:1px solid #23262E;border-radius:12px;
+    overflow:hidden;margin-top:20px;font-size:15px;line-height:1.5
+  }
+  .pd .g{color:var(--gray)}
+  .cap{font-size:.74rem;color:var(--dim);margin:9px 0 0;font-style:italic}
+
+  /* — the confirm screen — */
+  .gatewrap{display:flex;align-items:center;justify-content:center;padding:44px 18px;background:radial-gradient(110% 100% at 50% 0%, rgba(30,58,138,.35) 0%, rgba(10,10,10,0) 70%)}
+  .gate{max-width:430px;width:100%;background:var(--surf);border:1px solid var(--hair);border-radius:10px;padding:26px 26px 22px}
+  .gate .eye{display:inline-flex;align-items:center;gap:7px;font-family:ui-monospace,Consolas,monospace;font-size:.62rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;color:var(--lime)}
+  .gate .eye .bulb{width:7px;height:7px;border-radius:50%;background:var(--lime);box-shadow:0 0 8px rgba(217,249,157,.7)}
+  .gate h4{font-size:1.25rem;margin:.6rem 0 .35rem;letter-spacing:-.015em}
+  .gate p{margin:0 0 10px;font-size:.84rem;color:#C4CBD9}
+  .gate p b{color:#fff}
+  .gate .who{display:flex;align-items:center;gap:9px;background:var(--surf2);border:1px solid var(--hair);border-radius:7px;padding:9px 12px;margin:12px 0 16px;font-size:.8rem}
+  .gate .who .av{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,#1E3A8A,#2D4FB8);display:inline-flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;color:#fff}
+  .gate .btn-p{display:block;width:100%;background:var(--lime);color:#0A0A0A;border:none;border-radius:6px;font-size:.85rem;font-weight:800;padding:11px;cursor:pointer;margin-bottom:8px}
+  .gate .btn-s{display:block;width:100%;background:none;border:1px solid var(--hair);color:#CBD5E1;border-radius:6px;font-size:.8rem;padding:10px;cursor:pointer}
+  .gate .fn{font-size:.7rem;color:var(--gray);margin:12px 0 0;text-align:center}
+
+  /* — ledger / archives — */
+  .ledger{padding:22px 18px;font-family:ui-monospace,Consolas,monospace}
+  .ledger .lhead{font-size:.66rem;letter-spacing:.14em;color:var(--lime);font-weight:800}
+  .ledger .lsub{font-size:.7rem;color:var(--gray);margin:2px 0 14px}
+  .lrec{border:1px solid rgba(217,249,157,.28);border-radius:6px;padding:13px 15px;background:rgba(217,249,157,.04);max-width:460px}
+  .lrec .lr1{display:flex;justify-content:space-between;font-size:.72rem;color:var(--gray)}
+  .lrec .lr2{font-size:.95rem;color:#fff;font-weight:700;margin:4px 0 2px}
+  .lrec .lr3{font-size:.72rem;color:#C4CBD9}
+  .lrec .lseal{display:inline-block;margin-top:9px;font-size:.6rem;letter-spacing:.12em;color:var(--lime);border:1px solid rgba(217,249,157,.4);border-radius:3px;padding:2px 8px}
+
+  .sumline{display:flex;align-items:center;gap:10px;margin:14px 18px 18px;padding:11px 14px;border:1px solid var(--hair);border-radius:7px;background:var(--surf);font-size:.8rem}
+  .sumline .ok{color:#4ADE80;font-weight:800}
+
+  /* — QR card — */
+  .qrcard{display:flex;gap:20px;align-items:center;padding:26px;background:var(--surf);margin:18px;border:1px solid var(--hair);border-radius:10px;max-width:520px;flex-wrap:wrap}
+  .qr{width:110px;height:110px;flex:none;background:
+    repeating-linear-gradient(0deg,#fff 0 6px,transparent 6px 12px),
+    repeating-linear-gradient(90deg,#fff 0 6px,#0A0A0A 6px 12px);
+    border:8px solid #fff;border-radius:4px}
+  .qrtxt h5{margin:0 0 4px;font-size:1.05rem;color:#fff}
+  .qrtxt p{margin:0;font-size:.78rem;color:#C4CBD9;max-width:30ch}
+  .qrtxt .url{font-family:ui-monospace,Consolas,monospace;font-size:.72rem;color:var(--lime);margin-top:8px}
+
+  /* — chooser — */
+  .choose{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;padding:26px 18px}
+  .cho{background:var(--surf);border:1px solid var(--hair);border-radius:10px;padding:20px}
+  .cho .ic{font-size:1.4rem}
+  .cho h5{margin:.5rem 0 .25rem;font-size:1.05rem;color:#fff}
+  .cho p{margin:0 0 14px;font-size:.78rem;color:#C4CBD9}
+  .cho .go{display:inline-block;background:var(--lime);color:#0A0A0A;border-radius:5px;font-size:.72rem;font-weight:800;padding:8px 14px;text-transform:uppercase;letter-spacing:.06em}
+
+  footer.doc-end{margin-top:80px;border-top:1px solid var(--line);padding-top:14px;font-size:.78rem;color:var(--dim)}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <p class="eyebrow">FieldLogicHQ · Tournament Admin Sandbox · decisions · 2026-08-04</p>
+  <h1>The door decision, and three Phase 3 calls</h1>
+  <p class="lede">Phase 2 is built and committed. What's left are <b>choices, not chores</b>: one open ruling
+  (what the demo's door does for a visitor who is already signed in) and three deferred nice-to-haves.
+  Each section below is a recommendation with the mockup to judge it by. <b>Nothing here is built;
+  nothing gets built until you rule.</b> Labels:
+  <span class="lab lab-new">New</span> <span class="lab lab-re">Restyled</span> <span class="lab lab-un">Unchanged</span>.</p>
+  <nav class="toc">
+    <a href="#door">D5 · The signed-in door</a>
+    <a href="#ledger">P3a · Seal the Opener</a>
+    <a href="#qr">P3b · QR collateral</a>
+    <a href="#chooser">P3c · The chooser</a>
+    <a href="#asks">The asks</a>
+  </nav>
+</header>
+
+<!-- ════════════════ D5 · THE SIGNED-IN DOOR ════════════════ -->
+<section id="door">
+  <p class="sec-eyebrow">Decision D5 · <span class="tag">open since 2026-08-03 — recommend option A</span></p>
+  <h2>When a signed-in customer presses "See it live"</h2>
+  <p class="sec-intro">Today (option C) their own session is protected and they get the fan side only —
+  the organizer's seat, which is the demo's whole argument, silently never opens for them. The people most
+  likely to press this button late in a decision are <b>exactly the people already signed in</b>.
+  Recommendation: <b>option A — ask once, plainly.</b></p>
+
+  <div class="pd">
+    <div class="gatewrap">
+      <div class="gate">
+        <span class="eye"><span class="bulb"></span>Live demo</span>
+        <h4>Step into the organizer's seat?</h4>
+        <p>The demo's organizer side uses a <b>shared demo account</b>. Continuing signs this browser
+        out of your own account while you explore — <b>nothing about your account or your organization
+        changes</b>, and signing back in takes one click.</p>
+        <div class="who"><span class="av">JM</span><span>You're currently signed in as <b>j.morales@lakesideball.ca</b></span></div>
+        <button class="btn-p">Continue to the organizer's seat</button>
+        <button class="btn-s">Stay in my account — watch as a fan</button>
+        <p class="fn">The public side of the demo never needs this — only the organizer's seat does.</p>
+      </div>
+    </div>
+  </div>
+  <p class="cap">The confirm screen, shown ONLY to a signed-in visitor, and only when they press an operator beat (tour steps 3–6, the ⇄ flip, an operator dock press). A logged-out prospect — the entire target audience — never sees it.</p>
+
+  <dl class="anno">
+    <dt><span class="lab lab-re">Restyled</span></dt>
+    <dd><b>The screen itself already exists</b> (built in Phase 1, currently hard to reach). What changes is
+    <b>when it appears</b>: today a signed-in visitor's operator presses dead-end at the fan page; under
+    option A they get this one honest question instead.</dd>
+    <dt><span class="lab lab-new">New</span></dt>
+    <dd><b>"Stay in my account — watch as a fan"</b> returns them to the fan side with their session intact —
+    declining is a first-class choice, not a dismissal. The question is asked at the press, each time an
+    operator door is used without the demo session; in practice that is once.</dd>
+    <dt><span class="lab lab-un">Unchanged</span></dt>
+    <dd><b>The ungated ruling is untouched.</b> This warns a <i>customer</i> before replacing <i>their own</i>
+    session; it collects nothing from a stranger. Anonymous visitors keep walking straight in. When the
+    switch is confirmed, tour steps 3–6 resolve to the real screens automatically (that fallback machinery
+    already exists and is pinned by test).</dd>
+  </dl>
+
+  <div class="tbl-scroll"><table class="dec">
+    <tr><th>Option</th><th>What happens</th><th>Honest cost</th></tr>
+    <tr><td><b>A · Ask once</b> <span class="lab lab-new">Recommended</span></td>
+      <td>Operator press → this screen → their choice. Fan side never interrupted.</td>
+      <td>One interstitial, shown only to signed-in customers pressing an operator door.</td></tr>
+    <tr><td><b>B · Always take over</b></td>
+      <td>Operator press silently signs them out and in as the demo organizer.</td>
+      <td>A marketing button that signs a customer out of their account without asking. Rejected.</td></tr>
+    <tr><td><b>C · Keep today's behaviour</b></td>
+      <td>Signed-in visitors get the fan side only, permanently.</td>
+      <td>The demo's strongest half is invisible to the warmest audience, silently.</td></tr>
+  </table></div>
+</section>
+
+<!-- ════════════════ P3a · SEAL THE OPENER ════════════════ -->
+<section id="ledger">
+  <p class="sec-eyebrow">Phase 3a · <span class="tag">recommend BUILD — small, and it demos a differentiator</span></p>
+  <h2>Seal the Season Opener into the Digital Ledger</h2>
+  <p class="sec-intro">The morning-after moment currently ends at the Post-Event Summary. Sealing the Opener
+  gives that story a final beat the product is genuinely rare in having: a <b>permanent, read-only public
+  record</b>. The org's Digital Ledger shelf stops being empty in the demo, and "the record keeps itself"
+  becomes "…and it's sealed."</p>
+
+  <div class="pd">
+    <div class="ledger">
+      <div class="lhead">RIVERDALE MINOR BALL ASSOCIATION · DIGITAL LEDGER</div>
+      <div class="lsub">1 SEALED RECORD · READ-ONLY</div>
+      <div class="lrec">
+        <div class="lr1"><span>RECORD 001</span><span>SEALED YESTERDAY</span></div>
+        <div class="lr2">Riverdale Season Opener</div>
+        <div class="lr3">U11 Champion — Cedar Hollow Cyclones · 15 games · 8 teams · final standings preserved</div>
+        <span class="lseal">⛓ SEALED · IMMUTABLE</span>
+      </div>
+    </div>
+  </div>
+  <p class="cap"><span class="lab lab-un">Unchanged</span> The real Digital Ledger shelf (it exists today for every org) — what's <span class="lab lab-new">New</span> is a seeded record in it. The org's public home then shows its existing "Archives" door instead of hiding it.</p>
+
+  <div class="pd">
+    <div class="sumline"><span class="ok">⛓ Sealed ✓</span><span class="g">This tournament's final record is preserved in the Digital Ledger.</span><span style="margin-left:auto;font-size:.72rem;color:var(--lime)">View the sealed record →</span></div>
+  </div>
+  <p class="cap"><span class="lab lab-new">New</span> One line on the Post-Event Summary (the tour's closing screen) — the year ends with the paperwork done <i>and the record sealed</i>. Not a new tour step; the six-step tour is untouched.</p>
+
+  <div class="note warn"><b>The honest cost.</b> A sealed record is immutable by design, but the demo re-anchors its
+  dates daily — so the demo's nightly self-repair must also re-anchor the sealed record's dates, quietly rewriting
+  a thing the product promises never to rewrite. That is fine mechanically (it is our fictional org and the same
+  self-repair discipline as everything else) and invisible to a visitor, but it is the one place the demo's
+  machinery bends a product promise behind the curtain. Named here so it is chosen, not discovered.</div>
+</section>
+
+<!-- ════════════════ P3b · QR COLLATERAL ════════════════ -->
+<section id="qr">
+  <p class="sec-eyebrow">Phase 3b · <span class="tag">recommend DEFER to the production release</span></p>
+  <h2>Share &amp; QR collateral for the door</h2>
+  <p class="sec-intro">A pocket card / slide footer that puts the demo one camera-scan away — for tables at
+  tournaments, association meetings, cold outreach. Worth having <b>the week the door opens publicly</b>;
+  worthless while the marketing doors are hidden in production, which they still are.</p>
+
+  <div class="pd">
+    <div class="qrcard">
+      <div class="qr" aria-hidden="true"></div>
+      <div class="qrtxt">
+        <h5>Watch a live tournament run itself</h5>
+        <p>No signup, no email. A real tournament, ticking right now — and the organizer's seat is open.</p>
+        <div class="url">fieldlogichq.ca/see-it-live</div>
+      </div>
+    </div>
+  </div>
+  <p class="cap"><span class="lab lab-new">New</span> The shape of it — final artwork is a marketing task for release week, not a build task now. Recommendation: park this inside the release step's checklist so it ships the same day the door does.</p>
+</section>
+
+<!-- ════════════════ P3c · THE CHOOSER ════════════════ -->
+<section id="chooser">
+  <p class="sec-eyebrow">Phase 3c · <span class="tag">recommend DEFER — it belongs to the coach sandbox build</span></p>
+  <h2>The "See it live" chooser (organizer | coach)</h2>
+  <p class="sec-intro">When the coach sandbox exists, the one door serves two demos and a visitor picks their
+  seat. Building the chooser now would mean shipping a door with a dead second card — the exact anti-dead-end
+  rule this project is built on. The plan already assigns it to <b>whichever sandbox ships second</b>; this
+  mock exists so that build starts with direction, not a blank page.</p>
+
+  <div class="pd">
+    <div class="choose">
+      <div class="cho">
+        <div class="ic">🏟️</div>
+        <h5>Run a tournament</h5>
+        <p>A live event, ticking now — scores, bracket, schedule, and the organizer's dashboard behind it.</p>
+        <span class="go">Enter the tournament demo</span>
+      </div>
+      <div class="cho">
+        <div class="ic">📋</div>
+        <h5>Coach a team</h5>
+        <p>A season at five moments — tryouts to season's end — in the real coaches portal.</p>
+        <span class="go">Enter the coach demo</span>
+      </div>
+    </div>
+  </div>
+  <p class="cap"><span class="lab lab-new">New — future</span> Two cards, both alive, or no chooser at all. Until the coach sandbox builds, the door keeps walking straight into the tournament demo, exactly as today (<span class="lab lab-un">Unchanged</span>).</p>
+</section>
+
+<!-- ════════════════ THE ASKS ════════════════ -->
+<section id="asks">
+  <p class="sec-eyebrow">Summary · <span class="tag">four rulings requested</span></p>
+  <h2>The asks, in one table</h2>
+  <div class="tbl-scroll"><table class="dec">
+    <tr><th>#</th><th>Question</th><th>Recommendation</th><th>If approved, when</th></tr>
+    <tr><td><b>D5</b></td><td>Signed-in visitor at an operator door</td><td><b>A — ask once</b> with the plain-language confirm screen above</td><td>Small build, can precede release; closes the last open decision</td></tr>
+    <tr><td><b>P3a</b></td><td>Seal the Opener into the Digital Ledger</td><td><b>Build</b> (with the named re-anchor caveat)</td><td>Phase 3, alongside D5</td></tr>
+    <tr><td><b>P3b</b></td><td>QR / share collateral</td><td><b>Defer</b> — add to the production-release checklist</td><td>Release week, via /marketing</td></tr>
+    <tr><td><b>P3c</b></td><td>/see-it-live chooser</td><td><b>Defer</b> — the coach sandbox builds it; this mock is its brief</td><td>When the coach sandbox ships</td></tr>
+  </table></div>
+  <div class="note good"><b>If you approve D5 + P3a as drawn</b>, that is one small build pass (mockups above become
+  binding), then the usual /review, your QA, and the sandbox has no open items left except the release decision
+  itself.</div>
+</section>
+
+<footer class="doc-end">
+  Tournament Admin Sandbox · door decision + Phase 3 mockups rev 1 · 2026-08-04 ·
+  Companion to TOURNAMENT_ADMIN_SANDBOX_PLAN.md. Nothing here is built; nothing gets built until ruled on.
+</footer>
+</div>

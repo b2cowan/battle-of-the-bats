@@ -67,6 +67,34 @@
   font-weight: 600;
 }
 
+/* The account being asked about, named in its own quiet chip (approved D5 mockup shape). */
+.who {
+  display: flex;
+  align-items: center;
+  gap: 0.5625rem;
+  margin: 0 0 1.5rem;
+  padding: 0.5625rem 0.75rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.35);
+  background: rgba(var(--blueprint-blue-rgb), 0.1);
+  border-radius: 7px;
+  font-size: 0.8rem;
+  color: var(--data-gray);
+}
+
+.who strong {
+  color: var(--fl-text);
+  font-weight: 600;
+}
+
+.whoDot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blueprint-blue);
+  box-shadow: 0 0 6px rgba(var(--blueprint-blue-rgb), 0.8);
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

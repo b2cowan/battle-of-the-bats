@@ -64,27 +64,37 @@ export default async function SandboxSwitchPage() {
           {/* Matches the demo's own banner — see the note in SandboxChrome. */}
           Live demo
         </p>
-        <h1 className={styles.title}>You&apos;re signed in as yourself.</h1>
+        {/* Copy aligned to the approved D5 mockup (TOURNAMENT_SANDBOX_PHASE3_DECISIONS.html,
+            ratified 2026-08-04): lead with what they're stepping into, name the account being
+            signed out in its own chip, and make declining a first-class choice. */}
+        <h1 className={styles.title}>Step into the organizer&apos;s seat?</h1>
         <p className={styles.body}>
-          The demo has its own organizer account, so opening it will sign you out
-          {user.email ? <> of <strong>{user.email}</strong></> : null}. Your own workspace
-          isn&apos;t touched — you&apos;ll just sign back in when you&apos;re done.
+          The demo&apos;s organizer side uses a <strong>shared demo account</strong>. Continuing
+          signs this browser out of your own account while you explore —{' '}
+          <strong>nothing about your account or your organization changes</strong>, and signing
+          back in takes one click.
         </p>
+        {user.email && (
+          <p className={styles.who}>
+            <span className={styles.whoDot} aria-hidden="true" />
+            <span>You&apos;re currently signed in as <strong>{user.email}</strong></span>
+          </p>
+        )}
 
         {/* A POST, not a link: a GET that destroys a session can be fired by any page that can
             embed a URL. One button, no fields — there is nothing here to fill in. */}
         <form action={SANDBOX_SWITCH_ENDPOINT} method="post" className={styles.actions}>
           <button type="submit" className={styles.primary}>
-            Open the demo — sign me out
+            Continue to the organizer&apos;s seat
           </button>
           <Link href={demo.landingPath} className={styles.secondary}>
-            Stay signed in — show me the fan side
+            Stay in my account — watch as a fan
           </Link>
         </form>
 
         <p className={styles.note}>
-          The fan side is the public tournament page — live scores, standings, and the bracket
-          filling itself in. No account needed.
+          The public side of the demo never needs this — live scores, standings and the bracket
+          are open to everyone, no account involved.
         </p>
       </div>
     </main>

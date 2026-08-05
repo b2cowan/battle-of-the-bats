@@ -12,7 +12,7 @@ import { SANDBOX_CONFIRM_PATH } from '@/lib/sandbox-door';
  * The confirm screen's one button: swap this browser's session for the demo organizer's.
  *
  * Reached ONLY from `/see-it-live/switch`, and only by a visitor who was already signed in as
- * themselves and pressed "Open the demo — sign me out". The door itself never comes here.
+ * themselves and pressed "Continue to the organizer's seat". The door itself never comes here.
  *
  * ── Why this is a POST, and why it checks its Origin ────────────────────────────────────────
  *

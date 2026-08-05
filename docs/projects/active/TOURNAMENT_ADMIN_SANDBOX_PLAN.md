@@ -695,12 +695,29 @@ specs stay binding for everything Phase 2 does not supersede.
     **`/docs`: no help changes** — the demo stays undocumented while the doors are env-hidden
     (Phase 1 precedent), and no real-customer flow moved; nothing any guide says became wrong.
 
-**⬜ OPEN QUESTION FOR THE OWNER (raised 2026-08-03):** what should the door do when the visitor is
-ALREADY SIGNED IN? Today it refuses to replace their session (Build note 7), which costs them the
-operator half. Options put to the owner: (a) ask once, with a plain warning — the recommendation,
-and not a violation of the ungated ruling because it warns a customer rather than collecting
-anything from a stranger; (b) always take over; (c) keep today's behaviour, with note 17 as the
-permanent shape.
+**✅ D5 RESOLVED — the signed-in door takes option (a), and it was already BUILT.** The 2026-08-03
+ruling was taken and implemented in S3 (`/see-it-live` → signed-in, non-demo session →
+`/see-it-live/switch` confirm screen; the route's own header records the ruling) — but this block,
+build note 17's "fallback shape" caveat and the QA ledger's "decision I need" block were never
+un-staled, so the question was re-put to the owner on 2026-08-04 and **re-affirmed with mockups**
+(`TOURNAMENT_SANDBOX_PHASE3_DECISIONS.html`, artifact `edecef3e-4b84-4bb1-b3b8-50fe130dc9b0`).
+
+53. **D5 aligned to the approved mockup (2026-08-04).** The confirm screen's copy/layout matched to
+    the ratified drawing: leads with *"Step into the organizer's seat?"*, the account being signed
+    out sits in its own chip, declining is a first-class button (*"Stay in my account — watch as a
+    fan"*), and the footnote says the public side never needs this. Mechanics untouched (POST, no
+    fields, no params). **One recorded deviation from the mock's caption:** the screen appears on
+    ANY door press while signed in — not only "operator beats" — because the door deliberately
+    takes no parameters (pinned security invariant) and so cannot know intent; the decline button
+    covers the marketing-press case. ⚠ Lesson repeated from the QA-ledger memory: **verify open
+    questions against the code, not the doc headers** — this "open decision" had been closed in
+    code for a day while three documents still asked it.
+
+**✅ PHASE 3 RULINGS (owner, 2026-08-04, same mockups doc):** P3a (seal the Opener into the Digital
+Ledger), P3b (QR/share collateral) and P3c (the /see-it-live chooser) are **all DECLINED — not
+needed.** No Phase 3 exists. The chooser mock remains in the decisions doc as the brief for the
+coach sandbox if that project ever wants it; the QR shape likewise available to /marketing at
+release if desired, but nothing is owed.
 
 ### Recorded 2026-08-03, adversarial review + `/marketing` pass
 
