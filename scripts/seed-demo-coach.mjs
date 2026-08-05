@@ -1,11 +1,11 @@
 /**
- * Seed the Coach Sandbox — Riverdale Ridge Baseball, three teams frozen at three moments of a
- * season (`COACH_SANDBOX_SEASON_PHASES_PLAN.md`, Phase 1).
+ * Seed the Coach Sandbox — Riverdale Ridge Baseball, five teams frozen at five moments of a
+ * season (`COACH_SANDBOX_SEASON_PHASES_PLAN.md`).
  *
  * Everything fictional comes from `lib/demo-coach.ts` (the world) anchored by the clock; this
  * script only materializes rows. Design mirrors `seed-demo-tournament.mjs`:
  *
- *   · **Idempotent, stable ids.** The org, the coach user, the three teams (FIXED ids from
+ *   · **Idempotent, stable ids.** The org, the coach user, the five teams (FIXED ids from
  *     `lib/demo-org.ts`) and each team's program year are reused across runs; every child row
  *     (events, roster, tryouts, dues, budgets, lineups, …) is wiped and rebuilt from the world
  *     module. Re-running IS the re-anchor.
@@ -31,10 +31,16 @@ import {
   DEMO_TRYOUT_RUBRIC, DEMO_EVALUATORS, SPLIT_OPINION, tryoutScoreFor, TRYOUT_DESCRIPTION,
   MIDSEASON_LINEUP_GRID, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
   midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_BUDGET_LINES,
-  MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS,
+  MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
   SEASONS_END_FAMILY, SEASONS_END_DUES, SEASONS_END_BUDGET_LINES,
+  OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_DUES,
+  OFFSEASON_DEVELOPMENT_GOALS, OFFSEASON_MEASURABLE_TYPES, OFFSEASON_TESTING_ABSENT,
+  OFFSEASON_PRACTICE_PLANS, offseasonMeasurableValue, demoPaidStampIso,
+  SEASON_START_ROSTER, SEASON_START_BUDGET_LINES, SEASON_START_DUES,
+  SEASON_START_LINEUP_GRID, SEASON_START_LINEUP_SETTINGS, SEASON_START_BATTING_ORDER,
   resolveTryoutDayState, resolveMidSeasonState, resolveSeasonsEndState,
+  resolveOffSeasonState, resolveSeasonStartState,
   demoGuardianEmail, orgDateWithOffset,
 } from '../lib/demo-coach.ts';
 
@@ -274,6 +280,34 @@ async function wipeProgramYearChildren(teamId, pyId) {
   await del('rep_roster_players', q => q.eq('program_year_id', pyId));
 }
 
+/**
+ * A team's per-player dues: one schedule each, then its instalments.
+ *
+ * All four teams that collect dues wanted the same twelve lines with a different rule for which
+ * instalments are paid, so the rule is the only thing that varies — `isPaid(rosterIndex, n)`.
+ * Written out per team, the shared shape (the schedule row, the 1-based numbering, the org/team
+ * denormalization the DB requires and does not default) had four places to drift.
+ *
+ * `dueDates` and `paidDates` are parallel arrays: what the season's calendar says, and when the
+ * money actually arrived (a few days early). A team that pays on the nose can pass the same array
+ * twice.
+ */
+async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount, dueDates, paidDates, isPaid }) {
+  for (let i = 0; i < playerIds.length; i++) {
+    const scheduleId = randomUUID();
+    die(`insert dues schedule ${team.slug}`, (await db.from('rep_player_dues_schedules').insert({
+      id: scheduleId, program_year_id: pyId, player_id: playerIds[i],
+      team_id: team.id, org_id: org.id, total_amount: totalAmount,
+    })).error);
+    await insertAll('rep_player_dues_installments', dueDates.map((dueDate, n) => ({
+      schedule_id: scheduleId, player_id: playerIds[i], installment_number: n + 1,
+      amount: installmentAmount, due_date: dueDate,
+      paid_at: isPaid(i, n) ? `${paidDates[n]}T17:00:00.000Z` : null,
+      org_id: org.id, team_id: team.id, source: 'manual',
+    })));
+  }
+}
+
 /** Insert a roster from the world module; returns ids by roster index. */
 async function insertRoster(team, pyId, roster) {
   const rows = roster.map((p, i) => ({
@@ -298,8 +332,79 @@ function midProfileFor(team, i) {
   return team.id === DEMO_COACH_TEAMS.midSeason.id ? midseasonPitcherProfile(i) : null;
 }
 
-/** Materialize games + practices from a world state; returns event ids by game key. */
-async function insertSeasonEvents(team, pyId, state) {
+const budgetCategoryIds = await platformBudgetCategoryIds();
+
+/**
+ * The PLATFORM's own budget categories (the rows with no org — every tenant sees them), keyed by
+ * name. Budget-vs-actual matches an expense to a line by CATEGORY NAME, so the demo's lines have
+ * to hang off real categories or the moment lands on a page that files every dollar as unbudgeted.
+ * Looked up rather than created: inventing a taxonomy for the demo would be a state no coach's
+ * own club could reach.
+ */
+async function platformBudgetCategoryIds() {
+  // ⚠ Scoped exactly as the coach's own picker scopes it
+  // (`app/api/coaches/[orgSlug]/budget-items/route.ts`): org-only categories are admin tools, and
+  // that route's write path REFUSES them. Filtering here means a demo line on an unreachable
+  // category fails this script loudly instead of shipping a budget a coach could never have built.
+  const { data, error } = await db.from('budget_categories')
+    .select('id, name').is('org_id', null).in('scope', ['team', 'both']);
+  die('load budget categories', error);
+  const byName = new Map((data ?? []).map(c => [c.name.toLowerCase(), c.id]));
+  const required = [...new Set([
+    ...OFFSEASON_BUDGET_LINES.map(l => l.category),
+    ...SEASON_START_BUDGET_LINES.map(l => l.category),
+  ])];
+  const missing = required.filter(name => !byName.has(name.toLowerCase()));
+  if (missing.length) {
+    console.error(`❌ Budget categories not available to a TEAM: ${missing.join(', ')}`);
+    console.error('   The demo budgets name real, coach-reachable categories on purpose. A name that');
+    console.error("   resolves only at org scope would seed a line the coach's own planner refuses.");
+    process.exit(1);
+  }
+  return byName;
+}
+
+/** Turn a world practice plan into the product's own `practice_plan` jsonb, resolving the roster
+ *  indexes the module carries (a plan is the one place a practice names people). */
+function materializePracticePlan(plan, playerIds) {
+  const ids = indexes => (indexes ?? []).map(i => playerIds[i]).filter(Boolean);
+  return {
+    version: 1,
+    goal: plan.goal,
+    practiceTypes: [...plan.practiceTypes],
+    equipment: [...plan.equipment],
+    blocks: plan.blocks.map(block => {
+      const out = {
+        id: block.id,
+        title: block.title,
+        duration: block.restOfPractice
+          ? { minutes: null, restOfPractice: true }
+          : { minutes: block.minutes },
+      };
+      if (block.description) out.description = block.description;
+      if (block.goal) out.goal = block.goal;
+      if (block.coachingPoints) out.coachingPoints = [...block.coachingPoints];
+      if (block.staff) out.staff = [...block.staff];
+      if (block.stations) {
+        // People live at exactly ONE level (lib/types.ts): a rotating block carries its players in
+        // the rotation's groups and nowhere else, so no surface can show two answers to "who's here".
+        out.stations = block.stations.map(s => ({ ...s }));
+        out.rotation = {
+          intervalMinutes: block.rotation.intervalMinutes,
+          groupSource: 'manual',
+          groups: block.rotation.groups.map(g => ({ id: g.id, name: g.name, playerIds: ids(g.playerIndexes) })),
+        };
+      } else {
+        out.playerIds = block.playerIndexes ? ids(block.playerIndexes) : [...playerIds];
+      }
+      return out;
+    }),
+  };
+}
+
+/** Materialize games + practices from a world state; returns event ids by game key.
+ *  `plansByPracticeKey` attaches an already-materialized practice plan to named practices. */
+async function insertSeasonEvents(team, pyId, state, plansByPracticeKey = new Map()) {
   const eventIdByKey = new Map();
   const rows = [];
   for (const g of state.games) {
@@ -320,9 +425,10 @@ async function insertSeasonEvents(team, pyId, state) {
     eventIdByKey.set(p.key, id);
     rows.push({
       id, program_year_id: pyId, team_id: team.id, org_id: org.id,
-      event_type: 'practice', name: 'Team practice',
+      event_type: 'practice', name: p.name ?? 'Team practice',
       starts_at: p.startsAtIso, ends_at: p.endsAtIso,
       location: DEMO_HOME_DIAMOND, status: 'scheduled',
+      practice_plan: plansByPracticeKey.get(p.key) ?? null,
     });
   }
   await insertAll('rep_team_events', rows);
@@ -426,6 +532,164 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────
+// 14U — OFF-SEASON (the books are open, the season isn't)
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+{
+  const team = DEMO_COACH_TEAMS.offSeason;
+  const state = resolveOffSeasonState(now);
+  await upsertTeam(team);
+  // NEXT season's year: an off-season team has rolled over and is building the year it hasn't
+  // played yet — which is exactly why its Money screens are the moment's landing place.
+  const pyId = await ensureProgramYear(team, state.year, state.yearName, {
+    status: 'active', tryout_open: false,
+    budget_amount: OFFSEASON_BUDGET_LINES.reduce((s, l) => s + l.total, 0),
+  });
+  await ensureHeadCoach(team, pyId);
+  await wipeProgramYearChildren(team.id, pyId);
+  const playerIds = await insertRoster(team, pyId, OFFSEASON_ROSTER);
+
+  const plansByPracticeKey = new Map(OFFSEASON_PRACTICE_PLANS.map(plan =>
+    [plan.practiceKey, materializePracticePlan(plan, playerIds)]));
+  const eventIdByKey = await insertSeasonEvents(team, pyId, state, plansByPracticeKey);
+  await insertAttendance(team, pyId, state, eventIdByKey, playerIds);
+
+  // The budget plan: real platform categories, each line phased across four months so the report
+  // this moment lands on has a month grid rather than one undated lump.
+  // Ids are minted here, so lines and their phasing are two batched writes rather than twelve.
+  const budgetLineRows = OFFSEASON_BUDGET_LINES.map((line, i) => ({
+    id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
+    category_id: budgetCategoryIds.get(line.category.toLowerCase()),
+    description: line.description, total_amount: line.total, sort_order: i,
+  }));
+  await insertAll('rep_budget_lines', budgetLineRows);
+  // Periods must sum to their line within $0.02 (the planner enforces it); quarters divide every
+  // one of these totals exactly, so the demo never sits on that tolerance.
+  await insertAll('rep_budget_periods', budgetLineRows.flatMap(row =>
+    state.budgetPeriodDates.map((date, n) => ({
+      budget_line_id: row.id, period_label: date.slice(0, 7), period_date: date,
+      amount: row.total_amount / state.budgetPeriodDates.length, sort_order: n,
+    }))));
+
+  // What has actually been spent — the "actual" half of the report, one row deliberately on a
+  // category with no budget line so the unbudgeted section has something honest to say.
+  await insertAll('rep_team_expenses', state.expenses.map(e => ({
+    program_year_id: pyId, team_id: team.id, org_id: org.id,
+    expense_type: e.type, description: e.description, category: e.category,
+    amount: e.amount, notes: e.notes ?? null,
+    // Stamped through the world's own helper — the nightly re-anchor re-asserts these from the
+    // same function, and a second spelling of "4pm" would make every run rewrite every row.
+    expense_paid_at: e.paidDate ? demoPaidStampIso(e.paidDate) : null,
+    deposit_amount: e.deposit?.amount ?? null,
+    deposit_due_date: e.deposit?.dueDate ?? null,
+    deposit_paid_at: e.deposit?.paidDate ? demoPaidStampIso(e.deposit.paidDate) : null,
+    balance_amount: e.balance?.amount ?? null,
+    balance_due_date: e.balance?.dueDate ?? null,
+    balance_paid_at: e.balance?.paidDate ? demoPaidStampIso(e.balance.paidDate) : null,
+    payee_payer: 'Riverdale Ridge Baseball Club',
+    created_by: coach.id,
+  })));
+
+  // Dues: two instalments settled, two ahead — and one family a payment behind.
+  await seedDues(team, pyId, playerIds, {
+    totalAmount: OFFSEASON_DUES.totalAmount,
+    installmentAmount: OFFSEASON_DUES.installmentAmount,
+    dueDates: state.duesDueDates, paidDates: state.duesPaidDates,
+    isPaid: (i, n) => n <= 1 && !(n === 1 && i === OFFSEASON_DUES.overdueRosterIndex),
+  });
+
+  await insertAll('rep_player_development_goals', OFFSEASON_DEVELOPMENT_GOALS.map(goal => ({
+    org_id: org.id, team_id: team.id, player_id: playerIds[goal.rosterIndex],
+    focus_area: goal.focusArea, note: goal.note, status: goal.status, created_by: coach.id,
+  })));
+
+  // The winter's testing session: the coach's own test library, one session hung off the practice
+  // it was run at, and readings for everyone who was there. The two who missed get no row at all —
+  // an honest blank is the product's rule, never a fabricated zero.
+  const typeIds = [];
+  for (let i = 0; i < OFFSEASON_MEASURABLE_TYPES.length; i++) {
+    const id = randomUUID();
+    typeIds.push(id);
+    die('insert measurable type', (await db.from('rep_team_measurable_types').insert({
+      id, org_id: org.id, team_id: team.id,
+      name: OFFSEASON_MEASURABLE_TYPES[i].name, unit: OFFSEASON_MEASURABLE_TYPES[i].unit,
+      sort_order: i, is_active: true, created_by: coach.id,
+    })).error);
+  }
+  const sessionId = randomUUID();
+  die('insert evaluation session', (await db.from('rep_team_evaluation_sessions').insert({
+    id: sessionId, org_id: org.id, team_id: team.id, program_year_id: pyId,
+    session_date: state.testingSessionDate,
+    event_id: eventIdByKey.get(state.testingSessionPracticeKey) ?? null,
+    note: 'Post-holiday testing', created_by: coach.id,
+  })).error);
+  const readings = [];
+  playerIds.forEach((pid, i) => {
+    if (OFFSEASON_TESTING_ABSENT.includes(i)) return;
+    OFFSEASON_MEASURABLE_TYPES.forEach((type, t) => readings.push({
+      org_id: org.id, team_id: team.id, player_id: pid,
+      measurable_type_id: typeIds[t], value: offseasonMeasurableValue(i, t),
+      unit: type.unit, recorded_on: state.testingSessionDate,
+      session_id: sessionId, created_by: coach.id,
+    }));
+  });
+  await insertAll('rep_player_measurables', readings);
+
+  console.log(`✓ 14U off-season — budget ${OFFSEASON_BUDGET_LINES.length} lines, ${state.expenses.length} expenses logged, dues 2 of 4 in (one overdue), ${state.practices.length} sessions, 2 plans, ${readings.length} test readings`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// 10U — SEASON START (two weeks in, the year laid out ahead)
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+{
+  const team = DEMO_COACH_TEAMS.seasonStart;
+  const state = resolveSeasonStartState(now);
+  await upsertTeam(team);
+  const pyId = await ensureProgramYear(team, state.year, state.yearName, {
+    status: 'active', tryout_open: false,
+    lineup_settings: SEASON_START_LINEUP_SETTINGS,
+    budget_amount: SEASON_START_BUDGET_LINES.reduce((s, l) => s + l.total, 0),
+  });
+  await ensureHeadCoach(team, pyId);
+  await wipeProgramYearChildren(team.id, pyId);
+  const playerIds = await insertRoster(team, pyId, SEASON_START_ROSTER);
+
+  const eventIdByKey = await insertSeasonEvents(team, pyId, state);
+  await insertAttendance(team, pyId, state, eventIdByKey, playerIds);
+
+  // Exactly ONE saved lineup — the opener's. Everything after it is still the coach's to write,
+  // which is what "two weeks in" has to feel like.
+  const opener = state.games.find(g => g.key === state.lineupGameKey);
+  const lineupId = randomUUID();
+  die('insert 10U lineup', (await db.from('rep_team_lineups').insert({
+    id: lineupId, event_id: eventIdByKey.get(opener.key),
+    program_year_id: pyId, team_id: team.id, org_id: org.id,
+    lineup_mode: 'everyone_bats', inning_count: SEASON_START_LINEUP_GRID.length,
+  })).error);
+  await insertAll('rep_team_lineup_entries', SEASON_START_BATTING_ORDER.map((rosterIndex, pos) => ({
+    lineup_id: lineupId, player_id: playerIds[rosterIndex], batting_order: pos + 1, starter: true,
+    inning_positions: Object.fromEntries(
+      SEASON_START_LINEUP_GRID.map((inning, idx) => [String(idx + 1), inning[rosterIndex]])),
+  })));
+
+  await insertAll('rep_budget_lines', SEASON_START_BUDGET_LINES.map((line, i) => ({
+    org_id: org.id, team_id: team.id, program_year_id: pyId,
+    category_id: budgetCategoryIds.get(line.category.toLowerCase()),
+    description: line.description, total_amount: line.total, sort_order: i,
+  })));
+
+  // Dues mostly current: everyone but one family has paid the first instalment; the rest are ahead.
+  await seedDues(team, pyId, playerIds, {
+    totalAmount: SEASON_START_DUES.totalAmount,
+    installmentAmount: SEASON_START_DUES.installmentAmount,
+    dueDates: state.duesDueDates, paidDates: state.duesPaidDates,
+    isPaid: (i, n) => n === 0 && i !== SEASON_START_DUES.unpaidFirstRosterIndex,
+  });
+
+  const played = state.games.filter(g => g.result != null).length;
+  console.log(`✓ 10U season start — opening day ${state.openingDate}, ${played} played of ${state.games.length} games, ${state.practices.length} practices, 1 saved lineup, dues 1 of 4 in`);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────────────────────
 // 12U — MID-SEASON
 // ─────────────────────────────────────────────────────────────────────────────────────────────
 {
@@ -441,7 +705,8 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   await wipeProgramYearChildren(team.id, pyId);
   const playerIds = await insertRoster(team, pyId, MIDSEASON_ROSTER);
 
-  const eventIdByKey = await insertSeasonEvents(team, pyId, state);
+  const eventIdByKey = await insertSeasonEvents(team, pyId, state, new Map(
+    MIDSEASON_PRACTICE_PLANS.map(plan => [plan.practiceKey, materializePracticePlan(plan, playerIds)])));
   await insertAttendance(team, pyId, state, eventIdByKey, playerIds);
 
   // Lineups for the newest six decided games — the playing-time and arm-care record.
@@ -460,27 +725,17 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     })));
   }
 
-  // Dues: $480 in four, everyone owes the final future installment; two families sit overdue.
+  // Dues: $480 in four, everyone owes the final future instalment; two families sit overdue.
   const dueOffsets = [-70, -40, -10, 20];
-  for (let i = 0; i < playerIds.length; i++) {
-    const scheduleId = randomUUID();
-    die('insert dues schedule', (await db.from('rep_player_dues_schedules').insert({
-      id: scheduleId, program_year_id: pyId, player_id: playerIds[i],
-      team_id: team.id, org_id: org.id, total_amount: MIDSEASON_DUES.totalAmount,
-    })).error);
-    const overdue = MIDSEASON_DUES.overdueRosterIndexes.includes(i);
-    await insertAll('rep_player_dues_installments', dueOffsets.map((offset, n) => {
-      const dueDate = orgDateWithOffset(now, offset);
-      const isPast = offset < 0;
-      const unpaid = n === 3 || (overdue && n === 2); // final is future for all; overdue pair also missed #3
-      return {
-        schedule_id: scheduleId, player_id: playerIds[i], installment_number: n + 1,
-        amount: MIDSEASON_DUES.installmentAmount, due_date: dueDate,
-        paid_at: !unpaid && isPast ? `${orgDateWithOffset(now, offset - 3)}T17:00:00.000Z` : null,
-        org_id: org.id, team_id: team.id, source: 'manual',
-      };
-    }));
-  }
+  await seedDues(team, pyId, playerIds, {
+    totalAmount: MIDSEASON_DUES.totalAmount,
+    installmentAmount: MIDSEASON_DUES.installmentAmount,
+    dueDates: dueOffsets.map(offset => orgDateWithOffset(now, offset)),
+    paidDates: dueOffsets.map(offset => orgDateWithOffset(now, offset - 3)),
+    // The final instalment is future for everyone; the overdue pair also missed #3.
+    isPaid: (i, n) => dueOffsets[n] < 0
+      && !(n === 3 || (n === 2 && MIDSEASON_DUES.overdueRosterIndexes.includes(i))),
+  });
 
   const budgetRows = MIDSEASON_BUDGET_LINES.map((line, i) => ({
     id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
@@ -511,7 +766,7 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     focus_area: goal.focusArea, note: goal.note, status: 'working', created_by: coach.id,
   })));
 
-  console.log(`✓ 12U mid-season — ${state.games.length - 1} decided games (14-3-1), game Saturday ${state.saturdayDate}, dues + budget + waivers in`);
+  console.log(`✓ 12U mid-season — ${state.games.length - 1} decided games (14-3-1), game Saturday ${state.saturdayDate}, dues + budget + waivers in, ${MIDSEASON_PRACTICE_PLANS.length} past practices written up`);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────────────────────
@@ -552,23 +807,13 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
   }
 
   // Money: fully paid year — the archive's Money door shows a finished, settled story.
-  const seasonStart = state.games[0].date;
-  for (const pid of playerIds) {
-    const scheduleId = randomUUID();
-    die('insert 13U dues schedule', (await db.from('rep_player_dues_schedules').insert({
-      id: scheduleId, program_year_id: pyId, player_id: pid,
-      team_id: team.id, org_id: org.id, total_amount: SEASONS_END_DUES.totalAmount,
-    })).error);
-    await insertAll('rep_player_dues_installments', [0, 1, 2, 3].map(n => {
-      const dueDate = `${state.year}-0${5 + n}-01`;
-      return {
-        schedule_id: scheduleId, player_id: pid, installment_number: n + 1,
-        amount: SEASONS_END_DUES.installmentAmount, due_date: dueDate,
-        paid_at: `${state.year}-0${5 + n}-03T17:00:00.000Z`,
-        org_id: org.id, team_id: team.id, source: 'manual',
-      };
-    }));
-  }
+  await seedDues(team, pyId, playerIds, {
+    totalAmount: SEASONS_END_DUES.totalAmount,
+    installmentAmount: SEASONS_END_DUES.installmentAmount,
+    dueDates: [0, 1, 2, 3].map(n => `${state.year}-0${5 + n}-01`),
+    paidDates: [0, 1, 2, 3].map(n => `${state.year}-0${5 + n}-03`),
+    isPaid: () => true, // a closed season owes nothing
+  });
   await insertAll('rep_budget_lines', SEASONS_END_BUDGET_LINES.map((line, i) => ({
     org_id: org.id, team_id: team.id, program_year_id: pyId,
     description: line.description, total_amount: line.total, sort_order: i,
@@ -619,6 +864,8 @@ console.log(`\n✅ Seeded the Coach Sandbox — ${DEMO_COACH_ORG_NAME}`);
 console.log(`   Org: ${demoOrg.slug} · plan club · role coach · not public, not discoverable`);
 console.log(`   Coach: ${demoOrg.organizerEmail} (${DEMO_COACH_DISPLAY_NAME})`);
 console.log(`   Tryout day:  /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.tryoutDay.id}/tryouts/score`);
+console.log(`   Off-season:  /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.offSeason.id}/accounting/budget-vs-actual`);
+console.log(`   Season start: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonStart.id}/schedule`);
 console.log(`   Mid-season:  ${demoOrg.landingPath}`);
 console.log(`   Season's End: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonsEnd.id}/season-end`);
 console.log(`\n   Re-running this script IS the re-anchor: dates follow today, rows are diff-stable.`);

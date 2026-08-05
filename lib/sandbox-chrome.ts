@@ -39,8 +39,8 @@ export type SandboxSide = 'public' | 'operator';
 export const SANDBOX_MOMENT_KEYS = [
   // The tournament's year (Phase 2, ratified 2026-08-04)
   'registration-week', 'game-day', 'morning-after',
-  // The coach's season (COACH_SANDBOX_SEASON_PHASES_PLAN.md Phase 1 — the phase dock)
-  'tryout-day', 'mid-season', 'seasons-end',
+  // The coach's season (COACH_SANDBOX_SEASON_PHASES_PLAN.md — the phase dock), in season order
+  'tryout-day', 'off-season', 'season-start', 'mid-season', 'seasons-end',
 ] as const;
 export type SandboxMomentKey = (typeof SANDBOX_MOMENT_KEYS)[number];
 
@@ -120,9 +120,10 @@ export function sandboxMoments(
 }
 
 /**
- * The phase dock (coach sandbox): one club, three teams, each frozen at a different moment of a
- * season. Every press is plain navigation to that team's showcase screen — the coach portal has
- * no public/operator split (it all sits behind the demo session), so both paths agree.
+ * The phase dock (coach sandbox): one club, five teams, each frozen at a different moment of a
+ * season, listed in the order a year happens. Every press is plain navigation to that team's
+ * showcase screen — the coach portal has no public/operator split (it all sits behind the demo
+ * session), so both paths agree.
  *
  * ⚠ No moment carries the live dot, deliberately, including Tryout day. The dot is a claim that
  * the screen moves WHILE YOU WATCH, and the tryout's scores re-anchor nightly, not live — the
@@ -146,6 +147,26 @@ function coachSandboxMoments(org: { slug: string; landingPath: string }): Sandbo
       saidPublic: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
       saidOperator: 'Tryout day, mid-flight: 28 kids in bibs, two evaluators partway through their scoring, and one split opinion to argue about tonight. Blind scoring is on — the board shows bibs, never names.',
       bannerNote: 'Evaluations are mid-flight',
+    }),
+    moment({
+      key: 'off-season',
+      label: 'Off-season',
+      sub: 'between seasons',
+      teamId: DEMO_COACH_TEAM_IDS.offSeason,
+      path: teamPath(DEMO_COACH_TEAM_IDS.offSeason, '/accounting/budget-vs-actual'),
+      saidPublic: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
+      saidOperator: 'Between seasons, with the books open: a budget built line by line, the winter\'s spending already against it, dues two payments in — and one family behind. Nobody has thrown a pitch yet.',
+      bannerNote: 'The season is still being built',
+    }),
+    moment({
+      key: 'season-start',
+      label: 'Season start',
+      sub: 'two weeks in',
+      teamId: DEMO_COACH_TEAM_IDS.seasonStart,
+      path: teamPath(DEMO_COACH_TEAM_IDS.seasonStart, '/schedule'),
+      saidPublic: 'Two weeks into the year: the whole season already on the calendar, three games played, and the opener\'s lineup saved. This was one evening\'s work in March.',
+      saidOperator: 'Two weeks into the year: the whole season already on the calendar, three games played, and the opener\'s lineup saved. This was one evening\'s work in March.',
+      bannerNote: 'Two weeks into the season',
     }),
     moment({
       key: 'mid-season',

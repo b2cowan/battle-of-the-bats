@@ -153,17 +153,21 @@ describe('the dock', () => {
 
   /**
    * The coach sandbox's phase dock (built 2026-08-04, replacing the earlier "renders no dock"
-   * stub-state assertion). Same dock component, its own contract: three moments in season
-   * order, every press a plain in-org navigation, and — deliberately — NO live dot and NO
-   * countdown anywhere: nothing in the coach demo moves while you watch (nightly re-anchor),
-   * and the chrome never claims motion the clock won't deliver.
+   * stub-state assertion; grown to five moments in Phase 2). Same dock component, its own
+   * contract: the moments in SEASON order, every press a plain in-org navigation, and —
+   * deliberately — NO live dot and NO countdown anywhere: nothing in the coach demo moves while
+   * you watch (nightly re-anchor), and the chrome never claims motion the clock won't deliver.
    */
   const coachDemo = getDemoOrgByKind('coach')!;
   const coachOrg = { slug: coachDemo.slug, landingPath: coachDemo.landingPath };
 
-  test("the coach dock: three moments of a season, in order, all inside the coach portal", () => {
+  test('the coach dock: five moments of a season, in order, all inside the coach portal', () => {
     const moments = sandboxMoments('coach', coachOrg);
-    assert.deepEqual(moments.map(m => m.key), ['tryout-day', 'mid-season', 'seasons-end']);
+    // Season order, not build order — a visitor reads this row as a year, left to right.
+    assert.deepEqual(moments.map(m => m.key),
+      ['tryout-day', 'off-season', 'season-start', 'mid-season', 'seasons-end']);
+    assert.equal(new Set(moments.map(m => m.teamId)).size, moments.length,
+      'two moments share a team — one of them could never be the highlighted chip');
     for (const moment of moments) {
       assert.ok(moment.teamId, `${moment.key} names no team — the dock could not highlight it`);
       assert.ok(moment.fanPath.startsWith(`/${coachDemo.slug}/coaches/teams/`),

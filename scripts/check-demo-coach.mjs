@@ -8,13 +8,20 @@
  *   1. the demo org exists, carries the rep-teams module, is excluded from discovery, and the
  *      demo coach is an org member with role `coach` (never owner);
  *   2. TRYOUT DAY is today: sessions today, evaluators live, partial scores, the split opinion;
- *   3. MID-SEASON is alive: 14-3-1 from the app's own result rule, a game THIS Saturday with no
+ *   3. OFF-SEASON has open books: every budget line on a real category so budget-vs-actual can
+ *      match it, spending logged against four of six lines, one deliberately unbudgeted expense,
+ *      an unpaid payable balance ahead, $225 overdue from one family, two practice plans (one
+ *      rotating) and a testing session with honest blanks for the two who missed it;
+ *   4. SEASON START is two weeks in: opening day a fortnight back, three games played and the
+ *      rest ahead, NO past game left unscored, exactly one saved lineup, and attendance taken
+ *      for every event that has happened and none that hasn't;
+ *   5. MID-SEASON is alive: 14-3-1 from the app's own result rule, a game THIS Saturday with no
  *      lineup, the attendance dip, the playing-time outlier, $240 overdue across two families,
  *      one unsigned waiver;
- *   4. SEASON'S END is genuinely closed: `completed` status, 26 finalized games at 18-6-2 with
+ *   6. SEASON'S END is genuinely closed: `completed` status, 26 finalized games at 18-6-2 with
  *      the streak and the one-run games Wrapped needs, the reused winning batting order, awards,
  *      and 9-of-12 family recap views — and NO active year on that team;
- *   5. the one contact rule: every guardian address in the world is `@example.com`.
+ *   7. the one contact rule: every guardian address in the world is `@example.com`.
  *
  * Exit code 0 = presentable. Non-zero = do not point anyone at it.
  *
@@ -22,7 +29,11 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { getDemoOrgByKind } from '../lib/demo-org.ts';
-import { DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset } from '../lib/demo-coach.ts';
+import {
+  DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
+  OFFSEASON_BUDGET_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
+  SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
+} from '../lib/demo-coach.ts';
 
 const failures = [];
 const ok = (label) => console.log(`  ✓ ${label}`);
@@ -60,13 +71,44 @@ const { data: members } = await db.from('organization_members')
   .select('role, status, user_id').eq('organization_id', org.id);
 check(members?.length === 1 && members[0].role === 'coach' && members[0].status === 'active',
   'exactly one member, role coach — the demo session cannot see admin surfaces');
-const coachUserId = members?.[0]?.user_id;
 
 // ── helpers ──────────────────────────────────────────────────────────────────────────────────
 async function programYears(teamId) {
   return (await db.from('rep_program_years').select('id, year, status, tryout_open').eq('team_id', teamId)).data ?? [];
 }
 const exampleOnly = (rows, field) => rows.find(r => r[field] && !r[field].endsWith('@example.com'));
+
+/** Instalments past their due date with nothing paid against them — ONE definition of "overdue",
+ *  because three sections assert on it and a demo that disagrees with itself about who owes money
+ *  is worse than one that says nothing. */
+const overdueInstallments = (rows) => (rows ?? []).filter(i => !i.paid_at && i.due_date < today);
+
+/** Events with their org-calendar date attached — the shape the timing assertions below work on. */
+const datedEvents = (rows) => (rows ?? [])
+  .map(e => ({ ...e, date: orgDateWithOffset(new Date(e.starts_at), 0) }));
+
+/**
+ * Attendance exists for everything that has happened and nothing that hasn't.
+ *
+ * This is the staleness tripwire as much as a data check: if the nightly re-anchor stops running,
+ * events drift into the past carrying no attendance, and the demo starts showing sessions nobody
+ * apparently turned up to. Both season-shaped teams assert it, through one definition of the
+ * past/future boundary so the two can never disagree about which side "today" falls on.
+ */
+async function checkAttendanceMatchesTiming(programYearId, events, label) {
+  const { data: attendance } = await db.from('rep_team_event_attendance')
+    .select('event_id').eq('program_year_id', programYearId);
+  const taken = new Set((attendance ?? []).map(a => a.event_id));
+  // `<= today`, matching the seed's own `happened` rule exactly. Splitting on `<` would leave an
+  // event dated TODAY asserted by neither half — a hole that opens roughly one night in seven,
+  // on precisely the row most likely to be mid-transition.
+  const past = events.filter(e => e.date <= today);
+  const ahead = events.filter(e => e.date > today);
+  check(past.length > 0 && past.every(e => taken.has(e.id)),
+    `attendance was taken at all ${past.length} ${label} that have happened`);
+  check(ahead.every(e => !taken.has(e.id)),
+    `and at none of the ${ahead.length} still ahead — nothing is invented`);
+}
 
 // ── 2. tryout day ────────────────────────────────────────────────────────────────────────────
 console.log('\nTryout day — Riverdale Ridge 11U');
@@ -104,7 +146,160 @@ console.log('\nTryout day — Riverdale Ridge 11U');
   }
 }
 
-// ── 3. mid-season ────────────────────────────────────────────────────────────────────────────
+// ── 3. off-season ────────────────────────────────────────────────────────────────────────────
+console.log('\nOff-season — Riverdale Ridge 14U');
+{
+  const teamId = DEMO_COACH_TEAMS.offSeason.id;
+  const state = resolveOffSeasonState(now);
+  const years = await programYears(teamId);
+  const py = years.find(y => y.status === 'active');
+  check(!!py && years.length === 1 && py?.year === thisYear + 1,
+    `one active program year, and it is NEXT season (${thisYear + 1}) — a team building the year it hasn't played`);
+  if (py) {
+    // The budget half. A line with no category never matches an actual, so this is the assertion
+    // that keeps the moment's landing screen from quietly becoming a page of "Uncategorized".
+    const { data: lines } = await db.from('rep_budget_lines')
+      .select('id, total_amount, category_id, budget_categories(name, scope)').eq('program_year_id', py.id);
+    check(lines?.length === OFFSEASON_BUDGET_LINES.length && lines.every(l => l.category_id),
+      `${lines?.length} budget lines, every one on a real category (budget-vs-actual matches by category NAME)`);
+    // Org-only categories are invisible to the coach's own budget planner and refused by its write
+    // path — a line on one is a state no coach could have created, which the demo must never show.
+    check((lines ?? []).every(l => ['team', 'both'].includes(l.budget_categories?.scope)),
+      'every category is one a COACH could actually have picked (team-scoped, not an admin-only one)');
+    const budgetTotal = (lines ?? []).reduce((s, l) => s + Number(l.total_amount), 0);
+    check(budgetTotal === OFFSEASON_BUDGET_LINES.reduce((s, l) => s + l.total, 0),
+      `the plan totals $${budgetTotal.toLocaleString()}`);
+
+    const { data: periods } = await db.from('rep_budget_periods')
+      .select('budget_line_id, amount, period_date').in('budget_line_id', (lines ?? []).map(l => l.id));
+    const perLine = new Map();
+    for (const p of periods ?? []) perLine.set(p.budget_line_id, (perLine.get(p.budget_line_id) ?? 0) + Number(p.amount));
+    check((lines ?? []).every(l => Math.abs((perLine.get(l.id) ?? 0) - Number(l.total_amount)) < 0.02),
+      'every line is phased across months and each phasing sums back to its line (the planner\'s own ±$0.02 rule)');
+    check((periods ?? []).some(p => p.period_date?.slice(0, 7) === today.slice(0, 7)),
+      'the phasing covers THIS month — the month grid opens on a column that means something');
+
+    // The actual half, matched the way the report matches it: category name, case-insensitive.
+    const categoryNames = new Set((lines ?? []).map(l => l.budget_categories?.name?.toLowerCase()).filter(Boolean));
+    const { data: expenses } = await db.from('rep_team_expenses')
+      .select('description, category, amount, expense_type, expense_paid_at, balance_amount, balance_due_date, balance_paid_at')
+      .eq('program_year_id', py.id);
+    check(expenses?.length === state.expenses.length, `${expenses?.length} expenses logged against the plan`);
+    const matched = (expenses ?? []).filter(e => categoryNames.has((e.category ?? '').toLowerCase()));
+    check(matched.length === (expenses ?? []).length - 1,
+      'all but one expense matches a budget line by category — and exactly one does not, on purpose');
+    const unbudgeted = (expenses ?? []).find(e => !categoryNames.has((e.category ?? '').toLowerCase()));
+    check(!!unbudgeted && Number(unbudgeted.amount) > 0,
+      `the unbudgeted one is real money ("${unbudgeted?.description}", $${unbudgeted?.amount})`);
+    const payable = (expenses ?? []).find(e => e.expense_type === 'tournament_payable');
+    check(!!payable && !payable.balance_paid_at && payable.balance_due_date > today,
+      'a tournament balance is still owed, and it falls due AHEAD of today');
+    const spent = (expenses ?? []).reduce((s, e) =>
+      s + (e.expense_paid_at ? Number(e.amount) : 0), 0);
+    check(spent > 0 && spent < budgetTotal,
+      `money is spent but the budget holds ($${spent.toLocaleString()} of $${budgetTotal.toLocaleString()})`);
+
+    // Dues: two settled instalments and one family behind.
+    const { data: installments } = await db.from('rep_player_dues_installments')
+      .select('amount, due_date, paid_at, player_id').eq('team_id', teamId);
+    const overdue = overdueInstallments(installments);
+    const overdueTotal = overdue.reduce((s, i) => s + Number(i.amount), 0);
+    check(overdueTotal === OFFSEASON_DUES.installmentAmount && new Set(overdue.map(i => i.player_id)).size === 1,
+      `$${OFFSEASON_DUES.installmentAmount} overdue from exactly one family`,
+      `$${overdueTotal} across ${new Set(overdue.map(i => i.player_id)).size}`);
+    check((installments ?? []).filter(i => i.paid_at).length > 0
+      && (installments ?? []).every(i => !i.paid_at || i.paid_at.slice(0, 10) <= today),
+      'nothing was paid in the future');
+
+    // The sessions, the plans, and the one that rotates.
+    const { data: events } = await db.from('rep_team_events')
+      .select('id, name, starts_at, event_type, practice_plan').eq('program_year_id', py.id);
+    check((events ?? []).every(e => e.event_type === 'practice'),
+      `${events?.length} events, all of them practices — nobody plays anybody in the off-season`);
+    await checkAttendanceMatchesTiming(py.id, datedEvents(events), 'sessions');
+
+    const planned = (events ?? []).filter(e => e.practice_plan);
+    check(planned.length === 2, 'two practice plans are written', `got ${planned.length}`);
+    const rotating = planned.find(e => (e.practice_plan.blocks ?? [])
+      .some(b => b.rotation?.groups?.length >= 3 && (b.stations ?? []).length >= 3));
+    check(!!rotating, 'one of them is a real circuit — three stations, three groups on a clock');
+    check(planned.some(e => orgDateWithOffset(new Date(e.starts_at), 0) > today),
+      'one plan is for a session still AHEAD — there is something to walk into and run');
+
+    // Development: the winter's coaching, and a testing session that leaves honest blanks.
+    const { data: goals } = await db.from('rep_player_development_goals').select('id, status').eq('team_id', teamId);
+    check((goals ?? []).length >= 4 && (goals ?? []).some(g => g.status === 'achieved'),
+      `${goals?.length} focus areas on the go, at least one already achieved`);
+    const { data: sessions } = await db.from('rep_team_evaluation_sessions')
+      .select('id, session_date, event_id').eq('program_year_id', py.id);
+    check(sessions?.length === 1 && !!sessions[0].event_id,
+      'one testing session, hung off the practice it was actually run at');
+    const { data: roster } = await db.from('rep_roster_players')
+      .select('id, guardian_email, player_number').eq('program_year_id', py.id).eq('status', 'active');
+    const { data: readings } = await db.from('rep_player_measurables')
+      .select('player_id, measurable_type_id, unit').eq('session_id', sessions?.[0]?.id ?? '');
+    const tested = new Set((readings ?? []).map(r => r.player_id)).size;
+    check(tested === (roster?.length ?? 0) - OFFSEASON_TESTING_ABSENT.length,
+      `${tested} of ${roster?.length} players were tested — the ${OFFSEASON_TESTING_ABSENT.length} who missed have no row, not a zero`);
+    check(new Set((readings ?? []).map(r => r.measurable_type_id)).size === OFFSEASON_MEASURABLE_TYPES.length,
+      `all ${OFFSEASON_MEASURABLE_TYPES.length} tests were run`);
+    check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 14U guardian address is unreachable example.com');
+  }
+}
+
+// ── 4. season start ──────────────────────────────────────────────────────────────────────────
+console.log('\nSeason start — Riverdale Ridge 10U');
+{
+  const teamId = DEMO_COACH_TEAMS.seasonStart.id;
+  const state = resolveSeasonStartState(now);
+  const years = await programYears(teamId);
+  const py = years.find(y => y.status === 'active');
+  check(!!py && years.length === 1 && py?.year === thisYear, `one active program year (${thisYear})`);
+  if (py) {
+    const { data: events } = await db.from('rep_team_events')
+      .select('id, event_type, starts_at, result, team_score, opponent_score').eq('program_year_id', py.id);
+    const dated = datedEvents(events);
+    const games = dated.filter(e => e.event_type === 'league_game');
+    const played = games.filter(g => g.result != null);
+    const ahead = games.filter(g => g.result == null);
+    check(played.length === 3 && ahead.length >= 10,
+      `${played.length} games played and ${ahead.length} still ahead — the year is laid out, not lived`);
+    check(played.every(g => g.date < today) && played.every(g => g.team_score != null),
+      'every played game is behind us AND carries its score');
+    // The defect this moment is most likely to grow: a scheduled game slipping into the past with
+    // no result, which reads as a coach who forgot to write it up.
+    check(!ahead.some(g => g.date < today), 'no game sits in the past without a result');
+    check(state.openingDate < today && games.some(g => g.date === state.openingDate),
+      `opening day is ${state.openingDate} — a fortnight back, on a Saturday`);
+
+    const { data: lineups } = await db.from('rep_team_lineups').select('id, event_id').eq('program_year_id', py.id);
+    check(lineups?.length === 1, 'exactly ONE saved lineup — the opener\'s; the rest is still the coach\'s to write');
+    const openerId = games.find(g => g.date === state.openingDate)?.id;
+    check(lineups?.[0]?.event_id === openerId, 'and it belongs to the opening game');
+    const { data: entries } = await db.from('rep_team_lineup_entries')
+      .select('player_id, inning_positions, batting_order').eq('lineup_id', lineups?.[0]?.id ?? '');
+    const fieldInnings = (entries ?? []).map(e =>
+      Object.values(e.inning_positions ?? {}).filter(p => p && p !== 'Bench').length);
+    check(fieldInnings.length === 12 && Math.min(...fieldInnings) >= 4,
+      'everyone in the opener fielded at least four of six innings — this team is not the cautionary tale');
+
+    await checkAttendanceMatchesTiming(py.id, dated, 'events');
+
+    const { data: roster } = await db.from('rep_roster_players')
+      .select('id, guardian_email, player_number, primary_position').eq('program_year_id', py.id).eq('status', 'active');
+    check(roster?.length === 12 && roster.every(r => r.player_number && r.primary_position),
+      'a complete roster: twelve players, every one with a number and a position');
+    check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 10U guardian address is unreachable example.com');
+
+    const { data: installments } = await db.from('rep_player_dues_installments')
+      .select('amount, due_date, paid_at, player_id').eq('team_id', teamId);
+    const outstanding = overdueInstallments(installments);
+    check(outstanding.length === 1 && Number(outstanding[0].amount) === SEASON_START_DUES.installmentAmount,
+      'dues are mostly current — one family, one instalment behind');
+  }
+}
+
+// ── 5. mid-season ────────────────────────────────────────────────────────────────────────────
 console.log('\nMid-season — Riverdale Ridge 12U');
 {
   const teamId = DEMO_COACH_TEAMS.midSeason.id;
@@ -113,7 +308,7 @@ console.log('\nMid-season — Riverdale Ridge 12U');
   check(!!py && years.length === 1 && py?.year === thisYear, `one active program year (${thisYear})`);
   if (py) {
     const { data: events } = await db.from('rep_team_events')
-      .select('id, event_type, starts_at, result, team_score, opponent_score, opponent').eq('program_year_id', py.id);
+      .select('id, event_type, starts_at, result, team_score, opponent_score, opponent, practice_plan').eq('program_year_id', py.id);
     const games = (events ?? []).filter(e => e.event_type === 'league_game');
     // The app's own record rule: result column, league/tournament games only.
     const w = games.filter(g => g.result === 'win').length;
@@ -169,7 +364,7 @@ console.log('\nMid-season — Riverdale Ridge 12U');
 
     const { data: installments } = await db.from('rep_player_dues_installments')
       .select('amount, due_date, paid_at, player_id').eq('team_id', teamId);
-    const overdue = (installments ?? []).filter(i => !i.paid_at && i.due_date < today);
+    const overdue = overdueInstallments(installments);
     const overdueTotal = overdue.reduce((s, i) => s + Number(i.amount), 0);
     check(overdueTotal === 240 && new Set(overdue.map(i => i.player_id)).size === 2,
       '$240 overdue across exactly two families', `$${overdueTotal} across ${new Set(overdue.map(i => i.player_id)).size}`);
@@ -181,11 +376,18 @@ console.log('\nMid-season — Riverdale Ridge 12U');
     const signed = new Set((waivers ?? []).map(x => x.player_id));
     const unsigned = (roster ?? []).filter(r => !signed.has(r.id));
     check(roster?.length === 12 && unsigned.length === 1, '12 on the roster, exactly one waiver unsigned');
+
+    // Two past practices are written up, and NO upcoming one is — the Overview's one thing stays
+    // Saturday's lineup rather than competing with a plan waiting to be run.
+    const plannedPractices = (events ?? []).filter(e => e.practice_plan)
+      .map(e => orgDateWithOffset(new Date(e.starts_at), 0));
+    check(plannedPractices.length === 2 && plannedPractices.every(d => d < today),
+      'two practices are written up, both already behind us');
     check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 12U guardian address is unreachable example.com');
   }
 }
 
-// ── 4. season's end ──────────────────────────────────────────────────────────────────────────
+// ── 6. season's end ──────────────────────────────────────────────────────────────────────────
 console.log("\nSeason's End — Riverdale Ridge 13U");
 {
   const teamId = DEMO_COACH_TEAMS.seasonsEnd.id;
@@ -250,6 +452,8 @@ function report() {
   }
   console.log('\n✅ The coach sandbox is presentable.');
   console.log(`   Tryout day:   /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.tryoutDay.id}/tryouts/score`);
+  console.log(`   Off-season:   /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.offSeason.id}/accounting/budget-vs-actual`);
+  console.log(`   Season start: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonStart.id}/schedule`);
   console.log(`   Mid-season:   ${demoOrg.landingPath}`);
   console.log(`   Season's End: /${demoOrg.slug}/coaches/teams/${DEMO_COACH_TEAMS.seasonsEnd.id}/season-end`);
   process.exit(0);

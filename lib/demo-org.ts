@@ -49,7 +49,7 @@ export interface DemoOrgDefinition {
  * sandboxes speak one invented world.
  */
 /**
- * The coach sandbox's three teams — one per season moment — with FIXED ids.
+ * The coach sandbox's five teams — one per season moment — with FIXED ids.
  *
  * Hardcoded (like the slugs, unlike every other row id) because the coach portal addresses teams
  * by row id in the URL: a stable id is what lets the demo door's landing path, the phase dock's
@@ -59,6 +59,10 @@ export interface DemoOrgDefinition {
 export const DEMO_COACH_TEAM_IDS = {
   /** Riverdale Ridge 11U — tryout day, evaluations mid-flight. */
   tryoutDay: '5eed0c0a-c111-4d3e-9a01-000000000011',
+  /** Riverdale Ridge 14U — off-season: the books are open, the season isn't (Phase 2). */
+  offSeason: '5eed0c0a-c114-4d3e-9a01-000000000014',
+  /** Riverdale Ridge 10U — two weeks into its season, the year laid out ahead (Phase 2). */
+  seasonStart: '5eed0c0a-c110-4d3e-9a01-000000000010',
   /** Riverdale Ridge 12U — mid-season, game this Saturday. The landing team. */
   midSeason: '5eed0c0a-c112-4d3e-9a01-000000000012',
   /** Riverdale Ridge 13U — last year's team, season closed, Wrapped ready. */

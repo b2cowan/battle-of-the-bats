@@ -1,6 +1,29 @@
 # Coach Sandbox with Season Phases — PM Brief
 
-**Status:** Planned (owner agreed 2026-08-02). Plan: `COACH_SANDBOX_SEASON_PHASES_PLAN.md`.
+**Status:** **All five moments BUILT** — Phase 1 committed dev `7a7092ea` (2026-08-04), Phase 2
+built 2026-08-05 (dev, uncommitted). Owner QA outstanding for both (ledger §5.4). Plan:
+`COACH_SANDBOX_SEASON_PHASES_PLAN.md`.
+
+## What changed in Phase 2 (2026-08-05)
+
+The dock now walks a whole year rather than three points of it. Two teams joined the club:
+
+- **Riverdale Ridge 14U — Off-season.** Lands on Money, budget vs. actual. A season that has been
+  *planned* but not played: a budget built line by line, the winter's spending already logged
+  against it, a tournament balance still to pay, dues part-collected with one family behind, winter
+  Sunday sessions, two written practice plans (one a real three-station rotation you can open and
+  run), and a testing session with the two players who missed it left honestly blank.
+- **Riverdale Ridge 10U — Season start.** Lands on Schedule. Two weeks in: the whole year already
+  on the calendar, three games played, the opener's lineup saved and nothing since — the shape of a
+  season set up in one evening in March.
+
+The 12U also gained write-ups on two practices it has already run, so mid-season shows the record a
+coach leaves behind rather than only the week ahead.
+
+**Known judgement call for QA:** on a phone the five-chip dock is wider than the screen. It now
+scrolls the moment you're standing in into view, so the highlight is never hidden — but you still
+see roughly three and a half chips at a time and swipe for the rest. The alternative is a second
+row of chips, permanently taller. Worth your eyes.
 
 ## What a prospect sees
 

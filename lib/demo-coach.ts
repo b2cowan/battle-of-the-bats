@@ -1,11 +1,16 @@
 /**
  * lib/demo-coach.ts — the Coach Sandbox's fictional world, and where it sits in time.
  *
- * One club — **Riverdale Ridge Baseball** — three teams, each frozen at a different moment of a
- * season (`COACH_SANDBOX_SEASON_PHASES_PLAN.md`, Phase 1):
+ * One club — **Riverdale Ridge Baseball** — five teams, each frozen at a different moment of a
+ * season (`COACH_SANDBOX_SEASON_PHASES_PLAN.md`), listed here in the order the year happens:
  *
  *   · 11U — TRYOUT DAY.   Evaluations are running right now: sessions today, three evaluator
  *                          links, partial blind scores, one deliberate split opinion.
+ *   · 14U — OFF-SEASON.   Between seasons, with the books open: a categorized budget, real
+ *                          spending logged against it, dues part-collected with one family
+ *                          overdue, winter sessions, two practice plans, a testing session.
+ *   · 10U — SEASON START. Two weeks in: the whole year on the schedule, three games played,
+ *                          the opener's lineup saved, attendance only where it was taken.
  *   · 12U — MID-SEASON.   The richest team: 14-3-1, a game this Saturday with no lineup set,
  *                          an attendance dip, a playing-time outlier, two families overdue.
  *   · 13U — SEASON'S END. Last year's team. Its year is closed through the REAL lifecycle
@@ -19,6 +24,12 @@
  *      touches a database, and there is no randomness — reseeding must not churn rows.
  *   2. **Anchored relative to today** (org wall clock, America/Toronto): the tryout is always
  *      TODAY, the 12U game is always THIS Saturday, the 13U season always LAST year.
+ *
+ *      ⚠ **WEEK-QUANTIZED, NOT DAY-QUANTIZED.** Every dated row on the 14U and 10U is placed at
+ *      `thisSaturday + X` for a fixed X (`weekAnchoredDates` below), exactly as the 12U's season
+ *      already is. So the nightly re-anchor's shift is always a multiple of seven and a Sunday
+ *      session stays a Sunday session. Anchoring anything to a raw day count instead would walk
+ *      it one weekday per night — a "winter Sunday skills session" quietly becoming a Thursday.
  *   3. **Every person is fictional and unreachable.** Invented names, `@example.com` guardians
  *      (IANA-reserved — cannot receive mail), no phone numbers. Defense in depth on top of the
  *      notify/email chokepoint silence.
@@ -31,6 +42,7 @@ import { DEMO_COACH_TEAM_IDS } from './demo-org.ts';
 import { shiftedDate, DEMO_CONTACT_DOMAIN } from './demo-tournament.ts';
 import { dayOfWeekFor } from './coach-recurrence.ts';
 import { getRubricStarter } from './tryout-rubric-templates.ts';
+import { addMonths } from './coach-budget-months.ts';
 
 export const DEMO_COACH_ORG_NAME = 'Riverdale Ridge Baseball';
 /** The one demo coach — head coach of all three teams. Display name shows in staff panels. */
@@ -44,10 +56,21 @@ export interface DemoCoachTeamDef {
   color: string;
 }
 
-export const DEMO_COACH_TEAMS: Record<'tryoutDay' | 'midSeason' | 'seasonsEnd', DemoCoachTeamDef> = {
+export const DEMO_COACH_TEAMS: Record<
+  'tryoutDay' | 'offSeason' | 'seasonStart' | 'midSeason' | 'seasonsEnd',
+  DemoCoachTeamDef
+> = {
   tryoutDay: {
     id: DEMO_COACH_TEAM_IDS.tryoutDay,
     name: 'Riverdale Ridge 11U', slug: 'ridge-11u', division: '11U', color: '#1E3A8A',
+  },
+  offSeason: {
+    id: DEMO_COACH_TEAM_IDS.offSeason,
+    name: 'Riverdale Ridge 14U', slug: 'ridge-14u', division: '14U', color: '#1E3A8A',
+  },
+  seasonStart: {
+    id: DEMO_COACH_TEAM_IDS.seasonStart,
+    name: 'Riverdale Ridge 10U', slug: 'ridge-10u', division: '10U', color: '#1E3A8A',
   },
   midSeason: {
     id: DEMO_COACH_TEAM_IDS.midSeason,
@@ -81,6 +104,54 @@ function at(date: string, time: string): string {
 function offsetToSaturday(now: Date): number {
   const today = orgDateWithOffset(now, 0);
   return (6 - dayOfWeek(today) + 7) % 7;
+}
+
+/**
+ * The org-calendar date `x` days from THIS Saturday — the one placement rule the 14U and 10U
+ * worlds use for every dated row.
+ *
+ * `x` is a weekday-and-week offset in one number (0 = this Saturday, +1 = Sunday, -4 = Tuesday
+ * past, -7 = last Saturday, …), so a whole season is authored as constants that never move
+ * relative to each other, and the nightly re-anchor only ever shifts by whole weeks.
+ *
+ * ⚠ Whether a given `x` is in the PAST is not a constant — today's weekday decides it. Only
+ * `x <= -7` is past on every day of the week (`offsetToSaturday` spans 0..6), which is why every
+ * fact that must be settled — a game with a result, a paid installment, a logged expense — sits
+ * at `x <= -7`, and everything with `x >= 1` is unambiguously ahead. The band between them is
+ * reserved for rows that are allowed to flip (a practice whose attendance appears once it has
+ * happened), and those resolve `happened` from the clock rather than from a constant.
+ */
+function weekAnchoredDates(now: Date): (x: number) => string {
+  // Resolved once per run: the weekday of "today" cannot change mid-resolve, and rebuilding it
+  // per date would rescan a zoned formatter ~30 times (`resolveMidSeasonState` hoists it too).
+  const satOffset = offsetToSaturday(now);
+  return (x: number) => orgDateWithOffset(now, satOffset + x);
+}
+
+/**
+ * The key of one of the 14U's winter sessions, by its week offset `x`.
+ *
+ * ⚠ A practice plan has to name the session it belongs to, and the seed looks that session up by
+ * key. Written as literals the two sides agree only by a human re-deriving `week * 7 + 1` — and
+ * when they stopped agreeing the plan would simply not attach, silently, because a missing key
+ * reads as "this practice has no plan". Both sides call this instead, so the pairing is stated
+ * once as arithmetic. (`x = -13` renders as `OP-SUN--13`; the double dash is the negative sign,
+ * which is exactly the sort of literal nobody should be typing by hand.)
+ */
+export function offSeasonSessionKey(x: number): string {
+  return `OP-SUN-${x}`;
+}
+
+/** Week offsets of the 14U's Sunday sessions: five behind us, four from this weekend on. */
+const OFFSEASON_SUNDAY_WEEKS = [-5, -4, -3, -2, -1, 0, 1, 2, 3] as const;
+const offSeasonSundayOffset = (week: number) => week * 7 + 1;
+
+/** The first day of the month `offset` months from today, org-calendar. Budget periods are month
+ *  buckets, so they are re-derived from the clock on each pass rather than shifted like events.
+ *  Month arithmetic comes from the Money-by-Month grid's own helper — one implementation of the
+ *  negative-wraparound idiom, not two. */
+function monthStart(now: Date, offset: number): string {
+  return `${addMonths(orgDateWithOffset(now, 0).slice(0, 7), offset)}-01`;
 }
 
 // ── people ───────────────────────────────────────────────────────────────────────────────────
@@ -262,6 +333,8 @@ export interface DemoPractice {
   /** Attendance shape: indexes into the roster of players NOT attending, and how. */
   absent: readonly number[];
   late: readonly number[];
+  /** What this session is called on the schedule. Defaults to "Team practice" when absent. */
+  name?: string;
 }
 
 /** Chronological results, oldest → newest: 14-3-1, and "won 4 of the last 5". */
@@ -332,6 +405,68 @@ export const MIDSEASON_BUDGET_LINES = [
 
 /** Everyone but Wes (index 2) has a signed waiver on file — the "1 unsigned" beat. */
 export const MIDSEASON_UNSIGNED_WAIVER_INDEX = 2;
+
+/**
+ * Two plans on the 12U's most recent PAST practices — the written record of what was actually run
+ * on the Tuesday the room emptied out and the Thursday after it.
+ *
+ * ⚠ Past practices only, deliberately. A plan on an UPCOMING practice would be a second thing the
+ * Overview could be asked about, and this team's whole beat is that its one thing is Saturday's
+ * unset lineup. (Confirmed harmless either way — `resolveOverviewAnchor` reads the next event's
+ * TYPE, never whether it has a plan — but the moment stays undiluted on purpose.)
+ */
+export const MIDSEASON_PRACTICE_PLANS: readonly DemoPracticePlan[] = [
+  {
+    practiceKey: 'P-TUE-1',
+    goal: 'Cut the free bases we gave away on Saturday.',
+    practiceTypes: ['Fielding'],
+    equipment: ['Buckets', 'Cones'],
+    blocks: [
+      {
+        id: 'demo-12u-tue-warmup', title: 'Warm-up and throwing', minutes: 15,
+        description: 'Dynamic work, then out to the outfield grass.',
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-12u-tue-relays', title: 'Relays and cuts', minutes: 30,
+        description: 'Two lines from the corner, cut man on the grass every time.',
+        goal: 'Somebody is always calling the cut.',
+        coachingPoints: ['Line up the throw', 'Loud and early, then get out of the way'],
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-12u-tue-situations', title: 'Situations', minutes: null, restOfPractice: true,
+        description: 'Runner on second, one out. Play it out, then talk about it.',
+        playerIndexes: null,
+      },
+    ],
+  },
+  {
+    practiceKey: 'P-THU-1',
+    goal: 'Sharpen the top of the order before Saturday.',
+    practiceTypes: ['Hitting'],
+    equipment: ['Tees', 'Screens', 'Short bats'],
+    blocks: [
+      {
+        id: 'demo-12u-thu-warmup', title: 'Warm-up', minutes: 12,
+        description: 'Band work and easy throwing.',
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-12u-thu-rounds', title: 'Hitting rounds', minutes: 40,
+        description: 'Three groups: tee, front toss, live off the machine.',
+        goal: 'Every hitter takes at least one round with two strikes.',
+        coachingPoints: ['Two strikes, shorten up', 'One plan per round'],
+        staff: [DEMO_COACH_DISPLAY_NAME], playerIndexes: null,
+      },
+      {
+        id: 'demo-12u-thu-run', title: 'Baserunning', minutes: 15,
+        description: 'Leads and reads at second.',
+        playerIndexes: null,
+      },
+    ],
+  },
+];
 
 export const MIDSEASON_DEVELOPMENT_GOALS = [
   { rosterIndex: 5, focusArea: 'Two-strike approach', note: 'Shorten up with two strikes — fouled off 9 straight in Tuesday cage work.' },
@@ -426,6 +561,508 @@ export function resolveMidSeasonState(now: Date): MidSeasonState {
 function addHours(time: string, hours: number): string {
   const [h, m] = time.split(':').map(Number);
   return `${String(Math.min(23, h + hours)).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+}
+
+// ── 14U off-season ───────────────────────────────────────────────────────────────────────────
+
+/** 14U — the off-season roster, carried over and complete. Thirteen players. */
+export const OFFSEASON_ROSTER: readonly DemoPlayer[] = [
+  { first: 'Ines',     last: 'Duarte',     number: '2',  primary: 'C',  secondary: '1B', bats: 'R', throws: 'R' },
+  { first: 'Kwame',    last: 'Boateng',    number: '4',  primary: 'P',  secondary: '3B', bats: 'R', throws: 'R' },
+  { first: 'Sofia',    last: 'Marchetti',  number: '6',  primary: 'SS', secondary: '2B', bats: 'L', throws: 'R' },
+  { first: 'Levi',     last: 'Ashworth',   number: '8',  primary: '1B', secondary: 'LF', bats: 'L', throws: 'L' },
+  { first: 'Tariq',    last: 'Bahri',      number: '11', primary: '2B', secondary: 'SS', bats: 'S', throws: 'R' },
+  { first: 'Elowen',   last: 'Pryce',      number: '13', primary: '3B', secondary: 'C',  bats: 'R', throws: 'R' },
+  { first: 'Nikolai',  last: 'Varga',      number: '15', primary: 'P',  secondary: 'RF', bats: 'R', throws: 'R' },
+  { first: 'Camille',  last: 'Dubois',     number: '18', primary: 'CF', secondary: 'SS', bats: 'L', throws: 'L' },
+  { first: 'Rafael',   last: 'Ocampo',     number: '20', primary: 'LF', secondary: 'CF', bats: 'R', throws: 'R' },
+  { first: 'Yuki',     last: 'Tashiro',    number: '22', primary: 'RF', secondary: 'LF', bats: 'L', throws: 'R' },
+  { first: 'Hannah',   last: 'Berglund',   number: '26', primary: 'C',  secondary: '3B', bats: 'R', throws: 'R' },
+  { first: 'Osman',    last: 'Yilmaz',     number: '29', primary: 'P',  secondary: '1B', bats: 'R', throws: 'R' },
+  { first: 'Delphine', last: 'Roux',       number: '31', primary: '2B', secondary: 'RF', bats: 'R', throws: 'R' },
+];
+
+/**
+ * The budget plan — six lines, each on one of the PLATFORM's own budget categories.
+ *
+ * ⚠ `category` is not decoration: budget-vs-actual matches a logged expense to a budget line by
+ * comparing the expense's free-text category to the category NAME, case-insensitively
+ * (`app/api/coaches/.../budget-vs-actual/route.ts`). These strings must stay identical to the
+ * platform-default `budget_categories` rows (org_id NULL) the seed looks them up by, or the whole
+ * moment lands on a page reading "Uncategorized" with every dollar filed as unbudgeted.
+ *
+ * ⚠ **Every category here must be TEAM-reachable** (`scope` `team` or `both`). The coach's own
+ * budget planner lists only those, and its write path refuses the rest — so a line on an org-only
+ * category (`Admin`, `Coaching`) is a state no coach could ever create: the plan list would show
+ * it, and opening Edit Budget Line would find the category missing from its own picker. The seed
+ * enforces the scope so this cannot be reintroduced by choosing a plausible-sounding name.
+ */
+export const OFFSEASON_BUDGET_LINES = [
+  { description: 'Tournament entries — four weekends', category: 'Tournaments',       total: 3600 },
+  { description: 'Diamond and dome rentals',           category: 'Facilities',        total: 2800 },
+  { description: 'Uniforms, caps and helmets',         category: 'Team Gear',         total: 2100 },
+  { description: 'Winter cage sessions',               category: 'Training',          total: 1400 },
+  { description: 'Umpire fees',                        category: 'Officials',         total: 1200 },
+  { description: 'Raffle licence and printing',        category: 'Fundraising Costs', total: 600 },
+] as const;
+
+/** Each line is phased across four months (this month ±). Quarters divide every total exactly —
+ *  the planner enforces periods summing to their line within $0.02, and the demo must not sit on
+ *  that tolerance. */
+export const OFFSEASON_BUDGET_PERIOD_MONTHS = [-1, 0, 1, 2] as const;
+
+/**
+ * The instant a demo bill is settled: late afternoon in the ORG's own day, never 16:00 UTC.
+ *
+ * ⚠ One definition on purpose. The seed writes these stamps and the nightly re-anchor re-asserts
+ * them from the same world, so two spellings of "4pm" would make every single run rewrite every
+ * expense — a job whose entire contract is that a steady day writes nothing.
+ */
+export function demoPaidStampIso(date: string): string {
+  return at(date, '16:00');
+}
+
+export interface DemoExpense {
+  key: string;
+  description: string;
+  /** Free text in the product; here, always a budget category name — or deliberately not one. */
+  category: string;
+  amount: number;
+  type: 'expense' | 'tournament_payable';
+  /** Lump expenses: when it was paid. Payables leave this null and use the two legs. */
+  paidDate: string | null;
+  deposit?: { amount: number; dueDate: string; paidDate: string | null };
+  balance?: { amount: number; dueDate: string; paidDate: string | null };
+  notes?: string | null;
+}
+
+/** Dues: $900 a player in four. One family is a payment behind — $225 overdue, and the sweep that
+ *  would chase it is exactly what the demo org is excluded from. */
+export const OFFSEASON_DUES = {
+  totalAmount: 900,
+  installments: 4,
+  installmentAmount: 225,
+  /** Week-anchored due dates: two settled, two ahead. */
+  dueOffsets: [-49, -21, 7, 35] as const,
+  /** Roster index whose SECOND installment went unpaid past its due date. */
+  overdueRosterIndex: 4, // Tariq Bahri
+} as const;
+
+/** The winter's development work: what four players are actually being coached on. */
+export const OFFSEASON_DEVELOPMENT_GOALS = [
+  { rosterIndex: 1, focusArea: 'Repeating the delivery', status: 'working',
+    note: 'Lands closed when he tires. Ten pitches a session with the towel, no hitter.' },
+  { rosterIndex: 3, focusArea: 'Picking the short hop at first', status: 'working',
+    note: 'Wants the ball on a long hop. We are making it comfortable rather than avoiding it.' },
+  { rosterIndex: 7, focusArea: 'Reading the ball off the bat in centre', status: 'working',
+    note: 'First step is honest now — the routes are what we are working on.' },
+  { rosterIndex: 10, focusArea: 'Throwing through the bag', status: 'achieved',
+    note: 'Pop time down a tenth since the fall. She has stopped aiming it.' },
+] as const;
+
+/** The team's testing library — coach-defined, as the product intends (nothing ships seeded). */
+export const OFFSEASON_MEASURABLE_TYPES = [
+  { name: '60-yard dash',  unit: 'seconds' },
+  { name: 'Exit velocity', unit: 'mph' },
+  { name: 'Home to first', unit: 'seconds' },
+] as const;
+
+/** Two of the thirteen missed the testing session — they get an honest blank, never a zero. */
+export const OFFSEASON_TESTING_ABSENT = [5, 12] as const;
+
+/** A deterministic reading for (player, test) — a band per player, a wobble per test. */
+export function offseasonMeasurableValue(rosterIndex: number, typeIndex: number): number {
+  const band = (rosterIndex * 3 + 1) % 5;               // 0..4 per player
+  const wobble = ((rosterIndex + typeIndex * 2) % 3);   // 0..2
+  if (typeIndex === 0) return Math.round((8.6 - band * 0.22 - wobble * 0.05) * 100) / 100; // seconds
+  if (typeIndex === 1) return 52 + band * 3 + wobble;                                       // mph
+  return Math.round((4.9 - band * 0.13 - wobble * 0.04) * 100) / 100;                       // seconds
+}
+
+/**
+ * A practice plan, as the world knows it: the product's own `practice_plan` jsonb shape, with
+ * player membership left as ROSTER INDEXES for the seed to resolve into row ids. Groups and block
+ * rosters are the only part of a plan that references people.
+ */
+export interface DemoPracticePlan {
+  /** Which practice (by `DemoPractice.key`) this plan belongs to. */
+  practiceKey: string;
+  goal: string;
+  practiceTypes: string[];
+  equipment: string[];
+  blocks: Array<{
+    id: string;
+    title: string;
+    minutes: number | null;
+    restOfPractice?: boolean;
+    description?: string;
+    goal?: string;
+    coachingPoints?: string[];
+    staff?: string[];
+    /** Roster indexes for this block, or null for the whole team. */
+    playerIndexes?: readonly number[] | null;
+    /** ⚠ No `count` — the product retired it (owner ruling 2026-08-01, `PracticeStation`). */
+    stations?: Array<{
+      id: string; name: string; description?: string; goal?: string;
+      equipment?: string[]; setup?: string; coachingPoints?: string[]; staff?: string[]; note?: string;
+    }>;
+    rotation?: {
+      intervalMinutes: number;
+      groups: Array<{ id: string; name: string; playerIndexes: readonly number[] }>;
+    };
+  }>;
+}
+
+export const OFFSEASON_ASSISTANT_NAMES = ['Dana Whitlock', 'Sam Ferreira'] as const;
+
+/** Two plans: the circuit that was run in January, and next Sunday's, written and ready. */
+export const OFFSEASON_PRACTICE_PLANS: readonly DemoPracticePlan[] = [
+  {
+    practiceKey: offSeasonSessionKey(offSeasonSundayOffset(-2)),
+    goal: 'Everyone gets a full turn at all three stations.',
+    practiceTypes: ['Skills'],
+    equipment: ['Tees', 'Screens', 'Short bats', 'Buckets'],
+    blocks: [
+      {
+        id: 'demo-14u-warmup', title: 'Warm-up and throwing progression', minutes: 20,
+        description: 'Dynamic work, then the throwing ladder out to sixty feet.',
+        goal: 'Arms live before anyone swings.',
+        coachingPoints: ['Feet before hands', 'Finish over the front side'],
+        staff: [DEMO_COACH_DISPLAY_NAME],
+        playerIndexes: null,
+      },
+      {
+        id: 'demo-14u-circuit', title: 'Three-station circuit', minutes: 45,
+        description: 'Groups move on every fifteen minutes.',
+        goal: 'A full turn at hitting, short hops and bunt defence.',
+        staff: [DEMO_COACH_DISPLAY_NAME],
+        stations: [
+          {
+            id: 'demo-14u-stn-tee', name: 'Tee work — inside pitch',
+            description: 'Two tees into the near net, ball set on the inner half.',
+            goal: 'The barrel turns instead of being pushed.',
+            equipment: ['Tees', 'Short bats'], setup: 'Two tees into the near net, ten feet apart.',
+            coachingPoints: ['Hands inside it', 'Turn the barrel, do not push it'],
+            staff: [DEMO_COACH_DISPLAY_NAME],
+          },
+          {
+            id: 'demo-14u-stn-hops', name: 'Short hops',
+            description: 'Partner short hops, forehand and backhand, then bare hand.',
+            goal: 'Hands stay soft when the hop is ugly.',
+            equipment: ['Buckets'], setup: 'Partners at fifteen feet on the turf.',
+            coachingPoints: ['Work through it, not at it', 'Soft hands, quiet feet'],
+            staff: [OFFSEASON_ASSISTANT_NAMES[0]],
+            note: 'Bare-hand the last two minutes.',
+          },
+          {
+            id: 'demo-14u-stn-bunt', name: 'Bunt defence',
+            description: 'Live bunts off the machine with the corners crashing.',
+            goal: 'Somebody calls it, every single time.',
+            equipment: ['Screens'], setup: 'Machine at half speed, corners at the grass.',
+            coachingPoints: ['Call it early and loud', 'Pitcher covers third on the wheel'],
+            staff: [OFFSEASON_ASSISTANT_NAMES[1]],
+          },
+        ],
+        rotation: {
+          intervalMinutes: 15,
+          groups: [
+            { id: 'demo-14u-grp-a', name: 'Group A', playerIndexes: [0, 1, 2, 3] },
+            { id: 'demo-14u-grp-b', name: 'Group B', playerIndexes: [4, 5, 6, 7] },
+            { id: 'demo-14u-grp-c', name: 'Group C', playerIndexes: [8, 9, 10, 11, 12] },
+          ],
+        },
+      },
+      {
+        id: 'demo-14u-finish', title: 'Baserunning finisher', minutes: null, restOfPractice: true,
+        description: 'Reads off the bat from second, two groups, coaches quiet.',
+        goal: 'Let them decide, then talk about it.',
+        playerIndexes: null,
+      },
+    ],
+  },
+  {
+    practiceKey: offSeasonSessionKey(offSeasonSundayOffset(1)),
+    goal: 'First look at live pitching since the fall.',
+    practiceTypes: ['Skills', 'Live'],
+    equipment: ['Screens', 'Helmets', 'Buckets'],
+    blocks: [
+      {
+        id: 'demo-14u-next-warmup', title: 'Warm-up and long toss', minutes: 25,
+        description: 'Out to a hundred feet, then back down.',
+        staff: [DEMO_COACH_DISPLAY_NAME],
+        playerIndexes: null,
+      },
+      {
+        id: 'demo-14u-next-live', title: 'Controlled live at-bats', minutes: 40,
+        description: 'Two arms up, everyone gets six pitches with a count.',
+        goal: 'Compete in a count, not just swing.',
+        coachingPoints: ['Take your walk', 'One plan per at-bat'],
+        staff: [DEMO_COACH_DISPLAY_NAME, OFFSEASON_ASSISTANT_NAMES[0]],
+        playerIndexes: null,
+      },
+      {
+        id: 'demo-14u-next-close', title: 'Season talk', minutes: 10,
+        description: 'Schedule, dues, and what the first three weeks look like.',
+        playerIndexes: null,
+      },
+    ],
+  },
+];
+
+export interface OffSeasonState {
+  year: number;
+  yearName: string;
+  /** Empty, and meant to be: nobody plays anybody in the off-season. Present so the seed's
+   *  event/attendance writers take one shape of state, not two. */
+  games: DemoGame[];
+  practices: DemoPractice[];
+  /** Four installment due dates, oldest first (two settled, two ahead). */
+  duesDueDates: string[];
+  /** When each settled installment was actually paid — a few days before it was due. */
+  duesPaidDates: string[];
+  expenses: DemoExpense[];
+  /** Month-first dates for the budget phasing, oldest first. */
+  budgetPeriodDates: string[];
+  /** The practice the testing session was run at, and the day it happened. */
+  testingSessionPracticeKey: string;
+  testingSessionDate: string;
+}
+
+/**
+ * Off-season, resolved from the clock: Sunday skills sessions running from five weeks back to
+ * three weeks ahead, Wednesday cage nights among them, the winter's spending already logged, and
+ * dues two installments in.
+ *
+ * The program year is NEXT season's — an off-season team has rolled over and is building the year
+ * it hasn't played yet, which is why its Money screens are the moment's landing place.
+ */
+export function resolveOffSeasonState(now: Date): OffSeasonState {
+  const today = orgDateWithOffset(now, 0);
+  const year = Number(today.slice(0, 4)) + 1;
+  const dateAt = weekAnchoredDates(now);
+
+  const practices: DemoPractice[] = [];
+  const session = (key: string, x: number, time: string, endTime: string, name: string,
+                   absent: readonly number[], late: readonly number[]) => {
+    const date = dateAt(x);
+    const happened = date <= today;
+    practices.push({
+      key, date, time, startsAtIso: at(date, time), endsAtIso: at(date, endTime),
+      happened,
+      // Attendance only exists for sessions that have actually been run.
+      absent: happened ? absent : [], late: happened ? late : [],
+      name,
+    });
+  };
+
+  // Sunday mornings (Saturday + 1), nine of them: five behind, four from this weekend on.
+  for (const week of OFFSEASON_SUNDAY_WEEKS) {
+    const x = offSeasonSundayOffset(week);
+    session(offSeasonSessionKey(x), x, '10:00', '11:30', 'Sunday skills session',
+      week % 2 === 0 ? [3, 9] : [6], week === -2 ? [11] : []);
+  }
+  // Wednesday cage nights (Saturday + 4 − 7), three across the winter.
+  for (const week of [-4, -2, 1]) {
+    const x = week * 7 - 3;
+    session(`OP-CAGE-${x}`, x, '19:00', '20:15', 'Cage night',
+      [2, 8], week === -2 ? [0] : []);
+  }
+  practices.sort((a, b) => a.date.localeCompare(b.date));
+
+  const expense = (key: string, description: string, category: string, amount: number,
+                   paidX: number, notes: string | null = null): DemoExpense => ({
+    key, description, category, amount, type: 'expense', paidDate: dateAt(paidX), notes,
+  });
+
+  const expenses: DemoExpense[] = [
+    expense('EX-FALL', 'Fall Classic entry', 'Tournaments', 900, -45),
+    {
+      key: 'EX-SPRING', description: 'Spring Invitational', category: 'Tournaments',
+      amount: 1200, type: 'tournament_payable', paidDate: null,
+      // Paid a couple of days BEFORE it was due, like every other settled row in this world —
+      // the only thing running late here is the dues instalment that is meant to be.
+      deposit: { amount: 400, dueDate: dateAt(-30), paidDate: dateAt(-32) },
+      balance: { amount: 800, dueDate: dateAt(21), paidDate: null },
+      notes: 'Balance due four weeks before the first game.',
+    },
+    expense('EX-DOME', 'Dome time — January block', 'Facilities', 1150, -38),
+    expense('EX-GEAR', 'Jerseys and caps — deposit', 'Team Gear', 1050, -24),
+    expense('EX-CAGE', 'Cage rental — eight weeks', 'Training', 700, -17),
+    // Deliberately on a category with NO budget line: the report's "unbudgeted" section has to
+    // have something honest to report, and a team photo is exactly the sort of thing nobody plans.
+    expense('EX-PHOTO', 'Team photo day — deposit', 'Events', 180, -10,
+      'Nobody budgeted for this. It happens every year.'),
+  ];
+
+  return {
+    year,
+    yearName: `${year} Season`,
+    games: [],
+    practices,
+    duesDueDates: OFFSEASON_DUES.dueOffsets.map(dateAt),
+    duesPaidDates: OFFSEASON_DUES.dueOffsets.map(x => addCalendarDays(dateAt(x), -3)),
+    expenses,
+    budgetPeriodDates: OFFSEASON_BUDGET_PERIOD_MONTHS.map(offset => monthStart(now, offset)),
+    testingSessionPracticeKey: offSeasonSessionKey(offSeasonSundayOffset(-3)),
+    testingSessionDate: dateAt(offSeasonSundayOffset(-3)),
+  };
+}
+
+// ── 10U season start ─────────────────────────────────────────────────────────────────────────
+
+/** 10U — the season-start roster: complete, numbered, every player with a position. */
+export const SEASON_START_ROSTER: readonly DemoPlayer[] = [
+  { first: 'Micah',  last: 'Underhill', number: '2',  primary: 'P',  secondary: 'SS', bats: 'R', throws: 'R' },
+  { first: 'Leni',   last: 'Falk',      number: '3',  primary: 'C',  secondary: '1B', bats: 'R', throws: 'R' },
+  { first: 'Amos',   last: 'Trudeau',   number: '5',  primary: '1B', secondary: 'LF', bats: 'L', throws: 'L' },
+  { first: 'Sena',   last: 'Adeyemi',   number: '7',  primary: '2B', secondary: 'RF', bats: 'R', throws: 'R' },
+  { first: 'Clara',  last: 'Bishopp',   number: '8',  primary: 'SS', secondary: '2B', bats: 'R', throws: 'R' },
+  { first: 'Rory',   last: 'Mackinnon', number: '10', primary: '3B', secondary: 'P',  bats: 'L', throws: 'R' },
+  { first: 'Nia',    last: 'Baptiste',  number: '12', primary: 'LF', secondary: 'CF', bats: 'R', throws: 'R' },
+  { first: 'Tobias', last: 'Halloran',  number: '14', primary: 'CF', secondary: 'SS', bats: 'S', throws: 'R' },
+  { first: 'Pearl',  last: 'Nakamura',  number: '15', primary: 'RF', secondary: 'LF', bats: 'L', throws: 'R' },
+  { first: 'Ezio',   last: 'Cattaneo',  number: '17', primary: 'P',  secondary: '3B', bats: 'R', throws: 'R' },
+  { first: 'Wilma',  last: 'Sorensen',  number: '20', primary: 'C',  secondary: '2B', bats: 'R', throws: 'R' },
+  { first: 'Dez',    last: 'Abernathy', number: '21', primary: 'RF', secondary: '1B', bats: 'L', throws: 'L' },
+];
+
+/**
+ * The opener's lineup — the only one saved, three weeks of season still to write.
+ *
+ * Authored so a 10U first game reads the way a good one does: nine legal positions every inning,
+ * two pitchers at three innings each (the arm-care default), every player at their own primary or
+ * secondary position, and NOBODY below four of six in the field. The playing-time story on this
+ * team is deliberately unremarkable — the outlier belongs to the 12U, and two teams telling the
+ * same cautionary tale would flatten both.
+ *
+ * ⚠ Hand-authored grids drift silently: the first draft of this one sat two players at three
+ * innings, which is the exact shape the 12U's fairness insight exists to flag. The health check
+ * asserts the four-inning floor so a future edit cannot reintroduce it unnoticed.
+ */
+export const SEASON_START_LINEUP_GRID: ReadonlyArray<readonly string[]> = [
+  //  0      1       2       3       4     5       6       7       8       9      10      11
+  ['P',    'C',    '1B',   '2B',   'SS', '3B',   'LF',   'CF',   'RF',   'Bench','Bench','Bench'], // 1
+  ['P',    'C',    '1B',   'RF',   'SS', 'Bench','LF',   'CF',   'Bench','3B',   '2B',   'Bench'], // 2
+  ['P',    'Bench','1B',   '2B',   'SS', '3B',   'LF',   'CF',   'Bench','Bench','C',    'RF'],    // 3
+  ['Bench','C',    'Bench','RF',   'SS', '3B',   'CF',   'Bench','LF',   'P',    '2B',   '1B'],    // 4
+  ['SS',   'C',    '1B',   'Bench','2B', '3B',   'Bench','CF',   'LF',   'P',    'Bench','RF'],    // 5
+  ['Bench','C',    'Bench','Bench','SS', '3B',   'LF',   'CF',   'RF',   'P',    '2B',   '1B'],    // 6
+];
+
+export const SEASON_START_LINEUP_SETTINGS = {
+  maxInningsPerPosition: null,
+  pitcherMaxInningsDefault: 3,
+  minInningsPerPlayer: 2,
+} as const;
+
+/** The batting order the opener was played with — roster indexes, first to last. */
+export const SEASON_START_BATTING_ORDER: readonly number[] = [7, 4, 0, 2, 9, 1, 5, 6, 3, 10, 8, 11];
+
+/** Team-reachable categories only — same rule as `OFFSEASON_BUDGET_LINES`, same reason. */
+export const SEASON_START_BUDGET_LINES = [
+  { description: 'Diamond permits',         category: 'Facilities', total: 1600 },
+  { description: 'Umpire fees',             category: 'Officials',  total: 900 },
+  { description: 'Jerseys, caps and balls', category: 'Team Gear',  total: 1500 },
+  { description: 'Year-end party',          category: 'Events',     total: 400 },
+] as const;
+
+/** Dues: $600 a player in four. Eleven of twelve have paid the first — mostly current, one chase. */
+export const SEASON_START_DUES = {
+  totalAmount: 600,
+  installments: 4,
+  installmentAmount: 150,
+  dueOffsets: [-21, 7, 35, 63] as const,
+  /** The one roster index whose first installment is still outstanding. */
+  unpaidFirstRosterIndex: 8, // Pearl Nakamura
+} as const;
+
+/** The three games already played, oldest first: 2-1, and the loss was the midweek one. */
+const SEASON_START_RESULTS: ReadonlyArray<{ r: 'win' | 'loss' | 'tie'; us: number; them: number }> = [
+  { r: 'win', us: 8, them: 3 }, { r: 'loss', us: 2, them: 5 }, { r: 'win', us: 6, them: 1 },
+];
+
+export interface SeasonStartState {
+  year: number;
+  yearName: string;
+  games: DemoGame[];
+  practices: DemoPractice[];
+  duesDueDates: string[];
+  duesPaidDates: string[];
+  /** Opening day — the anchor the nightly re-anchor holds two weeks behind this Saturday. */
+  openingDate: string;
+  /** Key of the one game carrying a saved lineup. */
+  lineupGameKey: string;
+}
+
+/**
+ * Season start, resolved from the clock: opening day is always the Saturday two weeks back, the
+ * whole season runs out ahead of it, three games are in the books and the rest are waiting.
+ *
+ * ⚠ Every DECIDED game sits at `x <= -7` so it is behind us on every weekday (see
+ * `weekAnchoredDates`). A scheduled game that drifted into the past without a score would read as
+ * a game the coach forgot to write up — the one thing a demo schedule must never look like.
+ */
+export function resolveSeasonStartState(now: Date): SeasonStartState {
+  const today = orgDateWithOffset(now, 0);
+  const year = Number(today.slice(0, 4));
+  const dateAt = weekAnchoredDates(now);
+
+  const games: DemoGame[] = [];
+  const addGame = (key: string, x: number, time: string, resultIndex: number | null,
+                   opponentIndex: number, lineupOrder: number | null) => {
+    const date = dateAt(x);
+    const decided = resultIndex != null ? SEASON_START_RESULTS[resultIndex] : null;
+    games.push({
+      key, date, time,
+      startsAtIso: at(date, time), endsAtIso: at(date, addHours(time, 2)),
+      opponent: OPPONENTS[opponentIndex % OPPONENTS.length],
+      homeAway: opponentIndex % 2 === 0 ? 'home' : 'away',
+      result: decided?.r ?? null,
+      teamScore: decided?.us ?? null, opponentScore: decided?.them ?? null,
+      lineupOrder,
+    });
+  };
+
+  // Played: opening Saturday, the Tuesday after it, last Saturday. Only the opener has a lineup.
+  addGame('SS-G0', -14, '09:00', 0, 0, 0);
+  addGame('SS-G1', -11, '18:15', 1, 1, null);
+  addGame('SS-G2', -7, '09:00', 2, 2, null);
+
+  // Ahead: eight more Saturdays and four Tuesday nights — the year, already laid out.
+  let opponentIndex = 3;
+  for (const week of [0, 1, 2, 3, 4, 5, 6, 7]) {
+    addGame(`SS-SAT-${week}`, week * 7, '09:00', null, opponentIndex++, null);
+    if ([0, 2, 4, 6].includes(week)) {
+      addGame(`SS-TUE-${week}`, week * 7 + 3, '18:15', null, opponentIndex++, null);
+    }
+  }
+  games.sort((a, b) => a.date.localeCompare(b.date));
+
+  // Thursday practices (Saturday + 5 − 7) through the season, two behind and nine ahead.
+  const practices: DemoPractice[] = [];
+  for (let week = -2; week <= 8; week++) {
+    const x = week * 7 - 2;
+    const date = dateAt(x);
+    const happened = date <= today;
+    practices.push({
+      key: `SS-P-${x}`, date, time: '17:30',
+      startsAtIso: at(date, '17:30'), endsAtIso: at(date, '19:00'),
+      happened,
+      absent: happened ? (week === -1 ? [4, 11] : [7]) : [],
+      late: happened && week === -2 ? [2] : [],
+    });
+  }
+
+  return {
+    year,
+    yearName: `${year} Season`,
+    games,
+    practices,
+    duesDueDates: SEASON_START_DUES.dueOffsets.map(dateAt),
+    duesPaidDates: SEASON_START_DUES.dueOffsets.map(x => addCalendarDays(dateAt(x), -3)),
+    openingDate: dateAt(-14),
+    lineupGameKey: 'SS-G0',
+  };
 }
 
 // ── 11U tryout day ───────────────────────────────────────────────────────────────────────────

@@ -1,8 +1,74 @@
 # Coach Sandbox with Season Phases — Implementation Plan
 
-**Status:** **PHASE 1 BUILT 2026-08-04 (dev, uncommitted) — awaiting owner QA (ledger §5.4).**
+**Status:** **PHASE 1 COMMITTED (dev `7a7092ea`) · PHASE 2 BUILT 2026-08-05 (dev, uncommitted).**
+Both await owner QA (ledger §5.4). All five moments of the dock now exist.
 Mockups approved 2026-08-04 (phase dock, warm chrome). Companion brief:
 `COACH_SANDBOX_SEASON_PHASES_PM_BRIEF.md`.
+
+## Phase 2 build record (2026-08-05)
+
+The two remaining moments, built on Phase 1's machinery — no parallel world module, no second
+seed, no new UI component, **no migration and no schema change**.
+
+**Owner decisions taken at the start:** the new teams are **Riverdale Ridge 14U** (off-season) and
+**10U** (season start), giving the club a contiguous 10U–14U ladder with the biggest money story on
+the oldest team. Rider 1 (year-over-year tryout comparison on the 11U) **dropped** — see "Rider
+investigation" below. Rider 2 accepted: **two of the 12U's PAST practices are now written up**.
+
+1. **The world** (`lib/demo-coach.ts`) — two new team defs on FIXED ids (`DEMO_COACH_TEAM_IDS`)
+   plus `resolveOffSeasonState` / `resolveSeasonStartState`.
+   - **14U off-season:** next season's program year (a team building the year it hasn't played),
+     six budget lines each on a real PLATFORM budget category, phased across four months; six
+     logged expenses including a tournament payable with its balance still ahead and one
+     deliberately UNBUDGETED row; dues 2-of-4 in with one family overdue; nine Sunday sessions and
+     three Wednesday cage nights; two practice plans (one a real 3-station rotation); four
+     development focus areas; a testing session with 3 tests × 11 of 13 players.
+   - **10U season start:** opening day always the Saturday two weeks back, 3 games played and 12
+     ahead, 11 Thursday practices, ONE saved lineup (the opener's), complete roster with numbers
+     and positions, dues mostly current.
+   - ⚠ **WEEK-QUANTIZED ANCHORING** (`weekAnchoredDate`): every dated row on both teams is placed
+     at `thisSaturday + X`. The nightly shift is therefore always a multiple of seven and a Sunday
+     session stays a Sunday session. Anything anchored to a raw day count would walk one weekday
+     per night. Corollary, enforced by construction: **every settled fact sits at `X <= -7`** (the
+     only band that is in the past on all seven weekdays), so a scheduled game can never drift
+     into the past without a score.
+2. **The seed** — two new blocks reusing every Phase 1 helper. New: platform budget-category
+   lookup (budget-vs-actual matches actuals to lines by category NAME, so a line without one files
+   every dollar as unbudgeted), and a practice-plan materializer that resolves roster indexes into
+   row ids. Still idempotent; re-running is still the re-anchor.
+3. **The verifier** — grown from 37 to ~60 assertions across five moments, all relational rather
+   than hard-counted where the clock decides (attendance is asserted as "taken for everything that
+   happened, nothing that hasn't", which doubles as the staleness tripwire if the nightly job
+   stops). **It caught a real defect:** the first draft of the 10U's opener lineup sat two players
+   at three of six innings — the exact shape the 12U's fairness insight exists to flag.
+4. **The dock** — two chips inserted in SEASON order (`SANDBOX_MOMENT_KEYS`). **Measured at 390px:
+   five chips run 510px, so 120px sat off-screen behind a hidden scrollbar — including Mid-season,
+   the chip the door lands on.** The dock now scrolls the ACTIVE chip into view (via `scrollLeft`,
+   never `scrollIntoView`, which is free to scroll the page vertically too). Chips clipped at both
+   edges are also the affordance the hidden scrollbar isn't. **Flag at QA: a phone still shows ~3½
+   of 5 chips at a time.** The alternative is wrapping to two rows (+~30px of permanent hat).
+5. **The re-anchor** — both moments join `lib/demo-coach-reconcile-core.ts`, anchor row first:
+   the 14U on its first winter session, the 10U on opening day (reusing `shiftTeamSchedule`
+   wholesale). New: the 14U's books move with its calendar (expenses' paid/due stamps, and the
+   testing session WITH its readings — the product's own re-stamp rule), and the budget's month
+   phasing is **re-derived, not shifted** (month buckets, not events).
+   **Verified:** steady state writes zero rows; a ±7-day round trip moves 299 rows each way and a
+   ±28-day one 323 (the extra 24 being the re-derived budget periods); both land byte-identical.
+   Also fixed in passing: five **pre-existing** type errors in this file (committed at `7a7092ea`)
+   that made `npm run typecheck` fail on `dev`.
+
+**Deviations to flag at QA:** the phone dock (above); the 14U's off-season program year is NEXT
+season's, so its masthead names a year that hasn't started (deliberate — it is what an off-season
+team's data actually looks like).
+
+### Rider investigation — year-over-year tryout comparison (NOT built, owner-agreed)
+
+The memory strip is gated on `canShowTryoutMemory`, which is `!tryout.isAnonymous` — prior-season
+data may be assembled only once names are revealed, because pairing a bib to last year's named
+record is a server-side de-anonymization. The 11U's approved beat is blind scoring, and a sandbox
+visitor cannot turn it off (writes are centrally blocked). Seeding a prior year plus continuity
+links would therefore produce data **no visitor could ever see**, at the cost of reworking the
+one-program-year-per-team rule the seed and health check both enforce. Dropped 2026-08-05.
 
 ## Phase 1 build record (2026-08-04)
 
@@ -162,9 +228,9 @@ Components:
 
 ## Rollout
 
-- **Phase 1 (launch):** machinery (entry, write block, silence, dock, cron) + **three moments:
-  Tryout day, Mid-season, Season's End** (most differentiated; covers recruit-a-coach season).
-- **Phase 2:** add Off-season + Season start datasets.
+- ~~**Phase 1 (launch):**~~ ✅ machinery (entry, write block, silence, dock, cron) + **three
+  moments: Tryout day, Mid-season, Season's End**. Committed dev `7a7092ea`.
+- ~~**Phase 2:**~~ ✅ Off-season (14U) + Season start (10U) datasets, 2026-08-05. Dev, uncommitted.
 - **Phase 3 (polish):** per-phase guided-tour chips; "what parents see" preview stop; QR/share
   collateral for in-person pitching.
 

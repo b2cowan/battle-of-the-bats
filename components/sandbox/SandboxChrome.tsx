@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { DemoOrgKind } from '@/lib/demo-org';
@@ -286,6 +286,40 @@ export default function SandboxChrome({
     const eventSegment = pathname?.split('/')[2] ?? '';
     return moments.find(m => m.tournamentSlug === eventSegment) ?? null;
   }, [moments, kind, side, adminTournamentSlug, pathname]);
+
+  /**
+   * ── Keep the moment you are STANDING IN on screen ─────────────────────────────────────────
+   *
+   * The dock scrolls sideways when its chips outrun the viewport, and its scrollbar is hidden by
+   * design. Measured on a 390×844 phone with the coach sandbox's five moments: the row is 510px,
+   * so 120px sits off the right edge — and the two chips out there were Mid-season (the moment
+   * the door lands on) and Season's End. A visitor would arrive to a dock whose highlighted tab
+   * they cannot see, which reads as no highlight at all.
+   *
+   * So the row is scrolled to bring the active chip into the middle whenever it would otherwise
+   * be out of sight. It also does the honest second job: with chips clipped at BOTH edges, the
+   * row visibly continues in both directions, which is the affordance the hidden scrollbar isn't.
+   *
+   * ⚠ Deliberately not `scrollIntoView` — on an element inside a horizontally scrolling strip it
+   * is free to scroll the PAGE vertically as well, which on arrival would jump a visitor past the
+   * banner they are meant to read first. Setting `scrollLeft` can only ever move this one row.
+   *
+   * ⚠ Layout effect, not `useEffect` (house pattern: `OrgNavSync`, `ChatPanel`,
+   * `CoachPortalShell`). A dock's native scroll position on mount is 0 — the far left — so with a
+   * post-paint effect the visitor gets one frame of exactly the state this exists to prevent (no
+   * highlighted chip anywhere on screen) followed by a visible snap. Measuring before paint means
+   * the row simply arrives correct.
+   */
+  const dockRef = useRef<HTMLDivElement | null>(null);
+  const activeMomentRef = useRef<HTMLButtonElement | null>(null);
+  useLayoutEffect(() => {
+    const dock = dockRef.current;
+    const chip = activeMomentRef.current;
+    if (!dock || !chip) return;
+    if (dock.scrollWidth <= dock.clientWidth) return; // everything already visible — leave it be
+    const offsetLeft = chip.getBoundingClientRect().left - dock.getBoundingClientRect().left + dock.scrollLeft;
+    dock.scrollLeft = Math.max(0, offsetLeft - (dock.clientWidth - chip.offsetWidth) / 2);
+  }, [activeMoment?.key, moments.length]);
 
   // ── The countdown ───────────────────────────────────────────────────────────────────────────
   // Starts empty and fills in after mount: the cycle boundary is a function of the wall clock, so
@@ -686,16 +720,17 @@ export default function SandboxChrome({
         </div>
 
         {moments.length > 0 && (
-          // The moments dock (Phase 2): the year as three tabs. Plain navigation — same demo,
-          // same session, a different event of the same association — with the active moment
+          // The moments dock (Phase 2): the year as tabs. Plain navigation — same demo, same
+          // session, a different event or team of the same association — with the active moment
           // underlined and Game day carrying the only live dot, because it is the only moment
           // that moves.
-          <div className={styles.dock} role="group" aria-label={copy.dockAriaLabel}>
+          <div ref={dockRef} className={styles.dock} role="group" aria-label={copy.dockAriaLabel}>
             <span className={styles.dockLabel}>{copy.dockLabel}</span>
             {moments.map(moment => (
               <button
                 key={moment.key}
                 type="button"
+                ref={activeMoment?.key === moment.key ? activeMomentRef : undefined}
                 className={styles.moment}
                 aria-current={activeMoment?.key === moment.key ? 'true' : undefined}
                 onClick={() => onMoment(moment)}
