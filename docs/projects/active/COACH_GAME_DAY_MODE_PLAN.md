@@ -1,7 +1,28 @@
 # Coach Game-Day Mode — Implementation Plan
 
-**Status:** ✅ **P1 BUILT on dev 2026-08-04, UNCOMMITTED** — owner QA = `OWNER_QA_LEDGER.md`
-§1.15. Mockups rev 3 signed off same day (rev 2 added the scouting-handoff frames; rev 3
+**Status:** ✅ **P1 COMMITTED dev `bcd695a3` (2026-08-04)** — owner QA = `OWNER_QA_LEDGER.md`
+§1.15. ✅ **P2 (moments) BUILT on dev 2026-08-05, UNCOMMITTED** — owner QA = §1.17; mockups
+rev 4 + decisions Q1–Q5 signed off the same day; **migration 228 applied to dev, PROD-PENDING**.
+
+**P2 as built, and the three places it differs from this plan** (all owner-ruled 2026-08-05):
+1. **§3.7's "player recap composer" does not exist.** The family season recap generates itself
+   from records and the coach only previews it — there is nothing to compose into. Owner ruled
+   the COACH-SIDE version (mockup frame 16): tagged moments collect on the player's page beside
+   that preview, and no moment reaches a family surface. Frame 17 (moments inside the family
+   recap) was drawn, flagged and **not built**.
+2. **A finished season SHOWS moments, through Wrapped only.** `wrapped` was already a
+   season-aware route, so the strip would have followed silently — it was instead ruled
+   explicitly: a moment is a record of a night, cannot be edited, and reads as it read at the
+   time. Capture and deletion stay live-season-only; the player-page block is deliberately
+   narrower (live season only) because `roster/[playerId]` is an archive door and widening it
+   is its own decision.
+3. **Who may log** (§9 had no answer): any console DRIVE grant — `attendance` OR `lineups` OR
+   `scheduleManage`. Not bare `schedule`, whose console renders no footer at all.
+
+Also landed with P2, as a rider the feature forced: the Season Wrapped **share image is now
+built from an allow-list** (`wrappedShareCardData`), not from the whole payload. Moments put
+coach-written free text about a child into that payload, which turned "the card is share-safe"
+from a design property into luck. Mockups rev 3 signed off same day (rev 2 added the scouting-handoff frames; rev 3
 applied the playing-time vocabulary ruling — "Playing time — season report", never "Is playing
 time fair?"). Built exactly per `COACH_GAME_DAY_MODE_P1_BUILD_PROMPT.md`: P1 scope + the
 Opponent Scouting Book handoff rider; no migration; console route on the LIVE rail

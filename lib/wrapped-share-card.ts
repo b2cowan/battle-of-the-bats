@@ -6,14 +6,15 @@
  * decides where it goes. Share-safe by construction: the payload's award line already
  * carries first name + jersey only, and no money data exists in the payload at all.
  */
-import type { SeasonWrappedStats } from '@/lib/season-wrapped';
+import { wrappedShareCardData, type WrappedShareCardData } from '@/lib/season-wrapped';
 import { roundRect, fitText } from '@/lib/share-card';
 
-export interface WrappedCardData extends SeasonWrappedStats {
-  seasonName: string;
-  teamName: string;
-  teamColor: string | null;
-}
+/**
+ * What the card may know. An ALIAS of the allow-listed shape in `lib/season-wrapped.ts`, not a
+ * second definition — the narrowing function and the type it produces must not be able to
+ * drift apart, or the allow-list stops being a guarantee.
+ */
+export type WrappedCardData = WrappedShareCardData;
 
 const SIZE = 1080;
 const PAD = 84;
@@ -37,7 +38,17 @@ function fmtDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
 }
 
-export async function generateWrappedCardBlob(data: WrappedCardData): Promise<Blob> {
+/**
+ * ⚠ Accepts a SUPERSET and narrows it here, rather than trusting callers to pre-narrow.
+ *
+ * The allow-list only guarantees anything if it cannot be skipped. `SeasonWrappedPayload` is a
+ * structural superset of the share-safe shape, and TypeScript does not excess-property-check a
+ * non-literal argument — so `generateWrappedCardBlob(wrapped)` would have compiled cleanly and
+ * silently returned to "safe because the drawing code happens not to read it", the exact state
+ * Game-Day P2 found and fixed. Narrowing at the door means every caller is safe by default.
+ */
+export async function generateWrappedCardBlob(payload: WrappedCardData): Promise<Blob> {
+  const data = wrappedShareCardData(payload);
   const canvas = document.createElement('canvas');
   canvas.width = SIZE;
   canvas.height = SIZE;

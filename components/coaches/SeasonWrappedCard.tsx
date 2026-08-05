@@ -22,6 +22,8 @@ export default function SeasonWrappedCard({ wrapped }: { wrapped: SeasonWrappedP
   async function handleShare() {
     setShareState('working');
     try {
+      // The generator narrows to the share-safe allow-list itself — the exported PNG leaves
+      // the app, and a coach's bench moment is free text about a child.
       const blob = await generateWrappedCardBlob(wrapped);
       await shareScoreImage(
         blob,
@@ -110,6 +112,23 @@ export default function SeasonWrappedCard({ wrapped }: { wrapped: SeasonWrappedP
           </div>
         )}
       </div>
+
+      {/* Game-Day P2 — the season's most recent bench moment and the honest count. The smallest
+          true version (owner-approved mockup rev 4, frame 18): one line, never a ranking, and
+          absent entirely in a season nobody logged one for. It renders ON the card but is
+          excluded from the shared image — see `wrappedShareCardData`. */}
+      {wrapped.momentSlot && (
+        <div className={styles.wrappedMomentLine}>
+          <span className={styles.wrappedMomentLabel}>
+            From the bench · {wrapped.momentSlot.total} moment{wrapped.momentSlot.total === 1 ? '' : 's'}
+          </span>
+          <p className={styles.wrappedMomentBody}>&ldquo;{wrapped.momentSlot.body}&rdquo;</p>
+          <span className={styles.wrappedMomentMeta}>
+            {fmtDate(wrapped.momentSlot.happenedAt)}
+            {wrapped.momentSlot.gameLabel ? ` · ${wrapped.momentSlot.gameLabel}` : ''}
+          </span>
+        </div>
+      )}
 
       <div className={styles.wrappedShareRow}>
         <button type="button" className="btn btn-lime btn-sm" onClick={handleShare} disabled={shareState === 'working'}>

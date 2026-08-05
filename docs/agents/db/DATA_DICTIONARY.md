@@ -2297,6 +2297,44 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_team_opponent_observations.created_by_name -->
 **`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) / **`created_by_name`** (text, nullable) — attribution: identity for author-own deletion + display snapshot (gotcha 5).
 
+### `rep_team_game_moments`
+<!-- dict:table:rep_team_game_moments -->
+
+**Purpose:** Game-Day Mode P2 — one line a coach types at the bench because they want to remember it ("Maya's first triple"), optionally tagged to a player. Read back in the End-game wrap, on the tagged player's page, and as one quoted line on Season Wrapped. Added by migration 228. **⚠ DEV-ONLY / PROD-PENDING at author time.**
+
+**Gotchas (read first):**
+1. **⚠ THIS TABLE FEEDS NOTHING — it is the D4 test made structural** (plan §3.7). No analytic surface, playing-time figure, attendance rate, coverage report or season record may read it, so a half-used log poisons nothing. `tests/unit/coach-game-moments.test.ts` LOCKS the `SeasonWrappedStats` key set against ever growing a moments field, because that shape is also what the shareable PNG is drawn from. If you are reaching for this table from an analytics module, the answer is no.
+2. **⚠ NOTHING HERE NOTIFIES.** No `notify()` call exists on any path that touches this table, and none may be added: Game-Day Mode's spine is that families hear exactly once per game, at End game. Moments are coach-and-staff-side and never reach the family layer.
+3. **Append-only at the APP layer, not by trigger** — there is no UPDATE route and no update helper in `lib/db.ts`. A mistyped moment is DELETEd and retyped, so "what you wrote at 7:32" is always what was written then. DELETE = head coach (any row) or author (own rows), the `rep_team_opponent_observations` convention.
+4. **Writes are LIVE-SEASON-ONLY; the Wrapped read is not** (owner ruling 2026-08-05). Both routes ride `resolveLiveCoachTeamContext` and join neither archive allow-list, so a past season cannot be written. Season Wrapped (already a season-aware route) DOES show a finished season's moments: a moment is a record of a night, cannot be edited after the fact, and reads as it read at the time. The player-page block is deliberately narrower — live season only — because `roster/[playerId]` is an archive door and widening it needs its own decision.
+5. **`program_year_id` is stored, not derived through the event** — Season Wrapped asks "this season's moments" and should not walk every event row to answer it. It is the season the moment was captured in, always the event's own.
+6. **Player tag is SET NULL, event is CASCADE** — a player leaving the roster must not erase the memory of the night, only the name attached to it; deleting the game deletes what was written at it.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_team_game_moments.team_id -->
+<!-- dict:col:rep_team_game_moments.org_id -->
+**`team_id` / `org_id`** (FK, NOT NULL, CASCADE) — scope; sourced from URL/context.
+
+<!-- dict:col:rep_team_game_moments.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id` CASCADE, NOT NULL) — the season (gotcha 5). Indexed with `team_id`.
+
+<!-- dict:col:rep_team_game_moments.event_id -->
+**`event_id`** (FK → `rep_team_events.id` CASCADE, NOT NULL) — the game it was captured at; must be a game-type event (app-enforced). A moment without a night is not a moment. Indexed with `team_id`.
+
+<!-- dict:col:rep_team_game_moments.player_id -->
+**`player_id`** (FK → `rep_roster_players.id` ON DELETE SET NULL, nullable) — optional tag; NULL = a moment about the night, not a person. An off-roster id is REJECTED by the route rather than silently dropped. Trailing column of `idx_..._season_player`, which serves both the per-player read and (by left prefix) the whole-season read.
+
+<!-- dict:col:rep_team_game_moments.body -->
+**`body`** (text, NOT NULL; 1–280 app-enforced, `CHECK` as the floor) — the line itself. Coach-written free text: treat as sensitive, and note it is excluded from the Season Wrapped share image by allow-list (`wrappedShareCardData`).
+
+<!-- dict:col:rep_team_game_moments.happened_at -->
+**`happened_at`** (timestamptz, NOT NULL, DEFAULT now()) — when it happened; drives the "7:32" stamp and every newest-first sort. Distinct from `created_at` so a later backfill could carry a true time without rewriting the audit column.
+
+<!-- dict:col:rep_team_game_moments.created_by -->
+<!-- dict:col:rep_team_game_moments.created_by_name -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) / **`created_by_name`** (text, nullable) — attribution: identity for author-own deletion + display snapshot.
+
 ### `rep_team_tags`
 <!-- dict:table:rep_team_tags -->
 

@@ -87,6 +87,38 @@ export interface SeasonWrappedStats {
   rosterCount: number;
 }
 
+/**
+ * Everything the shareable Season Wrapped PNG is allowed to know: the analytic stats plus the
+ * three identity fields the card prints. Defined HERE, beside the stats, because this is the
+ * shape's real home — `lib/wrapped-share-card.ts` aliases it rather than keeping a second copy.
+ */
+export interface WrappedShareCardData extends SeasonWrappedStats {
+  seasonName: string;
+  teamName: string;
+  teamColor: string | null;
+}
+
+/** The allow-list the card is built from. */
+export const WRAPPED_SHARE_CARD_FIELDS = [
+  'record', 'longestStreak', 'closestGame', 'attendanceRate', 'topAward', 'lineupFact',
+  'gamesWithLineup', 'rosterCount', 'seasonName', 'teamName', 'teamColor',
+] as const;
+
+/**
+ * Narrow a full Wrapped payload to the share-safe subset.
+ *
+ * ⚠ ALLOW-LIST, not an omit-list, and that is the whole point. The card used to be handed the
+ * entire payload and was safe only because the drawing code happened not to read anything
+ * unsafe. Game-Day P2 put coach-written free text about a child into that payload
+ * (`momentSlot`), which turned "safe" into luck. A field added to the payload from now on is
+ * invisible to the exported image until someone deliberately names it above.
+ */
+export function wrappedShareCardData<T extends WrappedShareCardData>(payload: T): WrappedShareCardData {
+  const out: Record<string, unknown> = {};
+  for (const field of WRAPPED_SHARE_CARD_FIELDS) out[field] = payload[field];
+  return out as unknown as WrappedShareCardData;
+}
+
 const finalized = (e: WrappedGameInput) => e.result != null && e.status !== 'cancelled';
 
 export function computeSeasonWrapped(input: SeasonWrappedInput): SeasonWrappedStats {

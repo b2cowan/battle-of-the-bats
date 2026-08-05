@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getLatestClosedRepProgramYear } from '@/lib/db';
 import { resolveCoachSeasonReadContext, seasonParam } from '@/lib/coach-season-read';
 import { assembleSeasonWrapped } from '@/lib/rep-season-wrapped';
+import { canLogGameMoment } from '@/lib/coach-capabilities';
 import { countRecapViewers } from '@/lib/family-engagement';
 import { withObservability } from '@/lib/observability';
 
@@ -31,6 +32,18 @@ export const GET = withObservability(async (req: Request,
 
   const wrapped = await assembleSeasonWrapped(team, programYear, {
     fallbackColor: resolved.ctx.org.themePrimary ?? null,
+    /**
+     * Game-Day P2 — the bench moment rides a NARROWER gate than the rest of this card.
+     *
+     * Everything else here is a season's story. A moment is a coach's own line about a child,
+     * and it is gated on `canLogGameMoment` — "do you run the bench" — on every other surface
+     * that shows one (the console, the player's page). Letting it inherit whatever door this
+     * route happens to open would hand it to someone who cannot see a moment anywhere else:
+     * a new sensitive field must be asked its own question, not adopt an older answer.
+     *
+     * `assembleSeasonWrapped` defaults this FALSE, so forgetting it yields no moment.
+     */
+    includeMoments: canLogGameMoment(resolved.capabilities),
   });
 
   /**

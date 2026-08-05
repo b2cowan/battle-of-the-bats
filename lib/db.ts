@@ -9949,3 +9949,105 @@ export async function deleteRepTeamOpponentObservation(teamId: string, observati
     .eq('id', observationId).eq('team_id', teamId);
   if (error) throw error;
 }
+
+import type { RepTeamGameMoment } from './types';
+
+// ─── Game-Day Mode P2 — moments (rep_team_game_moments) ─────────────────────────────────────
+// One line a coach captured at the bench. Append-only at the app layer: there is deliberately
+// NO update helper here, so "append-only" is a property of the module rather than a rule a
+// route is trusted to remember. Every read is team-scoped; nothing here notifies anyone.
+
+function mapRepTeamGameMoment(row: Record<string, unknown>): RepTeamGameMoment {
+  return {
+    id: row.id as string,
+    teamId: row.team_id as string,
+    orgId: row.org_id as string,
+    programYearId: row.program_year_id as string,
+    eventId: row.event_id as string,
+    playerId: (row.player_id as string | null) ?? null,
+    body: row.body as string,
+    happenedAt: row.happened_at as string,
+    createdBy: (row.created_by as string | null) ?? null,
+    createdByName: (row.created_by_name as string | null) ?? null,
+    createdAt: row.created_at as string,
+  };
+}
+
+/** Tonight's moments for one game — what the console reads back and the wrap lists. */
+export async function getRepTeamGameMomentsForEvent(
+  teamId: string, eventId: string,
+): Promise<RepTeamGameMoment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_game_moments').select('*')
+    .eq('team_id', teamId).eq('event_id', eventId)
+    .order('happened_at', { ascending: false }).order('id', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamGameMoment);
+}
+
+/**
+ * ONE player's tagged moments for a season, newest first, capped — plus the honest total.
+ *
+ * Filtered and counted in the DATABASE rather than by pulling the team's whole season and
+ * discarding it in JS: this runs on every player-page load, and a player page has no business
+ * fetching every other player's moments to show eight of its own.
+ */
+export async function getRepTeamGameMomentsForPlayer(
+  teamId: string, programYearId: string, playerId: string, limit: number,
+): Promise<{ moments: RepTeamGameMoment[]; total: number }> {
+  const { data, error, count } = await supabaseAdmin
+    .from('rep_team_game_moments').select('*', { count: 'exact' })
+    .eq('team_id', teamId).eq('program_year_id', programYearId).eq('player_id', playerId)
+    // The `id` tiebreak matches `sortMomentsNewestFirst` — the "add another" loop makes
+    // same-second captures likely, and two of them must not swap places between page loads.
+    .order('happened_at', { ascending: false }).order('id', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return { moments: (data ?? []).map(mapRepTeamGameMoment), total: count ?? 0 };
+}
+
+/** A whole season's moments — Season Wrapped's one slot (bounded: one team, one season). */
+export async function getRepTeamGameMomentsForSeason(
+  teamId: string, programYearId: string,
+): Promise<RepTeamGameMoment[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_game_moments').select('*')
+    .eq('team_id', teamId).eq('program_year_id', programYearId)
+    .order('happened_at', { ascending: false }).order('id', { ascending: false });
+  if (error) throw error;
+  return (data ?? []).map(mapRepTeamGameMoment);
+}
+
+export async function createRepTeamGameMoment(opts: {
+  teamId: string; orgId: string; programYearId: string; eventId: string;
+  playerId: string | null; body: string; createdBy: string; createdByName: string | null;
+}): Promise<RepTeamGameMoment> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_game_moments')
+    .insert({
+      team_id: opts.teamId, org_id: opts.orgId, program_year_id: opts.programYearId,
+      event_id: opts.eventId, player_id: opts.playerId, body: opts.body,
+      created_by: opts.createdBy, created_by_name: opts.createdByName,
+    })
+    .select().single();
+  if (error) throw error;
+  return mapRepTeamGameMoment(data);
+}
+
+export async function getRepTeamGameMomentById(
+  teamId: string, momentId: string,
+): Promise<RepTeamGameMoment | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_game_moments').select('*')
+    .eq('team_id', teamId).eq('id', momentId).maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamGameMoment(data) : null;
+}
+
+export async function deleteRepTeamGameMoment(teamId: string, momentId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_team_game_moments').delete()
+    // team_id alongside the PK: defense-in-depth, like every sibling delete helper.
+    .eq('id', momentId).eq('team_id', teamId);
+  if (error) throw error;
+}

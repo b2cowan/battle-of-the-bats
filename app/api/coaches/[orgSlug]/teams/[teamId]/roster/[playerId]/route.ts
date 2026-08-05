@@ -9,14 +9,18 @@ import {
   getRepPlayerAttendanceSummary,
   getRepPlayerDuesSummary,
   getRepPlayerAwardsSummary,
+  getRepTeamGameMomentsForPlayer,
 } from '@/lib/db';
+import { PLAYER_MOMENTS_SHOWN } from '@/lib/coach-game-moments';
 import type { RepRosterStatus, LineupProfile } from '@/lib/types';
 import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } from '@/lib/rep-roster-options';
 import { getSportPack } from '@/lib/sports';
 import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
-import { denyUnless, canViewMoney, canViewRoster, redactRosterPlayer } from '@/lib/coach-capabilities';
+import {
+  denyUnless, canLogGameMoment, canViewMoney, canViewRoster, redactRosterPlayer,
+} from '@/lib/coach-capabilities';
 
 function trimmedOrNull(v: unknown): string | null {
   if (typeof v !== 'string') return null;
@@ -65,10 +69,31 @@ export const GET = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const [attendance, dues, awards] = await Promise.all([
+  /**
+   * Game-Day Mode P2 — the moments tagged to THIS player (owner Q3, 2026-08-05).
+   *
+   * The plan called this "the recap composer handoff", but there is no composer: the family
+   * season recap generates itself from records and the coach only previews it. The owner ruled
+   * the COACH-SIDE version — moments are material a coach reads before the season-end
+   * conversation, and they never reach a family surface. `PlayerRecapPreview` is untouched.
+   *
+   * ⚠ LIVE SEASON ONLY, deliberately narrower than this route's own rail. `roster/[playerId]`
+   * is season-aware (an archive door), and quietly serving a new content type through it would
+   * be exactly the silent archive expansion CLAUDE.md forbids. The one archive surface the
+   * owner ruled on is Wrapped; widening this needs its own decision, not a side effect here.
+   *
+   * ⚠ Gated on the same predicate that allows capturing one — a coach who cannot run the bench
+   * does not receive the staff's private lines about a child.
+   */
+  const showMoments = !isReadOnly && canLogGameMoment(capabilities);
+
+  const [attendance, dues, awards, moments] = await Promise.all([
     getRepPlayerAttendanceSummary(playerId, programYear.id),
     getRepPlayerDuesSummary(playerId, programYear.id),
     getRepPlayerAwardsSummary(playerId),
+    showMoments
+      ? getRepTeamGameMomentsForPlayer(teamId, programYear.id, playerId, PLAYER_MOMENTS_SHOWN)
+      : Promise.resolve({ moments: [], total: 0 }),
   ]);
 
   return NextResponse.json({
@@ -77,6 +102,7 @@ export const GET = withObservability(async (req: Request,
     attendance,
     dues: canViewMoney(capabilities) ? dues : null,
     awards,
+    moments,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]' });
 

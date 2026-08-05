@@ -5586,6 +5586,39 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Game-Day P2 — the bench-moment strip. Lives on the FIXED dark gradient like the tiles above,
+   so its ink is token-exempt for the same reason theirs is. Quoted text wraps (unlike the
+   tiles, which ellipsize): a moment cut off mid-sentence would be worse than a taller card. */
+.wrappedMomentLine {
+  margin-top: 0.7rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.08);
+  border-left: 3px solid var(--logic-lime);
+}
+.wrappedMomentLabel {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+.wrappedMomentBody {
+  margin: 0.25rem 0 0.2rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: #FFFFFF; /* token-exempt: ink on the fixed dark gradient */
+  overflow-wrap: anywhere;
+}
+.wrappedMomentMeta {
+  display: block;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  color: #B9C4D8; /* token-exempt: dim meta on the fixed dark gradient */
+}
+
 .wrappedShareRow { margin-top: 0.8rem; display: flex; flex-direction: column; gap: 0.35rem; }
 .wrappedShareNote {
   margin: 0;
@@ -7235,6 +7268,9 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   border-radius: var(--radius, 12px); padding: 0.8rem 0.9rem;
 }
 .gdCard[data-sticky="head"] { position: sticky; top: 0.5rem; z-index: 3; }
+/* A card nested INSIDE a sheet, where siblings space themselves with their own margin-top
+   (.gdSumLines, .gdQuietNote) rather than a container gap. The delta only — one card frame. */
+.gdCard[data-inset="yes"] { margin-top: 0.5rem; }
 
 .gdMatch { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
 .gdOpp { font-weight: 700; font-size: 1rem; color: var(--home-ink, var(--white-90)); }
@@ -7324,6 +7360,11 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .gdFbtn small { font-family: var(--font-data); font-size: 0.6rem; font-weight: 600; color: var(--white-45); }
 .gdFbtn[data-tone="end"] { color: var(--home-live, var(--danger)); border-color: var(--home-live-soft, rgba(217,72,43,0.4)); }
+/* Four or more labelled buttons (P2's Note joins the row): labels step down one size and the
+   horizontal padding tightens, so every target keeps its 3.5rem height — the thumb minimum is
+   never what gives way. The undo arrow is icon-only and holds its own width. */
+.gdFooter[data-tight="yes"] .gdFbtn { font-size: 0.72rem; padding-left: 0.25rem; padding-right: 0.25rem; }
+.gdFooter[data-tight="yes"] .gdFbtn small { font-size: 0.55rem; }
 
 /* Bottom sheets: one at a time, above the bottom nav on phones, centered column on desktop.
    Deliberately NOT `.modalOverlay` (the portal's modal-with-backdrop idiom): these sheets must
@@ -7392,6 +7433,12 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   background: var(--white-10); border-radius: 9px;
   padding: 0.55rem 0.7rem; text-align: center;
 }
+/* Still quiet, but it must be read: the one place the console says "you are about to lose
+   something" (an unsaved moment, at End game). */
+.gdQuietNote[data-tone="warn"] {
+  color: var(--warning-strong, var(--warning));
+  background: rgba(var(--home-amber-rgb, 161, 98, 7), 0.12);
+}
 
 .gdAttRow {
   display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0;
@@ -7450,6 +7497,59 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 }
 .gdBookLine b { color: var(--home-olive, var(--logic-lime)); }
 
+/* ── Game-Day P2 · moments ──────────────────────────────────────────────────────────────────
+   One timestamped line, rendered identically in the capture sheet, the End-game wrap and the
+   recap. Nothing here is a control except the eraser: a moment is read far more often than it
+   is written. */
+.gdMomentRow {
+  display: flex; align-items: flex-start; gap: 0.55rem;
+  font-size: 0.78rem; color: var(--white-70);
+  padding: 0.45rem 0; border-bottom: 1px solid var(--border-2);
+}
+.gdMomentRow:last-of-type { border-bottom: none; }
+.gdMomentTime {
+  font-family: var(--font-data); font-size: 0.62rem; font-weight: 600; line-height: 1.6;
+  color: var(--white-45); flex: 0 0 3.6em; font-variant-numeric: tabular-nums;
+}
+.gdMomentBody { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.gdMomentWho {
+  display: inline-block; margin-right: 0.35em; vertical-align: 1px;
+  font-family: var(--font-data); font-size: 0.6rem; font-weight: 700;
+  background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
+  border-radius: 5px; padding: 0.3em 0.45em;
+}
+.gdMomentX {
+  flex: 0 0 auto; background: none; border: none; cursor: pointer; color: var(--white-45);
+  min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px);
+  display: grid; place-items: center; margin: -0.45rem 0;
+}
+.gdMomentSaved {
+  display: flex; align-items: center; gap: 0.35rem; margin: 0 0 0.5rem;
+  font-family: var(--font-data); font-size: 0.7rem; font-weight: 600;
+  color: var(--home-olive, var(--logic-lime));
+}
+.gdMomentInput {
+  width: 100%; margin-top: 0.55rem; resize: vertical; min-height: 4.4em;
+  background: var(--home-paper, var(--bg)); color: var(--home-ink, var(--white-90));
+  border: 1px solid var(--border-2); border-radius: 9px; padding: 0.65rem 0.7rem;
+  font: inherit; font-size: 0.8rem;
+}
+.gdMomentMeta {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.6rem;
+  margin-top: 0.35rem; font-size: 0.68rem; color: var(--white-45);
+}
+.gdMomentCount { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
+.gdTagPick { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.1rem; }
+.gdTagChip {
+  font-family: var(--font-data); font-size: 0.66rem; font-weight: 600; cursor: pointer;
+  color: var(--white-55); background: none; border: 1px solid var(--border-2);
+  border-radius: 999px; padding: 0.55em 0.75em; min-height: var(--tap-min, 44px);
+}
+.gdTagChip[data-on="yes"] {
+  background: var(--home-olive-soft, rgba(190,242,100,0.12));
+  color: var(--home-olive, var(--logic-lime));
+  border-color: var(--home-olive, var(--logic-lime)); font-weight: 700;
+}
 .gdGridTable { border-collapse: collapse; font-size: 0.72rem; min-width: 100%; }
 .gdGridTable th, .gdGridTable td {
   border: 1px solid var(--border-2); padding: 0.25rem 0.3rem; text-align: center;

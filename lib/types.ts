@@ -1614,6 +1614,27 @@ export interface RepTeamOpponentObservation {
   createdAt: string;
 }
 
+/**
+ * Game-Day Mode P2 — one line a coach captured at the bench (`rep_team_game_moments`).
+ * Append-only at the app layer (no UPDATE route); DELETE removes a mistake. Feeds no
+ * analytics, no coverage surface and no notification — see lib/coach-game-moments.ts.
+ */
+export interface RepTeamGameMoment {
+  id: string;
+  teamId: string;
+  orgId: string;
+  programYearId: string;
+  /** The game it was captured at. Required — a moment without a night is not a moment. */
+  eventId: string;
+  /** Optional player tag; null = a moment about the night. */
+  playerId: string | null;
+  body: string;
+  happenedAt: string;
+  createdBy: string | null;
+  createdByName: string | null;
+  createdAt: string;
+}
+
 export interface RepTeamEventAttendance {
   id: string;
   eventId: string;

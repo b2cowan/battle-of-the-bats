@@ -789,6 +789,12 @@ this screen is built for a bench, one-handed. ⚠ Dev-server **restart required*
 files + shared modules). ⚠ To test "live", set a game's start time near now (the window is
 arithmetic, nothing is stored).
 
+> ⚠ **Do §1.15 and §1.17 in ONE sitting — P2 has since landed on this same screen.** Two things
+> below will look different from what P1's list describes, and neither is a defect: the footer
+> now carries a **Note** button (so four labelled buttons, not three — that crowding is §1.17's
+> first check), and the after-game recap gains a **"Moments from this game"** card *if* you
+> logged any. Everything else in this section is unchanged by P2.
+
 - [ ] **📱 Entry points appear only in the window:** a game later this week shows NO pill
       anywhere; edit its start to ~now → schedule + lineups rows grow the pill, masthead line
       links (“Open the bench ›”). Cancelled game: no pill even mid-window.
@@ -820,6 +826,14 @@ arithmetic, nothing is stored).
 - [ ] **📱 Who’s here:** the sheet’s four words are the schedule tab’s exactly — **In · Late ·
       Out · No reply**. Mark an ON-FIELD player Out → the board immediately asks who covers
       their position (bench players become the targets).
+- [ ] **⚠ DEVIATION FOUND 2026-08-05, not previously flagged — your call:** the **bench list is
+      in roster order, not longest-benched-first.** Mockup frame 2’s caption says *"Longest-
+      benched sits on top"*; the built screen sorts by jersey/roster order and relies on the
+      red **"2nd straight inning sitting"** chip to draw the eye instead. On a 12-player bench
+      that chip can sit below the fold. Not a bug — a piece of the drawing that didn’t get
+      built — and it is **the first item in the P3 plan**
+      (`COACH_GAME_DAY_MODE_P3_BUILD_PROMPT.md`), so you can either accept it here and let P3
+      fix it, or call it a P1 defect and have it fixed before this commit.
 - [ ] **📱 No-lineup fallback:** open the console for a game with no saved lineup → three
       doors (Start from a template / Everyone plays / Skip lineup). “Everyone plays”
       auto-fills a rotation and the board lights up; “Skip” runs score+attendance only.
@@ -861,6 +875,115 @@ arithmetic, nothing is stored).
       leak above.) Worth re-testing during QA: mark attendance from the console then check
       the schedule tab still shows the player's note; deactivate a rostered player who's in
       tonight's lineup, open the console, make a sub, confirm it saves.
+
+---
+
+### 1.17 📱 Game-Day Mode P2 — moments — **BUILT 2026-08-05, dev, UNCOMMITTED** · ⚠ mig 228 DEV-ONLY
+*One line a coach types at the bench because they want to remember it. It reads back in the
+end-game wrap, on the tagged player's page, and as one quoted line on Season Wrapped — and it
+feeds nothing else, ever.*
+
+Where: the bench console's footer grows a **Note** button (game day only, in the live window).
+Deep link is P1's: `…/teams/{teamId}/game/{eventId}`. **Test on a phone (≤640)** — the footer
+now holds four labelled buttons and that crowding is the point of check 2. ⚠ Dev-server
+**restart required** first (new files + a migration). ⚠ Set a game's start time near now to
+get the live window.
+
+- [ ] **📱 The Note button is there, and only for people who drive:** open the console as head
+      coach mid-window → footer reads **Who's here · Note · Full grid · End game** (plus the
+      undo arrow once you've made a sub). Every button still takes a thumb comfortably — if it
+      feels tight, say so; the fallback is moving *Full grid* up into the board header.
+- [ ] **📱 Capture, and the one-sitting loop:** tap **Note** → type a line → **Save note** →
+      the sheet stays open, says **"Saved — add another?"**, the keyboard stays up, and the
+      line appears above the field with its time. Add a second → "2 saved this sitting". Close
+      the sheet → the footer button now reads **"2 TONIGHT"**. Nothing pops, nothing pulses,
+      nothing ever re-asks.
+- [ ] **📱 Tagging is optional:** save one with no player tag and one tagged to a player (chips
+      under the field). The tagged one shows the player's name as a chip on the line; the
+      untagged one is just the line — a moment about the night.
+- [ ] **📱 The 280 limit is honest:** the counter appears as you type and the field stops at
+      280. **There is deliberately no edit** — a typo is removed with ✕ and retyped. Remove one
+      and confirm it goes (and that the footer count drops).
+- [ ] **📱 The wrap remembers:** **End game** → the confirm sheet now lists **Tonight's
+      moments** above the buttons, and the closing line reads *"Moments stay with you and your
+      staff. Confirming sends families the final score — nothing else."* Confirm → family gets
+      exactly ONE notification, the final score, same as P1.
+- [ ] **📱 A night with no moments is untouched:** run a game without tapping Note → the End
+      game sheet is **identical to the P1 screen you signed off** — no empty state, no "you
+      didn't add any notes", no section at all.
+- [ ] **📱 After the game:** reopen the console link → the read-only recap now carries a
+      **"Moments from this game"** card under playing time. No capture affordance (the window
+      is closed) — read-only, as designed.
+- [ ] **🖥📱 The player's page:** open a player you tagged → a **"Moments you logged"** block
+      sits just above the Family season recap preview, newest first, with the honest season
+      count when there are more than 8. The line under it says families don't see these.
+      ⚠ **Confirm the family recap preview is UNCHANGED** — no moment may appear inside it
+      (this is your Q3 ruling made real).
+- [ ] **🖥 Season Wrapped, including last season:** close a season (or open an already-closed
+      one) → Season's End's Wrapped card carries a **"From the bench · N moments"** strip with
+      the most recent line and its game. A season nobody logged one for shows **no strip**.
+      ⚠ **Then tap "Share your season"** — the exported image must NOT contain the moment
+      text. That exclusion is enforced by an allow-list and pinned by a test, but eyeball it.
+      ⚠ Also confirm the share image still shows everything it used to (record, streak,
+      closest game, attendance, top award, lineup fact) — the allow-list touched that path.
+- [ ] **📱 The unsaved-moment warning (from review):** type a line in the Note sheet, DON'T
+      save, close the sheet, tap **End game** → an amber line says you have a moment typed but
+      not saved. Go back, save it, return → the warning is gone and the moment is in the wrap.
+- [ ] **📱 Who can't:** a schedule-only Helper's console has no footer at all, so no Note
+      button (unchanged from §1.15). An **attendance-only** assistant DOES get Note — that's
+      your Q1 ruling: anyone who drives the console may capture. Their console still has no
+      board and no subs.
+- [ ] **🖥 The archive stays closed for writing:** in a completed season there is no Game day
+      pill anywhere, so no console and no way to add or remove a moment. Wrapped is the one
+      place a finished season shows them (your Q4 ruling) — read-only, by construction.
+- [ ] **⚠ Deviations to approve or flag (three):**
+      1. **Wording.** The button says **Note** (as drawn), but every heading says **moments**
+         — "Tonight's moments", "Moments you logged". The mockup said "Tonight's notes"; I
+         changed it because "Notes" already means privacy-gated player notes in this portal
+         and two drawers with one name is a real confusion.
+      2. **The recap handoff is coach-side** (mockup frame 16, your Q3) — frame 17 was not
+         built.
+      3. **Wrapped's strip is one quoted line + a count**, most-recent, never a "best of" —
+         we don't judge a coach's writing.
+- [x] 🤖 Unit coverage (25 new tests, 1,381 total green): validation (1–280 on the trimmed
+      body, optional tag, an **off-roster tag REJECTED** rather than silently filed nowhere),
+      newest-first ordering incl. stability for two same-second captures, per-player selection
+      (tagged only, capped, honest total), Wrapped's slot (most recent + count, null on an
+      empty season, survives a deleted game's label), the capability ruling (head coach yes /
+      any single drive grant yes / schedule-only Helper **no**), and **the D4 test with
+      teeth**: season analytics are byte-identical with and without moments, the analytic
+      stats key set is LOCKED against ever growing a moments field, and the share-card data
+      is now built from an **allow-list** so no future payload field can reach the exported
+      PNG. Existing mirrored-game 409 tests + the season-write-guard contract green **with no
+      allow-list edits** (the moments routes join neither archive list). typecheck ✓ ·
+      1,390 unit tests ✓ · verify:changed ✓ (0 lint errors in touched files) · rendered
+      `check:layout` NOT run (still needs a seeded probe GAME — the footer-crowding check
+      above is the human substitute).
+      ✅ **`/simplify` run** (6 fixes): a real gating gap — the Wrapped moment was riding the
+      card's own wide door (`hasRecordAccess`, a union of 7 duties) so a money-only or
+      documents-only assistant would have read it; now on `canLogGameMoment`, failing closed.
+      The share-card allow-list moved INSIDE `generateWrappedCardBlob` so no caller can bypass
+      it. The player page stopped fetching the team's whole season to show 8 rows (now filtered
+      + counted in SQL). Two of four indexes matched no query — replaced with one composite
+      (mig 228 re-applied to dev, table was empty). DB ordering gained the `id` tiebreak so
+      same-second captures can't swap between loads. One duplicate card frame removed.
+      ✅ **`/review` run** (high-risk funnel, 5 lenses, 8→7 deduped→**4 confirmed and fixed**,
+      3 refuted). The one High: the delete rollback restored a whole-list snapshot, so on a
+      flaky connection a failed erase could resurrect an already-deleted moment or wipe one
+      captured while it was in flight — the same defect class P1's review fixed for attendance;
+      now re-inserts only its own row. Also fixed: an unsaved moment was silently unrecoverable
+      after End game (the wrap now warns first); a stale capture error greeted a later re-open;
+      a moment tagged to a since-deactivated player rendered a generic "Player" chip (chip now
+      omitted, line never hidden). **The security/tenancy and regression lenses came back
+      CLEAN** — no cross-team/cross-org/past-season write path, no family or notification leak
+      path, and the share-image change drops nothing the card used to print.
+      ✅ **`/docs` run**: the game-day guide gains the Note button, the one-sitting loop, the
+      no-edit rule and the who-can-log line; two new FAQs (**"Do families see the notes I write
+      at the bench?"** and **"Can I edit a note after I save it?"**); the Season's End and
+      player-profile guides gain their moments paragraphs. Search terms added for "note",
+      "moment", "first triple", "who can log a moment".
+- Notes: **mig 228 is DEV-ONLY / PROD-PENDING**, so the schema-parity gate is red for this
+  table (and for the Club Shared Book's 227) until both are promoted — expected, not a defect.
 
 ---
 

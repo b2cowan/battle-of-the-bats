@@ -43,13 +43,14 @@ import {
   applyConsoleSwap, consoleMode, deriveGameResult, gameDayPeriodKey, gameDaySkipLineupKey,
   toGameDayEventShape,
 } from '@/lib/coach-game-day';
+import { GAME_MOMENT_MAX, sortMomentsNewestFirst } from '@/lib/coach-game-moments';
 import { formatInOrgZone } from '@/lib/timezone';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import styles from '../../../../coaches.module.css';
 import type {
   RepAttendanceStatus, RepRosterPlayer, RepTeamEvent, RepTeamEventAttendance,
-  RepTeamLineup, RepTeamLineupEntry,
+  RepTeamGameMoment, RepTeamLineup, RepTeamLineupEntry,
 } from '@/lib/types';
 
 // ⚠ HARD REQUIREMENT (plan §3.5): the attendance control is the schedule tab's, verbatim —
@@ -65,13 +66,16 @@ interface ConsoleData {
   entries: RepTeamLineupEntry[];
   players: RepRosterPlayer[];
   attendance: RepTeamEventAttendance[];
+  /** P2 — tonight's captured lines. Empty for anyone without a console drive grant (gated at
+   *  the source in the read route, not here: `can` flags gate affordances, never data). */
+  moments: RepTeamGameMoment[];
   isMirrored: boolean;
   window: { opensAtMs: number; closesAtMs: number } | null;
-  can: { subs: boolean; attendance: boolean; score: boolean };
+  can: { subs: boolean; attendance: boolean; score: boolean; moments: boolean };
   headCoachName: string | null;
 }
 
-type SheetKind = null | 'score' | 'attendance' | 'grid' | 'book' | 'end';
+type SheetKind = null | 'score' | 'attendance' | 'grid' | 'book' | 'end' | 'moment';
 
 /**
  * Bench sits in a row, counting backwards from `period` inclusive ("2nd straight inning
@@ -136,6 +140,21 @@ export default function CoachGameConsolePage({
    *  back a later tap on the same player that already succeeded. */
   const attSeqRef = useRef(new Map<string, number>());
 
+  /**
+   * P2 — moments. Held apart from every other piece of state on this screen on purpose: no
+   * derived value below reads `moments`, nothing in the lineup PUT body or the score PATCH
+   * touches it, and removing this block would leave the console's behaviour identical. That
+   * separation IS the D4 test, expressed in the component.
+   */
+  const [moments, setMoments] = useState<RepTeamGameMoment[]>([]);
+  const [momentBody, setMomentBody] = useState('');
+  const [momentPlayerId, setMomentPlayerId] = useState<string | null>(null);
+  const [momentSaving, setMomentSaving] = useState(false);
+  const [momentError, setMomentError] = useState('');
+  /** Counts THIS sitting, not the night — the scouting book's "add another?" idiom, verbatim. */
+  const [momentSavedCount, setMomentSavedCount] = useState(0);
+  const momentInputRef = useRef<HTMLTextAreaElement | null>(null);
+
   const [sheet, setSheet] = useState<SheetKind>(null);
   const [subInId, setSubInId] = useState<string | null>(null);
   const [coverFor, setCoverFor] = useState<{ playerId: string; position: string } | null>(null);
@@ -167,7 +186,7 @@ export default function CoachGameConsolePage({
 
   const event = data?.event ?? null;
   const mirrored = data?.isMirrored ?? false;
-  const can = data?.can ?? { subs: false, attendance: false, score: false };
+  const can = data?.can ?? { subs: false, attendance: false, score: false, moments: false };
   const live = !ended && !!event && consoleMode(toGameDayEventShape(event), nowMs) === 'live';
   const readOnlyViewer = !can.subs && !can.attendance && !can.score;
   const periodLabel = sportPack.periodLabel;
@@ -200,6 +219,7 @@ export default function CoachGameConsolePage({
       setTeamScore(d.event.teamScore ?? null);
       setOppScore(d.event.opponentScore ?? null);
       setAtt(Object.fromEntries(d.attendance.map(a => [a.playerId, { status: a.status, note: a.note ?? null }])));
+      setMoments(sortMomentsNewestFirst(d.moments ?? []));
       // Restore the UI prefs ONCE per mount — `load` can legitimately re-run (the sport pack
       // resolving flips its dependency), and a second pass must not discard a period tap the
       // coach made in between (practice-run `restoredRef` precedent).
@@ -408,6 +428,59 @@ export default function CoachGameConsolePage({
     }
   };
 
+  // ── Moments (P2) — capture and erase. No notification path exists here, deliberately. ─────
+  const saveMoment = async () => {
+    const body = momentBody.trim();
+    if (!body || momentSaving || !can.moments) return;
+    setMomentSaving(true);
+    setMomentError('');
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/game-moments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body, playerId: momentPlayerId }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || !json?.moment) throw new Error(json?.error || 'Couldn’t save that moment.');
+      setMoments(m => sortMomentsNewestFirst([json.moment as RepTeamGameMoment, ...m]));
+      setMomentBody('');
+      setMomentPlayerId(null);
+      setMomentSavedCount(n => n + 1);
+      // The one-sitting loop: the sheet stays open and the keyboard stays up, so a second
+      // thought costs no taps. Nothing re-prompts — closing the sheet ends it.
+      momentInputRef.current?.focus();
+    } catch (error: unknown) {
+      setMomentError(error instanceof Error ? error.message : 'Couldn’t save that moment.');
+    } finally {
+      setMomentSaving(false);
+    }
+  };
+
+  const deleteMoment = async (momentId: string) => {
+    const removed = moments.find(m => m.id === momentId);
+    if (!removed) return;
+    setMoments(m => m.filter(x => x.id !== momentId));
+    setMomentError('');
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/game-moments/${momentId}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) throw new Error();
+    } catch {
+      /**
+       * Put back ONLY THIS ROW, functionally — never a whole-list snapshot taken before the
+       * request went out (/review 2026-08-05, High). On a field with flaky signal two erases
+       * and a capture overlap constantly, and restoring the old array would undo whatever
+       * landed in between: a second, already-confirmed deletion would reappear, or a moment
+       * captured while this request was in flight would silently vanish from the list while
+       * sitting safely on the server. The same lesson attendance learned in P1's review.
+       */
+      setMoments(m => (m.some(x => x.id === removed.id) ? m : sortMomentsNewestFirst([removed, ...m])));
+      setMomentError('That moment couldn’t be removed — try again.');
+    }
+  };
+
   // ── End game (the one deliberate act; the single family notification) ─────────────────────
   const openEndSheet = () => {
     setFinalTeam(String(teamScore ?? 0));
@@ -556,6 +629,9 @@ export default function CoachGameConsolePage({
     setPendingSwap(null);
     setSubInId(null);
     setCoverFor(null);
+    // A failure from an earlier sitting must not greet the coach on a fresh open — it would
+    // misattribute a save that already failed to a capture that hasn't happened yet.
+    setMomentError('');
   };
   const applyPendingSwap = (scope: 'onward' | 'single') => {
     if (!pendingSwap) return;
@@ -677,6 +753,40 @@ export default function CoachGameConsolePage({
     </div>
   );
 
+  /**
+   * ONE moment row, rendered by all three places a moment appears (the capture sheet, the
+   * End-game wrap, the recap) — the same reason `sheetHead` exists: three hand-copies of a
+   * timestamped line is three chances for the timestamp to disagree with itself.
+   * `onRemove` is passed ONLY by the capture sheet; the wrap and the recap read, never erase.
+   */
+  const momentRow = (m: RepTeamGameMoment, onRemove?: (id: string) => void) => (
+    <div key={m.id} className={styles.gdMomentRow}>
+      <span className={styles.gdMomentTime}>
+        {formatInOrgZone(m.happenedAt, { hour: 'numeric', minute: '2-digit' })}
+      </span>
+      <span className={styles.gdMomentBody}>
+        {/* The chip renders only when the tag RESOLVES. A player deactivated since the moment
+            was captured would otherwise be labelled with `nameOf`'s generic "Player" fallback,
+            and a moment attributed to nobody in particular reads worse than one with no chip
+            at all (/review 2026-08-05). The line itself is never hidden. */}
+        {m.playerId && playerById.has(m.playerId) && (
+          <span className={styles.gdMomentWho}>{nameOf(m.playerId)}</span>
+        )}
+        {m.body}
+      </span>
+      {onRemove && (
+        <button
+          type="button"
+          className={styles.gdMomentX}
+          onClick={() => void onRemove(m.id)}
+          aria-label={`Remove the moment “${m.body.slice(0, 40)}”`}
+        >
+          <X size={13} aria-hidden />
+        </button>
+      )}
+    </div>
+  );
+
   // The Scouting Book sheet (the rider's door) — ONE instance, rendered by both the live
   // console (header-name door) and the recap (capture door), so the two can never drift.
   const bookSheet = sheet === 'book' && event.opponent ? (
@@ -751,6 +861,18 @@ export default function CoachGameConsolePage({
             </div>
           )}
 
+          {/* Tonight's moments, read-only. Absent when none were captured — no empty state,
+              no "you didn't add any" (the sparse-data honesty rule; mockup frame 15). */}
+          {moments.length > 0 && (
+            <div className={styles.gdCard}>
+              <p className={styles.gdGroupLbl}>Moments from this game</p>
+              {moments.map(m => momentRow(m))}
+              <p className={styles.gdQuietNote}>
+                Yours and your staff’s — families are never notified about these.
+              </p>
+            </div>
+          )}
+
           <Link href={`${base}/history/playing-time`} className={styles.gdDoorRow}>
             <span>Playing time — season report</span><span aria-hidden>›</span>
           </Link>
@@ -764,6 +886,9 @@ export default function CoachGameConsolePage({
   // ── Live mode ─────────────────────────────────────────────────────────────────────────────
   const showFallback = rows.length === 0 && !skipLineup;
   const boardVisible = rows.length > 0;
+  /** LABELLED footer buttons only — the undo arrow is icon-width and keeps its own room. */
+  const footerLabelCount = [can.attendance, can.moments, boardVisible, can.score && !mirrored]
+    .filter(Boolean).length;
 
   return (
     <div className={styles.page}>
@@ -939,13 +1064,25 @@ export default function CoachGameConsolePage({
           </>
         )}
 
-        {/* Footer — sticky, safe-area aware; absent entirely for a read-only viewer. */}
+        {/* Footer — sticky, safe-area aware; absent entirely for a read-only viewer.
+            `data-tight` fires at four or more labelled buttons (P2's Note joins here): the
+            labels step down one size so every target still clears the thumb minimum at 340px,
+            which is the whole of owner question Q2 (mockup frame 11). */}
         {!readOnlyViewer && (
-          <div className={`${styles.stickyActionBar} ${styles.gdFooter}`}>
+          <div
+            className={`${styles.stickyActionBar} ${styles.gdFooter}`}
+            data-tight={footerLabelCount >= 4 ? 'yes' : undefined}
+          >
             {can.attendance && (
               <button type="button" className={styles.gdFbtn} onClick={() => openSheet('attendance')}>
                 Who’s here
                 <small>{attendingCount} HERE{outCount > 0 ? ` · ${outCount} ${ATTENDANCE_WORD.absent.toUpperCase()}` : ''}</small>
+              </button>
+            )}
+            {can.moments && (
+              <button type="button" className={styles.gdFbtn} onClick={() => openSheet('moment')}>
+                Note
+                {moments.length > 0 && <small>{moments.length} TONIGHT</small>}
               </button>
             )}
             {boardVisible && (
@@ -1111,6 +1248,67 @@ export default function CoachGameConsolePage({
           </div>
         )}
 
+        {/* The capture sheet (P2, mockup frames 12–13). Quiet sheet, never a modal over the
+            game: one line, an optional player, one button. Nothing here notifies anyone. */}
+        {sheet === 'moment' && can.moments && (
+          <div className={styles.gdSheet} role="dialog" aria-label="Note a moment">
+            {sheetHead('Note')}
+            {momentSavedCount > 0 && (
+              <p className={styles.gdMomentSaved} aria-live="polite">
+                <Check size={12} aria-hidden />
+                <span>
+                  {momentSavedCount === 1 ? 'Saved' : `${momentSavedCount} saved this sitting`} — add another?
+                </span>
+              </p>
+            )}
+            {moments.map(m => momentRow(m, deleteMoment))}
+            <textarea
+              ref={momentInputRef}
+              className={styles.gdMomentInput}
+              value={momentBody}
+              maxLength={GAME_MOMENT_MAX}
+              rows={2}
+              aria-label="A moment from tonight"
+              placeholder="One line about tonight — something worth remembering."
+              onChange={e => setMomentBody(e.target.value)}
+            />
+            <div className={styles.gdMomentMeta}>
+              <span>{moments.length > 0 ? 'Remove one you mistyped — moments aren’t edited.' : 'For you and your staff.'}</span>
+              <span className={styles.gdMomentCount}>{momentBody.length} / {GAME_MOMENT_MAX}</span>
+            </div>
+
+            <p className={styles.gdGroupLbl}>About a player? (optional)</p>
+            <div className={styles.gdTagPick}>
+              {data.players.map(p => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={styles.gdTagChip}
+                  data-on={momentPlayerId === p.id ? 'yes' : undefined}
+                  aria-pressed={momentPlayerId === p.id}
+                  onClick={() => setMomentPlayerId(prev => (prev === p.id ? null : p.id))}
+                >
+                  {p.playerNumber ? `${p.playerNumber} ` : ''}{playerDisplayName(p)}
+                </button>
+              ))}
+            </div>
+
+            {momentError && <p className={styles.errorText}>{momentError}</p>}
+            <div className={styles.gdSheetActions}>
+              <button
+                type="button" className={styles.gdBigBtn} data-primary="yes"
+                onClick={() => void saveMoment()}
+                disabled={momentSaving || momentBody.trim().length === 0}
+              >
+                {momentSaving ? 'Saving…' : 'Save note'}
+              </button>
+            </div>
+            <p className={styles.gdQuietNote}>
+              Moments stay with you and your staff — families are never notified about them.
+            </p>
+          </div>
+        )}
+
         {bookSheet}
 
         {sheet === 'end' && (
@@ -1152,8 +1350,29 @@ export default function CoachGameConsolePage({
                 <span className={styles.gdSumLine}>{sportPack.periodLabelPlural} tracked live<b>{periodAtOpen} → {period}</b></span>
               )}
             </div>
+            {/* Tonight's moments read back above the one deliberate act (mockup frame 14).
+                A night with none shows NOTHING here — no empty state, no apology — so the
+                wrap is byte-identical to the P1 screen for the coach who never taps Note. */}
+            {moments.length > 0 && (
+              <div className={styles.gdCard} data-inset="yes">
+                <p className={styles.gdGroupLbl}>Tonight’s moments</p>
+                {moments.map(m => momentRow(m))}
+              </div>
+            )}
+            {/* ⚠ Ending the game is a ONE-WAY flip to the read-only recap, and the capture
+                sheet only exists in the live screen — so a line still sitting unsaved in the
+                Note sheet becomes unrecoverable the moment this button is tapped. Say so here
+                rather than losing it silently (/review 2026-08-05). Deliberately a statement,
+                not a blocker: the coach may well have thought better of it. */}
+            {momentBody.trim().length > 0 && (
+              <p className={styles.gdQuietNote} data-tone="warn">
+                You have a moment typed but not saved — go back and save it first, or it won’t be kept.
+              </p>
+            )}
             <p className={styles.gdQuietNote}>
-              Confirming sends families their one notification for tonight and finishes the record.
+              {moments.length > 0
+                ? 'Moments stay with you and your staff. Confirming sends families the final score — nothing else.'
+                : 'Confirming sends families their one notification for tonight and finishes the record.'}
             </p>
             {endError && <p className={styles.errorText}>{endError}</p>}
             <div className={styles.gdSheetActions}>

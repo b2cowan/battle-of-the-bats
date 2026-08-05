@@ -20,8 +20,9 @@ import {
   BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS,
   BATS_LABELS, THROWS_LABELS, JERSEY_SIZE_LABELS,
 } from '@/lib/rep-roster-options';
+import { formatInOrgZone } from '@/lib/timezone';
 import styles from '../../../../coaches.module.css';
-import type { RepRosterPlayer } from '@/lib/types';
+import type { RepRosterPlayer, RepTeamGameMoment } from '@/lib/types';
 import type { RepPlayerAttendanceSummary, RepPlayerDuesSummary, RepPlayerAwardsSummary } from '@/lib/db';
 
 const ATTN_CHIP: Record<string, string> = {
@@ -147,6 +148,11 @@ export default function PlayerDetailPage({
   const [attendance, setAttendance] = useState<RepPlayerAttendanceSummary | null>(null);
   const [dues, setDues] = useState<RepPlayerDuesSummary | null>(null);
   const [awards, setAwards] = useState<RepPlayerAwardsSummary | null>(null);
+  /** Game-Day P2 — the bench moments tagged to this player. Coach-side only, live season only;
+   *  the route sends an empty list otherwise, so this block simply doesn't render. */
+  const [moments, setMoments] = useState<{ moments: RepTeamGameMoment[]; total: number }>(
+    { moments: [], total: 0 },
+  );
   const [fetching, setFetching] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedFlash, setSavedFlash] = useState(false);
@@ -173,6 +179,7 @@ export default function PlayerDetailPage({
       setAttendance(data.attendance ?? null);
       setDues(data.dues ?? null);
       setAwards(data.awards ?? null);
+      setMoments(data.moments ?? { moments: [], total: 0 });
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to load.'));
     } finally {
@@ -526,6 +533,33 @@ export default function PlayerDetailPage({
           collapsed-by-default, fetch-on-open preview (a deliberate product decision, see the
           component's own docblock); nesting it in a second disclosure would stack two
           independent expand controls on one card. */}
+      {/* Game-Day P2 — moments this player was tagged in (owner Q3, 2026-08-05). Deliberately
+          sits BESIDE the recap preview rather than inside it: the family recap writes itself
+          from records, and these are the coach's own lines — material to read before the
+          season-end conversation, never text forwarded to a parent. Absent when there are
+          none, and absent in an archived season (the route sends nothing). */}
+      {moments.moments.length > 0 && (
+        <div className={styles.detailSection}>
+          <div className={styles.sectionHeadRow}>
+            <p className={styles.detailSectionTitle}>Moments you logged</p>
+            {moments.total > moments.moments.length && (
+              <span className={styles.detailPlaceholder}>{moments.total} this season</span>
+            )}
+          </div>
+          {moments.moments.map(m => (
+            <div key={m.id} className={styles.gdMomentRow}>
+              <span className={styles.gdMomentTime}>
+                {formatInOrgZone(m.happenedAt, { month: 'short', day: 'numeric' })}
+              </span>
+              <span className={styles.gdMomentBody}>{m.body}</span>
+            </div>
+          ))}
+          <p className={styles.detailPlaceholder}>
+            From games you ran the bench for. Yours and your staff’s — families don’t see these.
+          </p>
+        </div>
+      )}
+
       {assignment && player && !page.isReadOnly
         && canViewRoster(assignment.capabilities)
         && canViewDevelopmentGoals(assignment.capabilities) && (

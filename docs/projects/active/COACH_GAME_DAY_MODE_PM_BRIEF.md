@@ -56,7 +56,36 @@ never show a Game day button — this is a live-season instrument.
   ruling that shaped the practice screen). Abandoning the console mid-game is harmless.
 - Batting-order changes and per-inning score breakdowns are out of v1 (rare mid-game, and the
   full builder is one tap away).
-- Timestamped "moments" (Maya's first triple → season recap material) are phase 2.
+- Timestamped "moments" (Maya's first triple) shipped in **phase 2** — see below.
+
+## Phase 2 — moments (built 2026-08-05, awaiting owner QA)
+
+**What a coach does differently.** During a game, the console footer offers **Note**. One tap,
+one line, an optional player tag, save — and the sheet stays open saying "Saved — add another?"
+so a second thought costs nothing. At **End game** those lines read back above the confirm
+button. Afterwards they appear on the tagged player's page, next to the family recap preview,
+and one of them — the most recent — appears as a quoted line on the team's Season Wrapped card.
+
+**Why it matters.** The thing coaches say they lose is not data, it's the small stuff: the
+first triple, the kid who finally called for the ball. This is the cheapest possible way to
+keep it, and it survives into the two moments that matter — the season-end conversation with a
+family, and the card the team shares at the wrap-up.
+
+**What it deliberately does NOT do.**
+- It changes **no number anywhere**. Not playing time, not attendance, not the record. A coach
+  who logs twenty moments and one who logs none get identical reports. A half-used log has to
+  poison nothing, and that is now asserted by test rather than promised in a doc.
+- It **notifies nobody, ever**. Families still hear exactly once per game: the final score.
+- **Families never see a moment.** These are the coach's and their staff's.
+- Moments **can't be edited** — a typo is removed and retyped — so "what you wrote at 7:32" is
+  always what was written at 7:32.
+- A game with no moments looks exactly like the phase-1 screen. No empty state, no nudge.
+
+**Access.** Anyone who runs the bench (attendance, lineups, or schedule-management duties) can
+log one. A schedule-only helper cannot — their console is read-only and shows no footer.
+
+**Past seasons.** A finished season's Wrapped card shows the moments logged during it,
+read-only; there is no way to add or remove one once a season closes.
 
 ## Success criteria
 

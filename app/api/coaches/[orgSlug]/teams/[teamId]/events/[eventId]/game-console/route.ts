@@ -3,13 +3,16 @@ import {
   getRepRosterPlayers,
   getRepTeamEventAttendance,
   getRepTeamEventById,
+  getRepTeamGameMomentsForEvent,
   getRepTeamLineupEntries,
   getRepTeamLineupForEvent,
   getRepTeamStaffForYear,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { canManageSchedule, canViewSchedule, denyUnless, redactRoster } from '@/lib/coach-capabilities';
+import {
+  canLogGameMoment, canManageSchedule, canViewSchedule, denyUnless, redactRoster,
+} from '@/lib/coach-capabilities';
 import { COACH_GAME_EVENT_TYPES, isMirroredEvent } from '@/lib/coach-tournament-games';
 import { gameDayWindow } from '@/lib/coach-game-day';
 
@@ -63,11 +66,16 @@ export const GET = withObservability(async (_req: Request,
   // their console is matchup + score view (+ attendance if granted), exactly plan §6.
   const showAttendance = caps.attendance;
   const showLineup = caps.lineups;
-  const [players, attendance, lineup, staff] = await Promise.all([
+  // P2: moments ride THIS read rather than a second GET (the build prompt's rule) and are
+  // gated at the source on the same predicate that allows capturing one — a read-only Helper's
+  // console never receives the staff's private lines about the night.
+  const showMoments = canLogGameMoment(caps);
+  const [players, attendance, lineup, staff, moments] = await Promise.all([
     getRepRosterPlayers(programYear.id).then(all => all.filter(p => p.status === 'active')),
     showAttendance ? getRepTeamEventAttendance(eventId) : Promise.resolve([]),
     showLineup ? getRepTeamLineupForEvent(eventId) : Promise.resolve(null),
     getRepTeamStaffForYear(programYear.id, ctx.org.id),
+    showMoments ? getRepTeamGameMomentsForEvent(teamId, eventId) : Promise.resolve([]),
   ]);
   const entries = lineup ? await getRepTeamLineupEntries(lineup.id) : [];
 
@@ -77,6 +85,7 @@ export const GET = withObservability(async (_req: Request,
     entries,
     players: redactRoster(players, caps),
     attendance,
+    moments,
     isMirrored: isMirroredEvent(event),
     // The one clock both the entry points and the quiet-flag guard read (lib/coach-game-day) —
     // sent so the client renders live/review from the same arithmetic without re-deriving it.
@@ -90,6 +99,9 @@ export const GET = withObservability(async (_req: Request,
       subs: caps.lineups,
       attendance: caps.attendance,
       score: canManageSchedule(caps),
+      // P2 (owner Q1, 2026-08-05): any console DRIVE grant. Same predicate as the payload gate
+      // above — an affordance the data doesn't back is how a button becomes a 403.
+      moments: showMoments,
     },
     // Who DOES run the bench, named, for the read-only sentence (practice-run pattern).
     headCoachName: staff.find(s => s.coachRole === 'head_coach')?.displayName ?? null,

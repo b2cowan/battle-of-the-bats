@@ -310,6 +310,21 @@ export const canViewScoutingBook = (c: CoachCapabilities) => c.schedule;
 export const canLogScoutingObservation = (c: CoachCapabilities) => c.schedule;
 export const canWriteScoutingSummary = (c: CoachCapabilities) => c.notes;
 /**
+ * Game-Day Mode P2 — who may capture a moment at the bench (owner ruling 2026-08-05, the P2
+ * mockup sign-off's Q1; the plan was silent).
+ *
+ * **Anyone who DRIVES the console** — the union of the three grants that already carve the
+ * console into zones (subs, Who's here, score + End game). Deliberately NOT `schedule` alone,
+ * which is the Scouting Book's gate: a schedule-only Helper's console is read-only by the
+ * §1.15 ruling and renders no footer at all, so a bare-`schedule` predicate here would have
+ * put a write behind a surface that shows no button — a gate contradicting its own screen.
+ *
+ * ⚠ No new capability key, by the same reasoning as P1 §6: nothing new appears on the staff
+ * screen, and a coach's ability to log follows the duties they already hold.
+ */
+export const canLogGameMoment = (c: CoachCapabilities) =>
+  c.attendance || c.lineups || c.scheduleManage;
+/**
  * Does this person get a seat in the team's staff chat room?
  *
  * ⚠ Membership of that room is DERIVED from the staff assignment (`syncStaffChatRoom`), which is why

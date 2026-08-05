@@ -3,6 +3,7 @@ import {
   getRepTeamEvents,
   getRepTeamAttendanceReliability,
   getRepRosterPlayers,
+  getRepTeamGameMomentsForSeason,
   getRepTeamPlayerAwardsHydrated,
   getRepTeamSeasonLineups,
   getRepTeamLineupTemplates,
@@ -12,6 +13,7 @@ import { getSportPack, DEFAULT_SPORT } from './sports';
 import { cleanNamePart } from './coach-roster-name';
 import { computeSeasonLineupAnalytics } from './lineup-season-analytics';
 import { computeSeasonWrapped, type SeasonWrappedStats } from './season-wrapped';
+import { deriveWrappedMomentSlot, type WrappedMomentSlot } from './coach-game-moments';
 
 export interface SeasonWrappedPayload extends SeasonWrappedStats {
   seasonId: string;
@@ -21,7 +23,18 @@ export interface SeasonWrappedPayload extends SeasonWrappedStats {
   teamName: string;
   teamColor: string | null;
   teamSport: string;
+  /**
+   * Game-Day P2 — one bench moment and the season's count (owner ruling 2026-08-05).
+   *
+   * ⚠ A SIBLING OF THE STATS, NEVER PART OF THEM. `SeasonWrappedStats` is key-locked by test
+   * against ever growing a moments field, because everything inside it is analytic — and
+   * because the shareable PNG is built from that shape. A moment is coach-written free text
+   * about a child; it renders on the coach's own screen and is excluded from the share card by
+   * construction (`wrappedShareCardData`).
+   */
+  momentSlot: WrappedMomentSlot | null;
 }
+
 
 /**
  * Assemble the Season Wrapped payload for ONE program year (Coach Portal Batch 3, wow #7).
@@ -38,15 +51,32 @@ export async function assembleSeasonWrapped(
      *  team's card fell back to generic near-navy, which read as a dark-theme leak on the
      *  light theme — the org's brand color is the honest next-best branding). */
     fallbackColor?: string | null;
+    /**
+     * Game-Day P2 — may THIS caller receive the bench moment?
+     *
+     * ⚠ DEFAULTS FALSE, deliberately. The rest of this payload is a season's public-facing
+     * story; a moment is a coach's private line about a child, and it is gated everywhere
+     * else on `canLogGameMoment` (who runs the bench). Riding this route's own wider door
+     * (`hasRecordAccess`, a union of seven duties) would have handed it to a money-only or
+     * documents-only assistant who cannot see a moment on any other surface. A caller that
+     * forgets this flag gets no moment, which is the safe way to be forgotten.
+     */
+    includeMoments?: boolean;
   },
 ): Promise<SeasonWrappedPayload> {
-  const [events, attendanceByPlayer, roster, allAwards, lineups, templates] = await Promise.all([
+  const [events, attendanceByPlayer, roster, allAwards, lineups, templates, moments] = await Promise.all([
     getRepTeamEvents(programYear.id),
     getRepTeamAttendanceReliability(programYear.id),
     getRepRosterPlayers(programYear.id),
     getRepTeamPlayerAwardsHydrated(team.id, team.orgId),
     getRepTeamSeasonLineups(programYear.id),
     getRepTeamLineupTemplates(team.id, programYear.id),
+    // ⚠ The one place a moment reaches a FINISHED season (owner ruling 2026-08-05): a moment is
+    // a record of a night that happened, it cannot be edited after the fact, and it reads as it
+    // read at the time. Capture and deletion stay live-season-only — this read has no sibling
+    // write, so a closed season shows moments and offers no way to change one.
+    // Gated at the SOURCE, like every other moments read: no grant, no payload.
+    opts?.includeMoments ? getRepTeamGameMomentsForSeason(team.id, programYear.id) : Promise.resolve([]),
   ]);
 
   const rosterIds = new Set(roster.map(p => p.id));
@@ -111,8 +141,15 @@ export async function assembleSeasonWrapped(
     rosterCount: roster.length,
   });
 
+  // The dateline reads "vs Oakville Thunder", from the game the moment was captured at.
+  const gameLabelById = new Map(events.map(e => [
+    e.id,
+    e.opponent ? `${e.homeAway === 'away' ? '@' : 'vs'} ${e.opponent}` : e.name,
+  ]));
+
   return {
     ...stats,
+    momentSlot: deriveWrappedMomentSlot(moments, gameLabelById),
     seasonId: programYear.id,
     seasonName: programYear.name,
     seasonYear: programYear.year,
