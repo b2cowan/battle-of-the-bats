@@ -8,7 +8,7 @@ import {
   getRepTeamGameEventsForOpponentBookByTeam,
 } from './db';
 import {
-  buildClubBookBlock, buildClubContentKeys,
+  buildClubBookBlock, buildClubContentKeys, buildClubObservationCount,
   type ClubBookReader, type ClubBookBlock,
 } from './coach-club-book';
 import { captureError } from './observability';
@@ -63,6 +63,20 @@ export function assembleClubBookBlock(opts: {
     buildClubBookBlock(dbReader, { ...opts, nowIso: new Date().toISOString() }),
     null,
     'club-shared-book/card',
+  );
+}
+
+/**
+ * Just the number, for the game drawer's one-line teaser — no records, no observation text.
+ * 0 on failure, same "absent, never blocking" rule as the block itself.
+ */
+export function resolveClubObservationCount(opts: {
+  orgId: string;
+  viewerTeamId: string;
+  matchKeys: string[];
+}): Promise<number> {
+  return absentOnFailure(
+    buildClubObservationCount(dbReader, opts), 0, 'club-shared-book/count',
   );
 }
 

@@ -52,9 +52,10 @@ export default function OpponentScoutingPanel({
     observations: RepTeamOpponentObservation[];
     tags: string[];
     canShareToStaffChat?: boolean;
-    /** Club Shared Book: only the COUNT is used here — the drawer stays a glance, and no
-     *  sibling prose is rendered inline (plan §4.3). */
-    club?: { observationCount: number } | null;
+    /** Club Shared Book: only the COUNT — the drawer stays a glance and renders no sibling
+     *  prose (plan §4.3), so it asks the card route for `?club=count` and the server skips
+     *  assembling blocks it would only throw away. */
+    clubObservationCount?: number;
   } | null>(null);
   const [error, setError] = useState('');
   const [obsBody, setObsBody] = useState('');
@@ -81,7 +82,9 @@ export default function OpponentScoutingPanel({
 
   const load = useCallback(async () => {
     try {
-      const res = await fetch(apiBase);
+      // `?club=count` — this tab shows the club's NUMBER and none of its prose, so it asks the
+      // server not to assemble what it would discard. Every other field is unchanged.
+      const res = await fetch(`${apiBase}?club=count`);
       await throwIfNotOk(res, 'Could not load the book');
       const payload = await res.json();
       if (!mountedRef.current) return;
@@ -252,11 +255,11 @@ export default function OpponentScoutingPanel({
           something, deep-linking to the card's club section. No sibling prose inline: the
           drawer is Friday night's glance, and the masthead nudge + practice bridge keep
           speaking for this team's own book only. */}
-      {(data.club?.observationCount ?? 0) > 0 && (
+      {(data.clubObservationCount ?? 0) > 0 && (
         <Link href={`${base}/history/opponents/${key}#club`} className={styles.scoutClubTease}>
           <Library size={13} aria-hidden />
-          Your club has {data.club!.observationCount} more observation
-          {data.club!.observationCount === 1 ? '' : 's'} on {opponent.displayName} ›
+          Your club has {data.clubObservationCount} more observation
+          {data.clubObservationCount === 1 ? '' : 's'} on {opponent.displayName} ›
         </Link>
       )}
 

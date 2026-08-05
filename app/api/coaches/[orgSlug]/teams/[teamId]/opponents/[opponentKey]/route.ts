@@ -13,7 +13,7 @@ import {
 } from '@/lib/coach-opponents';
 import { assembleOpponentCard } from '@/lib/coach-opponent-card';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
-import { assembleClubBookBlock } from '@/lib/coach-club-book-server';
+import { assembleClubBookBlock, resolveClubObservationCount } from '@/lib/coach-club-book-server';
 import { getStaffChatRoom } from '@/lib/chat-service';
 import { getSportPack } from '@/lib/sports';
 
@@ -25,9 +25,17 @@ import { getSportPack } from '@/lib/sports';
  * share posts exactly what this serves. INSTRUMENT: off the season rail by decision (see
  * the list route's header comment).
  */
-export const GET = withObservability(async (_req: Request,
+export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; opponentKey: string }> },) => {
   const { orgSlug, teamId, opponentKey } = await params;
+  /**
+   * `?club=count` — the GLANCE caller (the schedule drawer's Scouting tab). It renders one line
+   * with one number in it and no sibling prose at all, so assembling the whole club block for
+   * it meant reading every matched sibling's game history to compute records nothing displays.
+   * The full card omits the parameter and gets the blocks. Everything else about the response
+   * is identical either way, and `clubObservationCount` is always the same number.
+   */
+  const clubCountOnly = new URL(req.url).searchParams.get('club') === 'count';
   const resolved = await resolveLiveCoachTeamContext(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
   const { ctx, team, assignment, programYear } = resolved;
@@ -57,13 +65,15 @@ export const GET = withObservability(async (_req: Request,
    * (`entry.key` plus every spelling merged into it) rather than the raw URL key alone.
    */
   const clubAccess = resolveClubBookAccessFor(ctx.org, team);
-  const club = clubAccess.canSeeClubLayer
-    ? await assembleClubBookBlock({
-        orgId: ctx.org.id,
-        viewerTeamId: teamId,
-        matchKeys: [entry.key, ...entry.aliasKeys],
-      })
+  const clubArgs = { orgId: ctx.org.id, viewerTeamId: teamId, matchKeys: [entry.key, ...entry.aliasKeys] };
+  const club = clubAccess.canSeeClubLayer && !clubCountOnly
+    ? await assembleClubBookBlock(clubArgs)
     : null;
+  // One number, however it was reached: derived from the blocks when we already have them,
+  // read cheaply when the caller only wants the teaser. A non-sharing team gets 0.
+  const clubObservationCount = !clubAccess.canSeeClubLayer ? 0
+    : clubCountOnly ? await resolveClubObservationCount(clubArgs)
+    : club?.observationCount ?? 0;
 
   return NextResponse.json({
     opponent: { ...entry, observationCount: observations.length },
@@ -74,8 +84,9 @@ export const GET = withObservability(async (_req: Request,
     aliases: card.aliases,
     tags: scoutingTagsForSport(sportPack),
     // The club's other sharing teams on this same opponent — read-only, labelled per team,
-    // never blended. Null = nothing to show (or no access), and the section is then absent.
+    // never blended. Null = nothing to show, no access, or the count-only caller.
     club,
+    clubObservationCount,
     canWriteSummary: canWriteScoutingSummary(assignment.capabilities),
     // The share door renders only where it can succeed: grant held AND the staff room
     // exists (a team below the staff-chat plan gate, or not yet healed, shows no button).

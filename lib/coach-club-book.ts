@@ -419,6 +419,42 @@ export async function buildClubBookBlock(reader: ClubBookReader, opts: {
 }
 
 /**
+ * "How many observations does the rest of the club have on this opponent?" — and NOTHING else.
+ *
+ * The game drawer's teaser is one line with one number in it (plan §4.3: the drawer stays a
+ * glance, no sibling prose inline). Assembling the full block for it meant reading every
+ * matched sibling's entire game history — to compute records the drawer never renders — and
+ * pulling their observation text across the wire to be counted and discarded.
+ *
+ * So this shares the CHEAP half of `buildClubBookBlock` — the same sibling resolution, the same
+ * org scoping, the same reciprocity precondition — and then stops. No game reads at all, and
+ * `cap: 0` means no observation body is fetched either: the count comes from a `head` count.
+ * `tests/unit/coach-club-book.test.ts` asserts the heavy reads are never even called.
+ */
+export async function buildClubObservationCount(reader: ClubBookReader, opts: {
+  orgId: string;
+  viewerTeamId: string;
+  matchKeys: string[];
+}): Promise<number> {
+  const { orgId, viewerTeamId, matchKeys } = opts;
+  const siblings = await reader.siblingTeams(orgId, viewerTeamId);
+  if (siblings.length === 0) return 0;
+
+  const siblingIds = siblings.map(s => s.id);
+  const [siblingOpponents, siblingAliases] = await Promise.all([
+    reader.opponents(orgId, siblingIds),
+    reader.aliases(orgId, siblingIds),
+  ]);
+
+  const matchedOpponentIds = matchSiblingBooks({ matchKeys, siblingOpponents, siblingAliases })
+    .flatMap(m => m.opponentIds);
+  if (matchedOpponentIds.length === 0) return 0;
+
+  const totals = await reader.observations(orgId, matchedOpponentIds, 0);
+  return Object.values(totals).reduce((sum, t) => sum + t.total, 0);
+}
+
+/**
  * Which of the viewer's opponent-list rows the club has something to say about — ONE batched
  * lookup for the whole list, resolved into the viewer's key space through their own merges.
  * Returns [] when the club has nothing (or has no other sharing teams).

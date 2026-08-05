@@ -27,6 +27,7 @@ import {
   clubContentKeys,
   buildClubBookBlock,
   buildClubContentKeys,
+  buildClubObservationCount,
   CLUB_TEAM_OBSERVATION_CAP,
   CLUB_TEAM_PREVIEW_COUNT,
   type ClubBookReader,
@@ -365,7 +366,10 @@ describe('the list badge resolves sibling spellings INTO the viewer’s key spac
  * unfiltered `.in('team_id', …)` query would do. If the assembly ever stops carrying the org
  * boundary, the leakage test below fails with the other club's words in the payload.
  */
-function twoOrgReader(calls: { orgIds: string[] } = { orgIds: [] }): ClubBookReader {
+function twoOrgReader(
+  calls: { orgIds: string[]; methods?: string[] } = { orgIds: [] },
+): ClubBookReader {
+  const note = (m: string) => { calls.methods?.push(m); };
   const teams = [
     { id: 't-a1', orgId: 'org-a', name: '12U A', sharing: true },
     { id: 't-a2', orgId: 'org-a', name: '10U', sharing: true },
@@ -402,21 +406,21 @@ function twoOrgReader(calls: { orgIds: string[] } = { orgIds: [] }): ClubBookRea
 
   return {
     async siblingTeams(orgId, viewerTeamId) {
-      calls.orgIds.push(orgId);
+      note('siblingTeams'); calls.orgIds.push(orgId);
       return teams.filter(t => t.orgId === orgId && t.sharing && t.id !== viewerTeamId)
         .map(t => ({ id: t.id, name: t.name }));
     },
     async opponents(orgId, teamIds) {
-      calls.orgIds.push(orgId);
+      note('opponents'); calls.orgIds.push(orgId);
       return opponents.filter(o => o.orgId === orgId && teamIds.includes(o.teamId));
     },
     async aliases(orgId, teamIds) {
-      calls.orgIds.push(orgId);
+      note('aliases'); calls.orgIds.push(orgId);
       const inOrg = new Set(opponents.filter(o => o.orgId === orgId).map(o => o.id));
       return aliases.filter(a => inOrg.has(a.opponentId) && teamIds.includes(a.teamId));
     },
     async observations(orgId, opponentIds, cap) {
-      calls.orgIds.push(orgId);
+      note(cap > 0 ? 'observations' : 'observations:count-only'); calls.orgIds.push(orgId);
       const out: Record<string, { observations: RepTeamOpponentObservation[]; total: number }> = {};
       for (const id of opponentIds) {
         const owner = opponents.find(o => o.id === id);
@@ -427,7 +431,7 @@ function twoOrgReader(calls: { orgIds: string[] } = { orgIds: [] }): ClubBookRea
       return out;
     },
     async observationCounts(orgId, teamIds) {
-      calls.orgIds.push(orgId);
+      note('observationCounts'); calls.orgIds.push(orgId);
       const counts: Record<string, number> = {};
       for (const [opponentId, rows] of Object.entries(observations)) {
         const owner = opponents.find(o => o.id === opponentId);
@@ -437,6 +441,7 @@ function twoOrgReader(calls: { orgIds: string[] } = { orgIds: [] }): ClubBookRea
       return counts;
     },
     async gameEventsByTeam(teamIds) {
+      note('gameEventsByTeam');
       const out: Record<string, OpponentGameInput[]> = {};
       for (const id of teamIds) out[id] = events[id] ?? [];
       return out;
@@ -491,6 +496,44 @@ describe('assembling the club layer', () => {
     assert.equal(await buildClubBookBlock(twoOrgReader(), {
       orgId: 'org-b', viewerTeamId: 't-b1', matchKeys: ['oakville thunder'], nowIso: NOW,
     }), null);
+  });
+
+  it('the drawer’s teaser number equals what the full block reports', async () => {
+    const args = { orgId: 'org-a', viewerTeamId: 't-a9', matchKeys: ['oakville thunder'] };
+    const block = await buildClubBookBlock(twoOrgReader(), { ...args, nowIso: NOW });
+    const count = await buildClubObservationCount(twoOrgReader(), args);
+    assert.equal(count, block!.observationCount,
+      'the number on the glance and the number behind the tap must be the same number');
+    assert.equal(count, 3);
+  });
+
+  it('⚠ the count-only path does NOT read games or observation bodies', async () => {
+    const calls = { orgIds: [] as string[], methods: [] as string[] };
+    await buildClubObservationCount(twoOrgReader(calls), {
+      orgId: 'org-a', viewerTeamId: 't-a9', matchKeys: ['oakville thunder'],
+    });
+    assert.equal(calls.methods.includes('gameEventsByTeam'), false,
+      'the drawer renders no sibling RECORD, so reading their whole game history for it is '
+      + 'pure waste — this is the assertion that keeps it that way');
+    assert.equal(calls.methods.includes('observations'), false,
+      'no observation BODY may be fetched for a surface that renders none');
+    assert.ok(calls.methods.includes('observations:count-only'),
+      'the total still comes from a real count, not from counting rows we fetched');
+    assert.deepEqual([...new Set(calls.orgIds)], ['org-a'], 'still one org only');
+  });
+
+  it('the count is 0 — never a leak — for an opponent the club does not know', async () => {
+    assert.equal(await buildClubObservationCount(twoOrgReader(), {
+      orgId: 'org-a', viewerTeamId: 't-a9', matchKeys: ['milton mavericks'],
+    }), 0);
+  });
+
+  it('the count respects the org boundary exactly as the block does', async () => {
+    // org-b's only sharing team is t-b1; excluding it leaves no siblings, and org-a's
+    // observations must not fill the gap.
+    assert.equal(await buildClubObservationCount(twoOrgReader(), {
+      orgId: 'org-b', viewerTeamId: 't-b1', matchKeys: ['oakville thunder'],
+    }), 0);
   });
 
   it('the list badge sees the same club and no more', async () => {

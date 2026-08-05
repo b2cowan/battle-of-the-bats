@@ -913,9 +913,11 @@ promote this to master before applying it to prod.
       in place.
 - [ ] **📱 The glance (phone, ≤640):** on a game against that opponent, open the schedule
       drawer's **Scouting** tab → one quiet **amber** line: *"Your club has N more observations
-      on {opponent} ›"*. Tap it → lands on the opponent card's club section. **No sibling notes
-      are shown inline in the drawer**, and the masthead nudge / practice-week panel still
-      speak only for your own team's book.
+      on {opponent} ›"*. Tap it → lands on the opponent card's club section, and **N should match
+      what you count there** (the tab fetches only that number, by a different route than the
+      card — worth confirming once that the two agree). **No sibling notes are shown inline in
+      the drawer**, and the masthead nudge / practice-week panel still speak only for your own
+      team's book.
 - [ ] **🖥 The list marker:** Insights → Opponents — the row for that opponent wears a small
       amber book icon (hover: "Your club has shared notes on …"). A row the club knows nothing
       about wears none.

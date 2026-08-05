@@ -10040,27 +10040,33 @@ export async function getRepTeamOpponentObservationsForOpponents(
     // so the true total can never be understated by a page-size ceiling the way counting
     // returned rows would be — and `Math.max` keeps the label honest if a concurrent delete
     // lands between the two reads (the count may only ever describe MORE than we are showing).
-    const [{ data, error }, { count, error: countError }] = await Promise.all([
-      supabaseAdmin
-        .from('rep_team_opponent_observations').select('*')
-        .eq('org_id', orgId).eq('opponent_id', id)
-        .order('created_at', { ascending: false })
-        .limit(cap),
+    //
+    // ⚠ `cap === 0` is the COUNT-ONLY caller (the game drawer's one-line teaser, which needs
+    // the number and none of the prose). It skips the page query altogether rather than asking
+    // for zero rows — not one observation body crosses the wire for a surface that renders none.
+    const [page, { count, error: countError }] = await Promise.all([
+      cap > 0
+        ? supabaseAdmin
+          .from('rep_team_opponent_observations').select('*')
+          .eq('org_id', orgId).eq('opponent_id', id)
+          .order('created_at', { ascending: false })
+          .limit(cap)
+        : Promise.resolve({ data: [] as Record<string, unknown>[] | null, error: null }),
       supabaseAdmin
         .from('rep_team_opponent_observations').select('id', { count: 'exact', head: true })
         .eq('org_id', orgId).eq('opponent_id', id),
     ]);
-    if (error) throw error;
+    if (page.error) throw page.error;
     if (countError) throw countError;
-    const rows = (data ?? []).map(mapRepTeamOpponentObservation);
+    const rows = (page.data ?? []).map(mapRepTeamOpponentObservation);
     return { id, rows, total: Math.max(count ?? rows.length, rows.length) };
   }));
 
   const out: Record<string, { observations: RepTeamOpponentObservation[]; total: number }> = {};
-  for (const page of pages) {
-    if (page.rows.length === 0) continue;
-    out[page.id] = { observations: page.rows, total: page.total };
-  }
+  // EVERY opponent asked about gets an entry, including one with nothing to say. The count-only
+  // caller needs the zero as much as the number, and the block builder filters on content
+  // anyway, so an empty entry changes nothing there.
+  for (const p of pages) out[p.id] = { observations: p.rows, total: p.total };
   return out;
 }
 

@@ -218,9 +218,10 @@ in the search box stops rebuilding it.
 
 Skipped, deliberately: extracting a shared admin-toggle component (the second copy lives in
 `assistant-coaches/page.tsx`, which another session had uncommitted — and a one-caller component
-is not a simplification); and giving the game drawer a count-only path so it stops assembling the
-full club block for one integer (**a real P2 efficiency item** — disproportionate for P1, since it
-needs a new API mode, and the observation-read fix above already removed most of its cost).
+is not a simplification).
+
+⚠ **The one deferred item was subsequently CLOSED at the owner's request (2026-08-05, same day)** —
+see §10.4 below.
 
 ### `/review` — high-risk tier, 5 lenses, 6 confirmed defects fixed
 | Severity | Defect | Fix |
@@ -253,3 +254,41 @@ its heading now names opponent books. Search keywords/`searchText` updated on bo
 those fields, not the prose). **No pricing copy written** — per the decisions-log handoff the
 Club-plan marketing story is `/marketing`'s at ship; the guides say only "part of the Club plan"
 where they must explain an absent switch.
+
+### 10.4 The drawer's count-only path — the deferred efficiency item, closed (owner call, 2026-08-05)
+
+`/simplify` flagged it and this plan deferred it to P2; the owner asked for it immediately, so it
+shipped in a follow-up commit.
+
+**The waste.** The Scouting tab renders ONE line with ONE number in it — plan §4.3 deliberately
+keeps sibling prose off that surface. It nevertheless fetched the full card payload, so the server
+assembled the whole club block for it: every matched sibling's entire game history (read purely to
+compute records the tab never renders) plus up to 25 observation bodies per sibling, counted and
+then discarded. ⚠ The `/review` fix that aligned the sibling history cap with the team's own page
+(§10's High finding) had **roughly doubled** this cost — correct, and worth the waste, but it made
+closing the item more attractive than the original estimate.
+
+**The shape.** The card GET takes `?club=count`. With it, the route skips block assembly entirely
+and calls a new count-only assembly that shares the CHEAP half of the block builder — the same
+sibling resolution, the same org scoping, the same reciprocity precondition — then stops: **no game
+reads at all**, and `cap: 0` so no observation body is fetched either (the total comes from a
+`head` count). `clubObservationCount` is now always served at the top level, derived from the
+blocks on the full path and read cheaply on the glance path. The card page omits the parameter and
+is byte-identical to before.
+
+**Why the two numbers cannot disagree** (the risk worth stating): the full path sums
+`observationCount` over blocks that survived `siblingBlockHasContent`, and the count path sums over
+every matched row. A block is filtered out only when it has no summary AND zero observations — so
+an excluded team contributes exactly 0 either way. The sums are equal by construction, and a test
+asserts it on the fixture.
+
+**A co-dependent pair, worth remembering:** skipping the rows query at `cap === 0` REQUIRES the
+companion change that stops dropping entries with no rows — the old skip condition was
+`rows.length === 0`, which is always true at cap 0, so the count would silently have been 0 forever.
+Ship them together or not at all.
+
+**Verification:** 4 new tests, including one that asserts the heavy reads are **never called** on
+the count path (the assertion that keeps the optimisation from quietly regressing). Re-reviewed
+through two adversarial lenses (correctness, security/regression) because it changes a shared
+endpoint's behaviour — **both clean**: no gate weakened by the new client-supplied parameter, org
+scoping identical, and the full card unchanged.
