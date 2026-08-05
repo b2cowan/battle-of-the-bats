@@ -169,6 +169,52 @@ investigation (this repo, coaches-demo agent) + owner Q&A.
   is intercepted with the sales nudge: "Not saved in the sandbox — start your own team free to
   keep this." (exact copy via /marketing at build).
 
+## Phase 3 — the guided tour: candidate beats (captured 2026-08-05, NOT designed)
+
+Raw material for the Phase 3 session, written while the world was fresh so the next session starts
+from a list rather than re-reading five seeded teams. **This is not a design** — the chip count,
+grouping, copy and whether the tour is per-moment or one spine are all open, and all of it is
+downstream of owner QA (§5.4), which may change which beats are worth pointing at.
+
+**The machinery already exists.** `sandboxTourSteps()` returns `[]` for `kind === 'coach'`, which
+renders no tour at all; the stepper, the numbered progress, the narration strip, the anchor-ring
+and the per-sandbox session state are all built and running for the tournament sandbox. Phase 3 is
+therefore **data + copy, not new components** — scope it as S/M, not L.
+
+**What a visitor will NEVER find on their own** (the tour's actual job — everything else in the
+sandbox is reachable by wandering):
+
+| Moment | Buried beat | Why it earns a chip |
+|---|---|---|
+| Tryout day | The split opinion — bib 14, Hitting, **5 from one evaluator, 2 from the other**, each with a note | The single most human thing in the product; invisible unless you open that one card |
+| Tryout day | The **evaluator bias readout** (one of the three reads consistently harsh) | Answers "how do I know my volunteers agree?" — a question coaches ask and nobody advertises |
+| Off-season | The **unbudgeted** line ("Team photo day, $180") sitting outside the plan | The report earning its keep; proves it reports reality, not the plan |
+| Off-season | The **upcoming** practice plan — three stations, three groups, a rotation clock, openable and runnable | The only place the product shows a plan you can walk onto a field with |
+| Off-season | The testing session's **two honest blanks** (11 of 13 tested) | The no-fabrication rule made visible; a dash where a lesser tool would print 0 |
+| Season start | That **exactly one** lineup is saved — the opener's — with the whole year still scheduled | The "set it up in one evening in March" story; only lands if you notice nothing follows it |
+| Season start | Both pitchers sitting **at** the arm-care cap in that lineup | Safety as a feature, not a warning |
+| Mid-season | The **playing-time outlier** under Lineups (one player well below the rest) | The insight coaches most fear being wrong about |
+| Mid-season | The **unsigned waiver**, which lives on a player's profile (no roster-level aggregate exists) | Genuinely hard to find — flagged as a Phase 1 mockup deviation |
+| Season's End | That the closed year is **actually browsable**, not a screenshot | The archive promise is the hardest thing to believe without touching it |
+| Season's End | **9 of 12 families opened the recap** | The only number in the demo about parents, and the one that closes a "will they use it?" objection |
+
+**Constraints that carry over (all learned expensively):**
+1. **A step must never be able to do nothing.** Anchors may vanish; the narration sentence IS the
+   deliverable, so pressing a chip always visibly produces something. (Tournament sandbox: two
+   steps anchored to conditionally-rendered panels read as broken three separate times.)
+2. **No motion claims.** Nothing in the coach demo moves while you watch — the re-anchor is
+   nightly. No countdowns, no live dots. The dock deliberately carries no pulse for this reason.
+3. **Writes are blocked**, so no step may ask the visitor to save, score, or change anything.
+4. **Blind scoring stays ON** on the tryout board — no step may reveal candidate names.
+5. **Phone budget is already tight.** The chrome is a banner + a five-chip dock that already
+   overflows 390px; the stepper hides its label and dots under 640px. Measure before adding a row.
+6. Mockups first, published as Artifacts, owner sign-off before any build.
+
+**Open questions for that session:** per-moment chips vs. one spine across the year (the tournament
+sandbox learned that two disconnected tours beat one — but its story was one day, not one season);
+whether the "what parents see" preview is a tour stop or its own thing; and whether the tour should
+open automatically for a first-time visitor or wait to be pressed.
+
 ## Architecture
 
 **Not a time machine — five parallel teams.** One permanent demo org, one demo coach account
