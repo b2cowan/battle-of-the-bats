@@ -1,4 +1,53 @@
-# Owner QA Ledger — everything built and waiting on your eyes (2026-08-01)
+# Owner QA Ledger — unverified LIVE behaviour, ordered by what it costs if it's wrong
+
+> ## ⚠ Read this first — what this document is now (re-framed 2026-08-03)
+>
+> **This stopped being a pre-release gate.** A release went out on 2026-08-03. `dev` is three
+> commits ahead of `origin/master`, and all three are documentation and contrast fixes. Every
+> feature with a step list below — with **one** exception — **is already in front of paying
+> customers.** This is not a list of things to check before shipping. It is a list of **live
+> behaviour nobody has verified.**
+>
+> **The one exception is §1.9c** (the roster switch), which is still only in the working tree,
+> together with four slices of the sandbox in §5.2. Everything else has shipped.
+>
+> **Two things were wrong across the old version of this document and are now corrected:**
+>
+> 1. **The status labels.** A dozen sections said "built, uncommitted" for work that shipped days
+>    ago. Each heading below was re-checked against `origin/master` by grepping for the feature's
+>    own code, not by trusting the header.
+> 2. **The migration warnings.** Roughly a dozen steps carried "⚠ Migration N is DEV-ONLY — prod
+>    must have it before this ships". **Migrations 211–224 were applied to production on
+>    2026-08-03** and the drift report reads zero across tables, columns, indexes, constraints and
+>    RLS. Those warnings are struck through where they appear. Nothing below is waiting on a
+>    database change.
+>
+> ### The ordering: exposure, not project completeness
+>
+> Sections are grouped by **what happens if this is wrong**, because a finished feature nobody can
+> reach matters less than a half-checked one handling a child's medical form.
+>
+> | Tier | What it means |
+> |---|---|
+> | **Tier 1** | Can harm someone — child data, money, messaging families, granting access |
+> | **Tier 2** | Daily coach actions — friction and lost trust, not harm |
+> | **Tier 3** | Polish — visible, annoying, nothing anyone can't get back |
+>
+> Section numbers are **unchanged** so older notes and links still resolve; they simply no longer
+> run in numeric order. Every step's wording is untouched — this was a re-sort and a re-label.
+>
+> ### Reading a status line
+>
+> | Label | Meaning |
+> |---|---|
+> | **LIVE ON PRODUCTION** | On `origin/master`. Customers have it now. Verifying it is damage-finding, not gatekeeping. |
+> | **UNCOMMITTED** | In the working tree only. Not on `dev`, not on prod. This is the one place QA still gates anything. |
+> | **⛔ CANNOT BE QA'd** | Shipped but switched off, or otherwise unreachable. Leave it. |
+>
+> ### Device batching survives the re-sort
+>
+> Each heading carries 🖥 (desktop), 📱 (phone) or both, so you can still do one phone sitting:
+> §1.6b · §1.9b · §1.11 · §2.3 · §2.6 · §2.1 · §2.2 · §2.5 · §2.4 · §3.1 · §1.4 · §1.8 · §1.9.
 
 > **Added 2026-08-01 (later):** §2.5 — **running a practice at the field (Practice Plans 1b)**.
 > ⚠ It is the one item in this ledger that genuinely cannot be judged at a desk; do it outdoors,
@@ -54,17 +103,20 @@
 > It also carries the one **open decision** on the project: what the door should do for a visitor
 > who is already signed in.
 
-> **How to use this:** work a session top-to-bottom, tick `[x]` as you go, jot defects inline under
-> the step that failed. When a project's section is fully ticked, tell the working agent "QA passed:
-> <project>" — it graduates the project (commit where still uncommitted, with your per-action OK,
-> then archive). Source plans are archived (paths noted per section); **this ledger is now the QA
-> surface of record.** Steps were extracted from each plan's own QA/acceptance sections; two
-> projects had none written — their sections say so and carry a sketch instead.
+> **How to use this:** work **Tier 1 top-to-bottom first**, tick `[x]` as you go, jot defects inline
+> under the step that failed. Because this is live behaviour, a Tier 1 defect is an incident to fix
+> now, not a release blocker to schedule. When a section is fully ticked, tell the working agent
+> "QA passed: <section>" — it graduates the project (commit where still uncommitted, with your
+> per-action OK, then archive). Source plans are archived (paths noted per section); **this ledger
+> is the QA surface of record.** Steps were extracted from each plan's own QA/acceptance sections;
+> two projects had none written — their sections say so and carry a sketch instead.
 >
-> Sessions are grouped by surface + device so you can batch efficiently: one desktop premium-portal
-> pass, one phone premium-portal pass, one free-portal pass, one cross-cutting pass.
+> **Steps marked 🤖 were machine-verified on 2026-08-03** by the Tier 1 pilot in `tests/uat/` and are
+> ticked. A machine can settle "can the wrong person reach this" better than a person can; it cannot
+> settle whether copy is honest, whether a bargain feels fair, or how anything behaves under a real
+> thumb. Everything still unticked needs your eyes for a reason.
 
-## Session 0 — prep (10 minutes, once)
+## Before any session — prep (10 minutes, once)
 
 - [ ] Dev server clean restart (stop → clear cache → start) — several of these landed shared files.
       Confirm the app loads and sign-in works.
@@ -79,108 +131,61 @@
       a team with dated budget lines/expenses/payables across months + a prior season (Chunk H);
       an org rep team with an **admin-linked tournament registration** (Batch 1); free-tier teams
       in the coherence states (Session 3).
-- ⚠ Everything below is on **dev only** — nothing is customer-visible yet.
+- ⚠ **Everything below except §1.9c and four slices of §5.2 is LIVE on production.** Dev and prod are schema-identical (migrations 211–224 applied 2026-08-03, zero drift), so what you see on dev is what customers have.
 
 ---
 
-## Session 1 — Premium Coaches Portal · DESKTOP
+# TIER 1 — can harm someone
 
-### 1.1 Overview says ONE thing (Chunk I) — built + reviewed, uncommitted
-*One priority card, a six-tile board, a quiet tail — replacing nine contradicting bands.*
-Archived plan: `archive/COACH_PORTAL_CHUNK_I_ONE_THING_PLAN.md` (its PM brief's "not started" header is stale — trust the plan).
-- [ ] As head coach, open Overview on four teams: game-today · game-this-week · quiet 3+ weeks ·
-      pre-season. Each shows exactly ONE anchor card, the right shape, six tiles incl. the money
-      pair (Dues + Budget), and "Close out the season" on the quiet team.
-- [ ] As a default assistant (money off): board shows Attendance + Playing time instead of money;
-      quiet team's season-check card has NO button (sentence only).
-- [ ] Assistant with money **read**: money tiles visible, zero money write actions anywhere.
-- [ ] Assistant with lineups off, game-day team: anchor's action falls back to "Take attendance";
-      Playing-time slot falls back to Development.
-- [ ] Assistant with attendance off, game-day team: anchor goes informational (no button);
-      Attendance tile is absent (not greyed).
-- [ ] Assistant with schedule off: "Nothing on your schedule" never appears.
-- [ ] Money coach with NEITHER dues nor budget set up: slots 5–6 collapse into one "Set up your
-      team's money" tile and Attendance fills the gap (not a missing tile).
-- [ ] A finished tournament sits in the tail with a "Finished" chip, never in the anchor slot.
-- Note: two coaches on the same team correctly see DIFFERENT anchors — not a bug.
+Guardian and child information, money, messaging families, and anything that grants a person
+access. Wrong here is not friction — it is a child's medical form in the wrong hands, a family
+billed wrongly, or an adult holding access nobody meant to give them. **Everything in this tier
+except §1.9c is already in front of customers.**
 
-### 1.2 Budget starter (Chunk G) — built, uncommitted · ⚠ review funnel not yet run
-*First-season coach answers 5 tap-only questions → seeded budget worksheet; no dollar figure ever comes from us.*
-Plan stays ACTIVE (its /simplify → /review → /docs pass is still owed; QA can proceed — expect a
-possible small follow-up after the funnel). Plan: `active/COACH_PORTAL_CHUNK_G_BUDGET_STARTER_PLAN.md`. *(No owner checklist in the doc — steps below are the sketch.)*
-- [ ] Zero-budget team, write coach: Season Budget Plan shows the first-run card with three doors
-      (Start · See a finished example · Add lines yourself).
-- [ ] Run the 5-question starter: worksheet placeholders are literally "$" — **no numeric hint
-      anywhere**; type some amounts, leave others blank; priced → real lines, unpriced → the
-      "Not in your plan yet" strip; ×N entry-fee helper shows its arithmetic at 2+ tournaments.
-- [ ] Checklist strip chip opens Add Line prefilled with category/item, amount EMPTY.
-- [ ] Sample sheet (all three entry points): clearly fenced fictional team, zero write affordances,
-      both tabs render.
-- [ ] Read-only money assistant: NO starter, NO strip, NO Add Line — sample door only.
-- [ ] Eyeball the five flagged mockup deviations (segmented control, square tick, olive text,
-      conditional ×N helper, arithmetic-in-note) — approve or flag.
-
-### 1.3 Money by Month (Chunk H) — BOTH halves built + reviewed, uncommitted
-*Spreadsheet-shaped months view + generalized payables page + 3-template import/export.*
-Archived plan: `archive/COACH_PORTAL_CHUNK_H_MONEY_BY_MONTH_PLAN.md`. *(No owner checklist in the doc — sketch below.)*
-- [ ] Months view on a data-rich team: rows/columns/totals sane; four lenses cycle; Difference
-      shows "—" for future months, never a false "under budget".
-- [ ] Cash-flow rows: a shortfall month is called out in plain words.
-- [ ] Second-season team: prior-season column + "last season only" group.
-- [ ] Cell drill-ins open EXISTING forms (never a new editor); read-only assistant gets read panels,
-      no drill-in, no import.
-- [ ] "Expenses & Payables" rename + new Payment schedule tab (Unpaid default / Paid / All).
-- [ ] Import: download a template — **every amount cell empty**; paste rows; editable preview with
-      per-row verdicts; nothing writes until confirmed; zero-row commit reports failure honestly.
-- Notes: month grid deliberately scrolls sideways on phones. The cumulative chart changed on
-  purpose (undated budget no longer smeared across months) — flag, don't file.
-
-### 1.4 The frozen past season (Chunk F) — built + reviewed, uncommitted
-*Open any season you coached, read-only, exactly as you could see it then.*
-Archived plan: `archive/COACH_PORTAL_CHUNK_F_FROZEN_SEASON_PLAN.md`. *(No owner checklist in the doc — sketch below.)*
-**The one rule: switch seasons with the IN-APP switcher, then go TWO screens deep — the worst bug
-this chunk ever had was invisible to fresh-page-load testing.**
-- [ ] Rolled-forward team (live 2026 + closed 2025): switch to 2025 (sidebar on desktop) and walk
-      roster → schedule → attendance → lineups → money (all five sub-pages) → documents →
-      development → awards → staff → tryout history → insights. Every screen shows 2025 data,
-      zero write controls, "2025 · Complete" chip present.
-- [ ] Assistant whose money access DIFFERS between seasons: past season shows what they had THEN.
-- [ ] Staff on a past season: capability controls read-only; "Remove access" still works and is
-      refused-by-server for the removed person immediately; the one explanatory sentence reads
-      right (open micro-item D-F4 — approve or reword).
-- [ ] Phone: season switcher lives in the More sheet; the chip doubles as the exit (open
-      micro-item D-F3 — does the chip feel tappable enough?).
-
-### 1.5 Player documents & guardian PII gating — built, uncommitted · ⚠ plan header stale, DB half dev-only
+### 1.5 🖥 Player documents & guardian PII gating — **LIVE ON PRODUCTION**
 *A signed medical form now needs BOTH Documents and Contacts access — an assistant with Documents
 alone no longer sees any child's signed forms.* Plan stays ACTIVE (its migration is applied on dev
-only and must reach prod with the release): `active/COACH_PLAYER_DOCUMENTS_PII_PLAN.md`. *(No owner
+to prod on 2026-08-03 along with the code): `active/COACH_PLAYER_DOCUMENTS_PII_PLAN.md`. *(No owner
 checklist in the doc — sketch below.)*
-- [ ] Assistant with Documents but NOT Contacts: no per-player documents section anywhere; team
+> 🤖 **Machine pass 2026-08-04** — `tests/uat/scenarios/coach-record-access-boundary.spec.ts`.
+> Six probes on a seeded assistant holding Documents but not Contacts.
+
+- [x] 🤖 Assistant with Documents but NOT Contacts: no per-player documents section anywhere; team
       TEMPLATES still visible.
+      *Cleared: the per-player documents route refuses (403) on both read AND write, the player page
+      renders the player with no Documents heading at all, and the team-templates route still
+      returns 200. The refusal was checked to carry neither the file name nor the guardian address.*
 - [ ] Grant the same assistant Contacts too: player documents appear and download.
+      *🤖 Half cleared — with Contacts added the same route returns 200 and lists the seeded form, so
+      the 403 above is a real gate rather than an empty shelf. **The DOWNLOAD is still yours:** it
+      goes through a signed storage URL the pilot did not exercise.*
 - [ ] Head coach + org admin: no change anywhere.
+      *🤖 Half cleared — the head coach reads the document normally. **The org admin is still yours.***
 - [ ] Turning ON Tryouts or Internal-notes access now asks for confirmation first.
+      *Yours — a confirmation dialog is a judgement about wording, not a boundary.*
 
-### 1.6 Findability, desktop half (Chunk B) — built, uncommitted · ⚠ plan header stale (says "planned")
-Code-verified built. Archived plan: `archive/COACH_PORTAL_CHUNK_B_FINDABILITY_PLAN.md`.
-- [ ] Sidebar reads **"Email families"** (not "Announcements") and it's obvious which door reaches
-      parents vs. staff (Chat).
-- [ ] Attendance, Chat, Settings — and on a closed season, Season's End + Insights — each carry a
-      "?" opening a guide about THAT screen.
-- [ ] A never-toured cold account's Overview leads with the welcome/tour card; dismiss → gone for
-      good; tour still reachable from Help. (Needs a genuinely fresh account — dismissal is
-      permanent.)
-
-### 1.6b Families follow the team (Chunk D Slices 0–2) — built + reviewed, **COMMITTED** `71b42636`
+### 1.6b 🖥📱 Families follow the team (Chunk D Slices 0–2) — **LIVE ON PRODUCTION**
 *One link a coach shares; grandparents follow the schedule; nobody sees a child.*
 Plan: `COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` §9 (build record + the six deviations).
-⚠ **Migrations 214–217 are DEV-ONLY.** ⚠ **The guardian tier — a parent connected to their own
+~~⚠ Migrations 214–217 are DEV-ONLY.~~ **Applied to prod 2026-08-03.** ⚠ **The guardian tier — a parent connected to their own
 child — is BUILT AND SWITCHED OFF pending counsel.** Everything in this section is the FOLLOWER
 tier plus the substrate, which carry no child data and are not gated. Guardian steps are in §1.6c
 and can only be run once the switch is on.
 *(These slices were built in an earlier session; steps below were written against the shipped code,
 not the plan headers.)*
+
+> 🤖 **Machine pass 2026-08-04** — `tests/uat/scenarios/family-access-boundary.spec.ts` (20 probes,
+> all green on a warm server).
+>
+> ⚠ **Three of this suite's probes had never actually run an assertion.** The stranger checks — a
+> guessed join token, an anonymous team payload, and the link reset — called `fetch` from a page
+> that had deliberately never navigated (being signed out is their whole point), so they threw
+> `Failed to parse URL` and errored out before asserting anything. **The most exposed surface in
+> the chunk was the one with no working probe.** Fixed in the pilot; all three now run and pass.
+>
+> ⚠ A fourth was a **false alarm**: it asserted the follower payload does not contain the string
+> `"guardian"`, and Slice 2 later added a `guardian: null` FIELD. It was failing on a key name while
+> nothing had leaked. Rewritten to assert the payload's shape instead of grepping it.
 
 **Coach side — sharing and gatekeeping**
 - [ ] Premium team → **Roster** (List view, not Depth chart): a **Team family access** card. Note
@@ -193,7 +198,7 @@ not the plan headers.)*
       shows a quiet **waiting** count. Nothing should chase you by email or push.
 - [ ] **Approve** → the follower sees the team. **Decline** someone → they can ask again (declining
       is not a permanent ban). **Manage → Remove** a follower → access ends immediately.
-- [ ] **Reset link** → the OLD link stops working everywhere, and everyone already approved keeps
+- [x] 🤖 **Reset link** → the OLD link stops working everywhere, and everyone already approved keeps
       their access. This is the "it got forwarded further than I meant" control.
 
 **The visibility setting — enforced on the server, not by hiding buttons**
@@ -202,20 +207,28 @@ not the plan headers.)*
       calendar a family already subscribed to. **Staff only must remove the DATA, not just the
       link** — a family sees a quiet "not available right now", never an error, and their
       connection stays intact.
+      *🤖 **Three of the four surfaces cleared:** flipping to Staff only leaves the follower a 200
+      with `state: hidden` and no opponent name (a quiet state, not an error, connection intact),
+      404s the shared game page, and the public team page carries the schedule ONLY at `public_link`.
+      **The fourth — the already-subscribed calendar — is NOT covered**, see the step below.*
 - [ ] Sharpest check: subscribe a calendar at **Families**, then flip to **Staff only**. The
       calendar must stop updating. A minted link that keeps serving after you close the door is
       the bug this setting exists to prevent.
+      *⚠ **NOT machine-covered, and it is the sharpest step in the section.** The suite proves a
+      revoked follower cannot MINT a calendar token and that a guessed one 404s — but nothing
+      asserts that an ALREADY-MINTED feed stops serving when visibility closes. That is the exact
+      shape of bug this setting exists to prevent, and it currently has no probe. Worth a spec.*
 
 **Family side — what a follower actually gets**
 - [ ] The team view is **one chronological list, no sections**, opened scrolled to the next event.
       Finished games carry scores; upcoming ones carry time and place. Practices sit inline.
-- [ ] **Nothing about any child anywhere** — no roster, no names, no attendance, no fees. This is
+- [x] 🤖 **Nothing about any child anywhere** — no roster, no names, no attendance, no fees. This is
       the standing invariant of the whole chunk; if you see a child's name on a follower surface,
       stop and tell me.
 - [ ] The team appears in **Following**, so a family reaches it where they already look.
 - [ ] **Subscribe** the calendar into a real phone calendar; move a game in the portal and confirm
       it updates.
-- [ ] Coach shares ONE game (**Share game link** on the event) → that page opens with **no account,
+- [x] 🤖 Coach shares ONE game (**Share game link** on the event) → that page opens with **no account,
       on a second device**. A game you did NOT share must not have a page. Sharing is per-game and
       deliberate — never a standing feed of where children will be.
 - [ ] Move a game, cancel one, **un-cancel** it, and post a final score → the follower is told each
@@ -236,14 +249,57 @@ forged forwarding header (platform-wide, pre-existing); the four older no-login 
 retro-fitted with rate limiting; a phone that had the app open before this shipped may cache the
 new family route once before updating.
 
-### 1.6c The guardian tier (Chunk D Slice 2) — ⛔ CANNOT BE QA'd UNTIL THE SWITCH IS ON
+### 1.6c ⛔ The guardian tier (Chunk D Slice 2) — SHIPPED, SWITCHED OFF, AND VERIFIED OFF · the walk-through stays blocked
 *A parent connected to their own child — built, shipped OFF, waiting on counsel sign-off.*
-**Do not attempt these until sign-off is recorded and the switch is turned on.** Until then the
+
+> ## 🤖 PILOT FINDING — resolved 2026-08-04. ✅ Production is clean.
+>
+> **Owner confirmed 2026-08-04: the production environment variable is ABSENT**, and the code
+> defaults the tier to off when it is unset. **The guardian tier has never been on for customers.**
+> No incident, nothing to disclose, no counsel exposure.
+>
+> **What was real:** this DEVELOPMENT machine had the tier switched **on**, so the refusal behaviour
+> the two steps below ask you to verify did not exist here. ✅ **Turned off and the dev server
+> restarted 2026-08-04**, with a note beside the setting explaining why it stays off. Dev and
+> production now agree, and this section is testable as written again.
+>
+> **⚠ The lesson worth keeping, because it will recur.** Four probes exist for the sole purpose of
+> proving this switch holds, and they **self-skipped when the switch was on**. In the run summary
+> they appeared only as "4 skipped" — no failure, no warning, no colour. A skipped guard reads
+> exactly like a guard that passed. The gap was found by reading *why* a number was 4, not by any
+> check going red. **A guard that disables itself in the state it guards against is not a guard.**
+>
+> ✅ **Fixed 2026-08-04:** those four now **fail loudly** and name the misconfiguration instead of
+> skipping. When the tier is legitimately turned on after sign-off, that block gets deleted as a
+> deliberate decision rather than quietly stopping.
+>
+> ⚠ **And the skip was hiding a probe that was broken anyway.** Once it started running, the fourth
+> guard turned out to have never worked — the same latent fault found in the family suite. It runs
+> now. **Two layers of silence over the same gap**, worth remembering the next time a suite reports
+> a skip.
+>
+> **Tier 1 now runs 72 probes with nothing skipped and nothing failing** (it was 68 passing and 4
+> silently skipped before this).
+
+**⬜ STANDING PRE-RELEASE CHECK — re-answer this every release, it is not a settled fact:**
+- [x] **Is the guardian tier switched off in PRODUCTION?** The setting must be **absent** from the
+      production environment (the code defaults to off when unset). *Answered 2026-08-04: absent. ✅*
+      ⚠ **This has to be re-asked, not remembered.** Someone can set that variable in a month and
+      nothing in the app will announce it — the automated guards only see this machine. Until a
+      counsel sign-off is recorded, a  here means a consent flow covering a child's
+      information is live, which is an incident rather than a QA finding.
+
+**Do not attempt the rest until sign-off is recorded and the switch is turned on.** Until then the
 correct behaviour is refusal, which is the only thing worth checking now:
-- [ ] Open the family link and choose the **parent/guardian** option: you get an honest "not open
+- [x] 🤖 Open the family link and choose the **parent/guardian** option: you get an honest "not open
       yet" hold state that points you at the follower path — **not** a hidden option, and **not** an
       accepted request parked somewhere.
-- [ ] No guardians card appears on any player page.
+      *Cleared: the join page reports the tier as off (so the browser is never the thing deciding),
+      a well-formed guardian request with every consent ticked is still refused, and it **writes
+      nothing** — the refusal is the gate, not validation happening to reject it. A coach invite
+      also cannot be claimed while off.*
+- [x] 🤖 No guardians card appears on any player page.
+      *Cleared at the source: the coach-side guardian routes do not exist while the tier is off.*
 
 **When the switch IS turned on, this is the walk:**
 - [ ] Parent requests as a guardian, typing their child's **full name** + consents + age band →
@@ -261,17 +317,17 @@ correct behaviour is refusal, which is the only thing worth checking now:
       waiting. *(This was the blocking follow-up; fixed 2026-08-01.)*
 - [ ] An **unclaimed invite cannot be approved** — it reads "waiting for them to accept" with a
       cancel. Approving one used to mint a guardian with no account and permanently consume a seat.
-- [ ] **THE STANDING BOUNDARY — run this every release:** an approved **follower** requesting any
+- [x] 🤖 **THE STANDING BOUNDARY — run this every release:** an approved **follower** requesting any
       guardian payload (the player band, the announcements archive, a season recap) must fail
       closed. And a guardian of one child must reach nothing about another.
 - [ ] Guardian sees: their child's band, the announcements archive, and — once the season closes —
       the season recap (§1.7).
 
-### 1.7 The coach byproducts (Chunk D Slice 3) — built + reviewed + docs, **COMMITTED** `71b42636`
+### 1.7 🖥 The coach byproducts (Chunk D Slice 3) — **LIVE ON PRODUCTION**
 *Four things your coaching work now produces on its own: an after-game email already written, a
 season recap per player, printable certificates, and two "is anyone using this?" counts.*
 Plan: `COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` §9.4 (build record + deviations).
-⚠ **Migration 219 is DEV-ONLY.** ⚠ The family-delivered half (the recap a parent reads, the
+~~⚠ Migration 219 is DEV-ONLY.~~ **Applied to prod 2026-08-03.** ⚠ The family-delivered half (the recap a parent reads, the
 keepsake) is **dark until the guardian switch flips after counsel** — everything below is the
 coach-side half and works today.
 
@@ -315,11 +371,519 @@ coach-side half and works today.
   seasons, so a rolled-over team includes last season's guardians; and family-adoption counts have
   no row cap for a very large club (matches the existing sibling behaviour).
 
-### 1.8 The drill library (Practice Plans Phase 2) — built + simplified + reviewed + docs + probed, uncommitted
+### 1.9b 🖥📱 Helpers — the parent who runs a station (Practice Plans Phase 4) — **LIVE ON PRODUCTION**
+
+> **Mockups you approved:** `claude.ai/code/artifact/ebf2b469-88d7-4b09-b1e8-151c3e7d4773` (10 frames).
+> **Where:** Team → **Staff** (the invite) · and a second sign-in as the helper.
+> **No migration.** Nothing to apply. ⚠ 22/22 layout probes green at 361 / 390 / desktop; 1165 unit tests green.
+
+**The point of it:** you can hand a parent the station they're running, on their own phone, without
+printing a sheet with ten children's names on it that then goes home in someone's pocket.
+
+**⚠ THIS ONE NEEDS A SECOND ACCOUNT.** The helper's own screens can only be judged by signing in as
+one — invite an address you control, accept it, and look at the portal through their eyes. **The
+probes could not cover any of this** (the test harness has one coach, and he's a head coach), so
+what you see is the only verification these screens will get.
+
+**The coach's side**
+
+- [ ] **The choice comes first.** Open **Staff**. Before the email box there's *"Who are you
+      inviting?"* with **Helper** and **Assistant coach**. Helper is preselected — that's deliberate,
+      it's the smaller grant. Tell me if that default feels wrong.
+- [ ] **Read the card underneath, as if you didn't build this.** It says what a helper *gets* and
+      what they *never* get, in sentences. **Does it tell you enough to hand a stranger this access
+      without worrying?** That is the entire job of that card — if it doesn't, say so.
+- [ ] **The chat line.** One item on that card is marked differently: *"Your staff chat — helpers are
+      never in it."* Until now, everyone on your staff list was in that room automatically. Check the
+      line actually lands — it's the one thing you'd otherwise assume wrong.
+- [ ] Switch to **Assistant coach** and the card changes to what an assistant gets, and the email
+      label changes with it.
+- [ ] **On your phone at 361/390.** The two options stack, both descriptions are readable, and
+      nothing scrolls sideways.
+- [ ] **A helper in the list has no permission grid.** Not a greyed-out one — none. That's on
+      purpose: they hold none of those switches. **Make assistant coach** widens them in one tap with
+      no re-invitation. Confirm removing one still reads clearly.
+- [ ] **⚠ Your existing assistants are untouched.** Open an assistant's card: **Schedule** is now two
+      switches (*see* it, and *change* it) and **Staff chat** is a switch too — **all of them still
+      on**. Nothing should have been taken away from anyone. If any assistant lost anything, stop and
+      tell me.
+
+**The helper's side — sign in as them**
+
+- [ ] **They land on the practice, not a dashboard.** One button: **Open my station**. Count how many
+      taps it takes them to see their group. It should be one.
+- [ ] **What's in the sidebar.** Should be the schedule and essentially nothing else. **No roster, no
+      Development, no Insights, no Chat, no Settings, no Money.** If you can see a door they can't
+      use, that's a bug — tell me which one.
+- [ ] **Inside their station:** their group by name and number, what they're doing, what they're
+      watching for, the coaching points. **No focus areas, no notes about any child.**
+- [ ] **⚠ No Rotate now / Next block.** Instead a line naming you: *"<your name> moves everyone on."*
+      Judge whether that reads as helpful or as a limitation being explained at them.
+- [ ] **A day with no practice** — they should see when the next one is, with a real date and place.
+- [ ] **A practice with no plan written yet** — they're told so, and told there's nothing to do. Make
+      sure it doesn't look broken.
+- [x] 🤖 **Try to get somewhere they shouldn't.** Paste a roster or Development URL into their browser.
+      It must refuse, not show a blank page with the data underneath.
+      *Cleared on six surfaces — roster, one player, the development board, the season review,
+      attendance, and past practice plans. Each refuses, AND each refusal body was checked to carry
+      neither the child's name nor the guardian address. This is the first time a real helper
+      account has been probed; the existing helper spec covers only the head coach's side of it.*
+
+### 1.9c 🖥 A1 — the roster switch is gone (2026-08-03) — **UNCOMMITTED — the only Tier 1 item NOT live**
+
+> **Mockups you approved:** `claude.ai/code/artifact/1f7c75ac-b7bc-42c7-b4bf-69fe71a70a5a`
+> **Where:** Team → **Staff** (the duty grid) · the Roster and Insights pages · a second sign-in as a helper.
+> **No migration. No new switch.** typecheck ✓ · 1174/1174 unit tests ✓ · 0 lint errors · all guardrails green.
+
+**The point of it:** the "Roster: Hidden" switch was a promise the product couldn't keep — four
+screens obeyed it and four ignored it. It's gone, names are visible to your whole staff, and the
+switch that actually protects something (Contacts & birthdates) is untouched.
+
+**The head coach's side**
+
+- [ ] **Open Staff and look at an assistant's card.** The **Roster Hidden/View** control is gone.
+      In its place, under the Everyday coaching switches, there's a line: *"Players' names and
+      numbers are visible to everyone on your staff. Their contact details and birthdates are not —
+      that's below."* ⚠ **Tell me if that sentence earns its place or reads as clutter** — it exists
+      so you don't go hunting for a switch that no longer exists.
+- [ ] **Check Contacts & birthdates still behaves exactly as it did.** Grant it, confirm the prompt
+      still warns you properly, revoke it. **This is the one way this change could have quietly
+      weakened something real** — it's the standing item you flagged when you ruled A1.
+- [ ] **A helper's card still says "Helper."** Not "Assistant." That word is worked out from their
+      switches, and the retired one was part of the sum — if it says Assistant, the fix didn't take.
+
+**The assistant's side (second account, or promote a test helper)**
+
+- [x] 🤖 **Grant an assistant team money and nothing else.** Open the dues page as them. **Names should
+      appear beside the amounts** — that's the case that prompted your ruling. Previously they'd
+      have seen "Player #12" and had to phone you.
+      *Cleared **at the source, not on the page**: a money-only assistant's roster payload — which is
+      where the dues screen gets its names — carries the player's first and last name, and does NOT
+      carry the guardian address. The rendered dues screen itself is still worth your glance.*
+- [x] 🤖 **An ordinary assistant can still open past practice plans.** Development → the practices
+      list → open one from a finished season. ⚠ **This is the one place this change could have
+      NARROWED** rather than widened — assistants reached it through the retired switch.
+      *Cleared: an assistant on the plain defaults (`notes: false`) still gets 200 on a past
+      season's plan, and a helper still gets 403 on the same URL.*
+
+> 🤖 **Machine pass 2026-08-04** — `tests/uat/scenarios/coach-record-access-boundary.spec.ts`.
+> ⚠ **This is the only Tier 1 section that is not yet live**, so unlike everywhere else in this tier
+> the machine pass here is a real gate rather than damage-finding. Both A1 risks were probed and
+> neither fired: the contacts gate still withholds (a money-only assistant gets names and **not** the
+> guardian address), and past practice plans did **not** narrow (an ordinary assistant still opens
+> them, a helper still cannot). A row still carrying the retired pre-A1 `roster`/`planPlayerNames`
+> keys was also probed — it neither opens nor holds a door, which is what "no migration needed" has
+> to mean in practice.
+
+**The helper's side (second account — same one as 1.9b)**
+
+- [ ] **Their menu is unchanged:** the schedule and their practice plan. **No Roster, no Attendance,
+      no Development, no Insights.** If any of those appeared, the section gate didn't hold.
+- [x] 🤖 **Names still show on their practice plan** — that must not have regressed.
+      *Cleared: a helper's own live practice-plan payload carries the player's name and NOT the
+      guardian address — the whole shape of A1 in one response.*
+- [x] 🤖 **Close the season and sign in as them.** They should meet *"This season has finished"* —
+      **not** the team's season review with the share button on it. ⚠ **This is the regression this
+      work exists to prevent**; it's the door you closed in the same sitting you ruled A1.
+- [ ] **Try to reach the season review the other five ways**, as the helper: sign in at the portal
+      root (it used to redirect you straight into it), the archive menu, both team pickers, and by
+      typing the address. **Every one should land on "This season has finished."** Phase 4 only
+      closed the sixth — the one nobody walks through.
+
+**Your own side of the removal fix**
+
+- [ ] **Remove a helper or assistant from a live season.** The confirmation should read *"loses
+      access to this team immediately."* — unchanged when they're only staff.
+- [ ] ⚠ **Now the case that was broken.** Add the same email address as a **family follower** on the
+      Roster page, then remove that person from **Staff**. The confirmation should now say their
+      coaching access ends, **and** that they still follow the team as a family member and will keep
+      seeing your schedule and results, and point you at where to end that too. Their staff card
+      should also carry a quiet *"Also connected to this team as a family member"* line. ⚠ **It's a
+      note, not a button** — the two records stay separate on purpose, so there's deliberately
+      nothing to click.
+- [ ] ⚠ **The one thing with no automated cover.** That family note is the only piece of this work
+      no test exercises (it needs real database rows, which the unit suite can't make). Worth two
+      extra minutes: confirm it does **not** appear for someone whose follow request is still
+      **waiting for your approval** — the first version of this got that wrong and would have told
+      you they keep seeing your schedule when they can't see anything yet.
+- [ ] **Open a finished season's Staff list.** The family note should be **absent** there — it
+      describes today, and a past season should only ever show you what was true at the time.
+
+---
+
+### 1.11 🖥📱 Tryout Insights — report · development baseline · candidate memory — **LIVE ON PRODUCTION**
+
+> **Mockups you approved (binding):** https://claude.ai/code/artifact/3b8bf1f9-c1c5-407c-9fa6-376a5bf8fee2
+> **Where:** Coaches → **Tryouts** → the **Decide** and **Build team** tabs, plus any player's
+> Development page.
+> ~~⚠ Migration 223 is applied to DEV only.~~ **Applied to prod 2026-08-03 with 211–224; zero drift.**
+> ⚠ **No rendered-layout check was run** (it needs a live dev server), so the memory strip's
+> appearance — **especially the phone stack** — has had no automated eyes on it at all. Judge it hard.
+> ⚠ **Needs a tryout with at least one PRIOR season of tryout data** to exercise the memory half.
+> A first-season team correctly shows none of it — which is right, but tests nothing.
+
+**The point of it:** the tryout stops being a one-day tool. It leaves behind a document you can hand
+your board, a starting point for every new player's season, and — at the moment you're deciding —
+what this kid looked like the last time they stood in front of you.
+
+> 🤖 **Machine pass 2026-08-04** — `tests/uat/scenarios/tryout-blindfold-boundary.spec.ts` (17 probes).
+> Every absence check is paired with its opposite: the same probe is run with the blindfold OFF and
+> must then carry what it withheld. Without that pairing all of these would pass against a route
+> that simply returns nothing.
+
+**Phase 1 · the report** (Build team tab)
+- [ ] **The funnel tells the truth about drop-off.** Registered → Attended → Evaluated → Offers
+      extended → Accepted → On roster, with honest captions ("3 never checked in", "1 declined").
+      Check each number against what you know actually happened.
+- [ ] **⚠ "Offers extended" vs the Decide tab's "offered" — these are ALLOWED to differ**, and I
+      relabelled the report row so they stop looking like the same number arguing with itself. The
+      report counts every offer you **ever** made; the Decide tally counts who is offered **right
+      now**. Offer someone, then change your mind, and the report should still count that offer.
+      *(Frame 01 said just "Offered" — this is a deliberate deviation. Tell me if it reads wrong.)*
+- [ ] **The fairness receipt states only what's true.** Run a tryout with **no blind mode** and
+      confirm the blind line is **absent** rather than reworded. Never scored anyone? The whole
+      receipt block should be gone, not empty.
+- [ ] **Board summary (PDF)** — totals and roster names only. Confirm there is **no child's score and
+      no cut decision anywhere in it**; this is the one you'd hand a parent.
+- [x] 🤖 **Full detail (PDF/Excel)** sits behind a confirmation that names the consequence. While names
+      are still hidden it must be **unavailable** — not merely warned about.
+
+**Phase 2 · development baseline** (Build team tab, below the report)
+- [ ] **Seed one.** After accepting anyone, **Start development from tryouts → Begin**. Walk two or
+      three players.
+- [ ] **⚠ "Don't add" must write NOTHING.** Answer it for every suggestion on one player, finish, then
+      open that player's development page and confirm **no focus area was created**. This is the whole
+      promise of the step.
+- [ ] **A player nobody scored** should say so plainly and let you set focus by hand — never block.
+- [ ] **Re-run the walkthrough.** Already-seeded players should be marked done and skipped. Then edit
+      your scorecard and confirm an existing baseline is **not** rewritten.
+- [ ] **On the player's development page**, the snapshot is visually **apart** from measurables
+      (dashed edge) and says it's coach-eyes-only. Confirm it does **not** join any trend line.
+
+**Phase 3 · candidate memory** (Decide tab)
+- [ ] **⚠ THE FLOW THAT WAS BROKEN — test this first.** With names still hidden, open Decide (bibs
+      only, no history — correct). Go to **Set up → Reveal names**. Come back to **Decide
+      WITHOUT refreshing the browser**. Names must appear and the strips must load. *(This failed
+      until review caught it — a mount-once load meant you'd have concluded the feature didn't work.)*
+- [ ] **Confirm a returning player, still without refreshing.** Tap **Possible returning player —
+      verify**, confirm the match, and the memory strip must appear **immediately** on that row.
+- [ ] **The comparable case:** both years on the same scale → last season's score, this season's, and
+      a **▲ +0.7**-style change between them. **Compare categories** opens it skill by skill.
+- [ ] **⚠ The incomparable case — the honesty test.** Two seasons on **different scales** (1–10 then
+      1–5) must show **both cards and NO arithmetic**, with a line naming the two scorecards. If you
+      ever see a delta across mismatched scales, that's the defect.
+- [ ] **An unverified match shows NO scores.** A "Possible returning player" you haven't confirmed
+      gets the verify button and nothing else.
+- [x] 🤖 **⚠ THE BLINDFOLD — check the absence.** While blind evaluation is on, confirm there is **no
+      prior-season anything** on the **field scorer**, the **live scoreboard**, or **check-in**.
+      Check-in's existing "tried out in {season}" marker is identity only and unchanged — that one
+      stays. A bib number must be just a bib number.
+- [ ] **The report's group line** (Build tab, under Turnout): with **3+** verified returning
+      candidates comparable on one scale, it states how the group moved. With **1 or 2**, it must be
+      **absent entirely** — silence, not a hedged sentence.
+- [ ] **📱 Phone (390 and ~360).** The two seasons should **stack** with the change between them, and
+      the decision buttons stay full-width and reachable. **Nothing automated has looked at this.**
+- [x] 🤖 **As an assistant coach without tryouts access:** no tryout surface at all, as today.
+      *Cleared across six tryout routes — memory, scoreboard, candidates, report, overview and
+      decisions — using an assistant who holds money, contacts, notes and documents but NOT tryouts,
+      so the grant is provably the thing gating candidate PII rather than seniority in general.*
+- [ ] Read the guide: **Help → How to run tryout day**, and the new FAQ *"Can I see how a returning
+      player did at last year's tryout?"*
+
+---
+
+### 1.12 🖥📱 Opponent Scouting Book — Phase 1 — **COMMITTED dev `72034c15`** · ⚠ mig 225 DEV-ONLY
+*Log a one-line observation right after the score; it files itself under that opponent; the book resurfaces on the schedule the week you meet them again.*
+
+Where: **Insights → "Who are we up against?"** tile, and any game's drawer → **Scouting** tab.
+Test on a team with games against a repeated opponent (toronto blue jays5 has the [qa] fixture
+season; or name the same opponent on two games and score them).
+
+- [ ] **The tile.** Insights shows a seventh tile, "Who are we up against?" — count of opponents on
+      file and how many are "in the book". With zero games it reads its honest sparse line instead.
+- [ ] **The list.** Every opponent you've ever named on a game, newest meeting first, all-time
+      record chip (green when winning, red when losing). The amber dot appears only where
+      something is written. Search filters as you type.
+- [ ] **The card.** Record + {runs} for/against + streak; every meeting season by season with
+      scores and W/L/T; a scrimmage wears an EXH badge and is **excluded from the record chip**
+      (the record must equal Season Wrapped's counting for the same games).
+- [ ] **The book line** (head coach, or an assistant granted notes): type a sentence, tap away —
+      "Saved ✓" pill; reload the page and it's there with its "updated {date}" stamp. An
+      assistant WITHOUT notes sees it read-only and gets no editor.
+- [ ] **Log an observation** from the card: one line + optional tag chip → it appears under
+      "General" with your name when more than one person has written. **As a Helper** (schedule
+      only): you can still log — attributed — but see no book-line editor.
+- [ ] **The eraser.** As head coach, hover an observation → ✕ removes it (anyone's). As an
+      assistant/helper, ✕ appears only on your own.
+- [ ] **The capture door.** Open a game vs a booked opponent, enter/save the final score → beside
+      the saved scoreline a quiet link: "Add to the book on {opponent} ›". Tap → the Scouting tab
+      opens; log from there and the observation lands **nested under that game** on the card.
+      It must be a link, never a popup.
+- [ ] **Scouting tab on any named-opponent game:** record chip + last meeting + book line + the
+      two freshest observations + "Everything we know ›". A game with a blank/TBD opponent shows
+      **no Scouting tab and no chip** — never a dead end.
+- [ ] **Record chip on schedule rows:** upcoming games vs a known opponent wear your record
+      (`2–1`) in the row; it disappears once a score is entered (the slot belongs to the score).
+- [ ] **📱 Phone (390):** card is single-column, tag chips wrap, the save button goes full-width,
+      the drawer tab row scrolls if tight.
+- [ ] **Archive absence (the ruling):** open a **completed past season** — no Opponents tile, no
+      Scouting tab, no scouting anywhere. The book serves only the live season.
+- [ ] **Numbers-not-names microcopy** is present under both capture inputs ("jersey number or
+      position, never by name").
+- [ ] Read the guide: **Help → The opponent book** (Premium group) — and search the help hub for
+      "scouting" and "opponent" (both should land on it). The platform-admin help mirror carries
+      the same section automatically.
+- [x] 🤖 `/simplify` (12 fixes) + `/review` funnel (high-risk tier, 4 lenses, 13 confirmed
+      findings fixed incl. stale "last met", wrapped-rule fetch gap, alias-proofing, archive
+      chip leak; 1 Critical refuted as another session's work) — all green after: typecheck,
+      1,197 unit tests, verify:changed. Rendered layout check NOT run (no dev server) — worth
+      one visual glance during this QA.
+
+---
+
+### 1.13 🖥📱 Opponent Scouting Book — Phase 2 — **COMMITTED dev `d87fb31b`** · ⚠ mig 225 DEV-ONLY
+*Merge two spellings into one opponent; the card writes its own scouting lines from your results
+and lineups; one tap briefs the staff room; the masthead nags once in game week.*
+
+Where: an opponent's card (Insights → Who are we up against? → row), any game's drawer →
+**Scouting** tab, and the team masthead in game week. Best tested on a team with the same
+opponent under two spellings (name one game "Oakville Thunder", another "Thunder 12U") and 3+
+scored games against one of them.
+
+- [ ] **"Same team as…" (merge).** On a card as head coach (or notes-granted assistant): an
+      **Identity** section at the foot with a quiet *Same team as…* control. Open it → the picker
+      lists the OTHER book entries with their record chips. Pick one → a confirm panel states
+      both records **and the unified record** before anything happens. Merge → one card: records
+      combined, the other entry's observations now nested under its games here, its book line
+      appended **labelled** (e.g. `[Thunder 12U] …`), and "also answers to '{spelling}'" listed.
+- [ ] **Aliases hold everywhere.** After the merge: the list shows ONE row; the schedule's
+      record chip appears on upcoming games under **either** spelling; either spelling's game
+      opens a Scouting tab showing the unified card.
+- [ ] **Un-merge.** The ✕ beside "also answers to…" splits them again on reload — the old
+      spelling regroups as its own (empty-book) entry; observations logged while merged **stay
+      with the merged card** (deliberate — un-merging doesn't guess which team a note meant).
+- [ ] **An assistant WITHOUT notes** sees no Identity section at all.
+- [ ] **"The numbers vs them"** (card, between the stat tiles and the book line): with **3+**
+      counted meetings — home/away split (only when you've played both), this-season vs
+      all-time (only when older seasons exist), averages, "all N decided by 2 or fewer" (only
+      when literally true), biggest win · worst loss. **Every line wears a "from N games"
+      chip.** With ≤2 meetings the whole block is **absent** — silence, not hedging.
+- [ ] **"What worked"** (needs 2+ saved lineups vs them, pitcher sports): with lineups saved on
+      2 wins and a loss where a different player pitched — "In both wins, {player} started at
+      pitcher; in the loss they didn't" and "N players saw the field in every win". Scrimmage
+      lineups must never feed these lines.
+- [ ] **Share to staff chat** (card and Scouting tab, staff-chat holders only): tap → "Shared ✓";
+      the staff room shows a snapshot **as you** — matchup + record, book line, the numbers,
+      tagged observations (capped with "+N more in the book"). Edit the book line afterwards —
+      the chat message must NOT change. On a team with **no staff room** (Free/Team-plan
+      unentitled) the button is absent on both surfaces.
+- [ ] **Game-week masthead nudge.** With a game vs a booked opponent (≥1 observation) inside
+      the next 7 days: one quiet line under the team masthead — "You play {opponent} {day} —
+      N observations in the book ›" → lands on that game's drawer with the Scouting tab open.
+      ✕ dismisses it **for that game only** (next week's game brings it back); it never appears
+      on an archived season, nor for an opponent with an empty book.
+- [ ] **Drawer tag filters.** On a game whose opponent has tagged observations: chip row
+      (All + only tags in use) above the observations; picking a tag filters the two shown +
+      the "+N more" count. Absent when nothing is tagged.
+- [ ] **Several in one sitting.** Log an observation in the drawer → "Saved — add another?"
+      appears, the input clears and keeps focus; log two more → "3 saved this sitting".
+- [ ] **📱 Phone (390):** numbers lines stack with their chips beneath; merge picker rows and
+      confirm panel stay tappable; the masthead nudge stays one readable line.
+- [ ] **Archive absence (the ruling, again for P2):** a completed season shows no numbers
+      block, no merge control, no share, no nudge — no scouting anywhere.
+- [ ] Read the guide: **Help → The opponent book** — the duplicate-spelling FAQ now teaches
+      the merge (no more "coming in a follow-up phase"), and a new FAQ explains why the
+      numbers block can be absent. Search the hub for "merge", "numbers vs them", and
+      "share to staff chat" (all should land on it).
+- [x] 🤖 Unit coverage: merge/un-merge round-trip incl. observation re-pointing, alias-aware
+      chip lookup, insight floors at both boundaries, snapshot formatting + chat-cap
+      truncation, normalizer idempotence, retry-idempotent summary merge. `/simplify`
+      (10 fixes incl. route-shadowing trap removed — merge/aliases now nest under the
+      opponent — masthead kept feature-free, one shared tag-filter + confirm-card pattern)
+      then `/review` (high-risk funnel, 5 lenses, 13→6 confirmed findings fixed: merge
+      retry double-append, non-idempotent key normalization, concurrent-merge guard,
+      double-tap guards, late-error + stale-response guards; residual: a milliseconds-wide
+      opposite-direction merge race would need an atomic DB function = migration — owner
+      call if wanted). All green after: typecheck, 1,234 unit tests, verify:changed.
+      Rendered layout check NOT run — worth one visual glance during this QA.
+
+---
+
+### 1.14 🖥📱 Opponent Scouting Book — Phase 3 — **COMMITTED dev `d87fb31b`** · ⚠ mig 225 DEV-ONLY
+*The book fills itself: a mirrored tournament game's Scouting tab shows the opponent's other
+results this weekend, assembled from the tournament we host; and the week you build practice,
+Saturday's book meets Tuesday's plan.*
+
+Where: a **mirrored tournament game's** drawer → **Scouting** tab (the tournament must run on
+FieldLogicHQ), and the **practice-plan screen** in a week with a booked game. The Game-Day
+handoff slice was **deliberately skipped** — Game-Day Mode is still unbuilt; both plans list it
+as the integration point when it ships. Best tested with a team registered in an ACTIVE platform
+tournament (published division) whose opponent has 2+ scored games that weekend.
+
+- [ ] **"Their tournament so far"** (mirrored game only): open the game's Scouting tab → a
+      dashed block between the book line and the observations — the opponent's OTHER results
+      in **this tournament** (W/L letter + score + who + time), their standing ("2nd in
+      Pool B" when pools exist, "in their division" otherwise), runs for/against, and a
+      provenance line naming the tournament ("…refreshed each time you open this").
+- [ ] **The game against YOU is not in the list** — it says "their OTHER results", and means it.
+- [ ] **Refreshed on read.** As the organizer, enter a score for another of the opponent's
+      games → reopen the drawer tab → the new result is there. No caching, no capture.
+- [ ] **Same tournament only (the scope ruling).** The block never shows results from any
+      OTHER tournament, however many this opponent has played on the platform.
+- [ ] **Absent, not apologized for:** a league game or a hand-entered external-tournament game
+      shows the Scouting tab exactly as before — no block, no placeholder, no excuse line.
+      Same for a first game of the weekend (opponent has no results yet).
+- [ ] **Public data only:** team names, scores, standing — no opposing rosters, no player or
+      coach names anywhere in the block. (The payload's key set is pinned by a unit test.)
+- [ ] **Practice-week bridge:** build/open a practice plan dated ≤6 days before a booked game
+      whose opponent has book content → one quiet lime-spined panel above the plan: "You play
+      {opponent} {day} — the book:", the book line in quotes, the freshest observation with
+      its author, and **Full book · N observations ›** → lands on the opponent's card.
+- [ ] **Aliases hold (P2's merge, felt here).** Name the week's game "Thunder 12U" after
+      merging that spelling into "Oakville Thunder" → the panel still appears and its link
+      lands on the merged Oakville Thunder card.
+- [ ] **Absent otherwise:** no booked game in the 6 days after the practice → no panel; the
+      game's opponent has an empty book (no line, no observations) → no panel; a book-line-only
+      book → panel shows the line alone (no observation row); observations-only → the freshest
+      observation without a quote line. Never a pop-up.
+- [ ] **An assistant who can read the plan sees the bridge too** — it rides the same
+      schedule capability as the rest of the practice screen.
+- [ ] **Archive absence (the ruling, again for P3):** a completed season's read-only practice
+      plan shows no bridge panel; an archived season still shows no scouting anywhere,
+      including the intel block.
+- [ ] **Forfeit honesty:** a forfeited game in the intel list wears a small **forfeit** chip,
+      and its (invented) scoreline stays out of the for/against total beneath — the numbers
+      should visibly disagree, and the chip is the explanation.
+- [ ] **📱 Phone (390):** the intel rows stay one line each (opponent name truncates, never
+      wraps the score away); the bridge panel wraps readably above the plan blocks.
+- [ ] Read the guide: **Help → The opponent book** — new paragraphs teach "Their tournament
+      so far" (incl. the honest platform-only constraint) and the practice-week panel, and a
+      new FAQ answers "why don't my other games have it?". Search the hub for "their
+      tournament so far" and "practice plan opponent" (both should land on it).
+- [x] 🤖 Unit coverage: intel presence rules (draft tournament / unpublished division /
+      non-accepted opponent / no results → absent), source-game exclusion, accepted-names-only
+      resolution with placeholder fallback, forfeit counted as a result but excluded from
+      totals + flagged, **per-game published-division check**, pool-scoped standing via the
+      real tie-break engine, **pinned no-names payload key set**, bridge game picker (6-day
+      window boundaries, cancelled/TBD/practice/behind-the-practice exclusions). `/simplify`
+      (6 fixes: shared route-context resolver adopted, duplicate ordinal removed, one-line
+      observation fetch instead of the whole log, parallelized independent lookups, derived
+      type + CSS reuse) then `/review` (high-risk funnel, 5 lenses, 9→4 confirmed findings
+      fixed: the per-game division check above — a game filed under a never-published
+      division could have surfaced after a mid-tournament team move; the forfeit chip;
+      epoch-safe game ordering; a latent stale-intel flash) then `/docs`. All green after:
+      typecheck, 1,266 unit tests, verify:changed. Rendered layout check NOT run — worth one
+      visual glance during this QA.
+
+---
+
+### 1.2 🖥 Budget starter (Chunk G) — **LIVE ON PRODUCTION** · ⚠ review funnel still owed
+*First-season coach answers 5 tap-only questions → seeded budget worksheet; no dollar figure ever comes from us.*
+Plan stays ACTIVE (its /simplify → /review → /docs pass is still owed; QA can proceed — expect a
+possible small follow-up after the funnel). Plan: `active/COACH_PORTAL_CHUNK_G_BUDGET_STARTER_PLAN.md`. *(No owner checklist in the doc — steps below are the sketch.)*
+- [ ] Zero-budget team, write coach: Season Budget Plan shows the first-run card with three doors
+      (Start · See a finished example · Add lines yourself).
+- [ ] Run the 5-question starter: worksheet placeholders are literally "$" — **no numeric hint
+      anywhere**; type some amounts, leave others blank; priced → real lines, unpriced → the
+      "Not in your plan yet" strip; ×N entry-fee helper shows its arithmetic at 2+ tournaments.
+- [ ] Checklist strip chip opens Add Line prefilled with category/item, amount EMPTY.
+- [ ] Sample sheet (all three entry points): clearly fenced fictional team, zero write affordances,
+      both tabs render.
+- [ ] Read-only money assistant: NO starter, NO strip, NO Add Line — sample door only.
+- [ ] Eyeball the five flagged mockup deviations (segmented control, square tick, olive text,
+      conditional ×N helper, arithmetic-in-note) — approve or flag.
+
+### 1.3 🖥 Money by Month (Chunk H) — **LIVE ON PRODUCTION**
+*Spreadsheet-shaped months view + generalized payables page + 3-template import/export.*
+Archived plan: `archive/COACH_PORTAL_CHUNK_H_MONEY_BY_MONTH_PLAN.md`. *(No owner checklist in the doc — sketch below.)*
+- [ ] Months view on a data-rich team: rows/columns/totals sane; four lenses cycle; Difference
+      shows "—" for future months, never a false "under budget".
+- [ ] Cash-flow rows: a shortfall month is called out in plain words.
+- [ ] Second-season team: prior-season column + "last season only" group.
+- [ ] Cell drill-ins open EXISTING forms (never a new editor); read-only assistant gets read panels,
+      no drill-in, no import.
+- [ ] "Expenses & Payables" rename + new Payment schedule tab (Unpaid default / Paid / All).
+- [ ] Import: download a template — **every amount cell empty**; paste rows; editable preview with
+      per-row verdicts; nothing writes until confirmed; zero-row commit reports failure honestly.
+- Notes: month grid deliberately scrolls sideways on phones. The cumulative chart changed on
+  purpose (undated budget no longer smeared across months) — flag, don't file.
+
+### 2.3 📱 Money on a phone (Chunk A) — **LIVE ON PRODUCTION**
+Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
+- [ ] Budget line with period splits: full-width tappable fields; backdrop tap asks "Discard
+      changes?"; "Keep editing" preserves everything.
+- [ ] Budget vs. Actual: sideways-scroll hint; line names pinned; the page itself never scrolls
+      sideways.
+- [ ] Expenses (both tabs), Fundraiser leaderboard + Log Amount, Org Allocations: stacked cards,
+      real full-width inputs; Allocations cross-links to Payment Requests.
+- [ ] Money hub headline numbers agree on "(paid only)".
+- [ ] Read-only assistant: same readable pages, zero write buttons, no blank card rows.
+- [ ] Desktop: Budget vs. Actual uses the window width (no ~960px inner scroll column).
+- [ ] No native browser alert anywhere in Money (a failed delete shows an inline error).
+
+### 2.6a 📱 The family experience on a real phone (Chunk D) — **LIVE ON PRODUCTION**
+*Moved out of §2.6 on 2026-08-03. These four are the only phone passes in the ledger where being
+wrong reaches a child rather than a layout. Wording unchanged.*
+**⚠ A real iPhone. Headless Chromium cannot answer any of these** — two defects in this repo's
+recorded corpus existed only on a notched iPhone and in iOS Safari's touch handling.
+- [ ] **Chunk D 0–2 — do this one as a FAMILY, on a real phone, not as a coach.** The whole
+      follower experience is phone-first and arrives from a group chat: open the family link on a
+      phone, request, get approved, and confirm the schedule opens **scrolled to the next event**
+      without you scrolling. Then subscribe the calendar into the phone's own calendar app.
+- [ ] Chunk D 1: open a **shared game link** on a phone with **no account and no app installed** —
+      the grandparent case this feature exists for.
+- [ ] Chunk D 3: save a score on a phone → **Draft the family email** is reachable and the compose
+      screen opens with the words in it (this is a real game-day-on-the-sideline moment).
+- [ ] Chunk D 3: the recap **preview** on a phone — the stat tiles should stack to one column on a
+      narrow screen rather than squashing to two.
+
+---
+
+# TIER 2 — daily coach actions
+
+The work a coach does every week: Overview, the past season, practice plans, tryout day, the
+first week with a new team. Wrong here is friction and lost trust, not harm.
+
+### 1.1 🖥 Overview says ONE thing (Chunk I) — **LIVE ON PRODUCTION**
+*One priority card, a six-tile board, a quiet tail — replacing nine contradicting bands.*
+Archived plan: `archive/COACH_PORTAL_CHUNK_I_ONE_THING_PLAN.md` (its PM brief's "not started" header is stale — trust the plan).
+- [ ] As head coach, open Overview on four teams: game-today · game-this-week · quiet 3+ weeks ·
+      pre-season. Each shows exactly ONE anchor card, the right shape, six tiles incl. the money
+      pair (Dues + Budget), and "Close out the season" on the quiet team.
+- [ ] As a default assistant (money off): board shows Attendance + Playing time instead of money;
+      quiet team's season-check card has NO button (sentence only).
+- [ ] Assistant with money **read**: money tiles visible, zero money write actions anywhere.
+- [ ] Assistant with lineups off, game-day team: anchor's action falls back to "Take attendance";
+      Playing-time slot falls back to Development.
+- [ ] Assistant with attendance off, game-day team: anchor goes informational (no button);
+      Attendance tile is absent (not greyed).
+- [ ] Assistant with schedule off: "Nothing on your schedule" never appears.
+- [ ] Money coach with NEITHER dues nor budget set up: slots 5–6 collapse into one "Set up your
+      team's money" tile and Attendance fills the gap (not a missing tile).
+- [ ] A finished tournament sits in the tail with a "Finished" chip, never in the anchor slot.
+- Note: two coaches on the same team correctly see DIFFERENT anchors — not a bug.
+
+### 1.4 🖥📱 The frozen past season (Chunk F) — **LIVE ON PRODUCTION**
+*Open any season you coached, read-only, exactly as you could see it then.*
+Archived plan: `archive/COACH_PORTAL_CHUNK_F_FROZEN_SEASON_PLAN.md`. *(No owner checklist in the doc — sketch below.)*
+**The one rule: switch seasons with the IN-APP switcher, then go TWO screens deep — the worst bug
+this chunk ever had was invisible to fresh-page-load testing.**
+- [ ] Rolled-forward team (live 2026 + closed 2025): switch to 2025 (sidebar on desktop) and walk
+      roster → schedule → attendance → lineups → money (all five sub-pages) → documents →
+      development → awards → staff → tryout history → insights. Every screen shows 2025 data,
+      zero write controls, "2025 · Complete" chip present.
+- [ ] Assistant whose money access DIFFERS between seasons: past season shows what they had THEN.
+- [ ] Staff on a past season: capability controls read-only; "Remove access" still works and is
+      refused-by-server for the removed person immediately; the one explanatory sentence reads
+      right (open micro-item D-F4 — approve or reword).
+- [ ] Phone: season switcher lives in the More sheet; the chip doubles as the exit (open
+      micro-item D-F3 — does the chip feel tappable enough?).
+
+### 1.8 🖥📱 The drill library (Practice Plans Phase 2) — **LIVE ON PRODUCTION**
 
 > **Mockups you approved:** `claude.ai/code/artifact/d0f7ea26-c159-49ce-b5ec-6af60bd24173`.
 > **Where:** Development → **Your drills**, plus the picker inside any practice plan.
-> ⚠ **Migration 218 is applied to DEV only.** Prod must have it (and 213) *before* this ships.
+> ~~⚠ Migration 218 is applied to DEV only.~~ **Applied to prod 2026-08-03 (with 213).**
 
 **The point of it:** write a drill once — the setup, what you're watching for, the coaching points —
 and adding it to a practice becomes four taps instead of retyping the same warm-up every Tuesday.
@@ -359,11 +923,11 @@ and adding it to a practice becomes four taps instead of retyping the same warm-
 - [ ] **As an assistant coach** (schedule access, not head coach): the library should be **readable**
       with no write buttons, and **Save to my drills…** should not appear anywhere.
 
-### 1.9 Plan templates, the recap & looking back (Practice Plans Phase 3) — built + docs + probed, uncommitted
+### 1.9 🖥📱 Plan templates, the recap & looking back (Practice Plans Phase 3) — **LIVE ON PRODUCTION**
 
 > **Mockups you approved:** `claude.ai/code/artifact/7ac29440-1e16-4b0e-a22b-9e0093470107` (12 frames).
 > **Where:** Development → **Plan templates** · any practice plan · Insights → **Development**.
-> ⚠ **Migration 221 is applied to DEV only.** Prod must have it (and 213 + 218) *before* this ships.
+> ~~⚠ Migration 221 is applied to DEV only.~~ **Applied to prod 2026-08-03 (with 213 + 218).**
 > ⚠ 18/18 layout probes green at 361 / 390 / desktop; 913 unit tests green.
 
 **The point of it:** you have a Tuesday you'd run again — keep it, and start from it next week. Then
@@ -426,61 +990,7 @@ say how it went afterwards, so "what did we do about hitting last spring?" has a
       with **no Rename, Retire, New or Your tags buttons at all**, and **Save as template…** doesn't
       appear on a plan.
 
-### 1.9b Helpers — the parent who runs a station (Practice Plans Phase 4) — built + simplified + reviewed + docs + probed, uncommitted. **THIS CLOSES PRACTICE PLANS.**
-
-> **Mockups you approved:** `claude.ai/code/artifact/ebf2b469-88d7-4b09-b1e8-151c3e7d4773` (10 frames).
-> **Where:** Team → **Staff** (the invite) · and a second sign-in as the helper.
-> **No migration.** Nothing to apply. ⚠ 22/22 layout probes green at 361 / 390 / desktop; 1165 unit tests green.
-
-**The point of it:** you can hand a parent the station they're running, on their own phone, without
-printing a sheet with ten children's names on it that then goes home in someone's pocket.
-
-**⚠ THIS ONE NEEDS A SECOND ACCOUNT.** The helper's own screens can only be judged by signing in as
-one — invite an address you control, accept it, and look at the portal through their eyes. **The
-probes could not cover any of this** (the test harness has one coach, and he's a head coach), so
-what you see is the only verification these screens will get.
-
-**The coach's side**
-
-- [ ] **The choice comes first.** Open **Staff**. Before the email box there's *"Who are you
-      inviting?"* with **Helper** and **Assistant coach**. Helper is preselected — that's deliberate,
-      it's the smaller grant. Tell me if that default feels wrong.
-- [ ] **Read the card underneath, as if you didn't build this.** It says what a helper *gets* and
-      what they *never* get, in sentences. **Does it tell you enough to hand a stranger this access
-      without worrying?** That is the entire job of that card — if it doesn't, say so.
-- [ ] **The chat line.** One item on that card is marked differently: *"Your staff chat — helpers are
-      never in it."* Until now, everyone on your staff list was in that room automatically. Check the
-      line actually lands — it's the one thing you'd otherwise assume wrong.
-- [ ] Switch to **Assistant coach** and the card changes to what an assistant gets, and the email
-      label changes with it.
-- [ ] **On your phone at 361/390.** The two options stack, both descriptions are readable, and
-      nothing scrolls sideways.
-- [ ] **A helper in the list has no permission grid.** Not a greyed-out one — none. That's on
-      purpose: they hold none of those switches. **Make assistant coach** widens them in one tap with
-      no re-invitation. Confirm removing one still reads clearly.
-- [ ] **⚠ Your existing assistants are untouched.** Open an assistant's card: **Schedule** is now two
-      switches (*see* it, and *change* it) and **Staff chat** is a switch too — **all of them still
-      on**. Nothing should have been taken away from anyone. If any assistant lost anything, stop and
-      tell me.
-
-**The helper's side — sign in as them**
-
-- [ ] **They land on the practice, not a dashboard.** One button: **Open my station**. Count how many
-      taps it takes them to see their group. It should be one.
-- [ ] **What's in the sidebar.** Should be the schedule and essentially nothing else. **No roster, no
-      Development, no Insights, no Chat, no Settings, no Money.** If you can see a door they can't
-      use, that's a bug — tell me which one.
-- [ ] **Inside their station:** their group by name and number, what they're doing, what they're
-      watching for, the coaching points. **No focus areas, no notes about any child.**
-- [ ] **⚠ No Rotate now / Next block.** Instead a line naming you: *"<your name> moves everyone on."*
-      Judge whether that reads as helpful or as a limitation being explained at them.
-- [ ] **A day with no practice** — they should see when the next one is, with a real date and place.
-- [ ] **A practice with no plan written yet** — they're told so, and told there's nothing to do. Make
-      sure it doesn't look broken.
-- [ ] **Try to get somewhere they shouldn't.** Paste a roster or Development URL into their browser.
-      It must refuse, not show a blank page with the data underneath.
-
-### 1.10 Ask the Front Office, Phase A — built + simplified + reviewed + docs, **COMMITTED** `5ce226a4`
+### 1.10 🖥 Ask the Front Office, Phase A — **LIVE ON PRODUCTION**
 Archived plan: `archive/ASK_FRONT_OFFICE_PLAN.md` + `_PM_BRIEF.md`. Mockups (binding):
 https://claude.ai/code/artifact/14a812e8-1fe0-429c-9c54-beab7a581038
 
@@ -513,83 +1023,7 @@ team**. It opens six ready-made questions; each answers in a sentence with the r
 - [ ] **In a completed season:** the ask bar is **absent from Insights**, not an empty box.
 - [ ] Read the guide: **Help → Asking about your team**, and confirm the Insights help "?" opens it.
 
-### 1.11 Tryout Insights — report · development baseline · candidate memory (all 3 phases) — built + simplified + reviewed + docs, Phase 1 **COMMITTED** `14969fbc`, Phases 2–3 uncommitted
-
-> **Mockups you approved (binding):** https://claude.ai/code/artifact/3b8bf1f9-c1c5-407c-9fa6-376a5bf8fee2
-> **Where:** Coaches → **Tryouts** → the **Decide** and **Build team** tabs, plus any player's
-> Development page.
-> ⚠ **Migration 223 is applied to DEV only** — the development-baseline half **will error until it
-> is applied**. It joins the 214–222 dev-only queue; prod needs all of them before any of this ships.
-> ⚠ **No rendered-layout check was run** (it needs a live dev server), so the memory strip's
-> appearance — **especially the phone stack** — has had no automated eyes on it at all. Judge it hard.
-> ⚠ **Needs a tryout with at least one PRIOR season of tryout data** to exercise the memory half.
-> A first-season team correctly shows none of it — which is right, but tests nothing.
-
-**The point of it:** the tryout stops being a one-day tool. It leaves behind a document you can hand
-your board, a starting point for every new player's season, and — at the moment you're deciding —
-what this kid looked like the last time they stood in front of you.
-
-**Phase 1 · the report** (Build team tab)
-- [ ] **The funnel tells the truth about drop-off.** Registered → Attended → Evaluated → Offers
-      extended → Accepted → On roster, with honest captions ("3 never checked in", "1 declined").
-      Check each number against what you know actually happened.
-- [ ] **⚠ "Offers extended" vs the Decide tab's "offered" — these are ALLOWED to differ**, and I
-      relabelled the report row so they stop looking like the same number arguing with itself. The
-      report counts every offer you **ever** made; the Decide tally counts who is offered **right
-      now**. Offer someone, then change your mind, and the report should still count that offer.
-      *(Frame 01 said just "Offered" — this is a deliberate deviation. Tell me if it reads wrong.)*
-- [ ] **The fairness receipt states only what's true.** Run a tryout with **no blind mode** and
-      confirm the blind line is **absent** rather than reworded. Never scored anyone? The whole
-      receipt block should be gone, not empty.
-- [ ] **Board summary (PDF)** — totals and roster names only. Confirm there is **no child's score and
-      no cut decision anywhere in it**; this is the one you'd hand a parent.
-- [ ] **Full detail (PDF/Excel)** sits behind a confirmation that names the consequence. While names
-      are still hidden it must be **unavailable** — not merely warned about.
-
-**Phase 2 · development baseline** (Build team tab, below the report)
-- [ ] **Seed one.** After accepting anyone, **Start development from tryouts → Begin**. Walk two or
-      three players.
-- [ ] **⚠ "Don't add" must write NOTHING.** Answer it for every suggestion on one player, finish, then
-      open that player's development page and confirm **no focus area was created**. This is the whole
-      promise of the step.
-- [ ] **A player nobody scored** should say so plainly and let you set focus by hand — never block.
-- [ ] **Re-run the walkthrough.** Already-seeded players should be marked done and skipped. Then edit
-      your scorecard and confirm an existing baseline is **not** rewritten.
-- [ ] **On the player's development page**, the snapshot is visually **apart** from measurables
-      (dashed edge) and says it's coach-eyes-only. Confirm it does **not** join any trend line.
-
-**Phase 3 · candidate memory** (Decide tab)
-- [ ] **⚠ THE FLOW THAT WAS BROKEN — test this first.** With names still hidden, open Decide (bibs
-      only, no history — correct). Go to **Set up → Reveal names**. Come back to **Decide
-      WITHOUT refreshing the browser**. Names must appear and the strips must load. *(This failed
-      until review caught it — a mount-once load meant you'd have concluded the feature didn't work.)*
-- [ ] **Confirm a returning player, still without refreshing.** Tap **Possible returning player —
-      verify**, confirm the match, and the memory strip must appear **immediately** on that row.
-- [ ] **The comparable case:** both years on the same scale → last season's score, this season's, and
-      a **▲ +0.7**-style change between them. **Compare categories** opens it skill by skill.
-- [ ] **⚠ The incomparable case — the honesty test.** Two seasons on **different scales** (1–10 then
-      1–5) must show **both cards and NO arithmetic**, with a line naming the two scorecards. If you
-      ever see a delta across mismatched scales, that's the defect.
-- [ ] **An unverified match shows NO scores.** A "Possible returning player" you haven't confirmed
-      gets the verify button and nothing else.
-- [ ] **⚠ THE BLINDFOLD — check the absence.** While blind evaluation is on, confirm there is **no
-      prior-season anything** on the **field scorer**, the **live scoreboard**, or **check-in**.
-      Check-in's existing "tried out in {season}" marker is identity only and unchanged — that one
-      stays. A bib number must be just a bib number.
-- [ ] **The report's group line** (Build tab, under Turnout): with **3+** verified returning
-      candidates comparable on one scale, it states how the group moved. With **1 or 2**, it must be
-      **absent entirely** — silence, not a hedged sentence.
-- [ ] **📱 Phone (390 and ~360).** The two seasons should **stack** with the change between them, and
-      the decision buttons stay full-width and reachable. **Nothing automated has looked at this.**
-- [ ] **As an assistant coach without tryouts access:** no tryout surface at all, as today.
-- [ ] Read the guide: **Help → How to run tryout day**, and the new FAQ *"Can I see how a returning
-      player did at last year's tryout?"*
-
----
-
-## Session 2 — Premium Coaches Portal · PHONE (real device; 390 and ~360 widths)
-
-### 2.1 Mobile overlay safety + Tournaments revival (Batch 1) — COMMITTED, phone QA owed
+### 2.1 📱 Mobile overlay safety + Tournaments revival (Batch 1) — **LIVE ON PRODUCTION**
 Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH1_PLAN.md`.
 - [ ] Every add/edit form (Add Player, Add Expense, dues credit/schedule, budget line, payment
       request, fundraiser) opens as a full-height sheet, back-arrow header, Save visible above the
@@ -604,7 +1038,7 @@ Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH1_PLAN.md`.
 - [ ] Budget modals on desktop got a slight chrome change (shared panel background) — eyeball, not
       a regression. Roster initials avatars removed on purpose.
 
-### 2.2 The "first week" bundle (Batch 2) — built + reviewed, uncommitted
+### 2.2 📱 The "first week" bundle (Batch 2) — **LIVE ON PRODUCTION**
 Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`.
 - [ ] Bulk add on an empty roster: paste mixed formats (`12 Jordan Smith` / `Jordan Smith` /
       `Jordan Smith 12`) → preview reads them; fix one row, remove one, commit. Then the
@@ -621,26 +1055,7 @@ Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`.
 - Note: paste captures names + numbers ONLY (no emails/DOB — by design); 200-row cap with a
   visible truncation warning.
 
-### 2.3 Money on a phone (Chunk A) — COMMITTED, phone QA owed
-Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
-- [ ] Budget line with period splits: full-width tappable fields; backdrop tap asks "Discard
-      changes?"; "Keep editing" preserves everything.
-- [ ] Budget vs. Actual: sideways-scroll hint; line names pinned; the page itself never scrolls
-      sideways.
-- [ ] Expenses (both tabs), Fundraiser leaderboard + Log Amount, Org Allocations: stacked cards,
-      real full-width inputs; Allocations cross-links to Payment Requests.
-- [ ] Money hub headline numbers agree on "(paid only)".
-- [ ] Read-only assistant: same readable pages, zero write buttons, no blank card rows.
-- [ ] Desktop: Budget vs. Actual uses the window width (no ~960px inner scroll column).
-- [ ] No native browser alert anywhere in Money (a failed delete shows an inline error).
-
-### 2.4 Findability, phone half (Chunk B) — built, uncommitted
-- [ ] More sheet: **Notifications** row at top with unread count; count also badges the More tab;
-      the feed opens; "Notification settings" reaches account settings.
-- [ ] More sheet reads "Email families"; sheet still fits its height cap at 361px.
-- [ ] As an assistant: rows/icons present, nothing offers an action they can't perform.
-
-### 2.5 Running a practice at the field (Practice Plans 1b) — built + reviewed + probed, uncommitted
+### 2.5 📱 Running a practice at the field (Practice Plans 1b) — **LIVE ON PRODUCTION**
 *Tuesday night, one hand, gloves on: the plan you wrote now reads one block at a time.* 1a (writing
 the plan) already PASSED your QA and is committed; **this is the second half only.**
 Plan: `active/COACH_PRACTICE_PLANS_PLAN.md`.
@@ -669,20 +1084,14 @@ toolbar). No plan handy? Ask the agent to seed a probe practice — it prints a 
       **absent entirely** (not a link that errors). *(This closed an existing bug; your call.)*
 - [ ] Help "?" on the run screen opens a guide about **that** screen, not the builder.
 
-### 2.6 Phone passes of Session-1 items (quick)
+### 2.6 📱 Phone passes of the desktop items (quick)
+
+> The four **Chunk D** lines that used to sit here moved to **§2.6a in Tier 1** — a family reaching a
+> child's schedule on a phone is an exposure question, not a layout one. Wording unchanged.
+
 - [ ] Chunk G starter end-to-end on a phone (tap-only questions).
 - [ ] Chunk H months grid scrolls sideways with first column pinned (by design).
 - [ ] Chunk F: switcher in More sheet; "2025 · Complete" chip as the way back out.
-- [ ] **Chunk D 0–2 — do this one as a FAMILY, on a real phone, not as a coach.** The whole
-      follower experience is phone-first and arrives from a group chat: open the family link on a
-      phone, request, get approved, and confirm the schedule opens **scrolled to the next event**
-      without you scrolling. Then subscribe the calendar into the phone's own calendar app.
-- [ ] Chunk D 1: open a **shared game link** on a phone with **no account and no app installed** —
-      the grandparent case this feature exists for.
-- [ ] Chunk D 3: save a score on a phone → **Draft the family email** is reachable and the compose
-      screen opens with the words in it (this is a real game-day-on-the-sideline moment).
-- [ ] Chunk D 3: the recap **preview** on a phone — the stat tiles should stack to one column on a
-      narrow screen rather than squashing to two.
 - [ ] **The drill library (§1.8) on a phone — this is where it actually earns its keep.** The whole
       claim is *"a plan becomes four taps"*, and the moment that has to be true is a coach on a couch
       with about four minutes. Build a block from a saved drill end-to-end on the phone: **Add a
@@ -706,9 +1115,7 @@ toolbar). No plan handy? Ask the agent to seed a probe practice — it prints a 
 
 ---
 
-## Session 3 — FREE coach portal · phone-first
-
-### 3.1 Overview coherence (DF-1…DF-7) — COMMITTED, QA owed
+### 3.1 📱 FREE coach portal — Overview coherence (DF-1…DF-7) — **LIVE ON PRODUCTION**
 Archived plan: `archive/FREE_COACH_OVERVIEW_COHERENCE_PLAN.md` (its PM brief's "nothing built" header is stale).
 - [ ] One accepted upcoming tournament: ONE "Your tournament" block with the ⇄ fan-view link,
       no duplicate event card, 2-up tiles, Tournaments tile full-width with "See all →".
@@ -726,7 +1133,30 @@ Archived plan: `archive/FREE_COACH_OVERVIEW_COHERENCE_PLAN.md` (its PM brief's "
 
 ---
 
-## Session 4 — Cross-cutting: dismiss/Escape sweep — built + reviewed, uncommitted
+---
+
+# TIER 3 — polish
+
+Findability, close behaviour, the creation preview and the sandbox. Wrong here is visible and
+annoying, and costs nobody anything they cannot get back.
+
+### 1.6 🖥 Findability, desktop half (Chunk B) — **LIVE ON PRODUCTION**
+Code-verified built. Archived plan: `archive/COACH_PORTAL_CHUNK_B_FINDABILITY_PLAN.md`.
+- [ ] Sidebar reads **"Email families"** (not "Announcements") and it's obvious which door reaches
+      parents vs. staff (Chat).
+- [ ] Attendance, Chat, Settings — and on a closed season, Season's End + Insights — each carry a
+      "?" opening a guide about THAT screen.
+- [ ] A never-toured cold account's Overview leads with the welcome/tour card; dismiss → gone for
+      good; tour still reachable from Help. (Needs a genuinely fresh account — dismissal is
+      permanent.)
+
+### 2.4 📱 Findability, phone half (Chunk B) — **LIVE ON PRODUCTION**
+- [ ] More sheet: **Notifications** row at top with unread count; count also badges the More tab;
+      the feed opens; "Notification settings" reaches account settings.
+- [ ] More sheet reads "Email families"; sheet still fits its height cap at 361px.
+- [ ] As an assistant: rows/icons present, nothing offers an action they can't perform.
+
+### 4 🖥📱 Cross-cutting: the dismiss/Escape sweep — **LIVE ON PRODUCTION**
 *One shared close-behavior for ~19 menus/panels; Escape now works where it didn't; iOS tap-to-dismiss fixed.*
 Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
 - [ ] Desktop spot-check ~6 converted panels (both More menus, notification bell, an admin schedule
@@ -743,9 +1173,7 @@ Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
 
 ---
 
-## Session 5 — Tournament admin · DESKTOP (wide window; §5.1 ~10 min, §5.2 ~30 min)
-
-### 5.1 Tournament creation live preview (v1) — built, uncommitted
+### 5.1 🖥 Tournament creation live preview (v1 + colour presets v1.1) — **LIVE ON PRODUCTION**
 *While an organizer fills in the setup wizard, a phone beside the form assembles their public
 tournament page in real time. Desktop-only; below ~1280px the wizard is untouched.*
 Plan (with build notes): `active/TOURNAMENT_CREATION_LIVE_PREVIEW_PLAN.md`.
@@ -812,26 +1240,52 @@ Sign in as an org admin. Do this at a window **wider than 1280px** unless a step
 - Note: there is deliberately **no colour picker** in the wizard. Custom colours are a paid feature
   and putting the swatches in free signup is a pricing decision you haven't made yet.
 
-### 5.2 The "See it live" sandbox (Tournament Admin Sandbox, Phase 1) — all eight slices built, uncommitted
+### 5.2 🖥📱 The "See it live" sandbox — **PHASE 1 LIVE; the tour rebuild, live pill and Playoffs tab are UNCOMMITTED**
 *A stranger with no login and no email walks into a real tournament that is running right now, on
 both sides of the product: the fan pages ticking on their own, and the actual admin portal as a
 demo organizer. Nothing they do is saved and nothing is ever sent to anyone.*
-Plan (with build notes 1–18): `active/TOURNAMENT_ADMIN_SANDBOX_PLAN.md`.
-Binding visual spec: `active/TOURNAMENT_SANDBOX_MOCKUPS.html`.
+Plan (with build notes 1–34): `active/TOURNAMENT_ADMIN_SANDBOX_PLAN.md`.
+Binding visual spec: `active/TOURNAMENT_SANDBOX_MOCKUPS.html` (the tour is superseded by artifact
+`f1fcaff5-7777-4a9f-a166-8557686214fc`).
+The narrative walkthrough (what to do, what to expect, what to judge at each beat) was delivered in
+chat 2026-08-03 at the owner's request rather than as a file. This list is the tick-box record.
+
+> **⚠ Status, corrected 2026-08-03 — this section is split down the middle.** The old heading said
+> "all eight slices built, uncommitted"; both halves of that were wrong.
+> **LIVE on production:** the door (**A**), the banner (**B**), the operator side (**D**), the
+> locked send (**F**), the curated corners (**G**), the invented-contacts check (**H**), the
+> marketing doors (**I**, still hidden in prod by default) and no-collateral-damage (**J**).
+> **UNCOMMITTED — working tree only:** the rebuilt guided tour (**C**), the live pill (**C2**), the
+> pre-expanded Schedule Health panel (**E**) and the **Playoffs tab (J2)**. J2 changes the nav on
+> **real customer tournaments**, so it is the one slice here whose blast radius is not the demo.
 
 **Before you start — two prerequisites, both easy to forget:**
 
-- [ ] **The clock now runs itself** (migration 224, every two minutes, applied to dev 2026-08-03) —
-      so you should NOT need to start anything. Confirm it by watching the banner countdown move and
-      a live score change on its own within ~2 minutes. If the demo looks frozen, the scheduled job
-      has stopped: it reports itself on the platform-admin observability freshness panel like every
-      other timed job, and you can always run the tick by hand (command in the plan).
+- [ ] **Check the demo's clock is actually running.** *(Re-verified 2026-08-04: it now delivers on
+      its own — you should NOT need to start anything.)* Earlier in this work the demo sat **exactly
+      two hours behind** with every instrument reporting healthy, which is why your first pass went
+      badly: nothing was live, and two tour buttons genuinely did nothing.
+      That can no longer hide. The platform-admin freshness panel now carries **two** demo rows —
+      one for the schedule *firing* and one for the app *actually doing the work*. **If the second
+      lags the first, delivery is broken**: run the ticker by hand in a spare terminal for the
+      session (command in the plan, `--watch`) and treat the demo as untrustworthy until it's fixed.
+      Confirm before you start: watch the banner countdown move, and a live score change on its own
+      within a few minutes.
+- [ ] **Check it's presentable at EVERY hour, not just now** *(new 2026-08-04)*. Run the full-day
+      sweep (`scripts/sweep-demo-sandbox.mjs`). It replays the whole day — 84 moments across all
+      twelve replays — and asserts a game is live, both dashboard cards have something in them, and
+      the schedule stays healthy. ⚠ *This exists because the demo's "Up Next" card quietly emptied
+      for about an hour every evening: the filler game sat four hours out, which for the late
+      replays landed after midnight. Nobody caught it because every spot check happened in the
+      afternoon.* If you QA in the evening and something looks thin, run this before assuming it's
+      you.
 - [ ] **Check it's presentable.** Run the sandbox health probe. It asserts that a game is live right
       now, the dashboard has work in it, the bracket is correct, and the schedule reads HEALTHY.
       If it reports a problem, fix that before judging anything else — you'd be QA-ing a broken set.
+      It now also tells you *why* when the demo is stale, instead of quietly passing.
 - [ ] **Use a FRESH private window.** The door deliberately refuses to replace an existing session,
-      so if you are already signed in as yourself you will get the fan side only and a shorter tour.
-      That is correct behaviour, not a bug — but it is not the experience a prospect gets.
+      so if you are already signed in as yourself you get the fan side and the operator steps route
+      via the door. That is correct behaviour, not a bug — but it is not what a prospect gets.
 
 **A · The door (no login, no email)**
 - [ ] From a signed-out window go to `/see-it-live`. You arrive on the **fan page** of the Riverdale
@@ -851,21 +1305,81 @@ Binding visual spec: `active/TOURNAMENT_SANDBOX_MOCKUPS.html`.
       way to dismiss it** — no ✕, no collapse.
 - [ ] Nothing underneath is hidden or cut off: the navbar, the score ticker and the page's own
       heading all sit fully below the banner, on the fan side AND in the admin portal.
-- [ ] Narrow the window to phone width. The banner still reads sensibly, the chip rail scrolls
-      sideways rather than eating the screen, and no control is lost.
+- [ ] **The event title is not clipped by the live-score ticker** on the Overview page at desktop
+      width. ⚠ *You caught this one: the hero reserved room for the navbar and the ticker but not
+      the FieldLogicHQ strip above them, so the ticker sat on the title.* **Check a REAL customer's
+      in-progress tournament too — the same bug was there**, hidden until now because the effect
+      only shows once an event is underway.
+- [ ] **Narrow the window to phone width.** ⚠ *Rewritten 2026-08-04 — the old check told you to
+      confirm the chip rail scrolled sideways. There is no chip rail any more, and nothing scrolls
+      sideways: that WAS the bug.* You should see the banner, then one row carrying the step you're
+      on and one button, then the live score on its own line. **Nothing scrolls sideways, and no
+      part of the tour is off-screen** — measured, 45% of it used to be. The platform's bottom tab
+      bar is gone (see K), so the page reclaims that space too.
 
-**C · The tour chips**
-- [ ] Chips are numbered and say **Try this**. A chip with an **arrow** takes you somewhere; a chip
-      **without** one points at something already on this page.
-- [ ] Press the "Scores tick on their own" chip. The page moves to the live scores and puts a lime
-      ring around them that **holds long enough to notice** — even if they were already on screen.
-- [ ] A chip only gets its **✓ after it has delivered** — after you've seen the beat, or after the
-      page it sends you to has loaded. Pressing and immediately pressing back should not leave a
-      trail of ticks for things you never saw.
-- [ ] Ticks last the visit and are gone in a brand-new private window.
-- [ ] **Signed out via the door:** three chips, including "See the organizer's side".
-      **Signed in as yourself:** two chips, and the organizer one is absent — deliberately, because
-      your session cannot open it. ⚠ *Pending your ruling below, this is the interim shape.*
+**C · The guided tour** *(rebuilt 2026-08-03 — this replaces the old chip rail entirely)*
+
+*Your verdict on the first version was "I don't know what these buttons are supposed to accomplish,
+they don't seem to do anything." That was literally true: two of them did nothing at all whenever no
+game was live. What you are checking now is that pressing anything always produces something you can
+see.*
+
+- [ ] The tour is **one row**: "Guided tour · Step 1 of 4", a live score pill, four numbered dots,
+      and **one lime button carrying the step's own words** ("Watch the score change by itself →").
+      There is never a generic button whose effect you have to guess at.
+- [ ] **The most important check.** Press the button. **A lime-edged sentence appears immediately
+      underneath** saying what just happened. It stays until you move on — it does not time out.
+      ⚠ *If pressing anything ever produces no visible change whatsoever, that is the original bug
+      and the whole rebuild has failed.*
+- [ ] Press it **when nothing is live** (the four-minute gap between the semifinal and the final —
+      the pill will say "Between games"). It must **still** produce a sentence. This is the exact
+      case that used to do nothing.
+- [ ] The dots show position: the current step is filled lime, finished ones show a ✓. Pressing a
+      dot jumps you there. A step only earns its ✓ **after it has delivered** — after you've seen
+      it, or after the page it sends you to has loaded.
+- [ ] Walk all four steps. They run **fan side → bracket → organizer's seat → break the schedule**,
+      and your progress **carries across the flip** — you should not start again on the admin side.
+- [ ] **Step 2 lands you on the actual bracket diagram**, roughly centred, with SEMIFINALS /
+      FINALS and the unresolved **"Semifinal 1 winner"** slot visible. ⚠ *It used to drop you on
+      the Playoffs page, which is a seeding write-up and never draws that slot — you caught this.*
+      Note the nav will highlight **Standings**, because that is where this product puts the
+      bracket. **Judgement call for you:** should the new **Playoffs** tab lead with the bracket
+      instead of the seeding write-up? That is the shipped layout, not something this project
+      changed — but the demo makes it obvious.
+- [ ] After step 4, the button becomes **"Start your own — free →"**. The end of the tour is the one
+      dead end that should sell.
+- [ ] Progress lasts the visit and is gone in a brand-new private window.
+- [ ] **The step count is the same whether or not you are signed in** (four, always). Only where the
+      operator steps *point* changes — signed in as yourself, they route via the door.
+      ⚠ *The old ledger said you'd see two chips signed-in. That was wrong about the shipped code.*
+
+**C2 · The live score strip, and the run landing** *(reworked after your second pass)*
+
+*You pressed "watch the score change by itself", the score sat at 3–8, and you reported it broken.
+The clock was fine — it moved five minutes later. The button was the problem: it promised something
+that arrives on the tournament's clock, not on your click. Step 1 is now called **"Show me the game
+that is live"**, and the waiting is handled explicitly.*
+
+- [ ] Press step 1. The sentence underneath ends with **"Next run in about 1:32 — watch it land"**
+      (or, if the next run is further off, **"— carry on, and it will flag itself"**). That number
+      **counts down every second**. ⚠ *You should never be left staring at a score with no idea
+      whether or when it will move.*
+- [ ] The strip shows the game, the score, and **"changed 2:27 ago"**, counting up.
+- [ ] **Wait for a run** (up to ~7 minutes; do something else in the demo meanwhile — the strip
+      follows you onto every page, including the admin side). When it lands: the strip **lights up
+      lime**, reads **"just scored"**, and the sentence becomes **"There it is — now 11–4."**
+      ⚠ *This is the moment the whole sandbox exists to sell. It used to happen in total silence.*
+- [ ] During the gap between games the strip turns amber and reads **"Between games · final in
+      2:41"**, counting down.
+- [ ] ⚠ **Across a replay boundary — the check you can only do by waiting** *(added 2026-08-04)*.
+      The adversarial review found the strip announcing **"There it is — now 0–0"** at two moments
+      where nothing had scored: when the semifinal hands over to the final, and at every replay
+      reset. Twice per cycle, for ever — the exact false claim this rebuild existed to remove.
+      **Watch the banner countdown reach zero.** When the tournament replays, the strip must go
+      quiet and simply show the new game — **never "just scored", never a celebration at 0–0**.
+      Same at the semifinal→final handover.
+- [ ] In the closing couple of minutes before a replay, the sentence must **not** promise
+      "Next run in about…". There is no next run — the tournament resets instead.
 
 **D · The operator side (the beat that sells)**
 - [ ] From the fan page, "See the organizer's side" lands you on the **real game-day dashboard** —
@@ -877,8 +1391,11 @@ Binding visual spec: `active/TOURNAMENT_SANDBOX_MOCKUPS.html`.
 - [ ] Flip back to the fan view from the header pill. Both directions work.
 
 **E · Try to break it (the moment the sandbox is built around)**
-- [ ] Open the Schedule. In the Schedule Health panel you should see a lime invitation line —
-      *"Try it — drag a game onto another team's slot"* — with a **Put it back** button.
+- [ ] Open the Schedule. The **Schedule Health panel is already expanded** and the lime invitation
+      line — *"Try it — drag a game onto a slot that's already busy…"* — is visible **without you
+      clicking anything**, with a **Put it back** button.
+      ⚠ *It used to arrive collapsed, so the tour rang a closed drawer and the invitation was hidden
+      behind a click nobody knew to make. A real customer's schedule still opens collapsed.*
 - [ ] Drag a game onto a slot that creates a clash. **Your move stays on screen** and the health
       score and conflict count **react immediately**. It must NOT snap back.
 - [ ] A quiet toast appears: *"Nothing is saved in the sandbox."* It never says "error" or "failed",
@@ -919,20 +1436,141 @@ Binding visual spec: `active/TOURNAMENT_SANDBOX_MOCKUPS.html`.
 - [ ] ⚠ These are **hidden in production by default**. Turning them on for real customers is a
       separate release step you and I do together, with its own decisions-log entry.
 
+**K · The demo is sealed — no wandering out** *(new 2026-08-04, your request)*
+
+*Build note 25 had deliberately let a visitor walk out onto the marketing site with the demo hat
+coming off. You reversed that: a prospect who wanders out of a demo has simply been lost. Ten doors
+were closed; audited to zero at desktop and phone width, on both sides.*
+
+- [ ] On the fan pages, the **FieldLogicHQ wordmark is still visible but no longer clickable**, and
+      there is **no Discover link, no account icon, no Sign In**. Hidden rather than greyed out — a
+      control that looks pressable and isn't is worse than one that never invited the press.
+- [ ] **On a phone there is no bottom tab bar** (Home · Scores · Chat · Account all led out).
+- [ ] In the **organizer's seat**, same again: wordmark inert, no account door.
+- [ ] **Two doors deliberately remain, and must still work:** the **⇄ ADMIN** flip (the tour's third
+      step) and **Start your own — free** in the banner. Follow the CTA and confirm it reaches
+      signup — that is the entire point of the demo.
+- [ ] Try to leave any other way. You shouldn't be able to. ⚠ *Tell me if that reads as a cage
+      rather than a frame — it's a judgement call and it's yours.*
+- [ ] **On a REAL org, none of this applies:** wordmark links, Discover is there, and the phone
+      bottom bar is back with its usual spacing. *(Checked in J below too — it matters most there.)*
+
+**J3 · Results opens on something — ANOTHER real-customer change** *(new 2026-08-04)*
+
+*You landed on Results and got "No games found." on a tournament with fifteen games. It was showing
+only games still needing a score, and that division's were all played. Changed for everyone.*
+
+- [ ] In the demo, **Results shows games immediately** — no empty screen.
+- [ ] The status chips above still work; switching to just "needs a score" narrows as before.
+- [ ] **Turn every status chip off.** You should get *"N games here — all hidden by the status
+      filters above"* and a **Show all games** button that brings them back. It must never just say
+      "No games found" when games exist.
+- [ ] Pick a division with no playoff games and switch to the Playoff view: it should tell you how
+      many games are in the pool round and offer to switch, rather than going blank.
+- [ ] **On a REAL org:** Results opens showing everything on a tournament you have not filtered
+      before. ⚠ *If you have used that screen already, your own filter choice is remembered — that
+      is deliberate. Check in a private window to see what a new organizer gets.*
+
+**J2 · The Playoffs tab — a REAL-CUSTOMER change, please look properly** *(new 2026-08-03)*
+
+*The bracket page has existed for a long time with **no way in from anywhere**: no entry in the side
+rail, the phone tabs or the desktop top bar, on any tournament. The overview only offered a link
+once every pool game had finished. The demo made it obvious — its tour sent strangers there and left
+them stranded — but this was every customer's gap, so it is fixed for everyone.*
+
+- [ ] On a **real** tournament that has a bracket set up, **Playoffs** now appears in the nav
+      **directly after Standings** — in the desktop side rail, the phone tab row, and the desktop
+      top-bar links. Check all three; they should agree.
+- [ ] Open it. The page renders (it always did), and the tab is marked as the current page.
+- [ ] On a tournament with **no bracket configured**, there is **no Playoffs tab**. It must not
+      appear speculatively.
+- [ ] On a tournament where you have **hidden Standings**, there is **no Playoffs tab** — the
+      bracket is a seeding view, so hiding standings must not leak seeding through it.
+- [ ] **A bracket-only tournament shows its Playoffs tab AND its bracket page** *(fixed 2026-08-04)*.
+      ⚠ *These could previously never show a bracket at all — the page hid itself because that
+      format has no standings, and the tab matched the page. The format most defined by having a
+      bracket was the only one that couldn't display one.* Its nav has no Standings tab (correct —
+      there is no round robin), and Playoffs sits where Standings would have been.
+- [ ] **On a real tournament whose bracket was built without setting a "teams qualifying" number**,
+      the tab still appears. ⚠ *My first gate keyed on that number and silently skipped a live
+      customer event with 29 playoff games already scheduled.*
+- [ ] Everywhere: **the tab appears exactly when the page renders.** Never a tab leading to
+      "Playoff Picture unavailable", never a bracket page with no way in.
+- [ ] The tab does **not** appear and disappear as pool play finishes. It is there from the start
+      or not at all.
+- [ ] Nothing else in the nav moved or changed.
+
 **J · No collateral damage to real customers** *(the most important section)*
-- [ ] Open a **real** org's public tournament page and its admin portal. No banner, no chips, no
+- [ ] Open a **real** org's public tournament page and its admin portal. No banner, no tour row, no
       toast, nothing moved by a pixel — the navbar, sidebar, event header and score ticker sit
       exactly where they always did.
+- [ ] A real org's **Schedule Health panel still opens collapsed** on the schedule screen.
 - [ ] The full nav (Data Tools, Settings & Access, Event Settings) is present for a real org.
 - [ ] Sign in as a real org admin, then type a **different** org's `/admin` URL. You should land on
       **your own workspace** — not a login page, and above all not a flashing loop. *(This loop was
       pre-existing and hit anyone doing this; the sandbox just found it.)*
 
-**⬜ Decision I need from you before this project can close:** what should the door do when a
-visitor is **already signed in**? Today it protects their session and gives them the fan side only.
-Options: **(a)** ask them once with a plain warning *(recommended — it warns a customer rather than
-asking anything of a stranger, so the ungated ruling is untouched)*; **(b)** always take over the
-session; **(c)** keep today's behaviour permanently.
+**✅ RESOLVED (and it turned out to be stale):** the signed-in-door question was already ruled
+(2026-08-03, option a) and already BUILT — pressing "See it live" while signed in lands on a
+confirm screen before your session is touched. Re-affirmed with mockups 2026-08-04 and the
+screen's copy aligned to them. **QA (30 seconds, you're the perfect tester since you're always
+signed in):** press the door while signed in as yourself → you should see *"Step into the
+organizer's seat?"* naming your email, with a lime **Continue** button and a quiet **"Stay in my
+account — watch as a fan"**. Decline → you're on the fan page, still signed in. Press again and
+continue → you're the demo organizer; signing back into your own account works normally after.
+
+### 5.3 🖥📱 The moments dock (Phase 2) — **BUILT 2026-08-04, dev, UNCOMMITTED**
+
+The demo's year in three tabs. One org, three tournaments; nothing about the write block, the
+outbound silence or the door changed. ⚠ *The dev scheduler still doesn't reach this environment —
+run the tick by hand before QA if the countdown looks stale.*
+
+**A · The dock itself** (start at `/riverdale-minor-ball/summer-classic`)
+
+- [ ] A slim **"The year"** row sits between the banner and the tour: **Registration week
+      (3 weeks before) · Game day (happening now, red dot) · The morning after (ended yesterday)**.
+      Game day is underlined.
+- [ ] Press **Registration week**. You land on the Invitational's public page, the underline moves,
+      the banner's clock slot now reads **"First pitch in 3 weeks"** (not "Replays in…"), and the
+      narration strip says you jumped three weeks back.
+- [ ] Press **The morning after**. The Season Opener's page: **"Tournament complete"** hero,
+      champion banner (**Cedar Hollow Cyclones def. Riverdale Rapids**), final record below; the
+      clock slot reads **"Wrapped up yesterday"**.
+- [ ] The **live score pill keeps showing the Summer Classic's game in every moment** — the proof
+      the demo is alive follows you.
+- [ ] On a phone (~390px): all three tabs fit on one line, nothing covers the banner, and the
+      page never scrolls sideways.
+
+**B · Registration week, organizer's seat** (flip to the operator side first)
+
+- [ ] Press **Registration week** in the dock. You land on the **Teams** screen already editing
+      the Invitational, with **Registration Health arriving expanded**: score, **11/16 · 69%
+      filled**, 3 unpaid, **1 past due**, 2 pending review.
+- [ ] **U11 reads full (8/8) with 2 waitlisted** — the close-registration moment. U13 has spots.
+- [ ] **Accept** a pending team: the change shows on screen and the familiar **"Nothing is saved
+      here"** toast appears. Refresh — it's back to pending.
+- [ ] The sidebar's **"Editing Tournament"** dropdown now exists and agrees with the dock.
+
+**C · The morning after, organizer's seat**
+
+- [ ] Press **The morning after**. You land on the **Post-Event Summary**: registration totals
+      (8 accepted / 1 rejected), payments fully collected, 15/15 games, U11 champion, and the
+      **"Reuse setup"** nudge. Pressing it produces the blocked-save reassurance, not an error.
+
+**D · The tour, now six steps**
+
+- [ ] The tour reads **Step N of 6**. Steps 1–4 behave exactly as you QA'd them.
+- [ ] Step 5 **"Go back three weeks"** lands on the Invitational's Teams screen, rings the health
+      panel, and narrates the week's work. Step 6 **"Skip to the morning after"** lands on the
+      Post-Event Summary and narrates the close. **Done** still ends on "Start your own — free →".
+- [ ] Old tour progress does not carry over (the step list changed shape — everyone starts fresh).
+
+**E · Nothing leaked**
+
+- [ ] Signed out entirely, the two new events' public pages render read-only; registering on the
+      Invitational is blocked with the toast; no email of any kind arrives for anything above.
+
+---
 
 ---
 
@@ -946,11 +1584,20 @@ session; **(c)** keep today's behaviour permanently.
   slices per phase.
 - ~~**Chunk D family experience**~~ — **now IN this ledger** (it is no longer "not built"):
   §1.6b Slices 0–2 · §1.6c the guardian tier · §1.7 Slice 3 · phone passes in §2.6.
-  All four slices are **committed** as `71b42636` on `dev`. Migrations 214–217, 219 and 220 are
-  DEV-ONLY and must all reach prod before this promotes.
+  All four slices are **LIVE on production**. Migrations 214–217, 219 and 220 were applied to prod
+  on 2026-08-03.
 
 ## After a session
 
 Tell me which sections passed (and any defects). I'll fix defects, run any owed review funnels
 (Chunk G), commit the uncommitted ones with your per-action OKs, mark the TODO lines complete, and
 archive the remaining active plans (G, PII, Quiet Mode graduate at release time).
+
+**⚠ A Tier 1 defect is an incident, not a backlog item.** These features are live. If a Tier 1 step
+fails, stop the session and tell me immediately rather than finishing the list — the fix ships the
+same day, the way the invisible-help-text defect did on 2026-08-03.
+
+**Only two things below still gate on your OK before customers see them:** §1.9c (the roster switch)
+and four slices of §5.2 (the rebuilt tour, the live strip, the pre-expanded health panel, and the
+Playoffs tab — the last of which changes real customers' tournament nav). Everything else has
+already shipped, so QA-ing it is damage-finding.
