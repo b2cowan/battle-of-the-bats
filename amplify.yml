@@ -63,6 +63,12 @@ frontend:
         # the heavier page-generation/cache-write phase. If 7168 still OOMs, the next lever
         # is a bigger Amplify build compute instance (console-only setting), not a higher number here.
         - NODE_OPTIONS=--max-old-space-size=7168 pnpm run build
+        # Amplify zips whatever is under node_modules alongside .next for SSR compute — with no
+        # --prod flag on the earlier install, the full dev toolchain (Playwright, TypeScript,
+        # ESLint, Tailwind/PostCSS) rides along even though nothing at request time touches it.
+        # Local prod build is ~96MB of real .next output; pruning here is what keeps the deployed
+        # artifact under Amplify's 220MB SSR compute cap as the route count keeps growing.
+        - pnpm prune --prod
   artifacts:
     baseDirectory: .next
     files:

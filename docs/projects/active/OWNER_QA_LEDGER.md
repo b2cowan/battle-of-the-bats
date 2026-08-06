@@ -1,31 +1,34 @@
 # Owner QA Ledger — unverified LIVE behaviour, ordered by what it costs if it's wrong
 
-> ## ⚠ Read this first — what this document is now (re-framed 2026-08-03)
+> ## ⚠ Read this first — what this document is now (re-grouped 2026-08-06)
 >
-> **This stopped being a pre-release gate.** A release went out on 2026-08-03. `dev` is three
-> commits ahead of `origin/master`, and all three are documentation and contrast fixes. Every
-> feature with a step list below — with **one** exception — **is already in front of paying
-> customers.** This is not a list of things to check before shipping. It is a list of **live
-> behaviour nobody has verified.**
+> **This is two lists wearing one cover, and you need to know which half you are standing in.**
 >
-> **The one exception is §1.9c** (the roster switch), which is still only in the working tree,
-> together with four slices of the sandbox in §5.2. Everything else has shipped.
+> - **The shipped half.** A release went out on 2026-08-03. Everything labelled **LIVE ON
+>   PRODUCTION** is in front of paying customers right now. Checking it is **damage-finding**, and
+>   a failure is an incident to fix today, not a backlog item.
+> - **The staged half.** Since that release, **18 commits of feature work have landed on `dev` and
+>   none of it has shipped.** Everything labelled **ON DEV** is real, finished, funnel-passed code
+>   that customers have never seen. For these, **your QA is the last gate before the next release.**
 >
-> **Two things were wrong across the old version of this document and are now corrected:**
+> **Corrected 2026-08-06 — the old framing said the opposite and it mattered.** This document used
+> to claim "only §1.9c and four slices of §5.2 still gate anything; everything else has shipped."
+> That was true on 2026-08-03 and is badly wrong now. Two facts, both re-checked against git rather
+> than against these headings:
 >
-> 1. **The status labels.** A dozen sections said "built, uncommitted" for work that shipped days
->    ago. Each heading below was re-checked against `origin/master` by grepping for the feature's
->    own code, not by trusting the header.
-> 2. **The migration warnings.** Roughly a dozen steps carried "⚠ Migration N is DEV-ONLY — prod
->    must have it before this ships". **Migrations 211–224 were applied to production on
->    2026-08-03** and the drift report reads zero across tables, columns, indexes, constraints and
->    RLS. Those warnings are struck through where they appear. Nothing below is waiting on a
->    database change.
+> 1. **Nothing is uncommitted any more.** The working tree is clean. Every section that said "BUILT,
+>    dev, UNCOMMITTED" is committed — the last catch-all commit (`d8316e87`) swept up §1.9c, §1.18,
+>    §1.19 and §6 together. The **UNCOMMITTED** label is retired; the label to read now is **ON DEV**.
+> 2. **Four migrations are waiting.** The old text said "nothing below is waiting on a database
+>    change" — true of 211–224, which went to prod on 2026-08-03 with zero drift. But **225**
+>    (opponent book), **226** (coach-sandbox re-anchor), **227** (club shared book) and **228**
+>    (game-day moments) are **dev-only**, and **226 is not applied even on dev** — which is why §5.4's
+>    dates go stale and have to be re-seeded by hand. These gate the release of the staged half.
 >
-> ### The ordering: exposure, not project completeness
+> ### The ordering: exposure first, then whatever you can test in one sitting
 >
-> Sections are grouped by **what happens if this is wrong**, because a finished feature nobody can
-> reach matters less than a half-checked one handling a child's medical form.
+> Three tiers by **what happens if this is wrong**, because a finished feature nobody can reach
+> matters less than a half-checked one handling a child's medical form.
 >
 > | Tier | What it means |
 > |---|---|
@@ -33,21 +36,31 @@
 > | **Tier 2** | Daily coach actions — friction and lost trust, not harm |
 > | **Tier 3** | Polish — visible, annoying, nothing anyone can't get back |
 >
-> Section numbers are **unchanged** so older notes and links still resolve; they simply no longer
-> run in numeric order. Every step's wording is untouched — this was a re-sort and a re-label.
+> Inside each tier the sections are now **grouped by what shares a setup** — one account, one seeded
+> team, one device, one sitting. Three of those groups exist because the old order actively cost you
+> time: the four opponent-book phases were split across the tier, the three game-day phases sit on
+> **one screen** and the ledger asks twice for them to be done together (they were separated by an
+> unrelated section), and §6 was stranded behind two enormous sandbox walkthroughs.
+>
+> Section numbers are **unchanged** so older notes and links still resolve; they no longer run in
+> numeric order and are not meant to. Every step's wording is untouched.
 >
 > ### Reading a status line
 >
 > | Label | Meaning |
 > |---|---|
-> | **LIVE ON PRODUCTION** | On `origin/master`. Customers have it now. Verifying it is damage-finding, not gatekeeping. |
-> | **UNCOMMITTED** | In the working tree only. Not on `dev`, not on prod. This is the one place QA still gates anything. |
+> | **LIVE ON PRODUCTION** | On `origin/master`. Customers have it now. Damage-finding, not gatekeeping. |
+> | **ON DEV** | Committed to `dev`, never released. **Your QA is the gate.** Some carry a dev-only migration. |
 > | **⛔ CANNOT BE QA'd** | Shipped but switched off, or otherwise unreachable. Leave it. |
 >
-> ### Device batching survives the re-sort
+> ### Device batching survives the re-group
 >
-> Each heading carries 🖥 (desktop), 📱 (phone) or both, so you can still do one phone sitting:
-> §1.6b · §1.9b · §1.11 · §2.3 · §2.6 · §2.1 · §2.2 · §2.5 · §2.4 · §3.1 · §1.4 · §1.8 · §1.9.
+> Each heading carries 🖥 (desktop), 📱 (phone) or both. **The phone sitting is now much bigger than
+> it was** — game day is a phone-first feature and three of its sections are new:
+> §1.15 · §1.17 · §1.18 (one sitting, one game) · §1.6b · §1.9b · §1.11 · §1.12 · §1.13 · §1.14 ·
+> §1.16 · §2.3 · §2.1 · §2.2 · §2.5 · §2.6 · §2.4 · §3.1 · §5.4.
+> **A real iPhone, not Chromium, is required for §2.6a and §4** — both have a recorded defect that
+> existed only on iOS.
 
 > **Added 2026-08-01 (later):** §2.5 — **running a practice at the field (Practice Plans 1b)**.
 > ⚠ It is the one item in this ledger that genuinely cannot be judged at a desk; do it outdoors,
@@ -104,17 +117,42 @@
 > who is already signed in.
 
 > **How to use this:** work **Tier 1 top-to-bottom first**, tick `[x]` as you go, jot defects inline
-> under the step that failed. Because this is live behaviour, a Tier 1 defect is an incident to fix
-> now, not a release blocker to schedule. When a section is fully ticked, tell the working agent
-> "QA passed: <section>" — it graduates the project (commit where still uncommitted, with your
-> per-action OK, then archive). Source plans are archived (paths noted per section); **this ledger
-> is the QA surface of record.** Steps were extracted from each plan's own QA/acceptance sections;
-> two projects had none written — their sections say so and carry a sketch instead.
+> under the step that failed. A Tier 1 defect on a **LIVE** section is an incident to fix today; on
+> an **ON DEV** section it simply holds the release. When a section is fully ticked, tell the working
+> agent "QA passed: <section>" — it graduates the project (mark the TODO line, then archive the
+> plan). Source plans are archived (paths noted per section); **this ledger is the QA surface of
+> record.** Steps were extracted from each plan's own QA/acceptance sections; two projects had none
+> written — their sections say so and carry a sketch instead.
 >
 > **Steps marked 🤖 were machine-verified on 2026-08-03** by the Tier 1 pilot in `tests/uat/` and are
 > ticked. A machine can settle "can the wrong person reach this" better than a person can; it cannot
 > settle whether copy is honest, whether a bargain feels fair, or how anything behaves under a real
 > thumb. Everything still unticked needs your eyes for a reason.
+
+## The running order at a glance
+
+Ten groups, in the order to work them. **§ numbers are historical and do not sort** — this table is
+the sequence.
+
+| # | Group | Sections, in order | Device | State |
+|---|---|---|---|---|
+| **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ON DEV |
+| **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
+| **1C** | Money | §1.2 · §1.3 · §2.3 | 🖥📱 | LIVE |
+| **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV · migs 225 + 227 |
+| **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV · mig 228 |
+| **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
+| **2B** | On a phone — and one of them outdoors | §2.1 · §2.2 · §2.5 · §2.6 | 📱 | LIVE |
+| **2C** | The free portal | §3.1 | 📱 | LIVE |
+| **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
+| **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 | 🖥📱 | Mixed · mig 226 unapplied |
+
+**Where the release gate actually sits:** groups **1A, 1D, 1E**, §1.9c, §6, and most of **3B** are
+the unshipped half. If you only have one sitting, those are the ones where finding something still
+changes what customers get.
+
+**The three longest sections**, so you can budget: §5.2 (~30 min, the sandbox) · §5.4 (~25 min, the
+coach sandbox) · §1.16 (needs two teams in one Club-plan org set up first).
 
 ## Before any session — prep (10 minutes, once)
 
@@ -131,7 +169,16 @@
       a team with dated budget lines/expenses/payables across months + a prior season (Chunk H);
       an org rep team with an **admin-linked tournament registration** (Batch 1); free-tier teams
       in the coherence states (Session 3).
-- ⚠ **Everything below except §1.9c and four slices of §5.2 is LIVE on production.** Dev and prod are schema-identical (migrations 211–224 applied 2026-08-03, zero drift), so what you see on dev is what customers have.
+- [ ] **Setup the newer groups need, and nothing else does** — each is stated again in its own
+      section, but they are the things you cannot conjure mid-sitting: a **throwaway org on a Club
+      plan you are happy to cancel** (1A) · a team with the **same opponent on two scored games**,
+      ideally under two spellings (1D) · **two teams in one Club-plan org**, both with scouting
+      content on a shared opponent (§1.16) · a game whose **start time you have set to ~now** so the
+      game-day window is open (1E) · a team with **at least one prior season of tryout data** (§1.11).
+- ⚠ **Dev and prod are NOT schema-identical any more.** 211–224 went to prod on 2026-08-03 with zero
+  drift, but **225, 227 and 228 are dev-only**, and **226 is applied nowhere** — so on dev the coach
+  sandbox's dates do not re-anchor overnight and have to be re-seeded by hand (§5.4). Nothing here is
+  blocked by that; it is the release that is.
 
 ---
 
@@ -139,10 +186,22 @@
 
 Guardian and child information, money, messaging families, and anything that grants a person
 access. Wrong here is not friction — it is a child's medical form in the wrong hands, a family
-billed wrongly, or an adult holding access nobody meant to give them. **Everything in this tier
-except §1.9c is already in front of customers.**
+billed wrongly, or an adult holding access nobody meant to give them.
 
-### 1.19 🖥📱 A cancelled subscription actually stops — **BUILT 2026-08-06, dev, UNCOMMITTED** · no migration
+**This tier is now split roughly down the middle.** Groups **1B** and **1C** are shipped — customers
+have them, and a defect there is an incident. Groups **1A**, **1D** and **1E** (plus §1.9c inside 1B)
+are staged on `dev` and have never been released, so a defect there is caught in time. Both halves
+are worth the same care; only the consequence of failing differs.
+
+---
+
+## Group 1A · Access and entitlement — is this org still a customer?
+
+A cancelled subscription is the only thing in this ledger that can switch a whole organisation off. It
+needs a throwaway org and a platform-admin sign-in, so it batches with nothing else — do it first and
+alone, while you still have the patience for a before/after.
+
+### 1.19 🖥📱 A cancelled subscription actually stops — **ON DEV `d8316e87`** · no migration
 
 *A platform admin cancels an org. Until now the coach portal and the scorekeeper app kept working —
 forever — even though the confirm dialog promised both would shut down. They stop now.*
@@ -208,6 +267,13 @@ you *cannot* do now.
   Stripe. That escape hatch is intentional.
 
 ---
+
+## Group 1B · Who can see a child
+
+Guardian details, medical forms, a child's name on a screen someone outside the staff can reach. The
+standing invariant across all of these: **if you ever see a child's name on a family-facing surface,
+stop and say so.** §2.6a closes the group because it needs a real iPhone — park it for the phone sitting
+if you have not got one to hand.
 
 ### 1.5 🖥 Player documents & guardian PII gating — **LIVE ON PRODUCTION**
 *A signed medical form now needs BOTH Documents and Contacts access — an assistant with Documents
@@ -496,7 +562,7 @@ what you see is the only verification these screens will get.
       neither the child's name nor the guardian address. This is the first time a real helper
       account has been probed; the existing helper spec covers only the head coach's side of it.*
 
-### 1.9c 🖥 A1 — the roster switch is gone (2026-08-03) — **UNCOMMITTED — the only Tier 1 item NOT live**
+### 1.9c 🖥 A1 — the roster switch is gone (2026-08-03) — **ON DEV `d8316e87`** · no migration
 
 > **Mockups you approved:** `claude.ai/code/artifact/1f7c75ac-b7bc-42c7-b4bf-69fe71a70a5a`
 > **Where:** Team → **Staff** (the duty grid) · the Roster and Insights pages · a second sign-in as a helper.
@@ -534,8 +600,9 @@ switch that actually protects something (Contacts & birthdates) is untouched.
       season's plan, and a helper still gets 403 on the same URL.*
 
 > 🤖 **Machine pass 2026-08-04** — `tests/uat/scenarios/coach-record-access-boundary.spec.ts`.
-> ⚠ **This is the only Tier 1 section that is not yet live**, so unlike everywhere else in this tier
-> the machine pass here is a real gate rather than damage-finding. Both A1 risks were probed and
+> ⚠ **This section has never been released** (it was the only such Tier 1 item on 2026-08-03; groups
+> 1A, 1D and 1E have since joined it), so the machine pass here is a real gate rather than
+> damage-finding. Both A1 risks were probed and
 > neither fired: the contacts gate still withholds (a money-only assistant gets names and **not** the
 > guardian address), and past practice plans did **not** narrow (an ordinary assistant still opens
 > them, a helper still cannot). A row still carrying the retired pre-A1 `roster`/`planPlayerNames`
@@ -575,8 +642,6 @@ switch that actually protects something (Contacts & birthdates) is untouched.
       you they keep seeing your schedule when they can't see anything yet.
 - [ ] **Open a finished season's Staff list.** The family note should be **absent** there — it
       describes today, and a past season should only ever show you what was true at the time.
-
----
 
 ### 1.11 🖥📱 Tryout Insights — report · development baseline · candidate memory — **LIVE ON PRODUCTION**
 
@@ -657,9 +722,83 @@ what this kid looked like the last time they stood in front of you.
 - [ ] Read the guide: **Help → How to run tryout day**, and the new FAQ *"Can I see how a returning
       player did at last year's tryout?"*
 
+### 2.6a 📱 The family experience on a real phone (Chunk D) — **LIVE ON PRODUCTION**
+*Moved out of §2.6 on 2026-08-03. These four are the only phone passes in the ledger where being
+wrong reaches a child rather than a layout. Wording unchanged.*
+**⚠ A real iPhone. Headless Chromium cannot answer any of these** — two defects in this repo's
+recorded corpus existed only on a notched iPhone and in iOS Safari's touch handling.
+- [ ] **Chunk D 0–2 — do this one as a FAMILY, on a real phone, not as a coach.** The whole
+      follower experience is phone-first and arrives from a group chat: open the family link on a
+      phone, request, get approved, and confirm the schedule opens **scrolled to the next event**
+      without you scrolling. Then subscribe the calendar into the phone's own calendar app.
+- [ ] Chunk D 1: open a **shared game link** on a phone with **no account and no app installed** —
+      the grandparent case this feature exists for.
+- [ ] Chunk D 3: save a score on a phone → **Draft the family email** is reachable and the compose
+      screen opens with the words in it (this is a real game-day-on-the-sideline moment).
+- [ ] Chunk D 3: the recap **preview** on a phone — the stat tiles should stack to one column on a
+      narrow screen rather than squashing to two.
+
 ---
 
-### 1.12 🖥📱 Opponent Scouting Book — Phase 1 — **COMMITTED dev `72034c15`** · ⚠ mig 225 DEV-ONLY
+## Group 1C · Money
+
+A family billed wrongly, or a coach handed a number we invented. The rule that runs through all three:
+**no dollar figure ever originates from us** — template amount cells ship empty.
+
+### 1.2 🖥 Budget starter (Chunk G) — **LIVE ON PRODUCTION** · ⚠ review funnel still owed
+*First-season coach answers 5 tap-only questions → seeded budget worksheet; no dollar figure ever comes from us.*
+Plan stays ACTIVE (its /simplify → /review → /docs pass is still owed; QA can proceed — expect a
+possible small follow-up after the funnel). Plan: `archive/COACH_PORTAL_CHUNK_G_BUDGET_STARTER_PLAN.md`. *(No owner checklist in the doc — steps below are the sketch.)*
+- [ ] Zero-budget team, write coach: Season Budget Plan shows the first-run card with three doors
+      (Start · See a finished example · Add lines yourself).
+- [ ] Run the 5-question starter: worksheet placeholders are literally "$" — **no numeric hint
+      anywhere**; type some amounts, leave others blank; priced → real lines, unpriced → the
+      "Not in your plan yet" strip; ×N entry-fee helper shows its arithmetic at 2+ tournaments.
+- [ ] Checklist strip chip opens Add Line prefilled with category/item, amount EMPTY.
+- [ ] Sample sheet (all three entry points): clearly fenced fictional team, zero write affordances,
+      both tabs render.
+- [ ] Read-only money assistant: NO starter, NO strip, NO Add Line — sample door only.
+- [ ] Eyeball the five flagged mockup deviations (segmented control, square tick, olive text,
+      conditional ×N helper, arithmetic-in-note) — approve or flag.
+
+### 1.3 🖥 Money by Month (Chunk H) — **LIVE ON PRODUCTION**
+*Spreadsheet-shaped months view + generalized payables page + 3-template import/export.*
+Archived plan: `archive/COACH_PORTAL_CHUNK_H_MONEY_BY_MONTH_PLAN.md`. *(No owner checklist in the doc — sketch below.)*
+- [ ] Months view on a data-rich team: rows/columns/totals sane; four lenses cycle; Difference
+      shows "—" for future months, never a false "under budget".
+- [ ] Cash-flow rows: a shortfall month is called out in plain words.
+- [ ] Second-season team: prior-season column + "last season only" group.
+- [ ] Cell drill-ins open EXISTING forms (never a new editor); read-only assistant gets read panels,
+      no drill-in, no import.
+- [ ] "Expenses & Payables" rename + new Payment schedule tab (Unpaid default / Paid / All).
+- [ ] Import: download a template — **every amount cell empty**; paste rows; editable preview with
+      per-row verdicts; nothing writes until confirmed; zero-row commit reports failure honestly.
+- Notes: month grid deliberately scrolls sideways on phones. The cumulative chart changed on
+  purpose (undated budget no longer smeared across months) — flag, don't file.
+
+### 2.3 📱 Money on a phone (Chunk A) — **LIVE ON PRODUCTION**
+Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
+- [ ] Budget line with period splits: full-width tappable fields; backdrop tap asks "Discard
+      changes?"; "Keep editing" preserves everything.
+- [ ] Budget vs. Actual: sideways-scroll hint; line names pinned; the page itself never scrolls
+      sideways.
+- [ ] Expenses (both tabs), Fundraiser leaderboard + Log Amount, Org Allocations: stacked cards,
+      real full-width inputs; Allocations cross-links to Payment Requests.
+- [ ] Money hub headline numbers agree on "(paid only)".
+- [ ] Read-only assistant: same readable pages, zero write buttons, no blank card rows.
+- [ ] Desktop: Budget vs. Actual uses the window width (no ~960px inner scroll column).
+- [ ] No native browser alert anywhere in Money (a failed delete shows an inline error).
+
+---
+
+## Group 1D · The opponent book, and the club that shares it
+
+Four phases of one project, best read in order — P1 builds the book, P2 merges spellings and writes the
+numbers, P3 fills it from the tournament, and the Club Shared Book opens it to sibling teams. The
+exposure here is **notes about other people's children** and, in §1.16, a boundary between two clubs.
+Test them on one team with a repeated opponent and you get all four for the price of the setup.
+
+### 1.12 🖥📱 Opponent Scouting Book — Phase 1 — **ON DEV `72034c15`** · ⚠ mig 225 DEV-ONLY
 *Log a one-line observation right after the score; it files itself under that opponent; the book resurfaces on the schedule the week you meet them again.*
 
 Where: **Insights → "Who are we up against?"** tile, and any game's drawer → **Scouting** tab.
@@ -706,9 +845,7 @@ season; or name the same opponent on two games and score them).
       1,197 unit tests, verify:changed. Rendered layout check NOT run (no dev server) — worth
       one visual glance during this QA.
 
----
-
-### 1.13 🖥📱 Opponent Scouting Book — Phase 2 — **COMMITTED dev `d87fb31b`** · ⚠ mig 225 DEV-ONLY
+### 1.13 🖥📱 Opponent Scouting Book — Phase 2 — **ON DEV `d87fb31b`** · ⚠ mig 225 DEV-ONLY
 *Merge two spellings into one opponent; the card writes its own scouting lines from your results
 and lineups; one tap briefs the staff room; the masthead nags once in game week.*
 
@@ -774,9 +911,7 @@ scored games against one of them.
       call if wanted). All green after: typecheck, 1,234 unit tests, verify:changed.
       Rendered layout check NOT run — worth one visual glance during this QA.
 
----
-
-### 1.14 🖥📱 Opponent Scouting Book — Phase 3 — **COMMITTED dev `d87fb31b`** · ⚠ mig 225 DEV-ONLY
+### 1.14 🖥📱 Opponent Scouting Book — Phase 3 — **ON DEV `d87fb31b`** · ⚠ mig 225 DEV-ONLY
 *The book fills itself: a mirrored tournament game's Scouting tab shows the opponent's other
 results this weekend, assembled from the tournament we host; and the week you build practice,
 Saturday's book meets Tuesday's plan.*
@@ -842,9 +977,121 @@ tournament (published division) whose opponent has 2+ scored games that weekend.
       typecheck, 1,266 unit tests, verify:changed. Rendered layout check NOT run — worth one
       visual glance during this QA.
 
+### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **ON DEV `d9add3cd` + `0ad5d2cc`** · ⚠ mig 227 DEV-ONLY
+
+> **`/review` ran 2026-08-05 (high-risk tier, retrospective — this shipped before the funnel).**
+> Five lenses: cross-org leakage · plan gating · correctness · data/contract/migration ·
+> regression/blast-radius. **Zero defects attributable to this work.** The two-org leakage boundary,
+> the double opt-in (both switches default OFF in the migration), the server-side Club-plan gate, the
+> sibling history cap and the "club layer never breaks the page" contract all hold under attack; the
+> perf follow-up was verified NOT to have widened data scope. The write-guard allow-lists were **not**
+> edited — the diff added a *negative* test proving the club book can never become an archive door.
+> One **pre-existing, platform-wide** gap surfaced and is NOT a club-book defect: a platform-admin
+> cancellation marks the subscription cancelled but never demotes `plan_id`, and no plan gate checks
+> subscription status — so **every** paid feature survives cancellation, not just this one.
+> ✅ **That gap is what §1.19 was built to close** (2026-08-06). This review is where it was found.
+*Teams inside one club can opt in to read each other's opponent books. The 12U B coach opens
+Thunder's page and inherits the A team's read on them — labelled, read-only, never blended.*
+
+**Two switches have to be on before anything appears**, which is most of what this QA proves.
+Setup, in order: (1) the org must be on the **Club** plan; (2) **Rep Teams → Shared library →
+"Teams can share their opponent books with each other" → On**; (3) on **each** team, **Team
+settings → "Share our book with the club" → on**. You need **two teams in the same club** with
+some scouting content, ideally on the **same opponent name**. ⚠ Dev-server **restart required**
+first (new files + shared modules + a migration). ⚠ **mig 227 is applied to DEV only** — do not
+promote this to master before applying it to prod.
+
+- [ ] **🖥 The admin's key:** on a Club-plan org, Rep Teams → Shared library shows the sharing
+      switch at the top with the plain-language deal. Turn it **off** → open any team's
+      **Team settings**: the "Share our book with the club" section is **absent entirely**
+      (not greyed, not locked). Turn it back on → the section appears.
+- [ ] **🖥 The coach's key + the words:** on team A, Team settings → the section reads *"Your
+      book line and observations become readable by your club's other sharing teams, labelled
+      with your team and each writer's name. **You'll see their shared books while you share
+      yours.** Stop sharing any time — your book disappears from their pages immediately."*
+      Switch it on → "Sharing with the club".
+- [ ] **🖥 Both ways:** turn sharing on for team A **and** team B. On team B, open
+      **Insights → Opponents → {shared opponent}**: below B's own timeline a **"From your club"**
+      section appears with an **amber left edge** (your own book line stays lime/olive), showing
+      **A's name**, **A's record chip**, **A's book line** labelled *"Their book line"*, and
+      A's latest observations each signed **"— {writer} · {team}"**. Now do the reverse on team
+      A — B's block should appear there. **Records are separate per team, never added together.**
+- [ ] **🖥 Read-only across team lines:** in that club block there is **no eraser, no editor,
+      no tag filter** — nothing you can click to change another team's words. Your own timeline
+      above still has all of its controls.
+- [ ] **🖥 "All N from {team}":** give one team **3+ observations** on the shared opponent →
+      the sibling block shows **two**, then an "All 5 from 12U A ›" link that expands the rest
+      in place.
+- [ ] **📱 The glance (phone, ≤640):** on a game against that opponent, open the schedule
+      drawer's **Scouting** tab → one quiet **amber** line: *"Your club has N more observations
+      on {opponent} ›"*. Tap it → lands on the opponent card's club section, and **N should match
+      what you count there** (the tab fetches only that number, by a different route than the
+      card — worth confirming once that the two agree). **No sibling notes are shown inline in
+      the drawer**, and the masthead nudge / practice-week panel still speak only for your own
+      team's book.
+- [ ] **🖥 The list marker:** Insights → Opponents — the row for that opponent wears a small
+      amber book icon (hover: "Your club has shared notes on …"). A row the club knows nothing
+      about wears none.
+- [ ] **⚠ RECIPROCITY (the one most likely to be got wrong):** turn team B's switch **off**,
+      leaving A's on. On B: the opponent card's club section is **gone**, the drawer line is
+      **gone**, the list marker is **gone** — immediately, no cache to clear. Meanwhile on
+      **A**, B's block has also disappeared (B stopped sharing). Turn B back on → everything
+      returns.
+- [ ] **⚠ THE GATE (non-Club org):** on a **Team-plan / standalone Premium** team, or any
+      non-Club org: Shared library has **no** sharing switch, Team settings has **no** section,
+      opponent cards have **no** club layer, and there is **no locked tease or upsell anywhere**.
+      The feature should be completely invisible.
+- [ ] **🖥 The archive is untouched:** switch to a **completed** season — no club layer appears
+      anywhere, and Opponents is still absent from the archived-season nav (the book is a
+      live-season instrument, unchanged by this build).
+- [ ] **🖥 Different spellings still find each other:** on team A, merge a second spelling
+      ("Thunder 12U") into the shared opponent via "Same team as…". On team B, open the
+      opponent under **its** spelling → A's block should still appear.
+- [ ] **🖥 Nothing leaks between clubs:** if you have a second organization with scouting
+      content, confirm none of it ever appears in this club's layer. *(A two-org fixture test
+      asserts this in code as well.)*
+- [ ] **🖥 The record agrees on both screens** *(review fix — the one you'd most likely notice)*:
+      note the record chip on team A's block inside team B's club section, then open **team A's
+      own** opponent page for that same opponent. **The two must read the same.** Best tested on
+      a club team with several seasons of games behind it.
+- [ ] **🖥 Two spellings, two book lines, neither lost** *(review fix)*: on team A, write a book
+      line on the opponent, then write a **different** book line on a second spelling of the same
+      team (don't merge them). On team B, A's block should show **both lines**, one per line —
+      not just the first.
+- [ ] **🖥 A club hiccup can't break your own page** *(review fix, best-effort to test)*: the
+      club section is an extra, never a blocker. If it ever fails to load, your own record, book
+      line and observations must still render normally — you'd see the page minus the club
+      section, never an error page.
+- [ ] **🖥 The guide explains it:** open the coaches **Help** guide → search *"from your club"*.
+      The scouting section should describe the club layer and the two switches, and two FAQs
+      should answer *"what exactly do the other coaches see?"* and *"why don't I have that
+      section?"*. On the admin side, the **Rep Teams** guide's Shared library section should
+      describe your switch. *(Search only matches keywords, so this is a real check.)*
+
+*(Built to mockup artifact `def742fe-…` Stage 8, owner-signed-off 2026-08-04. Deviation to flag:
+none — 8a/8b/8c are built as drawn. The one added judgement is the sibling-block ORDER: the team
+with the most observations reads first, then alphabetical.)*
+
+*(✅ Post-build funnel run 2026-08-05: `/simplify` → `/review` → `/docs`. The review was
+high-risk tier, 5 lenses, and **could not break any of the three gates** — cross-org leakage,
+plan-gate bypass and reciprocity bypass all held under direct attack. Six defects found and
+fixed; the four user-visible ones are checkbox items above. The fifth and sixth need no manual
+test: observation totals are now counted exactly, and **both sharing switches re-read the
+server's answer if a save fails** rather than assuming — so a switch can never sit showing "not
+sharing" while the club can in fact read that team's notes. If you want to exercise that last
+one, kill your network mid-toggle: the switch should settle on whatever the server actually
+recorded, not on a guess.)*
+
 ---
 
-### 1.15 📱🖥 Game-Day Mode P1 — the bench console — **COMMITTED dev `bcd695a3`** · no migration
+## Group 1E · Game day on the bench — ⚠ ONE sitting, one phone
+
+Three phases now sit on **the same screen**, and the ledger asks you twice not to test them separately.
+Set one game's start time near now, open the console on a phone, and walk §1.15 → §1.17 → §1.18 without
+putting it down. The bench-order check that §1.15 flags as a deviation is answered in §1.18 — do not
+test it twice.
+
+### 1.15 📱🖥 Game-Day Mode P1 — the bench console — **ON DEV `bcd695a3`** · no migration
 *One phone screen for running a game: who's on the field right now, tap-to-substitute, the
 score, attendance — every change saved into the same lineup the reports already read. Families
 hear exactly once, at End game.*
@@ -940,116 +1187,7 @@ arithmetic, nothing is stored).
       the schedule tab still shows the player's note; deactivate a rostered player who's in
       tonight's lineup, open the console, make a sub, confirm it saves.
 
----
-
-### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **COMMITTED dev `d9add3cd` + `0ad5d2cc`** · ⚠ mig 227 DEV-ONLY
-
-> **`/review` ran 2026-08-05 (high-risk tier, retrospective — this shipped before the funnel).**
-> Five lenses: cross-org leakage · plan gating · correctness · data/contract/migration ·
-> regression/blast-radius. **Zero defects attributable to this work.** The two-org leakage boundary,
-> the double opt-in (both switches default OFF in the migration), the server-side Club-plan gate, the
-> sibling history cap and the "club layer never breaks the page" contract all hold under attack; the
-> perf follow-up was verified NOT to have widened data scope. The write-guard allow-lists were **not**
-> edited — the diff added a *negative* test proving the club book can never become an archive door.
-> One **pre-existing, platform-wide** gap surfaced and is NOT a club-book defect: a platform-admin
-> cancellation marks the subscription cancelled but never demotes `plan_id`, and no plan gate checks
-> subscription status — so **every** paid feature survives cancellation, not just this one. Worth its
-> own ticket; the in-app downgrade path does it correctly.
-*Teams inside one club can opt in to read each other's opponent books. The 12U B coach opens
-Thunder's page and inherits the A team's read on them — labelled, read-only, never blended.*
-
-**Two switches have to be on before anything appears**, which is most of what this QA proves.
-Setup, in order: (1) the org must be on the **Club** plan; (2) **Rep Teams → Shared library →
-"Teams can share their opponent books with each other" → On**; (3) on **each** team, **Team
-settings → "Share our book with the club" → on**. You need **two teams in the same club** with
-some scouting content, ideally on the **same opponent name**. ⚠ Dev-server **restart required**
-first (new files + shared modules + a migration). ⚠ **mig 227 is applied to DEV only** — do not
-promote this to master before applying it to prod.
-
-- [ ] **🖥 The admin's key:** on a Club-plan org, Rep Teams → Shared library shows the sharing
-      switch at the top with the plain-language deal. Turn it **off** → open any team's
-      **Team settings**: the "Share our book with the club" section is **absent entirely**
-      (not greyed, not locked). Turn it back on → the section appears.
-- [ ] **🖥 The coach's key + the words:** on team A, Team settings → the section reads *"Your
-      book line and observations become readable by your club's other sharing teams, labelled
-      with your team and each writer's name. **You'll see their shared books while you share
-      yours.** Stop sharing any time — your book disappears from their pages immediately."*
-      Switch it on → "Sharing with the club".
-- [ ] **🖥 Both ways:** turn sharing on for team A **and** team B. On team B, open
-      **Insights → Opponents → {shared opponent}**: below B's own timeline a **"From your club"**
-      section appears with an **amber left edge** (your own book line stays lime/olive), showing
-      **A's name**, **A's record chip**, **A's book line** labelled *"Their book line"*, and
-      A's latest observations each signed **"— {writer} · {team}"**. Now do the reverse on team
-      A — B's block should appear there. **Records are separate per team, never added together.**
-- [ ] **🖥 Read-only across team lines:** in that club block there is **no eraser, no editor,
-      no tag filter** — nothing you can click to change another team's words. Your own timeline
-      above still has all of its controls.
-- [ ] **🖥 "All N from {team}":** give one team **3+ observations** on the shared opponent →
-      the sibling block shows **two**, then an "All 5 from 12U A ›" link that expands the rest
-      in place.
-- [ ] **📱 The glance (phone, ≤640):** on a game against that opponent, open the schedule
-      drawer's **Scouting** tab → one quiet **amber** line: *"Your club has N more observations
-      on {opponent} ›"*. Tap it → lands on the opponent card's club section, and **N should match
-      what you count there** (the tab fetches only that number, by a different route than the
-      card — worth confirming once that the two agree). **No sibling notes are shown inline in
-      the drawer**, and the masthead nudge / practice-week panel still speak only for your own
-      team's book.
-- [ ] **🖥 The list marker:** Insights → Opponents — the row for that opponent wears a small
-      amber book icon (hover: "Your club has shared notes on …"). A row the club knows nothing
-      about wears none.
-- [ ] **⚠ RECIPROCITY (the one most likely to be got wrong):** turn team B's switch **off**,
-      leaving A's on. On B: the opponent card's club section is **gone**, the drawer line is
-      **gone**, the list marker is **gone** — immediately, no cache to clear. Meanwhile on
-      **A**, B's block has also disappeared (B stopped sharing). Turn B back on → everything
-      returns.
-- [ ] **⚠ THE GATE (non-Club org):** on a **Team-plan / standalone Premium** team, or any
-      non-Club org: Shared library has **no** sharing switch, Team settings has **no** section,
-      opponent cards have **no** club layer, and there is **no locked tease or upsell anywhere**.
-      The feature should be completely invisible.
-- [ ] **🖥 The archive is untouched:** switch to a **completed** season — no club layer appears
-      anywhere, and Opponents is still absent from the archived-season nav (the book is a
-      live-season instrument, unchanged by this build).
-- [ ] **🖥 Different spellings still find each other:** on team A, merge a second spelling
-      ("Thunder 12U") into the shared opponent via "Same team as…". On team B, open the
-      opponent under **its** spelling → A's block should still appear.
-- [ ] **🖥 Nothing leaks between clubs:** if you have a second organization with scouting
-      content, confirm none of it ever appears in this club's layer. *(A two-org fixture test
-      asserts this in code as well.)*
-- [ ] **🖥 The record agrees on both screens** *(review fix — the one you'd most likely notice)*:
-      note the record chip on team A's block inside team B's club section, then open **team A's
-      own** opponent page for that same opponent. **The two must read the same.** Best tested on
-      a club team with several seasons of games behind it.
-- [ ] **🖥 Two spellings, two book lines, neither lost** *(review fix)*: on team A, write a book
-      line on the opponent, then write a **different** book line on a second spelling of the same
-      team (don't merge them). On team B, A's block should show **both lines**, one per line —
-      not just the first.
-- [ ] **🖥 A club hiccup can't break your own page** *(review fix, best-effort to test)*: the
-      club section is an extra, never a blocker. If it ever fails to load, your own record, book
-      line and observations must still render normally — you'd see the page minus the club
-      section, never an error page.
-- [ ] **🖥 The guide explains it:** open the coaches **Help** guide → search *"from your club"*.
-      The scouting section should describe the club layer and the two switches, and two FAQs
-      should answer *"what exactly do the other coaches see?"* and *"why don't I have that
-      section?"*. On the admin side, the **Rep Teams** guide's Shared library section should
-      describe your switch. *(Search only matches keywords, so this is a real check.)*
-
-*(Built to mockup artifact `def742fe-…` Stage 8, owner-signed-off 2026-08-04. Deviation to flag:
-none — 8a/8b/8c are built as drawn. The one added judgement is the sibling-block ORDER: the team
-with the most observations reads first, then alphabetical.)*
-
-*(✅ Post-build funnel run 2026-08-05: `/simplify` → `/review` → `/docs`. The review was
-high-risk tier, 5 lenses, and **could not break any of the three gates** — cross-org leakage,
-plan-gate bypass and reciprocity bypass all held under direct attack. Six defects found and
-fixed; the four user-visible ones are checkbox items above. The fifth and sixth need no manual
-test: observation totals are now counted exactly, and **both sharing switches re-read the
-server's answer if a save fails** rather than assuming — so a switch can never sit showing "not
-sharing" while the club can in fact read that team's notes. If you want to exercise that last
-one, kill your network mid-toggle: the switch should settle on whatever the server actually
-recorded, not on a guess.)*
-
----
-
-### 1.17 📱 Game-Day Mode P2 — moments — **BUILT 2026-08-05, dev, UNCOMMITTED** · ⚠ mig 228 DEV-ONLY
+### 1.17 📱 Game-Day Mode P2 — moments — **ON DEV `f03e0e46`** · ⚠ mig 228 DEV-ONLY
 *One line a coach types at the bench because they want to remember it. It reads back in the
 end-game wrap, on the tagged player's page, and as one quoted line on Season Wrapped — and it
 feeds nothing else, ever.*
@@ -1156,9 +1294,7 @@ get the live window.
 - Notes: **mig 228 is DEV-ONLY / PROD-PENDING**, so the schema-parity gate is red for this
   table (and for the Club Shared Book's 227) until both are promoted — expected, not a defect.
 
----
-
-### 1.18 📱 Game-Day Mode P3 — playing-time polish — **BUILT 2026-08-05, dev, UNCOMMITTED** · no migration
+### 1.18 📱 Game-Day Mode P3 — playing-time polish — **ON DEV `d8316e87`** · no migration
 *Three small things on the same bench console: the bench puts the longest-sitting player on top,
 the arm-care chip finally works for teams that set one season-wide pitching cap, and the screen
 stops going dark between pitches.*
@@ -1244,72 +1380,17 @@ modules + a payload change). ⚠ Set a game's start time near now to get the liv
 
 ---
 
-### 1.2 🖥 Budget starter (Chunk G) — **LIVE ON PRODUCTION** · ⚠ review funnel still owed
-*First-season coach answers 5 tap-only questions → seeded budget worksheet; no dollar figure ever comes from us.*
-Plan stays ACTIVE (its /simplify → /review → /docs pass is still owed; QA can proceed — expect a
-possible small follow-up after the funnel). Plan: `archive/COACH_PORTAL_CHUNK_G_BUDGET_STARTER_PLAN.md`. *(No owner checklist in the doc — steps below are the sketch.)*
-- [ ] Zero-budget team, write coach: Season Budget Plan shows the first-run card with three doors
-      (Start · See a finished example · Add lines yourself).
-- [ ] Run the 5-question starter: worksheet placeholders are literally "$" — **no numeric hint
-      anywhere**; type some amounts, leave others blank; priced → real lines, unpriced → the
-      "Not in your plan yet" strip; ×N entry-fee helper shows its arithmetic at 2+ tournaments.
-- [ ] Checklist strip chip opens Add Line prefilled with category/item, amount EMPTY.
-- [ ] Sample sheet (all three entry points): clearly fenced fictional team, zero write affordances,
-      both tabs render.
-- [ ] Read-only money assistant: NO starter, NO strip, NO Add Line — sample door only.
-- [ ] Eyeball the five flagged mockup deviations (segmented control, square tick, olive text,
-      conditional ×N helper, arithmetic-in-note) — approve or flag.
-
-### 1.3 🖥 Money by Month (Chunk H) — **LIVE ON PRODUCTION**
-*Spreadsheet-shaped months view + generalized payables page + 3-template import/export.*
-Archived plan: `archive/COACH_PORTAL_CHUNK_H_MONEY_BY_MONTH_PLAN.md`. *(No owner checklist in the doc — sketch below.)*
-- [ ] Months view on a data-rich team: rows/columns/totals sane; four lenses cycle; Difference
-      shows "—" for future months, never a false "under budget".
-- [ ] Cash-flow rows: a shortfall month is called out in plain words.
-- [ ] Second-season team: prior-season column + "last season only" group.
-- [ ] Cell drill-ins open EXISTING forms (never a new editor); read-only assistant gets read panels,
-      no drill-in, no import.
-- [ ] "Expenses & Payables" rename + new Payment schedule tab (Unpaid default / Paid / All).
-- [ ] Import: download a template — **every amount cell empty**; paste rows; editable preview with
-      per-row verdicts; nothing writes until confirmed; zero-row commit reports failure honestly.
-- Notes: month grid deliberately scrolls sideways on phones. The cumulative chart changed on
-  purpose (undated budget no longer smeared across months) — flag, don't file.
-
-### 2.3 📱 Money on a phone (Chunk A) — **LIVE ON PRODUCTION**
-Archived plan: `archive/COACH_PORTAL_CHUNK_A_MONEY_ON_A_PHONE_PLAN.md`.
-- [ ] Budget line with period splits: full-width tappable fields; backdrop tap asks "Discard
-      changes?"; "Keep editing" preserves everything.
-- [ ] Budget vs. Actual: sideways-scroll hint; line names pinned; the page itself never scrolls
-      sideways.
-- [ ] Expenses (both tabs), Fundraiser leaderboard + Log Amount, Org Allocations: stacked cards,
-      real full-width inputs; Allocations cross-links to Payment Requests.
-- [ ] Money hub headline numbers agree on "(paid only)".
-- [ ] Read-only assistant: same readable pages, zero write buttons, no blank card rows.
-- [ ] Desktop: Budget vs. Actual uses the window width (no ~960px inner scroll column).
-- [ ] No native browser alert anywhere in Money (a failed delete shows an inline error).
-
-### 2.6a 📱 The family experience on a real phone (Chunk D) — **LIVE ON PRODUCTION**
-*Moved out of §2.6 on 2026-08-03. These four are the only phone passes in the ledger where being
-wrong reaches a child rather than a layout. Wording unchanged.*
-**⚠ A real iPhone. Headless Chromium cannot answer any of these** — two defects in this repo's
-recorded corpus existed only on a notched iPhone and in iOS Safari's touch handling.
-- [ ] **Chunk D 0–2 — do this one as a FAMILY, on a real phone, not as a coach.** The whole
-      follower experience is phone-first and arrives from a group chat: open the family link on a
-      phone, request, get approved, and confirm the schedule opens **scrolled to the next event**
-      without you scrolling. Then subscribe the calendar into the phone's own calendar app.
-- [ ] Chunk D 1: open a **shared game link** on a phone with **no account and no app installed** —
-      the grandparent case this feature exists for.
-- [ ] Chunk D 3: save a score on a phone → **Draft the family email** is reachable and the compose
-      screen opens with the words in it (this is a real game-day-on-the-sideline moment).
-- [ ] Chunk D 3: the recap **preview** on a phone — the stat tiles should stack to one column on a
-      narrow screen rather than squashing to two.
-
----
-
 # TIER 2 — daily coach actions
 
 The work a coach does every week: Overview, the past season, practice plans, tryout day, the
 first week with a new team. Wrong here is friction and lost trust, not harm.
+
+---
+
+## Group 2A · At a desk — the week's work
+
+Overview, asking about your team, the archive, and both halves of Practice Plans. One sitting at a
+desktop window.
 
 ### 1.1 🖥 Overview says ONE thing (Chunk I) — **LIVE ON PRODUCTION**
 *One priority card, a six-tile board, a quiet tail — replacing nine contradicting bands.*
@@ -1329,6 +1410,39 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_I_ONE_THING_PLAN.md` (its PM brief's 
       team's money" tile and Attendance fills the gap (not a missing tile).
 - [ ] A finished tournament sits in the tail with a "Finished" chip, never in the anchor slot.
 - Note: two coaches on the same team correctly see DIFFERENT anchors — not a bug.
+
+### 1.10 🖥 Ask the Front Office, Phase A — **LIVE ON PRODUCTION**
+Archived plan: `archive/ASK_FRONT_OFFICE_PLAN.md` + `_PM_BRIEF.md`. Mockups (binding):
+https://claude.ai/code/artifact/14a812e8-1fe0-429c-9c54-beab7a581038
+
+On **Insights**, between "What stands out" and the report tiles, a one-line bar: **Ask about your
+team**. It opens six ready-made questions; each answers in a sentence with the records underneath.
+
+- [ ] **At rest it is ONE LINE.** Open Insights and confirm the bar costs almost no height and shows
+      no questions until you tap it. It should read as a bar to tap, **not a search box** — if your
+      instinct is to click and start typing, that's the defect, tell me.
+- [ ] Tap it. Six questions on a diamond team. Tap **"Who hasn't played a position lately?"** — a
+      position row opens **already on the position with the longest gap**, and the answer names a
+      player, a gap, and the last game they played there.
+- [ ] **⚠ THE SHARPEST STEP — the receipts must prove the sentence.** Whatever date the sentence
+      cites ("the last time was July 12 vs Falcons"), a receipt row for **that exact game** must be
+      in the list below. This broke in four places during review; it is the feature's whole promise.
+      Tap through several positions and check the citation every time.
+- [ ] Tap a **receipt link** — it should take you to the full report, and the back button should
+      return you to the page where you left it (this is why it expands in place, not in a pop-up).
+- [ ] **"What does each family still owe?"** — if you have siblings on the roster, they must appear
+      as **ONE family with a combined balance**, not two rows. Check a family whose surname differs
+      from the players'.
+- [ ] **"Who's missed the most practices?"** — the number must match the dates listed underneath.
+      If someone has an unrecorded (no-reply) practice, it must **not** count against them.
+- [ ] **On a brand-new team with nothing recorded:** every question says plainly that nothing is
+      recorded and names **the one thing** that would fill it in. No zeros, no blanks, no apology.
+- [ ] **As an assistant coach WITHOUT money access:** the two money questions are **absent from the
+      list entirely** — not greyed, not erroring on tap.
+- [ ] **As an assistant with money but NOT guardian contacts:** the family answer labels families by
+      **player names** ("Maya and Sam's family"), and siblings are still grouped as one.
+- [ ] **In a completed season:** the ask bar is **absent from Insights**, not an empty box.
+- [ ] Read the guide: **Help → Asking about your team**, and confirm the Insights help "?" opens it.
 
 ### 1.4 🖥📱 The frozen past season (Chunk F) — **LIVE ON PRODUCTION**
 *Open any season you coached, read-only, exactly as you could see it then.*
@@ -1457,38 +1571,13 @@ say how it went afterwards, so "what did we do about hitting last spring?" has a
       with **no Rename, Retire, New or Your tags buttons at all**, and **Save as template…** doesn't
       appear on a plan.
 
-### 1.10 🖥 Ask the Front Office, Phase A — **LIVE ON PRODUCTION**
-Archived plan: `archive/ASK_FRONT_OFFICE_PLAN.md` + `_PM_BRIEF.md`. Mockups (binding):
-https://claude.ai/code/artifact/14a812e8-1fe0-429c-9c54-beab7a581038
+---
 
-On **Insights**, between "What stands out" and the report tiles, a one-line bar: **Ask about your
-team**. It opens six ready-made questions; each answers in a sentence with the records underneath.
+## Group 2B · On a phone — and one of them outdoors
 
-- [ ] **At rest it is ONE LINE.** Open Insights and confirm the bar costs almost no height and shows
-      no questions until you tap it. It should read as a bar to tap, **not a search box** — if your
-      instinct is to click and start typing, that's the defect, tell me.
-- [ ] Tap it. Six questions on a diamond team. Tap **"Who hasn't played a position lately?"** — a
-      position row opens **already on the position with the longest gap**, and the answer names a
-      player, a gap, and the last game they played there.
-- [ ] **⚠ THE SHARPEST STEP — the receipts must prove the sentence.** Whatever date the sentence
-      cites ("the last time was July 12 vs Falcons"), a receipt row for **that exact game** must be
-      in the list below. This broke in four places during review; it is the feature's whole promise.
-      Tap through several positions and check the citation every time.
-- [ ] Tap a **receipt link** — it should take you to the full report, and the back button should
-      return you to the page where you left it (this is why it expands in place, not in a pop-up).
-- [ ] **"What does each family still owe?"** — if you have siblings on the roster, they must appear
-      as **ONE family with a combined balance**, not two rows. Check a family whose surname differs
-      from the players'.
-- [ ] **"Who's missed the most practices?"** — the number must match the dates listed underneath.
-      If someone has an unrecorded (no-reply) practice, it must **not** count against them.
-- [ ] **On a brand-new team with nothing recorded:** every question says plainly that nothing is
-      recorded and names **the one thing** that would fill it in. No zeros, no blanks, no apology.
-- [ ] **As an assistant coach WITHOUT money access:** the two money questions are **absent from the
-      list entirely** — not greyed, not erroring on tap.
-- [ ] **As an assistant with money but NOT guardian contacts:** the family answer labels families by
-      **player names** ("Maya and Sam's family"), and siblings are still grouped as one.
-- [ ] **In a completed season:** the ask bar is **absent from Insights**, not an empty box.
-- [ ] Read the guide: **Help → Asking about your team**, and confirm the Insights help "?" opens it.
+⚠ **§2.5 cannot be judged at a desk.** It is the run-the-practice screen, and the whole argument it makes
+is about arm's length in daylight — do it standing up, one-handed, ideally outside. The other three are
+ordinary phone passes and can be done anywhere.
 
 ### 2.1 📱 Mobile overlay safety + Tournaments revival (Batch 1) — **LIVE ON PRODUCTION**
 Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH1_PLAN.md`.
@@ -1582,6 +1671,11 @@ toolbar). No plan handy? Ask the agent to seed a probe practice — it prints a 
 
 ---
 
+## Group 2C · The free portal
+
+The only section in the ledger about the free tier. Needs free-tier coach accounts in the coherence
+states.
+
 ### 3.1 📱 FREE coach portal — Overview coherence (DF-1…DF-7) — **LIVE ON PRODUCTION**
 Archived plan: `archive/FREE_COACH_OVERVIEW_COHERENCE_PLAN.md` (its PM brief's "nothing built" header is stale).
 - [ ] One accepted upcoming tournament: ONE "Your tournament" block with the ⇄ fan-view link,
@@ -1600,12 +1694,77 @@ Archived plan: `archive/FREE_COACH_OVERVIEW_COHERENCE_PLAN.md` (its PM brief's "
 
 ---
 
----
-
 # TIER 3 — polish
 
 Findability, close behaviour, the creation preview and the sandbox. Wrong here is visible and
 annoying, and costs nobody anything they cannot get back.
+
+---
+
+## Group 3A · The coach portal — words, findability, close behaviour
+
+§6 leads because it is the one section that asks you to **ratify wording** rather than find a defect —
+it is a reading exercise, and nine invented phrases are waiting on your veto. The other three are live
+damage-finding.
+
+### 6 🖥📱 The words the app uses about playing time — **ON DEV `d8316e87`** · no migration
+*A copy-only sweep. Every playing-time metric is identical; only the framing changed. The app now
+says where minutes went — it never says whether that was fair. Your ruling, 2026-08-04.*
+
+Where: Insights, the Overview board, Lineups, Attendance, a player's profile, and the family
+season recap. **Nothing behaves differently** — bench warnings, pitching caps, auto-fill and the
+A-squad modes all work exactly as before, so this is a reading exercise, not a clicking one.
+No dev-server restart needed (copy only).
+
+- [ ] **🖥 Insights doorway + report title:** open **Insights** → the playing-time tile now reads
+      **"Where is playing time going?"**, and so does the report when you open it. The old
+      "Is playing time fair?" appears nowhere.
+- [ ] **🖥 Overview tile:** on a board that shows the **Playing time** tile (an assistant coach
+      without money access is the reliable way to see it), the verdict reads **"Evenly spread"**
+      or **"Leans on a few"** — never "Fairly even" / "Uneven". With too few lineups saved it
+      still reads "Not enough yet".
+- [ ] **🖥 Lineups — the empty state:** a team with no games yet shows the Lineups intro, whose
+      payoff line now ends "…Insights uses it to show **where playing time has gone** across the
+      season."
+- [ ] **🖥 Lineups — auto-fill and Reshuffle:** open a game's lineup → the note under **Auto-fill**
+      reads **"Auto-fill spreads bench time evenly across the roster."** Hover **Reshuffle** →
+      the tooltip reads "Fresh arrangement with even bench rotation…". Fill the grid, then tap
+      **Reshuffle** → the confirm says "…a fresh **arrangement with even bench rotation**, using
+      your current auto-fill settings."
+- [ ] **🖥 Lineups — the bench pill:** switch to the **Playing time** view of a filled lineup →
+      beside "Bench: 1–3 innings each" the pill now reads **"Evenly spread"** (or **"Leans on a
+      few"** when the spread is more than one inning), matching the Overview wording. ⚠ **Judgment
+      call — say if you'd rather it stayed short** ("Even" / "Uneven"): it's a small pill and the
+      long phrase is the price of consistency with the tile.
+- [ ] **🖥 Position preferences tooltip:** open a player → position preferences → the help bubble's
+      last line reads **"Bench time rotates evenly (no back-to-back sits)"**, describing what the
+      generator does rather than promising fairness.
+- [ ] **🖥 Attendance:** the season attendance page's explanatory line now reads "A season view to
+      **inform playing-time decisions** and spot when someone's drifting away — not a ranking."
+- [ ] **👨‍👩‍👧 The family recap — the highest-stakes one.** Open a player → **Family season recap**
+      → **Preview**. A player whose minutes sat near the team middle now reads **"Right in the
+      team's typical range all season"**. The above/below lines are unchanged ("Above/Below the
+      team's middle for time on the field"). Read this one as a parent: nothing on the screen
+      should sound like the platform is grading your coaching.
+- [ ] **🖥 Help stays in step:** open **Help** and read the **Insights**, **Lineups**, **Overview
+      tiles** and **Family season recap** entries — every quoted phrase matches what the screens
+      now say. Then **search "fair"** — the results still come up (the old word is kept as a
+      search term on purpose, because coaches will keep typing it); the answers they open just no
+      longer use it.
+- [ ] **⚠ Tryouts must be UNTOUCHED — the deliberate exception.** Open **Tryouts**: "names stay
+      hidden **for fairness**" is still there, and the **Tryout report** still carries its
+      **Fairness receipt** heading and lines. That is an evaluation-integrity promise, a different
+      concept, and you ruled it stays. If any of that wording changed, the sweep overreached.
+
+**Words I invented beyond the four you ratified** (each is a judgment call — veto any individually):
+"where minutes have gone", "where the innings are going", "Auto-fill spreads bench time evenly
+across the roster", "Fresh arrangement with even bench rotation", "Bench time rotates evenly",
+"inform playing-time decisions", "rotates everyone evenly", "keeps bench time even across the rest
+of the roster", and the lineup pill borrowing the Overview's "Evenly spread" / "Leans on a few".
+
+**Flagged, not changed:** the tournament **schedule generator** still offers "Default **fairness**
+across rest, facility moves, daily load, and time slots." That is scheduling equity between teams,
+not playing time — out of scope here. Say if it deserves its own ruling.
 
 ### 1.6 🖥 Findability, desktop half (Chunk B) — **LIVE ON PRODUCTION**
 Code-verified built. Archived plan: `archive/COACH_PORTAL_CHUNK_B_FINDABILITY_PLAN.md`.
@@ -1639,6 +1798,13 @@ Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
   payee dropdown ignores Enter/Space for keyboard users.
 
 ---
+
+## Group 3B · The shop window — what a prospect walks into
+
+The creation preview and both no-login demos. ⚠ **This group is only mostly polish:** §5.2's **J2**
+(the Playoffs tab) and **J3** (Results opening on something) changed the navigation of **real customers'**
+tournaments, and §5.4 is the newest thing in the ledger. Everything else here costs a prospect's
+impression and nothing more.
 
 ### 5.1 🖥 Tournament creation live preview (v1 + colour presets v1.1) — **LIVE ON PRODUCTION**
 *While an organizer fills in the setup wizard, a phone beside the form assembles their public
@@ -1707,7 +1873,7 @@ Sign in as an org admin. Do this at a window **wider than 1280px** unless a step
 - Note: there is deliberately **no colour picker** in the wizard. Custom colours are a paid feature
   and putting the swatches in free signup is a pricing decision you haven't made yet.
 
-### 5.2 🖥📱 The "See it live" sandbox — **PHASE 1 LIVE; the tour rebuild, live pill and Playoffs tab are UNCOMMITTED**
+### 5.2 🖥📱 The "See it live" sandbox — **PHASE 1 LIVE; the tour rebuild, live pill, health panel and Playoffs tab are ON DEV `21b8e0e8`**
 *A stranger with no login and no email walks into a real tournament that is running right now, on
 both sides of the product: the fan pages ticking on their own, and the actual admin portal as a
 demo organizer. Nothing they do is saved and nothing is ever sent to anyone.*
@@ -1717,14 +1883,16 @@ Binding visual spec: `archive/TOURNAMENT_SANDBOX_MOCKUPS.html` (the tour is supe
 The narrative walkthrough (what to do, what to expect, what to judge at each beat) was delivered in
 chat 2026-08-03 at the owner's request rather than as a file. This list is the tick-box record.
 
-> **⚠ Status, corrected 2026-08-03 — this section is split down the middle.** The old heading said
-> "all eight slices built, uncommitted"; both halves of that were wrong.
+> **⚠ Status — this section is split down the middle.** *(Corrected 2026-08-03, re-checked 2026-08-06.)*
 > **LIVE on production:** the door (**A**), the banner (**B**), the operator side (**D**), the
 > locked send (**F**), the curated corners (**G**), the invented-contacts check (**H**), the
 > marketing doors (**I**, still hidden in prod by default) and no-collateral-damage (**J**).
-> **UNCOMMITTED — working tree only:** the rebuilt guided tour (**C**), the live pill (**C2**), the
-> pre-expanded Schedule Health panel (**E**) and the **Playoffs tab (J2)**. J2 changes the nav on
-> **real customer tournaments**, so it is the one slice here whose blast radius is not the demo.
+> **ON DEV, never released** (`21b8e0e8`, plus the sealing work in `d8e00f74`): the rebuilt guided
+> tour (**C**), the live pill (**C2**), the pre-expanded Schedule Health panel (**E**), the sealed
+> demo (**K**), the Results fix (**J3**) and the **Playoffs tab (J2)**. **J2 and J3 change what
+> real customers see** — the tournament nav and the Results screen's default — so they are the two
+> slices here whose blast radius is not the demo, and the reason this Tier 3 group is not purely
+> cosmetic.
 
 **Before you start — two prerequisites, both easy to forget:**
 
@@ -1986,7 +2154,7 @@ organizer's seat?"* naming your email, with a lime **Continue** button and a qui
 account — watch as a fan"**. Decline → you're on the fan page, still signed in. Press again and
 continue → you're the demo organizer; signing back into your own account works normally after.
 
-### 5.3 🖥📱 The moments dock (Phase 2) — **BUILT 2026-08-04, dev, UNCOMMITTED**
+### 5.3 🖥📱 The moments dock (Phase 2) — **ON DEV `c1aed60c`**
 
 The demo's year in three tabs. One org, three tournaments; nothing about the write block, the
 outbound silence or the door changed. ⚠ *The dev scheduler still doesn't reach this environment —
@@ -2037,9 +2205,7 @@ run the tick by hand before QA if the countdown looks stale.*
 - [ ] Signed out entirely, the two new events' public pages render read-only; registering on the
       Invitational is blocked with the toast; no email of any kind arrives for anything above.
 
----
-
-### 5.4 🖥📱 The Coach Sandbox — five moments + the guided tour — **P1 `7a7092ea` · P2 `c57f6462` COMMITTED · P3 BUILT 2026-08-05, dev, UNCOMMITTED**
+### 5.4 🖥📱 The Coach Sandbox — five moments + the guided tour — **ON DEV · P1 `7a7092ea` · P2 `c57f6462` · P3 `a2923e5b`**
 
 The coach twin of the "See it live" demo: one tap, no login, into the real premium Coaches Portal
 on the fictional **Riverdale Ridge Baseball** — five teams frozen at five moments of a year, a warm
@@ -2167,67 +2333,6 @@ you got to for the rest of the browser session.
 
 ---
 
-### 6 🖥📱 The words the app uses about playing time — **BUILT 2026-08-05, dev, UNCOMMITTED** · no migration
-*A copy-only sweep. Every playing-time metric is identical; only the framing changed. The app now
-says where minutes went — it never says whether that was fair. Your ruling, 2026-08-04.*
-
-Where: Insights, the Overview board, Lineups, Attendance, a player's profile, and the family
-season recap. **Nothing behaves differently** — bench warnings, pitching caps, auto-fill and the
-A-squad modes all work exactly as before, so this is a reading exercise, not a clicking one.
-No dev-server restart needed (copy only).
-
-- [ ] **🖥 Insights doorway + report title:** open **Insights** → the playing-time tile now reads
-      **"Where is playing time going?"**, and so does the report when you open it. The old
-      "Is playing time fair?" appears nowhere.
-- [ ] **🖥 Overview tile:** on a board that shows the **Playing time** tile (an assistant coach
-      without money access is the reliable way to see it), the verdict reads **"Evenly spread"**
-      or **"Leans on a few"** — never "Fairly even" / "Uneven". With too few lineups saved it
-      still reads "Not enough yet".
-- [ ] **🖥 Lineups — the empty state:** a team with no games yet shows the Lineups intro, whose
-      payoff line now ends "…Insights uses it to show **where playing time has gone** across the
-      season."
-- [ ] **🖥 Lineups — auto-fill and Reshuffle:** open a game's lineup → the note under **Auto-fill**
-      reads **"Auto-fill spreads bench time evenly across the roster."** Hover **Reshuffle** →
-      the tooltip reads "Fresh arrangement with even bench rotation…". Fill the grid, then tap
-      **Reshuffle** → the confirm says "…a fresh **arrangement with even bench rotation**, using
-      your current auto-fill settings."
-- [ ] **🖥 Lineups — the bench pill:** switch to the **Playing time** view of a filled lineup →
-      beside "Bench: 1–3 innings each" the pill now reads **"Evenly spread"** (or **"Leans on a
-      few"** when the spread is more than one inning), matching the Overview wording. ⚠ **Judgment
-      call — say if you'd rather it stayed short** ("Even" / "Uneven"): it's a small pill and the
-      long phrase is the price of consistency with the tile.
-- [ ] **🖥 Position preferences tooltip:** open a player → position preferences → the help bubble's
-      last line reads **"Bench time rotates evenly (no back-to-back sits)"**, describing what the
-      generator does rather than promising fairness.
-- [ ] **🖥 Attendance:** the season attendance page's explanatory line now reads "A season view to
-      **inform playing-time decisions** and spot when someone's drifting away — not a ranking."
-- [ ] **👨‍👩‍👧 The family recap — the highest-stakes one.** Open a player → **Family season recap**
-      → **Preview**. A player whose minutes sat near the team middle now reads **"Right in the
-      team's typical range all season"**. The above/below lines are unchanged ("Above/Below the
-      team's middle for time on the field"). Read this one as a parent: nothing on the screen
-      should sound like the platform is grading your coaching.
-- [ ] **🖥 Help stays in step:** open **Help** and read the **Insights**, **Lineups**, **Overview
-      tiles** and **Family season recap** entries — every quoted phrase matches what the screens
-      now say. Then **search "fair"** — the results still come up (the old word is kept as a
-      search term on purpose, because coaches will keep typing it); the answers they open just no
-      longer use it.
-- [ ] **⚠ Tryouts must be UNTOUCHED — the deliberate exception.** Open **Tryouts**: "names stay
-      hidden **for fairness**" is still there, and the **Tryout report** still carries its
-      **Fairness receipt** heading and lines. That is an evaluation-integrity promise, a different
-      concept, and you ruled it stays. If any of that wording changed, the sweep overreached.
-
-**Words I invented beyond the four you ratified** (each is a judgment call — veto any individually):
-"where minutes have gone", "where the innings are going", "Auto-fill spreads bench time evenly
-across the roster", "Fresh arrangement with even bench rotation", "Bench time rotates evenly",
-"inform playing-time decisions", "rotates everyone evenly", "keeps bench time even across the rest
-of the roster", and the lineup pill borrowing the Overview's "Evenly spread" / "Leans on a few".
-
-**Flagged, not changed:** the tournament **schedule generator** still offers "Default **fairness**
-across rest, facility moves, daily load, and time slots." That is scheduling equity between teams,
-not playing time — out of scope here. Say if it deserves its own ruling.
-
----
-
 ## Not in this ledger (why)
 
 - **Quiet Mode onboarding** — your QA already PASSED (2026-07-29). Blocked on release only: its
@@ -2244,14 +2349,26 @@ not playing time — out of scope here. Say if it deserves its own ruling.
 ## After a session
 
 Tell me which sections passed (and any defects). I'll fix defects, run any owed review funnels
-(Chunk G), commit the uncommitted ones with your per-action OKs, mark the TODO lines complete, and
-archive the remaining active plans (G, PII, Quiet Mode graduate at release time).
+(Chunk G), mark the TODO lines complete, and archive the remaining active plans (G, PII, Quiet Mode
+graduate at release time).
 
-**⚠ A Tier 1 defect is an incident, not a backlog item.** These features are live. If a Tier 1 step
-fails, stop the session and tell me immediately rather than finishing the list — the fix ships the
-same day, the way the invisible-help-text defect did on 2026-08-03.
+**⚠ A Tier 1 defect on a LIVE section is an incident, not a backlog item.** If a step in group **1B**
+or **1C** fails, stop the session and tell me immediately rather than finishing the list — the fix
+ships the same day, the way the invisible-help-text defect did on 2026-08-03.
 
-**Only two things below still gate on your OK before customers see them:** §1.9c (the roster switch)
-and four slices of §5.2 (the rebuilt tour, the live strip, the pre-expanded health panel, and the
-Playoffs tab — the last of which changes real customers' tournament nav). Everything else has
-already shipped, so QA-ing it is damage-finding.
+**What still gates on your OK before customers see it** *(re-checked against git, 2026-08-06)* —
+this is now most of the newest work, not two odds and ends:
+
+| Gate | Sections | Also needs |
+|---|---|---|
+| Group **1A** | §1.19 — a cancelled subscription actually stops | — |
+| Group **1D** | §1.12 · §1.13 · §1.14 · §1.16 — the opponent book + club sharing | migs **225**, **227** to prod |
+| Group **1E** | §1.15 · §1.17 · §1.18 — game day on the bench | mig **228** to prod |
+| Inside **1B** | §1.9c — the roster switch | — |
+| Inside **3A** | §6 — the playing-time wording sweep | — |
+| Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | mig **226** applied (dev *and* prod) |
+
+⚠ **The release itself has a prerequisite this ledger cannot tick:** migrations **225–228** must be
+applied to production **before** the code promotes, and **226 is not applied even on dev**. Quiet
+Mode's migration (209) is in the same queue. That is a release-manager step, not a QA step — but if
+it is missed, several sections above break in production in ways that passed QA on dev.

@@ -117,6 +117,34 @@ Not a bug.
 
 ---
 
+## ✅ Decided — and what it now does
+
+**Ruling (2026-08-06): hard-block immediately.** Access stops the moment a subscription is
+cancelled. Nothing is deleted; resubscribing restores everything intact.
+
+Before building I checked the one thing that could have made this unsafe — whether a failed payment
+could ever cancel an org automatically. **It can't.** A failed payment marks the account *past due*
+and tells the customer; only Stripe giving up after its full retry window cancels. So the dunning
+path already has a real grace period built into it, which is exactly what made the immediate
+hard-block the right call rather than a risky one. Past-due accounts keep working, deliberately.
+
+What changed, in customer terms:
+- A cancelled club's coaches now see *"{Org}'s subscription has ended — nothing has been deleted"*
+  instead of a working portal.
+- The scorekeeper app says the same, instead of quietly accepting scores nobody could see.
+- The billing page still works, deliberately and carefully — that is how they come back.
+- A plan downgrade now archives the tournaments that no longer fit, as the customer's own downgrade
+  always did.
+- The feature matrix screen now says plainly that publishing records a decision but does not change
+  customer access, and lists anything published-but-not-live.
+- Bulk Operations carries the same honest comp-period warning the single-org screen always had.
+
+There is also a **test that fails the build** if anyone adds a route that skips the billing check —
+so this particular defect cannot come back quietly.
+
+<details>
+<summary>The options as they were presented (kept for the record)</summary>
+
 ## The decision I need from you
 
 **How much should a customer lose when their subscription is cancelled, and when?**
@@ -149,6 +177,8 @@ it matches the archive behaviour that already exists elsewhere in the product.
 
 Findings 2, 3 and 5 don't need a ruling — they're straightforward corrections once you've decided
 on this one.
+
+</details>
 
 ---
 
