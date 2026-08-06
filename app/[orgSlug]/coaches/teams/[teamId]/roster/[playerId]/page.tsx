@@ -11,7 +11,7 @@ import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection'
 import PlayerGuardiansCard from '@/components/coaches/PlayerGuardiansCard';
 import PlayerDevelopmentSection from '@/components/coaches/PlayerDevelopmentSection';
 import PlayerRecapPreview from '@/components/coaches/PlayerRecapPreview';
-import { canViewDevelopmentGoals, canViewMeasurables, canViewRoster, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
+import { canViewDevelopmentGoals, canViewMeasurables, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -506,7 +506,7 @@ export default function PlayerDetailPage({
       )}
 
       {/* Development (Player Development 3A) — section renders only when this coach can see
-          goals (notes) or measurables (roster view); the API filters server-side regardless. */}
+          goals (notes) or measurables (record access); the API filters server-side regardless. */}
       {assignment && (canViewDevelopmentGoals(assignment.capabilities) || canViewMeasurables(assignment.capabilities)) && (
         <CoachCollapseSection sectionId="development" title="Development">
           {/* key forces a fresh mount per player — no cross-player fetch races or stale drafts */}
@@ -528,7 +528,8 @@ export default function PlayerDetailPage({
       {/* The family season recap, previewed (Chunk D 3.2). Live season only — the route
           resolves the ACTIVE year and cannot address an archived one (the archive is opt-in),
           and `isReadOnly` keeps the door off an archived page rather than letting it 404.
-          Gated on roster visibility AND notes, matching the payload's development content.
+          Gated on `notes` alone, matching the payload's development content and the route's own
+          gate (A1, 2026-08-03 — the roster half became redundant once names went baseline).
           Left unwrapped by CoachCollapseSection — the component already implements its own
           collapsed-by-default, fetch-on-open preview (a deliberate product decision, see the
           component's own docblock); nesting it in a second disclosure would stack two
@@ -561,7 +562,6 @@ export default function PlayerDetailPage({
       )}
 
       {assignment && player && !page.isReadOnly
-        && canViewRoster(assignment.capabilities)
         && canViewDevelopmentGoals(assignment.capabilities) && (
         <PlayerRecapPreview
           key={playerId}

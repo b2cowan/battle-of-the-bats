@@ -24,7 +24,7 @@ import { withObservability } from '@/lib/observability';
 import { getScoutingBridgeForPractice } from '@/lib/coach-opponent-nudge';
 import {
   denyUnless, canManageSchedule, canViewSchedule, canWriteDevelopment, canViewDevelopmentGoals,
-  canSeePlanPlayers, redactRoster,
+  redactRoster,
 } from '@/lib/coach-capabilities';
 import {
   MAX_RECAP_LEN, collectPracticeTagSuggestions, sanitizePracticePlan,
@@ -107,33 +107,23 @@ export const GET = withObservability(async (_req: Request,
   const showFocus = canViewDevelopmentGoals(caps);
   const showAttendance = caps.attendance;
   /**
-   * ⚠ **NO ROSTER VISIBILITY → NO PLAYER LIST, EVER.** The sibling-route invariant, and this route
-   * was the one place in the portal breaking it.
+   * ⚠ **A1 (2026-08-03) DELETED THE "may this caller see names?" QUESTION FROM THIS ROUTE.**
    *
-   * `roster` is an INDEPENDENT grant from `schedule` (the head coach toggles them separately), so
-   * an assistant can legitimately hold `schedule: true, roster: 'off'` — someone trusted to run a
-   * station but not to hold the team list. This handler gated only on `schedule` and then ran the
-   * player projection through `redactRoster`, which nulls PII and notes FIELDS but never consults
-   * `caps.roster` — so on a projection of `{id, firstName, lastName, number}` it is a no-op, and
-   * every child's name and jersey number reached that assistant's browser.
+   * There used to be twenty lines here about gating the player list on `roster` — an independent
+   * grant a head coach could switch off, which this handler once failed to consult (it gated on
+   * `schedule` alone and leaned on `redactRoster`, which strips PII and notes FIELDS and never
+   * looked at `roster`, so on a `{id, firstName, lastName, number}` projection it was a no-op).
+   * That grant is retired: players' names, numbers and positions are baseline for everyone with
+   * portal access, so no bundle reaches this route and may not read a name. The `canViewSchedule`
+   * gate above is the only remaining question about who gets here.
    *
-   * ⚠ Gated at the SOURCE, not in the client: the list is never fetched, so no component mistake
-   * can surface it. The plan still renders — blocks, stations and groups simply show no names,
-   * which is exactly what the read-only past-plan route beside this one already does, and what
-   * `/roster`, `/attendance` and the development board have always done.
-   *
-   * ⚠ 2026-08-03: now `canSeePlanPlayers`, not `canViewRoster`. A HELPER holds `roster: 'off'` with
-   * `planPlayerNames: true` — names here, nowhere else — which is the owner ruling of the same date
-   * expressed as a grant. For every other coach the two predicates return the same answer, because
-   * `canSeePlanPlayers` still opens on roster visibility first.
+   * `redactRoster` below stays, and is now the whole protection — see the note on it.
    */
-  const showRoster = canSeePlanPlayers(caps);
 
   // Only `goals` depends on the roster, so it chains off that read; everything else starts
   // immediately rather than queuing behind a round trip it has no need of.
-  const playersPromise = showRoster
-    ? getRepRosterPlayers(programYear.id).then(all => all.filter(p => p.status === 'active'))
-    : Promise.resolve([]);
+  const playersPromise = getRepRosterPlayers(programYear.id)
+    .then(all => all.filter(p => p.status === 'active'));
   const [
     players, goals, attendance, previousEvents, sessions, staff, drills,
     templates, focusTags, eventTagMap, scoutingBridge,
@@ -180,8 +170,8 @@ export const GET = withObservability(async (_req: Request,
   //
   // ⚠ `redactRoster` is a SECOND line, not the first one. It nulls PII and notes FIELDS, so on this
   // narrow projection it is a no-op — it is here to catch the day someone spreads `...p` for a new
-  // field and brings guardian details along. Whether this coach may see the list AT ALL is decided
-  // by `showRoster` above, which is what `players` being empty already reflects.
+  // field and brings guardian details along. ⚠ Since A1 it is also the ONLY line: names are baseline,
+  // so everyone reaching this route gets the list, and PII/notes redaction is the whole protection.
   const roster = redactRoster(
     players.map(p => ({
       id: p.id,

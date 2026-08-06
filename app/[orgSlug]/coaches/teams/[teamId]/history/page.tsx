@@ -69,11 +69,17 @@ export default function CoachesInsightsPage({
   const scoreUnitWord = sportPack.score.unit.toLowerCase();
 
   const canLineups = !!assignment?.capabilities.lineups;
-  const canRoster = !!assignment && assignment.capabilities.roster !== 'off';
+  /**
+   * ⚠ A1 (2026-08-03): this WAS one `canRoster` flag reading roster visibility, and it did two
+   * jobs — deciding whether to fetch the attendance report, and whether to offer the door to it.
+   * Both now belong to the attendance duty, because that is what the report gates on. Keeping a
+   * record-access flag here would have fetched a 403 and drawn a door onto it.
+   */
+  const canAttendance = !!assignment?.capabilities.attendance;
   const canMoney = !!assignment && assignment.capabilities.money !== 'off';
   const canAwards = !!assignment && canManageAwards(assignment.capabilities);
   // Sixth doorway tile (3D, D4 Option B — logged ceiling exception): the report lists every
-  // player by name, so it rides the board's identity gate (roster visibility).
+  // player by name, so it rides the board's own gate — record access since A1.
   const canDevelopment = !!assignment && canViewMeasurables(assignment.capabilities);
 
   // "Who's earning it?" tile summary — a small self-contained fetch (not folded into the
@@ -161,7 +167,11 @@ export default function CoachesInsightsPage({
 
   // ONE coordinated load → ONE paint (no staggered pop-in). Each source degrades
   // independently: a failed/denied fetch just means its blocks/tiles don't render.
-  const load = useCallback(async (caps: { lineups: boolean; roster: boolean; money: boolean }) => {
+  // ⚠ A1 (2026-08-03): the middle flag was named `roster` and carried roster visibility, because
+  // that is what the attendance route used to gate on. It gates on the attendance grant now, so a
+  // stale name here would have fetched `/attendance` for anyone with record access and reported the
+  // resulting 403 as a genuine failure — "couldn't be loaded" for a section they simply don't have.
+  const load = useCallback(async (caps: { lineups: boolean; attendance: boolean; money: boolean }) => {
     setLoading(true);
     setError('');
     // Record scope: the Overview widget's remembered per-team choice (read here, inside the
@@ -180,7 +190,7 @@ export default function CoachesInsightsPage({
       get('/events'),
       get('/history'),
       caps.lineups ? get('/lineup-analytics') : Promise.reject(new Error('skipped')),
-      caps.roster ? get('/attendance') : Promise.reject(new Error('skipped')),
+      caps.attendance ? get('/attendance') : Promise.reject(new Error('skipped')),
       caps.money ? get('/dues') : Promise.reject(new Error('skipped')),
     ]);
     if (ev.status === 'fulfilled') setEvents(ev.value.events ?? []);
@@ -209,7 +219,7 @@ export default function CoachesInsightsPage({
       wanted && r.status === 'rejected' && (r.reason as Error | undefined)?.message !== 'skipped';
     setSrcErrors({
       lineups: realFailure(an, caps.lineups),
-      attendance: realFailure(at, caps.roster),
+      attendance: realFailure(at, caps.attendance),
       dues: realFailure(du, caps.money),
     });
     // Only a total blackout is a page error — partial data renders what it can.
@@ -222,8 +232,8 @@ export default function CoachesInsightsPage({
 
   useEffect(() => {
     if (ctxLoading || !assignment) return;
-    void Promise.resolve().then(() => load({ lineups: canLineups, roster: canRoster, money: canMoney }));
-  }, [ctxLoading, assignment, canLineups, canRoster, canMoney, load]);
+    void Promise.resolve().then(() => load({ lineups: canLineups, attendance: canAttendance, money: canMoney }));
+  }, [ctxLoading, assignment, canLineups, canAttendance, canMoney, load]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!assignment) {
@@ -464,7 +474,7 @@ export default function CoachesInsightsPage({
             </Link>
             {canLineups && (
               <Link href={`${base}/history/playing-time`} className={`${styles.insightsDoor} ${!analytics || analytics.gamesWithLineup === 0 ? styles.insightsDoorSoft : ''}`}>
-                <span className={styles.insightsDoorQ}>Is playing time fair?<span aria-hidden>→</span></span>
+                <span className={styles.insightsDoorQ}>Where is playing time going?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>
                   {srcErrors.lineups
                     ? 'Couldn’t load — refresh to try again'
@@ -474,7 +484,10 @@ export default function CoachesInsightsPage({
                 </span>
               </Link>
             )}
-            {canRoster && (
+            {/* ⚠ A1: keyed on the attendance duty, not record access — this is a DOOR to
+                /attendance, and that page gates on its own grant now. Record access would have
+                offered it to coaches who 403 on arrival. */}
+            {canAttendance && (
               <Link href={`${base}/attendance`} className={`${styles.insightsDoor} ${attendancePct == null ? styles.insightsDoorSoft : ''}`}>
                 <span className={styles.insightsDoorQ}>Who shows up?<span aria-hidden>→</span></span>
                 <span className={styles.insightsDoorSum}>

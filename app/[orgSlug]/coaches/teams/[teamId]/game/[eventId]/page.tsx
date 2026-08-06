@@ -15,9 +15,21 @@
  *
  * ── Practice-run bans carried over ──────────────────────────────────────────────────────────
  * No swipe/drag/long-press (gloves defeat them; swipe collides with browser back), no sound or
- * vibration, no auto-advance, no wake lock (owner: revisit with field feedback). The period
- * cursor is a sessionStorage UI preference, exactly like the practice station pick — never
- * persisted server-side, because "which column is highlighted" is not a fact about the game.
+ * vibration, no auto-advance. The period cursor is a sessionStorage UI preference, exactly like
+ * the practice station pick — never persisted server-side, because "which column is
+ * highlighted" is not a fact about the game.
+ *
+ * ⚠ The wake-lock ban does NOT carry over (owner ruling 2026-08-05, P3): the run screen is a
+ * plan you read and put down; this is a screen you glance at between pitches for two hours.
+ * It is live-window-only, drive-grants-only, and ALWAYS visible as a chip you can switch off in
+ * one tap — a screen that refuses to sleep without saying so reads as a broken phone.
+ *
+ * ── P3 (owner-ruled 2026-08-05) ─────────────────────────────────────────────────────────────
+ * The bench sorts longest-sitting first, and the order FREEZES until the period cursor moves
+ * (`benchOrderIds` / `applyBenchOrder`) — a list that re-shuffles between the moment a coach
+ * looks and the moment they tap is how the wrong child gets sent in. The arm-care chip resolves
+ * the cap the way the builder does (per-player ?? game override ?? season default). Neither
+ * adds a write, a request, or an optimistic update; both are derived from state already here.
  *
  * ── Who drives (plan §6) ────────────────────────────────────────────────────────────────────
  * Zone by zone from the caller's existing grants — subs on `lineups`, Who's here on
@@ -40,16 +52,19 @@ import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import { LINEUP_POSITIONS, type LineupSeedEntry } from '@/lib/lineup-grid';
 import { ordinal } from '@/lib/playoff-bracket';
 import {
-  applyConsoleSwap, consoleMode, deriveGameResult, gameDayPeriodKey, gameDaySkipLineupKey,
+  applyBenchOrder, applyConsoleSwap, benchOrderIds, benchOrderStillSorted, benchStreakThrough,
+  consoleMode, deriveGameResult, gameDayAwakeKey, gameDayPeriodKey, gameDaySkipLineupKey,
   toGameDayEventShape,
 } from '@/lib/coach-game-day';
+import { resolveLineupCaps, resolvePlayerPitcherCap } from '@/lib/lineup-caps';
+import { useScreenWakeLock } from '@/lib/hooks/useScreenWakeLock';
 import { GAME_MOMENT_MAX, sortMomentsNewestFirst } from '@/lib/coach-game-moments';
 import { formatInOrgZone } from '@/lib/timezone';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import styles from '../../../../coaches.module.css';
 import type {
-  RepAttendanceStatus, RepRosterPlayer, RepTeamEvent, RepTeamEventAttendance,
+  LineupSettings, RepAttendanceStatus, RepRosterPlayer, RepTeamEvent, RepTeamEventAttendance,
   RepTeamGameMoment, RepTeamLineup, RepTeamLineupEntry,
 } from '@/lib/types';
 
@@ -69,6 +84,9 @@ interface ConsoleData {
   /** P2 — tonight's captured lines. Empty for anyone without a console drive grant (gated at
    *  the source in the read route, not here: `can` flags gate affordances, never data). */
   moments: RepTeamGameMoment[];
+  /** P3 — this season's default caps; null when the caller has no lineup grant (gated at the
+   *  source, like every other zone's payload). Resolved against the game's own override. */
+  lineupSettings: LineupSettings | null;
   isMirrored: boolean;
   window: { opensAtMs: number; closesAtMs: number } | null;
   can: { subs: boolean; attendance: boolean; score: boolean; moments: boolean };
@@ -76,24 +94,6 @@ interface ConsoleData {
 }
 
 type SheetKind = null | 'score' | 'attendance' | 'grid' | 'book' | 'end' | 'moment';
-
-/**
- * Bench sits in a row, counting backwards from `period` inclusive ("2nd straight inning
- * sitting"). An UNASSIGNED period (`''`) continues a streak — the board groups it under Bench,
- * and the chip must agree with what the coach sees — but at least one explicit `'Bench'` is
- * required, so a half-planned grid doesn't chip every player as a long sitter.
- */
-function benchStreakThrough(row: GridRow, period: number): number {
-  let streak = 0;
-  let sawBench = false;
-  for (let p = period; p >= 1; p--) {
-    const pos = row.inningPositions[String(p)] ?? '';
-    if (pos === BENCH_POSITION) sawBench = true;
-    else if (pos !== '') break;
-    streak += 1;
-  }
-  return sawBench ? streak : 0;
-}
 
 export default function CoachGameConsolePage({
   params: paramsPromise,
@@ -125,6 +125,8 @@ export default function CoachGameConsolePage({
   );
   const [period, setPeriod] = useState(1);
   const [periodAtOpen, setPeriodAtOpen] = useState<number | null>(null);
+  /** P3 — the bench order as it was when this period started (see the board's `benched`). */
+  const [benchOrder, setBenchOrder] = useState<{ period: number; ids: string[] } | null>(null);
   const [skipLineup, setSkipLineup] = useState(false);
 
   const [teamScore, setTeamScore] = useState<number | null>(null);
@@ -192,6 +194,15 @@ export default function CoachGameConsolePage({
   const periodLabel = sportPack.periodLabel;
   const inningCount = lineupMeta.inningCount;
 
+  /**
+   * P3 — settle the bench order for a period. THE ONLY WAY the bench re-sorts: called when the
+   * board arrives, when a new board is seeded, and when the period cursor moves — never on a
+   * substitution, which is the whole point (see the board's `benched`).
+   */
+  const freezeBenchOrder = useCallback((forRows: GridRow[], forPeriod: number) => {
+    setBenchOrder({ period: forPeriod, ids: benchOrderIds(forRows, forPeriod) });
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     setLoadError('');
@@ -206,10 +217,11 @@ export default function CoachGameConsolePage({
       // along into every full-replace PUT, which rejects non-roster players — poisoning EVERY
       // save for the rest of the game with the same 400 (/review 2026-08-04, Critical).
       const activeIds = new Set(d.players.map(p => p.id));
-      setRows(d.entries.filter(e => activeIds.has(e.playerId)).map(e => ({
+      const loadedRows = d.entries.filter(e => activeIds.has(e.playerId)).map(e => ({
         playerId: e.playerId, battingOrder: e.battingOrder, starter: e.starter,
         inningPositions: { ...e.inningPositions }, notes: e.notes,
-      })));
+      }));
+      setRows(loadedRows);
       const count = d.lineup?.inningCount ?? sportPack.defaultPeriodCount;
       setLineupMeta({
         mode: d.lineup?.lineupMode ?? 'everyone_bats',
@@ -225,27 +237,54 @@ export default function CoachGameConsolePage({
       // coach made in between (practice-run `restoredRef` precedent).
       if (!restoredRef.current) {
         restoredRef.current = true;
+        let initial = 1;
         try {
           const saved = Number(sessionStorage.getItem(gameDayPeriodKey(eventId)) ?? '');
-          const initial = Number.isInteger(saved) && saved >= 1 && saved <= count ? saved : 1;
-          setPeriod(initial);
-          setPeriodAtOpen(prev => prev ?? initial);
+          if (Number.isInteger(saved) && saved >= 1 && saved <= count) initial = saved;
           setSkipLineup(sessionStorage.getItem(gameDaySkipLineupKey(eventId)) === '1');
         } catch { /* private mode — defaults stand */ }
+        setPeriod(initial);
+        setPeriodAtOpen(prev => prev ?? initial);
+        // The board's first arrival. (A later re-load keeps the order already frozen for this
+        // period; the rows changed, the period did not.)
+        freezeBenchOrder(loadedRows, initial);
       }
     } catch (error: unknown) {
       setLoadError(error instanceof Error ? error.message : 'Could not load this game.');
     } finally {
       setLoading(false);
     }
-  }, [orgSlug, teamId, eventId, sportPack.defaultPeriodCount]);
+  }, [orgSlug, teamId, eventId, sportPack.defaultPeriodCount, freezeBenchOrder]);
 
   useEffect(() => { void load(); }, [load]);
 
   const setCursor = (next: number) => {
     const clamped = Math.min(Math.max(next, 1), inningCount);
     setPeriod(clamped);
+    // Moving the cursor is the one moment a coach expects the board to change under them.
+    freezeBenchOrder(rows, clamped);
     try { sessionStorage.setItem(gameDayPeriodKey(eventId), String(clamped)); } catch { /* UI pref only */ }
+  };
+
+  // ── The screen stays on (P3, owner-ruled 2026-08-05) ──────────────────────────────────────
+  // Live window only, drive grants only, and never silent — the chip below says it out loud and
+  // switches it off in one tap. Read once at mount, the same way this screen reads the clock:
+  // no hydration risk, because nothing that depends on either renders until the fetch lands.
+  const [awakeSupported] = useState(() => typeof navigator !== 'undefined' && 'wakeLock' in navigator);
+  const [awake, setAwake] = useState(() => {
+    try { return sessionStorage.getItem(gameDayAwakeKey(eventId)) !== '0'; } catch { return true; }
+  });
+
+  // The policy lives HERE (live window, drive grant, coach's own switch); the hook only holds
+  // the lock. Review mode never keeps a screen awake, and neither does a helper's console.
+  useScreenWakeLock(awake && awakeSupported && live && !readOnlyViewer);
+
+  const toggleAwake = () => {
+    setAwake(prev => {
+      const next = !prev;
+      try { sessionStorage.setItem(gameDayAwakeKey(eventId), next ? '1' : '0'); } catch { /* UI pref only */ }
+      return next;
+    });
   };
 
   // ── Lineup save (the builder's PUT, verbatim contract) ────────────────────────────────────
@@ -562,6 +601,8 @@ export default function CoachGameConsolePage({
     const next = seeded.map(r => ({ ...r, inningPositions: generated.get(r.playerId) ?? {} }));
     setUndoStack([]);
     setRows(next);
+    // A brand-new board — nothing carries over from a board that didn't exist.
+    freezeBenchOrder(next, period);
     setLineupDirty(true);
   };
 
@@ -588,10 +629,33 @@ export default function CoachGameConsolePage({
     const pos = r.inningPositions[key] ?? '';
     return pos && pos !== BENCH_POSITION;
   });
-  const benched = rows.filter(r => {
+  const benchedRaw = rows.filter(r => {
     const pos = r.inningPositions[key] ?? '';
     return !pos || pos === BENCH_POSITION;
   });
+  /**
+   * P3 — longest sitting on top, FROZEN for the rest of the period.
+   *
+   * The order is recomputed at exactly three moments, all of them events rather than renders:
+   * the board first arriving, a brand-new board being seeded, and the period cursor moving
+   * (`freezeBenchOrder`, called from those three places). Between them nothing re-sorts, so a
+   * substitution never re-shuffles rows under the coach's thumb — a player benched mid-period
+   * simply lands at the bottom, where the sort would have put them anyway.
+   *
+   * The `period` guard is the safety net: an order frozen for a period we are no longer in is
+   * discarded in favour of the natural order, never applied to the wrong period's board.
+   */
+  const benched = applyBenchOrder(benchedRaw, benchOrder?.period === period ? benchOrder.ids : []);
+  /**
+   * P3 — the team's pitching cap for THIS game, resolved the way the lineup builder resolves
+   * it (this game's override ?? this season's default). A player's own cap still wins over it
+   * (`resolvePlayerPitcherCap`); when neither exists the board says nothing at all, because
+   * this product never invents an arm-care ceiling a coach did not set.
+   */
+  const teamPitcherCap = useMemo(
+    () => resolveLineupCaps(data?.lineupSettings ?? null, data?.lineup?.rulesOverride ?? null).pitcherInningsCap,
+    [data?.lineupSettings, data?.lineup?.rulesOverride],
+  );
   const openPositions = (analysis.unfilledFieldPositions.find(u => u.inning === period)?.positions ?? []);
   const pitchedThrough = (row: GridRow) => {
     if (!sportPack.pitcherPosition) return 0;
@@ -921,6 +985,18 @@ export default function CoachGameConsolePage({
             {event.fieldNumber && <span className={styles.gdChip}>{event.fieldNumber}</span>}
             {event.arrivalTime && <span className={styles.gdChip}>Arrive {event.arrivalTime}</span>}
             {event.uniform && <span className={styles.gdChip}>{event.uniform}</span>}
+            {/* P3 — the screen-awake switch. Present only where it does something: a live game,
+                a coach who runs the bench, a browser that can do it. Never a silent behaviour. */}
+            {awakeSupported && !readOnlyViewer && (
+              <button
+                type="button"
+                className={styles.gdChip}
+                aria-pressed={awake}
+                onClick={toggleAwake}
+              >
+                {awake ? 'Screen staying on' : 'Screen sleeps normally'}
+              </button>
+            )}
           </div>
           <div className={styles.gdScoreRow}>
             {scoreBlock}
@@ -994,8 +1070,12 @@ export default function CoachGameConsolePage({
               <p className={styles.gdGroupLbl}>On the field — {periodLabel.toLowerCase()} {period}</p>
               {onField.map(r => {
                 const pos = r.inningPositions[key] ?? '';
-                const pitched = pos === sportPack.pitcherPosition ? pitchedThrough(r) : 0;
-                const cap = playerById.get(r.playerId)?.lineupProfile?.pitcher?.maxInnings ?? null;
+                const isPitching = pos === sportPack.pitcherPosition;
+                const pitched = isPitching ? pitchedThrough(r) : 0;
+                const cap = isPitching
+                  ? resolvePlayerPitcherCap(
+                      playerById.get(r.playerId)?.lineupProfile?.pitcher?.maxInnings, teamPitcherCap)
+                  : null;
                 const isOut = att[r.playerId]?.status === 'absent';
                 return (
                   <button
@@ -1034,7 +1114,15 @@ export default function CoachGameConsolePage({
             </div>
 
             <div className={styles.gdGroup}>
-              <p className={styles.gdGroupLbl}>Bench</p>
+              {/* The label is a promise, so it is only made while it is true: with more than one
+                  row to order, and while the frozen order still matches what the streak chips
+                  say. Bench someone mid-period who has been sitting all game and they land at
+                  the bottom (nothing moves under your thumb, by ruling) — at which point this
+                  quietly stops claiming an order it no longer has, until the next period. */}
+              <p className={styles.gdGroupLbl}>
+                Bench{benched.length > 1 && benchOrderStillSorted(benched, period)
+                  ? ' — longest sitting first' : ''}
+              </p>
               {benched.length === 0 && <p className={styles.gdQuietNote}>Nobody on the bench this {periodLabel.toLowerCase()}.</p>}
               {benched.map(r => {
                 const streak = benchStreakThrough(r, period);

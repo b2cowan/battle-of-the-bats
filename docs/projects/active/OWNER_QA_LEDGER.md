@@ -142,6 +142,73 @@ access. Wrong here is not friction — it is a child's medical form in the wrong
 billed wrongly, or an adult holding access nobody meant to give them. **Everything in this tier
 except §1.9c is already in front of customers.**
 
+### 1.19 🖥📱 A cancelled subscription actually stops — **BUILT 2026-08-06, dev, UNCOMMITTED** · no migration
+
+*A platform admin cancels an org. Until now the coach portal and the scorekeeper app kept working —
+forever — even though the confirm dialog promised both would shut down. They stop now.*
+
+⚠ **This section is different from every other one in the ledger, and you need to know why before
+you start.** Entitlement changes are close to impossible to QA by clicking: **a cancelled org that
+still works looks exactly like a working org.** There is no red banner to spot, no error to notice.
+If you just "click around and it seems fine", you have learned nothing — that is precisely the state
+that shipped and went unnoticed for a year. So this section is built as a **before/after on one
+throwaway org**, where the only meaningful evidence is that something you *could* do a minute ago
+you *cannot* do now.
+
+**Do not run this on a real customer org.** Use a dev org you are happy to break.
+
+#### Setup (5 min)
+1. Pick a dev org on a **Club** plan with at least one rep team and one coach you can sign in as.
+   If it has tournaments, note how many are live.
+2. Sign in as that org's coach and open the Coaches Portal. **Do the things.** Open a roster, open
+   attendance, open lineups. Confirm they all work. *This is the "before" half — without it the
+   "after" proves nothing.*
+3. In a second browser (or private window) sign in as a **scorekeeper** for that org and open
+   `/{orgSlug}/scorekeeper`. Confirm you can see the day's games.
+
+#### The act
+4. As platform admin → the org → **Billing & Access** → **Cancel Subscription**. Read the
+   **"Will shut down:"** list in the dialog before you confirm — that list is the promise this whole
+   change exists to make true. Give any reason, confirm.
+
+#### After (the part that matters)
+5. **Coach browser — refresh.** Expected: the portal shell still frames the page, but instead of
+   the team you get *"{Org} 's subscription has ended"* with a short explanation and a way home.
+   ❌ If you still see rosters/attendance/lineups, the fix has failed — say so.
+6. **Scorekeeper browser — refresh.** Expected: the same "subscription has ended" message.
+   ❌ If you can still enter a score, the fix has failed. *(This one is the sharpest test: the
+   scorekeeper is an installed phone app that lives outside the admin screens, which is exactly why
+   it kept working before.)*
+7. **The comeback path — the thing most likely to be broken by this change.** As the org owner,
+   go to `/{orgSlug}/admin`. Expected: you land on the **Billing** page (everything else redirects
+   there) and **that page loads properly** — plan cards, prices, a way to resubscribe.
+   ❌ If the billing page errors, 500s, or bounces in a loop, **stop and tell me** — that would mean
+   a cancelled customer cannot pay us again, which is worse than the bug we set out to fix.
+8. **Undo it.** Platform admin → set the org's plan back / re-activate. Expected: the coach portal
+   and scorekeeper both come back **exactly as they were** — nothing was deleted.
+
+#### Also changed, quick checks (2 min)
+9. **Plan downgrade now tidies up.** On a dev org with several live tournaments, use platform admin
+   to drop it to a one-tournament plan. Expected: the response reports tournaments archived, and the
+   org is no longer sitting over its cap. Previously they all stayed live indefinitely.
+10. **Plans & Pricing → Feature Matrix.** Expected: a banner stating plainly that publishing the
+    matrix records the decision but does **not** change customer access, plus either a list of
+    "published but not live" rows or a ✅ saying published and live agree. *(Publishing used to
+    imply a packaging change had taken effect when nothing had.)*
+11. **Bulk Operations → Comp Period.** Expected: the same warning the single-org screen has always
+    carried — comp period is a billing tag and grants no access. It used to just say "Grant a comp
+    period", which reads like it gives something.
+
+#### What is deliberately NOT closed (so it doesn't look like a bug)
+- **`past_due` orgs keep working.** A failed payment writes past-due, not cancelled — the customer
+  gets Stripe's whole retry window before anything stops. Only Stripe *giving up* cancels.
+- **Free (Basic) coach portals are untouched.** Those teams belong to a person, not to a paying org,
+  so there is no subscription to cancel.
+- A platform-admin **"subscription status → active" override still rescues an org** without touching
+  Stripe. That escape hatch is intentional.
+
+---
+
 ### 1.5 🖥 Player documents & guardian PII gating — **LIVE ON PRODUCTION**
 *A signed medical form now needs BOTH Documents and Contacts access — an assistant with Documents
 alone no longer sees any child's signed forms.* Plan stays ACTIVE (its migration is applied on dev
@@ -777,7 +844,7 @@ tournament (published division) whose opponent has 2+ scored games that weekend.
 
 ---
 
-### 1.15 📱🖥 Game-Day Mode P1 — the bench console — **BUILT dev, UNCOMMITTED** · no migration
+### 1.15 📱🖥 Game-Day Mode P1 — the bench console — **COMMITTED dev `bcd695a3`** · no migration
 *One phone screen for running a game: who's on the field right now, tap-to-substitute, the
 score, attendance — every change saved into the same lineup the reports already read. Families
 hear exactly once, at End game.*
@@ -826,14 +893,11 @@ arithmetic, nothing is stored).
 - [ ] **📱 Who’s here:** the sheet’s four words are the schedule tab’s exactly — **In · Late ·
       Out · No reply**. Mark an ON-FIELD player Out → the board immediately asks who covers
       their position (bench players become the targets).
-- [ ] **⚠ DEVIATION FOUND 2026-08-05, not previously flagged — your call:** the **bench list is
-      in roster order, not longest-benched-first.** Mockup frame 2’s caption says *"Longest-
-      benched sits on top"*; the built screen sorts by jersey/roster order and relies on the
-      red **"2nd straight inning sitting"** chip to draw the eye instead. On a 12-player bench
-      that chip can sit below the fold. Not a bug — a piece of the drawing that didn’t get
-      built — and it is **the first item in the P3 plan**
-      (`COACH_GAME_DAY_MODE_P3_BUILD_PROMPT.md`), so you can either accept it here and let P3
-      fix it, or call it a P1 defect and have it fixed before this commit.
+- [x] **⚠ DEVIATION FOUND 2026-08-05 — RULED AND FIXED IN P3, test it in §1.18 instead.** The
+      bench list was in roster order, not longest-benched-first, though mockup frame 2’s caption
+      said *"Longest-benched sits on top"*. You ruled it **P3 scope** (not a P1 defect) on
+      2026-08-05; it is built, with the freeze rule that decides what happens mid-inning.
+      **Don’t test it here — §1.18’s first three checks cover it.**
 - [ ] **📱 No-lineup fallback:** open the console for a game with no saved lineup → three
       doors (Start from a template / Everyone plays / Skip lineup). “Everyone plays”
       auto-fills a rotation and the board lights up; “Skip” runs score+attendance only.
@@ -878,7 +942,19 @@ arithmetic, nothing is stored).
 
 ---
 
-### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **BUILT 2026-08-05, dev, UNCOMMITTED** · ⚠ mig 227 DEV-ONLY
+### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **COMMITTED dev `d9add3cd` + `0ad5d2cc`** · ⚠ mig 227 DEV-ONLY
+
+> **`/review` ran 2026-08-05 (high-risk tier, retrospective — this shipped before the funnel).**
+> Five lenses: cross-org leakage · plan gating · correctness · data/contract/migration ·
+> regression/blast-radius. **Zero defects attributable to this work.** The two-org leakage boundary,
+> the double opt-in (both switches default OFF in the migration), the server-side Club-plan gate, the
+> sibling history cap and the "club layer never breaks the page" contract all hold under attack; the
+> perf follow-up was verified NOT to have widened data scope. The write-guard allow-lists were **not**
+> edited — the diff added a *negative* test proving the club book can never become an archive door.
+> One **pre-existing, platform-wide** gap surfaced and is NOT a club-book defect: a platform-admin
+> cancellation marks the subscription cancelled but never demotes `plan_id`, and no plan gate checks
+> subscription status — so **every** paid feature survives cancellation, not just this one. Worth its
+> own ticket; the in-app downgrade path does it correctly.
 *Teams inside one club can opt in to read each other's opponent books. The 12U B coach opens
 Thunder's page and inherits the A team's read on them — labelled, read-only, never blended.*
 
@@ -1082,10 +1158,96 @@ get the live window.
 
 ---
 
+### 1.18 📱 Game-Day Mode P3 — playing-time polish — **BUILT 2026-08-05, dev, UNCOMMITTED** · no migration
+*Three small things on the same bench console: the bench puts the longest-sitting player on top,
+the arm-care chip finally works for teams that set one season-wide pitching cap, and the screen
+stops going dark between pitches.*
+
+Where: the same screen as §1.15/§1.17 — `…/teams/{teamId}/game/{eventId}` inside the live
+window. **Test on a phone (≤640).** ⚠ Dev-server **restart required** first (new files + shared
+modules + a payload change). ⚠ Set a game's start time near now to get the live window.
+
+> ⚠ **Do §1.15, §1.17 and §1.18 in ONE sitting** — three phases now sit on this one screen.
+> **This section answers §1.15's flagged bench-order deviation** ("the bench is in roster order,
+> not longest-benched-first"): you ruled it P3 scope on 2026-08-05 and it is built here. Tick it
+> off in §1.15 by reference — don't test it twice.
+
+- [ ] **📱 Longest sitting on top:** with three or more on the bench, the list leads with
+      whoever has sat longest and the group label reads **"Bench — longest sitting first"**.
+      Ties fall back to your roster order — two players who have sat the same amount never
+      trade places for no reason.
+- [ ] **📱 It holds still under your thumb (the rule):** mid-inning, sub a player OFF the field.
+      They join the **bottom** of the bench and **nothing above them moves**. Tap **›** to the
+      next inning → the list re-sorts once, and the new longest sitter is on top. This is the
+      whole point: a list that re-shuffles between the moment you look and the moment you tap is
+      how the wrong child gets sent in.
+- [ ] **📱 The label never lies:** the case above where you bench someone who had already sat
+      several innings — they land at the bottom carrying a red "5th straight inning sitting"
+      chip. The label quietly drops to plain **"Bench"** while that's true, and comes back at
+      the next inning. (Found by the review; worth one look because it's the only moment the
+      order and the chips can disagree.)
+- [ ] **📱 The pitching chip, for a team that never set per-player caps** — the actual reason
+      this phase exists. On **Team settings → lineup rules**, set **max innings pitched** to 3
+      and make sure your pitcher has **no** personal cap on their profile. Open the console →
+      their row now reads **"2 of 3 innings pitched"**, red at 3. **Before this it showed
+      nothing at all.**
+- [ ] **📱 A personal cap still wins:** give that same pitcher their own max innings of 5 on
+      their profile → the chip reads **"… of 5"**, not 3. ⚠ **Known and deliberate:** the
+      lineup **auto-fill** still enforces the *stricter* of the two (it would use 3). Flagged,
+      not changed here — say if you want them reconciled, it's its own piece of work.
+- [ ] **📱 Silence stays silence:** clear both caps → **no chip at all** on the mound. The
+      console never invents an arm-care ceiling you didn't set.
+- [ ] **📱 Screen staying on:** the header chips row (beside Field / Arrive / uniform) carries
+      **Screen staying on**, lit, from the moment you open a live game. Leave the phone
+      untouched on the bench for a few minutes → **it doesn't sleep**. Tap the chip → it reads
+      **"Screen sleeps normally"** and the phone behaves as usual again; the choice sticks for
+      the rest of the game.
+- [ ] **📱 It lets go when it should:** tap **End game** → the recap must **not** hold the
+      screen awake. Same for opening the link the next day, and for a **schedule-only helper**
+      (no chip at all — their battery is never spent on a board they can't touch).
+- [ ] **📱 Nothing else moved:** no new notification of any kind, nothing new stored, the
+      recap and moments unchanged, and an archived season still shows no way in.
+- [x] 🤖 Unit coverage (30 new tests): the bench streak arithmetic; the sort keys and their
+      roster-order tiebreak; the freeze end-to-end (a mid-period substitution moves no existing
+      row, and the boundary re-sort promotes the new longest sitter); the label's
+      still-sorted predicate; and cap resolution (personal over game override over season
+      default, neither set = no chip). typecheck ✓ · **1,426 unit tests ✓** · P1's 54 game-day
+      + P2's 22 moments tests + the mirrored-game 409s + **the season-write-guard contract all
+      green with NO allow-list edits** (the console stays a live-season instrument). 0 lint
+      errors in the touched files.
+      ✅ **`/simplify` run** (7 cleanups): the freeze became one named helper instead of three
+      hand-written copies; the sort keys are computed once per row instead of per comparison;
+      **a third spelling of "the cap that applies to this player" was converged** onto the one
+      shared rule (the season analytics rollup had its own copy); the wake lock became a small
+      reusable hook rather than 35 lines inside a 1,500-line screen; the toggle chip styles off
+      the accessibility state it already carries instead of a new attribute.
+      ✅ **`/review` run** (high-risk funnel, 4 lenses, 5 findings → **2 confirmed and fixed**).
+      The real one is the third checkbox above: the frozen order could keep the
+      "longest sitting first" label while the chips said otherwise — the label now checks
+      before it claims. Also hardened: two overlapping wake-lock requests could leave one
+      untracked, i.e. a phone left awake after a game. **The security/tenancy and
+      regression lenses came back CLEAN** — the new season-cap field is gated exactly like the
+      lineup data it belongs to (a helper without lineup access still receives none of it), it
+      carries no personal data, and the shared-helper convergence changes no number on any
+      family-facing surface.
+      ✅ **`/docs` run**: the game-day guide gains the bench-order rule, where the pitching
+      number comes from, and the screen-staying-on paragraph; two new FAQs (**"Why don't I see
+      the innings pitched chip for my pitcher?"** and **"Why did the bench list change order —
+      and why didn't it?"**). Search terms added for "longest sitting first", "innings pitched",
+      "arm care", "screen keeps turning off".
+      ⚠ **Rendered `check:layout` NOT run — for the third phase running.** No dev server was up,
+      and the sweep's fixture still has no seeded probe GAME, so the console screen isn't in it.
+      This phase changes the board at 340px (a longer bench group label, a new header chip), so
+      it is worth one deliberate look on a phone during QA. **Do not read this as passed.**
+- Notes: **no migration** in P3. The parity gate stays red only for P2's 228 and the Club
+  Shared Book's 227 — unchanged by this work.
+
+---
+
 ### 1.2 🖥 Budget starter (Chunk G) — **LIVE ON PRODUCTION** · ⚠ review funnel still owed
 *First-season coach answers 5 tap-only questions → seeded budget worksheet; no dollar figure ever comes from us.*
 Plan stays ACTIVE (its /simplify → /review → /docs pass is still owed; QA can proceed — expect a
-possible small follow-up after the funnel). Plan: `active/COACH_PORTAL_CHUNK_G_BUDGET_STARTER_PLAN.md`. *(No owner checklist in the doc — steps below are the sketch.)*
+possible small follow-up after the funnel). Plan: `archive/COACH_PORTAL_CHUNK_G_BUDGET_STARTER_PLAN.md`. *(No owner checklist in the doc — steps below are the sketch.)*
 - [ ] Zero-budget team, write coach: Season Budget Plan shows the first-run card with three doors
       (Start · See a finished example · Add lines yourself).
 - [ ] Run the 5-question starter: worksheet placeholders are literally "$" — **no numeric hint
@@ -1363,7 +1525,7 @@ Archived plan: `archive/COACH_PORTAL_LAUNCH_BATCH2_PLAN.md`.
 ### 2.5 📱 Running a practice at the field (Practice Plans 1b) — **LIVE ON PRODUCTION**
 *Tuesday night, one hand, gloves on: the plan you wrote now reads one block at a time.* 1a (writing
 the plan) already PASSED your QA and is committed; **this is the second half only.**
-Plan: `active/COACH_PRACTICE_PLANS_PLAN.md`.
+Plan: `archive/COACH_PRACTICE_PLANS_PLAN.md`.
 **Do this one OUTSIDE, or at least standing up and holding the phone one-handed — the whole screen
 is an argument about arm's length, and it can't be judged sitting at a desk.**
 **Fastest way in:** open a practice that has a plan → **Run practice** (also on the plan's own
@@ -1481,7 +1643,7 @@ Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
 ### 5.1 🖥 Tournament creation live preview (v1 + colour presets v1.1) — **LIVE ON PRODUCTION**
 *While an organizer fills in the setup wizard, a phone beside the form assembles their public
 tournament page in real time. Desktop-only; below ~1280px the wizard is untouched.*
-Plan (with build notes): `active/TOURNAMENT_CREATION_LIVE_PREVIEW_PLAN.md`.
+Plan (with build notes): `archive/TOURNAMENT_CREATION_LIVE_PREVIEW_PLAN.md`.
 
 Sign in as an org admin. Do this at a window **wider than 1280px** unless a step says otherwise.
 
@@ -1549,8 +1711,8 @@ Sign in as an org admin. Do this at a window **wider than 1280px** unless a step
 *A stranger with no login and no email walks into a real tournament that is running right now, on
 both sides of the product: the fan pages ticking on their own, and the actual admin portal as a
 demo organizer. Nothing they do is saved and nothing is ever sent to anyone.*
-Plan (with build notes 1–34): `active/TOURNAMENT_ADMIN_SANDBOX_PLAN.md`.
-Binding visual spec: `active/TOURNAMENT_SANDBOX_MOCKUPS.html` (the tour is superseded by artifact
+Plan (with build notes 1–34): `archive/TOURNAMENT_ADMIN_SANDBOX_PLAN.md`.
+Binding visual spec: `archive/TOURNAMENT_SANDBOX_MOCKUPS.html` (the tour is superseded by artifact
 `f1fcaff5-7777-4a9f-a166-8557686214fc`).
 The narrative walkthrough (what to do, what to expect, what to judge at each beat) was delivered in
 chat 2026-08-03 at the owner's request rather than as a file. This list is the tick-box record.
@@ -1877,29 +2039,53 @@ run the tick by hand before QA if the countdown looks stale.*
 
 ---
 
-### 5.4 🖥📱 The Coach Sandbox — Phase 1, three season moments — **BUILT 2026-08-04, dev, UNCOMMITTED**
+### 5.4 🖥📱 The Coach Sandbox — five moments + the guided tour — **P1 `7a7092ea` · P2 `c57f6462` COMMITTED · P3 BUILT 2026-08-05, dev, UNCOMMITTED**
 
 The coach twin of the "See it live" demo: one tap, no login, into the real premium Coaches Portal
-on the fictional **Riverdale Ridge Baseball** — three teams frozen at three moments, a warm demo
-banner, and the **phase dock** ("The season · Tryout day / Mid-season / Season's End").
-⚠ *Prep: the dev server needs a restart before this QA (new files + shared modules). The nightly
-re-anchor's schedule (migration 226) is NOT yet applied to the dev DB — if dates look stale, re-run
+on the fictional **Riverdale Ridge Baseball** — five teams frozen at five moments of a year, a warm
+demo banner, and the **phase dock** ("The season · Tryout day / Off-season / Season start /
+Mid-season / Season's End").
+⚠ *Prep: the dev server needs a restart before this QA (shared modules changed). The nightly
+re-anchor's schedule (migration 226) is STILL not applied to the dev DB — if dates look stale, re-run
 the seed (`node --env-file=.env.local scripts/seed-demo-coach.mjs`) or the tick by hand.*
 
 **A · The door** (private/incognito window, signed out)
 1. Open `/see-it-live/coaches` → you land on the 12U team's Overview, signed in as the demo
    coach, with the WARM banner ("You're in the coach's seat, on a fictional team…") and the
-   three-chip phase dock under it. No login, no email, no interstitial.
+   five-chip phase dock under it. No login, no email, no interstitial.
 2. The dock highlights **Mid-season**; the banner's right slot reads "There's a game this
    Saturday" — never a countdown.
+3. **⚠ ON A PHONE, JUDGE THE DOCK HARD.** Five chips are wider than a 390px screen (measured: 510px).
+   The row now scrolls so the chip you're standing in is always visible, and you swipe for the rest
+   — but you see roughly three and a half at a time. **Tell me if that reads as "there are five
+   moments" or as "the row is cut off."** The alternative is two rows of chips, permanently taller.
 
-**B · The three moments** (one tap each; a narration line appears on arrival)
+**B · The five moments** (one tap each; a narration line appears on arrival)
 1. **Tryout day** → the live scoring board: 28 candidates by bib (never names), two evaluators
    partway through, one split opinion (bib 14, Hitting: 5 vs 2). Sessions dated TODAY.
-2. **Mid-season** → Overview: record 14-3-1, "Saturday's lineup isn't set" as the one thing,
+2. **Off-season (14U)** → Money, budget vs. actual: a $11,700 plan on six real categories phased
+   across four months, ~$4,000 already spent against it, and one expense filed as **unbudgeted**
+   ("Team photo day", $180) — that's deliberate, it's the report earning its keep. Check the
+   **month grid** columns line up with the calendar, and that **Expenses** shows a Spring
+   Invitational balance still owed with a due date ahead.
+   - ⚠ *This team's season year is NEXT year, on purpose — an off-season team is building a season
+     it hasn't played. Confirm the masthead year doesn't read as a bug to you.*
+   - **Money → Dues:** two instalments in, one family a payment behind ($225).
+   - **Schedule:** Sunday skills sessions and cage nights. Open the past Sunday with the plan on
+     it → three stations, three groups, a rotation clock. Then the one still AHEAD → the plan
+     should be walkable/runnable.
+   - **Development:** four focus areas (one already achieved) and a testing session — 3 tests,
+     11 of 13 players. **The two who missed must show a dash, never a zero.**
+3. **Season start (10U)** → Schedule: opening day two Saturdays back, three games played (2-1) and
+   twelve ahead with practices between them. **No past game may sit there unscored.** Lineups shows
+   exactly ONE saved lineup — the opener's — and nothing after it. Roster is complete with numbers
+   and positions; dues are current bar one family.
+4. **Mid-season** → Overview: record 14-3-1, "Saturday's lineup isn't set" as the one thing,
    attendance dip on Tuesdays, $240 overdue across two families, 1 waiver missing (on the
    player's profile), playing-time outlier + a pitcher at the arm-care cap under Lineups.
-3. **Season's End** → the closed 2025 year: Season Wrapped (18-6-2, a 6-game streak, 9 of 12
+   **New:** the last Tuesday and Thursday practices now carry written plans — check the schedule
+   shows them as run-and-recorded, and that the Overview's one thing is STILL Saturday's lineup.
+5. **Season's End** → the closed 2025 year: Season Wrapped (18-6-2, a 6-game streak, 9 of 12
    families opened the recap), and every archive door opens read-only.
 
 **C · Look, don't keep**
@@ -1913,11 +2099,132 @@ the seed (`node --env-file=.env.local scripts/seed-demo-coach.mjs`) or the tick 
    seat?" confirm screen. Declining keeps your session; continuing swaps to the demo.
 
 **E · The calendar holds** (after the re-anchor runs)
-1. Come back tomorrow: the tryout is still "today", the game still "this Saturday".
+1. Come back tomorrow: the tryout is still "today", the game still "this Saturday", opening day
+   still two Saturdays back, and the winter sessions still on Sundays — **not Mondays**. The five
+   moments move in whole weeks so weekdays never drift; a session that has changed weekday means
+   the re-anchor is broken, not merely late.
 
 **F · Hygiene**
 1. Riverdale Ridge appears nowhere public: not in /discover, not in the sitemap, no public org
    pages.
+2. **⚠ A name collision to judge (found during the docs check, NOT changed).** The product has
+   its own built-in *sample budget* for a made-up team called **"Riverdale 12U"**, offered as
+   "See a finished example" on a budget page that is still empty. Inside the sandbox that is
+   reachable: open the **11U** (the tryout team, which has no budget) → Money → Budget vs. actual
+   → and you can open a sample for "Riverdale 12U" while the dock is showing you *Riverdale Ridge
+   12U*, a different fictional team, one tap away. Both are invented and nothing leaks between
+   them — but "clearly labelled as a made-up team" loses its force inside a demo that is already
+   a made-up team. **Tell me whether that reads as confusing.** The fix, if you want one, is a
+   rename on one side or the other; it is not a help-content problem, so I left it alone.
+
+**G · The guided tour (Phase 3, new 2026-08-05)** — *seven presses that walk one season.*
+Open the demo in a fresh private window each time you start this section; the tour remembers where
+you got to for the rest of the browser session.
+
+1. **The opening.** You arrive and the tour row reads **"The season, guided"** with one button,
+   **"Walk the year →"**. It should feel offered, not started: **nothing may move until you press.**
+2. **Press it seven times** and let each one land. Every press must produce a sentence in the hat —
+   that sentence is the deliverable, and a press that changes nothing is the defect. In order you
+   should reach: the tryout board (28 ranked, names still hidden) → the 14U's testing session
+   (**two dashes, never zeros**) → the 10U's lineups (one saved, twelve waiting) → the 12U's
+   budget → the 12U's playing-time table → **one player's page** → the closed 2025 season.
+3. **Step 4, the money — new data.** The 12U now has a real ledger: ~$9,205 spent against a $9,400
+   plan. **Diamond rentals should sit OVER plan**, and it should be the only line that does. That
+   is deliberate (two rainouts moved to weeknights) — a demo where every line comes in under budget
+   teaches a prospect the report flatters them. **Tell me if the over-plan line reads as a bug
+   rather than as honesty.**
+4. **Step 6, what a parent gets.** It lands on **Felix Aubert (#30)** — the same player step 5 just
+   showed you at the bottom of the playing-time table. Press **Preview** and read it as his parent
+   would. **This is the judgement call I most want your eye on:** showing the recap of the kid who
+   has been on the field least is either the sharpest thing in the demo or one step too far. Say
+   the word and I'll point it at a neutral player.
+5. **Step 7 closes the loop** — the recap you just read, counted: nine of twelve families opened
+   theirs. Then open one of the read-only archive doors from that page to prove the year is
+   browsable, not a screenshot.
+6. **🖥📱 The hat, on a phone.** Measured at 390px: **155px on arrival**, up from 112px, and
+   **198–216px while a sentence is showing**, up from 182px. Two things buy that back and both need
+   your eye: **the moments dock hides itself while the tour is speaking** (it comes back the moment
+   the sentence clears — tell me if it reads as missing rather than as standing aside), and **the
+   promise is now shortened on a phone to "Changes show on screen, but nothing is saved"**, taking
+   the place of "There's a game this Saturday". Before this, on a phone, *the honesty promise
+   appeared nowhere at all until you pressed something.*
+7. **Nothing may claim motion.** No countdown, no pulsing dot, no step that says "watch this
+   change". If anything on screen suggests it is updating while you look at it, that is a defect.
+8. **Blind scoring holds.** No step, anywhere, may show you a candidate's name on the tryout board.
+
+**⚠ Three pre-existing problems the tour design uncovered — NOT fixed, and worth your ruling:**
+- The dock's Tryout-day sentence promises **"one split opinion to argue about tonight."** The
+  disagreement (bib 14, hitting: 5 from one evaluator, 2 from the other) is real in the data and
+  **no screen in the product renders it** — every surface shows the 3.5 average. The sentence is
+  pointing at something a visitor cannot find.
+- The **evaluator-bias readout never fires** on this data ("runs hot / runs cold"). The product
+  compares each evaluator against the average of the *other* evaluators' averages, so one harsh
+  scorer out of two moves both by half the drift. Making it fire needs a harsher demo evaluator
+  **and** a way to link to the right tryout stage; I left both alone.
+- The **tryout hub opens on "Decide"**, not on the live scoreboard, because scores are already in.
+  That is the product working as designed, but it means the moment's most interesting screen is one
+  tab away and not linkable. The tour's step 1 points at what the hub actually opens.
+
+---
+
+### 6 🖥📱 The words the app uses about playing time — **BUILT 2026-08-05, dev, UNCOMMITTED** · no migration
+*A copy-only sweep. Every playing-time metric is identical; only the framing changed. The app now
+says where minutes went — it never says whether that was fair. Your ruling, 2026-08-04.*
+
+Where: Insights, the Overview board, Lineups, Attendance, a player's profile, and the family
+season recap. **Nothing behaves differently** — bench warnings, pitching caps, auto-fill and the
+A-squad modes all work exactly as before, so this is a reading exercise, not a clicking one.
+No dev-server restart needed (copy only).
+
+- [ ] **🖥 Insights doorway + report title:** open **Insights** → the playing-time tile now reads
+      **"Where is playing time going?"**, and so does the report when you open it. The old
+      "Is playing time fair?" appears nowhere.
+- [ ] **🖥 Overview tile:** on a board that shows the **Playing time** tile (an assistant coach
+      without money access is the reliable way to see it), the verdict reads **"Evenly spread"**
+      or **"Leans on a few"** — never "Fairly even" / "Uneven". With too few lineups saved it
+      still reads "Not enough yet".
+- [ ] **🖥 Lineups — the empty state:** a team with no games yet shows the Lineups intro, whose
+      payoff line now ends "…Insights uses it to show **where playing time has gone** across the
+      season."
+- [ ] **🖥 Lineups — auto-fill and Reshuffle:** open a game's lineup → the note under **Auto-fill**
+      reads **"Auto-fill spreads bench time evenly across the roster."** Hover **Reshuffle** →
+      the tooltip reads "Fresh arrangement with even bench rotation…". Fill the grid, then tap
+      **Reshuffle** → the confirm says "…a fresh **arrangement with even bench rotation**, using
+      your current auto-fill settings."
+- [ ] **🖥 Lineups — the bench pill:** switch to the **Playing time** view of a filled lineup →
+      beside "Bench: 1–3 innings each" the pill now reads **"Evenly spread"** (or **"Leans on a
+      few"** when the spread is more than one inning), matching the Overview wording. ⚠ **Judgment
+      call — say if you'd rather it stayed short** ("Even" / "Uneven"): it's a small pill and the
+      long phrase is the price of consistency with the tile.
+- [ ] **🖥 Position preferences tooltip:** open a player → position preferences → the help bubble's
+      last line reads **"Bench time rotates evenly (no back-to-back sits)"**, describing what the
+      generator does rather than promising fairness.
+- [ ] **🖥 Attendance:** the season attendance page's explanatory line now reads "A season view to
+      **inform playing-time decisions** and spot when someone's drifting away — not a ranking."
+- [ ] **👨‍👩‍👧 The family recap — the highest-stakes one.** Open a player → **Family season recap**
+      → **Preview**. A player whose minutes sat near the team middle now reads **"Right in the
+      team's typical range all season"**. The above/below lines are unchanged ("Above/Below the
+      team's middle for time on the field"). Read this one as a parent: nothing on the screen
+      should sound like the platform is grading your coaching.
+- [ ] **🖥 Help stays in step:** open **Help** and read the **Insights**, **Lineups**, **Overview
+      tiles** and **Family season recap** entries — every quoted phrase matches what the screens
+      now say. Then **search "fair"** — the results still come up (the old word is kept as a
+      search term on purpose, because coaches will keep typing it); the answers they open just no
+      longer use it.
+- [ ] **⚠ Tryouts must be UNTOUCHED — the deliberate exception.** Open **Tryouts**: "names stay
+      hidden **for fairness**" is still there, and the **Tryout report** still carries its
+      **Fairness receipt** heading and lines. That is an evaluation-integrity promise, a different
+      concept, and you ruled it stays. If any of that wording changed, the sweep overreached.
+
+**Words I invented beyond the four you ratified** (each is a judgment call — veto any individually):
+"where minutes have gone", "where the innings are going", "Auto-fill spreads bench time evenly
+across the roster", "Fresh arrangement with even bench rotation", "Bench time rotates evenly",
+"inform playing-time decisions", "rotates everyone evenly", "keeps bench time even across the rest
+of the roster", and the lineup pill borrowing the Overview's "Evenly spread" / "Leans on a few".
+
+**Flagged, not changed:** the tournament **schedule generator** still offers "Default **fairness**
+across rest, facility moves, daily load, and time slots." That is scheduling equity between teams,
+not playing time — out of scope here. Say if it deserves its own ruling.
 
 ---
 

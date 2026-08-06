@@ -53,6 +53,30 @@ export interface EffectiveLineupCaps {
   minInningsPerPlayer: number | null;   // min-play floor
 }
 
+/**
+ * The pitching cap that applies to ONE player in ONE game — the number a coach-facing surface
+ * may show them (the game-day console's chip, the arm-care card).
+ *
+ * A per-player cap OVERRIDES the team cap, which is what the field says about itself
+ * (`RepLineupProfile.pitcher.maxInnings`: "null = use the season default"): a coach who sets a
+ * team-wide ceiling and then deliberately gives one pitcher a different number meant that
+ * number. `teamCap` is the already-resolved game cap — `resolveLineupCaps(...).pitcherInningsCap`
+ * (per-game override ?? season default). null = no cap set anywhere, and a surface that gets
+ * null must say NOTHING rather than invent a ceiling the coach never set.
+ *
+ * ⚠ KNOWN DIVERGENCE, deliberately not resolved here (P3 plan §4.2, owner-ruled 2026-08-05):
+ * `lib/lineup-generator.ts` (`effectivePitchCap`) takes `min(per-player, team)` instead, so
+ * auto-fill enforces the stricter of the two while every coach-facing surface reports the
+ * override. Changing lineup generation is its own unit of work with its own tests — flag it,
+ * don't quietly shift a rotation from inside a display change.
+ */
+export function resolvePlayerPitcherCap(
+  perPlayerCap: number | null | undefined,
+  teamCap: number | null | undefined,
+): number | null {
+  return perPlayerCap ?? teamCap ?? null;
+}
+
 /** Effective cap = per-game override ?? season default (per rule). */
 export function resolveLineupCaps(
   season: LineupSettings | null | undefined,

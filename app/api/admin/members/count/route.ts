@@ -7,7 +7,7 @@ import { withObservability } from '@/lib/observability';
 export const GET = withObservability(async (request: Request) => {
   const { searchParams } = new URL(request.url);
   const orgSlug = searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
 
   const { org } = ctx;

@@ -65,6 +65,13 @@ interface Props {
   catalogVersions: ProductCatalogVersionRow[];
   addonCatalog: ProductCatalogAddonRow[];
   featureMatrix: FeatureMatrixRow[];
+  /** Rows where the PUBLISHED matrix and the LIVE product disagree — see the banner below. */
+  featureMatrixDrift: {
+    planId: string;
+    moduleKey: string;
+    publishedIncluded: boolean;
+    liveIncluded: boolean;
+  }[];
   changeRequests: CatalogChangeRequestRow[];
   campaigns: CatalogCampaignRow[];
   canManageProduct: boolean;
@@ -457,6 +464,7 @@ export default function PlansPricingClient({
   catalogVersions,
   addonCatalog,
   featureMatrix,
+  featureMatrixDrift,
   changeRequests,
   campaigns,
   canManageProduct,
@@ -1020,7 +1028,11 @@ export default function PlansPricingClient({
       setSelectedFeaturePublishId('');
       setFeaturePublishNote('');
       setFeaturePublishConfirming(false);
-      setCatalogSaved('Feature matrix published');
+      // ⚠ Do NOT shorten this back to "Feature matrix published". It was exactly that for a year,
+      // and it read as "the packaging change is live" when nothing about customer access had
+      // changed (audit 2026-08-06). The second clause is the whole point of the message.
+      setCatalogSaved('Feature matrix published — recorded, but NOT yet live for customers. '
+        + 'Raise the matching code change to lib/plan-config.ts to apply it.');
     } catch (err) {
       setCatalogError((err as Error).message);
     } finally {
@@ -2230,6 +2242,43 @@ export default function PlansPricingClient({
               Module entitlements from the published product catalog matrix. Draft edits below create
               Product Catalog change requests; approved requests can be published from the review panel.
             </p>
+          </div>
+
+          {/* ── The honesty banner (audit 2026-08-06) ────────────────────────────────────────
+              Publishing this matrix used to LOOK like a packaging change taking effect — change
+              request, second-person approval, "Feature matrix published", grid redraws. In fact
+              the published table is read only by this screen: the live gate reads a constant in
+              lib/plan-config.ts. Nobody's access changed. Wiring it up for real is a genuine
+              project (the gate is synchronous and runs in client components), so until then this
+              screen states the limit plainly rather than implying an effect it does not have. */}
+          <div className={`${styles.billingClarity ?? ''} ${styles.warningNote ?? ''}`.trim()} style={{ marginBottom: '1rem' }}>
+            <p>
+              <strong>Publishing here does not change what customers can access.</strong> This matrix is
+              the record of intended packaging. Live entitlement is still read from{' '}
+              <code>lib/plan-config.ts</code>, so a real packaging change needs a code update and a
+              deploy. Publish to record the decision — then raise the code change.
+            </p>
+            {featureMatrixDrift.length > 0 ? (
+              <>
+                <p style={{ marginTop: '0.6rem' }}>
+                  ⚠ <strong>{featureMatrixDrift.length} module{featureMatrixDrift.length === 1 ? '' : 's'} published but NOT live</strong>{' '}
+                  — these are waiting on that code change:
+                </p>
+                <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
+                  {featureMatrixDrift.map(row => (
+                    <li key={`${row.planId}:${row.moduleKey}`}>
+                      <strong>{planLabel(row.planId)}</strong> · {row.moduleKey} —{' '}
+                      published as <strong>{row.publishedIncluded ? 'included' : 'not included'}</strong>,
+                      live product says <strong>{row.liveIncluded ? 'included' : 'not included'}</strong>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p style={{ marginTop: '0.6rem' }}>
+                ✅ Published matrix and live product currently agree — nothing outstanding.
+              </p>
+            )}
           </div>
           <div className={styles.tableWrap}>
             <table className={`${styles.table} ${styles.matrixTable}`}>

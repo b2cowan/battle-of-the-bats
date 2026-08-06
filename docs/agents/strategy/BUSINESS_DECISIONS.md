@@ -9,7 +9,7 @@
 ---
 
 ### 2026-08-04 — The Club Shared Book is a CLUB-PLAN EXCLUSIVE: the first coaches-portal feature gated by the ORG's plan rather than the team's portal tier
-**Status:** Decided (owner, 2026-08-04 — "let's go with your recommendations", all five §8 rulings in `docs/projects/active/COACH_CLUB_SHARED_BOOK_PLAN.md` ratified as recommended). Feature itself is **mockup-gated, not yet built** — this entry binds the packaging, not a ship date.
+**Status:** Decided (owner, 2026-08-04 — "let's go with your recommendations", all five §8 rulings in `docs/projects/archive/COACH_CLUB_SHARED_BOOK_PLAN.md` ratified as recommended). Feature itself is **mockup-gated, not yet built** — this entry binds the packaging, not a ship date.
 
 **Decision:** When the Club Shared Book ships (teams inside one org opt in to share their opponent scouting books — labelled, read-only, revocable), it is available **only to organizations on the Club plan**. Non-Club orgs and standalone Premium-portal teams see **nothing anywhere** — no switches, no locked teaser (absent, not upsold in-app; the selling happens on marketing surfaces, not as a dangling lock in a coach's settings). The other four ratified rulings shape the product, not the packaging: admin-enables + head-coach-opts-in, see-only-while-sharing reciprocity, book line + observations + per-team records travel, and no cross-team blended stats.
 
@@ -46,12 +46,49 @@ HANDOFF → `/docs` — at ship: the scouting guide's club section states the op
 **Affects:** In-app copy across the coaches portal (Insights doorway + playing-time report, Overview tile, family player recap, lineup auto-fill, related help-guide entries) — a copy sweep, no price/plan/gate/schema change. Game-Day Mode P1 (in flight) builds with the new vocabulary from day one. Future idea recorded separately in the ideas backlog: contextual playing-time queries ("who has pitched the most this week among X?") — a feature, not part of this ruling.
 
 **Handoff:**
-HANDOFF → build (new chat) — execute the app-wide copy sweep as its own unit of work: `docs/projects/active/PLAYING_TIME_VOCAB_SWEEP_PLAN.md`. Tryout-fairness copy explicitly out of scope.
+HANDOFF → build (new chat) — execute the app-wide copy sweep as its own unit of work: `docs/projects/archive/PLAYING_TIME_VOCAB_SWEEP_PLAN.md`. Tryout-fairness copy explicitly out of scope.
 HANDOFF → `/docs` — help-guide entries that quote "Is playing time fair?" (Insights, lineups, recap guides) update **in the same sweep**, not before.
 HANDOFF → `/marketing` — check brand/marketing surfaces (persona pages, feature copy) for "fair playing time" framing; align anything found to descriptive vocabulary. No pricing surface is implicated.
 HANDOFF → `/billing` — **nothing.** No gate, key or plan config. Recorded so nobody goes hunting.
 
 **Supersedes:** nothing. **Relates to:** the Game-Day Mode P1 build (first surface to ship the new vocabulary); the Tryout Insights / tryout-report work (whose fairness-receipt vocabulary this ruling deliberately protects).
+
+---
+
+### 2026-08-03 — What "names are baseline" MEANT for the sections that switch was gating: the duties a person already holds decide, and no new grant is created. Plus an honest correction to the "nobody's access narrows" claim
+**Status:** Decided (owner, 2026-08-03 — ruled from mockups drawn side by side, https://claude.ai/code/artifact/1f7c75ac-b7bc-42c7-b4bf-69fe71a70a5a; all three questions answered as recommended). **AMENDS the A1 player-names entry below, which was silent on the question this settles.** ✅ BUILT on `dev` 2026-08-03, uncommitted — owner QA owed (`OWNER_QA_LEDGER.md` §1.9c).
+
+**The gap this closes.** A1 retired the `roster` grant. The re-audit A1's *own handoff demanded* found that grant had been doing **two jobs**:
+
+- **(a) "May a player's name be rendered here?"** — A1 makes this unconditionally yes. Settled.
+- **(b) "Does this SECTION exist for this person?"** — the roster page, attendance, the development board, Insights, the Overview tiles and the depth chart all read `roster` as a **stand-in** for this second question. **A1 said nothing about it.**
+
+⚠ Retiring the grant with nothing behind (b) would have opened every one of those surfaces to a **Helper** — a *widening*, which A1's own text says it is not. So (b) needed an answer, and the answer had to avoid inventing the very kind of switch A1 was deleting.
+
+**Decision:**
+
+1. **OPTION A — section visibility follows the DUTIES a person already holds** (attendance, lineups, internal notes, team money, documents, tryouts, or being head coach). **No new grant, no new vocabulary**: the model gets strictly smaller, exactly as A1 promised. It is **self-correcting** — grant a helper attendance and the roster page opens by itself, with no second switch for anyone to remember and no list to keep in step. **Option B** (retire the switch and let every section simply open) was drawn beside it and **declined**: it hands a parent volunteer the roster, the development board and the season's numbers.
+2. **It delivers the complaint that prompted A1 in the first place.** *"There shouldn't be an assistant coach that can see players' dues with no players' names."* Under Option A, holding **money** *is* record access — so the dues page names people instead of showing "Player #12" and costing a phone call. Before, that combination was a dead grant.
+3. **The staff card keeps a standing line** where the control used to be, telling a head coach what is true now and pointing at **Contacts & birthdates** as the switch that does the real protecting. Rationale: anyone who set the old switch will come looking for it, and a grid that simply lost a control explains nothing.
+4. **Change notice = release notes + help guides only.** Actively notifying affected head coaches was **offered and declined** — it advertises a control that never worked. ⚠ `/release` owes **one line at promote time** (assistants who had the roster hidden gain those sections); wording in the plan's §7.5.
+
+**⚠ CORRECTION TO A CLAIM THIS LOG SHOULD NOT CARRY UNCHALLENGED.** A1's briefing and plan both asserted **"nobody's access narrows."** That is *very slightly* too strong, and `/review` found the exception: an assistant holding `roster: 'view'` as their **only** record-ish grant — attendance, lineups **and** documents all explicitly switched off — loses the roster page, the development board and Insights. **Blast radius verified as ZERO: `rep_team_coaches` holds 0 assistant-coach rows on BOTH dev and prod (queried 2026-08-03), and A1 is not on prod.** Recorded rather than fixed: the durable consequence is that the model **can no longer express "sees the team list, holds no duties"** — that bundle is now indistinguishable from a Helper, which is precisely what Option A means. Fixing it would require resurrecting the retired grant or inventing a new one, both of which the ruling forbids. ⚠ **Item 4 was ruled partly on the premise that nothing narrows; the owner should know the premise is 99%-true rather than 100%-true, and it did not change the ruling because nobody is affected.**
+
+**Rationale:** The alternative to a *union of existing duties* was a bespoke per-surface gate, which is exactly the fragmentation A1 deleted (four surfaces honoured the old switch and four ignored it, because each asked its own question). One predicate with many call sites is the shape the codebase already praises; it also means the nav, the route and the Overview tile for a given section cannot drift apart, because they now literally ask the same function. The trade-off, stated plainly: the union is **wider than some individual doors strictly need** — someone granted only *money* or only *documents* also reaches the roster page and the season review. That follows directly from Option A and is accepted; narrowing any single door later is an owner decision, not a quiet tightening.
+
+**Affects:** **No price, plan name, capacity band, SKU, feature key or gate change.** Drift check run 2026-08-03 against `PLAN_PRICING_FACTS.md`, `lib/plan-config.ts` and `lib/plan-features.ts`: **no divergence and no edit required** — every surface here rides the existing **Premium Coaches Portal / `team`** entitlement, and the single `roster` string in `lib/plan-features.ts` is prose in a comment, not a feature key. The Facts doc needs no change beyond the reconcile line already added for the A1 sibling entry. Product model: the capability model loses one grant and one special case and **gains nothing**; "which sections exist" becomes a derived answer rather than a stored one.
+
+**⚠ ONE BUILD-TIME DECISION, NOT AN OWNER RULING — flagged for the guardian switch-on.** The *"also connected to this team as a family member"* label (from the season-review/double-record entry above) counts **verified GUARDIAN links as well as followers.** Reason: a guardian keeps the same schedule/results access a follower does, so removing that person from Staff leaves them connected just the same — counting only followers would have re-created the false sentence that entry exists to delete, arriving through a different door. **Dormant while `GUARDIAN_TIER_ENABLED` is off** (the tier refuses every write), and deliberately decided in advance so the switch-on inherits it rather than discovering it. ⚠ This is the *only* piece of that work with **no automated test** — it needs real database rows — so it rests on owner QA.
+
+**Handoff:**
+HANDOFF → `/plan` — **nothing new.** A1 is BUILT on `dev`, uncommitted; remaining work is owner QA (`OWNER_QA_LEDGER.md` §1.9c), which needs a **second signed-in helper account**. Plan + build record: `docs/projects/archive/COACH_ROSTER_BASELINE_A1_PLAN.md`.
+HANDOFF → `/docs` — **already done** (2026-08-03). The assistant-coaches guide now states that names are baseline, carries a "where did the Roster switch go?" FAQ, and names Contacts & birthdates as the real boundary.
+HANDOFF → `/billing` — **nothing.** No gate, key or plan config. Recorded as "nothing" so a later reader does not go hunting.
+HANDOFF → `/marketing` — **nothing.** No customer-facing surface sells roster visibility.
+HANDOFF → `/release` — ⚠ **one line owed at promotion**, per item 4.
+HANDOFF → owner — the guardian switch-on inherits the guardian-counts decision above, and should re-check the removal copy against **three** record types rather than two.
+
+**Amends:** the **2026-08-03 A1 player-names entry** (below) by answering the question it left open. **Relates to:** the **2026-08-03 season-review / double-record entry** above (built in the same sitting; its family label is what the guardian note governs); the **2026-06-25** locked assistant-capability decision, already amended by A1.
 
 ---
 
@@ -84,12 +121,13 @@ HANDOFF → `/billing` — **nothing.** No gate, key or plan config. Recorded as
 HANDOFF → `/marketing` — **nothing.** No customer-facing surface describes who receives a season review, and nothing here is a sold inclusion.
 HANDOFF → owner — **two items.** (1) ✅ **The standing "duplicate-records seam" item from the 2026-08-03 Helper entry (ruling 3) is now ANSWERED** — the answer is *keep them separate, fix the sentence* — so the guardian switch-on inherits a ruling rather than an open question. What it still must decide at switch-on: the third record is the only one carrying a **stored consent artifact** and the only one tied to a specific child, so its removal is not symmetrical with the other two, and the corrected removal copy must be re-checked against three record types rather than two. Nothing prevents one email holding all three — fine, but it should be a recorded decision at switch-on, not an omission found afterwards. (2) ✅ **Verified safe, so the obvious fear can be set aside:** the family access panel (followers, approval queue, schedule visibility) is mounted on the Roster page but gates itself **server-side on `rosterPii`**, which a helper does not hold — so **A1 opening the roster page to helpers does NOT hand them the family queue.** The Gate 2 "two doors" property survives A1 intact.
 
-**Supersedes:** nothing. **Relates to:** the **2026-08-03 A1 player-names entry** immediately below (this ruling depends on it — names are baseline, so ruling 1 is an *altitude* decision, not a privacy one — and hands it item E); the **2026-08-03 Helper entry** (ruling 3's accepted limitation and its standing owner item are what rulings 3–4 here resolve); the **2026-08-01 family-layer two-tier entry** (the follower/guardian tiers are unchanged); the **2026-08-01 archive rulings D-F1/D-F2/D-F7** and the binding archive-is-opt-in rule in `CLAUDE.md`, which ruling 1 extends from *which doors* to *which people*. Evidence: `docs/projects/active/COACH_SEASON_REVIEW_AND_DOUBLE_RECORD_RECOMMENDATION.md`.
+**Supersedes:** nothing. **Relates to:** the **2026-08-03 A1 player-names entry** immediately below (this ruling depends on it — names are baseline, so ruling 1 is an *altitude* decision, not a privacy one — and hands it item E); the **2026-08-03 Helper entry** (ruling 3's accepted limitation and its standing owner item are what rulings 3–4 here resolve); the **2026-08-01 family-layer two-tier entry** (the follower/guardian tiers are unchanged); the **2026-08-01 archive rulings D-F1/D-F2/D-F7** and the binding archive-is-opt-in rule in `CLAUDE.md`, which ruling 1 extends from *which doors* to *which people*. Evidence: `docs/projects/archive/COACH_SEASON_REVIEW_AND_DOUBLE_RECORD_RECOMMENDATION.md`.
 
 ---
 
 ### 2026-08-03 — Player NAMES, NUMBERS and POSITIONS are BASELINE for everyone with portal access. The "Roster: Hidden" grant is retired, because an audit found it was already fiction in half the places it claimed to work
 **Status:** Decided (owner, 2026-08-03 — *"any user should have roster read access to the names and numbers, items that show up in other areas of the app. There shouldn't be an assistant coach that can see players' dues with no players' names, or practice plans without players' names in groups."* Scope put to the owner as three options; **"everyone with portal access, including helpers"** was chosen over the narrower assistant-coaches-only reading.)
+> ⚠ **AMENDED 2026-08-03 — read the entry two above before acting on this one.** This entry settles *whether a name may be rendered* and is **silent on which SECTIONS the retired grant was gating** (the roster page, attendance, the development board, Insights, the Overview tiles, the depth chart). Building it literally would have opened all of them to a Helper. The amendment rules **Option A — the duties a person already holds decide** — and also **corrects this entry's "it is a simplification, not a widening" framing**: one rare bundle does narrow (blast radius verified zero on dev and prod). ✅ BUILT on `dev` 2026-08-03, uncommitted.
 
 **Decision:** A player's **first name, last name, jersey number and position** are visible to **anyone who holds portal access to that team** — head coach, assistant coach, or Helper. They stop being a grantable thing.
 
@@ -277,7 +315,7 @@ HANDOFF → owner — **the counsel packet** (`COACH_PORTAL_CHUNK_D_COUNSEL_PACK
 **Handoff:**
 HANDOFF → `/billing` (at Slice 1–2 build) — gate every family surface on the premium team entitlement (org-native Club teams pass via the org plan); no new keys beyond a family-layer feature flag if useful; reconcile `PLAN_PRICING_FACTS.md` + `lib/plan-config.ts` in the same unit of work and run the drift check.
 HANDOFF → `/marketing` — **still none until ship** (per the 2026-08-01 retention entry). When written: the family layer is a **Premium** benefit; never imply live-stats; never imply public sharing.
-HANDOFF → `/plan` — DELIVERED: `docs/projects/active/COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` (+ discovery §10 rulings record, PM brief, approved mockups artifact `2b0cbcab-9848-4a69-a0e6-a8c90cc85eb2` v3).
+HANDOFF → `/plan` — DELIVERED: `docs/projects/archive/COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` (+ discovery §10 rulings record, PM brief, approved mockups artifact `2b0cbcab-9848-4a69-a0e6-a8c90cc85eb2` v3).
 **Supersedes:** the ~5-accounts-per-player cap inside the 2026-07-11 G3 entry (annotated below); closes the "tier-gating left OPEN" item in the 2026-08-01 Chunk D retention entry (annotated below). G3's verification on-ramps and safeguarding preconditions otherwise stand; G4 otherwise stands.
 
 ---

@@ -9,8 +9,7 @@ import {
   canViewSchedule,
   canManageSchedule,
   canJoinStaffChat,
-  canSeePlanPlayers,
-  canViewRoster,
+  hasRecordAccess,
   hasNoTeamRecordAccess,
   type CoachCapabilities,
   type AssistantCapabilityGrants,
@@ -42,14 +41,16 @@ describe('the helper preset grants exactly what was authorised', () => {
     assert.equal(canManageSchedule(caps), false);
   });
 
-  it('sees players’ names ON A PLAN while holding no roster access at all', () => {
+  /**
+   * ⚠ REWRITTEN for A1 (2026-08-03). This used to assert `roster === 'off'` plus a
+   * `canSeePlanPlayers` exception. Both are retired: names are baseline, so there is no predicate
+   * left to ask, and what keeps the roster page shut is that the preset holds no record duty.
+   * The ruling this protects is unchanged — a helper reads names on their plan and nothing else.
+   */
+  it('holds no record access at all, which is what keeps the roster page shut', () => {
     const caps = helper();
-    // The ruling: full roster basics on the plan...
-    assert.equal(canSeePlanPlayers(caps), true);
-    // ...delivered WITHOUT the grant every record surface reads, which is what keeps the roster
-    // page, the development board and Insights shut with no new gate anywhere.
-    assert.equal(caps.roster, 'off');
-    assert.equal(canViewRoster(caps), false);
+    assert.equal(hasRecordAccess(caps), false);
+    assert.equal(hasNoTeamRecordAccess(caps), true);
   });
 
   it('is never in the staff chat room', () => {
@@ -78,8 +79,28 @@ describe('the helper preset grants exactly what was authorised', () => {
     const round = assistant(sanitizeAssistantGrants(HELPER_PRESET));
     assert.equal(canJoinStaffChat(round), false);
     assert.equal(canManageSchedule(round), false);
-    assert.equal(canSeePlanPlayers(round), true);
-    assert.equal(round.roster, 'off');
+    assert.equal(hasRecordAccess(round), false);
+  });
+
+  /**
+   * ⚠ A1 (2026-08-03) — the stale-key contract. Rows written before A1 still carry `roster` and
+   * `planPlayerNames` in their stored bundle. Nothing migrates them, so the sanitiser dropping
+   * unknown keys is the entire reason that is a non-event: a legacy `roster: 'off'` must not
+   * survive into a resolved bundle, and must not change what the person can do.
+   */
+  it('ignores the two keys A1 retired if they are still in a stored bundle', () => {
+    const legacyHelper = { ...HELPER_PRESET, roster: 'off', planPlayerNames: true };
+    const round = assistant(sanitizeAssistantGrants(legacyHelper));
+    assert.equal('roster' in round, false);
+    assert.equal('planPlayerNames' in round, false);
+    assert.equal(hasRecordAccess(round), false);
+    assert.equal(staffKindLabel(round), 'helper');
+
+    // And the mirror case: an ASSISTANT stored with `roster: 'off'` keeps everything else they
+    // hold, so A1 takes nothing away from them — it only stops hiding names.
+    const legacyAssistant = assistant(sanitizeAssistantGrants({ roster: 'off' }));
+    assert.equal(hasRecordAccess(legacyAssistant), true);
+    assert.equal(staffKindLabel(legacyAssistant), 'assistant');
   });
 });
 
@@ -141,12 +162,27 @@ describe('the three new grants change nothing for existing coaches', () => {
     assert.equal(canManageSchedule(legacy), false);
   });
 
-  it('gives an ordinary assistant plan names from roster visibility alone', () => {
-    // `planPlayerNames` defaults false and must grant nothing on its own: an assistant's names
-    // still come from `roster`, exactly as they always have.
-    assert.equal(ASSISTANT_DEFAULTS.planPlayerNames, false);
-    assert.equal(canSeePlanPlayers(assistant()), true);
-    assert.equal(canSeePlanPlayers(assistant({ roster: 'off' })), false);
+  it('keeps every record duty an assistant starts with, so A1 narrowed nobody', () => {
+    // A1 removed a switch; it must not have removed access. An assistant on the defaults holds
+    // record access through the duties they were always given.
+    assert.equal(ASSISTANT_DEFAULTS.attendance, true);
+    assert.equal(ASSISTANT_DEFAULTS.lineups, true);
+    assert.equal(ASSISTANT_DEFAULTS.documents, 'view');
+    assert.equal(hasRecordAccess(assistant()), true);
+  });
+
+  /**
+   * ⚠ THE ONE PLACE A1 COULD HAVE NARROWED. The past-practice-plan archive door read
+   * `notes || roster !== 'off'`; assistants carry `notes: false`, so they passed on the roster half
+   * and dropping it would have locked them out of past plans. The route gates on record access now
+   * — this asserts the property that fix depends on.
+   */
+  it('leaves an assistant able to reach past practice plans without notes', () => {
+    const caps = assistant();
+    assert.equal(caps.notes, false);
+    assert.equal(canViewSchedule(caps) && hasRecordAccess(caps), true);
+    // ...and still shuts that door on a helper, which is what the gate is for.
+    assert.equal(canViewSchedule(helper()) && hasRecordAccess(helper()), false);
   });
 });
 
@@ -167,8 +203,8 @@ describe('a helper is never routed into the archive', () => {
   it('stops matching the moment a helper is granted anything of substance', () => {
     // The altitude choice follows the grants, so a widened helper rejoins the ordinary portal with
     // no list to maintain and nothing to keep in step.
-    assert.equal(hasNoTeamRecordAccess(assistant({ ...HELPER_PRESET, roster: 'view' })), false);
     assert.equal(hasNoTeamRecordAccess(assistant({ ...HELPER_PRESET, attendance: true })), false);
+    assert.equal(hasNoTeamRecordAccess(assistant({ ...HELPER_PRESET, money: 'read' })), false);
   });
 });
 
@@ -180,12 +216,43 @@ describe('staffKindLabel is a WORD, never a gate', () => {
   });
 
   it('stops saying "helper" the moment the bundle widens — and that changes no access', () => {
-    // A head coach who hand-grants a helper the roster has made them something else. The label
+    // A head coach who hand-grants a helper attendance has made them something else. The label
     // follows the grants rather than the other way round, which is the entire reason this is a
     // preset: there is no stored role for the label to contradict.
-    const widened = assistant({ ...HELPER_PRESET, roster: 'view' });
+    const widened = assistant({ ...HELPER_PRESET, attendance: true });
     assert.equal(staffKindLabel(widened), 'assistant');
-    assert.equal(canViewRoster(widened), true);
+    assert.equal(hasRecordAccess(widened), true);
     assert.equal(isCoachNavItemVisible(widened, 'Roster'), true);
+  });
+
+  /**
+   * ⚠ THE REGRESSION A1 WOULD OTHERWISE HAVE SHIPPED. Both mechanisms that recognise a helper were
+   * keyed on `roster === 'off'` — the exact state A1 retires. Left alone, every helper would have
+   * been relabelled "Assistant" on the staff card AND lost the "This season has finished" screen,
+   * which is what keeps the season review shut to them (owner ruling 2026-08-03). Neither is a
+   * permission, so neither would have failed loudly.
+   */
+  /**
+   * ⚠ **THE SEASON-REVIEW DOOR** (owner ruling 2026-08-03). Season's End leads with Season Wrapped
+   * — the team's whole season, plus a share button that puts a child's first name on an image that
+   * leaves the app. A helper ran one station on one Tuesday and has no claim to it.
+   *
+   * Six paths reach that page (the portal-root sign-in redirect, the archive sidebar, both team
+   * switchers, the `?year=` rail, a typed URL) and Phase 4 closed only the one nobody uses. They
+   * all funnel through ONE nav label and ONE route, both keyed on `hasRecordAccess` — so this pair
+   * of assertions is the whole door.
+   */
+  it('never sees the Season\'s End door, and cannot pass the gate behind it', () => {
+    assert.equal(isCoachNavItemVisible(helper(), "Season's End"), false);
+    assert.equal(hasRecordAccess(helper()), false);
+    // ...and every real coach keeps it, which is what stops this being a narrowing.
+    assert.equal(isCoachNavItemVisible(assistant(), "Season's End"), true);
+    assert.equal(isCoachNavItemVisible(head(), "Season's End"), true);
+  });
+
+  it('still says "helper" after A1, with no roster grant left to read', () => {
+    const caps = helper();
+    assert.equal(staffKindLabel(caps), 'helper');
+    assert.equal(hasNoTeamRecordAccess(caps), true);
   });
 });

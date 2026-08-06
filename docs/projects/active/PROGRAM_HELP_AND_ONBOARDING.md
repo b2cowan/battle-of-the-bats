@@ -30,7 +30,7 @@ milestones: **fan alerts / PWA · data import · post-event summary · clone-and
 
 ### 1.3 Post-event wrap-up "Next steps" row
 On the completed-tournament wrap-up card. Designed, never built. Pairs naturally with the organizer
-dashboard finalize work (`PROGRAM_ORGANIZER_EXPERIENCE.md` §Completion guidance) — build them together.
+dashboard finalize work (`PROGRAM_TOURNAMENTS.md` §Stage 3) — build them together.
 
 ### 1.4 Cross-device dismissal (the 5b remainder)
 Today "don't show me this again" is stored in **localStorage only**, so dismissals are lost when an

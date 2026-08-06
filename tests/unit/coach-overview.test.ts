@@ -19,10 +19,8 @@ const HEAD_CAPS: CoachCapabilities = {
   schedule: true,
   scheduleManage: true,
   staffChat: true,
-  planPlayerNames: true,
   attendance: true,
   lineups: true,
-  roster: 'view',
   rosterWrite: true,
   rosterPii: true,
   notes: true,
@@ -296,7 +294,13 @@ describe('resolveBoard — the fixed set', () => {
 
   it('falls to a shorter board rather than inventing a tile', () => {
     const { slots } = resolveBoard(boardInput({
-      caps: caps({ money: 'off', roster: 'off', lineups: false, attendance: false, notes: false }),
+      // ⚠ A1 (2026-08-03): must be an ASSISTANT holding nothing. This case used to reach a short
+      // board via `roster: 'off'` on the head-coach baseline — but a head coach always has record
+      // access, so the old override was proving less than it looked like it was.
+      caps: caps({
+        isHeadCoach: false, money: 'off', documents: 'off',
+        lineups: false, attendance: false, notes: false, tryouts: false,
+      }),
     }));
     assert.ok(slots.length < BOARD_SLOT_COUNT);
     assert.ok(!slots.includes('roster'));
@@ -497,15 +501,15 @@ describe('resolveCoachingPair — the fetch gate and the board cannot disagree',
   it('falls back to development, then to nothing, as access narrows', () => {
     assert.deepEqual(resolveCoachingPair(caps({ lineups: false })), ['attendance', 'development']);
     assert.deepEqual(
-      resolveCoachingPair(caps({ lineups: false, attendance: false, notes: false, roster: 'off' })),
+      resolveCoachingPair(caps({ lineups: false, attendance: false, notes: false, documents: 'off' })),
       [],
     );
   });
 
-  it('respects the shared nav gate — attendance needs roster visibility too', () => {
-    // The attendance report lists players by name, so its route rides roster visibility. Granting
-    // attendance alone would otherwise put a tile on the board that 403s when tapped.
-    assert.ok(!resolveCoachingPair(caps({ roster: 'off' })).includes('attendance'));
+  it('respects the shared nav gate — the attendance tile needs the attendance duty', () => {
+    // A1 (2026-08-03): this used to assert that attendance ALSO needed roster visibility, because
+    // the route gated on it. One grant answers both now, so the tile can no longer 403 when tapped.
+    assert.ok(!resolveCoachingPair(caps({ attendance: false })).includes('attendance'));
   });
 });
 
@@ -571,10 +575,10 @@ describe('resolveCoachingTilesShown — the fetch gate matches the board EXACTLY
 
 describe('resolveCoachingPair — a tile is only offered when its NUMBER is real (review finding)', () => {
   it('does not offer Development to a coach whose goals are redacted', () => {
-    // The Development SECTION is visible on roster view (measurables ride roster), but this tile's
+    // The Development SECTION is visible on record access (measurables ride it), but this tile's
     // value is a goal count and goals are notes-gated — the route redacts them. Offering the tile
     // would print a confident "No goals yet" at someone not cleared to see them.
-    const rosterOnly = caps({ lineups: false, notes: false, roster: 'view' });
+    const rosterOnly = caps({ lineups: false, notes: false });
     assert.ok(!resolveCoachingPair(rosterOnly).includes('development'));
   });
 

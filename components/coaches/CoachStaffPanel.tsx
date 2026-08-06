@@ -11,7 +11,6 @@ import {
   staffKindLabel,
   type CoachCapabilities,
   type AssistantCapabilityGrants,
-  type RosterAccess,
   type DocsAccess,
 } from '@/lib/coach-capabilities';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -31,6 +30,19 @@ interface StaffMember {
   coachRole: 'head_coach' | 'assistant_coach';
   displayName: string | null;
   email: string | null;
+  /**
+   * ⚠ A LABEL, never a gate — this person's address also holds a verified family connection to
+   * this team. Computed server-side by comparing addresses; no family data is joined or sent here.
+   *
+   * ⚠ **A `false` here means "not known to be", NOT "definitely isn't."** The lookup is best-effort
+   * (it fails soft), and it matches on the address the person signed in with, which need not be the
+   * one they followed under. Every sentence that reads this must stay true when it is wrongly
+   * false — see the removal dialog.
+   *
+   * ⚠ It reflects TODAY, so it is suppressed in the read-only archive view, where showing it would
+   * assert a present-day fact about a finished season (governing rule 1).
+   */
+  alsoFollowsTeam?: boolean;
   capabilities: Caps;
   isSelf: boolean;
 }
@@ -48,14 +60,28 @@ type Toggle = { key: keyof Caps; label: string; hint: string };
  * every member of that group has a prompt rather than three of six.
  */
 const EVERYDAY_SEGMENTS: Segment[] = [
-  { key: 'roster', label: 'Roster', hint: 'Player list', options: [
-    { value: 'off', label: 'Hidden' }, { value: 'view', label: 'View' } ] },
+  // ⚠ The Roster Hidden/View control lived here until A1 (2026-08-03). Players' names, numbers and
+  // positions are baseline for everyone with portal access, so there is nothing left to switch —
+  // `STANDING_ACCESS_NOTE` below is what a head coach reading this grid sees in its place.
+  //
   // Everyday since 2026-07-31: this grant is blank TEAM forms only. A player's signed waiver or
   // medical consent now additionally requires `rosterPii` (`canViewPlayerDocuments`), so the speed
   // bump lives on the grant that actually hands over family details.
   { key: 'documents', label: 'Documents', hint: 'Blank team forms', options: [
     { value: 'off', label: 'Hidden' }, { value: 'view', label: 'View' }, { value: 'manage', label: 'Manage' } ] },
 ];
+
+/**
+ * ⚠ A1 (2026-08-03) — what a head coach reads where the Roster Hidden/View control used to be.
+ *
+ * It is NOT decoration. The switch it replaces was set deliberately by any coach who used it, and
+ * they will come looking for it; a grid that simply lost a control tells them nothing. Two jobs, in
+ * one sentence each: state what is true now, and point at the switch below that does the protecting
+ * the retired one only appeared to.
+ */
+const STANDING_ACCESS_NOTE =
+  'Players’ names, numbers and positions are visible to everyone on your staff. '
+  + 'Their contact details and birthdates are not — that’s below.';
 
 const EVERYDAY_TOGGLES: Toggle[] = [
   /**
@@ -195,7 +221,6 @@ const HELPER_CAPS = resolveCoachCapabilities('assistant_coach', HELPER_PRESET);
 const HELPER_PHRASING: Partial<Record<keyof Caps, string>> = {
   schedule: 'The practice schedule, and the plan for each practice',
   scheduleManage: 'Adding, changing or cancelling anything on the schedule',
-  roster: 'The team roster',
   documents: 'Team documents',
   money: 'Team money — budget, dues and expenses',
   rosterPii: 'Guardian contacts, birthdates and medical details',
@@ -210,11 +235,17 @@ const helperGrantLabels = (held: boolean) => GRANT_LABELS
 
 const HELPER_GETS = [
   ...helperGrantLabels(true),
-  // Not derivable from GRANT_LABELS because it has no control in the duty grid: `planPlayerNames`
-  // is meaningless once roster visibility is on, so it is a preset detail rather than a switch.
+  // Not derivable from GRANT_LABELS because it is no longer a grant at all: since A1 (2026-08-03)
+  // names, numbers and positions are baseline for everyone with portal access.
   'Players’ names, numbers and positions at their station',
 ];
-const HELPER_NEVER = helperGrantLabels(false);
+const HELPER_NEVER = [
+  ...helperGrantLabels(false),
+  // Also not derivable, and for the mirror-image reason: the roster page and the record surfaces
+  // beside it used to hang off the Roster switch. They follow record access now (`hasRecordAccess`),
+  // which the preset deliberately holds none of — so this has to be said rather than computed.
+  'The roster page, the development board and season reports',
+];
 
 /**
  * Count of sensitive grants currently in effect — shown on the collapsed group so it never hides one.
@@ -229,8 +260,9 @@ function sensitiveGrantCount(c: Caps): number {
 /**
  * ⚠ EVERY grant the server understands must appear here, including the ones this panel has no
  * control for. A PATCH replaces the whole stored bundle, so an omitted key is not "left alone" —
- * it is dropped, and the server then resolves it from the defaults. Leaving `planPlayerNames` out
- * would silently take a helper's names away the first time anyone touched any other switch.
+ * it is dropped, and the server then resolves it from the defaults. (The original example of that
+ * hazard, `planPlayerNames`, is gone — A1 retired it along with `roster` — but the rule stands for
+ * every grant that follows.)
  *
  * ⚠ The `Required<>` return type is what ENFORCES that, rather than this comment asking nicely:
  * every key of `AssistantCapabilityGrants` is mandatory here, so adding a grant to the server is a
@@ -241,10 +273,10 @@ function grantsFrom(c: Caps): Required<AssistantCapabilityGrants> {
   return {
     schedule: c.schedule, scheduleManage: c.scheduleManage,
     attendance: c.attendance, lineups: c.lineups,
-    roster: c.roster, rosterPii: c.rosterPii, notes: c.notes,
+    rosterPii: c.rosterPii, notes: c.notes,
     money: c.money, documents: c.documents,
     announcementsSend: c.announcementsSend, tryouts: c.tryouts,
-    staffChat: c.staffChat, planPlayerNames: c.planPlayerNames,
+    staffChat: c.staffChat,
   };
 }
 
@@ -358,6 +390,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
   }
 
   async function removeAssistant(member: StaffMember) {
+    const who = member.displayName || member.email || 'This assistant';
     // Was a native window.confirm() — the one dialog in the portal that broke from the app's own
     // styled confirmations (readiness-review finding f7-5).
     const ok = await confirm({
@@ -365,9 +398,32 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
       // The archive wording names the blast radius precisely: this season's records only, and
       // nothing about the current one. It matters because the same button on a live season DOES
       // remove them from the team.
+      /**
+       * ⚠ **THE SENTENCE THAT WAS FALSE** (owner ruling 2026-08-03, ruling D).
+       *
+       * This read "…loses access to this team immediately." For an adult who ALSO follows the team
+       * as a family member, that was untrue: a staff removal doesn't touch the family layer, so
+       * they keep the schedule, the results and any shared game page. The head coach most likely to
+       * read this line carefully is the one removing someone after a problem — and they'd stop at
+       * "immediately".
+       *
+       * Fixed as a sentence, not a model change: the owner explicitly declined merging the two
+       * records. So the dialog now says what removal actually does, and names the other
+       * relationship only when one exists, with where to go to end it too.
+       *
+       * ⚠ **THE BASE SENTENCE SAYS "COACHING ACCESS" IN BOTH BRANCHES, AND THAT IS THE WHOLE
+       * SAFETY PROPERTY.** `alsoFollowsTeam` can be a false negative for reasons this dialog cannot
+       * see — the lookup failed, or the person follows under a different address than the one they
+       * signed in with. If the fallback claimed they "lose access to this team", every one of those
+       * cases would put the original false sentence straight back. Scoping the claim to *coaching*
+       * access makes it true no matter what the flag says; the flag's only job is to ADD the family
+       * warning when we positively know about it. Under-inform, never mis-state.
+       */
       message: readAccessOnly
-        ? `${member.displayName || member.email || 'This assistant'} will no longer be able to open this finished season's records. It doesn't change what happened, and it doesn't affect any other season.`
-        : `${member.displayName || member.email || 'This assistant'} loses access to this team immediately. You can invite them again later.`,
+        ? `${who} will no longer be able to open this finished season's records. It doesn't change what happened, and it doesn't affect any other season.`
+        : member.alsoFollowsTeam
+          ? `${who} loses their coaching access to this team immediately. ⚠ They're also connected to this team as a family member, and that's separate — they'll keep seeing your schedule, results and any game page you've shared. To end that too, remove them under Family access on your Roster page.`
+          : `${who} loses their coaching access to this team immediately. You can invite them again later.`,
       confirmText: readAccessOnly ? 'Remove access' : 'Remove',
       cancelText: 'Keep them',
       tone: 'danger',
@@ -421,7 +477,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
     const who = member.displayName || member.email || 'This helper';
     const ok = await confirm({
       title: `Make ${who} an assistant coach?`,
-      message: `${who} will get everything an assistant starts with — the schedule, attendance, lineups, the roster and your staff chat — and you can grant more from their card. Nothing sensitive is granted by this.`,
+      message: `${who} will get everything an assistant starts with — the schedule, attendance, lineups, the roster page and your staff chat — and you can grant more from their card. Nothing sensitive is granted by this.`,
       confirmText: 'Make assistant coach',
       cancelText: 'Cancel',
       tone: 'warning',
@@ -436,11 +492,8 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
       scheduleManage: ASSISTANT_DEFAULTS.scheduleManage,
       attendance: ASSISTANT_DEFAULTS.attendance,
       lineups: ASSISTANT_DEFAULTS.lineups,
-      roster: ASSISTANT_DEFAULTS.roster as RosterAccess,
       documents: ASSISTANT_DEFAULTS.documents as DocsAccess,
       staffChat: ASSISTANT_DEFAULTS.staffChat,
-      // Their names now come from roster visibility, exactly as every other assistant's do.
-      planPlayerNames: false,
     });
   }
 
@@ -651,6 +704,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
                   <div>
                     <p className={css.personName}>{member.displayName || member.email || 'Assistant coach'}</p>
                     {member.email && member.displayName && <p className={css.personEmail}>{member.email}</p>}
+                    {member.alsoFollowsTeam && !readAccessOnly && <p className={css.alsoFollows}>Also connected to this team as a family member</p>}
                   </div>
                   <div className={css.personActions}>
                     {/* Persistent live region — a wrapper that only appears WITH its text is often
@@ -679,6 +733,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
                 <div className={css.grid}>
                   {EVERYDAY_TOGGLES.map(renderToggle)}
                   {EVERYDAY_SEGMENTS.map(renderSegment)}
+                  <p className={css.standingNote}>{STANDING_ACCESS_NOTE}</p>
                 </div>
 
                 {/* Sensitive access — money, family contact details, and anything that emails parents.
@@ -715,6 +770,7 @@ export default function CoachStaffPanel({ orgSlug, teamId, readAccessOnly = fals
                 <div>
                   <p className={css.personName}>{member.displayName || member.email || 'Helper'}</p>
                   {member.email && member.displayName && <p className={css.personEmail}>{member.email}</p>}
+                  {member.alsoFollowsTeam && !readAccessOnly && <p className={css.alsoFollows}>Also connected to this team as a family member</p>}
                 </div>
                 <div className={css.personActions}>
                   <span className={css.helperChip}>Helper</span>

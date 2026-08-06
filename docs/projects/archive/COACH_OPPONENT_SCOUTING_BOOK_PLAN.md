@@ -335,6 +335,8 @@ entry points until the tile + tab land in the same commit.
 5. Future (not in this plan's phases): org-level opt-in book sharing between a club's own
    teams ("your club's collective book") — compelling for Club-plan orgs; team-scoped
    boundaries are load-bearing, so this needs its own ruling if wanted.
+   → **Grown into its own project 2026-08-04:** `COACH_CLUB_SHARED_BOOK_PLAN.md` (+ PM
+   brief), Proposed, awaiting its §8 rulings.
 
 (2026-08-03 Q2 resolved by §4.5: assistants and helpers read the book — bench staff are the
 point. 2026-08-03 Q3 resolved by the workflow redesign: capture is a quiet toast link +

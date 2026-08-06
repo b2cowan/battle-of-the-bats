@@ -5,6 +5,7 @@ import { Undo2, Redo2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
+import { hasRecordAccess } from '@/lib/coach-capabilities';
 import PositionProfileEditor from '@/components/coaches/PositionProfileEditor';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import type { RepRosterPlayer, LineupSettings } from '@/lib/types';
@@ -62,7 +63,8 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
   const pitcherPos = sportPack.pitcherPosition; // 'P' for diamond sports, null when the sport has no mound
   const fieldCols = pitcherPos ? sportPack.fieldPositions.filter(p => p !== pitcherPos) : sportPack.fieldPositions;
   const canEdit = !!assignment?.capabilities.rosterWrite; // same gate as the player page + the PATCH endpoint
-  const canView = !!assignment && assignment.capabilities.roster !== 'off';
+  // A1 (2026-08-03): the depth chart is a view of the roster page, so it follows record access.
+  const canView = !!assignment && hasRecordAccess(assignment.capabilities);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const [players, setPlayers] = useState<RepRosterPlayer[]>([]);

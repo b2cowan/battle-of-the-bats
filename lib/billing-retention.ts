@@ -161,6 +161,100 @@ export async function buildDowngradePreflight(
   };
 }
 
+/**
+ * Archive the tournaments a plan change puts OVER the new cap, and record them so they come back.
+ *
+ * ── Why this exists (audit 2026-08-06) ───────────────────────────────────────────────────────
+ * The self-serve downgrade has always done this (app/api/billing/downgrade/confirm). The
+ * platform-admin plan change did NOT: it wrote the new `plan_id` + `tournament_limit`, COUNTED the
+ * over-cap tournaments, put that count in the audit log — and left every one of them running. The
+ * cap is only ever enforced at CREATION time (setup-tournament, clone), so an org moved from Club
+ * down to a one-slot plan kept all twelve of its live tournaments indefinitely. Recorded, never
+ * applied. Same defect class as the cancellation gap; same fix — do what the customer path does.
+ *
+ * WHICH ones are archived: `getNonArchivedTournaments` sorts year DESC, name ASC, and we keep the
+ * first N. So an operator downgrade keeps the org's MOST RECENT seasons and archives the oldest —
+ * deterministic, and the same "keep what's current" instinct an operator would apply by hand. The
+ * self-serve path lets the customer pick instead, which is right for them and wrong here: nobody
+ * is sitting in front of the platform console to choose on the customer's behalf.
+ *
+ * Nothing is destroyed: rows land in `billing_retained_records` exactly as the customer path
+ * writes them, so `restoreRetainedDowngradeTournaments` reinstates them on re-upgrade.
+ * Returns the archived summaries (empty when the change is not a downgrade or nothing is over cap).
+ */
+export async function archiveOverCapTournamentsForPlanChange(opts: {
+  orgId: string;
+  fromPlan: OrgPlan;
+  targetPlan: OrgPlan;
+  actorEmail: string | null;
+  reason: string | null;
+}): Promise<BillingTournamentSummary[]> {
+  const { orgId, fromPlan, targetPlan, actorEmail, reason } = opts;
+  const targetLimit = PLAN_CONFIG[targetPlan]?.tournamentLimit ?? 1;
+  if (targetLimit >= 9999) return [];
+
+  const tournaments = await getNonArchivedTournaments(orgId);
+  if (tournaments.length <= targetLimit) return [];
+
+  const overCap = tournaments.slice(targetLimit);
+  const keepIds = tournaments.slice(0, targetLimit).map(t => t.id);
+  const retentionUntil = retentionDeadline();
+
+  const { data: intent, error: intentError } = await supabaseAdmin
+    .from('billing_retention_intents')
+    .insert({
+      org_id: orgId,
+      intent_type: 'downgrade',
+      status: 'applied',
+      from_plan: fromPlan,
+      target_plan: targetPlan,
+      keep_tournament_ids: keepIds,
+      retention_until: retentionUntil,
+      reason,
+      created_by: null,
+      created_by_email: actorEmail,
+      applied_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single();
+  if (intentError) throw intentError;
+
+  const overCapIds = overCap.map(t => t.id);
+  const { error: archiveError } = await supabaseAdmin
+    .from('tournaments')
+    .update({ status: 'archived', is_active: false })
+    .eq('org_id', orgId)
+    .in('id', overCapIds);
+  if (archiveError) throw archiveError;
+
+  const { error: recordError } = await supabaseAdmin
+    .from('billing_retained_records')
+    .insert(overCap.map(t => ({
+      intent_id: intent.id,
+      org_id: orgId,
+      record_type: 'tournament',
+      record_id: t.id,
+      display_name: t.name,
+      retained_state: 'retained_inactive',
+      retention_until: retentionUntil,
+      metadata: {
+        previousStatus: t.status,
+        slug: t.slug,
+        year: t.year,
+        startDate: t.startDate,
+        endDate: t.endDate,
+        retentionReason: 'plan_downgrade',
+        fromPlan,
+        targetPlan,
+        initiatedBy: 'platform_admin',
+        adminEmail: actorEmail,
+      },
+    })));
+  if (recordError) throw recordError;
+
+  return overCap;
+}
+
 export async function buildCancellationPreflight(org: Organization): Promise<CancellationPreflight> {
   const tournaments = await getNonArchivedTournaments(org.id);
   if (isTeamWorkspaceOrg(org)) {

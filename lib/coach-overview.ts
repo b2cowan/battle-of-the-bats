@@ -25,7 +25,7 @@ import type { CoachRepPhase } from './coach-rep-phase';
 import {
   type CoachCapabilities,
   canViewMoney,
-  canViewRoster,
+  hasRecordAccess,
   canManageSchedule,
   canViewSchedule,
   canViewDevelopmentGoals,
@@ -336,7 +336,7 @@ export function resolveCoachingPair(caps: CoachCapabilities): TileKey[] {
   // Playing time reads the season's saved lineups; without that access it falls back to
   // Development, then to a shorter board. A documented chain, never a ranked list.
   if (caps.lineups) pair.push('playingTime');
-  // The Development SECTION is visible to anyone with roster view (measurables ride roster), but
+  // The Development SECTION is visible to anyone with record access (measurables ride it), but
   // this tile's value is a GOAL COUNT, and goals are notes-gated — the route redacts them without
   // that grant. Gating the tile on section visibility would print a confident "No goals yet" at a
   // coach who simply is not cleared to see them. A tile is only offered when its NUMBER is real.
@@ -369,7 +369,9 @@ export function resolveBoard(input: BoardInput): BoardDecision {
   // The record is derived from the season's games, so without schedule access it would read as
   // "no record" rather than "not yours to see".
   if (canSchedule) selected.push('record');
-  if (canViewRoster(caps)) selected.push('roster');
+  // A1 (2026-08-03): the roster tile is a DOOR into the roster page, so it follows the same record
+  // access the page and its nav item now use. Names on it were never the question.
+  if (hasRecordAccess(caps)) selected.push('roster');
   if (canSchedule) selected.push('schedule');
   selected.push('tournaments');
 

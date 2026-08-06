@@ -77,3 +77,40 @@ confirm the demo still says "today" (dates re-anchored).
 A cold visitor reaches the portal in one tap and can see all launch moments inside two minutes;
 nothing a visitor does persists or sends; the demo never shows stale dates; the "start your own"
 door is present at every dead end.
+
+---
+
+## Update — the guided tour (Phase 3, built 2026-08-05)
+
+**What a visitor sees that they didn't before.** The demo now offers to walk them through the
+season rather than leaving them to wander it. A row in the demo banner reads *"The season,
+guided — Walk the year →"*. Press it and seven presses take them from a tryout nobody has decided
+yet to a season that has been finished and kept, each one arriving with a sentence saying what
+they are looking at.
+
+**Why one continuous tour rather than a tour per moment.** The moments dock already lets anyone
+jump around self-serve. A tour per moment would have been the dock with extra buttons, and it
+would have turned a season into five feature demos — which is the pitch the whole "moments"
+framing exists to avoid. There is also a story that only works in order: the tour shows a coach
+the playing-time table, with one player well below the rest, and *then* opens the page that
+player's family reads at the end of the season. Those two only land together.
+
+**The rule behind every stop:** the dock drops you at a moment's front door; the tour opens the
+drawer behind it. If a visitor would have found it by wandering, it isn't a stop.
+
+**It never starts itself.** The demo promises that nothing moves while you watch, so it does not
+move a stranger either. It introduces itself once and waits to be pressed.
+
+**Something that got fixed on the way.** To point at the budget mid-season we needed a budget
+worth looking at — and found the mid-season team showing a $9,400 plan with **nothing spent
+against it**, eighteen games into its year. Anyone who wandered into Money saw a report saying
+nothing had happened all season. That team now has a real ledger, with **one line deliberately
+over plan**: a demo where every line comes in under budget quietly teaches a prospect that the
+report flatters them.
+
+**On a phone**, the sandbox's honesty promise — *"nothing is saved"* — is now visible from the
+first screen. It wasn't before: it was hidden on narrow screens on the assumption that the first
+guided sentence would carry it, which was true of the tournament demo and never true here.
+
+**Still open:** collateral for pitching in person (a QR code to the demo), and folding the beats
+that didn't make the tour into the dock's own arrival sentences.

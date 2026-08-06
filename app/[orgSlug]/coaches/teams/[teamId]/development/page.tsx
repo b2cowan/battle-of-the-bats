@@ -167,6 +167,12 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
   }
 
   if (!assignmentsLoading && assignment && caps && !canViewDevelopmentGoals(caps) && !canViewMeasurables(caps)) {
+    /**
+     * ⚠ A1 (2026-08-03) — the `blocker` line below used to read "player notes or roster access".
+     * The Roster control was retired from the head coach's staff card, so half that sentence sent
+     * a coach hunting for a switch that no longer exists. It now names the duties that actually
+     * open this section, which is what `canViewMeasurables` resolves to.
+     */
     return (
       <div className={styles.page}>
         <CoachEmptyState
@@ -175,7 +181,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
           headline="Development isn't turned on for you"
           description="Development records what each player is working on and the results of the tests you run through the season."
           payoff="It's what lets Insights answer “Is everyone getting attention?” — one row per player, so nobody quietly gets overlooked."
-          blocker="Ask your head coach for player notes or roster access on this team."
+          blocker="Ask your head coach for player notes, or for any of attendance, lineups, documents or tryouts on this team."
         />
       </div>
     );
@@ -213,7 +219,10 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
      page because someone retired a test (/review F1). The list now renders in every state;
      only the button, the note, and the dimming change. Nothing holding real records is dimmed. */
   const sessionsCard = (
-    <div key="sessions" className={`${styles.detailSection} ${firstRun && !hasSessions ? styles.devHeldBack : ''}`}>
+    // data-sandbox-tour: the beat the demo's "Find the two blanks" step rings — a session where
+    // eleven of thirteen were tested and the other two read as a dash. Inert off a demo org.
+    <div key="sessions" data-sandbox-tour="development-sessions"
+      className={`${styles.detailSection} ${firstRun && !hasSessions ? styles.devHeldBack : ''}`}>
       <div className={styles.devCardHeadRow}>
         <p className={styles.detailSectionTitle} style={{ margin: 0 }}>Evaluation sessions</p>
         {canWrite && (firstRun ? (

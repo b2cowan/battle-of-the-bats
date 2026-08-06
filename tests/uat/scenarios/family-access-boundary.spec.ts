@@ -226,14 +226,24 @@ async function signIn(page: Page, email: string) {
   await page.waitForURL(url => !url.pathname.includes('/auth/login'), { timeout: 45_000 });
 }
 
-/** Call an API as the current browser session and return { status, body }. */
+/**
+ * Call an API as the current browser session and return { status, body }.
+ *
+ * ⚠ FIXED 2026-08-03 (Tier 1 pilot). This used `page.evaluate(fetch(relativeUrl))`, which throws
+ * `Failed to parse URL` whenever the page has never navigated — and the ANONYMOUS probes below
+ * never navigate, because being signed out is the whole point of them. Three of this file's
+ * probes therefore threw before reaching a single assertion: the guessed join token, the
+ * anonymous team payload, and the link reset. **The most exposed surface in the chunk — an
+ * unauthenticated stranger holding a guessed URL — was the part with no working probe.**
+ *
+ * `page.request` shares the context's cookie jar (so a signed-in probe stays signed in) and
+ * resolves against `baseURL` (so an anonymous probe needs no page at all).
+ */
 async function apiGet(page: Page, url: string) {
-  return page.evaluate(async (u) => {
-    const res = await fetch(u);
-    let body: unknown = null;
-    try { body = await res.json(); } catch { /* non-JSON */ }
-    return { status: res.status, body };
-  }, url);
+  const res = await page.request.get(url, { timeout: 60_000 });
+  let body: unknown = null;
+  try { body = await res.json(); } catch { /* non-JSON */ }
+  return { status: res.status(), body };
 }
 
 async function setVisibility(teamId: string, visibility: string) {
@@ -308,14 +318,27 @@ test.describe('tier boundary — a follower reaches no child data', () => {
     const serialized = JSON.stringify(res.body ?? {});
     // The fixture put a real player on this team. If any of these appear, the DTO leaked.
     expect(serialized).not.toContain('Secret');
-    expect(serialized).not.toContain('guardian');
-    expect(serialized).not.toContain('player');
     expect(serialized).not.toContain('someone@dev.local');
+
+    /**
+     * ⚠ REWRITTEN 2026-08-03 (Tier 1 pilot). This asserted `not.toContain('guardian')` and
+     * `not.toContain('player')` against the serialized body. Slice 2 later added a
+     * `"guardian": null` FIELD to this payload — the correct, safe value for a follower — and the
+     * substring check started failing on a KEY NAME while no data had leaked at all.
+     *
+     * A blunt substring over a serialized DTO cannot tell "the guardian's email is in here" from
+     * "there is a field called guardian and it is empty". Assert the SHAPE instead: the field is
+     * present and null, and no player-level container exists.
+     */
+    const body = res.body as { role?: string; guardian?: unknown; view?: Record<string, unknown> };
+    expect(body.role).toBe('follower');
+    expect(body.guardian ?? null).toBeNull();
+    expect(body.view).not.toHaveProperty('players');
+    expect(body.view).not.toHaveProperty('roster');
 
     // And it must actually be serving the schedule — otherwise the assertions above pass
     // vacuously on an empty payload.
-    const body = res.body as { view?: { entries?: unknown[] } };
-    expect((body.view?.entries ?? []).length).toBeGreaterThan(0);
+    expect(((body.view?.entries as unknown[]) ?? []).length).toBeGreaterThan(0);
   });
 
   test('a follower is refused every coach-side family route', async ({ page }) => {

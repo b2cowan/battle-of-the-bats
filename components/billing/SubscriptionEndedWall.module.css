@@ -1,0 +1,67 @@
+/* Subscription-ended wall — the honest goodbye for a cancelled organization.
+   Deliberately built on the SAME tokens as the coaches portal's "not assigned" wall
+   (coaches.module.css .notAssigned*) so a cancelled account reads as this product
+   rather than as an error page. Works on the dark operator surfaces and the warm
+   coach skin without a variant, because every value below is a token with a fallback. */
+
+.wall {
+  padding: 4rem 2rem;
+  text-align: center;
+  color: var(--home-dim, rgba(255, 255, 255, 0.4));
+}
+
+.wall h2 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--home-ink-soft, rgba(255, 255, 255, 0.6));
+  margin: 1rem 0 0.5rem;
+}
+
+.wall p {
+  font-size: 0.9rem;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.detail {
+  margin-top: 0.5rem !important;
+}
+
+.doors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+}
+
+.door {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 1rem;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--home-ink-soft, rgba(255, 255, 255, 0.6));
+  background: transparent;
+  border: 1px solid var(--home-line, rgba(255, 255, 255, 0.12));
+  border-radius: var(--home-radius-pill, 999px);
+  text-decoration: none;
+  cursor: pointer;
+  transition: color 0.12s, border-color 0.12s;
+}
+
+.door:hover {
+  color: var(--home-ink, rgba(255, 255, 255, 0.9));
+  border-color: var(--home-line-strong, rgba(255, 255, 255, 0.28));
+}
+
+.emailLink {
+  color: var(--blueprint-blue);
+  text-decoration: none;
+}
+
+.emailLink:hover { text-decoration: underline; }

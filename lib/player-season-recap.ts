@@ -135,7 +135,7 @@ export interface PlayerSeasonRecapStats {
   } | null;
 }
 
-/** Within ±20% of the roster median reads as "in the team's fair-play band". Deliberately
+/** Within ±20% of the roster median reads as "in the team's typical range". Deliberately
  *  generous: this number goes to a parent, and a rotation is not a stopwatch. */
 const BAND_TOLERANCE = 0.2;
 

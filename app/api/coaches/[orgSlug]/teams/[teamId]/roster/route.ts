@@ -8,7 +8,7 @@ import {
   createRepRosterPlayer,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, redactRoster, canViewRoster } from '@/lib/coach-capabilities';
+import { denyUnless, redactRoster, hasRecordAccess } from '@/lib/coach-capabilities';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
@@ -42,7 +42,10 @@ export const GET = withObservability(async (req: Request,
   const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
   if ('error' in resolved) return resolved.error;
   const { capabilities, programYear, isReadOnly } = resolved;
-  const denied = denyUnless(canViewRoster(capabilities), 'You do not have access to the roster.');
+  // A1 (2026-08-03): the roster PAGE is a record surface, so it gates on record access rather than
+  // on the retired names switch. `redactRoster` below is unchanged and still does the real work —
+  // guardian contacts, birthdates and notes come off for anyone without those grants.
+  const denied = denyUnless(hasRecordAccess(capabilities), 'You do not have access to the roster.');
   if (denied) return denied;
 
   const players = await getRepRosterPlayers(programYear.id);

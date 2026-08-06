@@ -115,7 +115,7 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
                   <HelpStateRow state="never" label="Never" desc="a hard block — never placed here" />
                   <HelpStateRow state="neutral" label="Not set" desc="allowed, not preferred — used only to round out the field" />
                 </ul>
-                <p style={{ margin: '9px 0 0', color: 'var(--home-dim, rgba(255,255,255,0.55))' }}>Playing time stays fair (no back-to-back sits). You can edit the lineup before the game.</p>
+                <p style={{ margin: '9px 0 0', color: 'var(--home-dim, rgba(255,255,255,0.55))' }}>Bench time rotates evenly (no back-to-back sits). You can edit the lineup before the game.</p>
               </div>
             }
           />

@@ -20,7 +20,7 @@ export const POST = withObservability(async (req: Request) => {
   // (a multi-org member on Org B's page must not create Org A's billing account).
   const body = await req.json().catch(() => ({})) as { orgSlug?: unknown };
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
-  const auth = await getAuthContext(orgSlug ? { orgSlug } : {});
+  const auth = await getAuthContext(orgSlug ? { orgSlug, allowSuspendedOrg: true } : { allowSuspendedOrg: true });
   if (!auth) return unauthorized();
   // Billing is owner-only — enforce server-side (the UI also hides these controls).
   const denied = await requireCapability(auth, 'billing');

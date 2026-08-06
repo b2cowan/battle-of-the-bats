@@ -426,7 +426,7 @@ export default function CoachesLineupsPage({
           eyebrow="Lineups"
           headline="Set who plays where, once"
           description={`A lineup is your playing order and field positions for a single game, ${periodWord} by ${periodWord} — build it in advance, then reuse it as a template all season.`}
-          payoff="Your game sheet and attendance fill in from it instead of asking you again, and Insights uses it to answer whether playing time has been fair across the season."
+          payoff="Your game sheet and attendance fill in from it instead of asking you again, and Insights uses it to show where playing time has gone across the season."
           blocker={canAddGames
             ? 'A lineup attaches to a real game, so add one to your schedule first.'
             : 'A lineup attaches to a real game, and none are on the schedule yet. Adding games needs schedule access — ask your head coach.'}
@@ -472,7 +472,9 @@ export default function CoachesLineupsPage({
           </div>
 
           {upcomingShown.length > 0 && (
-            <section aria-labelledby="lineups-upcoming">
+            // data-sandbox-tour: the beat the demo's "count the lineups" step rings — the games
+            // still waiting behind the one lineup already saved. Inert off a demo org.
+            <section aria-labelledby="lineups-upcoming" data-sandbox-tour="lineups-upcoming">
               <p className={styles.sectionKicker} id="lineups-upcoming">Upcoming games</p>
               <div className={styles.lineupFrontList}>
                 {upcomingShown.map(e => renderRow(e, 'Build lineup'))}

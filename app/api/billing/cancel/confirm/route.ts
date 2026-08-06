@@ -19,7 +19,7 @@ export const POST = withObservability(async (req: Request) => {
   // if no orgSlug is supplied, so a destructive cancel can never default to the wrong subscription.
   const body = await req.json().catch(() => ({}));
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 

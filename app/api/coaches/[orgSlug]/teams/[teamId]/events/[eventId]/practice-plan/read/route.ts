@@ -6,7 +6,7 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
-import { denyUnless, canViewSchedule, canViewRoster, redactRoster } from '@/lib/coach-capabilities';
+import { denyUnless, canViewSchedule, hasRecordAccess, redactRoster } from '@/lib/coach-capabilities';
 
 /**
  * ⚠ **THE NEW ARCHIVE DOOR — one read-only past plan, and nothing else** (owner ruling
@@ -51,17 +51,18 @@ export const GET = withObservability(async (req: Request,
    * ⚠ THE ARCHIVE DOOR IS NOT A HELPER'S DOOR (Phase 4, 2026-08-03).
    *
    * This route serves a PAST season's plan, and its only entry point is the "Practices you've run"
-   * list inside the Development report — a door that shows on `notes || roster`. A helper turns up
-   * to run a station on a Tuesday; they hold neither, and they have no business reading last
-   * season's plans, so the gate here mirrors the door that leads to it rather than resting on the
-   * schedule alone. **Matching the gate to its own entry point is what keeps this from becoming a
-   * URL a helper can type.**
+   * list inside the Development report. A helper turns up to run a station on a Tuesday; they have
+   * no business reading last season's plans, so the gate here mirrors the door that leads to it
+   * rather than resting on the schedule alone. **Matching the gate to its own entry point is what
+   * keeps this from becoming a URL a helper can type — the two must move together.**
    *
-   * Every coach who can reach this in the UI today passes unchanged: they arrived through that list,
-   * which means they already hold one of the two.
+   * ⚠ **A1 (2026-08-03): this is the one gate where retiring `roster` would have NARROWED rather
+   * than widened.** It read `notes || roster !== 'off'`; assistants carry `notes: false` by default
+   * and passed on the roster half, so dropping that clause would have locked every ordinary
+   * assistant coach out of past plans while this change is supposed to take nothing away.
+   * `hasRecordAccess` restores them and still excludes a helper.
    */
-  const canOpenPastPlans =
-    canViewSchedule(capabilities) && (capabilities.notes || capabilities.roster !== 'off');
+  const canOpenPastPlans = canViewSchedule(capabilities) && hasRecordAccess(capabilities);
   const denied = denyUnless(canOpenPastPlans, 'You do not have access to past practice plans.');
   if (denied) return denied;
 
@@ -87,15 +88,13 @@ export const GET = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  const showRoster = canViewRoster(capabilities);
   const [tagsByEvent, players] = await Promise.all([
     getRepTeamEventTagsByKind([eventId], 'focus').catch(() => ({} as Record<string, { id: string; name: string }[]>)),
-    // Only to turn the plan's stored player ids into the names the coach wrote them as. Gated at
-    // the SOURCE: an assistant without roster visibility never receives the list, so no client
-    // mistake can surface it, and the page renders the groups without names.
-    showRoster
-      ? getRepRosterPlayers(programYear.id).catch(() => [])
-      : Promise.resolve([]),
+    // Only to turn the plan's stored player ids into the names the coach wrote them as.
+    // ⚠ A1 (2026-08-03): this used to be conditional on roster visibility. Names are baseline now,
+    // and the gate above already decided who reaches this route at all, so the conditional is gone
+    // rather than left as a constant nobody can flip.
+    getRepRosterPlayers(programYear.id).catch(() => []),
   ]);
 
   return NextResponse.json({

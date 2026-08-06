@@ -16,6 +16,7 @@
 //
 // Relative imports WITH the .ts extension so the unit tests run under plain `node --test`.
 import { daysBetweenDateStrings } from './timezone.ts';
+import { resolvePlayerPitcherCap } from './lineup-caps.ts';
 
 /** A saved lineup, reduced to what arm care needs. */
 export interface ArmCareLineup {
@@ -82,7 +83,9 @@ export function resolveArmCare(input: ArmCareInput): ArmCareConcern[] {
     if (!inningsToday) continue;
     const player = byId.get(playerId);
     if (!player) continue;
-    const cap = player.perGameCap ?? seasonCap ?? null;
+    // ONE spelling of "the cap that applies to them", shared with the game-day console's chip
+    // (lib/lineup-caps.ts) — two surfaces quoting a child's arm-care ceiling must never differ.
+    const cap = resolvePlayerPitcherCap(player.perGameCap, seasonCap);
 
     // The most recent prior outing. A FUTURE game is not rest they did not get, so it is ignored —
     // but ANOTHER GAME TODAY absolutely counts. A double-header is the single situation this

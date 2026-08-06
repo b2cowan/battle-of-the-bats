@@ -5,13 +5,14 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
-import { denyUnless, canViewRoster } from '@/lib/coach-capabilities';
+import { denyUnless } from '@/lib/coach-capabilities';
 
 const EMPTY_STAT = { attended: 0, known: 0, recorded: 0 };
 
 /**
  * Season attendance reliability for the whole active roster (Coaches Portal Phase 4 F3).
- * Gated on roster view — attendance is not guardian PII. Active players with no recorded
+ * Gated on the attendance duty (A1, 2026-08-03 — it was roster view, back when names were a
+ * grantable thing). Attendance is not guardian PII. Active players with no recorded
  * attendance come back with zeroed stats so the view can show them as "not tracked yet".
  */
 export const GET = withObservability(async (req: Request,
@@ -20,7 +21,10 @@ export const GET = withObservability(async (req: Request,
   const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
   if ('error' in resolved) return resolved.error;
   const { capabilities, programYear } = resolved;
-  const denied = denyUnless(canViewRoster(capabilities), 'You do not have access to this team roster. Ask the head coach to grant it.');
+  // A1 (2026-08-03): was `canViewRoster` — attendance rode roster visibility because the report
+  // lists players by name, and names were grantable. They are baseline now, so this gates on the
+  // duty the screen is actually for. A helper holds no attendance grant, so it stays shut for them.
+  const denied = denyUnless(capabilities.attendance, 'You do not have access to attendance. Ask the head coach to grant it.');
   if (denied) return denied;
 
   const [players, reliability] = await Promise.all([

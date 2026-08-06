@@ -9,8 +9,14 @@ against the prompt that raised them.
 > **C — Leave the model alone:** no merge, no combined list; the quiet "also follows the team" label
 > only. **D — Fix the sentence:** the staff-removal confirmation is corrected to say what it actually
 > does. **B** was closed on evidence and needed no ruling; **E** is carried into A1's scope.
-> Logged in `BUSINESS_DECISIONS.md` via `/strategy`. **Any build that follows is blocked until
-> Practice Plans Phase 4 is committed** (shared files).
+> Logged in `BUSINESS_DECISIONS.md` via `/strategy`.
+>
+> **✅ ALL THREE RULINGS ARE NOW BUILT on `dev` 2026-08-03, uncommitted** (Phase 4 committed at
+> `2e3e7e0d`, so the sequencing block is lifted; A1 shipped first, then these).
+> **A —** the season review is closed to non-coaches at the route, the nav and the page, so all six
+> paths land on the honest screen. **C —** no merge; the permitted label only. **D —** the removal
+> sentence is corrected and names the family relationship when one exists.
+> QA = `OWNER_QA_LEDGER.md` §1.9c.
 
 ---
 

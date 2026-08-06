@@ -428,7 +428,7 @@ Phase 1 (per-page education strip, cross-shell brand continuity) shipped. Open:
 Lineup Intelligence P0–P5 and the Lineup Builder Phases 1–4 are built and live. Known gap carried
 forward: parts of the lineup surface assume diamond sports. Benign while only softball/baseball are
 offered and Multi-Sport Phase 2 is paused — **must be swept before any non-diamond sport is enabled**.
-Cross-reference: `PROGRAM_TOURNAMENT_ENGINE.md` §Multi-Sport.
+Cross-reference: `PROGRAM_TOURNAMENTS.md` §3 (Multi-Sport — paused).
 
 ### 1.8 Free-coach removal safeguard — Phase 4 tail
 Phases 1–2 (preserve a free Coaches Portal when removing an org admin who is also a free coach) are

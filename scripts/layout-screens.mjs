@@ -83,6 +83,19 @@ export const SCREENS = [
     note: 'The field screen sets its OWN, HIGHER floor (56px) and is held to it by practice-run-layout.spec.ts. Re-checking the 44px floor here would be weaker, not stronger.',
   },
 
+  // ── Game day (P1–P3) ────────────────────────────────────────────────────────
+  {
+    id: 'coach-game-console',
+    session: 'coach',
+    path: (c) => `${team(c)}/game/${c.gameEventId}`,
+    // The console has NO <h1> — it is a phone-first instrument, not a document. This sticky header
+    // strip is rendered ONLY in live mode, so it proves two things at once: the screen resolved,
+    // and it resolved as the console rather than the read-only recap the same URL serves outside a
+    // live window. `resolveUatContext()` keeps the probe game live so that stays true.
+    ready: '[data-sticky="head"]',
+    note: 'The portal\'s only genuinely phone-first screen — a coach holding a phone one-handed at a fence in daylight. Tap floor and contrast matter here more than anywhere, and P1/P2/P3 all shipped before it could be rendered at all.',
+  },
+
   // ── Money ───────────────────────────────────────────────────────────────────
   { id: 'coach-accounting',        session: 'coach', path: (c) => `${team(c)}/accounting`,                 ready: 'h1' },
   { id: 'coach-budget',            session: 'coach', path: (c) => `${team(c)}/accounting/budget`,           ready: 'h1' },

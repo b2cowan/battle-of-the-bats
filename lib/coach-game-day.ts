@@ -222,6 +222,102 @@ export function applyConsoleSwap<T extends SwapGridRow>(rows: T[], swap: Console
   });
 }
 
+// ── The bench, ordered (P3) ──────────────────────────────────────────────────────────────────
+
+/**
+ * How many periods this player has sat in a ROW, counting backwards from `period` inclusive
+ * ("2nd straight inning sitting").
+ *
+ * An UNASSIGNED period (`''`) continues a streak — the board groups it under Bench, and the
+ * chip must agree with what the coach sees — but at least one explicit `'Bench'` is required,
+ * so a half-planned grid doesn't chip every player as a long sitter.
+ */
+export function benchStreakThrough(row: SwapGridRow, period: number): number {
+  let streak = 0;
+  let sawBench = false;
+  for (let p = period; p >= 1; p--) {
+    const pos = row.inningPositions[String(p)] ?? '';
+    if (pos === BENCH) sawBench = true;
+    else if (pos !== '') break;
+    streak += 1;
+  }
+  return sawBench ? streak : 0;
+}
+
+/** Total periods spent explicitly benched up to and including `period` — the second sort key,
+ *  so two players on the same streak are separated by who has sat more all night. */
+function benchedThrough(row: SwapGridRow, period: number): number {
+  let n = 0;
+  for (let p = 1; p <= period; p++) {
+    if ((row.inningPositions[String(p)] ?? '') === BENCH) n += 1;
+  }
+  return n;
+}
+
+/**
+ * The bench order for ONE period: longest current sit first, then most sat overall, then the
+ * order the caller passed in (the roster order the coach already knows — never jersey-number
+ * arithmetic, which is not an ordering anyone thinks in).
+ *
+ * ⚠ Pass EVERY row, not just the benched ones. A player on the field at the boundary has a
+ * streak of 0 and sorts below every sitter, so when they are benched mid-period they land at
+ * the BOTTOM of the frozen order without needing a special "newcomer" path — the freeze and
+ * the sort agree, which is the whole reason the rule is safe.
+ */
+export function benchOrderIds(rows: SwapGridRow[], period: number): string[] {
+  // Both keys are scans over the grid, so they are computed ONCE per row rather than on every
+  // pairwise comparison; `sort` is stable (ES2019), which is what keeps roster order as the
+  // tiebreak without carrying an index around.
+  return rows
+    .map(row => ({
+      playerId: row.playerId,
+      streak: benchStreakThrough(row, period),
+      sits: benchedThrough(row, period),
+    }))
+    .sort((a, b) => b.streak - a.streak || b.sits - a.sits)
+    .map(entry => entry.playerId);
+}
+
+/**
+ * Lay the bench out in a previously-frozen order, immutably.
+ *
+ * ⚠ THE POINT OF THIS FUNCTION IS THAT IT DOES NOT RE-SORT. The order is computed once when
+ * the period cursor moves (`benchOrderIds`) and then applied unchanged for the rest of that
+ * period, so no row ever moves between the moment a coach looks and the moment they tap —
+ * which is how the wrong child gets sent in. Anyone missing from `orderIds` keeps their given
+ * order at the end; an empty order is a no-op.
+ */
+export function applyBenchOrder<T extends { playerId: string }>(benched: T[], orderIds: string[]): T[] {
+  if (orderIds.length === 0) return benched;
+  const rank = new Map(orderIds.map((id, i) => [id, i]));
+  // Stable sort keeps anyone the order doesn't name in the sequence they arrived in, at the end.
+  return benched
+    .slice()
+    .sort((a, b) =>
+      (rank.get(a.playerId) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.playerId) ?? Number.MAX_SAFE_INTEGER));
+}
+
+/**
+ * Is this bench list, as it currently reads, still in longest-sitting-first order?
+ *
+ * ⚠ The freeze can outlive its own claim. A player who was ON THE FIELD when the period started
+ * has a streak of 0 and is therefore ranked last — but if the coach then benches them mid-period
+ * and they had sat the four periods before this one, their live streak chip reads "5th straight"
+ * while they sit at the BOTTOM of the list. The order is correct (it is the order the coach was
+ * looking at, deliberately unmoved); the LABEL is what would be lying. So the board asks this
+ * before claiming anything, and says plain "Bench" when the claim has gone stale. It comes back
+ * true by itself at the next period boundary, when the order re-settles.
+ */
+export function benchOrderStillSorted(benched: SwapGridRow[], period: number): boolean {
+  let previous = Infinity;
+  for (const row of benched) {
+    const streak = benchStreakThrough(row, period);
+    if (streak > previous) return false;
+    previous = streak;
+  }
+  return true;
+}
+
 // ── The quiet-score-write guard (server-checked; the flag must never widen) ──────────────────
 
 /** The ONLY fields a quiet write may carry. `result` is deliberately absent: a mid-game
@@ -266,3 +362,6 @@ export function validateQuietScoreWrite(input: {
 export const gameDayPeriodKey = (eventId: string) => `fl.game-day.period.${eventId}`;
 /** "Skip lineup — just score & attendance" for this game, chosen at the no-lineup fallback. */
 export const gameDaySkipLineupKey = (eventId: string) => `fl.game-day.skip-lineup.${eventId}`;
+/** P3 — whether the coach has switched OFF "screen staying on" for this game. Default is on;
+ *  the preference is per-game and per-tab, like every other console UI preference. */
+export const gameDayAwakeKey = (eventId: string) => `fl.game-day.awake.${eventId}`;

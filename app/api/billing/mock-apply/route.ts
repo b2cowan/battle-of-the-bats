@@ -15,7 +15,7 @@ export const POST = withObservability(async (req: Request) => {
     });
   }
 
-  const auth = await getAuthContext();
+  const auth = await getAuthContext({ allowSuspendedOrg: true });
   if (!auth) return unauthorized();
 
   const { plan, status }: { plan: OrgPlan; status: SubscriptionStatus } = await req.json();

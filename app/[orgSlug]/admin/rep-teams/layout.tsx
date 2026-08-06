@@ -12,7 +12,10 @@ export default async function RepTeamsLayout({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = await params;
-  const ctx = await getAuthContextWithRole({ orgSlug });
+  // `allowSuspendedOrg: true` so this layout reaches its OWN cancelled-org handling below rather
+  // than 500ing: `hasModuleEntitlement` already fails closed on a cancelled org and redirects out
+  // of rep-teams. Opening the resolver grants nothing — it just lets the right redirect happen.
+  const ctx = await getAuthContextWithRole({ orgSlug, allowSuspendedOrg: true });
 
   if (!ctx) {
     redirect(`/auth/login?next=/${orgSlug}/admin/rep-teams`);

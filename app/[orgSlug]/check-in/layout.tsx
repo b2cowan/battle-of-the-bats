@@ -5,6 +5,8 @@ import { getAuthContextWithRole } from '@/lib/api-auth';
 import ShellSignOutButton from '@/components/volunteer/ShellSignOutButton';
 import { getOrganizationBySlug } from '@/lib/db';
 import { hasCapability } from '@/lib/roles';
+import { isOrgBillingSuspended } from '@/lib/org-billing-access';
+import SubscriptionEndedWall from '@/components/billing/SubscriptionEndedWall';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
@@ -37,12 +39,27 @@ export default async function CheckInVolunteerLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContextWithRole({ orgSlug });
+  // `allowSuspendedOrg` so a cancelled org reaches the wall below rather than a 500. The check-in
+  // APIs are closed by the same rail regardless — this decides only what the volunteer SEES.
+  const authCtx = await getAuthContextWithRole({ orgSlug, allowSuspendedOrg: true });
   if (!authCtx) {
     redirect(`/auth/login?next=/${orgSlug}/check-in`);
   }
   if (authCtx.org.slug !== orgSlug) {
     redirect(`/${authCtx.org.slug}/check-in`);
+  }
+
+  // Billing rail (owner ruling 2026-08-06). Like the scorekeeper PWA, this surface sits outside
+  // the admin shell, so the client-side cancellation redirect never reached it. Checked before
+  // the capability wall so a cancelled org gets the accurate reason, not "Access Denied".
+  if (isOrgBillingSuspended(authCtx.org)) {
+    return (
+      <SubscriptionEndedWall
+        orgName={authCtx.org.name}
+        contactEmail={authCtx.org.contactEmail}
+        surface="check-in"
+      />
+    );
   }
 
   // Gate volunteers (check_in_teams) and organizers (manage_registrations) both qualify.

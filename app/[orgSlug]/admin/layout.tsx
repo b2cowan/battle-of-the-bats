@@ -44,7 +44,13 @@ export default async function AdminLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContextWithRole({ orgSlug });
+  // ⚠ `allowSuspendedOrg: true` is LOAD-BEARING for the comeback path: the resubscribe page lives
+  // at /{orgSlug}/admin/org/billing, INSIDE this layout. If the billing rail threw here, a
+  // cancelled org could never reach the one page that lets it pay again. The existing
+  // CancellationGuard (AdminChrome) already redirects a cancelled org to that billing page and
+  // nowhere else, and every admin API route stays closed by the rail — so opening the shell here
+  // grants nothing. Do not "tidy" this flag away.
+  const authCtx = await getAuthContextWithRole({ orgSlug, allowSuspendedOrg: true });
   if (!authCtx) {
     // Two very different situations wear the same `null` here, and sending BOTH to the login page
     // is what closes the J8-018 / J10-019 loop from this side:

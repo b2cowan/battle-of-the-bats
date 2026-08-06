@@ -37,7 +37,7 @@
 //
 // Relative imports WITH the .ts extension so the unit tests run under plain `node --test`.
 import type { CoachCapabilities } from './coach-capabilities.ts';
-import { canViewMoney, canViewRoster } from './coach-capabilities.ts';
+import { canViewMoney } from './coach-capabilities.ts';
 import type { InsightReport } from './insight-findings.ts';
 import { BENCH_MIN_GAMES, money, plural } from './insight-findings.ts';
 import type { PositionRecency } from './coach-position-recency.ts';
@@ -126,10 +126,12 @@ export const ASK_QUESTIONS: readonly AskQuestionDef[] = [
   {
     id: 'practice_misses',
     label: "Who's missed the most practices?",
-    // Attendance rides roster visibility, exactly as the attendance route does — attendance is
-    // not guardian PII, and a second opinion here would let the chip and the route disagree.
+    // Keyed on the same grant the attendance route gates on — a second opinion here would let the
+    // chip and the route disagree. ⚠ A1 (2026-08-03): both used to read roster visibility, because
+    // the report lists players by name and names were grantable. They are baseline now, so both
+    // moved to the duty the report is actually for.
     report: 'attendance',
-    allows: canViewRoster,
+    allows: caps => caps.attendance,
   },
   {
     id: 'playing_time',

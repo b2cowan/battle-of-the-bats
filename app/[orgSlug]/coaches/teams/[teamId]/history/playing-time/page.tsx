@@ -44,7 +44,7 @@ function mergeRows(a: SeasonLineupAnalytics): PlayerRow[] {
     r.perGameCap = c.perGameCap;
     r.overCapGames = c.overCapGames;
   }
-  // Most-benched first — this is the fairness question the page answers.
+  // Most-benched first — this is the distribution question the page answers.
   return [...byId.values()].sort((x, y) => y.benchInnings - x.benchInnings);
 }
 
@@ -107,7 +107,7 @@ export default function CoachesPlayingTimeReportPage({
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Scale size={22} /></div>
           <div>
-            <h1 className={styles.pageTitle}>Is playing time fair?</h1>
+            <h1 className={styles.pageTitle}>Where is playing time going?</h1>
             <p className={styles.pageSub}>One row per player, from your saved lineups</p>
           </div>
         </div>
@@ -133,7 +133,9 @@ export default function CoachesPlayingTimeReportPage({
         <>
           <p className={styles.insightsBasis}>Based on the {analytics.gamesWithLineup} game{analytics.gamesWithLineup === 1 ? '' : 's'} you&apos;ve saved a lineup for.</p>
 
-          <div className={styles.insightsTableWrap}>
+          {/* data-sandbox-tour: the beat the demo's "who's actually been on the field" step rings.
+              Inert off a demo org — no styling, no behaviour. */}
+          <div className={styles.insightsTableWrap} data-sandbox-tour="playing-time">
             <table className={styles.insightsTable}>
               <thead>
                 <tr>

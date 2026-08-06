@@ -8,6 +8,8 @@ import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import { useOrg } from '@/lib/org-context';
 import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
+import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
+import { hasRecordAccess } from '@/lib/coach-capabilities';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import HelpButton from '@/components/help/HelpButton';
 import styles from '../../../coaches.module.css';
@@ -46,8 +48,17 @@ export default function SeasonEndPage({
   const [fetching, setFetching] = useState(true);
   const [rolloverOpen, setRolloverOpen] = useState(false);
 
+  /**
+   * ⚠ The guards below run at RENDER time, and effects fire regardless of which branch renders —
+   * so without this line a helper's visit still issues a `/wrapped` request that the route is
+   * guaranteed to refuse, after it has done the season and assignment lookups to find that out.
+   * Worse, the 403 lands in the `.catch` and sets the generic "couldn't be loaded" error, which is
+   * the broken-page outcome the honest screen exists to replace.
+   */
+  const mayReadWrapped = page.hasAccess && (!page.capabilities || hasRecordAccess(page.capabilities));
+
   useEffect(() => {
-    if (loading) return;
+    if (loading || !mayReadWrapped) return;
     let cancelled = false;
     setFetching(true);
     setError('');
@@ -61,7 +72,7 @@ export default function SeasonEndPage({
       .catch(() => { if (!cancelled) setError('This season’s wrap-up couldn’t be loaded — refresh to try again.'); })
       .finally(() => { if (!cancelled) setFetching(false); });
     return () => { cancelled = true; };
-  }, [loading, orgSlug, teamId, yearParam]);
+  }, [loading, mayReadWrapped, orgSlug, teamId, yearParam]);
 
   if (loading) return <p className={styles.muted}>Loading...</p>;
 
@@ -72,6 +83,25 @@ export default function SeasonEndPage({
         <p>You are not assigned to this team.</p>
       </div>
     );
+  }
+
+  /**
+   * ⚠ **WHERE A HELPER ACTUALLY LANDS** (owner ruling 2026-08-03).
+   *
+   * Practice Plans Phase 4 put the "this season has finished" screen on the TEAM page — but a
+   * helper only reaches that by typing a URL. Signing in sends them to the portal root, which
+   * redirects a closed team straight here; so do both team switchers and the `?year=` season rail.
+   * Six paths, and this is the one they use.
+   *
+   * ⚠ Read from `page.capabilities` — THAT season's grants, not today's (governing rule 1). A
+   * helper who was on a team in 2024 and is an assistant now must still be judged as what they
+   * were at the time.
+   *
+   * Not a gate: the Wrapped route refuses them on its own and the nav hides the door. This is the
+   * altitude choice that stops the refusal rendering as a broken page.
+   */
+  if (page.capabilities && !hasRecordAccess(page.capabilities)) {
+    return <CoachSeasonFinishedNotice />;
   }
 
   const teamName = wrapped?.teamName ?? active?.teamName ?? closed?.teamName ?? '';
@@ -121,7 +151,10 @@ export default function SeasonEndPage({
               no guardian was connected to this season — a "0 of 0" is not a fact worth
               printing, and it would read as a failure rather than as "nobody signed up". */}
           {recapEngagement && recapEngagement.eligible > 0 && (
-            <section className={styles.setupPanel} aria-labelledby="season-end-recaps">
+            /* data-sandbox-tour: the beat the demo's closing step rings — the recap the families
+               actually opened. Inert off a demo org. */
+            <section className={styles.setupPanel} aria-labelledby="season-end-recaps"
+              data-sandbox-tour="season-recaps">
               <p className={styles.setupKicker} id="season-end-recaps">Family season recaps</p>
               <p className={styles.seasonEndNote} style={{ marginTop: 0 }}>
                 <b>{recapEngagement.viewers} of {recapEngagement.eligible}</b> connected

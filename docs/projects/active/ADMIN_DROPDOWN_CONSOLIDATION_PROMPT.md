@@ -2,7 +2,7 @@
 
 > Paste this into a fresh chat, or point the new session at this file.
 > Origin: Coach Onboarding Quiet Mode **Phase C0 remainder** — see
-> `docs/projects/active/COACH_ONBOARDING_QUIET_MODE_PLAN.md` §C0 and its `/simplify` finding 6.
+> `docs/projects/archive/COACH_ONBOARDING_QUIET_MODE_PLAN.md` §C0 and its `/simplify` finding 6.
 > Owner approved this scope 2026-07-29, **after** coach-portal QA passed (deliberate ordering: this
 > touches admin screens and shouldn't muddy that signal).
 

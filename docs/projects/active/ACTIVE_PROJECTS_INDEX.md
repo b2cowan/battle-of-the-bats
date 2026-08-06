@@ -6,7 +6,50 @@
 
 ---
 
-## 0. Sweep 2 — 2026-08-01 (owner-approved)
+## 0. Sweep 3 — 2026-08-06 (owner-approved) · **109 → 48 files**
+
+Two moves, same day.
+
+**(a) The tournament consolidation.** A planning session proposed tournament work built from
+`PROGRAM_TOURNAMENT_ENGINE.md` + `PROGRAM_ORGANIZER_EXPERIENCE.md` — then checked the proposals
+against the code and found **16 of 19 "outstanding" items were already built.** Both program docs,
+plus the standings-remodel pair, the user-management plan, the sandbox and creation-preview pairs
+and the two sandbox mockup files (11 total) were archived into a single code-verified
+**`PROGRAM_TOURNAMENTS.md`**. Two genuine gaps survived and are staged there.
+
+**(b) The backlog sweep.** 51 further files archived in three groups:
+
+- **18 executed build prompts** — re-applying the standing 2026-07-28 rule for the third time.
+  Every one had shipped work behind it. **The two genuinely UNRUN prompts stay:**
+  `TOP_NAV_REPAIR_BUILD_PROMPT` and `ADMIN_DROPDOWN_CONSOLIDATION_PROMPT`.
+  (`COACH_PORTAL_CHUNK_D_SLICE_0_1_BUILD_PROMPT`, retained as unrun in Sweep 2, has since shipped —
+  its slices are live on production per ledger §1.6b.)
+- **22 plans + briefs whose work is tracked in `OWNER_QA_LEDGER.md`** — applying the Sweep 2b
+  precedent (the ledger is the home for built-awaiting-QA work; its source plans archive). Ten of
+  them cover work already live on production. **Archiving a plan does not change its QA status.**
+- **11 shipped/QA-passed coach-portal plans** — launch batches 3–4, desktop shell, masthead A2,
+  Option C rails, Quiet Mode.
+
+**Retention calls made deliberately:** `COACH_PORTAL_CHUNK_D_COUNSEL_PACKET` stays (live dependency —
+the guardian tier is switched off pending that review). `COACH_PLAYER_DOCUMENTS_PII_*` stays.
+**Quiet Mode was released** — its Sweep 2 retention reason ("gates a release on a dev-only migration
+reaching prod") is resolved: migration 209 is on production.
+
+**31 dangling references repointed** across TODO.md, the QA ledger, the ideas backlog, the Business
+Decisions Log, the Data Dictionary, the design-decisions memory and one retained prompt —
+**verified zero remaining.** ⚠ Pre-existing dangling references from the 2026-07-28 and 2026-08-01
+sweeps still exist elsewhere (`AGENT_PLAYBOOK.md`, `DATA_DICTIONARY.md` and several `memory/` files
+point at plans archived long ago). Not created by this sweep; still worth a pass.
+
+**⚠ The lesson this sweep exists to record.** Status headers in this repo drift in the
+**"not built"** direction — Sweep 2 found 4 such files, this sweep found 16 more in one program.
+A backlog that under-reports progress silently steers the roadmap: tournaments looked full of unbuilt
+work while being mostly shipped, so every "what's next?" picked the Coaches Portal by default.
+**Verify against code before trusting any status line here.**
+
+---
+
+## 0b. Sweep 2 — 2026-08-01 (owner-approved)
 
 The folder had regrown to 110 files in four days. Moved to `archive/`: **19 executed build/run
 prompts** (re-applying the standing 2026-07-28 rule — prompts are single-use and never live here;
@@ -65,7 +108,8 @@ lifted into `PROGRAM_PLATFORM_SURFACES.md` §1.1 before it moved. **Do not write
 | Project | State |
 |---------|-------|
 | `COACH_PRACTICE_PLANS_PLAN.md` | ✅ **ALL FOUR PHASES BUILT — feature-complete on `dev` 2026-08-03, uncommitted.** Remaining = ONE owner QA sweep across Phases 2–4 (`OWNER_QA_LEDGER.md` §1.8 / §1.9 / §1.9b) → commit → **archive this plan + its PM brief**. ⚠ Blocked from prod by migs **213 + 218 + 221** (dev-only); Phase 4 itself adds none. ⚠ Its Phase-4 build prompt is now **spent** — archive it with the plan. |
-| `COACH_SEASON_REVIEW_AND_DOUBLE_RECORD_RECOMMENDATION.md` | ✅ **Recommendations delivered 2026-08-03 — awaiting owner ruling on A–E (§3). No code written.** Recommends Season's End / Wrapped stay coach-only (6 doors open, not 1), closes the Wrapped-share question on evidence, and recommends **no** identity merge for the follower/helper/guardian seam. ⚠ **Carries one finding into A1's scope:** both helper-recognition mechanisms are keyed on `roster === 'off'`, the state A1 retires. Its prompt (`…_PROMPT.md`) is now **spent** — archive both together once ruled + logged via `/strategy`. |
+| `COACH_ROSTER_BASELINE_A1_PLAN.md` + `_PM_BRIEF.md` | ✅ **BUILT on `dev` 2026-08-03, uncommitted — owner QA owed (`OWNER_QA_LEDGER.md` §1.9c).** `/simplify` + `/review` + `/docs` all run; rendered layout check clean across all 28 screens. Ruled 2026-08-03 (§3 = Option A, standing line stays, release-notes-only notice). Phase 4 committed `2e3e7e0d`. Mockups v1: https://claude.ai/code/artifact/1f7c75ac-b7bc-42c7-b4bf-69fe71a70a5a ⚠ The re-audit A1's own handoff demanded found the retiring grant doing **two jobs**; A1 answers only one, and the unanswered half is a widening if built literally. Folds in the two silent breakages (`staffKindLabel`, `hasNoTeamRecordAccess`). **Must ship before** the season-review door closure and the staff-removal copy fix. |
+| `COACH_SEASON_REVIEW_AND_DOUBLE_RECORD_RECOMMENDATION.md` | ✅ **RULED + LOGGED + BUILT on `dev` 2026-08-03, uncommitted — owner QA owed (`OWNER_QA_LEDGER.md` §1.9c).** All three rulings shipped: the season review is closed to non-coaches at the route, the nav AND the page (all six paths, not the one Phase 4 fixed); no identity merge — a computed label only; the staff-removal sentence corrected to stop over-promising. ✅ `/simplify` + `/review` + `/docs` all run on this batch. Between them they caught **five real defects**, four in the truthfulness fix itself: the family lookup counted **unapproved requests and guardian links** (so the dialog lied again, the exact bug it exists to delete), the fallback sentence **re-asserted the false claim** whenever the lookup missed, the failure path was **silent**, and the note **leaked today's state into a finished season**. ⚠ **One untested surface remains** — the family note needs real DB rows, so it rests on owner QA (ledger §1.9c). ⚠ The rendered layout check is **inconclusive** — another session is editing shared chrome/tokens concurrently and results changed run to run; my last clean full sweep predates their edits. Its prompt (`…_PROMPT.md`) is **spent** — archive all three together once QA passes. |
 | `COACH_PORTAL_LAUNCH_BATCH1_PLAN.md` | Built on dev; remaining = owner phone QA → commit |
 | `COACH_PORTAL_LAUNCH_BATCH2_PLAN.md` | Built on dev; remaining = dev restart → phone QA → `/simplify` → `/review` → commit |
 | `FREE_COACH_PORTAL_EXPERIENCE_PLAN.md` | All phases built; B2.3 ships migration 205 — **apply to prod before promoting** |
@@ -89,8 +133,7 @@ completed** on 2026-07-28, so that prompt was archived with the rest.
 | `PROGRAM_COACH_CHAT.md` | Chat engine + 4 surfaces (19 files) | Projects 2–4 never started; **is this program still wanted?** |
 | `PROGRAM_HELP_AND_ONBOARDING.md` | Help system, in-context help, onboarding (13 files) | Cross-device dismissals need a server column |
 | `PROGRAM_BILLING_AND_ENTITLEMENTS.md` | Stripe, plans, grants, retention (17 files) | The January 2027 conversion runbook (Stripe itself is **live** — see the correction note in that doc) |
-| `PROGRAM_TOURNAMENT_ENGINE.md` | Brackets, playoffs, standings, schedule, multi-sport (22 files) | **Standings Remodel — not started** |
-| `PROGRAM_ORGANIZER_EXPERIENCE.md` | Org-admin dashboard, admin IA, roles (14 files) | Admin IA multi-module nav — the League/Club skew |
+| `PROGRAM_TOURNAMENTS.md` | Brackets, playoffs, standings, schedule, org-admin, roles — the whole tournament wedge (36 source files, consolidated 2026-08-06) | **Two verified gaps** (owner-only permissions grantable; cross-org invite vs the Verified Network ruling), then the engine's owner QA pass. ⚠ Both retired program docs were **16-of-19 wrong** in the "not built" direction — status here is code-verified only |
 | `PROGRAM_ACCOUNTS_AND_ACCESS.md` | Identity, invites, follows (9 files) | Multi-org creation for existing users (the visible half of Verified Network) |
 | `PROGRAM_LEAGUE_AND_CLUB.md` | League + Club (7 files) | **PARKED 2026-07-28** — not production-ready; owner will run a full capability evaluation after the Coach Portal work |
 | `PROGRAM_PLATFORM_ADMIN_CONSOLE.md` | Operator console QA (1 large file) | No per-org team-cap control |
@@ -123,12 +166,12 @@ One name collided: an auto-generated public-token report existed in both folders
 was a June snapshot showing 22 defects; the active one was the current all-clear. Both were kept —
 the newer one landed as a date-suffixed file rather than overwriting history.
 
-**10 files stay active** because the project is unstarted (or mid-execution) and the plan is the
+**8 files stay active** (was 10 — `STANDINGS_REMODEL_*` and `USER_MANAGEMENT_TOURNAMENT_UX_PLAN.md`
+were archived 2026-08-06 once code verification showed both were substantially built) because the
+project is unstarted (or mid-execution) and the plan is the
 build spec, not history:
 
-- `STANDINGS_REMODEL_PLAN.md` + `STANDINGS_REMODEL_PM_BRIEF.md`
 - `ADMIN_IA_MULTIMODULE_NAV_PLAN.md`
-- `USER_MANAGEMENT_TOURNAMENT_UX_PLAN.md`
 - `HOUSE_LEAGUE_INSEASON_TRUST_PLAN.md`
 - `INLINE_TSX_TOKEN_DEBT.md`
 - `STRIPE_PRODUCTION_SMOKE_TEST_TODO.md`

@@ -399,6 +399,54 @@ export async function listTeamFamilyLinks(repTeamId: string): Promise<FamilyLink
   return (data ?? []).map(row => mapLink(row as unknown as FamilyLinkRow));
 }
 
+/**
+ * The normalised email addresses that hold a **live family connection** to this team — nothing else.
+ *
+ * ⚠ **THIS EXISTS SO A STAFF-SIDE CALLER NEVER HAS TO KNOW WHAT "connected" MEANS.** The owner
+ * ruling of 2026-08-03 kept the staff record and the family record deliberately separate, and the
+ * permitted bridge is a LABEL — "this address also follows the team" — computed by comparing
+ * addresses and joining no data. The first cut of that label called `listTeamFamilyLinks` and used
+ * every row it returned, which was wrong twice over: that function keeps **guardian** links as well
+ * as followers, and keeps **`requested` / `invited` / `pending_approval`** as well as `verified`.
+ * A parent still sitting in the coach's approval queue would have been reported as following the
+ * team — and the removal dialog would have told the head coach they keep seeing the schedule, which
+ * is false. That is the exact class of untrue sentence ruling D existed to delete.
+ *
+ * The role/status rule now lives HERE, beside the tier boundary it belongs to, rather than being
+ * re-derived by every caller that wants a yes/no.
+ *
+ * ⚠ **BOTH ROLES, not just `follower`.** The first cut filtered `role = 'follower'`, mirroring the
+ * coach-facing followers list — but that list answers a different question ("who is in the
+ * followers section?"). This one answers "would removing this person from staff leave them still
+ * seeing the team?", and a **verified guardian** keeps exactly that access:
+ * `getVerifiedLinkForUserTeam` gates on `status` alone and never looks at role. Filtering guardians
+ * out would hand back `false` for someone who genuinely stays connected — the same false sentence,
+ * arriving through a different door the day `GUARDIAN_TIER_ENABLED` is switched on. Costs nothing
+ * today (the guardian tier refuses every write while the flag is off) and is right in advance.
+ *
+ * `status = 'verified'` is the whole of the other half: `requested` / `pending_approval` are a
+ * queue and grant nothing, `invited` is an unclaimed guardian invite with no account behind it,
+ * and `declined` / `revoked` are over.
+ *
+ * ⚠ Returns EMAILS ONLY, deliberately: the caller gets no ids, no player links, no relationship
+ * text, no role, nothing it could accidentally start joining on. Selects one column for the same
+ * reason.
+ */
+export async function listVerifiedFamilyEmails(repTeamId: string): Promise<Set<string>> {
+  const { data, error } = await supabaseAdmin
+    .from('family_links')
+    .select('invited_email')
+    .eq('rep_team_id', repTeamId)
+    .eq('status', 'verified');
+  if (error) throw error;
+  const out = new Set<string>();
+  for (const row of data ?? []) {
+    const email = normalizeGuardianEmail((row as { invited_email: string | null }).invited_email);
+    if (email) out.add(email);
+  }
+  return out;
+}
+
 export async function approveFamilyLink(params: {
   linkId: string;
   repTeamId: string;

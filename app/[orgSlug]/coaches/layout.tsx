@@ -24,6 +24,8 @@ import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import ConfirmProvider from '@/components/coaches/ConfirmProvider';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
+import { isOrgBillingSuspended } from '@/lib/org-billing-access';
+import SubscriptionEndedWall from '@/components/billing/SubscriptionEndedWall';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import styles from './coaches.module.css';
 
@@ -55,6 +57,30 @@ export default async function CoachesLayout({
   }
   if (authCtx.org.slug !== orgSlug) {
     redirect(`/${authCtx.org.slug}/coaches`);
+  }
+
+  // Billing rail (owner ruling 2026-08-06) — the portal's human half. Every coach API route is
+  // already closed for a cancelled org; this stops the shell from rendering into a wall of failed
+  // fetches and says why instead. Placed BEFORE the assignment/season lookups so a cancelled club
+  // costs no queries, and inside the portal frame so it reads as this product, not an error page.
+  if (isOrgBillingSuspended(authCtx.org)) {
+    return (
+      <OrgProvider initialOrg={authCtx.org} initialUserRole={null}>
+        <div style={{ display: 'contents' }} {...coachWarmAttr}>
+          <CoachThemeColor />
+          <div className={styles.coachesShell}>
+            <CoachTopStrip />
+            <main className={styles.coachesMain}>
+              <SubscriptionEndedWall
+                orgName={authCtx.org.name}
+                contactEmail={authCtx.org.contactEmail}
+                surface="coaches"
+              />
+            </main>
+          </div>
+        </div>
+      </OrgProvider>
+    );
   }
 
   // The viewer's org-membership role (null when they're a coach but NOT org staff) — seeded into

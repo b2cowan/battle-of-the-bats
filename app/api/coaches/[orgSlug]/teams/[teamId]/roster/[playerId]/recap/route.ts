@@ -6,7 +6,7 @@ import {
   getActiveRepProgramYear,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canViewRoster, canViewDevelopmentGoals } from '@/lib/coach-capabilities';
+import { denyUnless, canViewDevelopmentGoals } from '@/lib/coach-capabilities';
 import { assemblePlayerSeasonRecap } from '@/lib/rep-player-season-recap';
 
 /**
@@ -18,7 +18,9 @@ import { assemblePlayerSeasonRecap } from '@/lib/rep-player-season-recap';
  * once a season closes, every write to it is refused, so there is nothing a coach could act on
  * after seeing it. They preview while they can still log a last reading or give an award.
  *
- * The gate is roster visibility AND notes: the payload carries development focus areas, which
+ * The gate is `notes` alone (A1, 2026-08-03 — it was roster visibility AND notes, and the roster
+ * half became redundant once names went baseline: see the note on the check itself). The payload
+ * carries development focus areas, which
  * are coach-judgment content about a minor and ride `notes` everywhere else in the portal
  * (`canViewDevelopmentGoals`). Redacting them instead would hand the coach a "preview" that is
  * not what the family sees, which defeats the point of previewing.
@@ -40,8 +42,11 @@ export const GET = withObservability(async (_req: Request,
   const assignment = assignments.find(a => a.teamId === teamId);
   if (!assignment) return forbidden();
 
+  // A1 (2026-08-03): was `canViewRoster && canViewDevelopmentGoals`. Coaching notes are the
+  // sensitive half and imply record access, so the roster clause was always redundant once names
+  // stopped being grantable — this is the same set of people, stated once.
   const denied = denyUnless(
-    canViewRoster(assignment.capabilities) && canViewDevelopmentGoals(assignment.capabilities),
+    canViewDevelopmentGoals(assignment.capabilities),
     'You do not have access to player recaps.',
   );
   if (denied) return denied;

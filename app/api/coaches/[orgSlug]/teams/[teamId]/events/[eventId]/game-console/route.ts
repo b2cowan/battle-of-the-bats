@@ -83,6 +83,16 @@ export const GET = withObservability(async (_req: Request,
     event,
     lineup,
     entries,
+    /**
+     * P3 — the season-default caps, so the board's arm-care chip can resolve the SAME cap the
+     * lineup builder does (per-player ?? this game's override ?? this season's default). P1
+     * read only a per-player cap, so a team that set one season-wide ceiling and no individual
+     * ones — the common setup — saw no chip anywhere on the console.
+     *
+     * Gated with the lineup zone: it is only meaningful where the board is, and the per-game
+     * override it resolves against rides on `lineup`, which is gated the same way.
+     */
+    lineupSettings: showLineup ? programYear.lineupSettings : null,
     players: redactRoster(players, caps),
     attendance,
     moments,

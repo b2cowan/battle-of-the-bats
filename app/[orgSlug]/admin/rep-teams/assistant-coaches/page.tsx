@@ -3,14 +3,17 @@ import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { UserCog, ChevronLeft, Trash2, Check, X, ShieldCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import type { CoachCapabilities } from '@/lib/coach-capabilities';
 import styles from '../rep-teams.module.css';
 
-interface Caps {
-  roster: 'off' | 'view';
-  rosterPii: boolean; notes: boolean; announcementsSend: boolean; tryouts: boolean;
-  money: 'off' | 'read' | 'write'; documents: 'off' | 'view' | 'manage';
-  schedule: boolean; attendance: boolean; lineups: boolean;
-}
+/**
+ * ⚠ The SERVER's type, not a structural copy of it. This page carried its own hand-written twin
+ * until A1 (2026-08-03), which is exactly why A1's `roster` retirement did not show up here as a
+ * compile error the way it did in every other caller — the copy kept declaring a field the model no
+ * longer has, and `grantSummary` below went on reporting on it. Aliasing the real type is what makes
+ * the next grant change a build failure here instead of a silent divergence.
+ */
+type Caps = CoachCapabilities;
 interface Assistant {
   coachId: string; teamId: string; teamName: string; programYearName: string;
   displayName: string | null; email: string | null; capabilities: Caps;
@@ -37,7 +40,8 @@ function grantSummary(c: Caps): string {
   if (c.announcementsSend) grants.push('send announcements');
   if (c.tryouts) grants.push('tryouts');
   const off: string[] = [];
-  if (c.roster === 'off') off.push('roster');
+  // A1 (2026-08-03): "no roster" left this list with the switch that produced it. Names are baseline
+  // now, and the roster PAGE follows record access rather than a grant an admin can read off a row.
   if (!c.schedule) off.push('schedule');
   if (!c.attendance) off.push('attendance');
   if (!c.lineups) off.push('lineups');

@@ -204,6 +204,10 @@
 /* A long unbroken club/school address would otherwise set the flex item's min-content width and
    push past the card edge — wrapping is never worse than overflowing. */
 .personEmail { margin: 0; font-size: 0.8rem; color: var(--white-45); overflow-wrap: anywhere; }
+/* ⚠ A LABEL, not a control (owner ruling 2026-08-03 — the two records stay separate). Quiet on
+   purpose: it tells a head coach the same person also follows the team, and offers nothing to
+   click, because acting on it belongs on the Roster page where family followers are managed. */
+.alsoFollows { margin: 0.15rem 0 0; font-size: 0.74rem; color: var(--white-45); font-style: italic; }
 
 .personActions { display: flex; align-items: center; gap: 0.6rem; }
 .saveState { font-size: 0.78rem; color: var(--white-45); }
@@ -231,6 +235,21 @@
 
 @media (max-width: 560px) {
   .grid { grid-template-columns: 1fr; }
+}
+
+/* A1 (2026-08-03): stands where the Roster Hidden/View control used to. A head coach who set that
+   switch will look for it, so the grid says what is true now and points at the one below that does
+   the protecting. Spans the grid so it reads as a statement about the group, not a control in it. */
+.standingNote {
+  grid-column: 1 / -1;
+  margin: 0.15rem 0 0;
+  padding: 0.5rem 0.65rem;
+  border-left: 2px solid var(--logic-lime);
+  border-radius: 0 4px 4px 0;
+  background: var(--white-05);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--white-70);
 }
 
 .check {

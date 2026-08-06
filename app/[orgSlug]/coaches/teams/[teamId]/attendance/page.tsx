@@ -180,7 +180,7 @@ export default function CoachesAttendancePage({
       )}
 
       <p className={styles.muted} style={{ fontSize: '0.85rem', margin: '1.25rem 0', maxWidth: 640 }}>
-        A season view to support fair playing-time and spot when someone&apos;s drifting away — not a ranking.
+        A season view to inform playing-time decisions and spot when someone&apos;s drifting away — not a ranking.
         Each figure counts games or practices where you recorded attendance; a player is &ldquo;present&rdquo;
         when marked attending or late, and events with no reply aren&apos;t counted against anyone.
       </p>

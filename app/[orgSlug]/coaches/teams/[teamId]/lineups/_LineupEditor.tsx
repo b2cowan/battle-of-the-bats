@@ -382,7 +382,7 @@ export default function LineupEditor(props: LineupEditorProps) {
     genBusyRef.current = true;
     try {
       if (rows.some(r => Object.values(r.inningPositions).some(Boolean))) {
-        if (!(await confirm({ title: 'Reshuffle the lineup?', message: 'This replaces the positions currently in the grid with a fresh fair arrangement using your current auto-fill settings. Continue?', confirmText: 'Reshuffle', cancelText: 'Keep current', tone: 'warning' }))) return;
+        if (!(await confirm({ title: 'Reshuffle the lineup?', message: 'This replaces the positions currently in the grid with a fresh arrangement with even bench rotation, using your current auto-fill settings. Continue?', confirmText: 'Reshuffle', cancelText: 'Keep current', tone: 'warning' }))) return;
       }
       runGenerate('regenerate');
     } finally {
@@ -554,12 +554,12 @@ export default function LineupEditor(props: LineupEditorProps) {
                       )}
                     </div>
                   )}
-                  <p className={styles.lineupAutoNote}>Auto-fill shares playing time fairly. It&apos;s a starting point — tweak after.</p>
+                  <p className={styles.lineupAutoNote}>Auto-fill spreads bench time evenly across the roster. It&apos;s a starting point — tweak after.</p>
                   <button type="button" className={styles.btnPrimary} onClick={handleAutoFill}>Generate</button>
                 </div>
               )}
             </div>
-            <button type="button" className={styles.btnSecondary} disabled={rows.length === 0} onClick={handleReshuffle} title="Fresh fair arrangement with your current auto-fill settings" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+            <button type="button" className={styles.btnSecondary} disabled={rows.length === 0} onClick={handleReshuffle} title="Fresh arrangement with even bench rotation, using your current auto-fill settings" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
               <Shuffle size={14} /> Reshuffle
             </button>
             {controlsExtra}
@@ -642,7 +642,7 @@ export default function LineupEditor(props: LineupEditorProps) {
           <div className={styles.lineupSummaryBody}>
             <div className={styles.lineupFairness}>
               Bench: {benchMin === benchMax ? `${benchMin}` : `${benchMin}–${benchMax}`} {benchMax === 1 ? 'inning' : 'innings'} each
-              <span className={`${styles.lineupFairPill} ${benchMax - benchMin > 1 ? styles.lineupFairPillWarn : ''}`}>{benchMax - benchMin > 1 ? 'Uneven' : 'Balanced'}</span>
+              <span className={`${styles.lineupFairPill} ${benchMax - benchMin > 1 ? styles.lineupFairPillWarn : ''}`}>{benchMax - benchMin > 1 ? 'Leans on a few' : 'Evenly spread'}</span>
             </div>
             <div className={styles.lineupSummaryDesktop}>
               <div className={styles.lineupSummaryWrap}>

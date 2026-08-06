@@ -12,6 +12,10 @@
  * to keep in sync by hand. When something is missing it THROWS with the repair command — a check
  * that cannot see its fixture must fail, never pass quietly.
  *
+ * ⚠ IT ALSO WRITES, in exactly one place: the probe GAME is re-anchored to "now" when it has drifted
+ * out of its live window, because the Game-Day console does not exist outside one. See the block at
+ * the bottom for why a stale game is worse than a missing one.
+ *
  * DEV ONLY. It reads `.env.local`, which points at the dev project, and refuses prod outright.
  */
 import { createClient } from '@supabase/supabase-js';
@@ -33,8 +37,21 @@ class FixtureError extends Error {
 }
 
 /**
+ * How far either side of "now" the probe game's start may sit before it is re-anchored.
+ *
+ * ⚠ This is DELIBERATELY NARROWER than the real live window (`gameDayWindow()` in
+ * `lib/coach-game-day.ts`, which opens ~2h before and lingers ~3h after). It is not a copy of that
+ * predicate and must not be maintained as one — a `.mjs` script cannot import the TypeScript source,
+ * and a hand-kept duplicate of a window that decides whether a door exists would be a liability.
+ * Staying well inside the real window means the console is unambiguously LIVE when the sweep opens
+ * it, however the real predicate is tuned later.
+ */
+const GAME_MAX_AGE_MS = 3 * 60 * 60_000;   // started at most 3h ago
+const GAME_MAX_LEAD_MS = 30 * 60_000;      // starts at most 30m from now
+
+/**
  * @returns {Promise<{orgSlug:string, orgId:string, teamId:string, programYearId:string,
- *                    practiceEventId:string, baseUrl:string}>}
+ *                    practiceEventId:string, gameEventId:string, baseUrl:string}>}
  */
 export async function resolveUatContext() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -77,12 +94,38 @@ export async function resolveUatContext() {
   if (ev.error) throw new FixtureError(`rep_team_events lookup failed: ${ev.error.message}`);
   if (!ev.data) throw new FixtureError('No "UAT probe practice" event on the active program year.');
 
+  // ── The probe GAME, kept live ──────────────────────────────────────────────────────────────
+  // ⚠ THIS RESOLVER WRITES. That is unusual for a lookup and is the point: the Game-Day console
+  // has no door outside a live window, so a game seeded yesterday resolves to the read-only recap
+  // instead. The sweep would then render a real screen, measure it happily, and report green —
+  // having never opened the console at all. That is the same failure shape as a probe that skips
+  // itself when its fixture is missing: a check reporting on a screen it did not see.
+  //
+  // Re-anchoring is idempotent, touches only this one named fixture row, and only fires when the
+  // game has actually drifted out of range.
+  const game = await db.from('rep_team_events')
+    .select('id, starts_at, ends_at').eq('program_year_id', py.data.id).eq('name', 'UAT probe game').maybeSingle();
+  if (game.error) throw new FixtureError(`probe game lookup failed: ${game.error.message}`);
+  if (!game.data) throw new FixtureError('No "UAT probe game" event on the active program year.');
+
+  const startedAt = Date.parse(game.data.starts_at);
+  const drift = Date.now() - startedAt;
+  if (!Number.isFinite(startedAt) || drift > GAME_MAX_AGE_MS || drift < -GAME_MAX_LEAD_MS) {
+    const upd = await db.from('rep_team_events').update({
+      starts_at: new Date(Date.now() - 30 * 60_000).toISOString(),
+      ends_at: new Date(Date.now() + 90 * 60_000).toISOString(),
+    }).eq('id', game.data.id);
+    if (upd.error) throw new FixtureError(`could not re-anchor the probe game: ${upd.error.message}`);
+    console.log('  · probe game re-anchored to now (it had drifted out of its live window)');
+  }
+
   return {
     orgSlug: org.data.slug,
     orgId: org.data.id,
     teamId: team.data.id,
     programYearId: py.data.id,
     practiceEventId: ev.data.id,
+    gameEventId: game.data.id,
     baseUrl: process.env.UAT_BASE_URL ?? 'http://localhost:3000',
   };
 }

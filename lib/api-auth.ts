@@ -8,6 +8,7 @@ import type { Capability } from './roles';
 import { assertSafeSupabaseServerEnvironment } from './supabase-safety';
 import { getEffectiveTournamentLimit, getEffectiveTeamLimit } from './plan-config';
 import { applyEntitlementGrants } from './entitlement-grants';
+import { isOrgBillingSuspended, OrgBillingSuspendedError } from './org-billing-access';
 
 export interface AuthContext {
   user: User;
@@ -27,6 +28,20 @@ type AuthContextOptions = {
    * (scripts/check-admin-org-context.mjs) enforces the admin-route half.
    */
   requireOrgSlug?: boolean;
+  /**
+   * Billing rail opt-out (owner ruling 2026-08-06). By DEFAULT a cancelled organization cannot
+   * reach any authenticated org route — `getAuthContext` throws `OrgBillingSuspendedError` and
+   * `withObservability` answers 402. Routes that must keep working while cancelled set this true.
+   *
+   * That is a SHORT list and it is pinned by `tests/unit/org-billing-access-guard.test.ts`:
+   * the comeback path (everything under /api/billing), the identity/nav resolution the app shell
+   * cannot render without (/api/auth/me, /api/org-context), the two reads the billing PAGE itself
+   * makes, and the feedback door (a cancelled customer must still be able to reach us).
+   *
+   * ⚠ Adding a call site fails that test until the list is edited — which is the decision point.
+   * Ask: would this still be honest if the cancel dialog listed it under "will shut down"?
+   */
+  allowSuspendedOrg?: boolean;
 };
 
 export interface AuthContextWithScope extends AuthContext {
@@ -159,7 +174,19 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
     clubBookSharingEnabled: orgRow.club_book_sharing_enabled === true,
   };
 
-  return { user, org: await applyEntitlementGrants(org) };
+  // Grants are applied FIRST so a platform-admin `subscription_status: 'active'` override can still
+  // rescue an account — that is the intended way to reinstate someone without touching Stripe.
+  const effectiveOrg = await applyEntitlementGrants(org);
+
+  // ── Billing rail (owner ruling 2026-08-06) ───────────────────────────────────────────────────
+  // A cancelled subscription stops working immediately. Fails CLOSED: every route is gated unless
+  // it explicitly opted out, so a route added tomorrow is covered by doing nothing. `past_due` is
+  // deliberately untouched — dunning gets its grace window there. See lib/org-billing-access.ts.
+  if (!options.allowSuspendedOrg && isOrgBillingSuspended(effectiveOrg)) {
+    throw new OrgBillingSuspendedError(effectiveOrg.slug);
+  }
+
+  return { user, org: effectiveOrg };
 }
 
 export interface AuthContextWithRole extends AuthContext {

@@ -676,6 +676,12 @@
 .helpFaqItem summary {
   cursor: pointer;
   padding: 9px 0;
+  /* ⚠ A LATENT tap-floor bug, caught by the rendered check 2026-08-03 when a newly-added FAQ
+     happened to be the first whose question fits on ONE line at desktop width: 0.87rem of text
+     plus 18px of padding is 40px, under the 44px floor. Every longer question was clearing the
+     floor by accident, purely because it wrapped to two lines. Fixed on the row rather than by
+     padding the copy, so the next short question can't reintroduce it. */
+  min-height: 44px;
   font-weight: 600;
   font-size: 0.87rem;
   color: var(--fl-text, rgba(255, 255, 255, 0.82));

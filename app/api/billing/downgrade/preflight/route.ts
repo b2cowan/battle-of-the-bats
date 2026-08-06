@@ -11,7 +11,7 @@ export const POST = withObservability(async (req: Request) => {
   // Scope to the org the caller is viewing (multi-org owners), NOT their home org — fail closed.
   const body = await req.json().catch(() => ({}));
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
+  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true, allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner') return forbidden();
 

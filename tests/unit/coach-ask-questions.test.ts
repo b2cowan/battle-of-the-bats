@@ -157,13 +157,15 @@ describe('visibleAskQuestions', () => {
     assert.deepEqual(ids, ['practice_misses']);
   });
 
-  it('hides the attendance question from an assistant without roster visibility', () => {
-    const caps = resolveCoachCapabilities('assistant_coach', { roster: 'off' });
+  it('hides the attendance question from an assistant without the attendance duty', () => {
+    // A1 (2026-08-03): was `roster: 'off'`. Names are baseline; the chip and its route both key on
+    // the attendance grant now, which is what the report is actually for.
+    const caps = resolveCoachCapabilities('assistant_coach', { attendance: false });
     assert.ok(!visibleAskQuestions(caps, DIAMOND).map(q => q.id).includes('practice_misses'));
   });
 
   it('returns NOTHING when a coach may ask nothing — the bar then does not render', () => {
-    const caps = resolveCoachCapabilities('assistant_coach', { lineups: false, roster: 'off', money: 'off' });
+    const caps = resolveCoachCapabilities('assistant_coach', { lineups: false, attendance: false, money: 'off' });
     assert.deepEqual(visibleAskQuestions(caps, DIAMOND), []);
   });
 
@@ -183,7 +185,7 @@ describe('visibleAskQuestions', () => {
     const shapes: CoachCapabilities[] = [
       HEAD, ASSISTANT,
       resolveCoachCapabilities('assistant_coach', { money: 'read' }),
-      resolveCoachCapabilities('assistant_coach', { money: 'write', roster: 'off' }),
+      resolveCoachCapabilities('assistant_coach', { money: 'write', attendance: false }),
       resolveCoachCapabilities('assistant_coach', { lineups: false }),
     ];
     for (const caps of shapes) {

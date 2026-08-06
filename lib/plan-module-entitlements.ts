@@ -104,6 +104,46 @@ export async function getEffectivePlanModuleEntitlements(): Promise<PlanModuleEn
   return matrix;
 }
 
+/**
+ * Where the PUBLISHED matrix and the LIVE product disagree.
+ *
+ * ── Read this before "fixing" the publish flow (audit 2026-08-06) ────────────────────────────
+ * Publishing writes `platform_plan_module_entitlements`. The runtime gate — `hasModuleEntitlement`
+ * — does NOT read that table: it reads the `PLAN_CONFIG[planId].moduleEntitlements` constant in
+ * lib/plan-config.ts. The published matrix was therefore read by exactly one thing, the
+ * platform-admin screen that wrote it: a mirror reflecting itself. An operator could take a
+ * packaging change through a change request, a second person's approval and a publish, see
+ * "Feature matrix published", and not one customer's access would change.
+ *
+ * Why it is not simply wired up: `hasModuleEntitlement` is SYNCHRONOUS, sits on the hot path of
+ * every request, and is called from client components (AdminSidebar among ~85 call sites). Making
+ * the plan→module mapping dynamic means an async, cached lookup threaded through all of them, with
+ * a cache-invalidation design where being wrong means wrong entitlements platform-wide. That is a
+ * project with its own plan, not a line in an audit fix.
+ *
+ * So the screen tells the truth instead: this function is what lets it say "published, and NOT yet
+ * live" and name the exact rows that differ. A non-empty result means a code change to
+ * `lib/plan-config.ts` plus a deploy is still owed. Empty means published and live agree.
+ */
+export async function getPlanModuleEntitlementDrift(): Promise<{
+  planId: string;
+  moduleKey: string;
+  publishedIncluded: boolean;
+  liveIncluded: boolean;
+}[]> {
+  const published = await getEffectivePlanModuleEntitlements();
+  return PLAN_ORDER.flatMap(planId =>
+    MODULE_CATALOG
+      .map(module => ({
+        planId,
+        moduleKey: module.key,
+        publishedIncluded: published[planId].includes(module.key),
+        liveIncluded: PLAN_CONFIG[planId].moduleEntitlements.includes(module.key),
+      }))
+      .filter(row => row.publishedIncluded !== row.liveIncluded),
+  );
+}
+
 export async function getFeatureMatrixRows(): Promise<FeatureMatrixRow[]> {
   const entitlements = await getEffectivePlanModuleEntitlements();
 

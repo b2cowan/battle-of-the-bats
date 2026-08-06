@@ -20,7 +20,10 @@ export default async function OrgAdminLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContextWithRole({ orgSlug });
+  // ⚠ `allowSuspendedOrg: true` is LOAD-BEARING: the resubscribe page (/admin/org/billing) is a
+  // child of this layout, so throwing here would strand a cancelled org with no way to pay again.
+  // See the same note in the parent admin layout; the API rail keeps everything else closed.
+  const authCtx = await getAuthContextWithRole({ orgSlug, allowSuspendedOrg: true });
   if (!authCtx) {
     redirect(`/auth/login?next=/${orgSlug}/admin/org`);
   }

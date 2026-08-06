@@ -1,4 +1,4 @@
-import type { CoachCapabilities } from './coach-capabilities';
+import { hasRecordAccess, type CoachCapabilities } from './coach-capabilities';
 
 /**
  * The CLOSED-season nav set. Batch 3 shipped this as exactly two doors — everything else a
@@ -46,13 +46,15 @@ export const CLOSED_TEAM_NAV_ITEMS: { label: string; href: string }[] = [
 export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label: string): boolean {
   if (!caps) return true;
   switch (label) {
-    case 'Roster':        return caps.roster !== 'off';
+    // ⚠ A1 (2026-08-03): was `caps.roster !== 'off'`. The roster PAGE is a record surface, so it
+    // follows record access; the NAMES on it are baseline and no longer gate anything.
+    case 'Roster':        return hasRecordAccess(caps);
     // Batch 4 (P1 f2-6 / f6-0 ×2 / f8-2): the season attendance report had no home in either nav —
     // its only door was a secondary button on Roster that disappears in the depth-chart view.
-    // Needs BOTH: the report lists players by name (the route gates on roster visibility) and the
-    // page leads with "take attendance for {next event}". Granting one without the other is a
-    // legitimate assistant setup, and gating on only `attendance` would show a door that 403s.
-    case 'Attendance':    return caps.attendance && caps.roster !== 'off';
+    // ⚠ A1: this needed BOTH grants only because the route gated on roster visibility while the
+    // page leads with "take attendance for {next event}". The route gates on `attendance` now, so
+    // one grant answers both and the door can no longer 403.
+    case 'Attendance':    return caps.attendance;
     case 'Lineups':       return caps.lineups;
     case 'Schedule':      return caps.schedule;
     case 'Tryouts':       return caps.tryouts;
@@ -73,17 +75,19 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      * attendance sections gate per-section on their own capabilities.
      *
      * ⚠ 2026-08-03: `return true` was the only door in this switch that no grant governed, which
-     * made it the one door a HELPER would have kept. A helper holds none of the five below, so this
-     * closes for them and for nobody else — every real assistant carries `roster: 'view'` from the
-     * defaults, and any assistant hand-stripped of all five is looking at a hub of sections they
-     * cannot see the contents of anyway.
+     * made it the one door a HELPER would have kept. A helper holds none of the record grants, so
+     * this closes for them and for nobody else — every real assistant carries attendance, lineups
+     * and documents from the defaults, and any assistant hand-stripped of all of them is looking at
+     * a hub of sections they cannot see the contents of anyway.
+     *
+     * ⚠ A1 (2026-08-03): the hand-written union here WAS `hasRecordAccess` minus notes/documents/
+     * tryouts. Collapsed onto the shared predicate so the archive door, the nav and the Overview
+     * cannot drift apart — they were three copies of one idea.
      */
-    case 'Insights':
-      return caps.isHeadCoach || caps.roster !== 'off' || caps.lineups
-        || caps.attendance || caps.money !== 'off';
-    // Player Development (3B): the hub is useful with EITHER goals (notes) or measurables
-    // (roster view); all writes stay head-coach-only server-side (D1).
-    case 'Development':   return caps.notes || caps.roster !== 'off';
+    case 'Insights':      return hasRecordAccess(caps);
+    // Player Development (3B): the hub is useful with EITHER goals (notes) or measurables, and both
+    // ride record access since A1; all writes stay head-coach-only server-side (D1).
+    case 'Development':   return hasRecordAccess(caps);
     case 'Documents':     return caps.documents !== 'off';
     case 'Staff':         return caps.isHeadCoach;
     /**
@@ -102,6 +106,13 @@ export function isCoachNavItemVisible(caps: CoachCapabilities | undefined, label
      *
      * Overview is deliberately NOT here: it is where a helper lands, and it renders their practice.
      */
+    /**
+     * ⚠ The archive's FRONT DOOR, and until 2026-08-03 the one closed-season door no grant
+     * governed — it fell through to `default: return true`, so a helper kept it. Season's End
+     * leads with Season Wrapped, which is the team's whole season; a parent volunteer who ran one
+     * station has no claim to it (owner ruling 2026-08-03). Same key as the route behind it.
+     */
+    case "Season's End": return hasRecordAccess(caps);
     case 'Chat':          return caps.staffChat;
     case 'Settings':
     case 'Tournaments':   return caps.isHeadCoach || caps.scheduleManage;

@@ -139,7 +139,8 @@ if (has('--changed') && !onlyIds) {
     console.log(`--changed: ${shared.length} shared file(s) touched (e.g. ${shared[0]}) — sweeping ALL screens.\n`);
   } else {
     // Turn each screen's URL back into the route folder that renders it, then match prefixes.
-    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', practiceEventId: '__EVENT__' };
+    // Both event-shaped screens live under a `[eventId]` folder, so one sentinel serves both.
+    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', practiceEventId: '__EVENT__', gameEventId: '__EVENT__' };
     const dirOf = (s) =>
       'app' + s.path(SENTINEL)
         .replace('/__ORG__/', '/[orgSlug]/')

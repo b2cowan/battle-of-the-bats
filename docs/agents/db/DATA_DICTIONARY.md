@@ -3675,7 +3675,7 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 
 *Added 2026-08-01 (migs 214 + 215). The parent/guardian-facing layer: who is connected to a
 team, on what lawful basis, and who has asked not to be emailed. Companion docs:
-`docs/projects/active/COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` (build spec) and the
+`docs/projects/archive/COACH_PORTAL_CHUNK_D_FAMILY_EXPERIENCE_PLAN.md` (build spec) and the
 2026-08-01 two-tier/premium-only entry in `docs/agents/strategy/BUSINESS_DECISIONS.md`.*
 
 **Gotchas first (the cross-cutting traps):**

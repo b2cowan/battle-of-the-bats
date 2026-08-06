@@ -36,7 +36,7 @@ const STATUS_LABEL: Record<'working' | 'achieved' | 'parked', string> = {
 };
 
 const BAND_LABEL: Record<'in_band' | 'above_band' | 'below_band', string> = {
-  in_band: 'Right in the team’s fair-play band all season',
+  in_band: 'Right in the team’s typical range all season',
   above_band: 'Above the team’s middle for time on the field',
   below_band: 'Below the team’s middle for time on the field',
 };

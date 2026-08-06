@@ -3,6 +3,7 @@ import { requirePlatformPermission } from '@/lib/platform-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
+import { archiveOverCapTournamentsForPlanChange, isLowerPlan } from '@/lib/billing-retention';
 import type { OrgPlan } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 
@@ -97,6 +98,43 @@ export const PATCH = withObservability(async (req: NextRequest,
     return NextResponse.json({ error: 'Update failed' }, { status: 500 });
   }
 
+  // Apply the new cap to the tournaments that ALREADY exist (audit 2026-08-06). Before this, the
+  // route counted them into the audit log and left them running — the cap is only enforced at
+  // creation, so a Club dropped to a one-slot plan kept every live tournament forever. The
+  // customer's own downgrade has always archived the excess; this is the operator path catching up.
+  // Nothing is destroyed — the rows are retained and restored on re-upgrade.
+  let archivedTournaments: { id: string; name: string }[] = [];
+  if (current && isLowerPlan(current.plan_id as OrgPlan, planId)) {
+    try {
+      const archived = await archiveOverCapTournamentsForPlanChange({
+        orgId: id,
+        fromPlan: current.plan_id as OrgPlan,
+        targetPlan: planId,
+        actorEmail: auth.user.email ?? null,
+        reason: reason.trim(),
+      });
+      archivedTournaments = archived.map(t => ({ id: t.id, name: t.name }));
+      if (archivedTournaments.length > 0) {
+        await writePlatformAuditLog(auth.user.email!, id, 'update_plan', 'archived_over_cap_tournaments',
+          null, { count: archivedTournaments.length, tournaments: archivedTournaments });
+      }
+    } catch (archiveErr) {
+      // The plan change itself already succeeded and must not be reported as a failure. Surface
+      // the shortfall to the operator instead of swallowing it — an org sitting over its cap is
+      // exactly the silent state this whole audit was about.
+      console.error('[platform-admin] over-cap tournament archive failed:', archiveErr);
+      return NextResponse.json({
+        ok: true,
+        planId,
+        tournamentLimit: effectiveTournamentLimit,
+        teamLimit: teamLimitProvided ? normalizedTeamLimit : (current?.team_limit ?? null),
+        archivedTournaments: [],
+        archiveWarning: 'Plan saved, but the over-cap tournaments could not be archived. '
+          + 'This org is now over its tournament limit — archive them manually.',
+      });
+    }
+  }
+
   await writePlatformAuditLog(auth.user.email!, id, 'update_org_plan_and_limit', 'plan_and_limit',
     current
       ? {
@@ -147,5 +185,6 @@ export const PATCH = withObservability(async (req: NextRequest,
     planId,
     tournamentLimit: effectiveTournamentLimit,
     teamLimit: teamLimitProvided ? normalizedTeamLimit : (current?.team_limit ?? null),
+    archivedTournaments,
   });
 }, { route: '/api/platform-admin/orgs/[id]/plan' });

@@ -3,7 +3,7 @@ import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async () => {
-  const ctx = await getAuthContextWithRole();
+  const ctx = await getAuthContextWithRole({ allowSuspendedOrg: true });
   if (!ctx) return unauthorized();
   return NextResponse.json({ orgSlug: ctx.org.slug, role: ctx.role });
 }, { route: '/api/auth/me' });

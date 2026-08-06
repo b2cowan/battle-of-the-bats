@@ -27,7 +27,7 @@ import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 /** The Team board: every active player's development at a glance — active focus areas,
  *  latest value per test, last-evaluated date. ROSTER ORDER ONLY (never sort-by-result;
  *  this is a coverage view, not a leaderboard — binding design decision 2026-07-17).
- *  Goals ride the notes capability; measurables ride roster visibility — each column is
+ *  Goals ride the notes capability; measurables ride record access — each column is
  *  filtered server-side per caller.
  *
  *  `?history=1` adds the per-player `historyLinked` season label (the Development REPORT
@@ -57,9 +57,18 @@ export const GET = withObservability(async (req: Request,
 
   const showGoals = canViewDevelopmentGoals(caps);
   const showMeasurables = canViewMeasurables(caps);
-  // Identity rule (sibling-route invariant): NO roster visibility → no player list, ever.
-  // Goals access alone must not become a side door to every minor's name + number — the
-  // notes-only assistant is correctly denied by /roster, so the board denies too.
+  /**
+   * Identity rule (sibling-route invariant): this board and `/roster` must answer the same
+   * question, because both hand back every active player.
+   *
+   * ⚠ **A1 (2026-08-03) REVERSED WHAT THAT MEANS FOR A NOTES-ONLY ASSISTANT, and the change is the
+   * point.** The rule used to be "no roster visibility → no player list, ever", and it denied a
+   * notes-only assistant here on the grounds that `/roster` denied them too. That was never quite
+   * true in the UI: the Development nav door already opened on `notes || roster`, so a notes-only
+   * assistant saw a door that 403'd on arrival. `notes` is now one of `hasRecordAccess`'s own
+   * terms, so `/roster` admits them and this board admits them — the two routes and the door
+   * finally agree, which is what the invariant was always asking for.
+   */
   const denied = denyUnless(showMeasurables, 'You do not have access to the team board.');
   if (denied) return denied;
 

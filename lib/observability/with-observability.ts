@@ -17,6 +17,7 @@ import { randomUUID } from 'node:crypto';
 import { runWithRequestContext, getRequestContext } from './request-context';
 import { recordRequest } from './metrics';
 import { captureError } from './capture';
+import { OrgBillingSuspendedError, billingSuspendedResponse } from '../org-billing-access';
 
 type AnyRouteHandler = (...args: never[]) => Promise<Response> | Response;
 
@@ -60,6 +61,16 @@ export function withObservability<T extends AnyRouteHandler>(handler: T, opts: {
           try { res?.headers?.set?.('x-request-id', requestId); } catch { /* immutable headers */ }
           return res;
         } catch (err) {
+          // Billing rail (owner ruling 2026-08-06): a cancelled org reached a route that did not
+          // opt out. This is an EXPECTED answer, not a failure — record it as a normal request and
+          // return 402 rather than letting it surface as an uncaught 500. Handled here, at the one
+          // wrapper every authenticated org route already passes through, so no route can forget.
+          if (err instanceof OrgBillingSuspendedError) {
+            recordRequest(opts.route, false);
+            const res = billingSuspendedResponse();
+            try { res.headers.set('x-request-id', requestId); } catch { /* immutable headers */ }
+            return res;
+          }
           recordRequest(opts.route, true);
           throw err; // onRequestError (instrumentation.ts) captures uncaught throws globally
         }

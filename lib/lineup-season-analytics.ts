@@ -5,6 +5,7 @@
 // `node --test`, which resolves neither the tsconfig path alias nor extension-less
 // ESM specifiers (tsconfig has allowImportingTsExtensions).
 import { analyzeLineup } from './lineup-analysis.ts';
+import { resolvePlayerPitcherCap } from './lineup-caps.ts';
 
 export interface SeasonLineupInput {
   eventId: string;
@@ -65,10 +66,11 @@ export function computeSeasonLineupAnalytics(opts: {
   const { lineups, scores, players, pitcherPosition, seasonPitcherCap, templates, fieldPositions } = opts;
   const nameById = new Map(players.map(p => [p.id, p.name]));
   const pByos = pitcherPosition ?? '';
-  const capOf = (id: string): number | null => {
-    const p = players.find(pl => pl.id === id);
-    return p?.pitcherCap ?? seasonPitcherCap ?? null;
-  };
+  // ONE spelling of "the cap that applies to them", shared with the game-day console's chip and
+  // the arm-care card (lib/lineup-caps.ts) — three surfaces quoting a child's arm-care ceiling
+  // must never drift apart.
+  const capOf = (id: string): number | null =>
+    resolvePlayerPitcherCap(players.find(pl => pl.id === id)?.pitcherCap, seasonPitcherCap);
 
   type Agg = { field: number; bench: number; games: number; backToBack: number; positions: Set<string>; pitchInnings: number; pitchGames: number; overCap: number };
   const byPlayer = new Map<string, Agg>();

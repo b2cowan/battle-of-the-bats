@@ -7329,6 +7329,20 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-size: 0.68rem; color: var(--white-70); background: var(--white-10);
   border-radius: 999px; padding: 0.25em 0.7em;
 }
+/* P3 — the same chip as a switch (screen staying on). A button so it announces itself to a
+   screen reader as pressable; sized to the thumb minimum even though it reads as a chip. */
+button.gdChip {
+  border: 1px solid transparent; cursor: pointer; font-family: inherit; line-height: 1.5;
+  min-height: var(--tap-min, 44px); padding-inline: 0.85em;
+}
+/* "On" reads off the ARIA state the button already carries (the .askChip convention in this
+   file), so the pressed look and what a screen reader says can never disagree. Soft tint, not
+   the filled lime: this chip sits beside the field/uniform chips and must not shout at them. */
+button.gdChip[aria-pressed='true'] {
+  background: var(--home-olive-soft, rgba(190, 242, 100, 0.12));
+  color: var(--home-olive, var(--logic-lime));
+  border-color: var(--home-olive, var(--logic-lime)); font-weight: 600;
+}
 .gdScoreRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.7rem; }
 .gdScore { background: none; border: none; padding: 0; cursor: pointer; text-align: left; min-height: var(--tap-min, 44px); }
 .gdScore:disabled { cursor: default; }

@@ -20,8 +20,17 @@ import { resolveOrgHomeHref } from './module-entitlements';
  * already hold (it comes from `getCoachPortalAuth`, itself cached).
  */
 
-/** The portal's auth gate. Null ⇒ not signed in / not a member of this org. */
-export const getCoachPortalAuth = cache((orgSlug: string) => getAuthContext({ orgSlug }));
+/**
+ * The portal's auth gate. Null ⇒ not signed in / not a member of this org.
+ *
+ * ⚠ `allowSuspendedOrg: true` on PURPOSE, and it does NOT open the portal. This is a PAGE
+ * resolver, not an API: if it threw, a cancelled club's coach would meet a 500 instead of a
+ * sentence. The layout resolves the org, sees the cancelled status and renders
+ * SubscriptionEndedWall — while every coach API route stays closed by the same rail. The wall is
+ * the presentation; the ~150 blocked routes are the enforcement.
+ */
+export const getCoachPortalAuth = cache((orgSlug: string) =>
+  getAuthContext({ orgSlug, allowSuspendedOrg: true }));
 
 /** Assignments on the team's LIVE (draft/active) seasons. */
 export const getCoachPortalAssignments = cache(

@@ -7,7 +7,7 @@ import { withObservability, setRequestAuth } from '@/lib/observability';
 // identity — so setRequestAuth() attributes any error captured during this request.
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug });
+  const ctx = await getAuthContextWithRole({ orgSlug, allowSuspendedOrg: true });
   if (!ctx) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

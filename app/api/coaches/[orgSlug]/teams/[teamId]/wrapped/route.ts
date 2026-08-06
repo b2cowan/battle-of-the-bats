@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getLatestClosedRepProgramYear } from '@/lib/db';
 import { resolveCoachSeasonReadContext, seasonParam } from '@/lib/coach-season-read';
+import { canLogGameMoment, hasRecordAccess } from '@/lib/coach-capabilities';
 import { assembleSeasonWrapped } from '@/lib/rep-season-wrapped';
-import { canLogGameMoment } from '@/lib/coach-capabilities';
 import { countRecapViewers } from '@/lib/family-engagement';
 import { withObservability } from '@/lib/observability';
 
@@ -30,18 +30,47 @@ export const GET = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Season Wrapped is only available once a season is closed.' }, { status: 409 });
   }
 
+  /**
+   * ⚠ **A SEASON REVIEW IS A COACH'S, NOT A HELPER'S** (owner ruling 2026-08-03).
+   *
+   * This route gated on nothing but "did you hold an assignment on this season" — so every one of
+   * the six paths that reach Season's End (the portal-root sign-in redirect, the archive sidebar,
+   * both team switchers, the `?year=` season rail, a typed URL) served the whole season's story to
+   * a parent volunteer who ran one station on one Tuesday. It is the LAST line, and it said yes.
+   *
+   * The reasoning is ALTITUDE, not names: after A1 there is nothing on this card a helper is
+   * forbidden to *see* — its only person-level line is `First name #number`, which is baseline now.
+   * What they have no claim to is the season — the record, the streak, the closest game, attendance
+   * across every game day, the award winner. None of it was theirs. And the card carries a share
+   * button that puts a child's first name on an image that leaves the app.
+   *
+   * ⚠ Keyed on `hasRecordAccess`, deliberately, NOT on a names gate — re-adding one would resurrect
+   * the switch A1 just retired, and it is the same predicate the nav and the page use so the three
+   * cannot drift.
+   *
+   * ⚠ **AND THAT PREDICATE IS WIDER THAN THIS DOOR STRICTLY NEEDS — an accepted trade, not an
+   * oversight.** `hasRecordAccess` is a union of seven duties, so someone granted ONLY `money` or
+   * ONLY `documents` — duties that touch no game and no player — also passes here and receives the
+   * season highlight card and its share button. That follows directly from the owner's Option A
+   * ruling (sections follow the duties held, no new grant), and giving this one door a narrower
+   * private predicate would re-introduce exactly the bespoke per-surface gating A1 deleted. If that
+   * width is ever judged too generous, it is an owner decision — not a quiet tightening here.
+   */
+  if (!hasRecordAccess(resolved.capabilities)) {
+    return NextResponse.json({ error: 'This season has finished.' }, { status: 403 });
+  }
+
   const wrapped = await assembleSeasonWrapped(team, programYear, {
     fallbackColor: resolved.ctx.org.themePrimary ?? null,
     /**
-     * Game-Day P2 — the bench moment rides a NARROWER gate than the rest of this card.
+     * Game-Day P2 — the bench moment rides a NARROWER door than the rest of this card.
      *
-     * Everything else here is a season's story. A moment is a coach's own line about a child,
-     * and it is gated on `canLogGameMoment` — "do you run the bench" — on every other surface
-     * that shows one (the console, the player's page). Letting it inherit whatever door this
-     * route happens to open would hand it to someone who cannot see a moment anywhere else:
-     * a new sensitive field must be asked its own question, not adopt an older answer.
-     *
-     * `assembleSeasonWrapped` defaults this FALSE, so forgetting it yields no moment.
+     * ⚠ The gate above (`hasRecordAccess`) is a union of seven duties, deliberately wide (see
+     * its note). That width is fine for a season's story; it is not fine for a coach's private
+     * line about a child, which every other surface gates on "can you run the bench". Without
+     * this, a money-only or documents-only assistant would read through Wrapped something they
+     * cannot see on the console or the player's page — a new sensitive field inheriting an old
+     * door instead of being asked its own question.
      */
     includeMoments: canLogGameMoment(resolved.capabilities),
   });

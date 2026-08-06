@@ -49,7 +49,7 @@ around is a broken token, not three unlucky surfaces** — the local fix is the 
 ### 2026-08-02 — Tryout Insights (Report · Baseline · Memory): evaluation data may travel, but only coach-eyes-only, only confirmed, and never through the blindfold
 
 **Trigger:** Tryout Insights plan + mockups v1, both owner-approved 2026-08-02
-(`docs/projects/active/COACH_TRYOUT_INSIGHTS_PLAN.md`; mockup artifact `3b8bf1f9` = binding visual
+(`docs/projects/archive/COACH_TRYOUT_INSIGHTS_PLAN.md`; mockup artifact `3b8bf1f9` = binding visual
 spec). These rulings govern all three phases; full text with rationale = plan §2.
 
 **BINDING RULES (R1–R8):**

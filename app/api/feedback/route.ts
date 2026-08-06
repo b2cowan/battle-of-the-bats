@@ -59,7 +59,7 @@ export const POST = withObservability(async (req: NextRequest) => {
   if (globalCount >= GLOBAL_MAX) return throttled();
 
   // Resolve persona. null = anonymous-but-accepted (org_id/user_id/user_email left null) — NOT a 401.
-  const auth = await getAuthContextWithRole().catch(() => null);
+  const auth = await getAuthContextWithRole({ allowSuspendedOrg: true }).catch(() => null);
   let user = auth?.user ?? null;
   if (!user) user = await getAuthenticatedUser().catch(() => null); // org-less Basic coach still gets attribution
 

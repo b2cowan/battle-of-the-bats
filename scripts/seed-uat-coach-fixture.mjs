@@ -33,8 +33,13 @@
  * state worth probing. Station staff includes the UAT coach's own display name so the
  * "that's you" pre-selection path is exercised too.
  *
+ * It also seeds a GAME that is happening right now, with a saved lineup and attendance, because the
+ * Game-Day console has no door outside a live window — a fixture with only a practice cannot reach
+ * that screen at all, which is how three phases of it shipped with no rendered layout check.
+ *
  * ⚠ Sport-neutral by requirement (`lib/sports.ts` Sport Pack rule): no baseball/softball-shaped
- * station names, drills or player names. A fixture is content too.
+ * station names, drills or player names. A fixture is content too. (The lineup's position codes are
+ * the schema's own fixed value domain, not a sport choice — see the note at that block.)
  */
 import { createClient } from '@supabase/supabase-js';
 import { config } from 'dotenv';
@@ -263,8 +268,107 @@ if (!att?.length) {
   ok('attendance already present');
 }
 
+// ── 10. A GAME that is happening right now, so the Game-Day console can be probed ────
+// ⚠ WHY A SEPARATE EVENT. The console only exists inside a live window (roughly two hours before
+// the first pitch through three hours after the last), and outside it the door is deliberately
+// absent. A fixture with only a practice therefore cannot reach the console AT ALL, which is why
+// three phases of Game-Day Mode shipped with no rendered check. This game is the probe surface.
+//
+// It is anchored 30 minutes in the past so the console opens in LIVE mode mid-first-period — the
+// state worth measuring — rather than the read-only recap. `resolveUatContext()` re-anchors it on
+// every run, so it cannot rot into review mode overnight and quietly measure the wrong screen.
+const gameStarts = new Date(Date.now() - 30 * 60_000).toISOString();
+const gameEnds = new Date(Date.now() + 90 * 60_000).toISOString();
+const INNINGS = 6;
+
+const { data: existingGame } = await db.from('rep_team_events')
+  .select('id').eq('program_year_id', py.id).eq('name', 'UAT probe game').maybeSingle();
+
+let gameId;
+if (existingGame) {
+  const upd = await db.from('rep_team_events')
+    .update({ starts_at: gameStarts, ends_at: gameEnds })
+    .eq('id', existingGame.id).select('id').single();
+  if (upd.error) { console.error('✗ game update', upd.error.message); process.exit(1); }
+  gameId = upd.data.id;
+  ok('game refreshed (re-anchored to now)');
+} else {
+  const ins = await db.from('rep_team_events').insert({
+    program_year_id: py.id, team_id: team.id, org_id: org.id,
+    event_type: 'league_game', name: 'UAT probe game',
+    opponent: 'Probe Rovers', home_away: 'home',
+    starts_at: gameStarts, ends_at: gameEnds,
+    location: 'UAT Fields', field_number: '1', arrival_time: '17:30',
+    uniform: 'Home kit',
+  }).select('id').single();
+  if (ins.error) { console.error('✗ game insert', ins.error.message); process.exit(1); }
+  gameId = ins.data.id;
+  ok('game created');
+}
+
+// ── 11. A saved lineup for it, so the console renders the BOARD ──────────────
+// Without a lineup the console renders its no-lineup fallback instead — a legitimate screen, but
+// the thin one. The board is where the tap targets, the two-column On field / Bench split and the
+// period cursor live, so that is what the sweep should be measuring.
+//
+// ⚠ The position codes below come from the schema's fixed value domain (`VALID_POSITIONS`), not
+// from a chosen sport — there is no neutral alternative to pick. Everything a fixture DOES choose
+// (names, opponent, location) stays sport-neutral per the Sport Pack rule.
+const FIELD_POSITIONS = ['P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF'];
+
+const { data: lineupRow, error: lErr } = await db.from('rep_team_lineups')
+  .upsert({
+    event_id: gameId, program_year_id: py.id, team_id: team.id, org_id: org.id,
+    lineup_mode: 'everyone_bats', inning_count: INNINGS,
+  }, { onConflict: 'event_id' })
+  .select('id').single();
+if (lErr) { console.error('✗ lineup upsert', lErr.message); process.exit(1); }
+ok(`lineup header ready (${INNINGS} innings)`);
+
+const { data: existingEntries } = await db.from('rep_team_lineup_entries')
+  .select('id').eq('lineup_id', lineupRow.id).limit(1);
+if (!existingEntries?.length) {
+  // Three players sit each inning, and the seat rotates — so every inning has a populated bench
+  // AND the season roll-up sees an even spread rather than one player carrying it.
+  const positionsFor = (playerIdx) => {
+    const out = {};
+    for (let inning = 1; inning <= INNINGS; inning++) {
+      const benchStart = ((inning - 1) * 3) % ids.length;
+      const seat = (playerIdx - benchStart + ids.length) % ids.length;
+      out[String(inning)] = seat < 3 ? 'Bench' : FIELD_POSITIONS[(seat - 3) % FIELD_POSITIONS.length];
+    }
+    return out;
+  };
+  const rows = ids.map((pid, i) => ({
+    lineup_id: lineupRow.id, player_id: pid,
+    batting_order: i + 1, starter: true,
+    inning_positions: positionsFor(i),
+  }));
+  const ins = await db.from('rep_team_lineup_entries').insert(rows);
+  if (ins.error) { console.error('✗ lineup entries insert', ins.error.message); process.exit(1); }
+  ok(`lineup entries seeded (${rows.length} players, 3 on the bench each inning)`);
+} else {
+  ok('lineup entries already present');
+}
+
+// ── 12. Attendance on the game, so "Who's here" opens onto something true ────
+const { data: gAtt } = await db.from('rep_team_event_attendance').select('id').eq('event_id', gameId).limit(1);
+if (!gAtt?.length) {
+  const rows = ids.map((pid, i) => ({
+    event_id: gameId, player_id: pid,
+    program_year_id: py.id, team_id: team.id, org_id: org.id,
+    status: i < 10 ? 'attending' : i < 11 ? 'late' : 'absent',
+  }));
+  const ins = await db.from('rep_team_event_attendance').insert(rows);
+  if (ins.error) console.log(`  ! game attendance skipped (${ins.error.message}) — probes still run`);
+  else ok('game attendance seeded');
+} else {
+  ok('game attendance already present');
+}
+
 console.log(`\n✓ UAT coach fixture is whole.\n`);
 console.log(`  Sign in as : ${coachEmail}`);
 console.log(`  Portal     : /${org.slug}/coaches/teams/${team.id}/schedule`);
-console.log(`  Run screen : /${org.slug}/coaches/teams/${team.id}/practice/${eventId}/run\n`);
+console.log(`  Run screen : /${org.slug}/coaches/teams/${team.id}/practice/${eventId}/run`);
+console.log(`  Console    : /${org.slug}/coaches/teams/${team.id}/game/${gameId}\n`);
 console.log(`  Probes     : PROBE_EVENT_ID=${eventId} npx playwright test --config playwright.config.ts\n`);

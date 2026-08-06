@@ -1,6 +1,86 @@
 {
-  "generated": "2026-08-04T02:14:59.524Z",
+  "generated": "2026-08-05T20:24:44.108Z",
   "entries": {
+    "coach-game-console|1440|tap-floor|a·FieldLogicHQ Home": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Account": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|button·Notifications": {
+      "reason": null,
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Overview": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Roster": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Attendance": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Lineups": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Development": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Tryouts": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Schedule": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Insights": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Money": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Chat": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Email families": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Staff": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Documents": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Settings": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Tournaments": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|a·Help": {
+      "reason": null,
+      "detail": "39px tall (floor 44)"
+    },
+    "coach-game-console|1440|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
     "coach-overview|1440|tap-floor|a·FieldLogicHQ Home": {
       "reason": null,
       "detail": "22px tall (floor 44)"

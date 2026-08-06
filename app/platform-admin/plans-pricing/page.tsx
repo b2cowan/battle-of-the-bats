@@ -2,7 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getAllStripePrices } from '@/lib/stripe-prices';
 import { getAllPlanConfigOverrideRows } from '@/lib/plan-config-db';
 import { PLAN_CONFIG } from '@/lib/plan-config';
-import { getFeatureMatrixRows, PLAN_ORDER } from '@/lib/plan-module-entitlements';
+import { getFeatureMatrixRows, getPlanModuleEntitlementDrift, PLAN_ORDER } from '@/lib/plan-module-entitlements';
 import { getPlatformAdminContext, hasPlatformPermission, requirePlatformAreaView } from '@/lib/platform-auth';
 import PlansPricingClient from './PlansPricingClient';
 
@@ -160,6 +160,7 @@ export default async function PlansPricingPage() {
     changeRequestsResult,
     campaignsResult,
     featureMatrix,
+    featureMatrixDrift,
   ] = await Promise.all([
     supabaseAdmin.from('plan_gating').select('*').order('plan_key'),
     supabaseAdmin.from('organizations').select('plan_id, subscription_status'),
@@ -185,6 +186,10 @@ export default async function PlansPricingPage() {
       .order('created_at', { ascending: false })
       .limit(20),
     getFeatureMatrixRows(),
+    // Where the PUBLISHED matrix and the LIVE product disagree. Non-empty = a code change to
+    // lib/plan-config.ts + a deploy is still owed; the screen says so rather than implying the
+    // publish took effect (audit 2026-08-06).
+    getPlanModuleEntitlementDrift(),
   ]);
 
   const gatingRows = (gatingResult.data ?? []) as PlanGatingRow[];
@@ -216,6 +221,7 @@ export default async function PlansPricingPage() {
       catalogVersions={catalogVersions}
       addonCatalog={addonCatalog}
       featureMatrix={featureMatrix}
+      featureMatrixDrift={featureMatrixDrift}
       changeRequests={changeRequests}
       campaigns={campaigns}
       canManageProduct={auth ? hasPlatformPermission(auth.role, 'manage_product') : false}

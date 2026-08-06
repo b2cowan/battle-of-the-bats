@@ -19,7 +19,7 @@ import { buildLineupProfileWrite } from '@/lib/lineup-profile';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachSeasonRead } from '@/lib/coach-season-read';
 import {
-  denyUnless, canLogGameMoment, canViewMoney, canViewRoster, redactRosterPlayer,
+  denyUnless, canLogGameMoment, canViewMoney, hasRecordAccess, redactRosterPlayer,
 } from '@/lib/coach-capabilities';
 
 function trimmedOrNull(v: unknown): string | null {
@@ -60,7 +60,9 @@ export const GET = withObservability(async (req: Request,
   const resolved = await resolveCoachSeasonRead(orgSlug, teamId, req);
   if ('error' in resolved) return resolved.error;
   const { ctx, capabilities, programYear, isReadOnly } = resolved;
-  const denied = denyUnless(canViewRoster(capabilities), 'You do not have access to the roster.');
+  // A1 (2026-08-03): a player's own page is a record surface — see the roster list route.
+  // `redactRosterPlayer` below is untouched and still strips PII and notes.
+  const denied = denyUnless(hasRecordAccess(capabilities), 'You do not have access to the roster.');
   if (denied) return denied;
 
   const player = await getRepRosterPlayer(playerId);

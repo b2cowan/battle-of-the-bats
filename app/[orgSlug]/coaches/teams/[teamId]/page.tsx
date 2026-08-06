@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { Archive, ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
-import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
 import CoachHelperHome from '@/components/coaches/CoachHelperHome';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
@@ -29,7 +29,7 @@ import {
   type PlayingTimeSummary,
   type TileKey,
 } from '@/lib/coach-overview';
-import { hasNoTeamRecordAccess } from '@/lib/coach-capabilities';
+import { hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
@@ -293,7 +293,7 @@ export default function TeamOverviewPage({
       // tile then read empty, telling a coach with a full squad and a full season that they had
       // "0 players" and "Nothing scheduled". Don't ask for what this coach isn't allowed to see;
       // the tiles that depend on the answer hide themselves (see `visible` on the snapshot cards).
-      const canRoster = !!a && a.capabilities.roster !== 'off';
+      const canRoster = !!a && hasRecordAccess(a.capabilities);
       const canSchedule = !!a && a.capabilities.schedule;
       const [rosterRes, eventsRes, budgetRes, duesRes] = await Promise.all([
         canRoster ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster`) : Promise.resolve(null),
@@ -683,7 +683,7 @@ export default function TeamOverviewPage({
 
   // Season lineup analytics — ONE fetch, two consumers:
   //   • the safety bridge (design log 2026-07-09): an over-cap pitcher as one quiet line, and
-  //   • the Playing time tile (chunk I, D13): is everyone getting a fair share of the game.
+  //   • the Playing time tile (chunk I, D13): where the game's minutes are going.
   // Lineups-gated; fail-silent (the Overview never blocks on analytics). Deliberately NOT a second
   // request for the tile — the payload already carries what both need.
   useEffect(() => {
@@ -783,14 +783,9 @@ export default function TeamOverviewPage({
    * children — and offer no door, because there genuinely isn't one.
    */
   if (closedCapsAreHelperShaped) {
-    return (
-      <CoachEmptyState
-        quiet
-        icon={<Archive size={18} aria-hidden />}
-        headline="This season has finished"
-        description="Thanks for helping out. There are no more practices to open here — if you help again next season, your coach will invite you back."
-      />
-    );
+    // ⚠ Shared with Season's End (2026-08-03) — that page is where the portal-root redirect and
+    // both team switchers actually send a helper, so the two must say the same thing.
+    return <CoachSeasonFinishedNotice />;
   }
 
   const assignment = assignments.find(a => a.teamId === teamId);
@@ -841,9 +836,9 @@ export default function TeamOverviewPage({
   // builder / schedule tab they can't use (mirrors the nav hiding those items). Both default ON.
   const canViewLineup = assignment.capabilities.lineups;
   const canSchedule = assignment.capabilities.schedule;
-  // Roster visibility gates both the roster fetch and every roster-derived tile — the same rule
-  // the sidebar uses to hide the Roster item.
-  const canViewRoster = assignment.capabilities.roster !== 'off';
+  // Record access gates both the roster fetch and every roster-derived tile — the same rule the
+  // sidebar uses to hide the Roster item. (A1 2026-08-03: was roster visibility, now retired.)
+  const canViewRoster = hasRecordAccess(assignment.capabilities);
   const helpHref = `/${orgSlug}/coaches/help`;
   // The season label drops a leading copy of the team name so the subtitle doesn't repeat the
   // title — orgs often name a program year "<Team> <Year>" (e.g. "Blue Jays 2026").
@@ -1239,7 +1234,7 @@ export default function TeamOverviewPage({
           key, label: 'Playing time', icon: ListOrdered,
           value: p == null ? '…'
             : p.verdict === 'insufficient' ? 'Not enough yet'
-              : p.verdict === 'even' ? 'Fairly even' : 'Uneven',
+              : p.verdict === 'even' ? 'Evenly spread' : 'Leans on a few',
           sub: p == null || p.verdict === 'insufficient'
             ? 'Save a few lineups to see the balance'
             : `across ${p.games} game${p.games === 1 ? '' : 's'}`,

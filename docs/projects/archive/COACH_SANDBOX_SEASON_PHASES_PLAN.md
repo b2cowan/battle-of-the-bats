@@ -1,9 +1,186 @@
 # Coach Sandbox with Season Phases — Implementation Plan
 
-**Status:** **PHASE 1 COMMITTED (dev `7a7092ea`) · PHASE 2 BUILT 2026-08-05 (dev, uncommitted).**
-Both await owner QA (ledger §5.4). All five moments of the dock now exist.
-Mockups approved 2026-08-04 (phase dock, warm chrome). Companion brief:
-`COACH_SANDBOX_SEASON_PHASES_PM_BRIEF.md`.
+**Status:** **PHASE 1 COMMITTED (dev `7a7092ea`) · PHASE 2 COMMITTED (dev `c57f6462`) ·
+PHASE 3 BUILT 2026-08-05 (dev, uncommitted).** All five moments and the guided tour now exist.
+All three await owner QA (ledger §5.4).
+Mockups: phase dock + warm chrome approved 2026-08-04; **guided tour rev 2 approved 2026-08-05**.
+Companion brief: `COACH_SANDBOX_SEASON_PHASES_PM_BRIEF.md`.
+
+## Phase 3 build record (2026-08-05) — the guided tour
+
+**One spine of SEVEN steps that walks a season**, not five per-moment tours. Reasoning, in the
+order it decided things:
+
+- The dock already offers the five moments self-serve, so a tour per moment would be the dock with
+  extra buttons — and it would turn a season into five feature demos, the exact pitch the moments
+  naming exists to avoid.
+- It is also structurally impossible: **step 6 (what a parent reads) only lands having seen step 5
+  (the playing-time table it answers)**, and two steps that depend on each other cannot live in
+  separate tours.
+- **The rule every destination obeys: a step lands one level deeper than its moment's dock chip.**
+  The dock drops a visitor on the moment's front door; the tour opens the drawer behind it. Step 7
+  is the deliberate exception — the archive promise is not a screen you can point at, it is the
+  fact that pressing things still works, so it lands where the chip does and the sentence says so.
+- **The tour does not open itself.** A demo that promises nothing moves while you watch must not
+  move a stranger. It opens in an INVITATION state ("The season, guided · Walk the year →") and
+  waits. Coach sandbox only — the tournament tour's opening is approved and shipped.
+
+### What was measured in the running demo BEFORE the steps were written
+
+Three of the plan's eleven candidate beats could not be pointed at. The list routes around all
+three rather than shipping steps that would read as broken (all three are **pre-existing** and are
+flagged to QA in their own right):
+
+1. **The tryout split opinion is invisible.** Bib 14's 5-vs-2 is real in the data; every surface
+   renders the 3.5 average. There is no per-evaluator view anywhere a visitor can reach — so the
+   dock's own Tryout-day sentence currently promises something no screen can support.
+2. **The evaluator-bias flag never fires on this data.** Consensus is the mean of evaluator MEANS,
+   so one harsh scorer out of two moves both by half the drift: computed ±0.39 against a 0.15×5 =
+   0.75 threshold. The seed comment claiming "the bias flag fires" is wrong. Making it fire is a
+   one-line drift change, deferred (owner call — it also needs the hub's stage to be addressable).
+3. **The tryout hub auto-selects "Decide", not the scoreboard** (`tryoutDayDone = scoredCount > 0`,
+   so a tryout with scores in it is past tryout day by the product's own reckoning), and hidden
+   panels are `display: none` — an anchor there would be a dead step. Step 1 points at the ranked
+   board the hub actually opens.
+4. **Practice plans have no address at all** — a schedule event opens a drawer over `/schedule`, so
+   the URL never changes. The off-season step goes to Development instead.
+
+### The seven steps
+
+| # | Press | Lands (one level below its chip) | The beat |
+|---|---|---|---|
+| 1 | See how 28 kids got ranked | 11U → Tryouts hub | ranked live, names still hidden |
+| 2 | Find the two blanks | 14U → Development | 11 of 13 tested; two dashes, not zeros |
+| 3 | Count the lineups | 10U → Lineups | one saved, twelve waiting — an evening in March |
+| 4 | See if the season is on budget | 12U → budget vs. actual | planned vs actually spent; Facilities over plan |
+| 5 | Ask who has been on the field | 12U → Insights → playing time | 12 innings vs 24–30; two pitchers at the cap |
+| 6 | Read what a parent gets | 12U → that player's page | the family recap, their view, drawn by their screen |
+| 7 | Open a season that is already over | 13U → Season's End | 18-6-2, 9 of 12 opened it, every screen still opens |
+
+The five candidate beats that did not make the spine were **not cut** — they belong in the dock's
+own arrival sentences, which already fire on every chip press and cost nothing. (Not yet written;
+carried as a follow-up.)
+
+### What it took to build
+
+1. **Seven inert markers** (`data-sandbox-tour`) on real product screens — the pattern already
+   running on five tournament screens. Nothing renders, nothing styles, off a demo org.
+2. **`exactPath` on a tour step** (new). `isOnStepPage` treats a destination as a SECTION, which is
+   right for the tournament tour and wrong here: step 1 lands on `/tryouts` and the dock lands on
+   `/tryouts/score` one level below, so under prefix matching a visitor who arrived by the dock
+   would press step 1 and watch nothing happen. Opted into per step; the tournament tour is
+   untouched. **The unit suite pins it**: any coach step that is an ancestor of another step or of
+   a dock landing must be exact.
+3. **The invitation state** — the stepper's pristine label and button, coach kind only.
+4. **A warm coat for the stepper row**, the one band of the chrome that had never rendered here.
+5. **Two narrow-screen rules** (below), and **`scroll-margin-top` on every tour marker** so the
+   fixed hat stops painting over whatever was just scrolled to.
+6. **Tall-anchor scrolling.** `scrollIntoView({block:'center'})` is right for a panel and wrong for
+   a list: measured, centring the 28-row decision board put its top **669px above the viewport** —
+   the visitor arrived staring at candidates 14–20 with the card's own title scrolled off. Now
+   `start` for anything taller than 80% of the viewport, `center` otherwise. Re-measured: top lands
+   at +216px, header and subtitle on screen.
+
+### The phone, measured (390×844, live demo, computed styles)
+
+| State | Rows | Chrome |
+|---|---|---|
+| Before Phase 3 — browsing | banner 68 + dock 44 | **112px** |
+| Before Phase 3 — after a dock press | banner + dock + sentence | **182px** |
+| Now — arrival (invitation) | banner 69 + dock 44 + stepper 42 | **155px** |
+| Now — a step delivered | banner 69 + stepper 42 + sentence 88–105 | **198–216px** |
+
+Two rules got it there, and the first draft of the second one was wrong in a way only measurement
+caught:
+
+- **The dock stands down while the strip is speaking** (`data-narrating`, ≤640px, coach only). The
+  sentence names the moment anyway, and the dock returns the instant it clears. Without this, a
+  delivered step ran four rows.
+- **The promise comes back to the phone banner — in its shortest honest form.** It is hidden below
+  640px for the tournament sandbox on the reasoning that the first narration line carries it; true
+  there, false here, because the coach sandbox's opening state has no sentence at all. **So on a
+  phone, "nothing is saved" was appearing NOWHERE until something was pressed.** First attempt
+  restored the whole sentence: banner 68px → **136px**, and a delivered step hit **283px**. So the
+  lead clause is dropped and the bold claim kept, taking the moment note's place rather than a line
+  of its own — flavour gives way, the honesty claim does not. Banner: 69px.
+
+### Also built in the same pass — the books (owner ask, 2026-08-05)
+
+A budget beat needed a budget worth looking at, and there wasn't one:
+
+- **The mid-season team showed $9,400 planned and $0.00 actual**, eighteen games into its season,
+  with every line filed under "Uncategorized" — its budget lines carried no category at all, and
+  budget-vs-actual matches spending to a line by category NAME. Season start was the same picture
+  ($4,400 planned, nothing logged).
+- Fixed: the 12U's five lines now name real team-reachable categories, and the team has **eight
+  logged expenses across the season**. **Facilities is deliberately OVER plan** (two rainouts moved
+  to weeknight slots) and is the only anomaly on the team — owner ruling: a demo whose every line
+  comes in under budget teaches a prospect that the report flatters them. The unbudgeted-expense
+  beat stays with the 14U; one anomaly per team, or neither reads.
+- The 10U gets **three early bills** — the contrast is the point: a complete plan, barely spent
+  against. First draft paid the gear line in full and put a fortnight-old season at 56% of budget;
+  **the health check failed on its own data** and it became a deposit.
+- **The ledgers now re-anchor on all three teams**, restated from the clock rather than shifted by
+  a delta (the 14U's argument, generalised): a bill dated before the season it belongs to is the
+  one thing a money screen must never show. Verified: a steady day still writes **zero rows**, on
+  two consecutive passes.
+
+### One fixed roster id (new convention)
+
+`DEMO_COACH_SHOWCASE.midSeasonPlayerId` — the only person in the demo world addressed by name,
+because step 6 points at one player's page. It is deliberately **the playing-time outlier step 5
+names** (jersey 30), so the tour reads "here is the uncomfortable number, and here is exactly what
+that family sees." Owner call: the demo is more persuasive admitting it than hiding behind a tidier
+player. The health check asserts the pairing, so a re-authored lineup grid cannot silently split the
+two steps across two children.
+
+**Verification run:** typecheck clean · 1426 unit tests pass · demo health check green (~70
+assertions) · re-anchor diff-stable over two passes · all seven steps driven end-to-end at 1280px
+and 390px, every one navigating, narrating and ringing its beat.
+**Not run:** `npm run check:layout` (timed out at 10 minutes). Residual risk low — the new CSS is
+either scoped to `[data-kind='coach']` inside the demo chrome or is a `scroll-margin-top` on demo-only
+markers, none of which renders for a customer.
+
+**Hardened at `/review` (2026-08-06, high-risk tier, 5 lenses).** Six defects fixed, all found by
+the review rather than by use:
+1. **The phone lost the moments dock permanently.** The dock stands down while the chrome narrates,
+   and the only control that clears a narration is a numbered dot — which the same breakpoint hides.
+   Measured: after step 1 on a 390px screen, nothing on the page could bring the dock back for the
+   rest of the session. The narration strip is now dismissible (44px target, both coats).
+2. **The dock came back mis-scrolled.** A hidden element reports zero width, so the "keep the active
+   chip on screen" effect early-returned for the whole walk and never re-ran. It now depends on the
+   narration state.
+3. **A regression reaching the shipped tournament tour**: the new tall-anchor scroll rule was
+   ungated by sandbox kind, so the playoff bracket's step would have changed where it lands — on an
+   approved surface, unmeasured. Now coach-only.
+4. **A global stylesheet rule reached real customers.** The tour markers ship on ten production
+   screens; the `scroll-margin-top` rule was unscoped and its "zero off a demo org" comment was
+   false (the fallback zeroes the variable, never the constant beside it). Now scoped to the
+   sandbox chrome's own root attribute.
+5. **The attendance backfill could abort itself.** One bulk insert against a `UNIQUE(event_id,
+   player_id)` table means a concurrent run's collision aborts the whole statement — including
+   uncontested events — and alerts a human over a race that harmed nothing. Now conflict-tolerant,
+   and coverage is judged per PLAYER rather than per event (an event missing only the newest
+   player's row was previously marked done for ever).
+6. **Query scoping and roster ordering** in that backfill: events are now scoped by program year
+   like the reads beside them, and the roster is ordered server-side with an id tiebreak — the
+   world's absent/late lists are plain indexes, so an unstable order could mark the wrong child
+   absent.
+Also added: the 12U finally has the attendance-timing assertion its siblings had — and it is the
+team most exposed to it, since its practices cross into the past mid-week, every week.
+**Refuted:** a claim that the lineup grid's rows are games rather than innings (they are innings).
+**Re-measured after the fixes:** phone arrival 155px; a delivered step **234px** (up from 216 — the
+dismiss control narrows the sentence and costs a line). Tournament sandbox confirmed unregressed at
+both widths.
+
+⚠ **This plan was moved to `archive/` by another session on 2026-08-06 while Phase 3 was still
+awaiting owner QA.** Archiving is meant to follow verification, not precede it; flagged for the
+owner rather than moved back, since the move was another agent's deliberate act.
+
+**Deviations to flag at QA:** the tour's Tryout-day step lands on the hub while the DOCK's chip
+still lands on the coach's own scorecard — deliberate (front door vs. one level deeper), but the two
+disagree about where "tryout day" is, and the dock's sentence still describes a split opinion no
+screen shows.
 
 ## Phase 2 build record (2026-08-05)
 
@@ -124,7 +301,7 @@ session state is namespaced per sandbox; arrival-heartbeat discipline extracted 
 (invisible to the drift gate — no schema change), marketing doors (`sandboxDoorsVisible` flag) +
 /marketing copy pass + /strategy log. **Dev-pending:** migration 226 not yet applied to the dev
 DB either (cron entry needs SQL access) — until then the tick runs by hand or a reseed re-anchors.
-**Sibling project:** `TOURNAMENT_ADMIN_SANDBOX_PLAN.md` — **mockups approved 2026-08-02; it IS
+**Sibling project:** `archive/TOURNAMENT_ADMIN_SANDBOX_PLAN.md` (archived 2026-08-06 → `PROGRAM_TOURNAMENTS.md`) — **mockups approved 2026-08-02; it IS
 building first.** The demo-mode machinery — demo-session entry pattern, central write block,
 outbound silence, demo-org hygiene, re-anchor job pattern — is SHARED between the two sandboxes
 and is being built there as org-agnostic pieces. **Check its state before building any of those
@@ -276,9 +453,13 @@ Components:
 
 - ~~**Phase 1 (launch):**~~ ✅ machinery (entry, write block, silence, dock, cron) + **three
   moments: Tryout day, Mid-season, Season's End**. Committed dev `7a7092ea`.
-- ~~**Phase 2:**~~ ✅ Off-season (14U) + Season start (10U) datasets, 2026-08-05. Dev, uncommitted.
-- **Phase 3 (polish):** per-phase guided-tour chips; "what parents see" preview stop; QR/share
-  collateral for in-person pitching.
+- ~~**Phase 2:**~~ ✅ Off-season (14U) + Season start (10U) datasets. Committed dev `c57f6462`.
+- ~~**Phase 3 (polish):**~~ ✅ the guided tour — one seven-step spine across the year, the
+  "what parents see" stop inside it (step 6), the invitation state, and the in-season books.
+  Built 2026-08-05, dev, uncommitted. **Still open from the original Phase 3 list:** QR/share
+  collateral for in-person pitching; the five demoted beats moving into the dock's own arrival
+  sentences; and the optional tryout upgrade (addressable hub stage + a harsher evaluator drift, so
+  the bias readout actually fires) — owner call, not taken.
 
 ## Risks & notes
 

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getEffectiveTournamentLimit, PLAN_CONFIG } from '@/lib/plan-config';
+import { archiveOverCapTournamentsForPlanChange, isLowerPlan } from '@/lib/billing-retention';
 import { hasPlatformPermission, requireAnyPlatformPermission } from '@/lib/platform-auth';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -259,7 +260,33 @@ export const POST = withObservability(async (req: Request) => {
           reason,
           free_plan_billing_reset: planId === 'tournament',
         });
-        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true, message: `Plan changed to ${PLAN_CONFIG[planId].label}` });
+
+        // Apply the new cap to tournaments that ALREADY exist (audit 2026-08-06) — the same gap
+        // the single-org plan route had, except this one repeats it across every org in the batch.
+        // Retained + restorable, never destroyed. A failure here is reported per-org in the result
+        // row rather than failing the whole batch: the plan change itself already landed.
+        let archivedNote = '';
+        if (isLowerPlan(org.plan_id as OrgPlan, planId)) {
+          try {
+            const archived = await archiveOverCapTournamentsForPlanChange({
+              orgId: org.id,
+              fromPlan: org.plan_id as OrgPlan,
+              targetPlan: planId,
+              actorEmail: auth.user.email ?? null,
+              reason,
+            });
+            if (archived.length > 0) {
+              archivedNote = ` — ${archived.length} over-cap tournament${archived.length === 1 ? '' : 's'} archived`;
+              await writePlatformAuditLog(auth.user.email!, org.id, 'bulk_update_org_plan_and_limit',
+                'archived_over_cap_tournaments', null,
+                { bulk_operation_id: operation.id, count: archived.length, tournaments: archived.map(t => ({ id: t.id, name: t.name })) });
+            }
+          } catch (archiveErr) {
+            console.error('[platform-admin bulk] over-cap archive failed:', org.slug, archiveErr);
+            archivedNote = ' — ⚠ over-cap tournaments could NOT be archived; this org is over its limit';
+          }
+        }
+        results.push({ orgId: org.id, name: org.name, slug: org.slug, ok: true, message: `Plan changed to ${PLAN_CONFIG[planId].label}${archivedNote}` });
       }
 
       if (actionType === 'module_addon_enablement') {

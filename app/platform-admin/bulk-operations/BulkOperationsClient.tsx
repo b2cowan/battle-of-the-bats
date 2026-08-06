@@ -116,7 +116,9 @@ export default function BulkOperationsClient({
   const previewCopy = actionType === 'subscription_status_override'
     ? `Create a subscription status override set to ${STATUS_LABELS[targetStatus] ?? targetStatus}.`
     : actionType === 'comp_period'
-      ? `Grant a comp period through ${expiresAt || 'the selected expiry date'}.`
+      // "Grant" alone read as "gives them something" — the single-org screen warns explicitly that
+      // it does not. Same action, opposite impression (audit 2026-08-06). Say what it is.
+      ? `Tag these orgs as comped through ${expiresAt || 'the selected expiry date'} — a billing/founding-season label only, no access granted.`
       : actionType === 'module_addon_enablement'
         ? `${MODULE_OPERATION_LABELS[moduleOperation]} ${moduleLabel} as an organization-specific module override.`
         : `Change base plan to ${PLAN_LABELS[targetPlan] ?? targetPlan}.`;
@@ -414,6 +416,21 @@ export default function BulkOperationsClient({
                   </select>
                 </label>
               </>
+            )}
+
+            {actionType === 'comp_period' && (
+              // Carried over from the single-org override form, which has warned about this for a
+              // while. This screen said only "Grant a comp period", which invites exactly the
+              // mistake the other screen works to prevent (audit 2026-08-06).
+              <div className={`${styles.billingClarity} ${styles.billingClarityCaution}`}>
+                <p>
+                  ⚠ Comp Period is a <strong>billing/founding-season tag only — it grants no section or
+                  plan access.</strong> It marks these accounts as comped (e.g. for the Founding cohort
+                  badge) but unlocks nothing. To actually give orgs access, use{' '}
+                  <strong>Module Add-on Enablement</strong> for specific sections, or a{' '}
+                  <strong>Subscription Status Override</strong> to change their access state.
+                </p>
+              </div>
             )}
 
             {(actionType === 'subscription_status_override' || actionType === 'comp_period') && (

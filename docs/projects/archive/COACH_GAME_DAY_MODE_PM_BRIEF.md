@@ -87,6 +87,42 @@ log one. A schedule-only helper cannot — their console is read-only and shows 
 **Past seasons.** A finished season's Wrapped card shows the moments logged during it,
 read-only; there is no way to add or remove one once a season closes.
 
+## Phase 3 — playing-time polish (PROPOSED 2026-08-05 — plan + mockups only, no code)
+
+Full plan: `COACH_GAME_DAY_MODE_P3_PLAN.md` · mockups rev 5, frames 19–23.
+
+**The honest framing.** Phase 3 is the first phase that is genuinely optional — the console
+already works, and every candidate is polish. So the plan argues what *not* to build, and cuts
+half of what was originally listed.
+
+**What a coach would see differently — three small things.**
+1. **The bench list puts the longest-sitting player on top**, which is what the signed-off
+   drawing said and what didn't get built. The order settles at the start of each period and
+   then holds still — a list that re-shuffles under a coach's thumb mid-inning is how the wrong
+   child gets subbed in.
+2. **The pitching-cap chip finally works for most teams.** Today it only appears for players
+   who have a personal arm-care cap. A team that set one season-wide cap instead — the common
+   case — sees nothing at all, on the exact screen where the coach is choosing the next
+   pitcher. This is the item with a real safety argument, and the reason the phase is worth
+   doing at all. If no cap is set anywhere, the screen still says nothing; the product never
+   invents a ceiling it wasn't given.
+3. **The screen can stay awake during the game** (owner decision pending) — visible as a chip
+   the coach can switch off in one tap, only while the game is live, only for the coach who is
+   actually running the bench.
+
+**What is being cut, deliberately.**
+- **Tonight's playing time compared to season averages.** It duplicates the season report,
+  which is already one tap away; it needs the whole season loaded onto a live-game screen; and
+  a one-game difference is close to meaningless in a sport where the coach rotates on purpose.
+  It is also the item most at risk of turning measurement into a verdict about a child, which
+  the vocabulary ruling forbids. Drawn anyway (frame 23) so the call is visible and reversible.
+- **A per-inning score breakdown.** Deferred a third time: it needs new storage, and a
+  half-filled line score is exactly the kind of unfinished record this whole feature was
+  designed to avoid.
+
+**Cost and risk.** No new data stored, no new screen, no migration, no change to what families
+receive. Small enough to drop item-by-item if priorities shift.
+
 ## Success criteria
 
 - Coaches who use the console produce visibly different (more accurate) playing-time data than

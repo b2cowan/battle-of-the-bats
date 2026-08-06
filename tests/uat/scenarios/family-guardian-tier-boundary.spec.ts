@@ -191,19 +191,51 @@ async function apiPost(page: Page, url: string, body: unknown) {
   }, { u: url, b: body });
 }
 
+/**
+ * ⚠ FIXED 2026-08-04. This used `page.evaluate(fetch(relativeUrl))`, which throws
+ * `Failed to parse URL` on a page that has never navigated — and the signed-out probes here
+ * deliberately never navigate. The "join page reports the tier as off" probe had therefore never
+ * run an assertion in its life; the `test.skip` above hid a probe that was broken anyway.
+ *
+ * `page.request` carries the context's cookies and resolves against `baseURL`, so it works signed
+ * in and signed out alike. Same fix as `family-access-boundary.spec.ts`.
+ */
 async function apiGet(page: Page, url: string) {
-  return page.evaluate(async (u) => {
-    const res = await fetch(u);
-    let parsed: unknown = null;
-    try { parsed = await res.json(); } catch { /* non-JSON */ }
-    return { status: res.status, body: parsed };
-  }, url);
+  const res = await page.request.get(url, { timeout: 60_000 });
+  let parsed: unknown = null;
+  try { parsed = await res.json(); } catch { /* non-JSON */ }
+  return { status: res.status(), body: parsed };
 }
 
 // ── 1. The switch actually holds ──────────────────────────────────────────────
 
 test.describe('guardian tier switch', () => {
-  test.skip(GUARDIAN_TIER_ENABLED, 'GUARDIAN_TIER_ENABLED is ON — these assert the OFF behaviour.');
+  /**
+   * ⚠ THIS USED TO BE `test.skip(GUARDIAN_TIER_ENABLED, ...)`, AND THAT WAS THE BUG.
+   *
+   * These four probes exist for one reason: to prove the guardian tier stays shut while it waits on
+   * counsel. Skipping them when the tier is ON silenced them in exactly the state they guard
+   * against. On 2026-08-04 a dev machine was found running with the tier switched on; the suite
+   * reported it as "4 skipped" — no failure, no warning, no colour — and it was caught by someone
+   * asking why a number was 4, not by anything going red.
+   *
+   * **A guard that disables itself in the state it guards against is not a guard.** So this now
+   * FAILS instead, naming the misconfiguration. When the tier is legitimately turned on after
+   * sign-off, this block is what you delete — deliberately, as the decision point — rather than
+   * something that quietly stops running on its way there.
+   *
+   * The tier-BOUNDARY probes further down are unaffected: they are written to hold in both states
+   * and must keep running whatever this switch says.
+   */
+  test.beforeEach(() => {
+    expect(
+      GUARDIAN_TIER_ENABLED,
+      'GUARDIAN_TIER_ENABLED is ON for the app under test. These probes assert the OFF behaviour, '
+      + 'which is the state the guardian tier is meant to be in until counsel signs off. Either the '
+      + 'environment is misconfigured, or the tier was turned on and this block should have been '
+      + 'removed as a deliberate decision.',
+    ).toBe(false);
+  });
 
   test('a direct guardian request is refused and writes NOTHING', async ({ page }) => {
     await signIn(page, FOLLOWER_EMAIL);

@@ -65,7 +65,7 @@ export const POST = withObservability(async (req: Request) => {
     billingCycle?: unknown;
   };
   const orgSlug = typeof body.orgSlug === 'string' ? body.orgSlug : undefined;
-  const auth = await getAuthContext(orgSlug ? { orgSlug } : {});
+  const auth = await getAuthContext(orgSlug ? { orgSlug, allowSuspendedOrg: true } : { allowSuspendedOrg: true });
   if (!auth) return unauthorized();
   // Billing is owner-only — enforce server-side (the UI also hides these controls).
   const denied = await requireCapability(auth, 'billing');

@@ -6,6 +6,8 @@ import ShellSignOutButton from '@/components/volunteer/ShellSignOutButton';
 import { ScorekeeperFlipProvider, ScorekeeperFlipPill } from '@/components/volunteer/ScorekeeperFlip';
 import { getOrganizationBySlug } from '@/lib/db';
 import { hasCapability } from '@/lib/roles';
+import { isOrgBillingSuspended } from '@/lib/org-billing-access';
+import SubscriptionEndedWall from '@/components/billing/SubscriptionEndedWall';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
@@ -40,13 +42,29 @@ export default async function ScorekeeperLayout({
 }) {
   const { orgSlug } = await params;
 
-  const authCtx = await getAuthContextWithRole({ orgSlug });
+  // `allowSuspendedOrg` so a cancelled org reaches the wall below rather than a 500. The score
+  // API is closed by the same rail regardless — this decides only what the volunteer SEES.
+  const authCtx = await getAuthContextWithRole({ orgSlug, allowSuspendedOrg: true });
   if (!authCtx) {
     redirect(`/auth/login?next=/${orgSlug}/scorekeeper`);
   }
 
   if (authCtx.org.slug !== orgSlug) {
     redirect(`/${authCtx.org.slug}/scorekeeper`);
+  }
+
+  // Billing rail (owner ruling 2026-08-06). The cancel dialog has always promised "score updates"
+  // shut down; this is the surface that kept working, because the scorekeeper PWA lives OUTSIDE
+  // the admin shell whose client-side guard was doing the redirecting. Checked before the
+  // capability wall so a cancelled org gets the accurate reason, not "Access Denied".
+  if (isOrgBillingSuspended(authCtx.org)) {
+    return (
+      <SubscriptionEndedWall
+        orgName={authCtx.org.name}
+        contactEmail={authCtx.org.contactEmail}
+        surface="scorekeeper"
+      />
+    );
   }
 
   if (!hasCapability(authCtx.role, authCtx.capabilities, 'submit_scores')) {
