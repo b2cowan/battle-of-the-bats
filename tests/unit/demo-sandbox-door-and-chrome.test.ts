@@ -1,10 +1,12 @@
 import { test, describe } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { getDemoOrgByKind, isDemoOrganizerEmail } from '../../lib/demo-org.ts';
+import {
+  getDemoOrgByKind, isDemoOrganizerEmail, DEMO_COACH_TEAM_IDS, DEMO_COACH_SHOWCASE,
+} from '../../lib/demo-org.ts';
 import { isReservedOrgSlug } from '../../lib/reserved-slugs.ts';
 import {
-  formatResetCountdown, msUntilSandboxReset, sandboxBannerCopy, sandboxTourSteps,
+  formatResetCountdown, msUntilSandboxReset, sandboxBannerCopy, sandboxTourSteps, sandboxMoments,
 } from '../../lib/sandbox-chrome.ts';
 import {
   SANDBOX_HIDDEN_TOURNAMENT_NAV_KEYS, isNavKeyHiddenInSandbox,
@@ -148,8 +150,56 @@ describe('the chrome (S4)', () => {
     }
   });
 
-  test('the tour is org-agnostic — an unbuilt sandbox renders no tour rather than the wrong one', () => {
-    assert.deepEqual(sandboxTourSteps('coach', demo), []);
+  /**
+   * The coach tour (Phase 3), pinned by the two things that would fail QUIETLY.
+   *
+   * Until 2026-08-05 this asserted `[]` — the correct "not built yet" state. Now that seven steps
+   * exist, the same slot pins the contract they have to keep: a step that lands somewhere the
+   * visitor can already be standing, or that points at a person the seed no longer creates, reads
+   * as a dead button rather than as an error, and nothing else in the build would catch either.
+   */
+  test('the coach tour walks its own org, and no step can be a no-op', () => {
+    const coachOrg = getDemoOrgByKind('coach')!;
+    const steps = sandboxTourSteps('coach', coachOrg);
+    assert.equal(steps.length, 7, 'the approved spine is seven beats');
+
+    const teamIds = new Set<string>(Object.values(DEMO_COACH_TEAM_IDS));
+    for (const step of steps) {
+      assert.ok(step.said.trim().length > 20, `step ${step.n} has no sentence — it can read as dead`);
+      assert.ok(step.href.startsWith(`/${coachOrg.slug}/coaches/teams/`),
+        `step ${step.n} leaves the demo org: ${step.href}`);
+      const teamId = step.href.split('/teams/')[1]?.split('/')[0];
+      assert.ok(teamIds.has(teamId), `step ${step.n} names a team the seed does not build: ${teamId}`);
+      // ⚠ Nothing in this demo moves while you watch — the re-anchor is nightly. A step that
+      // claimed a live payoff would be the tournament sandbox's hardest-won lesson, re-learned.
+      assert.equal(step.watchesLiveScore, undefined, `step ${step.n} promises motion this demo has none of`);
+      assert.equal(step.tournamentSlug, undefined, `step ${step.n} pins an event; the coach portal has none`);
+    }
+
+    /**
+     * ⚠ The prefix trap, pinned. `isOnStepPage` treats a step's destination as a SECTION unless the
+     * step opts out, so a step landing on `/tryouts` counts a visitor standing on `/tryouts/score`
+     * — where the moments dock drops them — as "already here", and the press does nothing at all.
+     * Any step whose destination is an ancestor of somewhere else the demo can send someone must
+     * therefore be exact.
+     */
+    for (const step of steps) {
+      const isAncestorOfAnother = steps.some(o => o !== step && o.href.startsWith(`${step.href}/`));
+      const isAncestorOfADockLanding = sandboxMoments('coach', coachOrg)
+        .some(m => m.fanPath.startsWith(`${step.href}/`));
+      if (isAncestorOfAnother || isAncestorOfADockLanding) {
+        assert.equal(step.exactPath, true,
+          `step ${step.n} (${step.href}) is a parent of somewhere the demo already sends people — `
+          + 'without exactPath, arriving there first makes this step a silent no-op');
+      }
+    }
+
+    // The one row the tour addresses by name. If the seed stops minting it at this id the step
+    // lands on a 404, which is the one failure a narration sentence cannot paper over.
+    const recapStep = steps.find(s => s.anchor?.includes('family-recap'));
+    assert.ok(recapStep, 'the family-recap beat is part of the approved spine');
+    assert.ok(recapStep!.href.endsWith(DEMO_COACH_SHOWCASE.midSeasonPlayerId),
+      'the family-recap step must address the fixed showcase player');
   });
 
   test('EVERY step narrates — the defect that made the first tour read as dead buttons', () => {

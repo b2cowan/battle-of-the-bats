@@ -11,7 +11,7 @@
     "lint:focused": "eslint",
     "typecheck": "tsc --noEmit --pretty false",
     "test": "node --import ./tests/ts-resolver.mjs --test \"tests/unit/**/*.test.ts\" \"lib/**/*.test.ts\"",
-    "verify:changed": "node scripts/verify-changed.mjs && node scripts/check-public-tokens.mjs --scope=all && node scripts/check-contrast.mjs && node scripts/check-date-correctness.mjs && node scripts/check-snapshot-freshness.mjs && node scripts/check-schema-parity.mjs && node scripts/check-dictionary-coverage.mjs && node scripts/check-admin-org-context.mjs && node scripts/check-observability-coverage.mjs",
+    "verify:changed": "node scripts/verify-changed.mjs && node scripts/check-public-tokens.mjs --scope=all && node scripts/check-contrast.mjs && node scripts/check-date-correctness.mjs && node scripts/check-snapshot-freshness.mjs && node scripts/check-schema-parity.mjs && node scripts/check-dictionary-coverage.mjs && node scripts/check-admin-org-context.mjs && node scripts/check-observability-coverage.mjs && node scripts/check-demos.mjs",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:org-context": "node scripts/check-admin-org-context.mjs",
     "check:tokens": "node scripts/check-public-tokens.mjs --scope=all",
@@ -27,7 +27,9 @@
     "check:layout": "node scripts/check-layout-invariants.mjs",
     "check:layout:init": "node scripts/check-layout-invariants.mjs --init",
     "check:layout:report": "node scripts/check-layout-invariants.mjs --report",
-    "check:layout:prune": "node scripts/check-layout-invariants.mjs --prune"
+    "check:layout:prune": "node scripts/check-layout-invariants.mjs --prune",
+    "check:demos": "node scripts/check-demos.mjs",
+    "tick:demos": "node scripts/check-demos.mjs --tick"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

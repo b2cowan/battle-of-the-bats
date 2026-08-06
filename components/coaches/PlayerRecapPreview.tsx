@@ -59,7 +59,9 @@ export default function PlayerRecapPreview({ orgSlug, teamId, playerId, playerFi
   }
 
   return (
-    <div className={styles.detailSection}>
+    // data-sandbox-tour: the beat the demo's "read what a parent gets" step rings. Inert off a
+    // demo org — the attribute carries no styling and no behaviour.
+    <div className={styles.detailSection} data-sandbox-tour="family-recap">
       <div className={styles.sectionHeadRow}>
         <p className={styles.detailSectionTitle}>Family season recap</p>
         <button type="button" className={`${styles.linkBtn} ${styles.linkBtnAccent}`} onClick={toggle}>

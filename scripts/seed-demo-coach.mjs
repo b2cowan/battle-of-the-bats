@@ -24,7 +24,7 @@
  */
 import { createClient } from '@supabase/supabase-js';
 import { randomUUID, randomBytes, createHash } from 'crypto';
-import { getDemoOrgByKind } from '../lib/demo-org.ts';
+import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import {
   DEMO_COACH_ORG_NAME, DEMO_COACH_DISPLAY_NAME, DEMO_COACH_TEAMS, DEMO_HOME_DIAMOND,
   MIDSEASON_ROSTER, SEASONS_END_ROSTER, TRYOUT_RETURNING, TRYOUT_CANDIDATES,
@@ -32,6 +32,7 @@ import {
   MIDSEASON_LINEUP_GRID, MIDSEASON_INNING_COUNT, MIDSEASON_LINEUP_SETTINGS,
   midseasonPitcherProfile, MIDSEASON_DUES, MIDSEASON_BUDGET_LINES,
   MIDSEASON_UNSIGNED_WAIVER_INDEX, MIDSEASON_DEVELOPMENT_GOALS, MIDSEASON_PRACTICE_PLANS,
+  MIDSEASON_SHOWCASE_ROSTER_INDEX,
   SEASONS_END_LINEUPS, SEASONS_END_BATTING_ORDERS, SEASONS_END_AWARD_TYPES, SEASONS_END_AWARDS,
   SEASONS_END_FAMILY, SEASONS_END_DUES, SEASONS_END_BUDGET_LINES,
   OFFSEASON_ROSTER, OFFSEASON_BUDGET_LINES, OFFSEASON_DUES,
@@ -309,9 +310,46 @@ async function seedDues(team, pyId, playerIds, { totalAmount, installmentAmount,
 }
 
 /** Insert a roster from the world module; returns ids by roster index. */
+/**
+ * The "actual" half of budget-vs-actual, for any team that has spent anything.
+ *
+ * Shared by three moments since Phase 3 (the 14U's winter, the 12U's season, the 10U's first
+ * bills). Kept in ONE place because the paid stamps here and the nightly re-anchor's restatement
+ * of them must agree exactly — two spellings of the same instant would make a steady day rewrite
+ * every row, and the job's whole contract is that it doesn't.
+ */
+async function insertDemoExpenses(team, pyId, expenses) {
+  await insertAll('rep_team_expenses', expenses.map(e => ({
+    program_year_id: pyId, team_id: team.id, org_id: org.id,
+    expense_type: e.type, description: e.description, category: e.category,
+    amount: e.amount, notes: e.notes ?? null,
+    expense_paid_at: e.paidDate ? demoPaidStampIso(e.paidDate) : null,
+    deposit_amount: e.deposit?.amount ?? null,
+    deposit_due_date: e.deposit?.dueDate ?? null,
+    deposit_paid_at: e.deposit?.paidDate ? demoPaidStampIso(e.deposit.paidDate) : null,
+    balance_amount: e.balance?.amount ?? null,
+    balance_due_date: e.balance?.dueDate ?? null,
+    balance_paid_at: e.balance?.paidDate ? demoPaidStampIso(e.balance.paidDate) : null,
+    payee_payer: 'Riverdale Ridge Baseball Club',
+    created_by: coach.id,
+  })));
+}
+
+/**
+ * ⚠ ONE roster row in the whole demo world carries a FIXED id: the 12U's playing-time outlier.
+ * The guided tour's "read what a parent gets" step addresses that player's page directly, so the
+ * id has to survive a reseed exactly as the team ids do (`DEMO_COACH_SHOWCASE`). Everyone else is
+ * generated, because nothing points at them.
+ */
+function rosterIdFor(team, index) {
+  const isShowcase = team.id === DEMO_COACH_TEAMS.midSeason.id
+    && index === MIDSEASON_SHOWCASE_ROSTER_INDEX;
+  return isShowcase ? DEMO_COACH_SHOWCASE.midSeasonPlayerId : randomUUID();
+}
+
 async function insertRoster(team, pyId, roster) {
   const rows = roster.map((p, i) => ({
-    id: randomUUID(), program_year_id: pyId, team_id: team.id, org_id: org.id,
+    id: rosterIdFor(team, i), program_year_id: pyId, team_id: team.id, org_id: org.id,
     player_first_name: p.first, player_last_name: p.last, player_number: p.number,
     primary_position: p.primary, secondary_position: p.secondary,
     bats: p.bats, throws: p.throws,
@@ -353,6 +391,7 @@ async function platformBudgetCategoryIds() {
   const required = [...new Set([
     ...OFFSEASON_BUDGET_LINES.map(l => l.category),
     ...SEASON_START_BUDGET_LINES.map(l => l.category),
+    ...MIDSEASON_BUDGET_LINES.map(l => l.category),
   ])];
   const missing = required.filter(name => !byName.has(name.toLowerCase()));
   if (missing.length) {
@@ -572,22 +611,7 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
 
   // What has actually been spent — the "actual" half of the report, one row deliberately on a
   // category with no budget line so the unbudgeted section has something honest to say.
-  await insertAll('rep_team_expenses', state.expenses.map(e => ({
-    program_year_id: pyId, team_id: team.id, org_id: org.id,
-    expense_type: e.type, description: e.description, category: e.category,
-    amount: e.amount, notes: e.notes ?? null,
-    // Stamped through the world's own helper — the nightly re-anchor re-asserts these from the
-    // same function, and a second spelling of "4pm" would make every run rewrite every row.
-    expense_paid_at: e.paidDate ? demoPaidStampIso(e.paidDate) : null,
-    deposit_amount: e.deposit?.amount ?? null,
-    deposit_due_date: e.deposit?.dueDate ?? null,
-    deposit_paid_at: e.deposit?.paidDate ? demoPaidStampIso(e.deposit.paidDate) : null,
-    balance_amount: e.balance?.amount ?? null,
-    balance_due_date: e.balance?.dueDate ?? null,
-    balance_paid_at: e.balance?.paidDate ? demoPaidStampIso(e.balance.paidDate) : null,
-    payee_payer: 'Riverdale Ridge Baseball Club',
-    created_by: coach.id,
-  })));
+  await insertDemoExpenses(team, pyId, state.expenses);
 
   // Dues: two instalments settled, two ahead — and one family a payment behind.
   await seedDues(team, pyId, playerIds, {
@@ -676,6 +700,8 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
     category_id: budgetCategoryIds.get(line.category.toLowerCase()),
     description: line.description, total_amount: line.total, sort_order: i,
   })));
+  // The plan is complete; the spending has barely started. That contrast IS this moment's books.
+  await insertDemoExpenses(team, pyId, state.expenses);
 
   // Dues mostly current: everyone but one family has paid the first instalment; the rest are ahead.
   await seedDues(team, pyId, playerIds, {
@@ -737,11 +763,17 @@ async function insertAttendance(team, pyId, state, eventIdByKey, playerIds) {
       && !(n === 3 || (n === 2 && MIDSEASON_DUES.overdueRosterIndexes.includes(i))),
   });
 
+  // The plan, on real platform categories — without them budget-vs-actual has nothing to match a
+  // logged expense to, and files the whole season as unbudgeted (the state this moment shipped in
+  // until 2026-08-05). Undated on purpose: unlike the 14U, this team's story is the season it has
+  // already spent, not the months it planned to spend it across.
   const budgetRows = MIDSEASON_BUDGET_LINES.map((line, i) => ({
     id: randomUUID(), org_id: org.id, team_id: team.id, program_year_id: pyId,
+    category_id: budgetCategoryIds.get(line.category.toLowerCase()),
     description: line.description, total_amount: line.total, sort_order: i,
   }));
   await insertAll('rep_budget_lines', budgetRows);
+  await insertDemoExpenses(team, pyId, state.expenses);
 
   // Waivers: a published template, signed by everyone except one — the beat the roster tells.
   const templateId = randomUUID();

@@ -35,6 +35,30 @@ After a substantive code change that also **adds a new abstraction** — a new s
 
 When a change alters a **user-facing flow** (admin/coaches UI behavior, a screen/step a customer follows, plan-gating of a visible feature, or new/renamed terminology), proactively offer to run `/docs` — the help-system agent in `.claude/commands/docs.md` — so the in-app guides don't drift. In-app help content is the single source of truth in `lib/help-content/*.tsx` (indexed by the hub arrays in the `help/page.tsx` shells); keeping it current is a code-time task, not a periodic manual sweep. Offer once per logical chunk; skip for purely internal changes (refactors, platform-admin-only ops, DB plumbing with no UI change) and skip if the user already updated docs or declined.
 
+# Demo sandboxes — the shop window drifts silently
+
+Two no-login demos run the **real** product on fictional clubs: the tournament sandbox
+(`riverdale-minor-ball`) and the coach sandbox (`riverdale-ridge`). Because they are the live
+product rather than a recording, a product change reaches them the instant it ships — but **the
+story the demo tells over the top of it does not follow.** That story is a set of hand-written
+sentences (the moments dock's arrival lines and the guided tours' step narration) plus a seeded
+world, and both can quietly stop being true while every page still renders perfectly.
+
+This is not hypothetical: three pieces of demo copy were found in 2026-08-05 pointing at things
+the product no longer shows, each having survived a build, a `/simplify` pass and a `/review` pass.
+
+**So: when a change alters a user-facing coach or tournament flow, ask two questions in the same
+breath as the help-docs one above** — *should a demo moment show this?* and *are the demo's
+existing sentences about this screen still true?* Adjust the seed, the dock copy or the tour steps
+in the same unit of work. `npm run check:demos` (part of `verify:changed`) proves both worlds are
+still in the state a prospect should find them in, but **it can only catch breakage — it cannot
+tell you the demo is missing something the product gained.** That judgement is the reason this
+paragraph exists. Skip for purely internal changes; skip if the demos were already considered.
+
+Plan: `docs/projects/active/DEMO_SANDBOX_DRIFT_GUARDS_PLAN.md` (two further measures approved,
+not built). Demo dates re-anchor nightly in production; on dev nothing does, so `npm run
+tick:demos` is how a stale demo gets put right (`check:demos` runs it for you off production).
+
 # Business-decision logging
 
 When a **durable business decision** is reached or changed — pricing, packaging/plan structure, what's gated, positioning, segment/GTM focus, monetization model, or commercially-driven roadmap sequencing — proactively offer to run `/strategy` (the steward agent in `.claude/commands/strategy.md`) to record it in the binding Business Decisions Log at `docs/agents/strategy/BUSINESS_DECISIONS.md`. `/strategy` decides the *what* and routes the follow-through (copy → `/marketing`, gates → `/billing`, plan → `/plan`); it never writes customer copy itself, so logging a decision there keeps it consistent and discoverable across all chats. Offer once per decision; log only what the user has actually accepted (record exploratory direction as **Proposed**, not Decided), and skip the offer for pure execution detail, for decisions already logged, or if the user declined.

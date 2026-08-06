@@ -1,6 +1,7 @@
 import type { DemoOrgKind } from './demo-org';
 import {
   DEMO_TOURNAMENT_SLUG, DEMO_OPENER_SLUG, DEMO_INVITATIONAL_SLUG, DEMO_COACH_TEAM_IDS,
+  DEMO_COACH_SHOWCASE,
 } from './demo-org';
 import { SEE_IT_LIVE_PATH } from './sandbox-door';
 
@@ -230,6 +231,19 @@ export interface SandboxTourStep {
    */
   tournamentSlug?: string;
   /**
+   * Treat "am I already here?" as an EXACT path match rather than a prefix one.
+   *
+   * The default is a prefix match, which is right for the tournament tour (its steps land on
+   * section roots and a visitor deeper inside one is, fairly, already there). It is wrong wherever
+   * a step's destination is the PARENT of a page the visitor can reach on their own: the coach
+   * tour's first step lands on the Tryouts hub, and the moments dock lands on `/tryouts/score`
+   * one level below it — so under prefix matching a visitor who arrived by the dock would press
+   * step 1, be told they were already there, and watch nothing move. That is the exact defect the
+   * moments dock already fixed for itself ("a subpage press navigates home"); this flag is the
+   * same rule, opted into per step so the tournament tour's behaviour is untouched.
+   */
+  exactPath?: boolean;
+  /**
    * This step's payoff is the live score moving, which happens on the tournament's clock rather
    * than on the visitor's click. The chrome adds a live countdown to the next run underneath the
    * sentence, and announces the run when it lands.
@@ -323,12 +337,8 @@ export function sandboxTourSteps(
   org: { slug: string; landingPath: string },
   access: SandboxTourAccess = { isDemoOrganizer: true },
 ): SandboxTourStep[] {
-  if (kind !== 'tournament') {
-    // The coach sandbox registers its own beats here when it builds
-    // (COACH_SANDBOX_SEASON_PHASES_PLAN.md). An empty list renders no tour at all, which is the
-    // correct "not built yet" state — the banner still carries the promise.
-    return [];
-  }
+  if (kind === 'coach') return coachSandboxTourSteps(org);
+  if (kind !== 'tournament') return [];
 
   const adminBase = `/${org.slug}/admin/tournaments`;
   // A visitor who arrived by a shared link rather than through the door holds no demo session, so
@@ -409,6 +419,112 @@ export function sandboxTourSteps(
       ...(access.isDemoOrganizer ? { tournamentSlug: DEMO_OPENER_SLUG } : {}),
       anchor: '[data-sandbox-tour="post-event-summary"]',
       said: 'The day after it all ended: every score in, the champion crowned, and the summary already written. Next year starts from one button.',
+    },
+  ];
+}
+
+/**
+ * The coach tour: ONE seven-step spine that walks a season (Phase 3, mockups rev 2, approved
+ * 2026-08-05).
+ *
+ * ── Why one spine and not five per-moment tours ──────────────────────────────────────────────
+ * The dock already offers the five moments self-serve; a tour per moment would be the dock with
+ * extra buttons, and it would turn a season into five feature demos — the exact pitch the moments
+ * naming exists to avoid. It is also structurally impossible here: step 6 (what a parent reads)
+ * only lands having seen step 5 (the playing-time table it answers), and two steps that depend on
+ * each other cannot live in separate tours.
+ *
+ * ── The rule every destination obeys ─────────────────────────────────────────────────────────
+ * **A step lands one level deeper than its moment's dock chip.** The dock drops a visitor on the
+ * moment's front door; the tour opens the drawer behind it. Step 7 is the single exception, and
+ * deliberately: the archive promise is not a screen you can point at, it is the fact that pressing
+ * things still works, so the step lands where the chip does and the sentence says so.
+ *
+ * ── What was measured before this list was written (2026-08-05, live demo, real browser) ─────
+ * Three of the plan's candidate beats could not be pointed at, and this list routes around all
+ * three rather than shipping steps that would read as broken:
+ *   · the tryout SPLIT OPINION (bib 14, 5 vs 2) exists in the data and is rendered nowhere — every
+ *     surface shows the 3.5 average — so step 1 points at the ranked board instead;
+ *   · the EVALUATOR BIAS chip never fires on this data (consensus is the mean of evaluator means,
+ *     so one harsh scorer of two moves both by half the drift: ±0.39 against a 0.75 threshold),
+ *     and it sits on a tab the hub does not auto-select for a tryout with scores in it, inside a
+ *     `display:none` panel — an anchor there would be a dead step;
+ *   · PRACTICE PLANS have no address at all (a schedule event opens a drawer over `/schedule`),
+ *     so the off-season step goes to Development, where the testing session's honest blanks are
+ *     addressable.
+ * Every remaining destination was opened and confirmed to render the thing its sentence claims.
+ */
+function coachSandboxTourSteps(org: { slug: string; landingPath: string }): SandboxTourStep[] {
+  const team = (teamId: string, rest = '') => `/${org.slug}/coaches/teams/${teamId}${rest}`;
+  return [
+    {
+      n: 1,
+      label: 'See how 28 kids got ranked',
+      // The HUB, not `/tryouts/score` — the dock's chip lands on the scorer one level below, so
+      // this step must match its path exactly or a dock arrival would make it a no-op.
+      href: team(DEMO_COACH_TEAM_IDS.tryoutDay, '/tryouts'),
+      exactPath: true,
+      anchor: '[data-sandbox-tour="tryout-decisions"]',
+      said: 'Twenty-eight kids tried out this morning. They are already ranked — a weighted average of what each evaluator scored, updating as the scores come in. The names are still hidden: you are deciding on bib numbers, and you reveal them when you are ready.',
+      nextLabel: 'Next: the off-season',
+    },
+    {
+      n: 2,
+      label: 'Find the two blanks',
+      href: team(DEMO_COACH_TEAM_IDS.offSeason, '/development'),
+      exactPath: true,
+      anchor: '[data-sandbox-tour="development-sessions"]',
+      said: 'Eleven of thirteen players were tested that day. The other two show a dash, not a zero — nothing here is invented to fill a column. Four things this team is working on, one already reached.',
+      nextLabel: 'Next: the season starts',
+    },
+    {
+      n: 3,
+      label: 'Count the lineups',
+      href: team(DEMO_COACH_TEAM_IDS.seasonStart, '/lineups'),
+      exactPath: true,
+      anchor: '[data-sandbox-tour="lineups-upcoming"]',
+      said: 'One lineup saved — opening day — and twelve games waiting behind it. The whole year went on the calendar in one evening in March; nothing since has had to be re-entered.',
+      nextLabel: 'Next: the money',
+    },
+    {
+      n: 4,
+      label: 'See if the season is on budget',
+      href: team(DEMO_COACH_TEAM_IDS.midSeason, '/accounting/budget-vs-actual'),
+      exactPath: true,
+      anchor: '[data-sandbox-tour="budget-variance"]',
+      said: 'Halfway through the year, against a plan built in the spring: here is what has actually gone out, line by line. Diamond rentals are over plan — the report says so rather than hiding it. Seven in ten dollars of dues are in, and two families are behind, named, with the amount.',
+      nextLabel: 'Next: playing time',
+    },
+    {
+      n: 5,
+      label: 'Ask who has been on the field',
+      href: team(DEMO_COACH_TEAM_IDS.midSeason, '/history/playing-time'),
+      exactPath: true,
+      anchor: '[data-sandbox-tour="playing-time"]',
+      // Measurement in context, never a verdict — the playing-time vocabulary ruling
+      // (owner 2026-08-04, BUSINESS_DECISIONS.md). Counts and a cap; the reader draws the line.
+      said: 'One row per player, from the lineups you already saved. Most of the team has been on the field for 24 to 30 innings so far; one player has been on for 12, and has sat back-to-back six times. Two pitchers are carrying 18 innings against a three-an-outing cap. Nobody typed any of this in.',
+      nextLabel: 'Next: what a parent sees',
+    },
+    {
+      n: 6,
+      label: 'Read what a parent gets',
+      href: team(DEMO_COACH_TEAM_IDS.midSeason, `/roster/${DEMO_COACH_SHOWCASE.midSeasonPlayerId}`),
+      exactPath: true,
+      anchor: '[data-sandbox-tour="family-recap"]',
+      // Asks for a PRESS, which is safe: the preview only reads. No step in this tour may ask a
+      // visitor to save, score or change anything — the sandbox blocks every write centrally, and
+      // a step that invited one would be writing a cheque the demo bounces.
+      said: 'This is the player you just saw at the bottom of that table. Press Preview: this is the page his family opens at the end of the season — their view, not yours, drawn by the very screen they will see. It writes itself from what you have already recorded.',
+      nextLabel: 'Next: a finished year',
+    },
+    {
+      n: 7,
+      label: 'Open a season that is already over',
+      href: team(DEMO_COACH_TEAM_IDS.seasonsEnd, '/season-end'),
+      exactPath: true,
+      anchor: '[data-sandbox-tour="season-recaps"]',
+      said: 'Last year, kept: 18-6-2, and nine of twelve families opened their player’s recap — the same page you just read. The season is closed and every screen of it still opens, read-only, exactly as it ended. Try one.',
     },
   ];
 }

@@ -28,11 +28,13 @@
  * Run: node --env-file=.env.local scripts/check-demo-coach.mjs
  */
 import { createClient } from '@supabase/supabase-js';
-import { getDemoOrgByKind } from '../lib/demo-org.ts';
+import { getDemoOrgByKind, DEMO_COACH_SHOWCASE } from '../lib/demo-org.ts';
 import {
   DEMO_COACH_TEAMS, SPLIT_OPINION, orgDateWithOffset,
   OFFSEASON_BUDGET_LINES, OFFSEASON_DUES, OFFSEASON_TESTING_ABSENT, OFFSEASON_MEASURABLE_TYPES,
   SEASON_START_DUES, resolveOffSeasonState, resolveSeasonStartState,
+  MIDSEASON_BUDGET_LINES, MIDSEASON_SHOWCASE_ROSTER_INDEX, resolveMidSeasonState,
+  SEASON_START_BUDGET_LINES,
 } from '../lib/demo-coach.ts';
 
 const failures = [];
@@ -62,7 +64,18 @@ console.log('\nOrg & hygiene');
 const org = (await db.from('organizations')
   .select('id, plan_id, subscription_status, is_public, is_discoverable')
   .eq('slug', demoOrg.slug).maybeSingle()).data;
-if (!check(!!org, 'the demo org exists')) { report(); }
+/**
+ * NOT SEEDED HERE is a skip, not a failure — exit code 3 (see `check-demos.mjs`).
+ *
+ * This check joined the routine verification sweep on 2026-08-05, so it now runs on machines that
+ * have never seeded a demo: a contributor's laptop, a fresh clone, a branch nobody has pointed at
+ * a database. Failing there would teach everyone to ignore a red build, which costs more than the
+ * check is worth. A demo that exists and is WRONG is still a hard failure.
+ */
+if (!org) {
+  console.log('  – no coach demo in this database — skipping (seed it with scripts/seed-demo-coach.mjs)');
+  process.exit(3);
+}
 check(org.plan_id === 'club' && org.subscription_status === 'active', 'plan carries the rep-teams module (club, active)');
 check(org.is_discoverable === false, 'excluded from /discover');
 check(org.is_public === false, 'no public org pages');
@@ -291,6 +304,18 @@ console.log('\nSeason start — Riverdale Ridge 10U');
       'a complete roster: twelve players, every one with a number and a position');
     check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 10U guardian address is unreachable example.com');
 
+    /* Phase 3 — the first bills of a young season. The point of this team's books is the CONTRAST
+       with the 12U's: a complete plan, barely spent against. Asserted as "some, and less than
+       half", because a fixed dollar figure would just restate the world module at it. */
+    const { data: spend } = await db.from('rep_team_expenses')
+      .select('amount, expense_paid_at').eq('program_year_id', py.id);
+    const spent = (spend ?? []).reduce((s, e) => s + Number(e.amount), 0);
+    const planned = SEASON_START_BUDGET_LINES.reduce((s, l) => s + l.total, 0);
+    check((spend ?? []).length === state.expenses.length && spent > 0 && spent < planned / 2,
+      `the 10U has started spending but is well under plan ($${spent} of $${planned})`);
+    check((spend ?? []).every(e => e.expense_paid_at && orgDateWithOffset(new Date(e.expense_paid_at), 0) <= today),
+      'no 10U bill is dated in the future');
+
     const { data: installments } = await db.from('rep_player_dues_installments')
       .select('amount, due_date, paid_at, player_id').eq('team_id', teamId);
     const outstanding = overdueInstallments(installments);
@@ -303,6 +328,7 @@ console.log('\nSeason start — Riverdale Ridge 10U');
 console.log('\nMid-season — Riverdale Ridge 12U');
 {
   const teamId = DEMO_COACH_TEAMS.midSeason.id;
+  const state = resolveMidSeasonState(new Date());
   const years = await programYears(teamId);
   const py = years.find(y => y.status === 'active');
   check(!!py && years.length === 1 && py?.year === thisYear, `one active program year (${thisYear})`);
@@ -384,6 +410,56 @@ console.log('\nMid-season — Riverdale Ridge 12U');
     check(plannedPractices.length === 2 && plannedPractices.every(d => d < today),
       'two practices are written up, both already behind us');
     check(!exampleOnly(roster ?? [], 'guardian_email'), 'every 12U guardian address is unreachable example.com');
+
+    /* The 12U was the only team with practices and NO attendance-timing assertion — and it is the
+       team most exposed to it: its Tuesday/Thursday practices sit in the current week, so one
+       crosses into the past mid-week, every week. That is the exact gap the re-anchor's attendance
+       backfill was written to close, and until now nothing would have caught it regressing here. */
+    await checkAttendanceMatchesTiming(py.id, datedEvents(events), 'events');
+
+    /* ── Phase 3: the books, and the two rows the guided tour addresses by name ──────────────
+       Until 2026-08-05 this team showed a full plan and $0.00 spent — a season 18 games old with
+       no expense ever logged, which is the one thing a money screen must never look like. The
+       matching is what makes it work: budget-vs-actual pairs an expense to a line by CATEGORY
+       NAME, so a line without a category files every dollar as unbudgeted. Both halves are
+       asserted, because either one alone leaves the report empty. */
+    const { data: budgetLines } = await db.from('rep_budget_lines')
+      .select('description, total_amount, category_id').eq('program_year_id', py.id);
+    check((budgetLines ?? []).length === MIDSEASON_BUDGET_LINES.length
+      && (budgetLines ?? []).every(l => l.category_id),
+      'every 12U budget line hangs off a real category (or the report files the season as unbudgeted)');
+
+    const { data: spend } = await db.from('rep_team_expenses')
+      .select('description, category, amount, expense_paid_at').eq('program_year_id', py.id);
+    check((spend ?? []).length === state.expenses.length,
+      `${state.expenses.length} expenses logged against the 12U's season`, `found ${(spend ?? []).length}`);
+    check((spend ?? []).every(e => e.expense_paid_at && orgDateWithOffset(new Date(e.expense_paid_at), 0) <= today),
+      'no 12U bill is dated in the future');
+
+    // The one deliberate anomaly: Facilities is OVER plan, and it is the only line that is.
+    // A demo whose every line comes in under budget teaches a prospect the report flatters them.
+    const plannedByCategory = new Map(MIDSEASON_BUDGET_LINES.map(l => [l.category.toLowerCase(), l.total]));
+    const spentByCategory = new Map();
+    for (const e of spend ?? []) {
+      const key = String(e.category ?? '').toLowerCase();
+      spentByCategory.set(key, (spentByCategory.get(key) ?? 0) + Number(e.amount));
+    }
+    const over = [...plannedByCategory].filter(([cat, planned]) => (spentByCategory.get(cat) ?? 0) > planned);
+    check(over.length === 1 && over[0][0] === 'facilities',
+      'exactly one 12U category is over plan, and it is Facilities',
+      over.length ? over.map(([c]) => c).join(', ') : 'every line came in under');
+    check([...spentByCategory.keys()].every(cat => plannedByCategory.has(cat)),
+      'every 12U expense lands on a category the plan names (the unbudgeted beat belongs to the 14U)');
+
+    /* The guided tour's "read what a parent gets" step addresses ONE player's page directly, so
+       that row's id must survive a reseed — and it must still be the player the step BEFORE it
+       names, or the tour tells two stories about two different children. */
+    const showcase = (roster ?? []).find(r => r.id === DEMO_COACH_SHOWCASE.midSeasonPlayerId);
+    check(!!showcase, 'the guided tour\'s showcase player exists at its fixed id');
+    const { data: showcaseRow } = await db.from('rep_roster_players')
+      .select('display_order').eq('id', DEMO_COACH_SHOWCASE.midSeasonPlayerId).maybeSingle();
+    check(showcaseRow?.display_order === MIDSEASON_SHOWCASE_ROSTER_INDEX,
+      'the showcase player is still the playing-time outlier the previous step names');
   }
 }
 

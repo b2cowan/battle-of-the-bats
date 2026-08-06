@@ -323,7 +323,9 @@ export default function TryoutDecisionBoard({ apiBase, continuityApiBase, memory
   const familyDeclined = board.candidates.filter(c => c.status === 'offered' && c.offerResponse === 'declined').length;
 
   return (
-    <div className={styles.card}>
+    // data-sandbox-tour: the beat the demo's "how 28 kids got ranked" step rings — the ranked
+    // board, still blind. Inert off a demo org.
+    <div className={styles.card} data-sandbox-tour="tryout-decisions">
       <div className={styles.head}>
         <div>
           <h3 className={styles.title}><ListChecks size={16} /> Decision board</h3>

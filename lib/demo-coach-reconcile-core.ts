@@ -24,7 +24,7 @@
 import {
   DEMO_COACH_TEAMS,
   resolveTryoutDayState, resolveMidSeasonState, resolveOffSeasonState, resolveSeasonStartState,
-  demoPaidStampIso, type OffSeasonState,
+  demoPaidStampIso, type OffSeasonState, type DemoExpense,
   orgDateWithOffset,
 } from './demo-coach.ts';
 import { getDemoOrgByKind } from './demo-org.ts';
@@ -65,13 +65,17 @@ async function assertProgramYearLabel(
   statuses: readonly string[],
   wantYear: number,
   label: string,
-): Promise<void> {
+): Promise<string> {
   const { data, error } = await db.from('rep_program_years')
-    .select('year').eq('team_id', teamId).in('status', statuses as string[]);
+    .select('id, year').eq('team_id', teamId).in('status', statuses as string[]);
   if (error) throw new Error(error.message);
-  if (!data?.some((y: { year: number }) => y.year === wantYear)) {
+  const match = (data as { id: string; year: number }[] | null)?.find(y => y.year === wantYear);
+  if (!match) {
     throw new Error(`${label} program year ${wantYear} not found — the calendar rolled over; run the seed`);
   }
+  // Returns the id as well: every caller needs it for the attendance sweep below, and looking it
+  // up a second time would be a second chance for the two to disagree about which year is live.
+  return match.id;
 }
 
 /** Shift an ISO instant by whole days, preserving its org-timezone wall clock across DST. */
@@ -145,7 +149,7 @@ export async function reconcileCoachSandbox(
     // Dates can be shifted; the program year's LABEL cannot — after Dec 31 the season name is
     // last year's until a reseed rebuilds it. Notice loudly instead of reporting a green tick
     // over a demo whose masthead says the wrong year (same treatment as the 13U check below).
-    await assertProgramYearLabel(db, teamId, ['draft', 'active'], state.year, '12U');
+    const pyId = await assertProgramYearLabel(db, teamId, ['draft', 'active'], state.year, '12U');
     const { data: games, error } = await db.from('rep_team_events')
       .select('id, starts_at')
       .eq('team_id', teamId).eq('event_type', 'league_game').is('result', null);
@@ -162,6 +166,11 @@ export async function reconcileCoachSandbox(
       result.rowsShifted += await shiftTeamSchedule(db, teamId, shift, games[0].id);
       result.notes.push(`12U shifted ${shift} day(s); game re-anchored to ${desired}`);
     }
+    // The books, restated from the clock and OUTSIDE the shift gate — same argument as the 14U's
+    // (a failure landing after the schedule moved would otherwise strand them permanently).
+    result.rowsShifted += await restateExpenses(db, teamId, state.expenses);
+    result.rowsShifted += await takeAttendanceForNewlyPastPractices(
+      db, teamId, pyId, org.id, state.practices, today);
   } catch (err) {
     fail(`mid-season: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -170,7 +179,7 @@ export async function reconcileCoachSandbox(
   try {
     const teamId = DEMO_COACH_TEAMS.offSeason.id;
     const state = resolveOffSeasonState(now);
-    await assertProgramYearLabel(db, teamId, ['draft', 'active'], state.year, '14U');
+    const pyId = await assertProgramYearLabel(db, teamId, ['draft', 'active'], state.year, '14U');
     const { data: events, error } = await db.from('rep_team_events')
       .select('id, starts_at, ends_at').eq('team_id', teamId)
       // `id` breaks ties. The anchor argument below requires the anchor's ROW IDENTITY to be
@@ -197,6 +206,8 @@ export async function reconcileCoachSandbox(
     // next one rather than surviving until somebody notices the numbers are in the wrong month.
     result.rowsShifted += await restateOffSeasonBooks(db, teamId, state);
     result.rowsShifted += await rederiveBudgetPeriods(db, teamId, state.budgetPeriodDates);
+    result.rowsShifted += await takeAttendanceForNewlyPastPractices(
+      db, teamId, pyId, org.id, state.practices, today);
   } catch (err) {
     fail(`off-season: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -205,7 +216,7 @@ export async function reconcileCoachSandbox(
   try {
     const teamId = DEMO_COACH_TEAMS.seasonStart.id;
     const state = resolveSeasonStartState(now);
-    await assertProgramYearLabel(db, teamId, ['draft', 'active'], state.year, '10U');
+    const pyId = await assertProgramYearLabel(db, teamId, ['draft', 'active'], state.year, '10U');
     const { data: games, error } = await db.from('rep_team_events')
       .select('id, starts_at').eq('team_id', teamId).eq('event_type', 'league_game')
       // Tiebroken by id for the same reason as the 14U's anchor: a stable row, not just a date.
@@ -221,6 +232,9 @@ export async function reconcileCoachSandbox(
       result.rowsShifted += await shiftTeamSchedule(db, teamId, shift, games[0].id);
       result.notes.push(`10U shifted ${shift} day(s); opening day re-anchored to ${state.openingDate}`);
     }
+    result.rowsShifted += await restateExpenses(db, teamId, state.expenses);
+    result.rowsShifted += await takeAttendanceForNewlyPastPractices(
+      db, teamId, pyId, org.id, state.practices, today);
   } catch (err) {
     fail(`season start: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -341,63 +355,13 @@ async function restateOffSeasonBooks(
   teamId: string,
   state: OffSeasonState,
 ): Promise<number> {
-  // Independent reads, issued together. Nothing below is decided by their order.
-  const [
-    { data: expenses, error: expenseError },
-    { data: sessions, error: sessionError },
-  ] = await Promise.all([
-    db.from('rep_team_expenses')
-      .select('id, description, expense_paid_at, deposit_due_date, deposit_paid_at, balance_due_date, balance_paid_at')
-      .eq('team_id', teamId),
-    db.from('rep_team_evaluation_sessions').select('id, session_date').eq('team_id', teamId),
-  ]);
-  if (expenseError) throw new Error(expenseError.message);
+  const { data: sessions, error: sessionError } = await db
+    .from('rep_team_evaluation_sessions').select('id, session_date').eq('team_id', teamId);
   if (sessionError) throw new Error(sessionError.message);
 
-  type ExpenseRow = {
-    id: string; description: string;
-    expense_paid_at: string | null;
-    deposit_due_date: string | null; deposit_paid_at: string | null;
-    balance_due_date: string | null; balance_paid_at: string | null;
-  };
   type SessionRow = { id: string; session_date: string };
 
-  /** The seed's own stamp, not a second spelling of it — see `demoPaidStampIso`. */
-  const paidStamp = (date: string | null | undefined) => (date ? demoPaidStampIso(date) : null);
-
-  const desiredByDescription = new Map(state.expenses.map(e => [e.description, e]));
-  let written = 0;
-
-  for (const row of (expenses ?? []) as ExpenseRow[]) {
-    const want = desiredByDescription.get(row.description);
-    // An expense the world no longer describes is not this job's to guess at — the seed owns
-    // creation and deletion, and inventing dates for an unknown row would be the "confident lie"
-    // the rest of this module is careful to avoid.
-    if (!want) continue;
-    const patch = {
-      expense_paid_at: paidStamp(want.paidDate),
-      deposit_due_date: want.deposit?.dueDate ?? null,
-      deposit_paid_at: paidStamp(want.deposit?.paidDate),
-      balance_due_date: want.balance?.dueDate ?? null,
-      balance_paid_at: paidStamp(want.balance?.paidDate),
-    };
-    // ⚠ Compare timestamps as INSTANTS, not strings. PostgREST hands back
-    // `2026-06-21T20:00:00+00:00` where the world produces `2026-06-21T20:00:00.000Z` — the same
-    // moment, spelled differently. String equality would call every row changed on every run and
-    // rewrite the whole ledger nightly: identical data, but the "a steady day writes nothing"
-    // contract quietly broken, and the row counts in the job's report rendered meaningless.
-    const sameInstant = (a: string | null, b: string | null) =>
-      (a === null || b === null ? a === b : Date.parse(a) === Date.parse(b));
-    const unchanged = sameInstant(row.expense_paid_at, patch.expense_paid_at)
-      && row.deposit_due_date === patch.deposit_due_date
-      && sameInstant(row.deposit_paid_at, patch.deposit_paid_at)
-      && row.balance_due_date === patch.balance_due_date
-      && sameInstant(row.balance_paid_at, patch.balance_paid_at);
-    if (unchanged) continue; // diff-only: a steady day writes nothing
-    const { error } = await db.from('rep_team_expenses').update(patch).eq('id', row.id);
-    if (error) throw new Error(`rep_team_expenses: ${error.message}`);
-    written++;
-  }
+  let written = await restateExpenses(db, teamId, state.expenses);
 
   // The session, then its readings — the order the product's own re-stamp uses, so a failure
   // between them leaves the pair consistent on the OLD date rather than half-moved.
@@ -412,6 +376,186 @@ async function restateOffSeasonBooks(
       .eq('session_id', session.id).neq('recorded_on', state.testingSessionDate);
     if (readingError) throw new Error(`rep_player_measurables: ${readingError.message}`);
     written += count ?? 0;
+  }
+
+  return written;
+}
+
+/**
+ * Take attendance at any practice that has CROSSED INTO THE PAST since the last run.
+ *
+ * ── The defect this closes ───────────────────────────────────────────────────
+ *
+ * The seed decides `happened` once, at seed time, and writes attendance for exactly those events.
+ * The re-anchor then shifts dates but creates nothing — so the first practice to cross the
+ * midnight boundary after a seed became a session that had visibly taken place with **nobody
+ * marked present or absent**. On the 10U that is a Thursday, so it happened weekly, and it read as
+ * a coach who had forgotten to take the register: the single most damaging thing a demo of a
+ * coaching product can accidentally depict.
+ *
+ * Found 2026-08-05 by the health check on the first morning it ran automatically — which is
+ * precisely the argument for running it automatically (`DEMO_SANDBOX_DRIFT_GUARDS_PLAN.md`).
+ *
+ * ⚠ **Coverage is judged per PLAYER, not per event, and the write tolerates a lost race.** Both
+ * matter, and the first draft got both wrong:
+ *
+ *   · Keying "already covered" on the event alone meant one attendance row — from any player —
+ *     marked the whole event done for ever. A player added to the roster after an event was first
+ *     covered would then keep an empty register permanently: the exact defect this function exists
+ *     to close, reintroduced for a subset and never revisited.
+ *   · A plain bulk `insert` is one atomic statement, and `rep_team_event_attendance` carries
+ *     `UNIQUE(event_id, player_id)`. So if a concurrent run (the cron, a manual tick, and an
+ *     arrival-triggered run can all overlap) had already committed rows for ONE event in the
+ *     batch, the whole statement aborted — including rows for uncontested events — and the tick
+ *     reported a failure and alerted a human over a race that had harmed nothing.
+ *
+ * `ignoreDuplicates` on the unique index turns that race into a quiet no-op, the same way
+ * `createRepPlayerTryoutBaseline` does. Duplicate rows were never possible; a false alarm was.
+ *
+ * ⚠ Still writes nothing on a steady day: with no uncovered pair there are no rows, and the
+ * statement is never issued at all.
+ *
+ * ⚠ Matched to the world by DATE, after the shift has landed — the same discipline the ledger uses
+ * for descriptions. A practice the world no longer describes is left alone; the seed owns creation.
+ */
+async function takeAttendanceForNewlyPastPractices(
+  db: CoachDemoDb,
+  teamId: string,
+  programYearId: string,
+  orgId: string,
+  practices: readonly { date: string; absent: readonly number[]; late: readonly number[] }[],
+  today: string,
+): Promise<number> {
+  const [
+    { data: events, error: eventError },
+    { data: roster, error: rosterError },
+  ] = await Promise.all([
+    // ⚠ Scoped by PROGRAM YEAR, not just team. The roster and attendance reads below are, and a
+    // team carrying a stale prior-year event row would otherwise have that row backfilled with
+    // THIS year's attendance — history misfiled under the wrong season. Dormant today (each demo
+    // team is seeded with one year) and cheap to make impossible.
+    db.from('rep_team_events').select('id, starts_at, event_type')
+      .eq('team_id', teamId).eq('program_year_id', programYearId),
+    // Ordered server-side, with `id` breaking ties: the world's absent/late lists are plain
+    // indexes into this array, so two players sharing (or missing) a display_order must not be
+    // free to swap places between runs and mark the wrong child absent.
+    db.from('rep_roster_players').select('id, display_order')
+      .eq('program_year_id', programYearId).eq('status', 'active')
+      .order('display_order', { ascending: true }).order('id', { ascending: true }),
+  ]);
+  if (eventError) throw new Error(eventError.message);
+  if (rosterError) throw new Error(rosterError.message);
+
+  type EventRow = { id: string; starts_at: string; event_type: string };
+  type PlayerRow = { id: string; display_order: number | null };
+
+  const past = ((events ?? []) as EventRow[])
+    .filter(e => e.event_type === 'practice')
+    .map(e => ({ ...e, date: utcToZonedInputs(e.starts_at).date }))
+    .filter(e => e.date <= today);
+  if (!past.length) return 0;
+
+  const { data: existing, error: attendanceError } = await db
+    .from('rep_team_event_attendance').select('event_id, player_id').eq('program_year_id', programYearId);
+  if (attendanceError) throw new Error(attendanceError.message);
+  // Per PAIR, not per event: an event with a register missing only the player who joined last
+  // month is still an event with a player who has no register.
+  const covered = new Set(((existing ?? []) as { event_id: string; player_id: string }[])
+    .map(a => `${a.event_id}:${a.player_id}`));
+
+  // Already ordered by the query above; the local sort is the tiebreak made explicit so the
+  // mapping from world index → player cannot depend on row order coming back from PostgREST.
+  const players = ((roster ?? []) as PlayerRow[])
+    .slice()
+    .sort((a, b) => (a.display_order ?? 0) - (b.display_order ?? 0) || a.id.localeCompare(b.id));
+  const byDate = new Map(practices.map(p => [p.date, p]));
+
+  const rows = past.flatMap(event => {
+    const world = byDate.get(event.date);
+    return players
+      .map((player, i) => ({
+        event_id: event.id, player_id: player.id,
+        program_year_id: programYearId, team_id: teamId, org_id: orgId,
+        // A practice the world does not describe still gets a register — a blank one is the defect.
+        status: world?.absent.includes(i) ? 'absent' : world?.late.includes(i) ? 'late' : 'attending',
+      }))
+      .filter(row => !covered.has(`${row.event_id}:${row.player_id}`));
+  });
+
+  if (!rows.length) return 0; // the ordinary case — nothing crossed, so no statement is issued
+
+  const { error } = await db.from('rep_team_event_attendance')
+    .upsert(rows, { onConflict: 'event_id,player_id', ignoreDuplicates: true });
+  if (error) throw new Error(`rep_team_event_attendance: ${error.message}`);
+  return rows.length;
+}
+
+/**
+ * Restate a team's ledger onto the dates the clock now implies.
+ *
+ * Absolute values, never a delta — see `restateOffSeasonBooks` above for why the books in
+ * particular cannot be shifted by the schedule's delta without inventing a failure mode that
+ * survives every subsequent run. Shared by three teams since Phase 3 (the 14U's winter, the 12U's
+ * season, the 10U's first bills): a bill dated before the season it belongs to is the one thing a
+ * money screen must never show, and it would otherwise happen on every one of them.
+ *
+ * Expenses are matched to the world by DESCRIPTION, which is what the seed writes and what the
+ * coach reads on screen; the world guarantees they are distinct within a team.
+ */
+async function restateExpenses(
+  db: CoachDemoDb,
+  teamId: string,
+  expenses: readonly DemoExpense[],
+): Promise<number> {
+  const { data, error } = await db.from('rep_team_expenses')
+    .select('id, description, expense_paid_at, deposit_due_date, deposit_paid_at, balance_due_date, balance_paid_at')
+    .eq('team_id', teamId);
+  if (error) throw new Error(error.message);
+
+  type ExpenseRow = {
+    id: string; description: string;
+    expense_paid_at: string | null;
+    deposit_due_date: string | null; deposit_paid_at: string | null;
+    balance_due_date: string | null; balance_paid_at: string | null;
+  };
+
+  /** The seed's own stamp, not a second spelling of it — see `demoPaidStampIso`. */
+  const paidStamp = (date: string | null | undefined) => (date ? demoPaidStampIso(date) : null);
+  /**
+   * ⚠ Compare timestamps as INSTANTS, not strings. PostgREST hands back
+   * `2026-06-21T20:00:00+00:00` where the world produces `2026-06-21T20:00:00.000Z` — the same
+   * moment, spelled differently. String equality would call every row changed on every run and
+   * rewrite the whole ledger nightly: identical data, but the "a steady day writes nothing"
+   * contract quietly broken, and the row counts in the job's report rendered meaningless.
+   */
+  const sameInstant = (a: string | null, b: string | null) =>
+    (a === null || b === null ? a === b : Date.parse(a) === Date.parse(b));
+
+  const desiredByDescription = new Map(expenses.map(e => [e.description, e]));
+  let written = 0;
+
+  for (const row of (data ?? []) as ExpenseRow[]) {
+    const want = desiredByDescription.get(row.description);
+    // An expense the world no longer describes is not this job's to guess at — the seed owns
+    // creation and deletion, and inventing dates for an unknown row would be the "confident lie"
+    // the rest of this module is careful to avoid.
+    if (!want) continue;
+    const patch = {
+      expense_paid_at: paidStamp(want.paidDate),
+      deposit_due_date: want.deposit?.dueDate ?? null,
+      deposit_paid_at: paidStamp(want.deposit?.paidDate),
+      balance_due_date: want.balance?.dueDate ?? null,
+      balance_paid_at: paidStamp(want.balance?.paidDate),
+    };
+    const unchanged = sameInstant(row.expense_paid_at, patch.expense_paid_at)
+      && row.deposit_due_date === patch.deposit_due_date
+      && sameInstant(row.deposit_paid_at, patch.deposit_paid_at)
+      && row.balance_due_date === patch.balance_due_date
+      && sameInstant(row.balance_paid_at, patch.balance_paid_at);
+    if (unchanged) continue; // diff-only: a steady day writes nothing
+    const { error: writeError } = await db.from('rep_team_expenses').update(patch).eq('id', row.id);
+    if (writeError) throw new Error(`rep_team_expenses: ${writeError.message}`);
+    written++;
   }
 
   return written;

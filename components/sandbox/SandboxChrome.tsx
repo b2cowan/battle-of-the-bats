@@ -214,9 +214,16 @@ function writeTourState(storageKey: string, state: TourState): void {
   }
 }
 
-/** Are we standing on the page this step lives on? */
-function isOnStepPage(pathname: string | null, href: string): boolean {
+/**
+ * Are we standing on the page this step lives on?
+ *
+ * `exact` is opted into per step (see `SandboxTourStep.exactPath`): a prefix match is right when a
+ * step owns a section, and wrong when a visitor can reach a page BELOW the step's destination on
+ * their own — there, "you're already here" is a lie that makes the button do nothing.
+ */
+function isOnStepPage(pathname: string | null, href: string, exact = false): boolean {
   if (!pathname) return false;
+  if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -312,14 +319,7 @@ export default function SandboxChrome({
    */
   const dockRef = useRef<HTMLDivElement | null>(null);
   const activeMomentRef = useRef<HTMLButtonElement | null>(null);
-  useLayoutEffect(() => {
-    const dock = dockRef.current;
-    const chip = activeMomentRef.current;
-    if (!dock || !chip) return;
-    if (dock.scrollWidth <= dock.clientWidth) return; // everything already visible — leave it be
-    const offsetLeft = chip.getBoundingClientRect().left - dock.getBoundingClientRect().left + dock.scrollLeft;
-    dock.scrollLeft = Math.max(0, offsetLeft - (dock.clientWidth - chip.offsetWidth) / 2);
-  }, [activeMoment?.key, moments.length]);
+  // The effect itself lives further down, where the narration state it now depends on exists.
 
   // ── The countdown ───────────────────────────────────────────────────────────────────────────
   // Starts empty and fills in after mount: the cycle boundary is a function of the wall clock, so
@@ -508,7 +508,23 @@ export default function SandboxChrome({
 
     const selector = step.anchor;
     const later = (fn: () => void, ms: number) => ringTimersRef.current.push(window.setTimeout(fn, ms));
-    const settle = (target: Element) => target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    /**
+     * Centre a beat that fits; align a tall one to its top.
+     *
+     * Centring is right for a panel and wrong for a list. Measured on the coach tour's first step:
+     * the tryout decision board is 28 rows, and centring it put its top 669px ABOVE the viewport —
+     * the visitor arrived staring at candidates 14 through 20, with the card's own title and the
+     * "ranked by score" line that the narration is about scrolled off. `scroll-margin-top` on the
+     * beat (globals.css) keeps the fixed hat from covering it.
+     */
+    const settle = (target: Element) => target.scrollIntoView({
+      behavior: 'smooth',
+      // ⚠ Coach sandbox only. The tournament tour is shipped and approved, and its own tall beat
+      // (the playoff bracket) has never been measured under this rule — changing where an approved
+      // tour lands, unmeasured, is the sort of quiet regression this whole chrome exists to avoid.
+      block: kind === 'coach' && target.getBoundingClientRect().height > window.innerHeight * 0.8
+        ? 'start' : 'center',
+    });
     let attempts = 0;
 
     const tryFind = () => {
@@ -530,7 +546,9 @@ export default function SandboxChrome({
     };
 
     tryFind();
-  }, []);
+    // `kind` decides the scroll alignment for a tall beat (see `settle`) — a prop, stable for the
+    // life of the mount, but a dependency all the same so the closure can never go stale.
+  }, [kind]);
 
   // And drop them whenever the page changes, not just on unmount. This component is mounted once by
   // the org shell and survives every client-side navigation inside the demo, so a search still
@@ -558,8 +576,8 @@ export default function SandboxChrome({
    * being on the page AND — for an operator destination — editing the right event: the same
    * admin pathname serving the wrong tournament has not delivered.
    */
-  const arrivedAt = (href: string, slug: string | null) =>
-    isOnStepPage(pathname, href) && (slug === null || currentAdminSlug() === slug);
+  const arrivedAt = (href: string, slug: string | null, exact = false) =>
+    isOnStepPage(pathname, href, exact) && (slug === null || currentAdminSlug() === slug);
 
   // Load progress, and settle a press that was mid-navigation when we left the last page — but
   // ONLY if we actually arrived where it was sending us.
@@ -572,13 +590,16 @@ export default function SandboxChrome({
   const settleArrivals = useCallback(() => {
     const stored = readTourState(tourStorageKey);
     const nav = stored.pendingNav;
+    // A step's arrival is judged by ITS OWN matching rule, looked up rather than stored — so the
+    // saved record keeps its shape (no storage version bump) and a step whose rule changes takes
+    // effect for a navigation already in flight.
+    const pendingStep = nav?.kind === 'step' ? steps.find(s => s.n === nav.n) : undefined;
 
-    if (nav && arrivedAt(nav.href, nav.slug)) {
+    if (nav && arrivedAt(nav.href, nav.slug, pendingStep?.exactPath)) {
       if (nav.kind === 'step') {
         update(deliver(stored, nav.n));
         // Let the destination paint before reaching for its beat.
-        const step = steps.find(s => s.n === nav.n);
-        if (step) window.requestAnimationFrame(() => ringAnchor(step));
+        if (pendingStep) window.requestAnimationFrame(() => ringAnchor(pendingStep));
       } else {
         update({ ...stored, strip: { kind: 'moment', key: nav.key }, pendingNav: null });
       }
@@ -618,7 +639,7 @@ export default function SandboxChrome({
   const onStep = useCallback((step: SandboxTourStep) => {
     if (!tour) return; // unreachable: the stepper only renders once progress has been read
     const slug = step.tournamentSlug ?? null;
-    if (arrivedAt(step.href, slug)) {
+    if (arrivedAt(step.href, slug, step.exactPath)) {
       // Already here: deliver in place. The narration strip appearing is the visible change, so
       // this branch is never silent even when the anchor is absent.
       update(deliver(tour, step.n));
@@ -673,9 +694,39 @@ export default function SandboxChrome({
   const currentStep = tour ? steps.find(s => s.n === tour.current) ?? null : null;
   // One strip, one voice — the union guarantees at most one of these is non-null.
   const strip = tour?.strip ?? null;
+
+  /**
+   * Keep the moment you are STANDING IN on screen — see the note beside `dockRef` above.
+   *
+   * ⚠ `strip` is a dependency, and it is not decoration. On a narrow screen the dock is
+   * `display: none` while the chrome is narrating, and a hidden element reports
+   * `clientWidth`/`scrollWidth` of 0 — so every run during a tour walk hits the early return and
+   * never moves `scrollLeft`. Without re-running when the narration clears, the dock would come
+   * back scrolled to wherever it stood when the walk STARTED, with the team the visitor is now
+   * standing in off-screen: precisely the "no highlighted chip anywhere" state this exists to
+   * prevent. (Found by the 2026-08-06 review; the dock is hidden for the whole walk, so this was
+   * not a corner case.)
+   */
+  useLayoutEffect(() => {
+    const dock = dockRef.current;
+    const chip = activeMomentRef.current;
+    if (!dock || !chip) return;
+    if (dock.scrollWidth <= dock.clientWidth) return; // hidden, or everything already visible
+    const offsetLeft = chip.getBoundingClientRect().left - dock.getBoundingClientRect().left + dock.scrollLeft;
+    dock.scrollLeft = Math.max(0, offsetLeft - (dock.clientWidth - chip.offsetWidth) / 2);
+  }, [activeMoment?.key, moments.length, strip]);
   const narratedStep = strip?.kind === 'step' ? steps.find(s => s.n === strip.n) ?? null : null;
   const jumpMoment = strip?.kind === 'moment' ? moments.find(m => m.key === strip.key) ?? null : null;
   const tourComplete = !!tour && steps.length > 0 && tour.done.length >= steps.length;
+  /**
+   * Nothing has been pressed yet — the tour's INVITATION state (Phase 3).
+   *
+   * It answers "does the tour open itself?" with no: a demo that has promised nothing moves while
+   * you watch must not move a stranger. It introduces itself once and waits. Coach sandbox only —
+   * the tournament tour's opening is already approved and shipped, and changing it here would be
+   * a silent edit to a surface nobody asked me to touch.
+   */
+  const tourUntouched = kind === 'coach' && !!tour && tour.done.length === 0 && tour.strip === null;
   // A step that travelled deserves a marked way back. Game day's fan page is the tour's home and
   // the one place every visitor recognises, so that is where "back" means — and the label names
   // the moment now that there is more than one to be standing in.
@@ -694,7 +745,12 @@ export default function SandboxChrome({
       {/* data-kind picks the coat: the tournament chrome is dark over the dark admin world; the
           coach chrome is warm over the warm portal (approved mockups 2026-08-04) — same bones,
           same behavior, different palette. */}
-      <div className={styles.chrome} ref={chromeRef} data-sandbox-banner data-kind={kind}>
+      {/* data-narrating publishes WHETHER the strip is speaking, so the narrow-screen rules can
+          stand the dock down while it is. Four rows of chrome (banner + dock + stepper + sentence)
+          measured 226px on a 390px phone — a quarter of the screen before the portal's own header
+          — and the sentence always names the moment anyway, so the dock is the row that gives. */}
+      <div className={styles.chrome} ref={chromeRef} data-sandbox-banner data-kind={kind}
+        data-narrating={strip ? 'true' : undefined}>
         <div className={styles.banner}>
           <span className={styles.eyebrow}>
             <span className={styles.bulb} aria-hidden="true" />
@@ -705,7 +761,9 @@ export default function SandboxChrome({
             Live demo
           </span>
           <span className={styles.message}>
-            {copy.lead}
+            {/* The lead is its own element so a narrow screen can drop it and keep the half that
+                matters. The bold clause is the honesty claim and is never the part that gives. */}
+            <span className={styles.messageLead}>{copy.lead}</span>
             {copy.emphasis ? <> <strong>{copy.emphasis}</strong></> : null}
           </span>
           <span className={styles.reset}>
@@ -749,7 +807,9 @@ export default function SandboxChrome({
           <div className={styles.stepper}>
             <span className={styles.stepperLabel}>Guided tour</span>
             <span className={styles.stepCount}>
-              {tourComplete ? 'Done' : `Step ${tour.current} of ${steps.length}`}
+              {tourComplete ? 'Done'
+                : tourUntouched ? 'The season, guided'
+                : `Step ${tour.current} of ${steps.length}`}
             </span>
 
             {/* The standing proof that the demo is running, between the score changes. */}
@@ -809,7 +869,10 @@ export default function SandboxChrome({
               <Link href="/auth/signup" className={styles.stepGo}>Start your own — free →</Link>
             ) : currentStep ? (
               <button type="button" className={styles.stepGo} onClick={() => onStep(currentStep)}>
-                {currentStep.label} →
+                {/* The opening press names the WHOLE walk, not its first beat. "See how 28 kids got
+                    ranked" is a fine second sentence and a poor invitation: it offers a feature
+                    where the tour is offering a season. Every press after this one names its beat. */}
+                {tourUntouched ? 'Walk the year' : currentStep.label} →
               </button>
             ) : null}
           </div>
@@ -852,6 +915,27 @@ export default function SandboxChrome({
                 {sandboxBackLabel(kind)}
               </button>
             )}
+            {/**
+              * Dismiss the sentence — and, on a phone, get the moments dock back.
+              *
+              * ⚠ This is not tidiness, it is the only way out. Below 640px the dock stands down
+              * while the strip is speaking, and the strip is only ever cleared by pressing a
+              * numbered dot — which that same breakpoint hides. Measured on a 390px screen: after
+              * the first tour step the dock was gone and NOTHING on screen could bring it back for
+              * the rest of the session, so a visitor lost the demo's whole navigation the moment
+              * they accepted its invitation. (2026-08-06 review.)
+              *
+              * Rendered at every width, because a sentence you have finished reading should be
+              * dismissible on a desktop too; it is simply load-bearing on a phone.
+              */}
+            <button
+              type="button"
+              className={styles.saidDismiss}
+              aria-label="Dismiss this note and show the moments again"
+              onClick={() => tour && update({ ...tour, strip: null })}
+            >
+              ✕
+            </button>
           </div>
         )}
       </div>

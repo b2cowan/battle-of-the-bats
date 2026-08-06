@@ -594,3 +594,91 @@
   border-color: var(--sandbox-warm-dim);
 }
 .chrome[data-kind='coach'] .saidBack:focus-visible { outline-color: var(--sandbox-warm-blue); }
+
+/* Dismiss the sentence. Load-bearing rather than decorative: below 640px the moments dock stands
+   down while the strip speaks, and this is the only control that can bring it back. Sized to the
+   44px tap floor even though the glyph is small. */
+.saidDismiss {
+  flex: none;
+  align-self: flex-start;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -0.5rem -0.25rem -0.5rem 0;
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--data-gray);
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.saidDismiss:hover { color: var(--fl-text); }
+.saidDismiss:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: -2px; }
+.chrome[data-kind='coach'] .saidDismiss { color: var(--sandbox-warm-dim); }
+.chrome[data-kind='coach'] .saidDismiss:hover { color: var(--sandbox-warm-ink); }
+.chrome[data-kind='coach'] .saidDismiss:focus-visible { outline-color: var(--sandbox-warm-blue); }
+
+/* The guided tour's row, warm (Phase 3). Until the coach tour shipped, the stepper had never
+   rendered in this sandbox — so this is the one band of the chrome that had no coat. Same bones as
+   the dark one: a tinted strip, a counter, dots, and the single obvious control. */
+.chrome[data-kind='coach'] .stepper {
+  background: rgba(var(--sandbox-warm-line-rgb), 0.06);
+  border-bottom-color: rgba(var(--sandbox-warm-line-rgb), 0.16);
+}
+.chrome[data-kind='coach'] .stepperLabel { color: var(--sandbox-warm-dim); }
+.chrome[data-kind='coach'] .stepCount { color: var(--sandbox-warm-gold); }
+
+.chrome[data-kind='coach'] .dot {
+  border-color: rgba(var(--sandbox-warm-line-rgb), 0.3);
+  color: var(--sandbox-warm-dim);
+  background: none;
+}
+.chrome[data-kind='coach'] .dot[data-done='true'] {
+  background: var(--sandbox-warm-blue);
+  border-color: var(--sandbox-warm-blue);
+  color: var(--sandbox-warm-paper);
+}
+.chrome[data-kind='coach'] .dot[aria-current='step'] {
+  border-color: var(--sandbox-warm-ink);
+  color: var(--sandbox-warm-ink);
+}
+.chrome[data-kind='coach'] .dot:focus-visible { outline-color: var(--sandbox-warm-blue); }
+
+.chrome[data-kind='coach'] .stepGo {
+  background: var(--sandbox-warm-ink);
+  color: var(--sandbox-warm-paper);
+  border: none;
+  border-radius: 999px;
+}
+.chrome[data-kind='coach'] .stepGo:hover { background: var(--sandbox-warm-gold); }
+.chrome[data-kind='coach'] .stepGo:focus-visible { outline-color: var(--sandbox-warm-blue); }
+
+/* ── The coach hat on a phone ──────────────────────────────────────────────────
+   Measured on a 390×844 viewport, live demo, computed styles (2026-08-05):
+   banner 68 · dock 44 · stepper 44 (no live pill here — the coach demo has no ticking score) ·
+   sentence 70. Three rows are comfortable; FOUR is 226px, on top of the portal's own 69px team
+   header, which is a quarter of the screen given over to chrome before a word of the product.
+
+   Two rules keep it near where it already sits:
+     1. the dock stands down while the strip is speaking — the sentence names the moment anyway,
+        and the dock returns the instant the sentence clears;
+     2. the promise comes BACK into the coach banner. It is hidden below 640px for the tournament
+        sandbox on the reasoning that the first narration line carries it — true there, because
+        that tour starts with a sentence. The coach sandbox's opening state is an invitation with
+        no sentence at all, so on a phone the words "nothing is saved" were appearing NOWHERE
+        until something was pressed. That is the one line in this chrome that must never be
+        optional. Costs ~18px; buys back 44 with rule 1. */
+@media (max-width: 640px) {
+  .chrome[data-kind='coach'][data-narrating] .dock { display: none; }
+
+  /* The promise comes back, in its shortest honest form. Measured first as the FULL sentence: the
+     banner went 68px → 136px, and a delivered step ran 283px of chrome before the portal's own
+     header. So the lead clause goes and the bold claim stays — and it takes the moment note's
+     place rather than a line of its own, because "There's a game this Saturday" is flavour and
+     "nothing is saved" is the reason a stranger will try pressing things at all.
+     `revert` rather than a hard `display` value: the banner is a flex container, so the keyword is
+     invisible either way, and this cannot drift if the base rule changes. */
+  .chrome[data-kind='coach'] .message { display: revert; font-size: 0.72rem; }
+  .chrome[data-kind='coach'] .messageLead { display: none; }
+  .chrome[data-kind='coach'] .reset { display: none; }
+}

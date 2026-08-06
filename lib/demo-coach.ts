@@ -266,7 +266,15 @@ export interface DemoEvaluator {
 /** Three evaluator links: two mid-session, one who starts this evening. */
 export const DEMO_EVALUATORS: readonly DemoEvaluator[] = [
   { name: 'Priya Raman',    scoredCount: 22, drift: 0 },
-  { name: 'Dana Kowalski',  scoredCount: 19, drift: -1 }, // reads harsh — the bias flag fires
+  /**
+   * ⚠ Reads harsh — but the scoreboard's bias chip does NOT fire on this, and the comment here
+   * claimed for a year that it did. Measured 2026-08-05: consensus is the mean of each evaluator's
+   * OWN mean, so with two scorers a −1 drift moves each of them only half that, giving ±0.39
+   * against a 0.15 × 5 = 0.75 threshold. Making "runs cold" appear needs roughly −2, and it needs
+   * the tryout hub's stage to be linkable before a tour could point at it. Both deferred (owner,
+   * 2026-08-05); the harsh scorer stays because it makes the split opinion below plausible.
+   */
+  { name: 'Dana Kowalski',  scoredCount: 19, drift: -1 },
   { name: 'Marcus Field',   scoredCount: 0,  drift: 0 },  // starts at the evening session
 ];
 
@@ -368,6 +376,17 @@ export const MIDSEASON_LINEUP_GRID: ReadonlyArray<readonly string[]> = [
 export const MIDSEASON_INNING_COUNT = 6;
 export const MIDSEASON_LINEUP_GAMES = 6; // the newest 6 decided games carry a saved lineup
 
+/**
+ * Which roster slot the guided tour points at twice — first as a number on the playing-time table,
+ * then as the family whose recap that number belongs to.
+ *
+ * It is the OUTLIER above (index 11, Felix, 2 of 6 innings), and it is named here rather than
+ * spelled `11` in the seed so the two references cannot drift apart: if the grid is ever
+ * re-authored so a different player sits most, this constant is what has to move with it, in one
+ * place, and the health check asserts the pairing.
+ */
+export const MIDSEASON_SHOWCASE_ROSTER_INDEX = 11;
+
 /** Arm care: Theo has an explicit per-game cap; the season default covers Marco. */
 export const MIDSEASON_LINEUP_SETTINGS = {
   maxInningsPerPosition: null,
@@ -395,12 +414,25 @@ export const MIDSEASON_DUES = {
   overdueRosterIndexes: [6, 10] as const, // Dmitri Kovac, Imani Brooks
 } as const;
 
+/**
+ * The 12U's plan, built in the spring — and, since Phase 3, actually spent against.
+ *
+ * ⚠ **The categories are not decoration.** Budget-vs-actual matches a logged expense to a line by
+ * comparing the expense's free-text category to the category NAME (same rule as
+ * `OFFSEASON_BUDGET_LINES`). Until 2026-08-05 these five lines carried no category at all, so the
+ * report grouped the entire plan under "Uncategorized" and filed every dollar as unbudgeted — which
+ * is why a team 18 games into its season showed $9,400 planned and $0.00 actual. Every category
+ * here must also be TEAM-reachable (`scope` `team` or `both`), or the seed refuses it.
+ *
+ * ⚠ One category per line, deliberately: the report groups BY category, so two lines sharing one
+ * would merge on screen and the over-plan line would disappear into an average.
+ */
 export const MIDSEASON_BUDGET_LINES = [
-  { description: 'Diamond rentals', total: 3200 },
-  { description: 'Tournament entries', total: 2400 },
-  { description: 'Uniforms & caps', total: 1800 },
-  { description: 'Umpires', total: 1100 },
-  { description: 'Equipment', total: 900 },
+  { description: 'Diamond rentals',    category: 'Facilities',  total: 3200 },
+  { description: 'Tournament entries', category: 'Tournaments', total: 2400 },
+  { description: 'Uniforms & caps',    category: 'Team Gear',   total: 1800 },
+  { description: 'Umpires',            category: 'Officials',   total: 1100 },
+  { description: 'Balls, screens and practice gear', category: 'Training', total: 900 },
 ] as const;
 
 /** Everyone but Wes (index 2) has a signed waiver on file — the "1 unsigned" beat. */
@@ -480,6 +512,8 @@ export interface MidSeasonState {
   games: DemoGame[];
   practices: DemoPractice[];
   saturdayDate: string;
+  /** What the season has actually cost so far — the "actual" half of budget-vs-actual (Phase 3). */
+  expenses: DemoExpense[];
 }
 
 /**
@@ -554,7 +588,32 @@ export function resolveMidSeasonState(now: Date): MidSeasonState {
     }
   }
 
-  return { year, yearName: `${year} Season`, games, practices, saturdayDate };
+  /**
+   * The books, eighteen games in (Phase 3).
+   *
+   * Dated off the SAME Saturday anchor as the schedule, so the nightly re-anchor moves the money
+   * with the calendar rather than leaving a bill dated before the season it belongs to.
+   *
+   * ⚠ **Facilities is deliberately OVER plan**, and it is the only anomaly on the team. Owner
+   * ruling 2026-08-05: a demo whose every line comes in under budget teaches a prospect that the
+   * report flatters them, which is the opposite of the thing being sold. Two rainouts moved to
+   * weeknight slots is the most ordinary way a real season goes over, so that is what it says.
+   * The unbudgeted-expense beat stays with the 14U — one anomaly per team, or neither reads.
+   */
+  const paidAt = (weeksBack: number) => orgDateWithOffset(now, satOffset - 7 * weeksBack);
+  const expenses: DemoExpense[] = [
+    demoExpense('MS-DIAMOND-1', 'Diamond rentals — spring block', 'Facilities', 2400, paidAt(11)),
+    demoExpense('MS-DIAMOND-2', 'Diamond rentals — weeknight slots', 'Facilities', 1050, paidAt(3),
+      'Two rainouts moved to weeknights. Not in the spring plan.'),
+    demoExpense('MS-TOURN-1', 'Spring Classic entry', 'Tournaments', 1200, paidAt(12)),
+    demoExpense('MS-TOURN-2', 'Riverside Invitational entry', 'Tournaments', 1200, paidAt(5)),
+    demoExpense('MS-GEAR', 'Jerseys, caps and helmets', 'Team Gear', 1755, paidAt(10)),
+    demoExpense('MS-UMP-1', 'Umpire fees — first half', 'Officials', 550, paidAt(7)),
+    demoExpense('MS-UMP-2', 'Umpire fees — second half', 'Officials', 440, paidAt(2)),
+    demoExpense('MS-TRAINING', 'Balls, screens and practice gear', 'Training', 610, paidAt(9)),
+  ];
+
+  return { year, yearName: `${year} Season`, games, practices, saturdayDate, expenses };
 }
 
 /** `HH:MM` plus whole hours (events are same-day; the demo never schedules across midnight). */
@@ -634,6 +693,20 @@ export interface DemoExpense {
   deposit?: { amount: number; dueDate: string; paidDate: string | null };
   balance?: { amount: number; dueDate: string; paidDate: string | null };
   notes?: string | null;
+}
+
+/**
+ * A settled, lump-sum expense — the shape three of the five teams now use.
+ *
+ * Shared rather than re-declared per team (Phase 3): the off-season resolver had its own local
+ * copy, and a second and third one would be three places for the same row to drift. Payables keep
+ * their object literal, because a two-legged bill has nothing to abbreviate.
+ */
+export function demoExpense(
+  key: string, description: string, category: string, amount: number,
+  paidDate: string, notes: string | null = null,
+): DemoExpense {
+  return { key, description, category, amount, type: 'expense', paidDate, notes };
 }
 
 /** Dues: $900 a player in four. One family is a payment behind — $225 overdue, and the sweep that
@@ -869,10 +942,10 @@ export function resolveOffSeasonState(now: Date): OffSeasonState {
   }
   practices.sort((a, b) => a.date.localeCompare(b.date));
 
+  // Offsets in, dates out — the shared row builder takes a date, and this team thinks in offsets.
   const expense = (key: string, description: string, category: string, amount: number,
-                   paidX: number, notes: string | null = null): DemoExpense => ({
-    key, description, category, amount, type: 'expense', paidDate: dateAt(paidX), notes,
-  });
+                   paidX: number, notes: string | null = null): DemoExpense =>
+    demoExpense(key, description, category, amount, dateAt(paidX), notes);
 
   const expenses: DemoExpense[] = [
     expense('EX-FALL', 'Fall Classic entry', 'Tournaments', 900, -45),
@@ -992,6 +1065,8 @@ export interface SeasonStartState {
   openingDate: string;
   /** Key of the one game carrying a saved lineup. */
   lineupGameKey: string;
+  /** The first bills of a young season — the "actual" half of budget-vs-actual (Phase 3). */
+  expenses: DemoExpense[];
 }
 
 /**
@@ -1053,6 +1128,24 @@ export function resolveSeasonStartState(now: Date): SeasonStartState {
     });
   }
 
+  /**
+   * The first bills of a young season (Phase 3) — the up-front ones and nothing else.
+   *
+   * A team two weeks old should NOT have a full ledger; the point of this moment's books is that
+   * the plan is complete and the spending has barely begun, which is a different picture from the
+   * 12U's nearly-closed year. Every stamp sits at `x <= -7`, the same settled-fact band the games
+   * obey, so nothing here can drift into the future on a Wednesday.
+   */
+  const expenses: DemoExpense[] = [
+    // A DEPOSIT, not the full order — the balance falls due when the jerseys arrive. The first
+    // draft paid the gear line off in full, which put a fortnight-old season at 56% of its budget
+    // and made the health check fail on its own data. Front-loaded is realistic; already spent is
+    // a different team's story, and this moment's whole point is the year still being ahead.
+    demoExpense('SS-GEAR', 'Jerseys and caps — deposit', 'Team Gear', 900, dateAt(-28)),
+    demoExpense('SS-PERMIT', 'Diamond permits — first half', 'Facilities', 800, dateAt(-21)),
+    demoExpense('SS-UMP', 'Umpire fees — opening weekend', 'Officials', 165, dateAt(-7)),
+  ];
+
   return {
     year,
     yearName: `${year} Season`,
@@ -1062,6 +1155,7 @@ export function resolveSeasonStartState(now: Date): SeasonStartState {
     duesPaidDates: SEASON_START_DUES.dueOffsets.map(x => addCalendarDays(dateAt(x), -3)),
     openingDate: dateAt(-14),
     lineupGameKey: 'SS-G0',
+    expenses,
   };
 }
 

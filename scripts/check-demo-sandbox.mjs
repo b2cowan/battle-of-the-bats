@@ -64,8 +64,16 @@ console.log(`\nSandbox check — ${demoOrg.label}\n`);
 // ── 1. org + event ───────────────────────────────────────────────────────────────────────────
 console.log('Organization and event');
 const { data: org } = await db.from('organizations').select('*').eq('slug', demoOrg.slug).maybeSingle();
-if (!check(!!org, 'demo org exists', `no org with slug "${demoOrg.slug}" — run scripts/seed-demo-tournament.mjs`)) {
-  process.exit(1);
+/**
+ * NOT SEEDED HERE is a skip, not a failure — exit code 3 (see `check-demos.mjs`).
+ *
+ * This check joined the routine verification sweep on 2026-08-05, so it now runs on machines that
+ * have never seeded a demo. Failing there would teach everyone to ignore a red build, which costs
+ * more than the check is worth. A demo that exists and is WRONG is still a hard failure.
+ */
+if (!org) {
+  console.log(`  – no tournament demo in this database — skipping (seed it with scripts/seed-demo-tournament.mjs)`);
+  process.exit(3);
 }
 check(org.plan_id === 'tournament_plus', 'comped to Tournament Plus (D2)', `plan_id=${org.plan_id}`);
 check(org.is_discoverable === false, 'excluded from /discover', `is_discoverable=${org.is_discoverable}`);

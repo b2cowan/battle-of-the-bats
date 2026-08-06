@@ -69,6 +69,25 @@ export const DEMO_COACH_TEAM_IDS = {
   seasonsEnd: '5eed0c0a-c113-4d3e-9a01-000000000013',
 } as const;
 
+/**
+ * The one ROSTER row the demo addresses by name (Phase 3, the guided tour).
+ *
+ * Every other person in the demo world gets a generated id, because nothing points at them. The
+ * tour's "read what a parent gets" step is the exception: the family-recap preview lives on ONE
+ * player's page, two taps behind a collapsed card, so the step needs a durable address the way the
+ * dock needs durable team ids. Same reasoning, same shape — and a fixed id makes the seed's upsert
+ * safer rather than riskier, because a reseed lands on the same row instead of minting a new one.
+ *
+ * ⚠ It is deliberately the mid-season team's playing-time outlier (jersey 30). The step before it
+ * names the number — fewest innings on the team, six back-to-back sits — and this one shows the page
+ * that player's family opens. Owner call, 2026-08-05: the demo is more persuasive admitting the
+ * uncomfortable number than hiding it behind a tidier player.
+ */
+export const DEMO_COACH_SHOWCASE = {
+  /** Riverdale Ridge 12U — the family-recap step's player. */
+  midSeasonPlayerId: '5eed0c0a-c112-4d3e-9a01-0000000000f0',
+} as const;
+
 export const DEMO_ORGS: readonly DemoOrgDefinition[] = [
   {
     slug: 'riverdale-minor-ball',

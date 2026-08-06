@@ -696,7 +696,9 @@ export default function BudgetVsActualPage({
 
           {/* Category breakdown */}
           {data.categories.length > 0 && (
-            <div className={styles.section}>
+            // data-sandbox-tour: the beat the demo's "is the season on budget" step rings —
+            // planned against actually spent, line by line. Inert off a demo org.
+            <div className={styles.section} data-sandbox-tour="budget-variance">
              {/* Budgeted / Actual / Variance side by side IS the report — card-stacking it
                  would remove the sideways scroll and the comparison with it (Chunk A D1). So
                  the grid keeps its shape, scrolls inside its own frame, pins the line name,

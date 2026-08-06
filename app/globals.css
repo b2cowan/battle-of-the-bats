@@ -1817,6 +1817,20 @@ tbody tr:hover { background: var(--white-10); }
    class attached. The ring holds for the WHOLE duration and breathes on top of
    itself rather than fading to nothing between pulses, so a visitor who glanced
    away still sees it when they look back. */
+/* A tour beat, scrolled to and ringed once. `scroll-margin-top` keeps the fixed sandbox hat from
+   painting over the top of whatever was just scrolled to — the chrome pads the DOCUMENT, which
+   does nothing for an element the browser is aligning to the top of the scrollport.
+
+   ⚠ Scoped to `[data-sandbox-chrome]`, which the sandbox chrome stamps on <html> and removes when
+   it unmounts. The markers themselves ship to EVERY customer (they sit on ten real product
+   screens), so an unscoped rule here would permanently shift those ten elements by 0.75rem for
+   people who will never see a demo — a small, silent, real behaviour change bought for nothing.
+   The first version of this rule claimed to be "zero off a demo org" and was not: the fallback
+   only zeroes the variable, never the constant beside it. (2026-08-06 review.) */
+[data-sandbox-chrome] [data-sandbox-tour] {
+  scroll-margin-top: calc(var(--sandbox-chrome-h, 0px) + 0.75rem);
+}
+
 .sandboxSpotlight {
   border-radius: 8px;
   outline: 2px solid var(--logic-lime);
