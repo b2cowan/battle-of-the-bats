@@ -31118,6 +31118,15 @@
         "column_default": "'{}'::jsonb"
       },
       {
+        "table_name": "organizations",
+        "pos": 37,
+        "column_name": "club_book_sharing_enabled",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
         "table_name": "plan_config_overrides",
         "pos": 1,
         "column_name": "id",
@@ -36158,6 +36167,105 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_game_moments",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 2,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 4,
+        "column_name": "program_year_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 5,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 6,
+        "column_name": "player_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 7,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 8,
+        "column_name": "happened_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 9,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 10,
+        "column_name": "created_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "pos": 11,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_team_groups",
         "pos": 1,
         "column_name": "id",
@@ -36573,6 +36681,240 @@
       },
       {
         "table_name": "rep_team_measurable_types",
+        "pos": 10,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "pos": 2,
+        "column_name": "opponent_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "pos": 5,
+        "column_name": "normalized_alias",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "pos": 6,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 2,
+        "column_name": "opponent_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 4,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 5,
+        "column_name": "event_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 6,
+        "column_name": "body",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 7,
+        "column_name": "tag",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 8,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 9,
+        "column_name": "created_by_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "pos": 10,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 2,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 3,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 4,
+        "column_name": "display_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 5,
+        "column_name": "normalized_name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 6,
+        "column_name": "summary",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 7,
+        "column_name": "last_note_updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 8,
+        "column_name": "updated_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "pos": 9,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_opponents",
         "pos": 10,
         "column_name": "updated_at",
         "data_type": "timestamp with time zone",
@@ -37128,6 +37470,15 @@
         "udt_name": "text",
         "is_nullable": "NO",
         "column_default": "'families'::text"
+      },
+      {
+        "table_name": "rep_teams",
+        "pos": 18,
+        "column_name": "share_club_book",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
       },
       {
         "table_name": "rep_tryout_evaluator_sessions",
@@ -41489,35 +41840,28 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -41525,6 +41869,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -41545,21 +41896,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -41567,20 +41911,27 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -42207,6 +42558,48 @@
         "constraint_name": "rep_team_expenses_team_id_fkey"
       },
       {
+        "table_name": "rep_team_game_moments",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "fk_rep_team_game_moments_created_by"
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "column_name": "event_id",
+        "foreign_table": "rep_team_events",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_game_moments_event"
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_game_moments_org"
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "column_name": "player_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_game_moments_player"
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_game_moments_team"
+      },
+      {
+        "table_name": "rep_team_game_moments",
+        "column_name": "program_year_id",
+        "foreign_table": "rep_program_years",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_game_moments_year"
+      },
+      {
         "table_name": "rep_team_groups",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -42310,6 +42703,83 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_measurable_types_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "column_name": "opponent_id",
+        "foreign_table": "rep_team_opponents",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponent_aliases_opponent"
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponent_aliases_org"
+      },
+      {
+        "table_name": "rep_team_opponent_aliases",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponent_aliases_team"
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "fk_rep_team_opponent_obs_created_by"
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "column_name": "event_id",
+        "foreign_table": "rep_team_events",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponent_obs_event"
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "column_name": "opponent_id",
+        "foreign_table": "rep_team_opponents",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponent_obs_opponent"
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponent_obs_org"
+      },
+      {
+        "table_name": "rep_team_opponent_observations",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponent_obs_team"
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponents_org"
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "fk_rep_team_opponents_team"
+      },
+      {
+        "table_name": "rep_team_opponents",
+        "column_name": "updated_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "fk_rep_team_opponents_updated_by"
       },
       {
         "table_name": "rep_team_payment_requests",
@@ -44872,6 +45342,21 @@
         "indexdef": "CREATE INDEX rep_team_expenses_year_idx ON public.rep_team_expenses USING btree (program_year_id)"
       },
       {
+        "tablename": "rep_team_game_moments",
+        "indexname": "idx_rep_team_game_moments_event",
+        "indexdef": "CREATE INDEX idx_rep_team_game_moments_event ON public.rep_team_game_moments USING btree (team_id, event_id)"
+      },
+      {
+        "tablename": "rep_team_game_moments",
+        "indexname": "idx_rep_team_game_moments_season_player",
+        "indexdef": "CREATE INDEX idx_rep_team_game_moments_season_player ON public.rep_team_game_moments USING btree (team_id, program_year_id, player_id)"
+      },
+      {
+        "tablename": "rep_team_game_moments",
+        "indexname": "rep_team_game_moments_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_game_moments_pkey ON public.rep_team_game_moments USING btree (id)"
+      },
+      {
         "tablename": "rep_team_groups",
         "indexname": "idx_rep_team_groups_org_name",
         "indexdef": "CREATE UNIQUE INDEX idx_rep_team_groups_org_name ON public.rep_team_groups USING btree (org_id, lower(name))"
@@ -44972,6 +45457,66 @@
         "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
       },
       {
+        "tablename": "rep_team_opponent_aliases",
+        "indexname": "idx_rep_team_opponent_aliases_opponent",
+        "indexdef": "CREATE INDEX idx_rep_team_opponent_aliases_opponent ON public.rep_team_opponent_aliases USING btree (opponent_id)"
+      },
+      {
+        "tablename": "rep_team_opponent_aliases",
+        "indexname": "idx_rep_team_opponent_aliases_org",
+        "indexdef": "CREATE INDEX idx_rep_team_opponent_aliases_org ON public.rep_team_opponent_aliases USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_opponent_aliases",
+        "indexname": "rep_team_opponent_aliases_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_opponent_aliases_pkey ON public.rep_team_opponent_aliases USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_opponent_aliases",
+        "indexname": "rep_team_opponent_aliases_team_alias_uq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_opponent_aliases_team_alias_uq ON public.rep_team_opponent_aliases USING btree (team_id, normalized_alias)"
+      },
+      {
+        "tablename": "rep_team_opponent_observations",
+        "indexname": "idx_rep_team_opponent_obs_event",
+        "indexdef": "CREATE INDEX idx_rep_team_opponent_obs_event ON public.rep_team_opponent_observations USING btree (event_id)"
+      },
+      {
+        "tablename": "rep_team_opponent_observations",
+        "indexname": "idx_rep_team_opponent_obs_opponent",
+        "indexdef": "CREATE INDEX idx_rep_team_opponent_obs_opponent ON public.rep_team_opponent_observations USING btree (opponent_id)"
+      },
+      {
+        "tablename": "rep_team_opponent_observations",
+        "indexname": "idx_rep_team_opponent_obs_team",
+        "indexdef": "CREATE INDEX idx_rep_team_opponent_obs_team ON public.rep_team_opponent_observations USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_team_opponent_observations",
+        "indexname": "rep_team_opponent_observations_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_opponent_observations_pkey ON public.rep_team_opponent_observations USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_opponents",
+        "indexname": "idx_rep_team_opponents_org",
+        "indexdef": "CREATE INDEX idx_rep_team_opponents_org ON public.rep_team_opponents USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_opponents",
+        "indexname": "idx_rep_team_opponents_team",
+        "indexdef": "CREATE INDEX idx_rep_team_opponents_team ON public.rep_team_opponents USING btree (team_id)"
+      },
+      {
+        "tablename": "rep_team_opponents",
+        "indexname": "rep_team_opponents_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_opponents_pkey ON public.rep_team_opponents USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_opponents",
+        "indexname": "rep_team_opponents_team_name_uq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_opponents_team_name_uq ON public.rep_team_opponents USING btree (team_id, normalized_name)"
+      },
+      {
         "tablename": "rep_team_payment_requests",
         "indexname": "rep_team_payment_requests_org_status_idx",
         "indexdef": "CREATE INDEX rep_team_payment_requests_org_status_idx ON public.rep_team_payment_requests USING btree (org_id, status)"
@@ -45065,6 +45610,11 @@
         "tablename": "rep_team_tournament_registrations",
         "indexname": "rep_team_tournament_registrations_tournament_team_unique",
         "indexdef": "CREATE UNIQUE INDEX rep_team_tournament_registrations_tournament_team_unique ON public.rep_team_tournament_registrations USING btree (tournament_team_id)"
+      },
+      {
+        "tablename": "rep_teams",
+        "indexname": "idx_rep_teams_org_share_club_book",
+        "indexdef": "CREATE INDEX idx_rep_teams_org_share_club_book ON public.rep_teams USING btree (org_id) WHERE share_club_book"
       },
       {
         "tablename": "rep_teams",
@@ -47131,6 +47681,18 @@
       },
       {
         "kind": "CHECK",
+        "table_name": "rep_team_game_moments",
+        "detail": "rep_team_game_moments_body_len",
+        "check_clause": "((char_length(body) >= 1) AND (char_length(body) <= 280))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_game_moments",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
         "table_name": "rep_team_groups",
         "detail": "rep_team_groups_name_check",
         "check_clause": "((char_length(TRIM(BOTH FROM name)) > 0) AND (char_length(name) <= 50))"
@@ -47210,6 +47772,24 @@
       {
         "kind": "RLS",
         "table_name": "rep_team_measurable_types",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_opponent_aliases",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_opponent_observations",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_opponents",
         "detail": "ENABLED",
         "check_clause": null
       },

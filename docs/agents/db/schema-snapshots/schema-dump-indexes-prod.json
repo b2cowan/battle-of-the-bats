@@ -1865,6 +1865,21 @@
     "indexdef": "CREATE INDEX rep_team_expenses_year_idx ON public.rep_team_expenses USING btree (program_year_id)"
   },
   {
+    "tablename": "rep_team_game_moments",
+    "indexname": "idx_rep_team_game_moments_event",
+    "indexdef": "CREATE INDEX idx_rep_team_game_moments_event ON public.rep_team_game_moments USING btree (team_id, event_id)"
+  },
+  {
+    "tablename": "rep_team_game_moments",
+    "indexname": "idx_rep_team_game_moments_season_player",
+    "indexdef": "CREATE INDEX idx_rep_team_game_moments_season_player ON public.rep_team_game_moments USING btree (team_id, program_year_id, player_id)"
+  },
+  {
+    "tablename": "rep_team_game_moments",
+    "indexname": "rep_team_game_moments_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_game_moments_pkey ON public.rep_team_game_moments USING btree (id)"
+  },
+  {
     "tablename": "rep_team_groups",
     "indexname": "idx_rep_team_groups_org_name",
     "indexdef": "CREATE UNIQUE INDEX idx_rep_team_groups_org_name ON public.rep_team_groups USING btree (org_id, lower(name))"
@@ -1965,6 +1980,66 @@
     "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
   },
   {
+    "tablename": "rep_team_opponent_aliases",
+    "indexname": "idx_rep_team_opponent_aliases_opponent",
+    "indexdef": "CREATE INDEX idx_rep_team_opponent_aliases_opponent ON public.rep_team_opponent_aliases USING btree (opponent_id)"
+  },
+  {
+    "tablename": "rep_team_opponent_aliases",
+    "indexname": "idx_rep_team_opponent_aliases_org",
+    "indexdef": "CREATE INDEX idx_rep_team_opponent_aliases_org ON public.rep_team_opponent_aliases USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_opponent_aliases",
+    "indexname": "rep_team_opponent_aliases_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_opponent_aliases_pkey ON public.rep_team_opponent_aliases USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_opponent_aliases",
+    "indexname": "rep_team_opponent_aliases_team_alias_uq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_opponent_aliases_team_alias_uq ON public.rep_team_opponent_aliases USING btree (team_id, normalized_alias)"
+  },
+  {
+    "tablename": "rep_team_opponent_observations",
+    "indexname": "idx_rep_team_opponent_obs_event",
+    "indexdef": "CREATE INDEX idx_rep_team_opponent_obs_event ON public.rep_team_opponent_observations USING btree (event_id)"
+  },
+  {
+    "tablename": "rep_team_opponent_observations",
+    "indexname": "idx_rep_team_opponent_obs_opponent",
+    "indexdef": "CREATE INDEX idx_rep_team_opponent_obs_opponent ON public.rep_team_opponent_observations USING btree (opponent_id)"
+  },
+  {
+    "tablename": "rep_team_opponent_observations",
+    "indexname": "idx_rep_team_opponent_obs_team",
+    "indexdef": "CREATE INDEX idx_rep_team_opponent_obs_team ON public.rep_team_opponent_observations USING btree (team_id)"
+  },
+  {
+    "tablename": "rep_team_opponent_observations",
+    "indexname": "rep_team_opponent_observations_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_opponent_observations_pkey ON public.rep_team_opponent_observations USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_opponents",
+    "indexname": "idx_rep_team_opponents_org",
+    "indexdef": "CREATE INDEX idx_rep_team_opponents_org ON public.rep_team_opponents USING btree (org_id)"
+  },
+  {
+    "tablename": "rep_team_opponents",
+    "indexname": "idx_rep_team_opponents_team",
+    "indexdef": "CREATE INDEX idx_rep_team_opponents_team ON public.rep_team_opponents USING btree (team_id)"
+  },
+  {
+    "tablename": "rep_team_opponents",
+    "indexname": "rep_team_opponents_pkey",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_opponents_pkey ON public.rep_team_opponents USING btree (id)"
+  },
+  {
+    "tablename": "rep_team_opponents",
+    "indexname": "rep_team_opponents_team_name_uq",
+    "indexdef": "CREATE UNIQUE INDEX rep_team_opponents_team_name_uq ON public.rep_team_opponents USING btree (team_id, normalized_name)"
+  },
+  {
     "tablename": "rep_team_payment_requests",
     "indexname": "rep_team_payment_requests_org_status_idx",
     "indexdef": "CREATE INDEX rep_team_payment_requests_org_status_idx ON public.rep_team_payment_requests USING btree (org_id, status)"
@@ -2058,6 +2133,11 @@
     "tablename": "rep_team_tournament_registrations",
     "indexname": "rep_team_tournament_registrations_tournament_team_unique",
     "indexdef": "CREATE UNIQUE INDEX rep_team_tournament_registrations_tournament_team_unique ON public.rep_team_tournament_registrations USING btree (tournament_team_id)"
+  },
+  {
+    "tablename": "rep_teams",
+    "indexname": "idx_rep_teams_org_share_club_book",
+    "indexdef": "CREATE INDEX idx_rep_teams_org_share_club_book ON public.rep_teams USING btree (org_id) WHERE share_club_book"
   },
   {
     "tablename": "rep_teams",
