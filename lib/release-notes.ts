@@ -44,6 +44,32 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-08-06',
+    title: 'New in the Coach Portal: scouting, club sharing, game day',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Log what you notice about an opponent after each game — it\'s all there, rolled up, before you play them again.',
+      },
+      {
+        category: 'new',
+        text: 'If another team in your club already scouted this opponent, you\'ll see their notes too — nobody starts from scratch twice.',
+      },
+      {
+        category: 'new',
+        text: 'A bench console built for the dugout — track playing time as it happens, not from memory afterward.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed several help labels that screen readers were skipping over.',
+      },
+      {
+        category: 'fixed',
+        text: 'Status colors are easier to read on light-colored cards.',
+      },
+    ],
+  },
+  {
     date: '2026-07-31',
     title: 'The Coaches Portal grows up — plus one connected navigation and real desktop layouts',
     highlights: [
