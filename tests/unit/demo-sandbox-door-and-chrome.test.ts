@@ -51,9 +51,14 @@ describe('the door (S3)', () => {
     assert.ok(!/searchParams\.get\(\s*['"]email/.test(src), 'door must not read ?email');
   });
 
-  test('resolves its redirect host through the trusted-origin helper, never a raw Origin header', async () => {
+  test('resolves its redirect host through a trusted-origin helper, never a raw Origin header', async () => {
     const src = await doorSource();
-    assert.ok(src.includes('resolveTrustedAppOrigin'), 'door must use resolveTrustedAppOrigin');
+    // ⚠ Was `resolveTrustedAppOrigin` until 2026-08-07. That helper answers with the CANONICAL
+    // host, which is right for a link going into an email and wrong for a redirect the visitor
+    // follows on this request: the door sets the session cookie for the host it was ASKED for, so
+    // sending them to a different host throws the session away. See the host-parity block at the
+    // foot of this file for the production trace.
+    assert.ok(src.includes('resolveSameHostOrigin'), 'door must use resolveSameHostOrigin');
     assert.ok(
       !/headers\.get\(\s*['"]origin['"]\s*\)/i.test(src),
       'door must not read the request Origin header directly',
@@ -270,5 +275,75 @@ describe('curated surfaces (S6)', () => {
     }
     assert.equal(isNavKeyHiddenInSandbox(true, 'dashboard'), false, 'the demo must show the product deeply');
     assert.equal(isNavKeyHiddenInSandbox(true, 'schedule'), false);
+  });
+});
+
+/**
+ * The redirect host — the defect found on production 2026-08-07.
+ *
+ * The site answers on BOTH `fieldlogichq.ca` and `www.fieldlogichq.ca`, and cookies do not span the
+ * two. Every door here mints the shared demo session and redirects in the same response, so if the
+ * redirect lands on a different host than the cookie was written for, the visitor arrives anonymous
+ * and is bounced to a login page — on a product whose whole promise is that there isn't one.
+ *
+ * ⚠ The old code asked for the CANONICAL origin, which is right for a link going into an EMAIL and
+ * wrong for a redirect the visitor follows now. And it failed on the NORMAL path, not an edge case:
+ * a browser sends `Origin` on CORS requests, form POSTs and fetches — never on a typed address or an
+ * ordinary link — so a top-level navigation always fell through to the canonical fallback.
+ *
+ * What is pinned: a same-request redirect keeps the visitor on the host they arrived at, an
+ * unrecognised host still falls back to canonical, and no door regresses to the email resolver.
+ */
+describe('demo doors keep the visitor on the host they arrived at', () => {
+  /**
+   * ⚠ These are STRUCTURAL pins, not behavioural ones, and the distinction is deliberate rather
+   * than lazy: `lib/app-origin.ts` imports `server-only`, which is supplied by the Next bundler and
+   * is not resolvable under `node --test`, so no unit test in this repo can execute it. That is why
+   * every other test in this file also reads source. A test that LOOKED behavioural while only
+   * matching text would be worse than one that says plainly what it checks.
+   *
+   * The behaviour itself was verified against production by walking both hosts on the live site
+   * (2026-08-07): apex bounced to a login page, www landed in the demo. That trace is what this
+   * pins against coming back.
+   */
+  test('the same-host resolver derives from the REQUEST url and still validates it', async () => {
+    const src = await readFile(new URL('../../lib/app-origin.ts', import.meta.url), 'utf8');
+    const fn = src.slice(src.indexOf('export function resolveSameHostOrigin'));
+    const body = fn.slice(0, fn.indexOf('\n}'));
+    assert.ok(
+      /new URL\(\s*req\.url\s*\)/.test(body),
+      'the redirect base must come from the request URL, or a cookie set for that host is orphaned',
+    );
+    assert.ok(
+      /isTrustedAppOrigin\(/.test(body),
+      'the request host must still be validated through the shared predicate',
+    );
+    assert.ok(
+      /resolveTrustedAppOrigin\(/.test(body),
+      'an unrecognised host must fall back to the canonical origin, not be honoured',
+    );
+  });
+
+  test('every door that mints a session uses the same-host resolver, not the email one', async () => {
+    // The four routes that set the demo cookie and redirect in one response. An email-bound
+    // resolver in any of them reintroduces the production defect verbatim.
+    const doors = [
+      'app/see-it-live/route.ts',
+      'app/see-it-live/coaches/route.ts',
+      'app/api/sandbox/switch/route.ts',
+      'app/api/sandbox/switch-coach/route.ts',
+    ];
+    for (const file of doors) {
+      const src = await readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
+      const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+      assert.ok(
+        code.includes('resolveSameHostOrigin'),
+        `${file} must resolve its redirect base from the request host`,
+      );
+      assert.ok(
+        !/\bresolveTrustedAppOrigin\s*\(/.test(code),
+        `${file} must not use the email-link resolver for a same-request redirect`,
+      );
+    }
   });
 });

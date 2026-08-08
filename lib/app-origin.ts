@@ -31,6 +31,49 @@ export function resolveTrustedAppOrigin(req: Request): string {
  * (the resolver above falls back to the canonical URL; an ingestion endpoint should keep accepting
  * it, since only a browser is obliged to send one).
  */
+/**
+ * The base URL for a redirect issued DURING THIS REQUEST — i.e. "wherever the visitor already is".
+ *
+ * ── Why this exists, and why it is not `resolveTrustedAppOrigin` ─────────────────────────────
+ *
+ * The resolver above answers "what is our canonical address?", which is the right question for a
+ * link that will be **embedded in an email** and clicked minutes later. It is the WRONG question for
+ * a redirect the visitor follows immediately, and using it there produced a real production defect:
+ *
+ *   The site answers on BOTH `fieldlogichq.ca` and `www.fieldlogichq.ca`, and cookies do not span
+ *   the two. A visitor who typed the apex address hit a demo door, which minted the shared demo
+ *   session and set the cookie **for the host they asked for** — then redirected them to the
+ *   canonical `www` host, where that cookie is not sent. They arrived anonymous and were bounced to
+ *   a login page, on a product whose entire promise is "no login". (Traced live 2026-08-07.)
+ *
+ *   ⚠ It is not an edge case. A browser sends `Origin` on CORS requests, form POSTs and fetches —
+ *   NOT on a typed address or an ordinary link. So a top-level navigation always fell through to the
+ *   canonical fallback. The normal path was the broken one, which is why it survived so long.
+ *
+ * So: a same-request redirect must keep the visitor on the host they arrived at, or any cookie set
+ * alongside it is thrown away.
+ *
+ * ── Why reading the request host is safe HERE ────────────────────────────────────────────────
+ *
+ * The attack the canonical fallback defends against is a caller-controlled host ending up inside an
+ * emailed link that carries a live one-time token. None of that applies to a redirect on this
+ * request: there is no token in the URL, and the session cookie is scoped to the very host being
+ * redirected to — so a caller who forges a host is redirecting themselves to their own host with a
+ * cookie only that host can read. It buys them nothing.
+ *
+ * The host is validated all the same, through the SAME predicate the email path uses, so an
+ * unrecognised host falls back to canonical rather than being honoured. One rule, stated once.
+ */
+export function resolveSameHostOrigin(req: Request): string {
+  try {
+    const self = new URL(req.url).origin;
+    if (isTrustedAppOrigin(self)) return self;
+  } catch {
+    /* unparseable request URL — fall through to the canonical answer */
+  }
+  return resolveTrustedAppOrigin(req);
+}
+
 export function isTrustedAppOrigin(origin: string): boolean {
   try {
     // Parse via the WHATWG URL parser and compare the normalized hostname — this neutralizes the

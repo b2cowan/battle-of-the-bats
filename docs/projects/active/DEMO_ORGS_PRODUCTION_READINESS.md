@@ -169,6 +169,45 @@ production database. It needs its own change, its own review, and a test that wa
 **Blocker status:** does not block this release (the doors are hidden in production builds, so no
 visitor can reach them from the site). **It absolutely blocks opening the doors.**
 
+### ✅ FIXED on `dev` 2026-08-07 (uncommitted, ships with this release)
+
+A same-request redirect now keeps the visitor on the host they arrived at. New
+`resolveSameHostOrigin` sits beside the email resolver in `lib/app-origin.ts` with the whole
+distinction written down in one place: **the canonical origin is the right answer for a link going
+into an EMAIL, and the wrong answer for a redirect the visitor follows on this request.** The
+request host is still validated through the same predicate the email path uses, so an unrecognised
+host falls back to canonical rather than being honoured.
+
+Applied to the four routes that mint a session and redirect in one response — the two doors and the
+two "you'll be signed out, continue?" confirmations. The other twelve consumers of the email
+resolver are untouched; they are building email links and are correct as they are.
+
+**Proven by executing the logic** (not just pattern-matching it — the module is `server-only` and
+cannot be imported under `node --test`, so a throwaway harness stubbed the marker):
+
+| Requested host | Redirect base | |
+|---|---|---|
+| `fieldlogichq.ca` | `https://fieldlogichq.ca` | stays on apex ✅ |
+| `www.fieldlogichq.ca` | `https://www.fieldlogichq.ca` | stays on www ✅ |
+| `demo.fieldlogichq.ca` | `https://demo.fieldlogichq.ca` | our subdomains are ours ✅ |
+| `evil.example` | `https://www.fieldlogichq.ca` | hostile host refused ✅ |
+| `fieldlogichq.ca.evil.example` | `https://www.fieldlogichq.ca` | suffix trick refused ✅ |
+
+**Regression cover:** `demo-sandbox-door-and-chrome.test.ts` now pins that all four doors use the
+same-host resolver and that none reverts to the email one, plus the resolver's own shape. ⚠ Those
+are **structural** pins and say so in the file — the behavioural proof is the table above and the
+live walk of both hosts, because this module cannot be executed by the unit runner.
+
+**Still worth doing separately:** enforce ONE canonical host at the edge (redirect apex → www before
+the app runs). That removes this entire class of defect rather than this instance of it, and
+consolidates search ranking onto one host. Hosting-level change, needs the owner.
+**→ RULED 2026-08-08: owner approved exactly this (Option A).** Shipped as an in-app host rule
+(temporary 307 first, permanent after the live matrix passes); Stripe's LIVE webhook was repointed
+apex → www **before** the rule shipped. Ruling + rollout log: `CANONICAL_HOST_DECISION_PROMPT.md`.
+
+**⚠ Re-verify on production after deploy** by walking BOTH hosts into both doors. This defect
+survived because nothing ever walked the real thing on the real host.
+
 ---
 
 ## Execution log — 2026-08-07

@@ -4,7 +4,7 @@ import { assertSafeSupabaseServerEnvironment } from '@/lib/supabase-safety';
 import { getDemoOrgByKind, isDemoOrganizerEmail } from '@/lib/demo-org';
 import { demoOrgIdForSlug } from '@/lib/demo-org-server';
 import { attachDemoSession, currentSessionUser } from '@/lib/demo-session';
-import { resolveTrustedAppOrigin } from '@/lib/app-origin';
+import { resolveSameHostOrigin } from '@/lib/app-origin';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { captureError } from '@/lib/observability';
 import { COACH_CONFIRM_PATH } from '@/lib/sandbox-door';
@@ -45,7 +45,7 @@ let unseededAlreadyReported = false;
 export async function GET(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('See-it-live coach demo door');
 
-  const origin = resolveTrustedAppOrigin(request);
+  const origin = resolveSameHostOrigin(request);
   const demo = getDemoOrgByKind('coach');
   if (!demo) return NextResponse.redirect(new URL(FALLBACK_PATH, origin));
 

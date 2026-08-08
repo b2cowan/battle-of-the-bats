@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from '@/lib/supabase-safety';
 import { getDemoOrgByKind } from '@/lib/demo-org';
 import { attachDemoSession } from '@/lib/demo-session';
-import { resolveTrustedAppOrigin, isTrustedAppOrigin } from '@/lib/app-origin';
+import { resolveSameHostOrigin, isTrustedAppOrigin } from '@/lib/app-origin';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { captureError } from '@/lib/observability';
 import { COACH_CONFIRM_PATH } from '@/lib/sandbox-door';
@@ -27,7 +27,7 @@ const globalLimiter = new FixedWindowRateLimiter(5 * MINUTE, 150);
 export async function POST(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('See-it-live coach session swap');
 
-  const origin = resolveTrustedAppOrigin(request);
+  const origin = resolveSameHostOrigin(request);
   const demo = getDemoOrgByKind('coach');
   if (!demo) return NextResponse.redirect(new URL('/for-coaches', origin), 303);
 

@@ -4,7 +4,7 @@ import { assertSafeSupabaseServerEnvironment } from '@/lib/supabase-safety';
 import { getDemoOrgByKind, isDemoOrganizerEmail } from '@/lib/demo-org';
 import { demoOrgIdForSlug } from '@/lib/demo-org-server';
 import { attachDemoSession, currentSessionUser } from '@/lib/demo-session';
-import { resolveTrustedAppOrigin } from '@/lib/app-origin';
+import { resolveSameHostOrigin } from '@/lib/app-origin';
 import { FixedWindowRateLimiter, clientIpFrom } from '@/lib/rate-limit';
 import { captureError } from '@/lib/observability';
 import { SANDBOX_CONFIRM_PATH } from '@/lib/sandbox-door';
@@ -48,11 +48,19 @@ import { SANDBOX_CONFIRM_PATH } from '@/lib/sandbox-door';
  * account. Nothing is collected either way, and a logged-out visitor never sees it.
  * (Owner ruling 2026-08-03, taking option (a) of the three put to them.)
  *
- * ── One more thing this route deliberately does NOT do ──────────────────────────────────────
+ * ── The redirect host ───────────────────────────────────────────────────────────────────────
  *
- * It never trusts the request's `Origin` for the redirect host. `resolveTrustedAppOrigin` honours
- * only our own hosts — see the auth-email origin gotcha; a raw `Origin` here is an
- * account-takeover shape.
+ * ⚠ This route SETS A SESSION COOKIE AND REDIRECTS IN THE SAME BREATH, so the two must land on the
+ * same host or the cookie is thrown away. It used to resolve the CANONICAL origin here, which meant
+ * a visitor arriving on the apex `fieldlogichq.ca` had their session written for the apex and was
+ * then sent to `www` — where the browser correctly refuses to send it. They arrived anonymous, on a
+ * door whose entire promise is "no login". (Traced live on production 2026-08-07.)
+ *
+ * `resolveSameHostOrigin` keeps them where they are and still validates the host through the same
+ * predicate the email path uses, so an unrecognised host falls back to canonical. The
+ * account-takeover shape the canonical fallback exists to stop is an emailed link carrying a live
+ * token — see `lib/app-origin.ts` for why that reasoning does not transfer to a redirect the
+ * visitor follows on this request.
  */
 
 export const dynamic = 'force-dynamic';
@@ -81,7 +89,7 @@ let unseededAlreadyReported = false;
 export async function GET(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('See-it-live demo door');
 
-  const origin = resolveTrustedAppOrigin(request);
+  const origin = resolveSameHostOrigin(request);
   const demo = getDemoOrgByKind('tournament');
 
   // No tournament sandbox is registered in the allow-list at all (it is a compile-time constant,
