@@ -1,4 +1,5 @@
 import type { Organization } from './types';
+import { HttpError } from './http-error';
 
 /**
  * Billing access rail — "a cancelled account stops working, immediately."
@@ -52,9 +53,15 @@ export function isOrgBillingSuspended(
  * every single one of those routes (verified: zero unwrapped) — answer 402 in ONE place, with no
  * per-route edits and no chance of a route forgetting.
  */
-export class OrgBillingSuspendedError extends Error {
-  readonly billingSuspended = true;
+export class OrgBillingSuspendedError extends HttpError {
+  /**
+   * 402 Payment Required — the honest status for "you are who you say you are, the org just
+   * doesn't pay any more." Deliberately NOT 401 (which reads as a broken session and can bounce a
+   * signed-in person into a sign-in loop) and not a bare 403 (which reads as "wrong role").
+   */
+  readonly status = 402;
   readonly orgSlug: string;
+
   // ⚠ Explicit field + assignment, NOT a TypeScript parameter property: the unit-test runner
   // strips types rather than compiling them, and `constructor(readonly x: string)` is a syntax
   // error there. Keep this shape.
@@ -63,20 +70,13 @@ export class OrgBillingSuspendedError extends Error {
     this.name = 'OrgBillingSuspendedError';
     this.orgSlug = orgSlug;
   }
-}
 
-/**
- * 402 Payment Required — the honest status for "you are who you say you are, the org just doesn't
- * pay any more." Deliberately NOT 401 (which would read as a broken session) and not a bare 403
- * (which reads as "wrong role"). The `billingSuspended` flag is what client code keys on to show
- * the cancelled state instead of an error. NOT counted as a server error by observability.
- */
-export function billingSuspendedResponse(): Response {
-  return new Response(
-    JSON.stringify({
+  /** `billingSuspended` is what client code keys on to show the cancelled state, not an error. */
+  body() {
+    return {
       error: 'This organization\'s subscription has ended.',
       billingSuspended: true,
-    }),
-    { status: 402, headers: { 'Content-Type': 'application/json' } },
-  );
+      orgSlug: this.orgSlug,
+    };
+  }
 }

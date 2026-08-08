@@ -5,6 +5,8 @@ import { getOrgOwnerEmail, supabaseAdmin } from './supabase-admin';
 import { billingRetentionWarningHtml, SITE_URL } from './email';
 import { sendTransactionalEmail } from './platform-email-templates';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
+import { tournamentToday } from './timezone';
+import { orderByKeepPriority } from './billing-downgrade-order';
 import type { Organization, OrgPlan } from './types';
 import type { Capability } from './roles';
 
@@ -12,15 +14,9 @@ export const BILLING_RETENTION_DAYS = 90;
 
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 
-export type BillingTournamentSummary = {
-  id: string;
-  name: string;
-  slug: string;
-  status: string;
-  year: number | null;
-  startDate: string | null;
-  endDate: string | null;
-};
+// Lives in a server-only-free module so the pure downgrade-order policy can share it.
+export type { BillingTournamentSummary } from './billing-retention-types';
+import type { BillingTournamentSummary } from './billing-retention-types';
 
 export type DowngradePreflight = {
   currentPlan: OrgPlan;
@@ -172,11 +168,11 @@ export async function buildDowngradePreflight(
  * down to a one-slot plan kept all twelve of its live tournaments indefinitely. Recorded, never
  * applied. Same defect class as the cancellation gap; same fix — do what the customer path does.
  *
- * WHICH ones are archived: `getNonArchivedTournaments` sorts year DESC, name ASC, and we keep the
- * first N. So an operator downgrade keeps the org's MOST RECENT seasons and archives the oldest —
- * deterministic, and the same "keep what's current" instinct an operator would apply by hand. The
- * self-serve path lets the customer pick instead, which is right for them and wrong here: nobody
- * is sitting in front of the platform console to choose on the customer's behalf.
+ * WHICH ones are archived — see `rankForKeeping` below. The self-serve path lets the CUSTOMER pick
+ * which to keep; nobody is sitting in front of the platform console to choose on their behalf, so
+ * this ranks deterministically instead. ⚠ It must never archive a tournament that is currently
+ * running: doing so 404s that event's entire public site instantly, mid-event, for every family
+ * and spectator. Live events are therefore kept first, unconditionally.
  *
  * Nothing is destroyed: rows land in `billing_retained_records` exactly as the customer path
  * writes them, so `restoreRetainedDowngradeTournaments` reinstates them on re-upgrade.
@@ -196,8 +192,14 @@ export async function archiveOverCapTournamentsForPlanChange(opts: {
   const tournaments = await getNonArchivedTournaments(orgId);
   if (tournaments.length <= targetLimit) return [];
 
-  const overCap = tournaments.slice(targetLimit);
-  const keepIds = tournaments.slice(0, targetLimit).map(t => t.id);
+  // Rank by what the org is actually USING, never the display order — see billing-downgrade-order.
+  // `tournamentToday()`, never raw UTC: production runs UTC, so a naive "today" reads a day late
+  // from ~8pm Toronto — which here would mean a tournament that started this evening scoring as
+  // "upcoming" instead of "running now" and being archived out from under a live event.
+  const ranked = orderByKeepPriority(tournaments, tournamentToday());
+
+  const overCap = ranked.slice(targetLimit);
+  const keepIds = ranked.slice(0, targetLimit).map(t => t.id);
   const retentionUntil = retentionDeadline();
 
   const { data: intent, error: intentError } = await supabaseAdmin
@@ -220,13 +222,16 @@ export async function archiveOverCapTournamentsForPlanChange(opts: {
   if (intentError) throw intentError;
 
   const overCapIds = overCap.map(t => t.id);
-  const { error: archiveError } = await supabaseAdmin
-    .from('tournaments')
-    .update({ status: 'archived', is_active: false })
-    .eq('org_id', orgId)
-    .in('id', overCapIds);
-  if (archiveError) throw archiveError;
 
+  // ⚠ ORDER IS DELIBERATE: write the RESTORE TICKET before taking anything away.
+  // These are three statements with no surrounding transaction. If the archive ran first and this
+  // insert then failed, the tournaments would be archived with no retention record — invisible to
+  // `restoreRetainedDowngradeTournaments` (which reads only these rows) AND invisible to a retry
+  // (`getNonArchivedTournaments` already excludes archived ones), so the customer would lose them
+  // permanently even after paying again. Reversed, the bad case is a retention row for a
+  // tournament that was never archived — restore simply no-ops it back to the status it still has.
+  // Harmless. The durable fix is one RPC wrapping all three; that needs a migration, so it is
+  // flagged rather than done here.
   const { error: recordError } = await supabaseAdmin
     .from('billing_retained_records')
     .insert(overCap.map(t => ({
@@ -251,6 +256,14 @@ export async function archiveOverCapTournamentsForPlanChange(opts: {
       },
     })));
   if (recordError) throw recordError;
+
+  // Only now take the tournaments away — the restore ticket above is already durable.
+  const { error: archiveError } = await supabaseAdmin
+    .from('tournaments')
+    .update({ status: 'archived', is_active: false })
+    .eq('org_id', orgId)
+    .in('id', overCapIds);
+  if (archiveError) throw archiveError;
 
   return overCap;
 }

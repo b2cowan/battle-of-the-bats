@@ -121,14 +121,53 @@ over to Bulk Operations, which said only "Grant a comp period."
 
 ---
 
+## What `/simplify` and `/review` changed (2026-08-06)
+
+Both ran after the build. Between them they found **three defects in this work** and **three
+pre-existing holes of the same class the rail was built to close**. All fixed.
+
+**Defects in this work**
+1. The feature-matrix honesty banner referenced CSS classes that don't exist in that stylesheet —
+   it shipped completely unstyled. (`/simplify`; own class added.)
+2. `lib/tournament-preview.ts` opted out of the rail to avoid an error boundary and then rendered
+   admin-only tournament data (service-role reads) into SSR HTML for a cancelled org. The
+   client-side `CancellationGuard` fires after mount and never fires at all without JS. Now does a
+   **server-side** `notFound()`. (`/review`; my own `/simplify` fix caused it.)
+3. Re-ordering the archive writes accidentally **deleted the archive step**, so the downgrade fix
+   would have silently done nothing. Caught by lint's unused-variable warning.
+
+**Pre-existing holes of the same class — the rail's own claim was overstated without these**
+4. **The family/guardian portal never consulted billing at all** — its org gate didn't even select
+   `subscription_status`. A cancelled club's families kept the team page, schedule, calendar feed
+   and join/claim links forever. Closed at `getOrgForGate`, the one chokepoint all six family
+   surfaces share.
+5. **Rep-team tryout registration** accepted player DOB + guardian contact details for a cancelled
+   org indefinitely. The house-league sibling has refused this since audit J3-068; tryouts never got
+   the same treatment.
+6. **The nightly dues-reminder sweep** kept emailing families about money on behalf of cancelled
+   clubs. Runs from `pg_cron` with no session, so the rail never saw it.
+
+**Also hardened**
+- Downgrade keep-order: the old rule kept the first N of a *display* sort (year DESC, name ASC), so
+  within one year it was pure alphabet — "April Open" (finished) kept over "Summer Showdown"
+  running today, which 404s a live event's public site mid-tournament. Now ranked by what the org is
+  actually using, extracted to a pure, testable module with 6 assertions pinning it.
+- Archive writes reordered: the restore ticket is written **before** anything is taken away, so a
+  partial failure can never strand tournaments archived with no way back.
+- `archiveWarning` now actually reaches the operator — the screen ignored it, so a half-applied
+  downgrade read as plain success.
+- Two new guard assertions: an **inverse guard** (every SSR-reachable caller must survive the throw
+  — this is what caught #2), and one that a page-layer opt-out must actually *stop* a cancelled org
+  rather than merely avoid the throw.
+
 ## Verification
 
 | Check | Result |
 |---|---|
 | `npm run typecheck` | ✅ clean |
-| `npm test` | ✅ **1431/1431** (1426 + 5 new) |
-| `npm run lint:focused` (19 changed files) | ✅ 0 errors |
-| Token / contrast / date / dictionary / snapshot guardrails | ✅ pass |
+| `npm test` | ✅ **1439/1439** (1426 baseline + 13 new) |
+| `npm run lint:focused` (all touched files) | ✅ 0 errors |
+| Token / contrast / **date-correctness** / dictionary guardrails | ✅ pass |
 | `check-admin-org-context` | ✅ 297 route files clean |
 | `check-observability-coverage`, `check-demos` | ✅ pass |
 
@@ -145,8 +184,15 @@ is claimed unverified.
 
 - [ ] Owner QA — ledger **§1.19** (built as a before/after; a cancelled org that still works is
       indistinguishable from a working one by clicking)
-- [ ] `/strategy` — log the cancellation ruling in the Business Decisions Log
-- [ ] `/simplify` then `/review` (billing/auth = high-risk tier), then `/docs`
+- [x] `/strategy` — logged 2026-08-06 (Decided). Option D (read-only goodbye) logged separately as
+      **Proposed**, unratified. No pricing fact changed, so `PLAN_PRICING_FACTS.md` is untouched.
+- [x] `/simplify` → `/review` → `/docs` — all three run. See the section above for what they found.
+- [x] Help content — the org guide gained an **"If your subscription ends"** section
+      (`#subscription-ends`, linked from the Owner/Org Admin role path) leading with *nothing is
+      deleted*; the coaches guide gained a coach-facing answer for hitting the wall; and the
+      operator runbook was **corrected** — it told support a status override was "display only",
+      which since this change would have locked a paying customer out of the entire product while
+      Stripe kept charging them.
 - [ ] Commit — owner's explicit per-action OK required; ~65 files from four other sessions are in
       the tree, so **explicit pathspecs only**
 - [ ] One-minute owner check: `ENTITLEMENT_GRANTS_ENABLED` in the Amplify env — if unset, every

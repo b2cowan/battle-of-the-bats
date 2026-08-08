@@ -10,6 +10,7 @@ import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { usePathname } from 'next/navigation';
 import { UserCheck, UserX, RotateCcw, Search, DollarSign, ClipboardList, Plus, Trash2, Check } from 'lucide-react';
 import BottomSheet from '@/components/admin/BottomSheet';
+import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfBottomBars';
 import styles from './CheckInBoard.module.css';
 
 const FETCH: RequestInit = { credentials: 'same-origin' };
@@ -137,10 +138,19 @@ const TeamRow = memo(function TeamRow({ team, fee, locked, busy, onOpen, onCheck
   );
 });
 
-export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
+export default function CheckInBoard({ orgSlug, tournamentId, locked, pinnedFilters = false }: {
   orgSlug: string;
   tournamentId: string;
   locked: boolean;
+  /**
+   * Host opt-in: move the arrival filter out of the toolbar and into the day-of shell's pinned
+   * bottom bar (phone only — above 640px it renders in the same place either way).
+   *
+   * ⚠ Opt-in per host, never a default. This board is ALSO mounted by the admin gate screen,
+   * which already carries `AdminBottomNav` — two more bars stacked under it would be three bands
+   * of chrome on one phone screen.
+   */
+  pinnedFilters?: boolean;
 }) {
   const [teams, setTeams] = useState<CheckInTeam[]>([]);
   const [divisions, setDivisions] = useState<DivInfo[]>([]);
@@ -267,6 +277,13 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
 
   const sheetTeam = sheetId ? teams.find(t => t.id === sheetId) ?? null : null;
 
+  const ARRIVAL_FILTERS = ['all', 'not_arrived', 'checked_in', 'no_show'] as const;
+  const arrivalLabel = (k: (typeof ARRIVAL_FILTERS)[number]) => (k === 'all' ? 'All' : STATUS_META[k].label);
+  // How many teams each bucket holds — the pinned bar leads on the count, because on a phone it
+  // replaces the reading a volunteer used to get from the gauges scrolled off above.
+  const arrivalCount = (k: (typeof ARRIVAL_FILTERS)[number]) =>
+    k === 'all' ? teams.length : teams.filter(t => t.checkInStatus === k).length;
+
   return (
     <>
       <div className={styles.gauges}>
@@ -293,16 +310,35 @@ export default function CheckInBoard({ orgSlug, tournamentId, locked }: {
           <option value="all">All divisions</option>
           {divisions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
         </select>
-        <div className={styles.segmented} role="tablist" aria-label="Arrival filter">
-          {(['all', 'not_arrived', 'checked_in', 'no_show'] as const).map(k => (
-            <button key={k} type="button" role="tab" aria-selected={statusFilter === k}
-              className={styles.segBtn} data-on={statusFilter === k ? 'true' : 'false'}
-              onClick={() => setStatusFilter(k)}>
-              {k === 'all' ? 'All' : STATUS_META[k].label}
-            </button>
-          ))}
-        </div>
+        {!pinnedFilters && (
+          <div className={styles.segmented} role="tablist" aria-label="Arrival filter">
+            {ARRIVAL_FILTERS.map(k => (
+              <button key={k} type="button" role="tab" aria-selected={statusFilter === k}
+                className={styles.segBtn} data-on={statusFilter === k ? 'true' : 'false'}
+                onClick={() => setStatusFilter(k)}>
+                {arrivalLabel(k)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
+
+      {/* The volunteer shell's pinned version — same four buckets, same state, thumb-reachable.
+          Rendered in this position so that above 640px it is simply a row where the toolbar's
+          segmented control used to sit. */}
+      {pinnedFilters && (
+        <DayOfFilterBar label="Arrival filter">
+          {ARRIVAL_FILTERS.map(k => (
+            <DayOfFilterButton
+              key={k}
+              label={arrivalLabel(k)}
+              count={arrivalCount(k)}
+              active={statusFilter === k}
+              onClick={() => setStatusFilter(k)}
+            />
+          ))}
+        </DayOfFilterBar>
+      )}
 
       {error && (
         <div className={styles.errorBanner}>

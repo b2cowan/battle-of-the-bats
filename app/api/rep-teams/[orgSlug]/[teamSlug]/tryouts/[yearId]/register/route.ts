@@ -6,6 +6,7 @@ import {
   createRepTryoutRegistration,
 } from '@/lib/db';
 import { tryoutRegistrationConfirmationHtml } from '@/lib/email';
+import { isOrgBillingSuspended } from '@/lib/org-billing-access';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability } from '@/lib/observability';
 import { clientIpFrom } from '@/lib/rate-limit';
@@ -29,6 +30,16 @@ export const POST = withObservability(async (req: Request,
 
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+
+  // A cancelled org must not keep taking in players' and guardians' personal details. This is a
+  // PUBLIC route — no session, so the billing rail on getAuthContext never sees it — and it writes
+  // name, date of birth, and guardian contact details. The house-league sibling
+  // (resolvePublicLeagueContext, audit J3-068) has refused registrations for a cancelled org for
+  // a while; rep-team tryouts never got the same treatment. 404, not 403: a cancelled org's public
+  // surface should read as "not here", the same as its tournament and league pages already do.
+  if (isOrgBillingSuspended(org)) {
+    return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+  }
 
   const team = await getRepTeamBySlug(org.id, teamSlug);
   if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });

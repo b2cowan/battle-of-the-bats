@@ -2251,7 +2251,7 @@ export default function PlansPricingClient({
               lib/plan-config.ts. Nobody's access changed. Wiring it up for real is a genuine
               project (the gate is synchronous and runs in client components), so until then this
               screen states the limit plainly rather than implying an effect it does not have. */}
-          <div className={`${styles.billingClarity ?? ''} ${styles.warningNote ?? ''}`.trim()} style={{ marginBottom: '1rem' }}>
+          <div className={styles.matrixTruthBanner}>
             <p>
               <strong>Publishing here does not change what customers can access.</strong> This matrix is
               the record of intended packaging. Live entitlement is still read from{' '}
@@ -2260,11 +2260,11 @@ export default function PlansPricingClient({
             </p>
             {featureMatrixDrift.length > 0 ? (
               <>
-                <p style={{ marginTop: '0.6rem' }}>
+                <p>
                   ⚠ <strong>{featureMatrixDrift.length} module{featureMatrixDrift.length === 1 ? '' : 's'} published but NOT live</strong>{' '}
                   — these are waiting on that code change:
                 </p>
-                <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.2rem' }}>
+                <ul>
                   {featureMatrixDrift.map(row => (
                     <li key={`${row.planId}:${row.moduleKey}`}>
                       <strong>{planLabel(row.planId)}</strong> · {row.moduleKey} —{' '}
@@ -2275,7 +2275,7 @@ export default function PlansPricingClient({
                 </ul>
               </>
             ) : (
-              <p style={{ marginTop: '0.6rem' }}>
+              <p>
                 ✅ Published matrix and live product currently agree — nothing outstanding.
               </p>
             )}

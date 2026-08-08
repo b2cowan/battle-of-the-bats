@@ -1,8 +1,12 @@
 /**
  * withObservability — wraps an App-Router route handler to (1) mint a requestId and seed the
- * AsyncLocalStorage request context, (2) count calls vs errors for the dashboard chart, and
+ * AsyncLocalStorage request context, (2) count calls vs errors for the dashboard chart,
  * (3) act as a returned-5xx SAFETY NET: if the handler RETURNS a 5xx that it never reported
- * itself, capture a fallback error event so no swallowed server failure is ever invisible.
+ * itself, capture a fallback error event so no swallowed server failure is ever invisible, and
+ * (4) translate a thrown `HttpError` into its own response (see lib/http-error.ts) — for failures
+ * raised deep in shared plumbing that the route above cannot reasonably be asked to catch. It
+ * carries this fourth job because it is the ONE wrapper every authenticated route provably passes
+ * through; it stays generic by knowing the HttpError contract, never a specific business class.
  *
  * It does NOT capture thrown errors here — Next's instrumentation.ts onRequestError captures
  * uncaught throws globally (capturing here too would double-count). The safety net is for the
@@ -17,7 +21,7 @@ import { randomUUID } from 'node:crypto';
 import { runWithRequestContext, getRequestContext } from './request-context';
 import { recordRequest } from './metrics';
 import { captureError } from './capture';
-import { OrgBillingSuspendedError, billingSuspendedResponse } from '../org-billing-access';
+import { isHttpError } from '../http-error';
 
 type AnyRouteHandler = (...args: never[]) => Promise<Response> | Response;
 
@@ -61,13 +65,15 @@ export function withObservability<T extends AnyRouteHandler>(handler: T, opts: {
           try { res?.headers?.set?.('x-request-id', requestId); } catch { /* immutable headers */ }
           return res;
         } catch (err) {
-          // Billing rail (owner ruling 2026-08-06): a cancelled org reached a route that did not
-          // opt out. This is an EXPECTED answer, not a failure — record it as a normal request and
-          // return 402 rather than letting it surface as an uncaught 500. Handled here, at the one
-          // wrapper every authenticated org route already passes through, so no route can forget.
-          if (err instanceof OrgBillingSuspendedError) {
+          // A typed error thrown from deep in shared plumbing that already knows its own HTTP
+          // answer (see lib/http-error.ts) — today the billing rail's 402 for a cancelled org.
+          // These are EXPECTED answers, not failures: record as a normal request and return the
+          // response rather than letting it surface as an uncaught 500. Handled here, at the one
+          // wrapper every authenticated route already passes through, so no route can forget —
+          // and via the HttpError contract, so a second such error needs no edit to this file.
+          if (isHttpError(err)) {
             recordRequest(opts.route, false);
-            const res = billingSuspendedResponse();
+            const res = err.toResponse();
             try { res.headers.set('x-request-id', requestId); } catch { /* immutable headers */ }
             return res;
           }

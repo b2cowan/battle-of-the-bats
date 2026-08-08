@@ -8,6 +8,118 @@
 
 ---
 
+### 2026-08-07 — The homepage states AVAILABILITY, not the promo calendar: the Founding Season is deliberately NOT announced on the persona cards, and the Coaches Portal card stops saying "coming soon"
+
+**Status:** Decided (owner delegated the call to `/strategy` on 2026-08-07 — *"go ahead with strategy and marketing"* — after being shown three options; the homepage correction itself was directed explicitly: *"we need to fix that"*). Not yet built.
+
+**Decision:** Four rulings about what the homepage's persona cards may claim.
+
+1. **The Coaches Portal card goes LIVE.** It has read "Coming soon · express interest", greyed out, since before the product launched — **and the product launched on production on 2026-07-24**. Verified against the live database, not notes: `plan_gating.team = live`, flipped by the owner at 01:13 UTC with the Phase 3 launch note; live `/for-coaches` renders "Free until Jan 1, 2027" ×5 and "Start free" ×8, `/start` offers "Coach a team · Free", `/pricing` shows the promo. The homepage is the **only** surface that hardcodes launch state instead of reading the gate, which is why it froze while every other surface flipped together. **It must read the gate like the others** — a hand-written "true" would re-arm the identical trap.
+
+2. **Persona-card badges state availability and the absence of a payment barrier — never the promo calendar.** Both live cards carry the *same shape* of claim (the "free to start, no credit card" class; exact words are `/marketing`'s). Prices, the $29/$39 anchors, and the Founding Season end date live **one click later** on the persona pages and `/pricing`, where a promotion can actually be explained.
+
+3. **League Plus and Club keep saying "coming soon"** — verified correct against the live gates (`league`, `club`, `club_large` all `early_access`). Only two of the four personas have something to sell, and the grid should say exactly that.
+
+4. **The Founding Season is NOT announced on the homepage for either product.** This was the live question. Announcing it for the Coaches Portal alone while Tournament Plus carries the identical $0-until-2027-01-01 offer would advertise one and hide the other, side by side; announcing it for both turns a persona chooser into a pricing page.
+
+**Rationale:** Three findings forced this, and each one kills a tempting alternative.
+
+- **A "then $X" badge on the Tournament card would be FALSE.** The free Tournament plan is `monthlyPrice: 0, trialDays: 0` — permanently free, no expiry, and "Free plan — no time limit" is already a trust point on its own persona page. There is no free *period* to end. So the two products' free offers are structurally different (a permanent free floor vs a comped paid tier), and forcing identical price wording onto both would require lying about one.
+- **A "$29 from January" badge on the Coaches card OVERSTATES the cost of coaching with us**, because a **free Basic Coaches Portal exists and never expires**. The homepage would be quoting the price of the tier it happens to link to, while the cheaper permanent option goes unmentioned — and the person most likely to bounce off a price on a homepage is the volunteer coach this whole promotion exists to recruit.
+- **It trades against the promotion's own stated goal.** Founding Season was ratified (2026-07-20) on the reasoning that *free-in-2026 justifies the beta feel and the goal is feedback volume, not revenue*. A price anchor on the top-of-funnel acquisition surface buys expectation-setting — which `/for-coaches` and `/pricing` already deliver to anyone who gets that far — at the cost of the one metric the promotion is optimising for.
+
+**Recorded alongside, deliberately, not as a defect:** the homepage routes coaches to the **comped Premium** door (`/for-coaches` → the Premium enrolment path) while the **free Basic** door sits on `/start`. That is the right call *during Founding Season* — Premium costs the customer nothing today and produces far better feedback than the Basic floor — but it stops being free-of-consequence on **2027-01-01**, when every coach who came through that door meets a $29 decision and the free alternative they were never shown. **⚠ This belongs in the January conversion runbook** (Phase 4 of `FOUNDING_SEASON_COACHES_FREE_PLAN.md`, still unwritten), not in a badge.
+
+**Affects:** homepage persona cards (copy + the live/greyed treatment), positioning consistency across homepage ↔ persona pages ↔ pricing, the January 2027 conversion runbook.
+
+**Handoff:**
+```
+HANDOFF → /marketing  (this session)
+- Homepage Coaches Portal card: replace "Coming soon · express interest" with an availability +
+  no-payment-barrier claim in the SAME shape as the Tournament card. Must NOT carry a price or the
+  Founding Season end date. Card body may be tightened but keep "whether or not your organization
+  is on FieldLogicHQ" — it is the standalone product's whole differentiator.
+- Homepage Tournament card: unchanged in meaning; confirm its badge and the coaches badge read as
+  a matched pair rather than two unrelated statements.
+- /for-tournament-organizers hero button: drop "— No Credit Card" so both persona pages carry the
+  same primary action wording (owner-directed 2026-08-07). The objection is already answered twice
+  more on that screen — the line above the button and the trust list below it — so nothing is lost.
+- /start chooser: "I was invited" is demoted from a card to a below-the-fold aside (owner-directed).
+  Write that line: it must answer the ONE question an invitee actually has — which email address to
+  use — because the invitation is surfaced by matching the address it was sent to.
+HANDOFF → owner / January runbook
+- The comped-Premium routing above: decide before 2027-01-01 whether the homepage should offer the
+  free Basic floor as an alternative when the promo ends, or whether the runbook handles it.
+HANDOFF → /plan
+- Fold the homepage correction into the demo-doors build (see the Proposed entry below) or ship it
+  standalone — it is a live self-contradiction on the highest-traffic page and does not depend on
+  the demo decision.
+```
+
+---
+
+### 2026-08-07 — PROPOSED: matching "See it live" doors for both demos, and addresses that say which demo they open
+
+**Status:** **Proposed** — recommended, NOT ratified. The owner has agreed to the *shape* in discussion but has not decided the gating question underneath it (below), and the marketing doors remain hidden in production builds by default.
+
+**Proposal:** Three changes to how a prospect reaches the two no-login demos.
+
+1. **The coach sandbox gets a front door.** It currently has **none** — nothing on the marketing site links to it, so five seeded teams, a five-step guided tour and a bespoke warm treatment are reachable only by someone who already knows the URL. Both live persona cards and both persona pages would carry the same "See it live — no sign-up" door.
+2. **Addresses name their demo:** `/see-it-live/tournament` and `/see-it-live/coaches` (plural, matching the product's own name). Today the bare `/see-it-live` silently means *tournament*, which a reader cannot tell — and these links get forwarded and read aloud, where the address is the only context that survives.
+3. **The bare `/see-it-live` becomes a two-option chooser** for context-free arrivals, and every existing shared link keeps working.
+
+**Where the choice is made, and why not at the door:** the homepage's four persona questions ("Running a tournament?", "Coaching a single team?") already *are* the chooser, and they are a better one than any demo picker, because they ask about the visitor's own life rather than about our catalogue — a stranger can answer them without knowing what we sell. Every button therefore routes straight into the matching demo with nothing in between.
+
+**⚠ Tension with the 2026-08-02 ungated ruling, and why this is argued compatible:** that ruling says *"no email, no form, **no interstitial**, no lead capture of any kind"*. The chooser is reached **only** by an arrival with no persona context — a forwarded link, a printed card, a URL read from a stage — because every on-site button points at a specific demo. Nobody the ruling protects ever sees it, it extracts nothing, and the alternative for that visitor is an arbitrary guess about which product they wanted. **If `/strategy` or the owner reads this as violating the ruling, the fallback is to leave the bare address pointing at the tournament demo** and keep changes 1 and 2 — the coach door is the part that matters.
+
+**The gating question this depends on, still unmade:** marketing demo doors are hidden in production builds unless explicitly enabled, so **no demo is publicly advertised today**. The 2026-08-02 ruling's own handoff records that an entry is owed here **"when the production door opens"** — that entry has not been written because the door has not opened. Ratifying this proposal means deciding to open it.
+
+**Affects:** marketing entry points, demo discoverability, the ungated-door posture.
+
+**Handoff:** none until ratified. On ratification: `/marketing` (door labels + the chooser's two options, which must name *what is behind each door* rather than naming our products), `/plan` (build), and a follow-up entry here recording that the production door opened.
+
+---
+
+### 2026-08-06 — A cancelled subscription STOPS WORKING, immediately: the product enforces the end of the relationship, and the dunning window is the only grace there is
+**Status:** Decided (owner, 2026-08-06 — chose option A from four presented). ✅ BUILT on `dev`, uncommitted; owner QA owed (`OWNER_QA_LEDGER.md` §1.19).
+
+**Decision:** When an organization's subscription is cancelled, **access stops at once, across the whole product** — coaches portal, tournament operations, scorekeeper and check-in apps, the family portal, and public pages. **Data is retained untouched** (the existing 90-day retention window is unchanged), so resubscribing restores everything intact. Three boundaries decided with it:
+
+1. **Past-due keeps working — deliberately.** A failed payment marks the account past-due and notifies the customer; only Stripe *giving up* after its full retry window produces a cancellation. The dunning window therefore **is** the grace period, and it is the only one. (Pinned by test so it cannot be "tidied" into suspending.)
+2. **Free (Basic) coach portals are unaffected.** Those teams belong to a person, not to a paying organization — there is no subscription to cancel, and the person keeps their own work.
+3. **The operator escape hatch stays.** A platform-admin "subscription status → active" override reinstates an org without touching Stripe.
+
+**Rationale:** This did not change what we charge — it made the product do what we already told operators it did. An audit of all 51 platform-admin routes found that cancelling wrote a status, displayed a confirm dialog itemising what would "shut down", and then shut almost none of it down: the Coaches Portal stayed fully open **forever**, the scorekeeper app kept accepting scores, the family portal kept serving. The org kept its plan, so every paid feature stayed available with **no expiry and no job to clean it up**. Commercially this is the most expensive part of the Club plan continuing free of charge after payment stops, indefinitely.
+
+Option A was chosen over the three alternatives because it is the only one that makes the existing confirm dialog *honest* — it is what the operator already believes they are buying — and because the safety objection to it turned out not to apply: the usual argument for a grace period (option C) is protecting a customer whose card merely expired, and that customer is never cancelled, only past-due. Option B (demote to free) was rejected for silently *giving* a cancelled Club a free product while destroying the record of what they were paying for. Option D (read-only window) was rejected **for now, not on the merits** — see the Proposed entry directly below.
+
+**Affects:** Product enforcement of the cancelled state, and the credibility of the cancellation dialog. **No price, plan name, capacity band, SKU or feature gate changed** — `PLAN_PRICING_FACTS.md` and `lib/plan-config.ts` are correctly untouched, and were reconciled (not restated) to confirm nothing in them describes cancellation behaviour. Retention/purge behaviour is unchanged. Downstream customer-visible effect: a cancelled org's coaches and volunteers now meet a plain "subscription has ended — nothing has been deleted" screen instead of a working product.
+
+**Handoff:**
+HANDOFF → `/plan` — **done**: `docs/projects/active/PLATFORM_ADMIN_ACTION_ENFORCEMENT_PLAN.md` + audit findings + PM brief.
+HANDOFF → `/billing` — **done at build, and deliberately narrow:** no gate, key, price or plan-config edit. Enforcement is one access rail keyed on `subscription_status = 'canceled'`, defaulting closed, with a build-failing allow-list for the handful of surfaces that must survive (the resubscribe path above all). ⚠ **One open operational item `/billing` should confirm before this is treated as safely reversible:** `ENTITLEMENT_GRANTS_ENABLED` must be `true` in the Amplify environment or the platform-admin override in boundary (3) is inert in production — it would report success and change nothing. Unverifiable from the repo.
+HANDOFF → `/marketing` — **nothing required, and one prohibition.** No pricing or plan surface changes. Do **not** market this as a feature. If cancellation is ever described on a customer-facing surface, the only two things that may be promised are that access ends immediately and that **data is kept and returns intact on resubscribe** — never a grace period, never continued read access (that is option D, unratified).
+HANDOFF → `/docs` — at commit: any help content describing what happens when an org cancels must match this (access ends now; data retained; resubscribe restores). Do not document a grace period.
+
+**Supersedes:** nothing — first entry to state what cancellation *does to access*. **Relates to:** the 90-day billing-retention behaviour (unchanged by this, and now the sole mechanism protecting the customer's data).
+
+---
+
+### 2026-08-06 — PROPOSED: a cancelled club should eventually be able to READ its own history, not just be locked out
+**Status:** **Proposed** — recommended, **awaiting ratification**. Explicitly *not* built and *not* binding. Raised as option D in the 2026-08-06 cancellation ruling above, where the owner chose immediate hard-block for now.
+
+**Proposal:** Replace the hard lock with a **read-only retention window** for the life of the existing 90-day retention period: a cancelled organization can still *open* its own past seasons, rosters, schedules and records, but can change nothing, message nobody, and take no money. At the end of the window it closes fully, as today.
+
+**Rationale (why it is worth keeping on the record):** a locked door is a worse goodbye than the product can afford at this stage. Three arguments: (1) **it matches behaviour the product already has** — a finished season is read-only-by-design in the coaches portal, so "your club, frozen" is an established idea rather than a new one; (2) **it is a reactivation surface** — a club that can still see last season's roster in February is one click from resubscribing, whereas a club facing a wall has already mentally left; (3) **it lowers the stakes of cancelling**, which matters for a pre-revenue product where a cautious buyer's real question is "how hard is it to get out, and do I lose everything?"
+
+**The trade-off, stated honestly:** "read-only coaching" is a real surface to design and verify, not a switch — every write path in the portal would need a proven read-only mode, and getting it wrong means a cancelled org retaining a write it shouldn't. That cost is exactly why it was not chosen today. It should be revisited when there is either (a) churn data showing cancelled clubs coming back, or (b) a sales objection about lock-in that we can attribute.
+
+**Affects:** if ratified, it would **supersede** the access half of the 2026-08-06 cancellation ruling (data retention is unchanged either way) and would need a `/plan` build plus a `/marketing` line, since "you keep read access for 90 days" becomes a promise worth making.
+
+**Handoff:** none until ratified. Do not build, gate, or write copy from this entry.
+
+---
+
 ### 2026-08-04 — The Club Shared Book is a CLUB-PLAN EXCLUSIVE: the first coaches-portal feature gated by the ORG's plan rather than the team's portal tier
 **Status:** Decided (owner, 2026-08-04 — "let's go with your recommendations", all five §8 rulings in `docs/projects/archive/COACH_CLUB_SHARED_BOOK_PLAN.md` ratified as recommended). Feature itself is **mockup-gated, not yet built** — this entry binds the packaging, not a ship date.
 

@@ -8,6 +8,7 @@ import {
   getCoachPortalPublicHref,
 } from '@/lib/coach-portal-request';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { getAuthenticatedUser } from '@/lib/api-auth';
 import type { OrgRole } from '@/lib/types';
 import { buildCoachSeasons } from '@/lib/coach-season-view';
 import { OrgProvider } from '@/lib/org-context';
@@ -53,7 +54,44 @@ export default async function CoachesLayout({
   // load both layouts render in ONE request — so the pair now costs one read, not two.
   const authCtx = await getCoachPortalAuth(orgSlug);
   if (!authCtx) {
-    redirect(`/auth/login?next=/${orgSlug}/coaches`);
+    // Two very different failures share this null: no session at all, and a session with no
+    // membership in THIS org. Only the first is fixed by signing in — bouncing the second to
+    // /auth/login sends them straight back here (the already-authenticated guard honours
+    // `next`), which is an unbreakable loop with no form and no doors. Costs one extra auth
+    // read, and only on a path that was already failing.
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      redirect(`/auth/login?next=/${orgSlug}/coaches`);
+    }
+    return (
+      <div style={{ display: 'contents' }} {...coachWarmAttr}>
+        <CoachThemeColor />
+        <div className={styles.coachesShell}>
+          {/* The strip is account-scoped — wordmark → Home, Account, Workspaces all resolve
+              from WHO the viewer is, never from the org in the URL — so it renders correctly
+              here even though this branch has no resolved org. Matching the two walls below
+              it: the screen with the least to offer must not also be the one with no chrome. */}
+          <CoachTopStrip />
+          <main className={styles.coachesMain}>
+            <div className={styles.notAssigned}>
+              <h2>No access to this organization</h2>
+              <p>
+                You&apos;re signed in, but this account isn&apos;t a coach at{' '}
+                <strong>{orgSlug}</strong>. If you were given a coaching account for this club,
+                sign out and sign back in with that email.
+              </p>
+              <div className={styles.notAssignedDoors}>
+                <Link href="/discover" className={styles.notAssignedDoor}>Go to Home</Link>
+                <Link href={COACHES_HOME_PATH} className={styles.notAssignedDoor}>
+                  Back to Coaches Portal home
+                </Link>
+                <CoachWallSignOut />
+              </div>
+            </div>
+          </main>
+        </div>
+      </div>
+    );
   }
   if (authCtx.org.slug !== orgSlug) {
     redirect(`/${authCtx.org.slug}/coaches`);

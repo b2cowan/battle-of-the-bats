@@ -1,11 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
+import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CalendarCheck, ArrowRight } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
 import HelpButton from '@/components/help/HelpButton';
 import {
   COACH_GAME_EVENT_TYPES, eventDisplayTitle, formatEventWhen, pickNextOrMostRecent,
@@ -72,6 +74,12 @@ export default function CoachesAttendancePage({
   // actually recorded. This is the event it points at — the next one coming up, or failing that
   // the most recent one played, so the answer to "where do I do this?" is a live link, not prose.
   const [markTarget, setMarkTarget] = useState<RepTeamEvent | null>(null);
+  // ⚠ A null target and an unanswered request look identical from here. Rendering the empty state
+  // on `null` alone meant every visit opened with "Nothing to take attendance for yet" for as long
+  // as the lookup took — a confident, wrong answer given before we had looked. These two flags keep
+  // the three states apart: still looking / looked and found nothing / could not look.
+  const [markTargetLoading, setMarkTargetLoading] = useState(true);
+  const [markTargetFailed, setMarkTargetFailed] = useState(false);
 
   const load = useCallback(async (isStale: () => boolean = () => false) => {
     setLoading(true);
@@ -90,16 +98,28 @@ export default function CoachesAttendancePage({
 
   // Non-fatal: the report stands on its own if this fails — it just loses the shortcut.
   const loadMarkTarget = useCallback(async (isStale: () => boolean = () => false) => {
+    // ⚠ All three reset together, and the remembered event MUST be one of them. Leaving it set
+    // meant a lookup that FAILED kept the previous team's game on screen — the render tests
+    // `markTarget` before `markTargetFailed`, so switching teams and hitting a network blip showed
+    // team A's game behind a "Take attendance" button pointing at team B's schedule.
+    setMarkTargetLoading(true);
+    setMarkTargetFailed(false);
+    setMarkTarget(null);
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events${seasonQuery}`);
-      if (!res.ok) return;
+      if (!res.ok) { if (!isStale()) setMarkTargetFailed(true); return; }
       const data: { events?: RepTeamEvent[] } = await res.json();
       if (isStale()) return;
       setMarkTarget(pickNextOrMostRecent(data.events ?? [], {
         types: ATTENDANCE_EVENT_TYPES,
         now: Date.now(),
       }));
-    } catch { /* the shortcut is a convenience, never a dependency */ }
+    } catch {
+      /* the shortcut is a convenience, never a dependency */
+      if (!isStale()) setMarkTargetFailed(true);
+    } finally {
+      if (!isStale()) setMarkTargetLoading(false);
+    }
   }, [orgSlug, teamId, seasonQuery]);
 
   // Both loads are keyed on teamId, and a coach with several assignments can switch teams without
@@ -115,8 +135,11 @@ export default function CoachesAttendancePage({
     return () => { cancelled = true; };
   }, [loadMarkTarget]);
 
-  if (ctxLoading) return <p className={styles.muted}>Loading…</p>;
-  if (!page.hasAccess) {
+  // ⚠ No `if (ctxLoading) return <p>Loading…</p>` here, deliberately. The title, sub-line and help
+  // button need no fetch, so the frame renders straight away and only the two unknown regions below
+  // shimmer — collapsing the whole page to a bare line was a second flash before the one this page
+  // was really reported for. `hasAccess` is false until the context lands, hence the `!ctxLoading`.
+  if (!ctxLoading && !page.hasAccess) {
     return (
       <div className={styles.notAssigned}>
         <h2>Team not found</h2>
@@ -129,6 +152,15 @@ export default function CoachesAttendancePage({
   // left at no-reply carry no reliability signal, so an all-no-reply player reads "not tracked yet"
   // rather than an ambiguous row of dashes.
   const hasAnyData = rows.some(r => r.games.known > 0 || r.practices.known > 0);
+
+  // One geometry, two renders — the skeleton rows have to land exactly where the real rows land,
+  // or the list jumps as it settles.
+  const attendanceRowStyle: CSSProperties = {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
+    minHeight: 48, padding: '0.6rem 0.9rem', borderRadius: 9,
+    background: 'var(--home-card, rgba(255,255,255,0.03))',
+    border: '1px solid var(--home-line, rgba(255,255,255,0.07))',
+  };
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
@@ -156,7 +188,16 @@ export default function CoachesAttendancePage({
       {/* Batch 4 — record first, review second. The review found this page explained what it would
           show but never linked to where attendance is actually taken; the round trip back from the
           game panel is the matching half. */}
-      {markTarget ? (
+      {markTargetLoading ? (
+        // Card-shaped placeholder, not a message — the slot holds its size and says nothing it
+        // might have to take back.
+        <div className={styles.nowCard} aria-busy="true" aria-label="Looking for your next game or practice">
+          <SkeletonBlock w="110px" h="0.7rem" />
+          <SkeletonBlock w="min(360px, 85%)" h="1.35rem" />
+          <SkeletonBlock w="170px" h="0.9rem" />
+          <SkeletonBlock w="150px" h="30px" />
+        </div>
+      ) : markTarget ? (
         // Reuses the Overview "Right now" anchor-card family rather than a parallel set of
         // classes — same eyebrow / headline / meta / CTA shape, so the two read as one pattern.
         <div className={styles.nowCard}>
@@ -169,7 +210,10 @@ export default function CoachesAttendancePage({
             </Link>
           </div>
         </div>
-      ) : (
+      ) : markTargetFailed ? null : (
+        // Only reached once the lookup has actually come back empty. A FAILED lookup renders
+        // nothing at all above — we don't know the schedule is empty, so we don't say it is, and
+        // the shortcut was never a dependency of the report below.
         <CoachEmptyState
           icon={<CalendarCheck size={22} aria-hidden />}
           eyebrow="Attendance"
@@ -186,7 +230,17 @@ export default function CoachesAttendancePage({
       </p>
 
       {loading ? (
-        <p className={styles.muted}>Loading…</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }} aria-busy="true" aria-label="Loading attendance">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} style={attendanceRowStyle}>
+              <SkeletonBlock w="130px" h="0.8rem" />
+              <div style={{ display: 'flex', gap: '1.5rem' }}>
+                <SkeletonBlock w="62px" h="0.8rem" />
+                <SkeletonBlock w="62px" h="0.8rem" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
       ) : rows.length === 0 ? (
@@ -205,12 +259,7 @@ export default function CoachesAttendancePage({
               <Link
                 key={r.playerId}
                 href={`${base}/roster/${r.playerId}`}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
-                  minHeight: 48, padding: '0.6rem 0.9rem', borderRadius: 9,
-                  background: 'var(--home-card, rgba(255,255,255,0.03))', border: '1px solid var(--home-line, rgba(255,255,255,0.07))',
-                  textDecoration: 'none', color: 'inherit',
-                }}
+                style={{ ...attendanceRowStyle, textDecoration: 'none', color: 'inherit' }}
               >
                 <span style={{ fontWeight: 500, fontSize: '0.9rem' }}>
                   {[r.playerFirstName, r.playerLastName].filter(Boolean).join(' ')}

@@ -76,7 +76,14 @@ export default function CheckInVolunteerPage() {
       {!loading && !error && tournaments.length === 0 && <div className={styles.msg}>No tournaments to check in for right now.</div>}
       {!loading && selected && banner && <div className={styles.banner}>{banner}</div>}
       {!loading && selected && (
-        <CheckInBoard orgSlug={orgSlug} tournamentId={selected.id} locked={selected.status !== 'active'} />
+        // `pinnedFilters`: this is the volunteer shell, which carries the day-of bottom bars. The
+        // admin gate screen must NOT pass it — it already has its own bottom nav.
+        <CheckInBoard
+          orgSlug={orgSlug}
+          tournamentId={selected.id}
+          locked={selected.status !== 'active'}
+          pinnedFilters
+        />
       )}
     </div>
   );

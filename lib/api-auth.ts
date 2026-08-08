@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr';
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from './supabase-admin';
 import type { Organization, OrgPlan, OrgRole } from './types';
@@ -81,7 +82,20 @@ type AuthMemberOrgRow = {
   organizations: AuthOrgRow | null;
 };
 
-export async function getAuthenticatedUser(): Promise<User | null> {
+/**
+ * The session's user, or null.
+ *
+ * ⚠ REQUEST-CACHED. `getAuthContext` calls this as its first step, so any caller that ALSO needs
+ * the raw user in the same request (the coaches layout, which must tell "no session" apart from
+ * "session with no membership here") would otherwise pay a second round-trip to the auth service —
+ * on the signed-out path, which is the common one. A user cannot change mid-request, so deduping
+ * is behaviour-preserving. Takes no arguments, so `cache()` keys trivially.
+ *
+ * Note: route handlers that call this outside a React render scope simply get no dedup — never
+ * different data. The invite routes that call an identically-named helper twice per handler define
+ * their OWN local copy and are unaffected either way.
+ */
+export const getAuthenticatedUser = cache(async (): Promise<User | null> => {
   assertSafeSupabaseServerEnvironment('API user auth Supabase client');
 
   const cookieStore = await cookies();
@@ -98,7 +112,7 @@ export async function getAuthenticatedUser(): Promise<User | null> {
 
   const { data: { user } } = await supabase.auth.getUser();
   return user ?? null;
-}
+});
 
 /**
  * Deterministic "home" org for the orgless fallback (decision 2026-06-19). Prefers a real

@@ -79,8 +79,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Getting started',
       heading: 'How to get into your portal',
       summary: 'Claim a team an organizer registered, or start a free team home from scratch.',
-      keywords: ['coach login', 'first login', 'claim team', 'start free team home', 'coach portal', 'get started', 'skip setup', 'hide welcome'],
-      searchText: 'coach first login sign in coaches portal claim your team registered email start free team home organizer invited tournament registration get started access three step starter set up your team let us set up your team welcome card comes first above the tiles above at a glance first screen skip all this skip setup hide the welcome card dismiss getting started steps turn on schedule from the steps turn on announcements from the welcome tick off checkmark completed step why is my step not ticked step still offers turn on after i used the tool new team empty tiles not on nothing to report yet',
+      keywords: ['coach login', 'first login', 'claim team', 'start free team home', 'coach portal', 'get started', 'skip setup', 'hide welcome', 'subscription has ended', 'subscription ended', 'lost access', 'locked out', 'portal stopped working', 'cannot get in', 'club stopped paying'],
+      searchText: 'coach first login sign in coaches portal claim your team registered email start free team home organizer invited tournament registration get started access three step starter set up your team let us set up your team welcome card comes first above the tiles above at a glance first screen skip all this skip setup hide the welcome card dismiss getting started steps turn on schedule from the steps turn on announcements from the welcome tick off checkmark completed step why is my step not ticked step still offers turn on after i used the tool new team empty tiles not on nothing to report yet subscription has ended club subscription ended cancelled canceled lost access locked out portal stopped working cannot get in no access did i lose my team is my roster gone nothing has been deleted club stopped paying talk to your club administrator free team home unaffected',
       content: (
         <>
           <p>There are two ways your team shows up in the portal. Sign in with the email address you use for coaching, then look for one of these.</p>
@@ -99,6 +99,20 @@ const coachesHelp: HelpPageContent = {
           popular: true,
           answer: (
             <p>Make sure you signed in with the same email the organizer used to register the team. If a team was registered with your email, a <strong>Claim your team</strong> prompt appears on your portal home — claim it to link it. If no one registered a team for you, use <strong>Start free team home</strong> to create your own.</p>
+          ),
+        },
+        {
+          id: 'faq-coach-subscription-ended',
+          question: 'My portal says the club’s subscription has ended — what happened to my team?',
+          answerText: 'Your club stopped subscribing, so the coaching tools are closed for now. Nothing has been deleted. Your roster, schedule, attendance, lineups and season history are all kept exactly as you left them, and they come back the moment the club subscribes again. There is nothing for you to do and nothing to save or export in a hurry — this is a billing matter between your club and FieldLogicHQ, so the person to talk to is your club administrator, not support. If you also run your own free team home, that is completely unaffected: it belongs to you rather than to the club, so it keeps working exactly as before.',
+          keywords: ['subscription has ended', 'subscription ended', 'club subscription', 'cancelled', 'canceled', 'lost access', 'locked out', 'portal stopped working', 'cannot get in', 'no access', 'did i lose my team', 'is my roster gone', 'club stopped paying'],
+          popular: true,
+          answer: (
+            <>
+              <p>Your club stopped subscribing, so the coaching tools are closed for now. <strong>Nothing has been deleted.</strong> Your roster, schedule, attendance, lineups and season history are all kept exactly as you left them, and they come back the moment the club subscribes again.</p>
+              <p>There&rsquo;s nothing for you to do, and nothing to save or export in a hurry. This is a billing matter between your club and FieldLogicHQ, so the person to ask is <strong>your club administrator</strong>.</p>
+              <p>If you also run <strong>your own free team home</strong>, that&rsquo;s completely unaffected — it belongs to you rather than to the club, so it keeps working exactly as before.</p>
+            </>
           ),
         },
         {

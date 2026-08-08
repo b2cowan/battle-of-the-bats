@@ -158,7 +158,12 @@ const OVERRIDE_TYPE_LABELS: Record<string, string> = {
   module_addon:        'Feature Access',
 };
 
-type ApiErrorBody = { error?: string };
+type ApiErrorBody = {
+  error?: string;
+  /** Plan PATCH: the over-cap tournaments a downgrade archived, and the warning when it couldn't. */
+  archivedTournaments?: { id: string; name: string }[];
+  archiveWarning?: string;
+};
 type ApiInternalNote = {
   id: string;
   body: string;
@@ -284,6 +289,8 @@ export default function OrgDetailClient({
   const [planConfirmOpen, setPlanConfirmOpen] = useState(false);
   const [planSaving, setPlanSaving] = useState(false);
   const [planSaved, setPlanSaved] = useState(false);
+  /** What the downgrade did to the org's existing tournaments — archived N, or failed to. */
+  const [planArchiveNote, setPlanArchiveNote] = useState('');
   const [planError, setPlanError] = useState('');
   const [pendingOwnershipTransfers, setPendingOwnershipTransfers] = useState(initialPendingOwnershipTransfers);
   const [ownershipReasons, setOwnershipReasons] = useState<Record<string, string>>({});
@@ -375,12 +382,26 @@ export default function OrgDetailClient({
           reason: planReason,
         }),
       });
-      const data = await res.json().catch((): ApiErrorBody => ({}));
+      const data: ApiErrorBody = await res.json().catch((): ApiErrorBody => ({}));
       if (!res.ok) {
         setPlanError(data.error ?? 'Plan update failed');
         return;
       }
       setPlanSaved(true);
+      // A downgrade archives the tournaments that no longer fit. Report BOTH outcomes: how many
+      // were archived, and — critically — when archiving FAILED. The route deliberately still
+      // answers ok:true there (the plan change itself landed), so if this screen ignored the
+      // warning the operator would read plain success while the org sits over its cap with a
+      // possibly-live tournament still running. Silent success on a half-applied change is the
+      // exact failure this whole audit was about. (/review 2026-08-06.)
+      setPlanArchiveNote(
+        data.archiveWarning
+          ? `⚠ ${data.archiveWarning}`
+          : data.archivedTournaments?.length
+            ? `${data.archivedTournaments.length} over-cap tournament${data.archivedTournaments.length === 1 ? '' : 's'} archived: `
+              + data.archivedTournaments.map(t => t.name).join(', ')
+            : '',
+      );
       setPlanReason('');
       setPlanConfirmOpen(false);
       router.refresh();
@@ -1518,6 +1539,13 @@ export default function OrgDetailClient({
                       ✅ Plan and access updated. Access changes are live now.{' '}
                       <strong>No billing changed</strong> — Stripe was not contacted.
                     </p>
+                    {planArchiveNote && (
+                      <p>
+                        {planArchiveNote.startsWith('⚠')
+                          ? <strong>{planArchiveNote}</strong>
+                          : planArchiveNote}
+                      </p>
+                    )}
                     {targetIsPaid && !hasLiveStripeSub && (
                       <p>
                         This is a <strong>free comp</strong> until a subscription exists. Next step: the owner

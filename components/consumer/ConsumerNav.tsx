@@ -201,8 +201,12 @@ export default function ConsumerNav({
   const visibleTabs = signedIn
     ? TABS
     : TABS.filter(t => t.href === '/discover' || t.href === '/scores');
-  // Never a Sign In affordance ON the auth pages themselves (mirrors the utilCta rule).
-  const showSignInTab = !signedIn && !pathname.startsWith('/auth');
+  // The phone tab STAYS on the auth pages and renders as the CURRENT tab there (below) — it is
+  // the only tab that represents the sign-in screen, and hiding it left that screen as the one
+  // surface in the shell with no tab of its own: two dim tabs, nothing highlighted, no answer to
+  // "where am I". A location marker is not an offer, so the "don't door into the room you're
+  // standing in" rule (which still hides the desktop `utilCta` button) is not violated by it.
+  const showSignInTab = !signedIn;
 
   // Shared bottom-tab items — identical in both variants (the tournament variant
   // renders ONLY these, neutral-skinned; the consumer variant pairs them with the
@@ -232,9 +236,17 @@ export default function ConsumerNav({
     <>
       {tabItems}
       {showSignInTab && (
-        <Link href="/auth/login" className={styles.tab}>
+        // Active via the SAME prefix helper every other tab uses, which lands the rule for free:
+        // current on /auth/login (and its recovery children), a live link everywhere else in the
+        // family — including /auth/signup, where "already have an account?" is a real door.
+        <Link
+          href="/auth/login"
+          className={`${styles.tab} ${isActive('/auth/login') ? styles.active : ''}`}
+          aria-current={isActive('/auth/login') ? 'page' : undefined}
+        >
           <span className={styles.iconWrap}>
-            <LogIn size={22} strokeWidth={1.8} />
+            <LogIn size={22} strokeWidth={isActive('/auth/login') ? 2.5 : 1.8} />
+            {isActive('/auth/login') && <span className={styles.activeDot} />}
           </span>
           <span className={styles.label}>Sign In</span>
         </Link>

@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { isOrgBillingSuspended } from '@/lib/org-billing-access';
+import type { Organization } from '@/lib/types';
 import styles from './SubscriptionEndedWall.module.css';
 
 /**
@@ -47,5 +49,31 @@ export default function SubscriptionEndedWall({
         <Link href="/discover" className={styles.door}>Go to Home</Link>
       </div>
     </div>
+  );
+}
+
+/**
+ * The wall, or null — for a server layout that just needs to bail out early.
+ *
+ * Exists because the check + early return was byte-identical in the scorekeeper and check-in
+ * layouts, and the ORDER matters: it must run BEFORE the capability wall, or a cancelled org's
+ * volunteer is told "Access Denied" (wrong, and it sends them to their org admin over nothing)
+ * instead of "the subscription ended". That rule lived only in a comment in two places; here it
+ * lives in one function that the next day-of-volunteer surface can call.
+ *
+ * The coaches portal deliberately does NOT use this: it renders the same wall inside its own
+ * portal chrome, so it calls `SubscriptionEndedWall` directly.
+ */
+export function suspendedOrgWall(
+  org: Pick<Organization, 'subscriptionStatus' | 'name' | 'contactEmail'>,
+  surface: 'coaches' | 'scorekeeper' | 'check-in',
+) {
+  if (!isOrgBillingSuspended(org)) return null;
+  return (
+    <SubscriptionEndedWall
+      orgName={org.name}
+      contactEmail={org.contactEmail}
+      surface={surface}
+    />
   );
 }

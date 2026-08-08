@@ -1,7 +1,9 @@
 .page {
   width: min(100%, 920px);
   margin: 0 auto;
-  padding-bottom: 5rem;
+  /* The shell owns the bottom budget now (its fixed bars publish `--dayof-bottom-h`, and the
+     layout's <main> composes from it). This is ordinary breathing room, nothing more. */
+  padding-bottom: 1.5rem;
 
   /* --sk-*: scorekeeper's bespoke dark-only slate/status palette. Component-scoped so the
      warm-portal program can remap this surface independently. P3 token pass: values unchanged. */
@@ -45,8 +47,7 @@
 .todayButton,
 .secondaryButton,
 .primaryButton,
-.statusTab,
-.statusTabActive {
+.filtersToggle {
   min-height: 42px;
   border: 1px solid rgba(148, 163, 184, 0.24);
   border-radius: 6px;
@@ -66,48 +67,81 @@
   color: var(--sk-ink-dim);
 }
 
-.statsGrid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.stat {
-  min-height: 76px;
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  gap: 0.15rem 0.55rem;
+/**
+ * The day, always visible. `Filters` is the fold's handle and exists on phones only — above 640px
+ * the panel below is permanently open, so a control to open it would be a lie.
+ *
+ * ⚠ THE DATE IS NEVER THE THING THAT GIVES. It was a grid `1fr` column whose input carried
+ * `min-width: 0`, so it could shrink below the width of a date — and the first thing that grew
+ * beside it (the filter count) clipped the day off the end: "2026-08-0". A volunteer who cannot
+ * read which day they are scoring cannot trust anything else on the screen. So the row wraps
+ * instead of squeezing: the date holds its natural width and the buttons drop to a second line if
+ * the screen is too narrow to hold all three. Fixing only the button that happened to grow would
+ * leave the same bug waiting for the next label.
+ */
+.dateRow {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  padding: 0.8rem;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--data-gray);
+  gap: 0.65rem;
+  margin-bottom: 0.65rem;
 }
 
-.stat span {
-  color: var(--sk-ink);
+.dateRow .dateControl {
+  flex: 1 1 9.5rem;
+  min-width: 9.5rem;
+}
+
+/* The browser draws the only calendar button on this field (we removed ours — two calendar icons
+   on one control is one icon explaining the other). Give it a gloved-thumb target and enough
+   contrast to read as pressable on the dark ground. */
+.dateControl input[type='date']::-webkit-calendar-picker-indicator {
+  padding: 0.4rem;
+  margin-right: -0.35rem;
+  opacity: 0.7;
+  cursor: pointer;
+}
+
+.dateControl input[type='date']::-webkit-calendar-picker-indicator:hover,
+.dateControl input[type='date']:focus-within::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+.dateRow .todayButton,
+.dateRow .filtersToggle {
+  flex: 0 0 auto;
+}
+
+.filtersToggle {
+  display: none;
+}
+
+/**
+ * The count as a corner badge rather than words in the label, so the button is the SAME WIDTH
+ * whether or not filters are on. A control that changes size when you use it re-lays out the row
+ * around it, which is how the date got clipped in the first place.
+ */
+.filterCount {
+  position: absolute;
+  top: -0.4rem;
+  right: -0.4rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  display: grid;
+  place-items: center;
+  padding: 0 0.25rem;
+  border-radius: 999px;
+  background: var(--logic-lime);
+  color: var(--bg);
   font-family: var(--font-data);
-  font-size: 1.55rem;
+  font-size: 0.6rem;
   font-weight: 900;
   line-height: 1;
 }
 
-.stat small {
-  grid-column: 1 / -1;
-  color: var(--data-gray);
-  font-family: var(--font-data);
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
 .controls {
   display: grid;
-  grid-template-columns: minmax(150px, 0.8fr) auto minmax(190px, 1.2fr) minmax(150px, 0.85fr) minmax(150px, 0.85fr);
+  grid-template-columns: minmax(190px, 1.2fr) minmax(150px, 0.85fr) minmax(150px, 0.85fr);
   gap: 0.65rem;
   margin-bottom: 0.85rem;
 }
@@ -153,26 +187,8 @@
   padding: 0 0.85rem;
 }
 
-.statusTabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.statusTab,
-.statusTabActive {
-  padding: 0 0.55rem;
-  background: var(--surface-2);
-  color: var(--data-gray);
-  font-size: 0.68rem;
-}
-
-.statusTabActive {
-  border-color: var(--logic-lime);
-  background: rgba(var(--logic-lime-rgb), 0.12);
-  color: var(--sk-ink);
-}
+/* The status buckets moved to the shared day-of filter bar (DayOfShell.module.css) — a plain
+   block in this same position on desktop, pinned above the tab bar on a phone. */
 
 .notice {
   display: grid;
@@ -397,11 +413,14 @@
 .sheetBackdrop {
   position: fixed;
   inset: 0;
+  /* Above both bottom bars (46) deliberately: entering a score is a modal act, and the sheet
+     covering the navigation is what stops a volunteer wandering off mid-entry. */
   z-index: 100;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding: 1rem;
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   background: rgba(2, 6, 23, 0.86);
 }
 
@@ -596,34 +615,47 @@
 }
 
 @media (max-width: 760px) {
-  .page {
-    padding-bottom: 6rem;
-  }
-
   .controls {
-    grid-template-columns: 1fr auto;
+    grid-template-columns: 1fr;
+  }
+}
+
+/* The fold. Matches the shell's 640px breakpoint exactly — the bars appear and the setup controls
+   stand down at the same width, because they are two halves of one decision about what a phone
+   shows first. Above it `.controlsClosed` does nothing and the panel is always open. */
+@media (max-width: 640px) {
+  .dateRow {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 0.5rem;
   }
 
-  .searchControl,
-  .select {
-    grid-column: 1 / -1;
+  .todayButton,
+  .filtersToggle {
+    padding: 0 0.7rem;
+    font-size: 0.66rem;
+  }
+
+  .filtersToggle {
+    /* `relative` anchors the count badge — see `.filterCount`. */
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    color: var(--sk-ink-faint);
+  }
+
+  .filtersToggle[aria-expanded='true'] {
+    border-color: var(--logic-lime);
+    color: var(--sk-ink);
+  }
+
+  .controlsClosed {
+    display: none;
   }
 }
 
 @media (max-width: 520px) {
-  .statsGrid {
-    gap: 0.5rem;
-  }
-
-  .stat {
-    min-height: 70px;
-    padding: 0.65rem;
-  }
-
-  .statusTabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .gameCard {
     min-height: 156px;
     padding: 0.85rem;

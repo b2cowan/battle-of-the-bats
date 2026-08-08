@@ -1,0 +1,335 @@
+/**
+ * The day-of volunteer shells (/{org}/scorekeeper + /{org}/check-in) — header, bottom bars, and
+ * the one geometry budget they all compose from.
+ *
+ * These two shells are inline-styled by design: single-purpose gloved-hands tools, a ruled
+ * exception to the platform nav grammar (top-nav audit §3). This module holds what inline styles
+ * cannot express — media queries and fixed furniture — and is SHARED so the twins cannot drift.
+ * They already drifted once on colour (§D9): a volunteer who does both jobs watched the whole
+ * screen change shade crossing between them.
+ *
+ * ── THE GEOMETRY BUDGET (read before adding anything to the bottom of these screens) ──────────
+ *
+ * `.shell` declares the height of the bottom furniture and every consumer COMPOSES from
+ * `--dayof-bottom-h` rather than hard-coding a clearance. This is not tidiness. The lineup
+ * builder's Undo bar docked itself at the bottom of a screen and nothing else was re-derived
+ * against the new budget: the bar sat BEHIND the nav on every notched iPhone (Undo unreachable)
+ * and two pop-ups lost their primary button on six of eight phone sizes. The failure mode is
+ * silent — everything renders, it is just underneath something.
+ *
+ * Both bars are PHONE-ONLY (≤640px, the breakpoint this shell already uses). Above it the tokens
+ * are 0px, every `calc()` collapses to today's geometry exactly, and the header keeps the doors
+ * the bars would otherwise carry — a desktop row has the room.
+ */
+
+.shell {
+  --dayof-tabbar-h: 0px;
+  --dayof-filterbar-h: 0px;
+  /* The single number anything reaching the bottom of these screens must clear. */
+  --dayof-bottom-h: calc(
+    var(--dayof-tabbar-h) + var(--dayof-filterbar-h) + env(safe-area-inset-bottom, 0px)
+  );
+}
+
+@media (max-width: 640px) {
+  .shell {
+    --dayof-tabbar-h: 62px;
+    --dayof-filterbar-h: 46px;
+  }
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────────────────────── */
+
+.identity {
+  /* The wordmark is `nowrap` and the actions beside it cannot shrink, so without a clip here the
+     mark paints straight across them the moment the row runs out of width. */
+  overflow: hidden;
+}
+
+.hop {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/*
+ * Doors the phone's tab bar now carries: the cross-role hop and Sign Out. They stay on desktop,
+ * where the row has room and there is no tab bar to hold them.
+ *
+ * ⚠ Sign Out disappearing from this row is the one change here with a safety history. It was a
+ * dead `/auth/logout` link that 404'd (J8-001), leaving a volunteer on a borrowed or shared phone
+ * with no way to end their session — a privacy hole, not a broken link. It is now one tap behind
+ * a permanently visible, labelled Account tab. If that ever proves too deep in owner QA, the fix
+ * is to drop this class from the Sign Out wrapper, NOT to remove the Account tab.
+ */
+@media (max-width: 640px) {
+  .deskOnly {
+    display: none;
+  }
+}
+
+/* ── The filter sub-bar ──────────────────────────────────────────────────────────────────── */
+/*
+ * The surface's own status buckets. Above 640px this is a plain block sitting exactly where it
+ * has always sat in the page's flow; below it, it pins itself above the tab bar. Rendering it in
+ * its natural DOM position and letting the media query lift it is what keeps the desktop layout
+ * byte-identical — the alternative (rendering it last and un-fixing it) would drop the buckets to
+ * the bottom of a desktop page.
+ */
+.filterBar {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+  .filterBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--dayof-tabbar-h) + env(safe-area-inset-bottom, 0px));
+    z-index: 45;
+    margin: 0;
+    gap: 0.4rem;
+    padding: 0.35rem 0.6rem;
+    background: var(--hud-surface);
+    border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
+  }
+}
+
+/* One bucket. Sized for a gloved thumb, not a mouse. */
+.barBtn {
+  min-height: 42px;
+  display: grid;
+  place-content: center;
+  gap: 0.1rem;
+  padding: 0 0.4rem;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  cursor: pointer;
+}
+
+.barBtn[aria-pressed='true'] {
+  border-color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.12);
+  color: var(--fl-text);
+}
+
+.barBtn:focus-visible {
+  outline: 2px solid var(--logic-lime);
+  outline-offset: 2px;
+}
+
+/* The count leads on a phone, where the bar is the only place the numbers still live — the three
+   counter tiles that used to carry them are retired. On desktop the bucket keeps its one-line
+   "To Score 2" shape, because there the bar is a filter row, not a summary. */
+.barCount {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .barBtn {
+    min-height: 40px;
+    font-size: 0.58rem;
+    letter-spacing: 0.05em;
+  }
+
+  .barCount {
+    display: block;
+    font-size: 1rem;
+    font-weight: 900;
+    line-height: 1;
+    color: inherit;
+  }
+
+  .barBtnInline {
+    display: none;
+  }
+}
+
+/* ── The tab bar ─────────────────────────────────────────────────────────────────────────── */
+
+.tabBar {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .tabBar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 46;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    background: var(--hud-surface);
+    border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.55);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+.tab {
+  min-height: var(--dayof-tabbar-h);
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 0.25rem;
+  padding: 0.35rem 0.25rem;
+  border: 0;
+  border-top: 2px solid transparent;
+  margin-top: -1px;
+  background: transparent;
+  color: var(--data-gray);
+  font-family: var(--font-data);
+  font-size: 0.56rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.tab[aria-current='page'],
+.tab[aria-expanded='true'] {
+  color: var(--logic-lime);
+  border-top-color: var(--logic-lime);
+  background: rgba(var(--logic-lime-rgb), 0.07);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--logic-lime);
+  outline-offset: -2px;
+}
+
+/* ── The Account sheet ───────────────────────────────────────────────────────────────────── */
+
+.sheetBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(2, 6, 23, 0.86);
+}
+
+.sheet {
+  width: min(100%, 520px);
+  max-height: 82vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  /* Clears the tab bar it opened from, plus the phone's home indicator. */
+  padding-bottom: calc(var(--dayof-tabbar-h) + env(safe-area-inset-bottom, 0px) + 1rem);
+  background: var(--surface);
+  border: 1px solid var(--blueprint-blue);
+  border-radius: 10px 10px 0 0;
+  box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.45);
+}
+
+.sheetHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.sheetTitle {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+}
+
+.sheetClose {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 6px;
+  background: var(--surface-2);
+  color: var(--fl-text);
+  cursor: pointer;
+}
+
+/* Who is signed in. On a borrowed or shared phone at a gate this is the question the sheet exists
+   to answer first — the doors below it are secondary. */
+.whoCard {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.85rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.45);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+.whoName {
+  font-family: var(--font-data);
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--fl-text);
+  overflow-wrap: anywhere;
+}
+
+.whoLine {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: var(--data-gray);
+  overflow-wrap: anywhere;
+}
+
+.sheetRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 48px;
+  padding: 0 0.85rem;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fl-text);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.sheetRow:focus-visible {
+  outline: 2px solid var(--logic-lime);
+  outline-offset: 2px;
+}
+
+.sheetRow .chev {
+  margin-left: auto;
+  color: var(--data-gray);
+}
+
+.sheetRowOut {
+  border-color: rgba(var(--logic-lime-rgb), 0.5);
+  color: var(--logic-lime);
+}
+
+.sheetRow:disabled {
+  opacity: 0.65;
+  cursor: default;
+}

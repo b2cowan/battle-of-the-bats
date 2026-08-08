@@ -277,6 +277,20 @@ export interface SandboxBannerCopy {
   lead: string;
   /** The half that must not be skimmed past — rendered bold. */
   emphasis?: string;
+  /**
+   * The same claim in the fewest honest words, for a phone.
+   *
+   * ⚠ Not a nicety. The banner is two columns on a phone (2026-08-07): identity over status on the
+   * left, the signup door pinned right. That leaves the status line about 165px on a 390px screen,
+   * and the full sentence needs closer to 230 — so it ellipsised, and the one line in this chrome
+   * that must never be optional was ending in "…nothing is sav". A truncated honesty claim is
+   * worse than a short one.
+   *
+   * Only the coats that show the claim ON a phone need this: the tournament sandbox hides the
+   * promise below 640px entirely (its first narration line carries it), the coach sandbox does not,
+   * because its opening state has no sentence at all.
+   */
+  emphasisShort?: string;
   /** The banner CTA's label — each sandbox asks for ITS OWN signup. */
   cta: string;
   /** The moments dock's visible label, and its accessible name. */
@@ -299,6 +313,9 @@ export function sandboxBannerCopy(side: SandboxSide, kind: DemoOrgKind = 'tourna
     return {
       lead: "You're in the coach's seat, on a fictional team.",
       emphasis: 'Changes show on screen, but nothing is saved.',
+      // The clause a stranger must not miss, standing alone. "Changes show on screen" is the
+      // reassurance; "nothing is saved" is the promise, and it is the half that survives a phone.
+      emphasisShort: 'Nothing is saved.',
       cta: 'Start your own team — free',
       dockLabel: 'The season',
       dockAriaLabel: "Moments in the team's season",

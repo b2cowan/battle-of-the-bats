@@ -73,11 +73,15 @@ export default function ForTournamentOrganizersPage() {
             Free to start, no credit card required.
           </p>
           <div className={styles.heroActions}>
+            {/* "Start free", matching /for-coaches word for word (owner-directed 2026-08-07): the
+                two persona pages are one product and were reading as two. The credit-card objection
+                is NOT lost — the sub-line directly above answers it, and the trust list below says
+                it a third time, which is where it belongs. */}
             <Link
               href="/auth/signup"
               className="font-mono text-xs font-bold uppercase tracking-widest bg-logic-lime text-pitch-black px-8 py-4 hover:bg-white transition-colors"
             >
-              Start Free — No Credit Card
+              Start free
             </Link>
             {/* Second position, deliberately: lime OUTLINE with a live dot, so it reads as a live
                 thing without out-shouting the solid-lime primary. The sandbox is the proof;
@@ -207,8 +211,11 @@ export default function ForTournamentOrganizersPage() {
                   </div>
                 ))}
               </div>
+              {/* Same relabel as the hero, and for the same reason — a page whose hero says
+                  "Start free" and whose plan card says something longer reads as two hands. This
+                  matches the Premium Coaches Portal card's "Start free →" exactly. */}
               <Link href="/auth/signup" className={`${styles.planCta} ${styles.planCtaPaid}`}>
-                Start Free — No Credit Card →
+                Start free →
               </Link>
             </div>
 

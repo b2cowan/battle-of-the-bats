@@ -1,5 +1,5 @@
 import 'server-only';
-import { getPlanGatingMap } from './plan-gating-server';
+import { isCoachesPortalPurchasable } from './plan-gating-server';
 
 /**
  * Server-resolved config for the "Run a tournament" persona menu (Desktop Public UX Phase 1,
@@ -19,7 +19,7 @@ import { getPlanGatingMap } from './plan-gating-server';
 export type StartMenuConfig = { coachHref: string; showLeague: boolean };
 
 export async function getStartMenuConfig(): Promise<StartMenuConfig> {
-  const teamCheckoutOpen = !(await getPlanGatingMap()).team;
+  const teamCheckoutOpen = await isCoachesPortalPurchasable();
   return {
     coachHref: teamCheckoutOpen ? '/start/team' : '/for-coaches',
     showLeague: process.env.LEAGUE_STARTER_BETA === 'true',

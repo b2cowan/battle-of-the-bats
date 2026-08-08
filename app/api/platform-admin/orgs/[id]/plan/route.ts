@@ -104,6 +104,7 @@ export const PATCH = withObservability(async (req: NextRequest,
   // customer's own downgrade has always archived the excess; this is the operator path catching up.
   // Nothing is destroyed — the rows are retained and restored on re-upgrade.
   let archivedTournaments: { id: string; name: string }[] = [];
+  let archiveWarning: string | undefined;
   if (current && isLowerPlan(current.plan_id as OrgPlan, planId)) {
     try {
       const archived = await archiveOverCapTournamentsForPlanChange({
@@ -122,16 +123,13 @@ export const PATCH = withObservability(async (req: NextRequest,
       // The plan change itself already succeeded and must not be reported as a failure. Surface
       // the shortfall to the operator instead of swallowing it — an org sitting over its cap is
       // exactly the silent state this whole audit was about.
+      //
+      // ⚠ Set a warning and FALL THROUGH rather than returning here: an early return would skip
+      // the plan-change audit logs below, so the one case where a human most needs the trail —
+      // a half-applied downgrade — would be the one case that left none.
       console.error('[platform-admin] over-cap tournament archive failed:', archiveErr);
-      return NextResponse.json({
-        ok: true,
-        planId,
-        tournamentLimit: effectiveTournamentLimit,
-        teamLimit: teamLimitProvided ? normalizedTeamLimit : (current?.team_limit ?? null),
-        archivedTournaments: [],
-        archiveWarning: 'Plan saved, but the over-cap tournaments could not be archived. '
-          + 'This org is now over its tournament limit — archive them manually.',
-      });
+      archiveWarning = 'Plan saved, but the over-cap tournaments could not be archived. '
+        + 'This org is now over its tournament limit — archive them manually.';
     }
   }
 
@@ -186,5 +184,6 @@ export const PATCH = withObservability(async (req: NextRequest,
     tournamentLimit: effectiveTournamentLimit,
     teamLimit: teamLimitProvided ? normalizedTeamLimit : (current?.team_limit ?? null),
     archivedTournaments,
+    ...(archiveWarning ? { archiveWarning } : {}),
   });
 }, { route: '/api/platform-admin/orgs/[id]/plan' });

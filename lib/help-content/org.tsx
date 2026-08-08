@@ -227,6 +227,89 @@ const orgHelp: HelpPageContent = {
       ),
     },
     {
+      id: 'subscription-ends',
+      heading: 'If your subscription ends',
+      summary: 'What stops, what is kept, and how to get everything back.',
+      keywords: [
+        'cancel', 'cancelled', 'canceled', 'cancel subscription', 'cancelled subscription',
+        'subscription ended', 'subscription has ended', 'end subscription', 'stop paying',
+        'lost access', 'no access', 'locked out', 'cannot log in', "can't log in",
+        'nothing works', 'everything stopped', 'portal stopped working',
+        'did we lose our data', 'is our data deleted', 'data deleted', 'lose everything',
+        'get our data back', 'restore access', 'resubscribe', 're-subscribe', 'reactivate',
+        'renew', 'renew subscription', 'start paying again',
+        'past due', 'payment failed', 'card declined', 'card expired', 'failed payment',
+        '90 days', 'retention', 'coaches portal not working', 'scorekeeper stopped',
+      ],
+      searchText: 'if your subscription ends cancel cancelled canceled subscription ended stop paying lost access locked out cannot log in nothing works did we lose our data is our data deleted nothing is deleted data kept 90 days retention resubscribe reactivate renew restore access billing page past due payment failed card declined card expired failed payment keeps working grace retry coaches portal stops scorekeeper stops check-in stops family portal stops public tournament pages go offline tryout registration closes dues reminder emails stop free coaches portal unaffected personal teams basic coach keeps their own work everything comes back intact',
+      links: [
+        { label: 'Billing', href: '../org/billing' },
+      ],
+      content: (
+        <>
+          <p><strong>Nothing is deleted.</strong> That is the part worth knowing first. If your subscription ends, your seasons, rosters, schedules, records and history are all kept, and they come back exactly as you left them when you subscribe again.</p>
+          <p><strong>What stops.</strong> Access ends straight away, across everything: the Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, your public tournament pages, and the family-facing team pages and calendar feeds. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted — not an error, and not a page that half works.</p>
+          <p>Two related things stop as well, so nobody is left wondering: <strong>tryout registration closes</strong> (a form that is no longer being watched should not keep collecting families&rsquo; details), and <strong>automated dues reminder emails stop going out</strong>.</p>
+          <p><strong>Your billing page keeps working — on purpose.</strong> It is the one place that stays open, because that is how you come back. An admin who opens the admin area lands there.</p>
+          <p><strong>A missed payment is not the same as cancelling.</strong> If a card fails, your account is marked past due and <em>everything keeps working</em> while the payment is retried and you are told about it. Access only stops if the subscription is actually cancelled at the end of that.</p>
+          <p><strong>A free Coaches Portal is not affected.</strong> Teams a coach set up on their own free portal belong to that person rather than to your organization, so there is no subscription involved and their own work stays exactly as it was.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-subscription-ended-data',
+          question: 'We cancelled — did we lose our data?',
+          answerText: 'No. Nothing is deleted when a subscription ends. Your seasons, rosters, schedules, records and history are all kept, and they come back exactly as you left them when you subscribe again. Your account records are retained for 90 days after cancellation. Subscribe again within that window and everything is restored intact — there is nothing to re-enter and nothing to import.',
+          keywords: ['did we lose our data', 'data deleted', 'is our data gone', 'lose everything', 'get data back', '90 days', 'retention', 'restore', 'cancelled data'],
+          popular: true,
+          answer: (
+            <>
+              <p><strong>No.</strong> Nothing is deleted when a subscription ends. Your seasons, rosters, schedules, records and history are all kept.</p>
+              <p>Your account records are retained for <strong>90 days</strong> after cancellation. Subscribe again within that window and everything is restored exactly as you left it — there is nothing to re-enter and nothing to import.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-subscription-ended-access',
+          question: 'Our coaches say the portal stopped working — why?',
+          answerText: 'If your organization\'s subscription was cancelled, access stops immediately for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Billing page — an admin who opens the admin area is taken straight there. Subscribing again restores access for everyone at once. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means a cancellation, not a declined card.',
+          keywords: ['portal stopped working', 'coaches locked out', 'coaches cannot log in', 'scorekeeper stopped', 'check-in stopped', 'no access', 'nothing works', 'subscription has ended message', 'why did access stop'],
+          popular: true,
+          answer: (
+            <>
+              <p>If your organization&apos;s subscription was cancelled, <strong>access stops immediately for everyone</strong> — the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. They see a short note saying the subscription has ended and that nothing has been deleted.</p>
+              <p>Open <strong>Org Admin &gt; Billing</strong> — an admin who opens the admin area is taken straight there. Subscribing again restores access for everyone at once.</p>
+              <p>If a payment simply <em>failed</em>, that is different: the account is marked past due and everything keeps working while the payment is retried. So a portal that has genuinely stopped means a cancellation, not a declined card.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-subscription-restore',
+          question: 'How do we get everything back?',
+          answerText: 'Subscribe again from Org Admin > Billing. That page keeps working even while access is stopped, precisely so you can come back. Everything is restored as you left it, and access returns for every coach, volunteer and family at once. Your records are kept for 90 days after cancellation.',
+          keywords: ['get everything back', 'restore access', 'resubscribe', 're-subscribe', 'reactivate', 'renew', 'start again', 'come back', 'subscribe again'],
+          answer: (
+            <>
+              <p>Subscribe again from <strong>Org Admin &gt; Billing</strong>. That page keeps working even while access is stopped, precisely so you can come back.</p>
+              <p>Everything is restored as you left it, and access returns for every coach, volunteer and family at once. Your records are kept for <strong>90 days</strong> after cancellation.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-plan-change-tournaments',
+          question: 'We moved to a smaller plan — where did our tournaments go?',
+          answerText: 'If your new plan includes fewer tournament slots than you were using, the extra tournaments are archived rather than deleted. A tournament that is currently running is never the one archived — live events are kept. Archived tournaments are retained and come back when you move up to a plan with room for them again.',
+          keywords: ['tournaments disappeared', 'tournaments missing', 'tournament archived', 'downgrade', 'smaller plan', 'fewer tournaments', 'plan change tournaments', 'where did my tournament go'],
+          answer: (
+            <>
+              <p>If your new plan includes fewer tournament slots than you were using, the extra tournaments are <strong>archived rather than deleted</strong>, and a tournament that is <strong>currently running is never the one archived</strong> — live events are kept.</p>
+              <p>Archived tournaments are retained and come back when you move up to a plan with room for them again.</p>
+            </>
+          ),
+        },
+      ],
+    },
+    {
       heading: 'Inviting and managing members',
       keywords: ['seat limit', 'staff seats', 'scorekeepers free', 'officials free', 'do scorekeepers count', 'invite member', 'manage member', 'resend invite'],
       searchText: 'seat limit staff seats how many seats do scorekeepers count toward limit officials free seats free tournament 3 seats upgrade invite member manage role restrict tournaments resend pending invite export member list',

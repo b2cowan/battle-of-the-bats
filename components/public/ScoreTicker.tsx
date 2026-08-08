@@ -105,11 +105,21 @@ export default function ScoreTicker() {
   // Reserve space so fixed page chrome (.hero / .page-content top padding) clears
   // the ticker only while it's actually visible — full strip (40px) when expanded,
   // slim restore bar (24px) when minimized.
+  //
+  // `data-ticker` is the same idiom one level up: an attribute on <html> announcing that this
+  // strip is on screen NAMING TODAY'S SCORES, so chrome above it can stand down rather than say
+  // the same thing twice. Set only when expanded — minimized, the strip is a "Live scores" button
+  // with no score in it, so anything that deferred to it should come back.
   useEffect(() => {
     const el = document.documentElement;
     if (show) el.style.setProperty('--ticker-h', minimized ? '24px' : '40px');
     else el.style.removeProperty('--ticker-h');
-    return () => { el.style.removeProperty('--ticker-h'); };
+    if (show && !minimized) el.dataset.ticker = 'scores';
+    else delete el.dataset.ticker;
+    return () => {
+      el.style.removeProperty('--ticker-h');
+      delete el.dataset.ticker;
+    };
   }, [show, minimized]);
 
   if (!show) return null;

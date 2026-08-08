@@ -9,8 +9,7 @@
   position: sticky;
   /* Stage C: stick just below the fixed AdminTopStrip (0 on mobile/focused shells, where
      no strip renders — today's exact behavior). */
-  /* --sandbox-chrome-h is 0px everywhere except the "See it live" sandbox (globals.css). */
-  top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px));
+  top: var(--admin-topstrip-h, 0px);
   z-index: 40;
   /* env() is 0 on desktop, so this clears the notch on mobile and is a plain top pad on desktop. */
   padding: calc(0.7rem + env(safe-area-inset-top)) max(0.9rem, env(safe-area-inset-right)) 0.7rem max(0.9rem, env(safe-area-inset-left));
@@ -153,6 +152,13 @@ a.name:hover { color: var(--logic-lime); }
 
 /* Desktop has room for a slightly larger name. */
 @media (min-width: 901px) {
+  /* Desktop scrolls the DOCUMENT, so this header sticks to the VIEWPORT and must clear the
+     "See it live" banner pinned above it. Mobile must NOT add the term: there the admin shell
+     is its own scroller that already begins below the banner (globals.css pads the body and
+     the shell subtracts the height), so adding it again double-counts and parks the header
+     mid-screen over the content. --sandbox-chrome-h is 0px outside the sandbox either way. */
+  .header { top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px)); }
+
   .name { font-size: 1.2rem; }
   .collapsed .name { font-size: 1.05rem; }
 }

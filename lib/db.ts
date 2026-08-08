@@ -3581,9 +3581,16 @@ export async function getInsightsDigestTeams(filter?: { orgId?: string; teamId?:
   if (tErr) throw tErr;
   const teamById = new Map((teams ?? []).map(t => [t.id as string, t]));
 
+  // ⚠ `.neq('subscription_status', 'canceled')` is load-bearing, not tidying. This enumerator
+  // feeds the SCHEDULED sweeps (dues reminders, insights digest) — automated mail sent on a club's
+  // behalf, to guardians, about money. Those run from pg_cron with no session, so the billing rail
+  // on getAuthContext never sees them. Without this filter a cancelled club keeps sending payment
+  // reminders to families indefinitely. An org whose team drops out of this map is skipped by the
+  // `if (!o) continue` below, so the sweep simply passes it over. (/review 2026-08-06.)
   const orgIds = [...new Set((teams ?? []).map(t => t.org_id as string))];
   const { data: orgs, error: oErr } = orgIds.length
-    ? await supabaseAdmin.from('organizations').select('id, slug').in('id', orgIds)
+    ? await supabaseAdmin.from('organizations').select('id, slug')
+        .in('id', orgIds).neq('subscription_status', 'canceled')
     : { data: [], error: null };
   if (oErr) throw oErr;
   const orgById = new Map((orgs ?? []).map(o => [o.id as string, o]));

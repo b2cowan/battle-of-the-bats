@@ -7,6 +7,47 @@
 
 ---
 
+### 🆕 Homepage persona cards + entry-point copy — APPROVED 2026-08-07 (built on `dev`, owner QA pending)
+
+Ruling behind it: `BUSINESS_DECISIONS.md` 2026-08-07 — **the homepage states availability and the
+absence of a payment barrier, never the promo calendar.** No price and no Founding Season date
+appears on a persona card; the $29/$39 anchors stay on the persona pages and this page.
+
+**Homepage — Coaches Portal persona badge**
+- **Was:** `Coming soon · express interest` (greyed) — wrong from 2026-07-24, when the Premium
+  Coaches Portal went live on production, until this fix.
+- **Now:** **`Free to start · no credit card`** — word-for-word the Tournament badge, because the
+  two carry the same offer terms and should read as a matched pair.
+- ⚠ The badge is **derived from the plan gate**, not written down. The gated wording stays as the
+  fallback. Do not "simplify" this to a constant — the constant is what broke it.
+- **Rejected:** `Free until Jan 1, 2027 · then $29/mo` (overstates the cost — a free Basic Coaches
+  Portal exists and never expires; and a price on the top-of-funnel surface trades against the
+  Founding Season's ratified goal of feedback volume, not revenue). Also rejected:
+  `Free to start · no org needed` — duplicates the card body and breaks the pairing.
+- **Never** put a `then $X` badge on the **Tournament** card: that plan is free permanently
+  (`monthlyPrice: 0, trialDays: 0`), so a future price there would be false.
+
+**Persona-page primary button — both pages**
+- **Was:** `Start Free — No Credit Card` (tournament) / `Start free` (coaches).
+- **Now:** **`Start free`** on both, and `Start free →` on both plan cards. One product should not
+  read as two. The credit-card objection is answered by the hero sub-line and the trust list — it
+  left the button, not the page.
+- Out of scope, unchanged: `/pricing`'s Tournament → Tournament Plus bridge still says
+  `Start Free — No Credit Card`; the footer's Title-Case `Start Free` is a nav link.
+
+**`/start` chooser — the invitation aside** (demoted from a card to a below-the-rule aside)
+> **Joining a club or team you were invited to?**
+> Create an account with the email address the invitation was sent to — it'll be waiting for you.
+> **Accept an invitation →**
+- "Club or team", never "organization" — our word, not a volunteer's.
+- ⚠ The email sentence is load-bearing: matching the address the invitation was sent to is what
+  surfaces it, and *"which email do I use?"* is the question that otherwise becomes a support
+  message. **This line may get quieter; it must never get shorter.**
+- The link states the outcome (`Accept an invitation`) while the body states the mechanic. The
+  literal alternative (`Create an account`) was considered and rejected for burying the reason.
+
+---
+
 ## ⚠️ AMENDMENTS — Phase 1 + Phase 2/3 Brand Audit (applied 2026-05-27)
 
 The sections below document all copy changes applied to the live pages after the brand strategy audit. Where original draft copy in this document conflicts with an amendment, the amendment wins. The live page files are always the authoritative state; this document records the approved intent.

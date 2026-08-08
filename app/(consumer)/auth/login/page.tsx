@@ -21,6 +21,40 @@ import styles from '../auth.module.css';
  * Home fast-path now returns concrete workspace URLs for solo users, so the
  * next-is-safe signal has to be explicit (see getAuthDestinationDetail).
  */
+/**
+ * Loop breaker: on the already-authenticated path, refuse to chase the same `next` twice IN
+ * QUICK SUCCESSION. A signed-in user bounced here by a layout they cannot reach (e.g. a member
+ * of some other org following a link into this one) would otherwise be forwarded back forever,
+ * with the form never rendering and no door on screen. `hasWorkspace` cannot catch it: it says
+ * "you have A workspace", not "you can reach THIS one".
+ *
+ * ⚠ The WINDOW is the point, not the marker. A bare "seen this next before" flag survives the
+ * successful forward that clears the loop, so the coach who is LATER granted access to the very
+ * team they were blocked from would have their first legitimate attempt in that tab silently
+ * dropped at Home (/review 2026-08-07). A real loop re-arrives in milliseconds; a genuine return
+ * visit is minutes or hours later — so recency, not recurrence, is what distinguishes them.
+ */
+const NEXT_ONCE_KEY = 'flhq-login-next-consumed';
+const NEXT_LOOP_WINDOW_MS = 10_000;
+function consumeNextOnce(next: string | null): string | null {
+  if (!next) return null;
+  try {
+    const raw = sessionStorage.getItem(NEXT_ONCE_KEY);
+    if (raw) {
+      const sep = raw.indexOf('|');
+      const at = Number(raw.slice(0, sep));
+      // Same destination, moments ago ⇒ we are mid-bounce. Give up and let the caller fall
+      // through to the resolved destination. Clearing here also keeps the entry self-expiring.
+      if (raw.slice(sep + 1) === next && Number.isFinite(at) && Date.now() - at < NEXT_LOOP_WINDOW_MS) {
+        sessionStorage.removeItem(NEXT_ONCE_KEY);
+        return null;
+      }
+    }
+    sessionStorage.setItem(NEXT_ONCE_KEY, `${Date.now()}|${next}`);
+  } catch { /* storage blocked — behave as before */ }
+  return next;
+}
+
 async function resolveLoginDestination(next: string | null): Promise<string> {
   let destination = '/discover';
   let hasWorkspace = false;
@@ -64,7 +98,7 @@ function LoginForm() {
       const user = await getUser();
       if (!active) return;
       if (user) {
-        const dest = await resolveLoginDestination(searchParams.get('next'));
+        const dest = await resolveLoginDestination(consumeNextOnce(searchParams.get('next')));
         if (active) router.replace(dest);
         return;
       }
@@ -86,6 +120,7 @@ function LoginForm() {
       // session may not be able to access → redirect back to login → loop). See
       // resolveLoginDestination.
       const dest = await resolveLoginDestination(searchParams.get('next'));
+      try { sessionStorage.removeItem(NEXT_ONCE_KEY); } catch { /* ignore */ }
       router.push(dest);
       router.refresh();
     }

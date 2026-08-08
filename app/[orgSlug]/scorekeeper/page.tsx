@@ -3,20 +3,18 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  AlertTriangle,
-  CalendarDays,
-  CheckCircle2,
-  Clock,
   Info,
   MapPin,
   RefreshCw,
   Save,
   Search,
+  SlidersHorizontal,
   Trophy,
   X,
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase-browser';
 import { useScorekeeperFlip } from '@/components/volunteer/ScorekeeperFlip';
+import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfBottomBars';
 import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
@@ -150,6 +148,12 @@ export default function ScorekeeperPage() {
   const [divisionFilter, setDivisionFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('open');
   const [teamSearch, setTeamSearch] = useState('');
+
+  // Phone only: the setup controls (date, search, field, division) fold behind one button. They
+  // are set once at the start of a shift, not touched between games, and on a 390px screen they
+  // were the reason a volunteer arrived at a screenful of controls with no games on it. Above
+  // 640px the panel is always open (CSS) and this state is inert.
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [editingCard, setEditingCard] = useState<GameCard | null>(null);
   const [homeScore, setHomeScore] = useState('');
@@ -365,6 +369,9 @@ export default function ScorekeeperPage() {
   );
 
   const hasFilters = Boolean(fieldFilter || divisionFilter || teamSearch || statusFilter !== 'open');
+  // What the Filters button admits to while it is closed. A folded panel that hides an active
+  // filter would make a filtered board look like an empty one — the one way this fold could lie.
+  const activeFilterCount = [fieldFilter, divisionFilter, teamSearch].filter(Boolean).length;
   const selectedPolicyRequiresReview = editingCard
     ? scorePolicies[editingCard.game.tournamentId] ?? false
     : false;
@@ -524,33 +531,58 @@ export default function ScorekeeperPage() {
         </button>
       </section>
 
-      <section className={styles.statsGrid} aria-label="Score status summary">
-        <div className={styles.stat}>
-          <Clock size={16} />
-          <span>{counts.open}</span>
-          <small>To Score</small>
-        </div>
-        <div className={styles.stat}>
-          <AlertTriangle size={16} />
-          <span>{counts.pending}</span>
-          <small>Review</small>
-        </div>
-        <div className={styles.stat}>
-          <CheckCircle2 size={16} />
-          <span>{counts.final}</span>
-          <small>Final</small>
-        </div>
-      </section>
+      {/* The three counter tiles that used to sit here are retired: the status bar at the bottom
+          of the screen now carries the same three numbers, and showing them twice was the single
+          biggest contributor to a volunteer arriving at a screenful of chrome with no games on it. */}
 
-      <section className={styles.controls} aria-label="Find games">
+      {/* The date stays visible at every width — it is the one piece of state a volunteer must be
+          able to confirm at a glance before they trust the board in front of them. */}
+      <section className={styles.dateRow} aria-label="Day">
+        {/* No calendar glyph of our own: the browser's date input draws its own picker button, and
+            two calendar icons on one field is one icon explaining the other. The native one is
+            also the one that actually opens the picker — ours was decoration taking width the
+            date itself needs. */}
         <label className={styles.dateControl}>
-          <CalendarDays size={16} />
-          <input type="date" value={date} onChange={event => setDate(event.target.value)} />
+          <input
+            type="date"
+            value={date}
+            aria-label="Day to score"
+            /**
+             * The browser's own picker carries a **Clear** button we cannot remove, and an empty
+             * date leaves this board showing games for a day it can no longer name. Clearing
+             * therefore means "back to today" — the field visibly refills, so the volunteer sees
+             * what their press did rather than staring at `yyyy-mm-dd` over a stale list.
+             */
+            onChange={event => setDate(event.target.value || todayString())}
+          />
         </label>
         <button type="button" className={styles.todayButton} onClick={() => setDate(todayString())}>
           Today
         </button>
+        <button
+          type="button"
+          className={styles.filtersToggle}
+          aria-expanded={filtersOpen}
+          aria-controls="sk-find-games"
+          /* The badge is decoration to a screen reader; the count belongs in the name. */
+          aria-label={activeFilterCount > 0 ? `Filters, ${activeFilterCount} active` : 'Filters'}
+          onClick={() => setFiltersOpen(open => !open)}
+        >
+          <SlidersHorizontal size={15} aria-hidden />
+          Filters
+          {/* A badge, not extra words: the button must not change width when a filter is set —
+              that growth is what clipped the day off the date beside it. */}
+          {activeFilterCount > 0 && (
+            <span className={styles.filterCount} aria-hidden>{activeFilterCount}</span>
+          )}
+        </button>
+      </section>
 
+      <section
+        id="sk-find-games"
+        className={`${styles.controls} ${filtersOpen ? '' : styles.controlsClosed}`}
+        aria-label="Find games"
+      >
         <label className={styles.searchControl}>
           <Search size={16} />
           <input
@@ -576,23 +608,25 @@ export default function ScorekeeperPage() {
         </select>
       </section>
 
-      <section className={styles.statusTabs} aria-label="Status filter">
+      {/* Rendered HERE, in its natural place in the flow, and lifted to the bottom of the phone's
+          screen by the shared stylesheet. Rendering it last instead would put the buckets at the
+          foot of a desktop page. */}
+      <DayOfFilterBar label="Status filter">
         {([
-          ['open', `To Score ${counts.open}`],
-          ['pending', `Review ${counts.pending}`],
-          ['final', `Final ${counts.final}`],
-          ['all', `All ${cards.length}`],
-        ] as const).map(([filter, label]) => (
-          <button
+          ['open', 'To Score', counts.open],
+          ['pending', 'Review', counts.pending],
+          ['final', 'Final', counts.final],
+          ['all', 'All', cards.length],
+        ] as const).map(([filter, label, count]) => (
+          <DayOfFilterButton
             key={filter}
-            type="button"
-            className={statusFilter === filter ? styles.statusTabActive : styles.statusTab}
+            label={label}
+            count={count}
+            active={statusFilter === filter}
             onClick={() => setStatusFilter(filter)}
-          >
-            {label}
-          </button>
+          />
         ))}
-      </section>
+      </DayOfFilterBar>
 
       {!sheetOpen && noticeBlock}
 

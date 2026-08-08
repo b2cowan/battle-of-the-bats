@@ -89,6 +89,7 @@ const SCOPES = {
       'components/billing',
       'components/feedback',
       'components/platform-admin',
+      'components/volunteer',
     ],
     // Named individually, NOT by folder: components/rep-teams also holds the PUBLIC
     // register.module.css (claimed by the public scope above), and components/notifications

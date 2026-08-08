@@ -201,10 +201,55 @@
   background: rgba(var(--home-olive-rgb), 0.18);
 }
 
-.footer {
-  margin-top: 1.5rem;
-  padding-top: 1.2rem;
+/* ── The invitation aside ─────────────────────────────────────────────────────
+   Below the rule, not in the card list: the cards are decisions, and an invitation is a thing that
+   already exists with your name on it (owner-directed 2026-08-07). Quieter than a card in every
+   dimension — no border, no fill, no arrow chip — so it reads as an aside rather than as a third
+   option a visitor has to weigh and reject.
+
+   ⚠ It carries the ONE sentence an invitee needs (which email address to use), so it may get
+   quieter but must never get shorter. */
+
+.invite {
+  margin-top: 1.75rem;
+  padding-top: 1.4rem;
   border-top: 1px solid var(--home-line);
+  text-align: center;
+}
+
+.inviteQuestion {
+  font-size: 0.9rem;
+  font-weight: 650;
+  color: var(--home-ink);
+  margin: 0;
+}
+
+.inviteBody {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--home-dim);
+  /* A reading measure, centred — the sentence is the point of this block and a full-width line
+     at this size is hard to come back from mid-thought. */
+  max-width: 44ch;
+  margin: 0.2rem auto 0;
+}
+
+.inviteCta {
+  display: inline-block;
+  margin-top: 0.55rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--home-olive);
+  text-decoration: none;
+  /* Tap floor without a box: the label is small and this sits alone in a lot of space. */
+  padding: 0.4rem 0.5rem;
+}
+.inviteCta:hover { text-decoration: underline; }
+
+/* The aside already draws the dividing rule, so the footer stops drawing a second one directly
+   beneath it — two hairlines a few lines apart read as a broken box. */
+.footer {
+  margin-top: 1.1rem;
   text-align: center;
   font-size: 0.78rem;
   color: var(--home-dim);

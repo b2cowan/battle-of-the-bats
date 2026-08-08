@@ -19,11 +19,13 @@
 > 1. **Nothing is uncommitted any more.** The working tree is clean. Every section that said "BUILT,
 >    dev, UNCOMMITTED" is committed — the last catch-all commit (`d8316e87`) swept up §1.9c, §1.18,
 >    §1.19 and §6 together. The **UNCOMMITTED** label is retired; the label to read now is **ON DEV**.
-> 2. **Four migrations are waiting.** The old text said "nothing below is waiting on a database
->    change" — true of 211–224, which went to prod on 2026-08-03 with zero drift. But **225**
->    (opponent book), **226** (coach-sandbox re-anchor), **227** (club shared book) and **228**
->    (game-day moments) are **dev-only**, and **226 is not applied even on dev** — which is why §5.4's
->    dates go stale and have to be re-seeded by hand. These gate the release of the staged half.
+> 2. **One migration is still waiting.** The old text said "nothing below is waiting on a database
+>    change" — true of 211–224 (prod, 2026-08-03) and, as of **2026-08-06**, true of **225**
+>    (opponent book), **227** (club shared book) and **228** (game-day moments) too: all three were
+>    applied to production and the snapshots refreshed (`a2b91654`). **Verified against the live
+>    databases, not the commit message.** The one still outstanding is **226**, the coach-sandbox
+>    re-anchor schedule, which is applied **nowhere** — that is why §5.4's demo dates go stale and
+>    have to be re-seeded by hand.
 >
 > ### The ordering: exposure first, then whatever you can test in one sitting
 >
@@ -139,13 +141,14 @@ the sequence.
 | **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ON DEV |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
 | **1C** | Money | §1.2 · §1.3 · §2.3 | 🖥📱 | LIVE |
-| **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV · migs 225 + 227 |
-| **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV · mig 228 |
+| **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
+| **1E** | Game day on the bench — ⚠ one sitting, one phone | §1.15 · §1.17 · §1.18 | 📱 | ON DEV |
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
 | **2B** | On a phone — and one of them outdoors | §2.1 · §2.2 · §2.5 · §2.6 | 📱 | LIVE |
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
 | **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
 | **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 | 🖥📱 | Mixed · mig 226 unapplied |
+| **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ON DEV · ⚠ no automated layout cover |
 
 **Where the release gate actually sits:** groups **1A, 1D, 1E**, §1.9c, §6, and most of **3B** are
 the unshipped half. If you only have one sitting, those are the ones where finding something still
@@ -169,16 +172,38 @@ coach sandbox) · §1.16 (needs two teams in one Club-plan org set up first).
       a team with dated budget lines/expenses/payables across months + a prior season (Chunk H);
       an org rep team with an **admin-linked tournament registration** (Batch 1); free-tier teams
       in the coherence states (Session 3).
-- [ ] **Setup the newer groups need, and nothing else does** — each is stated again in its own
-      section, but they are the things you cannot conjure mid-sitting: a **throwaway org on a Club
-      plan you are happy to cancel** (1A) · a team with the **same opponent on two scored games**,
-      ideally under two spellings (1D) · **two teams in one Club-plan org**, both with scouting
-      content on a shared opponent (§1.16) · a game whose **start time you have set to ~now** so the
-      game-day window is open (1E) · a team with **at least one prior season of tryout data** (§1.11).
-- ⚠ **Dev and prod are NOT schema-identical any more.** 211–224 went to prod on 2026-08-03 with zero
-  drift, but **225, 227 and 228 are dev-only**, and **226 is applied nowhere** — so on dev the coach
-  sandbox's dates do not re-anchor overnight and have to be re-seeded by hand (§5.4). Nothing here is
-  blocked by that; it is the release that is.
+- [x] **Setup the newer groups need, and nothing else does** — ✅ **SEEDED 2026-08-06.** One
+      command rebuilds all of it, and re-running it is also how you reset after a run:
+      `node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs` (`--cancel-lab` / `--game-day`
+      / `--book` to do one at a time). It prints the URLs and sign-ins. What it makes:
+      · **Group 1A** — a throwaway Club-plan org `qa-cancel-lab` with an owner, a coach, a
+        scorekeeper, a rep team with a lineup, and three live tournaments. Re-running RESETS the
+        subscription to active, which is the undo for §1.19 step 8.
+      · **Group 3C** (added 2026-08-07) — two more volunteers in that same org, `Dana Scorer`
+        (score only) and `Pat Gate` (gate only). They exist because no ROLE produces a single-duty
+        volunteer — everyone who can score can also check teams in — so the case the new tab bar
+        is weakest on had to be built with explicit capability overrides.
+      · **Group 1E** — a live-window game on `toronto blue jays5` with a lineup whose bench
+        streaks are deliberately **4 / 3 / 2 innings** so "longest sitting first" is a real claim,
+        and three pitchers of two innings each. Pitching caps left UNSET on purpose — that is
+        §1.18's "before".
+      · **Group 1D** — book lines and observations on Northgate Knights, a **second spelling**
+        ("Knights 12U") to merge, Durham Diamonds left deliberately EMPTY, lineups across three
+        wins and two losses with a different starting pitcher in each, and the two-team club pair
+        on `dev-club-org` with all three sharing switches **off** (turning them on is the test).
+      ⚠ Still missing, and honestly so: **§1.14's "Their tournament so far"** needs a real platform
+      tournament with the team registered in a published division. Those checkboxes will read
+      "absent" for setup reasons — not a defect.
+      ⚠ **Fixed 2026-08-07 — if you seeded before this date, re-seed.** The script stamped "today"
+      in UTC, so any run after ~8pm Eastern put the day's games on TOMORROW and the scorekeeper
+      board correctly reported **"No games today"** — a broken fixture that looks exactly like a
+      broken screen. It now uses the local calendar day, the one a screen means by "today".
+- [ ] Still yours to arrange: a team with **at least one prior season of tryout data** (§1.11), and
+      a real **iPhone** for §2.6a and §4.
+- ⚠ **Dev and prod are schema-identical again as of 2026-08-06** — 225, 227 and 228 were applied to
+  production and the snapshots refreshed. **One exception:** migration **226**, the coach sandbox's
+  nightly re-anchor, is applied **nowhere**, so on dev that demo's dates do not move overnight and
+  have to be re-seeded by hand before §5.4. Nothing else here is blocked by a database change.
 
 ---
 
@@ -201,10 +226,29 @@ A cancelled subscription is the only thing in this ledger that can switch a whol
 needs a throwaway org and a platform-admin sign-in, so it batches with nothing else — do it first and
 alone, while you still have the patience for a before/after.
 
-### 1.19 🖥📱 A cancelled subscription actually stops — **ON DEV `d8316e87`** · no migration
+### 1.19 🖥📱 A cancelled subscription actually stops — **ON DEV `d8316e87` + a SECOND and THIRD WAVE still in the working tree** · no migration
 
 *A platform admin cancels an org. Until now the coach portal and the scorekeeper app kept working —
 forever — even though the confirm dialog promised both would shut down. They stop now.*
+
+> ⚠ **Two rounds of work sit under this section, and only the first is committed.** A follow-up
+> review pass (2026-08-06, uncommitted at the time of writing — typecheck ✓, 1,439 unit tests ✓)
+> hardened three things the checklist below now covers:
+> 1. **The downgrade no longer archives a tournament that is happening right now.** It used to keep
+>    "the most recent seasons" — which inside one year is pure alphabet, so an event that finished
+>    in the spring outranked one running today. Archiving a live tournament takes its whole public
+>    site down mid-event, for every family watching. Step 9 is rewritten to catch that.
+> 2. **A failed archive no longer reads as success.** The plan screen now names the tournaments it
+>    archived, and says so loudly when it could not — previously the plan change reported plain
+>    success while the org sat over its cap with a live tournament still running.
+> 3. **Check-in joins the shut-down list** (it was already closed in the committed half; the new
+>    work made the ordering a shared rule so the next volunteer surface inherits it). There is now
+>    a checkbox for it — there wasn't before.
+>
+> ⚠ **A THIRD wave (2026-08-07, uncommitted — typecheck ✓, lint ✓, 1,439 unit tests ✓, adversarial
+> review ✓) landed while setting this section up, and it is not about cancellation at all.** Doing
+> step 2 signed in as the *wrong* account walked straight into a dead end that has been there all
+> along, on every workspace in the product. Steps 15–17 below are its checks.
 
 ⚠ **This section is different from every other one in the ledger, and you need to know why before
 you start.** Entitlement changes are close to impossible to QA by clicking: **a cancelled org that
@@ -214,16 +258,34 @@ that shipped and went unnoticed for a year. So this section is built as a **befo
 throwaway org**, where the only meaningful evidence is that something you *could* do a minute ago
 you *cannot* do now.
 
-**Do not run this on a real customer org.** Use a dev org you are happy to break.
+**Do not run this on a real customer org.** ✅ **A throwaway org is seeded for exactly this:**
+`qa-cancel-lab` — Club plan, one rep team with a roster and a saved lineup, and **three tournaments
+shaped so step 9 has a real answer** (see there). Rebuild or reset it any time with
+`node --env-file=.env.local scripts/seed-qa-day-fixtures.mjs --cancel-lab`.
+
+| Sign in as | Email | Password | Used in |
+|---|---|---|---|
+| Coach | `qa-lab-coach@dev.local` | `devpass123` | steps 2 + 5 |
+| Scorekeeper | `qa-lab-scorer@dev.local` | `devpass123` | steps 3 + 6 |
+| Org owner | `qa-lab-owner@dev.local` | `devpass123` | step 7, the comeback path |
+| Platform admin | `fieldlogichq@gmail.com` at `/platform-admin/login` | — | steps 4 + 9–12 |
+
+⚠ **The seeded games and the live window are anchored to the day you last ran the seeder.** If you
+come back tomorrow, re-run it — otherwise the scorekeeper's "before" shows no games today and the
+step proves nothing.
 
 #### Setup (5 min)
-1. Pick a dev org on a **Club** plan with at least one rep team and one coach you can sign in as.
-   If it has tournaments, note how many are live.
-2. Sign in as that org's coach and open the Coaches Portal. **Do the things.** Open a roster, open
-   attendance, open lineups. Confirm they all work. *This is the "before" half — without it the
-   "after" proves nothing.*
-3. In a second browser (or private window) sign in as a **scorekeeper** for that org and open
-   `/{orgSlug}/scorekeeper`. Confirm you can see the day's games.
+1. ✅ Already true: `qa-cancel-lab` is on the **Club** plan with a rep team, a coach, and three
+   tournaments — **QA Lab Summer Showdown** (running today, carrying two games), **QA Lab April
+   Open** (finished, earlier this year) and **QA Lab Fall Invitational** (last year). Step 9 turns
+   on which of those survives, so glance at the three now.
+2. Sign in as the **coach** and open the Coaches Portal at `/qa-cancel-lab/coaches`. **Do the
+   things.** Open the roster, open attendance, open lineups — all three have real data in them.
+   *This is the "before" half — without it the "after" proves nothing.*
+   → While you are here, **create a family link** on the Roster page and open it in a private
+   window. That is the "before" for step 12, and it can only be made from this screen.
+3. In a second browser (or private window) sign in as the **scorekeeper** and open
+   `/qa-cancel-lab/scorekeeper`. Confirm you can see the day's games — there are two.
 
 #### The act
 4. As platform admin → the org → **Billing & Access** → **Cancel Subscription**. Read the
@@ -238,6 +300,11 @@ you *cannot* do now.
    ❌ If you can still enter a score, the fix has failed. *(This one is the sharpest test: the
    scorekeeper is an installed phone app that lives outside the admin screens, which is exactly why
    it kept working before.)*
+   **6b. Check-in, the third volunteer door.** Still cancelled, open `/qa-cancel-lab/check-in`.
+   Expected: the same "subscription has ended" wall — **not** "Access Denied". The distinction
+   matters: Access Denied sends a volunteer to their org admin over something that is not their
+   fault and cannot be fixed at that end. *(Same class of surface as the scorekeeper — outside the
+   admin shell, so the original client-side redirect never reached it either.)*
 7. **The comeback path — the thing most likely to be broken by this change.** As the org owner,
    go to `/{orgSlug}/admin`. Expected: you land on the **Billing** page (everything else redirects
    there) and **that page loads properly** — plan cards, prices, a way to resubscribe.
@@ -245,11 +312,35 @@ you *cannot* do now.
    a cancelled customer cannot pay us again, which is worse than the bug we set out to fix.
 8. **Undo it.** Platform admin → set the org's plan back / re-activate. Expected: the coach portal
    and scorekeeper both come back **exactly as they were** — nothing was deleted.
+   *(Belt and braces: re-running `scripts/seed-qa-day-fixtures.mjs --cancel-lab` also resets the
+   org to active/Club and un-archives all three tournaments. Use it if step 8 goes wrong — but do
+   step 8 by hand first, because whether the operator path can undo its own cancellation is
+   exactly what is being tested.)*
 
-#### Also changed, quick checks (2 min)
-9. **Plan downgrade now tidies up.** On a dev org with several live tournaments, use platform admin
-   to drop it to a one-tournament plan. Expected: the response reports tournaments archived, and the
-   org is no longer sitting over its cap. Previously they all stayed live indefinitely.
+#### Also changed, quick checks (4 min)
+
+9. **⚠ The downgrade must not archive the tournament that is happening today.** This is the sharpest
+   of the "also changed" checks and the fixture is built around it.
+
+   With the lab back on **Club**, use platform admin to drop it to a **one-tournament plan**.
+   - Expected: the confirmation names what it archived — **QA Lab April Open** and **QA Lab Fall
+     Invitational** — and the survivor is **QA Lab Summer Showdown**, the one running today.
+   - ❌ **If Summer Showdown was archived and April Open survived, stop and tell me.** That is the
+     old behaviour: it kept the alphabetically-first event of the most recent year, which meant a
+     tournament finished in the spring outranked one being played right now. Archiving a live event
+     takes its whole public site down mid-tournament, for every family watching it.
+   - Then open the **public page of Summer Showdown** and confirm it still loads. The archived two
+     should be gone from the org's tournament list but nothing should 404 that families are using.
+   - Before this work the plan change reported the over-cap count and **left every one of them
+     running**, indefinitely.
+
+   ⚠ Re-run the seeder afterwards to put all three back before any other step.
+
+9b. **A failed tidy-up must not read as success.** Nothing to force — just read the confirmation
+   after step 9. It should either name the archived tournaments or carry a **bold warning** that
+   archiving did not happen. ❌ A plain "Plan and access updated" with no mention either way is the
+   defect: the plan change lands regardless, so a silent screen would leave the org over its cap
+   with a live tournament still running and nobody the wiser.
 10. **Plans & Pricing → Feature Matrix.** Expected: a banner stating plainly that publishing the
     matrix records the decision but does **not** change customer access, plus either a list of
     "published but not live" rows or a ✅ saying published and live agree. *(Publishing used to
@@ -257,6 +348,58 @@ you *cannot* do now.
 11. **Bulk Operations → Comp Period.** Expected: the same warning the single-org screen has always
     carried — comp period is a billing tag and grants no access. It used to just say "Grant a comp
     period", which reads like it gives something.
+
+#### Added by the review — three more doors that were still open (2 min)
+The review found the *same* defect on three surfaces the first pass missed. All three are worth a
+look because none of them are reachable from the coach or admin screens you just tested.
+
+12. **The family portal.** Use the family link you made in setup step 2 — the parent-facing team
+    page. Confirm it works. Then cancel and reload: expected **404 / not found**, not a working
+    schedule. *(A cancelled club's families kept the team page, schedule and calendar feed
+    indefinitely — the family portal never consulted billing at all.)*
+13. **Tryout registration.** With the org cancelled, open its public rep-team tryout registration
+    page and try to submit. Expected: the org reads as not found. ❌ If it accepts a registration,
+    a cancelled club is still collecting players' dates of birth and guardian contact details.
+14. **Dues reminder emails.** Nothing to click — just know that the nightly reminder sweep now skips
+    cancelled orgs. Previously a cancelled club kept emailing its families about money.
+
+#### Found while setting this section up — the door that trapped you (3 min)
+*Nothing here is about cancellation. It was found doing step 2 with the wrong account signed in, and
+it applies to **every** workspace in the product, not just the lab. Built 2026-08-07, uncommitted.*
+
+**What was wrong:** signed in as one account and following a link into a club you don't belong to,
+the club bounced you to the sign-in screen and the sign-in screen bounced you straight back —
+forever. No form ever appeared, no button, no message. The only escape was clearing cookies. Both
+halves were individually behaving sensibly; together they trapped you.
+
+15. **The trap itself.** Signed in as the **platform admin** (or any account that is *not*
+    `qa-lab-coach@dev.local`), open `/qa-cancel-lab/coaches`.
+    - Expected: a page headed **"No access to this organization"**, saying you're signed in but this
+      account isn't a coach here — with the portal's usual top strip above it (wordmark, Account,
+      Workspaces) and three buttons: **Go to Home**, **Back to Coaches Portal home**, **Sign out**.
+    - ❌ **If the screen flickers between two URLs and you can't click anything, stop and tell me** —
+      that is the original defect and it means the fix has failed.
+    - The **Workspaces** control top-right is the useful one: it should let you hop straight to a
+      club you *do* belong to, without signing out and back in.
+    - ⚠ On a **phone** the top strip is deliberately absent (it is desktop-only everywhere in the
+      portal); the three buttons carry the whole job there. That is intended, not a gap.
+
+16. **The same trap, elsewhere.** The bounce-protection is global, so spot-check one other door:
+    signed in as the coach, open `/qa-cancel-lab/admin` (they are not an org admin).
+    - Expected: you end up somewhere you can actually use — Home, or your own workspace — **not** a
+      flickering loop. The wording there is still generic; only the coach portal got a purpose-built
+      page in this pass, which is a known and deliberate gap.
+
+17. **📱 The sign-in screen's bottom bar.** On a phone, sign out completely and open `/auth/login`.
+    - Expected: three tabs — **Home · Scores · Sign In** — with **Sign In lit up** as the tab you're
+      on. Previously it showed only Home and Scores, with nothing highlighted and no indication of
+      where you were.
+    - Then tap through to **Create a free account**. Expected: the Sign In tab is still there but no
+      longer highlighted, and tapping it takes you back to sign-in — a genuinely useful "already
+      have an account?" shortcut.
+    - ❌ If the bar looks squashed, mis-spaced, or a tab is cut off, say so.
+    - *Worth a quick glance on a tournament public page and inside both demo sandboxes too — this is
+      shared chrome. Neither sandbox shows this bar at all, so nothing should have changed there.*
 
 #### What is deliberately NOT closed (so it doesn't look like a bug)
 - **`past_due` orgs keep working.** A failed payment writes past-due, not cancelled — the customer
@@ -798,7 +941,7 @@ numbers, P3 fills it from the tournament, and the Club Shared Book opens it to s
 exposure here is **notes about other people's children** and, in §1.16, a boundary between two clubs.
 Test them on one team with a repeated opponent and you get all four for the price of the setup.
 
-### 1.12 🖥📱 Opponent Scouting Book — Phase 1 — **ON DEV `72034c15`** · ⚠ mig 225 DEV-ONLY
+### 1.12 🖥📱 Opponent Scouting Book — Phase 1 — **ON DEV `72034c15`** · ✅ mig 225 on prod 2026-08-06
 *Log a one-line observation right after the score; it files itself under that opponent; the book resurfaces on the schedule the week you meet them again.*
 
 Where: **Insights → "Who are we up against?"** tile, and any game's drawer → **Scouting** tab.
@@ -845,7 +988,7 @@ season; or name the same opponent on two games and score them).
       1,197 unit tests, verify:changed. Rendered layout check NOT run (no dev server) — worth
       one visual glance during this QA.
 
-### 1.13 🖥📱 Opponent Scouting Book — Phase 2 — **ON DEV `d87fb31b`** · ⚠ mig 225 DEV-ONLY
+### 1.13 🖥📱 Opponent Scouting Book — Phase 2 — **ON DEV `d87fb31b`** · ✅ mig 225 on prod 2026-08-06
 *Merge two spellings into one opponent; the card writes its own scouting lines from your results
 and lineups; one tap briefs the staff room; the masthead nags once in game week.*
 
@@ -911,7 +1054,7 @@ scored games against one of them.
       call if wanted). All green after: typecheck, 1,234 unit tests, verify:changed.
       Rendered layout check NOT run — worth one visual glance during this QA.
 
-### 1.14 🖥📱 Opponent Scouting Book — Phase 3 — **ON DEV `d87fb31b`** · ⚠ mig 225 DEV-ONLY
+### 1.14 🖥📱 Opponent Scouting Book — Phase 3 — **ON DEV `d87fb31b`** · ✅ mig 225 on prod 2026-08-06
 *The book fills itself: a mirrored tournament game's Scouting tab shows the opponent's other
 results this weekend, assembled from the tournament we host; and the week you build practice,
 Saturday's book meets Tuesday's plan.*
@@ -977,7 +1120,7 @@ tournament (published division) whose opponent has 2+ scored games that weekend.
       typecheck, 1,266 unit tests, verify:changed. Rendered layout check NOT run — worth one
       visual glance during this QA.
 
-### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **ON DEV `d9add3cd` + `0ad5d2cc`** · ⚠ mig 227 DEV-ONLY
+### 1.16 🖥📱 Club Shared Book P1 — the club's collective scouting memory — **ON DEV `d9add3cd` + `0ad5d2cc`** · ✅ mig 227 on prod 2026-08-06
 
 > **`/review` ran 2026-08-05 (high-risk tier, retrospective — this shipped before the funnel).**
 > Five lenses: cross-org leakage · plan gating · correctness · data/contract/migration ·
@@ -1187,7 +1330,7 @@ arithmetic, nothing is stored).
       the schedule tab still shows the player's note; deactivate a rostered player who's in
       tonight's lineup, open the console, make a sub, confirm it saves.
 
-### 1.17 📱 Game-Day Mode P2 — moments — **ON DEV `f03e0e46`** · ⚠ mig 228 DEV-ONLY
+### 1.17 📱 Game-Day Mode P2 — moments — **ON DEV `f03e0e46`** · ✅ mig 228 on prod 2026-08-06
 *One line a coach types at the bench because they want to remember it. It reads back in the
 end-game wrap, on the tagged player's page, and as one quoted line on Season Wrapped — and it
 feeds nothing else, ever.*
@@ -2333,6 +2476,125 @@ you got to for the rest of the browser session.
 
 ---
 
+## Group 3C · The day-of volunteer bars — 📱 phone first, then one desktop pass
+
+**§7 — the scorekeeper and gate check-in screens get a bottom.** ON DEV, uncommitted, never
+released. Chrome only: no capability, route, database or API change anywhere in it.
+
+⚠ **The automated layout sweep does not cover these two screens at all** — checked, not assumed.
+Its screen list is coach-portal-only, so the three rules that fixed bottom chrome usually breaks
+(44px tap targets · nothing trapped under fixed furniture · no sideways scroll) are **not**
+watching this. Your phone is the only thing checking it.
+
+**Accounts — all three are seeded by `--cancel-lab`, password `devpass123`:**
+
+| Who | Sign-in | Duties | Should see |
+|---|---|---|---|
+| QA Lab Scorekeeper | `qa-lab-scorer@dev.local` | both | Score · Gate · Account |
+| Dana Scorer | `qa-lab-scorer-only@dev.local` | score only | Score · Account |
+| Pat Gate | `qa-lab-gate-only@dev.local` | gate only | Gate · Account |
+
+The two single-duty accounts are new (2026-08-07) and exist **only** for this section: every role
+that can score can also check teams in, so a single-duty volunteer cannot be produced by role and
+had to be built with explicit capability overrides. Re-run the seeder to reset.
+
+Screens: `/qa-cancel-lab/scorekeeper` · `/qa-cancel-lab/check-in`
+
+### A · What the scorekeeper opens on (dual-duty account, phone)
+
+- [ ] Sign in as **QA Lab Scorekeeper**, open the scorekeeper screen.
+- [ ] **Before scrolling at all: at least one game card is fully visible.** This is the entire
+      point of the change — it used to be none.
+- [ ] The three counter tiles (To Score / Review / Final) are **gone** from the top.
+- [ ] Visible at the top instead: the date, **Today**, and one **Filters** button.
+- [ ] At the bottom, two bars: the buckets (To Score 2 · Review 0 · Final 0 · All 2) with their
+      counts, above a Score · Gate · Account tab bar.
+- [ ] The header reads FIELDLOGICHQ over **the full club name** — "QA Cancel Lab (Tournament)",
+      not cut off mid-word. No Check-In link, no Sign Out, no Feedback. The ⇄ pill is still there.
+
+### B · The buckets earn the thumb
+
+- [ ] Scroll to the bottom of the game list. The bucket bar stays put.
+- [ ] From there, tap **Review** — the list empties and Review highlights, **without scrolling up**.
+- [ ] Tap **To Score** — both games back. Tap **All** — reads 2.
+
+### C · The fold cannot lie
+
+- [ ] The date field has **one** calendar icon, on the right, and tapping it opens the picker.
+      (Ours was removed 2026-08-07 — two calendar icons on one field is one icon explaining the
+      other, and the browser's is the one that actually works.)
+- [ ] Open the picker and press its **Clear** — the field must refill with **today** and the games
+      stay. That button is the browser's and cannot be removed; an empty date used to leave the
+      board showing games for a day it could no longer name.
+- [ ] Tap **Filters** — search, field and division appear.
+- [ ] The **field dropdown lists Lab Field 1 and Lab Field 2.** If it only offers "All fields",
+      the fixture predates 2026-08-07 — re-seed. (That empty dropdown is what surfaced the
+      game-location data-integrity problem; see `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN_PROMPT.md`.)
+- [ ] Pick **Lab Field 1** — only the 10:00 game remains.
+- [ ] Collapse Filters. **A lime count badge shows "1" on the button, and the date beside it still
+      reads 2026-08-07 in full.** A folded panel hiding an active filter would make a filtered
+      board look like an empty day; and the badge is a badge rather than extra words precisely so
+      the button cannot grow and clip the date (the defect this replaced).
+- [ ] Clear the filter.
+
+### D · Entering a score, over the bars
+
+- [ ] Tap a game. The score sheet opens **over** both bars — deliberate: entering a score is a
+      modal act, and covering the navigation is what stops a volunteer wandering off mid-entry.
+- [ ] With the number keyboard up, Cancel and Finalize are both reachable and clear of the home
+      indicator.
+- [ ] Save a score. The **To Score count in the bar drops and Final rises** — the bar is the only
+      place those numbers live now.
+
+### E · The tab bar
+
+- [ ] Tap **Gate**. The check-in board opens with its own bucket row: All · Not arrived ·
+      Checked in · No-show, with counts. Gate is the current tab.
+- [ ] Tap **Score** — straight back. One tap each way, no header hunting.
+
+### F · Account — and the one step here that is not cosmetic
+
+- [ ] Tap **Account**. The sheet names you: "QA Lab Scorekeeper", the email, and the duties you
+      hold at this club. On a borrowed phone at a gate this is the question that matters most.
+- [ ] **Install this app** → the install prompt appears. (Nothing on desktop Chrome is correct —
+      it is a phone affordance.)
+- [ ] **Open the public site** → lands on the club's public page.
+- [ ] ⚠ Back on the scorekeeper, Account → **Sign out**. **This is now the only exit on a phone.**
+      It used to sit in the header precisely because a volunteer on a borrowed or shared phone had
+      no way to end their session. If this is at all hard to find, say so — the fallback is
+      already decided (Sign Out returns to the header) and it is a one-line change.
+- [ ] After signing out, the Back button must not put you back on the board.
+
+### G · One duty only — the design's weakest case, and a wall test
+
+- [ ] Sign in as **Dana Scorer**. The scorekeeper shows **two** tabs: Score and Account. No Gate.
+- [ ] Type the check-in URL directly. It must **refuse with "Access Denied"** — a door being
+      absent from the bar is presentation; the wall is the actual protection.
+- [ ] Sign in as **Pat Gate**. Check-in shows **two** tabs: Gate and Account. No Score.
+- [ ] Type the scorekeeper URL directly. It must **refuse**.
+- [ ] ⚠ **A judgement, not a pass/fail:** for these two — who are the majority of real volunteers —
+      is a two-tab bar where one tab is the screen they are already on worth 62px of their screen?
+      If it reads as hollow, the fallback is the bucket bar alone for them, with Sign Out back in
+      the header.
+
+### H · Desktop must be untouched
+
+- [ ] Both screens at desktop width: **no tab bar, no pinned bars.** The buckets sit where they
+      always did, and the Check-In link and Sign Out are back in the header.
+- [ ] ⚠ **The one deliberate desktop change:** the volunteer gate board's arrival filter is now a
+      four-across row rather than an inline pill in the toolbar — it matches the scorekeeper twin.
+- [ ] **The admin gate screen** (`/qa-cancel-lab/admin/tournaments/check-in`) must be **completely
+      unchanged**: inline segmented filter, its own bottom nav, and *not* three stacked bars. It
+      shares the board component with the volunteer screen, so this is the collision to check.
+
+### I · A real iPhone (not Chromium)
+
+- [ ] On a notched iPhone: nothing sits behind the home indicator, both bars clear it, and the
+      score sheet's buttons stay reachable. This is the exact failure the lineup builder's Undo
+      bar shipped with, and the sweep that would normally catch it does not run here.
+
+---
+
 ## Not in this ledger (why)
 
 - **Quiet Mode onboarding** — your QA already PASSED (2026-07-29). Blocked on release only: its
@@ -2362,13 +2624,15 @@ this is now most of the newest work, not two odds and ends:
 | Gate | Sections | Also needs |
 |---|---|---|
 | Group **1A** | §1.19 — a cancelled subscription actually stops | — |
-| Group **1D** | §1.12 · §1.13 · §1.14 · §1.16 — the opponent book + club sharing | migs **225**, **227** to prod |
-| Group **1E** | §1.15 · §1.17 · §1.18 — game day on the bench | mig **228** to prod |
+| Group **1D** | §1.12 · §1.13 · §1.14 · §1.16 — the opponent book + club sharing | — (migs 225 + 227 shipped) |
+| Group **1E** | §1.15 · §1.17 · §1.18 — game day on the bench | — (mig 228 shipped) |
 | Inside **1B** | §1.9c — the roster switch | — |
 | Inside **3A** | §6 — the playing-time wording sweep | — |
+| Group **3C** | §7 — the day-of volunteer bottom bars | — (no migration; ⚠ no automated layout cover, your phone is the check) |
 | Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | mig **226** applied (dev *and* prod) |
 
-⚠ **The release itself has a prerequisite this ledger cannot tick:** migrations **225–228** must be
-applied to production **before** the code promotes, and **226 is not applied even on dev**. Quiet
-Mode's migration (209) is in the same queue. That is a release-manager step, not a QA step — but if
-it is missed, several sections above break in production in ways that passed QA on dev.
+⚠ **One database prerequisite is left, and this ledger cannot tick it:** migration **226**, the
+coach sandbox's nightly re-anchor, is applied **nowhere**. Until it is, §5.4's demo drifts out of
+date on both environments and has to be re-seeded by hand. Quiet Mode's migration (209) is in the
+same queue. Release-manager steps, not QA steps — but if missed, those sections break in production
+in ways that passed QA on dev. *(225, 227 and 228 cleared this queue on 2026-08-06.)*

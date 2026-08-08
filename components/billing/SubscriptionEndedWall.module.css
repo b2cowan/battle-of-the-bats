@@ -54,9 +54,12 @@
   transition: color 0.12s, border-color 0.12s;
 }
 
+/* Values kept EXACTLY in step with `.notAssignedDoor:hover` in the coaches portal's own wall
+   (coaches.module.css) — the two walls sit one click apart in the same product and must not
+   drift apart on hover. If you retune one, retune both. */
 .door:hover {
-  color: var(--home-ink, rgba(255, 255, 255, 0.9));
-  border-color: var(--home-line-strong, rgba(255, 255, 255, 0.28));
+  color: var(--home-ink, rgba(255, 255, 255, 0.85));
+  border-color: var(--home-ink-soft, rgba(255, 255, 255, 0.35));
 }
 
 .emailLink {

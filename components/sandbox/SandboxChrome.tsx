@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import type { DemoOrgKind } from '@/lib/demo-org';
 import type { DemoLiveBeat } from '@/lib/demo-tournament';
+import { useScrollCollapsed } from '@/lib/use-scroll-collapsed';
 import {
   formatResetCountdown,
   msUntilSandboxReset,
@@ -62,6 +63,24 @@ import styles from './SandboxChrome.module.css';
  * failure mode is silent and ugly: the banner keeps its space but something paints over it, so the
  * visitor sees an orphaned tour rail and never sees the promise. The narration strip changes the
  * chrome's height as it appears, which the ResizeObserver below already republishes.
+ *
+ * ── The claim stands, the guidance yields (2026-08-07) ──────────────────────────────────────
+ *
+ * Measured on a 390×844 phone on the game-day fan page, this hat was 183px — and the product's own
+ * event header and score ticker sit under it, so 357px of an 844px screen was fixed chrome before a
+ * word of the demo. Forty-two per cent of the screen spent proving the demo is a demo.
+ *
+ * The rule that resolves it WITHOUT touching the never-dismissible invariant above: the banner is
+ * the honesty claim and never moves; the moments dock and the guided tour are GUIDANCE, and
+ * guidance stands down while the visitor is reading the product. Below 640px, scrolling past 64px
+ * folds the guidance away and scrolling back expands it — the behaviour every app on the phone
+ * already has, which is the point: the demo's whole argument is "this IS the product".
+ *
+ * ⚠ THE HANDLE IS NOT POLISH — IT IS THE ONLY WAY BACK. Whatever folds the guidance away must
+ * offer a visible control that returns it, in the same unit of work. The 2026-08-06 review found
+ * the dock hiding itself during a tour step with nothing on screen able to bring it back for the
+ * rest of the session: a visitor lost the demo's entire navigation the moment they accepted its
+ * invitation. That defect is one `display: none` away at all times on a surface this small.
  */
 
 const SPOTLIGHT_CLASS = 'sandboxSpotlight';
@@ -469,6 +488,15 @@ export default function SandboxChrome({
     };
   }, [side]);
 
+  /**
+   * Has the visitor scrolled far enough that the guidance should stand down?
+   *
+   * 640px, deliberately not a new breakpoint — this component has exactly one, and the Option C
+   * rails ruling (2026-08-02) says a layout chunk adds none. A tablet keeps all three bands; it has
+   * the room, and the crowding this answers is a phone's.
+   */
+  const { collapsed: condensed, scrollToTop: showGuidance } = useScrollCollapsed({ maxWidth: '640px' });
+
   // ── The tour ────────────────────────────────────────────────────────────────────────────────
   // `null` until session storage has been read — NOT the same as "the tour hasn't started".
   // Rendering the default first would flash "Step 1 of 4" at a visitor who is on step 3, on every
@@ -732,6 +760,23 @@ export default function SandboxChrome({
   // the moment now that there is more than one to be standing in.
   const showBack = (narratedStep != null || jumpMoment != null) && !isOnStepPage(pathname, landingPath);
 
+  /**
+   * Which of the tour's three states we are in, decided ONCE.
+   *
+   * Two places need it and they need different words for it — the stepper's own line ("Done" / "The
+   * season, guided" / "Step 2 of 6") and the condensed handle ("2/6" / "Tour"). Classifying twice
+   * meant a fourth state, or any change to what "in progress" means, had to be found in two places
+   * that never mention each other.
+   *
+   * `'active'` is the only one that can name a position: "6/6" reads as a score and "0/6" as a
+   * scolding, so the other two fall back to a word.
+   */
+  const tourPhase: 'none' | 'done' | 'untouched' | 'active' =
+    !tour || steps.length === 0 ? 'none'
+      : tourComplete ? 'done'
+        : tourUntouched ? 'untouched'
+          : 'active';
+
   const sinceMs = beat && now != null ? now - beat.lastChangedAtMs : null;
   const untilMs = beat?.nextStartsAtMs != null && now != null ? beat.nextStartsAtMs - now : null;
   const justScored = scoredAt != null && now != null && now - scoredAt < JUST_SCORED_MS;
@@ -750,7 +795,8 @@ export default function SandboxChrome({
           measured 226px on a 390px phone — a quarter of the screen before the portal's own header
           — and the sentence always names the moment anyway, so the dock is the row that gives. */}
       <div className={styles.chrome} ref={chromeRef} data-sandbox-banner data-kind={kind}
-        data-narrating={strip ? 'true' : undefined}>
+        data-narrating={strip ? 'true' : undefined}
+        data-condensed={condensed ? 'true' : undefined}>
         <div className={styles.banner}>
           <span className={styles.eyebrow}>
             <span className={styles.bulb} aria-hidden="true" />
@@ -764,7 +810,20 @@ export default function SandboxChrome({
             {/* The lead is its own element so a narrow screen can drop it and keep the half that
                 matters. The bold clause is the honesty claim and is never the part that gives. */}
             <span className={styles.messageLead}>{copy.lead}</span>
-            {copy.emphasis ? <> <strong>{copy.emphasis}</strong></> : null}
+            {copy.emphasis ? (
+              <>
+                {' '}
+                <strong>
+                  {/* Two spellings of one claim; the stylesheet picks by width, and the SHORT one
+                      is what a phone's two-column banner has room for. They are a pair — the full
+                      form only stands down where a short form exists to replace it. */}
+                  <span className={styles.claimFull}>{copy.emphasis}</span>
+                  {copy.emphasisShort ? (
+                    <span className={styles.claimShort}>{copy.emphasisShort}</span>
+                  ) : null}
+                </strong>
+              </>
+            ) : null}
           </span>
           <span className={styles.reset}>
             {/* "Replays", not "resets": a stranger reading "resets in 38:45" has no idea what
@@ -774,8 +833,39 @@ export default function SandboxChrome({
                 countdown that belongs to the Summer Classic's replay loop. */}
             {activeMoment?.bannerNote ?? (countdown ? `Replays in ${countdown}` : ' ')}
           </span>
-          <Link href="/auth/signup" className={styles.cta}>{copy.cta}</Link>
+          {/* One right-hand slot, so the phone's two-column banner has a single thing to pin.
+              On a desktop this is simply the CTA where it has always been. */}
+          <span className={styles.bannerActions}>
+            {/* ⚠ The way back. Rendered ONLY while the guidance is folded away, and it carries the
+                tour's position rather than a generic word, so it says what it will give back.
+                See the header note: a fold with no visible handle cost a visitor the demo's whole
+                navigation once already. */}
+            {condensed && (steps.length > 0 || moments.length > 0) && (
+              <button
+                type="button"
+                className={styles.handle}
+                aria-expanded={false}
+                aria-label={tourPhase === 'active'
+                  ? `Show the guided tour and moments — step ${tour!.current} of ${steps.length}`
+                  : 'Show the guided tour and moments'}
+                onClick={showGuidance}
+              >
+                {tourPhase === 'active' ? `${tour!.current}/${steps.length}` : 'Tour'}
+                <span className={styles.handleChev} aria-hidden="true">▾</span>
+              </button>
+            )}
+            <Link href="/auth/signup" className={styles.cta}>{copy.cta}</Link>
+          </span>
         </div>
+
+        {/* The guidance layer — what it holds and why it may fold is documented once, on `.guide`
+            in SandboxChrome.module.css, next to the animation that does it.
+
+            `inert` is the half that cannot live in CSS: an element at zero height with overflow
+            hidden is still in the tab order, so without this a visitor tabbing through a condensed
+            page would land on invisible controls. */}
+        <div className={styles.guide} inert={condensed}>
+          <div className={styles.guideInner}>
 
         {moments.length > 0 && (
           // The moments dock (Phase 2): the year as tabs. Plain navigation — same demo, same
@@ -807,8 +897,8 @@ export default function SandboxChrome({
           <div className={styles.stepper}>
             <span className={styles.stepperLabel}>Guided tour</span>
             <span className={styles.stepCount}>
-              {tourComplete ? 'Done'
-                : tourUntouched ? 'The season, guided'
+              {tourPhase === 'done' ? 'Done'
+                : tourPhase === 'untouched' ? 'The season, guided'
                 : `Step ${tour.current} of ${steps.length}`}
             </span>
 
@@ -820,6 +910,10 @@ export default function SandboxChrome({
                   beat.kind === 'between' ? styles.pillSeam : '',
                   justScored ? styles.pillScored : '',
                 ].filter(Boolean).join(' ')}
+                /* Which claim this pill is making, so the stylesheet can stand the REPEATED one
+                   down where the product's own ticker already makes it, and keep the one the
+                   ticker cannot make ("between games, final in 4:12"). */
+                data-beat={beat.kind}
                 title={beat.kind === 'between'
                   ? 'The semifinal has ended and the final has not started yet.'
                   : `${beat.label} in progress`}
@@ -878,11 +972,27 @@ export default function SandboxChrome({
           </div>
         )}
 
+          </div>
+        </div>
+
         {(narratedStep || jumpMoment) && (
           // The core of the redesign: what just happened, said in words, in the place the visitor
           // just pressed. A ring on a section they are not looking at was never feedback. Dock
           // jumps share the strip — one voice — and their sentences always name the time first,
           // because the thing that just changed is WHEN the visitor is standing.
+          //
+          // ⚠ DELIBERATELY OUTSIDE THE FOLDING LAYER. It sat inside it for one build, and that
+          // quietly destroyed the thing this chrome was rebuilt for. The sequence: press a step →
+          // the strip is written → `ringAnchor` smooth-scrolls the page to the step's target →
+          // those programmatic scroll events are indistinguishable from a visitor's, so the fold
+          // fired → the sentence explaining what just happened folded to zero height AND went
+          // `inert`, so `aria-live` never announced it either. The visitor arrived at the
+          // spotlighted thing with no idea why, which is precisely the "these buttons don't seem to
+          // do anything" verdict the narration exists to answer.
+          //
+          // The rule that falls out, and it is the honest split: the banner is the CLAIM, the dock
+          // and the tour are NAVIGATION and may stand down, and this is a RESPONSE to something the
+          // visitor just did. A response does not get out of the way of the action that caused it.
           <div className={styles.said} role="status" aria-live="polite">
             <span className={styles.saidTick} aria-hidden="true">✓</span>
             <span className={styles.saidText}>

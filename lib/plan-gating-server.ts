@@ -49,3 +49,19 @@ export async function getPlanGatingMap(): Promise<PlanGatingMap> {
   }
   return map;
 }
+
+/**
+ * "Can a coach buy (or, during Founding Season, claim) a Premium Coaches Portal right now?"
+ *
+ * One named question with one answer, because three separate surfaces were each spelling out
+ * `!(await getPlanGatingMap()).team` from scratch — the /start chooser, the persona menu config and
+ * (as of 2026-08-07) the homepage. Writing the predicate out per call site is exactly how the
+ * homepage came to disagree with the other two for a fortnight after the gate opened on production:
+ * nothing connects the copies, so nothing notices when one is missed.
+ *
+ * ⚠ Note the inversion — `true` in the gating map means GATED. Getting that backwards silently
+ * offers a door that does not open, which is the failure this helper exists to make unlikely.
+ */
+export async function isCoachesPortalPurchasable(): Promise<boolean> {
+  return !(await getPlanGatingMap()).team;
+}

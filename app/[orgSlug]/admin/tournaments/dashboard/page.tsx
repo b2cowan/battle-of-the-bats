@@ -2521,9 +2521,9 @@ export default function AdminDashboard() {
               </p>
             </div>
             {hasSummary ? (
-              <Link href={`${base}/summary`} className="btn btn-lime btn-data" style={{ flexShrink: 0 }}>Review event summary →</Link>
+              <Link href={`${base}/summary`} className="btn btn-lime btn-data">Review event summary →</Link>
             ) : (
-              <Link href={`${base}/results`} className={styles.panelLink} style={{ flexShrink: 0 }}>View results →</Link>
+              <Link href={`${base}/results`} className={styles.panelLink}>View results →</Link>
             )}
           </div>
 

@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { supabaseAdmin } from './supabase-admin';
 import { PLAN_CONFIG } from './plan-config';
 import type { Capability } from './roles';
@@ -75,7 +76,13 @@ export function isValidPlanModuleEntitlementMatrix(value: unknown): value is Pla
   });
 }
 
-export async function getEffectivePlanModuleEntitlements(): Promise<PlanModuleEntitlementMatrix> {
+/**
+ * Request-memoized (React `cache()`, the repo's idiom for this — same as `getAuthUserCached` in
+ * lib/supabase-server.ts and the coach-portal resolvers). The plans-pricing page asks for both the
+ * feature matrix AND the drift in one `Promise.all`, and both need this table; without the cache
+ * that is two identical round trips per page load.
+ */
+export const getEffectivePlanModuleEntitlements = cache(async (): Promise<PlanModuleEntitlementMatrix> => {
   const matrix = defaultMatrix();
   const { data, error } = await supabaseAdmin
     .from('platform_plan_module_entitlements')
@@ -102,7 +109,7 @@ export async function getEffectivePlanModuleEntitlements(): Promise<PlanModuleEn
   }
 
   return matrix;
-}
+});
 
 /**
  * Where the PUBLISHED matrix and the LIVE product disagree.

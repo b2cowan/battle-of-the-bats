@@ -142,7 +142,7 @@ const platformAdminHelp: HelpPageContent = {
           <ol>
             <li>Go to <strong>Organizations</strong>, open the customer account, then open <strong>Billing &amp; Access</strong>.</li>
             <li>Under <strong>Active Overrides</strong>, click <strong>Add Override</strong>.</li>
-            <li>Choose <strong>Subscription Status</strong> when the account should behave as <code>active</code>, <code>trialing</code>, <code>past_due</code>, or <code>canceled</code> for a temporary period.</li>
+            <li>Choose <strong>Subscription Status</strong> when the account should behave as <code>active</code>, <code>trialing</code>, <code>past_due</code>, or <code>canceled</code> for a temporary period. ⚠ <strong>This genuinely changes what the customer can reach</strong> — <code>active</code> reinstates a cut-off account without touching Stripe (the intended unblock), and <code>canceled</code> shuts them out of the whole product. It is not a display flag.</li>
             <li>Choose <strong>Comp Period</strong> when the business decision is a no-charge access window with a clear end date.</li>
             <li>Set an expiry whenever the exception is temporary. Use the shortest reasonable period.</li>
             <li>Enter a reason that would make sense to another employee reading the audit trail later.</li>
@@ -733,8 +733,8 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Billing SOP',
       heading: 'How to cancel a customer subscription',
       summary: 'Cancel a Stripe subscription on behalf of a customer from the org detail billing tab.',
-      keywords: ['cancel subscription', 'unsubscribe', 'stripe cancel', 'billing cancel', 'terminate account', 'end subscription'],
-      searchText: 'how do i cancel a subscription for a customer unsubscribe stripe billing terminate account end subscription on behalf',
+      keywords: ['cancel subscription', 'unsubscribe', 'stripe cancel', 'billing cancel', 'terminate account', 'end subscription', 'customer locked out', 'coaches locked out', 'customer lost access', 'portal stopped working', 'scorekeeper stopped', 'did the customer lose data', 'reinstate', 'restore access', 'unblock customer'],
+      searchText: 'how do i cancel a subscription for a customer unsubscribe stripe billing terminate account end subscription on behalf what happens after cancellation access stops immediately coaches portal closes scorekeeper check-in family pages public tournament site tryout registration closes dues reminder emails stop nothing is deleted data retained 90 days resubscribe restores everything customer locked out lost access portal stopped working billing page keeps working free personal coaches portal unaffected reinstate unblock restore access active override',
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
         { label: 'Retention', href: '/platform-admin/retention' },
@@ -756,6 +756,8 @@ const platformAdminHelp: HelpPageContent = {
             <li>Add an internal note on the <strong>Support</strong> tab with the customer-facing context: what was discussed, who approved, and any retention or resubscription commitments.</li>
           </ol>
           <p>After cancellation the account moves to <code>canceled</code> status, the public site is unpublished, all non-archived tournaments are archived, and data is retained for 90 days. The Stripe subscription is canceled immediately. If Stripe cancellation fails but the in-app state succeeded, you will see a warning — complete the Stripe cancellation manually from the <strong>Open Stripe</strong> link on the org detail page.</p>
+          <p><strong>Access stops immediately and completely</strong> (owner ruling 2026-08-06). Expect calls: the Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, the family team pages and calendar feeds, and the public tournament site all close the moment you confirm. Coaches and volunteers see a plain &ldquo;subscription has ended — nothing has been deleted&rdquo; notice. Tryout registration closes and automated dues-reminder emails stop. <strong>Nothing is deleted</strong>, and resubscribing restores everything intact — that is the reassurance to lead with on a support call.</p>
+          <p>Two things deliberately keep working: the customer&rsquo;s own <strong>Billing page</strong> (that is how they come back — an admin who opens the admin area is redirected there), and any coach&rsquo;s <strong>free personal Coaches Portal</strong>, which is user-owned and has no subscription to cancel.</p>
           <p>Check the <strong>Retention</strong> queue after cancellation and extend the deadline if the customer has negotiated additional time.</p>
         </>
       ),
@@ -783,10 +785,14 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-cancel-vs-override',
           question: 'Should I cancel the subscription or just add a canceled status override?',
           answer: (
-            <p>If the customer wants their billing to stop and the account permanently closed, use <strong>Cancel Subscription</strong>. This cancels the Stripe subscription so no further charges occur. A status override only changes the display state in FieldLogicHQ and does not stop Stripe from billing.</p>
+            <>
+              <p>If the customer wants their billing to stop and the account closed, use <strong>Cancel Subscription</strong>. That cancels the Stripe subscription so no further charges occur. A status override does <strong>not</strong> stop Stripe from billing.</p>
+              <p><strong>⚠ A status override is not cosmetic.</strong> Since 2026-08-06 the access rail reads the effective subscription status, so setting an override to <code>canceled</code> <strong>genuinely shuts the customer out of the whole product</strong> while Stripe keeps charging them — the worst combination available. Never use it as a &ldquo;just for display&rdquo; flag.</p>
+              <p>The reverse is the useful case: an <code>active</code> override <strong>reinstates</strong> an account without touching Stripe, which is the intended way to unblock a customer who was cut off in error. <em>Operational caveat:</em> timed overrides only take effect when entitlement grants are enabled in the environment — if an override reports success but nothing changes for the customer, check that first before assuming the rail is broken.</p>
+            </>
           ),
-          answerText: 'Cancel Subscription stops Stripe billing. A status override only changes FieldLogicHQ display — it does not stop Stripe charges.',
-          keywords: ['cancel vs override', 'status override', 'stop billing'],
+          answerText: 'Use Cancel Subscription if the customer wants billing to stop — a status override does not stop Stripe charges. WARNING: a status override is not cosmetic. Since 2026-08-06 the access rail reads the effective subscription status, so an override set to canceled genuinely shuts the customer out of the entire product while Stripe keeps charging them. Never use it as a display-only flag. The reverse is the useful case: an active override reinstates an account without touching Stripe, and is the intended way to unblock a customer cut off in error. Timed overrides only apply when entitlement grants are enabled in the environment — if an override reports success but nothing changes for the customer, check that before assuming the rail is broken.',
+          keywords: ['cancel vs override', 'status override', 'stop billing', 'override locks out customer', 'override not cosmetic', 'reinstate', 'unblock customer', 'restore access', 'override did nothing', 'entitlement grants'],
           popular: true,
         },
       ],

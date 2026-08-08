@@ -6,6 +6,20 @@
   animation: skeletonShimmer 1.4s ease-in-out infinite;
 }
 
+/* ⚠ WARM COACH THEME — the gradient above collapses to nothing here, so it is re-stated.
+   Under the warm marker `--white-03` remaps to --home-paper (#F8F4ED) and `--white-8` to
+   --home-card (#FFFFFF) — and the surfaces these skeletons sit on (.nowCard, the coach masthead,
+   the attendance rows) are painted with that SAME --home-card white. The shimmer therefore
+   oscillated between "identical to its own card" and ~1.06:1 off it: a placeholder that renders
+   as a blank gap, which is worse than the misleading empty state it was added to replace.
+   Warm needs ink-on-paper, not paper-on-paper — hence the warm LINE tokens, whose alpha is
+   already tuned for this cream ground. Deliberately quiet (~1.25:1): a placeholder should be
+   plainly present without competing with the content it stands in for. */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .block {
+  background: linear-gradient(90deg, var(--home-line-strong) 25%, var(--home-line) 37%, var(--home-line-strong) 63%);
+  background-size: 400% 100%;
+}
+
 @keyframes skeletonShimmer {
   0%   { background-position: 100% 0; }
   100% { background-position: 0 0; }

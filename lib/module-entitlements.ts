@@ -1,5 +1,6 @@
 import { PLAN_CONFIG } from './plan-config';
 import { freeFloorModules } from './free-floor';
+import { isOrgBillingSuspended } from './org-billing-access';
 import type { Capability } from './roles';
 import type { Organization } from './types';
 
@@ -24,7 +25,12 @@ export type EntitlementOrg = Pick<
 >;
 
 export function hasModuleEntitlement(org: EntitlementOrg, cap: Capability): boolean {
-  if (org.subscriptionStatus === 'canceled') return false;
+  // ONE definition of "suspended", shared with the billing rail (lib/org-billing-access.ts).
+  // This gate and the rail answer at different layers — the rail closes API routes, this also
+  // drives client-side nav visibility, which the rail's throw never reaches — so both are needed.
+  // But the PREDICATE must not be restated: if suspension ever grows a second condition, an
+  // inline copy here would silently reopen exactly the gap the rail exists to close.
+  if (isOrgBillingSuspended(org)) return false;
 
   const plan = PLAN_CONFIG[org.planId];
   if (plan.moduleEntitlements.includes(cap)) return true;

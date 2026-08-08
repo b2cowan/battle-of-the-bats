@@ -93,6 +93,7 @@ export default function AdminHelpHubPage() {
         { label: 'Invite members and choose roles', href: `${helpBase}/org#recipe-invite-member` },
         { label: 'Fix a member access issue', href: `${helpBase}/org#recipe-fix-member-access` },
         { label: 'Turn on included modules', href: `${helpBase}/org#recipe-enable-modules` },
+        { label: 'If your subscription ends', href: `${helpBase}/org#subscription-ends` },
       ],
     }] : []),
     {

@@ -3,6 +3,7 @@ import { supabaseAdmin } from './supabase-admin';
 import { generateNoLoginToken, hashNoLoginToken } from './no-login-token';
 import { normalizeGuardianEmail } from './guardian-email';
 import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from './team-workspace-entitlements';
+import { isOrgBillingSuspended } from './org-billing-access';
 import type { Organization } from './types';
 
 /**
@@ -134,13 +135,21 @@ export async function getEnabledFamilyOrg(orgId: string, repTeamId: string) {
 }
 
 /** Load the minimum org shape the gate needs, by id — the family/public routes resolve a
- *  team first and have no org context handed to them. */
+ *  team first and have no org context handed to them.
+ *
+ *  ⚠ Returns null for a CANCELLED org, and this is the chokepoint that makes that stick: every
+ *  family surface (team page, schedule, calendar feed, join/claim, co-guardian, recap) resolves
+ *  through here or through getEnabledFamilyOrg above, and none of them ride getAuthContext — they
+ *  authenticate the guardian directly, so the main billing rail never sees them. Without this the
+ *  family portal of a cancelled club keeps working forever, which is the exact defect the rail was
+ *  built to close, just one door further along. Same shape as resolvePublicLeagueContext, which
+ *  learned this in audit J3-068. (/review 2026-08-06.) */
 export async function getOrgForGate(
   orgId: string,
 ): Promise<Pick<Organization, 'id' | 'accountKind' | 'planId'> & { name: string; slug: string; logoUrl: string | null } | null> {
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('id, name, slug, logo_url, account_kind, plan_id')
+    .select('id, name, slug, logo_url, account_kind, plan_id, subscription_status')
     .eq('id', orgId)
     .maybeSingle();
   if (error) throw error;
@@ -148,7 +157,12 @@ export async function getOrgForGate(
   const row = data as {
     id: string; name: string; slug: string; logo_url: string | null;
     account_kind: Organization['accountKind']; plan_id: Organization['planId'];
+    subscription_status: Organization['subscriptionStatus'] | null;
   };
+  // `?? 'active'` matches how every other org mapper reads this column: a null status is a
+  // pre-billing org, not a cancelled one. Only a literal 'canceled' closes the door — past_due
+  // keeps working, exactly as it does everywhere else on the rail.
+  if (isOrgBillingSuspended({ subscriptionStatus: row.subscription_status ?? 'active' })) return null;
   return {
     id: row.id,
     name: row.name,

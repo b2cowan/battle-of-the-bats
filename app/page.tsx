@@ -4,7 +4,8 @@ import styles from './page.module.css';
 import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
-import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
+import type { OrgPlan } from '@/lib/types';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
@@ -111,48 +112,112 @@ const PLATFORM_BENEFITS = [
 ];
 // id field kept for React key only — not rendered
 
-const PERSONAS = [
+/**
+ * The persona cards.
+ *
+ * ⚠ NO CARD WRITES DOWN WHETHER ITS PRODUCT IS AVAILABLE. Every one carries the plan key it speaks
+ * for, and `resolvePersonas` reads the live gate — because the alternative is what actually
+ * happened: the Coaches Portal card held a hardcoded "coming soon" for two weeks after the Premium
+ * Coaches Portal went live on production (gate reopened 2026-07-24), while /for-coaches, the /start
+ * chooser and /pricing — all of which READ the gate — flipped together the same day. The homepage
+ * was the one surface that asserted the answer instead of asking for it, so it froze, and the
+ * highest-traffic page in the product spent a fortnight contradicting the three pages one click
+ * behind it.
+ *
+ * Fixing only the card that was wrong would have left the identical trap armed under League Plus and
+ * Club: their gates are DB-driven and can change without a deploy, so whichever launches next would
+ * freeze the same way, and nobody would remember this comment in time.
+ *
+ * ⚠ `liveBadge: null` means "nobody has written what this card should say when it IS on sale", and
+ * such a card **stays presented as coming-soon even once its gate opens**. That looks like the bug
+ * this file just fixed, and it is deliberately not:
+ *
+ *   The homepage is not the only surface that speaks for a product. `/for-leagues` and `/for-clubs`
+ *   hard-code "Coming soon" in their own copy — they do not read the gate the way `/for-coaches`
+ *   does. So a card that went live the instant its gate flipped would send a visitor to a page still
+ *   telling them the product isn't ready: the SAME contradiction, moved one click downstream. Given
+ *   a choice between two inconsistencies, this one keeps the homepage and its destination agreeing.
+ *
+ *   Supplying `liveBadge` is therefore the single deliberate act that launches a card — and whoever
+ *   does it must make the destination page gate-aware in the same unit of work. Until then the card
+ *   is honest about being unavailable rather than dishonest about being available.
+ *
+ * Tracked in HOMEPAGE_TRUTH_AND_ENTRY_POINTS_PLAN.md; /marketing owes copy for both.
+ */
+type Persona = {
+  id: string;
+  /** The plan whose gate decides whether this card is on sale. */
+  planKey: OrgPlan;
+  label: string;
+  question: string;
+  body: string;
+  liveBadge: string | null;
+  cta: string;
+  href: string;
+};
+
+/** The one line every not-yet-purchasable card shows. */
+const GATED_BADGE = 'Coming soon · express interest';
+
+/**
+ * Badge copy is /marketing's (2026-08-07) and deliberately carries NO price and NO promo date — the
+ * persona cards state availability and the absence of a payment barrier; the $29/$39 anchors and the
+ * Founding Season end date live one click later where a promotion can be explained.
+ * Ruling: BUSINESS_DECISIONS.md 2026-08-07.
+ */
+const PERSONAS: Persona[] = [
   {
     id: 'tournament',
+    planKey: 'tournament',
     label: 'Tournament',
     question: 'Running a tournament?',
     body: 'From team registration to final standings — brackets, schedule, live scores, all in one place.',
-    badge: 'Free to start · no credit card',
-    isLive: true,
+    liveBadge: 'Free to start · no credit card',
     cta: "I'm a tournament organizer",
     href: '/for-tournament-organizers',
   },
   {
     id: 'league',
+    planKey: 'league',
     label: 'League Plus',
     question: 'Managing a house league season?',
     body: 'Player registration, draft, schedule, standings, and parent notifications — from first signup to final game.',
-    badge: 'Coming soon · express interest',
-    isLive: false,
+    liveBadge: null,
     cta: 'I run a house league',
     href: '/for-leagues',
   },
   {
     id: 'club',
+    planKey: 'club',
     label: 'Club',
     question: 'Running a club with rep teams?',
     body: 'Tournaments, house league, rep teams, and accounting in one place. Your executive team gets visibility. Coaches run their own teams.',
-    badge: 'Coming soon · express interest',
-    isLive: false,
+    liveBadge: null,
     cta: 'I run a club',
     href: '/for-clubs',
   },
   {
     id: 'coaches',
+    planKey: 'team',
     label: 'Coaches Portal',
     question: 'Coaching a single team?',
     body: 'Roster, lineups, budget, and documents — a complete team workspace, whether or not your organization is on FieldLogicHQ.',
-    badge: 'Coming soon · express interest',
-    isLive: false,
+    liveBadge: 'Free to start · no credit card',
     cta: "I'm a coach",
     href: '/for-coaches',
   },
 ];
+
+/**
+ * `true` in the gating map means GATED, so availability is its negation — AND a card only presents
+ * as live once someone has written what it says when it is (see the note above on `liveBadge`).
+ */
+function resolvePersonas(gating: PlanGatingMap) {
+  return PERSONAS.map(p => {
+    const isLive = !gating[p.planKey] && p.liveBadge !== null;
+    return { ...p, isLive, badge: isLive ? p.liveBadge : GATED_BADGE };
+  });
+}
 
 export default async function HomePage({
   searchParams,
@@ -177,9 +242,15 @@ export default async function HomePage({
   }
 
   const gatingMap = await getPlanGatingMap();
-  // The sandbox door, on the ONE persona card that has a working product behind it. Hidden in a
-  // production build until the owner turns it on deliberately (lib/sandbox-door.ts).
+  // The sandbox door. Hidden in a production build until the owner turns it on deliberately
+  // (lib/sandbox-door.ts) — and note the demo orgs are seeded on dev only today, so this is a
+  // local-only affordance until the "do the demos go public?" decision is made
+  // (BUSINESS_DECISIONS.md 2026-08-07, logged as Proposed).
   const showSandboxDoor = sandboxDoorsVisible();
+  // Order is deliberate and UNCHANGED by the 2026-08-07 correction: the Coaches Portal card gains
+  // its live treatment in place. Whether the two buyable products should lead the grid is an open
+  // question for the owner, not something to slip in alongside a truthfulness fix.
+  const personas = resolvePersonas(gatingMap);
   return (
     <>
       {/* ── Hero ──────────────────────────────────────────────────────── */}
@@ -215,16 +286,21 @@ export default async function HomePage({
 
           <AnimateIn>
             <div className={styles.heroPersonaGrid}>
-              {PERSONAS.map((p) => {
+              {personas.map((p) => {
                 const body = (
                   <>
                     <div className="flex items-start justify-between gap-4">
                       <span className="font-mono text-[10px] text-logic-lime uppercase tracking-widest font-bold">
                         {p.label}
                       </span>
-                      <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray/40'}`}>
-                        {p.badge}
-                      </span>
+                      {/* Defensive only — `resolvePersonas` guarantees a string either way. Absent
+                          rather than empty, so a future path that does yield no badge leaves no
+                          stray element in the flex row. */}
+                      {p.badge && (
+                        <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray/40'}`}>
+                          {p.badge}
+                        </span>
+                      )}
                     </div>
                     <p className="font-mono text-sm font-bold text-fl-text leading-snug">{p.question}</p>
                     <p className="font-mono text-xs text-data-gray/70 leading-relaxed flex-1">{p.body}</p>
@@ -242,8 +318,11 @@ export default async function HomePage({
                       <Link href={p.href} className={`${ctaClass} ${styles.heroPersonaStretch}`}>
                         {p.cta} →
                       </Link>
-                      {/* The live dot makes the one card with a working product visibly different
-                          from the three that don't — honest, and the strongest thing on the page. */}
+                      {/* ⚠ Tournament only, for now — NOT because it is the only live product (the
+                          Coaches Portal has been live since 2026-07-24), but because the demo orgs
+                          are seeded on dev only and putting them on production is an unmade
+                          decision. The matching coaches door is designed and waiting on that call:
+                          BUSINESS_DECISIONS.md 2026-08-07, status Proposed. */}
                       <Link href={SEE_IT_LIVE_PATH} className={`${ctaClass} ${styles.heroPersonaSecondary}`}>
                         <span className={styles.heroPersonaLiveDot} aria-hidden="true" />
                         See it live — no sign-up →
