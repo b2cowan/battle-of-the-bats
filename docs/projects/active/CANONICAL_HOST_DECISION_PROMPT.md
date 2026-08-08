@@ -126,10 +126,16 @@ analyzed and accepted in the ruling.
       host rule and becomes moot once the apex forwards — the post-promote matrix is the final word.
 
 **Open (in order):**
-- [ ] Promote to master, then the live matrix on BOTH addresses: apex 307 → www with path + query
-      intact · plain-http chain ends on https://www · www unchanged (200s) · .com unchanged ·
-      sign-in on www · demo door pressed via the apex lands on www WITH the demo session ·
-      Stripe recent deliveries green · cron heartbeats green.
+- [x] **Promoted 2026-08-08 (`725e4b38`, Amplify master job 248 SUCCEED) — live matrix PASSED:**
+      apex 307 → www with path + query intact · plain-http chain ends on https://www in 2 hops ·
+      www unchanged (200, no redirect) · .com still 308 → www.ca · deep app paths preserved ·
+      **the demo door pressed via the apex lands on www WITH the session cookie scoped to www —
+      the traced defect's death certificate** · prod cron heartbeats all ok on the first
+      post-deploy tick (16:20Z) · CloudWatch master stream: 0 ERROR events in the deploy window.
+      Not separately walked: a credentialed browser sign-in on www (cookie+redirect mechanics are
+      proven by the door; auth URL config verified in the dashboard API) — falls to normal owner
+      browser QA. Stripe deliveries: endpoint verified enabled on www; the dashboard deliveries
+      panel is the async check when the next billing event fires.
 - [ ] After a quiet 24–48h: flip `permanent: true`; add `metadataBase` + per-page canonical tags;
       consider registering Search Console on www before any marketing push.
 - [ ] With the permanent flip: align the nine dormant bare-apex `NEXT_PUBLIC_APP_URL` fallbacks to
