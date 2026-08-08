@@ -148,7 +148,7 @@ the sequence.
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
 | **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
 | **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 | 🖥📱 | Mixed · mig 226 unapplied |
-| **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ON DEV · ⚠ no automated layout cover |
+| **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ✅ **PASSED 2026-08-07** — 6 defects fixed in the run |
 
 **Where the release gate actually sits:** groups **1A, 1D, 1E**, §1.9c, §6, and most of **3B** are
 the unshipped half. If you only have one sitting, those are the ones where finding something still
@@ -2476,10 +2476,35 @@ you got to for the rest of the browser session.
 
 ---
 
-## Group 3C · The day-of volunteer bars — 📱 phone first, then one desktop pass
+## ✅ Group 3C · The day-of volunteer bars — PASSED 2026-08-07
 
-**§7 — the scorekeeper and gate check-in screens get a bottom.** ON DEV, uncommitted, never
-released. Chrome only: no capability, route, database or API change anywhere in it.
+**§7 — the scorekeeper and gate check-in screens get a bottom.** ON DEV, never released.
+Chrome only: no capability, route, database or API change anywhere in it.
+
+> ### ✅ Owner QA PASSED 2026-08-07 — all nine parts
+>
+> **Six defects were found and fixed during the run**, four of them in the fixture rather than the
+> feature, which is worth knowing because three would have wasted a later sitting:
+>
+> | # | Found at | What it was |
+> |---|---|---|
+> | 1 | Part 1 | **Fixture:** the day's games were seeded against UTC, so any run after ~8pm Eastern put them on TOMORROW and the board said "No games today". Now uses the local calendar day. |
+> | 2 | Part 3 | **Feature:** the filter count grew the button, which squeezed the date and clipped the day — "2026-08-0". The date can no longer be the thing that gives; the count is a badge, not words. |
+> | 3 | Part 3 | **Feature:** two calendar icons on one date field. Ours removed; the browser's is the one that opens the picker. |
+> | 4 | Part 3 | **Feature:** the browser's own **Clear** button (which cannot be removed) left the board showing games for a day it could no longer name. Clearing now means "back to today". |
+> | 5 | Part 3 | **Fixture:** the field dropdown was empty because the fixture typed field names onto games without creating field records. Fixed — and it surfaced a real product problem, see below. |
+> | 6 | Part 6 | **Feature:** "Open the public site" dead-ended at a private club (that page 404s by design). The row was then **removed entirely** on the owner's plainer argument: a volunteer has no errand on a club's marketing home page. |
+>
+> **Two judgement calls resolved as built** (say so if either was actually a reluctant yes):
+> the single-duty two-tab bar stays, and sign-out at one tap behind the Account tab stays.
+>
+> ⚠ **Left OPEN by defect 6:** the gate check-in shell now has no public door at all. That is the
+> original top-nav D9 finding resurfacing — **not decided**, and recorded that way in the plan.
+>
+> ⚠ **Escaped scope — a real data-integrity problem** found via defect 5: a game answers "which
+> field?" three unrelated ways, and **39% of games on dev carry a typed field name with no field
+> record, which double-booking detection skips entirely.** See
+> `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN_PROMPT.md`. Not a blocker for this section.
 
 ⚠ **The automated layout sweep does not cover these two screens at all** — checked, not assumed.
 Its screen list is coach-portal-only, so the three rules that fixed bottom chrome usually breaks
@@ -2502,94 +2527,99 @@ Screens: `/qa-cancel-lab/scorekeeper` · `/qa-cancel-lab/check-in`
 
 ### A · What the scorekeeper opens on (dual-duty account, phone)
 
-- [ ] Sign in as **QA Lab Scorekeeper**, open the scorekeeper screen.
-- [ ] **Before scrolling at all: at least one game card is fully visible.** This is the entire
+- [x] Sign in as **QA Lab Scorekeeper**, open the scorekeeper screen.
+- [x] **Before scrolling at all: at least one game card is fully visible.** This is the entire
       point of the change — it used to be none.
-- [ ] The three counter tiles (To Score / Review / Final) are **gone** from the top.
-- [ ] Visible at the top instead: the date, **Today**, and one **Filters** button.
-- [ ] At the bottom, two bars: the buckets (To Score 2 · Review 0 · Final 0 · All 2) with their
+- [x] The three counter tiles (To Score / Review / Final) are **gone** from the top.
+- [x] Visible at the top instead: the date, **Today**, and one **Filters** button.
+- [x] At the bottom, two bars: the buckets (To Score 2 · Review 0 · Final 0 · All 2) with their
       counts, above a Score · Gate · Account tab bar.
-- [ ] The header reads FIELDLOGICHQ over **the full club name** — "QA Cancel Lab (Tournament)",
+- [x] The header reads FIELDLOGICHQ over **the full club name** — "QA Cancel Lab (Tournament)",
       not cut off mid-word. No Check-In link, no Sign Out, no Feedback. The ⇄ pill is still there.
 
 ### B · The buckets earn the thumb
 
-- [ ] Scroll to the bottom of the game list. The bucket bar stays put.
-- [ ] From there, tap **Review** — the list empties and Review highlights, **without scrolling up**.
-- [ ] Tap **To Score** — both games back. Tap **All** — reads 2.
+- [x] Scroll to the bottom of the game list. The bucket bar stays put.
+- [x] From there, tap **Review** — the list empties and Review highlights, **without scrolling up**.
+- [x] Tap **To Score** — both games back. Tap **All** — reads 2.
 
 ### C · The fold cannot lie
 
-- [ ] The date field has **one** calendar icon, on the right, and tapping it opens the picker.
+- [x] The date field has **one** calendar icon, on the right, and tapping it opens the picker.
       (Ours was removed 2026-08-07 — two calendar icons on one field is one icon explaining the
       other, and the browser's is the one that actually works.)
-- [ ] Open the picker and press its **Clear** — the field must refill with **today** and the games
+- [x] Open the picker and press its **Clear** — the field must refill with **today** and the games
       stay. That button is the browser's and cannot be removed; an empty date used to leave the
       board showing games for a day it could no longer name.
-- [ ] Tap **Filters** — search, field and division appear.
-- [ ] The **field dropdown lists Lab Field 1 and Lab Field 2.** If it only offers "All fields",
+- [x] Tap **Filters** — search, field and division appear.
+- [x] The **field dropdown lists Lab Field 1 and Lab Field 2.** If it only offers "All fields",
       the fixture predates 2026-08-07 — re-seed. (That empty dropdown is what surfaced the
       game-location data-integrity problem; see `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN_PROMPT.md`.)
-- [ ] Pick **Lab Field 1** — only the 10:00 game remains.
-- [ ] Collapse Filters. **A lime count badge shows "1" on the button, and the date beside it still
+- [x] Pick **Lab Field 1** — only the 10:00 game remains.
+- [x] Collapse Filters. **A lime count badge shows "1" on the button, and the date beside it still
       reads 2026-08-07 in full.** A folded panel hiding an active filter would make a filtered
       board look like an empty day; and the badge is a badge rather than extra words precisely so
       the button cannot grow and clip the date (the defect this replaced).
-- [ ] Clear the filter.
+- [x] Clear the filter.
 
 ### D · Entering a score, over the bars
 
-- [ ] Tap a game. The score sheet opens **over** both bars — deliberate: entering a score is a
+- [x] Tap a game. The score sheet opens **over** both bars — deliberate: entering a score is a
       modal act, and covering the navigation is what stops a volunteer wandering off mid-entry.
-- [ ] With the number keyboard up, Cancel and Finalize are both reachable and clear of the home
+- [x] With the number keyboard up, Cancel and Finalize are both reachable and clear of the home
       indicator.
-- [ ] Save a score. The **To Score count in the bar drops and Final rises** — the bar is the only
+- [x] Save a score. The **To Score count in the bar drops and Final rises** — the bar is the only
       place those numbers live now.
 
 ### E · The tab bar
 
-- [ ] Tap **Gate**. The check-in board opens with its own bucket row: All · Not arrived ·
+- [x] Tap **Gate**. The check-in board opens with its own bucket row: All · Not arrived ·
       Checked in · No-show, with counts. Gate is the current tab.
-- [ ] Tap **Score** — straight back. One tap each way, no header hunting.
+- [x] Tap **Score** — straight back. One tap each way, no header hunting.
 
 ### F · Account — and the one step here that is not cosmetic
 
-- [ ] Tap **Account**. The sheet names you: "QA Lab Scorekeeper", the email, and the duties you
+- [x] Tap **Account**. The sheet names you: "QA Lab Scorekeeper", the email, and the duties you
       hold at this club. On a borrowed phone at a gate this is the question that matters most.
-- [ ] **Install this app** → the install prompt appears. (Nothing on desktop Chrome is correct —
+- [x] **Install this app** → the install prompt appears. (Nothing on desktop Chrome is correct —
       it is a phone affordance.)
-- [ ] **Open the public site** → lands on the club's public page.
-- [ ] ⚠ Back on the scorekeeper, Account → **Sign out**. **This is now the only exit on a phone.**
+- [x] **There is NO "open the public site" row.** Removed 2026-08-07 during this QA: a volunteer
+      has no errand on the club's marketing home page, and at a club that is not public that page
+      404s by design — so the row dead-ended (this QA club is private, and it did). The door a
+      volunteer might genuinely want is a specific *event's* public schedule, which is what the
+      scorekeeper's ⇄ pill already resolves to. ⚠ Leaves the gate shell with no public door at
+      all — an OPEN question (the original top-nav D9 finding), not a settled one.
+- [x] ⚠ Back on the scorekeeper, Account → **Sign out**. **This is now the only exit on a phone.**
       It used to sit in the header precisely because a volunteer on a borrowed or shared phone had
       no way to end their session. If this is at all hard to find, say so — the fallback is
       already decided (Sign Out returns to the header) and it is a one-line change.
-- [ ] After signing out, the Back button must not put you back on the board.
+- [x] After signing out, the Back button must not put you back on the board.
 
 ### G · One duty only — the design's weakest case, and a wall test
 
-- [ ] Sign in as **Dana Scorer**. The scorekeeper shows **two** tabs: Score and Account. No Gate.
-- [ ] Type the check-in URL directly. It must **refuse with "Access Denied"** — a door being
+- [x] Sign in as **Dana Scorer**. The scorekeeper shows **two** tabs: Score and Account. No Gate.
+- [x] Type the check-in URL directly. It must **refuse with "Access Denied"** — a door being
       absent from the bar is presentation; the wall is the actual protection.
-- [ ] Sign in as **Pat Gate**. Check-in shows **two** tabs: Gate and Account. No Score.
-- [ ] Type the scorekeeper URL directly. It must **refuse**.
-- [ ] ⚠ **A judgement, not a pass/fail:** for these two — who are the majority of real volunteers —
+- [x] Sign in as **Pat Gate**. Check-in shows **two** tabs: Gate and Account. No Score.
+- [x] Type the scorekeeper URL directly. It must **refuse**.
+- [x] ⚠ **A judgement, not a pass/fail:** for these two — who are the majority of real volunteers —
       is a two-tab bar where one tab is the screen they are already on worth 62px of their screen?
       If it reads as hollow, the fallback is the bucket bar alone for them, with Sign Out back in
       the header.
 
 ### H · Desktop must be untouched
 
-- [ ] Both screens at desktop width: **no tab bar, no pinned bars.** The buckets sit where they
+- [x] Both screens at desktop width: **no tab bar, no pinned bars.** The buckets sit where they
       always did, and the Check-In link and Sign Out are back in the header.
-- [ ] ⚠ **The one deliberate desktop change:** the volunteer gate board's arrival filter is now a
+- [x] ⚠ **The one deliberate desktop change:** the volunteer gate board's arrival filter is now a
       four-across row rather than an inline pill in the toolbar — it matches the scorekeeper twin.
-- [ ] **The admin gate screen** (`/qa-cancel-lab/admin/tournaments/check-in`) must be **completely
+- [x] **The admin gate screen** (`/qa-cancel-lab/admin/tournaments/check-in`) must be **completely
       unchanged**: inline segmented filter, its own bottom nav, and *not* three stacked bars. It
       shares the board component with the volunteer screen, so this is the collision to check.
 
 ### I · A real iPhone (not Chromium)
 
-- [ ] On a notched iPhone: nothing sits behind the home indicator, both bars clear it, and the
+- [x] On a notched iPhone: nothing sits behind the home indicator, both bars clear it, and the
       score sheet's buttons stay reachable. This is the exact failure the lineup builder's Undo
       bar shipped with, and the sweep that would normally catch it does not run here.
 
@@ -2628,7 +2658,7 @@ this is now most of the newest work, not two odds and ends:
 | Group **1E** | §1.15 · §1.17 · §1.18 — game day on the bench | — (mig 228 shipped) |
 | Inside **1B** | §1.9c — the roster switch | — |
 | Inside **3A** | §6 — the playing-time wording sweep | — |
-| Group **3C** | §7 — the day-of volunteer bottom bars | — (no migration; ⚠ no automated layout cover, your phone is the check) |
+| ~~Group **3C**~~ | ✅ §7 — the day-of volunteer bottom bars — **PASSED 2026-08-07**, gate cleared | — (no migration) |
 | Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | mig **226** applied (dev *and* prod) |
 
 ⚠ **One database prerequisite is left, and this ledger cannot tick it:** migration **226**, the

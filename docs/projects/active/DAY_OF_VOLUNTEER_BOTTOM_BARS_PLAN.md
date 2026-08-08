@@ -1,8 +1,12 @@
 # Day-of volunteer shells — the two bottom bars (Option C)
 
-**Status:** ✅ BUILT on `dev` 2026-08-07, UNCOMMITTED — owner QA owed. All four open calls were
-answered by the owner the same day: Account as a sheet ✔, sign-out one tap deeper ✔, public door
-in Account only (no ⇄ added to check-in) ✔, single-duty two-tab bar ships and QA judges it ✔.
+**Status:** ✅ BUILT and **owner QA PASSED 2026-08-07** (ledger Group 3C / §7, all nine parts).
+UNCOMMITTED on `dev`. Six defects were found and fixed during the run — four in the QA fixture,
+two in the feature — see the ledger's pass note for the list.
+
+All four open calls were answered the same day: Account as a sheet ✔, sign-out one tap deeper ✔,
+single-duty two-tab bar ships ✔ — and the public-door question was answered twice, the second
+answer overruling the first (§3.5).
 **Surfaces:** `/{org}/scorekeeper` and `/{org}/check-in` (the twin day-of volunteer shells)
 **Mockups:** Claude Artifact `2bf781e7-0977-4d4a-9432-733b72b81133` — *Scorekeeper: what goes at the bottom*
 **PM brief:** `DAY_OF_VOLUNTEER_BOTTOM_BARS_PM_BRIEF.md`
@@ -105,15 +109,29 @@ mirror of the scoring board — no such page exists there either. It resolves to
 the *event* (schedule and scores). A gate volunteer stands at the same event and has a more
 frequent reason to want it: "which field is U13 on?" is a gate question.
 
-**Resolution taken by this plan:** the Account sheet carries **Open the public site** on BOTH
-shells, so the door reaches the gate volunteer regardless. Owner choice on the header itself:
+**Resolved 2026-08-07, in two steps — the second overrules the first.**
 
-- **(recommended)** Account only — one home for the door, the check-in header stays uncluttered,
-  and the asymmetry ends without adding a control to a row this plan is otherwise clearing.
-- Account **plus** the ⇄ pill on check-in — the two headers become genuinely identical.
+*First:* the Account sheet would carry **Open the public site** on both shells, so the door reached
+the gate volunteer regardless, and no ⇄ pill was added to the check-in header.
 
-Either way the "considered and declined" comment is retired and replaced with what was actually
-decided, and the outcome is logged via `/design` so the audit's D9 stops being open.
+*Then owner QA killed the row entirely,* on a plainer argument than the one that created it:
+**a volunteer has no errand on the club's public HOME page.** It is a marketing surface. The door a
+volunteer might genuinely want is a specific *event's* public schedule — "which field is U13 on?" —
+which is a different destination, and is exactly what the scorekeeper's ⇄ pill already resolves to.
+
+It was also, as built, a **dead end**: at a club that is not public the club root 404s by design,
+and the QA club is private, so the row took a volunteer to ROUTE_NOT_FOUND. That is the house rule
+in CLAUDE.md — hide the entry point rather than let it dead-end — and the row failed it.
+
+**Where this leaves the asymmetry, stated plainly so it is not lost:** the scorekeeper has a public
+door (the ⇄ pill, to an event's schedule); the gate shell now has **none**. That may be right — a
+gate volunteer's job is the arrivals list — but it is now an open question rather than a settled
+one, and it is the ORIGINAL D9 finding resurfacing. **Do not record it as decided.** If it is taken
+up, the candidate is the ⇄ pill on check-in (an event schedule, useful at a gate), never the club
+root.
+
+The misleading "considered and declined" comment in the check-in shell has been replaced with what
+was actually decided and when.
 
 ## 4 · What comes off the top of the scorekeeper
 

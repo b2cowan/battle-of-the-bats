@@ -412,7 +412,14 @@
 
 .sheetBackdrop {
   position: fixed;
-  inset: 0;
+  left: 0;
+  right: 0;
+  /* Sized to the REAL visible area, not the layout viewport: the sheet autofocuses a score field,
+     so the number pad is up before the volunteer has seen anything, and a `inset: 0` backdrop puts
+     Finalize underneath it on a short phone. Same idiom as the tournament chat composer — --vvh /
+     --vv-offset-top are published globally by ViewportKeyboardVars; 100dvh covers first paint. */
+  top: var(--vv-offset-top, 0px);
+  height: var(--vvh, 100dvh);
   /* Above both bottom bars (46) deliberately: entering a score is a modal act, and the sheet
      covering the navigation is what stops a volunteer wandering off mid-entry. */
   z-index: 100;
@@ -426,6 +433,9 @@
 
 .scoreSheet {
   width: min(100%, 520px);
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
   padding: 1rem;
   border: 1px solid var(--blueprint-blue);
   border-radius: 8px;
@@ -433,19 +443,29 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
 }
 
+/* Only this scrolls. The action row is a flex sibling and never leaves the sheet's bottom edge. */
+.sheetBody {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Pinned, like the actions — nothing that orients the volunteer scrolls away mid-entry. With the
+   close button retired the row has one occupant, so the game line gets the full width and stays on
+   one line down to 320px. */
 .sheetHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
+  flex: none;
   margin-bottom: 1rem;
 }
 
-.sheetHeader h2 {
+/* Time - field - division. Replaces a title that repeated the two team names printed on the
+   labels below it: chrome earns its line by carrying what the surface does not already show. */
+.sheetMeta {
   margin: 0;
-  color: var(--sk-ink);
-  font-size: 1.1rem;
-  line-height: 1.2;
+  color: var(--sk-ink-faint);
+  font-family: var(--font-data);
+  font-size: 0.76rem;
+  line-height: 1.35;
 }
 
 .scoreGrid {
@@ -472,51 +492,38 @@
   text-transform: uppercase;
 }
 
-.scoreGrid input {
+/* The field is the whole column. The −/+ steppers that used to flank it (J8-007) took 109 of the
+   138px each team gets on a 390px phone, leaving ~29px for a numeral drawn at 38px. */
+.scoreInput {
   width: 100%;
   min-height: 72px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.7);
+  padding: 0;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.55);
   border-radius: 8px;
   background: var(--sk-bg-deep);
   color: var(--logic-lime);
   font-family: var(--font-data);
   font-size: 2.8rem;
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
   text-align: center;
   outline: 0;
 }
 
-.scoreGrid input.inputError {
+.scoreInput:focus-visible {
+  border-color: var(--logic-lime);
+  box-shadow: 0 0 0 2px rgba(var(--logic-lime-rgb), 0.35);
+}
+
+.scoreInput.inputError {
   border-color: var(--danger);
 }
 
-/* J8-007: thumb steppers + brighter input border. A never-trained volunteer can tap −/+ without a
-   keyboard; the big input stays directly editable. */
-.scoreStepper {
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) 48px;
-  align-items: stretch;
-  gap: 0.4rem;
-}
-.scoreStepper .scoreInput {
-  border-color: rgba(var(--logic-lime-rgb), 0.55);
-}
-.stepBtn {
-  min-height: 48px;
-  border: 1px solid rgba(var(--logic-lime-rgb), 0.45);
-  border-radius: 8px;
-  background: rgba(var(--logic-lime-rgb), 0.1);
-  color: var(--logic-lime);
-  font-family: var(--font-data);
-  font-size: 1.8rem;
-  font-weight: 900;
-  line-height: 1;
-  cursor: pointer;
-}
-.stepBtn:active { background: rgba(var(--logic-lime-rgb), 0.22); }
-
+/* Sits on the fields' centre line, not the row's: the labels above are 1-2 lines depending on the
+   club name, so anything centred on the whole column drifts with the longest team name. */
 .scoreDivider {
-  align-self: center;
+  align-self: end;
+  margin-bottom: 1.4rem;
   color: var(--data-gray);
   font-family: var(--font-data);
   font-size: 1.4rem;
@@ -576,14 +583,32 @@
 }
 
 .formError {
+  border-color: rgba(var(--danger-rgb), 0.5);
+  background: rgba(var(--danger-rgb), 0.1);
   color: var(--sk-red);
 }
+.formError svg { flex-shrink: 0; margin-top: 0.1rem; }
 
+/* Cancel takes only what it needs; Finalize takes the rest and stays under the thumb. Stacking
+   these on a phone cost ~54px of the height that keeps the primary clear of the keypad — and the
+   header already carries a close button, so the full-width Cancel was the second way to do one thing. */
 .sheetActions {
   display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 0.75rem;
   margin-top: 1rem;
+  flex: none;
+}
+
+/* These two inherit 16px everywhere else in the page, which is fine for a full-width control but
+   not for two on one row: measured with the real font, "Submit for Review" beside Cancel needs
+   259px against the 257px a 320px phone offers, and clears every other width by only ~4px — one
+   larger system font setting from breaking at any size. 0.78rem is what the approved mockup drew,
+   and it restores ~32px of slack. Scoped to the sheet so the list's own buttons are untouched. */
+.sheetActions .secondaryButton,
+.sheetActions .primaryButton {
+  font-size: 0.78rem;
+  min-width: 0;
 }
 
 .primaryButton {
@@ -701,12 +726,12 @@
     gap: 0.5rem;
   }
 
-  .scoreGrid input {
+  .scoreInput {
     min-height: 64px;
     font-size: 2.35rem;
   }
 
-  .sheetActions {
-    grid-template-columns: 1fr;
+  .scoreDivider {
+    margin-bottom: 1.15rem;
   }
 }

@@ -21,6 +21,19 @@ import { formatTime } from '@/lib/utils';
 import styles from './scorekeeper.module.css';
 
 type ScoreState = 'idle' | 'entering' | 'saving';
+
+/**
+ * Digits only, no leading zeros, at most three.
+ *
+ * The cap lives HERE and not in a `maxLength` attribute: the browser enforces `maxLength` on the
+ * raw edit, before React sees the value, so pasting "ab27" was truncated to "ab2" and then stripped
+ * to **2** — a silently wrong FINAL score with no error, because the field was not empty. Sanitise
+ * first, cap second. Leading zeros go too: "007" saved correctly as 7 but read as three digits on a
+ * screen whose whole job is being readable at a glance.
+ */
+function sanitizeScore(raw: string) {
+  return raw.replace(/\D/g, '').replace(/^0+(?=\d)/, '').slice(0, 3);
+}
 type StatusFilter = 'open' | 'pending' | 'final' | 'all';
 
 // WI-3: a score typed but not yet saved when the session lapsed. Stashed per-tab (sessionStorage
@@ -156,6 +169,10 @@ export default function ScorekeeperPage() {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const [editingCard, setEditingCard] = useState<GameCard | null>(null);
+  /** Enter in the home field moves here rather than submitting — see `onScoreKeyDown`. */
+  const awayScoreRef = useRef<HTMLInputElement | null>(null);
+  /** Where Enter in the away field lands: dismisses the keypad AND keeps a keyboard user in the sheet. */
+  const submitButtonRef = useRef<HTMLButtonElement | null>(null);
   const [homeScore, setHomeScore] = useState('');
   const [awayScore, setAwayScore] = useState('');
   const [scoreState, setScoreState] = useState<ScoreState>('idle');
@@ -383,6 +400,21 @@ export default function ScorekeeperPage() {
     setTeamSearch('');
   }
 
+  /**
+   * Which game this is — time, field, division (and the tournament, when the day spans more than
+   * one). The card and the score sheet share it deliberately: the sheet's title used to repeat the
+   * two team names printed on the labels directly beneath it, so the one line it owns said nothing
+   * the volunteer could use to confirm they had opened the right game out of eight on the field.
+   */
+  function gameMetaLine(card: GameCard) {
+    return [
+      tournamentIds.length > 1 ? card.tournamentName : null,
+      card.game.time ? formatTime(card.game.time) : 'Time TBD',
+      card.game.location || card.venue?.name,
+      card.divisionName,
+    ].filter(Boolean).join(' · ');
+  }
+
   function openScoreEntry(card: GameCard) {
     if (!canEdit(card.game)) return;
     setEditingCard(card);
@@ -391,6 +423,24 @@ export default function ScorekeeperPage() {
     setShowScoreErrors(false);
     setScoreState('entering');
     setNotice(null);
+  }
+
+  /**
+   * The keyboard's action key never finalizes a score. Enter in the home field moves to the away
+   * field; in the away field it moves to the Finalize button. Both fields sit inside the form, so
+   * the default would be an implicit submit — and committing an irreversible result from a keyboard
+   * key nobody aimed at is not a thing this screen should be able to do.
+   *
+   * The away branch focuses the button rather than blurring: a blur put focus on `document.body`,
+   * so the next Tab restarted from the top of the page and a keyboard-only volunteer was thrown out
+   * of the sheet. Focusing the button dismisses the on-screen keypad just the same, and lands the
+   * volunteer on the action they were heading for.
+   */
+  function onScoreKeyDown(event: React.KeyboardEvent<HTMLInputElement>, field: 'home' | 'away') {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    if (field === 'home') awayScoreRef.current?.focus();
+    else submitButtonRef.current?.focus();
   }
 
   function closeScoreEntry() {
@@ -653,12 +703,7 @@ export default function ScorekeeperPage() {
             const { game } = card;
             const editable = canEdit(game);
             const policyReview = scorePolicies[game.tournamentId] ?? false;
-            const meta = [
-              tournamentIds.length > 1 ? card.tournamentName : null,
-              game.time ? formatTime(game.time) : 'Time TBD',
-              game.location || card.venue?.name,
-              card.divisionName,
-            ].filter(Boolean).join(' - ');
+            const meta = gameMetaLine(card);
 
             const isNow = game.id === nowCardId;
 
@@ -711,93 +756,104 @@ export default function ScorekeeperPage() {
         </section>
       )}
 
+      {/* The backdrop does NOT dismiss (owner ruling 2026-08-08). It was the only exit that could
+          throw away a half-typed score by accident — and with the keypad up it is a ~30px sliver
+          exactly where a thumb rests. Cancel is the way out; Escape is its keyboard twin. */}
       {editingCard && scoreState !== 'idle' && (
-        <div className={styles.sheetBackdrop} role="presentation" onClick={closeScoreEntry}>
+        <div className={styles.sheetBackdrop}>
           <form
             className={styles.scoreSheet}
+            role="dialog"
+            aria-label={`Enter score — ${editingCard.homeName} vs ${editingCard.awayName}`}
             onSubmit={event => {
               event.preventDefault();
               void submitScore();
             }}
-            onClick={event => event.stopPropagation()}
+            onKeyDown={event => {
+              if (event.key === 'Escape') { event.stopPropagation(); closeScoreEntry(); }
+            }}
           >
+            {/* Header and actions are both pinned; only what sits between them scrolls, so the
+                on-screen keypad can never bury Finalize. */}
             <div className={styles.sheetHeader}>
-              <div>
-                <p className={styles.kicker}>Enter Score</p>
-                <h2>{editingCard.homeName} vs {editingCard.awayName}</h2>
-              </div>
-              <button type="button" className={styles.iconButton} onClick={closeScoreEntry} aria-label="Close score entry">
-                <X size={18} />
-              </button>
+              <p className={styles.kicker}>Enter Score</p>
+              {/* Which game, not who is playing — the team names are on the labels below. */}
+              <p className={styles.sheetMeta}>{gameMetaLine(editingCard)}</p>
             </div>
 
-            {/* WI-3: session-lapsed (and other) notices render here, above the score, while the
-                sheet is open — so the volunteer sees the "Sign in" recovery without closing it. */}
-            {noticeBlock}
+            <div className={styles.sheetBody}>
+              {/* WI-3: session-lapsed (and other) notices render here, above the score, while the
+                  sheet is open — so the volunteer sees the "Sign in" recovery without closing it. */}
+              {noticeBlock}
 
-            {/* J8-007: high-contrast inputs + thumb steppers — the most critical field moment.
-                A never-trained volunteer can tap −/+ without a keyboard; the input stays editable. */}
-            <div className={styles.scoreGrid}>
-              <label>
-                <span>{editingCard.homeName}</span>
-                <div className={styles.scoreStepper}>
-                  <button type="button" className={styles.stepBtn} aria-label={`Decrease ${editingCard.homeName} score`}
-                    onClick={() => setHomeScore(v => String(Math.max(0, (parseInt(v || '0', 10) || 0) - 1)))}>−</button>
+              {/* Two big fields, nothing beside them. The −/+ steppers this replaces (J8-007) were
+                  meant to spare a volunteer the keyboard, but at 48px each they left the number
+                  itself ~29px on a 390px phone — and the score is entered once, after the game, so
+                  there was never a running tally to step. `text` + `inputMode` + `pattern` is what
+                  reliably raises the 0-9 keypad; `type=number` also let a stray character blank the
+                  field and let a laptop scroll wheel change a final score. */}
+              <div className={styles.scoreGrid}>
+                <label>
+                  <span>{editingCard.homeName}</span>
                   <input
                     autoFocus
-                    type="number"
+                    type="text"
                     inputMode="numeric"
-                    min={0}
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    enterKeyHint="next"
                     value={homeScore}
-                    onChange={event => setHomeScore(event.target.value.replace(/\D/g, ''))}
+                    onFocus={event => event.currentTarget.select()}
+                    onKeyDown={event => onScoreKeyDown(event, 'home')}
+                    onChange={event => setHomeScore(sanitizeScore(event.target.value))}
                     className={`${styles.scoreInput} ${showScoreErrors && homeScore === '' ? styles.inputError : ''}`}
                   />
-                  <button type="button" className={styles.stepBtn} aria-label={`Increase ${editingCard.homeName} score`}
-                    onClick={() => setHomeScore(v => String((parseInt(v || '0', 10) || 0) + 1))}>+</button>
-                </div>
-              </label>
-              <span className={styles.scoreDivider}>-</span>
-              <label>
-                <span>{editingCard.awayName}</span>
-                <div className={styles.scoreStepper}>
-                  <button type="button" className={styles.stepBtn} aria-label={`Decrease ${editingCard.awayName} score`}
-                    onClick={() => setAwayScore(v => String(Math.max(0, (parseInt(v || '0', 10) || 0) - 1)))}>−</button>
+                </label>
+                <span className={styles.scoreDivider} aria-hidden>–</span>
+                <label>
+                  <span>{editingCard.awayName}</span>
                   <input
-                    type="number"
+                    ref={awayScoreRef}
+                    type="text"
                     inputMode="numeric"
-                    min={0}
+                    pattern="[0-9]*"
+                    autoComplete="off"
+                    enterKeyHint="done"
                     value={awayScore}
-                    onChange={event => setAwayScore(event.target.value.replace(/\D/g, ''))}
+                    onFocus={event => event.currentTarget.select()}
+                    onKeyDown={event => onScoreKeyDown(event, 'away')}
+                    onChange={event => setAwayScore(sanitizeScore(event.target.value))}
                     className={`${styles.scoreInput} ${showScoreErrors && awayScore === '' ? styles.inputError : ''}`}
                   />
-                  <button type="button" className={styles.stepBtn} aria-label={`Increase ${editingCard.awayName} score`}
-                    onClick={() => setAwayScore(v => String((parseInt(v || '0', 10) || 0) + 1))}>+</button>
-                </div>
-              </label>
+                </label>
+              </div>
+
+              {showScoreErrors && (homeScore === '' || awayScore === '') && (
+                <p className={styles.formError}>
+                  <X size={15} aria-hidden />
+                  <span>Both scores are required.</span>
+                </p>
+              )}
+
+              {/* J8-008: the consequence note was grey body text wedged above the button — skippable
+                  under pressure. Now an iconed, separated callout so the volunteer reads it before saving. */}
+              <p className={styles.policyNote} data-tone={selectedPolicyRequiresReview ? 'review' : 'final'}>
+                <Info size={15} aria-hidden />
+                <span>
+                  {editingCard.game.status === 'submitted'
+                    ? 'This replaces the pending score before an admin finalizes it.'
+                    : selectedPolicyRequiresReview
+                      ? 'This tournament requires admin review before scores become final.'
+                      : 'This score becomes final immediately after saving.'}
+                </span>
+              </p>
             </div>
-
-            {showScoreErrors && (homeScore === '' || awayScore === '') && (
-              <p className={styles.formError}>Both scores are required.</p>
-            )}
-
-            {/* J8-008: the consequence note was grey body text wedged above the button — skippable
-                under pressure. Now an iconed, separated callout so the volunteer reads it before saving. */}
-            <p className={styles.policyNote} data-tone={selectedPolicyRequiresReview ? 'review' : 'final'}>
-              <Info size={15} aria-hidden />
-              <span>
-                {editingCard.game.status === 'submitted'
-                  ? 'This replaces the pending score before an admin finalizes it.'
-                  : selectedPolicyRequiresReview
-                    ? 'This tournament requires admin review before scores become final.'
-                    : 'This score becomes final immediately after saving.'}
-              </span>
-            </p>
 
             <div className={styles.sheetActions}>
               <button type="button" className={styles.secondaryButton} onClick={closeScoreEntry} disabled={scoreState === 'saving'}>
                 Cancel
               </button>
-              <button type="submit" className={styles.primaryButton} disabled={scoreState === 'saving'}>
+              <button ref={submitButtonRef} type="submit" className={styles.primaryButton} disabled={scoreState === 'saving'}>
                 <Save size={16} />
                 {scoreState === 'saving' ? 'Saving...' : submitLabel}
               </button>

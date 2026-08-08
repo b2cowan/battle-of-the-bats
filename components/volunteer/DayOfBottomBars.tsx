@@ -15,7 +15,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ClipboardList, Download, ExternalLink, LogOut, UserCheck, UserRound, X } from 'lucide-react';
+import { ClipboardList, Download, LogOut, UserCheck, UserRound, X } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { useDismissable } from '@/lib/overlay-hooks';
 import styles from './DayOfShell.module.css';
@@ -184,15 +184,13 @@ export default function DayOfTabBar({
               <span className={styles.chev} aria-hidden>→</span>
             </button>
 
-            {/* The public-site door. The scorekeeper header also carries the ⇄ flip (which resolves
-                to a specific event); this is the plain org door, and it is the ONLY one the gate
-                shell has — settling an asymmetry that had been recorded as decided but never was
-                (top-nav audit D9; plan §3.5). */}
-            <Link href={`/${orgSlug}`} className={styles.sheetRow} onClick={close}>
-              <ExternalLink size={16} aria-hidden />
-              Open the public site
-              <span className={styles.chev} aria-hidden>→</span>
-            </Link>
+            {/* ⚠ NO "open the public site" row here, deliberately (owner call 2026-08-07).
+                It was added to give the gate shell a public door, then removed on the plainer
+                argument: the club's public HOME is a marketing surface, and a volunteer scoring
+                games or working a gate has no errand there. The door a volunteer might genuinely
+                want is a specific EVENT's public schedule ("which field is U13 on?") — which is
+                what the scorekeeper's ⇄ pill already resolves to, and is a different thing.
+                It also dead-ended at a private club, where that page 404s by design. */}
 
             <button
               type="button"
