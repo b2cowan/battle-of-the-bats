@@ -44,6 +44,24 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-08-07',
+    title: 'Scorekeeper and check-in, built for the phone',
+    highlights: [
+      {
+        category: 'improved',
+        text: 'Scorekeeper and check-in now open straight onto the games instead of a screenful of setup. On a phone the day\'s counts stay in view, switching between scoring and the gate takes one tap, and the filters stay out of the way until you need them.',
+      },
+      {
+        category: 'improved',
+        text: 'Help now covers what happens if a subscription ends. Nothing is deleted — the guide walks through what stops, what\'s kept, and how everything comes back.',
+      },
+      {
+        category: 'fixed',
+        text: 'Tryout registration now closes when an organization\'s subscription ends, along with the rest of its public pages.',
+      },
+    ],
+  },
+  {
     date: '2026-08-06',
     title: 'New in the Coach Portal: scouting, club sharing, game day',
     highlights: [
