@@ -2,7 +2,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Plus, Minus, Network } from 'lucide-react';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
-import { checkVenueConflict, buildConflictMap, resolveGameTiming, type ConflictResult, type ConflictInfo } from '@/lib/schedule-conflict';
+import { checkVenueConflict, buildConflictMap, resolveGameTiming, toConflictGame, type ConflictResult, type ConflictInfo } from '@/lib/schedule-conflict';
+import { hasKnownPlacement } from '@/lib/venue-identity';
+import { resolveGameFieldLabel } from '@/lib/venue-label';
 import { scheduledWindowState } from '@/lib/game-live-state';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { buildPlaceholderOptions, descendantBracketCodes } from '@/lib/playoff-bracket';
@@ -250,21 +252,7 @@ export default function GameList({
   // including the clashing partner (for "double-booked with…" labels).
   const conflictMap = useMemo((): Map<string, ConflictInfo> => {
     if (!tournament || mode !== 'planning') return new Map();
-    return buildConflictMap(
-      games.map(g => ({
-        id: g.id,
-        gameDate: g.date ?? null,
-        startTime: g.time ?? null,
-        status: g.status ?? null,
-        venueId: g.venueId ?? null,
-        venueFacilityId: g.venueFacilityId ?? null,
-        scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
-        divisionId: g.divisionId ?? null,
-        durationMinutes: g.durationMinutes ?? null,
-      })),
-      divisions,
-      tournament,
-    );
+    return buildConflictMap(games.map(toConflictGame), divisions, tournament);
   }, [games, divisions, tournament, mode]);
 
   // Feature 5: optionally show only games that have a conflict (planning triage).
@@ -289,32 +277,31 @@ export default function GameList({
     for (const gameId of expanded) {
       const edit = editState[gameId];
       if (!edit || !edit.date || !edit.time) continue;
-      if (!edit.venueId && !edit.venueFacilityId) continue;
       const game = games.find(g => g.id === gameId);
       if (!game) continue;
+      // Model the game as SAVING it would leave it, not as the form momentarily looks — otherwise
+      // the warning can block a save on a placement that save would never produce.
+      //
+      // The inline save only sends venue fields when one is picked (`data.venueId || undefined`),
+      // and the API skips undefined fields, so emptying this dropdown is a no-op: the stored venue
+      // survives. Retaining it here keeps the preview honest. A game located only by a typed field
+      // name still falls through to its own text, which is what lets "move this game to 2pm" be
+      // checked at all on a schedule built from typed names — the case that used to save in silence.
+      const venuePicked = Boolean(edit.venueId || edit.venueFacilityId);
+      const proposedGame = toConflictGame({
+        ...game,
+        id: gameId,
+        date: edit.date,
+        time: edit.time,
+        status: 'scheduled',
+        venueId: venuePicked ? edit.venueId || null : game.venueId ?? null,
+        venueFacilityId: venuePicked ? edit.venueFacilityId || null : game.venueFacilityId ?? null,
+      });
+      if (!hasKnownPlacement(proposedGame)) continue;
 
       const conflict = checkVenueConflict({
-        proposedGame: {
-          id: gameId,
-          gameDate: edit.date,
-          startTime: edit.time,
-          status: 'scheduled',
-          venueId: edit.venueId || null,
-          venueFacilityId: edit.venueFacilityId || null,
-          divisionId: game.divisionId || null,
-          durationMinutes: game.durationMinutes ?? null,
-        },
-        allGames: games.map(g => ({
-          id: g.id,
-          gameDate: g.date ?? null,
-          startTime: g.time ?? null,
-          status: g.status ?? null,
-          venueId: g.venueId ?? null,
-          venueFacilityId: g.venueFacilityId ?? null,
-          scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
-          divisionId: g.divisionId ?? null,
-          durationMinutes: g.durationMinutes ?? null,
-        })),
+        proposedGame,
+        allGames: games.map(toConflictGame),
         divisions,
         tournament: tournament ?? null,
       });
@@ -732,8 +719,12 @@ export default function GameList({
               const partner = games.find(x => x.id === info.partnerId);
               const partnerName = partner ? (partner.bracketCode || resolveTeam(partner.homeTeamId, partner.homePlaceholder)) : '';
               const partnerTime = info.partnerTime ? formatTime(info.partnerTime) : '';
+              // Names the field as well as the partner: this check arrives unannounced, so the
+              // tooltip has to be self-explanatory on first sight.
+              const partnerField = partner ? resolveGameFieldLabel(partner, venues) : '';
+              const matchNote = info.matchedOn === 'text' ? ' (matched on the typed field name)' : '';
               const title = partner
-                ? `${isOverlap ? 'Double-booked with' : 'Too close to'} ${partnerName}${partnerTime ? ` · ${partnerTime}` : ''}`
+                ? `${isOverlap ? 'Double-booked with' : 'Too close to'} ${partnerName}${partnerTime ? ` · ${partnerTime}` : ''}${partnerField ? ` on ${partnerField}` : ''}${matchNote}`
                 : (isOverlap ? 'Venue conflict: game windows overlap' : 'Buffer zone warning: games are too close together');
               return (
                 <span className={styles.conflictBadge} data-kind={info.kind} title={title}>
@@ -804,6 +795,11 @@ export default function GameList({
                 ? (partner.bracketCode || `${resolveTeam(partner.awayTeamId, partner.awayPlaceholder)} vs ${resolveTeam(partner.homeTeamId, partner.homePlaceholder)}`)
                 : 'another game';
               const partnerTime = info.partnerTime ? formatTime(info.partnerTime) : '';
+              // This check ships with no announcement (owner ruling R1), so the sentence has to
+              // stand on its own for someone seeing it for the first time: WHICH game, WHEN, and
+              // WHERE. Naming the field matters most when it was matched on a typed name — the
+              // organizer needs to know the match was on the words, not on a picked field.
+              const fieldLabel = partner ? resolveGameFieldLabel(partner, venues) : '';
               return (
                 <div className={styles.conflictBanner} data-kind={info.kind}>
                   <AlertTriangle size={13} style={{ flexShrink: 0 }} />
@@ -811,7 +807,13 @@ export default function GameList({
                     {isOverlap ? 'Double-booked with ' : 'Too close to '}
                     <strong>{partnerName}</strong>
                     {partnerTime ? ` · ${partnerTime}` : ''}
-                    {isOverlap ? ' at this venue.' : ' — buffer too short.'}
+                    {fieldLabel ? <> on <strong>{fieldLabel}</strong></> : ''}
+                    {isOverlap ? '.' : ' — buffer too short.'}
+                    {info.matchedOn === 'text' && (
+                      <em className={styles.conflictMatchNote}>
+                        {' '}Matched on the typed field name — pick a set-up field to make this exact.
+                      </em>
+                    )}
                   </span>
                 </div>
               );

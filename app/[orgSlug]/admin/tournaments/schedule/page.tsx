@@ -28,7 +28,8 @@ import ScheduleHealthPanel, { type ScheduleHealthRulesDraft } from './components
 import BracketColumns, { buildBracketColumns } from './components/BracketColumns';
 import ScheduleTimeline from './components/ScheduleTimeline';
 import { Game, Team, Division, Venue, PoolSlot, ScheduleFacilityLane, PlayoffConfig } from '@/lib/types';
-import { checkVenueConflict, type ConflictResult } from '@/lib/schedule-conflict';
+import { checkVenueConflict, toConflictGame, type ConflictResult } from '@/lib/schedule-conflict';
+import { hasKnownPlacement } from '@/lib/venue-identity';
 import { buildScheduleMetrics, getScheduleHealthRules } from '@/lib/schedule-metrics';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
@@ -154,32 +155,34 @@ export default function AdminSchedulePage() {
   const modalConflict = useMemo((): ConflictResult | null => {
     if (!modal) return null;
     if (!form.date || !form.time) return null;
-    if (!form.venueId && !form.venueFacilityId) return null;
+
+    // This is the main door free text comes in through, so gating the check on a picked venue was
+    // the single biggest hole — an organizer could type the same field name onto two games at one
+    // time and the modal would not say a word. `location` is passed as-is; a picked venue already
+    // shadows it inside the placement rules, so the precedence lives in one place.
+    const proposedGame = toConflictGame({
+      id: editing?.id ?? '__new__',
+      date: form.date,
+      time: form.time,
+      status: 'scheduled',
+      venueId: form.venueId || null,
+      venueFacilityId: form.venueFacilityId || null,
+      location: form.location,
+      divisionId: form.divisionId || null,
+      // The form offers a per-game length (a 3-hour final in a 90-minute division). Without it the
+      // check measured the proposed game at the division default and missed the back half of a
+      // longer game — a real overlap that saved without a word.
+      durationMinutes: form.durationMinutes === '' ? null : form.durationMinutes,
+    });
+    if (!hasKnownPlacement(proposedGame)) return null;
 
     return checkVenueConflict({
-      proposedGame: {
-        id: editing?.id ?? '__new__',
-        gameDate: form.date,
-        startTime: form.time,
-        status: 'scheduled',
-        venueId: form.venueId || null,
-        venueFacilityId: form.venueFacilityId || null,
-        divisionId: form.divisionId || null,
-      },
-      allGames: games.map(g => ({
-        id: g.id,
-        gameDate: g.date ?? null,
-        startTime: g.time ?? null,
-        status: g.status ?? null,
-        venueId: g.venueId ?? null,
-        venueFacilityId: g.venueFacilityId ?? null,
-        scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
-        divisionId: g.divisionId ?? null,
-      })),
+      proposedGame,
+      allGames: games.map(toConflictGame),
       divisions,
       tournament: currentTournament,
     });
-  }, [modal, form.date, form.time, form.venueId, form.venueFacilityId, form.divisionId, editing?.id, games, divisions, currentTournament]);
+  }, [modal, form.date, form.time, form.venueId, form.venueFacilityId, form.location, form.divisionId, form.durationMinutes, editing?.id, games, divisions, currentTournament]);
 
   const canAutoGenerateSchedule = currentOrg ? hasPlanFeature(currentOrg.planId, 'auto_schedule') : false;
   // Manual playoff bracket building is available on all tournament plans; the

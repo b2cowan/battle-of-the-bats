@@ -1,6 +1,14 @@
 import type { Division, Game, Tournament, Venue } from './types';
 import { computeTournamentStandings } from './tie-breakers.ts';
 import { isStandardSingleEliminationBracket, nextBracketCodeViaWinner } from './playoff-bracket.ts';
+import {
+  resolveVenuePlacement,
+  placementsShareSurface,
+  isPlaced,
+  venueGroupKey,
+  facilityGroupKey,
+  type VenuePlacement,
+} from './venue-identity.ts';
 
 export type ScheduleIssueSeverity = 'error' | 'warning' | 'info';
 export type ScheduleHealthTone = 'good' | 'warning' | 'danger';
@@ -121,6 +129,19 @@ export interface ScheduleMetrics {
   bufferConflictCount: number;
   travelBufferWarningCount: number;
   unresolvedFacilityLaneCount: number;
+  /**
+   * Games that have a date and a time but no field we can identify — nothing set at all, or
+   * placeholder text like "TBD". They are NOT included in any conflict count above, because
+   * there is nothing to compare them against. Surfaced so the panel stops implying a schedule
+   * is clean when part of it was never checked.
+   */
+  uncheckedVenueCount: number;
+  /**
+   * Share of schedulable games a clash check could actually apply to, 0–1 (1 when there is
+   * nothing scheduled). Scales the conflicts rating — "no clashes found" is only claimable for
+   * the portion of the schedule we could locate.
+   */
+  venueCheckCoverage: number;
   /** Effective "max games/day" threshold used for the day-load rating (organizer rule or default 2). */
   maxGamesPerDay: number;
   /** Effective back-to-back threshold in minutes used for the rest rating (organizer rule or default 15). */
@@ -169,6 +190,12 @@ interface ParticipantGame {
   date: string;
   timeMinutes: number;
   durationMinutes: number;
+  /**
+   * Resolved ONCE here so neither the movement keys below nor the O(n²) conflict scan has to
+   * rebuild it. The pair loop compares every game against every other on its date; re-resolving
+   * inside that loop would rebuild the same placement thousands of times per render.
+   */
+  placement: VenuePlacement;
   venueKey: string | null;
   facilityKey: string | null;
   /** True when this game was reached via the Phase 2B Winner-feed projection, not a real row. */
@@ -500,6 +527,22 @@ function aggregateMetrics(
   conflictSummary: { venueConflictCount: number; bufferConflictCount: number },
   games: ScheduleMetricGame[],
 ) {
+  // Coverage: what share of the schedulable games a clash check could actually apply to. Feeds
+  // the conflicts rating, which is a claim ("no clashes found") you can only make about the games
+  // you were able to examine. Counted in ONE pass — both numbers come from the same test, and
+  // placement is resolved once per game rather than once per counter.
+  //
+  // Skipped deliberately: cancelled games (nobody is turning up to them) and games with no date
+  // or time. The latter are drafts rather than unverified bookings — counting them would bury the
+  // games an organizer can actually act on under ones they have not scheduled yet.
+  let scheduledCount = 0;
+  let uncheckedVenueCount = 0;
+  for (const game of games) {
+    if (game.status === 'cancelled' || !game.date || !game.time) continue;
+    scheduledCount += 1;
+    if (!isPlaced(resolveVenuePlacement(game))) uncheckedVenueCount += 1;
+  }
+
   const gameCounts = teamMetrics.map(team => team.gameCount);
   const minGamesPerParticipant = gameCounts.length ? Math.min(...gameCounts) : 0;
   const maxGamesPerParticipant = gameCounts.length ? Math.max(...gameCounts) : 0;
@@ -531,6 +574,8 @@ function aggregateMetrics(
     bufferConflictCount: conflictSummary.bufferConflictCount,
     travelBufferWarningCount: teamMetrics.reduce((total, team) => total + team.travelBufferWarnings, 0),
     unresolvedFacilityLaneCount: games.filter(hasUnresolvedFacilityLane).length,
+    uncheckedVenueCount,
+    venueCheckCoverage: scheduledCount > 0 ? (scheduledCount - uncheckedVenueCount) / scheduledCount : 1,
     maxGamesPerDay,
   };
 }
@@ -604,6 +649,22 @@ function buildIssues(
   maxGamesPerDay: number,
 ): ScheduleIssue[] {
   const issues: ScheduleIssue[] = [];
+
+  // Pushed FIRST on purpose. The panel renders only the top couple of items, and the sort is
+  // stable within a severity — so this has to lead the warnings rather than sit behind them.
+  // It is not just another finding: it is a caveat on every other finding in the list. A clash
+  // count read as complete when part of the schedule was never examined is the original bug
+  // wearing a politer face.
+  if (aggregate.uncheckedVenueCount > 0) {
+    const n = aggregate.uncheckedVenueCount;
+    issues.push({
+      severity: 'warning',
+      code: 'venue_unchecked',
+      title: 'Games not checked for clashes',
+      detail: `${n} scheduled game${n === 1 ? ' has' : 's have'} no field set, so ${n === 1 ? 'it is' : 'they are'} not being checked for double-bookings. Set a field to include ${n === 1 ? 'it' : 'them'}.`,
+      count: n,
+    });
+  }
 
   if (expectedGamesPerParticipant) {
     const under = teamMetrics.filter(team => team.gameCount < expectedGamesPerParticipant);
@@ -733,7 +794,22 @@ function buildHealthBreakdown(
     dayLoad: clampScore(15 - overloadedGameDays * 5),
     movement: clampScore(15 - aggregate.venueChangeCount * 1.5 - aggregate.facilityChangeCount * 0.5 - aggregate.travelBufferWarningCount * 2),
     timeSlots: clampScore(15 - edgeRange * 3),
-    conflicts: clampScore(15 - aggregate.venueConflictCount * 7 - aggregate.bufferConflictCount * 3 - aggregate.unresolvedFacilityLaneCount * 1.5),
+    /**
+     * Scaled by how much of the schedule could actually be checked (owner decision 2026-08-08).
+     *
+     * This rating asserts "we looked for clashes and found none" — a claim that can only honestly
+     * be made about the games we could locate. A schedule where half the games have no field set
+     * earns half the rating, not all of it.
+     *
+     * Deliberately SCALED rather than penalised per unlocated game: an unchecked game is UNKNOWN,
+     * not WRONG, and charging for it like a real overlap would treat silence as a defect — the
+     * same category error this whole project exists to correct. The worst case is losing the 15
+     * points that were never earned; it can never score worse than a schedule with real clashes.
+     *
+     * Coverage is applied AFTER the penalties floor at zero, so genuine conflicts still dominate.
+     */
+    conflicts: clampScore(15 - aggregate.venueConflictCount * 7 - aggregate.bufferConflictCount * 3 - aggregate.unresolvedFacilityLaneCount * 1.5)
+      * aggregate.venueCheckCoverage,
   };
 }
 
@@ -747,7 +823,7 @@ function scanVenueConflicts(
   let bufferConflictCount = 0;
   const timedGames = games
     .map(game => buildParticipantGame(game, options, divisions, tournament))
-    .filter(game => game.game.date && game.game.time && game.venueKey);
+    .filter(game => game.game.date && game.game.time && isPlaced(game.placement));
 
   for (let i = 0; i < timedGames.length; i++) {
     for (let j = i + 1; j < timedGames.length; j++) {
@@ -772,14 +848,14 @@ function scanVenueConflicts(
   return { venueConflictCount, bufferConflictCount };
 }
 
+/**
+ * Shared with the save-time blocker, so the two engines cannot reach different verdicts about
+ * the same pair of games. Also fixes a blind spot this function used to have: a game pinned to
+ * a surface and a game recorded only against that surface's parent venue never compared, so two
+ * games genuinely on the same diamond passed each other unseen.
+ */
 function sameVenueConflictScope(a: ParticipantGame, b: ParticipantGame): boolean {
-  if (a.game.venueFacilityId || b.game.venueFacilityId) {
-    return !!a.game.venueFacilityId && a.game.venueFacilityId === b.game.venueFacilityId;
-  }
-  const aLaneKey = getScheduleFacilityLaneKey(a.game);
-  const bLaneKey = getScheduleFacilityLaneKey(b.game);
-  if (aLaneKey || bLaneKey) return !!aLaneKey && aLaneKey === bLaneKey;
-  return !!a.venueKey && a.venueKey === b.venueKey;
+  return placementsShareSurface(a.placement, b.placement);
 }
 
 function buildParticipantGame(
@@ -790,14 +866,16 @@ function buildParticipantGame(
 ): ParticipantGame {
   const timeMinutes = timeToMinutes(game.time ?? '');
   const dateIndex = dateToIndex(game.date ?? '');
+  const placement = resolveVenuePlacement(game);
   return {
     game,
     startAbsoluteMinutes: dateIndex * 24 * 60 + (Number.isFinite(timeMinutes) ? timeMinutes : 0),
     date: game.date ?? '',
     timeMinutes: Number.isFinite(timeMinutes) ? timeMinutes : 0,
     durationMinutes: resolveDuration(game, options, divisions, tournament),
-    venueKey: getVenueKey(game),
-    facilityKey: getFacilityKey(game),
+    placement,
+    venueKey: venueGroupKey(placement),
+    facilityKey: facilityGroupKey(placement),
   };
 }
 
@@ -889,28 +967,6 @@ function appendParticipantGame(map: Map<string, ParticipantGame[]>, key: string,
   const games = map.get(key) ?? [];
   games.push(game);
   map.set(key, games);
-}
-
-function getVenueKey(game: ScheduleMetricGame): string | null {
-  if (game.venueId) return `venue:${game.venueId}`;
-  const laneKey = getScheduleFacilityLaneKey(game);
-  if (laneKey) return laneKey;
-  if (game.location) return `location:${game.location.trim().toLowerCase()}`;
-  return null;
-}
-
-function getFacilityKey(game: ScheduleMetricGame): string | null {
-  if (game.venueFacilityId) return `facility:${game.venueFacilityId}`;
-  const laneKey = getScheduleFacilityLaneKey(game);
-  if (laneKey) return laneKey;
-  return getVenueKey(game);
-}
-
-function getScheduleFacilityLaneKey(game: ScheduleMetricGame): string | null {
-  if (game.venueId || game.venueFacilityId) return null;
-  if (game.scheduleFacilityLaneId) return `lane:${game.scheduleFacilityLaneId}`;
-  const label = game.scheduleFacilityLaneLabel?.trim() || '';
-  return label ? `lane-label:${label.toLowerCase()}` : null;
 }
 
 function hasUnresolvedFacilityLane(game: ScheduleMetricGame): boolean {

@@ -1,4 +1,5 @@
 import { checkVenueConflict } from '../schedule-conflict.ts';
+import { hasKnownPlacement } from '../venue-identity.ts';
 import type { Division, Tournament } from '../types.ts';
 import {
   buildTournamentScheduleImportAfterRecord,
@@ -249,6 +250,12 @@ function existingConflictGame(game: TournamentScheduleImportExistingGame) {
     venueId: game.venueId,
     venueFacilityId: game.venueFacilityId,
     scheduleFacilityLaneId: game.scheduleFacilityLaneId,
+    // An existing game placed only by a typed field name is a real clash partner. Omitting this
+    // made the COMMIT pass blind to something the PREVIEW pass already caught — the two-passes-
+    // disagree bug this whole change exists to end, reappearing one file over. (A typed match
+    // currently warns rather than blocks, below — but the two mappers must still agree about what
+    // the engine can SEE, or that divergence comes straight back the next time the rule changes.)
+    location: game.location,
     divisionId: game.divisionId,
   };
 }
@@ -262,6 +269,10 @@ function proposedConflictGame(row: PreparedTournamentScheduleCommitRow) {
     venueId: row.normalized.venueId,
     venueFacilityId: row.normalized.venueFacilityId,
     scheduleFacilityLaneId: null,
+    // Passed unconditionally: a picked venue already shadows typed text inside
+    // resolveVenuePlacement, so restating that precedence here would just be a second copy of
+    // the rule to keep in sync.
+    location: row.normalized.location,
     divisionId: row.normalized.divisionId,
   };
 }
@@ -386,7 +397,7 @@ export function validateTournamentScheduleCommitAgainstContext(
 
   for (const row of activeRows) {
     const proposed = proposedConflictGame(row);
-    if (proposed.status !== 'cancelled' && (proposed.venueId || proposed.venueFacilityId)) {
+    if (proposed.status !== 'cancelled' && hasKnownPlacement(proposed)) {
       const conflict = checkVenueConflict({
         proposedGame: proposed,
         allGames: Array.from(conflictCandidates.values()),
@@ -396,7 +407,10 @@ export function validateTournamentScheduleCommitAgainstContext(
           settings: context.tournament.settings ?? {},
         } as unknown as Tournament,
       });
-      if (conflict?.kind === 'overlap') conflictRows.push(row.rowNumber);
+      // Mirrors the preview's rule: a typed-name match warns, a structured one blocks. Blocking
+      // here rejects the entire batch, so only a certain match — same field record, not the same
+      // spelling — is allowed to do that.
+      if (conflict?.kind === 'overlap' && conflict.matchedOn !== 'text') conflictRows.push(row.rowNumber);
     }
     conflictCandidates.set(proposed.id, proposed);
   }

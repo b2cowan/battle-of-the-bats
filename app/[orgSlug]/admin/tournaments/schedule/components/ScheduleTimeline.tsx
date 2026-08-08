@@ -17,7 +17,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNod
 import { ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Plus, Minus, Check } from 'lucide-react';
 import { DndContext, PointerSensor, useSensor, useSensors, useDraggable, useDroppable, pointerWithin, type DragEndEvent, type DragMoveEvent } from '@dnd-kit/core';
 import type { Game, Division, Venue, Tournament, Team } from '@/lib/types';
-import { resolveGameTiming, buildConflictMap, checkVenueConflict, timeToMinutes, minutesToTime, type ConflictInfo, type ConflictGame } from '@/lib/schedule-conflict';
+import { resolveGameTiming, buildConflictMap, checkVenueConflict, toConflictGame, timeToMinutes, minutesToTime, type ConflictInfo, type ConflictGame } from '@/lib/schedule-conflict';
 import { teamAvatarHue } from '@/lib/team-color';
 import { formatTime } from '@/lib/utils';
 import BottomSheet from '@/components/admin/BottomSheet';
@@ -380,17 +380,7 @@ export default function ScheduleTimeline({
 
   // Lightweight conflict shape for ALL games — shared by the conflict map and the
   // mobile reschedule sheet's live check.
-  const conflictGames = useMemo<ConflictGame[]>(() => games.map(g => ({
-    id: g.id,
-    gameDate: g.date ?? null,
-    startTime: g.time ?? null,
-    status: g.status ?? null,
-    venueId: g.venueId ?? null,
-    venueFacilityId: g.venueFacilityId ?? null,
-    scheduleFacilityLaneId: g.scheduleFacilityLaneId ?? null,
-    divisionId: g.divisionId ?? null,
-    durationMinutes: g.durationMinutes ?? null,
-  })), [games]);
+  const conflictGames = useMemo<ConflictGame[]>(() => games.map(toConflictGame), [games]);
 
   // Conflict map over ALL games (global) — always on, even in single-division scope.
   const conflictMap = useMemo<Map<string, ConflictInfo>>(() => {

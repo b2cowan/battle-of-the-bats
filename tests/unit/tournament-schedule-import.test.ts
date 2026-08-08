@@ -410,6 +410,56 @@ describe('tournament schedule import commit helpers', () => {
     );
   });
 
+  /**
+   * A typed field name is a strong hint, not a certainty — it rests on a spelling convention in
+   * someone else's spreadsheet rather than on a field record. Because ONE blocked row rejects the
+   * whole upload, an uncertain match must warn rather than block: two unrelated rows that both say
+   * "Home Field" must not be able to reject a thousand good ones. A structured match still blocks.
+   */
+  it('warns but does not block an upload when the clash is on a typed field name', () => {
+    const typedTextRow = baseRow({
+      'Game Date': '2026-07-12',
+      'Start Time': '11:00',
+      // Typed field name only — no venue or facility picked.
+      'Venue ID': '',
+      'Venue Name': '',
+      'Facility ID': '',
+      'Facility Name': '',
+      Location: 'Diamond 7',
+    });
+
+    const typedTextContext: TournamentScheduleImportContext = {
+      ...context,
+      games: [
+        ...context.games,
+        {
+          ...context.games[0],
+          id: 'typed-text-clash',
+          gameDate: '2026-07-12',
+          startTime: '11:00:00',
+          location: 'Diamond 7',
+          venueId: null,
+          venueFacilityId: null,
+        },
+      ],
+    };
+
+    const preview = buildTournamentScheduleImportPreview(parsed([typedTextRow]), typedTextContext, 'batch-1');
+    const row = preview.rows[0];
+
+    // Seen and said out loud — proves the existing typed-text game is visible as a clash partner.
+    assert.ok(
+      row.warnings.some(warning => /typed field name/i.test(warning)),
+      `expected a typed-field-name warning, got ${JSON.stringify(row.warnings)}`,
+    );
+    // …but not fatal: the row still imports.
+    assert.equal(row.operation, 'create');
+    assert.deepEqual(row.errors, []);
+
+    const prepared = prepareTournamentScheduleCommitRows(storedRowsFromPreview(preview));
+    assert.doesNotThrow(() => validateTournamentScheduleCommitAgainstContext(prepared, typedTextContext));
+  });
+
   it('rejects slot-linked team changes at commit time', () => {
     const preview = buildTournamentScheduleImportPreview(parsed([
       baseRow({

@@ -1,5 +1,6 @@
 import crypto from 'node:crypto';
 import { checkVenueConflict } from '../schedule-conflict.ts';
+import { hasKnownPlacement } from '../venue-identity.ts';
 import { getCell, normalizeHeader, normalizeToken } from './tabular.ts';
 import type { ImportPreview, ImportPreviewChange, ImportPreviewRow, ParsedImportFile, ParsedImportRow } from './types.ts';
 import type { Division, Tournament } from '../types.ts';
@@ -549,6 +550,10 @@ function conflictGames(context: TournamentScheduleImportContext) {
     venueId: game.venueId,
     venueFacilityId: game.venueFacilityId,
     scheduleFacilityLaneId: game.scheduleFacilityLaneId,
+    // Existing games located only by a typed field name are legitimate clash partners for an
+    // imported row carrying the same name — without this an import could silently land a second
+    // game on an occupied field.
+    location: game.location,
     divisionId: game.divisionId,
   }));
 }
@@ -632,17 +637,24 @@ export function buildTournamentScheduleImportPreview(
     const before = target ? normalizeTournamentScheduleExistingGameForImport(target, context) : undefined;
     addLinkedGameChangeSafetyErrors(target, before, after, errors);
 
-    if (normalized.status !== 'cancelled' && (normalized.venueId || normalized.venueFacilityId)) {
+    // Imports are a common way a whole schedule of typed field names arrives at once, so checking
+    // only the picked-venue rows left the most exposed case unchecked. `location` is passed
+    // unconditionally — a picked venue already shadows it inside resolveVenuePlacement, so
+    // restating that precedence here would just be a second copy of the rule to keep in sync.
+    const proposedImportGame = {
+      id: target?.id ?? `import-row-${row.rowNumber}`,
+      gameDate: normalized.gameDate,
+      startTime: normalized.startTime,
+      status: normalized.status,
+      venueId: normalized.venueId,
+      venueFacilityId: normalized.venueFacilityId,
+      location: normalized.location,
+      divisionId: normalized.divisionId,
+    };
+
+    if (normalized.status !== 'cancelled' && hasKnownPlacement(proposedImportGame)) {
       const conflict = checkVenueConflict({
-        proposedGame: {
-          id: target?.id ?? `import-row-${row.rowNumber}`,
-          gameDate: normalized.gameDate,
-          startTime: normalized.startTime,
-          status: normalized.status,
-          venueId: normalized.venueId,
-          venueFacilityId: normalized.venueFacilityId,
-          divisionId: normalized.divisionId,
-        },
+        proposedGame: proposedImportGame,
         allGames: conflictCandidates,
         divisions: divisionsForConflict,
         tournament: {
@@ -650,7 +662,13 @@ export function buildTournamentScheduleImportPreview(
           settings: context.tournament.settings ?? {},
         } as unknown as Tournament,
       });
-      if (conflict?.kind === 'overlap') {
+      if (conflict?.kind === 'overlap' && conflict.matchedOn === 'text') {
+        // A typed-name match is a strong hint, not a certainty — it rests on a spelling
+        // convention in someone else's spreadsheet, not on a field record. A blocked row fails
+        // the WHOLE upload (see the commit gate), so an uncertain match must not be able to
+        // reject a thousand good rows. Say it loudly; let the organizer decide.
+        warnings.push('Overlaps another game with the same typed field name. Pick a set-up field on one of them to be sure.');
+      } else if (conflict?.kind === 'overlap') {
         errors.push('Venue/time overlaps another scheduled game at this location.');
       } else if (conflict?.kind === 'buffer') {
         warnings.push(`Venue buffer warning. Earliest clean start is ${conflict.availableAt}.`);
@@ -682,16 +700,10 @@ export function buildTournamentScheduleImportPreview(
     });
 
     if (operation !== 'blocked') {
-      conflictCandidates.push({
-        id: target?.id ?? `import-row-${row.rowNumber}`,
-        gameDate: normalized.gameDate,
-        startTime: normalized.startTime,
-        status: normalized.status,
-        venueId: normalized.venueId,
-        venueFacilityId: normalized.venueFacilityId,
-        scheduleFacilityLaneId: null,
-        divisionId: normalized.divisionId,
-      });
+      // Rows accepted earlier in this same file are clash partners for the rows after them —
+      // which is what lets two rows inside ONE upload that name the same field at the same time
+      // be caught, rather than the file quietly double-booking itself.
+      conflictCandidates.push({ ...proposedImportGame, scheduleFacilityLaneId: null });
     }
   }
 

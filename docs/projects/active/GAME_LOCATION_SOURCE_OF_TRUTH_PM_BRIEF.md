@@ -1,0 +1,117 @@
+# PM Brief — "The schedule can tell you you've double-booked a diamond"
+
+> **Created:** 2026-08-07 · **Status:** Planning, nothing built
+> **Plan:** `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md`
+> **Raised by:** owner, 2026-08-07, during day-of volunteer QA
+
+## What it does
+
+Makes the schedule reliably warn an organizer that they've put two games on the same field at the
+same time — **including when the field name was typed in by hand** rather than picked from a list.
+Where the product genuinely cannot check a game, it says so out loud instead of staying quiet.
+
+## Why it matters
+
+Right now the product has **two different opinions about the same schedule, and the quieter one is
+the one attached to the Save button.**
+
+The schedule health panel already spots a double-booked "Diamond 1" and counts it. The schedule
+editor — the screen the organizer is actually working in — shows no warning and lets the save go
+through. Nothing announces itself. Every screen renders. The organiser finds out at the field on
+Saturday morning, with eight teams standing on one diamond.
+
+That gap is live today and needs no database change to close.
+
+## What we found that changes the picture
+
+The concern that prompted this was that 39% of games have a typed field name with no real field
+record behind them, so they're invisible to clash detection.
+
+Two things turned out differently once measured:
+
+**Production is clean.** All 83 live games already point at a real field. The 39% is entirely
+development test data — and 96% of it sits in four seeded demo tournaments using just nine distinct
+field names. So the scariest part of this work, a data migration that guesses wrong and quietly
+moves a real game to the wrong diamond, **has no customer data to damage.** That makes it far safer,
+and far less urgent, than it first appeared.
+
+**The bug the volunteer reported is a different bug.** The empty "All fields" dropdown they hit was
+on a tournament whose games *do* have proper field records — so the typed-name problem doesn't
+explain it. It needs reproducing on its own. Worth being explicit: **this work would not have fixed
+what they saw**, and the plan's first step is to hand that defect back rather than quietly claim it.
+
+We also found something the original write-up didn't cover: **house league has no field structure at
+all**, so a league running all season across shared diamonds gets *zero* clash detection — a weekly
+risk rather than a tournament-weekend one. It has no live data yet, which means we can decide how it
+should work before there's anything to migrate. That window closes the moment a customer starts
+using it.
+
+## Who benefits
+
+Tournament organizers on every plan tier, plus day-of volunteers and scorekeepers who rely on the
+field filter. **No new plan gating** — catching a double-booking is basic correctness, not a premium
+feature.
+
+## Expected impact
+
+- Organizers find field clashes on Tuesday instead of Saturday.
+- When the product can't check a game, the schedule health panel says so with a count, instead of
+  handing out a clean bill of health it hasn't earned.
+- Typing a field name stops being the easy default. Picking a real field becomes the normal path,
+  and typing text becomes a deliberate "this is off-site" choice.
+- A game's field gets stated once and read everywhere — the way its division already is.
+
+⚠ **One thing to expect at QA:** organizers working on tournaments with typed field names will start
+seeing clash warnings where saves previously went through in silence. That is the entire point, but
+without warning it will look like something broke.
+
+## Priority
+
+**High** for the checking gap — it's live, it's silent, and it needs no schema change.
+**Medium** for the underlying data cleanup — real, worth doing, but the evidence says it's third in
+line, not first.
+
+## Success criteria
+
+1. Two games on the same field at the same time are **always** flagged — typed name or picked field.
+2. Where a game can't be checked, the product names it and says why.
+3. The day-of field filter lists every field the day's games are actually on.
+4. Not a single existing game is silently moved to the wrong field.
+5. The two conflict engines can no longer drift apart, because they share one definition.
+
+## Sequencing
+
+| Phase | What | Schema change? |
+|---|---|---|
+| 0 | Reproduce the volunteer's empty dropdown — hand it back to the day-of work | No |
+| 1 | **Close the checking gap** — both engines agree; say what can't be checked | **No** |
+| 2 | Stop new drift — picking a field becomes the default path | **No** |
+| 3 | Tidy the existing typed names — admin reviews every match, nothing auto-applied | **No** |
+| 4 | House league gets the same field model (**ruled**); coach events ruled out | **Yes — the only one** |
+| 5 | A database-level rule — **deferred, not proposed** | Yes, later |
+
+Phases 1-3 need no database migration at all. That's deliberate: this exact column has a history of
+a production-only failure (a stricter rule on production than development made deleting a venue fail
+for live customers), and there is nothing on production to migrate anyway.
+
+## Owner rulings — 2026-08-08 (all three decided)
+
+1. ✅ **Ship Phase 1 quietly.** No announcement. The warning has to explain itself the first time an
+   organizer sees it, so the wording of that message is now the only briefing they get — it names
+   both games, the field, and what to do about it.
+2. ✅ **"TBD" means no field set.** It stops being treated as a field name, so two unrelated TBD
+   games can never look like a clash. Instead they're counted in the "these games aren't being
+   checked" line, which is the honest answer. ("TBA" gets the same treatment.)
+3. ✅ **House league gets the same field model as tournaments.** A league gets clash detection from
+   day one rather than being the module that quietly never had it.
+4. ✅ **The health score now reflects what was actually checked** (added 2026-08-08, once the owner
+   confirmed no live tournaments would be affected). The "no clashes found" portion of the score is
+   earned in proportion to how much of the schedule could be checked — half your games located
+   means half that credit, not all of it. Deliberately *scaled* rather than *penalised*: a game
+   with no field set is **unverified**, not **broken**, and an unchecked schedule can never score
+   worse than one with confirmed double-bookings.
+
+**What ruling 3 changes:** Phase 4 becomes the only phase needing a database change, and it should
+**not** drift to the end of the queue. The whole reason it's cheap is that house league has no live
+data — that stops being true the moment a customer schedules a league game, and then it becomes a
+migration with customers attached.

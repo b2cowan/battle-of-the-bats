@@ -452,4 +452,199 @@ describe('buildScheduleMetrics', () => {
       );
     });
   });
+
+  /**
+   * Venue identity is now shared with the save-time conflict blocker (lib/venue-identity.ts).
+   * These lock in the behaviour the two engines must agree on — they used to disagree, which is
+   * how a double-booking reached the schedule editor with no warning attached.
+   */
+  describe('venue identity and unchecked games', () => {
+    function placed(id: string, time: string, place: Partial<ScheduleMetricGame>): ScheduleMetricGame {
+      return {
+        id, tournamentId: 't1', divisionId: 'd1',
+        homeTeamId: null, awayTeamId: null,
+        homePlaceholder: `${id} home`, awayPlaceholder: `${id} away`,
+        date: '2026-07-01', time, status: 'scheduled',
+        venueId: null, venueFacilityId: null, location: null,
+        ...place,
+      };
+    }
+
+    it('counts a clash between two games sharing a typed field name', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [
+          placed('g1', '09:00', { location: 'Diamond 1' }),
+          placed('g2', '09:30', { location: 'diamond 1' }),
+        ],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.venueConflictCount, 1);
+      assert.equal(metrics.uncheckedVenueCount, 0);
+    });
+
+    it('does not clash different typed field names', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [
+          placed('g1', '09:00', { location: 'Diamond 1' }),
+          placed('g2', '09:30', { location: 'Diamond 2' }),
+        ],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.venueConflictCount, 0);
+    });
+
+    it('catches mixed granularity — a surface-pinned game vs a venue-only game there', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [
+          placed('g1', '09:00', { venueId: 'v1', venueFacilityId: 'f1' }),
+          placed('g2', '09:30', { venueId: 'v1' }),
+        ],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.venueConflictCount, 1);
+    });
+
+    it('still treats two surfaces in one park as separate', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [
+          placed('g1', '09:00', { venueId: 'v1', venueFacilityId: 'f1' }),
+          placed('g2', '09:30', { venueId: 'v1', venueFacilityId: 'f2' }),
+        ],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.venueConflictCount, 0);
+    });
+
+    it('reports games it cannot check instead of passing them as clean', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [
+          placed('g1', '09:00', {}),
+          placed('g2', '09:30', { location: '   ' }),
+          placed('g3', '10:00', { location: 'TBD' }),
+          placed('g4', '10:30', { venueId: 'v1' }),
+        ],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.uncheckedVenueCount, 3, 'blank, whitespace and TBD are all unlocatable');
+      assert.equal(metrics.venueConflictCount, 0, 'unlocatable games must never clash with each other');
+
+      const issue = metrics.issues.find(i => i.code === 'venue_unchecked');
+      assert.ok(issue, 'the panel must say what it is not checking');
+      assert.equal(issue.count, 3);
+      assert.match(issue.detail, /not being checked/);
+    });
+
+    it('leads the warnings, because the panel only shows the top couple', () => {
+      // It qualifies every other finding, so it must not be the one hidden behind "2 more items".
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [
+          placed('g1', '09:00', {}),                                   // unchecked
+          placed('g2', '09:00', { venueId: 'v1' }),
+          placed('g3', '10:05', { venueId: 'v1' }),                    // buffer warning
+        ],
+        divisionId: 'd1',
+      });
+      const warnings = metrics.issues.filter(i => i.severity === 'warning');
+      assert.equal(warnings[0]?.code, 'venue_unchecked');
+    });
+
+    it('only earns the share of the conflicts rating it could actually verify', () => {
+      // "No clashes found" is a claim about the games we could look at. Half located → half credit.
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [
+          placed('g1', '09:00', { venueId: 'v1' }),
+          placed('g2', '11:00', { venueId: 'v2' }),
+          placed('g3', '09:00', {}),
+          placed('g4', '11:00', {}),
+        ],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.venueCheckCoverage, 0.5);
+      assert.equal(metrics.healthBreakdown.conflicts, 7.5);
+    });
+
+    it('earns the full conflicts rating when everything is located', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [placed('g1', '09:00', { venueId: 'v1' }), placed('g2', '11:00', { venueId: 'v2' })],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.venueCheckCoverage, 1);
+      assert.equal(metrics.healthBreakdown.conflicts, 15);
+      assert.equal(metrics.healthScore, 100);
+    });
+
+    it('earns none of it when nothing is located', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [placed('g1', '09:00', {}), placed('g2', '11:00', { location: 'TBD' })],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.venueCheckCoverage, 0);
+      assert.equal(metrics.healthBreakdown.conflicts, 0);
+    });
+
+    it('never scores an unchecked schedule worse than one with real clashes', () => {
+      // Unknown must not be punished harder than wrong — that is the category error being avoided.
+      const unchecked = buildScheduleMetrics({
+        teams: [],
+        games: [placed('g1', '09:00', {}), placed('g2', '11:00', {})],
+        divisionId: 'd1',
+      });
+      const clashing = buildScheduleMetrics({
+        teams: [],
+        games: [
+          placed('g1', '09:00', { venueId: 'v1' }),
+          placed('g2', '09:30', { venueId: 'v1' }),
+          placed('g3', '09:15', { venueId: 'v1' }),
+        ],
+        divisionId: 'd1',
+      });
+      assert.ok(
+        unchecked.healthBreakdown.conflicts >= clashing.healthBreakdown.conflicts,
+        'an unverified schedule must not rate below one with confirmed double-bookings',
+      );
+    });
+
+    it('leaves coverage at 1 when nothing is scheduled yet', () => {
+      const metrics = buildScheduleMetrics({ teams: [], games: [], divisionId: 'd1' });
+      assert.equal(metrics.venueCheckCoverage, 1);
+      assert.equal(metrics.healthBreakdown.conflicts, 15);
+    });
+
+    it('raises no unchecked finding when every game has a field', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [placed('g1', '09:00', { venueId: 'v1' }), placed('g2', '11:00', { venueId: 'v1' })],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.uncheckedVenueCount, 0);
+      assert.equal(metrics.issues.some(i => i.code === 'venue_unchecked'), false);
+    });
+
+    it('does not report unscheduled drafts as unchecked', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [{ ...placed('g1', '09:00', {}), date: null, time: null }],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.uncheckedVenueCount, 0);
+    });
+
+    it('does not report cancelled games as unchecked', () => {
+      const metrics = buildScheduleMetrics({
+        teams: [],
+        games: [{ ...placed('g1', '09:00', {}), status: 'cancelled' }],
+        divisionId: 'd1',
+      });
+      assert.equal(metrics.uncheckedVenueCount, 0);
+    });
+  });
 });

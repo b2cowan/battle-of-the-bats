@@ -11,12 +11,24 @@
  *     'buffer'   — the proposed game starts before the required buffer has elapsed
  *                  but after the prior game ends. Save is ALLOWED with a warning.
  * - Cancelled games are excluded from all checks.
- * - venueFacilityId is matched first (specific surface); if the proposed game only
- *   has a venueId (no facility selected), fall back to matching by venueId.
- * - Free-text location (no venueId) → no check performed.
+ * - Where two games are played is resolved by `lib/venue-identity.ts`, which is the single
+ *   answer to "same surface?" shared with the schedule-health engine. Do not re-derive venue
+ *   matching here — the two engines disagreeing is exactly the bug that module was created to
+ *   end (typed field names were checked by health and silently ignored at save time).
+ * - Games with NO usable location (nothing set, or placeholder text like "TBD") are still
+ *   skipped — there is genuinely nothing to compare. Those are counted and reported to the
+ *   organizer by the schedule-health engine rather than passing as "clean".
  */
 
 import type { Division, Tournament } from '@/lib/types';
+// Relative + explicit extension: this is a VALUE import, so it must resolve under the plain-node
+// test runner too (the type-only import above is erased and never resolved at runtime).
+import {
+  resolveVenuePlacement,
+  placementsShareSurface,
+  isPlaced,
+  type VenuePlacement,
+} from './venue-identity.ts';
 
 // ---------------------------------------------------------------------------
 // Timing resolution
@@ -109,10 +121,53 @@ export interface ConflictGame {
   venueId?: string | null;
   venueFacilityId?: string | null;
   scheduleFacilityLaneId?: string | null;
+  /** Draft lanes carry a label before they have an id. */
+  scheduleFacilityLaneLabel?: string | null;
+  /**
+   * Typed field name. Games located only by text are checked against each other — this is what
+   * the editor used to ignore while the health panel counted it.
+   */
+  location?: string | null;
   /** Which division this game belongs to (for resolving timing). */
   divisionId?: string | null;
   /** This game's own length (minutes), if set — wins over the division/tournament default. */
   durationMinutes?: number | null;
+}
+
+/**
+ * The one place a `Game` becomes a `ConflictGame`.
+ *
+ * Every screen that checks for clashes used to hand-write this object, and the field list drifted
+ * the moment anything was added: the fix that taught this engine about typed field names had to be
+ * pasted into seven separate literals, and one of them was missed. Route new call sites through
+ * here so "the engine forgot to look at X" cannot be reintroduced one field at a time.
+ */
+export function toConflictGame(game: {
+  id: string;
+  date?: string | null;
+  time?: string | null;
+  status?: string | null;
+  venueId?: string | null;
+  venueFacilityId?: string | null;
+  scheduleFacilityLaneId?: string | null;
+  scheduleFacilityLaneLabel?: string | null;
+  location?: string | null;
+  divisionId?: string | null;
+  durationMinutes?: number | null;
+}): ConflictGame {
+  return {
+    id: game.id,
+    gameDate: game.date ?? null,
+    startTime: game.time ?? null,
+    status: game.status ?? null,
+    venueId: game.venueId ?? null,
+    venueFacilityId: game.venueFacilityId ?? null,
+    scheduleFacilityLaneId: game.scheduleFacilityLaneId ?? null,
+    scheduleFacilityLaneLabel: game.scheduleFacilityLaneLabel ?? null,
+    location: game.location ?? null,
+    divisionId: game.divisionId ?? null,
+    durationMinutes: game.durationMinutes ?? null,
+  };
 }
 
 export interface ConflictResult {
@@ -121,6 +176,12 @@ export interface ConflictResult {
   conflictingGame: ConflictGame;
   /** Human-readable name of the conflicting division (for the warning message). */
   conflictingDivisionName: string;
+  /**
+   * How the clashing surface was identified. The organizer gets no announcement that this check
+   * exists (owner ruling R1), so the warning has to explain itself — 'text' means both games
+   * carry the same typed field name rather than a picked field, which is worth saying plainly.
+   */
+  matchedOn: VenuePlacement['kind'];
   /** The earliest clean start time (after all existing games + their buffers) on the same date/venue. "HH:MM" */
   availableAt: string;
 }
@@ -141,7 +202,7 @@ export interface CheckConflictParams {
  * at the same venue/facility on the same date.
  *
  * Returns null if:
- * - The proposed game has no venueId (free-text location)
+ * - The proposed game has no usable location at all (nothing set, or placeholder text)
  * - The proposed game has no gameDate or startTime
  * - No conflict exists
  *
@@ -149,10 +210,40 @@ export interface CheckConflictParams {
  * takes priority over buffer).
  */
 export function checkVenueConflict(params: CheckConflictParams): ConflictResult | null {
-  const { proposedGame, allGames, divisions, tournament } = params;
+  return checkAgainstPlaced(
+    params.proposedGame,
+    resolveVenuePlacement(params.proposedGame),
+    params.allGames.map(toPlacedGame),
+    params.divisions,
+    params.tournament,
+  );
+}
 
-  // No venue → no structured conflict check possible.
-  if (!proposedGame.venueId && !proposedGame.venueFacilityId && !proposedGame.scheduleFacilityLaneId) return null;
+/** A game paired with its resolved placement, so a scan never re-resolves the same row. */
+interface PlacedGame {
+  game: ConflictGame;
+  placement: VenuePlacement;
+}
+
+function toPlacedGame(game: ConflictGame): PlacedGame {
+  return { game, placement: resolveVenuePlacement(game) };
+}
+
+/**
+ * The real check. Takes placements already resolved so a full-schedule scan resolves each game
+ * ONCE rather than once per comparison — `buildConflictMap` calls this n times over the same n
+ * games, so re-resolving inside would make placement resolution quadratic.
+ */
+function checkAgainstPlaced(
+  proposedGame: ConflictGame,
+  proposedPlacement: VenuePlacement,
+  allGames: PlacedGame[],
+  divisions: Division[],
+  tournament: Tournament | null | undefined,
+): ConflictResult | null {
+  // Nowhere to be → nothing to compare. Note this is now much narrower than it was: a typed
+  // field name IS a placement, and does get checked.
+  if (!isPlaced(proposedPlacement)) return null;
   if (!proposedGame.gameDate || !proposedGame.startTime) return null;
 
   const proposedStart = timeToMinutes(proposedGame.startTime);
@@ -166,21 +257,16 @@ export function checkVenueConflict(params: CheckConflictParams): ConflictResult 
   // Find all games at the same venue/facility on the same date, excluding:
   // - the game being edited (same id)
   // - cancelled games
-  const candidates = allGames.filter(g => {
+  const candidates = allGames.filter(({ game: g, placement }) => {
     if (g.id === proposedGame.id) return false;
     if (g.status === 'cancelled') return false;
     if (g.gameDate !== proposedGame.gameDate) return false;
 
-    // Venue matching: facility first, then parent venue fallback.
-    if (proposedGame.venueFacilityId) {
-      return g.venueFacilityId === proposedGame.venueFacilityId;
-    }
-    if (proposedGame.scheduleFacilityLaneId) {
-      return g.scheduleFacilityLaneId === proposedGame.scheduleFacilityLaneId;
-    }
-    // Proposed has venueId only (no facility).
-    return g.venueId === proposedGame.venueId && !g.venueFacilityId;
-  });
+    // One shared answer to "same surface?" — compared at the coarsest granularity both games
+    // specify, so a surface-pinned game and a venue-only game on that same venue now compare
+    // (they used to pass each other unseen).
+    return placementsShareSurface(proposedPlacement, placement);
+  }).map(placed => placed.game);
 
   if (candidates.length === 0) return null;
 
@@ -238,6 +324,7 @@ export function checkVenueConflict(params: CheckConflictParams): ConflictResult 
     kind,
     conflictingGame,
     conflictingDivisionName,
+    matchedOn: proposedPlacement.kind,
     availableAt: minutesToTime(latestClear),
   };
 }
@@ -256,13 +343,17 @@ export interface ConflictInfo {
   kind: ConflictKind;
   partnerId: string;
   partnerTime: string | null;
+  /** See ConflictResult.matchedOn — lets the badge say the field was matched by typed name. */
+  matchedOn: VenuePlacement['kind'];
 }
 
 /**
  * Scans all games in a tournament and returns conflict status for every game
  * that has at least one conflict. Used to render conflict badges in GameList.
  *
- * Games with no venue or no time are skipped.
+ * Games with no time, or with no usable location at all, are skipped. Games located only by a
+ * typed field name ARE scanned — they used to be dropped here, which is why the list showed no
+ * badge on a schedule the health panel was already calling double-booked.
  * Cancelled games are excluded.
  */
 export function buildConflictMap(
@@ -272,17 +363,16 @@ export function buildConflictMap(
 ): Map<string, ConflictInfo> {
   const result = new Map<string, ConflictInfo>();
 
-  for (const game of allGames) {
+  // Resolve every game's placement ONCE up front. This scan compares each game against all the
+  // others, so resolving inside the comparison would rebuild the same placements n times over.
+  const placed = allGames.map(toPlacedGame);
+
+  for (const { game, placement } of placed) {
     if (game.status === 'cancelled') continue;
-    if (!game.venueId && !game.venueFacilityId && !game.scheduleFacilityLaneId) continue;
+    if (!isPlaced(placement)) continue;
     if (!game.gameDate || !game.startTime) continue;
 
-    const conflict = checkVenueConflict({
-      proposedGame: game,
-      allGames,
-      divisions,
-      tournament,
-    });
+    const conflict = checkAgainstPlaced(game, placement, placed, divisions, tournament);
 
     if (conflict) {
       // Escalate: if already marked 'buffer', upgrade to 'overlap' if needed.
@@ -292,6 +382,7 @@ export function buildConflictMap(
           kind: conflict.kind,
           partnerId: conflict.conflictingGame.id,
           partnerTime: conflict.conflictingGame.startTime ?? null,
+          matchedOn: conflict.matchedOn,
         });
       }
     }

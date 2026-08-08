@@ -3402,6 +3402,13 @@
 
 .conflictBanner strong { font-weight: 800; }
 
+/* Says the clash was matched on a typed field name rather than a set-up field. Deliberately
+   quieter than the warning itself — it qualifies the finding, it isn't a second finding. */
+.conflictMatchNote {
+  font-style: normal;
+  opacity: 0.78;
+}
+
 @media (max-width: 768px) {
   /* On mobile the desktop status-cell badge is hidden; show a compact inline
      tag in the date cell instead. */
