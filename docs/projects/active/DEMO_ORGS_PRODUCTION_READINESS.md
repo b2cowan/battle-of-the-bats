@@ -179,8 +179,9 @@ request host is still validated through the same predicate the email path uses, 
 host falls back to canonical rather than being honoured.
 
 Applied to the four routes that mint a session and redirect in one response — the two doors and the
-two "you'll be signed out, continue?" confirmations. The other twelve consumers of the email
-resolver are untouched; they are building email links and are correct as they are.
+two "you'll be signed out, continue?" confirmations. The other consumers are untouched — eleven
+build email links with the canonical resolver (correct as they are), and a twelfth (the nav-beacon
+endpoint) uses only the shared trust predicate to reject cross-origin posts.
 
 **Proven by executing the logic** (not just pattern-matching it — the module is `server-only` and
 cannot be imported under `node --test`, so a throwaway harness stubbed the marker):

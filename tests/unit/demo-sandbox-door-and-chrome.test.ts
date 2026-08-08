@@ -309,7 +309,12 @@ describe('demo doors keep the visitor on the host they arrived at', () => {
   test('the same-host resolver derives from the REQUEST url and still validates it', async () => {
     const src = await readFile(new URL('../../lib/app-origin.ts', import.meta.url), 'utf8');
     const fn = src.slice(src.indexOf('export function resolveSameHostOrigin'));
-    const body = fn.slice(0, fn.indexOf('\n}'));
+    // Comment-stripped like the door test below — a stale comment naming the old call must never
+    // be what satisfies a pin.
+    const body = fn
+      .slice(0, fn.indexOf('\n}'))
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/^\s*\/\/.*$/gm, '');
     assert.ok(
       /new URL\(\s*req\.url\s*\)/.test(body),
       'the redirect base must come from the request URL, or a cookie set for that host is orphaned',
@@ -337,8 +342,8 @@ describe('demo doors keep the visitor on the host they arrived at', () => {
       const src = await readFile(new URL(`../../${file}`, import.meta.url), 'utf8');
       const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
       assert.ok(
-        code.includes('resolveSameHostOrigin'),
-        `${file} must resolve its redirect base from the request host`,
+        /\bresolveSameHostOrigin\s*\(/.test(code),
+        `${file} must CALL the same-host resolver — a bare import satisfies nothing`,
       );
       assert.ok(
         !/\bresolveTrustedAppOrigin\s*\(/.test(code),

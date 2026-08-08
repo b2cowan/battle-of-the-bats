@@ -62,7 +62,9 @@ const keyEnvironment = stripeSecretKey.startsWith('sk_live_')
     : null;
 const environment = requestedEnvironment ?? keyEnvironment ?? 'live';
 
-const APP_URL = 'https://fieldlogichq.ca';
+// Canonical host (owner ruling 2026-08-08): the live webhook endpoint lives on www — the apex now
+// 307s there, and webhook deliveries do not follow redirects, so an apex match would false-FAIL.
+const APP_URL = 'https://www.fieldlogichq.ca';
 const WEBHOOK_URL = `${APP_URL}/api/billing/webhook`;
 const STRIPE_API_VERSION = '2026-04-22.dahlia';
 

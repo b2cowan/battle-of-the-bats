@@ -103,7 +103,10 @@ first** and flipped to permanent after a quiet validation window on live.
 change needed) · prod Vault `app_cron_base_url` = www (no change needed) · neither host indexed by
 Google yet (no ranking to migrate) · the `.com` in-app host redirect preserves path + query on the
 live stack (tested with a query string) · production `NEXT_PUBLIC_APP_URL` IS set, to www (the
-prompt's "not set" premise was stale).
+prompt's "not set" premise was stale) · Stripe TEST-mode hosted webhook already targets
+dev.fieldlogichq.ca (nothing to repoint) · PWA icons installed from the apex keep opening through
+the 307 but show browser chrome and lose their offline/push binding until reinstalled from www —
+analyzed and accepted in the ruling.
 
 **Executed 2026-08-08:**
 - [x] **Stripe LIVE webhook repointed** `fieldlogichq.ca/api/billing/webhook` →
@@ -114,6 +117,13 @@ prompt's "not set" premise was stale).
 - [x] Demo host-preserving fix committed (separate commit, same push) — the redirect makes the apex
       door unreachable, the fix guards every other host and any future config drift.
 - [x] Apex → www rule ships in the commit carrying this note, as `permanent: false` (307).
+- [x] Adversarial review (4 lenses) run on the two commits; confirmed follow-ups applied in a third
+      commit: the billing audit script's hardcoded webhook host apex → www (it exact-matches the
+      live endpoint and would have false-FAILed every future run), sturdier door test pins
+      (call-shape match + comment-stripped resolver body), the origin module's orphaned doc-comment
+      re-seated, and this doc's precision fixes. The Host-header-fidelity question (does the
+      platform hand the app the visitor's true host?) is refuted-in-practice by the live `.com`
+      host rule and becomes moot once the apex forwards — the post-promote matrix is the final word.
 
 **Open (in order):**
 - [ ] Promote to master, then the live matrix on BOTH addresses: apex 307 → www with path + query
@@ -122,5 +132,7 @@ prompt's "not set" premise was stale).
       Stripe recent deliveries green · cron heartbeats green.
 - [ ] After a quiet 24–48h: flip `permanent: true`; add `metadataBase` + per-page canonical tags;
       consider registering Search Console on www before any marketing push.
+- [ ] With the permanent flip: align the nine dormant bare-apex `NEXT_PUBLIC_APP_URL` fallbacks to
+      www (env is set in prod so they never fire today — policy hygiene, found in review).
 - [ ] Update the stale CLAUDE.md demo paragraph (demo stream owns it — prod now has the door live,
       the tournament org seeded, and the sandbox crons ticking; the coach org is still unseeded).

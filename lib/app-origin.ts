@@ -21,17 +21,6 @@ export function resolveTrustedAppOrigin(req: Request): string {
 }
 
 /**
- * Is this `Origin` header value one of OUR hosts?
- *
- * The hardened half of the check above, exposed on its own for callers that need the boolean rather
- * than a URL — e.g. a public unauthenticated endpoint deciding whether to accept a cross-origin
- * post. Stated once so the bypass-neutralizing parse can't drift between them.
- *
- * NB an absent `Origin` is NOT this function's business: callers decide what a missing header means
- * (the resolver above falls back to the canonical URL; an ingestion endpoint should keep accepting
- * it, since only a browser is obliged to send one).
- */
-/**
  * The base URL for a redirect issued DURING THIS REQUEST — i.e. "wherever the visitor already is".
  *
  * ── Why this exists, and why it is not `resolveTrustedAppOrigin` ─────────────────────────────
@@ -74,6 +63,17 @@ export function resolveSameHostOrigin(req: Request): string {
   return resolveTrustedAppOrigin(req);
 }
 
+/**
+ * Is this `Origin` header value one of OUR hosts?
+ *
+ * The hardened half of the checks above, exposed on its own for callers that need the boolean
+ * rather than a URL — e.g. a public unauthenticated endpoint deciding whether to accept a
+ * cross-origin post. Stated once so the bypass-neutralizing parse can't drift between them.
+ *
+ * NB an absent `Origin` is NOT this function's business: callers decide what a missing header means
+ * (the email resolver falls back to the canonical URL; an ingestion endpoint should keep accepting
+ * it, since only a browser is obliged to send one).
+ */
 export function isTrustedAppOrigin(origin: string): boolean {
   try {
     // Parse via the WHATWG URL parser and compare the normalized hostname — this neutralizes the
