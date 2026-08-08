@@ -9,7 +9,7 @@ import { notify } from '@/lib/notify';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/staff/invite — head coach invites an assistant by email.

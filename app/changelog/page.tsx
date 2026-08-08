@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: 'What’s New — FieldLogicHQ',
   description:
     'See what’s new in FieldLogicHQ — recent improvements to tournaments, leagues, clubs, and the Coaches Portal, plus a look at what’s on the horizon.',
+  alternates: { canonical: '/changelog' },
 };
 
 const MONTHS = [

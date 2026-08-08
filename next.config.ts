@@ -33,16 +33,15 @@ const nextConfig: NextConfig = {
         destination: 'https://www.fieldlogichq.ca/:path*',
         permanent: true,
       },
-      // One canonical host (owner ruling 2026-08-08): the .ca apex forwards to www so sessions,
-      // cookies-set-with-redirects and search all live on ONE address. TEMPORARY (307) for the
-      // live validation window — flip `permanent: true` once the matrix in
-      // docs/projects/active/CANONICAL_HOST_DECISION_PROMPT.md passes. Stripe's LIVE webhook was
-      // repointed to www BEFORE this shipped (webhook deliveries do not follow redirects).
+      // One canonical host (owner ruling 2026-08-08, finalized the same day after the live matrix
+      // passed): the .ca apex forwards PERMANENTLY to www so sessions, cookies-set-with-redirects
+      // and search all live on ONE address. Stripe's LIVE webhook was repointed to www BEFORE this
+      // shipped (webhook deliveries do not follow redirects).
       {
         source: '/:path*',
         has: [{ type: 'host', value: 'fieldlogichq.ca' }],
         destination: 'https://www.fieldlogichq.ca/:path*',
-        permanent: false,
+        permanent: true,
       },
       // Legacy path redirects (pre-multi-tenancy)
       { source: '/schedule',     destination: '/milton-bats/schedule',     permanent: true },

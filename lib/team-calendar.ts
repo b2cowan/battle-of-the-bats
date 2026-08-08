@@ -47,7 +47,7 @@ export async function downloadTeamScheduleICS({
   orgSlug,
   tournamentSlug,
 }: TeamCalendarInput): Promise<void> {
-  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://fieldlogichq.ca';
+  const origin = typeof window !== 'undefined' ? window.location.origin : 'https://www.fieldlogichq.ca';
 
   const teamGames = games
     .filter(g => g.homeTeamId === team.id || g.awayTeamId === team.id)

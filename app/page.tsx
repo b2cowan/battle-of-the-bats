@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import styles from './page.module.css';
 import AnimateIn from '@/components/AnimateIn';
@@ -10,6 +11,10 @@ import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
+
+export const metadata: Metadata = {
+  alternates: { canonical: '/' },
+};
 
 const MODULE_CARDS = [
   {

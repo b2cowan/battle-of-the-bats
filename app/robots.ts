@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { DEMO_ORG_SLUGS } from '@/lib/demo-org';
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
 export default function robots(): MetadataRoute.Robots {
   return {

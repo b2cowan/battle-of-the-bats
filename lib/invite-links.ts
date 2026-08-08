@@ -36,7 +36,7 @@ export async function sendPendingInviteLink(params: {
   const email = authUser.email;
   const invitedEmail = email.trim().toLowerCase();
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
   const roleLabel = role === 'official' ? 'scorekeeper' : `team ${role}`;
   const inviteAction = role === 'official' ? 'Accept Scorekeeper Invite' : 'Accept Invitation';
   const next = encodeURIComponent(`/auth/accept-invite?org=${orgSlug}`);

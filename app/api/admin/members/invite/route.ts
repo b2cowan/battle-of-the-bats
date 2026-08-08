@@ -83,7 +83,7 @@ export const POST = withObservability(async (req: Request) => {
   const { data: usersData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 });
   const existingUser = usersData?.users.find(u => u.email?.toLowerCase() === email);
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
   const roleLabel = ROLE_EMAIL_LABEL[role] ?? role;
   // J1-077: officials land on the screen matching their purpose. 'gate' → check-in,
   // otherwise the scorekeeper screen (which carries a cross-link to the gate).

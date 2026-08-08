@@ -14,7 +14,7 @@ import { revokeStaleChatMembershipsForCoach } from '@/lib/chat-service';
 import { sendEmail, assistantCoachInviteHtml } from '@/lib/email';
 import { withObservability } from '@/lib/observability';
 
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();

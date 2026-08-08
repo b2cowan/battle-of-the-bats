@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: 'For Club Executives — FieldLogicHQ',
   description:
     'One platform for tournaments, house league, rep teams, and org finances. Coaches run their teams independently — you keep full visibility without owning every task.',
+  alternates: { canonical: '/for-clubs' },
 };
 
 const { painItems: PAIN_ITEMS, steps: MODULES, features: CLUB_FEATURES } =

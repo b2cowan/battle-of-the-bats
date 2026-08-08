@@ -29,6 +29,12 @@ const ibmPlexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  // ONE canonical address (owner ruling 2026-08-08): relative URL-based metadata fields resolve
+  // against www site-wide. ⚠ Do NOT add a site-wide `alternates.canonical` here — a layout-level
+  // relative canonical resolves to this FIXED base (i.e. the homepage), not to each page's own
+  // path (per this Next version's generate-metadata docs), which would canonicalize every page
+  // to '/'. Self-canonicals belong on the pages that declare them.
+  metadataBase: new URL('https://www.fieldlogichq.ca'),
   title: {
     default: 'FieldLogicHQ',
     template: '%s | FieldLogicHQ',

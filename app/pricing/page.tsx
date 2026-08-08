@@ -9,6 +9,7 @@ import styles from './page.module.css';
 export const metadata = {
   title: 'Pricing — FieldLogicHQ',
   description: 'Simple, honest pricing for every role in your organization — from one tournament or one competitive team to a full club.',
+  alternates: { canonical: '/pricing' },
 };
 
 const TRUST_SIGNALS = [

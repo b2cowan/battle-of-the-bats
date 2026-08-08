@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getDirectoryListings, DIRECTORY_PAGE_SIZE } from '@/lib/directory';
 import DiscoverClient from './DiscoverClient';
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
 // Server-render the directory so search engines (and the first paint) get real
 // listings, not a client-only shell. Always fresh so newly-listed tournaments

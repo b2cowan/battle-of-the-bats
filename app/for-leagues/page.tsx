@@ -9,6 +9,7 @@ export const metadata: Metadata = {
   title: 'For House League Administrators — FieldLogicHQ',
   description:
     'Run your full house league season in one dashboard — registration, draft, scheduling, standings, and automated parent notifications. No spreadsheets, no reply-all emails.',
+  alternates: { canonical: '/for-leagues' },
 };
 
 const { painItems: PAIN_ITEMS, steps: STEPS, features: LEAGUE_FEATURES } =

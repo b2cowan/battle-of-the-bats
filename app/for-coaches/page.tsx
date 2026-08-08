@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: 'For Coaches — FieldLogicHQ',
   description:
     'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. Your workspace carries over if your organization joins later.',
+  alternates: { canonical: '/for-coaches' },
 };
 
 const { painItems: PAIN_ITEMS, steps: STEPS, features: PORTAL_FEATURES } =

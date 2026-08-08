@@ -2,7 +2,7 @@ import type { MetadataRoute } from 'next';
 import { getDirectorySitemapEntries, getOrgSitemapEntries } from '@/lib/directory';
 import { isDemoOrgSlug } from '@/lib/demo-org';
 
-const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://fieldlogichq.ca';
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
 // Dynamic — every opted-in, publicly-visible tournament page is enumerated here so
 // search engines can find them, alongside the core marketing pages.

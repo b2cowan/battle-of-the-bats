@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: 'For Tournament Organizers — FieldLogicHQ',
   description:
     'From first team registration to final standings — without the spreadsheets. Brackets, live scoring, scheduling, and registration all in one place. Free to start, no credit card required.',
+  alternates: { canonical: '/for-tournament-organizers' },
 };
 
 const { painItems: PAIN_ITEMS, steps: STEPS, features: PLUS_FEATURES } =
