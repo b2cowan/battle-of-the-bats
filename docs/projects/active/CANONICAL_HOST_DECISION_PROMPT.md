@@ -136,9 +136,16 @@ analyzed and accepted in the ruling.
       proven by the door; auth URL config verified in the dashboard API) — falls to normal owner
       browser QA. Stripe deliveries: endpoint verified enabled on www; the dashboard deliveries
       panel is the async check when the next billing event fires.
-- [ ] After a quiet 24–48h: flip `permanent: true`; add `metadataBase` + per-page canonical tags;
-      consider registering Search Console on www before any marketing push.
-- [ ] With the permanent flip: align the nine dormant bare-apex `NEXT_PUBLIC_APP_URL` fallbacks to
-      www (env is set in prod so they never fire today — policy hygiene, found in review).
+- [x] **Finalized 2026-08-08 — owner waived the quiet window (prod `201ec1bd`):** apex → www is now
+      **308 Permanent** (live-verified, query preserved) · root layout declares `metadataBase` =
+      www · homepage + six static marketing pages self-declare canonicals, live-verified in served
+      HTML (`/`, `/pricing`, `/for-coaches`, `/changelog` spot-checked; discover + scores already
+      had them). ⚠ Shape note: a layout-level RELATIVE canonical resolves to the BASE — the
+      homepage — not to each page's own path (this Next version's generate-metadata docs), so
+      canonicals are per-page by design; never add one to the root layout. · nine dormant
+      bare-apex `NEXT_PUBLIC_APP_URL` fallbacks aligned to www · robots/sitemap unchanged on www ·
+      .com unchanged · CloudWatch 0 ERROR post-deploy. Rollback posture now that it is a cached
+      permanent redirect: treat the address as settled.
+- [ ] Optional: register Search Console on www before any marketing push.
 - [ ] Update the stale CLAUDE.md demo paragraph (demo stream owns it — prod now has the door live,
       the tournament org seeded, and the sandbox crons ticking; the coach org is still unseeded).
