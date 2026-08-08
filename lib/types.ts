@@ -981,6 +981,12 @@ export interface LeagueGame {
   homeTeamId: string;
   awayTeamId: string;
   scheduledAt: string | null;
+  /** Optional game end; the clash check assumes 90 minutes when null (mig 229). */
+  endsAt: string | null;
+  /** Picked venue/surface from the ORG venue library — not per-season copies (mig 229). */
+  orgVenueId: string | null;
+  orgVenueFacilityId: string | null;
+  /** Display cache: server-derived from the picked venue, free text only when none picked. */
   location: string | null;
   homeScore: number | null;
   awayScore: number | null;
@@ -999,6 +1005,10 @@ export interface LeaguePractice {
   teamId: string;
   scheduledAt: string | null;
   endsAt: string | null;
+  /** Picked venue/surface from the ORG venue library (mig 229) — one booking pool with games. */
+  orgVenueId: string | null;
+  orgVenueFacilityId: string | null;
+  /** Display cache: server-derived from the picked venue, free text only when none picked. */
   location: string | null;
   notes: string | null;
   status: LeaguePracticeStatus;

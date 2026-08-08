@@ -751,6 +751,16 @@
   },
   {
     "tablename": "league_games",
+    "indexname": "idx_league_games_org_venue",
+    "indexdef": "CREATE INDEX idx_league_games_org_venue ON public.league_games USING btree (org_venue_id)"
+  },
+  {
+    "tablename": "league_games",
+    "indexname": "idx_league_games_org_venue_facility",
+    "indexdef": "CREATE INDEX idx_league_games_org_venue_facility ON public.league_games USING btree (org_venue_facility_id)"
+  },
+  {
+    "tablename": "league_games",
     "indexname": "league_games_division_idx",
     "indexdef": "CREATE INDEX league_games_division_idx ON public.league_games USING btree (division_id)"
   },
@@ -778,6 +788,16 @@
     "tablename": "league_notification_log",
     "indexname": "league_notification_log_pkey",
     "indexdef": "CREATE UNIQUE INDEX league_notification_log_pkey ON public.league_notification_log USING btree (id)"
+  },
+  {
+    "tablename": "league_practices",
+    "indexname": "idx_league_practices_org_venue",
+    "indexdef": "CREATE INDEX idx_league_practices_org_venue ON public.league_practices USING btree (org_venue_id)"
+  },
+  {
+    "tablename": "league_practices",
+    "indexname": "idx_league_practices_org_venue_facility",
+    "indexdef": "CREATE INDEX idx_league_practices_org_venue_facility ON public.league_practices USING btree (org_venue_facility_id)"
   },
   {
     "tablename": "league_practices",

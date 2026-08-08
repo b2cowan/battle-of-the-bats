@@ -2432,6 +2432,10 @@ export interface LeagueGameInput {
   homeTeamId: string;
   awayTeamId: string;
   scheduledAt?: string | null;
+  endsAt?: string | null;
+  /** Set together via resolveLeagueVenueSelection — never write a facility without its venue. */
+  orgVenueId?: string | null;
+  orgVenueFacilityId?: string | null;
   location?: string | null;
   notes?: string | null;
 }
@@ -2540,6 +2544,9 @@ function mapLeagueGame(row: any): LeagueGame {
     homeTeamId:  row.home_team_id,
     awayTeamId:  row.away_team_id,
     scheduledAt: row.scheduled_at ?? null,
+    endsAt:      row.ends_at ?? null,
+    orgVenueId:         row.org_venue_id ?? null,
+    orgVenueFacilityId: row.org_venue_facility_id ?? null,
     location:    row.location ?? null,
     homeScore:   row.home_score ?? null,
     awayScore:   row.away_score ?? null,
@@ -2884,6 +2891,8 @@ function mapLeaguePractice(row: Record<string, unknown>): LeaguePractice {
     teamId:            row.team_id as string,
     scheduledAt:       row.scheduled_at as string | null,
     endsAt:            row.ends_at as string | null,
+    orgVenueId:         (row.org_venue_id as string | null) ?? null,
+    orgVenueFacilityId: (row.org_venue_facility_id as string | null) ?? null,
     location:          row.location as string | null,
     notes:             row.notes as string | null,
     status:            row.status as LeaguePracticeStatus,
@@ -2909,13 +2918,16 @@ interface LeaguePracticeInput {
   teamId: string;
   scheduledAt: string | null;
   endsAt: string | null;
+  /** Set together via resolveLeagueVenueSelection — never write a facility without its venue. */
+  orgVenueId?: string | null;
+  orgVenueFacilityId?: string | null;
   location: string | null;
   notes: string | null;
   recurrenceGroupId?: string | null;
 }
 
 export async function createPractices(inputs: LeaguePracticeInput[]): Promise<LeaguePractice[]> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('league_practices')
     .insert(inputs.map(i => ({
       org_id:              i.orgId,
@@ -2924,11 +2936,16 @@ export async function createPractices(inputs: LeaguePracticeInput[]): Promise<Le
       team_id:             i.teamId,
       scheduled_at:        i.scheduledAt ?? null,
       ends_at:             i.endsAt ?? null,
+      org_venue_id:          i.orgVenueId ?? null,
+      org_venue_facility_id: i.orgVenueFacilityId ?? null,
       location:            i.location ?? null,
       notes:               i.notes ?? null,
       recurrence_group_id: i.recurrenceGroupId ?? null,
     })))
     .select();
+  // A swallowed insert error here read as "201, 0 practices created" — with real FKs on the
+  // venue columns (mig 229) that failure mode is now reachable, so it must surface.
+  if (error) throw new Error(`createPractices failed: ${error.message}`);
   return (data ?? []).map(mapLeaguePractice);
 }
 
@@ -2969,7 +2986,7 @@ export async function cancelPractice(
 }
 
 export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGame> {
-  const { data } = await supabaseAdmin
+  const { data, error } = await supabaseAdmin
     .from('league_games')
     .insert({
       org_id:       input.orgId,
@@ -2978,12 +2995,16 @@ export async function createLeagueGame(input: LeagueGameInput): Promise<LeagueGa
       home_team_id: input.homeTeamId,
       away_team_id: input.awayTeamId,
       scheduled_at: input.scheduledAt ?? null,
+      ends_at:      input.endsAt ?? null,
+      org_venue_id:          input.orgVenueId ?? null,
+      org_venue_facility_id: input.orgVenueFacilityId ?? null,
       location:     input.location ?? null,
       notes:        input.notes ?? null,
     })
     .select()
     .single();
-  return mapLeagueGame(data!);
+  if (error || !data) throw new Error(`createLeagueGame failed: ${error?.message ?? 'no row returned'}`);
+  return mapLeagueGame(data);
 }
 
 export async function updateLeagueGame(
@@ -2992,12 +3013,16 @@ export async function updateLeagueGame(
 ): Promise<void> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (input.scheduledAt !== undefined) patch.scheduled_at = input.scheduledAt;
+  if (input.endsAt      !== undefined) patch.ends_at      = input.endsAt;
+  if (input.orgVenueId         !== undefined) patch.org_venue_id          = input.orgVenueId;
+  if (input.orgVenueFacilityId !== undefined) patch.org_venue_facility_id = input.orgVenueFacilityId;
   if (input.location    !== undefined) patch.location     = input.location;
   if (input.homeScore   !== undefined) patch.home_score   = input.homeScore;
   if (input.awayScore   !== undefined) patch.away_score   = input.awayScore;
   if (input.status      !== undefined) patch.status       = input.status;
   if (input.notes       !== undefined) patch.notes        = input.notes;
-  await supabaseAdmin.from('league_games').update(patch).eq('id', gameId);
+  const { error } = await supabaseAdmin.from('league_games').update(patch).eq('id', gameId);
+  if (error) throw new Error(`updateLeagueGame failed: ${error.message}`);
 }
 
 // ─── Standings (computed, not stored) ────────────────────────────────────────

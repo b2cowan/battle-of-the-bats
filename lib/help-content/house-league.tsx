@@ -162,23 +162,36 @@ const houseLeagueHelp: HelpPageContent = {
       id: 'recipe-generate-house-league-schedule',
       group: 'How-to recipes',
       heading: 'How to generate a schedule and add practices',
-      summary: 'Generate a round-robin after teams exist, preview before saving, and track practices separately.',
-      keywords: ['generate schedule', 'round robin', 'games', 'preview', 'practices', 'recurring'],
-      searchText: 'generate schedule house league round robin games preview teams divisions location time rounds per week add game practices recurring practice start end time cancel series',
+      summary: 'Generate a round-robin after teams exist, pick fields from your Venue Library, and let the schedule catch double-bookings.',
+      keywords: ['generate schedule', 'round robin', 'games', 'preview', 'practices', 'recurring', 'field', 'venue', 'double-booked'],
+      searchText: 'generate schedule house league round robin games preview teams divisions location field diamond court venue library pick a field time end time rounds per week add game practices recurring practice start end time cancel series double booking double-booked conflict clash overlap somewhere else off-site',
       content: (
         <>
           <p>Generate a schedule only after the division&apos;s teams are created.</p>
           <ol>
             <li>Open the season, go to <strong>Schedule</strong>, and select the division.</li>
             <li>Click <strong>Generate Schedule</strong> to build a round-robin (every team plays every other team once).</li>
-            <li>Enter the first game date, default time, <strong>rounds per week</strong>, and location.</li>
+            <li>Enter the first game date, default time, <strong>rounds per week</strong>, and a default field.</li>
             <li>Preview the generated games and look for date, field, or matchup problems.</li>
-            <li>Save the schedule. Edit individual games afterward for exceptions, or use <strong>Add Game</strong> for one-off games.</li>
+            <li>Save the schedule. Edit individual games afterward for exceptions, or use <strong>Add Game</strong> for one-off games. A game can carry an optional <strong>end time</strong>; without one, the schedule assumes 90 minutes when checking for overlaps.</li>
           </ol>
-          <p><strong>Practices</strong> are tracked separately. Add a single or recurring practice per team with a start and end time. When you cancel a recurring practice, you choose whether to cancel just that one, this and the rest of the series, or the whole series.</p>
+          <p><strong>Where fields come from.</strong> Games and practices pick their field from your club&apos;s <strong>Venue Library</strong> (under Organization settings) — define each park and its playing surfaces once, and every season&apos;s schedule uses the same list. Choosing <strong>Somewhere else (type it)</strong> records a one-off location as plain text — fine for an away facility, but typed locations can only be matched against identically-typed text, so picking from the list is what makes clash checking reliable.</p>
+          <p><strong>Double-booking protection.</strong> The schedule treats games and practices as one pool of bookings: saving anything onto a field that&apos;s already occupied at that time is stopped with a message naming both bookings. The schedule page also shows a warning strip listing any existing clashes, and a count of bookings that have no field set (those can&apos;t be checked at all). The generator is the one exception — it saves and <em>warns</em> instead of blocking, because a generated round places several games at the same default time on purpose; spread them across times or fields afterward.</p>
+          <p><strong>Practices</strong> are tracked on their own tab. Add a single or recurring practice per team with a start and end time and a field. When you cancel a recurring practice, you choose whether to cancel just that one, this and the rest of the series, or the whole series.</p>
           <p>Exporting the schedule (Excel, CSV, or calendar file) is part of League Plus.</p>
         </>
       ),
+      faqs: [
+        {
+          id: 'faq-house-league-double-booked',
+          question: 'Why won’t a game save — it says the field is already booked?',
+          answer: (
+            <p>Another game or practice occupies that field at an overlapping time — the message names it. Pick a different time or field, or move the other booking first. If the game genuinely shares the facility (say, two mini-games on one surface), record the second one with a typed location instead of the picked field. Entering scores on an existing game is never blocked — only changes to where or when it&apos;s played are checked.</p>
+          ),
+          answerText: 'Another game or practice occupies that field at an overlapping time. Pick a different time or field, or move the other booking. Entering scores is never blocked — only changes to where or when a game is played are checked against double-bookings.',
+          keywords: ['double-booked', 'field already booked', 'conflict', 'cannot save game', 'overlap'],
+        },
+      ],
     },
     {
       id: 'recipe-record-house-league-scores',

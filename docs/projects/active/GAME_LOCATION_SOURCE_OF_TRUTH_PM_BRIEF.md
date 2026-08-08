@@ -87,7 +87,7 @@ line, not first.
 | 1 | **Close the checking gap** — both engines agree; say what can't be checked | **No** |
 | 2 | Stop new drift — picking a field becomes the default path | **No** |
 | 3 | Tidy the existing typed names — admin reviews every match, nothing auto-applied | **No** |
-| 4 | House league gets the same field model (**ruled**); coach events ruled out | **Yes — the only one** |
+| 4 | House league gets the same field model (**ruled**); coach events ruled out — ✅ **BUILT on dev 2026-08-08**, owner QA + prod migration decision pending | **Yes — the only one** |
 | 5 | A database-level rule — **deferred, not proposed** | Yes, later |
 
 Phases 1-3 need no database migration at all. That's deliberate: this exact column has a history of
@@ -115,3 +115,23 @@ for live customers), and there is nothing on production to migrate anyway.
 **not** drift to the end of the queue. The whole reason it's cheap is that house league has no live
 data — that stops being true the moment a customer schedules a league game, and then it becomes a
 migration with customers attached.
+
+## Phase 4 — built 2026-08-08 (dev), with two further owner decisions
+
+Production was re-measured first: still zero league games and practices, so the window was open.
+
+5. ✅ **A league's fields are the club's own field list** — the "define your locations once"
+   library that League and Club plans already have (it finally gets used). Not per-season copies:
+   this means two seasons sharing a diamond are checked against each other automatically.
+6. ✅ **Practices and games share one booking pool.** A practice occupying a diamond blocks a game
+   on it, and vice versa — a booking is a booking.
+
+**What a league organizer sees now:** picking a field from a list is the normal path (typing text
+is the explicit "somewhere else" choice); saving a game or practice onto an already-booked field is
+stopped with a message naming both bookings, the time and the field; the generator warns instead of
+blocking (its drafts deliberately stack games); and the schedule page carries the same honesty line
+tournaments got — "N bookings have no diamond set — they aren't being checked." Families see no
+change (the public league schedule doesn't show locations).
+
+**Still with the owner:** browser QA, and the decision to apply the database change to production
+(it is on dev only — deliberately, since applying migrations to prod is never automatic).

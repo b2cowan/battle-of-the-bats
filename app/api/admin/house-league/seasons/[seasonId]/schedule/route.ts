@@ -3,8 +3,10 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, createLeagueGame } from '@/lib/db';
+import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { zonedWallClockToUtc } from '@/lib/timezone';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -21,6 +23,9 @@ function mapGame(row: any) {
     homeTeamId:  row.home_team_id,
     awayTeamId:  row.away_team_id,
     scheduledAt: row.scheduled_at ?? null,
+    endsAt:      row.ends_at ?? null,
+    orgVenueId:         row.org_venue_id ?? null,
+    orgVenueFacilityId: row.org_venue_facility_id ?? null,
     location:    row.location ?? null,
     homeScore:   row.home_score ?? null,
     awayScore:   row.away_score ?? null,
@@ -89,12 +94,59 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Home and away teams must be different' }, { status: 400 });
   }
 
-  // Combine date + time into ISO timestamp if both provided
+  // Ownership: the division and both teams must live in THIS org's season. Body ids were
+  // previously trusted, which both mis-filed rows against foreign orgs and — once conflict
+  // messages started naming teams — would have echoed another org's team name back.
+  const [{ data: division }, { data: teamRows }] = await Promise.all([
+    supabaseAdmin.from('league_divisions').select('id').eq('id', divisionId).eq('season_id', seasonId).single(),
+    supabaseAdmin.from('league_teams').select('id, name').in('id', [homeTeamId, awayTeamId]).eq('season_id', seasonId),
+  ]);
+  if (!division) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  if ((teamRows ?? []).length !== 2) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+
+  // Combine date + time into ISO timestamp if both provided.
+  // J3-047: org-zone wall-clock → UTC (matches the PATCH route; the naive `new Date()`
+  // construction here was the last league writer still using the server's zone).
   let scheduledAt: string | null = null;
   if (body.scheduledDate && body.scheduledTime) {
-    scheduledAt = new Date(`${body.scheduledDate}T${body.scheduledTime}`).toISOString();
+    scheduledAt = zonedWallClockToUtc(body.scheduledDate, body.scheduledTime)
+      ?? new Date(`${body.scheduledDate}T${body.scheduledTime}`).toISOString();
   } else if (body.scheduledAt) {
     scheduledAt = body.scheduledAt;
+  } else if (body.scheduledDate || body.scheduledTime) {
+    // Half a schedule is a silent no-op waiting to happen — refuse it out loud.
+    return NextResponse.json({ error: 'Date and time must be set together' }, { status: 400 });
+  }
+  const endsAt = resolveEndInstant(scheduledAt, body.scheduledDate, body.endTime);
+
+  // Venue comes from the org library; the display string is DERIVED server-side so
+  // `location` can never disagree with the reference. Free text only when nothing picked.
+  const selection = await resolveLeagueVenueSelection({
+    orgId: ctx!.org.id,
+    orgVenueId: body.orgVenueId ?? null,
+    orgVenueFacilityId: body.orgVenueFacilityId ?? null,
+    locationText: body.location ?? null,
+  });
+  if (!selection.ok) return NextResponse.json({ error: selection.error }, { status: 400 });
+
+  // One booking pool, org-wide: a practice on this surface blocks this game too.
+  const names = new Map((teamRows ?? []).map(t => [t.id, t.name]));
+  const check = await checkLeagueBookings({
+    orgId: ctx!.org.id,
+    proposed: [{
+      id: 'new-game', kind: 'game',
+      startsAt: scheduledAt, endsAt,
+      orgVenueId: selection.value.orgVenueId,
+      orgVenueFacilityId: selection.value.orgVenueFacilityId,
+      location: selection.value.location,
+      label: `${names.get(homeTeamId) ?? 'Home'} vs ${names.get(awayTeamId) ?? 'Away'}`,
+    }],
+  });
+  if (check.blocking.length) {
+    return NextResponse.json(
+      { error: check.blocking[0].message, conflicts: check.blocking },
+      { status: 409 },
+    );
   }
 
   const game = await createLeagueGame({
@@ -104,9 +156,15 @@ export const POST = withObservability(async (req: Request,
     homeTeamId,
     awayTeamId,
     scheduledAt,
-    location: body.location ?? null,
+    endsAt,
+    orgVenueId:         selection.value.orgVenueId,
+    orgVenueFacilityId: selection.value.orgVenueFacilityId,
+    location: selection.value.location,
     notes:    body.notes ?? null,
   });
 
-  return NextResponse.json({ game }, { status: 201 });
+  return NextResponse.json(
+    { game, warnings: check.warnings.map(w => w.message) },
+    { status: 201 },
+  );
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule' });

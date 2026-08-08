@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, getTeamsForDivision } from '@/lib/db';
+import { resolveLeagueVenueSelection, checkLeagueBookings } from '@/lib/league-venue';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -73,11 +74,32 @@ export const POST = withObservability(async (req: Request,
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
 
   const body = await req.json();
-  const { divisionId, startDate, gamesPerWeek = 1, gameTime = '18:00', location = null, save = false } = body;
+  const { divisionId, startDate, gamesPerWeek = 1, gameTime = '18:00', save = false } = body;
 
   if (!divisionId || !startDate) {
     return NextResponse.json({ error: 'divisionId and startDate required' }, { status: 400 });
   }
+
+  // Ownership: the division must live in THIS org's season — a foreign division id would
+  // otherwise be read (and its team names echoed back through conflict warnings).
+  const { data: division } = await supabaseAdmin
+    .from('league_divisions')
+    .select('id')
+    .eq('id', divisionId)
+    .eq('season_id', seasonId)
+    .single();
+  if (!division) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+
+  // Default field: picked from the org venue library (server derives the display string)
+  // or free text — same rules as a single game.
+  const selection = await resolveLeagueVenueSelection({
+    orgId: ctx!.org.id,
+    orgVenueId: body.orgVenueId ?? null,
+    orgVenueFacilityId: body.orgVenueFacilityId ?? null,
+    locationText: body.location ?? null,
+  });
+  if (!selection.ok) return NextResponse.json({ error: selection.error }, { status: 400 });
+  const location = selection.value.location;
 
   const teams = await getTeamsForDivision(divisionId);
   if (teams.length < 2) {
@@ -107,6 +129,25 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ preview, roundCount: rounds.length, gameCount: preview.length });
   }
 
+  // Clash check — WARN ONLY, never block. A generated round puts several games at the same
+  // default time, so with one shared field the round genuinely overlaps itself; blocking
+  // would make the generator unusable, and its output is meant to be edited afterwards.
+  // The warnings (against existing bookings AND between generated siblings) go back to the
+  // organizer instead of the silence this project exists to end.
+  const nameOf = new Map(teams.map(t => [t.id, t.name]));
+  const check = await checkLeagueBookings({
+    orgId: ctx!.org.id,
+    proposed: preview.map((g, i) => ({
+      id: `new-${i}`, kind: 'game' as const,
+      startsAt: g.scheduledAt, endsAt: null,
+      orgVenueId: selection.value.orgVenueId,
+      orgVenueFacilityId: selection.value.orgVenueFacilityId,
+      location: g.location,
+      label: `${nameOf.get(g.homeTeamId) ?? 'Home'} vs ${nameOf.get(g.awayTeamId) ?? 'Away'} (R${g.round})`,
+    })),
+  });
+  const conflictMessages = [...check.blocking, ...check.warnings].map(c => c.message);
+
   // Save all games
   const inserts = preview.map(g => ({
     org_id:       ctx!.org.id,
@@ -115,6 +156,8 @@ export const POST = withObservability(async (req: Request,
     home_team_id: g.homeTeamId,
     away_team_id: g.awayTeamId,
     scheduled_at: g.scheduledAt,
+    org_venue_id:          selection.value.orgVenueId,
+    org_venue_facility_id: selection.value.orgVenueFacilityId,
     location:     g.location,
   }));
 
@@ -145,6 +188,9 @@ export const POST = withObservability(async (req: Request,
     homeTeamId:  row.home_team_id,
     awayTeamId:  row.away_team_id,
     scheduledAt: row.scheduled_at ?? null,
+    endsAt:      row.ends_at ?? null,
+    orgVenueId:         row.org_venue_id ?? null,
+    orgVenueFacilityId: row.org_venue_facility_id ?? null,
     location:    row.location ?? null,
     homeScore:   null,
     awayScore:   null,
@@ -154,5 +200,8 @@ export const POST = withObservability(async (req: Request,
     updatedAt:   row.updated_at,
   }));
 
-  return NextResponse.json({ games, roundCount: rounds.length, gameCount: games.length });
+  return NextResponse.json({
+    games, roundCount: rounds.length, gameCount: games.length,
+    warnings: conflictMessages,
+  });
 }, { route: '/api/admin/house-league/seasons/[seasonId]/schedule/generate' });

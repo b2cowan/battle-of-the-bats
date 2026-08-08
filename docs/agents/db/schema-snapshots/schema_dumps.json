@@ -4898,6 +4898,33 @@
         "column_default": null
       },
       {
+        "table_name": "league_games",
+        "pos": 15,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_games",
+        "pos": 16,
+        "column_name": "org_venue_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_games",
+        "pos": 17,
+        "column_name": "ends_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "league_notification_log",
         "pos": 1,
         "column_name": "id",
@@ -5084,6 +5111,24 @@
         "data_type": "uuid",
         "udt_name": "uuid",
         "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practices",
+        "pos": 14,
+        "column_name": "org_venue_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "league_practices",
+        "pos": 15,
+        "column_name": "org_venue_facility_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
         "column_default": null
       },
       {
@@ -17089,6 +17134,20 @@
       },
       {
         "table_name": "league_games",
+        "column_name": "org_venue_facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "league_games_org_venue_facility_id_fkey"
+      },
+      {
+        "table_name": "league_games",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "league_games_org_venue_id_fkey"
+      },
+      {
+        "table_name": "league_games",
         "column_name": "season_id",
         "foreign_table": "league_seasons",
         "foreign_column": "id",
@@ -17121,6 +17180,20 @@
         "foreign_table": "organizations",
         "foreign_column": "id",
         "constraint_name": "league_practices_org_id_fkey"
+      },
+      {
+        "table_name": "league_practices",
+        "column_name": "org_venue_facility_id",
+        "foreign_table": "org_venue_facilities",
+        "foreign_column": "id",
+        "constraint_name": "league_practices_org_venue_facility_id_fkey"
+      },
+      {
+        "table_name": "league_practices",
+        "column_name": "org_venue_id",
+        "foreign_table": "org_venues",
+        "foreign_column": "id",
+        "constraint_name": "league_practices_org_venue_id_fkey"
       },
       {
         "table_name": "league_practices",
@@ -17721,20 +17794,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
@@ -17743,6 +17809,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -17763,14 +17836,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -17791,21 +17864,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
@@ -17817,16 +17883,23 @@
       },
       {
         "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -18022,21 +18095,14 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -18044,6 +18110,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
+        "constraint_name": "rep_player_measurables_session_team_fkey"
+      },
+      {
+        "table_name": "rep_player_measurables",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
       {
@@ -20123,6 +20196,16 @@
       },
       {
         "tablename": "league_games",
+        "indexname": "idx_league_games_org_venue",
+        "indexdef": "CREATE INDEX idx_league_games_org_venue ON public.league_games USING btree (org_venue_id)"
+      },
+      {
+        "tablename": "league_games",
+        "indexname": "idx_league_games_org_venue_facility",
+        "indexdef": "CREATE INDEX idx_league_games_org_venue_facility ON public.league_games USING btree (org_venue_facility_id)"
+      },
+      {
+        "tablename": "league_games",
         "indexname": "league_games_division_idx",
         "indexdef": "CREATE INDEX league_games_division_idx ON public.league_games USING btree (division_id)"
       },
@@ -20150,6 +20233,16 @@
         "tablename": "league_notification_log",
         "indexname": "league_notification_log_pkey",
         "indexdef": "CREATE UNIQUE INDEX league_notification_log_pkey ON public.league_notification_log USING btree (id)"
+      },
+      {
+        "tablename": "league_practices",
+        "indexname": "idx_league_practices_org_venue",
+        "indexdef": "CREATE INDEX idx_league_practices_org_venue ON public.league_practices USING btree (org_venue_id)"
+      },
+      {
+        "tablename": "league_practices",
+        "indexname": "idx_league_practices_org_venue_facility",
+        "indexdef": "CREATE INDEX idx_league_practices_org_venue_facility ON public.league_practices USING btree (org_venue_facility_id)"
       },
       {
         "tablename": "league_practices",

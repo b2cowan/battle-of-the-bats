@@ -4896,6 +4896,33 @@
     "ordinal_position": 14
   },
   {
+    "table_name": "league_games",
+    "column_name": "org_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
+    "table_name": "league_games",
+    "column_name": "org_venue_facility_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 16
+  },
+  {
+    "table_name": "league_games",
+    "column_name": "ends_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 17
+  },
+  {
     "table_name": "league_notification_log",
     "column_name": "id",
     "data_type": "uuid",
@@ -5083,6 +5110,24 @@
     "is_nullable": "NO",
     "column_default": null,
     "ordinal_position": 13
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "org_venue_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "league_practices",
+    "column_name": "org_venue_facility_id",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
   },
   {
     "table_name": "league_registrations",

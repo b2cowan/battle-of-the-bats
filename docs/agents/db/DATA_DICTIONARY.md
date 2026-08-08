@@ -4135,7 +4135,16 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`scheduled_at`** (timestamptz, nullable) — game date/time; null games bucket under "Unscheduled" on the public schedule. Server-TZ construction trap (gotcha 5). Part of `schedule_idx`.
 
 <!-- dict:col:league_games.location -->
-**`location`** (text, nullable) — free-text venue; **not** an FK to the org's diamonds/venues tables.
+**`location`** (text, nullable) — venue **display cache**, same demoted role as tournament `games.location` (mig 229): when `org_venue_id` is set the server DERIVES this string (`Venue — Facility`) and client text is ignored; free text survives only for games with no picked venue ("off-site / not a configured field"). Never match on it when a structured ref exists.
+
+<!-- dict:col:league_games.org_venue_id -->
+**`org_venue_id`** (FK → `org_venues.id` ON DELETE **SET NULL**, nullable; index `idx_league_games_org_venue`; mig 229, dev-only) — the picked venue, referencing the **org venue library DIRECTLY** (owner decision 2026-08-08 — no per-season copies, unlike tournament `diamonds`). SET NULL so deleting a library venue never fails or eats the schedule (the migration-202 lesson). Written only through `resolveLeagueVenueSelection` ([lib/league-venue.ts](../../../lib/league-venue.ts)), which validates org ownership and derives `location`.
+
+<!-- dict:col:league_games.org_venue_facility_id -->
+**`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE **SET NULL**, nullable; index `idx_league_games_org_venue_facility`; mig 229, dev-only) — the specific surface; must belong to `org_venue_id` (server-enforced, no DB constraint). Preferred granularity for clash detection via `lib/venue-identity.ts`.
+
+<!-- dict:col:league_games.ends_at -->
+**`ends_at`** (timestamptz, nullable; mig 229, dev-only) — optional game end, making game windows comparable with practices in the one-booking-pool clash check; the league conflict engine falls back to a 90-minute default when null ([lib/league-schedule-conflict.ts](../../../lib/league-schedule-conflict.ts)).
 
 <!-- dict:col:league_games.home_score -->
 <!-- dict:col:league_games.away_score -->
@@ -4257,7 +4266,13 @@ The **intra-org recreational house-league** module (`league_*`) — sign-ups, di
 **`ends_at`** (timestamptz, nullable) — end time; required for recurring series, optional for a single practice.
 
 <!-- dict:col:league_practices.location -->
-**`location`** (text, nullable) — free-text venue (not an FK).
+**`location`** (text, nullable) — venue display cache, same rules as `league_games.location` (mig 229): server-derived when `org_venue_id` is set, free text only otherwise.
+
+<!-- dict:col:league_practices.org_venue_id -->
+**`org_venue_id`** (FK → `org_venues.id` ON DELETE **SET NULL**, nullable; index `idx_league_practices_org_venue`; mig 229, dev-only) — picked venue from the org library; see `league_games.org_venue_id` for the model. Practices share ONE booking pool with games — a practice on a surface blocks a game on it (owner decision 2026-08-08).
+
+<!-- dict:col:league_practices.org_venue_facility_id -->
+**`org_venue_facility_id`** (FK → `org_venue_facilities.id` ON DELETE **SET NULL**, nullable; index `idx_league_practices_org_venue_facility`; mig 229, dev-only) — the specific surface; must belong to `org_venue_id` (server-enforced).
 
 <!-- dict:col:league_practices.notes -->
 **`notes`** (text, nullable) — free-text admin notes.

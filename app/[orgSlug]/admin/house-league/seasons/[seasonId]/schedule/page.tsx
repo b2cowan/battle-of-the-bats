@@ -1,12 +1,13 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
-import { Calendar, ChevronLeft, Plus, X, Wand2 } from 'lucide-react';
+import { AlertTriangle, Calendar, ChevronLeft, Plus, X, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { hasCapability } from '@/lib/roles';
+import { getSportPack } from '@/lib/sports';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import {
@@ -15,7 +16,8 @@ import {
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../house-league.module.css';
-import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice } from '@/lib/types';
+import { FACILITY_TYPE_LABELS } from '@/lib/types';
+import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice, OrgVenue } from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
 
@@ -31,7 +33,7 @@ const SCHEDULE_EXPORT_COLS: ExportColumnDef[] = [
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
-interface SeasonInfo { id: string; name: string; }
+interface SeasonInfo { id: string; name: string; sport: string | null; }
 
 interface PreviewGame {
   round: number;
@@ -46,6 +48,8 @@ interface GameForm {
   awayTeamId: string;
   scheduledDate: string;
   scheduledTime: string;
+  endTime: string;
+  venueKey: string;
   location: string;
   status: LeagueGameStatus;
   homeScore: string;
@@ -57,6 +61,7 @@ interface GenerateConfig {
   startDate: string;
   gamesPerWeek: number;
   gameTime: string;
+  venueKey: string;
   location: string;
 }
 
@@ -68,8 +73,26 @@ interface PracticeForm {
   endDate: string;
   startTime: string;
   endTime: string;
+  venueKey: string;
   location: string;
   notes: string;
+}
+
+interface HealthConflict {
+  kind: 'game' | 'practice';
+  id: string;
+  label: string | null;
+  startsAt: string | null;
+  fieldLabel: string | null;
+  partnerKind: 'game' | 'practice';
+  partnerLabel: string | null;
+  partnerStartsAt: string | null;
+  matchedOn: 'facility' | 'venue' | 'text';
+}
+
+interface ScheduleHealth {
+  conflicts: HealthConflict[];
+  uncheckedCount: number;
 }
 
 interface FeedbackState {
@@ -128,6 +151,113 @@ const STATUS_CLASS: Record<LeagueGameStatus, string> = {
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// ── Field picker (org venue library) ──────────────────────────────────────────
+
+/**
+ * One dropdown value encodes the whole selection:
+ *   ''                       — no field set
+ *   `v:<venueId>`            — a venue (no specific surface)
+ *   `f:<venueId>:<facId>`    — a specific surface
+ *   'text'                   — off-site / typed free text (reveals the text input)
+ */
+function venueKeyFor(orgVenueId: string | null, orgVenueFacilityId: string | null, location: string | null): string {
+  if (orgVenueId && orgVenueFacilityId) return `f:${orgVenueId}:${orgVenueFacilityId}`;
+  if (orgVenueId) return `v:${orgVenueId}`;
+  return location ? 'text' : '';
+}
+
+function decodeVenueKey(key: string): { orgVenueId: string | null; orgVenueFacilityId: string | null; isText: boolean } {
+  if (key.startsWith('f:')) {
+    const [, venueId, facId] = key.split(':');
+    return { orgVenueId: venueId ?? null, orgVenueFacilityId: facId ?? null, isText: false };
+  }
+  if (key.startsWith('v:')) {
+    return { orgVenueId: key.slice(2) || null, orgVenueFacilityId: null, isText: false };
+  }
+  return { orgVenueId: null, orgVenueFacilityId: null, isText: key === 'text' };
+}
+
+/**
+ * Picking a real field is the default path; typing text is the explicit
+ * "somewhere else" choice — the same demotion the tournament side is getting.
+ */
+function FieldPicker({
+  venues, noun, venueKey, locationText, disabled, orgSlug, canManage,
+  onKeyChange, onTextChange,
+}: {
+  venues: OrgVenue[];
+  /** Sport-Pack surface noun, e.g. "Diamond" / "Court". */
+  noun: string;
+  venueKey: string;
+  locationText: string;
+  disabled?: boolean;
+  orgSlug: string;
+  canManage: boolean;
+  onKeyChange: (key: string) => void;
+  onTextChange: (text: string) => void;
+}) {
+  const hasLibrary = venues.length > 0;
+  return (
+    <div className={`${styles.field} ${styles.formGridFull}`}>
+      <label className={styles.label}>{noun}</label>
+      {hasLibrary ? (
+        <>
+          <select
+            className={styles.select}
+            value={venueKey}
+            onChange={e => onKeyChange(e.target.value)}
+            disabled={disabled}
+          >
+            <option value="">— No {noun.toLowerCase()} set —</option>
+            {venues.map(v => (
+              (v.facilities && v.facilities.length > 0) ? (
+                <optgroup key={v.id} label={v.name}>
+                  <option value={`v:${v.id}`}>{v.name} (any surface)</option>
+                  {v.facilities.map(f => (
+                    <option key={f.id} value={`f:${v.id}:${f.id}`}>{v.name} — {f.name}</option>
+                  ))}
+                </optgroup>
+              ) : (
+                <option key={v.id} value={`v:${v.id}`}>{v.name}</option>
+              )
+            ))}
+            <option value="text">Somewhere else (type it)</option>
+          </select>
+          {venueKey === 'text' && (
+            <input
+              className={styles.input}
+              style={{ marginTop: '0.4rem' }}
+              value={locationText}
+              onChange={e => onTextChange(e.target.value)}
+              placeholder={`${noun} name or address`}
+              disabled={disabled}
+            />
+          )}
+        </>
+      ) : (
+        <>
+          <input
+            className={styles.input}
+            value={locationText}
+            onChange={e => onTextChange(e.target.value)}
+            placeholder={`${noun} name or address`}
+            disabled={disabled}
+          />
+          {canManage && (
+            <p className={styles.hint}>
+              Typed locations can&apos;t be checked for double-bookings.{' '}
+              <Link href={`/${orgSlug}/admin/org/venues`} style={{ color: 'var(--logic-lime)' }}>
+                Set up your {noun.toLowerCase()}s once
+              </Link>{' '}
+              to pick them from a list.
+            </p>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 const BTN_PRIMARY: React.CSSProperties = {
   background: 'var(--logic-lime)', color: '#1a1f2e', border: 'none',
   borderRadius: '2px', padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: 700,
@@ -151,6 +281,9 @@ const BTN_DANGER: React.CSSProperties = {
 function GameModal({
   game,
   teams,
+  venues,
+  noun,
+  orgSlug,
   canManage,
   saving,
   onSave,
@@ -159,6 +292,9 @@ function GameModal({
 }: {
   game: LeagueGame | null;
   teams: LeagueTeam[];
+  venues: OrgVenue[];
+  noun: string;
+  orgSlug: string;
   canManage: boolean;
   saving: boolean;
   onSave: (form: GameForm) => Promise<void>;
@@ -172,6 +308,8 @@ function GameModal({
         awayTeamId:    game.awayTeamId,
         scheduledDate: game.scheduledAt ? isoToDateInput(game.scheduledAt) : '',
         scheduledTime: game.scheduledAt ? isoToTimeInput(game.scheduledAt) : '',
+        endTime:       game.endsAt ? isoToTimeInput(game.endsAt) : '',
+        venueKey:      venueKeyFor(game.orgVenueId, game.orgVenueFacilityId, game.location),
         location:      game.location ?? '',
         status:        game.status,
         homeScore:     game.homeScore != null ? String(game.homeScore) : '',
@@ -182,8 +320,8 @@ function GameModal({
     return {
       homeTeamId: teams[0]?.id ?? '',
       awayTeamId: teams[1]?.id ?? '',
-      scheduledDate: '', scheduledTime: '18:00',
-      location: '', status: 'scheduled',
+      scheduledDate: '', scheduledTime: '18:00', endTime: '',
+      venueKey: '', location: '', status: 'scheduled',
       homeScore: '', awayScore: '', notes: '',
     };
   });
@@ -196,11 +334,11 @@ function GameModal({
   const awayTeam = teams.find(t => t.id === form.awayTeamId);
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>{isCreate ? 'Add Game' : 'Edit Game'}</h2>
-          <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
+          <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
         <div className={styles.formGrid}>
@@ -224,13 +362,24 @@ function GameModal({
             <label className={styles.label}>Time</label>
             <input type="time" className={styles.input} value={form.scheduledTime} onChange={e => set('scheduledTime', e.target.value)} disabled={!canManage} />
           </div>
+          <div className={styles.field}>
+            <label className={styles.label}>End time <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
+            <input type="time" className={styles.input} value={form.endTime} onChange={e => set('endTime', e.target.value)} disabled={!canManage} />
+          </div>
         </div>
 
         <div className={styles.formGrid}>
-          <div className={`${styles.field} ${styles.formGridFull}`}>
-            <label className={styles.label}>Location</label>
-            <input className={styles.input} value={form.location} onChange={e => set('location', e.target.value)} placeholder="Diamond name or address" disabled={!canManage} />
-          </div>
+          <FieldPicker
+            venues={venues}
+            noun={noun}
+            venueKey={form.venueKey}
+            locationText={form.location}
+            disabled={!canManage}
+            orgSlug={orgSlug}
+            canManage={canManage}
+            onKeyChange={k => set('venueKey', k)}
+            onTextChange={t => set('location', t)}
+          />
           <div className={styles.field}>
             <label className={styles.label}>Status</label>
             <select className={styles.select} value={form.status} onChange={e => set('status', e.target.value as LeagueGameStatus)} disabled={!canManage}>
@@ -267,7 +416,7 @@ function GameModal({
             </button>
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.6rem' }}>
-            <button style={BTN_SECONDARY} onClick={onClose}>Close</button>
+            <button style={BTN_SECONDARY} onClick={onClose} disabled={saving}>Close</button>
             {canManage && (
               <button style={BTN_PRIMARY} onClick={() => onSave(form)} disabled={saving}>
                 {saving ? 'Saving…' : isCreate ? 'Create Game' : 'Save'}
@@ -285,6 +434,9 @@ function GameModal({
 function GenerateModal({
   divisionName,
   teams,
+  venues,
+  noun,
+  orgSlug,
   saving,
   onPreview,
   onSave,
@@ -292,6 +444,9 @@ function GenerateModal({
 }: {
   divisionName: string;
   teams: LeagueTeam[];
+  venues: OrgVenue[];
+  noun: string;
+  orgSlug: string;
   saving: boolean;
   onPreview: (cfg: GenerateConfig) => Promise<PreviewGame[]>;
   onSave: (cfg: GenerateConfig) => Promise<void>;
@@ -299,7 +454,7 @@ function GenerateModal({
 }) {
   const today = tournamentToday();
   const [config, setConfig] = useState<GenerateConfig>({
-    startDate: today, gamesPerWeek: 1, gameTime: '18:00', location: '',
+    startDate: today, gamesPerWeek: 1, gameTime: '18:00', venueKey: '', location: '',
   });
   const [preview, setPreview] = useState<PreviewGame[] | null>(null);
   const [previewing, setPreviewing] = useState(false);
@@ -317,11 +472,11 @@ function GenerateModal({
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={`${styles.modal} ${styles.generateModal}`}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Generate Schedule — {divisionName}</h2>
-          <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
+          <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
         <p style={{ fontSize: '0.82rem', color: 'var(--white-45)', marginBottom: '1rem' }}>
@@ -343,10 +498,16 @@ function GenerateModal({
               onChange={e => setCfg('gamesPerWeek', Math.max(1, Number(e.target.value)))} />
             <p className={styles.hint}>How many game nights per week</p>
           </div>
-          <div className={styles.field}>
-            <label className={styles.label}>Default location</label>
-            <input className={styles.input} value={config.location} onChange={e => setCfg('location', e.target.value)} placeholder="Optional" />
-          </div>
+          <FieldPicker
+            venues={venues}
+            noun={`Default ${noun.toLowerCase()}`}
+            venueKey={config.venueKey}
+            locationText={config.location}
+            orgSlug={orgSlug}
+            canManage
+            onKeyChange={k => setCfg('venueKey', k)}
+            onTextChange={t => setCfg('location', t)}
+          />
         </div>
 
         {!preview && (
@@ -396,7 +557,7 @@ function GenerateModal({
         )}
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose}>Cancel</button>
+          <button style={BTN_SECONDARY} onClick={onClose} disabled={saving}>Cancel</button>
           {preview && (
             <button style={BTN_PRIMARY} onClick={() => onSave(config)} disabled={saving}>
               {saving ? 'Saving…' : `Save ${preview.length} Games`}
@@ -412,11 +573,17 @@ function GenerateModal({
 
 function PracticeModal({
   team,
+  venues,
+  noun,
+  orgSlug,
   saving,
   onSave,
   onClose,
 }: {
   team: LeagueTeam;
+  venues: OrgVenue[];
+  noun: string;
+  orgSlug: string;
   saving: boolean;
   onSave: (form: PracticeForm) => Promise<void>;
   onClose: () => void;
@@ -430,6 +597,7 @@ function PracticeModal({
     endDate: today,
     startTime: '18:00',
     endTime: '20:00',
+    venueKey: '',
     location: '',
     notes: '',
   });
@@ -439,11 +607,11 @@ function PracticeModal({
   }
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={styles.modal}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Add Practice — {team.name}</h2>
-          <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
+          <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
@@ -495,10 +663,16 @@ function PracticeModal({
           </div>
         </div>
 
-        <div className={styles.field}>
-          <label className={styles.label}>Location <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
-          <input className={styles.input} value={form.location} onChange={e => set('location', e.target.value)} placeholder="Field name or address" />
-        </div>
+        <FieldPicker
+          venues={venues}
+          noun={noun}
+          venueKey={form.venueKey}
+          locationText={form.location}
+          orgSlug={orgSlug}
+          canManage
+          onKeyChange={k => set('venueKey', k)}
+          onTextChange={t => set('location', t)}
+        />
 
         <div className={styles.field}>
           <label className={styles.label}>Notes <span style={{ fontWeight: 400, opacity: 0.5 }}>(optional)</span></label>
@@ -506,7 +680,7 @@ function PracticeModal({
         </div>
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose}>Cancel</button>
+          <button style={BTN_SECONDARY} onClick={onClose} disabled={saving}>Cancel</button>
           <button style={BTN_PRIMARY} onClick={() => onSave(form)} disabled={saving}>
             {saving ? 'Saving…' : form.recurring ? 'Create Series' : 'Create Practice'}
           </button>
@@ -536,11 +710,11 @@ function CancelPracticeModal({
   const dt = practice.scheduledAt ? formatDateTime(practice.scheduledAt) : null;
 
   return (
-    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && onClose()}>
+    <div className={styles.modalOverlay} onClick={e => e.target === e.currentTarget && !saving && onClose()}>
       <div className={styles.modal} style={{ maxWidth: 420 }}>
         <div className={styles.modalHeader}>
           <h2 className={styles.modalTitle}>Cancel Practice</h2>
-          <button className={styles.modalCloseBtn} onClick={onClose}><X size={18} /></button>
+          <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
         <p style={{ fontSize: '0.88rem', color: 'var(--white-60)', marginBottom: '1rem' }}>
@@ -571,7 +745,7 @@ function CancelPracticeModal({
         )}
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose}>Back</button>
+          <button style={BTN_SECONDARY} onClick={onClose} disabled={saving}>Back</button>
           <button style={BTN_DANGER} onClick={() => onConfirm(scope)} disabled={saving}>
             {saving ? 'Cancelling…' : 'Cancel Practice'}
           </button>
@@ -590,6 +764,8 @@ export default function SchedulePage() {
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const [season, setSeason] = useState<SeasonInfo | null>(null);
+  const [venues, setVenues] = useState<OrgVenue[]>([]);
+  const [health, setHealth] = useState<ScheduleHealth | null>(null);
   const [divisions, setDivisions] = useState<LeagueDivision[]>([]);
   const [selectedDivId, setSelectedDivId] = useState('');
   const [teams, setTeams] = useState<LeagueTeam[]>([]);
@@ -619,10 +795,27 @@ export default function SchedulePage() {
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}${orgQuery}`);
     if (!res.ok) return;
     const { season: s, divisions: divs } = await res.json();
-    setSeason({ id: s.id, name: s.name });
+    setSeason({ id: s.id, name: s.name, sport: s.sport ?? null });
     setDivisions(divs ?? []);
     if (divs?.length && !selectedDivId) setSelectedDivId(divs[0].id);
   }, [seasonId, selectedDivId, orgQuery]);
+
+  // The org venue library feeds the field picker. A failed fetch (older plan, no access)
+  // degrades to the free-text input — never a blocked form.
+  const loadVenues = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/org/venues${orgQuery}`);
+      if (!res.ok) { setVenues([]); return; }
+      const data = await res.json();
+      setVenues(Array.isArray(data) ? data : []);
+    } catch { setVenues([]); }
+  }, [orgQuery]);
+
+  // Season-wide clash + unchecked counts — games AND practices, every division.
+  const loadHealth = useCallback(async () => {
+    const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/health${orgQuery}`);
+    if (res.ok) setHealth(await res.json());
+  }, [seasonId, orgQuery]);
 
   const loadTeamsAndGames = useCallback(async (divId: string) => {
     const orgParam = orgQuery ? orgQuery.replace('?', '&') : '';
@@ -647,6 +840,9 @@ export default function SchedulePage() {
     loadSeasonAndDivisions().finally(() => setLoading(false));
   }, [loadSeasonAndDivisions]);
 
+  useEffect(() => { void loadVenues(); }, [loadVenues]);
+  useEffect(() => { void loadHealth(); }, [loadHealth]);
+
   useEffect(() => {
     if (selectedDivId) {
       setSelectedTeamId('');
@@ -664,6 +860,13 @@ export default function SchedulePage() {
 
   const selectedDiv = divisions.find(d => d.id === selectedDivId);
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
+
+  // Sport-neutral surface noun ("Diamond" / "Court" / "Field") — never hard-coded.
+  const noun = FACILITY_TYPE_LABELS[getSportPack(season?.sport).defaultFacilityType];
+  const conflictKeys = useMemo(
+    () => new Set((health?.conflicts ?? []).map(c => `${c.kind}:${c.id}`)),
+    [health],
+  );
 
   const weekGroups = useMemo(() => {
     const map = new Map<string, LeagueGame[]>();
@@ -708,7 +911,11 @@ export default function SchedulePage() {
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/generate${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ divisionId: selectedDivId, save: false, ...cfg }),
+      body: JSON.stringify({
+        divisionId: selectedDivId, save: false,
+        startDate: cfg.startDate, gamesPerWeek: cfg.gamesPerWeek, gameTime: cfg.gameTime,
+        ...venueBody(cfg.venueKey, cfg.location),
+      }),
     });
     if (!res.ok) {
       showError('Preview failed', (await res.json()).error ?? 'Unknown error');
@@ -717,20 +924,44 @@ export default function SchedulePage() {
     return (await res.json()).preview ?? [];
   }
 
+  /** venueKey + typed text → the API's venue fields (text only when nothing is picked). */
+  function venueBody(venueKey: string, locationText: string) {
+    const sel = decodeVenueKey(venueKey);
+    const useText = sel.isText || venues.length === 0;
+    return {
+      orgVenueId: sel.orgVenueId,
+      orgVenueFacilityId: sel.orgVenueFacilityId,
+      location: useText ? (locationText.trim() || null) : null,
+    };
+  }
+
   async function handleGenerateSave(cfg: GenerateConfig) {
     setSaving(true);
     const res = await fetch(`/api/admin/house-league/seasons/${seasonId}/schedule/generate${orgQuery}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ divisionId: selectedDivId, save: true, ...cfg }),
+      body: JSON.stringify({
+        divisionId: selectedDivId, save: true,
+        startDate: cfg.startDate, gamesPerWeek: cfg.gamesPerWeek, gameTime: cfg.gameTime,
+        ...venueBody(cfg.venueKey, cfg.location),
+      }),
     });
     setSaving(false);
     if (!res.ok) {
       showError('Could not save schedule', (await res.json()).error ?? 'Unknown error');
       return;
     }
+    const { warnings } = await res.json();
     setShowGenerate(false);
+    if (Array.isArray(warnings) && warnings.length) {
+      setFeedback({
+        isOpen: true, title: `${warnings.length} ${noun.toLowerCase()} clash${warnings.length !== 1 ? 'es' : ''} in the generated schedule`,
+        message: `The schedule was saved, but some games share a ${noun.toLowerCase()} at the same time — spread them across times or ${noun.toLowerCase()}s. First: ${warnings[0]}`,
+        type: 'info',
+      });
+    }
     await loadTeamsAndGames(selectedDivId);
+    await loadHealth();
   }
 
   // ── Game CRUD ──────────────────────────────────────────────────────────────
@@ -749,7 +980,8 @@ export default function SchedulePage() {
       awayTeamId:    form.awayTeamId,
       scheduledDate: form.scheduledDate || undefined,
       scheduledTime: form.scheduledTime || undefined,
-      location:      form.location || null,
+      endTime:       form.endTime || null,
+      ...venueBody(form.venueKey, form.location),
       status:        form.status,
       notes:         form.notes || null,
     };
@@ -766,11 +998,20 @@ export default function SchedulePage() {
     });
     setSaving(false);
     if (!res.ok) {
-      showError('Could not save game', (await res.json()).error ?? 'Unknown error');
+      const data = await res.json();
+      showError(
+        res.status === 409 ? `That ${noun.toLowerCase()} is already booked` : 'Could not save game',
+        data.error ?? 'Unknown error',
+      );
       return;
     }
+    const data = await res.json();
     setGameModalOpen(false);
+    if (Array.isArray(data.warnings) && data.warnings.length) {
+      setFeedback({ isOpen: true, title: 'Saved — possible clash', message: data.warnings[0], type: 'info' });
+    }
     await loadTeamsAndGames(selectedDivId);
+    await loadHealth();
   }
 
   async function handleCancelGame() {
@@ -786,6 +1027,7 @@ export default function SchedulePage() {
     }
     setGameModalOpen(false);
     await loadTeamsAndGames(selectedDivId);
+    await loadHealth();
   }
 
   // ── Practice CRUD ──────────────────────────────────────────────────────────
@@ -798,7 +1040,7 @@ export default function SchedulePage() {
       recurring:  form.recurring,
       startTime:  form.startTime,
       endTime:    form.endTime || null,
-      location:   form.location || null,
+      ...venueBody(form.venueKey, form.location),
       notes:      form.notes || null,
     };
 
@@ -817,17 +1059,25 @@ export default function SchedulePage() {
     });
     setSaving(false);
     if (!res.ok) {
-      showError('Could not save practice', (await res.json()).error ?? 'Unknown error');
+      const data = await res.json();
+      showError(
+        res.status === 409 ? `That ${noun.toLowerCase()} is already booked` : 'Could not save practice',
+        data.error ?? 'Unknown error',
+      );
       return;
     }
-    const { count } = await res.json();
+    const { count, warnings } = await res.json();
     setShowPracticeModal(false);
+    const warningNote = Array.isArray(warnings) && warnings.length
+      ? ` Possible clash: ${warnings[0]}`
+      : '';
     setFeedback({
       isOpen: true, title: 'Practices created',
-      message: `${count} practice${count !== 1 ? 's' : ''} added successfully.`,
-      type: 'success',
+      message: `${count} practice${count !== 1 ? 's' : ''} added successfully.${warningNote}`,
+      type: warningNote ? 'info' : 'success',
     });
     await loadPractices(selectedTeamId);
+    await loadHealth();
   }
 
   async function handleCancelPractice(scope: 'one' | 'remaining' | 'all') {
@@ -849,6 +1099,7 @@ export default function SchedulePage() {
     setShowCancelModal(false);
     setActivePractice(null);
     await loadPractices(selectedTeamId);
+    await loadHealth();
   }
 
   // ── Export ─────────────────────────────────────────────────────────────────
@@ -1053,6 +1304,42 @@ export default function SchedulePage() {
         )}
       </div>
 
+      {/* Schedule health — clashes + what could not be checked (games AND practices) */}
+      {health && health.conflicts.length > 0 && (
+        <div style={{
+          border: '1px solid rgba(var(--warning-rgb),0.35)', background: 'rgba(var(--warning-rgb),0.07)',
+          borderRadius: '2px', padding: '0.7rem 0.9rem', marginBottom: '0.9rem',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--warning)', fontWeight: 700, fontSize: '0.82rem' }}>
+            <AlertTriangle size={15} />
+            {health.conflicts.length === 1
+              ? `1 booking shares a ${noun.toLowerCase()} with another at the same time`
+              : `${health.conflicts.length} bookings share a ${noun.toLowerCase()} with another at the same time`}
+          </div>
+          <ul style={{ margin: '0.45rem 0 0', paddingLeft: '1.4rem', fontSize: '0.8rem', color: 'var(--white-60)' }}>
+            {health.conflicts.slice(0, 4).map((c, i) => {
+              const dt = c.startsAt ? formatDateTime(c.startsAt) : null;
+              return (
+                <li key={i} style={{ marginBottom: '0.15rem' }}>
+                  {c.label ?? c.kind}{dt ? ` · ${dt.date} ${dt.time}` : ''} overlaps {c.partnerLabel ?? c.partnerKind}
+                  {c.fieldLabel ? ` on ${c.fieldLabel}` : ''}
+                  {c.matchedOn === 'text' ? ' (both use the same typed location — may be different places)' : ''}
+                </li>
+              );
+            })}
+            {health.conflicts.length > 4 && (
+              <li style={{ opacity: 0.6 }}>…and {health.conflicts.length - 4} more</li>
+            )}
+          </ul>
+        </div>
+      )}
+      {health && health.uncheckedCount > 0 && (
+        <p style={{ fontSize: '0.78rem', color: 'var(--white-45)', margin: '0 0 0.9rem' }}>
+          {health.uncheckedCount} scheduled {health.uncheckedCount === 1 ? 'booking has' : 'bookings have'} no {noun.toLowerCase()} set
+          — {health.uncheckedCount === 1 ? 'it is' : 'they are'} not being checked for double-bookings.
+        </p>
+      )}
+
       {/* Empty state (games views) */}
       {viewMode !== 'practices' && games.length === 0 && (
         <div className={styles.emptyState}>
@@ -1114,6 +1401,11 @@ export default function SchedulePage() {
                         <span className={`${styles.statusBadge} ${STATUS_CLASS[g.status]}`}>
                           {STATUS_LABELS[g.status]}
                         </span>
+                        {conflictKeys.has(`game:${g.id}`) && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--warning)' }}>
+                            <AlertTriangle size={11} /> Double-booked
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -1157,7 +1449,14 @@ export default function SchedulePage() {
                       {away?.color && <span className={styles.teamDot} style={{ background: away.color }} />}
                       {away?.name ?? '—'}
                     </td>
-                    <td>{g.location ?? <span style={{ opacity: 0.4 }}>—</span>}</td>
+                    <td>
+                      {g.location ?? <span style={{ opacity: 0.4 }}>—</span>}
+                      {conflictKeys.has(`game:${g.id}`) && (
+                        <span title="Another booking shares this surface at the same time" style={{ marginLeft: '0.35rem', color: 'var(--warning)', verticalAlign: 'middle', display: 'inline-flex' }}>
+                          <AlertTriangle size={12} />
+                        </span>
+                      )}
+                    </td>
                     <td className={styles.scoreCell}>
                       {g.status === 'completed' && g.homeScore != null
                         ? `${g.homeScore} – ${g.awayScore}`
@@ -1243,6 +1542,11 @@ export default function SchedulePage() {
                         <span className={`${styles.statusBadge} ${p.status === 'cancelled' ? styles.gameStatusCancelled : styles.practiceBadge}`}>
                           {p.status === 'cancelled' ? 'Cancelled' : 'Practice'}
                         </span>
+                        {conflictKeys.has(`practice:${p.id}`) && (
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--warning)' }}>
+                            <AlertTriangle size={11} /> Double-booked
+                          </span>
+                        )}
                         {clickable && (
                           <span style={{ fontSize: '0.68rem', color: 'var(--white-30)' }}>click to cancel</span>
                         )}
@@ -1261,6 +1565,9 @@ export default function SchedulePage() {
         <GenerateModal
           divisionName={selectedDiv.name}
           teams={teams}
+          venues={venues}
+          noun={noun}
+          orgSlug={orgSlug}
           saving={saving}
           onPreview={handlePreview}
           onSave={handleGenerateSave}
@@ -1273,6 +1580,9 @@ export default function SchedulePage() {
         <GameModal
           game={activeGame}
           teams={teams}
+          venues={venues}
+          noun={noun}
+          orgSlug={orgSlug}
           canManage={canManage}
           saving={saving}
           onSave={handleSaveGame}
@@ -1285,6 +1595,9 @@ export default function SchedulePage() {
       {showPracticeModal && selectedTeamId && teamMap.get(selectedTeamId) && (
         <PracticeModal
           team={teamMap.get(selectedTeamId)!}
+          venues={venues}
+          noun={noun}
+          orgSlug={orgSlug}
           saving={saving}
           onSave={handleSavePractice}
           onClose={() => setShowPracticeModal(false)}
