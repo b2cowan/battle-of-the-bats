@@ -4,10 +4,9 @@ import { redirect } from 'next/navigation';
 import styles from './page.module.css';
 import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
-import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
 import type { OrgPlan } from '@/lib/types';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
@@ -16,12 +15,35 @@ export const metadata: Metadata = {
   alternates: { canonical: '/' },
 };
 
-const MODULE_CARDS = [
+/**
+ * The role deep-dive cards ("One platform. Every role.").
+ *
+ * Same contract as the persona cards below: NO CARD WRITES DOWN WHETHER ITS PRODUCT IS AVAILABLE —
+ * this section held a hardcoded "Coaches Portal · Coming soon" for two weeks after that product
+ * went live (found by the owner 2026-08-08, the exact trap the persona cards were cured of the day
+ * before). `liveBadge` doubles as the launch switch: `null` means nobody has decided what the card
+ * says when live, so it presents as in-development even if its gate opens — and per the
+ * "live products lead" ruling (2026-08-08) an in-development role renders as a compact strip,
+ * never a full deep-dive card. `stripLine` is that strip's one-sentence pitch.
+ */
+const MODULE_CARDS: Array<{
+  id: string;
+  name: string;
+  href: string;
+  planKey: OrgPlan;
+  planLabel: string;
+  liveBadge: string | null;
+  tagline: string;
+  features: string[];
+  stripLine: string;
+}> = [
   {
     id: '01',
     name: 'Tournament Organizer',
     href: '/for-tournament-organizers',
-    plan: 'Tournament · Free to start',
+    planKey: 'tournament',
+    planLabel: 'Tournament',
+    liveBadge: 'Free to start',
     tagline: 'From team registration to final standings — without the spreadsheets.',
     features: [
       'Custom team registration with waitlist management',
@@ -30,40 +52,15 @@ const MODULE_CARDS = [
       'Live score entry — standings update the moment you save',
       'Tournament archives — every past event preserved',
     ],
+    stripLine: 'Registration to final standings, without the spreadsheets.',
   },
   {
     id: '02',
-    name: 'House League Admin',
-    href: '/for-leagues',
-    plan: 'League Plus · Coming soon',
-    tagline: 'From first registration to final standings, in one dashboard.',
-    features: [
-      'Player registration and waitlist management',
-      'Draft tools and team building',
-      'Auto-generated schedules and standings',
-      'Automated parent notifications — no manual emails',
-      'One dashboard from opening day to final standings',
-    ],
-  },
-  {
-    id: '03',
-    name: 'Club Executive',
-    href: '/for-clubs',
-    plan: 'Club · Coming soon',
-    tagline: 'Your executive team gets visibility. Coaches run their own teams.',
-    features: [
-      'Tournaments, house league, and rep teams under one roof',
-      'Coaches manage their own roster, lineups, and team budget',
-      'Organization-wide visibility into rosters, documents, and finances',
-      'Tryout registration and program year management',
-      'Organization ledger, team invoicing, and financial reporting',
-    ],
-  },
-  {
-    id: '04',
     name: 'Head Coach',
     href: '/for-coaches',
-    plan: 'Coaches Portal · Coming soon',
+    planKey: 'team',
+    planLabel: 'Coaches Portal',
+    liveBadge: 'Free to start',
     tagline: 'Manage your team. Not your inbox.',
     features: [
       'Full roster management with positions and season history',
@@ -72,6 +69,41 @@ const MODULE_CARDS = [
       'Document management — consent forms, medical notes, eligibility',
       'Works standalone — no organization account required',
     ],
+    stripLine: 'A complete team workspace — with or without an organization.',
+  },
+  {
+    id: '03',
+    name: 'House League Admin',
+    href: '/for-leagues',
+    planKey: 'league',
+    planLabel: 'League Plus',
+    liveBadge: null,
+    tagline: 'From first registration to final standings, in one dashboard.',
+    features: [
+      'Player registration and waitlist management',
+      'Draft tools and team building',
+      'Auto-generated schedules and standings',
+      'Automated parent notifications — no manual emails',
+      'One dashboard from opening day to final standings',
+    ],
+    stripLine: 'First registration to final standings, in one dashboard.',
+  },
+  {
+    id: '04',
+    name: 'Club Executive',
+    href: '/for-clubs',
+    planKey: 'club',
+    planLabel: 'Club',
+    liveBadge: null,
+    tagline: 'Your executive team gets visibility. Coaches run their own teams.',
+    features: [
+      'Tournaments, house league, and rep teams under one roof',
+      'Coaches manage their own roster, lineups, and team budget',
+      'Organization-wide visibility into rosters, documents, and finances',
+      'Tryout registration and program year management',
+      'Organization ledger, team invoicing, and financial reporting',
+    ],
+    stripLine: 'The whole organization under one roof.',
   },
 ];
 
@@ -252,10 +284,22 @@ export default async function HomePage({
   // local-only affordance until the "do the demos go public?" decision is made
   // (BUSINESS_DECISIONS.md 2026-08-07, logged as Proposed).
   const showSandboxDoor = sandboxDoorsVisible();
-  // Order is deliberate and UNCHANGED by the 2026-08-07 correction: the Coaches Portal card gains
-  // its live treatment in place. Whether the two buyable products should lead the grid is an open
-  // question for the owner, not something to slip in alongside a truthfulness fix.
+  // "Live products lead" (owner-ratified 2026-08-08, closing the question left open on 08-07):
+  // live personas get full cards; not-yet-purchasable ones compress into one roadmap strip below.
+  // The split is the same `isLive` the badges use, so a persona is promoted from strip to card by
+  // the same single deliberate act that launches it — supplying its `liveBadge`.
   const personas = resolvePersonas(gatingMap);
+  const livePersonas = personas.filter(p => p.isLive);
+  const roadmapPersonas = personas.filter(p => !p.isLive);
+  const teamOpen = !gatingMap.team;
+  // The Founding Season surfaces are promo artifacts, not permanent chrome (/review 2026-08-08):
+  // the hero badge row and the callout card render ONLY while the Tournament Plus promo runs, and
+  // name BOTH products only while both promos run and the coach checkout is open. When the promo
+  // ends they disappear on their own instead of asserting an expired date.
+  const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
+  const bothPromosLive = teamOpen && tpPromoActive && isFoundingSeasonPromoActive('team');
+  const liveModules = MODULE_CARDS.filter(m => !gatingMap[m.planKey] && m.liveBadge !== null);
+  const roadmapModules = MODULE_CARDS.filter(m => gatingMap[m.planKey] || m.liveBadge === null);
   return (
     <>
       {/* ── Hero ──────────────────────────────────────────────────────── */}
@@ -264,19 +308,23 @@ export default async function HomePage({
         <div className={styles.heroGrid} />
         <div className="container">
           <div className={styles.heroHeader}>
-            <div className="flex items-center gap-3 mb-8 justify-center flex-wrap">
-              <span className="font-mono text-xs text-logic-lime uppercase tracking-widest font-bold">
-                Founding Season
-              </span>
-              <span className="font-mono text-xs text-data-gray/40">·</span>
-              <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
-                Tournament Plus free through Dec 31, 2026
-              </span>
-              <span className="font-mono text-xs text-data-gray/40">·</span>
-              <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
-                No credit card required
-              </span>
-            </div>
+            {tpPromoActive && (
+              <div className="flex items-center gap-3 mb-8 justify-center flex-wrap">
+                <span className="font-mono text-xs text-logic-lime uppercase tracking-widest font-bold">
+                  Founding Season
+                </span>
+                <span className="font-mono text-xs text-data-gray/40">·</span>
+                <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
+                  {bothPromosLive
+                    ? 'Tournament Plus & Premium Coaches Portal free through Dec 31, 2026'
+                    : 'Tournament Plus free through Dec 31, 2026'}
+                </span>
+                <span className="font-mono text-xs text-data-gray/40">·</span>
+                <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
+                  No credit card required
+                </span>
+              </div>
+            )}
 
             <h1 className={styles.heroTitle}>
               Less admin.{' '}
@@ -291,7 +339,7 @@ export default async function HomePage({
 
           <AnimateIn>
             <div className={styles.heroPersonaGrid}>
-              {personas.map((p) => {
+              {livePersonas.map((p) => {
                 const body = (
                   <>
                     <div className="flex items-start justify-between gap-4">
@@ -344,6 +392,21 @@ export default async function HomePage({
                 );
               })}
             </div>
+
+            {/* The roadmap strip — every not-yet-purchasable persona, at footnote weight. Its
+                doors and interest capture survive; only the real estate shrinks. Data-driven from
+                the same gate as the cards, so it empties itself as products launch. */}
+            {roadmapPersonas.length > 0 && (
+              <div className={styles.heroRoadmap}>
+                <span className={styles.heroRoadmapLabel}>On the roadmap</span>
+                {roadmapPersonas.map(p => (
+                  <Link key={p.id} href={p.href} className={styles.heroRoadmapItem}>
+                    <span className={styles.heroRoadmapQ}>{p.question}</span>
+                    <span className={styles.heroRoadmapCta}>{p.cta} →</span>
+                  </Link>
+                ))}
+              </div>
+            )}
           </AnimateIn>
 
           <div className={styles.heroFooterNote}>
@@ -374,38 +437,63 @@ export default async function HomePage({
               <p className={styles.eyebrow}>What&apos;s included</p>
               <h2 className={styles.sectionTitle}>One platform. Every role.</h2>
               <p className={styles.sectionSub}>
-                Tournament organizers can start today — free, no credit card required. League Plus, Club, and Coaches Portal are in active development.
+                {teamOpen
+                  ? 'Tournament organizers and coaches can start today — free, no credit card required. League Plus and Club are in active development.'
+                  : 'Tournament organizers can start today — free, no credit card required. League Plus, Club, and Coaches Portal are in active development.'}
               </p>
             </div>
           </AnimateIn>
           <AnimateIn>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {MODULE_CARDS.map((mod) => (
-                <div key={mod.id} className="border border-blueprint-blue/30 p-8 flex flex-col gap-5 hover:border-blueprint-blue/60 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <span className="font-mono text-[10px] text-data-gray/40 uppercase tracking-widest">{mod.id}</span>
-                      <h3 className="font-mono text-sm font-bold text-fl-text uppercase tracking-wide mt-0.5">{mod.name}</h3>
+            <div className="flex flex-col gap-4">
+              {/* Live roles: the full deep-dive. */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {liveModules.map((mod) => (
+                  <div key={mod.id} className="border border-blueprint-blue/30 p-8 flex flex-col gap-5 hover:border-blueprint-blue/60 transition-colors">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <span className="font-mono text-[10px] text-data-gray/40 uppercase tracking-widest">{mod.id}</span>
+                        <h3 className="font-mono text-sm font-bold text-fl-text uppercase tracking-wide mt-0.5">{mod.name}</h3>
+                      </div>
+                      <span className="font-mono text-[10px] text-logic-lime uppercase tracking-widest text-right leading-relaxed">{mod.planLabel} · {mod.liveBadge}</span>
                     </div>
-                    <span className="font-mono text-[10px] text-data-gray/50 uppercase tracking-widest text-right leading-relaxed">{mod.plan}</span>
+                    <p className="font-mono text-xs text-data-gray leading-relaxed">{mod.tagline}</p>
+                    <ul className="flex flex-col gap-2 flex-1">
+                      {mod.features.map(f => (
+                        <li key={f} className="font-mono text-xs text-data-gray/70 flex gap-2">
+                          <span className="text-logic-lime flex-shrink-0">—</span>
+                          <span>{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <Link
+                      href={mod.href}
+                      className="font-mono text-xs text-logic-lime uppercase tracking-widest hover:text-fl-text transition-colors self-start"
+                    >
+                      This is me →
+                    </Link>
                   </div>
-                  <p className="font-mono text-xs text-data-gray leading-relaxed">{mod.tagline}</p>
-                  <ul className="flex flex-col gap-2 flex-1">
-                    {mod.features.map(f => (
-                      <li key={f} className="font-mono text-xs text-data-gray/70 flex gap-2">
-                        <span className="text-logic-lime flex-shrink-0">—</span>
-                        <span>{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href={mod.href}
-                    className="font-mono text-xs text-logic-lime uppercase tracking-widest hover:text-fl-text transition-colors self-start"
-                  >
-                    This is me →
-                  </Link>
+                ))}
+              </div>
+              {/* In-development roles: one confident sentence each — discoverable, not a peer.
+                  The full pitch lives on each role's own page, one click away. */}
+              {roadmapModules.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {roadmapModules.map((mod) => (
+                    <Link
+                      key={mod.id}
+                      href={mod.href}
+                      className="border border-blueprint-blue/20 px-6 py-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 hover:border-blueprint-blue/50 transition-colors"
+                    >
+                      <span className="font-mono text-xs font-bold text-data-gray uppercase tracking-wide">{mod.name}</span>
+                      <span className="font-mono text-[10px] text-data-gray/40 uppercase tracking-widest">{mod.planLabel} · In development</span>
+                      <span className="font-mono text-xs text-data-gray/70 leading-relaxed w-full">
+                        {mod.stripLine}{' '}
+                        <span className="text-data-gray/50 uppercase text-[10px] tracking-widest">Learn more →</span>
+                      </span>
+                    </Link>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
           </AnimateIn>
         </div>
@@ -447,62 +535,55 @@ export default async function HomePage({
               <p className={styles.eyebrow}>Pricing</p>
               <h2 className={styles.sectionTitle}>Plans built for how you operate.</h2>
               <p className={styles.sectionSub}>
-                Tournament and Tournament Plus are available now. League Plus and Club are open for early-access interest while those workflows are refined.
+                {teamOpen
+                  ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are available now. League Plus and Club are open for early-access interest while those workflows are refined.'
+                  : 'Tournament and Tournament Plus are available now. League Plus and Club are open for early-access interest while those workflows are refined.'}
               </p>
             </div>
           </AnimateIn>
-          <PricingSection gatingMap={gatingMap} />
 
-          {/* Founding Season callout card */}
-          <div className="mt-3 border border-logic-lime/40 p-6 flex flex-col gap-4" style={{ background: 'rgba(var(--logic-lime-rgb, 163 230 53) / 0.04)' }}>
-            <div className="flex items-center gap-3 flex-wrap">
-              <span className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-logic-lime">
-                Founding Season
-              </span>
-              <span className="font-mono text-[0.6rem] text-data-gray/40">·</span>
-              <span className="font-mono text-[0.6rem] uppercase tracking-widest text-data-gray/70">
-                Free through December 31, 2026
-              </span>
+          {/* Founding Season callout — a promo artifact that renders only while the promo runs,
+              and speaks for BOTH promos while both are running (Tournament Plus-only otherwise). */}
+          {tpPromoActive && (
+            <div className="mb-6 border border-logic-lime/40 p-6 flex flex-col gap-4" style={{ background: 'rgba(var(--logic-lime-rgb, 163 230 53) / 0.04)' }}>
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-logic-lime">
+                  Founding Season
+                </span>
+                <span className="font-mono text-[0.6rem] text-data-gray/40">·</span>
+                <span className="font-mono text-[0.6rem] uppercase tracking-widest text-data-gray/70">
+                  Free through December 31, 2026
+                </span>
+              </div>
+              <p className="font-mono text-sm font-bold text-fl-text leading-snug">
+                {bothPromosLive
+                  ? `Tournament Plus (${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month) and the Premium Coaches Portal (${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month) are free for organizations and coaches that sign up before the end of 2026.`
+                  : `Tournament Plus (${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month) is free for organizations that sign up before the end of 2026.`}
+              </p>
+              <p className="font-mono text-xs text-data-gray/70 leading-relaxed">
+                We&apos;re in our founding season — we want real tournaments and real teams on the
+                platform, not demos. Sign up today and run your season at no cost through December 31.
+              </p>
+              <div className="flex items-center gap-6 flex-wrap">
+                <Link
+                  href="/start"
+                  className="font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
+                >
+                  Start your organization →
+                </Link>
+                {teamOpen && (
+                  <Link
+                    href="/coaches/start?source=home"
+                    className="font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors"
+                  >
+                    Start your coaches portal →
+                  </Link>
+                )}
+              </div>
             </div>
-            <p className="font-mono text-sm font-bold text-fl-text leading-snug">
-              Tournament Plus ({formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month) is free for organizations that sign up before the end of 2026.
-            </p>
-            <p className="font-mono text-xs text-data-gray/70 leading-relaxed">
-              We&apos;re in our founding season — we want real tournaments on the platform, not demos.
-              Sign up today and run Tournament Plus at no cost through December 31.
-            </p>
-            <Link
-              href="/start"
-              className="font-mono text-xs font-bold uppercase tracking-widest text-logic-lime hover:text-fl-text transition-colors self-start"
-            >
-              Start your organization →
-            </Link>
-          </div>
+          )}
 
-          {/* Coaches Portal callout — matches pricing page coachesCallout treatment */}
-          <div className="mt-3 flex items-center gap-8 flex-wrap border border-blueprint-blue/25 px-6 py-4" style={{ background: 'rgba(30,58,138,0.03)' }}>
-            <div className="flex items-baseline gap-6 flex-1 flex-wrap">
-              <span className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-logic-lime whitespace-nowrap flex-shrink-0">
-                Coaches Portal
-              </span>
-              <span className="font-mono text-[0.82rem] font-bold text-fl-text whitespace-nowrap flex-shrink-0">
-                {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD <span className="font-normal text-[0.72rem] text-data-gray">/mo</span>
-              </span>
-              <span className="font-mono text-[0.7rem] text-data-gray whitespace-nowrap flex-shrink-0">
-                or {formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months
-              </span>
-              <span className="font-mono text-[0.73rem] text-data-gray leading-relaxed flex-1 min-w-[180px]">
-                A standalone workspace for one rep team — roster, lineups, budget, and schedule. No organization account needed. Coming soon.
-              </span>
-            </div>
-            <EarlyAccessModalTrigger
-              className="inline-flex items-center justify-center min-h-[38px] px-4 border border-logic-lime/40 bg-transparent text-logic-lime font-mono text-[0.68rem] font-bold uppercase tracking-widest whitespace-nowrap flex-shrink-0 hover:bg-logic-lime/10 hover:text-fl-text transition-colors cursor-pointer"
-              initialPlanInterest={['coaches_portal']}
-              initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
-            >
-              Express interest →
-            </EarlyAccessModalTrigger>
-          </div>
+          <PricingSection gatingMap={gatingMap} marketingLayout />
 
           <div className="flex justify-center mt-6">
             <Link

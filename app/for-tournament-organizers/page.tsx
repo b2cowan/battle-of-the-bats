@@ -3,6 +3,7 @@ import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import styles from './page.module.css';
 
@@ -26,7 +27,18 @@ const FREE_FEATURES = [
   '3 staff / admin seats',
 ];
 
-const CROSS_SELLS = [
+const CROSS_SELLS: Array<{
+  label: string;
+  q: string;
+  body: string;
+  cta: string;
+  /** When set AND the product's gate is open, the card links here instead of opening the
+   *  express-interest modal. Absent = the product has no live state to advertise yet. */
+  liveHref?: string;
+  liveCta?: string;
+  initialPlanInterest: string[];
+  initialFeaturesInterested: string[];
+}> = [
   {
     label: 'League Plus',
     q: 'Also running a house league season?',
@@ -48,15 +60,21 @@ const CROSS_SELLS = [
     q: 'Coaching a single competitive team?',
     body: 'A standalone workspace for one rep team — roster, lineups, budget, and schedule. No org account needed.',
     cta: 'Express interest',
+    // Live when the coach checkout gate is open — the card becomes a link to /for-coaches with a
+    // live CTA instead of an express-interest trigger. Same flip /for-coaches itself performs;
+    // this card held a hardcoded express-interest for a live product until 2026-08-08.
+    liveHref: '/for-coaches',
+    liveCta: 'Start free',
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
   },
 ];
 
-export default function ForTournamentOrganizersPage() {
+export default async function ForTournamentOrganizersPage() {
   // The sandbox door. Hidden in a production build until the owner turns it on deliberately —
   // see lib/sandbox-door.ts for why that release step is a decision and not a merge.
   const showSandboxDoor = sandboxDoorsVisible();
+  const teamCheckoutOpen = !(await getPlanGatingMap()).team;
   return (
     <main className="bg-pitch-black min-h-screen">
 
@@ -259,19 +277,36 @@ export default function ForTournamentOrganizersPage() {
         <div className="container">
           <p className={styles.crossSellEyebrow}>More from FieldLogicHQ</p>
           <div className={styles.crossSellGrid}>
-            {CROSS_SELLS.map(cs => (
-              <EarlyAccessModalTrigger
-                key={cs.label}
-                className={styles.crossSellCard}
-                initialPlanInterest={cs.initialPlanInterest}
-                initialFeaturesInterested={cs.initialFeaturesInterested}
-              >
-                <span className={styles.crossSellLabel}>{cs.label}</span>
-                <span className={styles.crossSellQ}>{cs.q}</span>
-                <span className={styles.crossSellBody}>{cs.body}</span>
-                <span className={styles.crossSellCta}>{cs.cta} →</span>
-              </EarlyAccessModalTrigger>
-            ))}
+            {CROSS_SELLS.map(cs => {
+              // Only the Coaches Portal card carries liveHref today, so the team gate is the
+              // right check; a future live cross-sell must key off its own plan's gate.
+              const isLive = !!cs.liveHref && teamCheckoutOpen;
+              const content = (
+                <>
+                  <span className={styles.crossSellLabel}>{cs.label}</span>
+                  <span className={styles.crossSellQ}>{cs.q}</span>
+                  <span className={styles.crossSellBody}>{cs.body}</span>
+                  <span className={styles.crossSellCta}>{(isLive ? cs.liveCta : undefined) ?? cs.cta} →</span>
+                </>
+              );
+              if (isLive) {
+                return (
+                  <Link key={cs.label} href={cs.liveHref!} className={styles.crossSellCard}>
+                    {content}
+                  </Link>
+                );
+              }
+              return (
+                <EarlyAccessModalTrigger
+                  key={cs.label}
+                  className={styles.crossSellCard}
+                  initialPlanInterest={cs.initialPlanInterest}
+                  initialFeaturesInterested={cs.initialFeaturesInterested}
+                >
+                  {content}
+                </EarlyAccessModalTrigger>
+              );
+            })}
           </div>
         </div>
       </section>

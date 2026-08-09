@@ -15,8 +15,9 @@
  *     their own billing screen, where a plan change actually happens (with proration and
  *     confirmations). Never the sign-up funnel.
  *   • Signed-in coach with no org — also UNCHANGED here: starting an organization genuinely IS
- *     sign-up for them. Their upgrade path is the Premium Coaches Portal callout below the grid,
- *     which already points at the coach checkout.
+ *     sign-up for them. Their upgrade path is the Premium Coaches Portal card in the marketing
+ *     grid (2026-08-08; formerly a callout below it), whose CTA always points at the coach
+ *     checkout — it deliberately never takes the org-operator overrides below.
  *
  * ANONYMOUS-PUBLIC INVARIANT (NAV_UNIFICATION_PLAN §5): everything resolves CLIENT-side after
  * hydration, from signals that already exist — `useClientSignedIn` is a local cookie read, and
@@ -33,7 +34,7 @@ import { useRoleSummaryState } from '@/lib/use-role-summary';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgPlan } from '@/lib/types';
 
-export default function ViewerAwarePlans({ gatingMap }: { gatingMap: Record<OrgPlan, boolean> }) {
+export default function ViewerAwarePlans({ gatingMap, marketingLayout }: { gatingMap: Record<OrgPlan, boolean>; marketingLayout?: boolean }) {
   const signedIn = useClientSignedIn();
   const { summary: roles, resolving } = useRoleSummaryState(signedIn);
 
@@ -58,17 +59,19 @@ export default function ViewerAwarePlans({ gatingMap }: { gatingMap: Record<OrgP
     return (
       <PricingSection
         gatingMap={gatingMap}
+        marketingLayout={marketingLayout}
         ctaHrefFor={() => '#'}
         ctaLabel={() => '…'}
       />
     );
   }
 
-  if (!billingHref) return <PricingSection gatingMap={gatingMap} />;
+  if (!billingHref) return <PricingSection gatingMap={gatingMap} marketingLayout={marketingLayout} />;
 
   return (
     <PricingSection
       gatingMap={gatingMap}
+      marketingLayout={marketingLayout}
       currentPlan={currentPlan}
       // Same destination for every card: the billing screen is where plan changes are made, and
       // sending "choose Club" somewhere else would fork one decision across two surfaces.

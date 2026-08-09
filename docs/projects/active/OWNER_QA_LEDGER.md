@@ -147,7 +147,7 @@ the sequence.
 | **2B** | On a phone — and one of them outdoors | §2.1 · §2.2 · §2.5 · §2.6 | 📱 | LIVE |
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
 | **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
-| **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 | 🖥📱 | Mixed · mig 226 unapplied |
+| **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 · §5.5 | 🖥📱 | Mixed · mig 226 unapplied · §5.5 ON DEV uncommitted |
 | **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ✅ **PASSED 2026-08-07** — 6 defects fixed in the run |
 
 **Where the release gate actually sits:** groups **1A, 1D, 1E**, §1.9c, §6, and most of **3B** are
@@ -2473,6 +2473,59 @@ you got to for the rest of the browser session.
 - The **tryout hub opens on "Decide"**, not on the live scoreboard, because scores are already in.
   That is the product working as designed, but it means the moment's most interesting screen is one
   tab away and not linkable. The tour's step 1 points at what the hub actually opens.
+
+### 5.5 🖥📱 Marketing pages — "live products lead" + the availability sweep — **ON DEV, uncommitted**
+*The homepage, /pricing, /for-tournament-organizers and the nav were rebalanced (2026-08-08,
+owner-ratified) so the two promoted products lead everywhere and nothing hand-writes "coming soon"
+any more. Covers Batches 1 + 1.5 of `HOMEPAGE_TRUTH_AND_ENTRY_POINTS_PLAN.md`. All anonymous — no
+sign-in needed; a private/incognito window is ideal.*
+
+**Homepage, signed out, desktop:**
+- [ ] The hero shows **two** large cards — Tournament and Coaches Portal, both "Free to start · no
+      credit card" — and below them one quiet **"On the roadmap"** strip naming the house-league and
+      club questions with their links. No coming-soon card anywhere in the hero.
+- [ ] The hero's top badge line reads **"Tournament Plus & Premium Coaches Portal free through
+      Dec 31, 2026"**.
+- [ ] "One platform. Every role." has **two** full deep-dive cards (Tournament Organizer ·
+      Free to start, Head Coach · Free to start) and **two** compact one-line rows (House League
+      Admin, Club Executive — "In development", linking to their pages). Nothing here says the
+      Coaches Portal is coming soon.
+- [ ] The pricing band opens with the **Founding Season callout naming BOTH products and both
+      prices**, with two doors: "Start your organization →" and "Start your coaches portal →" (the
+      second lands in the coach start flow).
+- [ ] The plan grid shows **three cards** — Tournament (Free), Tournament Plus, and **Premium
+      Coaches Portal** (both paid cards wear the same Founding Season badge) — and below it one
+      "Coming soon" strip naming League Plus and Club **with their prices** and a single Express
+      interest button that opens the interest form pre-marked for both.
+- [ ] The old thin "Coaches Portal … Coming soon / Express interest" strip is **gone**.
+- [ ] The nav reads **Tournaments · Coaches · Leagues · Clubs · Pricing**.
+- [ ] The Coaches Portal card's "Start free" leads somewhere a coach can actually start — never an
+      interest form.
+
+**/pricing, signed out:**
+- [ ] "What does your role look like?" — the **coach segment is second**, its CTA says **Start
+      free** (not Express interest), and it leads to the coach start flow.
+- [ ] The plan section is titled **"Available now"** and shows the same three-cards-plus-strip as
+      the homepage. The note under it names both Founding Season prices.
+- [ ] Nothing anywhere on the page lists the Coaches Portal among things "coming soon" — check the
+      "Coming Soon" deep-dive panel ("Coming next" must say League Plus and Club only) and the very
+      bottom banner above "Get Started Free".
+- [ ] FAQs: "Can I buy League Plus, Club, or the Coaches Portal today?" answers that the coaches
+      portal **is buyable now, free until Jan 1**.
+- [ ] **Signed-in org operator re-check (the one regression risk):** sign in as an org admin and
+      revisit /pricing. Your tier is still marked "Current plan", the org cards' buttons still open
+      your billing screen — and the **Premium Coaches Portal card must NOT say "Choose …" or point
+      at org billing**; it keeps its own coach door in every state.
+- [ ] **/for-tournament-organizers:** the Coaches Portal cross-sell at the bottom now says **Start
+      free** and links to the coaches page (League Plus and Club beside it stay express-interest).
+
+**Phone (390px-ish), signed out:** the hero cards stack, the roadmap strip wraps without clipping,
+the three plan cards stack with the strip after them, and the modules rows wrap to readable lines.
+
+**Why this matters enough to check:** the shop window spent two weeks telling coaches a live product
+didn't exist, and the worst instance quoted the $29 price while refusing the sale. Every claim above
+is now derived from the same gate the checkout uses — this QA proves the derivation, after which the
+surfaces cannot silently disagree again.
 
 ---
 

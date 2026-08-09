@@ -37,6 +37,17 @@ const BUYER_SEGMENTS: Array<{
     href: '#org-plans',
     cta: 'See tournament plans',
   },
+  // Live products lead (2026-08-08): the coach segment sits second, beside the other live door —
+  // the two coming-soon segments follow. The coach entry's CTA flips with the gate below.
+  {
+    eyebrow: 'Coach or team manager',
+    title: 'I manage one competitive team.',
+    body: 'Your free Coaches Portal follows every tournament you enter. Premium is the operations HQ for one competitive team — roster, lineups, budget, and schedule. No org account needed.',
+    cta: 'Express interest',
+    earlyAccess: true,
+    initialPlanInterest: ['coaches_portal'],
+    initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
+  },
   {
     eyebrow: 'House league administrator',
     title: 'I run a house league season.',
@@ -54,15 +65,6 @@ const BUYER_SEGMENTS: Array<{
     earlyAccess: true,
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
-  },
-  {
-    eyebrow: 'Coach or team manager',
-    title: 'I manage one competitive team.',
-    body: 'Your free Coaches Portal follows every tournament you enter. Premium is the operations HQ for one competitive team — roster, lineups, budget, and schedule. No org account needed.',
-    cta: 'Express interest',
-    earlyAccess: true,
-    initialPlanInterest: ['coaches_portal'],
-    initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
   },
 ];
 
@@ -160,6 +162,7 @@ export default async function PricingPage() {
   const gatingMap = await getPlanGatingMap();
   const teamCheckoutOpen = !gatingMap.team;
   const teamPromoActive = isFoundingSeasonPromoActive('team');
+  const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
 
   // The static segment/FAQ copy is written for the GATED state; when the team checkout is
   // open (Founding Season launch), the coach-facing entries flip to live availability so the
@@ -281,62 +284,36 @@ export default async function PricingPage() {
       <section className={styles.plansSection} id="org-plans">
         <div className="container">
           <div className={styles.sectionIntro}>
-            <p className={styles.sectionEyebrow}>For organizations</p>
-            <h2 className={styles.sectionTitle}>Tournament, League Plus, and Club plans</h2>
+            <p className={styles.sectionEyebrow}>Plans</p>
+            <h2 className={styles.sectionTitle}>Available now</h2>
             <p className={styles.sectionSub}>
-              Use these plans when you manage events or organization-wide operations.
+              {teamCheckoutOpen
+                ? 'Organization plans for tournaments and operations, plus the standalone Premium Coaches Portal for coaches. League Plus and Club are open for early interest below.'
+                : 'Use these plans when you manage events or organization-wide operations.'}
             </p>
           </div>
           {/* R4 (2026-08-01): same grid, but it knows whether the reader already operates here.
               Prospects and anonymous visitors get today's cards untouched; a signed-in org
               operator gets their tier marked and CTAs that open their billing screen instead of
-              the sign-up funnel. Resolved client-side, so this page stays static + role-free. */}
-          <ViewerAwarePlans gatingMap={gatingMap} />
+              the sign-up funnel. Resolved client-side, so this page stays static + role-free.
+              marketingLayout (2026-08-08): live plans as full cards — including the Premium
+              Coaches Portal, which replaced the old callout strip here — and gated plans
+              compressed into the coming-soon strip below the grid. */}
+          <ViewerAwarePlans gatingMap={gatingMap} marketingLayout />
 
-          {/* Founding Season note */}
-          <p className={`${styles.sectionSub} mt-3 text-center`} style={{ fontSize: '0.78rem' }}>
-            Tournament Plus is free through December 31, 2026 for founding organizations.
-            Starting January 2027, the standard {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month rate applies.
-            No contract. Cancel anytime.
-          </p>
-
-          {/* Premium Coaches Portal — compact callout below plan grid. Flips with the checkout gate:
-              live "Start free" + Founding Season promo when open, "Coming soon" + express-interest when gated. */}
-          <div className={styles.coachesCallout} id="coaches-portal">
-            <div className={styles.coachesCalloutInner}>
-              <span className={styles.coachesCalloutLabel}>Premium Coaches Portal</span>
-              {teamCheckoutOpen && teamPromoActive ? (
-                <>
-                  <span className={styles.coachesCalloutPrice}>Free <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>until Jan 1, 2027</span></span>
-                  <span className={styles.coachesCalloutPriceSub}>then {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/mo — no credit card required</span>
-                  <span className={styles.coachesCalloutBody}>
-                    The operations HQ for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically.
-                  </span>
-                </>
-              ) : (
-                <>
-                  <span className={styles.coachesCalloutPrice}>{formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)} CAD <span style={{ fontWeight: 400, fontSize: '0.72rem' }}>/mo</span></span>
-                  <span className={styles.coachesCalloutPriceSub}>or {formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months</span>
-                  <span className={styles.coachesCalloutBody}>
-                    The operations HQ for one rep team — roster, lineups, budget, and schedule. No org account needed. When your org joins Club, your workspace carries over automatically. Coming soon.
-                  </span>
-                </>
-              )}
-            </div>
-            {teamCheckoutOpen ? (
-              <Link href="/coaches/start?source=pricing" className={styles.coachesCalloutCta}>
-                {teamPromoActive ? 'Start free →' : 'Start now →'}
-              </Link>
-            ) : (
-              <EarlyAccessModalTrigger
-                className={styles.coachesCalloutCta}
-                initialPlanInterest={['coaches_portal']}
-                initialFeaturesInterested={['roster', 'lineups', 'budget', 'team_documents']}
-              >
-                Express interest →
-              </EarlyAccessModalTrigger>
-            )}
-          </div>
+          {/* Founding Season note — a promo artifact: gone the day the promo ends, rather than
+              asserting an expired date (/review 2026-08-08). */}
+          {tpPromoActive && (
+            <p className={`${styles.sectionSub} mt-3 text-center`} style={{ fontSize: '0.78rem' }}>
+              {teamCheckoutOpen && teamPromoActive
+                ? <>Tournament Plus and the Premium Coaches Portal are free through December 31, 2026 for founding organizations and coaches.
+                  Starting January 2027, the standard rates ({formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month and {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month) apply.
+                  No contract. Cancel anytime.</>
+                : <>Tournament Plus is free through December 31, 2026 for founding organizations.
+                  Starting January 2027, the standard {formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month rate applies.
+                  No contract. Cancel anytime.</>}
+            </p>
+          )}
         </div>
       </section>
 
@@ -345,11 +322,16 @@ export default async function PricingPage() {
         <div className="container">
           <h2 className={styles.sectionTitle}>Compare all plans</h2>
           <p className={styles.sectionSub}>
-            Tournament and Tournament Plus are available now. League Plus and Club are open for early interest.
+            {teamCheckoutOpen
+              ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are available now. League Plus and Club are open for early interest.'
+              : 'Tournament and Tournament Plus are available now. League Plus and Club are open for early interest.'}
           </p>
           <ComparisonTable />
           <p className="font-mono text-xs text-data-gray/50 mt-4 text-center">
-            League Plus and Club are available for early interest — express interest to be notified when self-serve checkout opens. Coaches Portal is also available standalone for coaches managing one team — see below.
+            League Plus and Club are available for early interest — express interest to be notified when self-serve checkout opens.
+            {teamCheckoutOpen
+              ? ' The Premium Coaches Portal is available standalone for coaches managing one team — see the plans above.'
+              : ' Coaches Portal is also available standalone for coaches managing one team.'}
           </p>
         </div>
       </section>
@@ -393,9 +375,11 @@ export default async function PricingPage() {
               <h2 className={styles.clubTitle}>League Plus and Club — what&apos;s coming next</h2>
               <p className={styles.clubSub}>We&apos;re finishing the workflows before opening self-serve checkout. Here&apos;s what they cover.</p>
               <p className={styles.clubBody}>
-                Tournament and Tournament Plus are the live plans available today. League Plus and Club are shown
-                here so organizations can understand the full platform direction before committing their
-                tournament workflow to us.
+                {teamCheckoutOpen
+                  ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are the live plans available today. '
+                  : 'Tournament and Tournament Plus are the live plans available today. '}
+                League Plus and Club are shown here so organizations can understand the full platform
+                direction before committing their tournament workflow to us.
               </p>
               <p className={styles.clubBody}>
                 League Plus is focused on house league registration, divisions, seasons, public organization
@@ -419,11 +403,17 @@ export default async function PricingPage() {
               {[
                 {
                   label: 'Available now',
-                  body: 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting.',
+                  body: teamCheckoutOpen
+                    ? 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting. The Premium Coaches Portal is live for coaches managing one team.'
+                    : 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting.',
                 },
                 {
                   label: 'Coming next',
-                  body: 'League Plus, Club, and the Coaches Portal workflows are being finished before self-serve checkout opens.',
+                  // Symmetric with "Available now": if the coach checkout gate ever re-closes,
+                  // the product moves back to this list instead of vanishing from both.
+                  body: teamCheckoutOpen
+                    ? 'League Plus and Club workflows are being finished before self-serve checkout opens.'
+                    : 'League Plus, Club, and the Coaches Portal workflows are being finished before self-serve checkout opens.',
                 },
                 {
                   label: 'Express interest',
@@ -471,8 +461,11 @@ export default async function PricingPage() {
             <span style={{ color: 'var(--logic-lime)' }}>More sport.</span>
           </h2>
           <p className={styles.ctaSub}>
-            Start free with Tournament. Tournament Plus is free through December 31, 2026 — no credit card required.
-            League Plus, Club, and the Coaches Portal are coming soon — express interest to be notified.
+            {teamCheckoutOpen
+              ? <>Start free with Tournament. Tournament Plus and the Premium Coaches Portal are free through December 31, 2026 — no credit card required.
+                League Plus and Club are coming soon — express interest to be notified.</>
+              : <>Start free with Tournament. Tournament Plus is free through December 31, 2026 — no credit card required.
+                League Plus, Club, and the Coaches Portal are coming soon — express interest to be notified.</>}
           </p>
           <div className={styles.ctaActions}>
             <Link

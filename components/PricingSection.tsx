@@ -22,6 +22,10 @@ interface Plan {
   period: string;
   freeNote: string;
   trialNote: string;
+  /** Shown under the price INSTEAD of freeNote while this plan's Founding Season promo is active
+   *  (and the card's CTA falls back from plan.cta to "Start now" once it isn't) — so promo wording
+   *  expires with the promo instead of waiting on a January runbook (/review 2026-08-08). */
+  promoNote?: string;
   features: string[];
   /** Short list used inside the onboarding wizard modal — 4–5 key differentiators only */
   compactFeatures: string[];
@@ -77,8 +81,9 @@ const PLANS: Plan[] = [
     annualSavings: `${formatAnnualSavings('tournament_plus')}`,
     currency: 'CAD',
     period: '/mo',
-    freeNote: 'Free through Dec 31, 2026 · no credit card required',
-    trialNote: 'Free through Dec 31, 2026 · no credit card required',
+    freeNote: 'No contracts — cancel anytime',
+    trialNote: 'No contracts — cancel anytime',
+    promoNote: 'Free through Dec 31, 2026 · no credit card required',
     features: [
       'Everything in Tournament',
       'Unlimited tournament slots',
@@ -164,9 +169,58 @@ const PLANS: Plan[] = [
 ];
 
 /**
+ * The Premium Coaches Portal card — rendered ONLY in `marketingLayout` (the "live products lead"
+ * ruling, 2026-08-08). It is a personal coach product, not an org tier, so:
+ *   • it is NOT in `RENDERED_PLAN_KEYS` — an org operator's `currentPlan` can never be `team`;
+ *   • its CTA always goes to the coach start flow — the org-operator `ctaHrefFor`/`ctaLabel`
+ *     overrides (billing deep-links) deliberately do not apply to it, in every viewer state.
+ * Its promo wording lives in `promoNote`, so it expires with the promo automatically.
+ */
+const TEAM_PLAN: Plan = {
+  key: 'team',
+  name: 'Premium Coaches Portal',
+  tagline: 'The operations HQ for one competitive team — standalone, no organization account needed. Included in Club when your organization joins.',
+  monthlyPrice: formatPriceAmount(PLAN_CONFIG.team.monthlyPrice),
+  annualPrice: formatPriceAmount(PLAN_CONFIG.team.annualPrice),
+  annualTotal: `${formatPriceAmount(PLAN_CONFIG.team.annualPrice)} CAD / year`,
+  annualSavings: `${formatAnnualSavings('team')}`,
+  currency: 'CAD',
+  period: '/mo',
+  freeNote: `or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months`,
+  trialNote: `or ${formatPriceAmount(PLAN_CONFIG.team.annualPrice)}/season — save two months`,
+  promoNote: 'Free through Dec 31, 2026 · no credit card required',
+  features: [
+    'Full roster management with positions and season history',
+    'Lineup builder with game-by-game history — exportable to PDF',
+    'Schedule, attendance, and availability tracking',
+    'Team budget, player dues, and payment tracking',
+    'Document management — consent forms, medical notes, eligibility',
+    'Works standalone — no organization account required',
+  ],
+  compactFeatures: [
+    'Roster, lineups, and schedule',
+    'Team budget and dues tracking',
+    'Document management',
+    'Works standalone — no org account',
+  ],
+  cta: 'Start free — no credit card required',
+  ctaHref: '/coaches/start?source=pricing',
+  initialPlanInterest: ['coaches_portal'],
+  initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
+};
+
+/** One-line descriptors for the marketing coming-soon strip — a gated plan's whole pitch there. */
+const GATED_STRIP_LINES: Partial<Record<OrgPlan, string>> = {
+  league: 'house league seasons — registration, draft, schedule, standings, and parent comms',
+  club: 'the complete club operating system — rep teams, accounting, and your whole coaching staff’s portals',
+  team: 'the standalone workspace for one competitive team',
+};
+
+/**
  * The plan keys this component actually RENDERS a card for — deliberately a subset of
- * `PLAN_CONFIG`, which also carries `team` (the Coaches Portal, sold by its own callout below the
- * grid) and `club_large` (Club · Association, a capacity band of Club rather than its own card).
+ * `PLAN_CONFIG`, which also carries `team` (the Coaches Portal — a card only in `marketingLayout`,
+ * and never an org's current plan) and `club_large` (Club · Association, a capacity band of Club
+ * rather than its own card).
  *
  * Exported because a caller marking "the viewer's current plan" has to test membership of THIS
  * list, not of PLAN_CONFIG: `club_large` is a real, valid plan that no card here can match, so a
@@ -197,9 +251,18 @@ interface PricingSectionProps {
   order?: OrgPlan[];
   /** Optional plan key to visually feature (highlighted border). */
   featuredPlan?: OrgPlan;
+  /**
+   * The "live products lead" layout (owner-ratified 2026-08-08), for the marketing surfaces only:
+   * plans whose gate is CLOSED collapse from full cards into one compact coming-soon strip below
+   * the grid, and the Premium Coaches Portal joins the grid as a real card while its checkout is
+   * open. In-app callers (onboarding wizard, billing) omit this and are unchanged. The split is
+   * gate-driven, so the day a gate opens the plan is promoted to a full card without a deploy —
+   * whoever opens a gate owns making that plan's destination page live in the same unit of work.
+   */
+  marketingLayout?: boolean;
 }
 
-export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', compact = false, order, featuredPlan }: PricingSectionProps) {
+export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, planLoading, disabledPlans, ctaLabel, ctaHrefFor, initialBilling = 'monthly', compact = false, order, featuredPlan, marketingLayout = false }: PricingSectionProps) {
   const [billing, setBilling] = useState<Billing>(initialBilling);
 
   const orderedPlans = order
@@ -210,8 +273,20 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
       })
     : PLANS;
 
+  // Marketing layout: cards = live org plans + the coaches card when its checkout is open;
+  // strip = whatever is still gated (including the coaches card if its gate ever re-closes).
+  const teamGated = gatingMap.team ?? true;
+  const stripPlans = marketingLayout
+    ? [...orderedPlans.filter(p => gatingMap[p.key] ?? false), ...(teamGated ? [TEAM_PLAN] : [])]
+    : [];
+  const cardPlans = marketingLayout
+    ? [...orderedPlans.filter(p => !(gatingMap[p.key] ?? false)), ...(teamGated ? [] : [TEAM_PLAN])]
+    : orderedPlans;
+
   function getSignupHref(plan: Plan) {
-    if (plan.key === 'tournament') return plan.ctaHref;
+    // Tournament's CTA is plain sign-up; the coaches card owns its own destination (the coach
+    // start flow takes no plan/billing params).
+    if (plan.key === 'tournament' || plan.key === 'team') return plan.ctaHref;
 
     const params = new URLSearchParams({
       plan: plan.key,
@@ -246,9 +321,12 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
       </div>
 
       {/* Plan cards */}
-      <div className={`${styles.pricingGrid} ${compact ? styles.pricingGridCompact : ''}`}>
-        {orderedPlans.map(plan => {
+      <div className={`${styles.pricingGrid} ${compact ? styles.pricingGridCompact : ''} ${cardPlans.length === 3 ? styles.pricingGridThree : ''} ${cardPlans.length === 2 ? styles.pricingGridTwo : ''}`}>
+        {cardPlans.map(plan => {
           const isGated = gatingMap[plan.key] ?? false;
+          // The coaches card never takes the org-operator CTA overrides — a plan change for an
+          // org happens on the org's billing screen, but the coach product isn't bought there.
+          const takesOverrides = plan.key !== 'team';
           // Deliberately NOT gated on `onChoosePlan` any more (R4, 2026-08-01): the marketing
           // pricing page renders the LINK branch and still needs to mark the viewer's own tier.
           // Every caller that doesn't pass `currentPlan` is unaffected.
@@ -257,9 +335,13 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
           const isFeatured = !isGated && featuredPlan === plan.key;
           const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
           const displayPrice = isGated ? 'Coming soon' : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
+          // Promo wording only while the promo is actually running — afterwards the card falls
+          // back to its permanent note and a truthful "Start now" CTA on its own, with no runbook.
+          const promoActive = !!plan.promoNote && isFoundingSeasonPromoActive(plan.key);
           const displayNote = isGated
             ? 'Join early access for launch updates'
-            : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : plan.freeNote);
+            : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : (promoActive ? plan.promoNote! : plan.freeNote));
+          const defaultCta = plan.promoNote && !promoActive ? 'Start now' : plan.cta;
 
           return (
             <div key={plan.key} className={`${styles.planCard} ${isGated ? styles.planCardPending : ''} ${isCurrent ? styles.planCardCurrent : ''} ${isFeatured ? styles.planCardFeatured : ''}`}>
@@ -334,7 +416,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                       ? 'Current plan'
                       : isIncluded
                         ? 'Included in plan'
-                        : (ctaLabel?.(plan.key) ?? plan.cta)}
+                        : (ctaLabel?.(plan.key) ?? defaultCta)}
                 </button>
               ) : (
                 /* R4: the caller may override the destination and the words; `isCurrent` only
@@ -342,16 +424,41 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                    compete with the one you might move to. One link, so href and label logic can
                    never drift between a "current" and a "not current" copy of it. */
                 <Link
-                  href={ctaHrefFor?.(plan.key) ?? getSignupHref(plan)}
+                  href={(takesOverrides ? ctaHrefFor?.(plan.key) : undefined) ?? getSignupHref(plan)}
                   className={`${CTA_CLASS}${isCurrent ? ` ${styles.viewerCurrentCta}` : ''}`}
                 >
-                  {ctaLabel?.(plan.key) ?? plan.cta}
+                  {(takesOverrides ? ctaLabel?.(plan.key) : undefined) ?? defaultCta}
                 </Link>
               )}
             </div>
           );
         })}
       </div>
+
+      {/* Marketing coming-soon strip — the gated plans, at footnote weight. Visible, priced, and
+          capturing interest, but never peers of what's actually on sale. */}
+      {marketingLayout && stripPlans.length > 0 && (
+        <div className={styles.comingSoonStrip}>
+          <span className={styles.comingSoonStripLabel}>Coming soon</span>
+          <span className={styles.comingSoonStripBody}>
+            {stripPlans.map((p, i) => (
+              <span key={p.key}>
+                {i > 0 && ' · '}
+                <strong className={styles.comingSoonStripName}>{p.name}</strong>
+                {' '}({p.monthlyPrice}/mo) — {GATED_STRIP_LINES[p.key] ?? p.tagline}
+              </span>
+            ))}
+            {'. '}Express interest to be notified when self-serve checkout opens.
+          </span>
+          <EarlyAccessModalTrigger
+            className={styles.comingSoonStripCta}
+            initialPlanInterest={[...new Set(stripPlans.flatMap(p => p.initialPlanInterest ?? []))]}
+            initialFeaturesInterested={[...new Set(stripPlans.flatMap(p => p.initialFeaturesInterested ?? []))]}
+          >
+            Express interest →
+          </EarlyAccessModalTrigger>
+        </div>
+      )}
     </>
   );
 }

@@ -1,6 +1,7 @@
 # Homepage truth + entry points — Batch 1
 
-**Status:** BUILT on `dev`, uncommitted. Owner QA pending.
+**Status:** BUILT on `dev`, uncommitted. Owner QA pending. **Batch 1.5 (2026-08-08) built on top —
+see the dated section below**: the marketing-wide sweep + the "live products lead" hierarchy.
 **Date:** 2026-08-07
 **Trigger:** owner, choosing badge copy for the demo doors — *"we need to fix that, the coaches
 portal should have been updated to behave like the tournament."*
@@ -205,10 +206,59 @@ prominence is exactly the class of drift this work is about, but changing nav pr
 
 ---
 
+## Batch 1.5 — the sweep Batch 1 didn't reach, and the hierarchy ruling (2026-08-08)
+
+**Status:** BUILT on `dev`, uncommitted. Owner QA pending.
+**Trigger:** owner screenshot — the modules section ("One platform. Every role.") was still badging
+the Coaches Portal "Coming soon". Batch 1 cured the persona cards and left five more hand-written
+availability claims standing on the same two pages, plus one on `/for-tournament-organizers`.
+**Decision:** owner ratified the full recommendation set ("I agree with your recommendations") —
+logged as the binding **"live products lead"** entry in `memory/design_decisions.md` (2026-08-08).
+**Mockups:** `claude.ai/code/artifact/b4a4c981-d77d-4e49-95cd-9aaf9597872b`
+
+### Truthfulness (all now gate-driven)
+- Modules section: Head Coach badge + section intro no longer hardcode "coming soon"; the module
+  cards adopted the persona-card contract (`planKey` + nullable `liveBadge` = the launch switch).
+- Homepage Coaches Portal callout (the "$29/mo … Coming soon → Express interest" strip that
+  deflected live buyers) **retired** — replaced by a real Premium Coaches Portal card in the grid.
+- Hero badge + Founding Season callout speak for BOTH promos while both run (fall back otherwise).
+- `/pricing`: "Coming next" panel, "Available now" stat, deep-dive body, compare-table subs, and
+  the bottom CTA no longer list the Coaches Portal as unfinished (gate-aware where copy flips).
+- `/for-tournament-organizers`: coaches cross-sell flips to a live "Start free" link with the gate.
+
+### Hierarchy ("live products lead" — closes Follow-up 2)
+- **Hero:** live personas get full cards; gated ones compress into one "On the roadmap" strip
+  (data-driven from the same `isLive` split, so launches promote automatically once live copy is
+  written).
+- **Modules:** two full deep-dives + two one-line in-development strips (`stripLine`).
+- **Pricing grid** (shared `PricingSection`, new opt-in `marketingLayout` — in-app callers
+  untouched): live org plans + the Premium Coaches Portal as full cards (3-col while exactly 3 are
+  live), gated plans in one coming-soon strip with combined express interest. The coaches card
+  never takes org-operator CTA overrides and stays out of `RENDERED_PLAN_KEYS`.
+- **Segment picker** on /pricing: coach segment moved to second (beside the other live door).
+- **Nav:** Tournaments · Coaches · Leagues · Clubs · Pricing.
+
+### /review outcome (same day — 7 confirmed findings, all fixed)
+Three-lens adversarial review confirmed the build correct TODAY but found four **scheduled
+falsehoods**: fallback branches and price notes hand-writing "free through Dec 31, 2026", which
+would have rendered false the day the promo ends. Fixes applied: promo surfaces (hero badge row,
+Founding Season callout/notes) now render only while `isFoundingSeasonPromoActive('tournament_plus')`;
+plan-card promo wording moved to an expiring `promoNote` (+ "Start now" CTA fallback); /pricing
+"Coming next" regains the Coaches Portal if its gate re-closes; a 2-live-card grid state got its
+own layout; a stale ViewerAwarePlans comment corrected. Also repaired
+`tests/uat/scenarios/pricing-team-smoke.spec.ts`, which had pinned the GATED-and-pre-promo UI and
+was failing since the 07-24 launch — now asserts the live state promo-robustly; **runs green 5/5**.
+In-app pricing callers re-verified untouched; full-project `tsc` clean. ⚠ `check:demos` fails on
+coach-sandbox attendance data (dev DB state, pre-dates and unrelated to this work — needs a
+re-seed).
+
+---
+
 ## Follow-ups
 
 1. **Owner QA** (test plan supplied in chat; ledger entry owed).
-2. **Card order** — open question: should the two buyable products lead the grid?
+2. ~~**Card order** — open question: should the two buyable products lead the grid?~~ **DECIDED
+   2026-08-08: yes — "live products lead" (see Batch 1.5). Built.**
 3. **Pricing-page bridge CTA** — leave the longer label, or match?
 4. **January runbook** — the homepage routes coaches to the *comped Premium* door while the free
    Basic door sits on `/start`. Right during Founding Season; a live question on 2027-01-01.

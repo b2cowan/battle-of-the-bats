@@ -21,11 +21,13 @@ import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
 import styles from './Navbar.module.css';
 
+// Live products lead (owner-ratified 2026-08-08): the two purchasable doors sit adjacent and
+// first; the coming-soon pair follows. Re-order deliberately when one of them launches.
 const MARKETING_NAV_LINKS = [
   { href: '/for-tournament-organizers', label: 'Tournaments' },
+  { href: '/for-coaches',               label: 'Coaches'    },
   { href: '/for-leagues',               label: 'Leagues'    },
   { href: '/for-clubs',                 label: 'Clubs'      },
-  { href: '/for-coaches',               label: 'Coaches'    },
   { href: '/pricing',                   label: 'Pricing'    },
 ];
 

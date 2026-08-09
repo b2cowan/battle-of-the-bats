@@ -301,6 +301,78 @@
   color: var(--fl-text);
 }
 
+/* ── Marketing layout (live products lead, 2026-08-08) ────────────────── */
+/* Exactly-three live cards (Tournament, Tournament Plus, Coaches Portal today) spread to
+   fill the row; the moment a fourth goes live the default 4-col template takes back over. */
+.pricingGridThree {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* Two live cards (a re-gated state) center in two columns instead of rattling in a 4-col frame. */
+.pricingGridTwo {
+  grid-template-columns: repeat(2, 1fr);
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+/* The gated plans, compressed to one quiet strip below the grid. */
+.comingSoonStrip {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 1.5rem;
+  padding: 0.9rem 1.5rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+  background: rgba(var(--blueprint-blue-rgb), 0.035);
+}
+
+.comingSoonStripLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.comingSoonStripBody {
+  font-family: var(--font-data);
+  font-size: 0.73rem;
+  color: var(--data-gray);
+  line-height: 1.6;
+  flex: 1;
+  min-width: 240px;
+}
+
+.comingSoonStripName {
+  color: var(--fl-text);
+  font-weight: 700;
+}
+
+.comingSoonStripCta {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--logic-lime);
+  background: transparent;
+  border: 1px solid rgba(var(--logic-lime-rgb), 0.4);
+  padding: 0.55rem 1rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.comingSoonStripCta:hover {
+  background: rgba(var(--logic-lime-rgb), 0.1);
+  color: var(--fl-text);
+}
+
 /* ── Compact variant — onboarding wizard modal ────────────────────────── */
 .toggleWrapCompact {
   margin-bottom: 1.25rem;

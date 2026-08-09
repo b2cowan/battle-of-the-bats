@@ -103,6 +103,61 @@
   .heroPersonaLiveDot { animation: none; }
 }
 
+/* ── The roadmap strip (live products lead, 2026-08-08) ─────────────────
+   Every not-yet-purchasable persona compresses into this one quiet row below the live cards —
+   addressable and interest-capturing, at footnote weight. Empties itself as gates open. */
+.heroRoadmap {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 2rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  padding: 0.85rem 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.heroRoadmapLabel {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  opacity: 0.5;
+  white-space: nowrap;
+}
+
+.heroRoadmapItem {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem 0.75rem;
+  text-decoration: none;
+}
+
+.heroRoadmapQ {
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  color: var(--data-gray);
+}
+
+.heroRoadmapCta {
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--data-gray);
+  opacity: 0.6;
+  transition: color 0.15s, opacity 0.15s;
+}
+
+.heroRoadmapItem:hover .heroRoadmapCta {
+  color: var(--logic-lime);
+  opacity: 1;
+}
+
 /* Inline "already know what you need?" footnote */
 .heroFooterNote {
   position: relative;
