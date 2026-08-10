@@ -1,65 +1,12 @@
 {
   "generated": "2026-08-10",
-  "total": 13,
+  "total": 0,
   "counts": {
     "tables": 0,
-    "columns": 5,
-    "indexes": 4,
-    "constraints": 4,
+    "columns": 0,
+    "indexes": 0,
+    "constraints": 0,
     "rls": 0
   },
-  "items": [
-    {
-      "key": "column:only-dev:league_games.ends_at",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:league_games.org_venue_facility_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:league_games.org_venue_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:league_practices.org_venue_facility_id",
-      "sig": ""
-    },
-    {
-      "key": "column:only-dev:league_practices.org_venue_id",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:league_games.league_games_org_venue_facility_id_fkey",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:league_games.league_games_org_venue_id_fkey",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:league_practices.league_practices_org_venue_facility_id_fkey",
-      "sig": ""
-    },
-    {
-      "key": "constraint:only-dev:league_practices.league_practices_org_venue_id_fkey",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:idx_league_games_org_venue",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:idx_league_games_org_venue_facility",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:idx_league_practices_org_venue",
-      "sig": ""
-    },
-    {
-      "key": "index:only-dev:idx_league_practices_org_venue_facility",
-      "sig": ""
-    }
-  ]
+  "items": []
 }

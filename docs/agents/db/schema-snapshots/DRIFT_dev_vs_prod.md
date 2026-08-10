@@ -2,14 +2,14 @@
 
 **Generated:** 2026-08-10 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 13 divergence(s)** across dev/prod.
+**✅ No structural drift** between dev and prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 5 | 0 | 0 |
-| Indexes | 4 | 0 | 0 |
-| Constraints | 4 | 0 | — |
+| Columns | 0 | 0 | 0 |
+| Indexes | 0 | 0 | 0 |
+| Constraints | 0 | 0 | — |
 | RLS / CHECK | 0 | 0 | 0 (RLS state) |
 
 ## Tables
@@ -20,12 +20,8 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (5)
-- `league_games.ends_at`
-- `league_games.org_venue_facility_id`
-- `league_games.org_venue_id`
-- `league_practices.org_venue_facility_id`
-- `league_practices.org_venue_id`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (0)
 _none_
@@ -34,11 +30,8 @@ _none_
 _none_
 
 ## Indexes
-### Only in DEV (4)
-- `idx_league_games_org_venue`
-- `idx_league_games_org_venue_facility`
-- `idx_league_practices_org_venue`
-- `idx_league_practices_org_venue_facility`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (0)
 _none_
@@ -47,11 +40,8 @@ _none_
 _none_
 
 ## Constraints (PK / UNIQUE / FK)
-### Only in DEV (4)
-- `league_games.league_games_org_venue_facility_id_fkey`
-- `league_games.league_games_org_venue_id_fkey`
-- `league_practices.league_practices_org_venue_facility_id_fkey`
-- `league_practices.league_practices_org_venue_id_fkey`
+### Only in DEV (0)
+_none_
 
 ### Only in PROD (0)
 _none_

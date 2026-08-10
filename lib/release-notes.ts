@@ -44,6 +44,32 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-08-10',
+    title: 'No more guessing where the game is',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Scheduling a game or practice now uses a field picker instead of a typed-in name — pick from your venue library, and if two things land on the same field at the same time, you\'ll see it before you save, not after.',
+      },
+      {
+        category: 'improved',
+        text: 'If your schedule still has games with a typed-in field name from before, you can now match them to a real venue in your library in a couple of clicks — so they\'re covered by double-booking checks too.',
+      },
+      {
+        category: 'new',
+        text: 'The homepage and organizer pages now link straight into live, click-through demos of the tournament and coach experience — see the real product before you sign up for anything.',
+      },
+      {
+        category: 'fixed',
+        text: 'The check-in board\'s search and filters now use the full width of the screen on a phone, so they\'re easier to tap.',
+      },
+      {
+        category: 'fixed',
+        text: 'Fixed three check-in board issues: the date could get cut off on some screens, the Clear button could leave the board stuck, and one screen had no way back out.',
+      },
+    ],
+  },
+  {
     date: '2026-08-07',
     title: 'Scorekeeper and check-in, built for the phone',
     highlights: [
