@@ -1,7 +1,7 @@
 # Day-of volunteer shells — the two bottom bars (Option C)
 
-**Status:** ✅ BUILT and **owner QA PASSED 2026-08-07** (ledger Group 3C / §7, all nine parts).
-UNCOMMITTED on `dev`. Six defects were found and fixed during the run — four in the QA fixture,
+**Status:** ✅ COMPLETE — **owner QA PASSED 2026-08-07** (ledger Group 3C / §7, all nine parts);
+committed `96c8e346`, LIVE on production (2026-08-07 release). Six defects were found and fixed during the run — four in the QA fixture,
 two in the feature — see the ledger's pass note for the list.
 
 All four open calls were answered the same day: Account as a sheet ✔, sign-out one tap deeper ✔,

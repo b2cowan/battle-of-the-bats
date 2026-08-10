@@ -2,7 +2,7 @@
 
 **Status:** ✅ **COMPLETE on dev** — owner QA passed twice (2026-08-08, first at 361px, then again
 after the `/review` fixes and the dismissal ruling), `/review` run (6 findings, all confirmed, 5
-fixed — §9), owner ruling on dismissal applied (§10). **NOT on production.**
+fixed — §9), owner ruling on dismissal applied (§10). **LIVE on production (2026-08-10 release, Amplify job 251).**
 
 ⚠ **Committed inside `3aeda5fd`, a concurrent agent's docs commit** ("docs(hosting): record the
 passed live matrix in the canonical-host ruling"), not under a commit of its own. Another agent
