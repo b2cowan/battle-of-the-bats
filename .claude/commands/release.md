@@ -68,7 +68,7 @@ git status --short
   1. Run `git diff --stat HEAD` to understand the scope of changes
   2. Read the changed file list and diff stat — do **not** read every file, just use names + stat to infer intent
   3. Generate a conventional commit message that accurately describes what is being committed (e.g. `feat: tournament scorekeeper UX + standalone team workspace phases 2-6`)
-  4. Stage everything and prepare the commit — but **do not run `git commit` yet**; include the proposed message in the Release Summary below so the user can see and approve it alongside the push
+  4. Stage the files this release intends to ship (**explicit pathspecs only, never `git add -A`** — per AGENCY_RULES the shared tree may hold another session's in-flight files; note any left behind in the summary) and prepare the commit — but **do not run `git commit` yet**; include the proposed message in the Release Summary below so the user can see and approve it alongside the push
   5. Commit format must include the Co-Authored-By trailer:
      ```
      [generated subject line]
@@ -194,7 +194,7 @@ Only execute after explicit "push" confirmation.
 **If the working tree was dirty (dev target):**
 Run the commit first using a PowerShell here-string so the multi-line message is passed correctly:
 ```powershell
-git add -A
+git add <the explicit pathspecs from Phase 1a — never -A in the shared working copy>
 git commit -m @'
 [generated subject line]
 
@@ -240,6 +240,27 @@ When done:
 ```
 
 ---
+
+## Phase 2b — After the master build SUCCEEDs, the record catches up (master / promote only)
+
+Deployment state is written down in several places, and none of them update themselves — the
+2026-08-10 audit found every one of them describing already-shipped work as unshipped. The release
+is not finished at SUCCEED; this checklist is part of it (same session, right after verifying the
+Amplify job):
+
+1. **TODO.md** — tick `[x]` every line this release ships; move fully-verified items to
+   "✅ Completed Tasks".
+2. **`docs/projects/active/OWNER_QA_LEDGER.md`** — any "on dev / unshipped" population notes now
+   describe LIVE behaviour; update the framing.
+3. **Auto-memory `reference_prod_release_history`** — record the promote: new prod HEAD hash,
+   Amplify job number + final status, migrations applied.
+4. **CLAUDE.md's demo-sandbox paragraph** — if the release touches the demos, their doors, or the
+   reconcile/cron code, re-verify its claims against the live site and true it up.
+5. **Plan headers** — any plan whose work just shipped gets its status line updated
+   ("committed `<hash>`, on prod <date> job N"), and moves to archive if complete + verified.
+
+Status wording throughout: positives with an anchor ("on prod 2026-08-10, job 251") — never leave
+"uncommitted" / "NOT on prod" / "DEV-ONLY" behind. See AGENCY_RULES → Status wording.
 
 ---
 
@@ -440,6 +461,7 @@ Option B — Force reset to previous commit (destructive):
 - **Never push with TypeScript errors** — preflight must be clean
 - **Never release to master / promote when `npm run check:migrations` fails** — prod being behind dev means a migration wasn't applied to prod and the new code will 500. Apply it to prod first (`apply-migration-api.mjs <file> --prod`), or get the user's explicit confirmation the drift is intentional.
 - **Always show the Amplify console URL** after a successful push
+- **A master/promote release is not finished at build SUCCEED** — the Phase 2b truth-up (the record catches up) is part of the release
 - **Always use `--force-with-lease`** if a force push is ever needed — never bare `--force`
 - **Extra confirmation for master** — always show the PRODUCTION warning prominently in the summary
 
