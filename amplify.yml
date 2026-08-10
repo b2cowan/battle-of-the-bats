@@ -26,6 +26,11 @@ frontend:
         # app_cron_secret in this environment's Supabase project. Unset ⇒ the
         # machine path on the trigger routes is disabled (fail-closed).
         - echo "CRON_SECRET=$CRON_SECRET" >> .env.production
+        # Entitlement grants (platform-admin timed access overrides). The console var has been
+        # set app-level since rollout, but a server-side var only reaches the runtime via this
+        # copy list — without this line every grant an operator records silently no-ops
+        # (same class as the VAPID lesson above and the UNSUBSCRIBE_SECRET note below).
+        - echo "ENTITLEMENT_GRANTS_ENABLED=$ENTITLEMENT_GRANTS_ENABLED" >> .env.production
         # NOTE: UNSUBSCRIBE_SECRET is deliberately NOT echoed here. The console var is set
         # (all-branches + dev), but production has been signing links with the insecure code
         # fallback because it was never on this copy list. Activating the console value flips
