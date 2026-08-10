@@ -9,6 +9,7 @@
  */
 
 import { supabaseAdmin } from './supabase-admin';
+import type { FacilityType } from './types';
 import {
   resolveVenueSelectionFromCatalog,
   type TournamentVenueCatalog,
@@ -38,6 +39,66 @@ export async function loadTournamentVenueCatalog(tournamentId: string): Promise<
       { id: f.id as string, venueId: f.venue_id as string, name: f.name as string },
     ])),
   };
+}
+
+/**
+ * Create a venue for a tournament. Thin, but it belongs here rather than inline in a route: the
+ * Phase 3 resolve screen creates venues from a typed name, and the venues admin creates them from
+ * a form, and a future hardening (a uniqueness rule, a plan cap, an audit row) must land once.
+ * Callers remain responsible for authorization — this is the write, not the gate.
+ */
+export async function createTournamentVenue(args: {
+  tournamentId: string;
+  name: string;
+  address?: string | null;
+  notes?: string | null;
+  sourceOrgVenueId?: string | null;
+}): Promise<{ id: string; name: string }> {
+  const { data, error } = await supabaseAdmin
+    .from('diamonds')
+    .insert({
+      tournament_id: args.tournamentId,
+      name: args.name,
+      address: args.address ?? null,
+      notes: args.notes ?? null,
+      source_org_venue_id: args.sourceOrgVenueId ?? null,
+    })
+    .select('id, name')
+    .single();
+  if (error) throw error;
+  return { id: data.id as string, name: data.name as string };
+}
+
+/**
+ * Create a surface inside a venue.
+ *
+ * `tournamentId` is taken from the PARENT VENUE by the caller, never from client input — a
+ * mismatched `tournament_id` here poisons every tenant-scoped facility read, which is the hardening
+ * Phase 2's review applied to the venues route and the reason this write is shared rather than
+ * copied.
+ */
+export async function createTournamentFacility(args: {
+  tournamentId: string;
+  venueId: string;
+  name: string;
+  facilityType: FacilityType;
+  displayOrder?: number;
+  notes?: string | null;
+}): Promise<{ id: string; venueId: string; name: string }> {
+  const { data, error } = await supabaseAdmin
+    .from('venue_facilities')
+    .insert({
+      venue_id: args.venueId,
+      tournament_id: args.tournamentId,
+      name: args.name,
+      facility_type: args.facilityType,
+      display_order: args.displayOrder ?? 0,
+      notes: args.notes ?? null,
+    })
+    .select('id, venue_id, name')
+    .single();
+  if (error) throw error;
+  return { id: data.id as string, venueId: data.venue_id as string, name: data.name as string };
 }
 
 /** Load + resolve in one step — the single-game (PATCH) convenience. */

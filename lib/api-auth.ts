@@ -355,3 +355,36 @@ export async function requireTournamentInOrg(ctx: AuthContext, tournamentId: str
   if (!data || data.org_id !== ctx.org.id) return forbidden();
   return null;
 }
+
+/**
+ * The full entry guard for any handler that WRITES to a tournament: in scope, in this org, and not
+ * locked. Returns a ready-to-send refusal, or null to proceed.
+ *
+ * The completed-tournament lock and its wording were hand-copied into five route files before this
+ * existed; a sixth copy was about to be added by the Phase 3 location-resolve route, which is what
+ * prompted extracting it. One org_id + status read replaces the two those copies issued
+ * separately. Prefer this over restating the check — a change to the lock condition (a grace
+ * window, say) must not have to be remembered in six places.
+ */
+export async function requireWritableTournament(
+  ctx: AuthContextWithScope,
+  tournamentId: string,
+): Promise<Response | null> {
+  const denied = scopeGuard(ctx, tournamentId);
+  if (denied) return denied;
+
+  const { data } = await supabaseAdmin
+    .from('tournaments')
+    .select('org_id, status')
+    .eq('id', tournamentId)
+    .single();
+
+  if (!data || data.org_id !== ctx.org.id) return forbidden();
+  if (data.status === 'completed') {
+    return Response.json(
+      { error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' },
+      { status: 409 },
+    );
+  }
+  return null;
+}

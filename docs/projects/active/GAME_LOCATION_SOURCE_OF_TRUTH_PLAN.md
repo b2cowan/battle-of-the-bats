@@ -464,14 +464,205 @@ the ORG guide has no Venue Library section at all (pre-existing gap — future d
 - An import file whose Location column exactly names your fields now links those games to the real
   records (previously they stayed typed text even when the spelling matched).
 
-### Phase 3 — Resolve the existing strings (data, reversible, admin-reviewed)
-- [ ] Per-tournament screen: "9 games say *Diamond 1* — is that **[Diamond 1 ▾]**?" with an explicit **Leave as text** option
-- [ ] Exact + trim + case-fold matching only. No fuzzy matching, no cross-tournament matching, no auto-apply (prompt §4.2)
-- [ ] Offer "create this field from the typed name" per distinct string — the honest fix for Bye Demo / Free Cup, which have no venues at all
-- [ ] Every conversion writes venue + surface + derived text **together** via the Phase 2 helper, so mixed granularity (§0.5) is never introduced
-- [ ] Reversible: record what was converted so a wrong guess can be undone
-- [ ] Multi-tenant: matching is scoped to the tournament's own fields — nothing crosses an org (prompt §5)
-- [ ] Run it on the four dev fixtures; **prod needs nothing** (§0.1)
+### Phase 3 — Resolve the existing strings ✅ BUILT on dev 2026-08-10 (no migration)
+
+Built to owner-approved mockups (Claude Artifact *Phase 3 — Matching typed locations to real
+fields*). Owner decisions taken 2026-08-10: **banner on the schedule page** (option A), **Undo now
++ re-point forever** (option 1), **completed games do convert**.
+
+- [x] **Per-tournament review panel** on the schedule page — a banner mirroring the existing
+  "temporary facilities unresolved" one, opening a modal with **one row per distinct NAME** (not per
+  game), its game count, an exact-match suggestion pre-filled where one exists, and three explicit
+  outcomes: confirm / **create the field from the name** / **leave as typed text**. Each row states
+  the derived string it will write ("Games will read *Lions Sports Field — Diamond 1*") — the admin
+  never types it, so without that line they would be applying an unseen result to N games
+- [x] **The matcher is now SHARED, not re-implemented** — Phase 2's `Location`-cell rule moved out
+  of `lib/import/tournament-schedule.ts` into new pure `lib/venue-name-match.ts`, consumed verbatim
+  by the importer and the resolve screen. Exact + trim + case-fold + punctuation-flattening only;
+  ambiguous = no suggestion; placeholders = no candidate. **The importer's private copy is gone**,
+  so the two callers cannot drift — the failure mode this whole project exists to end
+- [x] New pure `lib/tournament-location-resolve.ts` builds the review model (typed groups, linked
+  groups, exclusion counts) — 20 unit tests, and it is the only place the two exclusions live
+- [x] **Every conversion writes through the Phase 2 rail** (`resolveVenueSelectionFromCatalog`), so
+  venue + surface + derived em-dash label land together and mixed granularity (§0.5) is never
+  introduced. One server statement per NAME, not per game
+- [x] **Ordered so a refusal cannot half-convert a schedule** (the `save-bracket` lesson from Phase
+  2's review): validate every target → create the venues/fields the decisions call for → resolve
+  EVERY assignment to its final columns → only then touch a game
+- [x] **⚠ Notification-silent, pinned by a source-level test.** A conversion changes the venue ref
+  from none → real, which `lib/schedule-change-classify.ts` correctly reads as a MOVE. The route
+  writes via `supabaseAdmin` and never calls `recordGameScheduleChanges`;
+  `tests/unit/tournament-location-resolve.test.ts` fails the build if the route gains any notifier
+  import (comments stripped first, so the paragraph explaining the rule survives).
+  **Verified to fail on a real violation, not just to pass** — an injected notifier import was
+  confirmed to break it
+- [x] **Reversibility (owner option 1):** the apply response carries the exact **per-game**
+  before-state (a group's members do not always share one spelling), held in component state →
+  **Undo** restores it precisely. Session-scoped and honestly labelled as such. The durable half is
+  the **"Already linked to a {noun}"** list: any group can be re-pointed in one action at any time,
+  so a wrong pick noticed tomorrow is still a one-click fix — only the original wording is lost
+- [x] **Exclusions enforced in the pure module, not the UI:** placeholder text is never convertible
+  (R2) but IS counted and explained; **lane-tethered games never appear** (Phase 2 made an explicit
+  pick detach the lane — doing that wholesale would dismantle a draft schedule)
+- [x] **Refuses to manufacture the problem it fixes:** "create *Diamond 1* here" is hidden — and
+  refused server-side — for a venue that already owns that name under the matcher's normalization
+  (so "Diamond #1" cannot sneak past "diamond 1"). A second same-named surface in one park would
+  make the name permanently ambiguous
+- [x] Multi-tenant: affected game ids come from the **server's** own plan, never the client; the
+  catalog is tournament-scoped (foreign venue → 400); undo is trusted for values but every id is
+  re-checked against the tournament. `update_schedule` capability required; a **completed
+  tournament is locked** exactly as the lane route is
+- [x] Sport-neutral throughout (`fieldNounFor`); banner dismissal is keyed to the exact set of
+  names, so a newly typed one re-raises it — the honest substitute for a "left as text" flag that
+  cannot be stored without a migration
+- [x] Tests: new `tests/unit/venue-name-match.test.ts` (13) + new
+  `tests/unit/tournament-location-resolve.test.ts` (20). **Verified:** 1585/1585 ✅ · typecheck ✅ ·
+  focused lint 0 errors ✅ · `verify:changed` ✅ including **`check:demos` — 2 presentable** (the
+  coach-sandbox drift that dogged Phases 1–2 is no longer failing) and the org-context guard
+  passing over the new route
+
+#### ⚠ Three premise corrections found by measuring first (2026-08-10)
+
+The build prompt's framing was wrong in three places. Recorded so nobody re-derives it:
+
+1. **Six names, not nine — and Bye Demo shows NOTHING.** After the exclusions the prompt itself
+   requires, the real screen is: Battle of the Bats 4 names / 108 games · Crimson Cup 1 / 12 ·
+   Free Cup 1 / 15 · **Bye Demo 0** (all 21 of its typed games are lane-tethered). Bye Demo was
+   named in the prompt as a headline "create the field" case; it is correctly empty.
+2. **`venue_unchecked` cannot move, so it is NOT the QA signal.** `uncheckedVenueCount` counts games
+   with **no placement at all**; typed text already resolves to `kind: 'text'`, which `isPlaced()`
+   accepts. Measured: converting every name on all four fixtures moves that number by **exactly
+   zero** (fixture counts are Bats 0 · Bye Demo 0 · Free Cup 0 · Crimson Cup 6, and the 6 are
+   games with no location at all).
+3. **The real payoff is bigger and measurable: 22 invisible double-bookings.** Battle of the Bats
+   holds 108 typed games AND 25 pinned to real facilities. Phase 1 deliberately refuses to match
+   text against a record, so the two populations are blind to each other. Measured on live dev:
+   **17 overlapping pairs on Diamond 1 + 5 on Diamond 2 = 22 genuinely double-booked pairs that no
+   engine can currently see.** Resolving reveals all 22. That is the before/after to test against —
+   and it closes precisely the gap Phase 1 logged as "deliberately NOT done".
+
+#### Validated against live dev data, not just unit tests
+
+The plan builder was run over the four fixtures' real rows (2026-08-10). Output matched the
+predicted table exactly, including the two cases nobody would have invented: **"Diamond 4" matches
+nothing** (there are only Diamonds 1–3), and Battle of the Bats has a **facility named after its own
+venue** ("Lions Sports Field"), so that string is correctly reported as ambiguous with 2 candidates.
+Both demo-sandbox tournaments have **zero typed-only games**, so the banner never renders there —
+as predicted, and `check:demos` passes.
+
+⚠ **Residual risk, stated:** the WRITE path was never exercised over HTTP (no dev server/auth in the
+build session). Read side validated against the live database, write logic unit-tested and
+typechecked, but the owner's first Apply is the first real one — the QA section says so and asks for
+an immediate Undo to prove the round trip.
+
+⚠ **Battle of the Bats is `status = 'completed'`**, so the panel's button is disabled there until
+the status is set to Active. Deliberate: a completed tournament is read-only platform-wide and this
+screen does not carve an exception. The QA section carries the workaround.
+
+#### `/simplify` pass — 2026-08-10 (4 parallel agents: reuse / simplification / efficiency / altitude)
+
+**⚠ Found a real bug, not just cleanliness — the same class the project exists to end.** The plan
+grouped typed names with `normalizeLocationText` (no punctuation flattening) while MATCHING them
+with `normalizeToken` (flattens). So "Diamond-1" and "Diamond 1" became **two rows offering the same
+exact-match suggestion** — resolve one and the other stayed behind forever. Two normalizations
+inside one human-reviewed job, which is precisely the drift `venue-identity.ts` was written to
+prevent. Now grouped by the matcher's rule throughout, with the reason stated at the branch, and
+**pinned by a test**.
+
+Applied (9): **the plan is now derived CLIENT-side** from games + venues the schedule page already
+holds — the GET route is gone entirely, removing 3 queries and a round trip from *every* schedule
+refresh for a panel most tournaments never open (and with it the double-fetch after each apply);
+`resolveVenuePlacement` from `venue-identity.ts` now does the classification instead of a bespoke
+decision tree (its header asks new callers to do exactly that, and Phase 3 was the third caller);
+**`normalizeToken` moved to new `lib/normalize-token.ts`** so domain identity no longer depends on
+the file-import subsystem (`lib/import/tabular.ts` re-exports it, all existing importers unchanged);
+**`buildVenueNameIndex` made generic over the caller's record types**, which deleted the adapter the
+importer had grown to re-look-up records the matcher already held; **`requireWritableTournament`
+extracted to `lib/api-auth.ts`** (it was about to become the *sixth* hand-copied lock check — the
+lanes route now shares it, one query instead of two); **`createTournamentVenue`/`createTournamentFacility`
+added to the venue rail** so creation isn't a second copy of the venues route's inserts; one-pass
+apply (the mutate-then-reloop and its defensive re-check are gone); `ChoiceOutcome` consumes the
+decoded choice instead of re-parsing the encoded string a second time; the CSS twin of
+`.facilityResolveBanner` deleted in favour of reusing it; explicit CSS classes replaced element
+selectors so the chip and the count can't fight over font-size.
+
+Skipped (5, noted): merging the modal's picker with `TournamentFieldPicker` (different option sets —
+prop-plumbing would cost more than the ~15 lines saved); composing `.resolveLocationRow` from
+`.resolveFacilityRow` (the twin carries descendant selectors that would leak into this markup —
+the composes trap is real here even though the memory's *chained*-composes caveat doesn't apply);
+migrating the venues route's five inline inserts to the new helpers (outside the diff — logged as
+future drift risk); `pickSpelling`'s most-frequent tie-break (alphabetical-first would surface a
+typo over the wording 38 games used); forcing the typed-row and linked-row JSX into one component.
+
+**Re-verified:** output over the four live fixtures byte-identical before and after (so the cleanup
+changed no behaviour) · 1586/1586 ✅ · typecheck ✅ · lint 0 errors ✅ · `verify:changed` ✅.
+
+#### `/review` pass — 2026-08-10 (high-risk tier: 5 lenses — correctness / security+multi-tenant / data-contract / concurrency / regression)
+
+**Deterministic gate:** `verify:changed` ✓ (incl. `check:demos` 2 presentable) · typecheck ✓ ·
+lint 0 errors · migrations n/a · `check:layout` **SKIPPED — no dev server** (its covered-screen list
+is coach-portal-only; the skip is stated rather than read as a pass). 30 raw → 18 after triage →
+**9 confirmed + fixed**, 9 refuted, 3 accepted-with-note. Both Highs adjudicated in the main loop.
+
+Fixed (9):
+- **[High] A stale field target was validated only AFTER earlier creations in the batch had
+  committed.** Reachable by leaving the panel open while someone deletes a venue elsewhere: the
+  batch 400s and no game moves, but an **orphaned empty venue/field is left behind** — the file's
+  own "a refusal must not leave things half-done" guarantee protected the schedule and not the
+  venue library. Every target now resolves through the rail during validation, before the first
+  insert, so the guarantee is true rather than aspirational.
+- **[High] Applying wiped an explicit "Leave as typed text".** Clearing every selection after a
+  successful apply dropped rows that were never submitted back to their pre-filled suggestion — so
+  a later Apply for an unrelated row would sweep in and convert a name the admin had **twice**
+  declined. Only the submitted selections are forgotten now.
+- **[Medium] The refusal path looped on its own advice.** The 409 says "reopen the panel to see the
+  current locations", but nothing refreshed, so reopening re-rendered the same stale rows and
+  resubmitted the identical doomed request indefinitely. Games now reload on failure too.
+- **[Medium] Undo could silently trample a colleague's edit.** Undo now carries what the apply
+  wrote and skips any game that no longer holds it, reporting the count back ("3 games were changed
+  by someone else since, so they were left alone"). Silently reverting a deliberate edit is the same
+  category of harm as silently moving a game.
+- **[Medium] Creating a field was not retry-safe** — a retry or double-click could produce two
+  same-named venues, making that name **permanently ambiguous** to the matcher, i.e. the screen
+  manufacturing the defect it exists to clear up. An existing same-named venue is now reused.
+- **[Medium] A responsive rule stretched the Review button** across the row it now shares with the
+  dismiss control (481–768px), because the shared banner's `:global(.btn) { width: 100% }` was
+  written when the banner had exactly one child button.
+- **[Low ×3]** `display_order` counted every facility in the tournament rather than the venue's own
+  (contradicting the dictionary's "within the venue"); a swallowed read error could stamp a new
+  diamond as `'other'`; `facilityType` was typed `string` rather than `FacilityType`.
+- **[Advisory]** Undo's copy promised the text back "exactly" when the rail trims it, and the
+  route's own comment overstated what `revert` enforces — both corrected to what the code does.
+
+Refuted (9, dropped): cross-tenant writes via undo, spoofable create gating, client-nominated game
+ids, information disclosure in error messages, RLS posture, the shared lock helper being weaker than
+the copies it replaced, the importer's preview contract, the token-function move, and both exclusion
+rules (placeholder and lane-tethered proved **structurally** unreachable via `resolveVenuePlacement`'s
+precedence, not merely conventional).
+
+Accepted (3, reported not changed): undo does not delete a venue it created (deleting on undo is
+more dangerous than an unused record); the venues route still has its own inline inserts; a
+one-frame banner flash after load on a dismissed tournament (fixing it needs a render-time storage
+read, which trades a flicker for a hydration bug).
+
+⚠ **Neither High fix is unit-testable here** — the harness runs pure modules only (no React, no
+request tests). Both are covered by explicit QA steps in ledger §9b instead, and that limit is
+stated there rather than left implicit.
+
+**Re-verified:** 1586/1586 ✅ · typecheck ✅ · lint 0 errors ✅ · `verify:changed` ✅.
+
+#### `/docs` pass — 2026-08-10
+
+Tournament guide (`lib/help-content/tournaments.tsx`): the schedule section gains a paragraph on the
+review panel (one row per name, the three outcomes, exact-match-only, nothing notified, and the two
+exclusions); **new FAQ `#faq-resolve-typed-locations`** ("My games have field names typed in as
+text…") covering undo, the already-linked list, the Completed-tournament lock and the dismissal;
+`#faq-double-booked-field` now admits the gap it used to leave silent — a typed name is not compared
+against a real field — and points at the fix; `#faq-offsite-game-location` and the Data Tools
+import section both gained a pointer so someone who typed or imported text isn't left thinking it is
+permanent; the venues section covers setting venues up late. Search keywords/`searchText` updated in
+all four places (search does not read rendered prose). **No anchor renamed or removed** — only added,
+so no `href` needed updating (verified by grep).
 
 ### Phase 4 — House league gets the same field model ✅ BUILT on dev 2026-08-08 (the only phase with a migration)
 - [x] **DECIDED (R3, 2026-08-08): house league uses the same venue + surface model as tournaments.** Zero prod rows (§0.6) means this is a schema decision made before there is data to migrate — that window closes the moment a customer schedules a league game, so this phase should not drift to the end. **Prod re-measured 2026-08-08 before building: still 0 games / 0 practices** — the window was open

@@ -1,7 +1,8 @@
 import crypto from 'node:crypto';
 import { checkVenueConflict } from '../schedule-conflict.ts';
-import { hasKnownPlacement, isPlaceholderLocation } from '../venue-identity.ts';
+import { hasKnownPlacement } from '../venue-identity.ts';
 import { formatVenueLocation } from '../venue-label.ts';
+import { buildVenueNameIndex, matchVenueName, type VenueNameIndex } from '../venue-name-match.ts';
 import { getCell, normalizeHeader, normalizeToken } from './tabular.ts';
 import type { ImportPreview, ImportPreviewChange, ImportPreviewRow, ParsedImportFile, ParsedImportRow } from './types.ts';
 import type { Division, Tournament } from '../types.ts';
@@ -403,42 +404,25 @@ function venueDisplay(
 
 /**
  * The ONE sanctioned auto-resolution of typed text (Phase 2, plan §4 rulings): resolve a
- * bare `Location` cell against the tournament's own fields on EXACT match only — trim +
- * case-fold via `normalizeToken` (which also flattens punctuation, so our own exported
- * "Venue - Facility" and the live "Venue — Facility" read as the same string). A cell
- * that matches a venue name, a facility name, or the combined label resolves to that
- * record; anything ambiguous or unmatched stays typed text and is REPORTED, never blocked
- * and never guessed at.
+ * bare `Location` cell against the tournament's own fields on EXACT match only. The rule
+ * itself lives in `lib/venue-name-match.ts` — shared verbatim with the Phase 3 resolve
+ * screen, so the importer and the admin review can never disagree about what a string names.
  *
  * The token index is built ONCE per import (the venue list is identical for every row) and
  * each row's lookup is O(1) — a 1500-row file must not re-tokenize the catalog 1500 times.
  */
-type LocationCellTarget = {
-  venue: TournamentScheduleImportVenue;
-  facility: TournamentScheduleImportVenueFacility | null;
-};
-type LocationTokenIndex = Map<string, LocationCellTarget[]>;
+type LocationTokenIndex = VenueNameIndex<
+  TournamentScheduleImportVenue,
+  TournamentScheduleImportVenueFacility & { venueId: string }
+>;
 
 function buildLocationTokenIndex(context: TournamentScheduleImportContext): LocationTokenIndex {
-  const index: LocationTokenIndex = new Map();
-  const add = (token: string, target: LocationCellTarget) => {
-    if (!token) return;
-    const list = index.get(token) ?? [];
-    const targetKey = `${target.venue.id}:${target.facility?.id ?? ''}`;
-    if (!list.some(item => `${item.venue.id}:${item.facility?.id ?? ''}` === targetKey)) {
-      list.push(target);
-    }
-    index.set(token, list);
-  };
-  for (const venue of context.venues) {
-    add(normalizeToken(venue.name), { venue, facility: null });
-    for (const facility of venue.facilities) {
-      const target = { venue, facility };
-      add(normalizeToken(facility.name), target);
-      add(normalizeToken(`${venue.name} - ${facility.name}`), target);
-    }
-  }
-  return index;
+  return buildVenueNameIndex({
+    venues: context.venues,
+    // `venueId` is already on the facility type; spread keeps the caller's own record identity so
+    // a match hands back the very object the preview needs, names and all.
+    facilities: context.venues.flatMap(venue => venue.facilities.map(facility => ({ ...facility, venueId: venue.id }))),
+  });
 }
 
 function resolveLocationCell(
@@ -447,13 +431,9 @@ function resolveLocationCell(
 ):
   | { kind: 'matched'; venue: TournamentScheduleImportVenue; facility: TournamentScheduleImportVenueFacility | null }
   | { kind: 'unmatched' | 'ambiguous' | 'none' } {
-  const token = normalizeToken(text);
-  // Empty and placeholder text ("TBD", "N/A", …) name no field at all — not a failed match.
-  if (!token || isPlaceholderLocation(text)) return { kind: 'none' };
-
-  const targets = index.get(token) ?? [];
-  if (targets.length === 1) return { kind: 'matched', ...targets[0] };
-  return { kind: targets.length === 0 ? 'unmatched' : 'ambiguous' };
+  const match = matchVenueName(text, index);
+  if (match.kind !== 'matched') return { kind: match.kind };
+  return { kind: 'matched', venue: match.target.venue, facility: match.target.facility };
 }
 
 export function normalizeTournamentScheduleExistingGameForImport(game: TournamentScheduleImportExistingGame, context: TournamentScheduleImportContext): Record<string, unknown> {

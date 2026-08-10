@@ -86,7 +86,7 @@ line, not first.
 | 0 | Reproduce the volunteer's empty dropdown — hand it back to the day-of work | No |
 | 1 | **Close the checking gap** — both engines agree; say what can't be checked | **No** |
 | 2 | Stop new drift — picking a field becomes the default path — ✅ **BUILT on dev 2026-08-08** (to approved mockups), owner QA pending | **No** |
-| 3 | Tidy the existing typed names — admin reviews every match, nothing auto-applied | **No** |
+| 3 | Tidy the existing typed names — admin reviews every match, nothing auto-applied — ✅ **BUILT on dev 2026-08-10** (to approved mockups), owner QA pending | **No** |
 | 4 | House league gets the same field model (**ruled**); coach events ruled out — ✅ **BUILT on dev 2026-08-08**, owner QA + prod migration decision pending | **Yes — the only one** |
 | 5 | A database-level rule — **deferred, not proposed** | Yes, later |
 
@@ -163,3 +163,96 @@ canonical form the next time they're edited or imported.
 
 **Still with the owner:** browser QA (QA ledger has the script). The volunteer's empty field
 dropdown remains a separate defect — Phase 2 does not claim it.
+
+## Phase 3 — built 2026-08-10 (dev), with three owner decisions
+
+Built to mockups the owner approved the same day ("Phase 3 — Matching typed locations to real
+fields"). This is the cleanup phase: Phase 1 made typed field names *checked*, Phase 2 stopped new
+ones being *created*, and Phase 3 clears out the ones already in the data.
+
+9. ✅ **The review lives on the schedule page.** An amber banner — a sibling to the "temporary
+   facilities unresolved" one already there — reading *"4 locations typed by hand · 108 games name a
+   diamond as text."* It's where an organizer notices the problem, it needs no new menu item, and it
+   removes itself when the work is done.
+10. ✅ **Undo now, re-point forever.** Straight after applying, an Undo button puts the original
+    wording back exactly. That record is session-scoped — this phase deliberately adds nothing to
+    the database — so the panel also lists every field games are *already* on, and any of those
+    groups can be re-pointed in one action at any time. A wrong pick noticed tomorrow is still a
+    one-click fix; only the original typed wording is unrecoverable after a refresh.
+11. ✅ **Finished games do convert.** Location is display-only for a game already played, but leaving
+    them out would keep the history wrong and leave names permanently half-converted. The visible
+    consequence: a completed tournament will start showing retrospective double-booking warnings for
+    games that already happened. The product shouldn't lie about the past.
+
+**What an organizer sees now:** one row per *name*, not per game — "Diamond 1" is a single decision
+that moves 39 games. Names that match a real field exactly arrive pre-filled and say so; names that
+match nothing say that too, and offer to create the field. Every row states, in words, the exact
+text that will land on those games before anything is applied, because the organizer never types it
+themselves. Leaving a name as text is a real choice with its own explanation, not just the absence of
+one. Nothing converts without pressing Apply.
+
+**Three things we got wrong until we measured** (all corrected in the plan):
+
+- **The fixture named as the headline case shows nothing.** Bye Demo's typed games are all still
+  attached to the schedule generator's temporary lanes, which belong to a different panel. Its
+  review screen is correctly empty. Six names across three tournaments, not nine across four.
+- **The number we expected to improve can't move.** A typed field name already counted as "located",
+  so the "games not being checked" count changes by exactly zero. Worth knowing before QA, or it
+  reads as a failure.
+- **The real payoff turned out to be bigger.** Battle of the Bats has 108 games naming diamonds as
+  text *and* 25 games pointing at the real records, and the product deliberately refuses to match
+  text against a record. Measured: **22 pairs of games are genuinely double-booked on the same
+  diamond at the same minute, and nothing in the product can currently see them.** Resolving the
+  names reveals all 22. That's the number to test against — and a rise in the conflict count is the
+  pass condition, not a regression.
+
+**The one thing that could reach real people, and what stops it.** A conversion changes a game's
+field from "none" to a real one, which the product legitimately reads as the game having *moved* — on
+the normal save path that messages every following family. Tidying data must never do that. The
+review screen writes on a path that cannot notify anyone, and a test fails the build if anyone ever
+wires a notifier into it. That test was checked by deliberately breaking it first.
+
+**Still with the owner:** browser QA (ledger §9b, which carries the measured answer key). Two things
+flagged honestly in it: Battle of the Bats is marked Completed and therefore locked, so its status
+needs setting to Active for the run; and no agent could exercise the *writing* half over a real
+browser session, so the owner's first Apply is the first real one — the script asks for an immediate
+Undo to prove the round trip before going further.
+
+### Phase 3 — the three cleanup/review/docs passes (2026-08-10)
+
+All three ran after the build, before handoff. Between them they caught **one bug and two ways the
+screen could have done something the admin didn't ask for** — worth recording, because all three
+survived the build itself.
+
+**The cleanup pass found a real defect.** Two slightly different rules were being used to decide
+"is this the same field name?" — one for grouping the rows, one for matching them to your fields. So
+"Diamond-1" and "Diamond 1" would have appeared as **two separate rows both pointing at the same
+field**, and resolving one would leave the other behind permanently. It also moved the review out of
+a server request entirely: the page already has everything needed, so the panel now costs nothing to
+keep up to date instead of re-querying on every schedule action.
+
+**The review pass found two things that would have changed data without being asked.**
+
+1. **An explicit "leave this as text" could be quietly undone.** If you set one name to *leave as
+   typed text* and applied a different row, your decision was forgotten and the row reverted to its
+   suggested field. A later Apply — made for something else entirely — would then have converted a
+   name you had twice declined to touch.
+2. **Undo could wipe out a colleague's work.** If someone else re-pointed a few of those games by
+   hand between your Apply and your Undo, Undo overwrote them with no warning. It now leaves those
+   games alone and tells you: *"3 games were changed by someone else since, so they were left alone."*
+
+Also fixed: a refusal message that told you to reopen the panel, where reopening changed nothing and
+resubmitted the same failing request forever; a retry that could create two identically-named fields
+and thereby permanently break name-matching for that name; and a stale panel that could leave an
+empty field behind after refusing a change.
+
+**Two of those fixes cannot be covered by automated tests here** — the test setup only covers pure
+logic, not screens or requests. They're written into the QA script as explicit steps instead, and
+the ledger says plainly that they're covered by you or by nothing.
+
+**The guide was updated in the same pass.** The tournament guide now explains the review panel, and —
+more usefully — the existing double-booking answer stops implying typed names are permanently
+unfixable. It previously said a typed location "can't be checked against your real fields" and left
+it there; it now names the gap (a game typed "Diamond 1" and a game booked onto the real Diamond 1
+don't see each other) and points at the fix. The off-site answer and the spreadsheet-import section
+both gained the same pointer.

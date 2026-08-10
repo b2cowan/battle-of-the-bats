@@ -3806,3 +3806,249 @@
 @media (max-width: 480px) {
   .playoffEditIconBtn { display: none; }
 }
+
+/* ------------------------------------------------------------------
+   Phase 3 — "Match Typed Locations" review panel + its banner.
+   Shapes deliberately mirror .facilityResolveBanner / .resolveFacilityRow
+   above: the two panels are the same kind of thing (a small pile of work
+   with a button on it), so they must not look like different features.
+   ------------------------------------------------------------------ */
+
+/* The Phase 3 banner reuses `.facilityResolveBanner` + `.facilityResolveCopy` verbatim rather than
+   declaring a twin: the two banners are the same kind of thing, and a copy would drift the first
+   time anyone adjusts warning-banner styling and remembers only one of them. Only the actions
+   cluster below is new — the temporary-facilities banner has no dismiss control. */
+.locationResolveActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex: 0 0 auto;
+}
+
+.locationResolveDismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  border: 0;
+  background: transparent;
+  color: var(--white-45);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.locationResolveDismiss:hover { color: var(--white-70); }
+
+.resolveLocationsTitle {
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--logic-lime);
+}
+
+.resolveLocationsBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding-top: 0.6rem;
+}
+
+.resolveLocationsIntro {
+  margin: 0;
+  font-size: 0.72rem;
+  line-height: 1.5;
+  color: var(--white-55);
+}
+
+.resolveLocationsIntro strong { color: var(--white-70); }
+
+.resolveLocationsGroup {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.resolveLocationRow {
+  display: grid;
+  grid-template-columns: minmax(9rem, 0.85fr) minmax(13rem, 1.35fr);
+  align-items: start;
+  gap: 0.75rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: var(--white-5);
+  border-radius: 4px;
+}
+
+.resolveLocationRowDone {
+  border-color: rgba(var(--success-rgb), 0.3);
+  background: rgba(var(--success-rgb), 0.055);
+}
+
+.resolveLocationRowText {
+  border-color: var(--white-10);
+  background: transparent;
+}
+
+.resolveLocationId {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  align-items: flex-start;
+}
+
+/* Every child below is addressed by its own class — no element selectors, so the chip and the
+   count cannot end up fighting each other over font-size. */
+.resolveLocationName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-data);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--white-90);
+}
+
+/* A linked group is labelled by a real venue name, not by something someone typed — so it reads
+   as prose rather than as data. */
+.resolveLocationLinkedName {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--font-sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--white-90);
+}
+
+.resolveLocationCount {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 0.665rem;
+  color: var(--white-45);
+  font-variant-numeric: tabular-nums;
+}
+
+.resolveLocationChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 0.1rem;
+  padding: 0.1rem 0.32rem;
+  border-radius: 2px;
+  border: 1px solid;
+  font-family: var(--font-data);
+  font-size: 0.575rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.resolveLocationChipOk {
+  color: var(--success);
+  background: rgba(var(--success-rgb), 0.12);
+  border-color: rgba(var(--success-rgb), 0.32);
+}
+
+.resolveLocationChipWarn {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.12);
+  border-color: rgba(var(--warning-rgb), 0.32);
+}
+
+.resolveLocationAct {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.resolveLocationDoneLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.resolveLocationWrites {
+  font-size: 0.665rem;
+  line-height: 1.4;
+  color: var(--white-45);
+}
+
+.resolveLocationWrites b {
+  color: var(--white-70);
+  font-weight: 600;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+}
+
+.resolveLocationsSectionLabel {
+  padding-top: 0.35rem;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--white-30);
+}
+
+.resolveLocationsNote {
+  padding: 0.5rem 0.6rem;
+  border: 1px dashed var(--white-10);
+  border-radius: 4px;
+  font-size: 0.665rem;
+  line-height: 1.45;
+  color: var(--white-45);
+}
+
+.resolveLocationsNote b { color: var(--white-70); font-weight: 600; }
+
+.resolveLocationsEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 1.5rem 1rem;
+  border: 1px dashed var(--white-10);
+  border-radius: 4px;
+  color: var(--white-45);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.resolveLocationsEmptyTitle { color: var(--white-70); font-size: 0.8rem; font-weight: 600; }
+
+.resolveLocationsCount {
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--white-45);
+}
+
+.resolveLocationsActions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+/* The shared banner stacks its single button to full width below 768px — written when
+   `.facilityResolveBanner` had exactly one child button. The Phase 3 banner puts its Review button
+   in a row beside a dismiss control, so that rule would stretch Review across the whole row and
+   squash the dismiss icon. Same specificity as the inherited rule, declared later, so it wins —
+   and it must be its own 768px block, because the 640px one below never reaches 641-768px. */
+@media (max-width: 768px) {
+  .locationResolveActions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .locationResolveActions :global(.btn) {
+    width: auto;
+  }
+}
+
+@media (max-width: 640px) {
+  .resolveLocationRow { grid-template-columns: 1fr; }
+}

@@ -149,7 +149,7 @@ the sequence.
 | **2B** | On a phone — and one of them outdoors | §2.1 · §2.2 · §2.5 · §2.6 | 📱 | LIVE |
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
 | **2D** | House league schedule — fields + double-booking | §8 | 🖥 | ON DEV · mig **229** dev-only |
-| **2E** | Tournament schedule — a field is picked, not typed | §9 | 🖥 | ON DEV · no migration |
+| **2E** | Tournament schedule — a field is picked, not typed | §9 · §9b | 🖥 | ON DEV · no migration |
 | **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
 | **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 · §5.5 | 🖥📱 | Mixed · §5.5 ON DEV |
 | **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ✅ **PASSED 2026-08-07** — 6 defects fixed in the run |
@@ -1986,6 +1986,122 @@ surface picking; import auto-resolves EXACT name matches only.
   a real field now detaches the lane correctly.
 - Known + accepted: `check:demos`' coach-sandbox attendance drift pre-dates this work (seeded coach
   data; the tournament sandbox passes and its tour copy was re-checked against these screens).
+
+### 9b 🖥 Matching typed locations to real fields — **ON DEV** (no migration)
+Plan: `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md` Phase 3. Built to the owner-approved mockups
+(Artifact *Phase 3 — Matching typed locations to real fields*). Owner decisions baked in: banner on
+the schedule page; Undo now plus re-point forever; **completed games do convert**.
+
+> ⚠ **Do this section on `battle-of-the-bats` (Milton) — and set its status to Active first.**
+> The tournament is `completed`, so the Review button is deliberately disabled (a completed
+> tournament is read-only platform-wide; this screen does not carve an exception). Event Settings →
+> status Active. It is the only fixture with both typed names AND real field records, which is what
+> makes the payoff visible. **Set it back to Completed when you're done.**
+
+**Measured before-state (live dev, 2026-08-10) — this is the answer key**
+
+| Tournament | Names shown | Games | Suggested |
+|---|---|---|---|
+| Battle of the Bats | 4 | 108 (all completed) | Diamond 1 / 2 / 3 exact; **Diamond 4 has no match** |
+| Crimson Cup (`branded-light`) | 1 — "Field 1" | 12 | none (its fields are "diamond #1/#2") |
+| Free Cup | 1 — "Community Park" | 15 | none — **zero venues configured** |
+| Bye Demo | **0 — the panel is empty** | — | all 21 typed games are lane-tethered |
+
+**The banner and the panel**
+- [ ] Schedule page, Battle of the Bats: an amber banner reads **"4 locations typed by hand"** with
+      "108 games name a diamond as text…" and a **Review** button. It sits with (not instead of)
+      the "temporary facilities unresolved" banner — check they stack legibly.
+- [ ] Review → one row per NAME with its game count, not one row per game. Four rows, biggest first.
+- [ ] Diamond 1 / 2 / 3 carry a green **Exact match** chip and arrive pre-filled with the real
+      diamond. Diamond 4 carries an amber **No match** chip and an empty picker.
+- [ ] Under each picker, a line states the exact text that will land: *"Games will read Lions
+      Sports Field — Diamond 1"*. You never type that string — confirm it reads correctly before
+      applying.
+- [ ] Footer counts changes and games ("3 changes · 88 games"). Apply → the three rows become green
+      **Applied** rows with an **Undo**, and the banner drops to 1 name.
+
+**The three outcomes**
+- [ ] **Confirm:** apply Diamond 1 → open the schedule, those 39 games now show the real field, and
+      a **rename of that diamond on the Venues page immediately propagates to them** (proof they
+      hold a reference now, not text).
+- [ ] **Create:** on Diamond 4, choose *+ Create "Diamond 4" at Lions Sports Field* → applies, and
+      the new diamond appears on the Venues page. ⚠ Check the create option is **absent** for
+      Diamond 1 (that name already exists there — a second one would be permanently ambiguous).
+- [ ] **Leave as text:** choose it on any row → the line explains it stays checked only against
+      other games typed the same way. Nothing is written.
+- [ ] Free Cup (no venues): the only offer is *+ Create "Community Park" as a venue*, plus a
+      "Set up venues" link. Apply → the venue is created and 15 games point at it.
+- [ ] Bye Demo: the banner does not appear at all. Correct — its games belong to Resolve
+      Temporary Facilities.
+
+**⚠ The payoff — the reason this phase exists**
+- [ ] BEFORE converting Battle of the Bats, note the schedule health panel's conflict count.
+      AFTER converting Diamond 1 and Diamond 2, it should rise by **22 overlapping pairs**
+      (17 on Diamond 1, 5 on Diamond 2). Those are real double-bookings that no part of the
+      product could see, because 108 games said "Diamond 1" as text while 25 pointed at the
+      record. **A rise here is the pass condition, not a regression.**
+- [ ] The **"games not being checked" count does not move** — a typed name already counted as
+      located. That is expected; the number that moves is the conflict count above.
+
+**Undo, and the durable half**
+- [ ] Immediately after applying, press **Undo** → the exact original wording comes back (check a
+      game that used odd casing keeps its odd casing), and the row returns to the pending list.
+- [ ] Close the panel and reopen it → the Undo buttons are gone. Expected: the record is
+      session-scoped (no database change in this phase).
+- [ ] Below the pending rows, **"Already linked to a diamond"** lists each field with its game
+      count. Re-point one group to a different diamond → all its games move together. **This is
+      how a wrong pick is fixed tomorrow**, so confirm it works after a reload.
+
+**Nobody gets messaged (the most important check)**
+- [ ] Sign in as a family/coach following a Battle of the Bats team, or watch the notifications
+      table: convert a name affecting their game → **no "game moved" notice, no push, no email.**
+      A conversion changes the field reference, which the product legitimately reads as a move, so
+      this is the one failure that would reach real people. A test pins the route against it.
+
+**⚠ Found in `/review`, fixed, and NOT unit-testable — these two need your eyes**
+The test harness here only runs pure logic (no browser, no request tests), so these two fixes are
+covered by you or by nothing:
+- [ ] **An explicit "Leave as typed text" must survive an Apply.** Set row A to a real field and
+      row B to **Leave as typed text**. Apply. → Row B must STILL read "Leave as typed text"
+      afterwards. (Before the fix it silently snapped back to its pre-filled suggestion, so the
+      *next* Apply — made for some unrelated row — would have converted a name you had twice
+      declined to touch.)
+- [ ] **A stale panel must not leave litter behind.** Open the panel, then in another tab delete a
+      venue that one of the "Already linked" groups points at. Back in the panel, select that group
+      for a move AND pick "Create …" on a typed row, then Apply. → It refuses with a clear message,
+      and **no new empty venue/field appears** on the Venues page.
+- [ ] **Undo must not trample someone else's edit.** Apply a name, then (another tab) hand-edit one
+      of those games to a different field. Now press Undo. → The message says how many were undone
+      and that 1 game was changed by someone else and left alone — and that game keeps the other
+      admin's field.
+- [ ] **The refusal must not loop.** Two tabs, same tournament. In tab A select two names for Apply.
+      In tab B resolve one of them. Back in tab A, Apply → it explains the schedule changed, **and
+      the rows refresh**. Apply again → the remaining name goes through. (Before the fix, the panel
+      re-submitted the same doomed request forever.)
+- [ ] Narrow the window to ~700px: the banner's **Review** button and the **×** sit side by side
+      without Review stretching across the row.
+
+**Dismissing the nudge**
+- [ ] On a tournament where you deliberately left names as text, press the banner's **×** → it
+      hides. Reload → still hidden. Now type a NEW location on a game → the banner returns.
+      (Browser-scoped by design: "leave as text" cannot be stored without a schema change.)
+
+**Expected at QA, not defects**
+- Converting completed games makes a finished tournament start showing retrospective double-booking
+  warnings for games already played. Owner-decided 2026-08-10: the product should not lie about the
+  past, and it is what makes the 22 pairs visible.
+- Exact matches arrive pre-selected. Apply is still your click — nothing converts without it.
+- "Field 1" is never offered as "diamond #1". Near-misses are deliberately not guessed.
+- ⚠ **The write path has not been exercised over HTTP by an agent** — no dev server/auth in the
+  build session. The read side was validated against the live dev database (the table above is its
+  real output) and the write logic is unit-tested, but **your first Apply is the first real one.**
+  Undo immediately after the first Apply to confirm the round trip before doing the rest.
+- Undo does NOT delete a venue or field the apply created — an undone creation leaves an empty
+  record on the Venues page. Deliberate: deleting records on an undo is more dangerous than leaving
+  an unused one. Delete it by hand if you don't want it.
+- Creating a name that a venue already owns is refused rather than duplicated (a second
+  "Diamond 1" in one park would make that name permanently ambiguous), so a retry or double-click
+  cannot produce twins.
 
 ---
 

@@ -1,4 +1,9 @@
+import { normalizeToken } from '../normalize-token.ts';
 import { ImportParseError, type ImportFormat, type ParsedImportFile, type ParsedImportRow } from './types.ts';
+
+// Re-exported so the many existing `from './tabular.ts'` importers keep working. The rule itself
+// now lives at lib root — it decides venue-name identity too, so it cannot belong to import.
+export { normalizeToken };
 
 export function normalizeHeader(value: string): string {
   return value
@@ -7,10 +12,6 @@ export function normalizeHeader(value: string): string {
     .replace(/\([^)]*\)/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim();
-}
-
-export function normalizeToken(value: string): string {
-  return value.trim().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
 }
 
 export function isBlankRecord(values: Record<string, string>) {

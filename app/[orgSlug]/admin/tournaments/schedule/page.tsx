@@ -34,6 +34,8 @@ import { hasKnownPlacement } from '@/lib/venue-identity';
 import { formatVenueLocation } from '@/lib/venue-label';
 import TournamentFieldPicker, { fieldPickerValueForGame } from './components/TournamentFieldPicker';
 import ZeroVenuePrompt from './components/ZeroVenuePrompt';
+import ResolveLocationsModal from './components/ResolveLocationsModal';
+import { buildLocationResolvePlan, type LocationResolvePlan } from '@/lib/tournament-location-resolve';
 import { buildScheduleMetrics, getScheduleHealthRules } from '@/lib/schedule-metrics';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
@@ -113,6 +115,8 @@ export default function AdminSchedulePage() {
   const [conflictsOnly, setConflictsOnly] = useState(false);
   const [venueModalOpen, setVenueModalOpen] = useState(false);
   const [resolveFacilitiesOpen, setResolveFacilitiesOpen] = useState(false);
+  const [resolveLocationsOpen, setResolveLocationsOpen] = useState(false);
+  const [locationBannerDismissed, setLocationBannerDismissed] = useState(false);
   const [facilityLaneSelections, setFacilityLaneSelections] = useState<Record<string, string>>({});
   const [resolvingFacilities, setResolvingFacilities] = useState(false);
   const [resolveFacilitiesError, setResolveFacilitiesError] = useState<string | null>(null);
@@ -317,6 +321,11 @@ export default function AdminSchedulePage() {
   // Switching tournaments exits bracket-edit mode (the frozen editor division would
   // otherwise belong to the previous tournament).
   useEffect(() => { setEditingBracket(false); }, [tournamentId]);
+
+  // Same reason: the locations panel holds the previous tournament's names and its own undo
+  // history. Leaving it open across a switch would show one tournament's rows while addressing
+  // another's id — every action would fail, for no reason the admin could see.
+  useEffect(() => { setResolveLocationsOpen(false); }, [tournamentId]);
 
   // Restore filter state from localStorage when tournament changes. Skipped while
   // editing a bracket so a tournament switch can't flip viewMode and unmount the editor.
@@ -968,6 +977,49 @@ export default function AdminSchedulePage() {
   const unresolvedFacilityLanes = facilityLanes
     .filter(lane => selectedDivisionIds.has(lane.divisionId) && !lane.resolvedVenueId && unresolvedLaneGameCounts.has(lane.id))
     .sort((a, b) => a.sortOrder - b.sortOrder || a.label.localeCompare(b.label));
+  // Phase 3 — hand-typed field names awaiting review. Tournament-wide (not division-scoped), so
+  // resolving a name never leaves a puzzling remainder behind the division filter.
+  //
+  // Derived here rather than fetched: the review model is a pure function of games + venues, both
+  // of which this page already loads on every refresh, so asking the server for it would re-read
+  // the same two tables on every schedule action for a panel most tournaments never open.
+  const locationPlan: LocationResolvePlan | null = useMemo(() => {
+    if (games.length === 0) return null;
+    return buildLocationResolvePlan(games, {
+      venues: venues.map(venue => ({ id: venue.id, name: venue.name })),
+      facilities: venues.flatMap(venue =>
+        (venue.facilities ?? []).map(facility => ({ id: facility.id, venueId: venue.id, name: facility.name })),
+      ),
+    });
+  }, [games, venues]);
+
+  // Phase 3 — "leave as typed text" is a legitimate answer, but nothing in the database can
+  // remember it (Phases 1-3 are migration-free by design), so an organizer who deliberately
+  // keeps their typed names would be nagged forever. Dismissal is keyed to the EXACT set of
+  // names, so a newly typed one raises the banner again rather than hiding behind the old
+  // decision. Browser-scoped and deliberately so — this is a nudge, not a record.
+  const locationTokenSignature = useMemo(
+    () => (locationPlan?.typedGroups ?? []).map(group => group.token).sort().join('|'),
+    [locationPlan],
+  );
+  const locationDismissKey = tournamentId ? `flhq.locresolve.dismissed.${tournamentId}` : null;
+  useEffect(() => {
+    if (!locationDismissKey || !locationTokenSignature) {
+      setLocationBannerDismissed(false);
+      return;
+    }
+    try {
+      setLocationBannerDismissed(window.localStorage.getItem(locationDismissKey) === locationTokenSignature);
+    } catch {
+      setLocationBannerDismissed(false);
+    }
+  }, [locationDismissKey, locationTokenSignature]);
+  const dismissLocationBanner = useCallback(() => {
+    setLocationBannerDismissed(true);
+    if (!locationDismissKey) return;
+    try { window.localStorage.setItem(locationDismissKey, locationTokenSignature); } catch { /* private mode */ }
+  }, [locationDismissKey, locationTokenSignature]);
+
   const statusCounts: Record<string, number> = {
     scheduled: divisionGames.filter(g => g.status === 'scheduled').length,
     cancelled: divisionGames.filter(g => g.status === 'cancelled').length,
@@ -1756,6 +1808,48 @@ export default function AdminSchedulePage() {
         </div>
       )}
 
+      {/* Phase 3 — field names typed by hand, tournament-wide. Same shape as the banner above
+          on purpose: both are a small pile of work with a button on it. */}
+      {/* Hidden while a reload is in flight: during a tournament switch the id has already changed
+          while games still describe the previous one, and a dismissal taken in that window would
+          file the old tournament's names under the new tournament's key. */}
+      {locationPlan && locationPlan.typedGroups.length > 0 && !locationBannerDismissed && !gamesLoading && (
+        <div className={styles.facilityResolveBanner}>
+          <div className={styles.facilityResolveCopy}>
+            <MapPin size={14} />
+            <div>
+              <strong>
+                {locationPlan.typedGroups.length} {locationPlan.typedGroups.length === 1 ? 'location' : 'locations'} typed by hand
+              </strong>
+              <span>
+                {locationPlan.typedGameCount} {locationPlan.typedGameCount === 1 ? 'game names' : 'games name'} a{' '}
+                {fieldNoun.toLowerCase()} as text, so {locationPlan.typedGameCount === 1 ? "it isn't" : "they aren't"} checked
+                against your real {fieldNoun.toLowerCase()}s.
+              </span>
+            </div>
+          </div>
+          <div className={styles.locationResolveActions}>
+            <button
+              type="button"
+              className="btn btn-outline btn-data"
+              onClick={() => setResolveLocationsOpen(true)}
+              disabled={isLocked}
+            >
+              <MapPin size={13} /> Review
+            </button>
+            <button
+              type="button"
+              className={styles.locationResolveDismiss}
+              onClick={dismissLocationBanner}
+              aria-label="Hide this notice"
+              title="Hide this notice until a new location is typed"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {tournamentLoading || gamesLoading ? (
         <div className="empty-state">
           <RefreshCw size={32} className="spin" style={{ opacity: 0.4 }} />
@@ -1961,6 +2055,19 @@ export default function AdminSchedulePage() {
             </div>
           </div>
         </div>
+      )}
+
+      {resolveLocationsOpen && locationPlan && (
+        <ResolveLocationsModal
+          plan={locationPlan}
+          venues={venues}
+          noun={fieldNoun}
+          orgSlug={orgSlug ?? ''}
+          tournamentId={tournamentId ?? ''}
+          onClose={() => setResolveLocationsOpen(false)}
+          onGamesChanged={refresh}
+          onCreateVenue={() => { setResolveLocationsOpen(false); setVenueModalOpen(true); }}
+        />
       )}
 
       {(modal === 'add' || modal === 'edit') && (

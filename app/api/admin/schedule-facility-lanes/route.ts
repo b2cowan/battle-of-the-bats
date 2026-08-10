@@ -1,4 +1,11 @@
-import { forbidden, getAuthContextWithScope, requireTournamentInOrg, scopeGuard, unauthorized } from '@/lib/api-auth';
+import {
+  forbidden,
+  getAuthContextWithScope,
+  requireTournamentInOrg,
+  requireWritableTournament,
+  scopeGuard,
+  unauthorized,
+} from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
@@ -42,25 +49,6 @@ function mapLane(row: LaneRow) {
 
 function isMissingLaneTable(error: { code?: string; message?: string } | null) {
   return error?.code === '42P01' || (error?.message ?? '').includes('schedule_facility_lanes');
-}
-
-async function requireWritableTournament(ctx: Awaited<ReturnType<typeof getAuthContextWithScope>>, tournamentId: string) {
-  if (!ctx) return unauthorized();
-  const denied = scopeGuard(ctx, tournamentId);
-  if (denied) return denied;
-  const wrongOrg = await requireTournamentInOrg(ctx, tournamentId);
-  if (wrongOrg) return wrongOrg;
-
-  const { data } = await supabaseAdmin
-    .from('tournaments')
-    .select('status')
-    .eq('id', tournamentId)
-    .single();
-  if (data?.status === 'completed') {
-    return json({ error: 'This tournament is completed and locked. Set the status to Active in Event Settings to make changes.' }, 409);
-  }
-
-  return null;
 }
 
 async function ensureDivisionInTournament(tournamentId: string, divisionId: string) {
