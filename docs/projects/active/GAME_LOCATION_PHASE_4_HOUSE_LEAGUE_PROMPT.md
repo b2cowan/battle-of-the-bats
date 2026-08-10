@@ -4,7 +4,7 @@
 **Raised by:** owner ruling R3, 2026-08-08
 **Status:** ✅ **EXECUTED 2026-08-08** — see the plan's Phase 4 section for what was built and the
 two owner decisions taken at build time (org venue library as the field source; one booking pool).
-Mig 229 is dev-only; prod application is an owner decision. Kept for the record.
+Mig 229 was dev-only when this prompt was written; it **reached prod 2026-08-10** (verified live). Kept for the record.
 
 ---
 

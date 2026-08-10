@@ -1,6 +1,7 @@
 # PM Brief — "The schedule can tell you you've double-booked a diamond"
 
-> **Created:** 2026-08-07 · **Status:** Planning, nothing built
+> **Created:** 2026-08-07 · **Status:** Phases 0–4 complete on `dev`; Phase 5 deferred by decision.
+> Remaining: **owner QA, then release.** No database change outstanding.
 > **Plan:** `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md`
 > **Raised by:** owner, 2026-08-07, during day-of volunteer QA
 
@@ -37,8 +38,18 @@ and far less urgent, than it first appeared.
 
 **The bug the volunteer reported is a different bug.** The empty "All fields" dropdown they hit was
 on a tournament whose games *do* have proper field records — so the typed-name problem doesn't
-explain it. It needs reproducing on its own. Worth being explicit: **this work would not have fixed
-what they saw**, and the plan's first step is to hand that defect back rather than quietly claim it.
+explain it. Worth being explicit: **this work would not have fixed what they saw**, and the plan's
+first step was to hand it back rather than quietly claim it.
+
+✅ **Closed 2026-08-10 — and it was never a defect.** The test tournament the volunteer was looking at
+only learned to have fields *on the day of the report*. Before that, its games genuinely had no field
+attached, so a list of "the fields today's games are on" was correctly empty. Nothing in the product
+was broken, and there is nothing to hand back.
+
+That is only knowable because this work refused to absorb it. Had the first phase shipped as "fixes
+the volunteer's dropdown", a gap in test data would have been recorded forever as a fault in the
+scorekeeper — and the actual lesson would have been lost: **an empty field list means check the day
+and the data, not that something is broken.**
 
 We also found something the original write-up didn't cover: **house league has no field structure at
 all**, so a league running all season across shared diamonds gets *zero* clash detection — a weekly
@@ -83,11 +94,11 @@ line, not first.
 
 | Phase | What | Schema change? |
 |---|---|---|
-| 0 | Reproduce the volunteer's empty dropdown — hand it back to the day-of work | No |
+| 0 | Reproduce the volunteer's empty dropdown — ✅ **CLOSED 2026-08-10: test-data timing, never a product defect** | No |
 | 1 | **Close the checking gap** — both engines agree; say what can't be checked | **No** |
 | 2 | Stop new drift — picking a field becomes the default path — ✅ **BUILT on dev 2026-08-08** (to approved mockups), owner QA pending | **No** |
 | 3 | Tidy the existing typed names — admin reviews every match, nothing auto-applied — ✅ **BUILT on dev 2026-08-10** (to approved mockups), owner QA pending | **No** |
-| 4 | House league gets the same field model (**ruled**); coach events ruled out — ✅ **BUILT on dev 2026-08-08**, owner QA + prod migration decision pending | **Yes — the only one** |
+| 4 | House league gets the same field model (**ruled**); coach events ruled out — ✅ **BUILT on dev 2026-08-08**; its database change **applied to production 2026-08-10**, owner QA pending | **Yes — the only one** |
 | 5 | A database-level rule — **deferred, not proposed** | Yes, later |
 
 Phases 1-3 need no database migration at all. That's deliberate: this exact column has a history of
@@ -161,8 +172,9 @@ games are actually at, including typed-only locations that used to be unreachabl
 canonical format). Games saved before this phase may show a hyphen instead; they pick up the
 canonical form the next time they're edited or imported.
 
-**Still with the owner:** browser QA (QA ledger has the script). The volunteer's empty field
-dropdown remains a separate defect — Phase 2 does not claim it.
+**Still with the owner:** browser QA (QA ledger has the script). The volunteer's empty field dropdown
+is a separate matter Phase 2 does not claim — and it has since been **closed as test-data timing**
+(see the note above).
 
 ## Phase 3 — built 2026-08-10 (dev), with three owner decisions
 

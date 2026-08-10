@@ -108,7 +108,7 @@ the QA signal.
   ⚠ The coach-sandbox attendance drift in `check:demos` pre-dates all of this and belongs to
   another session — do not chase it.
 - `npm run typecheck` (shared modules), full tests, `npm run verify:changed` before handoff.
-- Migs 229 (dev-only) and prod promotion remain owner decisions — nothing schema-side.
+- ~~Migs 229 (dev-only) and prod promotion remain owner decisions~~ — **229 reached prod 2026-08-10** (verified live). Nothing schema-side in this phase regardless.
 
 ## 6 · Before you build
 

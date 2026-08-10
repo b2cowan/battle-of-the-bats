@@ -1,6 +1,6 @@
 # Game location — one source of truth — Implementation Plan
 
-> **Status:** Planning — nothing built
+> **Status:** Phases 0-4 COMPLETE (P3 = `f9b22a83`, 2026-08-10; **Phase 0 closed 2026-08-10 — fixture timing, never a defect**). Phase 5 deferred by decision. Mig 229 ✅ on prod 2026-08-10 (verified live). **Remaining: owner QA + release.**
 > **Created:** 2026-08-07
 > **Branch:** dev
 > **Prompt:** `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN_PROMPT.md` (owner, 2026-08-07)
@@ -49,7 +49,7 @@ puts games on the wrong field" — currently has **no real customer data to dama
 scoped per tournament, is a reviewable list, not a fuzzy-match problem. The backfill drops from
 "dangerous migration" to "admin-reviewed tidy-up", and it drops down the priority order.
 
-### 0.2 The reported symptom is a different defect — do not fold it in
+### 0.2 The reported symptom is a different defect — do not fold it in ✅ (and it turned out to be no defect at all)
 
 The tournament the volunteer was on (`qa-lab-summer-showdown`, org `qa-cancel-lab`) has **two games,
 both carrying a real `diamond_id`**, and **both venue records exist**:
@@ -69,8 +69,15 @@ working tree.
 Most likely: the fixture was viewed **before** that seeder run (the payload returns `venues: []`
 whenever the day has no games at all — `emptyPayload()`), or the seed partially failed at the time.
 
-> ⚠ **This plan does not fix the empty dropdown.** It must be reproduced and tracked on its own
-> (Phase 0). Shipping this plan and declaring the volunteer's bug fixed would be wrong.
+> ✅ **SETTLED 2026-08-10 (Phase 0): the first guess was right, and it is now proven.** Commit
+> `96c8e346` — which taught the QA-lab seeder to create venues and set `diamond_id` — is dated
+> **2026-08-07, the same day as the report**, and before it the seeder contained **no reference to
+> `diamonds` whatsoever**. So the fixture's games genuinely had no venue for the earlier part of that
+> day, and a filter built from venue references was **correctly empty**. Not a product defect, and
+> nothing to hand back.
+>
+> ⚠ **This plan still does not claim the empty dropdown as fixed** — it was never broken. Keeping
+> those two things separate is what made the real cause findable.
 
 ### 0.3 There are FOUR representations, not three
 
@@ -169,14 +176,33 @@ Phases 1-3 require **no migration**. This is deliberate: prompt §5 warns that `
 production history of a `NOT NULL` failure (migration 202), and §0.1 shows prod has nothing to
 backfill. A constraint is explicitly deferred to Phase 5 and is **not** proposed for approval here.
 
-### Phase 0 — Reproduce the volunteer's empty dropdown (separate defect)
-- [ ] Re-run `node scripts/seed-qa-day-fixtures.mjs`; confirm the two `diamonds` rows and both `games.diamond_id` values land (§0.2)
-- [ ] Load `/qa-cancel-lab/scorekeeper` on 2026-08-07 and confirm "All fields" lists *Lab Field 1* and *Lab Field 2*
-- [ ] If it reproduces, file it against the day-of volunteer work — **do not** attach it to this plan
-- [ ] If it does not reproduce, record it as fixture-timing and close it with that note
+### Phase 0 — Reproduce the volunteer's empty dropdown ✅ CLOSED 2026-08-10 — **fixture timing, never a product defect**
+- [x] Confirmed the two `diamonds` rows and both `games.diamond_id` values are present — read from the
+  live dev database rather than re-running the seeder, because the state the step existed to verify
+  was already there. (Deliberately did NOT re-run `seed-qa-day-fixtures.mjs`: it resets three
+  fixtures that other pending ledger sections use as their setup, for no gain here.)
+- [x] Established what the "All fields" list would show, from the code rather than a click — and the
+  answer is correct in both directions: the filter is built from the **venues the day's games
+  reference** (Phase 2 made it day-scoped), listing VENUES not surfaces, so this fixture's two
+  zero-surface venues both appear on the game day. On a day with no games the payload is empty by
+  construction, and the screen has shown a titled **"No games today"** state since 2026-05-23 — so
+  an empty filter there is explained, not silent.
+- [x] **Closed as fixture timing — and now PROVEN, not hypothesised.** §0.2 guessed the fixture was
+  viewed before the seeder run that gave those games their venues. Git settles it: the QA-lab seeder
+  gained venues in commit **`96c8e346`, dated 2026-08-07 — the same day as the report** (before it,
+  the seeder contained zero references to `diamonds`, so its games had no venue at all). A field
+  filter built from venue references was therefore **correctly empty** on that fixture until that
+  commit landed. Nothing was broken; the fixture had no fields yet.
+- [x] Nothing to file against the day-of volunteer work.
 
-> Guard against the failure this plan is most likely to cause: declaring the reported bug fixed by
-> a change that never touched it.
+> The guard held. This plan never claimed the reported bug, and the reported bug turned out not to be
+> a bug — which is only knowable because the plan refused to fold it in. Had Phase 1 shipped as "fixes
+> the volunteer's dropdown", the real cause (a fixture that had no venues for the first half of that
+> day) would have been permanently mislabelled as a product fault in the scorekeeper.
+
+⚠ **The empty-dropdown symptom is not proof of a venue-data problem.** Anyone meeting it again should
+check, in order: is there a game on the selected day at all (the screen says so), and do those games
+carry a venue reference. Both are data questions, not filter questions.
 
 ### Phase 1 — Close the checking gap ✅ BUILT on dev 2026-08-08 (no migration)
 - [x] **New shared module `lib/venue-identity.ts`** — one answer to "same surface?", written module-agnostic per R3 (games / league games / league practices), reused verbatim in Phase 4
@@ -370,7 +396,8 @@ Built to owner-approved mockups (Claude Artifact `phase2-field-authoring-mockups
   on, plus one `text:` entry per typed-only location (matched client-side with the same
   `normalizeLocationText`), so an unused venue no longer pads the list and a typed-only game is no
   longer invisible to the filter. Placeholder text gets no entry (R2). ⚠ The volunteer's empty
-  "All fields" dropdown remains a SEPARATE defect (§0.2 / Phase 0) — not claimed here.
+  "All fields" dropdown was a SEPARATE issue (§0.2 / Phase 0) — not claimed here, and since **closed
+  as fixture timing rather than a defect**.
 - [x] **Sport-neutral throughout**: modal label, picker options, inline row, and the import dialog's
   unmatched-copy all take the noun from `getSportPack(...).defaultFacilityType` →
   `FACILITY_TYPE_LABELS`.
@@ -668,7 +695,7 @@ so no `href` needed updating (verified by grep).
 - [x] **DECIDED (R3, 2026-08-08): house league uses the same venue + surface model as tournaments.** Zero prod rows (§0.6) means this is a schema decision made before there is data to migrate — that window closes the moment a customer schedules a league game, so this phase should not drift to the end. **Prod re-measured 2026-08-08 before building: still 0 games / 0 practices** — the window was open
 - [x] **DECIDED (owner, 2026-08-08): league fields come from the ORG venue library** (`org_venues` / `org_venue_facilities`), referenced **directly** — no per-season copies. A league is org-level and season-long; direct references make clash detection work across seasons/divisions automatically and give the (previously 0-row) library its first consumer. Known accepted gap: tournament games use per-event copies, so a tournament and a league game on the same physical field still never compare (pre-existing, logged in Phase 1's review notes)
 - [x] **DECIDED (owner, 2026-08-08): ONE booking pool — practices and games block each other.** A practice occupying a surface blocks a game on it and vice versa
-- [x] Migration **229** (`229_league_venue_refs.sql`, **applied to dev only** — prod is an owner decision): `org_venue_id` + `org_venue_facility_id` (both ON DELETE **SET NULL** — the anti-migration-202 choice) on both tables, + **`league_games.ends_at`** (build decision: one pool with practices needs comparable windows; engine falls back to 90 min when null), + 4 FK indexes. Schema-parity baseline re-initialized to accept the dev-only divergence
+- [x] Migration **229** (`229_league_venue_refs.sql`, **applied to dev AND prod — prod landed 2026-08-10, verified against live `information_schema`: six columns nullable, four FKs SET NULL, zero structural drift; parity baseline lowered to 0**): `org_venue_id` + `org_venue_facility_id` (both ON DELETE **SET NULL** — the anti-migration-202 choice) on both tables, + **`league_games.ends_at`** (build decision: one pool with practices needs comparable windows; engine falls back to 90 min when null), + 4 FK indexes. Schema-parity baseline re-initialized to accept the dev-only divergence
 - [x] **Same unit of work:** `DATA_DICTIONARY.md` updated + `refresh:snapshots` run (dev + prod) — `check:dictionary` green
 - [x] **`lib/venue-identity.ts` reused VERBATIM** (zero edits) via new pure module `lib/league-schedule-conflict.ts` (ms-window overlap over `LeagueBooking`s; no buffer severity — league has no turnaround config; cancelled AND postponed vacate the slot) + server rail `lib/league-venue.ts` (`resolveLeagueVenueSelection` = the only venue writer, derives the `Venue — Facility` display string so `location` is demoted to a cache exactly like Phase 1's model; `checkLeagueBookings` = org-wide save-time check, games+practices, all seasons, `.eq('org_id')` on every pool query)
 - [x] Authoring picks a field like tournaments: `FieldPicker` (venue/surface dropdown from the library + explicit "Somewhere else (type it)" escape) on the game modal, the practice modal and the generator; empty library degrades to free text + a "set up your fields once" link to the library page. Game modal gains optional **End time**

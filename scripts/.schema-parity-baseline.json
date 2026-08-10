@@ -1,18 +1,4 @@
 {
   "_comment": "ACCEPTED dev↔prod divergences (scripts/check-schema-parity.mjs). Every entry is debt, not a decision — the target is an empty object. A NEW divergence, or an accepted one whose signature changes, fails the gate. Lower this as items are reconciled; re-init only after refreshing the snapshots.",
-  "accepted": {
-    "column:only-dev:league_games.ends_at": "",
-    "column:only-dev:league_games.org_venue_facility_id": "",
-    "column:only-dev:league_games.org_venue_id": "",
-    "column:only-dev:league_practices.org_venue_facility_id": "",
-    "column:only-dev:league_practices.org_venue_id": "",
-    "constraint:only-dev:league_games.league_games_org_venue_facility_id_fkey": "",
-    "constraint:only-dev:league_games.league_games_org_venue_id_fkey": "",
-    "constraint:only-dev:league_practices.league_practices_org_venue_facility_id_fkey": "",
-    "constraint:only-dev:league_practices.league_practices_org_venue_id_fkey": "",
-    "index:only-dev:idx_league_games_org_venue": "",
-    "index:only-dev:idx_league_games_org_venue_facility": "",
-    "index:only-dev:idx_league_practices_org_venue": "",
-    "index:only-dev:idx_league_practices_org_venue_facility": ""
-  }
+  "accepted": {}
 }

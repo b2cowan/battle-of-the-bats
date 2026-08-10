@@ -69,7 +69,8 @@ have **zero configured fields** and the UI silently accepted typed text anyway.
 6. **Scorekeeper field filter** lists the fields the day's games are actually on — so an unused
    venue doesn't pad the list and a typed-only game isn't invisible
    (`app/api/official/[orgSlug]/score/get-score.ts`).
-   ⚠ Related but SEPARATE: the volunteer's empty "All fields" dropdown is a **different defect**
+   ✅ CLOSED 2026-08-10 as fixture timing (the seeder had no venues until the day of the report), so
+   this was never a defect. Kept for the record. Related but SEPARATE: the volunteer's empty "All fields" dropdown is a **different defect**
    (plan §0.2 / Phase 0) — do not claim this fixes it.
 7. **Sport-neutral labels throughout** — the surface noun comes from the Sport Pack
    (`getSportPack(...).defaultFacilityType` → `FACILITY_TYPE_LABELS`), never hard-coded. Phase 4's
@@ -96,7 +97,7 @@ have **zero configured fields** and the UI silently accepted typed text anyway.
   schedule screens, adjust in the same unit of work if needed, and run `npm run check:demos`.
 - One shared `dev` branch; explicit pathspecs only; `[orgSlug]`/bracket dirs need `:(literal)`.
 - `npm run typecheck` (shared modules), full tests, `npm run verify:changed` before handoff.
-- ⚠ Migration 229 is applied to **dev only** (deliberate; owner decision pending for prod) and
+- ⚠ Migration 229 was applied to **dev only** when this prompt was written; it **reached prod 2026-08-10** (verified live). At the time it was
   mig 226 is applied nowhere. Neither concerns Phase 2 — but do not "helpfully" apply or widen
   anything schema-side.
 

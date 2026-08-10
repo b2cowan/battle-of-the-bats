@@ -148,7 +148,7 @@ the sequence.
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
 | **2B** | On a phone — and one of them outdoors | §2.1 · §2.2 · §2.5 · §2.6 | 📱 | LIVE |
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
-| **2D** | House league schedule — fields + double-booking | §8 | 🖥 | ON DEV · mig **229** dev-only |
+| **2D** | House league schedule — fields + double-booking | §8 | 🖥 | ON DEV · mig **229** ✅ on prod |
 | **2E** | Tournament schedule — a field is picked, not typed | §9 · §9b | 🖥 | ON DEV · no migration |
 | **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
 | **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 · §5.5 | 🖥📱 | Mixed · §5.5 ON DEV |
@@ -207,8 +207,10 @@ coach sandbox) · §1.16 (needs two teams in one Club-plan org set up first).
 - ⚠ **Dev and prod are schema-identical again as of 2026-08-06** — 225, 227 and 228 were applied to
   production and the snapshots refreshed. **226 followed on 2026-08-08** (the demo production launch):
   the coach sandbox's nightly re-anchor is scheduled on **both** databases, so its dates move
-  overnight everywhere. The remaining exception is **229** (house-league venues, dev-only — see
-  the release-gate table at the end). Nothing else here is blocked by a database change.
+  overnight everywhere. **229 followed on 2026-08-10** (house-league venues) — verified against live `information_schema` on
+  both databases: all six columns present and nullable, all four foreign keys `SET NULL`, zero
+  structural drift. **No database change blocks anything in this ledger now**, and the schema-parity
+  baseline has been lowered to 0 accordingly.
 
 ---
 
@@ -1848,16 +1850,17 @@ Archived plan: `archive/FREE_COACH_OVERVIEW_COHERENCE_PLAN.md` (its PM brief's "
 
 ## Group 2D · House league schedule — a field is picked, not typed
 
-One sitting at a desk, one org. **The whole section is ON DEV (`240e8fbf`, 2026-08-08) and carries
-migration 229, applied to dev only** — promoting the code without applying 229 to prod breaks every
-league schedule page, so this gate has a release-manager step attached, like 226 does.
+One sitting at a desk, one org. **The whole section is ON DEV (`240e8fbf`, 2026-08-08). Its migration 229 is
+now APPLIED TO PRODUCTION (2026-08-10, verified against live `information_schema`)**, so the
+release-manager step this gate used to carry is discharged — the code is safe to promote whenever QA
+clears it.
 
 Setup: `dev-league-org` (or `dev-club-org`) → **Dev House League 2026** (both already hold seeded
 games with typed locations like "Maple Grove Park — Diamond 1", which is deliberate — they exercise
 the typed-text path). The org venue library starts **empty everywhere**, and that is the first step,
 not an obstacle.
 
-### 8 🖥 House league fields + double-booking protection — **ON DEV** (mig 229, dev-only)
+### 8 🖥 House league fields + double-booking protection — **ON DEV** (mig 229 ✅ on prod)
 Plan: `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md` Phase 4. Owner rulings baked in: fields come from the
 org Venue Library (not per-season copies); games and practices are ONE booking pool; "TBD" is not a
 field name.
@@ -1960,8 +1963,10 @@ surface picking; import auto-resolves EXACT name matches only.
 **Scorekeeper filter reflects the day**
 - [ ] A day with games on 2 of 5 configured fields: the "All fields" filter lists those 2 only.
 - [ ] A game placed by typed text shows as a "…" (typed) entry, and picking it filters to that game.
-- ⚠ The volunteer's original empty "All fields" dropdown is a SEPARATE defect (plan §0.2) — do not
-  mark it fixed from this section.
+- ✅ The volunteer's original empty "All fields" dropdown is **CLOSED as fixture timing, not a product
+  defect** (Phase 0, 2026-08-10): the QA-lab seeder only learned to create venues on 2026-08-07, the
+  same day as the report, so until that landed those games had no venue and the filter was correctly
+  empty. Nothing to test here, and nothing to hand back.
 
 **Found in `/review`, fixed — worth a targeted poke**
 - [ ] Edit ONLY the notes on a game whose stored label still shows the legacy hyphen → save →
