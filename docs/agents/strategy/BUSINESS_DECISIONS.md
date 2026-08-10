@@ -8,6 +8,37 @@
 
 ---
 
+### 2026-08-10 — THE DOORS ARE OPEN: both demos are public on production, and the funnel now has a zero-contact proof path for every live product
+
+**Status:** Decided AND executed (owner-directed across 2026-08-08 → 2026-08-10; doors: *"flip the doors"*; placements: *"looks good, I approve those recommendations"* + the Club-block/reroute follow-ups: *"go ahead"*). Live on production as of the 2026-08-10 release (verified against the live site and databases, not plans).
+
+**Decision:** The three-part go-public decision (Proposed 2026-08-07, below) is executed in full — with the placement set ratified alongside it:
+
+1. **Both demo worlds are seeded on production** (2026-08-08) and **re-anchor on schedule on both databases** — the demos self-maintain; nothing depends on a person remembering to freshen them.
+2. **The marketing doors are ON** (2026-08-10, a production-scoped setting — one deliberate action, exactly as the 2026-08-02 ruling prescribed). This is the entry that ruling's handoff recorded as owed "when the production door opens."
+3. **Placements (design ruling 2026-08-10, binding in `memory/design_decisions.md`):** the demo is *proof one step after every claim, never competing with the ask*. Per product: homepage hero twin door → persona page (hero + bottom) → a text-weight "see it first" line under the two paid pricing cards. **No standalone chooser and no nav item** — the hero's side-by-side doored cards are the browse experience. The both-curious visitor is served on `/for-clubs` ("Both halves are live today", two doors — coming-soon becomes proof-by-parts) and, in a follow-up build, by an in-demo "walk the other half" cross-door.
+4. **Route-to-proof:** every Club touchpoint now navigates to the Club page (where the two doors and the interest form both live) instead of opening the interest form directly. League Plus touchpoints deliberately stay form-first — no demo exists there, and a door pattern must never promise one.
+
+**Resolution of the 2026-08-07 proposal's three parts:** part 1 (the coach front door) executed and extended; part 2 (per-demo addresses — `/see-it-live/tournament`) **not executed**, the bare address still means the tournament demo; part 3 (bare-address chooser) **deferred by ruling** — revisit only when a campaign needs a single shareable URL.
+
+**Rationale:** The funnel changed shape: a stranger can now find, walk, and sign up for either live product with zero contact and zero forms — the ungated-door posture (2026-08-02) applied to the whole shop window. The demos went public only after both were verified self-maintaining and health-checked on production; the two demo-integrity defects found during the launch window (a Saturday false alarm in the checker, a Sunday roll-forward in the re-anchor) were fixed and shipped in the same release, so the surfaces being advertised are the surfaces being maintained.
+
+**Affects:** GTM funnel (zero-contact proof path), marketing entry points on all five surfaces, demo discoverability, express-interest routing for Club.
+
+**Handoff:**
+```
+HANDOFF → /marketing — door-label + demo-adjacent copy pass (owed since the door-open step was
+  defined; labels shipped as working copy: "See it live — no sign-up", "See a live tournament
+  first", "See a coach's season first", the Club block's "Both halves are live today").
+HANDOFF → owner — two standing revisit triggers, unchanged: the bare-address chooser (when a
+  campaign needs one URL) and the 2027-01-01 ungated-door re-ask in the January conversion runbook.
+HANDOFF → /plan — the in-demo cross-door follow-up build, when scheduled.
+```
+
+**Supersedes:** the 2026-08-07 PROPOSED doors entry below (parts 1+gating executed, part 2 dropped for now, part 3 deferred by the no-chooser ruling).
+
+---
+
 ### 2026-08-07 — The homepage states AVAILABILITY, not the promo calendar: the Founding Season is deliberately NOT announced on the persona cards, and the Coaches Portal card stops saying "coming soon"
 
 **Status:** Decided (owner delegated the call to `/strategy` on 2026-08-07 — *"go ahead with strategy and marketing"* — after being shown three options; the homepage correction itself was directed explicitly: *"we need to fix that"*). Not yet built.
@@ -60,7 +91,7 @@ HANDOFF → /plan
 
 ### 2026-08-07 — PROPOSED: matching "See it live" doors for both demos, and addresses that say which demo they open
 
-**Status:** **Proposed** — recommended, NOT ratified. The owner has agreed to the *shape* in discussion but has not decided the gating question underneath it (below), and the marketing doors remain hidden in production builds by default.
+**Status:** **Superseded by "2026-08-10 — THE DOORS ARE OPEN"** (part 1 executed and extended; part 2 — per-demo addresses — not executed, the bare address still means the tournament demo; part 3 — the bare-address chooser — deferred by the no-standalone-chooser ruling, revisit when a campaign needs one URL).
 
 **Proposal:** Three changes to how a prospect reaches the two no-login demos.
 

@@ -80,7 +80,7 @@ export default async function ForCoachesPage() {
           </div>
           {/* The objection this answers — "is this another form?" — is why the door converts. */}
           {showSandboxDoor && (
-            <p className={styles.seeItLiveNote}>No sign-up, no email. Walk a real team&apos;s season — tryout day to season&apos;s end.</p>
+            <p className={styles.seeItLiveNote}>No sign-up, no email. Walk a full season — tryout day to season&apos;s end.</p>
           )}
           <p className={styles.heroNote}>
             {checkoutOpen ? (

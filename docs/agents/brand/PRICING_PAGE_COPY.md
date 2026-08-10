@@ -852,3 +852,27 @@ Free Coach Portal Experience **Phase B3**. Records the in-product upsell copy th
 - **Explore capability list** gains **"Assistant coaches with their own sign-in"** (verified: the Premium portal's Staff section is head-coach-gated only, no plan gate — accurate for the standalone $29 portal, not a Club-only capability). The free `basic_coach_*` model has no assistant-coach concept at all, so this is the only place a free coach can learn it exists.
 
 **Feature-vocabulary additions to the approved list** (previously: game lineups · attendance · team documents · dues schedules & reminders · season budget · carry your roster into next season): **assistant coaches with their own sign-in**, **season history across every event**, **playing time**, **team awards**. All four verified against shipped Premium surfaces (Staff; Insights → Results / Playing time / Attendance / Awards).
+
+---
+
+## AMENDMENT — Demo-door lines on the pricing surfaces (applied 2026-08-10)
+
+Records the demo-adjacent copy that shipped with the door placements (design ruling 2026-08-10;
+BUSINESS_DECISIONS.md "THE DOORS ARE OPEN"). No price, plan-name, capacity, or gate change.
+
+**New copy (marketing pricing surfaces only, rendered only while the demo doors are on):**
+- **Under the Tournament Plus card's CTA:** "Not ready? See a live tournament first →"
+- **Under the Premium Coaches Portal card's CTA:** "Not ready? See a coach's season first →"
+  — text-weight lines BELOW the buy CTA, never buttons; product-specific wording is deliberate
+  here (both doors share one screen) and deliberately NOT used in the homepage hero, where the
+  twin doors share the ratified "See it live — no sign-up" label and the card titles disambiguate.
+- **Club segment card** (the "What does your role look like?" picker): CTA is now
+  **"See what Club includes"** and NAVIGATES to /for-clubs — the express-interest form waits
+  there, one scroll below the "Both halves are live today" demo block. (Route-to-proof ruling;
+  League Plus's segment card deliberately stays "Express interest in League Plus" — no demo
+  exists for it, and a door pattern must never promise one.)
+
+**Voice-pass fixes in the same session:** the /for-coaches door note reads "Walk a full season —
+tryout day to season's end" (dropped an ambiguous "real team's"); the /for-clubs block body reads
+"tournaments and the Premium Coaches Portal" (dropped "the tournament platform"); the 2026-08-10
+changelog demo line broadened to "homepage, product pages, and pricing."

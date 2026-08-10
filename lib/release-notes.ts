@@ -57,7 +57,7 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       },
       {
         category: 'new',
-        text: 'The homepage and organizer pages now link straight into live, click-through demos of the tournament and coach experience — see the real product before you sign up for anything.',
+        text: 'The homepage, product pages, and pricing now link straight into live, click-through demos of the tournament and coach experience — see the real product before you sign up for anything.',
       },
       {
         category: 'fixed',

@@ -115,8 +115,8 @@ export default async function ForClubsPage() {
                 Both halves are live today
               </p>
               <p className="font-mono text-sm text-fl-text leading-relaxed max-w-2xl">
-                Club bundles what&apos;s already running: the tournament platform and the Premium
-                Coaches Portal. Walk both right now — no sign-up — and express interest for the day
+                Club bundles what&apos;s already running: tournaments and the Premium Coaches
+                Portal. Walk both right now — no sign-up — and express interest for the day
                 they&apos;re one product.
               </p>
               <div className="flex items-center gap-4 flex-wrap">
