@@ -36,6 +36,9 @@ const CROSS_SELLS: Array<{
    *  express-interest modal. Absent = the product has no live state to advertise yet. */
   liveHref?: string;
   liveCta?: string;
+  /** Unconditional navigation — the destination page is worth visiting regardless of any gate
+   *  (Club's page carries the two demo doors). Wins over the modal always. */
+  alwaysHref?: string;
   initialPlanInterest: string[];
   initialFeaturesInterested: string[];
 }> = [
@@ -51,7 +54,11 @@ const CROSS_SELLS: Array<{
     label: 'Club',
     q: 'Running a full club with rep teams?',
     body: 'Club adds rep teams, accounting, and coaching staff management to the full tournament and house league toolkit.',
-    cta: 'Express interest in Club',
+    cta: 'See what Club includes',
+    // 2026-08-10 reroute: to the Club page, not straight to the interest form — that page now
+    // carries both demo doors, and the form waits there. (League Plus above stays form-first on
+    // purpose: its page has no demo to show yet.)
+    alwaysHref: '/for-clubs',
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
   },
@@ -281,6 +288,7 @@ export default async function ForTournamentOrganizersPage() {
               // Only the Coaches Portal card carries liveHref today, so the team gate is the
               // right check; a future live cross-sell must key off its own plan's gate.
               const isLive = !!cs.liveHref && teamCheckoutOpen;
+              const linkHref = cs.alwaysHref ?? (isLive ? cs.liveHref : undefined);
               const content = (
                 <>
                   <span className={styles.crossSellLabel}>{cs.label}</span>
@@ -289,9 +297,9 @@ export default async function ForTournamentOrganizersPage() {
                   <span className={styles.crossSellCta}>{(isLive ? cs.liveCta : undefined) ?? cs.cta} →</span>
                 </>
               );
-              if (isLive) {
+              if (linkHref) {
                 return (
-                  <Link key={cs.label} href={cs.liveHref!} className={styles.crossSellCard}>
+                  <Link key={cs.label} href={linkHref} className={styles.crossSellCard}>
                     {content}
                   </Link>
                 );
@@ -329,6 +337,14 @@ export default async function ForTournamentOrganizersPage() {
             >
               Get Started Free
             </Link>
+            {/* The reader who finished the whole pitch and still isn't ready gets one more exit
+                that isn't "leave" (2026-08-10 door placements). */}
+            {showSandboxDoor && (
+              <Link href={SEE_IT_LIVE_PATH} className={styles.seeItLive}>
+                <span className={styles.seeItLiveDot} aria-hidden="true" />
+                See it live →
+              </Link>
+            )}
             <Link
               href="/pricing"
               className="font-mono text-sm uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"

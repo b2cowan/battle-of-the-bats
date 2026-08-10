@@ -4,6 +4,7 @@ import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -24,6 +25,11 @@ export default async function ForCoachesPage() {
   const checkoutOpen = !(await getPlanGatingMap()).team;
   const promoActive = isFoundingSeasonPromoActive('team');
   const startHref = '/coaches/start?source=for_coaches';
+  // The demo door (owner-ratified 2026-08-10) — same arrangement /for-tournament-organizers
+  // settled: solid "Start free" first, lime OUTLINE "See it live" with a live dot second. The
+  // sandbox is the proof; signup is still the ask. Independent of the checkout gate on purpose:
+  // the demo proves the product exists either way.
+  const showSandboxDoor = sandboxDoorsVisible();
   return (
     <main className="bg-pitch-black min-h-screen">
 
@@ -59,6 +65,12 @@ export default async function ForCoachesPage() {
                 Express interest
               </EarlyAccessModalTrigger>
             )}
+            {showSandboxDoor && (
+              <Link href={SEE_IT_LIVE_COACHES_PATH} className={styles.seeItLive}>
+                <span className={styles.seeItLiveDot} aria-hidden="true" />
+                See it live →
+              </Link>
+            )}
             <Link
               href="/pricing"
               className="font-mono text-xs uppercase tracking-widest text-data-gray border border-blueprint-blue/40 px-8 py-4 hover:border-blueprint-blue hover:text-fl-text transition-colors"
@@ -66,6 +78,10 @@ export default async function ForCoachesPage() {
               See all plans →
             </Link>
           </div>
+          {/* The objection this answers — "is this another form?" — is why the door converts. */}
+          {showSandboxDoor && (
+            <p className={styles.seeItLiveNote}>No sign-up, no email. Walk a real team&apos;s season — tryout day to season&apos;s end.</p>
+          )}
           <p className={styles.heroNote}>
             {checkoutOpen ? (
               promoActive ? (
@@ -221,13 +237,11 @@ export default async function ForCoachesPage() {
                   product — not a trial, not a fallback.
                 </p>
               </div>
-              <EarlyAccessModalTrigger
-                className={`${styles.planCta} ${styles.planCtaSecondary}`}
-                initialPlanInterest={['club']}
-                initialFeaturesInterested={['rep_teams', 'coach_portal']}
-              >
+              {/* Same 2026-08-10 reroute as the cross-sell below: the Club page now carries the
+                  proof; the interest form waits there. */}
+              <Link href="/for-clubs" className={`${styles.planCta} ${styles.planCtaSecondary}`}>
                 Is your org considering Club? →
-              </EarlyAccessModalTrigger>
+              </Link>
             </div>
 
           </div>
@@ -244,19 +258,18 @@ export default async function ForCoachesPage() {
         <div className="container">
           <p className={styles.crossSellEyebrow}>More from FieldLogicHQ</p>
           <div className={styles.crossSellGrid}>
-            <EarlyAccessModalTrigger
-              className={styles.crossSellCard}
-              initialPlanInterest={['club']}
-              initialFeaturesInterested={['accounting', 'rep_teams', 'coach_portal']}
-            >
+            {/* Routes to the Club page, not straight to the interest form (2026-08-10 ruling:
+                route to a page when the page has proof — /for-clubs now carries both demo doors;
+                express interest waits there). */}
+            <Link href="/for-clubs" className={styles.crossSellCard}>
               <span className={styles.crossSellLabel}>Club</span>
               <span className={styles.crossSellQ}>Is your organization on FieldLogicHQ yet?</span>
               <span className={styles.crossSellBody}>
                 Club includes the Premium Coaches Portal for your whole coaching staff — every coach,
                 every team, no per-team fee — plus tournaments, house league, rep teams, and accounting.
               </span>
-              <span className={styles.crossSellCta}>Express interest in Club →</span>
-            </EarlyAccessModalTrigger>
+              <span className={styles.crossSellCta}>See what Club includes →</span>
+            </Link>
             <Link href="/for-tournament-organizers" className={styles.crossSellCard}>
               <span className={styles.crossSellLabel}>Tournament</span>
               <span className={styles.crossSellQ}>Running a team tournament?</span>
@@ -302,6 +315,12 @@ export default async function ForCoachesPage() {
               >
                 Express interest
               </EarlyAccessModalTrigger>
+            )}
+            {showSandboxDoor && (
+              <Link href={SEE_IT_LIVE_COACHES_PATH} className={styles.seeItLive}>
+                <span className={styles.seeItLiveDot} aria-hidden="true" />
+                See it live →
+              </Link>
             )}
             <Link
               href="/pricing"

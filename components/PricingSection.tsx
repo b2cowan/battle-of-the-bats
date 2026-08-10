@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Check } from 'lucide-react';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
 import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, isFoundingSeasonPromoActive } from '@/lib/plan-config';
+import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PricingSection.module.css';
 
@@ -209,6 +210,18 @@ const TEAM_PLAN: Plan = {
   initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
 };
 
+/**
+ * The quiet demo line under a paid live card's CTA (owner-ratified 2026-08-10) — for the pricing
+ * page's skeptic, who won't start free because they suspect "free" hides a hollow product. Text
+ * weight below the CTA, so the buying path loses nothing; product-specific wording here (unlike
+ * the hero's shared label) because both doors share one screen. Marketing layout only, and only
+ * while the doors are on.
+ */
+const DEMO_DOORS: Partial<Record<OrgPlan, { href: string; label: string }>> = {
+  tournament_plus: { href: SEE_IT_LIVE_PATH, label: 'See a live tournament first' },
+  team: { href: SEE_IT_LIVE_COACHES_PATH, label: "See a coach's season first" },
+};
+
 /** One-line descriptors for the marketing coming-soon strip — a gated plan's whole pitch there. */
 const GATED_STRIP_LINES: Partial<Record<OrgPlan, string>> = {
   league: 'house league seasons — registration, draft, schedule, standings, and parent comms',
@@ -282,6 +295,8 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
   const cardPlans = marketingLayout
     ? [...orderedPlans.filter(p => !(gatingMap[p.key] ?? false)), ...(teamGated ? [] : [TEAM_PLAN])]
     : orderedPlans;
+  // NEXT_PUBLIC_ vars are inlined into the client bundle, so this works in a client component.
+  const demoDoorsOpen = marketingLayout && sandboxDoorsVisible();
 
   function getSignupHref(plan: Plan) {
     // Tournament's CTA is plain sign-up; the coaches card owns its own destination (the coach
@@ -394,7 +409,9 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                 ))}
               </ul>
 
-              {/* Band 5: CTA */}
+              {/* Band 5: CTA — one wrapper so the subgrid row can also hold the quiet demo line
+                  on marketing surfaces without becoming a sixth band. */}
+              <div className={styles.planCtaBand}>
               {isGated ? (
                 <EarlyAccessModalTrigger
                   className={`${CTA_CLASS} ${styles.pendingCta}`}
@@ -430,6 +447,15 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, p
                   {(takesOverrides ? ctaLabel?.(plan.key) : undefined) ?? defaultCta}
                 </Link>
               )}
+              {demoDoorsOpen && !isGated && !onChoosePlan && DEMO_DOORS[plan.key] && (
+                <p className={styles.planDemoLine}>
+                  Not ready?{' '}
+                  <Link href={DEMO_DOORS[plan.key]!.href} className={styles.planDemoLink}>
+                    {DEMO_DOORS[plan.key]!.label} →
+                  </Link>
+                </p>
+              )}
+              </div>
             </div>
           );
         })}

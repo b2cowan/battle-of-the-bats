@@ -9,7 +9,7 @@ import type { OrgPlan } from '@/lib/types';
 import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive } from '@/lib/plan-config';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
-import { SEE_IT_LIVE_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
+import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 
 export const metadata: Metadata = {
   alternates: { canonical: '/' },
@@ -361,22 +361,26 @@ export default async function HomePage({
                 );
                 const ctaClass = `font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray/50'}`;
 
-                // The Tournament card carries a SECOND door in the sandbox era. Two links cannot
-                // nest, so that one card becomes a div and the persona link stretches over it
-                // (::after) to keep whole-card clickability. Every other card is untouched.
-                if (showSandboxDoor && p.id === 'tournament') {
+                // The TWIN DOOR (owner-ratified 2026-08-10): every live persona whose product has
+                // a public demo carries a second, quieter link into it — proof one step after the
+                // claim, never competing with the ask. Two links cannot nest, so a doored card
+                // becomes a div and the persona link stretches over it (::after) to keep
+                // whole-card clickability. A persona with no demo gets no door — a door pattern
+                // on League/Club would promise a demo that does not exist.
+                const doorPath =
+                  p.id === 'tournament' ? SEE_IT_LIVE_PATH
+                  : p.id === 'coaches' ? SEE_IT_LIVE_COACHES_PATH
+                  : null;
+                if (showSandboxDoor && doorPath) {
                   return (
                     <div key={p.id} className={`${styles.heroPersonaCard} ${styles.heroPersonaCardStack}`}>
                       {body}
                       <Link href={p.href} className={`${ctaClass} ${styles.heroPersonaStretch}`}>
                         {p.cta} →
                       </Link>
-                      {/* ⚠ Tournament only, for now — NOT because it is the only live product (the
-                          Coaches Portal has been live since 2026-07-24), but because the demo orgs
-                          are seeded on dev only and putting them on production is an unmade
-                          decision. The matching coaches door is designed and waiting on that call:
-                          BUSINESS_DECISIONS.md 2026-08-07, status Proposed. */}
-                      <Link href={SEE_IT_LIVE_PATH} className={`${ctaClass} ${styles.heroPersonaSecondary}`}>
+                      {/* One label for both worlds — the card's own title says which "it" you'll
+                          see. Product-specific wording was considered and parked (2026-08-10). */}
+                      <Link href={doorPath} className={`${ctaClass} ${styles.heroPersonaSecondary}`}>
                         <span className={styles.heroPersonaLiveDot} aria-hidden="true" />
                         See it live — no sign-up →
                       </Link>

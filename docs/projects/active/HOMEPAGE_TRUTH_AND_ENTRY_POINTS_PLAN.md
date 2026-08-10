@@ -254,6 +254,42 @@ re-seed).
 
 ---
 
+## Batch 2 — the demo doors (2026-08-10, BUILT on `dev`, uncommitted at writing)
+
+**Status:** the go-public decision executed in full (doors flipped on prod 2026-08-10, build 250),
+and the owner ratified the door-placement set (design ruling logged in `memory/design_decisions.md`
+2026-08-10; mockups artifact `2d646e07`). Built:
+- Homepage: the Coaches Portal card gains the twin door (`/see-it-live/coaches`), same stack
+  pattern and label as the Tournament card's.
+- `/for-coaches`: outline+dot door in hero (second position) + bottom CTA + the honesty note.
+- `/for-tournament-organizers`: bottom-CTA door added (hero door already existed).
+- Pricing grid (home + /pricing): text-weight "Not ready? See … first" lines under the Tournament
+  Plus and Premium Coaches Portal cards (marketing layout only, doors-flag-gated).
+- `/for-clubs`: "Both halves are live today" block (two doors); hero note gate-aware (names the
+  live coaches portal); coaches cross-sell flips live with the gate.
+- Reroutes (route-to-proof ruling): pricing club segment card, both persona-page club cross-sells
+  and the coaches org-bridge link now navigate to `/for-clubs`; League Plus stays form-first.
+
+**QA (owner, ~5 min, anonymous + one glance signed-in) — extends ledger §5.5:**
+- [ ] Homepage hero: BOTH live cards carry "See it live — no sign-up →" with the pulsing dot; the
+      tournament one lands in the Summer Classic, the coaches one lands on the 12U team signed in
+      as the demo coach.
+- [ ] `/for-coaches`: door beside Start free (hero) and in the bottom CTA; the "no sign-up, no
+      email" note reads correctly.
+- [ ] `/for-tournament-organizers`: doors in hero AND bottom CTA.
+- [ ] `/for-clubs`: the lime "Both halves are live today" block sits right under the hero with two
+      working doors; the hero note names Tournament, Tournament Plus AND the Premium Coaches
+      Portal; the Coaches Portal cross-sell says "Start free" and goes to `/for-coaches`.
+- [ ] `/pricing`: "Not ready? See a live tournament first →" under Tournament Plus and "See a
+      coach's season first →" under the coaches card — text-weight, below the CTAs; the club
+      segment card now says "See what Club includes" and lands on `/for-clubs`.
+- [ ] In-app onboarding plan picker (signed-in org): NO demo lines anywhere.
+
+**Follow-up owed:** the in-demo cross-door ("walk the other half" at each tour's end) — separate
+build; `/marketing` copy pass on door labels.
+
+---
+
 ## Follow-ups
 
 1. **Owner QA** (test plan supplied in chat; ledger entry owed).

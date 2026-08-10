@@ -61,10 +61,12 @@ const BUYER_SEGMENTS: Array<{
     eyebrow: 'Club executive',
     title: 'I run a club with rep teams.',
     body: 'Tournaments, house league, rep teams, and accounting in one place. Coaches manage their teams; you get the visibility without the constant check-ins.',
-    cta: 'Express interest in Club',
-    earlyAccess: true,
-    initialPlanInterest: ['club'],
-    initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],
+    // 2026-08-10 reroute: to the Club page, not straight to the interest form — that page now
+    // carries both demo doors, and the form waits there. This also restores the section's own
+    // promise ("you'll land in the right place"). League Plus above stays form-first on purpose:
+    // its page has no demo to show yet.
+    cta: 'See what Club includes',
+    href: '/for-clubs',
   },
 ];
 

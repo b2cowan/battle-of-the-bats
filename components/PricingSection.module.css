@@ -315,6 +315,28 @@
   margin: 0 auto;
 }
 
+/* Band 5's wrapper — CTA plus, on marketing surfaces, the quiet demo line beneath it. */
+.planCtaBand {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.planDemoLine {
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  color: var(--data-gray);
+  text-align: center;
+  margin: 0;
+}
+
+.planDemoLink {
+  color: var(--logic-lime);
+  transition: color 0.15s;
+}
+
+.planDemoLink:hover { color: var(--fl-text); }
+
 /* The gated plans, compressed to one quiet strip below the grid. */
 .comingSoonStrip {
   margin-top: 1.25rem;

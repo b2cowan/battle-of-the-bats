@@ -4,6 +4,25 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-10 — Demo doors on the marketing pages: proof one step after every claim, never competing with the ask
+
+**Trigger:** the production doors flipped on 2026-08-10 with only the tournament demo advertised (two spots) and the coach demo reachable by URL alone. Owner approved the placement set and, in the follow-up on "browsing both," the Club-page block + reroutes. Mockups (approved, all sections incl. §5): `claude.ai/code/artifact/2d646e07-1bef-48ef-8fd9-1a883bd56eea`.
+
+**BINDING RULES:**
+1. **The door is always SECOND.** "Start free" stays the primary action on every surface; the demo door is the quieter sibling beside it — hero persona cards use the twin-door stack (shared label "See it live — no sign-up", the card title names the world), persona pages use the lime-OUTLINE + live-dot button in second position (hero AND bottom CTA), and the pricing grid uses a text-weight "Not ready? See … first" line UNDER the two paid live cards' CTAs (product-specific wording there only, because both doors share one screen). Marketing layout only; never in the in-app plan wizard.
+2. **NO standalone chooser page and NO nav item.** The hero's side-by-side doored cards ARE the browse experience. The one future exception: a campaign needing a single URL may get a tiny unlisted chooser — deferred until a campaign asks.
+3. **A door renders only where its demo exists.** League Plus and Club surfaces get no door pattern (it would promise a demo that doesn't exist) — with ONE deliberate exception: `/for-clubs` carries the **"Both halves are live today"** block (two doors), because the club executive is the one persona genuinely interested in both, and their coming-soon page becomes proof-by-parts.
+4. **Route to a page when the page has proof; route to a form only when it doesn't.** All Club touchpoints (pricing segment card, both persona-page cross-sells, the coaches org-bridge link) now NAVIGATE to `/for-clubs` — the interest form waits there. League Plus touchpoints stay form-first on purpose; the asymmetry is the principle working, not an inconsistency.
+5. **Every door is gated on the doors flag** (`sandboxDoorsVisible()`) — nothing hand-writes door visibility, matching the availability contract.
+
+**Also fixed in the build:** the `/for-clubs` coaches cross-sell was still an express-interest trigger for the live Coaches Portal (the same stale trap as the tournament page's, cured 2026-08-08) — flips with the coach checkout gate now; and the Club hero note names all three live products, gate-aware.
+
+**Follow-up owed (its own build):** the in-demo cross-door — "that's the tournament half, walk a coach's season →" at each tour's end — catches the proven browser at peak interest. **Copy pass owed to /marketing** on all door labels.
+
+**Applies to:** `app/page.tsx`, `app/for-coaches/*`, `app/for-tournament-organizers/page.tsx`, `app/for-clubs/*`, `app/pricing/page.tsx`, `components/PricingSection.*`.
+
+---
+
 ### 2026-08-08 — Marketing surfaces: LIVE PRODUCTS LEAD; coming-soon compresses to strips — and no surface hand-writes availability
 
 **Trigger:** owner screenshot of the homepage modules section still badging the Coaches Portal "Coming soon" two weeks after launch — found in the SAME session that had just documented this exact trap on the persona cards one section up. The owner then asked for a full marketing sweep against the actual business state (Tournament Plus + Premium Coaches Portal live and promoted, both free until Jan 1 2027; League Plus + Club genuinely coming soon). Mockups (approved, all sections): `claude.ai/code/artifact/b4a4c981-d77d-4e49-95cd-9aaf9597872b`.

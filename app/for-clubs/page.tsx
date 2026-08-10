@@ -3,6 +3,8 @@ import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { getPlanGatingMap } from '@/lib/plan-gating-server';
+import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
@@ -15,11 +17,22 @@ export const metadata: Metadata = {
 const { painItems: PAIN_ITEMS, steps: MODULES, features: CLUB_FEATURES } =
   PLAN_ARTICLE_CONTENT.club;
 
-const CROSS_SELLS = [
+const CROSS_SELLS: Array<{
+  label: string;
+  q: string;
+  body: string;
+  cta: string;
+  href?: string;
+  initialPlanInterest?: string[];
+  initialFeaturesInterested?: string[];
+}> = [
   {
     label: 'Coaches Portal',
     q: 'Do coaches need access before Club opens?',
     body: "The Coaches Portal is also available standalone — coaches can get started independently and their workspace carries over automatically when your org moves to Club.",
+    // Flips to a live "Start free" link with the coach checkout gate below — this card held an
+    // express-interest trigger for a live product until 2026-08-10 (the same stale trap as the
+    // /for-tournament-organizers cross-sell, found in the door-placement build).
     cta: 'Express interest',
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],
@@ -28,11 +41,19 @@ const CROSS_SELLS = [
     label: 'Tournament',
     q: 'Running a tournament before Club opens?',
     body: 'Tournament and Tournament Plus are live today — free to start, no credit card required. Your org is already on the platform when Club launches.',
+    cta: 'See tournament plans',
     href: '/for-tournament-organizers',
   },
 ];
 
-export default function ForClubsPage() {
+export default async function ForClubsPage() {
+  const teamCheckoutOpen = !(await getPlanGatingMap()).team;
+  const showSandboxDoor = sandboxDoorsVisible();
+  const crossSells = CROSS_SELLS.map(cs =>
+    cs.label === 'Coaches Portal' && teamCheckoutOpen
+      ? { ...cs, href: '/for-coaches', cta: 'Start free' }
+      : cs,
+  );
   return (
     <main className="bg-pitch-black min-h-screen">
 
@@ -66,7 +87,10 @@ export default function ForClubsPage() {
           </div>
           <p className={styles.heroNote}>
             <span className={styles.heroNoteAccent}>Coming soon</span>
-            {' '}— Club is in development. Tournament and Tournament Plus are live today.
+            {' '}— Club is in development.{' '}
+            {teamCheckoutOpen
+              ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are live today.'
+              : 'Tournament and Tournament Plus are live today.'}
           </p>
           <div className={styles.trustRow}>
             {['No contracts — cancel anytime', 'Billed in CAD', 'Upgrade or downgrade at any time'].map(s => (
@@ -78,6 +102,37 @@ export default function ForClubsPage() {
           </div>
         </div>
       </section>
+
+      {/* ── Both halves are live today (owner-ratified 2026-08-10) ───────────
+          The club executive is the one persona genuinely interested in BOTH demos — their
+          coming-soon page becomes proof-by-parts. Renders only while the doors are on; a door
+          pattern must never appear anywhere it would promise a demo that doesn't exist. */}
+      {showSandboxDoor && (
+        <section className={styles.section}>
+          <div className="container">
+            <div className="border border-logic-lime/40 p-8 flex flex-col gap-4" style={{ background: 'rgba(var(--logic-lime-rgb, 163 230 53) / 0.04)' }}>
+              <p className="font-mono text-[0.65rem] font-bold uppercase tracking-widest text-logic-lime">
+                Both halves are live today
+              </p>
+              <p className="font-mono text-sm text-fl-text leading-relaxed max-w-2xl">
+                Club bundles what&apos;s already running: the tournament platform and the Premium
+                Coaches Portal. Walk both right now — no sign-up — and express interest for the day
+                they&apos;re one product.
+              </p>
+              <div className="flex items-center gap-4 flex-wrap">
+                <Link href={SEE_IT_LIVE_PATH} className={styles.seeItLive}>
+                  <span className={styles.seeItLiveDot} aria-hidden="true" />
+                  See a live tournament →
+                </Link>
+                <Link href={SEE_IT_LIVE_COACHES_PATH} className={styles.seeItLive}>
+                  <span className={styles.seeItLiveDot} aria-hidden="true" />
+                  See a coach&apos;s season →
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ── Pain recognition ─────────────────────────────────────────────── */}
       <section className={styles.section}>
@@ -206,13 +261,13 @@ export default function ForClubsPage() {
         <div className="container">
           <p className={styles.crossSellEyebrow}>More from FieldLogicHQ</p>
           <div className={styles.crossSellGrid}>
-            {CROSS_SELLS.map(cs =>
+            {crossSells.map(cs =>
               cs.href ? (
                 <Link key={cs.label} href={cs.href} className={styles.crossSellCard}>
                   <span className={styles.crossSellLabel}>{cs.label}</span>
                   <span className={styles.crossSellQ}>{cs.q}</span>
                   <span className={styles.crossSellBody}>{cs.body}</span>
-                  <span className={styles.crossSellCta}>See tournament plans →</span>
+                  <span className={styles.crossSellCta}>{cs.cta} →</span>
                 </Link>
               ) : (
                 <EarlyAccessModalTrigger
