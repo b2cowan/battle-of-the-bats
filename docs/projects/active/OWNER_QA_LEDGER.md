@@ -148,6 +148,8 @@ the sequence.
 | **2A** | At a desk — the week's work | §1.1 · §1.10 · §1.4 · §1.8 · §1.9 | 🖥 | LIVE |
 | **2B** | On a phone — and one of them outdoors | §2.1 · §2.2 · §2.5 · §2.6 | 📱 | LIVE |
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
+| **2D** | House league schedule — fields + double-booking | §8 | 🖥 | ON DEV · mig **229** dev-only |
+| **2E** | Tournament schedule — a field is picked, not typed | §9 | 🖥 | ON DEV · no migration |
 | **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
 | **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 · §5.5 | 🖥📱 | Mixed · §5.5 ON DEV |
 | **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ✅ **PASSED 2026-08-07** — 6 defects fixed in the run |
@@ -229,14 +231,18 @@ A cancelled subscription is the only thing in this ledger that can switch a whol
 needs a throwaway org and a platform-admin sign-in, so it batches with nothing else — do it first and
 alone, while you still have the patience for a before/after.
 
-### 1.19 🖥📱 A cancelled subscription actually stops — **ON DEV `d8316e87` + a SECOND and THIRD WAVE still in the working tree** · no migration
+### 1.19 🖥📱 A cancelled subscription actually stops — **✅ LIVE ON PRODUCTION** (all three waves) · no migration
 
 *A platform admin cancels an org. Until now the coach portal and the scorekeeper app kept working —
 forever — even though the confirm dialog promised both would shut down. They stop now.*
 
-> ⚠ **Two rounds of work sit under this section, and only the first is committed.** A follow-up
-> review pass (2026-08-06, uncommitted at the time of writing — typecheck ✓, 1,439 unit tests ✓)
-> hardened three things the checklist below now covers:
+> ⚠ **This is now damage-finding, not a gate.** All three waves reached production on 2026-08-08.
+> A failure below is an **incident to fix today**, not a release blocker to schedule. Verified
+> against production rather than these headings, 2026-08-08.
+>
+> **Three rounds of work sit under this section.** The first shipped the rail itself. A follow-up
+> review pass (2026-08-06 — typecheck ✓, 1,439 unit tests ✓) hardened three things the checklist
+> below now covers:
 > 1. **The downgrade no longer archives a tournament that is happening right now.** It used to keep
 >    "the most recent seasons" — which inside one year is pure alphabet, so an event that finished
 >    in the spring outranked one running today. Archiving a live tournament takes its whole public
@@ -248,10 +254,10 @@ forever — even though the confirm dialog promised both would shut down. They s
 >    work made the ordering a shared rule so the next volunteer surface inherits it). There is now
 >    a checkbox for it — there wasn't before.
 >
-> ⚠ **A THIRD wave (2026-08-07, uncommitted — typecheck ✓, lint ✓, 1,439 unit tests ✓, adversarial
-> review ✓) landed while setting this section up, and it is not about cancellation at all.** Doing
-> step 2 signed in as the *wrong* account walked straight into a dead end that has been there all
-> along, on every workspace in the product. Steps 15–17 below are its checks.
+> ⚠ **A THIRD wave (2026-08-07) landed while setting this section up, and it is not about
+> cancellation at all.** Doing step 2 signed in as the *wrong* account walked straight into a dead
+> end that has been there all along, on every workspace in the product. Steps 15–17 below are its
+> checks. Also live.
 
 ⚠ **This section is different from every other one in the ledger, and you need to know why before
 you start.** Entitlement changes are close to impossible to QA by clicking: **a cancelled org that
@@ -278,42 +284,42 @@ come back tomorrow, re-run it — otherwise the scorekeeper's "before" shows no 
 step proves nothing.
 
 #### Setup (5 min)
-1. ✅ Already true: `qa-cancel-lab` is on the **Club** plan with a rep team, a coach, and three
+- [ ] **1.** ✅ Already true: `qa-cancel-lab` is on the **Club** plan with a rep team, a coach, and three
    tournaments — **QA Lab Summer Showdown** (running today, carrying two games), **QA Lab April
    Open** (finished, earlier this year) and **QA Lab Fall Invitational** (last year). Step 9 turns
    on which of those survives, so glance at the three now.
-2. Sign in as the **coach** and open the Coaches Portal at `/qa-cancel-lab/coaches`. **Do the
+- [ ] **2.** Sign in as the **coach** and open the Coaches Portal at `/qa-cancel-lab/coaches`. **Do the
    things.** Open the roster, open attendance, open lineups — all three have real data in them.
    *This is the "before" half — without it the "after" proves nothing.*
    → While you are here, **create a family link** on the Roster page and open it in a private
    window. That is the "before" for step 12, and it can only be made from this screen.
-3. In a second browser (or private window) sign in as the **scorekeeper** and open
+- [ ] **3.** In a second browser (or private window) sign in as the **scorekeeper** and open
    `/qa-cancel-lab/scorekeeper`. Confirm you can see the day's games — there are two.
 
 #### The act
-4. As platform admin → the org → **Billing & Access** → **Cancel Subscription**. Read the
+- [ ] **4.** As platform admin → the org → **Billing & Access** → **Cancel Subscription**. Read the
    **"Will shut down:"** list in the dialog before you confirm — that list is the promise this whole
    change exists to make true. Give any reason, confirm.
 
 #### After (the part that matters)
-5. **Coach browser — refresh.** Expected: the portal shell still frames the page, but instead of
+- [ ] **5.** **Coach browser — refresh.** Expected: the portal shell still frames the page, but instead of
    the team you get *"{Org} 's subscription has ended"* with a short explanation and a way home.
    ❌ If you still see rosters/attendance/lineups, the fix has failed — say so.
-6. **Scorekeeper browser — refresh.** Expected: the same "subscription has ended" message.
+- [ ] **6.** **Scorekeeper browser — refresh.** Expected: the same "subscription has ended" message.
    ❌ If you can still enter a score, the fix has failed. *(This one is the sharpest test: the
    scorekeeper is an installed phone app that lives outside the admin screens, which is exactly why
    it kept working before.)*
-   **6b. Check-in, the third volunteer door.** Still cancelled, open `/qa-cancel-lab/check-in`.
+- [ ] **6b.** **Check-in, the third volunteer door.** Still cancelled, open `/qa-cancel-lab/check-in`.
    Expected: the same "subscription has ended" wall — **not** "Access Denied". The distinction
    matters: Access Denied sends a volunteer to their org admin over something that is not their
    fault and cannot be fixed at that end. *(Same class of surface as the scorekeeper — outside the
    admin shell, so the original client-side redirect never reached it either.)*
-7. **The comeback path — the thing most likely to be broken by this change.** As the org owner,
+- [ ] **7.** **The comeback path — the thing most likely to be broken by this change.** As the org owner,
    go to `/{orgSlug}/admin`. Expected: you land on the **Billing** page (everything else redirects
    there) and **that page loads properly** — plan cards, prices, a way to resubscribe.
    ❌ If the billing page errors, 500s, or bounces in a loop, **stop and tell me** — that would mean
    a cancelled customer cannot pay us again, which is worse than the bug we set out to fix.
-8. **Undo it.** Platform admin → set the org's plan back / re-activate. Expected: the coach portal
+- [ ] **8.** **Undo it.** Platform admin → set the org's plan back / re-activate. Expected: the coach portal
    and scorekeeper both come back **exactly as they were** — nothing was deleted.
    *(Belt and braces: re-running `scripts/seed-qa-day-fixtures.mjs --cancel-lab` also resets the
    org to active/Club and un-archives all three tournaments. Use it if step 8 goes wrong — but do
@@ -322,7 +328,7 @@ step proves nothing.
 
 #### Also changed, quick checks (4 min)
 
-9. **⚠ The downgrade must not archive the tournament that is happening today.** This is the sharpest
+- [ ] **9.** **⚠ The downgrade must not archive the tournament that is happening today.** This is the sharpest
    of the "also changed" checks and the fixture is built around it.
 
    With the lab back on **Club**, use platform admin to drop it to a **one-tournament plan**.
@@ -339,16 +345,16 @@ step proves nothing.
 
    ⚠ Re-run the seeder afterwards to put all three back before any other step.
 
-9b. **A failed tidy-up must not read as success.** Nothing to force — just read the confirmation
+- [ ] **9b.** **A failed tidy-up must not read as success.** Nothing to force — just read the confirmation
    after step 9. It should either name the archived tournaments or carry a **bold warning** that
    archiving did not happen. ❌ A plain "Plan and access updated" with no mention either way is the
    defect: the plan change lands regardless, so a silent screen would leave the org over its cap
    with a live tournament still running and nobody the wiser.
-10. **Plans & Pricing → Feature Matrix.** Expected: a banner stating plainly that publishing the
+- [ ] **10.** **Plans & Pricing → Feature Matrix.** Expected: a banner stating plainly that publishing the
     matrix records the decision but does **not** change customer access, plus either a list of
     "published but not live" rows or a ✅ saying published and live agree. *(Publishing used to
     imply a packaging change had taken effect when nothing had.)*
-11. **Bulk Operations → Comp Period.** Expected: the same warning the single-org screen has always
+- [ ] **11.** **Bulk Operations → Comp Period.** Expected: the same warning the single-org screen has always
     carried — comp period is a billing tag and grants no access. It used to just say "Grant a comp
     period", which reads like it gives something.
 
@@ -356,14 +362,14 @@ step proves nothing.
 The review found the *same* defect on three surfaces the first pass missed. All three are worth a
 look because none of them are reachable from the coach or admin screens you just tested.
 
-12. **The family portal.** Use the family link you made in setup step 2 — the parent-facing team
+- [ ] **12.** **The family portal.** Use the family link you made in setup step 2 — the parent-facing team
     page. Confirm it works. Then cancel and reload: expected **404 / not found**, not a working
     schedule. *(A cancelled club's families kept the team page, schedule and calendar feed
     indefinitely — the family portal never consulted billing at all.)*
-13. **Tryout registration.** With the org cancelled, open its public rep-team tryout registration
+- [ ] **13.** **Tryout registration.** With the org cancelled, open its public rep-team tryout registration
     page and try to submit. Expected: the org reads as not found. ❌ If it accepts a registration,
     a cancelled club is still collecting players' dates of birth and guardian contact details.
-14. **Dues reminder emails.** Nothing to click — just know that the nightly reminder sweep now skips
+- [ ] **14.** **Dues reminder emails.** Nothing to click — just know that the nightly reminder sweep now skips
     cancelled orgs. Previously a cancelled club kept emailing its families about money.
 
 #### Found while setting this section up — the door that trapped you (3 min)
@@ -375,7 +381,7 @@ the club bounced you to the sign-in screen and the sign-in screen bounced you st
 forever. No form ever appeared, no button, no message. The only escape was clearing cookies. Both
 halves were individually behaving sensibly; together they trapped you.
 
-15. **The trap itself.** Signed in as the **platform admin** (or any account that is *not*
+- [ ] **15.** **The trap itself.** Signed in as the **platform admin** (or any account that is *not*
     `qa-lab-coach@dev.local`), open `/qa-cancel-lab/coaches`.
     - Expected: a page headed **"No access to this organization"**, saying you're signed in but this
       account isn't a coach here — with the portal's usual top strip above it (wordmark, Account,
@@ -387,13 +393,13 @@ halves were individually behaving sensibly; together they trapped you.
     - ⚠ On a **phone** the top strip is deliberately absent (it is desktop-only everywhere in the
       portal); the three buttons carry the whole job there. That is intended, not a gap.
 
-16. **The same trap, elsewhere.** The bounce-protection is global, so spot-check one other door:
+- [ ] **16.** **The same trap, elsewhere.** The bounce-protection is global, so spot-check one other door:
     signed in as the coach, open `/qa-cancel-lab/admin` (they are not an org admin).
     - Expected: you end up somewhere you can actually use — Home, or your own workspace — **not** a
       flickering loop. The wording there is still generic; only the coach portal got a purpose-built
       page in this pass, which is a known and deliberate gap.
 
-17. **📱 The sign-in screen's bottom bar.** On a phone, sign out completely and open `/auth/login`.
+- [ ] **17.** **📱 The sign-in screen's bottom bar.** On a phone, sign out completely and open `/auth/login`.
     - Expected: three tabs — **Home · Scores · Sign In** — with **Sign In lit up** as the tab you're
       on. Previously it showed only Home and Scores, with nothing highlighted and no indication of
       where you were.
@@ -1840,6 +1846,149 @@ Archived plan: `archive/FREE_COACH_OVERVIEW_COHERENCE_PLAN.md` (its PM brief's "
 
 ---
 
+## Group 2D · House league schedule — a field is picked, not typed
+
+One sitting at a desk, one org. **The whole section is ON DEV (`240e8fbf`, 2026-08-08) and carries
+migration 229, applied to dev only** — promoting the code without applying 229 to prod breaks every
+league schedule page, so this gate has a release-manager step attached, like 226 does.
+
+Setup: `dev-league-org` (or `dev-club-org`) → **Dev House League 2026** (both already hold seeded
+games with typed locations like "Maple Grove Park — Diamond 1", which is deliberate — they exercise
+the typed-text path). The org venue library starts **empty everywhere**, and that is the first step,
+not an obstacle.
+
+### 8 🖥 House league fields + double-booking protection — **ON DEV** (mig 229, dev-only)
+Plan: `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md` Phase 4. Owner rulings baked in: fields come from the
+org Venue Library (not per-season copies); games and practices are ONE booking pool; "TBD" is not a
+field name.
+
+**The empty-library floor, then the library**
+- [ ] With no venues defined: season → Schedule → **Add Game** shows a plain text location box plus
+      a "typed locations can't be checked" hint linking to the Venue Library. Nothing is blocked.
+- [ ] Organization → Venues: create "Maple Grove Park" with two diamonds. Back on the schedule,
+      the game/practice/generator forms now offer a **dropdown** of those surfaces, with
+      "Somewhere else (type it)" as the explicit escape. The label reads **Diamond** (softball
+      season) — not a hard-coded "Field".
+
+**The block, and the one pool**
+- [ ] Game A on Diamond 1 at 6:00 PM saves clean. Game B, same diamond, 7:00 PM → **save refused**,
+      and the message names game A, its time, and the diamond. Different diamond or 7:30+ → saves.
+- [ ] A **practice** on Diamond 1 overlapping game A → refused, naming the game. Reverse order too:
+      a saved practice blocks a game. (A booking is a booking.)
+- [ ] "Any surface" at the park clashes with a specific diamond booking at the same time — the
+      conservative rule, on purpose.
+- [ ] **Scoring is never hostage:** on a clashing pair created via the generator (below), set a
+      final score on one → saves without complaint. Only where/when changes are checked.
+- [ ] Cancel (or postpone) one of a clashing pair → the slot frees; the warning strip clears on
+      next load.
+
+**Warn, don't block, where blocking would be wrong**
+- [ ] Two games typed "Riverside Park" (same time) → both save, with a "possible clash" notice that
+      says the match is on a typed name and may be two different places.
+- [ ] Two games marked "TBD" → never a clash; they join the "no diamond set" count instead.
+- [ ] **Generator** with a picked default diamond and 4 teams → saves (never blocks) and reports
+      how many generated games stack on the same surface; the strip and the per-card
+      **Double-booked** badges then show them.
+
+**The honesty line**
+- [ ] Games with no field at all: the schedule page shows "N scheduled bookings have no diamond
+      set — not being checked", exactly as tournaments do. The seeded typed-location games do NOT
+      count here (typed text IS checked, against itself).
+
+**Edges**
+- [ ] A game with an end time (6–9 PM) blocks an 8 PM booking — the default assumption is only
+      90 minutes, so the long game is the proof the end time matters.
+- [ ] An overnight practice (11:30 PM–12:30 AM) saves as one hour, not minus-23.
+- [ ] Clearing the date but not the time on an existing game → a clear error, not a silent
+      non-save.
+- [ ] Help → House League → search "double-booked" → the new FAQ surfaces; the schedule recipe
+      describes the Venue Library flow.
+- Known + accepted: two admins saving clashing bookings in the same instant both land — the strip
+  flags it on the next load (self-healing, by design). Two admins editing the SAME game is
+  last-write-wins (app-wide pattern, logged as follow-up, not a Phase 4 defect).
+- Families see nothing new; the public league schedule doesn't show locations.
+
+---
+
+## Group 2E · Tournament schedule — a field is picked, not typed
+
+One sitting at a desk, one org. **The whole section is ON DEV (2026-08-08), no migration** — pure
+code, safe to promote independently of 229. Built to the owner-approved Phase 2 mockups.
+
+Setup: any dev org with a tournament that has venues configured (e.g. the Summer Classic pattern),
+PLUS one tournament with **zero venues** (Bye Demo / Free Cup are the natural labs — they're the
+fixtures this failure minted). For the library lead, one League/Club org with `org_venues` rows.
+
+### 9 🖥 Tournament field picking + clear + import report — **ON DEV** (no migration)
+Plan: `GAME_LOCATION_SOURCE_OF_TRUTH_PLAN.md` Phase 2. Owner rulings baked in: League/Club get the
+Venue Library lead in the zero-venue prompt; setup copy says "venues", the sport noun stays on
+surface picking; import auto-resolves EXACT name matches only.
+
+**Picking is the default, typing is a choice**
+- [ ] Add/Edit game window: the venue box is a **picker** (grouped by venue, with "Any diamond at
+      …" per venue) — not a text box. "Somewhere else (type it)" reveals the text input, with a
+      "typed locations aren't checked" hint. The label reads **Diamond** on a softball event.
+- [ ] The inline schedule row's picker gets the same shape, including "Somewhere else (type it)".
+- [ ] The bracket builder's field select gains the same "Somewhere else (type it)" escape.
+- [ ] Pick a field → the displayed name is **derived** ("Lions Park — Diamond 2", em dash) on every
+      surface (list, public schedule, exports) — whatever text was in the box before is gone.
+
+**Clearing genuinely clears (the Phase 1 parked defect)**
+- [ ] Inline row: set the picker to "— No diamond —", save, reload → the game truly has no field
+      and joins the "not being checked" count. (Before: silent no-op, the old field survived.)
+- [ ] Same from the Edit window, and after a timeline drag the placement matches the drop.
+
+**Zero-venue tournament is asked, not indulged**
+- [ ] On a tournament with no venues: the game window's field area is the **"No venues set up
+      yet"** prompt (create + type-anyway link), not a silent text box. Same prompt on the empty
+      timeline.
+- [ ] On a **League/Club** org: the prompt leads with **[Import from your Venue Library]**, which
+      lands on the Venues page with the import picker already open. Tournament-tier org: no
+      library button.
+- [ ] "Type a location anyway" reveals the text input — nothing is blocked.
+- [ ] Create a venue from the prompt → the picker appears in place with the new venue selected.
+
+**Import: exact matches link, the rest is named**
+- [ ] Import a file whose Location column exactly names a real field (any casing, "Park - Diamond"
+      hyphen or em dash) → the preview shows those rows linked to the real field, canonical label.
+- [ ] Include rows with "Diamond 7" (×2) and "Main Field" (×1) → the preview shows a panel:
+      **field names that didn't match**, each with its game count — and the file still commits.
+- [ ] "TBD" rows do NOT appear in that panel (placeholder = no field, not a failed match).
+- [ ] Two venues each with a "Diamond 1": a bare "Diamond 1" row stays text with a "matches more
+      than one" warning — never auto-guessed.
+
+**Scorekeeper filter reflects the day**
+- [ ] A day with games on 2 of 5 configured fields: the "All fields" filter lists those 2 only.
+- [ ] A game placed by typed text shows as a "…" (typed) entry, and picking it filters to that game.
+- ⚠ The volunteer's original empty "All fields" dropdown is a SEPARATE defect (plan §0.2) — do not
+  mark it fixed from this section.
+
+**Found in `/review`, fixed — worth a targeted poke**
+- [ ] Edit ONLY the notes on a game whose stored label still shows the legacy hyphen → save →
+      **no family/coach "game moved" notification** goes out (the label silently canonicalizes;
+      moves are judged on the actual field record now, and a test pins it).
+- [ ] Generator-created game still on a temporary lane: repoint it to a real diamond, then run
+      Resolve Facilities for that lane → the repointed game **keeps your pick** (it used to snap
+      back to the lane's venue in silence).
+- [ ] Scorekeeper: set the field filter, change the date to a day without that field → the filter
+      **snaps back to All fields** instead of showing an empty board.
+- [ ] Cross-club wall (needs two orgs): as org A's admin, attempt the Venue-Library import with
+      org B's library-venue id → **404**, and on a Tournament-tier org the action is refused
+      outright; renaming/deleting org B's library facility by id is also refused.
+
+**Expected at QA, not defects**
+- Legacy games show "Venue - Field" with a hyphen until next touched — the canonical em dash lands
+  on the next save/import through them (an import update will honestly list "Location" as a change).
+- The Edit window no longer *forces* a location: saving with "— No diamond —" is legal and counts
+  as unchecked — that is the honest state, and the health panel says so.
+- A generator-lane game shows in the pickers as "Somewhere else (type it)" with the lane's label —
+  display honesty gap, logged; the Resolve Facilities panel remains the lane surface, and picking
+  a real field now detaches the lane correctly.
+- Known + accepted: `check:demos`' coach-sandbox attendance drift pre-dates this work (seeded coach
+  data; the tournament sandbox passes and its tour copy was re-checked against these screens).
+
+---
+
 # TIER 3 — polish
 
 Findability, close behaviour, the creation preview and the sandbox. Wrong here is visible and
@@ -2363,20 +2512,20 @@ look stale, re-run the seed (`node --env-file=.env.local scripts/seed-demo-coach
 by hand.*
 
 **A · The door** (private/incognito window, signed out)
-1. Open `/see-it-live/coaches` → you land on the 12U team's Overview, signed in as the demo
+- [ ] **1.** Open `/see-it-live/coaches` → you land on the 12U team's Overview, signed in as the demo
    coach, with the WARM banner ("You're in the coach's seat, on a fictional team…") and the
    five-chip phase dock under it. No login, no email, no interstitial.
-2. The dock highlights **Mid-season**; the banner's right slot reads "There's a game this
+- [ ] **2.** The dock highlights **Mid-season**; the banner's right slot reads "There's a game this
    Saturday" — never a countdown.
-3. **⚠ ON A PHONE, JUDGE THE DOCK HARD.** Five chips are wider than a 390px screen (measured: 510px).
+- [ ] **3.** **⚠ ON A PHONE, JUDGE THE DOCK HARD.** Five chips are wider than a 390px screen (measured: 510px).
    The row now scrolls so the chip you're standing in is always visible, and you swipe for the rest
    — but you see roughly three and a half at a time. **Tell me if that reads as "there are five
    moments" or as "the row is cut off."** The alternative is two rows of chips, permanently taller.
 
 **B · The five moments** (one tap each; a narration line appears on arrival)
-1. **Tryout day** → the live scoring board: 28 candidates by bib (never names), two evaluators
+- [ ] **1.** **Tryout day** → the live scoring board: 28 candidates by bib (never names), two evaluators
    partway through, one split opinion (bib 14, Hitting: 5 vs 2). Sessions dated TODAY.
-2. **Off-season (14U)** → Money, budget vs. actual: a $11,700 plan on six real categories phased
+- [ ] **2.** **Off-season (14U)** → Money, budget vs. actual: a $11,700 plan on six real categories phased
    across four months, ~$4,000 already spent against it, and one expense filed as **unbudgeted**
    ("Team photo day", $180) — that's deliberate, it's the report earning its keep. Check the
    **month grid** columns line up with the calendar, and that **Expenses** shows a Spring
@@ -2389,38 +2538,38 @@ by hand.*
      should be walkable/runnable.
    - **Development:** four focus areas (one already achieved) and a testing session — 3 tests,
      11 of 13 players. **The two who missed must show a dash, never a zero.**
-3. **Season start (10U)** → Schedule: opening day two Saturdays back, three games played (2-1) and
+- [ ] **3.** **Season start (10U)** → Schedule: opening day two Saturdays back, three games played (2-1) and
    twelve ahead with practices between them. **No past game may sit there unscored.** Lineups shows
    exactly ONE saved lineup — the opener's — and nothing after it. Roster is complete with numbers
    and positions; dues are current bar one family.
-4. **Mid-season** → Overview: record 14-3-1, "Saturday's lineup isn't set" as the one thing,
+- [ ] **4.** **Mid-season** → Overview: record 14-3-1, "Saturday's lineup isn't set" as the one thing,
    attendance dip on Tuesdays, $240 overdue across two families, 1 waiver missing (on the
    player's profile), playing-time outlier + a pitcher at the arm-care cap under Lineups.
    **New:** the last Tuesday and Thursday practices now carry written plans — check the schedule
    shows them as run-and-recorded, and that the Overview's one thing is STILL Saturday's lineup.
-5. **Season's End** → the closed 2025 year: Season Wrapped (18-6-2, a 6-game streak, 9 of 12
+- [ ] **5.** **Season's End** → the closed 2025 year: Season Wrapped (18-6-2, a 6-game streak, 9 of 12
    families opened the recap), and every archive door opens read-only.
 
 **C · Look, don't keep**
-1. Try to save anything — build Saturday's lineup, score a candidate, edit the budget. The
+- [ ] **1.** Try to save anything — build Saturday's lineup, score a candidate, edit the budget. The
    change shows on screen, the warm toast says nothing is saved, and a refresh proves it.
-2. "Email families" style sends: composable, never delivered (fictional example.com people,
+- [ ] **2.** "Email families" style sends: composable, never delivered (fictional example.com people,
    plus the send paths refuse the demo org).
 
 **D · A signed-in customer presses the door**
-1. While signed into YOUR account, open `/see-it-live/coaches` → the "Step into the coach's
+- [ ] **1.** While signed into YOUR account, open `/see-it-live/coaches` → the "Step into the coach's
    seat?" confirm screen. Declining keeps your session; continuing swaps to the demo.
 
 **E · The calendar holds** (after the re-anchor runs)
-1. Come back tomorrow: the tryout is still "today", the game still "this Saturday", opening day
+- [ ] **1.** Come back tomorrow: the tryout is still "today", the game still "this Saturday", opening day
    still two Saturdays back, and the winter sessions still on Sundays — **not Mondays**. The five
    moments move in whole weeks so weekdays never drift; a session that has changed weekday means
    the re-anchor is broken, not merely late.
 
 **F · Hygiene**
-1. Riverdale Ridge appears nowhere public: not in /discover, not in the sitemap, no public org
+- [ ] **1.** Riverdale Ridge appears nowhere public: not in /discover, not in the sitemap, no public org
    pages.
-2. **⚠ A name collision to judge (found during the docs check, NOT changed).** The product has
+- [ ] **2.** **⚠ A name collision to judge (found during the docs check, NOT changed).** The product has
    its own built-in *sample budget* for a made-up team called **"Riverdale 12U"**, offered as
    "See a finished example" on a budget page that is still empty. Inside the sandbox that is
    reachable: open the **11U** (the tryout team, which has no budget) → Money → Budget vs. actual
@@ -2434,36 +2583,36 @@ by hand.*
 Open the demo in a fresh private window each time you start this section; the tour remembers where
 you got to for the rest of the browser session.
 
-1. **The opening.** You arrive and the tour row reads **"The season, guided"** with one button,
+- [ ] **1.** **The opening.** You arrive and the tour row reads **"The season, guided"** with one button,
    **"Walk the year →"**. It should feel offered, not started: **nothing may move until you press.**
-2. **Press it seven times** and let each one land. Every press must produce a sentence in the hat —
+- [ ] **2.** **Press it seven times** and let each one land. Every press must produce a sentence in the hat —
    that sentence is the deliverable, and a press that changes nothing is the defect. In order you
    should reach: the tryout board (28 ranked, names still hidden) → the 14U's testing session
    (**two dashes, never zeros**) → the 10U's lineups (one saved, twelve waiting) → the 12U's
    budget → the 12U's playing-time table → **one player's page** → the closed 2025 season.
-3. **Step 4, the money — new data.** The 12U now has a real ledger: ~$9,205 spent against a $9,400
+- [ ] **3.** **Step 4, the money — new data.** The 12U now has a real ledger: ~$9,205 spent against a $9,400
    plan. **Diamond rentals should sit OVER plan**, and it should be the only line that does. That
    is deliberate (two rainouts moved to weeknights) — a demo where every line comes in under budget
    teaches a prospect the report flatters them. **Tell me if the over-plan line reads as a bug
    rather than as honesty.**
-4. **Step 6, what a parent gets.** It lands on **Felix Aubert (#30)** — the same player step 5 just
+- [ ] **4.** **Step 6, what a parent gets.** It lands on **Felix Aubert (#30)** — the same player step 5 just
    showed you at the bottom of the playing-time table. Press **Preview** and read it as his parent
    would. **This is the judgement call I most want your eye on:** showing the recap of the kid who
    has been on the field least is either the sharpest thing in the demo or one step too far. Say
    the word and I'll point it at a neutral player.
-5. **Step 7 closes the loop** — the recap you just read, counted: nine of twelve families opened
+- [ ] **5.** **Step 7 closes the loop** — the recap you just read, counted: nine of twelve families opened
    theirs. Then open one of the read-only archive doors from that page to prove the year is
    browsable, not a screenshot.
-6. **🖥📱 The hat, on a phone.** Measured at 390px: **155px on arrival**, up from 112px, and
+- [ ] **6.** **🖥📱 The hat, on a phone.** Measured at 390px: **155px on arrival**, up from 112px, and
    **198–216px while a sentence is showing**, up from 182px. Two things buy that back and both need
    your eye: **the moments dock hides itself while the tour is speaking** (it comes back the moment
    the sentence clears — tell me if it reads as missing rather than as standing aside), and **the
    promise is now shortened on a phone to "Changes show on screen, but nothing is saved"**, taking
    the place of "There's a game this Saturday". Before this, on a phone, *the honesty promise
    appeared nowhere at all until you pressed something.*
-7. **Nothing may claim motion.** No countdown, no pulsing dot, no step that says "watch this
+- [ ] **7.** **Nothing may claim motion.** No countdown, no pulsing dot, no step that says "watch this
    change". If anything on screen suggests it is updating while you look at it, that is a defect.
-8. **Blind scoring holds.** No step, anywhere, may show you a candidate's name on the tryout board.
+- [ ] **8.** **Blind scoring holds.** No step, anywhere, may show you a candidate's name on the tryout board.
 
 **⚠ Three pre-existing problems the tour design uncovered — NOT fixed, and worth your ruling:**
 - The dock's Tryout-day sentence promises **"one split opinion to argue about tonight."** The
@@ -2716,10 +2865,14 @@ this is now most of the newest work, not two odds and ends:
 | Inside **1B** | §1.9c — the roster switch | — |
 | Inside **3A** | §6 — the playing-time wording sweep | — |
 | ~~Group **3C**~~ | ✅ §7 — the day-of volunteer bottom bars — **PASSED 2026-08-07**, gate cleared | — (no migration) |
+| Group **2D** | §8 — house-league fields + double-booking | mig **229** applied to **prod** before promoting |
 | Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | — (mig **226** applied both envs 2026-08-08) |
 
-⚠ **One database prerequisite is left, and this ledger cannot tick it:** Quiet Mode's migration
-(**209**). Release-manager steps, not QA steps — but if missed, those sections break in production
-in ways that passed QA on dev. *(225, 227 and 228 cleared this queue on 2026-08-06; **226 cleared
+⚠ **One database prerequisite is left, and this ledger cannot tick it:** migration **229**
+(house-league venue references, 2026-08-08) is applied to **dev only** — §8's code reads the new
+columns unconditionally, so promoting it to master without applying 229 to prod breaks every league
+schedule page for live customers. Quiet Mode's migration (209) is in the same queue.
+Release-manager steps, not QA steps — but if missed, those sections break in production in ways
+that passed QA on dev. *(225, 227 and 228 cleared this queue on 2026-08-06; **226 cleared
 2026-08-08** — the coach re-anchor is scheduled on both databases and both demo worlds are live on
 production.)*
