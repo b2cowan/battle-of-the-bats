@@ -252,6 +252,14 @@
 @media (max-width: 640px) {
   .checkInLabel { display: none; }
   .checkInBtn { padding: 0 0.55rem; }
+
+  /* Phone: the toolbar wraps into a stacked column, so each control takes the full row
+     (matches the scorekeeper's full-width division filter) at the 44px day-of touch height. */
+  .searchWrap,
+  .select {
+    flex: 1 1 100%;
+    height: 44px;
+  }
 }
 
 /* Direct "mark no-show" affordance on the row (full options still live in the sheet). */

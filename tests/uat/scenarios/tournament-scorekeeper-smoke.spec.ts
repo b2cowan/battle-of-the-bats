@@ -286,8 +286,10 @@ test.describe.serial('Tournament scorekeeper UAT smoke', () => {
     await reviewCard.click()
 
     const scoreSheet = scorekeeperPage.locator('form').filter({ hasText: 'Enter Score' })
-    await scoreSheet.getByRole('spinbutton').nth(0).fill('7')
-    await scoreSheet.getByRole('spinbutton').nth(1).fill('4')
+    // `textbox`, not `spinbutton`: the score fields are text inputs carrying inputmode=numeric so
+    // phones raise the 0-9 keypad rather than the full keyboard.
+    await scoreSheet.getByRole('textbox').nth(0).fill('7')
+    await scoreSheet.getByRole('textbox').nth(1).fill('4')
     await scoreSheet.getByRole('button', { name: /Submit for Review/ }).click()
     await expect(scorekeeperPage.getByText('Score sent for review')).toBeVisible({ timeout: 10_000 })
 
