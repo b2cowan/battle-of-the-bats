@@ -1,5 +1,7 @@
 # Android push — confirmation test plan (dev)
 
+**Status:** ACTIVE — standing manual test script for the open Android push-delivery investigation (production delivery unconfirmed; suspected VAPID mismatch). Not a build plan; deliberately no PM brief.
+
 **Goal:** confirm push notifications actually reach an Android phone **on the dev environment** before Phase 2 (fan accounts & alerts) relies on them. The earlier failure was on production; dev has its own keys/config, so it must be confirmed on dev specifically.
 
 **Why this works:** the built-in **"Test this device"** tool uses the exact same push plumbing (keys, service worker, delivery path) as fan score alerts. If a test notification is delivered, fan alerts will work too. If it fails, the tool names the exact reason.

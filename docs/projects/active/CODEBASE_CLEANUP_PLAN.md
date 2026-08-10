@@ -1,6 +1,6 @@
 # Codebase Cleanup — Tranche Plan
 
-> Status: **PROPOSED 2026-07-24 — investigation complete, NO tranche executed. Owner ratifies each tranche before any execution chat touches code.**
+> Status: **IN EXECUTION — Tranches 0–3 executed (see the trackers + cleanup commits); Tranches 4–5 open. Owner ratifies each tranche before any execution chat touches code.**
 > Companion docs: `CODEBASE_CLEANUP_ANALYSIS.md` (full verified findings inventory + evidence — finding IDs like A02/C03/D01 below refer to it) and `CODEBASE_CLEANUP_PM_BRIEF.md` (plain-language owner brief).
 > Produced by the 2026-07-24 multi-agent audit (160 agents: 14 finders + adversarial verifier per removal candidate + completeness critic + 7 recovery verifiers; final tally 208 findings — 173 confirmed / 30 downgraded / 5 refuted).
 
@@ -8,7 +8,7 @@
 
 1. **Per-action owner OK before any commit.** Stage explicit pathspecs only; `git show --stat HEAD` after each commit.
 2. **Re-verify before deleting.** Concurrent sessions share this tree. Immediately before deleting any file/export, re-run the zero-reference grep from the analysis doc. A finding verified 2026-07-24 is not a license to delete blind a week later.
-3. **⚠ Local `master` is stale (G33).** Local `master` = `8f8b9e1b` (2026-06-25); true deployed prod = `origin/master` = `f064712d` (2026-07-23, ~100 commits ahead). All prod-reference checks in execution tranches must use `origin/master` after a `git fetch`. Recommended one-time fix: `git fetch && git branch -f master origin/master` (owner/ops action — flag before doing).
+3. **Local `master` staleness (G33) — FIXED 2026-08-10** (fast-forwarded to `origin/master` during the docs audit). The rule stands regardless: all prod-reference checks use `origin/master` after a `git fetch` — never trust the local ref.
 4. **Dev-server restart rule.** Every tranche that deletes files or touches shared modules ends with: stop server → `rm -rf .next` → `npm run dev` → verify ready, before owner browser testing.
 5. **Verification suite per tranche:** `npm run verify:changed`; `npm run typecheck` when lib/ or shared modules are touched; ratchet `--init` re-freeze only where a tranche explicitly extends scopes.
 6. **DB changes** (Tranche 5 only): routed through `/db`–`/dba`, applied via `apply-migration-api.mjs` to BOTH envs, with `DATA_DICTIONARY.md` update + `npm run refresh:snapshots` in the same unit of work. ALL DB drops are owner-decision regardless of mechanical confidence.

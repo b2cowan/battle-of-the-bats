@@ -3,7 +3,7 @@
 **Audit:** `PLATFORM_ADMIN_ACTION_ENFORCEMENT_AUDIT_FINDINGS.md` (evidence for every claim)
 **PM brief:** `PLATFORM_ADMIN_ACTION_ENFORCEMENT_AUDIT_PM_BRIEF.md`
 **Ruling:** owner, 2026-08-06 — **hard-block immediately** (option A), plus all four secondary fixes.
-**Status:** ✅ BUILT on `dev`, UNCOMMITTED. Owner QA = ledger §1.19. **No migration.**
+**Status:** ✅ LIVE on production (committed `d8316e87`, 2026-08-06 release; the `ENTITLEMENT_GRANTS_ENABLED` runtime gap closed in `1538379a`, 2026-08-10). Owner QA = ledger §1.19 owed. **No migration.**
 
 ---
 
