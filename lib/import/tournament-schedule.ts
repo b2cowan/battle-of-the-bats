@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import { checkVenueConflict } from '../schedule-conflict.ts';
-import { hasKnownPlacement } from '../venue-identity.ts';
+import { hasKnownPlacement, isPlaceholderLocation } from '../venue-identity.ts';
+import { formatVenueLocation } from '../venue-label.ts';
 import { getCell, normalizeHeader, normalizeToken } from './tabular.ts';
 import type { ImportPreview, ImportPreviewChange, ImportPreviewRow, ParsedImportFile, ParsedImportRow } from './types.ts';
 import type { Division, Tournament } from '../types.ts';
@@ -108,6 +109,9 @@ export type TournamentScheduleImportNormalizedRow = {
   venueFacilityId: string | null;
   venueFacilityName: string | null;
   location: string;
+  /** How the bare Location cell fared against the tournament's fields (Phase 2 reporting).
+   *  Absent when venue columns were used, the cell was empty/placeholder, or a match landed. */
+  locationMatch?: 'unmatched' | 'ambiguous';
   status: ScheduleStatus;
   notes: string | null;
 };
@@ -393,9 +397,63 @@ function venueDisplay(
   facility: TournamentScheduleImportVenueFacility | null,
   fallback: string,
 ) {
-  if (venue && facility) return `${venue.name} - ${facility.name}`;
-  if (venue) return venue.name;
+  if (venue) return formatVenueLocation(venue.name, facility?.name);
   return fallback.trim();
+}
+
+/**
+ * The ONE sanctioned auto-resolution of typed text (Phase 2, plan §4 rulings): resolve a
+ * bare `Location` cell against the tournament's own fields on EXACT match only — trim +
+ * case-fold via `normalizeToken` (which also flattens punctuation, so our own exported
+ * "Venue - Facility" and the live "Venue — Facility" read as the same string). A cell
+ * that matches a venue name, a facility name, or the combined label resolves to that
+ * record; anything ambiguous or unmatched stays typed text and is REPORTED, never blocked
+ * and never guessed at.
+ *
+ * The token index is built ONCE per import (the venue list is identical for every row) and
+ * each row's lookup is O(1) — a 1500-row file must not re-tokenize the catalog 1500 times.
+ */
+type LocationCellTarget = {
+  venue: TournamentScheduleImportVenue;
+  facility: TournamentScheduleImportVenueFacility | null;
+};
+type LocationTokenIndex = Map<string, LocationCellTarget[]>;
+
+function buildLocationTokenIndex(context: TournamentScheduleImportContext): LocationTokenIndex {
+  const index: LocationTokenIndex = new Map();
+  const add = (token: string, target: LocationCellTarget) => {
+    if (!token) return;
+    const list = index.get(token) ?? [];
+    const targetKey = `${target.venue.id}:${target.facility?.id ?? ''}`;
+    if (!list.some(item => `${item.venue.id}:${item.facility?.id ?? ''}` === targetKey)) {
+      list.push(target);
+    }
+    index.set(token, list);
+  };
+  for (const venue of context.venues) {
+    add(normalizeToken(venue.name), { venue, facility: null });
+    for (const facility of venue.facilities) {
+      const target = { venue, facility };
+      add(normalizeToken(facility.name), target);
+      add(normalizeToken(`${venue.name} - ${facility.name}`), target);
+    }
+  }
+  return index;
+}
+
+function resolveLocationCell(
+  text: string,
+  index: LocationTokenIndex,
+):
+  | { kind: 'matched'; venue: TournamentScheduleImportVenue; facility: TournamentScheduleImportVenueFacility | null }
+  | { kind: 'unmatched' | 'ambiguous' | 'none' } {
+  const token = normalizeToken(text);
+  // Empty and placeholder text ("TBD", "N/A", …) name no field at all — not a failed match.
+  if (!token || isPlaceholderLocation(text)) return { kind: 'none' };
+
+  const targets = index.get(token) ?? [];
+  if (targets.length === 1) return { kind: 'matched', ...targets[0] };
+  return { kind: targets.length === 0 ? 'unmatched' : 'ambiguous' };
 }
 
 export function normalizeTournamentScheduleExistingGameForImport(game: TournamentScheduleImportExistingGame, context: TournamentScheduleImportContext): Record<string, unknown> {
@@ -469,6 +527,7 @@ function normalizeRow(
   row: ParsedImportRow,
   target: TournamentScheduleImportExistingGame | null,
   context: TournamentScheduleImportContext,
+  locationIndex: LocationTokenIndex,
   warnings: string[],
   errors: string[],
 ): TournamentScheduleImportNormalizedRow {
@@ -504,21 +563,45 @@ function normalizeRow(
     errors.push('Home Team and Away Team must be different.');
   }
 
-  const venueResult = resolveVenue({
+  const venueColumns = {
     venueId: rawCell(row, ['Venue ID', 'venue_id']),
     venueName: rawCell(row, ['Venue Name', 'Venue']),
     facilityId: rawCell(row, ['Facility ID', 'facility_id', 'Venue Facility ID']),
     facilityName: rawCell(row, ['Facility Name', 'Facility', 'Venue Facility']),
-  }, context);
+  };
+  const venueResult = resolveVenue(venueColumns, context);
   errors.push(...venueResult.errors);
   warnings.push(...venueResult.warnings);
+
+  // Phase 2: a row carrying ONLY a typed Location cell (most third-party files) resolves
+  // on exact match against the tournament's fields. Attempted only when no venue column
+  // was used at all, so the explicit columns keep their stricter error semantics.
+  let resolvedVenue = venueResult.venue;
+  let resolvedFacility = venueResult.facility;
+  let locationMatch: 'unmatched' | 'ambiguous' | undefined;
+  const locationCell = rawCell(row, ['Location']);
+  const usedVenueColumns = Boolean(
+    venueColumns.venueId || venueColumns.venueName || venueColumns.facilityId || venueColumns.facilityName,
+  );
+  if (!usedVenueColumns && locationCell) {
+    const cellResult = resolveLocationCell(locationCell, locationIndex);
+    if (cellResult.kind === 'matched') {
+      resolvedVenue = cellResult.venue;
+      resolvedFacility = cellResult.facility;
+    } else if (cellResult.kind === 'ambiguous') {
+      locationMatch = 'ambiguous';
+      warnings.push('Location matches more than one of this tournament\'s fields — left as typed text. Use the Venue/Facility columns to be exact.');
+    } else if (cellResult.kind === 'unmatched') {
+      locationMatch = 'unmatched';
+    }
+  }
 
   const gameDate = parseDate(rawCell(row, ['Game Date', 'Date']), errors);
   const startTime = parseTime(rawCell(row, ['Start Time', 'Time', 'Game Time']), errors);
   const fallbackStatus = target?.status === 'cancelled' ? 'cancelled' : 'scheduled';
   const status = parseStatus(rawCell(row, ['Status']), fallbackStatus, warnings, errors);
   const gameType = parseGameType(rawCell(row, ['Game Type', 'Type', 'is_playoff']), target, errors);
-  const location = venueDisplay(venueResult.venue, venueResult.facility, rawCell(row, ['Location']));
+  const location = venueDisplay(resolvedVenue, resolvedFacility, locationCell);
 
   return {
     gameId,
@@ -531,11 +614,12 @@ function normalizeRow(
     awayTeamName: awayResult.team?.name ?? rawCell(row, ['Away Team', 'Away']),
     gameDate,
     startTime,
-    venueId: venueResult.venue?.id ?? null,
-    venueName: venueResult.venue?.name ?? null,
-    venueFacilityId: venueResult.facility?.id ?? null,
-    venueFacilityName: venueResult.facility?.name ?? null,
+    venueId: resolvedVenue?.id ?? null,
+    venueName: resolvedVenue?.name ?? null,
+    venueFacilityId: resolvedFacility?.id ?? null,
+    venueFacilityName: resolvedFacility?.name ?? null,
     location,
+    ...(locationMatch ? { locationMatch } : {}),
     status,
     notes: rawCell(row, ['Notes']) || null,
   };
@@ -616,6 +700,7 @@ export function buildTournamentScheduleImportPreview(
   const duplicatedUploadedIds = new Set(uploadedIds.filter((id, index) => uploadedIds.indexOf(id) !== index));
   const conflictCandidates = conflictGames(context);
   const divisionsForConflict = context.divisions.map(asConflictDivision);
+  const locationIndex = buildLocationTokenIndex(context);
 
   const rows: ImportPreviewRow[] = [];
 
@@ -632,7 +717,7 @@ export function buildTournamentScheduleImportPreview(
     }
 
     addExistingGameSafetyErrors(target, errors);
-    const normalized = normalizeRow(row, target, context, warnings, errors);
+    const normalized = normalizeRow(row, target, context, locationIndex, warnings, errors);
     const after = buildTournamentScheduleImportAfterRecord(normalized);
     const before = target ? normalizeTournamentScheduleExistingGameForImport(target, context) : undefined;
     addLinkedGameChangeSafetyErrors(target, before, after, errors);
@@ -716,6 +801,33 @@ export function buildTournamentScheduleImportPreview(
     blocked: rows.filter(row => row.operation === 'blocked').length,
   };
 
+  // Name every typed location the file carried that did NOT resolve to one of this
+  // tournament's fields — those rows import as text and are never checked for
+  // double-bookings, so the organizer hears it here rather than never. Aggregated by
+  // normalized name (one line per distinct spelling family, with a row count).
+  const unmatchedByToken = new Map<string, { name: string; rows: number; ambiguous: boolean }>();
+  for (const row of rows) {
+    if (row.operation === 'blocked') continue;
+    const normalized = row.normalized as TournamentScheduleImportNormalizedRow;
+    if (!normalized.locationMatch) continue;
+    const token = normalizeToken(normalized.location);
+    if (!token) continue;
+    const entry = unmatchedByToken.get(token);
+    if (entry) {
+      entry.rows += 1;
+      entry.ambiguous = entry.ambiguous || normalized.locationMatch === 'ambiguous';
+    } else {
+      unmatchedByToken.set(token, {
+        name: normalized.location,
+        rows: 1,
+        ambiguous: normalized.locationMatch === 'ambiguous',
+      });
+    }
+  }
+  const unmatchedLocations = [...unmatchedByToken.values()]
+    .sort((a, b) => b.rows - a.rows)
+    .map(({ name, rows: rowCount, ambiguous }) => ({ name, rows: rowCount, ...(ambiguous ? { ambiguous } : {}) }));
+
   return {
     batchId,
     importType: TOURNAMENT_SCHEDULE_IMPORT_TYPE,
@@ -725,6 +837,7 @@ export function buildTournamentScheduleImportPreview(
     ],
     scope: { orgId: context.orgId, tournamentId: context.tournamentId },
     summary,
+    ...(unmatchedLocations.length > 0 ? { unmatchedLocations } : {}),
     rows,
     canCommit: summary.blocked === 0,
   };

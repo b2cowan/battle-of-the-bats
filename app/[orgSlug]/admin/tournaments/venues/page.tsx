@@ -1,5 +1,6 @@
 'use client';
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   MapPin, Plus, Pencil, Trash2, X, Check,
   ChevronDown, Navigation, Download,
@@ -18,6 +19,7 @@ import {
 } from '@/lib/export';
 import type { Venue, VenueFacility, OrgVenue, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS, FACILITY_TYPES } from '@/lib/types';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import styles from '../../org/venues/venues-admin.module.css';
 
 // ---------------------------------------------------------------------------
@@ -733,7 +735,7 @@ export default function TournamentVenuesPage() {
   // Org venue library is only available on League and Club plans.
   // Tournament / Tournament Plus subscribers have no org library — their entire
   // experience is the tournament admin module only.
-  const hasOrgLibrary = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
+  const hasOrgLibrary = hasOrgVenueLibrary(currentOrg?.planId);
 
   const refresh = useCallback(async () => {
     if (!currentTournament) { setVenues([]); return; }
@@ -748,6 +750,13 @@ export default function TournamentVenuesPage() {
     const t = window.setTimeout(() => { void refresh(); }, 0);
     return () => window.clearTimeout(t);
   }, [refresh]);
+
+  // Deep link from the schedule's zero-venue prompt: ?import=library opens the org-library
+  // import straight away (League/Club only — the gate mirrors the button below).
+  const searchParams = useSearchParams();
+  useEffect(() => {
+    if (hasOrgLibrary && searchParams.get('import') === 'library') setImportOpen(true);
+  }, [hasOrgLibrary, searchParams]);
 
   // -- Export ----------------------------------------------------------------
 

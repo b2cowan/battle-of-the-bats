@@ -321,6 +321,7 @@ export default function ScheduleTimeline({
   stage,
   onMove,
   onCreateVenue,
+  zeroVenuePrompt,
 }: {
   games: Game[];
   venues: Venue[];
@@ -335,6 +336,9 @@ export default function ScheduleTimeline({
   onMove?: (gameId: string, target: { date: string; time: string; venueId: string; venueFacilityId: string }) => void | Promise<void>;
   /** Open the create-venue flow (for the "+ Field" menu). */
   onCreateVenue?: () => void;
+  /** Rendered instead of the add-a-field hint when the tournament has ZERO venues —
+   *  the setup prompt that stops typed-only schedules at the source (Phase 2). */
+  zeroVenuePrompt?: ReactNode;
 }) {
   const divById = useMemo(() => new Map(divisions.map(d => [d.id, d])), [divisions]);
   // Pool is for block COLOR only (not selection) — derived from the teams' pool.
@@ -827,7 +831,11 @@ export default function ScheduleTimeline({
               )}
             </div>
             {columns.length === 0 && (
-              <div className={styles.gridHint}>Add a field, then drag an unscheduled game onto it to set its venue and time.</div>
+              venues.length === 0 && zeroVenuePrompt ? (
+                <div style={{ maxWidth: 460, margin: '0.75rem auto 0' }}>{zeroVenuePrompt}</div>
+              ) : (
+                <div className={styles.gridHint}>Add a field, then drag an unscheduled game onto it to set its venue and time.</div>
+              )
             )}
           </div>
         )}

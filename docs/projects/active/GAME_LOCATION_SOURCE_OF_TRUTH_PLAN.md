@@ -323,14 +323,146 @@ Accepted as intended (reported, not changed):
 - **Typed text still never matches a configured field.** A tournament with some games typed "Diamond 1" and others pinned to the facility record *Diamond 1* is only partially checked. Resolving that is Phase 3 (reviewed), and Phase 2 should report it at import time.
 - **A tournament with zero configured fields still has no timeline columns.** Authoring concern → Phase 2.
 
-### Phase 2 — Stop new drift at the source (no migration)
-- [ ] One server-side helper that derives the display string from venue+surface, generalizing the lane-resolution logic (`app/api/admin/schedule-facility-lanes/route.ts:238`) — single formatter, one definition of the string
-- [ ] Call it on every write path that sets a venue: `app/api/admin/games/route.ts` (lines 317, 377, 457, 929), so `location` is written *through* and can no longer disagree with the reference
-- [ ] Game editor + schedule builder: picking a field is the default path; free text becomes an explicit "off-site / not a configured field" choice (`GameList.tsx:649`, `ScheduleTimeline.tsx`, `BracketBuilder.tsx:211`)
-- [ ] When a tournament has **no** fields configured, prompt to create them instead of silently accepting text (this is what produced Bye Demo's 21 and Free Cup's 18 — §0.1)
-- [ ] Bulk import keeps accepting text, but resolves-on-exact-match and **reports** unresolved names in the import summary (`lib/import/tournament-schedule.ts`, `app/api/admin/tournaments/[tournamentId]/schedule/import/shared.ts`)
-- [ ] Scorekeeper filter: list the fields the day's games are actually on, so a venue that exists but is unused doesn't pad the list and a typed-only game isn't invisible (`app/api/official/[orgSlug]/score/get-score.ts:335`)
-- [ ] Sport-neutral labels throughout — "field" comes from the Sport Pack (`lib/sports.ts`), never hard-coded
+### Phase 2 — Stop new drift at the source ✅ BUILT on dev 2026-08-08 (no migration)
+
+Built to owner-approved mockups (Claude Artifact `phase2-field-authoring-mockups`, rev `venues-naming`).
+
+- [x] **One formatter, one rail.** `formatVenueLocation()` in `lib/venue-label.ts` is now the ONLY
+  producer of the `Venue — Facility` string (em dash — the lane route and both import passes wrote
+  a plain hyphen and drifted from the live labels). New `lib/tournament-venue-selection.ts` (pure,
+  unit-tested) + `lib/tournament-venue.ts` (catalog fetch) mirror Phase 4's league rail: the ONLY
+  way a venue reference gets onto a tournament game, deriving `location` server-side so it can
+  never disagree with the reference. The league rail now imports the same formatter.
+- [x] **Write-through on every games write path**: bulk-save, create, save-bracket (one catalog per
+  tournament in the batch), the lane-resolution route, and PATCH update. **Bonus hardening:** the
+  catalog is tournament-scoped, so a venue id from another tournament/org now 400s instead of being
+  written through (the bare FK never enforced tenancy).
+- [x] **PATCH venue semantics are presence-based** (the league pattern): a PRESENT `venueId` — value
+  or explicit null — is the venue decision; a bare `location` edit only applies while no reference
+  is stored. **This fixes Phase 1's parked defect:** clearing the venue from the inline row (and the
+  modal, and a timeline drag — all three ride the same save) was a silent no-op via
+  `|| undefined` + undefined-skip; all senders now send explicit nulls. (Also fixed en route: PATCH
+  `venueId: ''` used to write a literal empty string into a uuid column.)
+- [x] **Picking a field is the default path.** New shared `TournamentFieldPicker` (modal + inline
+  row): venue optgroups with "Any {noun} at {venue}", a working "— No {noun} —" clear, and typed
+  text demoted to the explicit **"Somewhere else (type it)"** choice, mirroring the league
+  FieldPicker. The modal's type-first autocomplete is gone, and so is its `required` venue — the
+  honest "no field yet" beats coerced junk text (what R2 exists to mop up). The bracket builder's
+  select gains the same "Somewhere else" escape (sticky via local text-mode state). The inline
+  conflict preview now models the real save semantics (cleared means cleared).
+- [x] **Zero-venue prompt** (`ZeroVenuePrompt`): a tournament with no venues gets *"No venues set up
+  yet — games without a real venue can't be checked for double-bookings"* + **[Create venues]**
+  (opens the add-venue modal in place) in the game modal and on the empty timeline, instead of a
+  silent text box; "type a location anyway" stays as a deliberate link. **Owner ruling 2026-08-08:
+  League/Club orgs are offered [Import from your Venue Library] FIRST** (deep link
+  `venues?import=library` auto-opens the existing import modal; Tournament tiers have no library →
+  plain create). **Naming ruling (owner 2026-08-08): setup-level copy says "venues"** — the
+  container created on the Venues page — while the sport noun stays wherever an actual playing
+  surface is picked.
+- [x] **Import resolves the bare `Location` cell on exact match** (trim + case-fold via
+  `normalizeToken`, which flattens punctuation so legacy hyphen labels and live em-dash labels read
+  the same) against venue names, unique facility names, and combined labels — the ONE sanctioned
+  auto-resolution. Ambiguous names warn and stay text; unmatched names stay text and are **named in
+  a new `unmatchedLocations` report** on the preview (aggregated by name with game counts, rendered
+  in the import dialog). Nothing unmatched blocks the file. Explicit Venue/Facility columns are
+  never second-guessed.
+- [x] **Scorekeeper "All fields" filter reflects the day**: only venues today's games are actually
+  on, plus one `text:` entry per typed-only location (matched client-side with the same
+  `normalizeLocationText`), so an unused venue no longer pads the list and a typed-only game is no
+  longer invisible to the filter. Placeholder text gets no entry (R2). ⚠ The volunteer's empty
+  "All fields" dropdown remains a SEPARATE defect (§0.2 / Phase 0) — not claimed here.
+- [x] **Sport-neutral throughout**: modal label, picker options, inline row, and the import dialog's
+  unmatched-copy all take the noun from `getSportPack(...).defaultFacilityType` →
+  `FACILITY_TYPE_LABELS`.
+- [x] Tests: new `tests/unit/tournament-venue-selection.test.ts` (10) + 7 added to
+  `tests/unit/tournament-schedule-import.test.ts` (location-cell resolution, ambiguity, aggregation,
+  R2, column precedence) + 2 existing expectations updated for the deliberate em-dash unification.
+  **Verified:** 1545/1545 ✅ · typecheck ✅ · `verify:changed` ✅ except `check:demos`' coach-sandbox
+  attendance drift (pre-existing, seeded coach data — Phase 1's review hit the identical failure;
+  the TOURNAMENT sandbox passes and its tour copy about the schedule screens was re-read and stays
+  true — no demo sentence mentions the venue box).
+
+#### `/simplify` pass — 2026-08-10 (4 parallel agents: reuse / simplification / efficiency / altitude)
+
+Applied (9): ONE plan-gate predicate `hasOrgVenueLibrary()` in `lib/plan-features.ts` (was inlined in
+6 files — all converted); ONE sport-noun helper `fieldNounFor()` in `lib/sports.ts` (4 sites);
+`typedLocationKey()` in `lib/venue-identity.ts` shared by the scorekeeper server + client (the two
+sides literally share the key builder now); the last 3 hand-built venue labels routed through
+`formatVenueLocation` (page/GameList/PlayoffWizard); the lane-resolve route's hand-rolled
+venue/tenancy validation replaced with the catalog rail (one behavior delta: a venue+facility
+mismatch now 400s instead of the facility's parent silently winning); GameList's edit-state defaults
+collapsed to one `editDefaultsFor()` seeded from `fieldPickerValueForGame` (un-deadening it); the
+import's Location index built once per upload (O(rows×catalog) → O(rows+catalog)); multi-tournament
+batch catalogs load in parallel; the venues-page deep link reads `useSearchParams`.
+Skipped (4, noted): BracketBuilder/TournamentFieldPicker merge (lane option + compact labels =
+genuinely different UI); per-save catalog cache (not a hot path); reusing gameRow for the
+bare-location check (it doesn't carry `diamond_id` — verified); field-name rename symmetry (churn).
+
+#### `/review` pass — 2026-08-10 (high-risk tier: 5 lenses — correctness / multi-tenant / data-contract / regression / concurrency)
+
+**Deterministic gate:** typecheck ✓ · lint 0 errors · migrations n/a · `verify:changed` ✓ except the
+pre-existing coach-sandbox demo drift (foreign to this diff) · `check:layout` SKIPPED (no dev
+server; covered-screen list is coach-portal-only). 23 raw findings → 15 after triage → **8
+confirmed + fixed**, 7 accepted-with-note.
+
+Fixed (8):
+- **[High] Spurious "game moved" family notices.** Every save now rewrites `location` to the
+  canonical string, and `classify()` diffed the raw string — a notes-only edit on a
+  legacy-hyphen game would have buzzed families with a move. Venue change is now judged on the
+  STRUCTURED refs when the snapshot carries them (extracted to pure
+  `lib/schedule-change-classify.ts` + 7 pinning tests; the string diff still applies for
+  ref-less callers like the bulk shift and for text-vs-text placements).
+- **[High] A picked venue now detaches the generator lane.** Repointing a lane-tethered game to a
+  real field left `schedule_facility_lane_id` behind; a later lane-resolve pass snapped the game
+  back to the lane's venue, silently discarding the manual pick (modal, inline row, and timeline
+  drag all rode the same PATCH). An explicit lane key in the body still wins; clearing/typing
+  leaves a lane alone so an untouched save can't evict a lane game.
+- **[High, pre-existing — hardened in passing] `import-from-org` copied ANY org's private venue
+  library by UUID** (no `org_id` ownership check, no plan gate — reachable on any tier) — now
+  404s foreign ids and requires the library plan. Siblings fixed with it: org-library
+  `update-facility`/`delete-facility` mutated by raw id with zero ownership check (cross-org
+  rename/delete); tournament `add-facility` trusted the client's `tournamentId` instead of
+  deriving it from the parent venue (tenant-scoped facility reads poisoned by a mismatch).
+- **[Medium] `save-bracket` resolves every game's venue BEFORE the first write** — a resolver
+  refusal mid-loop used to leave the bracket half-saved behind a 400.
+- **[Medium] Scorekeeper field filter resets when a date change empties it** (the list is
+  day-scoped now, so a stale `text:` filter guaranteed a silently empty board).
+- **[Medium] BracketBuilder clears abandoned typed text when a matchup returns to its lane**
+  (it used to ride the next save as a live text placement and invite bogus typed-name warnings).
+- **[Medium] `handleVenueSaved` only auto-selects the new venue when the game modal is open** —
+  the create-venue door is shared by six call sites, and an inline-row create was staging the
+  venue into the (closed) modal's form.
+- **[Low] A batch row with no `tournamentId` fails as a clean 400** instead of a TypeError 500.
+
+Accepted (7, reported not changed): re-import of legacy-hyphen files reclassifies rows as
+'update' with a Location change line (one-time canonicalization, nothing blocked); lane games
+present in the pickers as "Somewhere else" with the lane label (display gap — harmless now the
+clobber is fixed; the resolve-facilities panel remains the lane surface); `save-bracket` still
+never writes lane membership (canvas doesn't surface lanes); the bare-location PATCH branch is
+unreachable from current callers (kept — it guards the desync invariant); naive `+'s'`
+pluralization (correct for all six current facility labels); two narrow pre-existing races
+(venue-deleted-mid-request FK window → 500; bare-text TOCTOU on an unreachable branch).
+
+**Re-verified:** 1552/1552 tests ✅ · typecheck ✅ · focused lint 0 errors ✅
+
+#### `/docs` pass — 2026-08-10
+
+Tournament guide (`lib/help-content/tournaments.tsx`): venues section rewritten for pick-first +
+the zero-venue prompt + the League/Club library lead; schedule section gains the double-booking
+paragraph + 2 new FAQs (`#faq-double-booked-field`, `#faq-offsite-game-location`) — Phase 1's
+warnings had never been documented; Data Tools section documents Location-column auto-matching +
+the unmatched-names report; the scorekeeper FAQ notes the day-scoped field filter. Search
+keywords/searchText updated everywhere (search doesn't read rendered prose). ⚠ Noted, not done:
+the ORG guide has no Venue Library section at all (pre-existing gap — future docs pass).
+
+#### What Phase 2 changes at QA (expected surprises)
+- Existing games whose stored label used the hyphen form ("Lions Park - Diamond 1") get rewritten to
+  the em dash the next time anything saves through them (including an import update, where
+  "Location" now appears as a change line). One-time, cosmetic, deliberate.
+- The Add/Edit game window no longer *requires* a location — "— No diamond —" is a legitimate save
+  and lands in the `venue_unchecked` count, which is the honest outcome.
+- An import file whose Location column exactly names your fields now links those games to the real
+  records (previously they stayed typed text even when the spelling matched).
 
 ### Phase 3 — Resolve the existing strings (data, reversible, admin-reviewed)
 - [ ] Per-tournament screen: "9 games say *Diamond 1* — is that **[Diamond 1 ▾]**?" with an explicit **Leave as text** option
@@ -402,7 +534,11 @@ Accepted as intended (reported, not changed):
 ### Still open (not blocking)
 
 - [x] ~~Should `venue_unchecked` dock the health score?~~ **DECIDED R4 (2026-08-08): yes — scaled by coverage.** See the R4 block in Phase 1.
-- [ ] Does the org-level venue library (`org_venues` / `org_venue_facilities`, League/Club only — **0 rows on both dev and prod**) belong in Phase 2's "create the fields first" prompt, or is it dead weight to leave alone? Becomes more pressing under R3, since a league's fields are org-level by nature.
+- [x] ~~Does the org venue library belong in Phase 2's "create the fields first" prompt?~~
+  **DECIDED (owner, 2026-08-08): yes — League/Club orgs are offered "Import from your Venue
+  Library" FIRST in the zero-venue prompt** (Tournament tiers get plain create — no library on
+  those plans). Companion naming ruling the same day: the setup prompt says **"venues"**, the sport
+  noun (diamond/court/rink) stays wherever a game's actual playing surface is picked.
 
 ## 5 · Verification
 

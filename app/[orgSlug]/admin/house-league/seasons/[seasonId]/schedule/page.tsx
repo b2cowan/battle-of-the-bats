@@ -7,7 +7,7 @@ import { useOrg } from '@/lib/org-context';
 import { ORG_TIME_ZONE, utcToZonedInputs, tournamentToday } from '@/lib/timezone';
 import { isFreeFloorLeague } from '@/lib/free-floor';
 import { hasCapability } from '@/lib/roles';
-import { getSportPack } from '@/lib/sports';
+import { fieldNounFor } from '@/lib/sports';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import {
@@ -16,7 +16,6 @@ import {
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../house-league.module.css';
-import { FACILITY_TYPE_LABELS } from '@/lib/types';
 import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice, OrgVenue } from '@/lib/types';
 
 // ── Export definition ─────────────────────────────────────────────────────────
@@ -862,7 +861,7 @@ export default function SchedulePage() {
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
 
   // Sport-neutral surface noun ("Diamond" / "Court" / "Field") — never hard-coded.
-  const noun = FACILITY_TYPE_LABELS[getSportPack(season?.sport).defaultFacilityType];
+  const noun = fieldNounFor(season?.sport);
   const conflictKeys = useMemo(
     () => new Set((health?.conflicts ?? []).map(c => `${c.kind}:${c.id}`)),
     [health],

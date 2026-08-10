@@ -9,6 +9,8 @@ type Props = {
   open: boolean;
   tournamentId: string;
   orgSlug?: string;
+  /** Sport-pack surface noun ("Diamond" / "Court" …) for the unmatched-locations copy. */
+  fieldNoun?: string;
   onClose: () => void;
   onPreviewed?: () => void | Promise<void>;
   onCommitted?: () => void | Promise<void>;
@@ -29,7 +31,8 @@ function statusLabel(preview: ImportPreview) {
   return 'Preview ready';
 }
 
-export default function TournamentScheduleImportDialog({ open, tournamentId, orgSlug, onClose, onPreviewed, onCommitted }: Props) {
+export default function TournamentScheduleImportDialog({ open, tournamentId, orgSlug, fieldNoun = 'field', onClose, onPreviewed, onCommitted }: Props) {
+  const nounPlural = `${fieldNoun.toLowerCase()}s`;
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [commitResult, setCommitResult] = useState<ImportCommitResult | null>(null);
@@ -218,6 +221,33 @@ export default function TournamentScheduleImportDialog({ open, tournamentId, org
                 <span><strong>{preview.summary.updates}</strong> updates</span>
                 <span><strong>{preview.summary.unchanged}</strong> unchanged</span>
               </div>
+              {preview.unmatchedLocations && preview.unmatchedLocations.length > 0 && (
+                // Phase 2: name the field names the file carried that didn't match one of this
+                // tournament's fields. These import as typed text and are never checked for
+                // double-bookings — said here, once, instead of never. Never blocks the file.
+                <div className={styles.noticeBox}>
+                  <AlertCircle size={15} aria-hidden />
+                  <div>
+                    <strong>
+                      {preview.unmatchedLocations.length === 1
+                        ? `1 field name didn’t match this tournament’s ${nounPlural}`
+                        : `${preview.unmatchedLocations.length} field names didn’t match this tournament’s ${nounPlural}`}
+                    </strong>
+                    <ul className={styles.noticeList}>
+                      {preview.unmatchedLocations.map(item => (
+                        <li key={item.name}>
+                          &ldquo;{item.name}&rdquo; — {item.rows} game{item.rows === 1 ? '' : 's'}
+                          {item.ambiguous ? ' (matches more than one field)' : ''}
+                        </li>
+                      ))}
+                    </ul>
+                    <span className={styles.muted}>
+                      These import as typed text and won&rsquo;t be checked for double-bookings.
+                      Exact name matches were linked to real fields automatically.
+                    </span>
+                  </div>
+                </div>
+              )}
               {commitResult && (
                 <div className={styles.successBox}>
                   <CheckCircle2 size={15} aria-hidden />

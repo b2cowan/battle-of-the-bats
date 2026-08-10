@@ -2,9 +2,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronDown, ChevronUp, MapPin, Pencil, X, AlertCircle, Trash2, Check, AlertTriangle, Lock, Unlock, Plus, Minus, Network } from 'lucide-react';
 import { Game, Team, Division, Venue, Tournament } from '@/lib/types';
+import { fieldNounFor } from '@/lib/sports';
 import { checkVenueConflict, buildConflictMap, resolveGameTiming, toConflictGame, type ConflictResult, type ConflictInfo } from '@/lib/schedule-conflict';
 import { hasKnownPlacement } from '@/lib/venue-identity';
-import { resolveGameFieldLabel } from '@/lib/venue-label';
+import { formatVenueLocation, resolveGameFieldLabel } from '@/lib/venue-label';
+import TournamentFieldPicker, { fieldPickerValueForGame } from './TournamentFieldPicker';
 import { scheduledWindowState } from '@/lib/game-live-state';
 import { formatTime, formatPoolName } from '@/lib/utils';
 import { buildPlaceholderOptions, descendantBracketCodes } from '@/lib/playoff-bracket';
@@ -31,7 +33,7 @@ interface GameListProps {
   onCancel?: (id: string) => void;
   onSchedule?: (id: string) => void;
   onToggleGeneratorLock?: (id: string, nextLocked: boolean) => void;
-  onSave?: (gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string }) => Promise<void>;
+  onSave?: (gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; location: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string }) => Promise<void>;
   onSaveScore?: (gameId: string, homeScore: number, awayScore: number) => Promise<void>;
   /** Mark a game a forfeit; winningSide is the team that showed up and advances. */
   onForfeit?: (gameId: string, winningSide: 'home' | 'away') => Promise<void>;
@@ -47,7 +49,7 @@ interface GameListProps {
   focusGameId?: string | null;
 }
 
-type EditFields = { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string };
+type EditFields = { date: string; time: string; venueId: string; venueFacilityId: string; location: string; venueTextMode: boolean; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder: string; awayPlaceholder: string };
 
 type ScoreFields = { home: string; away: string };
 
@@ -67,6 +69,8 @@ export default function GameList({
   onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onForfeit, onCreateVenue, mode, conflictsOnly = false, tournament, focusGameId
 }: GameListProps) {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // Sport-pack surface noun for the field picker — never hard-coded.
+  const fieldNoun = fieldNounFor(tournament?.sport);
   // Which game's "who forfeited?" picker is open (scoring mode); null = closed.
   const [forfeitPickerId, setForfeitPickerId] = useState<string | null>(null);
   const [editState, setEditState] = useState<Record<string, EditFields>>({});
@@ -144,15 +148,33 @@ export default function GameList({
   const getVenueName = (venueId?: string, facilityId?: string) => {
     const venue = venueId ? venues.find(d => d.id === venueId) : null;
     if (!venue) return '';
-    if (!facilityId) return venue.name;
-    const facility = venue.facilities?.find(f => f.id === facilityId);
-    return facility ? `${venue.name} — ${facility.name}` : venue.name;
+    const facility = facilityId ? venue.facilities?.find(f => f.id === facilityId) : null;
+    return formatVenueLocation(venue.name, facility?.name);
   };
   const getVenueParts = (venueId?: string, facilityId?: string): { name: string; facility: string } => {
     const venue = venueId ? venues.find(d => d.id === venueId) : null;
     if (!venue) return { name: '', facility: '' };
     const facility = facilityId ? venue.facilities?.find(f => f.id === facilityId) : null;
     return { name: venue.name, facility: facility?.name ?? '' };
+  };
+  // The ONE place a game becomes inline-edit state. Venue fields come from the picker's
+  // own initializer (a stored venue wins; otherwise non-empty text means text mode), so the
+  // "what counts as text mode" rule lives with the picker, not copied here.
+  const editDefaultsFor = (game: Game): EditFields => {
+    const picker = fieldPickerValueForGame(game);
+    return {
+      date: game.date ?? '',
+      time: game.time ?? '',
+      venueId: picker.venueId,
+      venueFacilityId: picker.venueFacilityId,
+      location: picker.location,
+      venueTextMode: picker.textMode,
+      notes: game.notes ?? '',
+      homeTeamId: game.homeTeamId ?? '',
+      awayTeamId: game.awayTeamId ?? '',
+      homePlaceholder: game.homePlaceholder ?? '',
+      awayPlaceholder: game.awayPlaceholder ?? '',
+    };
   };
 
   useEffect(() => {
@@ -187,17 +209,7 @@ export default function GameList({
         if (prev[id]) return prev;
         return {
           ...prev,
-          [id]: {
-            date: game.date ?? '',
-            time: game.time ?? '',
-            venueId: game.venueId ?? '',
-            venueFacilityId: game.venueFacilityId ?? '',
-            notes: game.notes ?? '',
-            homeTeamId: game.homeTeamId ?? '',
-            awayTeamId: game.awayTeamId ?? '',
-            homePlaceholder: game.homePlaceholder ?? '',
-            awayPlaceholder: game.awayPlaceholder ?? '',
-          },
+          [id]: editDefaultsFor(game),
         };
       });
     }
@@ -282,20 +294,19 @@ export default function GameList({
       // Model the game as SAVING it would leave it, not as the form momentarily looks — otherwise
       // the warning can block a save on a placement that save would never produce.
       //
-      // The inline save only sends venue fields when one is picked (`data.venueId || undefined`),
-      // and the API skips undefined fields, so emptying this dropdown is a no-op: the stored venue
-      // survives. Retaining it here keeps the preview honest. A game located only by a typed field
-      // name still falls through to its own text, which is what lets "move this game to 2pm" be
-      // checked at all on a schedule built from typed names — the case that used to save in silence.
-      const venuePicked = Boolean(edit.venueId || edit.venueFacilityId);
+      // The save now states the venue decision in full (a picked venue, an explicit clear, or
+      // typed text in "somewhere else" mode), so the preview simply mirrors the form: cleared
+      // means cleared, and typed words are checked as text — the case that used to save in
+      // silence on schedules built from typed field names.
       const proposedGame = toConflictGame({
         ...game,
         id: gameId,
         date: edit.date,
         time: edit.time,
         status: 'scheduled',
-        venueId: venuePicked ? edit.venueId || null : game.venueId ?? null,
-        venueFacilityId: venuePicked ? edit.venueFacilityId || null : game.venueFacilityId ?? null,
+        venueId: edit.venueId || null,
+        venueFacilityId: edit.venueFacilityId || null,
+        location: edit.venueTextMode ? edit.location : null,
       });
       if (!hasKnownPlacement(proposedGame)) continue;
 
@@ -587,24 +598,11 @@ export default function GameList({
     }
 
     // ── PLANNING MODE ─────────────────────────────────────────────────────────
-    const edit = editState[g.id] ?? {
-      date: g.date ?? '',
-      time: g.time ?? '',
-      venueId: g.venueId ?? '',
-      venueFacilityId: g.venueFacilityId ?? '',
-      notes: g.notes ?? '',
-      homeTeamId: g.homeTeamId ?? '',
-      awayTeamId: g.awayTeamId ?? '',
-      homePlaceholder: g.homePlaceholder ?? '',
-      awayPlaceholder: g.awayPlaceholder ?? '',
-    };
+    const edit = editState[g.id] ?? editDefaultsFor(g);
     const isSaving = saving.has(g.id);
 
     const handleDiscard = () => {
-      setEditState(prev => ({
-        ...prev,
-        [g.id]: { date: g.date ?? '', time: g.time ?? '', venueId: g.venueId ?? '', venueFacilityId: g.venueFacilityId ?? '', notes: g.notes ?? '', homeTeamId: g.homeTeamId ?? '', awayTeamId: g.awayTeamId ?? '', homePlaceholder: g.homePlaceholder ?? '', awayPlaceholder: g.awayPlaceholder ?? '' },
-      }));
+      setEditState(prev => ({ ...prev, [g.id]: editDefaultsFor(g) }));
       setSaveErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
       setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
     };
@@ -618,7 +616,9 @@ export default function GameList({
       setSaving(prev => new Set(prev).add(g.id));
       setSaveErrors(prev => { const n = { ...prev }; delete n[g.id]; return n; });
       try {
-        await onSave(g.id, edit);
+        // Typed text only travels while text mode is on — a picked or cleared venue
+        // never carries stale words with it.
+        await onSave(g.id, { ...edit, location: edit.venueTextMode ? edit.location : '' });
         setEditState(prev => { const n = { ...prev }; delete n[g.id]; return n; });
         setExpanded(prev => { const next = new Set(prev); next.delete(g.id); return next; });
       } catch {
@@ -839,50 +839,23 @@ export default function GameList({
                   onChange={e => setEditState(prev => ({ ...prev, [g.id]: { ...prev[g.id], time: e.target.value } }))}
                 />
               </div>
-              {/* Venue / Facility */}
+              {/* Venue / Facility — the shared picker: picking is the default path, typed
+                  text is the explicit "Somewhere else" choice, and "— No … —" genuinely
+                  clears (the old empty option was a silent no-op end to end). */}
               <div className={styles.formField}>
-                <label className={styles.formLabel}>Venue / Facility</label>
-                <select
-                  className={styles.formSelect}
-                  value={edit.venueFacilityId || edit.venueId}
-                  onChange={e => {
-                    const val = e.target.value;
-                    if (val === '__create__') {
-                      onCreateVenue?.();
-                      return;
-                    }
-                    // Find which venue owns this facility ID
-                    let parentVenueId = '';
-                    let facilityId = '';
-                    for (const v of venues) {
-                      const fac = v.facilities?.find(f => f.id === val);
-                      if (fac) { parentVenueId = v.id; facilityId = fac.id; break; }
-                    }
-                    // Fallback: val might be a raw venueId (backward compat / venues without facilities)
-                    if (!parentVenueId && venues.find(v => v.id === val)) {
-                      parentVenueId = val;
-                    }
-                    setEditState(prev => ({
-                      ...prev,
-                      [g.id]: { ...prev[g.id], venueId: parentVenueId, venueFacilityId: facilityId },
-                    }));
-                  }}
-                >
-                  <option value="">— TBD —</option>
-                  {venues.filter(v => (v.facilities?.length ?? 0) > 0).map(v => (
-                    <optgroup key={v.id} label={v.name}>
-                      {v.facilities!.map(f => (
-                        <option key={f.id} value={f.id}>{v.name} — {f.name}</option>
-                      ))}
-                    </optgroup>
-                  ))}
-                  {/* Venues without facilities (pre-migration or newly created): show flat */}
-                  {venues.filter(v => (v.facilities?.length ?? 0) === 0).map(v => (
-                    <option key={v.id} value={v.id}>{v.name}</option>
-                  ))}
-                  <option disabled>──────────</option>
-                  <option value="__create__">＋ Add venue…</option>
-                </select>
+                <label className={styles.formLabel}>Venue / {fieldNoun}</label>
+                <TournamentFieldPicker
+                  venues={venues}
+                  noun={fieldNoun}
+                  value={{ venueId: edit.venueId, venueFacilityId: edit.venueFacilityId, location: edit.location, textMode: edit.venueTextMode }}
+                  onChange={next => setEditState(prev => ({
+                    ...prev,
+                    [g.id]: { ...(prev[g.id] ?? edit), venueId: next.venueId, venueFacilityId: next.venueFacilityId, location: next.location, venueTextMode: next.textMode },
+                  }))}
+                  onCreateVenue={onCreateVenue}
+                  selectClassName={styles.formSelect}
+                  inputClassName={styles.formInput}
+                />
               </div>
               {/* Away / Home participants — order matches row display (away left, home right).
                   Playoff games wire by Seed/Winner/Loser placeholder (or a known team);

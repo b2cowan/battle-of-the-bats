@@ -51,14 +51,11 @@ const MAX_NOTICES_PER_SWEEP = 2000;
 /** Empty-slot sentinel some games use instead of NULL for an unassigned team. */
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
-export type GameChangeKind = 'moved' | 'cancelled' | 'restored';
-
-export interface GameScheduleSnapshot {
-  date: string | null;
-  time: string | null;
-  location: string | null;
-  status: string | null;
-}
+// The change taxonomy + classifier live in lib/schedule-change-classify.ts (pure,
+// unit-tested — this module is server-only and unreachable from the test runner).
+// Re-exported so existing importers keep one import site.
+import { classifyScheduleChange, type GameChangeKind, type GameScheduleSnapshot } from './schedule-change-classify';
+export type { GameChangeKind, GameScheduleSnapshot } from './schedule-change-classify';
 
 export interface GameChangeInput {
   gameId: string;
@@ -74,30 +71,7 @@ export interface GameChangeInput {
   after: GameScheduleSnapshot;
 }
 
-/**
- * Which changes are worth a person's attention. Deliberately NOT: notes, bracket codes, the
- * generator-lock flag, duration, team reassignment — none of those change where or when
- * somebody has to be. Venue is diffed on `location` (the human string every schedule surface
- * prints) rather than the structured venue ids, so the message can always name the new place.
- */
-function classify(before: GameScheduleSnapshot, after: GameScheduleSnapshot): GameChangeKind | null {
-  const wasCancelled = before.status === 'cancelled';
-  const isCancelled = after.status === 'cancelled';
-
-  // A game that has been played (or is mid-approval) is bookkeeping, not news.
-  const playedStatuses = new Set(['submitted', 'completed', 'forfeit']);
-  if (playedStatuses.has(after.status ?? '') || playedStatuses.has(before.status ?? '')) return null;
-
-  if (!wasCancelled && isCancelled) return 'cancelled';
-  if (wasCancelled && !isCancelled) return 'restored';
-  if (isCancelled) return null; // still cancelled — moving a cancelled game is not news
-
-  const moved =
-    before.date !== after.date ||
-    before.time !== after.time ||
-    (before.location ?? null) !== (after.location ?? null);
-  return moved ? 'moved' : null;
-}
+const classify = classifyScheduleChange;
 
 export interface RecordedChanges {
   /** Queue rows created — hand these to supersedeScheduleChangeNotices if the organizer

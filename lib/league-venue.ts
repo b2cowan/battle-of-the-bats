@@ -21,6 +21,7 @@
 
 import { supabaseAdmin } from './supabase-admin';
 import { ORG_TIME_ZONE } from './timezone';
+import { formatVenueLocation } from './venue-label';
 import {
   findLeagueBookingConflicts,
   isBlockingConflict,
@@ -96,7 +97,7 @@ export async function resolveLeagueVenueSelection(args: {
       orgVenueId: venue.id,
       orgVenueFacilityId: facility.id,
       // Same shape resolveGameVenueLabel renders for tournaments — one label everywhere.
-      location: `${venue.name} — ${facility.name}`,
+      location: formatVenueLocation(venue.name, facility.name),
     },
   };
 }

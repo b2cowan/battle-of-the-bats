@@ -26,6 +26,7 @@ import { hasPlanFeature, requiresPlanCopy } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
+import { fieldNounFor } from '@/lib/sports';
 import TournamentTeamsImportDialog from '@/components/admin/import/TournamentTeamsImportDialog';
 import TournamentScheduleImportDialog from '@/components/admin/import/TournamentScheduleImportDialog';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
@@ -577,6 +578,7 @@ export default function TournamentDataToolsPage() {
         open={scheduleImportOpen}
         tournamentId={tournamentId}
         orgSlug={orgSlug}
+        fieldNoun={fieldNounFor(currentTournament?.sport)}
         onClose={() => setScheduleImportOpen(false)}
         onPreviewed={async () => {
           setNotice({

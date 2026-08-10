@@ -3,6 +3,7 @@ import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTo
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -475,15 +476,16 @@ export const POST = withObservability(async (req: Request) => {
       // Verify venue belongs to a tournament the caller can access
       const { data: venue } = await supabaseAdmin
         .from('diamonds').select('tournament_id').eq('id', data.venueId).single();
-      if (venue) {
-        const denied = scopeGuard(ctx, venue.tournament_id);
-        if (denied) return denied;
-        const wrongOrg = await requireTournamentInOrg(ctx, venue.tournament_id);
-        if (wrongOrg) return wrongOrg;
-      }
+      if (!venue) return NextResponse.json({ error: 'Venue not found' }, { status: 404 });
+      const denied = scopeGuard(ctx, venue.tournament_id);
+      if (denied) return denied;
+      const wrongOrg = await requireTournamentInOrg(ctx, venue.tournament_id);
+      if (wrongOrg) return wrongOrg;
       const { data: newFac, error } = await supabaseAdmin.from('venue_facilities').insert({
         venue_id:      data.venueId,
-        tournament_id: data.tournamentId,
+        // Derived from the parent venue, never trusted from the client — a mismatched
+        // tournament_id here would poison every tenant-scoped facility read.
+        tournament_id: venue.tournament_id,
         name:          data.name,
         facility_type: data.facilityType ?? 'other',
         display_order: data.displayOrder ?? 0,
@@ -533,6 +535,9 @@ export const POST = withObservability(async (req: Request) => {
 
     // -- import-from-org: copy an org library venue into a tournament -------
     if (action === 'import-from-org') {
+      // The library itself is a League/Club feature — the same gate as /api/admin/org/venues.
+      // Without it, any plan could pull library rows through this side door.
+      if (!hasOrgVenueLibrary(ctx.org.planId)) return forbidden();
       const denied = scopeGuard(ctx, data.tournamentId);
       if (denied) return denied;
       const wrongOrg = await requireTournamentInOrg(ctx, data.tournamentId);
@@ -543,7 +548,12 @@ export const POST = withObservability(async (req: Request) => {
         .select('*, org_venue_facilities(*)')
         .eq('id', data.orgVenueId)
         .single();
-      if (ovErr || !ov) return NextResponse.json({ error: 'Org venue not found' }, { status: 404 });
+      // "Not found" for another org's venue too — supabaseAdmin bypasses RLS, so ownership
+      // is this check or nothing; without it any admin could copy a foreign club's private
+      // venue list (names, addresses, notes) into their own tournament by UUID.
+      if (ovErr || !ov || ov.org_id !== ctx.org.id) {
+        return NextResponse.json({ error: 'Org venue not found' }, { status: 404 });
+      }
 
       const { data: newVenue, error: vErr } = await supabaseAdmin.from('diamonds').insert({
         tournament_id:       data.tournamentId,

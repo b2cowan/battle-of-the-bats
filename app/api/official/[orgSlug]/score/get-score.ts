@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 import { tournamentToday } from '@/lib/timezone';
+import { typedLocationKey } from '@/lib/venue-identity';
 
 type Params = { params: Promise<{ orgSlug: string }> };
 
@@ -380,13 +381,37 @@ export async function getScore(req: Request, { params }: Params) {
     || a.divisionName.localeCompare(b.divisionName)
   ));
 
+  // The "All fields" filter lists the DAY'S reality (Phase 2): only fields today's games are
+  // actually on — an unused venue no longer pads the list — plus one entry per typed-only
+  // location so a game placed by words alone is reachable through the filter instead of
+  // invisible to it. Typed entries carry a `text:` key the client filters on with the same
+  // normalization; placeholder text ("TBD" …) means NO field and gets no entry (R2).
+  const usedVenueIds = new Set(games.map(game => game.venueId).filter(Boolean));
+  const dayVenues = venues.filter(venue => usedVenueIds.has(venue.id));
+  const typedLocationByKey = new Map<string, string>();
+  for (const game of games) {
+    if (game.venueId) continue;
+    const key = typedLocationKey(game.location);
+    if (key && !typedLocationByKey.has(key)) {
+      typedLocationByKey.set(key, game.location.trim());
+    }
+  }
+  const typedVenueEntries: Venue[] = [...typedLocationByKey.entries()]
+    .sort(([, a], [, b]) => a.localeCompare(b))
+    .map(([key, label]) => ({
+      id: key,
+      tournamentId: '',
+      name: `“${label}” (typed)`,
+      address: '',
+    }));
+
   return NextResponse.json({
     date,
     tournamentIds,
     scorePolicyByTournamentId,
     publicTournaments,
     cards,
-    venues,
+    venues: [...dayVenues, ...typedVenueEntries],
     divisions,
     emptyMessage: '',
     emptyState: null,

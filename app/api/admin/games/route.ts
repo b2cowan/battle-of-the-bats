@@ -27,6 +27,47 @@ import {
   submitTournamentScore,
   TournamentScoringError,
 } from '@/lib/tournament-scoring-service';
+import {
+  loadTournamentVenueCatalog,
+  resolveVenueSelectionFromCatalog,
+  type TournamentVenueCatalog,
+} from '@/lib/tournament-venue';
+
+/**
+ * Resolve one game's venue selection against its tournament's catalog and spread the result
+ * into a DB row. `location` is DERIVED from the picked venue/surface (never trusted from the
+ * client when a reference exists), so the display string cannot disagree with the reference.
+ * Free text passes through only when nothing is picked. Throws a client-safe message on a
+ * venue that isn't the tournament's own.
+ */
+function resolvedVenueColumns(
+  catalog: TournamentVenueCatalog | undefined,
+  g: { venueId?: string | null; venueFacilityId?: string | null; location?: string | null },
+): { location: string | null; diamond_id: string | null; venue_facility_id: string | null } {
+  // A row whose tournamentId matched no catalog is malformed input — fail it as a clean 400,
+  // not a TypeError-shaped 500.
+  if (!catalog) throw new VenueSelectionError('A game in this batch names no tournament.');
+  const result = resolveVenueSelectionFromCatalog(catalog, {
+    venueId: g.venueId,
+    venueFacilityId: g.venueFacilityId,
+    locationText: g.location,
+  });
+  if (!result.ok) throw new VenueSelectionError(result.error);
+  return {
+    location: result.value.location,
+    diamond_id: result.value.venueId,
+    venue_facility_id: result.value.venueFacilityId,
+  };
+}
+
+class VenueSelectionError extends Error {}
+
+function venueSelectionErrorResponse(err: VenueSelectionError) {
+  return new Response(JSON.stringify({ error: err.message }), {
+    status: 400,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
 
 function tournamentLockedResponse() {
   return new Response(
@@ -57,12 +98,14 @@ async function isTournamentLocked(tournamentId: string): Promise<boolean> {
  * actually in the row, never against what the client believed.
  */
 const SCHEDULE_SNAPSHOT_COLUMNS =
-  'game_date, game_time, location, status, division_id, home_team_id, away_team_id';
+  'game_date, game_time, location, diamond_id, venue_facility_id, status, division_id, home_team_id, away_team_id';
 
 interface ScheduleSnapshotRow {
   game_date: string | null;
   game_time: string | null;
   location: string | null;
+  diamond_id: string | null;
+  venue_facility_id: string | null;
   status: string | null;
   division_id: string | null;
   home_team_id: string | null;
@@ -80,6 +123,9 @@ async function readScheduleSnapshot(gameId: string): Promise<ScheduleSnapshotRow
 
 const toSnapshot = (row: ScheduleSnapshotRow): GameScheduleSnapshot => ({
   date: row.game_date, time: row.game_time, location: row.location, status: row.status,
+  // The structured refs let classify() tell a real venue change from a cosmetic rewrite of
+  // the derived display string (Phase 2 canonicalizes legacy labels on ordinary saves).
+  venueId: row.diamond_id, venueFacilityId: row.venue_facility_id,
 });
 
 /**
@@ -304,6 +350,13 @@ export const POST = withObservability(async (req: Request) => {
         if (await isTournamentLocked(tid)) return tournamentLockedResponse();
       }
 
+      // One catalog per tournament in the batch — every row's venue selection resolves
+      // against its own tournament's fields, and `location` is derived server-side.
+      const venueCatalogs = new Map(await Promise.all(
+        batchTournamentIds.map(async (tid): Promise<[string, TournamentVenueCatalog]> =>
+          [tid, await loadTournamentVenueCatalog(tid)]),
+      ));
+
       const usesFacilityLanes = games.some((g: any) => g.scheduleFacilityLaneId !== undefined);
       const rows = games.map((g: any) => {
         const row: Record<string, unknown> = {
@@ -314,9 +367,7 @@ export const POST = withObservability(async (req: Request) => {
           game_date:        g.date,
           game_time:        g.time,
           duration_minutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : null,
-          location:         g.location,
-          diamond_id:       g.venueId      || null,
-          venue_facility_id: g.venueFacilityId || null,
+          ...resolvedVenueColumns(venueCatalogs.get(g.tournamentId), g),
           status:           g.status       || 'scheduled',
           is_playoff:       g.isPlayoff    || false,
           bracket_id:       g.bracketId    || null,
@@ -366,6 +417,10 @@ export const POST = withObservability(async (req: Request) => {
         if (wrongOrg) return wrongOrg;
         if (await isTournamentLocked(tid)) return tournamentLockedResponse();
       }
+      const createCatalogs = new Map(await Promise.all(
+        batchTournamentIds.map(async (tid): Promise<[string, TournamentVenueCatalog]> =>
+          [tid, await loadTournamentVenueCatalog(tid)]),
+      ));
       const rows = games.map((g: any) => ({
         tournament_id:    g.tournamentId,
         division_id:      g.divisionId,
@@ -374,9 +429,7 @@ export const POST = withObservability(async (req: Request) => {
         game_date:        g.date || null,
         game_time:        g.time || null,
         duration_minutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : null,
-        location:         g.location ?? null,
-        diamond_id:       g.venueId || null,
-        venue_facility_id: g.venueFacilityId || null,
+        ...resolvedVenueColumns(createCatalogs.get(g.tournamentId), g),
         status:           g.status || 'scheduled',
         is_playoff:       g.isPlayoff || false,
         bracket_id:       g.bracketId || null,
@@ -445,8 +498,13 @@ export const POST = withObservability(async (req: Request) => {
       const existingById = new Map((existing ?? []).map(e => [e.id, e]));
       const submittedIds = new Set(games.map((g: any) => g.sourceGameId).filter(Boolean));
 
+      const bracketCatalog = await loadTournamentVenueCatalog(divRow.tournament_id);
+      // Resolve EVERY game's venue selection before the first write. The loop below updates
+      // rows as it goes, so a resolver refusal mid-list would otherwise leave the bracket
+      // half-saved behind a 400 that reads like nothing happened.
+      const resolvedVenueByIndex = (games as any[]).map(g => resolvedVenueColumns(bracketCatalog, g));
       const inserts: Record<string, unknown>[] = [];
-      for (const g of games as any[]) {
+      for (const [gi, g] of (games as any[]).entries()) {
         // Schedule + structure fields, shared by update + insert. Team ids and
         // duration are NOT in `common`: a played game's resolved teams + scores
         // must be preserved, and per-game duration (e.g. a longer final) isn't
@@ -454,9 +512,7 @@ export const POST = withObservability(async (req: Request) => {
         const common: Record<string, unknown> = {
           game_date:        g.date || null,
           game_time:        g.time || null,
-          location:         g.location ?? null,
-          diamond_id:       g.venueId || null,
-          venue_facility_id: g.venueFacilityId || null,
+          ...resolvedVenueByIndex[gi],
           bracket_id:       g.bracketId || null,
           bracket_code:     g.bracketCode || null,
           bracket_label:    g.bracketLabel || null,
@@ -688,6 +744,7 @@ export const POST = withObservability(async (req: Request) => {
     });
 
   } catch (err: any) {
+    if (err instanceof VenueSelectionError) return venueSelectionErrorResponse(err);
     console.error('Admin Games API Error:', err);
     void captureError(err, { ctx, route: '/api/admin/games', method: 'POST', statusCode: 500 });
     return new Response(JSON.stringify({ error: err.message || 'Unknown server error' }), {
@@ -926,9 +983,43 @@ export const PATCH = withObservability(async (req: Request) => {
         const n = Number(body.durationMinutes);
         updates.duration_minutes = Number.isInteger(n) && n > 0 && n <= 600 ? n : null;
       }
-      if (body.location         !== undefined) updates.location           = body.location;
-      if (body.venueId          !== undefined) updates.diamond_id         = body.venueId;
-      if (body.venueFacilityId  !== undefined) updates.venue_facility_id  = body.venueFacilityId || null;
+      // Venue: presence-based, like the league PATCH. Sending `venueId` — a value to pick
+      // OR an explicit null to clear — is a venue decision: the selection is validated
+      // against the tournament's own fields and `location` is DERIVED, never trusted from
+      // the client. (The old `!== undefined` gate made clearing a silent no-op: the client
+      // coalesced '' to undefined, the key vanished from the JSON, and the stored venue
+      // survived a save the UI showed as cleared.)
+      if ('venueId' in body || 'venueFacilityId' in body) {
+        const catalog = await loadTournamentVenueCatalog(gameRow.tournamentId);
+        const selection = resolveVenueSelectionFromCatalog(catalog, {
+          venueId: body.venueId ?? null,
+          venueFacilityId: body.venueFacilityId ?? null,
+          locationText: typeof body.location === 'string' ? body.location : null,
+        });
+        if (!selection.ok) {
+          return new Response(JSON.stringify({ error: selection.error }), {
+            status: 400, headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        updates.diamond_id        = selection.value.venueId;
+        updates.venue_facility_id = selection.value.venueFacilityId;
+        updates.location          = selection.value.location;
+        // A deliberately PICKED venue supersedes a generator lane. Leaving the lane id
+        // behind let a later lane-resolve pass silently snap the game back to the lane's
+        // venue, discarding the pick with no warning to either admin. An explicit lane key
+        // in the body still wins (handled below); clearing/typing leaves a lane alone —
+        // an untouched inline save of a lane game must not evict it from its lane.
+        if (selection.value.venueId && body.scheduleFacilityLaneId === undefined) {
+          updates.schedule_facility_lane_id = null;
+        }
+      } else if (body.location !== undefined) {
+        // Bare text edit with no venue decision: applies only while no reference is stored —
+        // a stored venue always re-derives its display string, so a stray `location` write
+        // can never desync the pair.
+        const { data: current } = await supabaseAdmin
+          .from('games').select('diamond_id').eq('id', id).single();
+        if (!current?.diamond_id) updates.location = body.location;
+      }
       if (body.scheduleFacilityLaneId !== undefined) updates.schedule_facility_lane_id = body.scheduleFacilityLaneId || null;
       if (body.notes            !== undefined) updates.notes              = body.notes;
       if (body.homeTeamId       !== undefined) updates.home_team_id       = body.homeTeamId || null;

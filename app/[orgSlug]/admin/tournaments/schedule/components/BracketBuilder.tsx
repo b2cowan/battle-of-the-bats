@@ -83,6 +83,11 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
 }) {
   const display = labelFor ?? ((s: string) => s);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: matchup.id });
+  // The explicit "Somewhere else (type it)" choice — sticky even while the text box is
+  // still empty (typed text carries no id, so the mode can't be derived from the data).
+  const [fieldTextMode, setFieldTextMode] = useState(
+    !matchup.scheduleFacilityLaneId && !matchup.venueId && !matchup.venueFacilityId && !!matchup.location,
+  );
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -104,7 +109,7 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
         if (f) return f.name;
       }
     }
-    return venues.find(v => v.id === matchup.venueId)?.name ?? '';
+    return venues.find(v => v.id === matchup.venueId)?.name ?? (matchup.location || '');
   })();
 
   // ── Compact card (default): click anywhere to open the editor ──
@@ -208,13 +213,25 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
           className={styles.timeInput}
         />
         <select
-          value={matchup.scheduleFacilityLaneId ? `lane:${matchup.scheduleFacilityLaneId}` : (matchup.venueFacilityId || matchup.venueId)}
+          value={matchup.scheduleFacilityLaneId
+            ? `lane:${matchup.scheduleFacilityLaneId}`
+            : (matchup.venueFacilityId || matchup.venueId || (fieldTextMode ? '__text__' : ''))}
           onChange={e => {
             const val = e.target.value;
             if (val.startsWith('lane:')) {
-              onUpdate({ ...matchup, venueId: '', venueFacilityId: undefined });
+              setFieldTextMode(false);
+              // Clear any abandoned typed text too — left behind, it would ride the next
+              // save as a live text placement and invite bogus typed-name clash warnings.
+              onUpdate({ ...matchup, venueId: '', venueFacilityId: undefined, location: '' });
               return;
             }
+            if (val === '__text__') {
+              // The explicit "somewhere else" choice — typed text, kept as typed.
+              setFieldTextMode(true);
+              onUpdate({ ...matchup, venueId: '', venueFacilityId: undefined, scheduleFacilityLaneId: null, scheduleFacilityLaneLabel: null });
+              return;
+            }
+            setFieldTextMode(false);
             let parentVenueId = '';
             let facilityId = '';
             for (const v of venues) {
@@ -249,8 +266,19 @@ function SortableMatchup({ matchup, options, usedOptions, venues, isFinal, label
           {venues.filter(v => (v.facilities?.length ?? 0) === 0).map(v => (
             <option key={v.id} value={v.id}>{v.name}</option>
           ))}
+          <option value="__text__">Somewhere else (type it)</option>
         </select>
       </div>
+      {fieldTextMode && !matchup.scheduleFacilityLaneId && !matchup.venueId && !matchup.venueFacilityId && (
+        <input
+          type="text"
+          value={matchup.location ?? ''}
+          onChange={e => onUpdate({ ...matchup, location: e.target.value })}
+          className={styles.dateInput}
+          style={{ width: '100%', marginTop: '0.3rem' }}
+          placeholder="Type a location…"
+        />
+      )}
       <button className={styles.doneBtn} onClick={onClose}>Done</button>
     </div>
   );

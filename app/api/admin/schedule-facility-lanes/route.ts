@@ -2,6 +2,7 @@ import { forbidden, getAuthContextWithScope, requireTournamentInOrg, scopeGuard,
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { loadTournamentVenueCatalog, resolveVenueSelectionFromCatalog } from '@/lib/tournament-venue';
 
 type LaneRow = {
   id: string;
@@ -200,43 +201,21 @@ export const POST = withObservability(async (req: Request) => {
         }
       }
 
-      const facilityIds = [...new Set(mappings.map(mapping => mapping.venueFacilityId).filter(Boolean))] as string[];
-      const { data: facilities, error: facilityError } = facilityIds.length > 0
-        ? await supabaseAdmin
-            .from('venue_facilities')
-            .select('id, venue_id, name, tournament_id')
-            .in('id', facilityIds)
-        : { data: [], error: null };
-      if (facilityError) throw facilityError;
-      const facilityById = new Map((facilities ?? []).map(row => [row.id as string, row]));
-
-      const venueIds = new Set<string>();
-      mappings.forEach(mapping => { if (mapping.venueId) venueIds.add(mapping.venueId); });
-      (facilities ?? []).forEach(facility => venueIds.add(facility.venue_id as string));
-      const { data: venues, error: venueError } = venueIds.size > 0
-        ? await supabaseAdmin
-            .from('diamonds')
-            .select('id, name, tournament_id')
-            .in('id', Array.from(venueIds))
-        : { data: [], error: null };
-      if (venueError) throw venueError;
-      const venueById = new Map((venues ?? []).map(row => [row.id as string, row]));
+      // Venue/surface validation + the derived display string go through the ONE tournament
+      // venue rail (tenant-scoped catalog) — this route used to hand-roll the same ownership
+      // checks and formatting a second time. A lane resolved with no venue keeps its label
+      // as the display text, which the rail expresses as the location-text fallback.
+      const catalog = await loadTournamentVenueCatalog(tournamentId);
 
       for (const mapping of mappings) {
         const lane = laneById.get(mapping.laneId)!;
-        const facility = mapping.venueFacilityId ? facilityById.get(mapping.venueFacilityId) : null;
-        if (mapping.venueFacilityId && !facility) return json({ error: 'Selected facility not found.' }, 404);
-        if (facility && facility.tournament_id !== tournamentId) return json({ error: 'Selected facility is outside this tournament.' }, 403);
-
-        const resolvedVenueId = (facility?.venue_id as string | undefined) ?? mapping.venueId ?? null;
-        const venue = resolvedVenueId ? venueById.get(resolvedVenueId) : null;
-        if (resolvedVenueId && !venue) return json({ error: 'Selected venue not found.' }, 404);
-        if (venue && venue.tournament_id !== tournamentId) return json({ error: 'Selected venue is outside this tournament.' }, 403);
-
-        const resolvedFacilityId = facility ? (facility.id as string) : null;
-        const location = venue
-          ? (facility ? `${venue.name as string} - ${facility.name as string}` : venue.name as string)
-          : lane.label;
+        const selection = resolveVenueSelectionFromCatalog(catalog, {
+          venueId: mapping.venueId,
+          venueFacilityId: mapping.venueFacilityId,
+          locationText: lane.label,
+        });
+        if (!selection.ok) return json({ error: selection.error }, 400);
+        const { venueId: resolvedVenueId, venueFacilityId: resolvedFacilityId, location } = selection.value;
 
         const now = new Date().toISOString();
         const { error: updateLaneError } = await supabaseAdmin

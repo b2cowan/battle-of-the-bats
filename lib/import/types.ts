@@ -46,6 +46,13 @@ export type ImportPreview = {
     warnings: number;
     blocked: number;
   };
+  /**
+   * Schedule imports only: typed location names that did NOT exactly match one of the
+   * tournament's fields (trim + case-fold — the one sanctioned auto-resolution). These
+   * rows import as typed text and are never checked for double-bookings, so the summary
+   * names them instead of staying quiet. Never blocks the file.
+   */
+  unmatchedLocations?: Array<{ name: string; rows: number; ambiguous?: boolean }>;
   rows: ImportPreviewRow[];
   canCommit: boolean;
 };

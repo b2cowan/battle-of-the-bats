@@ -114,6 +114,17 @@ export function normalizeLocationText(value: string | null | undefined): string 
   return trimmed.toLowerCase();
 }
 
+/**
+ * A stable `text:`-prefixed key for a typed-only location, or null when the text names no
+ * place at all (empty / placeholder). The scorekeeper field filter builds its synthetic
+ * entries with this on the server and matches them with this on the client — one builder,
+ * so the two sides cannot drift.
+ */
+export function typedLocationKey(value: string | null | undefined): string | null {
+  const token = normalizeLocationText(value);
+  return token ? `text:${token}` : null;
+}
+
 // ---------------------------------------------------------------------------
 // Resolution
 // ---------------------------------------------------------------------------

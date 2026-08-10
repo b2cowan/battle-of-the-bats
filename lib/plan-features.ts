@@ -138,6 +138,16 @@ export function hasPlanFeature(planId: OrgPlan, feature: PlanFeature): boolean {
 }
 
 /**
+ * Whether this plan carries the org-level venue library (`org_venues`). League/Club only —
+ * Tournament tiers are standalone events with per-tournament venues. This predicate used to
+ * be an inline plan-id array copied across seven files; a plan restructure must only ever
+ * need to touch this one.
+ */
+export function hasOrgVenueLibrary(planId: OrgPlan | null | undefined): boolean {
+  return !!planId && ['league', 'club', 'club_large'].includes(planId);
+}
+
+/**
  * Returns upgrade copy for any plan feature.
  * Use this in ExportMenu and any new upsell surfaces.
  * Delegates to requiresTournamentPlusCopy() for existing features so callers

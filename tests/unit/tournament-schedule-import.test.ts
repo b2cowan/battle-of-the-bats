@@ -144,7 +144,9 @@ describe('tournament schedule import preview', () => {
 
     assert.equal(preview.summary.updates, 1);
     assert.equal(preview.rows[0].operation, 'update');
-    assert.deepEqual(preview.rows[0].changes.map(change => change.field), ['Start Time', 'Notes']);
+    // Location appears because the stored game carries the legacy hyphen label while the
+    // derived string is the canonical em dash — the one-time write-through unification.
+    assert.deepEqual(preview.rows[0].changes.map(change => change.field), ['Start Time', 'Location', 'Notes']);
     assert.equal(preview.canCommit, true);
   });
 
@@ -344,7 +346,7 @@ describe('tournament schedule import commit helpers', () => {
         away_team_id: 'team-2',
         game_date: '2026-07-12',
         game_time: '11:00',
-        location: 'Lions Park - Diamond 1',
+        location: 'Lions Park — Diamond 1',
         diamond_id: 'venue-1',
         venue_facility_id: 'facility-1',
         status: 'scheduled',
@@ -480,5 +482,107 @@ describe('tournament schedule import commit helpers', () => {
       () => validateTournamentScheduleCommitAgainstContext(prepared, slotContext),
       /Pool-slot games cannot change/,
     );
+  });
+});
+
+/**
+ * Phase 2: a bare Location cell — the way most third-party files name a field — resolves on
+ * EXACT match (trim + case-fold; punctuation flattened, so our own hyphen-exported labels and
+ * the live em-dash labels read the same) against the tournament's fields. It is the ONE
+ * sanctioned auto-resolution of typed text. Anything ambiguous or unmatched stays typed text,
+ * never blocks the file, and is NAMED in the preview's unmatched-locations report.
+ */
+describe('tournament schedule import — bare Location cell resolution', () => {
+  const noVenueColumns = {
+    'Venue ID': '',
+    'Venue Name': '',
+    'Facility ID': '',
+    'Facility Name': '',
+  };
+
+  it('resolves an exact combined label, across separator and casing variants', () => {
+    for (const cell of ['Lions Park - Diamond 1', 'Lions Park — Diamond 1', '  lions park -   DIAMOND 1 ']) {
+      const preview = buildTournamentScheduleImportPreview(parsed([
+        baseRow({ ...noVenueColumns, Location: cell }),
+      ]), context, 'batch-1');
+      const normalized = preview.rows[0].normalized as Record<string, unknown>;
+      assert.equal(normalized.venueId, 'venue-1', `cell ${JSON.stringify(cell)} should resolve the venue`);
+      assert.equal(normalized.venueFacilityId, 'facility-1');
+      // The stored display string is DERIVED from the records, in the one canonical format.
+      assert.equal(normalized.location, 'Lions Park — Diamond 1');
+      assert.equal(preview.unmatchedLocations, undefined);
+    }
+  });
+
+  it('resolves a bare facility name when it is unique in the tournament', () => {
+    const preview = buildTournamentScheduleImportPreview(parsed([
+      baseRow({ ...noVenueColumns, Location: 'diamond 1' }),
+    ]), context, 'batch-1');
+    const normalized = preview.rows[0].normalized as Record<string, unknown>;
+    assert.equal(normalized.venueFacilityId, 'facility-1');
+    assert.equal(normalized.location, 'Lions Park — Diamond 1');
+  });
+
+  it('resolves a bare venue name to the venue alone', () => {
+    const preview = buildTournamentScheduleImportPreview(parsed([
+      baseRow({ ...noVenueColumns, Location: 'LIONS PARK' }),
+    ]), context, 'batch-1');
+    const normalized = preview.rows[0].normalized as Record<string, unknown>;
+    assert.equal(normalized.venueId, 'venue-1');
+    assert.equal(normalized.venueFacilityId, null);
+    assert.equal(normalized.location, 'Lions Park');
+  });
+
+  it('leaves an ambiguous name as typed text, warns, and flags it in the report', () => {
+    const twoDiamondOnes: TournamentScheduleImportContext = {
+      ...context,
+      venues: [
+        ...context.venues,
+        { id: 'venue-2', name: 'Community Park', facilities: [{ id: 'facility-9', venueId: 'venue-2', name: 'Diamond 1' }] },
+      ],
+    };
+    const preview = buildTournamentScheduleImportPreview(parsed([
+      baseRow({ ...noVenueColumns, Location: 'Diamond 1' }),
+    ]), twoDiamondOnes, 'batch-1');
+    const row = preview.rows[0];
+    const normalized = row.normalized as Record<string, unknown>;
+    assert.equal(normalized.venueId, null);
+    assert.equal(normalized.location, 'Diamond 1');
+    assert.ok(row.warnings.some(warning => /more than one/i.test(warning)));
+    assert.equal(row.operation, 'create'); // never blocks
+    assert.deepEqual(preview.unmatchedLocations, [{ name: 'Diamond 1', rows: 1, ambiguous: true }]);
+  });
+
+  it('aggregates unmatched names by count, and never lets them block the file', () => {
+    const preview = buildTournamentScheduleImportPreview(parsed([
+      baseRow({ ...noVenueColumns, Location: 'Diamond 7', 'Start Time': '09:00' }),
+      baseRow({ ...noVenueColumns, Location: ' diamond 7 ', 'Start Time': '11:00', 'Home Team ID': 'team-3', 'Home Team': 'Gold Lions' }),
+      baseRow({ ...noVenueColumns, Location: 'Main Field', 'Start Time': '13:00' }),
+    ]), context, 'batch-1');
+
+    assert.deepEqual(preview.unmatchedLocations, [
+      { name: 'Diamond 7', rows: 2 },
+      { name: 'Main Field', rows: 1 },
+    ]);
+    assert.equal(preview.summary.blocked, 0);
+    assert.equal(preview.canCommit, true);
+  });
+
+  it('does not report placeholder text — "TBD" names no field at all (R2)', () => {
+    const preview = buildTournamentScheduleImportPreview(parsed([
+      baseRow({ ...noVenueColumns, Location: 'TBD' }),
+    ]), context, 'batch-1');
+    assert.equal(preview.unmatchedLocations, undefined);
+  });
+
+  it('never second-guesses the explicit Venue/Facility columns', () => {
+    // Venue columns used → the Location cell is only a fallback string, not a lookup.
+    const preview = buildTournamentScheduleImportPreview(parsed([
+      baseRow({ Location: 'Some Unrelated Words' }),
+    ]), context, 'batch-1');
+    const normalized = preview.rows[0].normalized as Record<string, unknown>;
+    assert.equal(normalized.venueId, 'venue-1');
+    assert.equal(normalized.location, 'Lions Park — Diamond 1');
+    assert.equal(preview.unmatchedLocations, undefined);
   });
 });

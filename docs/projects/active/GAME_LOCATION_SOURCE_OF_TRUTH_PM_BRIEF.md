@@ -85,7 +85,7 @@ line, not first.
 |---|---|---|
 | 0 | Reproduce the volunteer's empty dropdown — hand it back to the day-of work | No |
 | 1 | **Close the checking gap** — both engines agree; say what can't be checked | **No** |
-| 2 | Stop new drift — picking a field becomes the default path | **No** |
+| 2 | Stop new drift — picking a field becomes the default path — ✅ **BUILT on dev 2026-08-08** (to approved mockups), owner QA pending | **No** |
 | 3 | Tidy the existing typed names — admin reviews every match, nothing auto-applied | **No** |
 | 4 | House league gets the same field model (**ruled**); coach events ruled out — ✅ **BUILT on dev 2026-08-08**, owner QA + prod migration decision pending | **Yes — the only one** |
 | 5 | A database-level rule — **deferred, not proposed** | Yes, later |
@@ -135,3 +135,31 @@ change (the public league schedule doesn't show locations).
 
 **Still with the owner:** browser QA, and the decision to apply the database change to production
 (it is on dev only — deliberately, since applying migrations to prod is never automatic).
+
+## Phase 2 — built 2026-08-08 (dev), with two further owner decisions
+
+Built to mockups the owner approved the same day (the "Phase 2 — Field Picking Mockups" artifact).
+
+7. ✅ **League and Club clubs with no tournament fields are offered their Venue Library first.**
+   The "no venues yet" prompt leads with importing the club's own field list; plain create is the
+   fallback (and the only option on Tournament plans, which have no library).
+8. ✅ **The setup prompt says "venues."** The buttons land on a page called Venues, next to a button
+   called Venue Library — so the prompt matches. The sport's own word (diamond, court, rink) stays
+   wherever a specific playing surface is being picked for a game.
+
+**What a tournament organizer sees now:** picking a real field is the normal path everywhere a game
+gets a location — the game window, the inline schedule row, the timeline, the bracket builder —
+and typing text is a deliberate "Somewhere else (type it)" choice that says, right there, that
+typed locations aren't checked. Clearing a field genuinely clears it (it used to silently keep the
+old one). A tournament with no venues is asked to set them up the first time someone schedules,
+instead of silently accepting text. A spreadsheet import links field names that exactly match your
+real fields, and the preview names — by name, with counts — every field name it couldn't match,
+without ever blocking the file over one. The scorekeeper's field filter lists the places today's
+games are actually at, including typed-only locations that used to be unreachable through it.
+
+**One cosmetic effect to expect:** the product writes field names as "Lions Park — Diamond 2" (one
+canonical format). Games saved before this phase may show a hyphen instead; they pick up the
+canonical form the next time they're edited or imported.
+
+**Still with the owner:** browser QA (QA ledger has the script). The volunteer's empty field
+dropdown remains a separate defect — Phase 2 does not claim it.

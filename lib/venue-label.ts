@@ -7,6 +7,18 @@ type GameLike = {
 };
 
 /**
+ * THE one way a venue + surface becomes a display string — "Venue — Facility"
+ * (em dash), or just the venue name when no surface is pinned. Every writer of a
+ * denormalized `location` (games API, lane resolution, schedule import, league
+ * venue rail) and every live label resolver must build the string here; two
+ * corners of the product used to render a plain hyphen and drifted from the
+ * live labels.
+ */
+export function formatVenueLocation(venueName: string, facilityName?: string | null): string {
+  return facilityName ? `${venueName} — ${facilityName}` : venueName;
+}
+
+/**
  * Resolve a game's display location LIVE from the venues array (which must be
  * loaded WITH facilities), so a venue or facility rename propagates everywhere
  * immediately. Falls back to the denormalized `game.location` snapshot for
@@ -24,7 +36,7 @@ export function resolveGameVenueLabel(game: GameLike, venues: Venue[]): string {
       const facility = game.venueFacilityId
         ? venue.facilities?.find(f => f.id === game.venueFacilityId)
         : null;
-      return facility ? `${venue.name} — ${facility.name}` : venue.name;
+      return formatVenueLocation(venue.name, facility?.name);
     }
   }
   return game.location ?? '';

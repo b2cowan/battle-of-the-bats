@@ -5,6 +5,7 @@ import { Division, Team, Venue, Tournament, Game, PlayoffTierConfig } from '@/li
 import { nextPow2, seedOrder, findBracketSchedulingViolations, gamesToBracketPreview, computeBracketColumns, suggestDefaultTiers, validateTierRanges, remapTierSeed } from '@/lib/playoff-bracket';
 import { isPlayoffOnly as resolveIsPlayoffOnly } from '@/lib/tournament-phase';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
+import { formatVenueLocation } from '@/lib/venue-label';
 import NumberStepper from '@/components/admin/NumberStepper';
 import FeedbackModal from '@/components/FeedbackModal';
 import BracketBuilder from './BracketBuilder';
@@ -288,7 +289,8 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
     const v = venues.find(d => d.id === p.venueId);
     if (!v) return p.location || '';
     const f = p.venueFacilityId ? v.facilities?.find(fac => fac.id === p.venueFacilityId) : null;
-    return f ? `${v.name} — ${f.name}` : v.name;
+    // Display-only convenience — the server re-derives the stored string from the records.
+    return formatVenueLocation(v.name, f?.name);
   }
 
   async function save() {

@@ -9,6 +9,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { getMapsUrl } from '@/components/LocationLink';
 import type { OrgVenue, OrgVenueFacility, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS, FACILITY_TYPES } from '@/lib/types';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import styles from './venues-admin.module.css';
 
 // ---------------------------------------------------------------------------
@@ -328,7 +329,7 @@ export default function OrgVenueLibraryPage() {
   const orgSlug = currentOrg?.slug;
 
   // Venue Library is a League/Club feature only
-  const planAllowed = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
+  const planAllowed = hasOrgVenueLibrary(currentOrg?.planId);
 
   const [venues, setVenues]     = useState<OrgVenue[]>([]);
   const [loading, setLoading]   = useState(true);

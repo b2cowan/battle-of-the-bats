@@ -3,6 +3,7 @@ import { getAuthContextWithScope, unauthorized, forbidden } from '@/lib/api-auth
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { hasOrgVenueLibrary } from '@/lib/plan-features';
 
 // ---------------------------------------------------------------------------
 // Org Venue Library API
@@ -48,7 +49,7 @@ export const GET = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
-  if (!['league', 'club', 'club_large'].includes(ctx.org.planId)) return forbidden();
+  if (!hasOrgVenueLibrary(ctx.org.planId)) return forbidden();
 
   const { data: venues, error: vErr } = await supabaseAdmin
     .from('org_venues')
@@ -87,7 +88,7 @@ export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
-  if (!['league', 'club', 'club_large'].includes(ctx.org.planId)) return forbidden();
+  if (!hasOrgVenueLibrary(ctx.org.planId)) return forbidden();
   if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
 
   try {
@@ -154,6 +155,12 @@ export const POST = withObservability(async (req: Request) => {
 
     // -- update-facility ----------------------------------------------------
     if (action === 'update-facility' && id) {
+      // Verify ownership — supabaseAdmin bypasses RLS, so this check is the tenant wall.
+      // Every sibling action here has it; these two were mutating by raw id.
+      const { data: fac } = await supabaseAdmin
+        .from('org_venue_facilities').select('org_id').eq('id', id).single();
+      if (fac?.org_id !== ctx.org.id) return forbidden();
+
       const updates: Record<string, unknown> = {};
       if (data.name          !== undefined) updates.name          = data.name;
       if (data.facilityType  !== undefined) updates.facility_type = data.facilityType;
@@ -166,6 +173,10 @@ export const POST = withObservability(async (req: Request) => {
 
     // -- delete-facility ----------------------------------------------------
     if (action === 'delete-facility' && id) {
+      const { data: fac } = await supabaseAdmin
+        .from('org_venue_facilities').select('org_id').eq('id', id).single();
+      if (fac?.org_id !== ctx.org.id) return forbidden();
+
       const { error } = await supabaseAdmin.from('org_venue_facilities').delete().eq('id', id);
       if (error) throw error;
       return NextResponse.json({ success: true });

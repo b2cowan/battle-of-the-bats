@@ -265,8 +265,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Define the structure',
       heading: 'Venues, contacts, communication, and rules',
       summary: 'Prepare the public information teams need before registration opens.',
-      keywords: ['venues', 'fields', 'contacts', 'public contact', 'communication', 'news posts', 'rules', 'resources'],
-      searchText: 'venues fields custom location contacts public contact email notifications communication news posts welcome message rules resources documents public site rename venue rename field rename diamond edit venue name field name updates everywhere live',
+      keywords: ['venues', 'fields', 'contacts', 'public contact', 'communication', 'news posts', 'rules', 'resources', 'no venues yet', 'venue library', 'import venues'],
+      searchText: 'venues fields custom location contacts public contact email notifications communication news posts welcome message rules resources documents public site rename venue rename field rename diamond edit venue name field name updates everywhere live no venues set up yet create venues import from venue library league club somewhere else type it off-site',
       links: [
         { label: 'Venues', href: '../tournaments/venues' },
         { label: 'Communication', href: '../tournaments/communication' },
@@ -274,7 +274,8 @@ const tournamentsHelp: HelpPageContent = {
       ],
       content: (
         <>
-          <p>Add venues before building the schedule so games can use consistent field names. You can still type a custom location on an individual game if needed.</p>
+          <p>Add venues before building the schedule — a game&apos;s field is <strong>picked from your venues</strong>, and picked fields are what the double-booking check can protect. A typed location is still possible for genuinely off-site games (choose <strong>Somewhere else (type it)</strong> in the field picker), but typed locations aren&apos;t checked for double-bookings.</p>
+          <p>If you try to schedule before any venues exist, the field picker asks you to set them up first. On <strong>League and Club plans</strong> it offers <strong>Import from your Venue Library</strong> — your club&apos;s own field list — so you define locations once and pull them into each event; other plans create venues directly. You can still choose to type a location anyway.</p>
           <p>The public contact is the name and email teams see for tournament questions. Choose a contact from your organization members on the <strong>Contacts</strong> page inside tournament admin. If no tournament-specific contact is set, FieldLogicHQ may fall back to the organization contact where available.</p>
           <p>Use <strong>Communication</strong> to publish news posts and send email updates to teams. Rules and resources are for durable documents and tournament policies.</p>
         </>
@@ -660,8 +661,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Build the schedule',
       heading: 'Build and adjust the tournament schedule',
       summary: 'Create games manually or generate round-robin schedules, then edit exceptions before game day.',
-      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate', 'adjust today', 'shift the day', 'rain delay', 'tools menu', 'move all games', 'bulk reschedule', 'delay games', 'cancel games', 'division filter', 'venue filter', 'notify teams', 'schedule change notification', 'does editing a game notify', 'who gets told', 'edit game warning', 'unpublished schedule silent', 'one message per team'],
-      searchText: 'build tournament schedule generate round robin auto-generate accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline adjust today shift the day rain delay tools menu tournament plus running behind move push all remaining games back bulk reschedule delay cancel today games one step before after preview atomic filter by division venue field diamond editing a published game notifies the teams edit game dialog warning saving alerts followers who gets told coaches and families same message tournament plus reaches phones free plan nobody notified knowing is not the paid part unpublished division is silent build freely nobody has seen those times notes game length bracket wiring do not notify swapping a team into or out of a game is silent no true your game moved already started already played never notifies one message per team not one per game held a few minutes imminent game sent straight away reminder email refreshed stale first game time announcement replaces the automatic alert skip lets it send',
+      keywords: ['build schedule', 'generate schedule', 'round robin', 'edit games', 'venues', 'auto-generate', 'adjust today', 'shift the day', 'rain delay', 'tools menu', 'move all games', 'bulk reschedule', 'delay games', 'cancel games', 'division filter', 'venue filter', 'notify teams', 'schedule change notification', 'does editing a game notify', 'who gets told', 'edit game warning', 'unpublished schedule silent', 'one message per team', 'double-booked', 'double booking', 'conflict warning', 'buffer warning', 'field picker', 'somewhere else', 'off-site game', 'not being checked', 'no field set', 'schedule health'],
+      searchText: 'build tournament schedule generate round robin auto-generate accepted teams venues time slots edit games cancel restore public schedule pools flat list timeline adjust today shift the day rain delay tools menu tournament plus running behind move push all remaining games back bulk reschedule delay cancel today games one step before after preview atomic filter by division venue field diamond editing a published game notifies the teams edit game dialog warning saving alerts followers who gets told coaches and families same message tournament plus reaches phones free plan nobody notified knowing is not the paid part unpublished division is silent build freely nobody has seen those times notes game length bracket wiring do not notify swapping a team into or out of a game is silent no true your game moved already started already played never notifies one message per team not one per game held a few minutes imminent game sent straight away reminder email refreshed stale first game time announcement replaces the automatic alert skip lets it send double-booked two games same field same time conflict warning buffer too close save blocked pick a field somewhere else type it off-site typed location not checked no field set unchecked schedule health score clear a field no diamond',
       links: [
         { label: 'Schedule', href: '../tournaments/schedule' },
       ],
@@ -677,6 +678,7 @@ const tournamentsHelp: HelpPageContent = {
             <li>Use the public preview to confirm the schedule is readable for teams.</li>
           </ol>
           <p>There is no separate schedule publish step — saved schedule changes flow to the public tournament pages. Use <strong>pool view</strong> when a division is split into pools. Use <strong>flat view</strong> when you want one combined list.</p>
+          <p><strong>A game&apos;s field is picked, not typed.</strong> Everywhere a game gets a location — the Add/Edit window, the inline row, the timeline, the bracket builder — you pick from the tournament&apos;s venues, and the displayed name (&ldquo;Lions Park — Diamond 2&rdquo;) is written for you from the venue itself. Two games on the same field at the same time are flagged before you save: a true overlap <strong>blocks the save</strong> and names the other game, its time, and the field; games merely too close together get a buffer warning you can save through. Genuinely off-site games use <strong>Somewhere else (type it)</strong> — typed locations still warn when two games share the same typed name, but they can&apos;t be checked against your real fields, and the schedule health panel counts them (and games with no field at all) as <em>not being checked for double-bookings</em>.</p>
           <p><strong>Once a division&apos;s schedule is published, editing one of its games tells the teams.</strong> The Edit Game dialog says so before you save, and names who gets told. Change the date, time, or venue — or cancel a game, or put a cancelled one back on — and everyone following those two teams is notified: the coaches and the families, in the same message. On <strong>Tournament Plus</strong> that reaches their phones; on the free plan the dialog says plainly that nobody gets a notification, though the change still shows on the public schedule and in coaches&apos; portals. Three things deliberately stay quiet: editing a division whose schedule <strong>isn&apos;t published yet</strong> (nobody has been shown those times, so there is nothing to correct — build freely); edits that touch only <strong>notes, game length, or bracket wiring</strong>; and an edit that also <strong>swaps a team into or out of the game</strong>, because &ldquo;your game moved&rdquo; isn&apos;t a true thing to say to either the incoming or the outgoing team. If you move several games in one sitting, each team gets <strong>one</strong> message covering all of theirs, not one per game.</p>
           <p><strong>Rained out or running behind?</strong> Whenever the event has upcoming games, open <strong>Tools ▾ → Rain delay</strong> on the Schedule page. Pick a day (today or any upcoming day), optionally narrow to one division or venue, and it moves or cancels those games in one step — push them back 30 minutes, an hour, two hours, or a custom amount, and/or cancel a few — with a live before-and-after preview, then a ready-to-send notice so you update the schedule and tell everyone in one action. It applies all-or-nothing, leaves games that already have a result alone, and won&rsquo;t let a playoff game land before the games that feed it. <strong>Rain delay is a Tournament Plus tool</strong>; on the free plan you can still reschedule games one at a time and post a rain-delay banner (see the day-of question below).</p>
         </>
@@ -699,6 +701,32 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['edit schedule', 'generated games', 'cancel game'],
           answer: (
             <p>Yes. Generated games are normal schedule records after they are saved. You can edit time, location, teams, notes, status, or remove a game if needed.</p>
+          ),
+        },
+        {
+          id: 'faq-double-booked-field',
+          question: 'What stops me from putting two games on the same field at the same time?',
+          answerText: 'The schedule checks every save. Two games on the same picked field with overlapping times block the save, and the warning names the other game, its time, and the field. Games that are merely too close together get a buffer warning you can still save through. Games placed by typed text are checked against each other by name — two games with the same typed name at the same time are flagged too, with a note that the match is on the typed words, so picking a real field makes it exact. Games with no field set cannot be checked at all; the schedule health panel counts them so you can see how much of the schedule is actually protected.',
+          keywords: ['double-booked', 'double booking', 'same field same time', 'conflict', 'overlap', 'buffer warning', 'save blocked', 'venue conflict', 'not being checked', 'no field set', 'schedule health'],
+          popular: true,
+          answer: (
+            <>
+              <p>The schedule checks every save. Two games on the same picked field with overlapping times <strong>block the save</strong> — the warning names the other game, its time, and the field. Games that are merely too close together get a <strong>buffer warning</strong> you can still save through, with the earliest clean start suggested.</p>
+              <p>Games placed by typed text are checked against each other <strong>by name</strong>: two games with the same typed name at the same time are flagged too, with a note that the match is on the typed words — pick a set-up field to make it exact.</p>
+              <p>A game with <strong>no field set</strong> can&apos;t be checked at all. The schedule health panel says how many games are in that state, so a clean bill of health is never quietly unearned.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-offsite-game-location',
+          question: 'How do I schedule a game somewhere that isn’t one of my venues?',
+          answerText: 'In the field picker choose Somewhere else (type it) and type the location. Typed locations are for genuinely off-site games — they display everywhere like any other location, but they are not checked against your real fields for double-bookings, and the schedule health panel counts them as not being checked. To take a game off a field entirely, pick the no-field option at the top of the picker; clearing genuinely clears it.',
+          keywords: ['off-site', 'somewhere else', 'type a location', 'custom location', 'away game', 'not our field', 'clear a field', 'remove venue from game', 'no field'],
+          answer: (
+            <>
+              <p>In the field picker choose <strong>Somewhere else (type it)</strong> and type the location. It displays everywhere like any other location — but it isn&apos;t checked against your real fields for double-bookings, and the schedule health panel counts it as not being checked. The picker says so right where you type.</p>
+              <p>To take a game off a field entirely, pick the <strong>&ldquo;No&nbsp;…&rdquo;</strong> option at the top of the picker (it&apos;s named for your sport — &ldquo;No diamond&rdquo;, &ldquo;No court&rdquo;). Clearing genuinely clears it.</p>
+            </>
           ),
         },
         {
@@ -935,7 +963,7 @@ const tournamentsHelp: HelpPageContent = {
           keywords: ['scorekeepers', 'scorekeeper', 'submit score'],
           popular: true,
           answer: (
-            <p>Scorekeepers use <strong>Scorekeeper View</strong> at <code>/{'{orgSlug}'}/scorekeeper</code>. They see the games available to them, filter by date, field, division, team, or status, and submit scores from that focused interface.</p>
+            <p>Scorekeepers use <strong>Scorekeeper View</strong> at <code>/{'{orgSlug}'}/scorekeeper</code>. They see the games available to them, filter by date, field, division, team, or status, and submit scores from that focused interface. The field filter lists the places that day&apos;s games are actually at — unused venues don&apos;t pad the list, and a game whose location was typed rather than picked appears as its own entry.</p>
           ),
         },
         {
@@ -1515,8 +1543,8 @@ const tournamentsHelp: HelpPageContent = {
       group: 'Close Out',
       heading: 'Importing teams and schedules',
       summary: 'Use Data Tools for spreadsheet templates, safe previews, and recent import history.',
-      keywords: ['import', 'data tools', 'xlsx', 'csv', 'spreadsheet', 'templates', 'teams', 'schedule', 'blocked rows', 'current template', 'empty template'],
-      searchText: 'import data tools spreadsheet templates xlsx csv preview teams registrations schedule bulk add update recent imports blocked rows current template empty template warnings',
+      keywords: ['import', 'data tools', 'xlsx', 'csv', 'spreadsheet', 'templates', 'teams', 'schedule', 'blocked rows', 'current template', 'empty template', 'field names', 'location column', 'unmatched'],
+      searchText: 'import data tools spreadsheet templates xlsx csv preview teams registrations schedule bulk add update recent imports blocked rows current template empty template warnings location column field names matched automatically unmatched field names didn\'t match typed text third-party schedule',
       links: [
         { label: 'Data Tools', href: '../tournaments/data-tools' },
       ],
@@ -1538,6 +1566,16 @@ const tournamentsHelp: HelpPageContent = {
             Uploading a file creates a preview first. Review creates, updates, unchanged rows,
             warnings, and blocked rows before applying. Warnings are advisory; blocked rows must
             be fixed before any schedule or team changes can be applied.
+          </p>
+          <p>
+            <strong>Field names in the Location column link themselves when they match.</strong> A
+            schedule row whose Location exactly names one of your venues or fields (capitalization
+            and punctuation don&apos;t matter) is linked to the real field record, so those games are
+            covered by double-booking checks. Names that don&apos;t match are listed <em>by name, with a
+            game count</em> in the preview — they import as typed text, aren&apos;t checked for
+            double-bookings, and never block the file. A name matching more than one field stays
+            text with a warning rather than being guessed; use the Venue/Facility columns to be
+            exact.
           </p>
           <p>
             Schedule imports block scored, submitted, completed, generator-locked, playoff,

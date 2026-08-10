@@ -1,4 +1,4 @@
-import type { FacilityType } from './types';
+import { FACILITY_TYPE_LABELS, type FacilityType } from './types';
 import type { TieBreaker } from './tie-breakers';
 
 /**
@@ -344,4 +344,12 @@ export function getSportPack(value: SportId | string | null | undefined): SportP
   const tailored = TAILORED_PACKS[id];
   if (tailored) return tailored;
   return { ...GENERIC_PACK, id, label: sportLabel(id) };
+}
+
+/**
+ * The sport's playing-surface noun ("Diamond" / "Court" / "Rink" …) — the ONE derivation
+ * every field-picking label uses. Callers must not restate the pack→label lookup locally.
+ */
+export function fieldNounFor(sport: SportId | string | null | undefined): string {
+  return FACILITY_TYPE_LABELS[getSportPack(sport).defaultFacilityType];
 }

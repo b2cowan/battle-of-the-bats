@@ -11,7 +11,7 @@ import { tournamentToday } from '@/lib/timezone';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { useDismissable } from '@/lib/overlay-hooks';
-import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { hasPlanFeature, hasOrgVenueLibrary, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
@@ -28,8 +28,12 @@ import ScheduleHealthPanel, { type ScheduleHealthRulesDraft } from './components
 import BracketColumns, { buildBracketColumns } from './components/BracketColumns';
 import ScheduleTimeline from './components/ScheduleTimeline';
 import { Game, Team, Division, Venue, PoolSlot, ScheduleFacilityLane, PlayoffConfig } from '@/lib/types';
+import { fieldNounFor } from '@/lib/sports';
 import { checkVenueConflict, toConflictGame, type ConflictResult } from '@/lib/schedule-conflict';
 import { hasKnownPlacement } from '@/lib/venue-identity';
+import { formatVenueLocation } from '@/lib/venue-label';
+import TournamentFieldPicker, { fieldPickerValueForGame } from './components/TournamentFieldPicker';
+import ZeroVenuePrompt from './components/ZeroVenuePrompt';
 import { buildScheduleMetrics, getScheduleHealthRules } from '@/lib/schedule-metrics';
 import s from '../../admin-common.module.css';
 import styles from './schedule-admin.module.css';
@@ -123,8 +127,8 @@ export default function AdminSchedulePage() {
   const [search, setSearch] = useState('');
   const [selectedStatuses, setSelectedStatuses] = useState<ScheduleStatusFilter[]>(['scheduled']);
   const [selectedVenueKeys, setSelectedVenueKeys] = useState<string[]>([]);
-  const [venueSearch, setVenueSearch] = useState('');
-  const [venueDropdownOpen, setVenueDropdownOpen] = useState(false);
+  // Modal field picker: true = the explicit "Somewhere else (type it)" choice is active.
+  const [venueTextMode, setVenueTextMode] = useState(false);
   const [addVenueOpen, setAddVenueOpen] = useState(false);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
@@ -183,6 +187,12 @@ export default function AdminSchedulePage() {
       tournament: currentTournament,
     });
   }, [modal, form.date, form.time, form.venueId, form.venueFacilityId, form.location, form.divisionId, form.durationMinutes, editing?.id, games, divisions, currentTournament]);
+
+  // Sport-pack surface noun for every field-picking label (never hard-coded — R "sport-neutral").
+  const fieldNoun = fieldNounFor(currentTournament?.sport);
+  // Org venue library exists on League/Club plans only — drives the zero-venue prompt's
+  // "Import from your Venue Library" lead (owner ruling 2026-08-08).
+  const hasOrgLibrary = hasOrgVenueLibrary(currentOrg?.planId);
 
   const canAutoGenerateSchedule = currentOrg ? hasPlanFeature(currentOrg.planId, 'auto_schedule') : false;
   // Manual playoff bracket building is available on all tournament plans; the
@@ -361,9 +371,8 @@ export default function AdminSchedulePage() {
   const getVenueName = (venueId?: string, facilityId?: string) => {
     const venue = venueId ? venues.find(d => d.id === venueId) : null;
     if (!venue) return '';
-    if (!facilityId) return venue.name;
-    const facility = venue.facilities?.find(f => f.id === facilityId);
-    return facility ? `${venue.name} — ${facility.name}` : venue.name;
+    const facility = facilityId ? venue.facilities?.find(f => f.id === facilityId) : null;
+    return formatVenueLocation(venue.name, facility?.name);
   };
   const getGameVenueKey = (g: Game) => {
     // Key by facility when present so each diamond/field is its own filter row.
@@ -461,13 +470,14 @@ export default function AdminSchedulePage() {
   function openAdd() {
     const divisionId = (filterGroup !== 'all' ? filterGroup : '') || (divisions[0]?.id ?? '');
     setForm({ ...emptyForm, divisionId });
-    setVenueSearch('');
+    setVenueTextMode(false);
     setEditing(null);
     setModal('add');
     fetchModalSlots(divisionId);
   }
 
   function openEdit(g: Game) {
+    const picker = fieldPickerValueForGame(g);
     setForm({
       divisionId: g.divisionId,
       homeTeamId: g.homeTeamId ?? '',
@@ -479,17 +489,12 @@ export default function AdminSchedulePage() {
       date: g.date ?? '',
       time: g.time ?? '09:00',
       durationMinutes: typeof g.durationMinutes === 'number' ? g.durationMinutes : '',
-      location: g.location ?? '',
-      venueId: g.venueId ?? '',
-      venueFacilityId: g.venueFacilityId ?? '',
+      location: picker.location,
+      venueId: picker.venueId,
+      venueFacilityId: picker.venueFacilityId,
       notes: g.notes ?? '',
     });
-    const existingVenue    = g.venueId ? venues.find(d => d.id === g.venueId) : null;
-    const existingFacility = g.venueFacilityId ? existingVenue?.facilities?.find(f => f.id === g.venueFacilityId) : null;
-    setVenueSearch(
-      existingFacility ? `${existingVenue!.name} — ${existingFacility.name}` :
-      (existingVenue?.name ?? g.location ?? '')
-    );
+    setVenueTextMode(picker.textMode);
     setEditing(g);
     setModal('edit');
     fetchModalSlots(g.divisionId);
@@ -543,7 +548,11 @@ export default function AdminSchedulePage() {
       date:              form.date,
       time:              form.time,
       durationMinutes:   form.durationMinutes === '' ? null : form.durationMinutes,
-      location:          form.location,
+      // Venue decision, stated in full: a picked venue (its display string is derived
+      // server-side), or typed text via the explicit "somewhere else" mode, or nothing.
+      // Typed text is only sent while text mode is active, so stale words never ride
+      // along with a picked venue or a cleared one.
+      location:          venueTextMode ? form.location : '',
       venueId:           form.venueId           || undefined,
       venueFacilityId:   form.venueFacilityId   || undefined,
       notes:             form.notes             || undefined,
@@ -622,9 +631,12 @@ export default function AdminSchedulePage() {
           date: data.date || undefined,
           time: data.time || undefined,
           durationMinutes: data.durationMinutes ?? undefined,
-          venueId: data.venueId,
-          venueFacilityId: data.venueFacilityId,
-          location: data.location,
+          // Explicit nulls, never absent keys: the API treats a PRESENT venueId as the
+          // venue decision (null = clear), so clearing genuinely clears — the old
+          // `|| undefined` coalescing made the key vanish and the stored venue survive.
+          venueId: data.venueId ?? null,
+          venueFacilityId: data.venueFacilityId ?? null,
+          location: data.location || null,
           notes: data.notes,
           homeTeamId: dw.homeTeamId,
           awayTeamId: dw.awayTeamId,
@@ -685,7 +697,7 @@ export default function AdminSchedulePage() {
     refresh();
   }
 
-  async function handleSaveGame(gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder?: string; awayPlaceholder?: string }) {
+  async function handleSaveGame(gameId: string, data: { date: string; time: string; venueId: string; venueFacilityId: string; location?: string; notes: string; homeTeamId: string; awayTeamId: string; homePlaceholder?: string; awayPlaceholder?: string }) {
     const orgParam = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
     // Only playoff games wire participants by placeholder. Never forward placeholder
     // fields for round-robin/slot games — that would null-clobber a slot's stored
@@ -712,12 +724,7 @@ export default function AdminSchedulePage() {
         throw new Error('bracket-order'); // keep the inline row open
       }
     }
-    const venue    = data.venueId ? venues.find(d => d.id === data.venueId) : null;
-    const facility = data.venueFacilityId ? venue?.facilities?.find(f => f.id === data.venueFacilityId) : null;
-    // Build a human-readable location string: "Lions Park — Diamond 1" or just "Lions Park"
-    const locationStr = facility
-      ? `${venue!.name} — ${facility.name}`
-      : (venue?.name || undefined);
+    const typedLocation = !data.venueId && !data.venueFacilityId ? (data.location?.trim() || null) : null;
     const saveRes = await fetch(`/api/admin/games${orgParam}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -726,9 +733,13 @@ export default function AdminSchedulePage() {
         id:               gameId,
         date:             data.date             || undefined,
         time:             data.time             || undefined,
-        venueId:          data.venueId          || undefined,
-        venueFacilityId:  data.venueFacilityId  || undefined,
-        location:         locationStr,
+        // Explicit nulls, never absent keys: a PRESENT venueId is the venue decision
+        // (null = clear), and the display string is DERIVED server-side from the picked
+        // venue — the client no longer authors it. Typed text rides along only when
+        // nothing is picked (the explicit "somewhere else" path).
+        venueId:          data.venueId          || null,
+        venueFacilityId:  data.venueFacilityId  || null,
+        location:         typedLocation,
         notes:            data.notes            || undefined,
         homeTeamId:       data.homeTeamId,
         awayTeamId:       data.awayTeamId,
@@ -751,6 +762,10 @@ export default function AdminSchedulePage() {
     // moved-but-unsaved game scores correctly with no new maths. The "nothing is saved" toast is
     // raised by the shared sandbox chrome, which watches every fetch for this same marker.
     if (saveRes.headers.get('X-Sandbox-Blocked') === '1') {
+      // Mirror the server's derived display string on the in-memory copy (the real write
+      // was sandbox-refused by design, so the label has to be computed here).
+      const sandboxVenue    = data.venueId ? venues.find(d => d.id === data.venueId) : null;
+      const sandboxFacility = data.venueFacilityId ? sandboxVenue?.facilities?.find(f => f.id === data.venueFacilityId) : null;
       setGames(prev => prev.map((g): Game => {
         if (g.id !== gameId) return g;
         const moved: Game = {
@@ -759,11 +774,11 @@ export default function AdminSchedulePage() {
           time:            data.time,
           venueId:         data.venueId || undefined,
           venueFacilityId: data.venueFacilityId || undefined,
+          location:        sandboxVenue ? formatVenueLocation(sandboxVenue.name, sandboxFacility?.name) : (typedLocation ?? ''),
           notes:           data.notes || undefined,
           homeTeamId:      data.homeTeamId,
           awayTeamId:      data.awayTeamId,
         };
-        if (locationStr) moved.location = locationStr;
         if (isPlayoffGame) {
           moved.homePlaceholder = data.homePlaceholder ?? g.homePlaceholder;
           moved.awayPlaceholder = data.awayPlaceholder ?? g.awayPlaceholder;
@@ -893,8 +908,15 @@ export default function AdminSchedulePage() {
     const res = await fetch(`/api/admin/venues?tournamentId=${encodeURIComponent(currentTournament!.id)}${orgParam}`);
     const updated: Venue[] = res.ok ? await res.json() : [];
     setVenues(updated);
-    setForm(f => ({ ...f, venueId: saved.id, location: saved.name }));
-    setVenueSearch(saved.name);
+    // The create-venue modal serves SIX doors (game modal, timeline, both zero-venue
+    // prompts, every inline row). Auto-select the new venue only where the game modal is
+    // actually open — blindly writing it into the modal's form from an inline-row door
+    // would stage a venue nobody picked for the NEXT modal open. Inline rows get the new
+    // venue in their (refreshed) picker list and choose it themselves.
+    if (modal) {
+      setForm(f => ({ ...f, venueId: saved.id, venueFacilityId: '', location: '' }));
+      setVenueTextMode(false);
+    }
     setAddVenueOpen(false);
   }
 
@@ -1764,6 +1786,13 @@ export default function AdminSchedulePage() {
           stage={viewMode}
           onMove={isLocked ? undefined : handleMoveGame}
           onCreateVenue={() => setAddVenueOpen(true)}
+          zeroVenuePrompt={
+            <ZeroVenuePrompt
+              orgSlug={orgSlug ?? ''}
+              hasOrgLibrary={hasOrgLibrary}
+              onCreateVenue={() => setAddVenueOpen(true)}
+            />
+          }
         />
       ) : layout === 'bracket' && filterGroup === 'all' ? (
         <div className="empty-state">
@@ -2137,7 +2166,7 @@ export default function AdminSchedulePage() {
               })()}
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
-                  <label className="form-label" style={{ margin: 0 }}>Venue *</label>
+                  <label className="form-label" style={{ margin: 0 }}>{fieldNoun}</label>
                   <Link
                     href={`/${orgSlug}/admin/tournaments/venues`}
                     className="btn btn-outline btn-data"
@@ -2146,86 +2175,28 @@ export default function AdminSchedulePage() {
                     <MapPin size={12} /> Manage venues
                   </Link>
                 </div>
-                <div style={{ position: 'relative' }}>
-                  <MapPin size={14} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--white-30)', pointerEvents: 'none', zIndex: 1 }} />
-                  <input
-                    className="form-input"
-                    style={{ paddingLeft: '2.1rem' }}
-                    placeholder={venues.length > 0 ? 'Search venues…' : 'Type a location…'}
-                    value={venueSearch}
-                    autoComplete="off"
-                    required
-                    onChange={e => {
-                      const v = e.target.value;
-                      setVenueSearch(v);
-                      setForm(f => ({ ...f, location: v, venueId: '', venueFacilityId: '' }));
-                      setVenueDropdownOpen(true);
-                    }}
-                    onFocus={() => { if (venues.length > 0) setVenueDropdownOpen(true); }}
-                    onBlur={() => setTimeout(() => setVenueDropdownOpen(false), 150)}
+                {venues.length === 0 && !venueTextMode ? (
+                  // The state that mints unchecked games: no venues at all. Ask for setup
+                  // instead of silently accepting text (typing stays possible, one click in).
+                  <ZeroVenuePrompt
+                    orgSlug={orgSlug ?? ''}
+                    hasOrgLibrary={hasOrgLibrary}
+                    onCreateVenue={() => setAddVenueOpen(true)}
+                    onTypeAnyway={() => setVenueTextMode(true)}
                   />
-                  {venueDropdownOpen && (() => {
-                    const q = venueSearch.toLowerCase();
-                    // Build a flat list of facility-level entries for search
-                    type VenueOption = { venueId: string; facilityId: string; label: string; sublabel?: string };
-                    const options: VenueOption[] = [];
-                    for (const v of venues) {
-                      const facList = v.facilities ?? [];
-                      if (facList.length > 0) {
-                        for (const f of facList) {
-                          const label = `${v.name} — ${f.name}`;
-                          if (!q || label.toLowerCase().includes(q) || (v.address || '').toLowerCase().includes(q)) {
-                            options.push({ venueId: v.id, facilityId: f.id, label, sublabel: v.address || undefined });
-                          }
-                        }
-                      } else {
-                        if (!q || v.name.toLowerCase().includes(q) || (v.address || '').toLowerCase().includes(q)) {
-                          options.push({ venueId: v.id, facilityId: '', label: v.name, sublabel: v.address || undefined });
-                        }
-                      }
-                    }
-                    if (options.length === 0) return null;
-                    return (
-                      <div style={{
-                        position: 'absolute', top: 'calc(100% + 2px)', left: 0, right: 0, zIndex: 200,
-                        background: '#0d0f18', border: '1px solid var(--border)',
-                        borderRadius: '2px', boxShadow: '0 8px 32px rgba(0,0,0,0.8)',
-                        maxHeight: '220px', overflowY: 'auto',
-                      }}>
-                        {options.map((opt, i) => (
-                          <div
-                            key={`${opt.venueId}-${opt.facilityId}`}
-                            onMouseDown={() => {
-                              setForm(f => ({ ...f, venueId: opt.venueId, venueFacilityId: opt.facilityId, location: opt.label }));
-                              setVenueSearch(opt.label);
-                              setVenueDropdownOpen(false);
-                            }}
-                            style={{
-                              padding: '0.55rem 0.875rem',
-                              cursor: 'pointer',
-                              borderBottom: i < options.length - 1 ? '1px solid var(--border)' : 'none',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'var(--white-5)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = '')}
-                          >
-                            <div style={{ fontWeight: 600, fontSize: '0.88rem', color: 'var(--white)' }}>{opt.label}</div>
-                            {opt.sublabel && <div style={{ fontSize: '0.73rem', color: 'var(--white-40)', marginTop: '1px' }}>{opt.sublabel}</div>}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })()}
-                </div>
-                {!form.venueId && (
-                  <small style={{ display: 'block', marginTop: '0.35rem', color: 'var(--white-40)', fontSize: '0.72rem' }}>
-                    Venues are shared across this tournament — search above before adding, or use “Manage venues” to see the full list.
-                  </small>
-                )}
-                {form.venueId && (
-                  <div style={{ marginTop: '0.35rem', fontSize: '0.73rem', color: 'var(--white-40)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                    <Check size={11} style={{ color: 'var(--logic-lime)' }} />
-                    {form.venueFacilityId ? 'Linked to saved facility' : 'Linked to saved venue'}
-                  </div>
+                ) : (
+                  <TournamentFieldPicker
+                    venues={venues}
+                    noun={fieldNoun}
+                    value={{ venueId: form.venueId, venueFacilityId: form.venueFacilityId, location: form.location, textMode: venueTextMode }}
+                    onChange={next => {
+                      setVenueTextMode(next.textMode);
+                      setForm(f => ({ ...f, venueId: next.venueId, venueFacilityId: next.venueFacilityId, location: next.location }));
+                    }}
+                    onCreateVenue={() => setAddVenueOpen(true)}
+                    selectClassName="form-select"
+                    inputClassName="form-input"
+                  />
                 )}
               </div>
               <div className="form-group" style={{ marginBottom: '0.5rem' }}>

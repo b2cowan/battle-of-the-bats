@@ -10,7 +10,7 @@ import {
   Link2, Plus, MapPin, Mail, Archive, Users, Calendar,
 } from 'lucide-react';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
-import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import { hasPlanFeature, hasOrgVenueLibrary as hasOrgVenueLibraryPlan, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import { signOut } from '@/lib/auth';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
@@ -133,10 +133,10 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
   const coachDoor = coachDoorFor(coachAccess, currentOrgSlug);
 
   const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
-  // Org venue library is a League/Club-band feature (League Plus, Club, Club · Association) —
-  // not available to Tournament or Tournament Plus subscribers. Must match the API + page gates,
-  // which include 'club_large' (Club · Association) — omitting it hid the nav for that paid band.
-  const hasOrgVenueLibrary = !!currentOrg && ['league', 'club', 'club_large'].includes(currentOrg.planId);
+  // Org venue library is a League/Club-band feature — the shared predicate keeps this
+  // matched to the API + page gates (omitting 'club_large' here once hid the nav for a
+  // paid band).
+  const hasOrgVenueLibrary = hasOrgVenueLibraryPlan(currentOrg?.planId);
   const showTournamentSummary = currentTournament?.status === 'completed' || currentTournament?.status === 'archived';
   const tournamentGroups = TOUR_GROUPS
     .map(group =>

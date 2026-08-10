@@ -18,6 +18,7 @@ import { DayOfFilterBar, DayOfFilterButton } from '@/components/volunteer/DayOfB
 import type { ScorekeeperFlipTournament } from '@/lib/flip-twins';
 import type { Division, Venue, Game, GameStatus } from '@/lib/types';
 import { formatTime } from '@/lib/utils';
+import { typedLocationKey } from '@/lib/venue-identity';
 import styles from './scorekeeper.module.css';
 
 type ScoreState = 'idle' | 'entering' | 'saving';
@@ -227,7 +228,12 @@ export default function ScorekeeperPage() {
       }
 
       setCards(Array.isArray(data.cards) ? data.cards : []);
-      setVenues(Array.isArray(data.venues) ? data.venues : []);
+      const loadedVenues: Venue[] = Array.isArray(data.venues) ? data.venues : [];
+      setVenues(loadedVenues);
+      // The field list is day-scoped now (only fields the day's games are on, plus typed
+      // entries). A filter carried across a date change can point at a field the new day
+      // doesn't have — which would silently empty the board. Snap it back to "All fields".
+      setFieldFilter(prev => (prev && !loadedVenues.some(v => v.id === prev) ? '' : prev));
       setDivisions(Array.isArray(data.divisions) ? data.divisions : []);
       setTournamentIds(Array.isArray(data.tournamentIds) ? data.tournamentIds : []);
       setScorePolicies(data.scorePolicyByTournamentId ?? {});
@@ -355,7 +361,16 @@ export default function ScorekeeperPage() {
     const query = normalizedText(teamSearch);
 
     return cards.filter(card => {
-      if (fieldFilter && card.game.venueId !== fieldFilter) return false;
+      if (fieldFilter) {
+        // `text:` entries are the day's typed-only locations (no venue record) — matched with
+        // the same key builder the server used to make the list, so a game placed by words
+        // alone is reachable through the filter instead of invisible to it.
+        if (fieldFilter.startsWith('text:')) {
+          if (card.game.venueId || typedLocationKey(card.game.location) !== fieldFilter) return false;
+        } else if (card.game.venueId !== fieldFilter) {
+          return false;
+        }
+      }
       if (divisionFilter && card.game.divisionId !== divisionFilter) return false;
 
       if (statusFilter === 'open' && card.game.status !== 'scheduled') return false;

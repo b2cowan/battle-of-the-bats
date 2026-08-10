@@ -8,6 +8,7 @@ import { teamColor } from '@/lib/team-color';
 import { Division, Team, Venue, PlayoffConfig, PlayoffTierConfig, Tournament, Game } from '@/lib/types';
 import { formatPoolName } from '@/lib/utils';
 import { resolveManualTravelBuffers } from '@/lib/schedule-metrics';
+import { formatVenueLocation } from '@/lib/venue-label';
 import { buildBracketScheduleMetrics } from '@/lib/bracket-schedule-metrics';
 import { resolveGameTiming } from '@/lib/schedule-conflict';
 import NumberStepper from '@/components/admin/NumberStepper';
@@ -1182,7 +1183,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
             const v = venues.find(d => d.id === p.venueId);
             if (!v) return 'TBD';
             const f = p.venueFacilityId ? v.facilities?.find(f => f.id === p.venueFacilityId) : null;
-            return f ? `${v.name} — ${f.name}` : v.name;
+            return formatVenueLocation(v.name, f?.name);
           })(),
           venueId:         p.venueId         || undefined,
           venueFacilityId: p.venueFacilityId || undefined,
