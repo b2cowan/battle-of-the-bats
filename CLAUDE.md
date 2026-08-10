@@ -58,15 +58,18 @@ paragraph exists. Skip for purely internal changes; skip if the demos were alrea
 Plan: `docs/projects/active/DEMO_SANDBOX_DRIFT_GUARDS_PLAN.md` (two further measures approved,
 not built).
 
-**⚠ NEITHER DEMO EXISTS ON PRODUCTION — they are seeded on dev only** (verified against the live
-prod database 2026-08-07: zero `riverdale-*` organizations, and zero "See it live" links rendered
-anywhere on the live site, since the marketing doors are hidden in production builds by default).
-An earlier version of this paragraph said demo dates "re-anchor nightly in production", which
-described the intended end state rather than the fact and would let a reader assume the demos are
-live. **Making them public is an unmade decision with three parts** — seed the two fictional clubs
-onto prod, make the replay/re-anchor schedule actually run there, and turn the doors on — logged as
-**Proposed** in `BUSINESS_DECISIONS.md` (2026-08-07). `npm run tick:demos` is how a stale demo gets
-put right on dev.
+**⚠ BOTH DEMOS ARE LIVE ON PRODUCTION as of 2026-08-08** (verified against the live prod database
+and site 2026-08-08 evening): both `riverdale-*` organizations are seeded on prod (02:14 UTC that
+night), and the re-anchor schedules are **active on BOTH databases** (tournament every 2 minutes,
+coach nightly — confirmed in `cron.job` on each). **The doors are the one part still closed**: the
+live homepage renders zero "See it live" links (`NEXT_PUBLIC_SEE_IT_LIVE_DOORS` not enabled),
+though the `/see-it-live` route itself responds and the demo org pages are reachable by direct URL.
+Of the three-part go-public decision (`BUSINESS_DECISIONS.md` 2026-08-07: seed + schedule + doors),
+the first two are DONE; opening the doors is the remaining deliberate step. `npm run tick:demos`
+remains the manual repair on dev; `check:demos` self-heals on dev only and **never writes to prod**
+— production freshness rides the cron alone. Distrust older notes saying the demos are dev-only or
+that migration 226 is unapplied; they predate the launch night. (This paragraph has been wrong in
+BOTH directions now — it is corrected only against the live database, never against a plan.)
 
 # Business-decision logging
 

@@ -117,7 +117,19 @@ async function checkAttendanceMatchesTiming(programYearId, events, label) {
   // on precisely the row most likely to be mid-transition.
   const past = events.filter(e => e.date <= today);
   const ahead = events.filter(e => e.date > today);
-  check(past.length > 0 && past.every(e => taken.has(e.id)),
+  // ⚠ One deliberate exemption, for exactly one day: an UNRESULTED game dated TODAY. On Saturdays
+  // `offsetToSaturday` is 0, so both season teams' anchor game ("a game THIS Saturday, no lineup,
+  // no result") is dated today — game-day-before-first-pitch, the single most compelling state the
+  // demo has, and the seed deliberately writes it no attendance. The `<= today` boundary read that
+  // as a lapsed register, so this check went red every Saturday on EVERY environment and healed
+  // itself every Sunday (found 2026-08-08, the first Saturday after the production launch). The
+  // staleness tripwire survives intact: if the re-anchor stalls, tomorrow that same game is a PAST
+  // unresulted game — no exemption — and the sibling "no game sits in the past without a result"
+  // check fires alongside this one. (`result` is only selected on the game-bearing call sites; a
+  // practices-only caller short-circuits on event_type before ever reading it.)
+  const isGameDayBeforeFirstPitch = e =>
+    e.event_type === 'league_game' && e.result == null && e.date === today;
+  check(past.length > 0 && past.every(e => taken.has(e.id) || isGameDayBeforeFirstPitch(e)),
     `attendance was taken at all ${past.length} ${label} that have happened`);
   check(ahead.every(e => !taken.has(e.id)),
     `and at none of the ${ahead.length} still ahead — nothing is invented`);

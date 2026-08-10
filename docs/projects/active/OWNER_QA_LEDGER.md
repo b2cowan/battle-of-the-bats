@@ -23,9 +23,11 @@
 >    change" — true of 211–224 (prod, 2026-08-03) and, as of **2026-08-06**, true of **225**
 >    (opponent book), **227** (club shared book) and **228** (game-day moments) too: all three were
 >    applied to production and the snapshots refreshed (`a2b91654`). **Verified against the live
->    databases, not the commit message.** The one still outstanding is **226**, the coach-sandbox
->    re-anchor schedule, which is applied **nowhere** — that is why §5.4's demo dates go stale and
->    have to be re-seeded by hand.
+>    databases, not the commit message.** **226 cleared on 2026-08-08 with the demo production launch**: the
+>    coach-sandbox nightly re-anchor is scheduled and active on BOTH databases (verified in
+>    `cron.job`, dev and prod) and both demo worlds are seeded on production — older 226 notes
+>    below predate that night. The migration queue's remaining member is **229** (house-league
+>    venues, dev-only; see the release-gate table at the end).
 >
 > ### The ordering: exposure first, then whatever you can test in one sitting
 >
@@ -147,7 +149,7 @@ the sequence.
 | **2B** | On a phone — and one of them outdoors | §2.1 · §2.2 · §2.5 · §2.6 | 📱 | LIVE |
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
 | **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
-| **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 · §5.5 | 🖥📱 | Mixed · mig 226 unapplied · §5.5 ON DEV uncommitted |
+| **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 · §5.5 | 🖥📱 | Mixed · §5.5 ON DEV |
 | **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ✅ **PASSED 2026-08-07** — 6 defects fixed in the run |
 
 **Where the release gate actually sits:** groups **1A, 1D, 1E**, §1.9c, §6, and most of **3B** are
@@ -201,9 +203,10 @@ coach sandbox) · §1.16 (needs two teams in one Club-plan org set up first).
 - [ ] Still yours to arrange: a team with **at least one prior season of tryout data** (§1.11), and
       a real **iPhone** for §2.6a and §4.
 - ⚠ **Dev and prod are schema-identical again as of 2026-08-06** — 225, 227 and 228 were applied to
-  production and the snapshots refreshed. **One exception:** migration **226**, the coach sandbox's
-  nightly re-anchor, is applied **nowhere**, so on dev that demo's dates do not move overnight and
-  have to be re-seeded by hand before §5.4. Nothing else here is blocked by a database change.
+  production and the snapshots refreshed. **226 followed on 2026-08-08** (the demo production launch):
+  the coach sandbox's nightly re-anchor is scheduled on **both** databases, so its dates move
+  overnight everywhere. The remaining exception is **229** (house-league venues, dev-only — see
+  the release-gate table at the end). Nothing else here is blocked by a database change.
 
 ---
 
@@ -2355,8 +2358,9 @@ on the fictional **Riverdale Ridge Baseball** — five teams frozen at five mome
 demo banner, and the **phase dock** ("The season · Tryout day / Off-season / Season start /
 Mid-season / Season's End").
 ⚠ *Prep: the dev server needs a restart before this QA (shared modules changed). The nightly
-re-anchor's schedule (migration 226) is STILL not applied to the dev DB — if dates look stale, re-run
-the seed (`node --env-file=.env.local scripts/seed-demo-coach.mjs`) or the tick by hand.*
+re-anchor (migration 226) has been scheduled on both databases since 2026-08-08 — if dates still
+look stale, re-run the seed (`node --env-file=.env.local scripts/seed-demo-coach.mjs`) or the tick
+by hand.*
 
 **A · The door** (private/incognito window, signed out)
 1. Open `/see-it-live/coaches` → you land on the 12U team's Overview, signed in as the demo
@@ -2712,10 +2716,10 @@ this is now most of the newest work, not two odds and ends:
 | Inside **1B** | §1.9c — the roster switch | — |
 | Inside **3A** | §6 — the playing-time wording sweep | — |
 | ~~Group **3C**~~ | ✅ §7 — the day-of volunteer bottom bars — **PASSED 2026-08-07**, gate cleared | — (no migration) |
-| Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | mig **226** applied (dev *and* prod) |
+| Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | — (mig **226** applied both envs 2026-08-08) |
 
-⚠ **One database prerequisite is left, and this ledger cannot tick it:** migration **226**, the
-coach sandbox's nightly re-anchor, is applied **nowhere**. Until it is, §5.4's demo drifts out of
-date on both environments and has to be re-seeded by hand. Quiet Mode's migration (209) is in the
-same queue. Release-manager steps, not QA steps — but if missed, those sections break in production
-in ways that passed QA on dev. *(225, 227 and 228 cleared this queue on 2026-08-06.)*
+⚠ **One database prerequisite is left, and this ledger cannot tick it:** Quiet Mode's migration
+(**209**). Release-manager steps, not QA steps — but if missed, those sections break in production
+in ways that passed QA on dev. *(225, 227 and 228 cleared this queue on 2026-08-06; **226 cleared
+2026-08-08** — the coach re-anchor is scheduled on both databases and both demo worlds are live on
+production.)*
