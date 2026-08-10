@@ -64,15 +64,17 @@ directions before): both `riverdale-*` organizations are seeded on prod (2026-08
 the re-anchor schedules are **active on BOTH databases** (tournament every 2 minutes, coach
 nightly — confirmed in `cron.job` on each), and **the doors are OPEN** — owner-directed
 2026-08-10, via `NEXT_PUBLIC_SEE_IT_LIVE_DOORS=true` set as a **master-branch-scoped** Amplify
-variable + rebuild (job 250, code unchanged at `201ec1bd`); "See it live" links verified rendering
-on the live homepage and `/for-tournament-organizers`, both door routes 307 into their worlds. The
-three-part go-public decision (`BUSINESS_DECISIONS.md` 2026-08-07) is now fully executed. ⚠ The
-coach demo has **no marketing-page door on master** — only the tournament card links in; the coach
-door is route-only (`/see-it-live/coaches`) until the dev-side marketing work ships. `npm run
+variable + rebuild (job 250, code unchanged at `201ec1bd`). **Prod code has since moved to
+`ebdf02ea`** — the 2026-08-10 13:37 release push, Amplify **job 251 SUCCEED** (13:43 ET) — which
+carries the Sunday roll-forward reconcile fix (`853a4df2`; the weekly re-break risk is CLOSED) and
+the coach demo's marketing doors: "See it live" verified rendering live post-251 on the homepage
+hero (both demos), both pricing cards, and `/for-coaches` (`/for-clubs` carries one in code); both
+door routes 307 into their worlds. The three-part go-public decision (`BUSINESS_DECISIONS.md`
+2026-08-07) is fully executed and **the coach door is no longer route-only**. `npm run
 tick:demos` remains the manual repair on dev; `check:demos` self-heals on dev only and **never
 writes to prod** — production freshness rides the cron alone, so a reconcile bug fixed on dev is
-NOT fixed on prod until it reaches the deployed build (learned 2026-08-10: the Sunday roll-forward
-attendance defect).
+NOT fixed on prod until it reaches the deployed build (learned 2026-08-10 with the Sunday
+roll-forward attendance defect — found, fixed and shipped the same day in job 251).
 
 # Business-decision logging
 
