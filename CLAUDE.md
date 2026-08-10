@@ -58,18 +58,21 @@ paragraph exists. Skip for purely internal changes; skip if the demos were alrea
 Plan: `docs/projects/active/DEMO_SANDBOX_DRIFT_GUARDS_PLAN.md` (two further measures approved,
 not built).
 
-**⚠ BOTH DEMOS ARE LIVE ON PRODUCTION as of 2026-08-08** (verified against the live prod database
-and site 2026-08-08 evening): both `riverdale-*` organizations are seeded on prod (02:14 UTC that
-night), and the re-anchor schedules are **active on BOTH databases** (tournament every 2 minutes,
-coach nightly — confirmed in `cron.job` on each). **The doors are the one part still closed**: the
-live homepage renders zero "See it live" links (`NEXT_PUBLIC_SEE_IT_LIVE_DOORS` not enabled),
-though the `/see-it-live` route itself responds and the demo org pages are reachable by direct URL.
-Of the three-part go-public decision (`BUSINESS_DECISIONS.md` 2026-08-07: seed + schedule + doors),
-the first two are DONE; opening the doors is the remaining deliberate step. `npm run tick:demos`
-remains the manual repair on dev; `check:demos` self-heals on dev only and **never writes to prod**
-— production freshness rides the cron alone. Distrust older notes saying the demos are dev-only or
-that migration 226 is unapplied; they predate the launch night. (This paragraph has been wrong in
-BOTH directions now — it is corrected only against the live database, never against a plan.)
+**⚠ BOTH DEMOS ARE FULLY PUBLIC ON PRODUCTION as of 2026-08-10** (every claim here verified
+against the live prod database/site, never a plan — this paragraph has been wrong in both
+directions before): both `riverdale-*` organizations are seeded on prod (2026-08-08 02:14 UTC),
+the re-anchor schedules are **active on BOTH databases** (tournament every 2 minutes, coach
+nightly — confirmed in `cron.job` on each), and **the doors are OPEN** — owner-directed
+2026-08-10, via `NEXT_PUBLIC_SEE_IT_LIVE_DOORS=true` set as a **master-branch-scoped** Amplify
+variable + rebuild (job 250, code unchanged at `201ec1bd`); "See it live" links verified rendering
+on the live homepage and `/for-tournament-organizers`, both door routes 307 into their worlds. The
+three-part go-public decision (`BUSINESS_DECISIONS.md` 2026-08-07) is now fully executed. ⚠ The
+coach demo has **no marketing-page door on master** — only the tournament card links in; the coach
+door is route-only (`/see-it-live/coaches`) until the dev-side marketing work ships. `npm run
+tick:demos` remains the manual repair on dev; `check:demos` self-heals on dev only and **never
+writes to prod** — production freshness rides the cron alone, so a reconcile bug fixed on dev is
+NOT fixed on prod until it reaches the deployed build (learned 2026-08-10: the Sunday roll-forward
+attendance defect).
 
 # Business-decision logging
 
