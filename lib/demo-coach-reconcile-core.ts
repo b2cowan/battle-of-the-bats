@@ -171,6 +171,7 @@ export async function reconcileCoachSandbox(
     result.rowsShifted += await restateExpenses(db, teamId, state.expenses);
     result.rowsShifted += await takeAttendanceForNewlyPastPractices(
       db, teamId, pyId, org.id, state.practices, today);
+    result.rowsShifted += await clearAttendanceAtEventsStillAhead(db, pyId, today);
   } catch (err) {
     fail(`mid-season: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -208,6 +209,7 @@ export async function reconcileCoachSandbox(
     result.rowsShifted += await rederiveBudgetPeriods(db, teamId, state.budgetPeriodDates);
     result.rowsShifted += await takeAttendanceForNewlyPastPractices(
       db, teamId, pyId, org.id, state.practices, today);
+    result.rowsShifted += await clearAttendanceAtEventsStillAhead(db, pyId, today);
   } catch (err) {
     fail(`off-season: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -235,6 +237,7 @@ export async function reconcileCoachSandbox(
     result.rowsShifted += await restateExpenses(db, teamId, state.expenses);
     result.rowsShifted += await takeAttendanceForNewlyPastPractices(
       db, teamId, pyId, org.id, state.practices, today);
+    result.rowsShifted += await clearAttendanceAtEventsStillAhead(db, pyId, today);
   } catch (err) {
     fail(`season start: ${err instanceof Error ? err.message : String(err)}`);
   }
@@ -488,6 +491,39 @@ async function takeAttendanceForNewlyPastPractices(
     .upsert(rows, { onConflict: 'event_id,player_id', ignoreDuplicates: true });
   if (error) throw new Error(`rep_team_event_attendance: ${error.message}`);
   return rows.length;
+}
+
+/**
+ * Clear attendance from any event that has ROLLED INTO THE FUTURE — the mirror of
+ * `takeAttendanceForNewlyPastPractices`, and the defect the first Sunday after the production
+ * launch exposed (2026-08-10): the weekly +7 re-anchor moves last week's practices forward into
+ * the COMING week, and their registers ride along, so the demo showed who attended a practice
+ * that hasn't happened. The world's own rule is that the `-6..0` band "is allowed to flip" —
+ * flipping must work in BOTH directions, and until this function it only worked one way.
+ *
+ * Same disciplines as its sibling: judged by DATE after the shift has landed, diff-only (a
+ * steady day issues no statement), and safe against overlapping runs — both compute the same
+ * boundary from the same clock, the two functions' event sets are disjoint (past vs future), and
+ * a second deleter simply deletes zero rows.
+ */
+async function clearAttendanceAtEventsStillAhead(
+  db: CoachDemoDb,
+  programYearId: string,
+  today: string,
+): Promise<number> {
+  const { data: events, error } = await db.from('rep_team_events')
+    .select('id, starts_at').eq('program_year_id', programYearId);
+  if (error) throw new Error(error.message);
+  const aheadIds = ((events ?? []) as { id: string; starts_at: string }[])
+    .filter(e => (utcToZonedInputs(e.starts_at).date ?? '') > today)
+    .map(e => e.id);
+  if (!aheadIds.length) return 0;
+
+  const { error: deleteError, count } = await db.from('rep_team_event_attendance')
+    .delete({ count: 'exact' })
+    .eq('program_year_id', programYearId).in('event_id', aheadIds);
+  if (deleteError) throw new Error(`rep_team_event_attendance: ${deleteError.message}`);
+  return count ?? 0;
 }
 
 /**
