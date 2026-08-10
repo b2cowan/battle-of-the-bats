@@ -29,7 +29,7 @@ After completing a **substantive** code change (new logic, API/DB/auth/shared-mo
 
 # Post-edit simplify
 
-After a substantive code change that also **adds a new abstraction** — a new shared helper/module, a new component prop/pattern, or logic that duplicates/touches something similar elsewhere — proactively offer to run `/simplify` (reuse/simplification/efficiency/altitude cleanup, in `.claude/commands/simplify.md`), ideally **before** `/review` so correctness review runs on the cleaned-up version. Don't offer it for every substantive change — only when the diff shape suggests overcomplication risk (new duplication, a new special case layered on shared infra, etc.); a straightforward change with no new abstraction doesn't need it. Offer once per logical chunk; skip if the user already asked for it or declined.
+After a substantive code change that also **adds a new abstraction** — a new shared helper/module, a new component prop/pattern, or logic that duplicates/touches something similar elsewhere — proactively offer to run `/simplify` (reuse/simplification/efficiency/altitude cleanup — a built-in Claude Code skill; it has no repo command file), ideally **before** `/review` so correctness review runs on the cleaned-up version. Don't offer it for every substantive change — only when the diff shape suggests overcomplication risk (new duplication, a new special case layered on shared infra, etc.); a straightforward change with no new abstraction doesn't need it. Offer once per logical chunk; skip if the user already asked for it or declined.
 
 # Help-docs sync
 

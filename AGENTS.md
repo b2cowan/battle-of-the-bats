@@ -7,7 +7,7 @@ Project convention: this repo uses the Next.js 16 `proxy.ts` request interceptio
 <!-- END:nextjs-agent-rules -->
 
 # AI Interaction Rules
-See [AGENCY_RULES.md](file:///c:/Users/Robert%20Cowan/Documents/tournament-website/AGENCY_RULES.md) for project-wide planning and testing requirements.
+See [AGENCY_RULES.md](AGENCY_RULES.md) for project-wide planning and testing requirements.
 
 # Local Dev Server
 
