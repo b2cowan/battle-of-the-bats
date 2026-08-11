@@ -27,6 +27,17 @@ import { isDemoOrgSlug, getDemoOrgBySlug } from './demo-org';
  * Outbound silence (email/notifications) is a SEPARATE and independent guarantee — see
  * `lib/notify.ts` and `lib/email.ts`. Either layer alone would stop the demo org contacting
  * anyone; both is what makes it a statement rather than a hope.
+ *
+ * ── The one known GET that writes ───────────────────────────────────────────────────────────
+ *
+ * This chokepoint keys on write METHODS, so a GET handler with a lazy-create side effect walks
+ * straight through it. Exactly one is known: `…/tryout-self-score` find-or-creates the signed-in
+ * coach's own `self:`-keyed evaluator session on first open of the scorer. For the demo org that
+ * means one benign, idempotent bookkeeping row (the demo coach, "Jordan Blake") appears the
+ * first time anyone opens the demo's scoring screen — invisible to the visitor, no user content,
+ * and `check-demo-coach.mjs` counts shareable links excluding `self:` rows for this reason
+ * (2026-08-11). If you add another GET-that-writes, either guard it here-in-spirit with
+ * `assertNotDemoOrg` or record it in this list — an unrecorded one costs a day of false alarms.
  */
 
 /** Methods that cannot change anything and are therefore always allowed. */

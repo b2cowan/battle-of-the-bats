@@ -156,9 +156,16 @@ console.log('\nTryout day — Riverdale Ridge 11U');
     check(!exampleOnly(regs, 'guardian_email'), 'every guardian address is unreachable example.com');
 
     const { data: evals } = await db.from('rep_tryout_evaluator_sessions')
-      .select('id, evaluator_name, revoked_at, expires_at').eq('program_year_id', py.id);
-    check(evals?.length === 3 && evals.every(e => !e.revoked_at && new Date(e.expires_at) > now),
-      'three evaluator links, live and unexpired');
+      .select('id, evaluator_name, revoked_at, expires_at, token_hash').eq('program_year_id', py.id);
+    // Count SHAREABLE links the way the product's own Evaluators card does — excluding `self:`
+    // rows. Opening the scorer lazily creates the signed-in coach's own scoring identity (a
+    // GET-side find-or-create in …/tryout-self-score), so the demo grows a fourth, legitimate
+    // "Jordan Blake" row the first time anyone walks in. Counting it here made this check read
+    // "not presentable" over a world a prospect sees as perfectly coherent (found 2026-08-11
+    // after a day of false alarms).
+    const links = (evals ?? []).filter(e => !String(e.token_hash).startsWith('self:'));
+    check(links.length === 3 && links.every(e => !e.revoked_at && new Date(e.expires_at) > now),
+      'three shareable evaluator links, live and unexpired (self-scoring rows excluded)');
 
     const { data: scores } = await db.from('rep_tryout_scores')
       .select('score, category_key, registration_id, evaluator_session_id').eq('program_year_id', py.id);
