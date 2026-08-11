@@ -4,11 +4,10 @@ import { ArrowLeft, Calendar, CheckCircle2, ChevronLeft, ChevronRight, CircleHel
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -2059,94 +2058,95 @@ export default function CoachesSchedulePage({
   }
 
 
+  // Page-header ruling 2026-08-11: header actions, extracted so the CoachPageHeader call stays
+  // scannable (same shape as the Money panels' headerActions consts).
+  const scheduleHeaderActions = (
+    <>
+      {/* Chunk C (P1 #7). Sits beside Export deliberately: the pair is one idea — a schedule
+          goes out and comes back, and the importer reads the exporter's own columns. Gated on
+          the same grant as Add Event; a read-only assistant sees neither. */}
+      {canAddEvents && (
+        <button
+          className={styles.btnSecondary}
+          onClick={() => { setImportToast(''); setImportOpen(true); }}
+          aria-label="Import"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}
+        >
+          <Upload size={13} aria-hidden /> <span className={styles.headerBtnLabel}>Import</span>
+        </button>
+      )}
+      <ExportMenu
+        formats={['xlsx', 'csv', 'ics']}
+        onExportXLSX={handleExportXLSX}
+        onExportCSV={handleExportCSV}
+        onExportICS={handleExportICS}
+        disabled={events.length === 0}
+      />
+      {/* Add event — coach-portal primary actions are btn-lime (CP-1), not the
+          shared blueprint-blue .btnPrimary used by in-modal save buttons. The primary
+          keeps its words at every width. Gated on the same grant as the empty state's
+          CTA: without it the events POST 403s, so this was a button that could only
+          ever fail — and once the empty state started saying "adding events needs
+          schedule access", leaving it here contradicted that outright. */}
+      {canAddEvents && (
+        <div className={styles.addEventWrap}>
+          <button
+            className="btn btn-lime"
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
+            onClick={() => setAddTypeMenuOpen(v => !v)}
+          >
+            <Plus size={13} aria-hidden /> Add Event
+          </button>
+          {addTypeMenuOpen && (
+            <div className={styles.addEventMenu}>
+              {ADD_MENU.map(({ type, nested }) => {
+                const Icon = EVENT_ICONS[type];
+                return (
+                  <button
+                    key={type}
+                    className={`${styles.addEventMenuItem}${nested ? ` ${styles.addEventMenuSubItem}` : ''}`}
+                    onClick={() => openAddForm(type)}
+                  >
+                    <Icon size={14} style={{ color: EVENT_COLORS[type] }} />
+                    {EVENT_LABELS[type]}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+    </>
+  );
+
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      {/* Header */}
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Calendar size={22} /></div>
-          <div>
-            <nav className={styles.breadcrumb}>
-              <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-              <span>/</span>
-              <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
-              <span>/</span>
-              <span>Schedule</span>
-            </nav>
-            <h1 className={styles.pageTitle}>Team Calendar<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>{page.programYearName}</p>
-          </div>
-        </div>
-        <div className={styles.scheduleToolbar}>
-          {/* View toggle (left) */}
-          <div className={styles.viewToggle}>
-            {(['list', 'week', 'month'] as ViewMode[]).map(v => (
-              <button
-                key={v}
-                className={`${styles.viewToggleBtn} ${view === v ? styles.viewToggleBtnActive : ''}`}
-                onClick={() => setView(v)}
-              >
-                {v.charAt(0).toUpperCase() + v.slice(1)}
-              </button>
-            ))}
-          </div>
-          {/* Import + Export + Add (right) */}
-          <div className={styles.scheduleToolbarActions}>
-            {/* Chunk C (P1 #7). Sits beside Export deliberately: the pair is one idea — a schedule
-                goes out and comes back, and the importer reads the exporter's own columns. Gated on
-                the same grant as Add Event; a read-only assistant sees neither. */}
-            {canAddEvents && (
-              <button
-                className={styles.btnSecondary}
-                onClick={() => { setImportToast(''); setImportOpen(true); }}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem' }}
-              >
-                <Upload size={13} aria-hidden /> <span className={styles.addEventLabel}>Import</span>
-              </button>
-            )}
-            <ExportMenu
-              formats={['xlsx', 'csv', 'ics']}
-              onExportXLSX={handleExportXLSX}
-              onExportCSV={handleExportCSV}
-              onExportICS={handleExportICS}
-              disabled={events.length === 0}
-            />
-            <HelpButton iconOnly label="Schedule" help={scheduleHelpRequest} />
-          {/* Add event — coach-portal primary actions are btn-lime (CP-1), not the
-              shared blueprint-blue .btnPrimary used by in-modal save buttons.
-              Gated on the same grant as the empty state's CTA: without it the events POST 403s, so
-              this was a button that could only ever fail — and once the empty state started saying
-              "adding events needs schedule access", leaving it here contradicted that outright. */}
-          {canAddEvents && (
-          <div className={styles.addEventWrap}>
+      {/* Header (page-header ruling 2026-08-11): "Schedule" — the name the nav already uses;
+          "Team Calendar" said "team" (the masthead's job) and disagreed with its own menu item.
+          Actions right, "?" in its fixed corner; the view switcher rides the views below. */}
+      <CoachPageHeader
+        icon={Calendar}
+        title="Schedule"
+        season={page.season}
+        teamBase={page.teamBase}
+        actions={scheduleHeaderActions}
+        helpLabel="Schedule"
+        help={scheduleHelpRequest}
+      />
+
+      {/* List | Week | Month — a view switcher is not an action: it rides the body it switches
+          (ruling 2026-08-11), exactly where Roster's List/Depth-chart toggle already lives. */}
+      <div className={styles.listToolbar}>
+        <div className={styles.viewToggle}>
+          {(['list', 'week', 'month'] as ViewMode[]).map(v => (
             <button
-              className={`btn btn-lime ${styles.addEventBtn}`}
-              aria-label="Add event"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
-              onClick={() => setAddTypeMenuOpen(v => !v)}
+              key={v}
+              className={`${styles.viewToggleBtn} ${view === v ? styles.viewToggleBtnActive : ''}`}
+              onClick={() => setView(v)}
             >
-              <Plus size={13} /> <span className={styles.addEventLabel}>Add Event</span>
+              {v.charAt(0).toUpperCase() + v.slice(1)}
             </button>
-            {addTypeMenuOpen && (
-              <div className={styles.addEventMenu}>
-                {ADD_MENU.map(({ type, nested }) => {
-                  const Icon = EVENT_ICONS[type];
-                  return (
-                    <button
-                      key={type}
-                      className={`${styles.addEventMenuItem}${nested ? ` ${styles.addEventMenuSubItem}` : ''}`}
-                      onClick={() => openAddForm(type)}
-                    >
-                      <Icon size={14} style={{ color: EVENT_COLORS[type] }} />
-                      {EVENT_LABELS[type]}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-          )}
-          </div>
+          ))}
         </div>
       </div>
 

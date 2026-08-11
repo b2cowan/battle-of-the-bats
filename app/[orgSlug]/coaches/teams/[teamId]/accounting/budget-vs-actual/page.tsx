@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { TrendingUp, ChevronDown, ChevronRight, X, ArrowLeft, Tag } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
@@ -484,33 +484,38 @@ export function BudgetVsActualPanel({
 
   const unbudgetedTotal = data?.unbudgetedActuals.reduce((s, u) => s + u.amount, 0) ?? 0;
 
+  // Page-header ruling 2026-08-11: the one action, shared by the standalone header and the
+  // embedded (Money-hub tab) actions row.
+  const bvaExportMenu = (
+    <ExportMenu
+      formats={['xlsx', 'csv', 'pdf']}
+      onExportXLSX={handleExportXLSX}
+      onExportCSV={handleExportCSV}
+      onExportPDF={handleExportPDF}
+      planId={currentOrg?.planId}
+      pdfFeatureKey="pdf_exports"
+      disabled={!data || (data.effectiveBudget === 0 && data.totalActual === 0)}
+    />
+  );
+
   return (
     <div className={styles.page}>
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={shared.backLink}>
+        <Link href={`${base}/accounting${seasonQuery}`} className={shared.lineupBackLink}>
           <ArrowLeft size={14} aria-hidden /> Back to Money
         </Link>
       )}
-      <div className={styles.pageHeader}>
-        {!embedded && (
-          <div className={styles.pageHeaderLeft}>
-            <div className={styles.headerIcon}><TrendingUp size={22} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Budget vs. Actual<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-              <p className={styles.pageSub}>{page.programYearName}</p>
-            </div>
-          </div>
-        )}
-        <ExportMenu
-          formats={['xlsx', 'csv', 'pdf']}
-          onExportXLSX={handleExportXLSX}
-          onExportCSV={handleExportCSV}
-          onExportPDF={handleExportPDF}
-          planId={currentOrg?.planId}
-          pdfFeatureKey="pdf_exports"
-          disabled={!data || (data.effectiveBudget === 0 && data.totalActual === 0)}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: one shape, actions right, "?" in its fixed corner. */}
+      <CoachPageHeader
+        embedded={embedded}
+        icon={TrendingUp}
+        title="Budget vs. Actual"
+        season={page.season}
+        teamBase={page.teamBase}
+        actions={bvaExportMenu}
+        helpLabel="Budget vs. Actual"
+        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+      />
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>

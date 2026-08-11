@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, ChevronRight, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck, ClipboardPaste, HelpCircle } from 'lucide-react';
+import { Users, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, CalendarCheck, ClipboardPaste, HelpCircle } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -11,7 +11,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -22,7 +22,6 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
 import FamilyAccessPanel from '@/components/coaches/FamilyAccessPanel';
@@ -88,25 +87,6 @@ function cleanNamePart(part: string | null | undefined): string {
 }
 function playerFullName(p: { playerFirstName: string | null; playerLastName: string | null }): string {
   return [cleanNamePart(p.playerFirstName), cleanNamePart(p.playerLastName)].filter(Boolean).join(' ');
-}
-
-// Season labels are often auto-named with the team in them (e.g.
-// "toronto blue jays5 2026"). The team name already appears in the breadcrumb,
-// sidebar, and title — strip a leading team-name prefix so the subtitle doesn't stutter.
-function seasonLabel(season: string | null | undefined, teamName: string): string {
-  const s = (season ?? '').trim();
-  if (!s) return '';
-  const t = teamName.trim();
-  if (t && s.toLowerCase().startsWith(t.toLowerCase())) {
-    const rest = s.slice(t.length);
-    // Only strip a WHOLE-WORD team-name prefix (next char is a separator or end), so a team
-    // like "Jay" doesn't mangle a season "Jays 2026".
-    if (rest === '' || /^[\s—–-]/.test(rest)) {
-      const stripped = rest.replace(/^[\s—–-]+/, '').trim();
-      if (stripped) return stripped;
-    }
-  }
-  return s;
 }
 
 export default function RosterPage({
@@ -466,7 +446,6 @@ export default function RosterPage({
   // ── Roster summary + data-quality signals ─────────────────────────────────
   const activeCount = players.filter(p => p.status === 'active').length;
   const inactiveCount = players.length - activeCount;
-  const season = seasonLabel(programYear?.name ?? page.programYearName, page.teamName);
   // Assistant Coaches: only the head coach (or an assistant granted it) edits the roster; guardian
   // contact + DOB are hidden from assistants without the PII grant. The API enforces both — these
   // just keep the UI honest (no broken buttons, no blank sensitive columns).
@@ -502,79 +481,60 @@ export default function RosterPage({
   if (missingContact) nudgeParts.push(`${missingContact} without guardian contact`);
   const nudge = nudgeParts.length ? `${nudgeParts.join(' · ')} — open a player to fill in details` : '';
 
+  // Page-header ruling 2026-08-11: header actions, extracted so the CoachPageHeader call
+  // stays scannable (same shape as the Money panels' headerActions consts).
+  const rosterHeaderActions = view === 'list' && (
+    <>
+      <Link
+        href={`${base}/attendance`}
+        className={styles.btnSecondary}
+        aria-label="Attendance"
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem', textDecoration: 'none' }}
+      >
+        <CalendarCheck size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Attendance</span>
+      </Link>
+      <ExportMenu
+        formats={['xlsx', 'csv', 'pdf']}
+        onExportXLSX={handleExportXLSX}
+        onExportCSV={handleExportCSV}
+        onExportPDF={handleExportPDF}
+        hasSensitiveOption={canSeePii}
+        sensitiveOptionLabel="Excel with contact details"
+        onExportXLSXWithSensitive={canSeePii ? handleExportXLSXWithSensitive : undefined}
+        planId={currentOrg?.planId}
+        pdfFeatureKey="pdf_exports"
+        disabled={players.length === 0}
+      />
+      {canWriteRoster && (
+        <button
+          type="button"
+          className="btn btn-lime"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
+          onClick={openAdd}
+        >
+          <Plus size={15} aria-hidden /> Add Player
+        </button>
+      )}
+    </>
+  );
+
   return (
     /* BOTH views are wide (desktop shell D1, owner-ratified 2026-08-01): the roster list is
        a data table, and data-dense surfaces take `.pageWide` unconditionally — supersedes the
        earlier depth-only opt-in (f9-2 remainder, Chunk E WI-4). */
     <div className={`${styles.page} ${styles.pageWide}`}>
-      {/* Breadcrumb */}
-      <div className={styles.breadcrumb}>
-        <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>Roster</span>
-      </div>
-
-      {/* Header */}
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Users size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>
-              Roster
-              {/* Chunk F, D-F4: the read-only signal. Also the way OUT of an archive on a phone,
-                  where the season switcher lives in More. Renders nothing in a live season. */}
-              <CoachSeasonChip season={page.season} teamBase={page.teamBase} />
-            </h1>
-            <p className={styles.pageSub}>
-              {activeCount} active {activeCount === 1 ? 'player' : 'players'}
-              {inactiveCount > 0 ? ` · ${inactiveCount} inactive` : ''}
-              {season ? ` · ${season} season` : ''}
-            </p>
-          </div>
-        </div>
-        {/* ONE trailing group, always. `.pageHeader` pins only its LAST child right (margin-left:auto),
-            so Help must live INSIDE this wrapper — as a third sibling it would steal that pin and
-            drop the Attendance/Export/Add Player cluster back beside the title. */}
-        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          {view === 'list' && (
-          <>
-          <Link
-            href={`${base}/attendance`}
-            className={styles.btnSecondary}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem', textDecoration: 'none' }}
-          >
-            <CalendarCheck size={14} /> Attendance
-          </Link>
-          <ExportMenu
-            formats={['xlsx', 'csv', 'pdf']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportPDF={handleExportPDF}
-            hasSensitiveOption={canSeePii}
-            sensitiveOptionLabel="Excel with contact details"
-            onExportXLSXWithSensitive={canSeePii ? handleExportXLSXWithSensitive : undefined}
-            planId={currentOrg?.planId}
-            pdfFeatureKey="pdf_exports"
-            disabled={players.length === 0}
-          />
-          {canWriteRoster && (
-          <button
-            type="button"
-            className={`btn btn-lime ${styles.addPlayerBtn}`}
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.8rem', padding: '0.34rem 0.8rem' }}
-            onClick={openAdd}
-            aria-label="Add player"
-          >
-            <Plus size={15} /> <span className={styles.addPlayerLabel}>Add Player</span>
-          </button>
-          )}
-          </>
-          )}
-          <HelpButton iconOnly label="Roster" help={rosterHelpRequest} />
-        </div>
-      </div>
+      {/* Header (page-header ruling 2026-08-11): title + actions + "?" in its fixed corner,
+          nothing under the title — the roster counts lead the list toolbar below, beside the
+          view toggle, so the fact sits on the thing it counts. */}
+      <CoachPageHeader
+        icon={Users}
+        title="Roster"
+        season={page.season}
+        teamBase={page.teamBase}
+        actions={rosterHeaderActions}
+        helpLabel="Roster"
+        help={rosterHelpRequest}
+      />
 
       {/* Team family access (Chunk D). Mounted on the ROSTER index rather than the player
           page the mockup drew it on: in Slice 1 this card is entirely TEAM-level (the link,
@@ -585,14 +545,22 @@ export default function RosterPage({
           it asks the API first and draws only on a yes. */}
       {view === 'list' && <FamilyAccessPanel orgSlug={orgSlug} teamId={teamId} />}
 
-      {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live here) */}
-      <div className={styles.segChoice} style={{ margin: '0 0 1rem' }} aria-label="Roster view">
-        <button type="button" aria-pressed={view === 'list'}
-          className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
-          onClick={() => setView('list')}>List</button>
-        <button type="button" aria-pressed={view === 'depth'}
-          className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
-          onClick={() => setView('depth')}>Depth chart</button>
+      {/* List ⇄ Depth chart — two views of the same roster (positions/pitching/A-squad live
+          here) — plus the counts that used to be the header subtitle (page-header ruling
+          2026-08-11: a live fact leads the body it counts, not the chrome above it). */}
+      <div className={styles.listToolbar}>
+        <span className={styles.listToolbarFact}>
+          {activeCount} active {activeCount === 1 ? 'player' : 'players'}
+          {inactiveCount > 0 ? ` · ${inactiveCount} inactive` : ''}
+        </span>
+        <div className={styles.segChoice} aria-label="Roster view">
+          <button type="button" aria-pressed={view === 'list'}
+            className={`${styles.segBtn}${view === 'list' ? ' ' + styles.segBtnActive : ''}`}
+            onClick={() => setView('list')}>List</button>
+          <button type="button" aria-pressed={view === 'depth'}
+            className={`${styles.segBtn}${view === 'depth' ? ' ' + styles.segBtnActive : ''}`}
+            onClick={() => setView('depth')}>Depth chart</button>
+        </div>
       </div>
 
       {view === 'depth' ? (

@@ -2,9 +2,9 @@
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Users, X, CheckCircle2, AlertTriangle, ChevronRight, Plus, Trash2, ChevronDown, Bell, ArrowRight, ArrowLeft, DollarSign } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import {
@@ -589,64 +589,74 @@ export function PlayerDuesPanel({
   /** Is anyone ACTUALLY late? Distinct from "hasn't paid" — see the chase card below. */
   const anyoneLate = railTotals.overduePlayers > 0;
 
+  // Page-header ruling 2026-08-11: one shape, actions right, phone secondaries icon-only.
+  // The reminder status lines stay stacked under the buttons — they're feedback about this
+  // action group, so they travel with it.
+  const headerActions = (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+        <ExportMenu
+          formats={['xlsx', 'csv', 'pdf']}
+          onExportXLSX={handleExportXLSX}
+          onExportCSV={handleExportCSV}
+          onExportPDF={handleExportPDF}
+          planId={currentOrg?.planId}
+          pdfFeatureKey="pdf_exports"
+          disabled={players.length === 0}
+        />
+        {moneyCanWrite && (
+          <>
+            <button className={styles.btnSecondary} onClick={() => { setApplyAllOpen(true); setApplyAllError(''); }} aria-label="Set dues for all players">
+              <DollarSign size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Set dues for all players</span>
+            </button>
+            <button
+              className={styles.btnSecondary}
+              onClick={sendReminders}
+              disabled={sendingReminders}
+              style={{ opacity: sendingReminders ? 0.6 : 1 }}
+              /* Tracks the visible ternary — a static label would tell AT "Send due
+                 reminders" while sighted users watch "Sending…" (/review finding). */
+              aria-label={sendingReminders ? 'Sending reminders' : 'Send due reminders'}
+            >
+              <Bell size={14} aria-hidden /> <span className={styles.headerBtnLabel}>{sendingReminders ? 'Sending…' : 'Send Due Reminders'}</span>
+            </button>
+          </>
+        )}
+      </div>
+      {reminderResult && reminderResult.emailsSent > 0 && (
+        <span style={{ fontSize: '0.8rem', color: 'var(--success-light)' }}>
+          Sent {reminderResult.emailsSent} reminder email{reminderResult.emailsSent !== 1 ? 's' : ''} covering {reminderResult.installmentsTagged} installment{reminderResult.installmentsTagged !== 1 ? 's' : ''}.
+        </span>
+      )}
+      {reminderResult && reminderResult.emailsSent === 0 && (
+        <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
+          No reminders needed — no installments due within 3 days.
+        </span>
+      )}
+      {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
+    </div>
+  );
+
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      {/* Header */}
+      {/* Header (page-header ruling 2026-08-11: one shape, actions right, phone secondaries
+          icon-only, "?" in its fixed corner). The reminder status lines stay stacked under the
+          buttons — they're feedback about the action group, so they travel with it. */}
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
+        <Link href={`${base}/accounting${seasonQuery}`} className={styles.lineupBackLink}>
           <ArrowLeft size={14} aria-hidden /> Back to Money
         </Link>
       )}
-      <div className={styles.pageHeader}>
-        {!embedded && (
-          <div className={styles.pageHeaderLeft}>
-            <div className={styles.headerIcon}><Users size={22} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Player Dues<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-              <p className={styles.pageSub}>{page.programYearName}</p>
-            </div>
-          </div>
-        )}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            <ExportMenu
-              formats={['xlsx', 'csv', 'pdf']}
-              onExportXLSX={handleExportXLSX}
-              onExportCSV={handleExportCSV}
-              onExportPDF={handleExportPDF}
-              planId={currentOrg?.planId}
-              pdfFeatureKey="pdf_exports"
-              disabled={players.length === 0}
-            />
-            {moneyCanWrite && (
-              <>
-                <button className={styles.btnSecondary} onClick={() => { setApplyAllOpen(true); setApplyAllError(''); }}>
-                  Set dues for all players
-                </button>
-                <button
-                  className={styles.btnSecondary}
-                  onClick={sendReminders}
-                  disabled={sendingReminders}
-                  style={{ opacity: sendingReminders ? 0.6 : 1 }}
-                >
-                  {sendingReminders ? 'Sending…' : 'Send Due Reminders'}
-                </button>
-              </>
-            )}
-          </div>
-          {reminderResult && reminderResult.emailsSent > 0 && (
-            <span style={{ fontSize: '0.8rem', color: 'var(--success-light)' }}>
-              Sent {reminderResult.emailsSent} reminder email{reminderResult.emailsSent !== 1 ? 's' : ''} covering {reminderResult.installmentsTagged} installment{reminderResult.installmentsTagged !== 1 ? 's' : ''}.
-            </span>
-          )}
-          {reminderResult && reminderResult.emailsSent === 0 && (
-            <span style={{ fontSize: '0.8rem', color: 'var(--home-dim, rgba(255,255,255,0.4))' }}>
-              No reminders needed — no installments due within 3 days.
-            </span>
-          )}
-          {reminderError && <span style={{ fontSize: '0.8rem', color: 'var(--danger-light)' }}>{reminderError}</span>}
-        </div>
-      </div>
+      <CoachPageHeader
+        embedded={embedded}
+        icon={Users}
+        title="Player Dues"
+        season={page.season}
+        teamBase={page.teamBase}
+        actions={headerActions}
+        helpLabel="Player Dues"
+        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+      />
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>

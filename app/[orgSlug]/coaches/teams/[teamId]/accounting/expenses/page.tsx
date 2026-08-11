@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Receipt, Plus, CheckCircle2, AlertTriangle, ArrowLeft, Tag, Settings2, Upload } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
@@ -453,54 +453,49 @@ export function ExpensesPayablesPanel({
   const filterTotal = filterTagId ? filteredActive.reduce((s, e) => s + e.amount, 0) : 0;
   const filterTag = filterTagId ? tagById.get(filterTagId) : null;
 
+  // Page-header ruling 2026-08-11. ⚠ Every affordance here stays write-gated (Chunk A probe):
+  // a read-only money assistant could otherwise open a sheet only the server would refuse.
+  const expenseHeaderActions = canWriteMoney ? (
+    <>
+      <button className={styles.btnSecondary} aria-label="Add expense" onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); }}>
+        <Plus size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Add Expense</span>
+      </button>
+      <button className={styles.btnSecondary} aria-label="Add payable" onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); }}>
+        <Plus size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Add Payable</span>
+      </button>
+      {/* Chunk H2 — a whole season's commitments usually arrive as a schedule, not one at
+          a time. Same importer as the budget, pointed at the payables shape. */}
+      <button className={styles.btnGhost} onClick={() => setImportOpen(true)} aria-label="Import payables">
+        <Upload size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Import payables</span>
+      </button>
+      {ownMoneyTags.length > 0 && (
+        <button className={styles.btnGhost} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags" aria-label="Manage tags">
+          <Settings2 size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Manage tags</span>
+        </button>
+      )}
+    </>
+  ) : null;
+
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
+        <Link href={`${base}/accounting${seasonQuery}`} className={styles.lineupBackLink}>
           <ArrowLeft size={14} aria-hidden /> Back to Money
         </Link>
       )}
-      <div className={styles.pageHeader}>
-        {!embedded && (
-          <div className={styles.pageHeaderLeft}>
-            <div className={styles.headerIcon}><Receipt size={22} /></div>
-            <div>
-              {/* "Tournament" retired (chunk H, D-H9): the same record has always handled a dome
-                  booking or an equipment order just as well as a tournament entry — only the
-                  words assumed otherwise. The stored type is unchanged. */}
-              <h1 className={styles.pageTitle}>Expenses &amp; Payables<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-              <p className={styles.pageSub}>{page.programYearName}</p>
-            </div>
-          </div>
-        )}
-        <div style={{ display: 'flex', gap: '0.5rem' }}>
-          {/* ⚠ These two were the ONLY ungated write affordances on the page — every other one
-              already checked canWriteMoney. A read-only money assistant could open either sheet,
-              fill it in and only then hit the server's refusal. Found by the Chunk A probe. */}
-          {canWriteMoney && (
-            <button className={styles.btnSecondary} onClick={() => { setShowAddExpense(true); setExpenseForm(BLANK_EXPENSE); setExpenseFormTags([]); setExpensePayee(null); setSaveError(''); }}>
-              <Plus size={14} /> Add Expense
-            </button>
-          )}
-          {canWriteMoney && (
-            <button className={styles.btnSecondary} onClick={() => { setShowAddPayable(true); setPayableForm(BLANK_PAYABLE); setPayableFormTags([]); setPayablePayee(null); setSaveError(''); }}>
-              <Plus size={14} /> Add Payable
-            </button>
-          )}
-          {/* Chunk H2 — a whole season's commitments usually arrive as a schedule, not one at
-              a time. Same importer as the budget, pointed at the payables shape. */}
-          {canWriteMoney && (
-            <button className={styles.btnGhost} onClick={() => setImportOpen(true)}>
-              <Upload size={14} /> Import payables
-            </button>
-          )}
-          {canWriteMoney && ownMoneyTags.length > 0 && (
-            <button className={styles.btnGhost} onClick={() => setTagManagerOpen(true)} title="Rename, merge, or delete your money tags">
-              <Settings2 size={14} /> Manage tags
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Page-header ruling 2026-08-11: one shape, actions right, phone secondaries icon-only.
+          ⚠ The write gates stand (Chunk A probe): a read-only money assistant sees no sheet
+          door the server would refuse. "Tournament" stays retired from the title (D-H9). */}
+      <CoachPageHeader
+        embedded={embedded}
+        icon={Receipt}
+        title={<>Expenses &amp; Payables</>}
+        season={page.season}
+        teamBase={page.teamBase}
+        actions={expenseHeaderActions}
+        helpLabel="Expenses & Payables"
+        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+      />
 
       {importMessage && (
         <p className={styles.moneyTagSummary} role="status" style={{ marginBottom: '1rem' }}>{importMessage}</p>

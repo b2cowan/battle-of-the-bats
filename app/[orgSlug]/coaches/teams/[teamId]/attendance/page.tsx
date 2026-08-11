@@ -5,10 +5,9 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CalendarCheck, ArrowRight } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
-import HelpButton from '@/components/help/HelpButton';
 import {
   COACH_GAME_EVENT_TYPES, eventDisplayTitle, formatEventWhen, pickNextOrMostRecent,
 } from '@/lib/coach-tournament-games';
@@ -168,22 +167,16 @@ export default function CoachesAttendancePage({
           IA parent = the Insights hub; the Roster page keeps its own in-context button here. */}
       <Link href={`${base}/history`} className={styles.lineupBackLink}>← Insights</Link>
 
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><CalendarCheck size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Attendance<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>Who&apos;s been making it out this season</p>
-          </div>
-        </div>
-        {/* Chunk B (P1 #17): Attendance gained a nav home in Batch 4 but never got the help icon
-            every other nav destination carries. */}
-        <HelpButton
-          iconOnly
-          label="Attendance"
-          help={{ module: 'coaches', sectionIds: ['recipe-attendance'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-attendance` }}
-        />
-      </div>
+      {/* Header (page-header ruling 2026-08-11): title + "?" in its fixed corner, nothing
+          under the title. */}
+      <CoachPageHeader
+        icon={CalendarCheck}
+        title="Attendance"
+        season={page.season}
+        teamBase={page.teamBase}
+        helpLabel="Attendance"
+        help={{ module: 'coaches', sectionIds: ['recipe-attendance'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-attendance` }}
+      />
 
       {/* Batch 4 — record first, review second. The review found this page explained what it would
           show but never linked to where attendance is actually taken; the round trip back from the

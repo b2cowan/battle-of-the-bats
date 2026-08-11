@@ -266,7 +266,9 @@ export default function AdminSchedulePage({
           </nav>
           <h1 className={styles.pageTitle}>
             <Calendar size={20} style={{ verticalAlign: 'middle', marginRight: '0.5rem' }} />
-            Team Calendar
+            {/* "Schedule" — the name this page's own breadcrumb, the coach mirror and the nav
+                all use (page-header ruling 2026-08-11 retired "Team Calendar" everywhere). */}
+            Schedule
           </h1>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>

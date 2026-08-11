@@ -2,9 +2,10 @@
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, AlertTriangle, Check } from 'lucide-react';
+import { Users, AlertTriangle, Check } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import { stripTeamNamePrefix } from '@/lib/coach-season-label';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachCollapseSection from '@/components/coaches/CoachCollapseSection';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlayerDocumentsSection from '@/components/coaches/PlayerDocumentsSection';
@@ -106,19 +107,6 @@ function ageFromDob(dob: string | null | undefined): number | null {
   const mm = now.getMonth() - birth.getMonth();
   if (mm < 0 || (mm === 0 && now.getDate() < birth.getDate())) age--;
   return age >= 0 && age < 130 ? age : null;
-}
-
-// Season labels are often auto-named with the team in them — strip a leading
-// team-name prefix so the subtitle doesn't repeat the team name.
-function seasonLabel(season: string | null | undefined, teamName: string): string {
-  const s = (season ?? '').trim();
-  if (!s) return '';
-  const t = teamName.trim();
-  if (t && s.toLowerCase().startsWith(t.toLowerCase())) {
-    const stripped = s.slice(t.length).replace(/^[\s—–-]+/, '').trim();
-    if (stripped) return stripped;
-  }
-  return s;
 }
 
 function errorMessage(error: unknown, fallback: string) {
@@ -290,40 +278,34 @@ export default function PlayerDetailPage({
 
   const attnKnown = attendance ? attendance.attending + attendance.absent + attendance.late : 0;
   const attnRate = attnKnown > 0 ? Math.round((attendance!.attending / attnKnown) * 100) : 0;
+  const age = player ? ageFromDob(player.playerDateOfBirth) : null;
 
   return (
     <div className={styles.page}>
       <UnsavedChangesGuard active={isDirty} />
-      {/* Breadcrumb */}
-      <div className={styles.breadcrumb}>
-        <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${base}/roster${seasonQuery}`}>Roster</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>{[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}</span>
-      </div>
+      {/* Drill-in back link (the breadcrumb is globally hidden — this is the one way back). */}
+      <Link href={`${base}/roster${seasonQuery}`} className={styles.lineupBackLink}>← Roster</Link>
 
-      {/* Header */}
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div>
-            <h1 className={styles.pageTitle}>{[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>
-              {[
-                player.playerNumber ? `#${player.playerNumber}` : null,
-                ageFromDob(player.playerDateOfBirth) !== null ? `Age ${ageFromDob(player.playerDateOfBirth)}` : null,
-                seasonLabel(page.programYearName, page.teamName)
-                  ? `${seasonLabel(page.programYearName, page.teamName)} season` : null,
-              ].filter(Boolean).join(' · ')}
-            </p>
-          </div>
-        </div>
-      </div>
+      {/* Header (page-header ruling 2026-08-11): the player's name + archive chip, nothing
+          under the title — jersey number and age are live facts, so they lead the status row
+          the page already had one line down. Season text is the masthead's job. */}
+      <CoachPageHeader
+        icon={Users}
+        title={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
+        season={page.season}
+        teamBase={page.teamBase}
+      />
 
       {/* Status row */}
       <div className={styles.statusRow}>
+        {(player.playerNumber || age !== null) && (
+          <span className={styles.listToolbarFact}>
+            {[
+              player.playerNumber ? `#${player.playerNumber}` : null,
+              age !== null ? `Age ${age}` : null,
+            ].filter(Boolean).join(' · ')}
+          </span>
+        )}
         <span className={styles.statusLabel}>Status</span>
         <span className={`${styles.badge} ${STATUS_CSS[player.status] ?? styles.badgeDraft}`}>
           {player.status === 'active' ? 'Active' : 'Inactive'}
@@ -520,7 +502,7 @@ export default function PlayerDetailPage({
             playerName={[clean(player.playerFirstName), clean(player.playerLastName)].filter(Boolean).join(' ')}
             playerNumber={player.playerNumber ? clean(player.playerNumber) : null}
             teamName={assignment.teamName}
-            seasonName={seasonLabel(assignment.programYearName, assignment.teamName) || null}
+            seasonName={stripTeamNamePrefix(assignment.programYearName, assignment.teamName) || null}
           />
         </CoachCollapseSection>
       )}

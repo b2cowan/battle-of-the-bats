@@ -19,66 +19,9 @@
   .gridInner { min-width: 520px; }
 }
 
-.pageHeader {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-/* Trailing header controls pin RIGHT even when they are the header's only child — the Money
-   hub case, where the title block is suppressed because the hub already shows it. Same
-   drift as budget.module.css: this local copy never gained the shared rule, so the Export
-   menu collapsed left here while panels on the shared class stayed right. */
-.pageHeader > *:last-child:not(.pageHeaderLeft) { margin-left: auto; }
-
-.pageHeaderLeft {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.headerIcon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  color: var(--logic-lime);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.pageTitle {
-  font-size: 1.75rem;
-  font-weight: 900;
-  font-family: var(--font-display, sans-serif);
-  margin: 0;
-  color: var(--white-90);
-  line-height: 1.1;
-}
-
-.pageSub {
-  margin: 0.25rem 0 0;
-  color: var(--white-40, rgba(255,255,255,0.4));
-  font-size: 0.9rem;
-}
-
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.82rem;
-  color: var(--home-dim, rgba(255,255,255,0.35));
-  margin-bottom: 0.35rem;
-}
-.breadcrumb a { color: var(--home-ink-soft, rgba(255,255,255,0.55)); text-decoration: none; }
-.breadcrumb a:hover { color: var(--home-ink, rgba(255,255,255,0.8)); }
-.breadcrumb span { color: var(--home-dim, rgba(255,255,255,0.25)); }
+/* The local .pageHeader/.pageTitle/.headerIcon/.pageSub fork that used to live here is GONE
+   (page-header ruling 2026-08-11): this page now renders the shared CoachPageHeader, so the
+   copy that had already drifted once (Export collapsing left) can't drift again. */
 
 .muted { color: var(--white-40, rgba(255,255,255,0.4)); padding: 2rem; }
 .errorText { color: var(--danger-light); font-size: 0.85rem; margin: 0.5rem 0; }

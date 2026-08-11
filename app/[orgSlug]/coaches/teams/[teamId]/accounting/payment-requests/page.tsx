@@ -6,6 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 
@@ -215,28 +216,25 @@ export function PaymentRequestsPanel({
   return (
     <div className={styles.page}>
       {!embedded && (
-        <Link href={`${base}/accounting`} className={styles.backLink}>
+        <Link href={`${base}/accounting`} className={styles.lineupBackLink}>
           <ArrowLeft size={14} aria-hidden /> Back to Money
         </Link>
       )}
-      <div className={styles.pageHeader}>
-        {!embedded && (
-          <div className={styles.pageHeaderLeft}>
-            <div className={styles.headerIcon}><ArrowUpRight size={22} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Payment Requests</h1>
-              <p className={styles.pageSub}>{assignment.programYearName}</p>
-            </div>
-          </div>
-        )}
-        {/* Same gap the Expenses page had: this page never checked the money capability at all,
-            so a read-only assistant was offered a form the server would refuse. */}
-        {canWriteMoney && (
+      {/* Page-header ruling 2026-08-11: one shape; the primary keeps its words at every width.
+          The write gate stands — a read-only assistant is never offered a form the server
+          would refuse. */}
+      <CoachPageHeader
+        embedded={embedded}
+        icon={ArrowUpRight}
+        title="Payment Requests"
+        actions={canWriteMoney && (
           <button type="button" className={styles.btnPrimary} onClick={openForm}>
             + New Request
           </button>
         )}
-      </div>
+        helpLabel="Payment Requests"
+        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+      />
 
       {/* Cross-link (review f4-7) — the other half of the org-money pair. */}
       <p className={styles.muted} style={{ fontSize: '0.8rem', margin: '-0.75rem 0 1.25rem' }}>

@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Gift, Settings, X, Check, ArrowLeft } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -236,36 +237,34 @@ export default function FundraiserDetailPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/accounting/fundraisers`} className={styles.backLink}>
+      <Link href={`${base}/accounting/fundraisers`} className={styles.lineupBackLink}>
         <ArrowLeft size={14} aria-hidden /> Back to Fundraisers
       </Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Gift size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>{fundraiser?.name ?? 'Fundraiser'}</h1>
-            {fundraiser && (
-              <p className={styles.pageSub}>
-                {fundraiser.playerRebatePercent}% player rebate
-                {fundraiser.startDate && ` · ${fundraiser.startDate}`}
-                {fundraiser.endDate && ` → ${fundraiser.endDate}`}
-              </p>
-            )}
-          </div>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          {fundraiser && (
-            <span className={`${styles.badge} ${fundraiser.isActive ? styles.badgeActive : styles.badgeArchived}`}>
-              {fundraiser.isActive ? 'Active' : 'Closed'}
-            </span>
-          )}
-          {canWriteMoney && (
-            <button className={styles.btnSecondary} onClick={openSettings} title="Edit fundraiser settings">
-              <Settings size={15} /> Settings
-            </button>
-          )}
-        </div>
-      </div>
+      {/* Page-header ruling 2026-08-11: the Active/Closed badge is STATE, so it rides the title
+          row; the rebate % and dates are live facts about the entity, so they lead the body. */}
+      <CoachPageHeader
+        icon={Gift}
+        title={fundraiser?.name ?? 'Fundraiser'}
+        titleChips={fundraiser && (
+          <span className={`${styles.badge} ${fundraiser.isActive ? styles.badgeActive : styles.badgeArchived}`}>
+            {fundraiser.isActive ? 'Active' : 'Closed'}
+          </span>
+        )}
+        actions={canWriteMoney && (
+          <button className={styles.btnSecondary} onClick={openSettings} title="Edit fundraiser settings" aria-label="Fundraiser settings">
+            <Settings size={15} aria-hidden /> <span className={styles.headerBtnLabel}>Settings</span>
+          </button>
+        )}
+        helpLabel="Fundraisers"
+        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+      />
+      {fundraiser && (
+        <p className={styles.muted} style={{ margin: '-1.25rem 0 1.5rem' }}>
+          {fundraiser.playerRebatePercent}% player rebate
+          {fundraiser.startDate && ` · ${fundraiser.startDate}`}
+          {fundraiser.endDate && ` → ${fundraiser.endDate}`}
+        </p>
+      )}
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>

@@ -72,6 +72,7 @@ export function buildCoachSeasons(
       programYearYear: a.programYearYear,
       status: 'live' as const,
       capabilities: a.capabilities,
+      coachRole: a.coachRole,
     })),
     ...closedAll.map(a => ({
       teamId: a.teamId,
@@ -80,6 +81,7 @@ export function buildCoachSeasons(
       programYearYear: a.programYearYear,
       status: 'complete' as const,
       capabilities: a.capabilities,
+      coachRole: a.coachRole,
     })),
   ];
 }

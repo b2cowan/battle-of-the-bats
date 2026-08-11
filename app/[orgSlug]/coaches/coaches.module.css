@@ -394,6 +394,28 @@
    "2026 season · 12–4–1 · Game day — Lions, 6:30 p.m." Each part is its own span and any part can
    be absent (no games played, a quiet week), so the separator is drawn BETWEEN siblings rather
    than punctuated into the strings — otherwise a missing middle leaves a stranded dot. */
+/* Name line is a flex row so the role tag can ride beside the name (ruling 2026-08-11)
+   and wrap under it rather than squeezing it on a phone. */
+.teamHeaderNameRow { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+
+/* The viewer's role — "Head Coach" / "Assistant Coach" — as a quiet identity tag beside the
+   team name (page-header ruling 2026-08-11; owner refined meta-line text → name-line tag the
+   same day). Chips are the portal's identity/state vocabulary; quantities still never chip. */
+.teamHeaderRole {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--white-70);
+  background: var(--home-card, transparent);
+  border: 1px solid var(--white-20);
+  border-radius: 7px;
+  padding: 0.14rem 0.45rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .teamHeaderMeta {
   display: flex;
   align-items: center;
@@ -516,6 +538,9 @@
   .teamHeaderCollapsed .teamHeaderEyebrow { display: none; }
   .teamHeaderCollapsed .teamHeaderMeta { display: none; }
   .teamHeaderCollapsed .teamHeaderName { font-size: 0.92rem; }
+  /* A collapsed phone bar is the BARE team name (ruled 2026-08-02) — the role tag folds away
+     with the season, record and right slot rather than surviving as the only non-name content. */
+  .teamHeaderCollapsed .teamHeaderRole { display: none; }
   /* The right slot folds with the rest of the detail — a collapsed phone bar is the bare team
      name, and a chip plus a two-line stack beside it would defeat the point of collapsing. */
   .teamHeaderCollapsed .teamHeaderRight { display: none; }
@@ -845,8 +870,54 @@ a.railRow:focus-visible {
 }
 
 /* Trailing header controls (export / + add / view toggle / help) pin to the right — including
-   when they wrap below the title on narrow screens — for a consistent, standard placement. */
-.pageHeader > *:last-child:not(.pageHeaderLeft) { margin-left: auto; }
+   when they wrap below the title on narrow screens — for a consistent, standard placement.
+   LEGACY hand-rolled headers only — CoachPageHeader (.pageHeaderStd) owns its own geometry
+   below, so the boundary is drawn once on the parent, not per-child. */
+.pageHeader:not(.pageHeaderStd) > *:last-child:not(.pageHeaderLeft) { margin-left: auto; }
+
+/* ── CoachPageHeader slots (page-header ruling 2026-08-11) ──────────────────
+   ONE header for every standard page: icon · title · archive chip | actions | help.
+   No subtitle slot exists — that's the ruling enforced by construction. `.pageHeaderStd`
+   scopes every rule here so the ~30 not-yet-migrated hand-rolled headers keep their
+   legacy geometry untouched until their pass. */
+.pageHeaderStd .pageHeaderLeft { margin-right: auto; min-width: 0; }
+.pageTitleWrap { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.pageHeaderActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  /* Also pins the row right when it's the header's ONLY child (the embedded hub-tab shape);
+     with a title present, the left block's margin-right:auto is the one that soaks the space. */
+  margin-left: auto;
+}
+.pageHeaderHelp { flex-shrink: 0; display: inline-flex; }
+/* Phone: the "?" keeps the title line's right corner on EVERY page (one findable home);
+   only the actions drop to a right-pinned row beneath. Secondaries go icon-only via
+   .headerBtnLabel; the one lime primary keeps its words. */
+.headerBtnLabel { display: inline; }
+@media (max-width: 640px) {
+  .pageHeaderStd { display: grid; grid-template-columns: 1fr auto; align-items: center; row-gap: 0.75rem; }
+  .pageHeaderStd .pageHeaderLeft { grid-row: 1; grid-column: 1; }
+  .pageHeaderStd .pageHeaderHelp { grid-row: 1; grid-column: 2; }
+  .pageHeaderStd .pageHeaderActions { grid-row: 2; grid-column: 1 / -1; }
+  .headerBtnLabel { display: none; }
+  /* Phone tap floor on every header control (the lineup view-toggle precedent: min-height at
+     the phone breakpoint only — desktop keeps the portal's compact control heights, which are
+     a grandfathered portal-wide decision this pass deliberately does not take). Element
+     selectors reach DESCENDANTS on purpose: grouped action wrappers (Dues' status column, the
+     Add-Event wrap) and popover menu items all get finger-sized on phones — menus are tapped
+     too. ⚠ KNOWN LIMIT: ExportMenu's own trigger buttons keep the admin-ratified 32px (its
+     module pins them with !important at ≤760px), so this rule silently loses there —
+     reconciling the two conventions is the same portal-wide control-height decision, deferred
+     with it (flagged in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). */
+  .pageHeaderStd .pageHeaderActions button,
+  .pageHeaderStd .pageHeaderActions a,
+  .pageHeaderStd .pageHeaderHelp button {
+    min-height: var(--tap-min, 44px);
+  }
+}
 
 .headerIcon {
   width: 48px;
@@ -2423,9 +2494,6 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .rosterHintDrag, .rosterHintMove { display: inline-flex; align-items: center; gap: 0.3rem; }
 .rosterHintMove { display: none; }
 
-/* "Add Player" label collapses to a "+" on mobile (matches the other screens' add buttons). */
-.addPlayerLabel { display: inline; }
-
 .thWithHelp { display: inline-flex; align-items: center; gap: 0.3rem; }
 
 .cellEmpty { opacity: 0.3; }
@@ -2528,8 +2596,9 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   /* Hint + add-button swaps on mobile. */
   .rosterHintDrag { display: none; }
   .rosterHintMove { display: inline-flex; }
-  .addPlayerLabel { display: none; }
-  .addPlayerBtn { padding: 0.45rem 0.6rem !important; }
+  /* Page-header ruling 2026-08-11 inverted the old collapse here: the one lime PRIMARY
+     ("+ Add Player") keeps its words at every width; it's the SECONDARY buttons that go
+     icon-only on phones (.headerBtnLabel). A primary you can't read isn't a primary. */
   .rosterTable td::before {
     content: attr(data-label);
     flex-shrink: 0;
@@ -2991,6 +3060,19 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .formCheck input { accent-color: var(--logic-lime); cursor: pointer; }
 
 /* Segmented Home / Away / Neutral choice — lime active fill (coach accent) */
+/* Body toolbar under a page header: the live fact a subtitle used to carry (left) beside the
+   view switcher (right) — page-header ruling 2026-08-11: facts lead the body they describe,
+   and a view switcher rides the views it switches. Roster and Schedule both use this row. */
+.listToolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0 0 1rem;
+}
+.listToolbarFact { font-size: 0.85rem; color: var(--home-dim, rgba(255,255,255,0.4)); }
+
 .segChoice {
   display: inline-flex;
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
@@ -3386,6 +3468,11 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   min-width: 190px;
   z-index: 50;
   box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  /* The phone tap floor makes each row ~44px, so the open menu is ~65px taller there than
+     its desktop self — cap it and let it scroll rather than run off a short (landscape)
+     viewport. Harmless on tall phones: 6 rows fit inside the cap. */
+  max-height: min(60vh, 340px);
+  overflow-y: auto;
 }
 .addEventMenuItem {
   display: flex;
@@ -5079,9 +5166,8 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .lineupMoveControls { display: none; }
 
 @media (max-width: 640px) {
-  /* #2 — Add Event collapses to a compact "+" (label hidden, tighter padding). */
-  .addEventLabel { display: none; }
-  .addEventBtn { padding: 0.4rem 0.55rem !important; }
+  /* #2 RETIRED by the page-header ruling 2026-08-11: the lime PRIMARY ("+ Add Event") keeps
+     its words at every width; secondaries (Import) go icon-only via .headerBtnLabel instead. */
 
   /* #3 — event rows wrap so the full name + opponent + score + result all show:
      line 1 = time … score/result; line 2 = the (untruncated) name. */
@@ -5309,20 +5395,8 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .moneyTabBtn { padding: 0.5rem 0.6rem; font-size: 0.66rem; }
 }
 
-/* ── Sub-page back link (Money et al.) ──────────────────────────────────
-   Replaces the (globally hidden) breadcrumb trail on drill-in pages: one
-   quiet "back to hub" affordance, flush left above the header icon. */
-.backLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.35rem;
-  margin: 0 0 0.75rem;
-  color: var(--white-55);
-  font-size: 0.82rem;
-  font-weight: 600;
-  text-decoration: none;
-}
-.backLink:hover { color: var(--white-90); }
+/* The grey .backLink that used to live here is RETIRED (page-header ruling 2026-08-11):
+   every drill-in back link now uses the one .lineupBackLink treatment. */
 
 /* ── Tag search combobox (Coach Tags & Player Awards, Phase 3) ──────────────
    ADO-style type-ahead: a search box + filtered dropdown of the already-loaded

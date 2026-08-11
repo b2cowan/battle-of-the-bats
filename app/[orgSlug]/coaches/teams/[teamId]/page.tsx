@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { Archive, ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
 import CoachHelperHome from '@/components/coaches/CoachHelperHome';
 import UpgradeSummaryBanner from '@/components/coaches/UpgradeSummaryBanner';
@@ -33,7 +34,6 @@ import { hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
-import HelpButton from '@/components/help/HelpButton';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
@@ -840,18 +840,14 @@ export default function TeamOverviewPage({
   // sidebar uses to hide the Roster item. (A1 2026-08-03: was roster visibility, now retired.)
   const canViewRoster = hasRecordAccess(assignment.capabilities);
   const helpHref = `/${orgSlug}/coaches/help`;
-  // The season label drops a leading copy of the team name so the subtitle doesn't repeat the
-  // title — orgs often name a program year "<Team> <Year>" (e.g. "Blue Jays 2026").
-  const teamNameTrim = assignment.teamName?.trim() ?? '';
-  const yearNameTrim = assignment.programYearName?.trim() ?? '';
-  // Only strip when the team name is a WHOLE-WORD prefix (next char is a separator or the end),
-  // so a team like "Jay" doesn't mangle a season "Jays 2026" into "s 2026".
-  const afterTeam = teamNameTrim && yearNameTrim.toLowerCase().startsWith(teamNameTrim.toLowerCase())
-    ? yearNameTrim.slice(teamNameTrim.length)
-    : null;
-  const seasonLabel = afterTeam !== null && (afterTeam === '' || /^[\s\-–—]/.test(afterTeam))
-    ? (afterTeam.replace(/^[\s\-–—]+/, '').trim() || yearNameTrim)
-    : yearNameTrim;
+  // Division is real information only when the team's NAME doesn't already carry it as a WHOLE
+  // WORD — "Riverdale Ridge 12U" + a "12U" chip is the masthead's fact stated twice, but a bare
+  // substring test would also hide "AA" inside "AAA" (/review finding; same whole-word lesson as
+  // stripTeamNamePrefix).
+  const divisionInTeamName = !!teamDivision && new RegExp(
+    `(^|[^a-z0-9])${teamDivision.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}([^a-z0-9]|$)`,
+    'i',
+  ).test(assignment.teamName);
   // Required = the spine of a team (season is automatic, roster is the one true must).
   // Everything else is OPTIONAL: pointed to, auto-checks when done, skippable, and never
   // blocks the header chip from going quiet.
@@ -1592,44 +1588,29 @@ export default function TeamOverviewPage({
         </div>
       )}
 
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              {/* "Overview", not the team name (design review 2026-08-11): the sticky masthead
-                  directly above already carries the team name + season, and every sibling page
-                  (Roster, Money, Team Calendar…) titles itself the same page-specific way. */}
-              <h1 className={styles.pageTitle}>Overview</h1>
-              {isTeamWorkspace && <span className={styles.titlePremiumBadge}>Premium</span>}
-              {/* Status badge only when it's NOT the everyday "active" case — an active team
-                  needs no label; draft/completed/archived seasons get one so it's noticed. */}
-              {assignment.programYearStatus !== 'active' && (
-                <span className={`${styles.badge} ${STATUS_CSS[assignment.programYearStatus] ?? styles.badgeDraft}`}>
-                  {STATUS_LABEL[assignment.programYearStatus] ?? assignment.programYearStatus}
-                </span>
-              )}
-              {teamDivision && (
-                <span className={`${styles.badge} ${styles.badgeManual}`}>{teamDivision}</span>
-              )}
-            </div>
-            <p className={styles.pageSub}>
-              {/* The masthead already states the bare year ("2026 season"), so only print
-                  seasonLabel here when an org has actually named the season something more
-                  specific — a bare year would just be the same fact stated a second time. */}
-              {!/^\d{4}$/.test(seasonLabel.trim()) && <>{seasonLabel} -{' '}</>}
-              {assignment.coachRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach'}
-            </p>
-          </div>
-        </div>
-        <div className={styles.identityHelp}>
-          {renderSetupChip()}
-          <HelpButton
-            iconOnly
-            label="Premium Coaches Portal"
-            help={{ module: 'coaches', sectionIds: ['premium-portal-tour', 'premium'], fullGuideHref: `${helpHref}#premium-portal-tour` }}
-          />
-        </div>
-      </div>
+      {/* Page-header ruling 2026-08-11: title + chips + actions + help, NOTHING under the title.
+          The masthead directly above owns the team name, season and the coach's role. */}
+      <CoachPageHeader
+        title="Overview"
+        titleChips={
+          <>
+            {isTeamWorkspace && <span className={styles.titlePremiumBadge}>Premium</span>}
+            {/* Status badge only when it's NOT the everyday "active" case — an active team
+                needs no label; draft/completed/archived seasons get one so it's noticed. */}
+            {assignment.programYearStatus !== 'active' && (
+              <span className={`${styles.badge} ${STATUS_CSS[assignment.programYearStatus] ?? styles.badgeDraft}`}>
+                {STATUS_LABEL[assignment.programYearStatus] ?? assignment.programYearStatus}
+              </span>
+            )}
+            {teamDivision && !divisionInTeamName && (
+              <span className={`${styles.badge} ${styles.badgeManual}`}>{teamDivision}</span>
+            )}
+          </>
+        }
+        actions={renderSetupChip()}
+        helpLabel="Premium Coaches Portal"
+        help={{ module: 'coaches', sectionIds: ['premium-portal-tour', 'premium'], fullGuideHref: `${helpHref}#premium-portal-tour` }}
+      />
 
       {/* A failed dashboard read has to say so ON the page. Moving setup into the popover left this
           message behind a click — and for a coach whose chip is hidden, behind nothing at all. The

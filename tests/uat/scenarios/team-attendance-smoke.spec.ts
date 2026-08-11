@@ -213,7 +213,7 @@ test.describe.serial('standalone Team attendance smoke', () => {
     })
 
     await coachPage.goto(`/${state.workspaceSlug}/coaches/teams/${state.repTeamId}/schedule`)
-    await expect(coachPage.getByRole('heading', { name: 'Team Calendar' })).toBeVisible({
+    await expect(coachPage.getByRole('heading', { name: 'Schedule' })).toBeVisible({
       timeout: 30_000,
     })
     await coachPage.getByRole('button', { name: new RegExp(state.eventName) }).click()
@@ -232,7 +232,7 @@ test.describe.serial('standalone Team attendance smoke', () => {
     await expect(coachPage.getByText('Unsaved changes')).not.toBeVisible({ timeout: 15_000 })
 
     await coachPage.reload()
-    await expect(coachPage.getByRole('heading', { name: 'Team Calendar' })).toBeVisible({
+    await expect(coachPage.getByRole('heading', { name: 'Schedule' })).toBeVisible({
       timeout: 30_000,
     })
     await coachPage.getByRole('button', { name: new RegExp(state.eventName) }).click()

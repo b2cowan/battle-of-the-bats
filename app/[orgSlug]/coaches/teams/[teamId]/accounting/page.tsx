@@ -8,8 +8,7 @@ import {
   ArrowLeftRight, ArrowRight, ChevronLeft, ChevronRight, AlertTriangle,
 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
 import OverviewDashboard, { fmt, type MoneySummary } from './OverviewDashboard';
 import styles from '../../../coaches.module.css';
@@ -292,27 +291,18 @@ export default function CoachesAccountingPage({
   // own). At 960px the 8-tab row also truncated with no cue — see the tab-bar rules.
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><DollarSign size={22} /></div>
-          <div>
-            <nav className={styles.breadcrumb}>
-              <Link href={`/${orgSlug}/coaches`}>Portal</Link>
-              <span>/</span>
-              <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
-              <span>/</span>
-              <span>Money</span>
-            </nav>
-            <h1 className={styles.pageTitle}>Money<CoachSeasonChip season={page.season} teamBase={page.teamBase} extraQuery={effectiveSection !== 'overview' ? `section=${effectiveSection}` : undefined} /></h1>
-            <p className={styles.pageSub}>{page.programYearName}</p>
-          </div>
-        </div>
-        <HelpButton
-          iconOnly
-          label="Money"
-          help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: title + archive chip + help, nothing under the title —
+          the masthead above owns the season. The old in-header breadcrumb repeated the masthead's
+          team name and this h1 one line away (and was display:none anyway). */}
+      <CoachPageHeader
+        icon={DollarSign}
+        title="Money"
+        season={page.season}
+        teamBase={page.teamBase}
+        chipExtraQuery={effectiveSection !== 'overview' ? `section=${effectiveSection}` : undefined}
+        helpLabel="Money"
+        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+      />
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>

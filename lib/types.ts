@@ -1127,6 +1127,12 @@ export interface CoachSeasonOption {
    * re-checks every read regardless, and this only decides which doors are drawn.
    */
   capabilities: CoachCapabilities;
+  /**
+   * The role held on THIS season's assignment row — a sibling of `capabilities` for the same
+   * reason (a coach can be head on one season and assistant on another). The masthead's role
+   * tag reads it off the resolved season instead of re-searching the assignment arrays.
+   */
+  coachRole: 'head_coach' | 'assistant_coach';
 }
 
 export interface RepProgramYear {

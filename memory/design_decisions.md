@@ -4,6 +4,63 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-11 — Coach portal page headers: nothing under the title; the masthead owns season AND role; actions right of the title on every screen
+
+**Trigger:** owner asked for a consistent approach to the per-page sub-headers (screenshots: Overview
+"2026 Season - Head Coach", Money "2026 Season", Roster "12 active players · 2026 Season season" —
+that last one a live bug: the code appends the word "season" to a season already named "2026 Season").
+Inventory of all 48 team-hub pages found four subtitle dialects, no shared header component, two
+hand-forked copies of the header CSS (one had already drifted and broken layout once), five back-link
+styles, two breadcrumb dialects, and a 20px/22px icon split. Owner picked **Option A, amended**
+(2026-08-11). Mockup (v2 = decided state, binding visual spec):
+`claude.ai/code/artifact/1ae95cd8-8bc2-4500-b024-1f6f0bc78f3a`, source at
+`docs/projects/active/COACH_PAGE_HEADER_CONSISTENCY_MOCKUP.html` (Options B/C renders preserved in
+the artifact's version history).
+
+**DECISION (four rules):**
+1. **Nothing under the title.** No page under `/coaches/teams/{teamId}/` renders a subtitle line —
+   no season, team, org, role, or feature-blurb text in any page header. Live facts formerly in
+   subtitles move INTO the body they describe (roster count leads the list toolbar); framing lines
+   REQUIRED by prior rulings (the coverage board's "Roster order — a coverage view, not a ranking")
+   move into the card they frame. **Relocated, never deleted** — the blurbs go to empty states.
+2. **The masthead owns the season AND the role.** The viewer's role renders as a **TAG beside the
+   team name** ("Head Coach" / "Assistant Coach" — owner: role belongs "in the main header if
+   anywhere", refined same day from meta-line text to a name-line chip). Chips are this portal's
+   identity/state vocabulary (Premium, Complete), so a role tag fits it; quantities still don't.
+   On the phone's collapsed scroll bar the tag folds away with everything else — the "bare team
+   name" collapse ruling stands untouched. The masthead also shows an org's NAMED season when
+   richer than a bare year ("Fall Ball 2026"); a bare-year name renders "{year} season" as today.
+   No guard regexes on pages — the fact lives at the source.
+3. **Actions sit RIGHT of the title, one row, every screen — and only ACTIONS.** The Roster pattern
+   becomes the rule, with two owner refinements from the phone render (same day): **a view switcher
+   is not an action** — it rides the body it switches (Roster's List|Depth-chart already does;
+   Schedule's List|Week|Month joins it at ALL widths), so Schedule's header carries Import / Export /
+   Add Event / help only. **At phone width, secondary buttons go icon-only** — the standing
+   mobile-admin pattern (hidden label + aria-label) extends to the coach portal — while the ONE lime
+   primary keeps its label and help stays an icon; every header row then fits a 390px phone on one
+   line. Narrow-screen wrap stays right-pinned as the fallback, never a designed second row.
+   **The help "?" is chrome, not an action** (owner, same day): it anchors the top-right corner
+   beside the title on EVERY page at EVERY width — on phones the actions row drops below while the
+   "?" stays on the title line — one findable home for help portal-wide.
+4. **One shared page-header component** (icon 22px · title · archive chip | actions · help) replaces
+   40 hand-rolled copies; retires the budget/bva CSS forks. Archive "{year} · Complete" chip stays
+   inside the `<h1>` (screen-reader page name), unchanged in meaning.
+
+**Also ruled (same pass):** division chip ("12U") renders only when the team name does NOT already
+contain it; hub breadcrumbs retire (masthead + title state every crumb); "Team Calendar" retitles to
+"Schedule" — the nav LABEL does not change (it keys the access gate); the Insights coverage report
+retitles to question voice ("Is everyone getting attention?") and Tryouts history to "Tryout history"
+to break the duplicate-title pairs; help "?" fills its sibling gaps; one back-link treatment for
+drill-ins.
+
+**Supersedes:** the subtitle half of the same-day Overview-header entry directly below — BOTH its
+named-season print AND its kept role line (role moves to the masthead; the season name moves there
+too). That entry's masthead-nudge rulings (#2, #3) stand untouched.
+
+**Status:** design ruling + binding mockup, 2026-08-11; implementation is its own unit of work.
+
+---
+
 ### 2026-08-11 — Coach Overview's header stops repeating the sticky masthead, and the scouting nudge stops floating between the two
 
 **Trigger:** owner screenshot of the mobile Coach Overview — disliked the scouting-book notification

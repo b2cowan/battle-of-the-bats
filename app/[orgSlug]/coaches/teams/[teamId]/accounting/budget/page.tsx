@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { BarChart3, Plus, X, ChevronDown, ChevronRight, Pencil, Trash2, ArrowLeft, Upload } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
 import BudgetStarterSheet from '@/components/coaches/BudgetStarterSheet';
@@ -691,37 +691,38 @@ export function BudgetPlanPanel({
   // stay reachable from a cold start (review finding).
   const trueEmpty      = groups.length === 0 && seasonTotal == null && !editingSeason;
 
+  // Page-header ruling 2026-08-11: one header shape, actions right, phone secondaries icon-only.
+  // Chunk H2 kept — Import is available at every page state, not only on a blank plan: a coach
+  // topping up an existing budget from a sheet is the same job.
+  const headerActions = moneyCanWrite ? (
+    <>
+      <button type="button" className={shared.btnGhost} onClick={() => setImportOpen(true)} aria-label="Import">
+        <Upload size={15} aria-hidden /> <span className={shared.headerBtnLabel}>Import</span>
+      </button>
+      <button type="button" className={shared.btnSecondary} onClick={openAdd} aria-label="Add line">
+        <Plus size={15} aria-hidden /> <span className={shared.headerBtnLabel}>Add Line</span>
+      </button>
+    </>
+  ) : null;
+
   return (
     <div className={styles.page}>
       {/* Header */}
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={shared.backLink}>
+        <Link href={`${base}/accounting${seasonQuery}`} className={shared.lineupBackLink}>
           <ArrowLeft size={14} aria-hidden /> Back to Money
         </Link>
       )}
-      <div className={styles.pageHeader}>
-        {!embedded && (
-          <div className={styles.pageHeaderLeft}>
-            <div className={styles.headerIcon}><BarChart3 size={22} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Season Budget Plan<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-              <p className={styles.pageSub}>{assignment.programYearName} — estimated costs</p>
-            </div>
-          </div>
-        )}
-        {moneyCanWrite && (
-          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            {/* Chunk H2 — available at every page state, not only on a blank plan: a coach
-                topping up an existing budget from a sheet is the same job. */}
-            <button type="button" className={shared.btnGhost} onClick={() => setImportOpen(true)}>
-              <Upload size={15} /> Import
-            </button>
-            <button type="button" className={shared.btnSecondary} onClick={openAdd}>
-              <Plus size={15} /> Add Line
-            </button>
-          </div>
-        )}
-      </div>
+      <CoachPageHeader
+        embedded={embedded}
+        icon={BarChart3}
+        title="Season Budget Plan"
+        season={page.season}
+        teamBase={page.teamBase}
+        actions={headerActions}
+        helpLabel="Budget Plan"
+        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+      />
 
       {importMessage && (
         <p className={styles.importedNote} role="status">{importMessage}</p>

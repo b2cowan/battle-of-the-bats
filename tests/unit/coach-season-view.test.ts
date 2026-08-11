@@ -20,6 +20,7 @@ const TEAM = 'team-1';
 const season = (id: string, name: string, status: 'live' | 'complete', capabilities = HEAD) => ({
   teamId: TEAM, programYearId: id, programYearName: name,
   programYearYear: Number(name), status, capabilities,
+  coachRole: 'head_coach' as const,
 });
 
 /** A rolled-forward team: 2026 live, 2025 + 2024 complete. The case the ledger never named. */

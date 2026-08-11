@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Gift, Plus, ChevronRight, TrendingUp, ArrowLeft } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -156,26 +156,25 @@ export function FundraisersPanel({
   return (
     <div className={styles.page}>
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
+        <Link href={`${base}/accounting${seasonQuery}`} className={styles.lineupBackLink}>
           <ArrowLeft size={14} aria-hidden /> Back to Money
         </Link>
       )}
-      <div className={styles.pageHeader}>
-        {!embedded && (
-          <div className={styles.pageHeaderLeft}>
-            <div className={styles.headerIcon}><Gift size={22} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Fundraisers<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-              <p className={styles.pageSub}>{page.programYearName}</p>
-            </div>
-          </div>
-        )}
-        {canWriteMoney && (
+      {/* Page-header ruling 2026-08-11: one shape; the primary keeps its words at every width. */}
+      <CoachPageHeader
+        embedded={embedded}
+        icon={Gift}
+        title="Fundraisers"
+        season={page.season}
+        teamBase={page.teamBase}
+        actions={canWriteMoney && (
           <button className={styles.btnPrimary} onClick={openModal}>
             <Plus size={16} /> New Fundraiser
           </button>
         )}
-      </div>
+        helpLabel="Fundraisers"
+        help={{ module: 'coaches', sectionIds: ['premium-money'], fullGuideHref: `/${orgSlug}/coaches/help#premium-money` }}
+      />
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>

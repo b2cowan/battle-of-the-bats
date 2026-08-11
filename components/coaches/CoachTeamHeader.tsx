@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { ArrowLeftRight, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { resolveSeasonView } from '@/lib/coach-season-view';
+import { mastheadSeasonLabel } from '@/lib/coach-season-label';
 import { formatRecord } from '@/lib/coach-season-record';
 import {
   mastheadWhen,
@@ -125,6 +126,21 @@ function CoachTeamHeaderInner({
 
   const season = resolveSeasonView(seasons, teamId, searchParams.get('year'));
   const year = season.current?.programYearYear ?? null;
+  // Page-header ruling 2026-08-11: the masthead owns the season AND the role, so no page
+  // subtitle ever restates either. Both resolve HERE, client-side, for the season on screen.
+  //  · Season text: an org's NAMED season ("Fall Ball 2026", "2026 Season") renders verbatim
+  //    (team-name prefix stripped — the stutter the old year-only rule guarded against); a
+  //    bare-year name keeps the classic "{year} season". This supersedes the "never
+  //    programYearName" half of the meta-line rule in the docblock above.
+  //  · Role: read off the RESOLVED season (CoachSeasonOption carries coachRole beside
+  //    capabilities, for the same per-season reason) — never a second search of the
+  //    assignment arrays, which is how a mid-rollover team gets described wrong. Falls back
+  //    to the team's assignment only while the season is still resolving.
+  const seasonRole = season.current?.coachRole ?? (live ?? closed)?.coachRole ?? null;
+  const roleLabel = seasonRole
+    ? (seasonRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach')
+    : null;
+  const seasonText = mastheadSeasonLabel(season.current?.programYearName, teamName, year);
   // The record OF THE SEASON ON SCREEN — an archive gets its own frozen final tally, never the
   // live season's. Absent from the map means no decided game yet, which renders as nothing: a
   // record of 0–0 is not a record, it is a season that hasn't started.
@@ -169,9 +185,14 @@ function CoachTeamHeaderInner({
               left already says, above the same team name, so the masthead was a carbon copy of its
               own neighbour. A club's name IS information, so a club org keeps its eyebrow. */}
           {!isTeamWorkspace && <span className={styles.teamHeaderEyebrow}>{orgName}</span>}
-          <span className={styles.teamHeaderName}>{teamName}</span>
+          <span className={styles.teamHeaderNameRow}>
+            <span className={styles.teamHeaderName}>{teamName}</span>
+            {/* Who you are here — identity, so it rides the identity bar on every page
+                (2026-08-11; previously the Overview subtitle). Folds on the collapsed bar. */}
+            {roleLabel && <span className={styles.teamHeaderRole}>{roleLabel}</span>}
+          </span>
           <div className={styles.teamHeaderMeta}>
-            {year && <span>{year} season</span>}
+            {seasonText && <span>{seasonText}</span>}
             {/* An archive's record is stated on the right, beside its Complete chip. */}
             {!season.isReadOnly && record && (
               <span className={styles.teamHeaderRecord}>{formatRecord(record)}</span>

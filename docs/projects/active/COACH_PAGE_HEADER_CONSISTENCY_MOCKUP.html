@@ -1,0 +1,925 @@
+<title>Coach Page Headers — Consistency Mockups</title>
+<style>
+  /* ── Document shell: three-state theming (light / system-dark / forced-dark) ── */
+  :root {
+    --bg: #EFEDE7;
+    --panel: #FFFFFF;
+    --ink: #26231C;
+    --ink-soft: #4C463A;
+    --dim: #6E675C;
+    --line: rgba(60, 52, 32, 0.16);
+    --line-soft: rgba(60, 52, 32, 0.09);
+    --acc: #57651E;          /* olive — the portal's own accent family */
+    --acc-soft: rgba(87, 101, 30, 0.10);
+    --lime: #D9F99D;
+    --lime-ink: #241E15;
+    --bad: #B03A22;
+    --bad-soft: rgba(176, 58, 34, 0.10);
+    --warn: #835006;
+    --warn-soft: rgba(131, 80, 6, 0.10);
+    --mono: 'IBM Plex Mono', Consolas, 'Cascadia Mono', ui-monospace, monospace;
+    --sans: 'Segoe UI', Inter, system-ui, sans-serif;
+    --disp: 'Barlow Condensed', Bahnschrift, 'Arial Narrow', 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1B1915;
+      --panel: #242019;
+      --ink: #EDE8DC;
+      --ink-soft: #C9C2B2;
+      --dim: #99917F;
+      --line: rgba(237, 232, 220, 0.18);
+      --line-soft: rgba(237, 232, 220, 0.09);
+      --acc: #B5CB5E;
+      --acc-soft: rgba(181, 203, 94, 0.12);
+      --bad: #E06A50;
+      --bad-soft: rgba(224, 106, 80, 0.14);
+      --warn: #D99A3D;
+      --warn-soft: rgba(217, 154, 61, 0.14);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1B1915;
+    --panel: #242019;
+    --ink: #EDE8DC;
+    --ink-soft: #C9C2B2;
+    --dim: #99917F;
+    --line: rgba(237, 232, 220, 0.18);
+    --line-soft: rgba(237, 232, 220, 0.09);
+    --acc: #B5CB5E;
+    --acc-soft: rgba(181, 203, 94, 0.12);
+    --bad: #E06A50;
+    --bad-soft: rgba(224, 106, 80, 0.14);
+    --warn: #D99A3D;
+    --warn-soft: rgba(217, 154, 61, 0.14);
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin: 0;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--acc);
+  }
+  h1 {
+    font-family: var(--disp);
+    font-stretch: 87.5%;
+    font-weight: 900;
+    text-transform: uppercase;
+    font-size: clamp(2rem, 4.5vw, 2.9rem);
+    line-height: 1.02;
+    letter-spacing: 0.005em;
+    margin: 0.35rem 0 0.75rem;
+    text-wrap: balance;
+  }
+  .lede { max-width: 62ch; color: var(--ink-soft); margin: 0 0 0.5rem; }
+  h2 {
+    font-family: var(--disp);
+    font-stretch: 87.5%;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 1.45rem;
+    letter-spacing: 0.01em;
+    margin: 0 0 0.25rem;
+  }
+  h3 { font-size: 1rem; font-weight: 700; margin: 0 0 0.25rem; }
+  section { margin-top: 3.25rem; }
+  .sec-head { border-top: 2px solid var(--ink); padding-top: 0.9rem; margin-bottom: 1.1rem; }
+  .sec-head p { max-width: 68ch; color: var(--ink-soft); margin: 0.35rem 0 0; }
+  a { color: var(--acc); }
+  code {
+    font-family: var(--mono);
+    font-size: 0.82em;
+    background: var(--acc-soft);
+    padding: 0.08em 0.35em;
+    border-radius: 4px;
+  }
+
+  .decided {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    background: var(--lime);
+    color: var(--lime-ink);
+    border-radius: 999px;
+    padding: 0.24rem 0.65rem;
+  }
+
+  /* ── Change tags (mockup convention: NEW / RESTYLED / UNCHANGED / REMOVED) ── */
+  .tag {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.09em;
+    padding: 0.14rem 0.45rem;
+    border-radius: 999px;
+    vertical-align: 0.12em;
+    white-space: nowrap;
+  }
+  .tag-new       { background: var(--acc); color: var(--bg); }
+  .tag-restyled  { background: var(--warn-soft); color: var(--warn); border: 1px solid var(--warn); }
+  .tag-unchanged { background: transparent; color: var(--dim); border: 1px solid var(--line); }
+  .tag-removed   { background: var(--bad-soft); color: var(--bad); border: 1px solid var(--bad); }
+  .legend-strip { display: flex; flex-wrap: wrap; gap: 0.5rem 0.9rem; align-items: center; margin: 0.75rem 0 0; color: var(--dim); font-size: 0.8rem; }
+
+  /* ── Annotation pins + legends ── */
+  .pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px; height: 17px;
+    border-radius: 50%;
+    background: #B03A22;
+    color: #FFF7F0;
+    font-family: var(--mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    margin-left: 0.35rem;
+    vertical-align: 0.15em;
+    flex: none;
+  }
+  .pin-ok { background: #57651E; }
+  .note-list { list-style: none; margin: 0.8rem 0 0; padding: 0; display: grid; gap: 0.45rem; }
+  .note-list li { display: flex; gap: 0.55rem; align-items: baseline; font-size: 0.88rem; color: var(--ink-soft); max-width: 75ch; }
+  .note-list .pin { margin-left: 0; transform: translateY(2px); }
+  .note-list .tag { flex: none; transform: translateY(1px); }
+
+  /* ── Frame chrome: each mockup is a "window" on the product ── */
+  .frame { margin-top: 1.4rem; }
+  .frame-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #241E15;
+    color: #C9C2B2;
+    border-radius: 10px 10px 0 0;
+    padding: 0.45rem 0.85rem;
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+  }
+  .frame-bar .dots { display: inline-flex; gap: 4px; }
+  .frame-bar .dots i { width: 8px; height: 8px; border-radius: 50%; background: #4A4235; }
+  .frame-scroll { overflow-x: auto; border: 1px solid var(--line); border-top: 0; border-radius: 0 0 10px 10px; }
+  .frame-body { min-width: 820px; }
+
+  /* ══ PRODUCT RENDER — hard-committed to the warm coach-portal palette.
+     Values are the DECLARED ones from the product's stylesheets: paper #F8F4ED ·
+     card #FFF · ink #241E15 · ink-soft #4A4235 · dim #6A635C · olive #57651E ·
+     line rgba(70,55,30,.12) · lime #D9F99D · title 1.75rem/900 display ·
+     icon tile 48px r14 olive-tint. Type approximated from system faces. ══ */
+  .fm { background: #F8F4ED; color: #241E15; font-family: var(--sans); }
+
+  .fm-mast {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    background: #FFFFFF;
+    border-bottom: 1px solid rgba(70, 55, 30, 0.12);
+    padding: 0.8rem 1.5rem;
+  }
+  .fm-eyebrow {
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6A635C;
+  }
+  .fm-team {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #241E15;
+    line-height: 1.25;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+  .fm-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    color: #6A635C;
+    margin-top: 0.12rem;
+  }
+  .fm-meta .sep { opacity: 0.45; }
+  .fm-rec { color: #4A4235; font-weight: 700; }
+  .fm-next { text-align: right; }
+  .fm-nextk {
+    display: block;
+    font-family: var(--mono);
+    font-size: 0.55rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #6A635C;
+  }
+  .fm-nextv { font-family: var(--mono); font-size: 0.78rem; font-weight: 700; color: #241E15; white-space: nowrap; }
+
+  /* ── Phone variant: the product's own ≤900px metrics (masthead 0.98rem name, page
+     title 1.35rem, 40px icon tile; collapsed scroll bar = bare name at 0.92rem). ── */
+  .fm-phone { width: 390px; }
+  .fm-phone .fm-mast { padding: 0.45rem 1rem; }
+  .fm-phone .fm-team { font-size: 0.98rem; }
+  .fm-phone .fm-canvas { padding: 1rem 1rem 1.25rem; }
+  .fm-phone .fm-title { font-size: 1.35rem; }
+  .fm-phone .fm-icon { width: 40px; height: 40px; }
+  .fm-phone .fm-icon svg { width: 20px; height: 20px; }
+  /* Phone: the ? keeps the title line's right corner; the actions row drops beneath. */
+  .fm-phone .fm-ph { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.75rem; }
+  .fm-phone .fm-ph > .fm-phl { grid-row: 1; grid-column: 1; }
+  .fm-phone .fm-ph > .fm-help { grid-row: 1; grid-column: 2; }
+  .fm-phone .fm-ph > .fm-actions { grid-row: 2; grid-column: 1 / -1; justify-content: flex-end; }
+  .fm-mast-collapsed { padding: 0.3rem 1rem; min-height: 36px; align-items: center; }
+  .fm-mast-collapsed .fm-team { font-size: 0.92rem; }
+  .phone-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr));
+    gap: 1.4rem;
+    align-items: start;
+    margin-top: 1.4rem;
+  }
+  .phone-row .frame { margin-top: 0; }
+  .phone-row .frame-body { min-width: 390px; }
+
+  .fm-canvas {
+    padding: 1.3rem 1.5rem 1.5rem;
+    background:
+      linear-gradient(rgba(70, 55, 30, 0.045) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(70, 55, 30, 0.045) 1px, transparent 1px),
+      #F8F4ED;
+    background-size: 26px 26px, 26px 26px, auto;
+  }
+
+  /* Annotation separator between stacked screens — dark chip = reviewer's label,
+     matching the frame bar's material so it cannot read as product UI. */
+  .fm-break {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin: 1.6rem 0 1.2rem;
+  }
+  .fm-break:first-child { margin-top: 0; }
+  .fm-break::before, .fm-break::after {
+    content: '';
+    flex: 1;
+    border-top: 1px dashed rgba(70, 55, 30, 0.3);
+  }
+  .fm-break span {
+    background: #241E15;
+    color: #C9C2B2;
+    font-family: var(--mono);
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-radius: 999px;
+    padding: 0.22rem 0.7rem;
+    white-space: nowrap;
+  }
+
+  .fm-crumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: #6A635C;
+    margin: 0 0 0.6rem;
+  }
+  .fm-crumb .cl { color: #57651E; }
+
+  .fm-ph { display: flex; align-items: center; justify-content: flex-start; gap: 0.6rem; flex-wrap: wrap; }
+  .fm-phl { display: flex; align-items: center; gap: 1rem; margin-right: auto; }
+  .fm-icon {
+    width: 48px; height: 48px;
+    border-radius: 14px;
+    background: rgba(87, 101, 30, 0.12);
+    border: 1px solid rgba(87, 101, 30, 0.3);
+    color: #57651E;
+    display: flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .fm-icon svg { width: 22px; height: 22px; }
+  .fm-title {
+    font-family: var(--disp);
+    font-stretch: 87.5%;
+    font-size: 1.75rem;
+    font-weight: 900;
+    color: #241E15;
+    line-height: 1.1;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .fm-sub { margin: 0.25rem 0 0; font-size: 0.9rem; color: #6A635C; }
+  .fm-sub .dup { text-decoration: underline wavy #B03A22 1.5px; text-underline-offset: 3px; }
+
+  .fm-chip {
+    font-family: var(--mono);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #4A4235;
+    background: #FFFFFF;
+    border: 1px solid rgba(70, 55, 30, 0.2);
+    border-radius: 7px;
+    padding: 0.2rem 0.5rem;
+  }
+  .fm-chip-complete { background: rgba(70, 55, 30, 0.08); }
+
+  .fm-actions { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+  .fm-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #241E15;
+    background: #FFFFFF;
+    border: 1px solid rgba(70, 55, 30, 0.2);
+    border-radius: 9px;
+    padding: 0.45rem 0.8rem;
+    white-space: nowrap;
+  }
+  .fm-btn-mono { font-family: var(--mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; }
+  .fm-btn-lime { background: #D9F99D; border-color: #D9F99D; font-weight: 700; }
+  .fm-help {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: #FFFFFF;
+    border: 1px solid rgba(70, 55, 30, 0.2);
+    color: #4A4235;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.85rem; font-weight: 700;
+    flex: none;
+  }
+  .fm-setup {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(70, 55, 30, 0.2);
+    border-radius: 999px;
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #241E15;
+    white-space: nowrap;
+  }
+  .fm-ring {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    border: 2.5px solid rgba(87, 101, 30, 0.25);
+    border-top-color: #57651E;
+    border-right-color: #57651E;
+    border-bottom-color: #57651E;
+    flex: none;
+  }
+  .fm-seg {
+    display: inline-flex;
+    background: #FFFFFF;
+    border: 1px solid rgba(70, 55, 30, 0.2);
+    border-radius: 9px;
+    overflow: hidden;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #4A4235;
+  }
+  .fm-seg span { padding: 0.42rem 0.7rem; white-space: nowrap; }
+  .fm-seg .on { background: rgba(87, 101, 30, 0.12); color: #241E15; font-weight: 700; }
+  .fm-ibtn {
+    width: 38px; height: 38px;
+    border-radius: 9px;
+    background: #FFFFFF;
+    border: 1px solid rgba(70, 55, 30, 0.2);
+    color: #4A4235;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex: none;
+  }
+  .fm-ibtn svg { width: 18px; height: 18px; }
+
+  .fm-tabs {
+    display: flex;
+    gap: 1.4rem;
+    margin-top: 1.15rem;
+    border-bottom: 1px solid rgba(70, 55, 30, 0.12);
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6A635C;
+    overflow: hidden;
+  }
+  .fm-tabs span { padding: 0 0 0.5rem; white-space: nowrap; }
+  .fm-tabs .on { color: #241E15; box-shadow: inset 0 -2px 0 #57651E; }
+
+  .fm-bodyhint {
+    margin-top: 1.1rem;
+    background: #FFFFFF;
+    border: 1px solid rgba(70, 55, 30, 0.12);
+    border-radius: 14px 14px 0 0;
+    border-bottom: 0;
+    padding: 0.8rem 1rem 1rem;
+    color: #6A635C;
+    font-size: 0.82rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .fm-bodyhint b { color: #241E15; }
+
+  /* ── Verdicts / rules / punch list ── */
+  .verdict {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+  .verdict > div {
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 10px;
+    padding: 0.8rem 0.95rem;
+    font-size: 0.86rem;
+    color: var(--ink-soft);
+  }
+  .verdict b { color: var(--ink); display: block; margin-bottom: 0.2rem; font-size: 0.8rem; letter-spacing: 0.04em; text-transform: uppercase; font-family: var(--mono); }
+
+  .rules { display: grid; gap: 1rem; margin-top: 1.25rem; }
+  .rule {
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-left: 3px solid var(--acc);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+  }
+  .rule h3 { font-family: var(--disp); font-stretch: 87.5%; text-transform: uppercase; font-size: 1.12rem; font-weight: 800; }
+  .rule p { margin: 0.3rem 0 0; color: var(--ink-soft); max-width: 72ch; }
+
+  .dialects { list-style: none; margin: 1rem 0 0; padding: 0; display: grid; gap: 0.5rem; }
+  .dialects li {
+    display: grid;
+    grid-template-columns: 150px 1fr;
+    gap: 0.9rem;
+    background: var(--panel);
+    border: 1px solid var(--line-soft);
+    border-radius: 8px;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.85rem;
+    align-items: baseline;
+  }
+  .dialects .k { font-family: var(--mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--dim); }
+  .dialects q { quotes: '“' '”'; color: var(--ink); }
+  .dialects .why { color: var(--dim); }
+
+  .punch { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.85rem; }
+  .punch th {
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--dim);
+    border-bottom: 2px solid var(--ink);
+    padding: 0.4rem 0.75rem 0.4rem 0;
+  }
+  .punch td { border-bottom: 1px solid var(--line-soft); padding: 0.55rem 0.75rem 0.55rem 0; vertical-align: top; color: var(--ink-soft); }
+  .punch td:first-child { color: var(--ink); font-weight: 600; min-width: 170px; }
+  .punch-scroll { overflow-x: auto; }
+  .punch-scroll table { min-width: 640px; }
+
+  .foot { margin-top: 3.5rem; border-top: 1px solid var(--line); padding-top: 1rem; color: var(--dim); font-size: 0.8rem; }
+  .foot p { max-width: 80ch; margin: 0.3rem 0; }
+
+  @media (max-width: 560px) {
+    .dialects li { grid-template-columns: 1fr; gap: 0.15rem; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">FieldLogicHQ · Design Review · 2026-08-11</div>
+    <h1>Coach portal page headers — the decided direction</h1>
+    <p class="lede">
+      Every page under a coach's team hub draws its own header by hand — forty pages, no shared
+      pattern, and four different ideas of what the grey line under the title is for. The owner
+      reviewed three options and ruled: <strong>nothing under the title</strong>, the masthead
+      picks up the season <em>and</em> the coach's role, and actions always sit to the right of
+      the title. This document shows today's state, the ruling, and the approved render.
+    </p>
+    <p><span class="decided">✓ DECIDED 2026-08-11 — Option A, amended</span></p>
+    <div class="legend-strip">
+      <span><span class="tag tag-new">NEW</span></span>
+      <span><span class="tag tag-restyled">RESTYLED</span></span>
+      <span><span class="tag tag-unchanged">UNCHANGED</span></span>
+      <span><span class="tag tag-removed">REMOVED</span></span>
+      <span>— every element in the approved frame is tagged against today's build. Dark pills
+      on dashed lines inside frames are reviewer labels naming each screen, not product UI.</span>
+    </div>
+  </header>
+
+  <!-- ═══════════════ 1 · TODAY ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">1 · What renders today</div>
+      <h2>The masthead already answers "whose team, which season, how's it going"</h2>
+      <p>
+        The sticky bar carries the club, the team, the season and the record on every page.
+        Everything pinned in red below is a second copy of one of those facts — or, in one case,
+        a genuine bug.
+      </p>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span> today — three screens stacked under the one shared masthead</div>
+      <div class="frame-scroll"><div class="frame-body fm">
+        <div class="fm-mast">
+          <div>
+            <div class="fm-eyebrow">Riverdale Ridge Baseball</div>
+            <div class="fm-team">Riverdale Ridge 12U</div>
+            <div class="fm-meta"><span>2026 season</span><span class="sep">·</span><span class="fm-rec">14-3-1</span><span class="pin pin-ok">A</span></div>
+          </div>
+          <div class="fm-next"><span class="fm-nextk">Next</span><span class="fm-nextv">Today 6:00 p.m. practice</span></div>
+        </div>
+
+        <div class="fm-canvas">
+          <div class="fm-break"><span>Screen 1 · the Overview page</span></div>
+          <div class="fm-ph">
+            <div class="fm-phl">
+              <div>
+                <h3 class="fm-title">Overview <span class="fm-chip">12U</span><span class="pin">2</span></h3>
+                <p class="fm-sub"><span class="dup">2026 Season</span> - Head Coach<span class="pin">1</span></p>
+              </div>
+            </div>
+            <div class="fm-actions">
+              <span class="fm-setup"><span class="fm-ring"></span> Season setup 4/5 ⌄</span>
+              <span class="fm-help">?</span>
+            </div>
+          </div>
+
+          <div class="fm-break"><span>Screen 2 · the Money page</span></div>
+          <div class="fm-crumb"><span class="cl">Portal</span> / <span class="cl">Riverdale Ridge 12U</span> / Money<span class="pin">3</span></div>
+          <div class="fm-ph">
+            <div class="fm-phl">
+              <div class="fm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+              <div>
+                <h3 class="fm-title">Money</h3>
+                <p class="fm-sub"><span class="dup">2026 Season</span><span class="pin">1</span></p>
+              </div>
+            </div>
+            <div class="fm-actions"><span class="fm-help">?</span></div>
+          </div>
+          <div class="fm-tabs"><span class="on">Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraisers</span><span>Expenses &amp; Payables</span><span>Budget vs. Actual</span></div>
+
+          <div class="fm-break"><span>Screen 3 · the Roster page</span></div>
+          <div class="fm-crumb"><span class="cl">Coaches Portal</span> › <span class="cl">Riverdale Ridge 12U</span><span class="pin">3</span></div>
+          <div class="fm-ph">
+            <div class="fm-phl">
+              <div class="fm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:20px;height:20px"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg><span class="pin" style="margin-left:2px">5</span></div>
+              <div>
+                <h3 class="fm-title">Roster</h3>
+                <p class="fm-sub">12 active players · <span class="dup">2026 Season season</span><span class="pin">4</span></p>
+              </div>
+            </div>
+            <div class="fm-actions">
+              <span class="fm-btn">Attendance</span>
+              <span class="fm-btn fm-btn-mono">⤓ EXPORT ⌄</span>
+              <span class="fm-btn fm-btn-lime">+ Add Player</span>
+              <span class="fm-help">?</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <ul class="note-list">
+      <li><span class="pin pin-ok">A</span><span>The masthead states the season and record once, on every page. It is the right home for both — nothing below should say them again.</span></li>
+      <li><span class="pin">1</span><span>Three subtitles, three restatements of the season. Overview has a guard that drops a bare year ("2026") — but this org named its season <em>"2026 Season"</em>, so the word "Season" defeats the guard and the fact sails through anyway.</span></li>
+      <li><span class="pin">2</span><span>The "12U" chip repeats the last three characters of the team name directly above it. It's real information only for teams whose name doesn't carry the division.</span></li>
+      <li><span class="pin">3</span><span>Two breadcrumb dialects in one portal — Money says "Portal /" with slashes inside the header; Roster says "Coaches Portal ›" with chevrons above it. Both repeat the team name from the masthead and the page name from the title one line away.</span></li>
+      <li><span class="pin">4</span><span>The genuine bug: Roster appends the word "season" to whatever the season is named, producing <em>"2026 Season season."</em> No guard here at all — even a bare-year name would duplicate the masthead.</span></li>
+      <li><span class="pin">5</span><span>Small drift: this icon draws at 20px where most pages draw 22px in the same 48px tile (five pages differ).</span></li>
+    </ul>
+
+    <h3 style="margin-top:2rem">The four subtitle dialects, portal-wide</h3>
+    <ul class="dialects">
+      <li><span class="k">Season again</span><span><q>2026 Season</q> — Money, Dues, Fundraisers, Expenses, Documents, Announcements, and both roster pages. <span class="why">Masthead already says it.</span></span></li>
+      <li><span class="k">Team again</span><span><q>Riverdale Ridge 12U — 2026 Season</q> (Documents), <q>Toronto Blue Jays</q> (Settings). <span class="why">Both facts sit in the masthead above.</span></span></li>
+      <li><span class="k">Feature blurb</span><span><q>Build game lineups and reusable templates for your team.</q> (Lineups) <span class="why">Useful the first visit, furniture every visit after — belongs in the empty state.</span></span></li>
+      <li><span class="k">Real information</span><span><q>12 active players</q> (Roster), <q>Roster order — a coverage view, not a ranking</q> (Team board). <span class="why">Real facts keep a home — they move into the page body, not the chrome.</span></span></li>
+    </ul>
+  </section>
+
+  <!-- ═══════════════ 2 · THE RULING ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">2 · The ruling</div>
+      <h2>Four rules, decided</h2>
+      <p>
+        The portal's existing "chrome rule" (2026-08-02: chrome may only say what the page hasn't
+        already said) applied to all forty pages at once, with the season and the role handled at
+        the source instead of guarded page-by-page.
+      </p>
+    </div>
+    <div class="rules">
+      <div class="rule">
+        <h3>1 · Nothing under the title</h3>
+        <p>
+          Page headers are a title and actions — no subtitle line exists anywhere in the portal.
+          Live facts that subtitles used to carry ("12 active players") move into the body they
+          describe; framing lines that prior rulings require ("Roster order — a coverage view,
+          not a ranking") move into the card they frame. Relocated, never deleted.
+        </p>
+      </div>
+      <div class="rule">
+        <h3>2 · The masthead owns the season — and the role</h3>
+        <p>
+          The masthead is the identity surface: whose club, which team, which season, how it's
+          going — and now <strong>who you are here</strong>. The role renders as a quiet tag
+          beside the team name — "Head Coach" / "Assistant Coach" — the same chip vocabulary the
+          portal already uses for identity and state (Premium, Complete). When an org names a
+          season something richer than a bare year ("Fall Ball 2026"), the masthead shows that
+          name; a plain year renders "2026 season" exactly as today. No page can repeat what only
+          the masthead states.
+        </p>
+      </div>
+      <div class="rule">
+        <h3>3 · Actions right of the title — and only actions</h3>
+        <p>
+          One row: title left, actions right — the pattern Roster already had becomes the rule.
+          A view switcher is not an action: it changes how you look at the same content, so it
+          rides the body it switches (Roster's List/Depth-chart toggle already does; Schedule's
+          List/Week/Month joins it). At phone width, secondary buttons go icon-only — the
+          standing mobile rule from the admin side — while the one lime primary keeps its label.
+          And the help "?" is chrome, not an action: it anchors the top-right corner beside the
+          title on every page, at every width, so help lives in one findable place portal-wide.
+          Only actions ever drop to a row beneath the title; that drop stays pinned right.
+        </p>
+      </div>
+      <div class="rule">
+        <h3>4 · One header, forty pages</h3>
+        <p>
+          One shared page-header component with fixed slots — icon · title · archive chip, then
+          actions, with the help "?" anchored last in the top-right corner at every width. The
+          portal already did exactly this for modals; pages never
+          got the same treatment, and two pages have since forked the CSS (one fork already caused
+          a real layout bug). The component retires both forks, settles the 20px/22px icon split,
+          and makes the next inconsistency impossible to write.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 3 · THE APPROVED RENDER ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">3 · The approved render</div>
+      <h2>Option A, amended — clean titles, a masthead that says who you are</h2>
+      <p>
+        Four screens plus the archive case, stacked under the one shared masthead. The dark
+        pills on dashed lines are reviewer labels naming each screen — in the product, each
+        header appears once on its own page.
+      </p>
+    </div>
+
+    <div class="frame">
+      <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span> approved — five screens stacked under the one shared masthead</div>
+      <div class="frame-scroll"><div class="frame-body fm">
+        <div class="fm-mast">
+          <div>
+            <div class="fm-eyebrow">Riverdale Ridge Baseball</div>
+            <div class="fm-team">Riverdale Ridge 12U <span class="fm-chip">Head Coach</span><span class="pin pin-ok" style="margin-left:0">2</span></div>
+            <div class="fm-meta"><span>2026 Season</span><span class="pin pin-ok" style="margin-left:1px">1</span><span class="sep">·</span><span class="fm-rec">14-3-1</span></div>
+          </div>
+          <div class="fm-next"><span class="fm-nextk">Next</span><span class="fm-nextv">Today 6:00 p.m. practice</span></div>
+        </div>
+
+        <div class="fm-canvas">
+          <div class="fm-break"><span>Screen 1 · Overview</span></div>
+          <div class="fm-ph">
+            <div class="fm-phl">
+              <div><h3 class="fm-title">Overview</h3></div>
+            </div>
+            <div class="fm-actions">
+              <span class="fm-setup"><span class="fm-ring"></span> Season setup 4/5 ⌄</span>
+            </div>
+            <span class="fm-help">?</span>
+          </div>
+
+          <div class="fm-break"><span>Screen 2 · Money</span></div>
+          <div class="fm-ph">
+            <div class="fm-phl">
+              <div class="fm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+              <div><h3 class="fm-title">Money</h3></div>
+            </div>
+            <span class="fm-help">?</span>
+          </div>
+          <div class="fm-tabs"><span class="on">Overview</span><span>Budget Plan</span><span>Player Dues</span><span>Fundraisers</span><span>Expenses &amp; Payables</span><span>Budget vs. Actual</span></div>
+
+          <div class="fm-break"><span>Screen 3 · Roster</span></div>
+          <div class="fm-ph">
+            <div class="fm-phl">
+              <div class="fm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+              <div><h3 class="fm-title">Roster</h3></div>
+            </div>
+            <div class="fm-actions">
+              <span class="fm-btn">Attendance</span>
+              <span class="fm-btn fm-btn-mono">⤓ EXPORT ⌄</span>
+              <span class="fm-btn fm-btn-lime">+ Add Player</span>
+            </div>
+            <span class="fm-help">?</span>
+          </div>
+          <div class="fm-bodyhint"><span><b>12 active players</b> — the count leads the list it counts<span class="pin pin-ok" style="margin-left:6px">3</span></span><span class="fm-seg"><span class="on">List</span><span>Depth chart</span></span></div>
+
+          <div class="fm-break"><span>Screen 4 · Schedule — actions in the header, the view switcher with its views</span></div>
+          <div class="fm-ph">
+            <div class="fm-phl">
+              <div class="fm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+              <div><h3 class="fm-title">Schedule<span class="pin pin-ok" style="align-self:center">4</span></h3></div>
+            </div>
+            <div class="fm-actions">
+              <span class="fm-btn">Import</span>
+              <span class="fm-btn fm-btn-mono">⤓ EXPORT ⌄</span>
+              <span class="fm-btn fm-btn-lime">+ Add Event</span>
+            </div>
+            <span class="fm-help">?</span>
+          </div>
+          <div class="fm-bodyhint"><span class="fm-seg"><span class="on">List</span><span>Week</span><span>Month</span></span><span>Aug 11 – 17 · 3 events<span class="pin pin-ok" style="margin-left:6px">5</span></span></div>
+
+          <div class="fm-break"><span>Screen 5 · an archived season keeps its read-only signal</span></div>
+          <div class="fm-ph">
+            <div class="fm-phl">
+              <div class="fm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+              <div><h3 class="fm-title">Roster <span class="fm-chip fm-chip-complete">2025 · Complete</span></h3></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div>
+
+    <ul class="note-list">
+      <li><span class="pin pin-ok">1</span><span><span class="tag tag-restyled">RESTYLED</span> The masthead shows the org's own season name when it's richer than a bare year ("2026 Season", "Fall Ball 2026"); a bare-year name renders "2026 season" exactly as today.</span></li>
+      <li><span class="pin pin-ok">2</span><span><span class="tag tag-new">NEW</span> The role rides the team name as a tag — <span class="fm-chip" style="vertical-align:1px">Head Coach</span> here, <span class="fm-chip" style="vertical-align:1px">Assistant Coach</span> for an assistant. It's about the viewer, so it lives on the identity bar on every page, in the chip vocabulary the portal already uses for identity and state.</span></li>
+      <li><span class="pin pin-ok">3</span><span><span class="tag tag-restyled">RESTYLED</span> Facts that subtitles used to carry move into the body they describe: the roster count leads the list toolbar; the coverage board's required "a coverage view, not a ranking" line becomes the first line of the board card.</span></li>
+      <li><span class="pin pin-ok">4</span><span><span class="tag tag-restyled">RESTYLED</span> "Team Calendar" retitles to "Schedule" — the name the nav already uses — and its toolbar's true actions (Import, Export, Add Event, help) move right of the title like every other page.</span></li>
+      <li><span class="pin pin-ok">5</span><span><span class="tag tag-restyled">RESTYLED</span> List/Week/Month isn't an action — it changes how you look at the same events. It rides the body it switches, exactly where Roster's List/Depth-chart toggle already lives. Headers hold actions; bodies hold views.</span></li>
+      <li><span class="tag tag-removed">REMOVED</span><span>Every subtitle in the portal; the "12U" chip wherever the team name already contains it; hub breadcrumbs (masthead + title already state every crumb); feature-blurb lines (they move to each page's empty state, read once, when they help).</span></li>
+      <li><span class="tag tag-new">NEW</span><span>The help "?" gets a fixed home: the last thing on the header row, top-right, on every page. On desktop that's where it already tended to sit — the ruling makes it a guarantee, and on phones it stays up beside the title while actions drop below.</span></li>
+      <li><span class="tag tag-unchanged">UNCHANGED</span><span>The Next-up slot, Season-setup chip, Money tabs, archive "Complete" chip, all action sets.</span></li>
+    </ul>
+
+    <h3 style="margin-top:2.4rem">And on the phone — the product's own compact rules, unchanged</h3>
+    <p style="max-width:68ch;color:var(--ink-soft);margin:0.35rem 0 0">
+      Phone widths already have their own header metrics (smaller title, smaller icon tile), and
+      the masthead already collapses to a slim bar once you scroll. This ruling changes nothing
+      about that behavior — it just has less to collapse.
+    </p>
+    <div class="phone-row">
+      <div class="frame">
+        <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span> phone · 390px — top of page</div>
+        <div class="frame-scroll"><div class="frame-body fm fm-phone">
+          <div class="fm-mast">
+            <div>
+              <div class="fm-eyebrow">Riverdale Ridge Baseball</div>
+              <div class="fm-team">Riverdale Ridge 12U <span class="fm-chip">Head Coach</span></div>
+              <div class="fm-meta"><span>2026 Season</span><span class="sep">·</span><span class="fm-rec">14-3-1</span></div>
+            </div>
+            <div class="fm-next"><span class="fm-nextk">Next</span><span class="fm-nextv">Today 6:00 p.m.</span></div>
+          </div>
+          <div class="fm-canvas">
+            <div class="fm-break"><span>Overview</span></div>
+            <div class="fm-ph">
+              <div class="fm-phl">
+                <div><h3 class="fm-title">Overview</h3></div>
+              </div>
+              <div class="fm-actions">
+                <span class="fm-setup"><span class="fm-ring"></span> Season setup 4/5 ⌄</span>
+              </div>
+              <span class="fm-help">?</span>
+            </div>
+            <div class="fm-break"><span>Roster — ? keeps the corner, actions row beneath</span></div>
+            <div class="fm-ph">
+              <div class="fm-phl">
+                <div class="fm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                <div><h3 class="fm-title">Roster</h3></div>
+              </div>
+              <div class="fm-actions">
+                <span class="fm-ibtn" title="Attendance"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="m9 16 2 2 4-4"/></svg></span>
+                <span class="fm-ibtn" title="Export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+                <span class="fm-btn fm-btn-lime">+ Add Player</span>
+              </div>
+              <span class="fm-help">?</span>
+            </div>
+            <div class="fm-break"><span>Schedule — one row, the view switcher lives with its views</span></div>
+            <div class="fm-ph">
+              <div class="fm-phl">
+                <div class="fm-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div>
+                <div><h3 class="fm-title">Schedule</h3></div>
+              </div>
+              <div class="fm-actions">
+                <span class="fm-ibtn" title="Import"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+                <span class="fm-ibtn" title="Export"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg></span>
+                <span class="fm-btn fm-btn-lime">+ Add Event</span>
+              </div>
+              <span class="fm-help">?</span>
+            </div>
+            <div class="fm-bodyhint"><span class="fm-seg"><span class="on">List</span><span>Week</span><span>Month</span></span><span>3 events this week</span></div>
+          </div>
+        </div></div>
+      </div>
+      <div class="frame">
+        <div class="frame-bar"><span class="dots"><i></i><i></i><i></i></span> phone · scrolled — the bar folds to the bare name</div>
+        <div class="frame-scroll"><div class="frame-body fm fm-phone">
+          <div class="fm-mast fm-mast-collapsed">
+            <div>
+              <div class="fm-team">Riverdale Ridge 12U</div>
+            </div>
+          </div>
+          <div class="fm-canvas">
+            <div class="fm-bodyhint" style="margin-top:0.2rem"><span>…page content keeps scrolling under the slim bar…</span></div>
+          </div>
+        </div></div>
+        <ul class="note-list" style="margin-top:1rem">
+          <li><span class="tag tag-unchanged">UNCHANGED</span><span>The collapse rule is already ruled: a scrolled phone bar is the <em>bare team name</em> — eyebrow, season, record and the Next-up slot all fold away, and the role tag folds with them.</span></li>
+          <li><span class="tag tag-restyled">RESTYLED</span><span>At phone width, secondary buttons keep their icon and drop their label — the same rule the admin screens already follow — while the one lime primary keeps its words and help stays an icon. Labels remain readable to screen readers. Every header row now fits a 390px phone on one line.</span></li>
+          <li><span class="tag tag-new">NEW</span><span>The ? never moves: it holds the title line's right corner on every page, at every width, so help is found by muscle memory portal-wide. Only actions drop to the row beneath — and that row stays pinned right.</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="verdict" style="margin-top:1.6rem">
+      <div><b>What a coach gains</b>Every screen opens the same way: name of the room, tools on the right, data underneath. The season bug can't recur — no page composes season text at all. Assistants see their role the moment the portal loads, on every page.</div>
+      <div><b>The trade accepted</b>Header lines carry less prose; anything worth reading now has to live in the page body. That's the point — but it means empty states and body toolbars pick up the orientation job, and they must actually do it (part of the build, not a follow-up).</div>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 4 · CONSIDERED & DECLINED ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">4 · Considered and declined</div>
+      <h2>Two other options were on the table</h2>
+      <p>
+        <strong>B — "the earned line"</strong> kept a subtitle wherever it stated a live fact
+        ("12 active players") — declined for the cleaner all-or-nothing rule; the facts move into
+        the body instead. <strong>C — "facts as chips"</strong> pressed those facts into title-line
+        chips — declined because chips mean <em>state</em> in this portal (Complete, Premium,
+        Draft), and an archived roster collected four of them. Both renders are preserved in this
+        artifact's version history.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════ 5 · PUNCH LIST ═══════════════ -->
+  <section>
+    <div class="sec-head">
+      <div class="eyebrow">5 · Rides along in the same build</div>
+      <h2>The rest of the drift, one pass</h2>
+    </div>
+    <div class="punch-scroll">
+      <table class="punch">
+        <tr><th>Finding</th><th>Today</th><th>Fix</th></tr>
+        <tr><td>Forked header CSS</td><td>Budget and Budget-vs-Actual hand-copied the header styles; one copy already drifted and broke its layout once</td><td>Retired automatically by the shared component</td></tr>
+        <tr><td>Icon drift</td><td>5 pages draw the icon at 20px, the rest 22px; 7 pages have no icon tile at all</td><td>Component draws every icon at 22px; the 7 iconless pages get their section's icon</td></tr>
+        <tr><td>Help button gaps</td><td>Siblings disagree — Drills has one, Team board doesn't; Insights has one, Awards and Playing-time don't; Money's sub-pages have none even opened directly</td><td>Every page with a help article gets the same "?" in the same slot</td></tr>
+        <tr><td>Five back-link styles</td><td>Grey-arrow, blue-arrow, literal "←", "‹ All opponents"-as-subtitle, and a bespoke one on the bench console</td><td>One back-link treatment for all drill-in pages; hub breadcrumbs retire</td></tr>
+        <tr><td>Page called two names</td><td>Nav says "Schedule"; the page's own title says "Team Calendar"</td><td>Title becomes "Schedule" (the nav label stays put — it's load-bearing for access gating)</td></tr>
+        <tr><td>Two pages named "Development"</td><td>The working hub and the Insights coverage report share a title and an icon</td><td>The report joins its Insights siblings' question voice: "Is everyone getting attention?"</td></tr>
+        <tr><td>Two pages named "Tryouts"</td><td>The live tryout hub and its history page</td><td>History page becomes "Tryout history"</td></tr>
+        <tr><td>Archive chip placement</td><td>Sits inside the title on most pages, outside it on two — which changes what a screen reader announces as the page name</td><td>Component fixes one placement (inside, after the title text)</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <div class="foot">
+    <p><strong>Fidelity note.</strong> Frames commit to the warm coach-portal palette and the declared metrics from the product's stylesheets (title 1.75rem/900 display face, 48px icon tile, masthead mono metadata). Typefaces are approximated from system faces — Bahnschrift/Arial Narrow standing in for Barlow Condensed, Consolas for IBM Plex Mono — so letterforms differ slightly; sizes, weights, spacing and colours are the product's own.</p>
+    <p><strong>Grounding.</strong> Inventory of all 48 team-hub pages, the masthead component, and the warm token scope; prior rulings applied: the chrome rule (2026-08-02), the coverage-view wording ruling, and the nav-label gating constraint. This ruling supersedes the subtitle half of the same-day Overview-header ruling — including its kept role line, which moves to the masthead.</p>
+  </div>
+</div>

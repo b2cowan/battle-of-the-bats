@@ -141,7 +141,7 @@ test.describe.serial('standalone Team lineup smoke', () => {
     await expect(coachPage.getByText('Prepare game lineups')).toBeVisible()
 
     await coachPage.goto(`/${state.workspaceSlug}/coaches/teams/${state.repTeamId}/schedule`)
-    await expect(coachPage.getByRole('heading', { name: 'Team Calendar' })).toBeVisible({
+    await expect(coachPage.getByRole('heading', { name: 'Schedule' })).toBeVisible({
       timeout: 30_000,
     })
     await coachPage.getByRole('button', { name: new RegExp(state.eventName) }).click()
