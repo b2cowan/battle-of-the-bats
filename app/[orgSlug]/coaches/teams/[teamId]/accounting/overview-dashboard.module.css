@@ -1,0 +1,396 @@
+/* ── Money Overview dashboard (operate stage) ─────────────────────────────
+   One-screen replacement for the pre-tabs hub stack: three story cards, a
+   merged Next-N-days ledger, and a one-line-per-surface rail. Spec = the
+   approved mockup (COACH_MONEY_OVERVIEW_DASHBOARD_PLAN.md); every fact
+   renders exactly once, and there is deliberately NO lime CTA anywhere on
+   this screen (owner call 2026-08-11 — the dashboard reports, it doesn't
+   shout; reminders live in Player Dues). Warm tokens with the same fallback
+   idiom as coaches.module.css. */
+
+.row3 {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin-bottom: 0.8rem;
+}
+.row2 {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+@media (max-width: 860px) {
+  .row3, .row2 { grid-template-columns: minmax(0, 1fr); }
+}
+
+.card {
+  background: var(--home-card, rgba(255, 255, 255, 0.04));
+  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  border-radius: 8px;
+  padding: 0.95rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+}
+/* Overdue state announces itself on the card edge, not with a button. */
+.cardAlert {
+  border-left: 3px solid var(--home-live, var(--danger));
+}
+
+.eyeRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.eye {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--home-dim, var(--white-45));
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-data);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.chipDanger {
+  color: var(--home-live, var(--danger));
+  background: rgba(var(--danger-rgb), 0.08);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+}
+.chipWarn {
+  color: var(--warning);
+  background: rgba(var(--warning-rgb), 0.08);
+  border: 1px solid rgba(var(--warning-rgb), 0.3);
+}
+.chipGood {
+  color: var(--home-olive, var(--success));
+  background: rgba(var(--success-rgb), 0.07);
+  border: 1px solid rgba(var(--success-rgb), 0.25);
+}
+
+.big {
+  font-size: 1.55rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--white-90);
+  font-variant-numeric: tabular-nums;
+}
+.big small {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--home-dim, var(--white-45));
+  letter-spacing: 0;
+}
+.vGood { color: var(--success); }
+.vBad { color: var(--home-live, var(--danger)); }
+.vMuted { color: var(--white-40); }
+
+/* ── Bars ── */
+.bar {
+  display: flex;
+  height: 12px;
+  border-radius: 6px;
+  background: var(--home-line, var(--white-10));
+  overflow: hidden;
+  gap: 2px;
+}
+.seg { height: 100%; }
+.segCollected { background: var(--home-olive, var(--success)); border-radius: 6px 0 0 6px; }
+/* Hatched, not just red, so the slice survives colour-blind viewing and print. */
+.segOverdue {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--home-live, var(--danger)) 0 4px,
+    rgba(var(--danger-rgb), 0.55) 4px 8px
+  );
+}
+.segSpent { background: var(--blueprint-blue); border-radius: 6px 0 0 6px; }
+.segSpentOver { background: var(--home-live, var(--danger)); border-radius: 6px 0 0 6px; }
+
+.legend {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  font-size: 0.7rem;
+  color: var(--home-dim, var(--white-45));
+}
+.legend b { color: var(--white-80); font-weight: 650; font-variant-numeric: tabular-nums; }
+.legendDot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 0.3rem;
+  vertical-align: -1px;
+}
+.dotCollected { background: var(--home-olive, var(--success)); }
+.dotOverdue {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--home-live, var(--danger)) 0 3px,
+    rgba(var(--danger-rgb), 0.55) 3px 6px
+  );
+}
+.dotTrack { background: var(--home-line, var(--white-10)); }
+.dotSpent { background: var(--blueprint-blue); }
+
+/* ── Cash in/out mini-bars ── */
+.flow { display: flex; flex-direction: column; gap: 0.35rem; margin-top: 0.1rem; }
+.flowRow {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+.flowLabel {
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--home-dim, var(--white-45));
+}
+.flowTrack {
+  height: 9px;
+  border-radius: 5px;
+  background: var(--home-line, var(--white-10));
+  overflow: hidden;
+}
+.flowFill { display: block; height: 100%; border-radius: 5px; }
+.flowIn { background: var(--success); }
+.flowOut { background: var(--home-rust, var(--warning)); }
+.flowAmt {
+  font-size: 0.74rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-80);
+  text-align: right;
+}
+
+.footNote {
+  font-size: 0.68rem;
+  line-height: 1.45;
+  color: var(--home-dim, var(--white-45));
+  margin: 0;
+}
+
+/* ── Card footers: same-height link bands pinned to the bottom edge, so the
+   footers of sibling cards align as one band and slack sits ABOVE them. ── */
+.foot {
+  display: flex;
+  gap: 1.1rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: auto;
+  padding-top: 0.35rem;
+  border-top: 1px solid var(--home-line, var(--border-2));
+}
+.footLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: 44px; /* tap floor — same rule the tab bar learned the hard way */
+  font-size: 0.78rem;
+  font-weight: 650;
+  color: var(--home-olive, var(--primary-light));
+  text-decoration: none;
+}
+.footLink:hover { text-decoration: underline; }
+
+/* ── Ledger ── */
+.ledgerHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+.ledgerSummary {
+  font-size: 0.74rem;
+  color: var(--home-dim, var(--white-45));
+  min-width: 0;
+}
+.ledgerSummary b { color: var(--white-80); font-variant-numeric: tabular-nums; font-weight: 650; }
+
+.daysToggle {
+  display: flex;
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 6px;
+  overflow: hidden;
+}
+.daysBtn {
+  min-height: 44px;
+  padding: 0 0.65rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--home-dim, var(--white-45));
+}
+.daysBtnActive {
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.05));
+  color: var(--home-olive, var(--primary-light));
+}
+
+.ledgerRows { display: flex; flex-direction: column; }
+.ledgerRow {
+  display: grid;
+  grid-template-columns: 4.2rem minmax(0, 1fr) auto;
+  gap: 0.7rem;
+  align-items: center;
+  padding: 0.45rem 0;
+  border-top: 1px solid var(--home-line, var(--border-2));
+}
+.ledgerRow:first-child { border-top: none; }
+
+.ledgerWhen { display: flex; flex-direction: column; gap: 0.2rem; align-items: flex-start; }
+.ledgerDate {
+  font-family: var(--font-data);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--home-dim, var(--white-45));
+  white-space: nowrap;
+}
+.ledgerDateDue { color: var(--home-live, var(--danger)); }
+
+.badge {
+  font-family: var(--font-data);
+  font-size: 0.55rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.1rem 0.4rem;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+.badgeLate {
+  color: var(--home-live, var(--danger));
+  background: rgba(var(--danger-rgb), 0.08);
+  border: 1px solid rgba(var(--danger-rgb), 0.3);
+}
+.badgeDues {
+  color: var(--home-olive, var(--success));
+  background: var(--home-olive-soft, rgba(255, 255, 255, 0.05));
+  border: 1px solid rgba(var(--success-rgb), 0.2);
+}
+.badgeOut {
+  color: var(--home-rust, var(--warning));
+  background: rgba(var(--warning-rgb), 0.07);
+  border: 1px solid rgba(var(--warning-rgb), 0.25);
+}
+
+.ledgerMain { min-width: 0; }
+.ledgerTitle { margin: 0; font-size: 0.82rem; font-weight: 650; color: var(--white-90); }
+.ledgerSub {
+  margin: 0.05rem 0 0;
+  font-size: 0.7rem;
+  color: var(--home-dim, var(--white-45));
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ledgerEnd { display: flex; align-items: center; gap: 0.6rem; justify-content: flex-end; }
+.ledgerAmt {
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--white-80);
+  white-space: nowrap;
+}
+.amtIn { color: var(--success); }
+.amtBad { color: var(--home-live, var(--danger)); }
+.ledgerAct {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.55rem;
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--home-olive, var(--primary-light));
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ledgerAct:hover { text-decoration: underline; }
+
+.ledgerEmptyLine {
+  margin: 0;
+  padding: 0.5rem 0 0.1rem;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  font-size: 0.72rem;
+  font-style: italic;
+  color: var(--home-dim, var(--white-45));
+}
+.ledgerAllClear {
+  margin: 0.3rem 0;
+  font-size: 0.8rem;
+  color: var(--home-dim, var(--white-45));
+}
+
+/* ── "More in Money" rail ── */
+.railRow {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) auto 10px;
+  gap: 0.6rem;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.1rem 0;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  text-decoration: none;
+}
+.railRow:first-of-type { border-top: none; }
+.railRow:hover .railName { text-decoration: underline; }
+.railDot { width: 8px; height: 8px; border-radius: 50%; }
+.railDotGood { background: var(--success); }
+.railDotBlue { background: var(--blueprint-blue); }
+.railDotRust { background: var(--home-rust, var(--warning)); }
+.railDotPlum { background: var(--home-plum, var(--warning)); }
+.railDotOlive { background: var(--home-olive, var(--success)); }
+.railName { font-size: 0.78rem; font-weight: 650; color: var(--white-90); }
+.railStat {
+  font-size: 0.7rem;
+  color: var(--home-dim, var(--white-45));
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.railStat b { color: var(--white-80); font-weight: 650; }
+.railStatDanger { color: var(--home-live, var(--danger)); font-weight: 700; }
+.railChev { color: var(--white-30); font-size: 0.75rem; }
+
+/* ── Loading / error (same idiom as the shared payables panel) ── */
+.skeleton {
+  height: 0.85rem;
+  border-radius: 4px;
+  background: var(--home-line, var(--white-10));
+  animation: dashPulse 1.2s ease-in-out infinite;
+  margin: 0.35rem 0;
+}
+@keyframes dashPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+.errorText { margin: 0.3rem 0; font-size: 0.8rem; color: var(--home-live, var(--danger)); }

@@ -11,6 +11,7 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import HelpButton from '@/components/help/HelpButton';
 import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel';
+import OverviewDashboard, { fmt, type MoneySummary } from './OverviewDashboard';
 import styles from '../../../coaches.module.css';
 
 // Code-split, not just lazy-mounted: each panel is 1000+ lines and a couple pull in
@@ -44,47 +45,11 @@ const PANELS: { id: SectionId; Component: ComponentType<PanelProps> }[] = [
   { id: 'budget-vs-actual', Component: BudgetVsActualPanel },
 ];
 
-interface MoneySummary {
-  stage: 'plan' | 'collect' | 'operate';
-  orgLinked: boolean;
-  moneyIn: { duesCollected: number; fundraisingRaised: number; orgFunding: number; total: number };
-  moneyOut: { expensesPaid: number; allocationsPaid: number; orgPayments: number; total: number };
-  onHand: number;
-  headroom: number | null;
-  budget: {
-    seasonTotal: number | null;
-    itemizedTotal: number;
-    effectiveTotal: number;
-    buffer: number;
-    overItemized: boolean;
-    lineCount: number;
-    hasInstallments: boolean;
-    rosterCount: number;
-    perPlayer: number | null;
-  };
-  dues: {
-    expected: number;
-    collected: number;
-    outstanding: number;
-    overdueCount: number;
-    overdueAmount: number;
-    neverPaidCount: number;
-    schedulesCount: number;
-  };
-  fundraisers: { activeCount: number; totalRaised: number; creditsIssued: number };
-  expenses: { paidTotal: number; loggedCount: number; unpaidCount: number; upcomingDueCount: number };
-  allocations: { count: number; totalAllocated: number; outstanding: number; overdueCount: number };
-  paymentRequests: { pendingCount: number };
-}
+// MoneySummary now lives with the operate-stage dashboard, its main consumer.
 
 // Money hub tab ids — match the sub-route folder names 1:1 so a coach's mental
 // model ("I'm in the dues screen") and the URL agree.
 type SectionId = 'overview' | 'budget' | 'dues' | 'fundraisers' | 'expenses' | 'allocations' | 'payment-requests' | 'budget-vs-actual';
-
-function fmt(n: number) {
-  const abs = Math.abs(n).toLocaleString('en-CA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  return n < 0 ? `-$${abs}` : `$${abs}`;
-}
 
 export default function CoachesAccountingPage({
   params: paramsPromise,
@@ -200,11 +165,12 @@ export default function CoachesAccountingPage({
 
   const canWrite = page.canWrite(page.capabilities?.money === 'write');
 
-  // ── Stage anchor content ─────────────────────────────────────────────────
-  // One "right now" card, one lime CTA max (earned-lime rule). Operate splits
-  // into sub-states by urgency: overdue → never-paid → all-collected → on-track.
+  // ── Stage anchor content (plan/collect only) ─────────────────────────────
+  // One "right now" card, one lime CTA max (earned-lime rule). The operate
+  // stage renders the OverviewDashboard instead — its old operate sub-states
+  // (overdue → never-paid → on-track) live on as the Collections card's chip.
   function renderAnchor(s: MoneySummary) {
-    const { budget, dues } = s;
+    const { budget } = s;
 
     if (s.stage === 'plan') {
       return (
@@ -271,71 +237,8 @@ export default function CoachesAccountingPage({
       );
     }
 
-    // operate
-    const pct = dues.expected > 0 ? Math.round((dues.collected / dues.expected) * 100) : 0;
-    if (dues.overdueCount > 0) {
-      return (
-        <div className={`${styles.nowCard} ${styles.nowGameDay}`} style={{ borderLeftColor: 'var(--danger)' }}>
-          <p className={styles.nowEyebrow}>Collections</p>
-          <p className={styles.nowHeadline}>
-            {dues.overdueCount} {dues.overdueCount === 1 ? 'player is' : 'players are'} overdue
-          </p>
-          <p className={styles.nowMeta}>{fmt(dues.overdueAmount)} past due · {fmt(dues.collected)} of {fmt(dues.expected)} collected ({pct}%)</p>
-          <div className={styles.nowActions}>
-            {canWrite
-              ? <Link href={sectionHref('dues')} className="btn btn-lime btn-sm">Send reminders <ArrowRight size={14} /></Link>
-              : <Link href={sectionHref('dues')} className={styles.nowSecondary}>Open Player Dues <ArrowRight size={13} /></Link>}
-          </div>
-        </div>
-      );
-    }
-    if (dues.neverPaidCount > 0) {
-      return (
-        <div className={`${styles.nowCard} ${styles.nowInSeason}`} style={{ borderLeftColor: 'var(--warning)' }}>
-          <p className={styles.nowEyebrow}>Collections</p>
-          <p className={styles.nowHeadline}>
-            {dues.neverPaidCount} {dues.neverPaidCount === 1 ? 'player hasn’t' : 'players haven’t'} paid anything yet
-          </p>
-          <p className={styles.nowMeta}>{fmt(dues.collected)} of {fmt(dues.expected)} collected ({pct}%). Nudge families with one tap from Player Dues.</p>
-          <div className={styles.nowActions}>
-            <Link href={sectionHref('dues')} className={canWrite ? 'btn btn-lime btn-sm' : styles.nowSecondary}>
-              Review dues <ArrowRight size={canWrite ? 14 : 13} />
-            </Link>
-          </div>
-        </div>
-      );
-    }
-    const allCollected = dues.expected > 0 && dues.outstanding <= 0.005;
-    return (
-      <div className={`${styles.nowCard} ${styles.nowInSeason}`}>
-        <p className={styles.nowEyebrow}>This season</p>
-        <p className={styles.nowHeadline}>{allCollected ? 'All dues collected' : 'You’re on track'}</p>
-        <p className={styles.nowMeta}>
-          {allCollected
-            ? `Every installment is in — ${fmt(dues.collected)} collected. Keep logging expenses to see how you land against the plan.`
-            : `${fmt(dues.collected)} of ${fmt(dues.expected)} collected (${pct}%).`}
-        </p>
-        {(s.headroom != null || s.expenses.upcomingDueCount > 0) && (
-          <>
-            <div className={styles.nowDivider} />
-            <div className={styles.nowStatsRow}>
-              {s.headroom != null && (
-                s.headroom >= 0
-                  ? <span className={styles.nowStatOk}>{fmt(s.headroom)} headroom</span>
-                  : <span className={styles.nowStatWarn}><AlertTriangle size={14} aria-hidden /> {fmt(Math.abs(s.headroom))} over budget</span>
-              )}
-              {s.expenses.upcomingDueCount > 0 && (
-                <span className={styles.nowStatMuted}>{s.expenses.upcomingDueCount} payable{s.expenses.upcomingDueCount === 1 ? '' : 's'} due soon</span>
-              )}
-            </div>
-          </>
-        )}
-        <div className={styles.nowActions}>
-          {canWrite && <Link href={sectionHref('expenses')} className="btn btn-lime btn-sm">Log an expense <ArrowRight size={14} /></Link>}
-          <Link href={sectionHref('budget-vs-actual')} className={styles.nowSecondary}>Budget vs. Actual <ArrowRight size={13} /></Link>
-        </div>
-      </div>
-    );
+    // operate never reaches here — the dashboard owns that stage.
+    return null;
   }
 
   // ── Grouped drill-in cards ───────────────────────────────────────────────
@@ -460,7 +363,30 @@ export default function CoachesAccountingPage({
             )}
           </div>
 
-          {effectiveSection === 'overview' && (
+          {/* Overview forks by stage: an operating season gets the one-screen dashboard
+              (each fact rendered once — see OverviewDashboard); a coach still setting up
+              keeps the guided walk below (anchor, tiles, payables, journey cards). */}
+          {effectiveSection === 'overview' && summary.stage === 'operate' && (
+            <OverviewDashboard
+              summary={summary}
+              payablesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
+              hrefs={{
+                dues: sectionHref('dues'),
+                budget: sectionHref('budget'),
+                budgetStarter: sectionHref('budget', { starter: '1' }),
+                budgetVsActual: sectionHref('budget-vs-actual'),
+                fundraisers: sectionHref('fundraisers'),
+                expenses: sectionHref('expenses'),
+                expensesSchedule: sectionHref('expenses', { tab: 'schedule' }),
+                ...(showOrgTabs ? {
+                  allocations: sectionHref('allocations'),
+                  paymentRequests: sectionHref('payment-requests'),
+                } : {}),
+              }}
+            />
+          )}
+
+          {effectiveSection === 'overview' && summary.stage !== 'operate' && (
             <>
               {renderAnchor(summary)}
 

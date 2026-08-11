@@ -100,6 +100,11 @@ export const GET = withObservability(async (req: Request,
     duesItems = (installments ?? []).map((i: any) => {
       const pid = i.player_id ?? schedulePlayerMap.get(i.schedule_id);
       const d = daysUntil(i.due_date);
+      // ⚠ description/dueDate/amount double as a MERGE KEY: the Money Overview
+      // ledger (MoneyNextThirtyDays) collapses dues rows that share all three
+      // into one "Installment #N — X players" line. Personalizing description
+      // per player (a discount note, a partial-payment marker) silently turns
+      // that grouping into one-row-per-player again.
       return {
         id:          i.id,
         description: `Installment #${i.installment_number}`,
