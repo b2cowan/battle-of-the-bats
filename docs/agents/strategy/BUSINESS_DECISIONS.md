@@ -8,6 +8,33 @@
 
 ---
 
+### 2026-08-10 — Premium Coaches Portal seats clarified: coaching staff is unlimited, the bundled tournament-admin side keeps the free-tier 3-seat guard; officials exemption extended to the portal; config label aligned to the canonical name
+
+**Status:** Decided (owner, 2026-08-10 — officials flip and label alignment ratified directly; the seat ruling ratified after a clarification pass established exactly who a "seat" is)
+
+**Decision:** Three rulings out of the 2026-08-10 docs-audit drift check:
+
+1. **The 3-seat cap on the `team` (Premium Coaches Portal) plan STANDS — and is now precisely scoped.** It governs only the workspace's org-side admin members (the admin-console Members door: the coach + up to 2 co-organizer/staff invites for the portal's one included free-grade tournament). **Coaching staff — assistants and helpers — is unlimited on every tier**: they join via team-level invites with no plan gate and no count, and accepting one never creates an org-member row (verified in code — the seat check lives solely on the admin members invite route). The 2026-05-28 "no seat limits on paid tiers" ruling is **clarified, not contradicted**: it governs the paid ORG tiers; the portal is a team product whose bundled tournament tooling deliberately keeps the free tier's abuse-guard shape.
+2. **The officials/scorekeeper seat exemption (2026-06-22) extends to the `team` plan.** `officialsFreeSeats` flips false→true so a standalone coach's gate/scorekeeper volunteers stop counting against the 3 seats. Every other tier already exempts them; the portal was the one gap, and the original rationale (don't tax multi-field events for scorekeepers) applies verbatim.
+3. **The `team` plan's config label becomes "Premium Coaches Portal"** (was "Coaches Portal", the product-family name) per the 2026-06-22 naming canon, so billing/admin surfaces that render the plan label carry the tier name marketing surfaces already hardcode.
+
+**Rationale:** The audit flagged PLAN_PRICING_FACTS' "paid plans = unlimited seats" against config's `seatLimit: 3` on `team`. Investigation showed both were right about different things — the doc sentence was the bug (it read as a coaching-staff cap, which does not exist). The officials gap and the label mismatch fell out of the same check.
+
+**Affects:** PLAN_PRICING_FACTS.md (seats bullet rewritten + changelog), `lib/plan-config.ts` (two one-line changes), platform-admin surfaces rendering the plan label and the seat-limit error string. **No price, SKU, capacity band, feature key or gate value moves.**
+
+**Handoff:**
+```
+HANDOFF → /billing — flip `officialsFreeSeats: true` on `team`; relabel `team` to
+  "Premium Coaches Portal"; sanity-check the label's render points (platform-admin plan
+  chips, the members screen's seat-limit error string). Drift check on completion.
+HANDOFF → /marketing — none. No customer copy changes; marketing already uses the
+  canonical name.
+```
+
+**Supersedes:** nothing — clarifies the scope of 2026-05-28 (seat limits) and closes a gap in 2026-06-22 (officials exemption).
+
+---
+
 ### 2026-08-10 — THE DOORS ARE OPEN: both demos are public on production, and the funnel now has a zero-contact proof path for every live product
 
 **Status:** Decided AND executed (owner-directed across 2026-08-08 → 2026-08-10; doors: *"flip the doors"*; placements: *"looks good, I approve those recommendations"* + the Club-block/reroute follow-ups: *"go ahead"*). Live on production as of the 2026-08-10 release (verified against the live site and databases, not plans).

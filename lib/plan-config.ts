@@ -51,13 +51,15 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
     gatingStatus: 'live',
   },
   team: {
-    label: 'Coaches Portal',
+    label: 'Premium Coaches Portal',
     monthlyPrice: 29,
     annualPrice: 290,
     tournamentLimit: 1,
     teamLimit: 9999,
     seatLimit: 3,
-    officialsFreeSeats: false,
+    // Extended to the portal 2026-08-10 (BUSINESS_DECISIONS.md) — parity with every other
+    // tier; a standalone coach's tournament volunteers must not consume the 3 seats.
+    officialsFreeSeats: true,
     trialDays: 0,
     // Team gets free-tier tournament tooling. Rep-team access is intentionally
     // team-scoped through team_entitlements, not org-wide module_rep_teams.
