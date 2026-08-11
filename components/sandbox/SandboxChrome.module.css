@@ -22,8 +22,9 @@
 }
 
 /* ── The guidance layer ───────────────────────────────────────────────────────
-   The dock and the guided tour — how a visitor finds their way AROUND the demo. Below 640px this
-   folds away as they scroll into the product and returns when they scroll back.
+   The dock and the guided tour — how a visitor finds their way AROUND the demo. At every width
+   this folds away as they scroll into the product and returns when they scroll back (phones-only
+   until the 2026-08-10 owner call — the fold rule lives just below).
 
    ⚠ Three things live in this chrome and only ONE of them folds. The banner is the CLAIM and never
    moves. The narration strip is a RESPONSE to something the visitor just pressed and is deliberately
@@ -46,6 +47,13 @@
   overflow: hidden;
   min-height: 0;
 }
+
+/* ── The fold ────────────────────────────────────────────────────────────────
+   Scrolled into the product, the guidance stands down; scrolled back (or the banner's handle),
+   it returns. Every width (owner call 2026-08-10, superseding the phones-only gate). The banner
+   is untouched on purpose — the honesty claim and the door out are on screen at every scroll
+   position, which is what keeps this compatible with the never-dismissible rule above. */
+.chrome[data-condensed='true'] .guide { grid-template-rows: 0fr; }
 
 /* ── The banner ───────────────────────────────────────────────────────────── */
 
@@ -451,6 +459,30 @@
 .stepGo:hover { background: var(--logic-lime); color: var(--pitch-black); }
 .stepGo:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
 
+/* The second lap. Takes the finished tour's control slot INSTEAD of a signup CTA (owner call
+   2026-08-10): the banner's signup button is pinned at every moment including this one, so a copy
+   here was asking twice within 40px. Deliberately quieter than .stepGo — it is an offer, not the
+   row's main event. */
+.restart {
+  flex: none;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  color: var(--data-gray);
+  border-radius: 999px;
+  font-family: var(--font-data);
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.375rem 0.8125rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.restart:hover { color: var(--fl-text); border-color: var(--data-gray); }
+.restart:focus-visible { outline: 2px solid var(--logic-lime); outline-offset: 2px; }
+
 /* ── "What just happened" ─────────────────────────────────────────────────────
    The core of the redesign. A ring on a section the visitor is not looking at was never
    feedback; a sentence where their finger just was, is. */
@@ -604,13 +636,6 @@
   }
   .cta { padding: 0.375rem 0.625rem; font-size: 0.6rem; }
 
-  /* ── The fold ──────────────────────────────────────────────────────────────
-     Scrolled into the product, the guidance stands down; scrolled back, it returns. The banner is
-     untouched by this on purpose — the honesty claim and the door out are on screen at every
-     scroll position, which is what keeps this compatible with the never-dismissible rule at the
-     top of this file. */
-  .chrome[data-condensed='true'] .guide { grid-template-rows: 0fr; }
-
   /* The dock keeps all three tabs on one 390px screen: tighter padding, smaller labels, and the
      row label goes — the tabs' own time anchors ("3 weeks before / happening now / ended
      yesterday") already say what this band is. Scrolls sideways only if a locale's labels run
@@ -637,7 +662,7 @@
     padding: 0.1875rem 0.5rem 0.1875rem 0.4375rem;
     gap: 0.375rem;
   }
-  .stepGo { margin-left: auto; padding: 0.375rem 0.625rem; font-size: 0.6rem; }
+  .stepGo, .restart { margin-left: auto; padding: 0.375rem 0.625rem; font-size: 0.6rem; }
 
   /* While a sentence is showing it is the thing the visitor just asked for, and the pill is
      describing the same game it names. Two attention-getters plus three lines of text pushed the
@@ -732,15 +757,8 @@
 }
 .chrome[data-kind='coach'] .saidTick { color: var(--sandbox-warm-blue); }
 .chrome[data-kind='coach'] .saidText { color: var(--sandbox-warm-ink); }
-.chrome[data-kind='coach'] .saidBack {
-  border-color: rgba(var(--sandbox-warm-line-rgb), 0.28);
-  color: var(--sandbox-warm-dim);
-}
-.chrome[data-kind='coach'] .saidBack:hover {
-  color: var(--sandbox-warm-ink);
-  border-color: var(--sandbox-warm-dim);
-}
-.chrome[data-kind='coach'] .saidBack:focus-visible { outline-color: var(--sandbox-warm-blue); }
+/* No coach coat for .saidBack: the marked way back is tournament-only (owner cut 2026-08-10 —
+   the coach walk spans five teams and has no single home for "back" to mean). */
 
 /* Dismiss the sentence. Load-bearing rather than decorative: below 640px the moments dock stands
    down while the strip speaks, and this is the only control that can bring it back. Sized to the
@@ -799,6 +817,17 @@
 }
 .chrome[data-kind='coach'] .stepGo:hover { background: var(--sandbox-warm-gold); }
 .chrome[data-kind='coach'] .stepGo:focus-visible { outline-color: var(--sandbox-warm-blue); }
+
+.chrome[data-kind='coach'] .restart {
+  border-color: rgba(var(--sandbox-warm-line-rgb), 0.32);
+  color: var(--sandbox-warm-dim);
+}
+.chrome[data-kind='coach'] .restart:hover {
+  background: var(--sandbox-warm-ink);
+  border-color: var(--sandbox-warm-ink);
+  color: var(--sandbox-warm-paper);
+}
+.chrome[data-kind='coach'] .restart:focus-visible { outline-color: var(--sandbox-warm-blue); }
 
 /* ── The coach hat on a phone ──────────────────────────────────────────────────
    Measured on a 390×844 viewport, live demo, computed styles (2026-08-05):

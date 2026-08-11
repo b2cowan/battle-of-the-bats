@@ -180,9 +180,15 @@ interface TourState {
   strip: StripVoice | null;
   /** The one navigation waiting to be delivered, if any. */
   pendingNav: PendingNav | null;
+  /**
+   * Has the visitor accepted the invitation (pressed "Walk the year")? Distinct from `done`,
+   * because the opening press TRAVELS without delivering — the tour is armed at step 1 with no
+   * checks yet, a state `done` alone cannot represent. Absent in stored v4 records; reads false.
+   */
+  started: boolean;
 }
 
-const EMPTY_TOUR: TourState = { current: 1, done: [], strip: null, pendingNav: null };
+const EMPTY_TOUR: TourState = { current: 1, done: [], strip: null, pendingNav: null, started: false };
 
 function isMomentKey(value: unknown): value is SandboxMomentKey {
   return typeof value === 'string' && (SANDBOX_MOMENT_KEYS as readonly string[]).includes(value);
@@ -219,6 +225,7 @@ function readTourState(storageKey: string): TourState {
       done: Array.isArray(parsed.done) ? parsed.done.filter(n => typeof n === 'number') : [],
       strip: parseStrip(parsed.strip),
       pendingNav: parsePendingNav(parsed.pendingNav),
+      started: parsed.started === true,
     };
   } catch {
     return EMPTY_TOUR; // a visitor with storage disabled simply starts the tour each page
@@ -491,11 +498,29 @@ export default function SandboxChrome({
   /**
    * Has the visitor scrolled far enough that the guidance should stand down?
    *
-   * 640px, deliberately not a new breakpoint — this component has exactly one, and the Option C
-   * rails ruling (2026-08-02) says a layout chunk adds none. A tablet keeps all three bands; it has
-   * the room, and the crowding this answers is a phone's.
+   * Every width (owner call 2026-08-10, superseding the phones-only 640px gate): four bands of
+   * chrome crowd a desktop assessment too. The banner never moves; the handle in it is the way
+   * back at all widths.
    */
-  const { collapsed: condensed, scrollToTop: showGuidance } = useScrollCollapsed({ maxWidth: '640px' });
+  const { collapsed: condensed, scrollToTop: showGuidance } = useScrollCollapsed();
+
+  /**
+   * The fold must never eat the keyboard. `inert` on the folding layer blurs whatever control the
+   * visitor was standing on (a dot, the step button) to nowhere — a silent focus drop, mid-press,
+   * for exactly the visitor using a keyboard or screen reader. When the fold fires while focus is
+   * inside the layer, focus moves to the handle: the control that brings the guidance back,
+   * rendered in the same commit that set `condensed`.
+   */
+  const guideRef = useRef<HTMLDivElement | null>(null);
+  const handleRef = useRef<HTMLButtonElement | null>(null);
+  useEffect(() => {
+    if (!condensed) return;
+    const guide = guideRef.current;
+    const active = document.activeElement;
+    if (guide && active instanceof HTMLElement && guide.contains(active)) {
+      handleRef.current?.focus();
+    }
+  }, [condensed]);
 
   // ── The tour ────────────────────────────────────────────────────────────────────────────────
   // `null` until session storage has been read — NOT the same as "the tour hasn't started".
@@ -589,6 +614,7 @@ export default function SandboxChrome({
 
   /** Mark a step delivered: narrate it, bank it, and move the tour on. */
   const deliver = useCallback((state: TourState, n: number): TourState => ({
+    ...state,
     current: Math.min(n + 1, Math.max(steps.length, 1)),
     done: state.done.includes(n) ? state.done : [...state.done, n],
     strip: { kind: 'step', n },
@@ -680,6 +706,35 @@ export default function SandboxChrome({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, tour, deliver, update, ringAnchor, goToOperatorScreen]);
 
+  /**
+   * The invitation's press: travel to the SEASON'S start and deliver no step (owner calls,
+   * 2026-08-10, two rounds).
+   *
+   * Round one delivered step 1 on this press, which read as "step 1 is skipped": one press
+   * produced a row already claiming step 2 and a check the visitor never chose. Round two armed
+   * the tour on step 1's own page — and that collapsed the walk's first two presses into the same
+   * screen, so step 1's button appeared to do nothing ("the data is the same").
+   *
+   * So the opening press is the Tryout day chip wearing the tour's handle: it lands on the
+   * moment's front door (the mid-flight scoring board) with that moment's own arrival sentence,
+   * and arms the tour at "Step 1 of 7", unchecked. Step 1's press then travels one level deeper
+   * to the ranked board — the walk's every press changes the screen, and the "one level deeper
+   * than the chip" rule now covers the opening too.
+   */
+  const startWalk = useCallback(() => {
+    if (!tour) return;
+    const armed = { ...tour, started: true, current: 1 };
+    const first = moments[0];
+    if (!first) { update({ ...armed, strip: null, pendingNav: null }); return; }
+    const target = side === 'operator' ? first.operatorPath : first.fanPath;
+    if (pathname === target) {
+      update({ ...armed, strip: { kind: 'moment', key: first.key }, pendingNav: null });
+      return;
+    }
+    update({ ...armed, strip: null, pendingNav: { kind: 'moment', key: first.key, href: target, slug: null } });
+    goToOperatorScreen(target, null);
+  }, [pathname, tour, moments, side, update, goToOperatorScreen]);
+
   /** A dock press: same jumps as tour steps 5–6, wearing the self-serve handle. */
   const onMoment = useCallback((moment: SandboxMoment) => {
     if (!tour) return;
@@ -702,7 +757,10 @@ export default function SandboxChrome({
 
   const jumpTo = useCallback((n: number) => {
     if (!tour) return;
-    update({ ...tour, current: n, strip: null });
+    // A dot press is a deliberate choice of position, so it also STARTS an unstarted tour.
+    // Without this, the press landed in a state the invitation row never shows — and the very
+    // next "Walk the year" discarded it silently (2026-08-11 review finding).
+    update({ ...tour, current: n, strip: null, started: true });
   }, [tour, update]);
 
   // ── The catch-all ───────────────────────────────────────────────────────────────────────────
@@ -753,12 +811,22 @@ export default function SandboxChrome({
    * you watch must not move a stranger. It introduces itself once and waits. Coach sandbox only —
    * the tournament tour's opening is already approved and shipped, and changing it here would be
    * a silent edit to a surface nobody asked me to touch.
+   *
+   * A dock press does NOT end the invitation (owner call 2026-08-10). The door lands on Mid-season
+   * and the walk starts back at Tryout day, so surfacing step 1's beat ("See how 28 kids got
+   * ranked") after a season jump read as a non-sequitur beside a Mid-season highlight. The
+   * invitation stands until the visitor accepts it — `started`, set by the invitation's own press
+   * (which travels to step 1 without delivering it; see `startWalk`).
    */
-  const tourUntouched = kind === 'coach' && !!tour && tour.done.length === 0 && tour.strip === null;
-  // A step that travelled deserves a marked way back. Game day's fan page is the tour's home and
-  // the one place every visitor recognises, so that is where "back" means — and the label names
-  // the moment now that there is more than one to be standing in.
-  const showBack = (narratedStep != null || jumpMoment != null) && !isOnStepPage(pathname, landingPath);
+  const tourUntouched = kind === 'coach' && !!tour && tour.done.length === 0 && !tour.started;
+  // A step that travelled deserves a marked way back — on the TOURNAMENT side, where "back" names
+  // a real place: game day's fan page, the tour's home and the one page every visitor recognises.
+  // The coach walk spans five teams and has no such home, so its generic "Back to the demo" named
+  // nowhere and, pressed mid-walk, yanked the visitor to the Mid-season overview with no framing.
+  // Cut (owner call 2026-08-10); the sentence's ✕ and the season dock are the coach demo's ways
+  // onward.
+  const showBack = kind === 'tournament'
+    && (narratedStep != null || jumpMoment != null) && !isOnStepPage(pathname, landingPath);
 
   /**
    * Which of the tour's three states we are in, decided ONCE.
@@ -843,6 +911,7 @@ export default function SandboxChrome({
             {condensed && (steps.length > 0 || moments.length > 0) && (
               <button
                 type="button"
+                ref={handleRef}
                 className={styles.handle}
                 aria-expanded={false}
                 aria-label={tourPhase === 'active'
@@ -864,7 +933,7 @@ export default function SandboxChrome({
             `inert` is the half that cannot live in CSS: an element at zero height with overflow
             hidden is still in the tab order, so without this a visitor tabbing through a condensed
             page would land on invisible controls. */}
-        <div className={styles.guide} inert={condensed}>
+        <div className={styles.guide} inert={condensed} ref={guideRef}>
           <div className={styles.guideInner}>
 
         {moments.length > 0 && (
@@ -897,6 +966,10 @@ export default function SandboxChrome({
           <div className={styles.stepper}>
             <span className={styles.stepperLabel}>Guided tour</span>
             <span className={styles.stepCount}>
+              {/* The counter tracks the next step to take, advancing the moment a step delivers —
+                  in agreement with the dots and the button. It can never read ahead of what the
+                  visitor has pressed, because the invitation press arms the tour at step 1
+                  without delivering it (see startWalk). */}
               {tourPhase === 'done' ? 'Done'
                 : tourPhase === 'untouched' ? 'The season, guided'
                 : `Step ${tour.current} of ${steps.length}`}
@@ -958,14 +1031,25 @@ export default function SandboxChrome({
             </span>
 
             {tourComplete ? (
-              // The one dead end that should sell. Every other surface offers the CTA; the end of
-              // the tour is where a convinced visitor actually is.
-              <Link href="/auth/signup" className={styles.stepGo}>Start your own — free →</Link>
+              // A finished tour offers a second lap, not a second pitch (owner call 2026-08-10).
+              // The banner's signup CTA is pinned on screen at every moment including this one, so
+              // a copy of it here was asking twice within 40px — and it left the tour a dead end
+              // for the rest of the session (the dots stop rendering a control once complete).
+              // Restart clears the checks; revisiting a single step never does — the visitor HAS
+              // seen it, and the demo never claims otherwise.
+              <button type="button" className={styles.restart} onClick={() => update(EMPTY_TOUR)}>
+                ↺ Walk it again
+              </button>
             ) : currentStep ? (
-              <button type="button" className={styles.stepGo} onClick={() => onStep(currentStep)}>
+              <button
+                type="button"
+                className={styles.stepGo}
+                onClick={() => (tourUntouched ? startWalk() : onStep(currentStep))}
+              >
                 {/* The opening press names the WHOLE walk, not its first beat. "See how 28 kids got
                     ranked" is a fine second sentence and a poor invitation: it offers a feature
-                    where the tour is offering a season. Every press after this one names its beat. */}
+                    where the tour is offering a season. It travels to the walk's start and delivers
+                    nothing (see startWalk); every press after it names its beat and delivers it. */}
                 {tourUntouched ? 'Walk the year' : currentStep.label} →
               </button>
             ) : null}

@@ -2397,8 +2397,9 @@ see.*
       bracket. **Judgement call for you:** should the new **Playoffs** tab lead with the bracket
       instead of the seeding write-up? That is the shipped layout, not something this project
       changed — but the demo makes it obvious.
-- [ ] After step 4, the button becomes **"Start your own — free →"**. The end of the tour is the one
-      dead end that should sell.
+- [ ] After the final step, the row reads **Done** and offers **"↺ Walk it again"** (owner call
+      2026-08-10: the banner's signup button is pinned directly above at every moment, so the row's
+      duplicate pitch was cut; the restart clears the checks and re-arms the tour).
 - [ ] Progress lasts the visit and is gone in a brand-new private window.
 - [ ] **The step count is the same whether or not you are signed in** (four, always). Only where the
       operator steps *point* changes — signed in as yourself, they route via the door.
@@ -2613,7 +2614,8 @@ run the tick by hand before QA if the countdown looks stale.*
 - [ ] The tour reads **Step N of 6**. Steps 1–4 behave exactly as you QA'd them.
 - [ ] Step 5 **"Go back three weeks"** lands on the Invitational's Teams screen, rings the health
       panel, and narrates the week's work. Step 6 **"Skip to the morning after"** lands on the
-      Post-Event Summary and narrates the close. **Done** still ends on "Start your own — free →".
+      Post-Event Summary and narrates the close. **Done** ends on **"↺ Walk it again"** (the row's
+      signup duplicate was cut 2026-08-10 — the banner's pinned CTA is the one ask).
 - [ ] Old tour progress does not carry over (the step list changed shape — everyone starts fresh).
 
 **E · Nothing leaked**

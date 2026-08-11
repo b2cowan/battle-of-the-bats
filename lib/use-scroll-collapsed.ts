@@ -32,11 +32,11 @@ import { usePathname } from 'next/navigation';
  * should not ride along with a demo-chrome change.
  */
 export function useScrollCollapsed(options: {
-  /** Only collapse below this width. Above it, always expanded. */
-  maxWidth: string;
+  /** Only collapse below this width. Absent = collapse at every width. */
+  maxWidth?: string;
   collapseAt?: number;
   expandAt?: number;
-}): {
+} = {}): {
   collapsed: boolean;
   /**
    * Scroll whatever is scrolling back to the top — i.e. back to the expanded state.
@@ -62,7 +62,7 @@ export function useScrollCollapsed(options: {
   }, []);
 
   useEffect(() => {
-    const mq = window.matchMedia(`(max-width: ${maxWidth})`);
+    const mq = maxWidth ? window.matchMedia(`(max-width: ${maxWidth})`) : null;
     let raf = 0;
     // The last offset read from a source we accepted. Kept outside `read` so a scroll event on an
     // element we rejected leaves the previous reading standing instead of resetting it to zero.
@@ -87,7 +87,7 @@ export function useScrollCollapsed(options: {
     };
 
     const read = () => {
-      if (!mq.matches) {
+      if (mq && !mq.matches) {
         setCollapsed(false);
         return;
       }
@@ -100,8 +100,14 @@ export function useScrollCollapsed(options: {
         scrollerRef.current = null;
         y = window.scrollY || document.documentElement.scrollTop || 0;
       } else if (target instanceof HTMLElement) {
-        // Big enough to be the page's own scroller, rather than a strip or a dialog body.
+        // Big enough to BE the page: page-tall AND page-wide. Height alone let the desktop nav
+        // rails qualify — the admin sidebar and both portal side rails are full-height 240-280px
+        // columns with their own scroll — so scrolling a NAV list folded the chrome, a rail's
+        // remembered offset pre-folded the next route, and the way-back handle scrolled the rail
+        // instead of the page (2026-08-11 review, found the day the fold went all-widths). A real
+        // content scroller is never narrower than 60% of the viewport; a rail never reaches it.
         if (target.clientHeight < window.innerHeight * 0.6) return;
+        if (target.clientWidth < window.innerWidth * 0.6) return;
         scrollerRef.current = target;
         y = target.scrollTop;
       } else {
