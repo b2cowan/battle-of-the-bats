@@ -256,6 +256,16 @@
      Derived from the shared --chrome-bar-h (Stage G) — the ONE platform chrome-bar height, worn
      also by the other operator strip and the consumer app strip, so none can drift. The local var stays because the zeroing below is shell-local. */
   --coach-topstrip-h: var(--chrome-bar-h);
+  /* The strip's actual on-screen top, not just its height — in the "See it live" demo the
+     sandbox banner sits above it and pushes it down by --sandbox-chrome-h (0px for every
+     real customer). The STICKY/FIXED things pinned below the strip (the team header, the
+     sidebar, the reference rail, deep-link scroll targets) must offset by THIS, or they
+     stick too high and tuck under the strip.
+     ⚠ NOT this element's own padding-top below — globals.css already pads the whole
+     document by --sandbox-chrome-h once (html[data-sandbox-chrome] body), because a body
+     padding can't reach a sticky/fixed element's `top`. Adding the term here too would
+     double-count the banner and open a gap under the strip (caught 2026-08-11 review). */
+  --coach-topstrip-top: calc(var(--coach-topstrip-h) + var(--sandbox-chrome-h, 0px));
   display: flex;
   min-height: 100vh;
   padding-top: var(--coach-topstrip-h);
@@ -317,7 +327,7 @@
   position: sticky;
   /* Pins just below the fixed CoachTopStrip on desktop (the var is zeroed ≤900 where the
      strip never renders) — the document scrolls underneath, mirroring AdminEventHeader. */
-  top: var(--coach-topstrip-h, 0px);
+  top: var(--coach-topstrip-top, 0px);
   z-index: 40; /* above page content incl. sticky bottom bars (z2); below sheets (200+) + nav (300) */
   /* Column, not row: the identity/status row is the first child, and the scouting-book nudge
      (when present) is an attached second row — one sticky unit rather than a floating card
@@ -530,8 +540,8 @@
      as the scroller, an unpinned sidebar scrolled away on any long page. Height-clipping is
      what makes the overflow rule real, so the nav scrolls its own list independently. */
   position: sticky;
-  top: var(--coach-topstrip-h, 0px);
-  height: calc(100vh - var(--coach-topstrip-h, 0px));
+  top: var(--coach-topstrip-top, 0px);
+  height: calc(100vh - var(--coach-topstrip-top, 0px));
   overflow-y: auto;
 }
 
@@ -698,7 +708,7 @@
 }
 .rail {
   position: sticky;
-  top: calc(var(--coach-topstrip-h, 0px) + var(--coach-header-h, 0px) + 1rem);
+  top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + 1rem);
   display: flex;
   flex-direction: column;
   gap: 1rem;
@@ -770,7 +780,7 @@ a.railRow:focus-visible {
   border-radius: var(--radius);
   /* A ?section= deep-link scrolls the section to the viewport top — under the pinned
      chrome without this margin. */
-  scroll-margin-top: calc(var(--coach-topstrip-h, 0px) + var(--coach-header-h, 0px) + 0.5rem);
+  scroll-margin-top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + 0.5rem);
 }
 .collapseSummary {
   display: flex;
@@ -6298,7 +6308,7 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 .ppRailInner {
   /* Clears the fixed top strip + pinned team header now that document scrolling makes
      sticky real (2026-08-01) — at the old `top: 1rem` it would pin occluded behind them. */
-  position: sticky; top: calc(var(--coach-topstrip-h, 0px) + var(--coach-header-h, 0px) + 1rem);
+  position: sticky; top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px) + 1rem);
   display: flex; flex-direction: column; gap: 0.5rem;
   padding: 0.85rem 0.9rem; border-radius: 12px;
   border: 1px solid var(--border-2); background: var(--card-bg);

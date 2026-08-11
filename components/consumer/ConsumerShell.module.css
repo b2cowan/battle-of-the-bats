@@ -81,6 +81,13 @@
   .topbarCoach { display: none; }
 }
 
+/* Same offset .mhead and .topbarStrip already carry: on the demo sandbox, the fixed banner
+   owns the real top of the viewport, so this bar must sit below it once sticky engages —
+   0px for every real customer (--sandbox-chrome-h is only ever set on a demo org). */
+.topbarCoach {
+  top: var(--sandbox-chrome-h, 0px);
+}
+
 .topLeft {
   display: flex;
   align-items: center;
