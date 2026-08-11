@@ -155,82 +155,94 @@ function CoachTeamHeaderInner({
   ) : null;
 
   return (
-    <>
-    {/* role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event
-        header sets this explicitly for the identical mount position (AdminEventHeader:137). */}
+    /* role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event
+       header sets this explicitly for the identical mount position (AdminEventHeader:137). */
     <header
       ref={headerRef}
       role="banner"
       className={`${styles.teamHeader}${collapsed ? ` ${styles.teamHeaderCollapsed}` : ''}`}
     >
-      <div className={styles.teamHeaderLeft}>
-        {/* Option B (owner-picked 2026-08-02): NO eyebrow on a standalone team. Its eyebrow could
-            only ever read "Coaches Portal" — which is verbatim what the sidebar immediately to its
-            left already says, above the same team name, so the masthead was a carbon copy of its
-            own neighbour. A club's name IS information, so a club org keeps its eyebrow. */}
-        {!isTeamWorkspace && <span className={styles.teamHeaderEyebrow}>{orgName}</span>}
-        <span className={styles.teamHeaderName}>{teamName}</span>
-        <div className={styles.teamHeaderMeta}>
-          {year && <span>{year} season</span>}
-          {/* An archive's record is stated on the right, beside its Complete chip. */}
-          {!season.isReadOnly && record && (
-            <span className={styles.teamHeaderRecord}>{formatRecord(record)}</span>
+      <div className={styles.teamHeaderRow}>
+        <div className={styles.teamHeaderLeft}>
+          {/* Option B (owner-picked 2026-08-02): NO eyebrow on a standalone team. Its eyebrow could
+              only ever read "Coaches Portal" — which is verbatim what the sidebar immediately to its
+              left already says, above the same team name, so the masthead was a carbon copy of its
+              own neighbour. A club's name IS information, so a club org keeps its eyebrow. */}
+          {!isTeamWorkspace && <span className={styles.teamHeaderEyebrow}>{orgName}</span>}
+          <span className={styles.teamHeaderName}>{teamName}</span>
+          <div className={styles.teamHeaderMeta}>
+            {year && <span>{year} season</span>}
+            {/* An archive's record is stated on the right, beside its Complete chip. */}
+            {!season.isReadOnly && record && (
+              <span className={styles.teamHeaderRecord}>{formatRecord(record)}</span>
+            )}
+          </div>
+        </div>
+
+        {/* The right slot — identity left, live status right, admin's event-header pattern. It holds
+            the one thing that changes day to day, which is also what stops a standalone team's bar
+            being 70% empty space. Same slot in every season state: game day, next up, or Complete. */}
+        <div className={styles.teamHeaderRight}>
+          {season.isReadOnly ? (
+            <>
+              {/* Presentational — the page-title chip is THE season switcher (see docblock). No
+                  status on an archive, ever: a finished season has no next thing, and the archive is
+                  opt-in — nothing live may be read for or shown on one. */}
+              <span className={styles.seasonChip}>Complete</span>
+              {record && <span className={styles.teamHeaderStat}>Final {formatRecord(record)}</span>}
+            </>
+          ) : gameDayLine ? (
+            consoleHref
+              ? <Link href={consoleHref} className={styles.teamHeaderConsoleLink}>{gameDayLine}</Link>
+              : gameDayLine
+          ) : status ? (
+            <span className={styles.teamHeaderStack}>
+              <span className={styles.teamHeaderStackKey}>Next</span>
+              <span className={styles.teamHeaderStackValue}>{nextLabel(status)}</span>
+            </span>
+          ) : null}
+
+          {publicHref && (
+            <Link href={publicHref} className={styles.teamHeaderFlip}>
+              <ArrowLeftRight size={13} aria-hidden />
+              Public site
+            </Link>
           )}
         </div>
       </div>
 
-      {/* The right slot — identity left, live status right, admin's event-header pattern. It holds
-          the one thing that changes day to day, which is also what stops a standalone team's bar
-          being 70% empty space. Same slot in every season state: game day, next up, or Complete. */}
-      <div className={styles.teamHeaderRight}>
-        {season.isReadOnly ? (
-          <>
-            {/* Presentational — the page-title chip is THE season switcher (see docblock). No
-                status on an archive, ever: a finished season has no next thing, and the archive is
-                opt-in — nothing live may be read for or shown on one. */}
-            <span className={styles.seasonChip}>Complete</span>
-            {record && <span className={styles.teamHeaderStat}>Final {formatRecord(record)}</span>}
-          </>
-        ) : gameDayLine ? (
-          consoleHref
-            ? <Link href={consoleHref} className={styles.teamHeaderConsoleLink}>{gameDayLine}</Link>
-            : gameDayLine
-        ) : status ? (
-          <span className={styles.teamHeaderStack}>
-            <span className={styles.teamHeaderStackKey}>Next</span>
-            <span className={styles.teamHeaderStackValue}>{nextLabel(status)}</span>
-          </span>
-        ) : null}
-
-        {publicHref && (
-          <Link href={publicHref} className={styles.teamHeaderFlip}>
-            <ArrowLeftRight size={13} aria-hidden />
-            Public site
+      {/* Game-week book nudge (Scouting Book P2, mockup Stage 6; re-anchored into the sticky bar
+          2026-08-11): an attached row, not a floating card in page flow beneath it. Gated on the
+          SAME `status` the bar renders from, so it can never speak for an archive or a mismatched
+          ?year= season — and only for the very game the status names. When the status is already
+          the Game-day line, that line has named the opponent and "today" already, so the row
+          leads with the one new fact instead of repeating them. */}
+      {status && scoutingNudge && scoutingNudge.eventId === status.event.id && !nudgeDismiss.dismissed && (
+        <div className={styles.teamHeaderNudge}>
+          <Link href={scoutingNudge.href} className={styles.teamHeaderNudgeLink}>
+            {status.kind === 'game_day' ? (
+              <>
+                <b>{scoutingNudge.observationCount}</b> observation{scoutingNudge.observationCount === 1 ? '' : 's'} in the book ›
+              </>
+            ) : (
+              <>
+                You play {scoutingNudge.opponentName} {nudgeDay(status.event.startsAt, status.daysAway)} —{' '}
+                {scoutingNudge.observationCount} observation{scoutingNudge.observationCount === 1 ? '' : 's'} in the book ›
+              </>
+            )}
           </Link>
-        )}
-      </div>
+          <button
+            type="button"
+            className={styles.teamHeaderNudgeDismiss}
+            aria-label="Dismiss book reminder"
+            title="Dismiss"
+            onClick={nudgeDismiss.dismiss}
+          >
+            <X size={13} />
+          </button>
+        </div>
+      )}
     </header>
-    {/* Game-week book nudge (Scouting Book P2, mockup Stage 6): one quiet line, once per
-        game. Gated on the SAME `status` the bar renders from, so it can never speak for an
-        archive or a mismatched ?year= season — and only for the very game the status names. */}
-    {status && scoutingNudge && scoutingNudge.eventId === status.event.id && !nudgeDismiss.dismissed && (
-      <div className={styles.scoutNudge}>
-        <Link href={scoutingNudge.href} className={styles.scoutNudgeLink}>
-          You play {scoutingNudge.opponentName} {nudgeDay(status.event.startsAt, status.daysAway)} —{' '}
-          {scoutingNudge.observationCount} observation{scoutingNudge.observationCount === 1 ? '' : 's'} in the book ›
-        </Link>
-        <button
-          type="button"
-          className={styles.scoutNudgeDismiss}
-          aria-label="Dismiss book reminder"
-          title="Dismiss"
-          onClick={nudgeDismiss.dismiss}
-        >
-          <X size={13} />
-        </button>
-      </div>
-    )}
-    </>
   );
 }
 

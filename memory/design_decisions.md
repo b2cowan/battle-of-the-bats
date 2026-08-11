@@ -4,6 +4,42 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-11 — Coach Overview's header stops repeating the sticky masthead, and the scouting nudge stops floating between the two
+
+**Trigger:** owner screenshot of the mobile Coach Overview — disliked the scouting-book notification
+sitting above the header, and asked whether the page's own team-name header is needed at all given
+the top nav already carries it. Mockup (approved): `claude.ai/code/artifact/2f4f2d3d-4a14-473e-8864-660a10efc127`,
+source at `docs/projects/active/COACH_OVERVIEW_HEADER_MOCKUP.html`.
+
+**DECISION:**
+1. **The Overview page titles itself "Overview," not the team name.** The sticky masthead
+   (`CoachTeamHeader`) already carries the team name and season; the Overview's own `<h1>` was the
+   only page under `/teams/{teamId}/` that repeated the team name instead of naming itself — every
+   sibling (Roster, Money, Team Calendar, Tryouts, Documents…) already used a page-specific title.
+   This was the standing "chrome rule" (2026-08-02, reaffirmed 2026-08-07: chrome may only carry
+   data the page doesn't already show) unapplied to this one page. Premium/tier badges and the
+   Season-setup chip stay — they're the genuinely new information on that line. The subtitle drops
+   the season UNLESS an org has actually named it something more specific than a bare year (a plain
+   `/^\d{4}$/` season label is exactly what the masthead already says; a real season name like
+   "Fall 2026" is new information and stays).
+2. **The scouting-book nudge is now a row of the sticky masthead, not a floating card beneath it.**
+   It used to render as a separate, non-sticky, bordered card directly under a `position: sticky`
+   bar — which read as a stray notification wedged between two headers, especially once #1 made the
+   page header thinner. It's now an attached second row inside `<header>` (hairline divider, no
+   card chrome), so it scrolls and pins as one unit with the bar it's about, and folds away with the
+   rest of the detail on the phone-collapsed state.
+3. **The nudge's copy leads with the new fact only.** When the masthead's own status is already the
+   Game-day line (opponent + "today" both stated one row up), the nudge trims to "N observations in
+   the book ›" instead of re-stating the opponent and day. When the status is the further-out "Next"
+   line (which does NOT name an opponent), the nudge keeps its fuller "You play {opponent} {day} —
+   N observations ›" phrasing, because that IS new information there.
+
+**Applies to:** `CoachTeamHeader` (+ `coaches.module.css` masthead/nudge rules), the Overview page
+header (`app/[orgSlug]/coaches/teams/[teamId]/page.tsx`). Built on dev 2026-08-11, uncommitted,
+owner QA pending. [[design-system]] [[design-principles]]
+
+---
+
 ### 2026-08-10 — Demo doors on the marketing pages: proof one step after every claim, never competing with the ask
 
 **Trigger:** the production doors flipped on 2026-08-10 with only the tournament demo advertised (two spots) and the coach demo reachable by URL alone. Owner approved the placement set and, in the follow-up on "browsing both," the Club-page block + reroutes. Mockups (approved, all sections incl. §5): `claude.ai/code/artifact/2d646e07-1bef-48ef-8fd9-1a883bd56eea`.

@@ -1,0 +1,601 @@
+<title>Coach Overview Header — Design Review</title>
+<style>
+  /* ── Tokens ─────────────────────────────────────────────────────────── */
+  :root {
+    /* Sheet (document chrome) — blueprint drafting paper, light */
+    --sheet: #EEF1F6;
+    --sheet-2: #E2E7F0;
+    --sheet-line: rgba(30, 58, 138, 0.10);
+    --ink: #12151F;
+    --ink-70: rgba(18, 21, 31, 0.72);
+    --ink-50: rgba(18, 21, 31, 0.52);
+    --ink-35: rgba(18, 21, 31, 0.35);
+    --rule: rgba(18, 21, 31, 0.12);
+    --accent: #1E3A8A;
+    --accent-rgb: 30, 58, 138;
+    --flag: #B3401F;
+    --flag-bg: rgba(179, 64, 31, 0.08);
+    --flag-rgb: 179, 64, 31;
+    --check: #1F7A5C;
+    --check-bg: rgba(31, 122, 92, 0.08);
+    --check-rgb: 31, 122, 92;
+    --card: #FFFFFF;
+    --card-shadow: 0 1px 2px rgba(18,21,31,0.05), 0 8px 24px rgba(18,21,31,0.06);
+
+    /* Product tokens, reproduced verbatim for the phone specimens */
+    --p-black: #0A0A0A;
+    --p-blue: #1E3A8A;
+    --p-blue-rgb: 30, 58, 138;
+    --p-lime: #D9F99D;
+    --p-lime-rgb: 217, 249, 157;
+    --p-hud: #111827;
+    --p-slate: #0F172A;
+    --p-gray: #94A3B8;
+    --p-text: #F1F5F9;
+    --p-w90: rgba(255,255,255,0.9);
+    --p-w80: rgba(255,255,255,0.8);
+    --p-w70: rgba(255,255,255,0.7);
+    --p-w45: rgba(255,255,255,0.45);
+    --p-w40: rgba(255,255,255,0.4);
+    --p-w20: rgba(255,255,255,0.2);
+    --p-w10: rgba(255,255,255,0.1);
+    --p-w08: rgba(255,255,255,0.08);
+    --p-w05: rgba(255,255,255,0.05);
+    --p-olive-rgb: 87, 101, 30;
+
+    --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --font-data: ui-monospace, "SFMono-Regular", "IBM Plex Mono", Consolas, "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --sheet: #0B0F17;
+      --sheet-2: #10151F;
+      --sheet-line: rgba(217, 249, 157, 0.06);
+      --ink: #EAEFF9;
+      --ink-70: rgba(234, 239, 249, 0.75);
+      --ink-50: rgba(234, 239, 249, 0.55);
+      --ink-35: rgba(234, 239, 249, 0.38);
+      --rule: rgba(234, 239, 249, 0.12);
+      --accent: #D9F99D;
+      --accent-rgb: 217, 249, 157;
+      --flag: #FF8A65;
+      --flag-bg: rgba(255, 138, 101, 0.10);
+      --flag-rgb: 255, 138, 101;
+      --check: #4ADE9C;
+      --check-bg: rgba(74, 222, 156, 0.10);
+      --check-rgb: 74, 222, 156;
+      --card: #10151F;
+      --card-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+    }
+  }
+  :root[data-theme="dark"] {
+    --sheet: #0B0F17;
+    --sheet-2: #10151F;
+    --sheet-line: rgba(217, 249, 157, 0.06);
+    --ink: #EAEFF9;
+    --ink-70: rgba(234, 239, 249, 0.75);
+    --ink-50: rgba(234, 239, 249, 0.55);
+    --ink-35: rgba(234, 239, 249, 0.38);
+    --rule: rgba(234, 239, 249, 0.12);
+    --accent: #D9F99D;
+    --accent-rgb: 217, 249, 157;
+    --flag: #FF8A65;
+    --flag-bg: rgba(255, 138, 101, 0.10);
+    --flag-rgb: 255, 138, 101;
+    --check: #4ADE9C;
+    --check-bg: rgba(74, 222, 156, 0.10);
+    --check-rgb: 74, 222, 156;
+    --card: #10151F;
+    --card-shadow: 0 1px 2px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      repeating-linear-gradient(0deg, var(--sheet-line) 0 1px, transparent 1px 88px),
+      repeating-linear-gradient(90deg, var(--sheet-line) 0 1px, transparent 1px 88px),
+      var(--sheet);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1160px; margin: 0 auto; padding: 3rem 1.5rem 5rem; }
+
+  /* ── Masthead of the review doc ────────────────────────────────────── */
+  .docHead { margin-bottom: 2.75rem; }
+  .docEyebrow {
+    font-family: var(--font-data);
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  .docEyebrow::before {
+    content: "";
+    width: 22px; height: 1px;
+    background: currentColor;
+    display: inline-block;
+  }
+  h1.docTitle {
+    font-size: clamp(1.7rem, 3.4vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0.6rem 0 0.5rem;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  .docSub { font-size: 1rem; color: var(--ink-70); max-width: 62ch; margin: 0; }
+  .docMeta {
+    margin-top: 1.1rem;
+    display: flex; flex-wrap: wrap; gap: 0.4rem 1.4rem;
+    font-family: var(--font-data);
+    font-size: 0.72rem;
+    color: var(--ink-50);
+  }
+  .docMeta b { color: var(--ink-70); font-weight: 700; }
+
+  /* ── Section shell ──────────────────────────────────────────────────── */
+  section { margin-top: 3rem; }
+  .sectionHead { display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 1.1rem; }
+  .sectionNum {
+    font-family: var(--font-data); font-size: 0.72rem; font-weight: 700;
+    color: var(--accent); letter-spacing: 0.06em;
+  }
+  h2.sectionTitle { font-size: 1.15rem; font-weight: 800; margin: 0; color: var(--ink); }
+  .sectionNote { font-size: 0.88rem; color: var(--ink-50); margin: 0.3rem 0 0; max-width: 68ch; }
+
+  /* ── Finding cards ──────────────────────────────────────────────────── */
+  .findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+  .findCard {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 10px;
+    padding: 1.1rem 1.2rem; box-shadow: var(--card-shadow);
+  }
+  .findSev {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-family: var(--font-data); font-size: 0.62rem; font-weight: 700;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--flag); background: var(--flag-bg);
+    border: 1px solid rgba(var(--flag-rgb), 0.28);
+    padding: 0.16rem 0.55rem; border-radius: 999px;
+  }
+  .findCard h3 { font-size: 0.98rem; margin: 0.65rem 0 0.35rem; }
+  .findCard p { font-size: 0.86rem; color: var(--ink-70); margin: 0; }
+
+  /* ── Phone comparison ──────────────────────────────────────────────── */
+  .compare {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.75rem;
+    align-items: start;
+  }
+  @media (max-width: 820px) { .compare { grid-template-columns: 1fr; } }
+  .col { min-width: 0; }
+  .colLabel {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 0.85rem;
+  }
+  .colLabel .tag {
+    font-family: var(--font-data); font-size: 0.68rem; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .col.before .tag { color: var(--flag); }
+  .col.after .tag { color: var(--check); }
+  .colLabel .sub { font-size: 0.78rem; color: var(--ink-50); }
+
+  .deviceShell {
+    background: linear-gradient(180deg, #23262E, #16181D);
+    border-radius: 34px;
+    padding: 10px;
+    box-shadow: var(--card-shadow);
+    max-width: 340px;
+    margin: 0 auto;
+  }
+  .device {
+    background: var(--p-black);
+    border-radius: 26px;
+    overflow: hidden;
+    font-family: var(--font-sans);
+  }
+  .statusRow {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0.5rem 1rem 0.3rem;
+    font-family: var(--font-data); font-size: 0.68rem; font-weight: 700;
+    color: var(--p-w90);
+  }
+  .statusIcons { display: flex; align-items: center; gap: 0.32rem; }
+  .sigBars { display: flex; align-items: flex-end; gap: 1.5px; height: 8px; }
+  .sigBars span { width: 2.5px; background: var(--p-w90); border-radius: 1px; }
+  .sigBars span:nth-child(1) { height: 40%; } .sigBars span:nth-child(2) { height: 60%; }
+  .sigBars span:nth-child(3) { height: 80%; } .sigBars span:nth-child(4) { height: 100%; }
+  .battery { width: 20px; height: 10px; border: 1px solid var(--p-w90); border-radius: 2px; position: relative; padding: 1px; }
+  .battery::after { content: ""; position: absolute; right: -3px; top: 3px; width: 2px; height: 4px; background: var(--p-w90); border-radius: 0 1px 1px 0; }
+  .battery i { display: block; height: 100%; width: 92%; background: var(--p-w90); border-radius: 1px; }
+
+  /* Sticky masthead specimen */
+  .mh {
+    background: var(--p-black);
+    padding: 0.55rem 1rem;
+    border-bottom: 1px solid var(--p-w08);
+  }
+  .mhRow { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
+  .mhLeft { min-width: 0; }
+  .mhName { font-size: 0.98rem; font-weight: 700; color: var(--p-w90); line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mhMeta { display: flex; gap: 0.45rem; align-items: center; font-family: var(--font-data); font-size: 0.63rem; color: var(--p-w45); margin-top: 0.15rem; }
+  .mhMeta b { color: var(--p-w70); font-weight: 700; }
+  .mhMeta .dot::before { content: "·"; margin-right: 0.45rem; opacity: 0.5; }
+  .mhRight { display: flex; align-items: center; gap: 0.55rem; flex-shrink: 0; }
+  .pill-gameday {
+    font-family: var(--font-data); font-size: 0.6rem; font-weight: 700; letter-spacing: 0.03em;
+    padding: 0.14rem 0.45rem; border-radius: 999px; white-space: nowrap;
+    background: rgba(var(--p-olive-rgb), 0.16); color: var(--p-lime);
+    border: 1px solid rgba(var(--p-olive-rgb), 0.35);
+  }
+  .mhStack { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.22; }
+  .mhStackKey { font-family: var(--font-data); font-size: 0.5rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--p-w45); white-space: nowrap; }
+  .mhStackVal { font-family: var(--font-data); font-size: 0.72rem; font-weight: 700; color: var(--p-w90); white-space: nowrap; }
+
+  /* Attached sub-row (AFTER) */
+  .mhSub {
+    margin-top: 0.5rem; padding-top: 0.45rem;
+    border-top: 1px solid var(--p-w08);
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  }
+  .mhSubLink { font-size: 0.72rem; font-weight: 600; color: var(--p-w80); display: flex; align-items: center; gap: 0.35rem; min-width: 0; }
+  .mhSubLink b { color: var(--p-lime); font-weight: 700; }
+  .xBtn {
+    flex-shrink: 0; width: 18px; height: 18px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--p-w40); font-size: 0.7rem; font-family: var(--font-sans);
+  }
+
+  /* Floating nudge card (BEFORE) */
+  .nudgeCard {
+    margin: 0.5rem 0.85rem 0;
+    background: var(--p-hud);
+    border: 1px solid var(--p-w08);
+    border-left: 3px solid var(--p-lime);
+    border-radius: 8px;
+    padding: 0.5rem 0.7rem;
+    display: flex; align-items: center; justify-content: space-between; gap: 0.5rem;
+  }
+  .nudgeCard .txt { font-size: 0.76rem; font-weight: 600; color: var(--p-w80); }
+
+  /* Page body specimen */
+  .pageBody { padding: 1rem 1rem 0.3rem; background: var(--p-black); }
+  .pageHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.6rem; margin-bottom: 1rem; }
+  .pageTitleRow { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+  .pageTitle { font-size: 1.4rem; font-weight: 900; color: var(--p-w90); margin: 0; line-height: 1.1; }
+  .badge-premium {
+    font-size: 0.52rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--p-black); background: var(--p-lime); border-radius: 999px; padding: 0.14rem 0.42rem;
+  }
+  .badge-tier {
+    font-size: 0.52rem; font-weight: 700; letter-spacing: 0.04em;
+    color: var(--p-w70); background: var(--p-w08); border: 1px solid var(--p-w20);
+    border-radius: 999px; padding: 0.14rem 0.42rem;
+  }
+  .pageSub { font-size: 0.74rem; color: var(--p-w45); margin: 0.28rem 0 0; }
+  .headControls { display: flex; align-items: center; gap: 0.4rem; flex-shrink: 0; }
+  .setupChip {
+    display: flex; align-items: center; gap: 0.3rem;
+    font-family: var(--font-data); font-size: 0.58rem; font-weight: 700; color: var(--p-w70);
+    border: 1px solid var(--p-w20); border-radius: 999px; padding: 0.25rem 0.55rem;
+    white-space: nowrap;
+  }
+  .ring { width: 11px; height: 11px; border-radius: 50%; border: 2px solid var(--p-lime); border-right-color: var(--p-w20); border-bottom-color: var(--p-w20); }
+  .helpDot { width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--p-w20); display: flex; align-items: center; justify-content: center; font-size: 0.66rem; color: var(--p-w45); font-family: var(--font-data); }
+
+  .teaser { border-radius: 10px; border: 1px solid var(--p-w08); background: var(--p-hud); padding: 0.8rem 0.9rem; }
+  .teaser .k { font-family: var(--font-data); font-size: 0.56rem; font-weight: 700; letter-spacing: 0.08em; color: var(--p-lime); text-transform: uppercase; }
+  .teaser .v { font-size: 0.86rem; font-weight: 700; color: var(--p-w90); margin-top: 0.3rem; }
+  .teaser .m { font-size: 0.72rem; color: var(--p-w45); margin-top: 0.15rem; }
+  .fade { height: 2.6rem; margin-top: -2.6rem; background: linear-gradient(180deg, transparent, var(--p-black)); position: relative; pointer-events: none; }
+
+  /* Flag / check markers */
+  .mk {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 15px; height: 15px; border-radius: 50%;
+    font-family: var(--font-data); font-size: 0.6rem; font-weight: 800;
+    flex-shrink: 0; margin-left: 0.3rem;
+  }
+  .mk.flag { background: var(--flag); color: #fff; }
+  .mk.check { background: var(--check); color: #06281d; }
+
+  .callouts { list-style: none; margin: 0.9rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .callouts li { display: flex; gap: 0.55rem; align-items: flex-start; font-size: 0.83rem; color: var(--ink-70); }
+  .callouts .mk { margin-left: 0; margin-top: 0.1rem; }
+  .callouts b { color: var(--ink); }
+
+  /* ── Legend strip ───────────────────────────────────────────────────── */
+  .legend { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .legItem {
+    display: flex; align-items: baseline; gap: 0.5rem;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 9px;
+    padding: 0.65rem 0.85rem; flex: 1 1 260px; box-shadow: var(--card-shadow);
+  }
+  .legTag {
+    font-family: var(--font-data); font-size: 0.6rem; font-weight: 800; letter-spacing: 0.08em;
+    padding: 0.14rem 0.4rem; border-radius: 5px; white-space: nowrap; flex-shrink: 0;
+  }
+  .legTag.unchanged { background: rgba(var(--accent-rgb), 0.12); color: var(--accent); }
+  .legTag.restyled { background: rgba(var(--flag-rgb), 0.12); color: var(--flag); }
+  .legTag.removed { background: var(--rule); color: var(--ink-50); text-decoration: line-through; }
+  .legItem p { margin: 0; font-size: 0.82rem; color: var(--ink-70); }
+
+  /* ── Rationale ──────────────────────────────────────────────────────── */
+  .rationale { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 1.75rem; align-items: start; }
+  @media (max-width: 820px) { .rationale { grid-template-columns: 1fr; } }
+  table.routes { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+  table.routes caption { text-align: left; font-family: var(--font-data); font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-50); margin-bottom: 0.5rem; }
+  table.routes th, table.routes td { text-align: left; padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--rule); }
+  table.routes th { font-family: var(--font-data); font-size: 0.66rem; color: var(--ink-50); font-weight: 700; }
+  table.routes td.route { font-family: var(--font-data); font-size: 0.76rem; color: var(--ink-50); }
+  table.routes tr.outlier td { color: var(--flag); font-weight: 700; }
+  table.routes tr.outlier { background: var(--flag-bg); }
+
+  .quote {
+    background: var(--card); border: 1px solid var(--rule); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 1rem 1.1rem; box-shadow: var(--card-shadow);
+  }
+  .quote p { margin: 0; font-size: 0.9rem; color: var(--ink); font-style: italic; }
+  .quote cite { display: block; margin-top: 0.6rem; font-family: var(--font-data); font-size: 0.68rem; font-style: normal; color: var(--ink-50); }
+
+  footer { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 1px solid var(--rule); font-size: 0.78rem; color: var(--ink-35); }
+</style>
+
+<div class="wrap">
+
+  <div class="docHead">
+    <p class="docEyebrow">FieldLogicHQ · Design Review</p>
+    <h1 class="docTitle">The Coach Overview header says the same two things twice, then floats a third thing between them</h1>
+    <p class="docSub">
+      A review of the mobile Overview screen under <code>/coaches/teams/{teamId}</code> — where the
+      sticky masthead, the scouting-book nudge, and the page's own title band stack at the very top
+      of the screen.
+    </p>
+    <div class="docMeta">
+      <span><b>Screen:</b> Coach Overview, phone width</span>
+      <span><b>Trigger:</b> owner screenshot review</span>
+      <span><b>Date:</b> 2026-08-11</span>
+      <span><b>Status:</b> proposed — not built</span>
+    </div>
+  </div>
+
+  <section>
+    <div class="sectionHead">
+      <span class="sectionNum">01</span>
+      <div>
+        <h2 class="sectionTitle">Two findings</h2>
+        <p class="sectionNote">Both come from the same root cause: chrome that repeats data the screen already shows one line above it.</p>
+      </div>
+    </div>
+    <div class="findings">
+      <div class="findCard">
+        <span class="findSev">Severity — High</span>
+        <h3>Team identity stated twice in one screen height</h3>
+        <p>
+          The page's own <code>&lt;h1&gt;</code> repeats the team name and season that the sticky
+          masthead already shows 8px above it. Every sibling page (Roster, Money, Team&nbsp;Calendar,
+          Tryouts…) titles itself with the page's own name instead — Overview is the one outlier.
+        </p>
+      </div>
+      <div class="findCard">
+        <span class="findSev">Severity — Med-High</span>
+        <h3>The scouting nudge reads as an orphaned third bar</h3>
+        <p>
+          It sits in plain page flow under a <em>sticky</em> masthead, with its own card border and
+          margin — a floating notification wedged between two headers. It also restates the opponent
+          and "today," which the masthead's own Game&nbsp;day line already states one row up.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sectionHead">
+      <span class="sectionNum">02</span>
+      <div>
+        <h2 class="sectionTitle">Before / after, at phone width</h2>
+        <p class="sectionNote">Same season, same game, same data — laid out only once instead of twice.</p>
+      </div>
+    </div>
+
+    <div class="compare">
+      <!-- ══════════════════ BEFORE ══════════════════ -->
+      <div class="col before">
+        <div class="colLabel"><span class="tag">Before — today</span><span class="sub">3 header bars</span></div>
+        <div class="deviceShell">
+          <div class="device">
+            <div class="statusRow">
+              <span>8:04</span>
+              <div class="statusIcons">
+                <div class="sigBars"><span></span><span></span><span></span><span></span></div>
+                <div class="battery"><i></i></div>
+              </div>
+            </div>
+
+            <!-- sticky masthead -->
+            <div class="mh">
+              <div class="mhRow">
+                <div class="mhLeft">
+                  <div class="mhName">toronto blue jays5 <span class="mk flag">1</span></div>
+                  <div class="mhMeta"><span>2026 season <span class="mk flag" style="width:13px;height:13px;font-size:0.52rem;">2</span></span><b class="dot">6-5</b></div>
+                </div>
+                <div class="mhRight">
+                  <span class="pill-gameday">GAME DAY</span>
+                  <div class="mhStack">
+                    <span class="mhStackKey">Northgate Knights</span>
+                    <span class="mhStackVal">6:30 p.m.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- floating nudge -->
+            <div class="nudgeCard">
+              <span class="txt">You play Northgate Knights today — 4 observations in the book ›</span>
+              <span class="xBtn">✕</span>
+            </div>
+            <div style="text-align:right; padding: 0.15rem 0.85rem 0;"><span class="mk flag" style="position:static;">3</span></div>
+
+            <!-- page header, duplicate -->
+            <div class="pageBody">
+              <div class="pageHead">
+                <div>
+                  <div class="pageTitleRow">
+                    <h3 class="pageTitle">toronto blue jays5</h3>
+                    <span class="mk flag">1</span>
+                    <span class="badge-premium">Premium</span>
+                    <span class="badge-tier">U13 Tier 1</span>
+                  </div>
+                  <p class="pageSub">2026 season - Head Coach <span class="mk flag" style="width:13px;height:13px;font-size:0.52rem;">2</span></p>
+                </div>
+                <div class="headControls">
+                  <div class="setupChip"><span class="ring"></span>Setup 4/5</div>
+                  <div class="helpDot">?</div>
+                </div>
+              </div>
+              <div class="teaser">
+                <div class="k">Game day</div>
+                <div class="v">vs Northgate Knights</div>
+                <div class="m">6:30 p.m. · Christie Pits</div>
+              </div>
+              <div class="fade"></div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="callouts">
+          <li><span class="mk flag">1</span><span><b>Team name</b>, printed twice before any content.</span></li>
+          <li><span class="mk flag">2</span><span><b>"2026 season"</b>, printed twice.</span></li>
+          <li><span class="mk flag">3</span><span><b>Floating card</b> — not sticky, own border/radius, restates "Northgate Knights today" from the row above it.</span></li>
+        </ul>
+      </div>
+
+      <!-- ══════════════════ AFTER ══════════════════ -->
+      <div class="col after">
+        <div class="colLabel"><span class="tag">After — proposed</span><span class="sub">1 header, 1 unit</span></div>
+        <div class="deviceShell">
+          <div class="device">
+            <div class="statusRow">
+              <span>8:04</span>
+              <div class="statusIcons">
+                <div class="sigBars"><span></span><span></span><span></span><span></span></div>
+                <div class="battery"><i></i></div>
+              </div>
+            </div>
+
+            <!-- sticky masthead, now carrying the nudge as an attached row -->
+            <div class="mh">
+              <div class="mhRow">
+                <div class="mhLeft">
+                  <div class="mhName">toronto blue jays5</div>
+                  <div class="mhMeta"><span>2026 season</span><b class="dot">6-5</b></div>
+                </div>
+                <div class="mhRight">
+                  <span class="pill-gameday">GAME DAY</span>
+                  <div class="mhStack">
+                    <span class="mhStackKey">Northgate Knights</span>
+                    <span class="mhStackVal">6:30 p.m.</span>
+                  </div>
+                </div>
+              </div>
+              <div class="mhSub">
+                <span class="mhSubLink"><b>4 observations</b>&nbsp;in the book for today's game ›</span>
+                <span class="xBtn">✕</span>
+              </div>
+            </div>
+            <div style="text-align:right; padding: 0.1rem 0.85rem 0;"><span class="mk check" style="position:static;">3</span></div>
+
+            <!-- page header, page-specific title like every sibling page -->
+            <div class="pageBody">
+              <div class="pageHead">
+                <div>
+                  <div class="pageTitleRow">
+                    <h3 class="pageTitle">Overview</h3>
+                    <span class="mk check">1</span>
+                    <span class="badge-premium">Premium</span>
+                    <span class="badge-tier">U13 Tier 1</span>
+                  </div>
+                  <p class="pageSub">Head Coach <span class="mk check" style="width:13px;height:13px;font-size:0.52rem;">2</span></p>
+                </div>
+                <div class="headControls">
+                  <div class="setupChip"><span class="ring"></span>Setup 4/5</div>
+                  <div class="helpDot">?</div>
+                </div>
+              </div>
+              <div class="teaser">
+                <div class="k">Game day</div>
+                <div class="v">vs Northgate Knights</div>
+                <div class="m">6:30 p.m. · Christie Pits</div>
+              </div>
+              <div class="fade"></div>
+            </div>
+          </div>
+        </div>
+
+        <ul class="callouts">
+          <li><span class="mk check">1</span><span>Title reads <b>"Overview"</b> — same convention as Roster, Money, Team Calendar. Team name appears exactly once, in the masthead.</span></li>
+          <li><span class="mk check">2</span><span>Subtitle drops the repeated season — <b>"Head Coach"</b> is the only new fact here.</span></li>
+          <li><span class="mk check">3</span><span>Book nudge is now a <b>row of the sticky bar</b> — scrolls and pins as one unit, leads with the new fact (4 observations), drops "today"/opponent already stated above.</span></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sectionHead">
+      <span class="sectionNum">03</span>
+      <div>
+        <h2 class="sectionTitle">What actually changes</h2>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legItem"><span class="legTag unchanged">Unchanged</span><p>Masthead's team name / season / record / Game&nbsp;day stack, Premium &amp; tier badges, Season&nbsp;setup chip, Help button, page content below.</p></div>
+      <div class="legItem"><span class="legTag restyled">Restyled</span><p>Page <code>&lt;h1&gt;</code> (team name → "Overview"), subtitle (drop season), scouting nudge (moved into the masthead, copy trimmed).</p></div>
+      <div class="legItem"><span class="legTag removed">Removed</span><p>Duplicate team-name heading, duplicate season line, the nudge's card border / radius / floating margin.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="sectionHead">
+      <span class="sectionNum">04</span>
+      <div>
+        <h2 class="sectionTitle">Why this is the fix, not just a preference</h2>
+      </div>
+    </div>
+    <div class="rationale">
+      <div>
+        <table class="routes">
+          <caption>Every sibling page already titles itself this way</caption>
+          <thead><tr><th>Route</th><th>Page title used</th></tr></thead>
+          <tbody>
+            <tr><td class="route">/roster</td><td>Roster</td></tr>
+            <tr><td class="route">/accounting</td><td>Money</td></tr>
+            <tr><td class="route">/schedule</td><td>Team Calendar</td></tr>
+            <tr><td class="route">/tryouts</td><td>Tryouts</td></tr>
+            <tr><td class="route">/documents</td><td>Documents</td></tr>
+            <tr><td class="route">/settings</td><td>Team settings</td></tr>
+            <tr class="outlier"><td class="route">/ (Overview)</td><td>{team name} — the outlier</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="quote">
+        <p>"Chrome content is data the page does not already show" — applied across components, not just within one.</p>
+        <cite>the standing "chrome/rail rule" — design_decisions.md, 2026-08-02, reaffirmed 2026-08-07</cite>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    Source: owner screenshot, Coach Overview, phone width, 2026-08-11. Mockup reproduces
+    <code>CoachTeamHeader.tsx</code> and the Overview page header at their real token values —
+    nothing here is a placeholder style. Not yet built; awaiting sign-off.
+  </footer>
+
+</div>

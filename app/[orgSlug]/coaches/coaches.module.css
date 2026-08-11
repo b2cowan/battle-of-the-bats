@@ -319,10 +319,11 @@
      strip never renders) — the document scrolls underneath, mirroring AdminEventHeader. */
   top: var(--coach-topstrip-h, 0px);
   z-index: 40; /* above page content incl. sticky bottom bars (z2); below sheets (200+) + nav (300) */
+  /* Column, not row: the identity/status row is the first child, and the scouting-book nudge
+     (when present) is an attached second row — one sticky unit rather than a floating card
+     sitting in normal page flow beneath it (design review 2026-08-11). */
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
+  flex-direction: column;
   margin: -2rem -2rem 2rem;
   padding: 0.5rem 2rem;
   min-height: 44px;
@@ -332,6 +333,13 @@
   background-color: var(--pitch-black);
   background-image: linear-gradient(var(--card-bg), var(--card-bg));
   border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
+}
+
+.teamHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 
 /* Masthead hierarchy (Option A, owner-picked 2026-08-02): eyebrow → name → meta, stacked.
@@ -501,6 +509,9 @@
   /* The right slot folds with the rest of the detail — a collapsed phone bar is the bare team
      name, and a chip plus a two-line stack beside it would defeat the point of collapsing. */
   .teamHeaderCollapsed .teamHeaderRight { display: none; }
+  /* The nudge is a second fact about today, not the bare identity a collapsed bar promises —
+     folds away with the rest of the detail rather than surviving as the only non-name content. */
+  .teamHeaderCollapsed .teamHeaderNudge { display: none; }
   /* Uncollapsed on a phone there is far less room: keep the chip and the time, and let the
      opponent's name take whatever is left rather than pushing the team name out. */
   .teamHeaderStackKey { max-width: 10ch; }
@@ -5192,6 +5203,58 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   .moneyCardDesc { display: none; }
 }
 
+/* ── Money hub tab bar (Overview + one tab per section) ───────────────────
+   Same underline-tab idiom as TournamentTopTabs/CoachRecordJumpNav — mono
+   uppercase label, warm-olive underline — but always on (not mobile-only):
+   the whole point is letting a coach hop between Money screens without a
+   trip back through Overview, on desktop as much as on phone. */
+.moneyTabBar {
+  display: flex;
+  gap: 0.15rem;
+  border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
+  margin: 0.9rem 0 1.4rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.moneyTabBar::-webkit-scrollbar { display: none; }
+.moneyTabBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding: 0.55rem 0.85rem;
+  white-space: nowrap;
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.045em;
+  text-transform: uppercase;
+  color: var(--white-45);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color 0.12s ease, border-color 0.12s ease;
+}
+.moneyTabBtn:hover { color: var(--white-70); }
+.moneyTabActive {
+  color: var(--home-olive, var(--logic-lime));
+  border-bottom-color: var(--home-olive, var(--logic-lime));
+}
+
+@media (max-width: 640px) {
+  /* Contained scroll, not full-bleed: unlike TournamentTopTabs (which sits directly
+     under a fixed, viewport-wide header) this tab bar is nested inside .page's own
+     padding — a negative-margin bleed here escaped that padding box and caused the
+     whole document to scroll sideways by a couple pixels (caught by check:layout). */
+  .moneyTabBar {
+    mask-image: linear-gradient(to right, transparent 0, black 12px, black calc(100% - 12px), transparent 100%);
+  }
+  .moneyTabBtn { padding: 0.5rem 0.6rem; font-size: 0.66rem; }
+}
+
 /* ── Sub-page back link (Money et al.) ──────────────────────────────────
    Replaces the (globally hidden) breadcrumb trail on drill-in pages: one
    quiet "back to hub" affordance, flush left above the header icon. */
@@ -7243,29 +7306,34 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
 /* The merge CONFIRM card reuses the .dupeNotice family (schedule's duplicate-event notice)
    — same warning-accent confirm shape, one pattern to maintain, not a parallel set. */
 
-/* Game-week nudge under the masthead (P2) — one quiet line, dismissable once per game. */
-.scoutNudge {
+/* Game-week nudge, attached to the masthead as its own row (P2; re-anchored 2026-08-11) — was a
+   floating card in normal page flow beneath the STICKY masthead, which read as a stray popup
+   wedged between it and the page's own header. A hairline-divided row of the same sticky bar
+   scrolls and pins as one unit instead, and only ever leads with the fact the bar doesn't
+   already state (see CoachTeamHeader's game_day branch). */
+.teamHeaderNudge {
   display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
-  padding: 0.4rem 0.85rem;
-  margin: 0.35rem 0 0;
-  border: 1px solid var(--border-2);
-  border-left: 3px solid var(--logic-lime);
-  border-radius: 8px;
-  background: var(--card-bg);
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
+  border-top: 1px solid var(--home-line, rgba(255,255,255,0.08));
 }
-.scoutNudgeLink { font-size: 0.8rem; font-weight: 600; color: var(--white-80); text-decoration: none; min-width: 0; }
-.scoutNudgeLink:hover { color: var(--logic-lime); }
-.scoutNudgeDismiss {
+.teamHeaderNudgeLink {
+  font-size: 0.76rem; font-weight: 600; color: var(--white-80); text-decoration: none;
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.teamHeaderNudgeLink:hover { color: var(--logic-lime); }
+.teamHeaderNudgeLink b { color: var(--logic-lime); font-weight: 700; }
+.teamHeaderNudgeDismiss {
   flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  width: 22px; height: 22px;
+  width: 20px; height: 20px;
   border-radius: 6px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--white-35);
   cursor: pointer;
 }
-.scoutNudgeDismiss:hover { color: var(--white-70); background: var(--white-10); }
+.teamHeaderNudgeDismiss:hover { color: var(--white-70); background: var(--white-10); }
 
 /* 640 = CONTENT reflow: stats keep three-up (they're small); the log save button goes
    full-width so the tap target isn't squeezed by the tag chips. The numbers lines stack so

@@ -1596,7 +1596,10 @@ export default function TeamOverviewPage({
         <div className={styles.pageHeaderLeft}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <h1 className={styles.pageTitle}>{assignment.teamName}</h1>
+              {/* "Overview", not the team name (design review 2026-08-11): the sticky masthead
+                  directly above already carries the team name + season, and every sibling page
+                  (Roster, Money, Team Calendar…) titles itself the same page-specific way. */}
+              <h1 className={styles.pageTitle}>Overview</h1>
               {isTeamWorkspace && <span className={styles.titlePremiumBadge}>Premium</span>}
               {/* Status badge only when it's NOT the everyday "active" case — an active team
                   needs no label; draft/completed/archived seasons get one so it's noticed. */}
@@ -1610,7 +1613,10 @@ export default function TeamOverviewPage({
               )}
             </div>
             <p className={styles.pageSub}>
-              {seasonLabel} -{' '}
+              {/* The masthead already states the bare year ("2026 season"), so only print
+                  seasonLabel here when an org has actually named the season something more
+                  specific — a bare year would just be the same fact stated a second time. */}
+              {!/^\d{4}$/.test(seasonLabel.trim()) && <>{seasonLabel} -{' '}</>}
               {assignment.coachRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach'}
             </p>
           </div>
