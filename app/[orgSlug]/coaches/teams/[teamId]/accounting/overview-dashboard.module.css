@@ -19,6 +19,14 @@
   gap: 0.8rem;
   margin-bottom: 1.5rem;
 }
+/* Archived seasons: the ledger is absent (instrument, not record), so the rail
+   takes the row alone instead of sitting beside a 2fr hole. */
+.rowSolo {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
 @media (max-width: 860px) {
   .row3, .row2 { grid-template-columns: minmax(0, 1fr); }
 }

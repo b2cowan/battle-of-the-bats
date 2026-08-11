@@ -369,7 +369,11 @@ export default function CoachesAccountingPage({
           {effectiveSection === 'overview' && summary.stage === 'operate' && (
             <OverviewDashboard
               summary={summary}
-              payablesApiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
+              /* Live seasons only: the Next-N-days ledger is an instrument, and its API
+                 resolves the ACTIVE year — in an archive it showed TODAY's payments
+                 (owner ruling 2026-08-11: hide it rather than invent an archived "next
+                 30 days" that never existed). */
+              payablesApiUrl={page.isReadOnly ? undefined : `/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
               hrefs={{
                 dues: sectionHref('dues'),
                 budget: sectionHref('budget'),
@@ -441,13 +445,17 @@ export default function CoachesAccountingPage({
                 </div>
               </div>
 
-              <div style={{ marginBottom: '1.5rem' }}>
-                <UpcomingPayablesPanel
-                  apiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
-                  /* This panel is a 30/60/90-day preview; the schedule tab is every commitment (chunk H). */
-                  fullScheduleUrl={sectionHref('expenses', { tab: 'schedule' })}
-                />
-              </div>
+              {/* Same archive rule as the dashboard's ledger: forward-looking preview,
+                  active-year API — a read-only season doesn't offer it. */}
+              {!page.isReadOnly && (
+                <div style={{ marginBottom: '1.5rem' }}>
+                  <UpcomingPayablesPanel
+                    apiUrl={`/api/coaches/${orgSlug}/teams/${teamId}/upcoming-payables`}
+                    /* This panel is a 30/60/90-day preview; the schedule tab is every commitment (chunk H). */
+                    fullScheduleUrl={sectionHref('expenses', { tab: 'schedule' })}
+                  />
+                </div>
+              )}
 
               {/* Plan */}
               <div className={styles.moneyGroup}>

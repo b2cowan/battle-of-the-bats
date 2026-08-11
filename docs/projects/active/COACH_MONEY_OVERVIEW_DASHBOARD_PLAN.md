@@ -200,20 +200,28 @@ standalone rail rows · archived season (org rows absent) · 60/90 toggle ·
 grouped-row View + Remind deep-links land on the dues tab · phone stack order ·
 footers align at equal height.
 
-## Surfaced by /review — PRE-EXISTING, not caused or fixed by this project
+## Surfaced by /review — pre-existing archive gap, RULED AND FIXED 2026-08-11
 
-**The Money archive door shows the live season's payables timeline.** `Money` is an
+**The Money archive door showed the live season's payables timeline.** `Money` is an
 approved archive door and `money-summary` is season-aware (so `stage`, the cards and
 the rail all reflect the VIEWED season), but `upcoming-payables` resolves the ACTIVE
 program year and is not in `APPROVED_SEASON_AWARE_ROUTES` — so a coach opening an
-archived season's Money tab sees a "Next 30 days" list (previously: the Upcoming
-Payables panel — same data, same gap) populated from TODAY's season. That violates
-archive rule 3 ("show what the coach could see AT THE TIME") for any finished season
-that had dues schedules — the common case, not an edge. Predates this project
-(verified identical in the pre-diff panel usage); fixing it means either hiding the
-ledger on read-only seasons or making the route season-aware, which is an
-allow-list edit — i.e. an owner decision per the archive-opt-in rule. **Owner
-ruling needed; do not fix silently.**
+archived season's Money tab saw a "Next 30 days" list (previously: the Upcoming
+Payables panel — same data, same gap) populated from TODAY's season, violating
+archive rule 3 ("show what the coach could see AT THE TIME"). Predated this project
+(verified identical in the pre-diff panel usage).
+
+**Owner ruling (2026-08-11): hide the instrument in archives** — a finished season
+has no "next 30 days", and any season-aware reconstruction would be a view nobody
+ever saw. Implemented same day: the dashboard's ledger and the setup-stage layout's
+UpcomingPayablesPanel both render only when the viewed season is live
+(`page.isReadOnly` gates both; the dashboard signals it by the payables URL simply
+not being passed, matching the org-rows presence pattern). An archived season's
+Overview keeps the three season-aware story cards and the rail — the season's
+record — with the rail taking the row alone. No allow-list edit, no API change;
+fails closed, same posture as Payment Requests/Allocations in archives. The closed
+season's uncollected-dues story remains available where it is a record: the
+Collections card and the Player Dues tab.
 
 ## Explicitly not in v1
 

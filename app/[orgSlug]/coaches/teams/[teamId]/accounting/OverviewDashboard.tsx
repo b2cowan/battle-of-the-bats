@@ -59,7 +59,11 @@ export interface DashboardHrefs {
 
 interface Props {
   summary: MoneySummary;
-  payablesApiUrl: string;
+  /** Absent on archived (read-only) seasons — the Next-N-days ledger is a
+   *  forward-looking INSTRUMENT (owner ruling 2026-08-11): a finished season
+   *  has no "next 30 days", and the API behind it only knows the active year,
+   *  so rendering it in an archive showed TODAY's payments. No URL, no panel. */
+  payablesApiUrl?: string;
   /** Org-only rows (Allocations, Payment Requests) render iff their href is
    *  present — one signal, owned by the caller that owns the gating rule. */
   hrefs: DashboardHrefs;
@@ -216,16 +220,18 @@ export default function OverviewDashboard({ summary, payablesApiUrl, hrefs }: Pr
         </div>
       </div>
 
-      <div className={styles.row2}>
-        <MoneyNextThirtyDays
-          apiUrl={payablesApiUrl}
-          hrefs={{
-            dues: hrefs.dues,
-            expenses: hrefs.expenses,
-            allocations: hrefs.allocations,
-            fullSchedule: hrefs.expensesSchedule,
-          }}
-        />
+      <div className={payablesApiUrl ? styles.row2 : styles.rowSolo}>
+        {payablesApiUrl && (
+          <MoneyNextThirtyDays
+            apiUrl={payablesApiUrl}
+            hrefs={{
+              dues: hrefs.dues,
+              expenses: hrefs.expenses,
+              allocations: hrefs.allocations,
+              fullSchedule: hrefs.expensesSchedule,
+            }}
+          />
+        )}
 
         {/* ── More in Money: one line + one live stat per surface the story
             cards don't already own; navigation itself belongs to the tab bar. ── */}
