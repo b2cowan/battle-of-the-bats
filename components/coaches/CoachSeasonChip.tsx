@@ -25,10 +25,19 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 export default function CoachSeasonChip({
   season,
   teamBase,
+  extraQuery,
 }: {
   season: SeasonView;
   /** `/{org}/coaches/teams/{teamId}` — where switching seasons lands. */
   teamBase?: string;
+  /**
+   * Extra query string (no leading `?`/`&`) preserved on top of `resolveSeasonSwitchHref`'s
+   * result — ONLY when the switch keeps the coach on the same pathname it resolved from. A
+   * tabbed hub (e.g. Money) puts which screen is showing in a query param rather than the
+   * pathname, so `resolveSeasonSwitchHref` alone can't tell one tab from another and always
+   * lands back on that hub's default view. Pass the hub's own tab param here to keep it.
+   */
+  extraQuery?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
@@ -60,7 +69,14 @@ export default function CoachSeasonChip({
     setOpen(false);
     const target = season.options.find(s => s.programYearId === programYearId);
     if (!target) return;
-    router.push(resolveSeasonSwitchHref(teamBase, pathname, target));
+    let href = resolveSeasonSwitchHref(teamBase, pathname, target);
+    // Only tack extraQuery on when the switch actually kept the coach on this same
+    // pathname — if it fell back to /season-end instead, extraQuery describes a tab on
+    // a page we're no longer landing on.
+    if (extraQuery && href.split('?')[0] === pathname) {
+      href += (href.includes('?') ? '&' : '?') + extraQuery;
+    }
+    router.push(href);
   };
 
   return (

@@ -104,10 +104,13 @@ const DUES_EXPORT_COLS: ExportColumnDef[] = [
   { label: 'Status',     key: 'status',    format: 'text' },
 ];
 
-export default function CoachesDuesPage({
+export function PlayerDuesPanel({
   params: paramsPromise,
+  embedded = false,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
+  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
+  embedded?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -589,17 +592,21 @@ export default function CoachesDuesPage({
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Header */}
-      <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
-        <ArrowLeft size={14} aria-hidden /> Back to Money
-      </Link>
+      {!embedded && (
+        <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
+          <ArrowLeft size={14} aria-hidden /> Back to Money
+        </Link>
+      )}
       <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Users size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Player Dues<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>{page.programYearName}</p>
+        {!embedded && (
+          <div className={styles.pageHeaderLeft}>
+            <div className={styles.headerIcon}><Users size={22} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Player Dues<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+              <p className={styles.pageSub}>{page.programYearName}</p>
+            </div>
           </div>
-        </div>
+        )}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.5rem' }}>
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <ExportMenu
@@ -1318,6 +1325,14 @@ export default function CoachesDuesPage({
       )}
     </div>
   );
+}
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; teamId: string }>;
+}) {
+  return <PlayerDuesPanel params={params} />;
 }
 
 // ── Shared schedule form ──────────────────────────────────────────────────────

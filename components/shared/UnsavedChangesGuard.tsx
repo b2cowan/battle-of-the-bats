@@ -16,9 +16,18 @@ import FeedbackModal from '@/components/FeedbackModal';
  */
 export default function UnsavedChangesGuard({
   active,
+  interceptClicks = active,
   message = 'You have unsaved changes. Leave without saving them?',
 }: {
   active: boolean;
+  /**
+   * Separately gate the in-app click interceptor from the tab-close/refresh warning.
+   * A form that's dirty but not currently on screen (e.g. a background tab in a
+   * tabbed hub — the form itself is still mounted, just hidden) shouldn't hijack
+   * clicks on whatever the coach IS looking at; closing/refreshing the tab would
+   * still lose that work, so `active` alone keeps guarding beforeunload.
+   */
+  interceptClicks?: boolean;
   message?: string;
 }) {
   const router = useRouter();
@@ -33,9 +42,10 @@ export default function UnsavedChangesGuard({
   }, [active]);
 
   // In-app link clicks (capture phase, so we intercept before Next's <Link>).
-  // Only attached while there are unsaved changes.
+  // Only attached while there are unsaved changes AND this guard's own form is
+  // the one actually on screen.
   useEffect(() => {
-    if (!active) return;
+    if (!interceptClicks) return;
     function onClick(e: MouseEvent) {
       // Let modified clicks (new tab, etc.) and non-primary buttons through
       if (e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
@@ -56,7 +66,7 @@ export default function UnsavedChangesGuard({
     }
     document.addEventListener('click', onClick, true);
     return () => document.removeEventListener('click', onClick, true);
-  }, [active]);
+  }, [interceptClicks]);
 
   return (
     <FeedbackModal

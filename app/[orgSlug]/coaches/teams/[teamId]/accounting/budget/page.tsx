@@ -104,10 +104,18 @@ function sameLineForm(a: LineForm, b: LineForm): boolean {
     p.label === b.periods[i].label && p.date === b.periods[i].date && p.amount === b.periods[i].amount);
 }
 
-export default function BudgetPlannerPage({
+export function BudgetPlanPanel({
   params: paramsPromise,
+  embedded = false,
+  tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
+  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
+  embedded?: boolean;
+  /** Is this panel the tab currently on screen? A dirty form left on a tab the coach has
+   *  since switched away from must stop intercepting clicks on whatever tab they're
+   *  actually looking at — see UnsavedChangesGuard's `interceptClicks`. */
+  tabActive?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -312,24 +320,24 @@ export default function BudgetPlannerPage({
   useEffect(() => { load(); }, [load]);
 
   // Deep link from the Money hub / Dues page: ?generate=1 opens the Generate
-  // Installments modal directly (one-shot; only when the CTA would be shown,
-  // which includes money-write capability — read-only coaches never get it).
-  const genDeepLinkDone = useRef(false);
+  // Installments modal directly (only when the CTA would be shown, which includes
+  // money-write capability — read-only coaches never get it). Keyed off the reactive
+  // search param (not a mount-only ref latch): under the Money hub this panel stays
+  // mounted once visited, so the CTA needs to re-open on a SECOND visit too, not just
+  // whichever visit happened to be first.
+  const wantsGenerate = seasonSearchParams.get('generate') === '1';
   useEffect(() => {
-    if (genDeepLinkDone.current || loading || !plan) return;
+    if (!wantsGenerate || loading || !plan) return;
     const a = assignments.find(x => x.teamId === teamId);
     if (!a) return; // assignments still loading — try again next render
-    genDeepLinkDone.current = true;
     if (a.capabilities.money !== 'write') return;
-    const wantsGenerate = typeof window !== 'undefined'
-      && new URLSearchParams(window.location.search).get('generate') === '1';
-    if (wantsGenerate && plan.lines.length > 0 && !plan.hasInstallments) {
+    if (plan.lines.length > 0 && !plan.hasInstallments) {
       setGenOpen(true);
       setGenerateSuccess(false);
       setPreview(null);
       setGenInstallments([{ ...DEFAULT_INSTALLMENT }]);
     }
-  }, [loading, plan, assignments, teamId]);
+  }, [wantsGenerate, loading, plan, assignments, teamId]);
 
   // Deep link from the month grid (chunk H): ?line=<id> opens THIS page's existing edit modal
   // on that line, with its payment periods expanded. The grid is a way to REACH the form that
@@ -361,18 +369,17 @@ export default function BudgetPlannerPage({
   }, [loading, plan, assignments, teamId]);
 
   // Deep link from the Money hub's plan anchor: ?starter=1 opens the budget starter
-  // directly (one-shot; write-capable + still-empty plan only — the ?generate=1 recipe).
-  const starterDeepLinkDone = useRef(false);
+  // directly (write-capable + still-empty plan only — the ?generate=1 recipe above).
+  // Reactive on the search param for the same reason: the panel can stay mounted
+  // across visits under the Money hub, so this needs to re-arm, not fire once ever.
+  const wantsStarter = seasonSearchParams.get('starter') === '1';
   useEffect(() => {
-    if (starterDeepLinkDone.current || loading || !plan) return;
+    if (!wantsStarter || loading || !plan) return;
     const a = assignments.find(x => x.teamId === teamId);
     if (!a) return; // assignments still loading — try again next render
-    starterDeepLinkDone.current = true;
     if (a.capabilities.money !== 'write') return;
-    const wantsStarter = typeof window !== 'undefined'
-      && new URLSearchParams(window.location.search).get('starter') === '1';
-    if (wantsStarter && plan.lines.length === 0) setStarterOpen(true);
-  }, [loading, plan, assignments, teamId]);
+    if (plan.lines.length === 0) setStarterOpen(true);
+  }, [wantsStarter, loading, plan, assignments, teamId]);
 
   async function saveSeasonTotal() {
     setSeasonError('');
@@ -687,17 +694,21 @@ export default function BudgetPlannerPage({
   return (
     <div className={styles.page}>
       {/* Header */}
-      <Link href={`${base}/accounting${seasonQuery}`} className={shared.backLink}>
-        <ArrowLeft size={14} aria-hidden /> Back to Money
-      </Link>
+      {!embedded && (
+        <Link href={`${base}/accounting${seasonQuery}`} className={shared.backLink}>
+          <ArrowLeft size={14} aria-hidden /> Back to Money
+        </Link>
+      )}
       <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><BarChart3 size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Season Budget Plan<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>{assignment.programYearName} — estimated costs</p>
+        {!embedded && (
+          <div className={styles.pageHeaderLeft}>
+            <div className={styles.headerIcon}><BarChart3 size={22} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Season Budget Plan<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+              <p className={styles.pageSub}>{assignment.programYearName} — estimated costs</p>
+            </div>
           </div>
-        </div>
+        )}
         {moneyCanWrite && (
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
             {/* Chunk H2 — available at every page state, not only on a blank plan: a coach
@@ -1479,8 +1490,17 @@ export default function BudgetPlannerPage({
       {/* The discard guards cover dismissing a sheet; this covers walking away from one. */}
       <UnsavedChangesGuard
         active={lineDirty || genDirty}
+        interceptClicks={(lineDirty || genDirty) && tabActive}
         message="You haven't saved what you entered on this form. Leave without saving it?"
       />
     </div>
   );
+}
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; teamId: string }>;
+}) {
+  return <BudgetPlanPanel params={params} />;
 }

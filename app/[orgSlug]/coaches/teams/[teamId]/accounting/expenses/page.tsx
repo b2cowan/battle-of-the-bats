@@ -58,10 +58,16 @@ const BLANK_PAYABLE = {
   paymentMethod: '',
 };
 
-export default function CoachesExpensesPage({
+export function ExpensesPayablesPanel({
   params: paramsPromise,
+  embedded = false,
+  tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
+  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
+  embedded?: boolean;
+  /** Is this panel the tab currently on screen? See UnsavedChangesGuard's `interceptClicks`. */
+  tabActive?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -215,12 +221,15 @@ export default function CoachesExpensesPage({
 
   useEffect(() => { if (tab === 'schedule') loadSchedule(); }, [tab, loadSchedule]);
 
-  // ?tab=schedule — where a Scheduled cell in the month grid lands. Read once on mount.
+  // ?tab=schedule — where a Scheduled cell in the month grid (or the Money hub's
+  // "See full schedule" link) lands. Reactive on the search param, not mount-only: under
+  // the Money hub this panel can stay mounted across visits, so revisiting with the
+  // param freshly set (e.g. clicking "See full schedule" a second time) needs to jump
+  // the sub-tab again, not silently do nothing because it already fired once before.
+  const wantedTab = seasonSearchParams.get('tab');
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const wanted = new URLSearchParams(window.location.search).get('tab');
-    if (wanted === 'schedule' || wanted === 'payables' || wanted === 'expenses') setTab(wanted);
-  }, []);
+    if (wantedTab === 'schedule' || wantedTab === 'payables' || wantedTab === 'expenses') setTab(wantedTab);
+  }, [wantedTab]);
 
   // Create a new money tag on the fly from the combobox; returns the new tag so the picker can
   // select it immediately. Adds it to the loaded library so it shows up without a full reload.
@@ -446,20 +455,24 @@ export default function CoachesExpensesPage({
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
-        <ArrowLeft size={14} aria-hidden /> Back to Money
-      </Link>
+      {!embedded && (
+        <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
+          <ArrowLeft size={14} aria-hidden /> Back to Money
+        </Link>
+      )}
       <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Receipt size={22} /></div>
-          <div>
-            {/* "Tournament" retired (chunk H, D-H9): the same record has always handled a dome
-                booking or an equipment order just as well as a tournament entry — only the
-                words assumed otherwise. The stored type is unchanged. */}
-            <h1 className={styles.pageTitle}>Expenses &amp; Payables<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>{page.programYearName}</p>
+        {!embedded && (
+          <div className={styles.pageHeaderLeft}>
+            <div className={styles.headerIcon}><Receipt size={22} /></div>
+            <div>
+              {/* "Tournament" retired (chunk H, D-H9): the same record has always handled a dome
+                  booking or an equipment order just as well as a tournament entry — only the
+                  words assumed otherwise. The stored type is unchanged. */}
+              <h1 className={styles.pageTitle}>Expenses &amp; Payables<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+              <p className={styles.pageSub}>{page.programYearName}</p>
+            </div>
           </div>
-        </div>
+        )}
         <div style={{ display: 'flex', gap: '0.5rem' }}>
           {/* ⚠ These two were the ONLY ungated write affordances on the page — every other one
               already checked canWriteMoney. A read-only money assistant could open either sheet,
@@ -1002,8 +1015,17 @@ export default function CoachesExpensesPage({
           a tap on the sidebar, the bottom nav, or a browser refresh mid-form. */}
       <UnsavedChangesGuard
         active={(showAddExpense && expenseDirty) || (showAddPayable && payableDirty)}
+        interceptClicks={((showAddExpense && expenseDirty) || (showAddPayable && payableDirty)) && tabActive}
         message="You haven't saved what you entered on this form. Leave without saving it?"
       />
     </div>
   );
+}
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; teamId: string }>;
+}) {
+  return <ExpensesPayablesPanel params={params} />;
 }

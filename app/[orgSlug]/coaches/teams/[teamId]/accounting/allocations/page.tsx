@@ -29,10 +29,13 @@ function fmtDate(s: string) {
   return d.toLocaleDateString('en-CA', { year: 'numeric', month: 'short', day: 'numeric' });
 }
 
-export default function CoachesAllocationsPage({
+export function OrgAllocationsPanel({
   params: paramsPromise,
+  embedded = false,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
+  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
+  embedded?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -111,18 +114,22 @@ export default function CoachesAllocationsPage({
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      <Link href={`${base}/accounting`} className={styles.backLink}>
-        <ArrowLeft size={14} aria-hidden /> Back to Money
-      </Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Building2 size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Org Allocations</h1>
-            <p className={styles.pageSub}>{assignment.programYearName}</p>
+      {!embedded && (
+        <Link href={`${base}/accounting`} className={styles.backLink}>
+          <ArrowLeft size={14} aria-hidden /> Back to Money
+        </Link>
+      )}
+      {!embedded && (
+        <div className={styles.pageHeader}>
+          <div className={styles.pageHeaderLeft}>
+            <div className={styles.headerIcon}><Building2 size={22} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Org Allocations</h1>
+              <p className={styles.pageSub}>{assignment.programYearName}</p>
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {loading ? (
         <p className={styles.muted}>Loading…</p>
@@ -284,4 +291,12 @@ export default function CoachesAllocationsPage({
       )}
     </div>
   );
+}
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; teamId: string }>;
+}) {
+  return <OrgAllocationsPanel params={params} />;
 }

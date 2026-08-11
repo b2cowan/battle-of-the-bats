@@ -5218,16 +5218,63 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
    uppercase label, warm-olive underline — but always on (not mobile-only):
    the whole point is letting a coach hop between Money screens without a
    trip back through Overview, on desktop as much as on phone. */
+/* The row scrolls when it must, but a hidden scrollbar means the truncation is INVISIBLE —
+   at 960px the 8th tab simply stopped mid-word with nothing saying more existed (reported
+   from a real screenshot). Each edge that has something hidden past it gets a fade AND a
+   real arrow BUTTON that scrolls the row. ⚠ The arrows were briefly `pointer-events: none`
+   decoration — they looked clickable, and the click fell straight through to the tab
+   underneath. An arrow is a control or it is not an arrow. */
+/* ⚠ The row's margins live on the WRAPPER, not on the nav. With them on the nav they
+   collapsed straight through this (padding-less, border-less) wrapper, so the wrapper
+   measured only its content and the absolutely-positioned arrows — inset by those same
+   margins — rendered 8px tall, far under the 44px tap floor. Caught by check:layout. */
+.moneyTabBarWrap { position: relative; margin: 0.9rem 0 1.4rem; }
 .moneyTabBar {
   display: flex;
   gap: 0.15rem;
   border-bottom: 1px solid rgba(var(--blueprint-blue-rgb), 0.15);
-  margin: 0.9rem 0 1.4rem;
   overflow-x: auto;
+  scroll-behavior: smooth;
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 .moneyTabBar::-webkit-scrollbar { display: none; }
+/* Fades apply per-edge, so an end-of-row never fades against nothing. */
+.moneyTabFadeRight {
+  mask-image: linear-gradient(to right, black 0, black calc(100% - 40px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black 0, black calc(100% - 40px), transparent 100%);
+}
+.moneyTabFadeLeft {
+  mask-image: linear-gradient(to right, transparent 0, black 40px);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px);
+}
+.moneyTabFadeLeft.moneyTabFadeRight {
+  mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 40px, black calc(100% - 40px), transparent 100%);
+}
+.moneyTabScrollBtn {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  color: var(--home-olive, var(--logic-lime));
+  z-index: 2;
+}
+.moneyTabScrollBtn:hover { color: var(--white-90); }
+.moneyTabScrollLeft {
+  left: 0;
+  background: linear-gradient(to right, var(--home-paper, var(--bg)) 55%, transparent);
+}
+.moneyTabScrollRight {
+  right: 0;
+  background: linear-gradient(to left, var(--home-paper, var(--bg)) 55%, transparent);
+}
 .moneyTabBtn {
   display: inline-flex;
   align-items: center;
@@ -5259,9 +5306,6 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
      under a fixed, viewport-wide header) this tab bar is nested inside .page's own
      padding — a negative-margin bleed here escaped that padding box and caused the
      whole document to scroll sideways by a couple pixels (caught by check:layout). */
-  .moneyTabBar {
-    mask-image: linear-gradient(to right, transparent 0, black 12px, black calc(100% - 12px), transparent 100%);
-  }
   .moneyTabBtn { padding: 0.5rem 0.6rem; font-size: 0.66rem; }
 }
 

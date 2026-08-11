@@ -35,10 +35,16 @@ function fmtDate(d: string | null) {
   return new Date(d + 'T00:00:00').toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-export default function FundraisersListPage({
+export function FundraisersPanel({
   params: paramsPromise,
+  embedded = false,
+  tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
+  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
+  embedded?: boolean;
+  /** Is this panel the tab currently on screen? See UnsavedChangesGuard's `interceptClicks`. */
+  tabActive?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -149,17 +155,21 @@ export default function FundraisersListPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
-        <ArrowLeft size={14} aria-hidden /> Back to Money
-      </Link>
+      {!embedded && (
+        <Link href={`${base}/accounting${seasonQuery}`} className={styles.backLink}>
+          <ArrowLeft size={14} aria-hidden /> Back to Money
+        </Link>
+      )}
       <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Gift size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Fundraisers<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>{page.programYearName}</p>
+        {!embedded && (
+          <div className={styles.pageHeaderLeft}>
+            <div className={styles.headerIcon}><Gift size={22} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Fundraisers<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+              <p className={styles.pageSub}>{page.programYearName}</p>
+            </div>
           </div>
-        </div>
+        )}
         {canWriteMoney && (
           <button className={styles.btnPrimary} onClick={openModal}>
             <Plus size={16} /> New Fundraiser
@@ -315,8 +325,17 @@ export default function FundraisersListPage({
 
       <UnsavedChangesGuard
         active={showModal && formDirty}
+        interceptClicks={showModal && formDirty && tabActive}
         message="You haven't created this fundraiser yet. Leave without saving it?"
       />
     </div>
   );
+}
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; teamId: string }>;
+}) {
+  return <FundraisersPanel params={params} />;
 }

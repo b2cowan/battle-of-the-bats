@@ -80,10 +80,16 @@ function TypeBadge({ type }: { type: string }) {
   );
 }
 
-export default function PaymentRequestsPage({
+export function PaymentRequestsPanel({
   params: paramsPromise,
+  embedded = false,
+  tabActive = true,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
+  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
+  embedded?: boolean;
+  /** Is this panel the tab currently on screen? See UnsavedChangesGuard's `interceptClicks`. */
+  tabActive?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -208,17 +214,21 @@ export default function PaymentRequestsPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/accounting`} className={styles.backLink}>
-        <ArrowLeft size={14} aria-hidden /> Back to Money
-      </Link>
+      {!embedded && (
+        <Link href={`${base}/accounting`} className={styles.backLink}>
+          <ArrowLeft size={14} aria-hidden /> Back to Money
+        </Link>
+      )}
       <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><ArrowUpRight size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Payment Requests</h1>
-            <p className={styles.pageSub}>{assignment.programYearName}</p>
+        {!embedded && (
+          <div className={styles.pageHeaderLeft}>
+            <div className={styles.headerIcon}><ArrowUpRight size={22} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Payment Requests</h1>
+              <p className={styles.pageSub}>{assignment.programYearName}</p>
+            </div>
           </div>
-        </div>
+        )}
         {/* Same gap the Expenses page had: this page never checked the money capability at all,
             so a read-only assistant was offered a form the server would refuse. */}
         {canWriteMoney && (
@@ -466,8 +476,17 @@ export default function PaymentRequestsPage({
 
       <UnsavedChangesGuard
         active={showForm && formDirty}
+        interceptClicks={showForm && formDirty && tabActive}
         message="You haven't submitted this payment request. Leave without saving it?"
       />
     </div>
   );
+}
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; teamId: string }>;
+}) {
+  return <PaymentRequestsPanel params={params} />;
 }

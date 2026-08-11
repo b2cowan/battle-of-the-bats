@@ -28,6 +28,12 @@
   flex-wrap: wrap;
 }
 
+/* Trailing header controls pin RIGHT even when they are the header's only child — the Money
+   hub case, where the title block is suppressed because the hub already shows it. Same
+   drift as budget.module.css: this local copy never gained the shared rule, so the Export
+   menu collapsed left here while panels on the shared class stayed right. */
+.pageHeader > *:last-child:not(.pageHeaderLeft) { margin-left: auto; }
+
 .pageHeaderLeft {
   display: flex;
   align-items: center;

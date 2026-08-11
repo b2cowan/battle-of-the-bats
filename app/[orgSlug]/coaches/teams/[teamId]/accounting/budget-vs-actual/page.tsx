@@ -184,10 +184,13 @@ function CumulativeChart({ data }: { data: MonthlyPoint[] }) {
   );
 }
 
-export default function BudgetVsActualPage({
+export function BudgetVsActualPanel({
   params: paramsPromise,
+  embedded = false,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
+  /** Rendered as a Money hub tab — suppress the standalone "back to Money" affordance. */
+  embedded?: boolean;
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
@@ -483,17 +486,21 @@ export default function BudgetVsActualPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/accounting${seasonQuery}`} className={shared.backLink}>
-        <ArrowLeft size={14} aria-hidden /> Back to Money
-      </Link>
+      {!embedded && (
+        <Link href={`${base}/accounting${seasonQuery}`} className={shared.backLink}>
+          <ArrowLeft size={14} aria-hidden /> Back to Money
+        </Link>
+      )}
       <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><TrendingUp size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Budget vs. Actual<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>{page.programYearName}</p>
+        {!embedded && (
+          <div className={styles.pageHeaderLeft}>
+            <div className={styles.headerIcon}><TrendingUp size={22} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Budget vs. Actual<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
+              <p className={styles.pageSub}>{page.programYearName}</p>
+            </div>
           </div>
-        </div>
+        )}
         <ExportMenu
           formats={['xlsx', 'csv', 'pdf']}
           onExportXLSX={handleExportXLSX}
@@ -931,4 +938,12 @@ export default function BudgetVsActualPage({
       )}
     </div>
   );
+}
+
+export default function Page({
+  params,
+}: {
+  params: Promise<{ orgSlug: string; teamId: string }>;
+}) {
+  return <BudgetVsActualPanel params={params} />;
 }

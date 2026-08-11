@@ -15,6 +15,13 @@
   flex-wrap: wrap;
 }
 
+/* Trailing header controls pin RIGHT even when they are the header's only child — which is
+   exactly the case in the Money hub, where the title block is suppressed because the hub
+   already shows it. This local .pageHeader is a copy of the shared one in coaches.module.css
+   and had drifted: the shared rule gained this line, this copy never did, so Import/Add Line
+   collapsed to the left here while the four panels using the shared class stayed right. */
+.pageHeader > *:last-child:not(.pageHeaderLeft) { margin-left: auto; }
+
 .pageHeaderLeft {
   display: flex;
   align-items: center;
