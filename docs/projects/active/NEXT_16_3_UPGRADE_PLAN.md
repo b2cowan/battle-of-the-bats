@@ -1,10 +1,12 @@
 # Next.js 16.2.4 → 16.3.0 — Upgrade Plan
 
-**Status:** IN EXECUTION 2026-08-12 — §10 Steps 0–3 DONE: **16.3.0 on dev (`8d0688b6`)**, V1–V6
-green, §12 measured both sides; Gate 3 delivered and **D6 executed** (supervisor + heap ceiling +
-sweep guards KEPT on the measured verdict; dev.mjs / memory-guard / AGENTS.md reworded to match —
-the self-retirement notice now aims at >16.3). Now: Step 4 (V7 prod-build test + 2–3 day V8 soak);
-Step 5 promote ⛔ is the owner's.
+**Status:** RELEASING 2026-08-12 — §10 Steps 0–4 DONE: **16.3.0 on dev (`8d0688b6`)**, V1–V7 all
+green and measured both sides (§12 complete); Gate 3 delivered, **D6 executed** (nets KEPT on the
+measured verdict, docs reworded, `bf594ea7`). **V8 soak WAIVED by owner 2026-08-12** — no active
+prod customers yet, so prod itself is the bake window and the §9 rollback ladder (console redeploy
+in minutes) covers the residual risk; the soak's watch items (dev.mjs restart counter, #96705
+stale-HMR symptom) carry into normal dev use instead. Step 5 promote: owner-directed 2026-08-12,
+proceeding via the normal release flow.
 **Companion:** [NEXT_16_3_UPGRADE_PM_BRIEF.md](NEXT_16_3_UPGRADE_PM_BRIEF.md) (plain-language brief)
 **Origin:** [NEXT_16_3_UPGRADE_PROMPT.md](NEXT_16_3_UPGRADE_PROMPT.md) — its 2026-08-11 measurements and claims were
 re-verified per its own instruction; the corrections are in §1.
@@ -310,8 +312,8 @@ V7's measured prod-build test is what finally closes it, on this machine, with n
 | 1 ⛔ | Promote the pending 20 feature commits as their own release (normal `/release` flow) | ✅ DONE 2026-08-12 — promoted to prod; dev == origin/master at execution start |
 | 2 | On dev: V0 baseline → bump commit (`next` + `eslint-config-next` + `sharp` + `agentRules:false` + both lockfiles) → V1–V6 | The upgrade exists on dev, fully verified locally; before/after memory numbers exist |
 | 3 ⛔ | Report V4 verdict to owner → D6 retirement decision → follow-up commit (supervisor removal and/or doc rewording, only as measured) | ✅ DONE 2026-08-12 — verdict reported; owner ruled "go ahead"; supervisor/guards KEPT, docs reworded (this commit) |
-| 4 | V7 prod-build test + V8 soak (2–3 days). If 16.3.1 stable lands: bump to it, re-run V1/V4a/V5 | Confidence for the promote; prod-leak question closed with numbers |
-| 5 ⛔ | Promote the upgrade **alone** → V9 → post-release truth-up per `.claude/commands/release.md` Phase 2b | 16.3.x live; security exposure closed; records updated |
+| 4 | V7 prod-build test + V8 soak (2–3 days). If 16.3.1 stable lands: bump to it, re-run V1/V4a/V5 | ✅ V7 DONE 2026-08-12 (§12: artifact −4.6 MB, prod slope 0.04/plateau, icons render); **V8 soak WAIVED by owner 2026-08-12** (no active prod customers — prod is the bake; watch items ride normal dev use) |
+| 5 ⛔ | Promote the upgrade **alone** → V9 → post-release truth-up per `.claude/commands/release.md` Phase 2b | Owner-directed 2026-08-12 — in progress |
 
 Elapsed: dev-side work is a same-day affair; the promote lands ~3–4 days after approval, soak
 permitting. If anything in V1–V7 fails in a way that can't be resolved same-day, stop and report —
@@ -368,8 +370,13 @@ fresh server; V4 repeats the same split.
 | Plateau observed? | **NO — dead linear through req 220** (last-third slope 2.05) | **NO — same linearity** | — |
 | Per-compile cost, coach route (MB) | **coach-overview 261–264** (3 runs); siblings 6–13 once portal chrome is compiled (team-hub 12.5, notifications 6.1) | **coach-overview 72–82 (−70%)**; siblings 4–22; **coach-help 456 settled — IT COMPILES AND THE SERVER LIVES** (was a 3/3-deterministic V8 fatal on 16.2.4) | **PASS — the compile-memory fix is real here** |
 | Post-sweep heap vs cold boot (V4b) | **No eviction:** 180 s idle returned 1.3 MB (317.8→316.5, 8.3× cold boot; walk truncated — see fatality below) | Full 15-route walk **completes** at 692 MB heap (11% of ceiling); idle +180 s: heap 717 (11.1× cold — strict heap-shrink criterion NOT met) but **RSS 2987→1181 MB (−1.8 GB returned to the OS)**; linear-growth-per-route is broken | **PASS on the alternative criterion** — eviction works at process level, not V8-heap level; "swept = spent" softens accordingly |
-| Prod build (`next start`) slope, 200 req | **0.00 MB/req, plateau YES** (heap 89→101 MB total over 200 req; rss ~180 MB) — **prod does NOT leak; the §7/§11 "UNPROVEN" is now closed on this machine** | — (V7, during soak) | — |
-| `.next` artifact size | server 70.4 MB · static 14.7 MB · **~175 MB** incl. root manifests/types (excl. the 3.5 GB `.next/dev` Turbopack cache, which never deploys) — vs the 220 MB context | — (V7, during soak) | — |
+| Prod build (`next start`) slope, 200 req | **0.00 MB/req, plateau YES** (heap 89→101 MB total over 200 req; rss ~180 MB) — **prod does NOT leak; the §7/§11 "UNPROVEN" is now closed on this machine** | **0.04 MB/req, last-third 0.00, plateau YES** (heap 76→93 MB; measured 2026-08-12) | **PASS — prod leak-free on both versions** |
+| `.next` artifact size | server 70.4 MB · static 14.7 MB · **~175 MB** incl. root manifests/types (excl. the 3.5 GB `.next/dev` Turbopack cache, which never deploys) — vs the 220 MB context | server **65.8 MB (−4.6)** · static 14.7 · **~170.5 MB** total — one sharp binary (lockstep held) | **PASS — artifact shrank** |
+
+**V7 completed 2026-08-12** (build `8d0688b6` + D6 `bf594ea7` on dev): canonical build clean; icon
+routes render through sharp 0.35.3 on the prod build (`…/icon-maskable` 200 image/png 7637 B,
+`apple-icon` 200 image/png 2372 B against the demo tournament); the measurable run used the
+dev-env-build method recorded at §8 V7. Remaining before promote: V8 soak (2–3 days) → Step 5 ⛔.
 
 **V1–V6 battery on 16.3.0 (all run 2026-08-12):** V1 typecheck 0 errors (against fresh `next typegen`
 output — note: BUILD-generated `.next/types` stubs reject the Money-hub pages' extra named exports on
