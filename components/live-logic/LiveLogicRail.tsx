@@ -35,15 +35,15 @@ export function LiveLogicRail() {
             </span>
             <button
               onClick={() => dismiss(event.id)}
-              className="font-mono text-[10px] text-data-gray/50 hover:text-data-gray leading-none"
+              className="font-mono text-[10px] text-data-gray hover:text-data-gray leading-none"
               aria-label="Dismiss"
             >
               ×
             </button>
           </div>
-          <div className="font-mono text-[10px] text-data-gray/70 tracking-wider">{event.title}</div>
+          <div className="font-mono text-[10px] text-data-gray tracking-wider">{event.title}</div>
           <div className="font-mono text-xs text-fl-text/80 leading-snug mt-0.5">{event.detail}</div>
-          <div className="font-mono text-[9px] text-data-gray/40 mt-1">
+          <div className="font-mono text-[9px] text-data-gray mt-1">
             {event.timestamp.toLocaleTimeString('en-CA', { hour12: false })}
           </div>
         </div>

@@ -46,7 +46,7 @@ function formatDate(value: string) {
 
 function badgeClass(status: string) {
   if (status === 'linked' || status === 'org_owned') return 'border-green-500/35 text-green-300 bg-green-500/10';
-  if (status === 'declined' || status === 'revoked') return 'border-white/10 text-white/35 bg-white/5';
+  if (status === 'declined' || status === 'revoked') return 'border-white/10 text-data-gray bg-white/5';
   return 'border-yellow-400/35 text-yellow-300 bg-yellow-400/10';
 }
 

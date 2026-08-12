@@ -313,13 +313,13 @@ export default async function HomePage({
                 <span className="font-mono text-xs text-logic-lime uppercase tracking-widest font-bold">
                   Founding Season
                 </span>
-                <span className="font-mono text-xs text-data-gray/40">·</span>
+                <span className="font-mono text-xs text-data-gray/40" aria-hidden="true">·</span>
                 <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
                   {bothPromosLive
                     ? 'Tournament Plus & Premium Coaches Portal free through Dec 31, 2026'
                     : 'Tournament Plus free through Dec 31, 2026'}
                 </span>
-                <span className="font-mono text-xs text-data-gray/40">·</span>
+                <span className="font-mono text-xs text-data-gray/40" aria-hidden="true">·</span>
                 <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
                   No credit card required
                 </span>
@@ -350,16 +350,16 @@ export default async function HomePage({
                           rather than empty, so a future path that does yield no badge leaves no
                           stray element in the flex row. */}
                       {p.badge && (
-                        <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray/40'}`}>
+                        <span className={`font-mono text-[9px] uppercase tracking-widest text-right leading-relaxed ${p.isLive ? 'text-logic-lime' : 'text-data-gray'}`}>
                           {p.badge}
                         </span>
                       )}
                     </div>
                     <p className="font-mono text-sm font-bold text-fl-text leading-snug">{p.question}</p>
-                    <p className="font-mono text-xs text-data-gray/70 leading-relaxed flex-1">{p.body}</p>
+                    <p className="font-mono text-xs text-data-gray leading-relaxed flex-1">{p.body}</p>
                   </>
                 );
-                const ctaClass = `font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray/50'}`;
+                const ctaClass = `font-mono text-[10px] uppercase tracking-widest ${p.isLive ? 'text-logic-lime' : 'text-data-gray'}`;
 
                 // The TWIN DOOR (owner-ratified 2026-08-10): every live persona whose product has
                 // a public demo carries a second, quieter link into it — proof one step after the
@@ -414,7 +414,7 @@ export default async function HomePage({
           </AnimateIn>
 
           <div className={styles.heroFooterNote}>
-            <span className="font-mono text-xs text-data-gray/50 uppercase tracking-widest">
+            <span className="font-mono text-xs text-data-gray uppercase tracking-widest">
               Already know what you need?
             </span>
             <Link
@@ -425,7 +425,7 @@ export default async function HomePage({
             </Link>
             <Link
               href="/start"
-              className="font-mono text-xs uppercase tracking-widest text-data-gray/60 hover:text-fl-text transition-colors"
+              className="font-mono text-xs uppercase tracking-widest text-data-gray hover:text-fl-text transition-colors"
             >
               Not sure? See your options →
             </Link>
@@ -455,7 +455,7 @@ export default async function HomePage({
                   <div key={mod.id} className="border border-blueprint-blue/30 p-8 flex flex-col gap-5 hover:border-blueprint-blue/60 transition-colors">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <span className="font-mono text-[10px] text-data-gray/40 uppercase tracking-widest">{mod.id}</span>
+                        <span className="font-mono text-[10px] text-data-gray uppercase tracking-widest">{mod.id}</span>
                         <h3 className="font-mono text-sm font-bold text-fl-text uppercase tracking-wide mt-0.5">{mod.name}</h3>
                       </div>
                       <span className="font-mono text-[10px] text-logic-lime uppercase tracking-widest text-right leading-relaxed">{mod.planLabel} · {mod.liveBadge}</span>
@@ -463,7 +463,7 @@ export default async function HomePage({
                     <p className="font-mono text-xs text-data-gray leading-relaxed">{mod.tagline}</p>
                     <ul className="flex flex-col gap-2 flex-1">
                       {mod.features.map(f => (
-                        <li key={f} className="font-mono text-xs text-data-gray/70 flex gap-2">
+                        <li key={f} className="font-mono text-xs text-data-gray flex gap-2">
                           <span className="text-logic-lime flex-shrink-0">—</span>
                           <span>{f}</span>
                         </li>
@@ -489,10 +489,10 @@ export default async function HomePage({
                       className="border border-blueprint-blue/20 px-6 py-4 flex flex-wrap items-baseline gap-x-4 gap-y-1 hover:border-blueprint-blue/50 transition-colors"
                     >
                       <span className="font-mono text-xs font-bold text-data-gray uppercase tracking-wide">{mod.name}</span>
-                      <span className="font-mono text-[10px] text-data-gray/40 uppercase tracking-widest">{mod.planLabel} · In development</span>
-                      <span className="font-mono text-xs text-data-gray/70 leading-relaxed w-full">
+                      <span className="font-mono text-[10px] text-data-gray uppercase tracking-widest">{mod.planLabel} · In development</span>
+                      <span className="font-mono text-xs text-data-gray leading-relaxed w-full">
                         {mod.stripLine}{' '}
-                        <span className="text-data-gray/50 uppercase text-[10px] tracking-widest">Learn more →</span>
+                        <span className="text-data-gray uppercase text-[10px] tracking-widest">Learn more →</span>
                       </span>
                     </Link>
                   ))}
@@ -554,8 +554,8 @@ export default async function HomePage({
                 <span className="font-mono text-[0.6rem] font-bold uppercase tracking-widest text-logic-lime">
                   Founding Season
                 </span>
-                <span className="font-mono text-[0.6rem] text-data-gray/40">·</span>
-                <span className="font-mono text-[0.6rem] uppercase tracking-widest text-data-gray/70">
+                <span className="font-mono text-[0.6rem] text-data-gray/40" aria-hidden="true">·</span>
+                <span className="font-mono text-[0.6rem] uppercase tracking-widest text-data-gray">
                   Free through December 31, 2026
                 </span>
               </div>
@@ -564,7 +564,7 @@ export default async function HomePage({
                   ? `Tournament Plus (${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month) and the Premium Coaches Portal (${formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month) are free for organizations and coaches that sign up before the end of 2026.`
                   : `Tournament Plus (${formatPriceAmount(PLAN_CONFIG.tournament_plus.monthlyPrice)}/month) is free for organizations that sign up before the end of 2026.`}
               </p>
-              <p className="font-mono text-xs text-data-gray/70 leading-relaxed">
+              <p className="font-mono text-xs text-data-gray leading-relaxed">
                 We&apos;re in our founding season — we want real tournaments and real teams on the
                 platform, not demos. Sign up today and run your season at no cost through December 31.
               </p>
@@ -613,7 +613,7 @@ export default async function HomePage({
             {PLATFORM_BENEFITS.map(({ id, module, entry }, i) => (
               <AnimateIn key={id} delay={i * 120}>
                 <div className="border-l-2 border-blueprint-blue bg-hud-surface p-6 flex flex-col gap-4">
-                  <div className="font-mono text-[10px] text-data-gray/50 uppercase tracking-widest">
+                  <div className="font-mono text-[10px] text-data-gray uppercase tracking-widest">
                     {module}
                   </div>
                   <p className="font-mono text-xs text-fl-text/80 leading-relaxed">{entry}</p>

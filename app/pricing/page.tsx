@@ -329,7 +329,7 @@ export default async function PricingPage() {
               : 'Tournament and Tournament Plus are available now. League Plus and Club are open for early interest.'}
           </p>
           <ComparisonTable />
-          <p className="font-mono text-xs text-data-gray/50 mt-4 text-center">
+          <p className="font-mono text-xs text-data-gray mt-4 text-center">
             League Plus and Club are available for early interest — express interest to be notified when self-serve checkout opens.
             {teamCheckoutOpen
               ? ' The Premium Coaches Portal is available standalone for coaches managing one team — see the plans above.'

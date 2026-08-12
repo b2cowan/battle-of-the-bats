@@ -103,7 +103,7 @@ export default function RepTeamsPage() {
       {/* Plan callout */}
       <section className="py-12 border-t border-blueprint-blue/20">
         <div className="max-w-4xl mx-auto px-6">
-          <p className="font-mono text-xs text-data-gray/50 uppercase tracking-widest mb-4">Included in</p>
+          <p className="font-mono text-xs text-data-gray uppercase tracking-widest mb-4">Included in</p>
           <div className="flex flex-wrap gap-3 mb-6">
             {['Club'].map(plan => (
               <span

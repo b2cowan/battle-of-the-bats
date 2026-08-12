@@ -12,6 +12,12 @@
  * is run constantly and has to stay fast, and an unrelated failing test elsewhere must never be
  * able to block a colour check.
  *
+ * ⚠ SCOPE — this file proves TOKENS, not USAGES. `text-data-gray/40` is a different colour from
+ * `--data-gray` and no assertion here has ever seen it; that gap let 22 sub-AA marketing usages
+ * pass for months (found 2026-08-11). `scripts/check-text-contrast.mjs` now covers the static half
+ * of usage, and `npm run check:layout` covers the rendered half — but only for the 28 coach
+ * screens it lists. Three checks, three scopes; know which one you are relying on.
+ *
  *   npm run check:contrast
  */
 import { spawnSync } from 'node:child_process';
@@ -42,7 +48,8 @@ if (res.status !== 0) {
   }
   console.error('\n  A token is a value, not a suggestion — fix the palette rather than the screen.');
   console.error('  Usage (this string, on that painted background) is checked separately by');
-  console.error('  `npm run check:layout`, which needs a dev server.');
+  console.error('  `npm run check:layout` (renders real screens, needs a dev server) and by');
+  console.error('  `npm run check:text-contrast` (opacity-modified utilities, static).');
   process.exit(1);
 }
 
