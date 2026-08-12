@@ -1,12 +1,10 @@
 'use client';
 import { useState, useEffect, use } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, Download, FileText } from 'lucide-react';
+import { Download, FileText } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import styles from '../../../coaches.module.css';
 import type { RepDocumentType } from '@/lib/types';
 
@@ -36,14 +34,11 @@ export default function TeamDocumentsPage({
   params: Promise<{ orgSlug: string; teamId: string }>;
 }) {
   const params = use(paramsPromise);
-  const { assignments, loading: assignmentsLoading } = useCoaches();
+  const { loading: assignmentsLoading } = useCoaches();
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(params.orgSlug, params.teamId, seasonSearchParams.get('year'));
-  const seasonQuery = page.query;
-  const assignment = assignments.find(a => a.teamId === params.teamId);
-  const base = `/${params.orgSlug}/coaches/teams/${params.teamId}`;
   const apiBase = `/api/coaches/${params.orgSlug}/teams/${params.teamId}/documents/templates`;
 
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
@@ -146,29 +141,17 @@ export default function TeamDocumentsPage({
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      {/* Breadcrumb */}
-      <div className={styles.breadcrumb}>
-        <Link href={`/${params.orgSlug}/coaches`}>Coaches Portal</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${base}${seasonQuery}`}>{page.teamName}</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>Documents</span>
-      </div>
-
-      {/* Header */}
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div>
-            <h1 className={styles.pageTitle}>Documents<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>{page.teamName} — {page.programYearName}</p>
-          </div>
-        </div>
-        <HelpButton
-          iconOnly
-          label="Documents"
-          help={documentsHelpRequest}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: the breadcrumb retires (the masthead and the title state
+          every crumb), the team+season line goes with it (both are the masthead's), and the page
+          joins the portal's one icon convention. */}
+      <CoachPageHeader
+        icon={FileText}
+        title="Documents"
+        season={page.season}
+        teamBase={page.teamBase}
+        helpLabel="Documents"
+        help={documentsHelpRequest}
+      />
 
       {orgWide.length === 0 && teamSpecific.length === 0 && (
         // No-action empty: coaches DOWNLOAD templates here, they don't publish them (the org admin

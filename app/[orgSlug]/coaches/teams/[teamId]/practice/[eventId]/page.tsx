@@ -1,15 +1,13 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import {
-  ArrowLeft, BookMarked, CalendarDays, Check, ClipboardList, Copy, NotebookPen, Play, Printer, Ruler, Telescope, X,
-} from 'lucide-react';
+import { BookMarked, CalendarDays, Check, ClipboardList, Copy, NotebookPen, Play, Printer, Ruler, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import {
   buildFilename, downloadPracticeSheet, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
@@ -33,6 +31,7 @@ import PracticePlanEditor, {
 import type { DrillInput, RepTeamDrill } from '@/lib/rep-drills';
 import type { PracticeWeekScoutingBridge } from '@/lib/coach-opponent-nudge';
 import type { PickableTag } from '@/components/coaches/TagPicker';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../coaches.module.css';
 import type { RepAttendanceStatus, RepTeamEvaluationSession, RepTeamEvent } from '@/lib/types';
 
@@ -517,27 +516,24 @@ export default function CoachPracticePlanPage({
   const event = data?.event;
   const header = (
     <>
-      <Link href={`${base}/schedule${event ? `?event=${eventId}` : ''}`} className={styles.lineupBackLink}>
-        <ArrowLeft size={14} aria-hidden /> Schedule
-      </Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><ClipboardList size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>{event?.name || 'Practice plan'}</h1>
-            <div className={styles.lineupMetaRow}>
-              <span className={styles.lineupMetaText}>
-                {event?.startsAt ? `${fmtDate(event.startsAt)} · ${fmtTime(event.startsAt)}` : 'Plan this practice.'}
-              </span>
-              {event && (
-                <Link href={`${base}/schedule?event=${eventId}`} className={styles.lineupOnScheduleLink}>
-                  <CalendarDays size={12} aria-hidden /> View on schedule
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
-        <HelpButton iconOnly label="Practice plan" help={practiceHelpRequest} />
+      <CoachBackLink href={`${base}/schedule${event ? `?event=${eventId}` : ''}`}>Schedule</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: the meta row is BODY content — below the header block,
+          not inside it (its lineup-builder twin now reads identically). */}
+      <CoachPageHeader
+        icon={ClipboardList}
+        title={event?.name || 'Practice plan'}
+        helpLabel="Practice plan"
+        help={practiceHelpRequest}
+      />
+      <div className={styles.pageSummaryStrip}>
+        <span className={styles.lineupMetaText}>
+          {event?.startsAt ? `${fmtDate(event.startsAt)} · ${fmtTime(event.startsAt)}` : 'Plan this practice.'}
+        </span>
+        {event && (
+          <Link href={`${base}/schedule?event=${eventId}`} className={styles.lineupOnScheduleLink}>
+            <CalendarDays size={12} aria-hidden /> View on schedule
+          </Link>
+        )}
       </div>
     </>
   );

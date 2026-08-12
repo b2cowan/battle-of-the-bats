@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ArrowLeft, ArrowRight } from 'lucide-react';
+import { Building2, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2, ArrowRight } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '../../../../coaches.module.css';
 import type { RepAllocationInstallment } from '@/lib/types';
@@ -116,9 +117,7 @@ export function OrgAllocationsPanel({
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
       {!embedded && (
-        <Link href={`${base}/accounting`} className={styles.lineupBackLink}>
-          <ArrowLeft size={14} aria-hidden /> Back to Money
-        </Link>
+        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
       )}
       {/* Page-header ruling 2026-08-11: title + help, nothing under the title (embedded mode
           renders nothing here — no actions, and the hub's own header is already on screen). */}

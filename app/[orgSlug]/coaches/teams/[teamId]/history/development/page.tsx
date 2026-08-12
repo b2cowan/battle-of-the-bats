@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Info, TrendingUp } from 'lucide-react';
 import { useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { formatShortDate } from '@/lib/measurable-format';
 import { formatInOrgZone } from '@/lib/timezone';
 import { UNTAGGED_FILTER, collectTags, filterTagged } from '@/lib/rep-drills';
@@ -127,7 +128,7 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   if (!data) {
     return (
       <div className={styles.page}>
-        <Link href={`${base}/history${seasonQuery}`} className={styles.lineupBackLink}>← Insights</Link>
+        <CoachBackLink href={`${base}/history${seasonQuery}`}>Insights</CoachBackLink>
         <p className={styles.detailPlaceholder}>
           {error}{' '}
           <button type="button" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
@@ -161,18 +162,19 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/history${seasonQuery}`} className={styles.lineupBackLink}>← Insights</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><TrendingUp size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>
-              Development<CoachSeasonChip season={page.season} teamBase={page.teamBase} />
-            </h1>
-            <p className={styles.pageSub}>Is everyone getting attention? — roster order, a coverage checklist, not a ranking</p>
-          </div>
-        </div>
-      </div>
+      <CoachBackLink href={`${base}/history${seasonQuery}`}>Insights</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: the report takes the QUESTION as its title — it was the
+          only "Development" other than the hub of the same name, and the question is what the page
+          answers. The coverage framing it used to trail is required wording, so it moves down to
+          the Coverage section it frames. */}
+      <CoachPageHeader
+        icon={TrendingUp}
+        title="Is everyone getting attention?"
+        season={page.season}
+        teamBase={page.teamBase}
+        helpLabel="Development"
+        help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
+      />
 
       {noSeason ? (
         <p className={styles.detailPlaceholder}>
@@ -187,10 +189,13 @@ function ReportView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
         <>
           {/* ── Section 1 · Coverage ── */}
           <p className={styles.reportSectionTitle}>Coverage</p>
+          {/* The coverage framing is REQUIRED wording (binding coverage ruling) — it moved here
+              from the retired subtitle so it sits with the roster order it frames. */}
           <p className={styles.reportSectionSub}>
             {showCoverage
               ? 'Who has been named in a practice plan, and where each player is up to.'
               : 'Where each player is up to.'}
+            {' '}Roster order — a coverage checklist, not a ranking.
           </p>
 
           {/* ⚠ COUNT-ONLY AND NAMELESS, and silent until there is real usage. This is the findings

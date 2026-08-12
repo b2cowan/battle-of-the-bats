@@ -2,14 +2,15 @@
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Archive, BookMarked, History, Plus, RotateCcw, Tags, X } from 'lucide-react';
+import { Archive, BookMarked, History, Plus, RotateCcw, Tags, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TagManagerModal from '@/components/coaches/TagManagerModal';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { formatInOrgZone } from '@/lib/timezone';
 import { UNTAGGED_FILTER, collectTags, filterTagged } from '@/lib/rep-drills';
 import {
@@ -353,21 +354,15 @@ export default function CoachPlanTemplatesPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/development`} className={styles.lineupBackLink}>
-        <ArrowLeft size={14} aria-hidden /> Development
-      </Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><BookMarked size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Plan templates</h1>
-            <p className={styles.pageSub}>
-              Save a practice you&apos;d run again. Start from it next Tuesday instead of rebuilding it.
-            </p>
-          </div>
-        </div>
-        <HelpButton iconOnly label="Plan templates" help={helpRequest} />
-      </div>
+      <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: the blurb's promise ("next Tuesday starts from it") is
+          already the empty state's description, where a coach with no templates reads it. */}
+      <CoachPageHeader
+        icon={BookMarked}
+        title="Plan templates"
+        helpLabel="Plan templates"
+        help={helpRequest}
+      />
 
       {loadError && <p className={styles.errorText} role="alert">{loadError}</p>}
 

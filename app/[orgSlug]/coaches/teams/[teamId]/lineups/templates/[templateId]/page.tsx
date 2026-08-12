@@ -1,9 +1,10 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ListOrdered, ArrowLeft, Check } from 'lucide-react';
+import { ListOrdered, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   buildLineupRows, renumberBattingOrder, sortLineupRows, type LineupPlayerRow,
@@ -121,21 +122,20 @@ export default function TemplateBuilderPage({
 
   const header = (
     <>
-      <Link href={`${base}/lineups`} className={styles.lineupBackLink}><ArrowLeft size={14} aria-hidden /> All lineups</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><ListOrdered size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>{isNew ? 'New template' : 'Edit template'}</h1>
-            <p className={styles.pageSub}>A reusable base lineup — batting order and field positions you can apply to any game.</p>
-          </div>
-        </div>
-        {canLineups && !loading && !loadError && (
+      <CoachBackLink href={`${base}/lineups`}>All lineups</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: the "reusable base lineup" blurb is deleted — the Lineups
+          hub's Templates empty state teaches it, and this page is reached only from there. */}
+      <CoachPageHeader
+        icon={ListOrdered}
+        title={isNew ? 'New template' : 'Edit template'}
+        actions={canLineups && !loading && !loadError ? (
           <button type="button" className="btn btn-lime btn-sm" disabled={saving} onClick={handleSave} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
             <Check size={15} /> {saving ? 'Saving…' : 'Save template'}
           </button>
-        )}
-      </div>
+        ) : undefined}
+        helpLabel="Lineup templates"
+        help={{ module: 'coaches', sectionIds: ['premium-lineups'], fullGuideHref: `/${orgSlug}/coaches/help#premium-lineups` }}
+      />
     </>
   );
 

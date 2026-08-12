@@ -3,6 +3,8 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Scale, BarChart3 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../../coaches.module.css';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
@@ -102,16 +104,16 @@ export default function CoachesPlayingTimeReportPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/history`} className={styles.lineupBackLink}>← Insights</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Scale size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Where is playing time going?</h1>
-            <p className={styles.pageSub}>One row per player, from your saved lineups</p>
-          </div>
-        </div>
-      </div>
+      <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: the provenance is LOAD-BEARING — a reader must know these
+          numbers come from saved lineups, not from the games played — so it moves into the table's
+          basis line below rather than being deleted with the decorative subtitles. */}
+      <CoachPageHeader
+        icon={Scale}
+        title="Where is playing time going?"
+        helpLabel="Insights"
+        help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
+      />
 
       {!canLineups ? (
         <div className={styles.emptyState}>
@@ -131,7 +133,7 @@ export default function CoachesPlayingTimeReportPage({
         </div>
       ) : (
         <>
-          <p className={styles.insightsBasis}>Based on the {analytics.gamesWithLineup} game{analytics.gamesWithLineup === 1 ? '' : 's'} you&apos;ve saved a lineup for.</p>
+          <p className={styles.insightsBasis}>One row per player, based on the {analytics.gamesWithLineup} game{analytics.gamesWithLineup === 1 ? '' : 's'} you&apos;ve saved a lineup for.</p>
 
           {/* data-sandbox-tour: the beat the demo's "who's actually been on the field" step rings.
               Inert off a demo org — no styling, no behaviour. */}

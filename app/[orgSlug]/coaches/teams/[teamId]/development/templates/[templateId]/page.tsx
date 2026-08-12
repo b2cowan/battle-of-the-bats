@@ -1,12 +1,12 @@
 'use client';
 import { use, useCallback, useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, BookMarked, Check } from 'lucide-react';
+import { BookMarked, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TagPicker from '@/components/coaches/TagPicker';
 import { useFocusTags } from '@/components/coaches/use-focus-tags';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import {
   MAX_TEMPLATE_NAME_LEN, templateShapeLabel, templateUseLabel,
 } from '@/lib/rep-plan-templates';
@@ -170,27 +170,25 @@ export default function CoachPlanTemplateEditorPage({
 
   return (
     <div className={`${styles.page} ${styles.pageWide} ${styles.lineupDockedPage}`}>
-      <Link href={`${base}/development/templates`} className={styles.lineupBackLink}>
-        <ArrowLeft size={14} aria-hidden /> Plan templates
-      </Link>
+      <CoachBackLink href={`${base}/development/templates`}>Plan templates</CoachBackLink>
       <UnsavedChangesGuard active={dirty} />
 
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><BookMarked size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>{data?.template.name || 'Template'}</h1>
-            <p className={styles.pageSub}>
-              {data
-                // ⚠ "Started N plans", never "used N×" — and zero in words, so an unused template
-                // never reads as a failing score.
-                ? `${templateShapeLabel(plan)} · ${templateUseLabel(data.template.planCount)}`
-                : 'Loading…'}
-            </p>
-          </div>
-        </div>
-        <HelpButton iconOnly label="Plan templates" help={helpRequest} />
-      </div>
+      <CoachPageHeader
+        icon={BookMarked}
+        title={data?.template.name || 'Template'}
+        helpLabel="Plan templates"
+        help={helpRequest}
+      />
+
+      {/* Page-header ruling 2026-08-11: shape and use are facts ABOUT this template, so they lead
+          the body that edits it instead of sitting under the title.
+          ⚠ "Started N plans", never "used N×" — and zero in words, so an unused template never
+          reads as a failing score. */}
+      {data && (
+        <p className={styles.pageSummaryStrip}>
+          {templateShapeLabel(plan)} · {templateUseLabel(data.template.planCount)}
+        </p>
+      )}
 
       {loadError && <p className={styles.errorText} role="alert">{loadError}</p>}
 

@@ -1,8 +1,8 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Printer } from 'lucide-react';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
 import { canManageAwards } from '@/lib/coach-capabilities';
@@ -90,7 +90,7 @@ export default function AwardCertificatePage({
   return (
     <div className={cert.screen}>
       <div className={cert.bar}>
-        <Link href={`${base}/history/awards`} className={styles.lineupBackLink}>← Awards</Link>
+        <CoachBackLink href={`${base}/history/awards`}>Awards</CoachBackLink>
         <p className={cert.barNote}>
           Letter, landscape — one page per certificate. Turn on background graphics in your
           browser’s print options if the frame doesn’t appear.

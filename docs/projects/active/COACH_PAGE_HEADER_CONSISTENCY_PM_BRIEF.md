@@ -59,6 +59,28 @@ UX-debt / polish, medium priority — no revenue gate. Two build passes on `dev`
 shared pieces first, then the portal-wide sweep with the punch list (icons, help gaps, back links,
 renames). No migration.
 
+## Status — both passes built, 2026-08-11
+
+**Done and waiting on you.** Owner QA is one sitting: `OWNER_QA_LEDGER.md` §10 (Group 3A), desktop +
+390px phone, plus one archived season and one assistant-coach account.
+
+Three things worth knowing before you walk it:
+
+1. **Two real bugs fell out that nobody had reported.** The automated screen-rendering check found
+   the practice-plan page scrolling sideways on a desktop — a spacing rule written for a slide-over
+   panel had been copied into a bar that three full pages also use, so those pages hung 24 pixels
+   off the edge of their own content. And the "Season insights" link on Lineups was 21 pixels tall,
+   the smallest tap target in the portal. Both fixed. Neither was visible in a screenshot; both
+   needed a browser to actually lay the page out.
+2. **Three screens changed their names**, so if a coach has muscle memory they'll notice: the
+   Insights coverage report is now **"Is everyone getting attention?"** (it used to be called
+   "Development", which is also the name of a different screen — the pairing is what we were
+   breaking), tryout history is now **"Tryout history"** (it used to be "Tryouts", same as the live
+   tryout hub), and Season's End now names itself rather than repeating the team name.
+3. **Nothing calculates differently.** No new data is read, no screen became reachable that wasn't
+   before, and the rules about what a *finished* season lets a coach open were verified untouched.
+   This is genuinely a change to the first inch of every screen.
+
 ## Success looks like
 
 - Every team-hub screen: title left, tools right, "?" top-right, nothing under the title —

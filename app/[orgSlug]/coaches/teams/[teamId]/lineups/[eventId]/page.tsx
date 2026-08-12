@@ -2,11 +2,13 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useDismissable } from '@/lib/overlay-hooks';
-import { ListOrdered, ArrowLeft, CalendarDays, X, Undo2, Redo2, Printer, Check } from 'lucide-react';
+import { ListOrdered, CalendarDays, X, Undo2, Redo2, Printer, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import type { PositionPolicy } from '@/lib/lineup-generator';
@@ -50,6 +52,11 @@ export default function CoachLineupBuilderPage({
   const assignment = assignments.find(a => a.teamId === teamId);
   const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
   const canLineups = assignment ? assignment.capabilities.lineups : true;
+  const lineupHelpRequest = {
+    module: 'coaches' as const,
+    sectionIds: ['premium-lineups'],
+    fullGuideHref: `/${orgSlug}/coaches/help#premium-lineups`,
+  };
 
   const [event, setEvent] = useState<RepTeamEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -400,24 +407,24 @@ export default function CoachLineupBuilderPage({
   const defaultPolicy: PositionPolicy = event?.eventType === 'tournament_game' ? 'competitive'
     : event?.eventType === 'scrimmage' ? 'development' : 'balanced';
 
+  // Page-header ruling 2026-08-11: the meta row is BODY content — it renders below the header
+  // block, not inside it — and the builder gains the help "?" its practice-plan twin already had.
   const header = (
     <>
-      <Link href={`${base}/lineups`} className={styles.lineupBackLink}><ArrowLeft size={14} aria-hidden /> All lineups</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><ListOrdered size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>{gameTitle}</h1>
-            <div className={styles.lineupMetaRow}>
-              <span className={styles.lineupMetaText}>{gameMeta || 'Set the batting order and field positions for this game.'}</span>
-              {event && (
-                <Link href={`${base}/schedule?event=${eventId}`} className={styles.lineupOnScheduleLink}>
-                  <CalendarDays size={12} aria-hidden /> View on schedule
-                </Link>
-              )}
-            </div>
-          </div>
-        </div>
+      <CoachBackLink href={`${base}/lineups`}>All lineups</CoachBackLink>
+      <CoachPageHeader
+        icon={ListOrdered}
+        title={gameTitle}
+        helpLabel="Lineup builder"
+        help={lineupHelpRequest}
+      />
+      <div className={styles.pageSummaryStrip}>
+        <span className={styles.lineupMetaText}>{gameMeta || 'Set the batting order and field positions for this game.'}</span>
+        {event && (
+          <Link href={`${base}/schedule?event=${eventId}`} className={styles.lineupOnScheduleLink}>
+            <CalendarDays size={12} aria-hidden /> View on schedule
+          </Link>
+        )}
       </div>
     </>
   );

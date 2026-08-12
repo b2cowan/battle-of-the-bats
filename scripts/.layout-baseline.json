@@ -1,5 +1,5 @@
 {
-  "generated": "2026-08-11T20:14:26.175Z",
+  "generated": "2026-08-12T01:10:26.133Z",
   "entries": {
     "coach-overview|361|tap-floor|button·Skip this step": {
       "reason": null,
@@ -54,7 +54,7 @@
       "detail": "20px tall (floor 44)"
     },
     "coach-help|361|tap-floor|a·Building the lineup": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
     "coach-help|361|tap-floor|a·Attendance": {
@@ -62,7 +62,7 @@
       "detail": "30px tall (floor 44)"
     },
     "coach-help|361|tap-floor|a·Tournament games on your schedule": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
     "coach-help|361|tap-floor|a·Running it at the field": {
@@ -120,10 +120,6 @@
     "coach-schedule|361|tap-floor|button·Month": {
       "reason": null,
       "detail": "27px tall (floor 44)"
-    },
-    "coach-attendance|361|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-attendance|361|tap-floor|a·Take attendance": {
       "reason": null,
@@ -305,10 +301,6 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "coach-lineups|361|tap-floor|button·Help: Lineups": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-lineups|361|tap-floor|button·Games": {
       "reason": null,
       "detail": "40px tall (floor 44)"
@@ -318,16 +310,12 @@
       "detail": "40px tall (floor 44)"
     },
     "coach-lineups|361|tap-floor|button·All": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
       "detail": "36px tall (floor 44)"
     },
     "coach-lineups|361|tap-floor|button·League": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
       "detail": "36px tall (floor 44)"
-    },
-    "coach-lineups|361|tap-floor|a·Season insights": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
-      "detail": "21px tall (floor 44)"
     },
     "coach-depth-chart|361|tap-floor|button·List": {
       "reason": null,
@@ -353,10 +341,6 @@
       "reason": null,
       "detail": "37px tall (floor 44)"
     },
-    "coach-development|361|tap-floor|button·Help: Development": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-development|361|tap-floor|input·e.g. 60-yd sprint": {
       "reason": null,
       "detail": "35px tall (floor 44)"
@@ -381,14 +365,6 @@
       "reason": null,
       "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
     },
-    "coach-development-drills|361|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|361|tap-floor|button·Help: Your drills": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-development-drills|361|tap-floor|button·All 1": {
       "reason": null,
       "detail": "21px tall (floor 44)"
@@ -396,18 +372,6 @@
     "coach-development-drills|361|tap-floor|button·No tags 1": {
       "reason": null,
       "detail": "21px tall (floor 44)"
-    },
-    "coach-development-board|361|tap-floor|a·← Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|361|tap-floor|button·Help: Plan templates": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-development-templates|361|tap-floor|button·All 15": {
       "reason": null,
@@ -477,17 +441,9 @@
       "reason": null,
       "detail": "22px tall (floor 44)"
     },
-    "coach-practice-plan|361|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-practice-plan|361|tap-floor|a·View on schedule": {
       "reason": null,
       "detail": "23px tall (floor 44)"
-    },
-    "coach-practice-plan|361|tap-floor|button·Help: Practice plan": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-practice-plan|361|tap-floor|a·Run practice": {
       "reason": null,
@@ -661,10 +617,6 @@
       "reason": null,
       "detail": "37px tall (floor 44)"
     },
-    "coach-budget|361|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-budget|361|tap-floor|button·Start — about a minute": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -685,10 +637,6 @@
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
-    "coach-budget-vs-actual|361|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-budget-vs-actual|361|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -701,10 +649,6 @@
       "reason": null,
       "detail": "41px tall (floor 44)"
     },
-    "coach-expenses|361|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-expenses|361|tap-floor|button·Expenses (0)": {
       "reason": null,
       "detail": "43px tall (floor 44)"
@@ -716,10 +660,6 @@
     "coach-expenses|361|tap-floor|button·Payment schedule": {
       "reason": null,
       "detail": "43px tall (floor 44)"
-    },
-    "coach-dues|361|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-dues|361|tap-floor|button·Export as Excel": {
       "reason": null,
@@ -737,10 +677,6 @@
       "reason": null,
       "detail": "26px tall (floor 44)"
     },
-    "coach-announcements|361|tap-floor|button·Help: Email families": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-announcements|361|tap-floor|button·Refresh contacts": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -753,21 +689,9 @@
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
-    "coach-documents|361|tap-floor|button·Help: Documents": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-staff|361|tap-floor|button·Help: Coaching staff": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-staff|361|tap-floor|input·<input>": {
       "reason": null,
       "detail": "13px tall (floor 44)"
-    },
-    "coach-settings|361|tap-floor|button·Help: Team settings": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-settings|361|tap-floor|a·Season Review": {
       "reason": null,
@@ -780,10 +704,6 @@
     "coach-settings|361|tap-floor|button·Save rules": {
       "reason": null,
       "detail": "31px tall (floor 44)"
-    },
-    "coach-tryouts|361|tap-floor|button·Help: Tryouts": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-tryouts|361|tap-floor|button·How tryouts work": {
       "reason": null,
@@ -813,17 +733,9 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-history|361|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-history|361|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
       "reason": null,
       "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-history-development|361|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-history-development|361|tap-floor|a·#1 Avery Test": {
       "reason": null,
@@ -881,14 +793,6 @@
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
-    "coach-history-results|361|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-results|361|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-overview|390|tap-floor|button·Skip this step": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -942,7 +846,7 @@
       "detail": "20px tall (floor 44)"
     },
     "coach-help|390|tap-floor|a·Building the lineup": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
     "coach-help|390|tap-floor|a·Attendance": {
@@ -950,7 +854,7 @@
       "detail": "30px tall (floor 44)"
     },
     "coach-help|390|tap-floor|a·Tournament games on your schedule": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
     "coach-help|390|tap-floor|a·Running it at the field": {
@@ -1008,10 +912,6 @@
     "coach-schedule|390|tap-floor|button·Month": {
       "reason": null,
       "detail": "27px tall (floor 44)"
-    },
-    "coach-attendance|390|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-attendance|390|tap-floor|a·Take attendance": {
       "reason": null,
@@ -1193,10 +1093,6 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "coach-lineups|390|tap-floor|button·Help: Lineups": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-lineups|390|tap-floor|button·Games": {
       "reason": null,
       "detail": "40px tall (floor 44)"
@@ -1206,16 +1102,12 @@
       "detail": "40px tall (floor 44)"
     },
     "coach-lineups|390|tap-floor|button·All": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
       "detail": "36px tall (floor 44)"
     },
     "coach-lineups|390|tap-floor|button·League": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
       "detail": "36px tall (floor 44)"
-    },
-    "coach-lineups|390|tap-floor|a·Season insights": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
-      "detail": "21px tall (floor 44)"
     },
     "coach-depth-chart|390|tap-floor|button·List": {
       "reason": null,
@@ -1241,10 +1133,6 @@
       "reason": null,
       "detail": "37px tall (floor 44)"
     },
-    "coach-development|390|tap-floor|button·Help: Development": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-development|390|tap-floor|input·e.g. 60-yd sprint": {
       "reason": null,
       "detail": "35px tall (floor 44)"
@@ -1269,14 +1157,6 @@
       "reason": null,
       "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
     },
-    "coach-development-drills|390|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-drills|390|tap-floor|button·Help: Your drills": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-development-drills|390|tap-floor|button·All 1": {
       "reason": null,
       "detail": "21px tall (floor 44)"
@@ -1284,18 +1164,6 @@
     "coach-development-drills|390|tap-floor|button·No tags 1": {
       "reason": null,
       "detail": "21px tall (floor 44)"
-    },
-    "coach-development-board|390|tap-floor|a·← Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|a·Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-templates|390|tap-floor|button·Help: Plan templates": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-development-templates|390|tap-floor|button·All 15": {
       "reason": null,
@@ -1365,17 +1233,9 @@
       "reason": null,
       "detail": "22px tall (floor 44)"
     },
-    "coach-practice-plan|390|tap-floor|a·Schedule": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-practice-plan|390|tap-floor|a·View on schedule": {
       "reason": null,
       "detail": "23px tall (floor 44)"
-    },
-    "coach-practice-plan|390|tap-floor|button·Help: Practice plan": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-practice-plan|390|tap-floor|a·Run practice": {
       "reason": null,
@@ -1549,10 +1409,6 @@
       "reason": null,
       "detail": "37px tall (floor 44)"
     },
-    "coach-budget|390|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-budget|390|tap-floor|button·Start — about a minute": {
       "reason": null,
       "detail": "39px tall (floor 44)"
@@ -1573,10 +1429,6 @@
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
-    "coach-budget-vs-actual|390|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-budget-vs-actual|390|tap-floor|button·Export as Excel": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1589,10 +1441,6 @@
       "reason": null,
       "detail": "41px tall (floor 44)"
     },
-    "coach-expenses|390|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-expenses|390|tap-floor|button·Expenses (0)": {
       "reason": null,
       "detail": "27px tall (floor 44)"
@@ -1604,10 +1452,6 @@
     "coach-expenses|390|tap-floor|button·Payment schedule": {
       "reason": null,
       "detail": "27px tall (floor 44)"
-    },
-    "coach-dues|390|tap-floor|a·Back to Money": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-dues|390|tap-floor|button·Export as Excel": {
       "reason": null,
@@ -1625,10 +1469,6 @@
       "reason": null,
       "detail": "26px tall (floor 44)"
     },
-    "coach-announcements|390|tap-floor|button·Help: Email families": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-announcements|390|tap-floor|button·Refresh contacts": {
       "reason": null,
       "detail": "32px tall (floor 44)"
@@ -1641,21 +1481,9 @@
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
-    "coach-documents|390|tap-floor|button·Help: Documents": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-staff|390|tap-floor|button·Help: Coaching staff": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-staff|390|tap-floor|input·<input>": {
       "reason": null,
       "detail": "13px tall (floor 44)"
-    },
-    "coach-settings|390|tap-floor|button·Help: Team settings": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-settings|390|tap-floor|a·Season Review": {
       "reason": null,
@@ -1668,10 +1496,6 @@
     "coach-settings|390|tap-floor|button·Save rules": {
       "reason": null,
       "detail": "31px tall (floor 44)"
-    },
-    "coach-tryouts|390|tap-floor|button·Help: Tryouts": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-tryouts|390|tap-floor|button·How tryouts work": {
       "reason": null,
@@ -1701,17 +1525,9 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-history|390|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-history|390|contrast|span·→·rgba(87, 101, 30, 0.75)on255,255,255": {
       "reason": null,
       "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
-    },
-    "coach-history-development|390|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-history-development|390|tap-floor|a·#1 Avery Test": {
       "reason": null,
@@ -1768,14 +1584,6 @@
     "coach-history-development|390|tap-floor|button·No tags 1": {
       "reason": null,
       "detail": "21px tall (floor 44)"
-    },
-    "coach-history-results|390|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-history-results|390|tap-floor|button·Help: Insights": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
     },
     "coach-overview|768|tap-floor|button·Season setup3/5": {
       "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
@@ -1846,7 +1654,7 @@
       "detail": "20px tall (floor 44)"
     },
     "coach-help|768|tap-floor|a·Building the lineup": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
     "coach-help|768|tap-floor|a·Attendance": {
@@ -1854,7 +1662,7 @@
       "detail": "30px tall (floor 44)"
     },
     "coach-help|768|tap-floor|a·Tournament games on your schedule": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
     "coach-help|768|tap-floor|a·Running it at the field": {
@@ -1926,12 +1734,8 @@
       "detail": "27px tall (floor 44)"
     },
     "coach-schedule|768|tap-floor|button·Aug 5 · 4:02 p.m.UAT probe practice": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: desktop-only (≥768) event-chip row at the portal-wide grandfathered compact control height — the same decision the migrated header controls are held to. Phones already clear the 44px floor. Reopening it is the one owner ruling still owed (plan §5b).",
       "detail": "31px tall (floor 44)"
-    },
-    "coach-attendance|768|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-attendance|768|tap-floor|button·Help: Attendance": {
       "reason": null,
@@ -2054,16 +1858,12 @@
       "detail": "36px tall (floor 44)"
     },
     "coach-lineups|768|tap-floor|button·All": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
       "detail": "30px tall (floor 44)"
     },
     "coach-lineups|768|tap-floor|button·League": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
       "detail": "30px tall (floor 44)"
-    },
-    "coach-lineups|768|tap-floor|a·Season insights": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
-      "detail": "21px tall (floor 44)"
     },
     "coach-depth-chart|768|tap-floor|button·Help: Roster": {
       "reason": null,
@@ -2713,10 +2513,6 @@
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
-    "coach-development-board|768|tap-floor|a·← Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-development-templates|768|tap-floor|a·Development": {
       "reason": null,
       "detail": "34px tall (floor 44)"
@@ -3189,10 +2985,6 @@
       "reason": null,
       "detail": "3.63:1 (needs 4.5:1) — rgba(87, 101, 30, 0.75) on rgb(255, 255, 255) at 15px"
     },
-    "coach-history-development|768|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-history-development|768|tap-floor|a·#1 Avery Test": {
       "reason": null,
       "detail": "19px tall (floor 44)"
@@ -3248,10 +3040,6 @@
     "coach-history-development|768|tap-floor|button·No tags 1": {
       "reason": null,
       "detail": "21px tall (floor 44)"
-    },
-    "coach-history-results|768|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-history-results|768|tap-floor|button·Help: Insights": {
       "reason": null,
@@ -3550,7 +3338,7 @@
       "detail": "20px tall (floor 44)"
     },
     "coach-help|1440|tap-floor|a·Building the lineup": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
     "coach-help|1440|tap-floor|a·Attendance": {
@@ -3558,7 +3346,7 @@
       "detail": "30px tall (floor 44)"
     },
     "coach-help|1440|tap-floor|a·Tournament games on your schedule": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: the help hub is a SHARED cross-portal shell (an exempt surface in COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §1) and these are quick-link CHIPS, whose own convention is 28px. Changing the height here reaches the admin and tournament help hubs too, so it belongs to the ONE portal-wide control-height ruling still owed (plan §5b, with the ExportMenu 32px triggers) — not to a coach-portal CSS edit made in passing.",
       "detail": "30px tall (floor 44)"
     },
     "coach-help|1440|tap-floor|a·Running it at the field": {
@@ -3702,7 +3490,7 @@
       "detail": "27px tall (floor 44)"
     },
     "coach-schedule|1440|tap-floor|button·Aug 5 · 4:02 p.m.UAT probe practice": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: desktop-only (≥768) event-chip row at the portal-wide grandfathered compact control height — the same decision the migrated header controls are held to. Phones already clear the 44px floor. Reopening it is the one owner ruling still owed (plan §5b).",
       "detail": "31px tall (floor 44)"
     },
     "coach-attendance|1440|tap-floor|a·FieldLogicHQ Home": {
@@ -3784,10 +3572,6 @@
     "coach-attendance|1440|tap-floor|button·Sign out": {
       "reason": null,
       "detail": "33px tall (floor 44)"
-    },
-    "coach-attendance|1440|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
     },
     "coach-attendance|1440|tap-floor|button·Help: Attendance": {
       "reason": null,
@@ -4066,16 +3850,12 @@
       "detail": "36px tall (floor 44)"
     },
     "coach-lineups|1440|tap-floor|button·All": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
       "detail": "30px tall (floor 44)"
     },
     "coach-lineups|1440|tap-floor|button·League": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
+      "reason": "Reviewed 2026-08-11 (header pass 2), KEPT: .lineupFilterChip is at its RULED height — the 2026-06-29 mobile-conventions decision bumps chips to ≥36px on phones (tabs to ≥40px) deliberately, chips being the compact species beside the standalone tab control. Desktop keeps the portal-wide grandfathered compact height. Nothing here is drift; it is a prior ruling this pass did not reopen.",
       "detail": "30px tall (floor 44)"
-    },
-    "coach-lineups|1440|tap-floor|a·Season insights": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
-      "detail": "21px tall (floor 44)"
     },
     "coach-depth-chart|1440|tap-floor|a·FieldLogicHQ Home": {
       "reason": null,
@@ -5041,10 +4821,6 @@
       "reason": null,
       "detail": "33px tall (floor 44)"
     },
-    "coach-development-board|1440|tap-floor|a·← Development": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-development-templates|1440|tap-floor|a·FieldLogicHQ Home": {
       "reason": null,
       "detail": "22px tall (floor 44)"
@@ -5428,10 +5204,6 @@
     "coach-practice-plan|1440|tap-floor|button·Add a block": {
       "reason": null,
       "detail": "33px tall (floor 44)"
-    },
-    "coach-practice-plan|1440|content-overflow|div·ScheduleUAT probe practiceWed, Aug 5, 20": {
-      "reason": "Surfaced 2026-08-11 by the first full snapshot since 2026-08-05 — NOT reviewed, NOT accepted: post-baseline feature debt owed to the header pass-2 punch list (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md §4). The coach-practice-plan content-overflow is a real defect to fix, not argue away.",
-      "detail": "content spills 24px with overflow-x:visible — no scroller owns it"
     },
     "coach-game-console|1440|tap-floor|a·FieldLogicHQ Home": {
       "reason": null,
@@ -6713,10 +6485,6 @@
       "reason": null,
       "detail": "33px tall (floor 44)"
     },
-    "coach-history-development|1440|tap-floor|a·← Insights": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
     "coach-history-development|1440|tap-floor|a·#1 Avery Test": {
       "reason": null,
       "detail": "19px tall (floor 44)"
@@ -6853,12 +6621,16 @@
       "reason": null,
       "detail": "33px tall (floor 44)"
     },
-    "coach-history-results|1440|tap-floor|a·← Insights": {
+    "coach-history-results|1440|tap-floor|button·Help: Insights": {
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-history-results|1440|tap-floor|button·Help: Insights": {
-      "reason": null,
+    "coach-development-board|1440|tap-floor|button·Help: Team board": {
+      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-history-development|1440|tap-floor|button·Help: Development": {
+      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md).",
       "detail": "34px tall (floor 44)"
     }
   }

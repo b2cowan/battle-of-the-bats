@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
-import { ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, ArrowLeft, ArrowRight } from 'lucide-react';
+import { ArrowUpRight, ArrowDownLeft, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import styles from '../../../../coaches.module.css';
@@ -9,6 +9,7 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 
 interface PaymentRequest {
   id: string;
@@ -216,9 +217,7 @@ export function PaymentRequestsPanel({
   return (
     <div className={styles.page}>
       {!embedded && (
-        <Link href={`${base}/accounting`} className={styles.lineupBackLink}>
-          <ArrowLeft size={14} aria-hidden /> Back to Money
-        </Link>
+        <CoachBackLink href={`${base}/accounting`}>Back to Money</CoachBackLink>
       )}
       {/* Page-header ruling 2026-08-11: one shape; the primary keeps its words at every width.
           The write gate stands — a read-only assistant is never offered a form the server

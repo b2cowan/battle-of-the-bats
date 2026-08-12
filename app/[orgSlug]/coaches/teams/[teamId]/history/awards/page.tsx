@@ -3,9 +3,11 @@ import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { Award, Check, Printer, Trash2 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import AwardTypeManagerModal from '@/components/coaches/AwardTypeManagerModal';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { canManageAwards } from '@/lib/coach-capabilities';
 import styles from '../../../../coaches.module.css';
 import type { RepPlayerAward, RepTeamAwardType } from '@/lib/types';
@@ -143,16 +145,15 @@ export default function CoachesAwardsReportPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/history`} className={styles.lineupBackLink}>← Insights</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Award size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Who&apos;s earning it?</h1>
-            <p className={styles.pageSub}>Every award given this season</p>
-          </div>
-        </div>
-      </div>
+      <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: "Every award given this season" deleted — the list below
+          IS every award given this season, and the season is the masthead's to state. */}
+      <CoachPageHeader
+        icon={Award}
+        title="Who's earning it?"
+        helpLabel="Awards"
+        help={{ module: 'coaches', sectionIds: ['recipe-game-day-details'], fullGuideHref: `/${orgSlug}/coaches/help#recipe-game-day-details` }}
+      />
 
       {loading || loadedFor !== teamId ? (
         <div className={styles.loadingState}>Loading report…</div>

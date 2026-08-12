@@ -4,14 +4,13 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ChevronRight, Trophy } from 'lucide-react';
 import { useCoaches, resolveClosedAssignment, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import type { SeasonWrappedPayload } from '@/lib/rep-season-wrapped';
 import SeasonWrappedCard from '@/components/coaches/SeasonWrappedCard';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
 import { hasRecordAccess } from '@/lib/coach-capabilities';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
-import HelpButton from '@/components/help/HelpButton';
 import styles from '../../../coaches.module.css';
 
 /**
@@ -104,8 +103,6 @@ export default function SeasonEndPage({
     return <CoachSeasonFinishedNotice />;
   }
 
-  const teamName = wrapped?.teamName ?? active?.teamName ?? closed?.teamName ?? '';
-  const seasonName = wrapped?.seasonName ?? closed?.programYearName ?? '';
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
   const orgName = currentOrg?.name ?? 'your club';
   // The forward path only renders in the CLOSED-ONLY state; a coach browsing a past season
@@ -115,25 +112,20 @@ export default function SeasonEndPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <h1 className={styles.pageTitle}>{teamName}</h1>
-              <CoachSeasonChip season={page.season} teamBase={page.teamBase} />
-            </div>
-            {seasonName && <p className={styles.pageSub}>{seasonName}</p>}
-          </div>
-        </div>
-        {/* Chunk B (P1 #17): on a closed season this is one of only TWO doors the coach gets, so a
-            missing help icon lands on the coach with the least context — the one returning months
-            later to look something up. */}
-        <HelpButton
-          iconOnly
-          label="Season's End"
-          help={{ module: 'coaches', sectionIds: ['premium-season-end'], fullGuideHref: `/${orgSlug}/coaches/help#premium-season-end` }}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: the page names ITSELF, not the team — this was the same
+          masthead-repeat the Overview had. The chip moves inside the h1 (where every other page
+          puts it) and the season line under it retires with the rest.
+          Chunk B (P1 #17): on a closed season this is one of only TWO doors the coach gets, so a
+          missing help icon lands on the coach with the least context — the one returning months
+          later to look something up. */}
+      <CoachPageHeader
+        icon={Trophy}
+        title="Season's End"
+        season={page.season}
+        teamBase={page.teamBase}
+        helpLabel="Season's End"
+        help={{ module: 'coaches', sectionIds: ['premium-season-end'], fullGuideHref: `/${orgSlug}/coaches/help#premium-season-end` }}
+      />
 
       {fetching ? (
         <div className={styles.loadingState}>Wrapping up the season…</div>

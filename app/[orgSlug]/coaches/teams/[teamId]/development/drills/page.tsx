@@ -1,11 +1,10 @@
 'use client';
 import { use, useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, Archive, History, Library, Plus, RotateCcw, X } from 'lucide-react';
+import { Archive, History, Library, Plus, RotateCcw, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   MAX_DRILL_MINUTES, MAX_DRILL_NAME_LEN, MAX_DRILL_POINTS,
@@ -14,6 +13,7 @@ import {
   type DrillInput, type RepTeamDrillWithUsage,
 } from '@/lib/rep-drills';
 import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../coaches.module.css';
 
 /**
@@ -421,21 +421,15 @@ export default function CoachDrillsPage({
 
   const header = (
     <>
-      <Link href={`${base}/development`} className={styles.lineupBackLink}>
-        <ArrowLeft size={14} aria-hidden /> Development
-      </Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Library size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Your drills</h1>
-            <p className={styles.pageSub}>
-              Write a drill once. Pick it in four taps every practice after that.
-            </p>
-          </div>
-        </div>
-        <HelpButton iconOnly label="Your drills" help={helpRequest} />
-      </div>
+      <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: the blurb's promise ("write it once, four taps after
+          that") is already the empty state's description, where a coach with no drills reads it. */}
+      <CoachPageHeader
+        icon={Library}
+        title="Your drills"
+        helpLabel="Your drills"
+        help={helpRequest}
+      />
     </>
   );
 

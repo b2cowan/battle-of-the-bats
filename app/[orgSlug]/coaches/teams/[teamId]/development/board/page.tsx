@@ -2,6 +2,8 @@
 import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { LayoutGrid } from 'lucide-react';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { formatValue, formatShortDate } from '@/lib/measurable-format';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamMeasurableType } from '@/lib/types';
@@ -67,7 +69,7 @@ function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   if (!data) {
     return (
       <div className={styles.page}>
-        <Link href={`${base}/development`} className={styles.lineupBackLink}>← Development</Link>
+        <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
         <p className={styles.detailPlaceholder}>
           {error}{' '}
           <button type="button" className="btn btn-ghost" style={{ fontSize: '0.78rem', padding: '0.15rem 0.5rem' }}
@@ -96,16 +98,16 @@ function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/development`} className={styles.lineupBackLink}>← Development</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><LayoutGrid size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Team board</h1>
-            <p className={styles.pageSub}>Roster order — a coverage view, not a ranking</p>
-          </div>
-        </div>
-      </div>
+      <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: the coverage framing is REQUIRED wording (binding
+          coverage ruling), so it relocates to the first line of the board itself — where the
+          roster order it frames actually appears — rather than being deleted with the subtitles. */}
+      <CoachPageHeader
+        icon={LayoutGrid}
+        title="Team board"
+        helpLabel="Team board"
+        help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
+      />
 
       {noSeason ? (
         <p className={styles.detailPlaceholder}>
@@ -117,6 +119,10 @@ function BoardView({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
         </p>
       ) : (
         <>
+          {/* REQUIRED coverage framing (binding coverage ruling), relocated out of the retired
+              subtitle into the board it frames. Same `.devCardNote` voice as the note beneath it —
+              one class for one kind of line, not a near-identical second. */}
+          <p className={styles.devCardNote} style={{ marginBottom: '0.6rem' }}>Roster order — a coverage view, not a ranking</p>
           {hiddenTypeCount > 0 && (
             <p className={styles.devCardNote} style={{ marginBottom: '0.5rem' }}>
               Showing the {columnTypes.length} most-used tests — {hiddenTypeCount} more on each player&apos;s profile.

@@ -2,8 +2,10 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { ClipboardCheck, X } from 'lucide-react';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { NewTypeFields } from '@/components/coaches/TestTypesManager';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { formatValue } from '@/lib/measurable-format';
 import styles from '../../../../../coaches.module.css';
 import type { RepTeamEvaluationSession, RepTeamMeasurableType, RepPlayerMeasurable } from '@/lib/types';
@@ -339,16 +341,21 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/development`} className={styles.lineupBackLink}>← Development</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><ClipboardCheck size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Evaluation session</h1>
-            <p className={styles.pageSub}>{formatSessionDate(session.sessionDate)}</p>
-          </div>
-        </div>
-      </div>
+      <CoachBackLink href={`${base}/development`}>Development</CoachBackLink>
+      <CoachPageHeader
+        icon={ClipboardCheck}
+        title="Evaluation session"
+        helpLabel="Development"
+        help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
+      />
+
+      {/* Page-header ruling 2026-08-11: the session date moves out of the subtitle into the body.
+          A coach who can WRITE already has it in the editable Date field below — printing it twice
+          would be the same fact in two places — so the summary strip is the read-only viewer's
+          only copy of it. */}
+      {!canWrite && (
+        <p className={styles.pageSummaryStrip}>{formatSessionDate(session.sessionDate)}</p>
+      )}
 
       {/* ── When and where these readings were taken (D10) ──
           Two SEPARATE facts, deliberately: which practice this belongs to, and when the

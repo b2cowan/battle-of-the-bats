@@ -6,7 +6,7 @@ import { resolveRowFanView } from '@/lib/coach-alert-registration';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachRegistrationCard from '@/components/coaches/CoachRegistrationCard';
 import styles from '../../../coaches.module.css';
@@ -87,15 +87,15 @@ export default function PremiumTeamTournamentsPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div>
-            <h1 className={styles.pageTitle}>Tournaments</h1>
-            <p className={styles.pageSub}>Every tournament your team is entered in — live status, schedule, and results.</p>
-          </div>
-        </div>
-        <HelpButton iconOnly label="Tournaments" help={helpRequest} />
-      </div>
+      {/* Page-header ruling 2026-08-11: the blurb is deleted — the list's own intro line says what
+          this shows, and the empty state teaches it for a team with nothing entered yet. The page
+          gains the section icon its siblings all have. */}
+      <CoachPageHeader
+        icon={Trophy}
+        title="Tournaments"
+        helpLabel="Tournaments"
+        help={helpRequest}
+      />
 
       {error && <p className={styles.errorText}>{error}</p>}
 

@@ -4,7 +4,7 @@ import { ClipboardList, UserCheck, Play } from 'lucide-react';
 import { useTryoutAccess } from '@/components/coaches/useTryoutAccess';
 import FeedbackModal from '@/components/FeedbackModal';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import TryoutDayCard from '@/components/rep-teams/TryoutDayCard';
 import TryoutRubricCard from '@/components/rep-teams/TryoutRubricCard';
 import TryoutEvaluatorsCard from '@/components/rep-teams/TryoutEvaluatorsCard';
@@ -72,17 +72,16 @@ export default function CoachTryoutsPage({
 
   const hidden = (tab: TabKey) => (activeTab === tab ? '' : flow.panelHidden);
 
+  // Page-header ruling 2026-08-11: the blurb ("run your whole tryout here…") is already the
+  // no-access empty state's description, and for a coach who HAS tryouts the flow header's own
+  // steps say it better than a sentence could. Icon joins the portal's 22px convention.
   const header = (
-    <div className={styles.pageHeader}>
-      <div className={styles.pageHeaderLeft}>
-        <div className={styles.headerIcon}><ClipboardList size={20} /></div>
-        <div>
-          <h1 className={styles.pageTitle}>Tryouts</h1>
-          <p className={styles.pageSub}>Run your whole tryout here — set up, score, decide, and build your team.</p>
-        </div>
-      </div>
-      <HelpButton iconOnly label="Tryouts" help={helpRequest} />
-    </div>
+    <CoachPageHeader
+      icon={ClipboardList}
+      title="Tryouts"
+      helpLabel="Tryouts"
+      help={helpRequest}
+    />
   );
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;

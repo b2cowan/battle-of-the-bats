@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
-import Link from 'next/link';
-import { Gift, Settings, X, Check, ArrowLeft } from 'lucide-react';
+import { Gift, Settings, X, Check } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -9,6 +8,7 @@ import styles from '../../../../../coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 
 interface FundraiserDetail {
   id: string;
@@ -237,9 +237,7 @@ export default function FundraiserDetailPage({
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/accounting/fundraisers`} className={styles.lineupBackLink}>
-        <ArrowLeft size={14} aria-hidden /> Back to Fundraisers
-      </Link>
+      <CoachBackLink href={`${base}/accounting/fundraisers`}>Back to Fundraisers</CoachBackLink>
       {/* Page-header ruling 2026-08-11: the Active/Closed badge is STATE, so it rides the title
           row; the rebate % and dates are live facts about the entity, so they lead the body. */}
       <CoachPageHeader

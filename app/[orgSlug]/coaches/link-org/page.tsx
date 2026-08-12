@@ -2,7 +2,8 @@
 
 import { FormEvent, use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Building2, Link2, RefreshCw } from 'lucide-react';
+import { Building2, RefreshCw } from 'lucide-react';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
 import styles from '../coaches.module.css';
@@ -66,6 +67,11 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const linkOrgHelpRequest = {
+    module: 'coaches' as const,
+    sectionIds: ['recipe-link-parent-org'],
+    fullGuideHref: `/${orgSlug}/coaches/help#recipe-link-parent-org`,
+  };
 
   const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
 
@@ -182,15 +188,15 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
   if (!isTeamWorkspace) {
     return (
       <div className={styles.page}>
-        <div className={styles.pageHeader}>
-          <div className={styles.pageHeaderLeft}>
-            <div className={styles.headerIcon}><Link2 size={22} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>Link Organization</h1>
-              <p className={styles.pageSub}>Available for paid Coaches Portal teams.</p>
-            </div>
-          </div>
-        </div>
+        {/* Page-header ruling 2026-08-11: ONE icon for both states (this page drew Link2 here and
+            Building2 below — the same screen changing its own identity), and the static line goes:
+            the callout under it already says who this is for, in a full sentence. */}
+        <CoachPageHeader
+          icon={Building2}
+          title="Link Organization"
+          helpLabel="Link Organization"
+          help={linkOrgHelpRequest}
+        />
         <HelpCallout
           variant="info"
           title="Already inside an organization"
@@ -202,18 +208,19 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Building2 size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Link Organization</h1>
-            <p className={styles.pageSub}>Request a Basic visibility link with a parent organization, or transfer your team into it.</p>
-          </div>
-        </div>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks}>
-          <RefreshCw size={14} /> Refresh
-        </button>
-      </div>
+      {/* Page-header ruling 2026-08-11: the static line goes — the two callouts directly below say
+          the same thing at length, and the header carries only actions. */}
+      <CoachPageHeader
+        icon={Building2}
+        title="Link Organization"
+        actions={
+          <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks} aria-label="Refresh">
+            <RefreshCw size={14} aria-hidden /> <span className={styles.headerBtnLabel}>Refresh</span>
+          </button>
+        }
+        helpLabel="Link Organization"
+        help={linkOrgHelpRequest}
+      />
 
       <HelpCallout
         variant="info"
@@ -342,7 +349,7 @@ export default function CoachLinkOrgPage({ params }: { params: Promise<{ orgSlug
         )}
       </section>
 
-      <p className={styles.pageSub}>
+      <p className={styles.bodyNote}>
         More detail about Basic visibility links is available in <Link href={`/${orgSlug}/coaches/help#recipe-link-parent-org`} target="_blank" rel="noopener noreferrer">Help</Link>.
       </p>
     </div>

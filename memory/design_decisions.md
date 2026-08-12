@@ -57,7 +57,17 @@ drill-ins.
 named-season print AND its kept role line (role moves to the masthead; the season name moves there
 too). That entry's masthead-nudge rulings (#2, #3) stand untouched.
 
-**Status:** design ruling + binding mockup, 2026-08-11; implementation is its own unit of work.
+**Status:** design ruling + binding mockup, 2026-08-11. **BUILT IN FULL on dev the same day** —
+Pass 1 `ad43cae1`, Pass 2 alongside it; owner QA rides `OWNER_QA_LEDGER.md` §10. All ~40 team-hub
+screens now render `components/coaches/CoachPageHeader.tsx`, which has **no subtitle slot by
+construction**; `.pageSub` and `.breadcrumb` are deleted from `coaches.module.css` with zero
+consumers left, so rule 1 is now enforced by the absence of a mechanism rather than by discipline.
+`components/coaches/CoachBackLink.tsx` does the same job for rule "one back-link treatment" —
+collapsing the five styles to one class proved insufficient because the markup was still hand-copied
+into 27 files. **Two rendered defects surfaced only once a browser laid the pages out** (a
+slide-over spacing rule baked into a bar three pages also used → 24px of desktop sideways scroll;
+a 21px tap target) — both fixed, and both are the argument for keeping the rendered sweep in the
+gate rather than trusting screenshots.
 
 ---
 

@@ -17,6 +17,7 @@ import { isNeverPaidPlayer } from '@/lib/dues-status';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import ExportMenu from '@/components/admin/ExportMenu';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../coaches.module.css';
 import { tournamentToday } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -643,9 +644,7 @@ export function PlayerDuesPanel({
           icon-only, "?" in its fixed corner). The reminder status lines stay stacked under the
           buttons — they're feedback about the action group, so they travel with it. */}
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={styles.lineupBackLink}>
-          <ArrowLeft size={14} aria-hidden /> Back to Money
-        </Link>
+        <CoachBackLink href={`${base}/accounting${seasonQuery}`}>Back to Money</CoachBackLink>
       )}
       <CoachPageHeader
         embedded={embedded}

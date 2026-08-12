@@ -1,9 +1,9 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Archive, CalendarPlus, Library, Link2, Pencil, SlidersHorizontal } from 'lucide-react';
+import { Archive, CalendarPlus, Library, Link2, Pencil, Settings, SlidersHorizontal } from 'lucide-react';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import type { LineupSettings } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -181,22 +181,17 @@ export default function TeamSettingsPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div>
-            <h1 className={styles.pageTitle}>Team settings</h1>
-            <p className={styles.pageSub}>{team.name}</p>
-          </div>
-        </div>
-        {/* Chunk B (P1 #17): the one door of the five that had NO guide to open. Rather than point
-            a "?" at the help hub — a table of contents where the coach expected an answer about
-            this screen — the guide was written in the same unit of work. */}
-        <HelpButton
-          iconOnly
-          label="Team settings"
-          help={{ module: 'coaches', sectionIds: ['premium-team-settings'], fullGuideHref: `/${orgSlug}/coaches/help#premium-team-settings` }}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: the team-name line retires into the masthead that already
+          carries it; the page gains the section icon its siblings all have.
+          Chunk B (P1 #17): the one door of the five that had NO guide to open. Rather than point
+          a "?" at the help hub — a table of contents where the coach expected an answer about
+          this screen — the guide was written in the same unit of work. */}
+      <CoachPageHeader
+        icon={Settings}
+        title="Team settings"
+        helpLabel="Team settings"
+        help={{ module: 'coaches', sectionIds: ['premium-team-settings'], fullGuideHref: `/${orgSlug}/coaches/help#premium-team-settings` }}
+      />
 
       {/* ── Division ─────────────────────────────────────────────────────── */}
       <section className={styles.setupPanel} aria-labelledby="division-title">

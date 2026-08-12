@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Receipt, Plus, CheckCircle2, AlertTriangle, ArrowLeft, Tag, Settings2, Upload } from 'lucide-react';
+import { Receipt, Plus, CheckCircle2, AlertTriangle, Tag, Settings2, Upload } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -16,6 +16,7 @@ import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import BudgetImportSheet from '@/components/coaches/BudgetImportSheet';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { useDiscardGuard, touched } from '@/components/coaches/useDiscardGuard';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamExpense, RepTeamTag, BudgetCategoryWithItems, RepBudgetPlan } from '@/lib/types';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -479,9 +480,7 @@ export function ExpensesPayablesPanel({
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
       {!embedded && (
-        <Link href={`${base}/accounting${seasonQuery}`} className={styles.lineupBackLink}>
-          <ArrowLeft size={14} aria-hidden /> Back to Money
-        </Link>
+        <CoachBackLink href={`${base}/accounting${seasonQuery}`}>Back to Money</CoachBackLink>
       )}
       {/* Page-header ruling 2026-08-11: one shape, actions right, phone secondaries icon-only.
           ⚠ The write gates stand (Chunk A probe): a read-only money assistant sees no sheet

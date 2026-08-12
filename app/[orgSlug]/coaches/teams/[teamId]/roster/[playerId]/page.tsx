@@ -15,6 +15,7 @@ import PlayerRecapPreview from '@/components/coaches/PlayerRecapPreview';
 import { canViewDevelopmentGoals, canViewMeasurables, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
 import {
@@ -284,7 +285,7 @@ export default function PlayerDetailPage({
     <div className={styles.page}>
       <UnsavedChangesGuard active={isDirty} />
       {/* Drill-in back link (the breadcrumb is globally hidden — this is the one way back). */}
-      <Link href={`${base}/roster${seasonQuery}`} className={styles.lineupBackLink}>← Roster</Link>
+      <CoachBackLink href={`${base}/roster${seasonQuery}`}>Roster</CoachBackLink>
 
       {/* Header (page-header ruling 2026-08-11): the player's name + archive chip, nothing
           under the title — jersey number and age are live facts, so they lead the status row

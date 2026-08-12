@@ -6,7 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachAskBar from '@/components/coaches/CoachAskBar';
 import { askReportHref } from '@/lib/coach-ask-questions';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   computeInsightFindings, summarizeDuesForFindings, ATTENDANCE_MIN_KNOWN, ATTENDANCE_FLAG_BELOW,
@@ -336,20 +336,14 @@ export default function CoachesInsightsPage({
 
   return (
     <div className={`${styles.page} ${styles.pageWide}`}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><BarChart3 size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Insights</h1>
-            <p className={styles.pageSub}>{assignment.teamName} — how your season is going</p>
-          </div>
-        </div>
-        <HelpButton
-          iconOnly
-          label="Insights"
-          help={{ module: 'coaches', sectionIds: ['premium-insights', 'premium-ask'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: the team name is the masthead's, and "how your season is
+          going" is what the whole page is — a title's worth of blurb under the title. */}
+      <CoachPageHeader
+        icon={BarChart3}
+        title="Insights"
+        helpLabel="Insights"
+        help={{ module: 'coaches', sectionIds: ['premium-insights', 'premium-ask'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
+      />
 
       {loading || loadedFor !== teamId ? (
         <div className={styles.loadingState}>Loading insights…</div>

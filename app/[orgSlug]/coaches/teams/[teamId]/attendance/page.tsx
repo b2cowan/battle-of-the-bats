@@ -7,6 +7,7 @@ import { CalendarCheck, ArrowRight } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { SkeletonBlock } from '@/components/admin/AdminSkeleton';
 import {
   COACH_GAME_EVENT_TYPES, eventDisplayTitle, formatEventWhen, pickNextOrMostRecent,
@@ -57,13 +58,12 @@ export default function CoachesAttendancePage({
 }) {
   const params = use(paramsPromise);
   const { orgSlug, teamId } = params;
-  const { assignments, loading: ctxLoading } = useCoaches();
+  const { loading: ctxLoading } = useCoaches();
   // Chunk F — which SEASON is on screen. `page.capabilities` are that season's (rule 1)
   // and `page.canWrite()` folds in read-only, so write flags go through it.
   const seasonSearchParams = useSearchParams();
   const page = useCoachSeasonPage(orgSlug, teamId, seasonSearchParams.get('year'));
   const seasonQuery = page.query;
-  const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
 
   const [rows, setRows] = useState<AttendanceRow[]>([]);
@@ -165,7 +165,7 @@ export default function CoachesAttendancePage({
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* Drill-in sub-page back-link (the coach breadcrumb is globally hidden — 2026-07-08 rule).
           IA parent = the Insights hub; the Roster page keeps its own in-context button here. */}
-      <Link href={`${base}/history`} className={styles.lineupBackLink}>← Insights</Link>
+      <CoachBackLink href={`${base}/history`}>Insights</CoachBackLink>
 
       {/* Header (page-header ruling 2026-08-11): title + "?" in its fixed corner, nothing
           under the title. */}

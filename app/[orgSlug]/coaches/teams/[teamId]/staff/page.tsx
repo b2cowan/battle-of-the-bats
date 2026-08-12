@@ -1,12 +1,10 @@
 'use client';
 import { use } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, Users, ShieldCheck } from 'lucide-react';
+import { Users, ShieldCheck } from 'lucide-react';
 import { useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachStaffPanel from '@/components/coaches/CoachStaffPanel';
 import { useCoaches } from '@/lib/coaches-context';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -35,31 +33,16 @@ export default function CoachStaffPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.breadcrumb}>
-        <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${page.teamBase}${page.query}`}>{page.teamName}</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>Staff</span>
-      </div>
-
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Users size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>
-              Coaching staff
-              <CoachSeasonChip season={page.season} teamBase={page.teamBase} />
-            </h1>
-            <p className={styles.pageSub}>{page.teamName}</p>
-          </div>
-        </div>
-        <HelpButton
-          iconOnly
-          label="Coaching staff"
-          help={{ module: 'coaches', sectionIds: ['premium-staff'], fullGuideHref: `/${orgSlug}/coaches/help#premium-staff` }}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: breadcrumb and team-name line both retire into the
+          masthead that already says both; the icon joins the portal's 22px convention. */}
+      <CoachPageHeader
+        icon={Users}
+        title="Coaching staff"
+        season={page.season}
+        teamBase={page.teamBase}
+        helpLabel="Coaching staff"
+        help={{ module: 'coaches', sectionIds: ['premium-staff'], fullGuideHref: `/${orgSlug}/coaches/help#premium-staff` }}
+      />
 
       {/*
         Governing rule 3 — the ONE deliberate write surface on a finished season, and the one

@@ -1,7 +1,34 @@
 # Coach Portal Page Headers — Consistency Build Plan
 
-**Status:** ruled 2026-08-11 (owner-approved through four mockup rounds). **Pass 1 (§3) BUILT on
-dev 2026-08-11 (+ /simplify §5b and /review §5c the same day) — owner QA pending.** typecheck ✓ · 1,595 unit tests ✓ (9 new for the
+**Status:** ruled 2026-08-11 (owner-approved through four mockup rounds). **BOTH PASSES BUILT on
+dev 2026-08-11 — owner QA pending as `OWNER_QA_LEDGER.md` §10 (Group 3A), one sitting covering the
+whole ruling.**
+
+**Pass 2 (§4) BUILT 2026-08-11** (+ `/simplify` §5d and `/review` §5e the same day). The remaining
+27 pages migrated; **zero `.pageSub` and zero `.breadcrumb` renders survive portal-wide, and the
+only hand-rolled `.pageHeader` markup left is inside `CoachPageHeader` itself** (the §7 success
+criteria, grep-proven). Retitles landed (Development report → "Is everyone getting attention?",
+Tryouts history → "Tryout history", Season's End h1); seven iconless pages gained their icon; ten
+pages gained the help "?"; `.pageSub` → `.bodyNote` (renamed so a future header can't reach for it
+by muscle memory) and `.breadcrumb`/`.scoutBackLink` deleted outright. **The back-link punch item
+went one level deeper than the plan asked:** one class was not enough — the markup was still
+hand-copied into 27 files — so `components/coaches/CoachBackLink.tsx` now owns the shape, applied
+to all 26 non-exempt call sites. typecheck ✓ · 1,595 unit tests ✓ · verify:changed full chain ✓
+(demos still presentable) · 2 UAT heading assertions retargeted to the renamed report.
+
+**The 23 SURFACED-NOT-REVIEWED baseline entries are CLOSED: 2 fixed, 18 argued with written
+reasons, 3 pruned as fixed.** The two real ones were exactly the two the Pass 1 note predicted
+would not survive scrutiny: the **coach-practice-plan content-overflow @1440 was a genuine defect**
+— `.attendanceFooter` baked a slide-over-only `-1.5rem` sideways bleed into its base rule, so the
+three PAGE consumers hung 24px past the page edge at every desktop width; the bleed now lives on
+`.modalOverlay .attendanceFooter`, where it is measured, so a future page reusing the bar is right
+by default. The other was the Lineups "Season insights" link at **21px tall — the smallest control
+in the portal** — now carrying the `.lineupBackLink` tap-padding shape. The 18 kept entries are the
+help hub's quick-link chips (a shared cross-portal shell, exempt), `.lineupFilterChip` at its ruled
+36px phone height (2026-06-29 mobile conventions), and a desktop-only schedule event chip — all
+three now point at the ONE portal-wide control-height ruling still owed (§5b).
+
+**Pass 1 (§3) BUILT on dev 2026-08-11 (+ /simplify §5b and /review §5c the same day) — owner QA pending.** typecheck ✓ · 1,595 unit tests ✓ (9 new for the
 season-label helper) · verify:changed full chain ✓ (demos still presentable) · 2 UAT heading
 assertions retargeted "Team Calendar"→"Schedule" · admin rep-teams schedule h1 joined the rename
 (its own breadcrumb already said "Schedule"). **Rendered layout sweep RUN (full, all 29 screens ×4
@@ -14,7 +41,7 @@ recorded with reasons in the baseline. Baseline re-snapshotted from the complete
 **23 marked SURFACED-NOT-REVIEWED (post-2026-08-05 feature debt: help-hub guide links, Lineups
 All/League filter + Season insights link, a schedule event-chip row, and ONE REAL content-overflow
 on coach-practice-plan @1440) — these are Pass 2 punch-list work, recorded so the gate runs green
-without the debt being silently absorbed.** Pass 2 (§4) open.
+without the debt being silently absorbed.**
 **Binding visual spec:** mockup artifact `claude.ai/code/artifact/1ae95cd8-8bc2-4500-b024-1f6f0bc78f3a`
 (source `docs/projects/active/COACH_PAGE_HEADER_CONSISTENCY_MOCKUP.html`; Options B/C renders live in
 the artifact's version history).
@@ -243,6 +270,88 @@ header div was a phantom extra 2rem.
 sit below, but tab order follows DOM (title → actions → help). Reordering the DOM would move the
 same mismatch to desktop — which is currently perfect — so the phone keeps it: few controls,
 screen-reader linear order unaffected. Do not "fix" one width by breaking the other.
+
+## 5c-bis. What the rendered sweep found in Pass 2 — and one operational lesson
+
+The 29-screen × 2-width sweep is the only gate that sees a defect which exists solely once a
+browser has laid the page out, and in this pass it earned its cost three times:
+
+1. **The practice-plan sideways scroll @1440** — a real defect, fixed at its source (§5d).
+2. **The Lineups "Season insights" link at 21px** — the smallest control in the portal, on a link
+   whose "quiet" visual register had been mistaken for a licence to skip the tap floor.
+3. **~20 baselined back-link entries cleared by ONE rule.** Every drill-in's back link was 34px on
+   a phone, and the baseline carried one entry per screen saying so — because the shape was
+   hand-copied per screen. Extracting `CoachBackLink` meant a single `@media (max-width: 640px)`
+   rule on `.lineupBackLink` fixed all of them at once. **This is the concrete argument for the
+   component over the class:** the class made them consistent, the component made them fixable.
+
+⚠ **Re-keyed findings are the sweep's standard false alarm and cost real time.** Dropping the
+literal "←" from the back links (it became an `aria-hidden` lucide icon) changed every accessible
+name from `a·← Insights` to `a·Insights` — so ~20 entries reported as NEW at their unchanged 34px.
+**Before treating a rendered finding as a regression, grep the baseline for the same element under
+its old accessible name.** The height is the tell: identical px in the detail string means a
+re-key, not a change.
+
+⚠ **A full 29-screen sweep exhausts the dev server's heap** (measured this pass: the node process
+reached 6.6 GB, after which `coach-notifications @1440` timed out at 150s and the script aborted
+before printing its verdict — the abort reads like a failure but is the server dying, not a
+defect). The script's own error text says so. **Stop the server, delete `.next`, restart, then
+re-run** — the same sequence AGENTS.md mandates for a stale cache.
+
+## 5d. /simplify outcome — Pass 2 (2026-08-11)
+
+Four lenses. Five fixes applied, and three of them were the same lesson at different depths: **a
+shared mechanism was being special-cased instead of corrected.**
+
+- **`.attendanceFooter`'s sideways bleed moved to the container that measures it.** The first fix
+  cancelled the bleed on the three page consumers; the altitude lens was right that this was the
+  wrong depth — the base rule was defaulting to the slide-over's context and every page had to
+  remember an antidote. Now `.modalOverlay .attendanceFooter` owns it. (The bottom bleed stays
+  universal: `.coachesMain`'s padding is set by arithmetic against exactly that 24px pull.)
+- **`.pageHeaderBlock` deleted.** It reached past `CoachPageHeader`'s public contract to override
+  the component's *internal* class from page CSS. The deeper answer was not a prop — it was that a
+  meta row hugging the title **is the banned subtitle wearing a new class name**. Both entity pages
+  now render theirs at ordinary body rhythm, and `.pageSummaryStrip` carries a comment saying why
+  tightening it back up is off-limits.
+- **`.lineupMetaRow` folded into `.pageSummaryStrip`** (same idea, different magic numbers, same
+  pages) and **`.devBoardFraming` dropped for `.devCardNote`** (a near-duplicate for one call site).
+- **`CoachBackLink` extracted** — see the status block above.
+
+**Skipped:** the repeated `{ module: 'coaches', sectionIds: […] }` help literals — verified as a
+pre-existing convention across 41 files with no factory to point at, so not a Pass 2 regression.
+
+⚠ **Process note worth keeping:** the back-link codemod's regex used a lazy `[\s\S]*?` for the href
+and **over-matched in one file**, swallowing an unrelated `<Link>`. Typecheck caught it; every
+transformed file was then audited for net deletions before proceeding. A codemod over JSX needs a
+verification pass that is not "did it compile" — a same-tag swallow can parse cleanly.
+
+## 5e. /review outcome — Pass 2 (2026-08-11, high-risk tier, 5 lenses)
+
+Tier forced to **high-risk** by the standing carve-out: shared portal chrome has the blast radius of
+a shared module however small the diff.
+
+**Deterministic gate:** verify:changed ✓ (token ratchets, palette contrast, snapshot freshness,
+schema parity 0, dictionary, org-context guard, demos presentable) · typecheck ✓ · lint ✓ (0 errors)
+· migrations n/a · rendered check:layout — see the status block.
+
+**Security / archive-contract lens: CLEAN, and the presentation-only claim verified structurally** —
+zero `fetch(` in the whole diff, no `app/api/**` or `lib/**` file touched, `coach-season-write-guard`
+lists zero-diff, and the one new hook call (`useCoachSeasonPage` on the past-practice archive door)
+traced to a pure resolve over already-loaded context that changes no request and widens nothing.
+**CSS-cascade lens: CLEAN** — the four `.attendanceFooter` consumers are structurally disjoint at
+every width; the slide-over keeps its bleed.
+
+**Fixed from findings:** the retitled Insights report broke two Playwright assertions in
+`plan-templates-layout.spec.ts` (retargeted); seven `import Link` statements survived the codemod's
+cleanup pass (removed); one comment cited the wrong breakpoint for the mobile re-bleed (≤640, not
+≤900).
+
+**Refuted (raised by two lenses, dropped on adjudication):** "the binding coverage framing is now
+missing from the empty states". In both files the empty-state branches render a placeholder
+sentence and **no roster order at all** — the framing exists to stop a reader misreading a visible
+roster order as a ranking, so above "Nothing on the board yet" it would be framing an absence. The
+ruling's own words are "move into the card they frame", which is what shipped. Both lenses applied
+the rule mechanically without checking whether the framed thing was on screen.
 
 ## 6. Risks & edge cases
 

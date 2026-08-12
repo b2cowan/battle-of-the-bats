@@ -6,7 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { recordChip, recordTone, resultLetter, hasMeetings, hasBookContent, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { formatInOrgZone } from '@/lib/timezone';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import styles from '../../../../coaches.module.css';
 
@@ -63,20 +63,14 @@ export default function CoachesOpponentsPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Telescope size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Who are we up against?</h1>
-            <p className={styles.pageSub}>{assignment.teamName} — your book on every opponent, every season</p>
-          </div>
-        </div>
-        <HelpButton
-          iconOnly
-          label="Opponents"
-          help={{ module: 'coaches', sectionIds: ['premium-scouting'], fullGuideHref: `/${orgSlug}/coaches/help#premium-scouting` }}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: the team name belongs to the masthead, and "your book on
+          every opponent" is what the empty state already teaches a coach with no book yet. */}
+      <CoachPageHeader
+        icon={Telescope}
+        title="Who are we up against?"
+        helpLabel="Opponents"
+        help={{ module: 'coaches', sectionIds: ['premium-scouting'], fullGuideHref: `/${orgSlug}/coaches/help#premium-scouting` }}
+      />
 
       {loading ? (
         <div className={styles.loadingState}>Loading…</div>

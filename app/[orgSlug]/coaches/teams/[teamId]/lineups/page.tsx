@@ -7,13 +7,12 @@ import {
   Plus, Pencil, Trash2, Check, X, ClipboardCheck, HelpCircle,
 } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { canManageSchedule } from '@/lib/coach-capabilities';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import styles from '../../../coaches.module.css';
 import { gameDayEntryHref } from '@/lib/coach-game-day';
@@ -302,17 +301,17 @@ export default function CoachesLineupsPage({
     );
   }
 
+  // Page-header ruling 2026-08-11: nothing under the title. The old blurb ("Build game lineups
+  // and reusable templates for your team") is carried, in fuller form, by BOTH empty states below.
   const header = (
-    <div className={styles.pageHeader}>
-      <div className={styles.pageHeaderLeft}>
-        <div className={styles.headerIcon}><ListOrdered size={22} /></div>
-        <div>
-          <h1 className={styles.pageTitle}>Lineups<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-          <p className={styles.pageSub}>Build game lineups and reusable templates for your team.</p>
-        </div>
-      </div>
-      <HelpButton iconOnly label="Lineups" help={helpRequest} />
-    </div>
+    <CoachPageHeader
+      icon={ListOrdered}
+      title="Lineups"
+      season={page.season}
+      teamBase={page.teamBase}
+      helpLabel="Lineups"
+      help={helpRequest}
+    />
   );
 
   if (!canLineups) {
@@ -584,7 +583,7 @@ export default function CoachesLineupsPage({
         <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onClick={() => applyBusyGameId ? null : setApplyTemplate(null)}>
           <div className={styles.modal} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title={<>Apply &ldquo;{applyTemplate.name}&rdquo; to&hellip;</>} onClose={() => setApplyTemplate(null)} closeIconSize={18} closeAriaLabel="Close" />
-            <p className={styles.pageSub} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>
+            <p className={styles.bodyNote} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>
             <div className={styles.lineupFrontList}>
               {pickerGames.map(g => (
                 <button key={g.id} type="button" className={styles.lineupFrontRow} disabled={!!applyBusyGameId} onClick={() => applyToGame(g)} style={{ textAlign: 'left', cursor: applyBusyGameId ? 'wait' : 'pointer' }}>

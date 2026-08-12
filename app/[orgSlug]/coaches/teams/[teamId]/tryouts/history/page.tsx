@@ -1,13 +1,11 @@
 'use client';
 import { use, useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ChevronRight, ClipboardList, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { ClipboardList, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { useCoachSeasonPage, useCoaches } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
-import HelpButton from '@/components/help/HelpButton';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -119,35 +117,17 @@ export default function TryoutHistoryPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.breadcrumb}>
-        <Link href={`/${orgSlug}/coaches`}>Coaches Portal</Link>
-        <span><ChevronRight size={12} /></span>
-        <Link href={`${page.teamBase}${seasonQuery}`}>{page.teamName}</Link>
-        <span><ChevronRight size={12} /></span>
-        <span>Tryouts</span>
-      </div>
-
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><ClipboardList size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>
-              Tryouts
-              <CoachSeasonChip season={page.season} teamBase={page.teamBase} />
-            </h1>
-            <p className={styles.pageSub}>
-              {data?.sessions.length
-                ? `${data.sessions.length} ${data.sessions.length === 1 ? 'session' : 'sessions'} · ${data.turnout} ${data.turnout === 1 ? 'candidate' : 'candidates'}`
-                : 'What happened at this season’s tryout'}
-            </p>
-          </div>
-        </div>
-        <HelpButton
-          iconOnly
-          label="Tryouts"
-          help={{ module: 'coaches', sectionIds: ['premium-tryout-history'], fullGuideHref: `/${orgSlug}/coaches/help#premium-tryout-history` }}
-        />
-      </div>
+      {/* Page-header ruling 2026-08-11: retitled "Tryout history" — "Tryouts" was the live hub's
+          name too, and two screens with one title is how a coach ends up on the wrong one. The
+          breadcrumb retires; the session/candidate counts move into the body they summarize. */}
+      <CoachPageHeader
+        icon={ClipboardList}
+        title="Tryout history"
+        season={page.season}
+        teamBase={page.teamBase}
+        helpLabel="Tryout history"
+        help={{ module: 'coaches', sectionIds: ['premium-tryout-history'], fullGuideHref: `/${orgSlug}/coaches/help#premium-tryout-history` }}
+      />
 
       {fetching ? (
         <div className={styles.loadingState}>Looking back at this tryout…</div>
@@ -166,6 +146,18 @@ export default function TryoutHistoryPage({
           {/* Turnout, stated as a COMPARISON. A bare count doesn't answer "is the program
               growing" — which is the reason the owner put tryouts back in scope. */}
           <div className={styles.statStrip}>
+            {/* Page-header ruling 2026-08-11: the retired subtitle's "N sessions · N candidates"
+                lands HERE rather than as a second strip — this row already carried the candidate
+                count, and printing it twice on one screen is the thing the ruling is against. */}
+            {data.sessions.length > 0 && (
+              <>
+                <span className={styles.statStripItem}>
+                  <strong>{data.sessions.length}</strong>
+                  {data.sessions.length === 1 ? 'session' : 'sessions'}
+                </span>
+                <span className={styles.statStripDot} aria-hidden>·</span>
+              </>
+            )}
             <span className={styles.statStripItem}>
               <strong>{data.turnout}</strong>
               {data.turnout === 1 ? 'candidate' : 'candidates'}
@@ -205,7 +197,7 @@ export default function TryoutHistoryPage({
                     <tr key={c.id}>
                       <td data-label="Candidate">{name}</td>
                       <td data-label="Score">
-                        {c.averageScore == null ? '—' : (<>{c.averageScore.toFixed(1)}{c.scoredCategories > 0 && (<span className={styles.pageSub}> · {c.scoredCategories} {c.scoredCategories === 1 ? 'score' : 'scores'}</span>)}</>)}
+                        {c.averageScore == null ? '—' : (<>{c.averageScore.toFixed(1)}{c.scoredCategories > 0 && (<span className={styles.bodyNote}> · {c.scoredCategories} {c.scoredCategories === 1 ? 'score' : 'scores'}</span>)}</>)}
                       </td>
                       <td data-label="Decision">
                         <span className={
@@ -241,7 +233,7 @@ export default function TryoutHistoryPage({
           </CoachScrollX>
 
           {data.sessions.length > 0 && (
-            <p className={styles.pageSub} style={{ marginTop: '0.75rem' }}>
+            <p className={styles.bodyNote} style={{ marginTop: '0.75rem' }}>
               Sessions: {data.sessions.map(s => s.sessionDate).join(' · ')}
             </p>
           )}

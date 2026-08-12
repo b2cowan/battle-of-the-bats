@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { Trophy, Archive, ChevronDown, Check } from 'lucide-react';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
-import HelpButton from '@/components/help/HelpButton';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamHistoryYear, RepTeamTag } from '@/lib/types';
 
@@ -158,27 +159,19 @@ export default function CoachesResultsReportPage({
   return (
     <div className={styles.page}>
       {/* A closed-only team's Insights hub is season-live — its back door goes to Season's End. */}
-      <Link href={isClosedOnly ? `${base}/season-end` : `${base}/history`} className={styles.lineupBackLink}>
-        ← {isClosedOnly ? "Season's End" : 'Insights'}
-      </Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Trophy size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>How are we doing?</h1>
-            <p className={styles.pageSub}>{isClosedOnly ? 'Your seasons, kept for good' : 'Every result this season, plus your past seasons'}</p>
-          </div>
-        </div>
-        {/* Chunk B (P1 #17): on a CLOSED season the nav points Insights straight here, so this page
-            is a nav destination in its own right — the /history hub that carries the icon is not
-            reachable at all. On a live season it is a drill-in and inherits the hub's guide; one
-            icon covers both readings rather than two rules. */}
-        <HelpButton
-          iconOnly
-          label="Insights"
-          help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
-        />
-      </div>
+      <CoachBackLink href={isClosedOnly ? `${base}/season-end` : `${base}/history`}>{isClosedOnly ? "Season's End" : 'Insights'}</CoachBackLink>
+      {/* Page-header ruling 2026-08-11: the conditional line is deleted — the question in the h1
+          already says what the page answers, and the results list below shows its own scope.
+          Chunk B (P1 #17): on a CLOSED season the nav points Insights straight here, so this page
+          is a nav destination in its own right — the /history hub that carries the icon is not
+          reachable at all. On a live season it is a drill-in and inherits the hub's guide; one
+          icon covers both readings rather than two rules. */}
+      <CoachPageHeader
+        icon={Trophy}
+        title="How are we doing?"
+        helpLabel="Insights"
+        help={{ module: 'coaches', sectionIds: ['premium-insights'], fullGuideHref: `/${orgSlug}/coaches/help#premium-insights` }}
+      />
 
       {loading || loadedFor !== teamId ? (
         <div className={styles.loadingState}>Loading report…</div>

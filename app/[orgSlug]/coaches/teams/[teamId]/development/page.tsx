@@ -4,10 +4,9 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { TrendingUp, Plus, X, HelpCircle } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
-import CoachSeasonChip from '@/components/coaches/CoachSeasonChip';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
-import HelpButton from '@/components/help/HelpButton';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import TestTypesManager from '@/components/coaches/TestTypesManager';
 import { todayLocal } from '@/lib/measurable-format';
@@ -434,24 +433,18 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><TrendingUp size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Development<CoachSeasonChip season={page.season} teamBase={page.teamBase} /></h1>
-            <p className={styles.pageSub}>
-              {assignment?.teamName ?? ''}
-              {/* Instructional, not a claim about the team's overall state — a team can have
-                  focus areas set with no test list yet, and the doors below will say so
-                  truthfully; the subtitle must not contradict them (/review F3). */}
-              {loading ? '' : firstRun
-                ? ' — add a test to start recording evaluations'
-                : ' — run evaluations, see where each player is'}
-            </p>
-          </div>
-        </div>
-        <HelpButton iconOnly label="Development" help={helpRequest} />
-      </div>
+      {/* Page-header ruling 2026-08-11: the team name is the masthead's job, and the first-run
+          guidance it used to carry is already said, in place and in full, by the sessions card's
+          held-back note ("Add your first test above and this turns on…") beside the "Start here"
+          pill on the test list. */}
+      <CoachPageHeader
+        icon={TrendingUp}
+        title="Development"
+        season={page.season}
+        teamBase={page.teamBase}
+        helpLabel="Development"
+        help={helpRequest}
+      />
 
       {error && <p className={styles.errorText} role="alert">{error}</p>}
       {loading ? (

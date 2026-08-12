@@ -1,8 +1,8 @@
 'use client';
 import { useState, useEffect, useCallback, useMemo, useRef, use } from 'react';
-import Link from 'next/link';
 import { Telescope, Check, X, Share2, GitMerge } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import {
   recordChip, recordTone, resultLetter,
@@ -16,6 +16,7 @@ import {
 import type { RepTeamOpponentObservation } from '@/lib/types';
 import { formatInOrgZone } from '@/lib/timezone';
 import ScoutTagFilter from '@/components/coaches/ScoutTagFilter';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import styles from '../../../../../coaches.module.css';
 
 /** Seven fetch sites in this file share one error idiom — one copy of it, not seven. */
@@ -227,7 +228,7 @@ export default function CoachOpponentCardPage({
     return (
       <div className={styles.page}>
         <p className={styles.errorText}>{error || 'Could not load this opponent'}</p>
-        <Link href={`${base}/history/opponents`} className={styles.scoutBackLink}>‹ All opponents</Link>
+        <CoachBackLink href={`${base}/history/opponents`}>All opponents</CoachBackLink>
       </div>
     );
   }
@@ -363,20 +364,21 @@ export default function CoachOpponentCardPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><Telescope size={22} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>{opponent.displayName}</h1>
-            <p className={styles.pageSub}>
-              <Link href={`${base}/history/opponents`} className={styles.scoutBackLink}>‹ All opponents</Link>
-            </p>
-          </div>
-        </div>
-        <span className={styles.scoutRecChip} data-tone={recordTone(opponent.record)}>
-          {recordChip(opponent.record)}
-        </span>
-      </div>
+      {/* Page-header ruling 2026-08-11: the way back was a SUBTITLE dressed as a link — it now
+          uses the portal's one back-link treatment, above the header like every other drill-in.
+          The record chip stays on the title row: it is this opponent's identity, not an action. */}
+      <CoachBackLink href={`${base}/history/opponents`}>All opponents</CoachBackLink>
+      <CoachPageHeader
+        icon={Telescope}
+        title={opponent.displayName}
+        titleChips={
+          <span className={styles.scoutRecChip} data-tone={recordTone(opponent.record)}>
+            {recordChip(opponent.record)}
+          </span>
+        }
+        helpLabel="Opponents"
+        help={{ module: 'coaches', sectionIds: ['premium-scouting'], fullGuideHref: `/${orgSlug}/coaches/help#premium-scouting` }}
+      />
 
       <div className={styles.scoutStatRow}>
         <div className={styles.scoutStat}>

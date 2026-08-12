@@ -150,7 +150,7 @@ the sequence.
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
 | **2D** | House league schedule — fields + double-booking | §8 | 🖥 | ON DEV · mig **229** ✅ on prod |
 | **2E** | Tournament schedule — a field is picked, not typed | §9 · §9b | 🖥 | ON DEV · no migration |
-| **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 | 🖥📱 | §6 ON DEV, rest LIVE |
+| **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 · §10 | 🖥📱 | §6 + §10 ON DEV, rest LIVE |
 | **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 · §5.5 | 🖥📱 | Mixed · §5.5 ON DEV |
 | **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ✅ **PASSED 2026-08-07** — 6 defects fixed in the run |
 
@@ -2215,6 +2215,90 @@ Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
 
 ---
 
+### 10 🖥📱 Forty screens open the same way — the page-header ruling, BOTH passes — **ON DEV** (Pass 1 `ad43cae1`, Pass 2 pending commit) · no migration
+*Presentation only. Nothing calculates differently, no new data is fetched, no route changed, and
+the archive allow-lists are untouched. What changed is the first inch of every screen.*
+
+**The rule, in one line:** nothing renders under a page title. The team name and the season belong
+to the sticky masthead; a fact that used to sit in a subtitle now leads the body it describes, or
+teaches from an empty state, or is gone. Actions sit right of the title; the help "?" holds the
+top-right corner at every width.
+
+⚠ **One sitting, and you need three things open:** a desktop browser, a **390px phone**, and — for
+the last two steps — one **archived season** and one **assistant-coach** account. Restart of the dev
+server IS required before this section (new files + shared chrome).
+
+**A. The shape, on a desktop.** Walk the left nav top to bottom — Overview, Schedule, Roster,
+Attendance, Lineups, Development, Insights, Money, Tryouts, Documents, Email families, Coaching
+staff, Team settings, Tournaments, Season's End.
+- [ ] Every screen: **one row** — icon, title, then actions, then "?" at the far right. No second
+      line under any title, anywhere. If you find one, that is the defect this whole pass exists
+      to remove.
+- [ ] Every section icon is the **same size** (they used to be two sizes), and seven screens that
+      had no icon at all now have one: Documents, Email families, Team settings, Tournaments,
+      Season's End, Link Organization, Roster player page.
+- [ ] The "?" is in the **same corner on every screen**. Open it on three or four — the guide that
+      opens should be about *that* screen, not the help index.
+- [ ] No breadcrumb trail anywhere ("Coaches Portal › …" is gone from four screens — the masthead
+      and the title already say where you are).
+
+**B. The renames — do they read better, or did we break your muscle memory?** Your call.
+- [ ] **Insights → the coverage report** is now titled **"Is everyone getting attention?"** (was
+      "Development", which is also the name of a different screen — that pairing is what we were
+      trying to break).
+- [ ] **Tryouts → history** is now **"Tryout history"** (was "Tryouts", same as the live hub).
+- [ ] **Season's End** now titles itself "Season's End" rather than repeating the team name.
+
+**C. Where the facts went.** Each of these used to be a subtitle. Confirm the fact is still findable
+and now reads as part of the thing it describes:
+- [ ] **Team board** (Development → Team board): "Roster order — a coverage view, not a ranking" now
+      leads the board itself. ⚠ **This wording is binding** — if it is missing above a board that
+      HAS rows, that is a defect. (Above an empty board it is deliberately absent — there is no
+      roster order there to misread.)
+- [ ] **Playing time**: the "one row per player, from your saved lineups" provenance is now folded
+      into the line above the table that says how many games it is based on.
+- [ ] **Lineup builder / Practice plan**: the date, time and "View on schedule" link now sit below
+      the header as the first line of the body.
+- [ ] **Evaluation session**: the session date. As head coach you see it in the editable Date field;
+      **as an assistant with read-only access** it appears as a line above the readings. Check both.
+- [ ] **Tryout history**: "N sessions" joined the turnout strip rather than becoming a second strip.
+- [ ] **Plan template editor**: "shape · started N plans" now leads the editor.
+
+**D. On a 390px phone.** Same walk, faster.
+- [ ] Every header fits **one line for the title + "?"**, with the actions on a right-pinned row
+      beneath. Nothing scrolls sideways.
+- [ ] Secondary buttons are **icons only**; the one lime primary keeps its words. Every header
+      control is comfortably finger-sized.
+- [ ] The masthead's role tag folds away when you scroll (the collapsed bar stays bare team name).
+
+**E. Going back.** Every drill-in (a Money panel, a template, an opponent, a past practice, the
+awards certificate, a player) has **one** back link, top-left, with an arrow.
+- [ ] Tap several. They all look and behave identically, and each lands one level up — **carrying
+      the season you were viewing** if you are in an archive.
+
+**F. In an archived season** (switch via the chip beside a title, or the season switcher).
+- [ ] The "{year} · Complete" chip sits **inside the title** on every screen that has one, and it is
+      still the way back out to a live season.
+- [ ] **A past practice plan** (Insights → "Is everyone getting attention?" → a practice) now shows
+      that chip instead of a hand-written one — and the chip is now a working season switcher there,
+      which it was not before.
+- [ ] Nothing new became reachable in the archive. If a screen you did not expect opens read-only,
+      say so — the allow-lists were deliberately untouched.
+
+**G. As an assistant coach.** Sign in as an assistant on the same team.
+- [ ] Actions you are not granted are **absent, not disabled** — exactly as before the pass. This is
+      the one thing a header migration could plausibly have broken, so it is worth a careful look on
+      Money, Lineups, Roster and Development.
+- [ ] Your role reads **"Assistant Coach"** in the masthead beside the team name.
+
+*Automated checks that already passed, so don't spend your time re-doing them: typecheck, 1,595 unit
+tests, the full token/contrast/snapshot/dictionary chain, and the rendered 29-screen layout sweep at
+four widths. Two real rendered defects were found and fixed by that sweep and are worth a glance:
+the practice plan no longer scrolls sideways on a desktop, and the Lineups page's "Season insights"
+link is now a proper tap target.*
+
+---
+
 ## Group 3B · The shop window — what a prospect walks into
 
 The creation preview and both no-login demos. ⚠ **This group is only mostly polish:** §5.2's **J2**
@@ -2987,6 +3071,7 @@ this is now most of the newest work, not two odds and ends:
 | Group **1E** | §1.15 · §1.17 · §1.18 — game day on the bench | — (mig 228 shipped) |
 | Inside **1B** | §1.9c — the roster switch | — |
 | Inside **3A** | §6 — the playing-time wording sweep | — |
+| Inside **3A** | §10 — the page-header ruling, both passes | — (no migration, no route change) |
 | ~~Group **3C**~~ | ✅ §7 — the day-of volunteer bottom bars — **PASSED 2026-08-07**, gate cleared | — (no migration) |
 | Group **2D** | §8 — house-league fields + double-booking | mig **229** applied to **prod** before promoting |
 | Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | — (mig **226** applied both envs 2026-08-08) |

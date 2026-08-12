@@ -1,9 +1,10 @@
 'use client';
 import { use, useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { ArrowLeft, ClipboardList, Library } from 'lucide-react';
-import { useCoaches } from '@/lib/coaches-context';
+import { ClipboardList, Library } from 'lucide-react';
+import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
+import CoachPageHeader from '@/components/coaches/CoachPageHeader';
+import CoachBackLink from '@/components/coaches/CoachBackLink';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
@@ -139,6 +140,10 @@ export default function CoachPastPracticePlanPage({
   const year = searchParams.get('year');
   const seasonQuery = year ? `?year=${encodeURIComponent(year)}` : '';
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+  // Page-header ruling 2026-08-11: the archive chip is the SHARED one, in the h1, like every other
+  // page in the portal — this page had hand-rolled its own read-only span, which meant it also had
+  // no way OUT of the archive from the chip (the shared component is the exit too).
+  const page = useCoachSeasonPage(orgSlug, teamId, year);
 
   const [data, setData] = useState<LoadState | null>(null);
   const [loading, setLoading] = useState(true);
@@ -174,9 +179,7 @@ export default function CoachPastPracticePlanPage({
     <div className={`${styles.page} ${styles.pageWide}`}>
       {/* ⚠ The ONLY link out, and it carries the viewed season — an archive is a container, and a
           page inside one must not drop the season on the way back. */}
-      <Link href={`${base}/history/development${seasonQuery}`} className={styles.lineupBackLink}>
-        <ArrowLeft size={14} aria-hidden /> Practices you&apos;ve run
-      </Link>
+      <CoachBackLink href={`${base}/history/development${seasonQuery}`}>Practices you&apos;ve run</CoachBackLink>
 
       {loading ? (
         <div className={styles.loadingState}>Opening the plan…</div>
@@ -184,31 +187,30 @@ export default function CoachPastPracticePlanPage({
         <p className={styles.errorText} role="alert">{error || 'Could not open that plan.'}</p>
       ) : (
         <>
-          <div className={styles.pageHeader}>
-            <div className={styles.pageHeaderLeft}>
-              <div className={styles.headerIcon}><ClipboardList size={22} /></div>
-              <div>
-                <h1 className={styles.pageTitle}>
-                  {data.event.name || 'Practice plan'}
-                  {/* The season is always on screen, so a coach never wonders which year they are
-                      reading. */}
-                  <span className={styles.ppSharedChip}>
-                    {data.season.name}{data.season.isReadOnly ? ' · Complete' : ''}
-                  </span>
-                </h1>
-                <p className={styles.pageSub}>
-                  {[
-                    data.event.startsAt ? `${fmtDate(data.event.startsAt)} · ${fmtTime(data.event.startsAt)}` : null,
-                    [data.event.location, data.event.fieldNumber].filter(Boolean).join(', ') || null,
-                  ].filter(Boolean).join(' · ')}
-                </p>
-                {data.tags.length > 0 && (
-                  <div className={styles.tagReadRow}>
-                    {data.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
-                  </div>
-                )}
-              </div>
-            </div>
+          <CoachPageHeader
+            icon={ClipboardList}
+            title={data.event.name || 'Practice plan'}
+            season={page.season}
+            teamBase={page.teamBase}
+            helpLabel="Practice plans"
+            help={{ module: 'coaches', sectionIds: ['premium-practice-plans'], fullGuideHref: `/${orgSlug}/coaches/help#premium-practice-plans` }}
+          />
+
+          {/* Page-header ruling 2026-08-11: when and where this practice was, and what it was
+              tagged, are facts ABOUT the practice — they lead the record instead of hanging under
+              the title. */}
+          <div className={styles.pageSummaryStrip}>
+            <span>
+              {[
+                data.event.startsAt ? `${fmtDate(data.event.startsAt)} · ${fmtTime(data.event.startsAt)}` : null,
+                [data.event.location, data.event.fieldNumber].filter(Boolean).join(', ') || null,
+              ].filter(Boolean).join(' · ')}
+            </span>
+            {data.tags.length > 0 && (
+              <span className={styles.tagReadRow}>
+                {data.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
+              </span>
+            )}
           </div>
 
           {!plan ? (

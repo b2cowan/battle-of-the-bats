@@ -231,7 +231,9 @@ test.describe('the Development report — coverage, and the rules that bind hard
     test(`renders with no horizontal overflow at ${vp.name}`, async ({ page }) => {
       await page.setViewportSize({ width: vp.width, height: vp.height });
       await page.goto(reportUrl());
-      await expect(page.getByRole('heading', { name: /^Development/ })).toBeVisible();
+      // Retitled to the question it answers by the page-header ruling 2026-08-11 — it and the
+      // Development HUB were both called "Development", which is how a coach lands on the wrong one.
+      await expect(page.getByRole('heading', { name: /^Is everyone getting attention\?/ })).toBeVisible();
       expect(await pageRenderedWithStyles(page), 'the report rendered with its CSS module resolved').toBe(true);
       expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
     });
@@ -251,7 +253,7 @@ test.describe('the Development report — coverage, and the rules that bind hard
     await page.goto(reportUrl());
     // Generous, and only here: this page fetches before it can render anything, so the first
     // assertion after a cold compile is measuring the dev server rather than the product.
-    await expect(page.getByRole('heading', { name: /^Development/ })).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole('heading', { name: /^Is everyone getting attention\?/ })).toBeVisible({ timeout: 30_000 });
 
     const sortable = await page.evaluate(() => {
       const table = document.querySelector('[class*="devBoardTable"]');
