@@ -1,6 +1,6 @@
 # FieldLogicHQ Memory Index
 
-- [Design decisions log](design_decisions.md) — binding visual rulings, newest first (latest 2026-08-11: coach page headers — no subtitles, masthead owns season+role, actions right; BUILT IN FULL, `.pageSub`/`.breadcrumb` deleted so rule 1 has no mechanism left to break)
+- [Design decisions log](design_decisions.md) — binding visual rulings, newest first (latest 2026-08-12: Overview's icon exception RETIRED — tried, shipped, rejected on sight; the One Thing anchor arranged in 3 rows not 5, 228→144px desktop / 267→199px phone, resolver untouched. Before that 2026-08-11: coach page headers — no subtitles, masthead owns season+role, actions right; BUILT IN FULL, `.pageSub`/`.breadcrumb` deleted so rule 1 has no mechanism left to break)
 - [Iterate visual fixes with Playwright](feedback_iterate_visual_with_playwright.md) — for CSS/alignment bugs, drive the app + measure computed heights/screenshot, don't fix blind on user screenshots
 - [Agent review workflow](agents/codex-subagent-coordination.md)
 - [Agent verification workflow](agent-verification-workflow.md)

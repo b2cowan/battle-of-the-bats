@@ -2291,6 +2291,25 @@ awards certificate, a player) has **one** back link, top-left, with an arrow.
       Money, Lineups, Roster and Development.
 - [ ] Your role reads **"Assistant Coach"** in the masthead beside the team name.
 
+**H. The two things you sent back (added 2026-08-12).** Both on the Overview.
+- [ ] **The Overview now has a section icon** like every other screen — so the page title starts at
+      the same place on all forty. Walk the nav again and check nothing else is still missing one.
+- [ ] **The next-event card is shorter.** It was 228px on a desktop and 267px on a phone; it is now
+      144px and 199px. **On a 390px phone the Dues / Budget / Record row should now be visible
+      without scrolling** — that's the whole point of the change, so it's the one thing to check.
+- [ ] The card still says the full date and time. It deliberately repeats what the team bar says,
+      because the bar's copy disappears once you scroll on a phone — scroll down and confirm the
+      card is still telling you when.
+- [ ] **The action button now sits beside the title** instead of under it. On a phone it may drop to
+      its own full-width row when the title is long — that's intended; what's not intended is a
+      squashed or hard-to-hit button. Check both a game and a practice.
+- [ ] **Game day should still be the fullest version of this card** — score, who's in, lineup ready,
+      any arm-care warning. It legitimately stays taller than the others; confirm nothing went
+      missing from it.
+- [ ] The other situations use the same card: a brand-new team ("Welcome"), a quiet week, a season
+      that looks finished, and pre-season's next step. Copy is unchanged in all of them — you're
+      checking the shape holds, not re-reading the words.
+
 *Automated checks that already passed, so don't spend your time re-doing them: typecheck, 1,595 unit
 tests, the full token/contrast/snapshot/dictionary chain, and the rendered 29-screen layout sweep at
 four widths. Two real rendered defects were found and fixed by that sweep and are worth a glance:

@@ -4,6 +4,96 @@ Newest entries first. All decisions here are binding in future sessions unless e
 
 ---
 
+### 2026-08-12 — The Overview's icon exception is retired, and the Overview anchor stops paying for its height in stacked rows
+
+**Trigger:** owner, looking at the shipped Pass-2 Overview: *"why doesn't the overview header have an
+icon like the rest? also, I don't like how big this 'next event' banner is and it pushes down all of
+the more useful dashboard cards."* Mockup:
+`claude.ai/code/artifact/a9cd5b53-2303-4961-8523-cb4046161a10` (source
+`docs/projects/active/COACH_OVERVIEW_ANCHOR_MOCKUP.html`).
+
+**DECISION 1 — Overview gets a section icon like every other screen.** The 2026-08-11 page-header
+mockup deliberately drew Overview title-only, and the shared component recorded the exception. The
+reasoning was that an icon marks a SECTION and the hub's front door has no sibling to be
+distinguished from. **That reasoning assumes the screens are seen side by side; a coach meets them
+one after another**, and in sequence what registers is the title jumping 44px left and back.
+Consistency was the entire point of the ruling, so one exception in forty reads as an oversight —
+which is exactly how the owner read it, unprompted, within a day. ⚠ The exception is RETIRED, not
+merely unimplemented: it was tried, shipped and rejected on sight. Do not restore it.
+(The Pass-2 plan had also contradicted itself here — its inventory listed Overview among the seven
+iconless pages to fix while §3.3 and the component said title-only. The contradiction survived a
+`/simplify` and a `/review`; the owner's eye found it.)
+
+**DECISION 2 — the anchor card ("the One Thing") is arranged in three rows, not five.** The card's
+height was never its information: six situations each rendered their own kicker/headline/meta
+markup, so the *structure* was repeated six times and nobody could see the structure was the cost.
+Measured before: **228px desktop, 267px phone — a third of the viewport — pushing the
+Dues/Budget/Record row past the fold on the screen coaches open most.** The primary action now sits
+on the headline's row and the answers sit on the meta's row. Measured after (the everyday
+next-event case): **144px desktop, 199px phone**, and on a real coach's 390px phone the first tile
+row moved from 40px BELOW the fold to 14px above it.
+
+- **The date STAYS on the card**, though the sticky team bar also shows it. The mockup proposed
+  dropping it as a duplicate; the bar's right slot is `display:none` once the phone header collapses
+  on scroll, so the "duplicate" vanishes exactly when a scrolling coach would need it. **A duplicate
+  that disappears is not a duplicate** — the de-duplication argument was checked and withdrawn.
+- **Game day keeps whatever height it earns.** The scoreline, the readiness row and the arm-care
+  warnings are what a coach opens the portal FOR on a game morning; they still render in full below.
+- **The six situations now share ONE arrangement by construction** (named text slots, one renderer),
+  the same move that fixed the page headers a day earlier. Copy is byte-for-byte unchanged — every
+  one of those sentences was ruled on separately and this was a layout pass.
+- **The resolver is untouched.** Which card appears, and when, is tested, ruled logic; only how much
+  room its answer takes has changed.
+
+**Status:** built on dev 2026-08-12; owner QA rides `OWNER_QA_LEDGER.md` §10.
+
+---
+
+### 2026-08-11 — NO new muted-grey token: the third text tier is the WHITE ALPHA LADDER, capped at /50 — fading `--data-gray` is banned
+
+**Decision:** The request was for a new mid-tone grey token, to restore the three-tier text hierarchy
+that the 2026-08-11 contrast sweep (`b569536a`) flattened when it dropped 22 sub-AA usages onto the
+solid `--data-gray`. **Declined — and the flattening should NOT be reversed by adding a palette
+value.** Three rulings:
+
+1. **Fading `--data-gray` with an opacity modifier is banned outright for text.** Measured on all
+   three dark grounds: `/70` = 4.24:1, `/60` = 3.39:1, `/50` = 2.69:1, `/40` = 2.12:1 — *every* rung
+   fails the 4.5:1 AA floor, and `/40` fails even the 3:1 non-text floor. `--data-gray` starts at
+   only 7.72:1, so it has no headroom to dim; there is no safe rung on that ladder. This is now
+   machine-enforced by `scripts/check-text-contrast.mjs` in `verify:changed`.
+2. **When a third, dimmer tier is genuinely wanted, use the WHITE ALPHA LADDER — already in the
+   design system (`--white-90` … `--white-05`) — and stop at `/50`.** White composited on a
+   near-black ground loses contrast far more slowly than a mid-grey does, so it stays legible much
+   further down: `/60` = 7.30:1, **`/50` = 5.33:1 (the floor rung — AA on all three grounds with
+   margin)**, `/45` = 4.50:1 (borderline; large text only), `/40` = 3.77:1 (fails). And `white/50`
+   reads *visually dimmer* than `--data-gray` while still clearing AA — which is exactly the effect
+   the faded grey was reaching for. **`/45` and below are large-text-only; never body copy.**
+3. **A new solid mid-grey hex would have been the wrong instrument.** `#7C8BA1` measures 5.72 /
+   5.12 / 5.16 and would have worked *in dark mode only* — it is theme-blind, so it would need a
+   hand-maintained light-mode twin, which is the precise trap `tailwind.config.ts` already documents
+   for `--blueprint-light`. The `--white-*` scale inverts automatically (`--white` remaps to
+   `#0F1123` in light mode). Adding a token to duplicate a ladder that exists, minus its
+   theme-awareness, is a net loss.
+
+⚠ **One sharp edge, because the two spellings are not the same colour.** The CSS var `--white-50`
+IS theme-aware. The Tailwind utility `text-white/50` is **not** — Tailwind's `white` is literal
+`#FFFFFF` and never remaps. So: in CSS modules on any theme-aware surface use `var(--white-50)`;
+the Tailwind spelling is acceptable **only** on the dark-only marketing pages (which hardcode
+`bg-pitch-black`), and is a latent light-mode bug anywhere else.
+
+**Rationale:** the sweep's flattening is acceptable as it stands — size, weight and tracking were
+already carrying most of the hierarchy, and the marketing pages read fine without a third ink. So
+this is not a gap that needs filling today; it is a rule for the next time someone reaches for one.
+The governing heuristic is the design-review standard already on record: *use existing custom
+properties before adding new visual primitives*. The palette did not need a new value — it needed
+the existing ladder to be the obvious answer, which is what this entry makes it.
+
+**Applies to:** global — every text colour choice on a dark ground; `scripts/check-text-contrast.mjs`
+(which permits `text-white/50` and above and refuses the faded-`data-gray` rungs, so the rule is
+enforced rather than remembered). [[design-system]] [[design-principles]]
+
+---
+
 ### 2026-08-11 — Coach portal page headers: nothing under the title; the masthead owns season AND role; actions right of the title on every screen
 
 **Trigger:** owner asked for a consistent approach to the per-page sub-headers (screenshots: Overview
@@ -113,10 +203,60 @@ owner QA pending. [[design-system]] [[design-principles]]
 
 **BINDING RULES:**
 1. **The door is always SECOND.** "Start free" stays the primary action on every surface; the demo door is the quieter sibling beside it — hero persona cards use the twin-door stack (shared label "See it live — no sign-up", the card title names the world), persona pages use the lime-OUTLINE + live-dot button in second position (hero AND bottom CTA), and the pricing grid uses a text-weight "Not ready? See … first" line UNDER the two paid live cards' CTAs (product-specific wording there only, because both doors share one screen). Marketing layout only; never in the in-app plan wizard.
-2. **NO standalone chooser page and NO nav item.** The hero's side-by-side doored cards ARE the browse experience. The one future exception: a campaign needing a single URL may get a tiny unlisted chooser — deferred until a campaign asks.
+2. **NO standalone chooser page and NO nav item.** The hero's side-by-side doored cards ARE the browse experience. The one future exception: a campaign needing a single URL may get a tiny unlisted chooser — deferred until a campaign asks. **⟶ AMENDED 2026-08-11: the exception FIRED and the chooser is built. "No nav item" stands. See the amendment note below rule 5.**
 3. **A door renders only where its demo exists.** League Plus and Club surfaces get no door pattern (it would promise a demo that doesn't exist) — with ONE deliberate exception: `/for-clubs` carries the **"Both halves are live today"** block (two doors), because the club executive is the one persona genuinely interested in both, and their coming-soon page becomes proof-by-parts.
 4. **Route to a page when the page has proof; route to a form only when it doesn't.** All Club touchpoints (pricing segment card, both persona-page cross-sells, the coaches org-bridge link) now NAVIGATE to `/for-clubs` — the interest form waits there. League Plus touchpoints stay form-first on purpose; the asymmetry is the principle working, not an inconsistency.
-5. **Every door is gated on the doors flag** (`sandboxDoorsVisible()`) — nothing hand-writes door visibility, matching the availability contract.
+5. **Every door is gated on the doors flag** (`sandboxDoorsVisible()`) — nothing hand-writes door visibility, matching the availability contract. **⟶ ONE CARVE-OUT 2026-08-11 for the two doors ON `/demos`; see the amendment note below.**
+
+---
+
+#### ⟶ AMENDMENT, 2026-08-11 — the chooser exists: `/demos`
+
+Rule 2's own exception fired. The owner asked for one address to send to industry contacts who
+should walk BOTH worlds — *"I want a page that has that so I can send to people in the industry for
+them to try all demos… we can put a simple link in the marketing pages footer for now."* Shipped as
+**`/demos`** (commit `f66c473b`, on dev). The business ruling is logged in `BUSINESS_DECISIONS.md`
+("2026-08-11 — The chooser's revisit trigger FIRED"); this note records only what changes VISUALLY.
+
+**What still holds, unchanged:** the hero's twin-doored persona cards remain THE browse experience
+for a cold prospect — `/demos` is the landing pad for an OUTBOUND link, not a funnel surface, and
+nothing on-site routes a prospect to it in preference to a persona door. **"No nav item" stands**:
+one footer link ("Live Demos", Product column), never the top nav, never the mobile bottom nav.
+
+**Three departures, each deliberate:**
+
+1. **"Unlisted" is now split in two, and only half of it survives.** The chooser is *listed* to
+   people (a footer link) but remains *unlisted to search* — `/demos` is deliberately absent from
+   `app/sitemap.ts`, which is an explicit allow-list. That is the distinction to carry forward: the
+   original "unlisted" instinct was protecting against the demo competing with the funnel in
+   ORGANIC discovery, and that protection is intact. Being reachable from the footer of a page
+   someone is already reading costs the funnel nothing.
+2. **Rule 5 carve-out: the two doors ON `/demos` are not flag-gated, and must not be.** The page
+   follows the same contract as the doors themselves — *the door is always live wherever the sandbox
+   is seeded; the flag governs whether the marketing site ADVERTISES it.* Gating the page would kill
+   a link already emailed to a named person, which is the single failure this page exists to
+   prevent. **The footer link is what the flag governs** (`surface === 'marketing' &&
+   sandboxDoorsVisible()`), so with the doors off the whole thing collapses back to precisely rule
+   2's original "tiny unlisted chooser". The rule's intent is honoured; only its literal reading
+   bends. The footer link is additionally scoped to the marketing surface so it never renders in the
+   signed-in consumer app — rule 1's "marketing layout only" clause reaching a shared component.
+3. **Rule 1 is scoped, not broken: on `/demos` the door IS the primary action.** Every other surface
+   puts "Start free" first and the door second, because the demo must not compete with the ask.
+   `/demos` carries no ask at all, and its two doors are solid-lime primaries of equal weight. That
+   is correct *because there is no ask on this surface to compete with* — the visitor arrived having
+   been sent the demo link, and answering a question they did not ask would be the actual error. Two
+   equal primaries are right here for the same reason: they are genuinely parallel choices, which is
+   the page's whole purpose. **The ask lives one step later, inside the sandbox chrome's own
+   "Start free →" CTA** — so "proof, then ask" still holds across the journey, just not within this
+   one screen. Read rule 1 as governing surfaces that CARRY an ask.
+
+**The page belongs in the system as built.** Bordered cards with no fill, `--blueprint-blue` at low
+alpha for the border and a `--logic-lime` border on hover — the homepage persona-card pattern
+exactly; mono type throughout, `--logic-lime` eyebrows, `--fl-text` headings, `--data-gray` body.
+One trap avoided and worth repeating: the eyebrows deliberately **do not** use the global
+`.hud-label` class with a colour utility, because `.hud-label` sets its own ink and is declared
+after `@tailwind utilities`, so it silently wins and the label renders blue (the same cascade bug
+`app/error.tsx` documents). Spell the eyebrow's type out, or use `.hud-label` bare.
 
 **Also fixed in the build:** the `/for-clubs` coaches cross-sell was still an express-interest trigger for the live Coaches Portal (the same stale trap as the tournament page's, cured 2026-08-08) — flips with the coach checkout gate now; and the Club hero note names all three live products, gate-aware.
 

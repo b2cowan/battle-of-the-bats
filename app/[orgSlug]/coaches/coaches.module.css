@@ -1815,9 +1815,28 @@ a.railRow:focus-visible {
 
 /* Layout ONLY — colour and hover come from the shipped `btn btn-lime`, so the warm-theme
    ink-on-lime handling and the one-lime-action rule are inherited, not re-implemented. */
+/* ── The two shared rows (owner 2026-08-12) ────────────────────────────────────
+   The card's height was never its information — it was five STACKED rows carrying one fact and
+   one action, at 228px desktop / 267px phone. The action now rides the headline's row and the
+   answers ride the meta's, so the same content costs two rows fewer. Both wrap on a narrow
+   screen, where stacking is the honest fallback rather than the default. */
+.oneHeadRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 1rem;
+  flex-wrap: wrap;
+}
+.oneHeadRow .oneHeadline { flex: 1 1 auto; min-width: 0; }
+.oneMetaRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem 1.1rem;
+  flex-wrap: wrap;
+}
+.oneMetaRow .oneMeta { flex: 1 1 auto; min-width: 0; }
+
 .onePrimary {
-  align-self: flex-start;
-  margin-top: 0.85rem;
+  flex: none;
   min-height: 40px;
   gap: 0.4rem;
 }
@@ -1829,7 +1848,7 @@ a.railRow:focus-visible {
   align-items: center;
   gap: 0.4rem 1.1rem;
   flex-wrap: wrap;
-  margin-top: 0.6rem;
+  flex: none;
 }
 .oneAnswer,
 .oneAnswerMuted {
@@ -1854,9 +1873,15 @@ a.railRow:focus-visible {
 @media (max-width: 640px) {
   .oneThing { padding: 0.95rem 1rem 1.05rem; }
   .oneHeadline { font-size: 1.14rem; }
-  /* Full-width primary on a phone — the one control that must never be a small target. */
-  .onePrimary { align-self: stretch; justify-content: center; min-height: 44px; }
-  .oneAnswers { justify-content: space-between; gap: 0.4rem 0.75rem; }
+  /* ⚠ The primary keeps the 44px phone floor but NOT its own full-width row. Giving it one is what
+     made the phone the worst case — the card ran to 267px and pushed the board's first row past
+     the fold. It shares the headline's row and grows to fill only if the headline forces it to
+     wrap, so it is never a small target and never a wasted row. */
+  .onePrimary { flex: 1 1 auto; justify-content: center; min-height: 44px; }
+  /* The headline yields before the button does: a squeezed button is unusable, a wrapped headline
+     is just two lines. */
+  .oneHeadRow .oneHeadline { flex: 1 1 9rem; }
+  .oneAnswers { gap: 0.4rem 0.9rem; }
 }
 
 /* ══ THE TAIL (Chunk I) ════════════════════════════════════════════════════

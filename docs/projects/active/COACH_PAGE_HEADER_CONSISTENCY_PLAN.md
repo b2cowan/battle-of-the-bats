@@ -353,6 +353,33 @@ roster order as a ranking, so above "Nothing on the board yet" it would be frami
 ruling's own words are "move into the card they frame", which is what shipped. Both lenses applied
 the rule mechanically without checking whether the framed thing was on screen.
 
+## 5f. Owner feedback on the shipped result (2026-08-12) — two changes, both taken
+
+The owner opened the finished Overview and sent back two things within a day. Both are now built;
+the ruling in `memory/design_decisions.md` records them as binding.
+
+1. **“Why doesn't the Overview header have an icon like the rest?”** — because §3.3 and the binding
+   mockup said title-only, while **§2 and the §4.2 punch list of this very plan said the opposite**
+   (“the section icon on the 7 iconless pages”, Overview being one of the seven). The contradiction
+   sat in the plan through a `/simplify` and a `/review` and was found by looking at the product.
+   The exception is retired: **one exception in forty reads as an oversight**, because a coach meets
+   the screens in sequence rather than side by side, and what registers is the title jumping 44px.
+   ⚠ Do not re-derive the old rationale from §3.3 — that section is now superseded.
+
+2. **“The next-event banner is too big and pushes down the more useful cards.”** — measurably true:
+   228px desktop / **267px on a phone, a third of the viewport**, with the board's first row ending
+   40px past the fold. The card's six situations each rendered their own kicker/headline/meta
+   markup, so the *structure* was written six times and its cost was invisible; naming the three
+   text slots once and rendering one arrangement got it to **144px / 199px** with the phone's first
+   tile row now 14px above the fold. Copy byte-for-byte unchanged (proven by string-count diff
+   against HEAD); the resolver untouched.
+
+⚠ **One proposal in the mockup was wrong and was dropped during the build.** It argued the card's
+date duplicated the sticky team bar and could go. The bar's right slot is `display:none` once the
+phone header collapses on scroll — so the duplicate disappears exactly when a scrolling coach needs
+it, and the card would have been left as the only copy of a fact just deleted. **A duplicate that
+disappears is not a duplicate.** The saving comes from removing two stacked rows instead.
+
 ## 6. Risks & edge cases
 
 - **Named-season display:** org season names that EMBED the team name ("Riverdale Ridge 12U 2026")

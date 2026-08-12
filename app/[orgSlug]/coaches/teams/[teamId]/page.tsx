@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { Archive, ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
+import { Archive, ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, LayoutDashboard, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
 import CoachHelperHome from '@/components/coaches/CoachHelperHome';
@@ -1517,6 +1517,97 @@ export default function TeamOverviewPage({
       && setupStats.activeRosterCount === 0 && setupStats.eventCount === 0,
   });
 
+  /**
+   * The card's THREE TEXT SLOTS, one set per situation (owner 2026-08-12).
+   *
+   * The six situations used to each render their own kicker/headline/meta markup, which is how the
+   * card ended up with five stacked rows: every variant repeated the structure, so nobody could see
+   * that the structure was the cost. Naming the slots once means the arrangement is decided in ONE
+   * place — the same reason the portal's headers became a component.
+   *
+   * ⚠ Copy is unchanged from what shipped, deliberately: this is a layout pass, and every one of
+   * these sentences was ruled on separately (the welcome's team-naming, the season check's
+   * can/cannot-close split, the lull's tournament variant). Only the arrangement moves.
+   */
+  const anchorSlots: {
+    tone: 'work' | 'live' | 'decide';
+    kicker: React.ReactNode;
+    when: React.ReactNode | null;
+    headline: React.ReactNode;
+    meta: React.ReactNode | null;
+  } = (() => {
+    switch (anchor?.kind) {
+      // Chunk B (P1 #12) — the first thing a cold-signup coach ever sees. Names the team so it
+      // reads as THEIR portal, not a product tour, and lists the areas rather than selling them.
+      case 'welcome':
+        return {
+          tone: 'work', kicker: 'Welcome', when: null,
+          headline: <>This is your team&apos;s portal</>,
+          meta: <>
+            Roster, schedule, lineups, attendance and money for {assignment.teamName} — all in
+            one place. Two minutes to see what&apos;s here.
+          </>,
+        };
+      case 'game_day':
+        return {
+          tone: 'live',
+          kicker: <><span className={styles.oneLiveDot} aria-hidden>●</span> Game day</>,
+          when: 'Today',
+          headline: nextEvent?.opponent ? `vs ${nextEvent.opponent}` : (nextEvent?.name || 'Game day'),
+          // On a mirrored tournament game the event's NAME is the tournament, and the headline has
+          // already taken the opponent — so name it here or it disappears entirely.
+          meta: nextEvent && (nextTimeLabel || fieldOrLoc || isMirroredEvent(nextEvent))
+            ? [isMirroredEvent(nextEvent) ? nextEvent.name : null, nextTimeLabel, fieldOrLoc].filter(Boolean).join(' · ')
+            : null,
+        };
+      case 'next_event':
+        return {
+          tone: 'work',
+          kicker: `Next ${nextIsGame ? 'game' : 'event'}`,
+          when: nextEventDays == null ? null
+            : nextEventDays === 0 ? 'Today' : nextEventDays === 1 ? 'Tomorrow' : `in ${nextEventDays} days`,
+          headline: nextEvent
+            ? `${formatEventDate(nextEvent.startsAt)}${nextTimeLabel ? `, ${nextTimeLabel}` : ''}${nextEvent.opponent ? ` vs ${nextEvent.opponent}` : ''}`
+            : '',
+          meta: nextEvent
+            ? ([nextEvent.opponent ? null : (nextEvent.name || 'Upcoming event'), fieldOrLoc].filter(Boolean).join(' · ') || 'On your schedule')
+            : null,
+        };
+      case 'season_check':
+        return {
+          tone: 'decide', kicker: 'Season check', when: null,
+          headline: anchor.primary ? 'Is the season over?' : 'Your season looks finished',
+          meta: <>
+            No games in {daysSinceLastEvent === null ? 'a while' : `${Math.floor((daysSinceLastEvent ?? 0) / 7)} weeks`} and nothing scheduled.{' '}
+            {anchor.primary
+              ? <>Closing it out locks your record and unlocks your <strong>Season Wrapped</strong>.</>
+              : <>{currentOrg?.name ?? 'Your club'} closes the season — your <strong>Season Wrapped</strong> appears here when they do.</>}
+          </>,
+        };
+      case 'lull':
+        return {
+          tone: 'work',
+          kicker: hasUpcomingTournament ? <><Trophy size={13} aria-hidden /> Next up</> : 'In season',
+          when: hasUpcomingTournament && tournaments?.nextDate
+            ? (tournaments.liveNow ? 'Live now' : formatEventDate(`${tournaments.nextDate}T00:00:00`))
+            : null,
+          headline: hasUpcomingTournament
+            ? (tournaments?.liveNow ? 'Your tournament is on' : 'Tournament coming up')
+            : 'Nothing on your schedule',
+          meta: hasUpcomingTournament
+            ? 'Add your games and practices so attendance, lineups and your record keep up.'
+            : 'Add your next game or practice to track attendance, lineups, and your record.',
+        };
+      case 'preseason':
+        return {
+          tone: 'work', kicker: 'Next step', when: null,
+          headline: setupLine?.head ?? '', meta: setupLine?.desc ?? null,
+        };
+      default:
+        return { tone: 'work', kicker: '', when: null, headline: '', meta: null };
+    }
+  })();
+
   // ── The board ─────────────────────────────────────────────────────────────
   // `moneyStarted` is computed once, above the effects, so the board and the fetch gates share one
   // definition and cannot disagree about whether the coaching pair is needed.
@@ -1590,7 +1681,15 @@ export default function TeamOverviewPage({
 
       {/* Page-header ruling 2026-08-11: title + chips + actions + help, NOTHING under the title.
           The masthead directly above owns the team name, season and the coach's role. */}
+      {/* ⚠ The page-header ruling's ONE exception, RETIRED by the owner 2026-08-12. The approved
+          mockup drew Overview title-only — the reasoning being that an icon marks a SECTION, and the
+          hub's front door has no sibling to be distinguished from. That holds only if you see the
+          screens side by side; a coach meets them one after another, and in sequence the thing that
+          registers is the title jumping 44px left and back. Consistency was the point of the ruling,
+          and one exception in forty read as an oversight — which is exactly how the owner read it.
+          Do not "restore" the exception: it was tried, shipped, and rejected on sight. */}
       <CoachPageHeader
+        icon={LayoutDashboard}
         title="Overview"
         titleChips={
           <>
@@ -1628,68 +1727,112 @@ export default function TeamOverviewPage({
           sentence and drops its button, never a disabled control. */}
       {anchor && (
         <div className={styles.oneThing} data-shape={anchor.shape} data-kind={anchor.kind}>
+          {/* ── ONE SHAPE, six situations (owner 2026-08-12) ───────────────────────────────────
+              Each situation contributes a KICKER, a HEADLINE and a META, and the card renders them
+              in one arrangement: the primary action sits ON the headline's row and the answers sit
+              ON the meta's row, instead of each claiming a stacked row of its own.
+
+              ⚠ This is a HEIGHT fix, not an information one. The card was 228px on a desktop and
+              267px on a phone — a third of the viewport — which pushed the Dues/Budget/Record row
+              past the fold on the screen coaches open most. Five stacked rows were carrying one
+              fact and one action.
+
+              ⚠ The date STAYS in the headline, though the sticky team bar also carries it. The
+              mockup proposed dropping it as a duplicate; the bar's right slot is `display:none`
+              once the phone header collapses on scroll, so the "duplicate" vanishes the moment a
+              coach scrolls and the card would be the only copy — of a fact that had just been
+              deleted. A duplicate that disappears is not a duplicate.
+
+              Game day keeps whatever height it earns: the scoreline, readiness and arm-care rows
+              are facts a coach opens the portal FOR on a game morning, and they still render below
+              in full. */}
           {/* Chunk B (P1 #12) — the first thing a cold-signup coach ever sees. Names the team so it
               reads as THEIR portal, not a product tour, and lists the areas rather than selling
               them. No colour rule needed: `.oneThing`'s base accent already applies, which is the
               same treatment the pre-season card this replaces was using. */}
-          {anchor.kind === 'welcome' && (
-            <>
-              <p className={styles.oneKicker} data-t="work">Welcome</p>
-              <p className={styles.oneHeadline}>This is your team&apos;s portal</p>
-              <p className={styles.oneMeta}>
-                Roster, schedule, lineups, attendance and money for {assignment.teamName} — all in
-                one place. Two minutes to see what&apos;s here.
-              </p>
-            </>
-          )}
+          <p className={styles.oneKicker} data-t={anchorSlots.tone}>
+            {anchorSlots.kicker}
+            {anchorSlots.when && <span className={styles.oneKickerWhen}>{anchorSlots.when}</span>}
+          </p>
 
-          {anchor.kind === 'game_day' && nextEvent && (
-            <>
-              <p className={styles.oneKicker} data-t="live">
-                <span className={styles.oneLiveDot} aria-hidden>●</span> Game day <span className={styles.oneKickerWhen}>Today</span>
-              </p>
-              <p className={styles.oneHeadline}>{nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Game day')}</p>
-              {/* On a mirrored tournament game the event's NAME is the tournament, and the headline
-                  has already taken the opponent — so name it here or it disappears entirely. */}
-              {(nextTimeLabel || fieldOrLoc || isMirroredEvent(nextEvent)) && (
-                <p className={styles.oneMeta}>
-                  {[isMirroredEvent(nextEvent) ? nextEvent.name : null, nextTimeLabel, fieldOrLoc].filter(Boolean).join(' · ')}
-                </p>
-              )}
-              {/* The scoreline. Once a score is entered on game day this is the single most-wanted
-                  fact on the page, and dropping it in the rewrite would have made the Overview go
-                  quiet at exactly the moment it matters most. */}
-              {nextEvent.teamScore != null && nextEvent.opponentScore != null && (
-                <p className={styles.oneScoreline}>
-                  {nextEvent.teamScore} – {nextEvent.opponentScore}
-                  {nextEvent.result && (
-                    <span className={styles.oneScoreResult}>
-                      {' · '}{nextEvent.result === 'win' ? 'Win' : nextEvent.result === 'loss' ? 'Loss' : 'Tie'}
-                    </span>
+          <div className={styles.oneHeadRow}>
+            <p className={styles.oneHeadline}>{anchorSlots.headline}</p>
+            {/* The shipped lime CTA language + a layout-only modifier, so warm-theme handling and
+                the single-lime-action rule are inherited rather than re-implemented.
+                A `null` primary is deliberate and means informational — the card keeps its
+                sentence and drops its button, never a disabled control. */}
+            {anchor.primary && (
+              anchor.primary === 'close_season' ? (
+                <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={() => setRolloverOpen(true)}>
+                  {ANCHOR_LABEL[anchor.primary]}
+                </button>
+              ) : anchor.primary === 'take_tour' ? (
+                // Opens the tour DRAWER in place — not a navigation. Opening deliberately does not
+                // retire the offer; only finishing or skipping does (the shipped Quiet Mode rule),
+                // so an accidental Escape doesn't cost the coach their one welcome.
+                <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={openPortalTour}>
+                  {ANCHOR_LABEL[anchor.primary]}
+                </button>
+              ) : (
+                <Link href={anchorHref(anchor.primary)} className={`btn btn-lime ${styles.onePrimary}`}>
+                  {ANCHOR_LABEL[anchor.primary]} <ArrowRight size={15} aria-hidden />
+                </Link>
+              )
+            )}
+          </div>
+
+          {(anchorSlots.meta || anchor.answers.length > 0 || (anchor.kind === 'preseason' && !tourSeen)) && (
+            <div className={styles.oneMetaRow}>
+              {anchorSlots.meta && <p className={styles.oneMeta}>{anchorSlots.meta}</p>}
+              {(anchor.answers.length > 0 || (anchor.kind === 'preseason' && !tourSeen)) && (
+                <div className={styles.oneAnswers}>
+                  {anchor.answers.map(answer => {
+                    if (answer === 'not_yet' || answer === 'got_it') {
+                      return (
+                        <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={dismissSeasonCue}>
+                          {ANSWER_LABEL[answer]}
+                        </button>
+                      );
+                    }
+                    if (answer === 'skip_step') {
+                      return (
+                        <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={() => nextSetupItem && toggleSkip(nextSetupItem.key)}>
+                          {ANSWER_LABEL[answer]}
+                        </button>
+                      );
+                    }
+                    return (
+                      <Link key={answer} href={anchorHref(answer)} className={styles.oneAnswer}>
+                        {ANSWER_LABEL[answer]}
+                      </Link>
+                    );
+                  })}
+                  {/* The tour is offered ONCE, and only beside the pre-season step — the one moment
+                      it is actually relevant. It no longer shares a rule with this season's next
+                      task. */}
+                  {anchor.kind === 'preseason' && !tourSeen && (
+                    <button type="button" className={styles.oneAnswer} onClick={openPortalTour}>
+                      Take the 2-minute tour
+                    </button>
                   )}
-                </p>
+                </div>
               )}
-            </>
+            </div>
           )}
 
-          {anchor.kind === 'next_event' && nextEvent && (
-            <>
-              <p className={styles.oneKicker} data-t="work">
-                Next {nextIsGame ? 'game' : 'event'}
-                {nextEventDays != null && (
-                  <span className={styles.oneKickerWhen}>
-                    {nextEventDays === 0 ? 'Today' : nextEventDays === 1 ? 'Tomorrow' : `in ${nextEventDays} days`}
-                  </span>
-                )}
-              </p>
-              <p className={styles.oneHeadline}>
-                {formatEventDate(nextEvent.startsAt)}{nextTimeLabel ? `, ${nextTimeLabel}` : ''}
-                {nextEvent.opponent ? ` vs ${nextEvent.opponent}` : ''}
-              </p>
-              <p className={styles.oneMeta}>
-                {[nextEvent.opponent ? null : (nextEvent.name || 'Upcoming event'), fieldOrLoc].filter(Boolean).join(' · ') || 'On your schedule'}
-              </p>
-            </>
+          {/* The scoreline. Once a score is entered on game day this is the single most-wanted
+              fact on the page, and dropping it in the rewrite would have made the Overview go
+              quiet at exactly the moment it matters most. */}
+          {anchor.kind === 'game_day' && nextEvent
+            && nextEvent.teamScore != null && nextEvent.opponentScore != null && (
+            <p className={styles.oneScoreline}>
+              {nextEvent.teamScore} – {nextEvent.opponentScore}
+              {nextEvent.result && (
+                <span className={styles.oneScoreResult}>
+                  {' · '}{nextEvent.result === 'win' ? 'Win' : nextEvent.result === 'loss' ? 'Loss' : 'Tie'}
+                </span>
+              )}
+            </p>
           )}
 
           {/* Readiness rides the card on BOTH working shapes — it is the whole reason a coach
@@ -1732,107 +1875,6 @@ export default function TeamOverviewPage({
             </div>
           )}
 
-          {anchor.kind === 'season_check' && (
-            <>
-              <p className={styles.oneKicker} data-t="decide">Season check</p>
-              <p className={styles.oneHeadline}>
-                {anchor.primary ? 'Is the season over?' : 'Your season looks finished'}
-              </p>
-              <p className={styles.oneMeta}>
-                No games in {daysSinceLastEvent === null ? 'a while' : `${Math.floor((daysSinceLastEvent ?? 0) / 7)} weeks`} and nothing scheduled.{' '}
-                {anchor.primary
-                  ? <>Closing it out locks your record and unlocks your <strong>Season Wrapped</strong>.</>
-                  : <>{currentOrg?.name ?? 'Your club'} closes the season — your <strong>Season Wrapped</strong> appears here when they do.</>}
-              </p>
-            </>
-          )}
-
-          {anchor.kind === 'lull' && (
-            <>
-              <p className={styles.oneKicker} data-t="work">
-                {hasUpcomingTournament ? <><Trophy size={13} aria-hidden /> Next up</> : 'In season'}
-                {hasUpcomingTournament && tournaments?.nextDate && (
-                  <span className={styles.oneKickerWhen}>
-                    {tournaments.liveNow ? 'Live now' : formatEventDate(`${tournaments.nextDate}T00:00:00`)}
-                  </span>
-                )}
-              </p>
-              <p className={styles.oneHeadline}>
-                {hasUpcomingTournament
-                  ? (tournaments?.liveNow ? 'Your tournament is on' : 'Tournament coming up')
-                  : 'Nothing on your schedule'}
-              </p>
-              <p className={styles.oneMeta}>
-                {hasUpcomingTournament
-                  ? 'Add your games and practices so attendance, lineups and your record keep up.'
-                  : 'Add your next game or practice to track attendance, lineups, and your record.'}
-              </p>
-            </>
-          )}
-
-          {anchor.kind === 'preseason' && setupLine && (
-            <>
-              <p className={styles.oneKicker} data-t="work">Next step</p>
-              <p className={styles.oneHeadline}>{setupLine.head}</p>
-              <p className={styles.oneMeta}>{setupLine.desc}</p>
-            </>
-          )}
-
-          {/* One full-width primary, then answers on ONE line. A stack of buttons costs ~140px on a
-              phone and pushes the board under the fold. */}
-          {/* The shipped lime CTA language + a layout-only modifier, so warm-theme handling and the
-              single-lime-action rule are inherited rather than re-implemented. */}
-          {anchor.primary && (
-            anchor.primary === 'close_season' ? (
-              <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={() => setRolloverOpen(true)}>
-                {ANCHOR_LABEL[anchor.primary]}
-              </button>
-            ) : anchor.primary === 'take_tour' ? (
-              // Opens the tour DRAWER in place — not a navigation. Opening deliberately does not
-              // retire the offer; only finishing or skipping does (the shipped Quiet Mode rule), so
-              // an accidental Escape doesn't cost the coach their one welcome.
-              <button type="button" className={`btn btn-lime ${styles.onePrimary}`} onClick={openPortalTour}>
-                {ANCHOR_LABEL[anchor.primary]}
-              </button>
-            ) : (
-              <Link href={anchorHref(anchor.primary)} className={`btn btn-lime ${styles.onePrimary}`}>
-                {ANCHOR_LABEL[anchor.primary]} <ArrowRight size={15} aria-hidden />
-              </Link>
-            )
-          )}
-
-          {anchor.answers.length > 0 && (
-            <div className={styles.oneAnswers}>
-              {anchor.answers.map(answer => {
-                if (answer === 'not_yet' || answer === 'got_it') {
-                  return (
-                    <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={dismissSeasonCue}>
-                      {ANSWER_LABEL[answer]}
-                    </button>
-                  );
-                }
-                if (answer === 'skip_step') {
-                  return (
-                    <button key={answer} type="button" className={styles.oneAnswerMuted} onClick={() => nextSetupItem && toggleSkip(nextSetupItem.key)}>
-                      {ANSWER_LABEL[answer]}
-                    </button>
-                  );
-                }
-                return (
-                  <Link key={answer} href={anchorHref(answer)} className={styles.oneAnswer}>
-                    {ANSWER_LABEL[answer]}
-                  </Link>
-                );
-              })}
-              {/* The tour is offered ONCE, and only beside the pre-season step — the one moment it
-                  is actually relevant. It no longer shares a rule with this season's next task. */}
-              {anchor.kind === 'preseason' && !tourSeen && (
-                <button type="button" className={styles.oneAnswer} onClick={openPortalTour}>
-                  Take the 2-minute tour
-                </button>
-              )}
-            </div>
-          )}
         </div>
       )}
 

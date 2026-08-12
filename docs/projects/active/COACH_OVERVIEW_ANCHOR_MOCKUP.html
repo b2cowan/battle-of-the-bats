@@ -1,0 +1,546 @@
+<title>Coach Overview — the icon, and the anchor card's height</title>
+<style>
+  :root {
+    --bg: #EFEDE7;
+    --panel: #FFFFFF;
+    --ink: #26231C;
+    --ink-soft: #4C463A;
+    --dim: #6E675C;
+    --line: rgba(60, 52, 32, 0.16);
+    --line-soft: rgba(60, 52, 32, 0.09);
+    --acc: #57651E;
+    --acc-soft: rgba(87, 101, 30, 0.10);
+    --lime: #D9F99D;
+    --lime-ink: #241E15;
+    --bad: #B03A22;
+    --bad-soft: rgba(176, 58, 34, 0.10);
+    --warn: #835006;
+    --warn-soft: rgba(131, 80, 6, 0.10);
+    --blue: #1E3A8A;
+    --blue-soft: rgba(30, 58, 138, 0.10);
+    --mono: 'IBM Plex Mono', Consolas, 'Cascadia Mono', ui-monospace, monospace;
+    --sans: 'Segoe UI', Inter, system-ui, sans-serif;
+    --disp: 'Barlow Condensed', Bahnschrift, 'Arial Narrow', 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #1B1915; --panel: #242019; --ink: #EDE8DC; --ink-soft: #C9C2B2; --dim: #99917F;
+      --line: rgba(237,232,220,0.18); --line-soft: rgba(237,232,220,0.09);
+      --acc: #B5CB5E; --acc-soft: rgba(181,203,94,0.12);
+      --bad: #E06A50; --bad-soft: rgba(224,106,80,0.14);
+      --warn: #D99A3D; --warn-soft: rgba(217,154,61,0.14);
+      --blue: #7DA0E8; --blue-soft: rgba(125,160,232,0.14);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #1B1915; --panel: #242019; --ink: #EDE8DC; --ink-soft: #C9C2B2; --dim: #99917F;
+    --line: rgba(237,232,220,0.18); --line-soft: rgba(237,232,220,0.09);
+    --acc: #B5CB5E; --acc-soft: rgba(181,203,94,0.12);
+    --bad: #E06A50; --bad-soft: rgba(224,106,80,0.14);
+    --warn: #D99A3D; --warn-soft: rgba(217,154,61,0.14);
+    --blue: #7DA0E8; --blue-soft: rgba(125,160,232,0.14);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    font-size: 0.95rem; line-height: 1.6; margin: 0; -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 2.5rem 1.25rem 5rem; }
+
+  .eyebrow {
+    font-family: var(--mono); font-size: 0.68rem; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--acc); margin: 0;
+  }
+  h1 {
+    font-family: var(--disp); font-stretch: 87.5%; font-weight: 900; text-transform: uppercase;
+    font-size: clamp(2rem, 4.5vw, 2.9rem); line-height: 1.02; letter-spacing: 0.005em;
+    margin: 0.35rem 0 0.75rem; text-wrap: balance;
+  }
+  h2 {
+    font-family: var(--disp); font-stretch: 87.5%; font-weight: 800; text-transform: uppercase;
+    font-size: 1.5rem; letter-spacing: 0.01em; line-height: 1.1;
+    margin: 0 0 0.15rem; text-wrap: balance;
+  }
+  h3 { font-size: 0.95rem; font-weight: 700; margin: 0 0 0.3rem; }
+  .lede { max-width: 64ch; color: var(--ink-soft); margin: 0 0 0.5rem; }
+  p { margin: 0 0 0.7rem; }
+  .q + .q { margin-top: 3.5rem; }
+  .q { border-top: 2px solid var(--line); padding-top: 1.6rem; margin-top: 3rem; }
+  .qnum {
+    font-family: var(--mono); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em;
+    color: var(--dim); text-transform: uppercase;
+  }
+  .verdict {
+    background: var(--acc-soft); border-left: 3px solid var(--acc);
+    padding: 0.85rem 1.1rem; border-radius: 4px; margin: 1.2rem 0 0;
+  }
+  .verdict h3 { color: var(--acc); font-family: var(--mono); font-size: 0.7rem;
+    letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 0.35rem; }
+  .verdict p:last-child { margin-bottom: 0; }
+  .note { color: var(--dim); font-size: 0.86rem; }
+  code {
+    font-family: var(--mono); font-size: 0.85em; background: var(--line-soft);
+    padding: 0.08em 0.35em; border-radius: 3px;
+  }
+  .cols { display: grid; gap: 1.1rem; margin: 1.4rem 0 0; }
+  @media (min-width: 800px) { .cols-2 { grid-template-columns: 1fr 1fr; } }
+
+  /* ── The rendered portal fragments ─────────────────────────────────── */
+  .screen {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 8px;
+    overflow: hidden; box-shadow: 0 1px 3px rgba(60,52,32,0.07);
+  }
+  .screen-cap {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 0.6rem;
+    font-family: var(--mono); font-size: 0.64rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--dim); padding: 0.5rem 0.8rem; border-bottom: 1px solid var(--line-soft);
+    background: var(--line-soft);
+  }
+  .screen-cap b { color: var(--ink); font-weight: 700; }
+  .screen-body { padding: 0.9rem 1rem 1.1rem; }
+
+  /* masthead */
+  .mast { border-bottom: 1px solid var(--line-soft); padding: 0.55rem 1rem 0.6rem;
+          display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+  .mast-org { font-family: var(--mono); font-size: 0.56rem; letter-spacing: 0.14em;
+              text-transform: uppercase; color: var(--dim); }
+  .mast-team { font-family: var(--disp); font-stretch: 87.5%; font-weight: 800;
+               font-size: 1.15rem; line-height: 1.15; display: flex; align-items: center; gap: 0.45rem; }
+  .mast-role { font-family: var(--mono); font-size: 0.52rem; font-weight: 700; letter-spacing: 0.1em;
+               text-transform: uppercase; border: 1px solid var(--line); border-radius: 3px;
+               padding: 0.1rem 0.32rem; color: var(--ink-soft); background: var(--panel); }
+  .mast-meta { font-size: 0.7rem; color: var(--dim); }
+  .mast-next { text-align: right; font-family: var(--mono); font-size: 0.6rem; line-height: 1.5; }
+  .mast-next span { display: block; font-size: 0.52rem; letter-spacing: 0.12em;
+                    text-transform: uppercase; color: var(--dim); }
+  .mast-next b { font-weight: 700; color: var(--ink-soft); }
+
+  /* page header row */
+  .ph { display: flex; align-items: center; gap: 0.7rem; padding: 0.15rem 0 0.9rem; }
+  .ph-icon {
+    width: 34px; height: 34px; flex: none; border-radius: 6px;
+    background: var(--blue-soft); border: 1px solid rgba(30,58,138,0.28); color: var(--acc);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ph-icon svg { width: 17px; height: 17px; }
+  .ph-title { font-family: var(--disp); font-stretch: 87.5%; font-weight: 900;
+              font-size: 1.5rem; line-height: 1.05; margin: 0; }
+  .ph-sp { margin-left: auto; }
+  .ph-setup {
+    display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.72rem; font-weight: 600;
+    border: 1px solid var(--line); border-radius: 999px; padding: 0.24rem 0.6rem; color: var(--ink-soft);
+  }
+  .ph-ring { width: 11px; height: 11px; border-radius: 50%;
+             border: 2px solid var(--acc); border-right-color: transparent; }
+  .ph-help { width: 26px; height: 26px; flex: none; border-radius: 50%; border: 1px solid var(--line);
+             display: flex; align-items: center; justify-content: center;
+             font-size: 0.72rem; font-weight: 700; color: var(--ink-soft); }
+
+  /* the anchor card, at true height */
+  .anchor {
+    border: 1px solid rgba(30,58,138,0.30); border-left: 3px solid var(--blue);
+    border-radius: 6px; background: var(--line-soft); overflow: hidden;
+  }
+  .anchor-kick {
+    display: flex; align-items: center; gap: 0.4rem;
+    font-family: var(--mono); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--dim);
+  }
+  .anchor-when { margin-left: auto; }
+  .anchor-head { font-family: var(--disp); font-stretch: 87.5%; font-weight: 800;
+                 font-size: 1.22rem; line-height: 1.15; margin: 0; }
+  .anchor-meta { font-size: 0.78rem; color: var(--ink-soft); margin: 0; }
+  .btn-lime {
+    display: inline-flex; align-items: center; gap: 0.3rem; background: var(--lime);
+    color: var(--lime-ink); border: 1px solid rgba(87,101,30,0.35); border-radius: 5px;
+    font-size: 0.75rem; font-weight: 700; padding: 0.34rem 0.7rem; white-space: nowrap;
+  }
+  .link-q { font-size: 0.75rem; color: var(--acc); font-weight: 600; }
+
+  /* shape A: today */
+  .a-now { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.85rem 0.95rem 0.95rem; height: 228px; }
+  /* shape B: two-line */
+  .a-two { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.7rem 0.9rem 0.75rem; height: 113px; }
+  .a-two-row { display: flex; align-items: center; gap: 0.8rem; }
+  .a-two-row .anchor-head { flex: 1 1 auto; min-width: 0; }
+  /* shape C: one line */
+  .a-one { display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0.9rem; height: 76px; }
+  .a-one-main { min-width: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 0.12rem; }
+
+  /* tile row */
+  .kick {
+    font-family: var(--mono); font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--dim); margin: 1rem 0 0.5rem;
+  }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.6rem; }
+  .tile { border: 1px solid var(--line); border-radius: 6px; padding: 0.6rem 0.7rem; background: var(--panel); }
+  .tile-l { font-family: var(--mono); font-size: 0.55rem; letter-spacing: 0.1em;
+            text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; }
+  .tile-v { font-family: var(--disp); font-stretch: 87.5%; font-weight: 800; font-size: 1.3rem; line-height: 1.2; }
+  .tile-v.bad { color: var(--bad); }
+  .tile-s { font-size: 0.68rem; color: var(--dim); }
+
+  /* the fold marker */
+  .foldwrap { position: relative; }
+  .fold {
+    position: absolute; left: 0; right: 0; border-top: 2px dashed var(--bad);
+    display: flex; justify-content: flex-end; pointer-events: none;
+  }
+  .fold b {
+    font-family: var(--mono); font-size: 0.55rem; font-weight: 700; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--bad); background: var(--bad-soft);
+    padding: 0.1rem 0.4rem; border-radius: 0 0 4px 4px; transform: translateY(-1px);
+  }
+
+  /* measurement chips */
+  .measure {
+    display: inline-flex; align-items: baseline; gap: 0.35rem; font-family: var(--mono);
+    font-size: 0.64rem; font-weight: 700; letter-spacing: 0.06em;
+    border: 1px solid var(--line); border-radius: 4px; padding: 0.15rem 0.45rem; color: var(--ink-soft);
+  }
+  .measure.win { color: var(--acc); border-color: rgba(87,101,30,0.4); background: var(--acc-soft); }
+  .measure.cost { color: var(--bad); border-color: rgba(176,58,34,0.35); background: var(--bad-soft); }
+  .measures { display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0.65rem 0 0; }
+
+  table { border-collapse: collapse; width: 100%; font-size: 0.85rem; margin: 1rem 0 0; }
+  .tablewrap { overflow-x: auto; }
+  th, td { text-align: left; padding: 0.45rem 0.7rem; border-bottom: 1px solid var(--line-soft); }
+  th { font-family: var(--mono); font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+       color: var(--dim); font-weight: 700; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .win-txt { color: var(--acc); font-weight: 700; }
+  .cost-txt { color: var(--bad); font-weight: 700; }
+
+  ul { margin: 0.3rem 0 0.9rem; padding-left: 1.1rem; }
+  li { margin-bottom: 0.3rem; }
+  .foot { margin-top: 3.5rem; border-top: 2px solid var(--line); padding-top: 1.2rem; color: var(--dim); font-size: 0.84rem; }
+  a { color: var(--acc); }
+  a:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--acc); outline-offset: 2px; }
+</style>
+
+<div class="wrap">
+
+  <p class="eyebrow">Coaches portal · Overview · follow-up to the page-header ruling</p>
+  <h1>The missing icon, and the card that eats the fold</h1>
+  <p class="lede">
+    Two things you spotted on the Overview after Pass 2 shipped. The first has a definite answer that
+    isn't the one I expected. The second is measurably real, and worst on a phone — every render below
+    is drawn at its true pixel height so the argument is visible rather than asserted.
+  </p>
+
+  <div class="verdict" style="margin:1.4rem 0 0;border-left-color:var(--warn);background:var(--warn-soft)">
+    <h3 style="color:var(--warn)">Built 2026-08-12 — and one thing below was wrong</h3>
+    <p>
+      Both recommendations are built. <strong>Measured after:</strong> the everyday next-event card is
+      <b>144px on a desktop</b> (was 228) and <b>199px on a phone</b> (was 267); on a real coach's
+      390px phone the first tile row moved from 40px <em>below</em> the fold to 14px above it.
+    </p>
+    <p>
+      <strong>The deviation:</strong> Option&nbsp;B below proposes dropping the date from the card
+      because the team bar already shows it. I checked that after you approved it, and it's wrong —
+      the bar's right-hand slot is hidden the moment the phone header collapses on scroll, so the
+      “duplicate” disappears exactly when a scrolling coach would need it. <b>The card keeps its full
+      date.</b> The height saving comes entirely from removing two stacked rows, not from removing
+      information — which is the better trade anyway.
+    </p>
+  </div>
+
+  <!-- ═══════════════════════ Q1 ═══════════════════════ -->
+  <section class="q">
+    <p class="qnum">Question 1</p>
+    <h2>Why doesn't Overview have an icon?</h2>
+    <p>
+      Because the approved mockup drew it that way — deliberately. Every sibling screen in that
+      mockup carries an icon tile; Overview is rendered title-only, and the shared header component
+      records the exception in as many words. So this is a decision that shipped, not a page I missed.
+    </p>
+    <p>
+      <strong>But the plan contradicted itself, and nobody noticed.</strong> Its own inventory lists
+      Overview among the “7 pages with no icon tile”, and the Pass&nbsp;2 punch list says to put the
+      section icon on those seven pages. I gave six of them an icon and left Overview alone, because
+      the mockup and the component both said to. Your eye landed on exactly the seam.
+    </p>
+
+    <div class="cols cols-2">
+      <div class="screen">
+        <div class="screen-cap"><span>As it ships today</span><b>no tile</b></div>
+        <div class="screen-body">
+          <div class="ph">
+            <h3 class="ph-title">Overview</h3>
+            <span class="ph-sp"></span>
+            <span class="ph-setup"><span class="ph-ring"></span> Season setup 4/5 ⌄</span>
+            <span class="ph-help">?</span>
+          </div>
+          <div class="ph" style="border-top:1px dashed var(--line);padding-top:0.9rem">
+            <div class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <h3 class="ph-title">Roster</h3>
+            <span class="ph-sp"></span>
+            <span class="ph-help">?</span>
+          </div>
+          <p class="note" style="margin:0.5rem 0 0">
+            The title's left edge jumps 44px between Overview and every other screen in the portal.
+          </p>
+        </div>
+      </div>
+
+      <div class="screen">
+        <div class="screen-cap"><span>Option — give it one</span><b>recommended</b></div>
+        <div class="screen-body">
+          <div class="ph">
+            <div class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            </div>
+            <h3 class="ph-title">Overview</h3>
+            <span class="ph-sp"></span>
+            <span class="ph-setup"><span class="ph-ring"></span> Season setup 4/5 ⌄</span>
+            <span class="ph-help">?</span>
+          </div>
+          <div class="ph" style="border-top:1px dashed var(--line);padding-top:0.9rem">
+            <div class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            </div>
+            <h3 class="ph-title">Roster</h3>
+            <span class="ph-sp"></span>
+            <span class="ph-help">?</span>
+          </div>
+          <p class="note" style="margin:0.5rem 0 0">
+            One left edge for all forty screens. A dashboard-grid mark keeps “this is the front door”.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="verdict">
+      <h3>My recommendation — give it the icon</h3>
+      <p>
+        The case for leaving it off is that an icon is a <em>section</em> marker, and the front door has
+        no sibling to be distinguished from. That reasoning holds if you see the screens side by side.
+        A coach never does — they see them <em>one after another</em>, and in sequence the thing that
+        registers is the title sliding 44px left and back again. Consistency was the entire point of the
+        ruling, and one exception in forty reads as an oversight rather than a decision. Yours did.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ Q2 ═══════════════════════ -->
+  <section class="q">
+    <p class="qnum">Question 2</p>
+    <h2>The next-event card is too tall</h2>
+    <p>
+      Agreed, and it's measurable. That card is “the One Thing” — a ruled feature that picks exactly one
+      anchor per visit and answers <em>what should I do now</em>. The feature is right. Its
+      <strong>height</strong> is the problem, and the height comes from stacking five rows — kicker,
+      headline, place, button, secondary link — to carry one fact and one action.
+    </p>
+
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Measured on the real page</th><th>Anchor card</th><th>Tiles start</th><th>Tiles end</th><th>Fold</th></tr></thead>
+        <tbody>
+          <tr><td>Desktop 1440 × 900</td><td class="num cost-txt">228px</td><td class="num">501</td><td class="num">807</td><td class="num">900</td></tr>
+          <tr><td>Phone 390 × 844</td><td class="num cost-txt">267px</td><td class="num">523</td><td class="num cost-txt">884</td><td class="num">844</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note" style="margin-top:0.5rem">
+      On a phone the anchor takes 32% of the viewport and pushes the bottom of the first tile row
+      <strong>40px past the fold</strong> — so Dues, Budget and Record are all cut off on the screen a
+      coach opens most often.
+    </p>
+
+    <h3 style="margin-top:1.6rem">There's a second cost: the same fact, twice</h3>
+    <p>
+      The sticky team bar already says <b>Next · Thu 6:00 p.m. practice</b> in its top-right corner. The
+      anchor then says <b>Thu, Aug 13, 6:00 p.m. · Team practice</b> about 120px below it. The schedule
+      tile already dodges this — it flips to “this week” when the anchor is about the next event — but
+      the masthead and the anchor were never reconciled.
+    </p>
+
+    <div class="cols cols-2">
+      <div class="screen">
+        <div class="screen-cap"><span>Today · desktop</span><b>228px</b></div>
+        <div class="mast">
+          <div>
+            <div class="mast-org">Riverdale Ridge Baseball</div>
+            <div class="mast-team">Riverdale Ridge 12U <span class="mast-role">Head coach</span></div>
+            <div class="mast-meta">2026 Season · 14–3–1</div>
+          </div>
+          <div class="mast-next"><span>Next</span><b>Thu 6:00 p.m. practice</b></div>
+        </div>
+        <div class="screen-body">
+          <div class="ph">
+            <h3 class="ph-title">Overview</h3><span class="ph-sp"></span>
+            <span class="ph-setup"><span class="ph-ring"></span> Season setup 4/5 ⌄</span>
+            <span class="ph-help">?</span>
+          </div>
+          <div class="anchor">
+            <div class="a-now">
+              <div class="anchor-kick">Next event <span class="anchor-when">In 2 days</span></div>
+              <p class="anchor-head">Thu, Aug 13, 6:00 p.m.</p>
+              <p class="anchor-meta">Team practice · Riverdale Park — Diamond 2</p>
+              <div style="margin-top:auto"><span class="btn-lime">Take attendance →</span></div>
+              <div><span class="link-q">Open schedule</span></div>
+            </div>
+          </div>
+          <p class="kick">Your team at a glance</p>
+          <div class="tiles">
+            <div class="tile"><div class="tile-l"><span>Dues</span><span>→</span></div><div class="tile-v bad">$1,680</div><div class="tile-s">outstanding</div></div>
+            <div class="tile"><div class="tile-l"><span>Budget</span><span>→</span></div><div class="tile-v">$195</div><div class="tile-s">left to spend</div></div>
+            <div class="tile"><div class="tile-l"><span>Record</span><span>→</span></div><div class="tile-v">14–3–1</div><div class="tile-s">season</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="screen">
+        <div class="screen-cap"><span>Option B · two lines, action inline</span><b>113px</b></div>
+        <div class="mast">
+          <div>
+            <div class="mast-org">Riverdale Ridge Baseball</div>
+            <div class="mast-team">Riverdale Ridge 12U <span class="mast-role">Head coach</span></div>
+            <div class="mast-meta">2026 Season · 14–3–1</div>
+          </div>
+          <div class="mast-next"><span>Next</span><b>Thu 6:00 p.m. practice</b></div>
+        </div>
+        <div class="screen-body">
+          <div class="ph">
+            <div class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            </div>
+            <h3 class="ph-title">Overview</h3><span class="ph-sp"></span>
+            <span class="ph-setup"><span class="ph-ring"></span> Season setup 4/5 ⌄</span>
+            <span class="ph-help">?</span>
+          </div>
+          <div class="anchor">
+            <div class="a-two">
+              <div class="anchor-kick">Next event <span class="anchor-when">Thu · in 2 days</span></div>
+              <div class="a-two-row">
+                <p class="anchor-head">Thu, Aug 13, 6:00 p.m.</p>
+                <span class="btn-lime">Take attendance →</span>
+              </div>
+              <p class="anchor-meta">Team practice · Riverdale Park — Diamond 2 · <span class="link-q">Open schedule</span></p>
+            </div>
+          </div>
+          <p class="kick">Your team at a glance</p>
+          <div class="tiles">
+            <div class="tile"><div class="tile-l"><span>Dues</span><span>→</span></div><div class="tile-v bad">$1,680</div><div class="tile-s">outstanding</div></div>
+            <div class="tile"><div class="tile-l"><span>Budget</span><span>→</span></div><div class="tile-v">$195</div><div class="tile-s">left to spend</div></div>
+            <div class="tile"><div class="tile-l"><span>Record</span><span>→</span></div><div class="tile-v">14–3–1</div><div class="tile-s">season</div></div>
+          </div>
+          <p class="note" style="margin:0.7rem 0 0">
+            <b>As built:</b> the headline keeps the full date (see the note at the top — the team bar's
+            copy vanishes on scroll). The two rows this removes are the button's and the answers' own.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="cols cols-2">
+      <div class="screen">
+        <div class="screen-cap"><span>Option C · one line</span><b>76px</b></div>
+        <div class="screen-body">
+          <div class="anchor">
+            <div class="a-one">
+              <div class="a-one-main">
+                <div class="anchor-kick">Next event · Thu, in 2 days</div>
+                <p class="anchor-head" style="font-size:1.05rem">Team practice, 6:00 p.m. — Riverdale Park D2</p>
+              </div>
+              <span class="btn-lime">Take attendance →</span>
+            </div>
+          </div>
+          <p class="note" style="margin:0.7rem 0 0">
+            Everything on one row. Cheapest in space, but the anchor starts to read as a toolbar rather
+            than as an instruction — and on game day it has to grow again to carry the score and the
+            lineup-ready chip, so the portal would have two anchor heights.
+          </p>
+        </div>
+      </div>
+
+      <div class="screen">
+        <div class="screen-cap"><span>Phone 390 · the whole point</span><b>fold</b></div>
+        <div class="screen-body foldwrap" style="padding-bottom:1.4rem">
+          <div class="fold" style="top:214px"><b>Fold — today</b></div>
+          <div class="ph" style="padding-bottom:0.6rem">
+            <div class="ph-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>
+            </div>
+            <h3 class="ph-title">Overview</h3><span class="ph-sp"></span><span class="ph-help">?</span>
+          </div>
+          <div class="anchor">
+            <div class="a-two">
+              <div class="anchor-kick">Next event <span class="anchor-when">Thu · in 2 days</span></div>
+              <div class="a-two-row">
+                <p class="anchor-head" style="font-size:1.05rem">Team practice, 6:00 p.m.</p>
+                <span class="btn-lime">Attendance →</span>
+              </div>
+              <p class="anchor-meta">Riverdale Park — Diamond 2</p>
+            </div>
+          </div>
+          <p class="kick">Your team at a glance</p>
+          <div class="tiles" style="grid-template-columns:1fr 1fr">
+            <div class="tile"><div class="tile-l"><span>Dues</span></div><div class="tile-v bad">$1,680</div><div class="tile-s">outstanding</div></div>
+            <div class="tile"><div class="tile-l"><span>Budget</span></div><div class="tile-v">$195</div><div class="tile-s">left to spend</div></div>
+          </div>
+          <p class="note" style="margin:0.7rem 0 0">
+            With Option&nbsp;B the first tile row clears the fold with room to spare. Today its bottom
+            edge sits 40px below it.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div class="measures">
+      <span class="measure cost">Before &nbsp;228px desktop · 267px phone</span>
+      <span class="measure win">As built &nbsp;144px desktop · 199px phone</span>
+      <span class="measure win">Phone fold &nbsp;tiles −40px below → +14px above</span>
+    </div>
+    <p class="note" style="margin-top:0.5rem">
+      Measured on the running app, on the same team as your screenshot. The phone saves less than the
+      desktop because at 390px the headline and the button don't fit on one line, so the button wraps
+      to its own full-width row — which is the right fallback: a squeezed primary is worse than a
+      wrapped one.
+    </p>
+
+    <div class="verdict">
+      <h3>My recommendation — Option B</h3>
+      <p>
+        It recovers the fold on a phone, which is the actual complaint, without flattening the one card
+        the portal deliberately makes unmissable. It keeps the accent rail, the kicker and the display
+        headline — the things that make it read as an instruction — and removes only the
+        <em>stacking</em>: the action moves up onto the headline row instead of sitting under it, and the
+        place and the schedule link share one quiet line.
+      </p>
+      <p>
+        It also fixes the duplication rather than tolerating it: the team bar keeps <em>when</em>, so the
+        card leads with <em>what</em> and prints the day once, in the kicker where “in 2 days” already is.
+      </p>
+    </div>
+  </section>
+
+  <section class="q">
+    <p class="qnum">If you pick these</p>
+    <h2>What I'd change, and what I wouldn't touch</h2>
+    <ul>
+      <li><strong>The icon</strong> is a one-line change plus a note in the ruling explaining why the
+        original exception was dropped, so it doesn't get “restored” later as a regression.</li>
+      <li><strong>The anchor</strong> is a layout change to one shared card. It has six situations —
+        welcome, game day, next event, a season question, a quiet week, pre-season — so all six need
+        walking, not just the one in your screenshot. Game day carries a score and a lineup-ready chip
+        and will legitimately be taller; that's the shape earning its height.</li>
+      <li><strong>Not touching:</strong> which anchor appears and when. That resolver is a tested,
+        ruled piece of logic and none of this changes its answer — only how much room the answer takes.</li>
+    </ul>
+    <p class="note">
+      Both are presentation-only: no new data, no route changes, nothing that touches what a finished
+      season shows.
+    </p>
+  </section>
+
+  <p class="foot">
+    Measurements taken from the running app at 1440×900 and 390×844, not estimated from screenshots.
+    Companion to the page-header ruling (2026-08-11) and its mockup. Nothing here is built yet.
+  </p>
+
+</div>
