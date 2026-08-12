@@ -1,13 +1,20 @@
 /**
  * Memory guard for the checks that drive a browser through many pages.
  *
- * Why this exists: the dev server compiles each route on first visit and then holds it for the
- * life of the process — it never gives that memory back. So a sweep is the one thing in this
- * repo that reliably walks the machine into swap, and it does it while the operator is watching
- * a progress log that looks completely healthy. On 2026-08-11 that ended with the dev server
- * killed at its heap ceiling and 1.7 GB free; on 2026-08-02 it ended with 26 of 112 screens
- * unmeasured. scripts/dev.mjs stops the dev server itself from being the thing that eats the
- * machine — this stops a sweep from riding it down when something else already has.
+ * Why this exists: on Next ≤16.2.x the dev server compiled each route on first visit and held it
+ * for the life of the process — a sweep was the one thing in this repo that reliably walked the
+ * machine into swap, while the operator watched a progress log that looked completely healthy.
+ * On 2026-08-11 that ended with the dev server killed at its heap ceiling and 1.7 GB free; on
+ * 2026-08-02 it ended with 26 of 112 screens unmeasured. scripts/dev.mjs stops the dev server
+ * itself from being the thing that eats the machine — this stops a sweep from riding it down
+ * when something else already has.
+ *
+ * ⚠ 16.3.0 (re-measured 2026-08-12) changed the shape of the risk, not the need for the guard:
+ *   compile memory now largely returns at the PROCESS level and a full sweep ends far from the
+ *   ceiling — but compiles still SPIKE while they run, the V8 heap keeps what it holds, and the
+ *   per-request drip persists (scripts/dev.mjs's header is the single home for those numbers).
+ *   An abort-before-partial-baseline guard on total-system free memory stays correct even on a
+ *   healthy framework — that was the keep-forever verdict in NEXT_16_3_UPGRADE_PLAN.md §6.
  *
  * The signal is free physical memory, deliberately: it needs no process enumeration, behaves the
  * same on every platform, and it is the quantity that actually decides whether the machine stays
@@ -36,8 +43,8 @@ export function floorMb() {
 
 function repairLines() {
   return [
-    'The dev server never releases what it compiled, so one that has already been swept stays',
-    'large until it is restarted. Restart it, then re-run:',
+    'A dev server that has been swept or heavily browsed may still be holding memory (the',
+    'per-request drip persists even on 16.3+). Restart it, then re-run:',
     '    1. stop `npm run dev`   2. npm run dev   3. re-run this check',
     `To move the trip point deliberately: DEV_FREE_FLOOR_MB=<mb> (default ${DEFAULT_FLOOR_MB}).`,
   ];

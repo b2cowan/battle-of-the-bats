@@ -33,12 +33,22 @@ Correct sequence:
 
 Symptoms of a stale cache — page never loads, "compiling → rendering → compiling" loop in the terminal, or 500 Internal Server Error on all routes — are always fixed by this sequence. Do not ask the user to debug these symptoms; just stop, clear, and restart proactively.
 
-## Memory rule — a swept dev server is a spent dev server
+## Memory rule — sweeps, and what the dev server keeps
 
-The dev server compiles each route on first visit and **holds it for the life of the process**. It never gives that memory back. So anything that walks the app — `npm run check:layout`, `node scripts/mobile-review-capture.mjs`, a broad Playwright/UAT run — leaves the server permanently large, and the next sweep starts from that inflated floor.
+On Next ≤16.2.x the dev server held every compiled route for the life of the process — a swept
+server was a spent server, and this rule required a restart after every sweep. **Re-measured on
+16.3.0 (2026-08-12): compile memory now largely returns at the process level, and a full sweep no
+longer spends the server.** But the dev runtime still leaks per REQUEST (an open upstream bug — the
+history and numbers live in `scripts/dev.mjs`'s header, their single home), compiles still spike
+while they run, and the JS heap never hands back what it holds. The discipline relaxes; it does not
+vanish:
 
-- **Restart the dev server after any full sweep**, before the next one. This is a restart trigger in its own right, alongside the file/shared-module triggers above.
-- **Do not launch a sweep against a server that has just been started and is also being used for something else.** A cold sweep compiles ~29 routes back to back; that is the single heaviest thing this repo asks of it.
+- **Restart after a full sweep is no longer mandatory on 16.3+.** Restart instead when the server
+  has taken sustained heavy browsing (only a restart returns the per-request drip), and always when
+  a sweep **aborted** partway.
+- **Do not launch a sweep against a server that is also being used for something else.** A cold
+  sweep compiles ~29 routes back to back; that is still the single heaviest thing this repo asks
+  of it.
 - **Start the dev server only with `npm run dev`.** It goes through `scripts/dev.mjs`, which is the only thing imposing a heap ceiling and the only thing that restarts the server when it dies. ⚠ Never "simplify" that back to `node --max-old-space-size=N node_modules/next/dist/bin/next dev` — Next reads that limit from the `NODE_OPTIONS` **environment variable** only, silently discards a command-line one, and substitutes **half of installed RAM**. That inert flag sat in `package.json` for months. **`scripts/dev.mjs` is the single home for the measurements and the incident history — read its header before changing it, and do not restate its numbers here or anywhere else** (they go stale independently, which is how a rule ends up citing figures that stopped being true).
 - Override the ceiling for a one-off heavy run with `DEV_HEAP_MB=<mb> npm run dev`; the sweeps' abort floor moves with `DEV_FREE_FLOOR_MB=<mb>`.
 

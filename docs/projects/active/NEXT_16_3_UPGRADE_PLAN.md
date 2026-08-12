@@ -1,8 +1,10 @@
 # Next.js 16.2.4 → 16.3.0 — Upgrade Plan
 
-**Status:** IN EXECUTION 2026-08-12 — Gates 1+2 DONE (mitigations committed `c16931d9`; the pending
-feature release promoted to prod 2026-08-12, dev == origin/master at execution start). Executing §10
-Step 2: V0 baseline → bump → V1–V6 → Gate 3.
+**Status:** IN EXECUTION 2026-08-12 — §10 Steps 0–3 DONE: **16.3.0 on dev (`8d0688b6`)**, V1–V6
+green, §12 measured both sides; Gate 3 delivered and **D6 executed** (supervisor + heap ceiling +
+sweep guards KEPT on the measured verdict; dev.mjs / memory-guard / AGENTS.md reworded to match —
+the self-retirement notice now aims at >16.3). Now: Step 4 (V7 prod-build test + 2–3 day V8 soak);
+Step 5 promote ⛔ is the owner's.
 **Companion:** [NEXT_16_3_UPGRADE_PM_BRIEF.md](NEXT_16_3_UPGRADE_PM_BRIEF.md) (plain-language brief)
 **Origin:** [NEXT_16_3_UPGRADE_PROMPT.md](NEXT_16_3_UPGRADE_PROMPT.md) — its 2026-08-11 measurements and claims were
 re-verified per its own instruction; the corrections are in §1.
@@ -206,9 +208,9 @@ Everything else: verified zero-surface (§3 deprecations list). No app-code chan
 | Mitigation | Verdict | Why |
 |---|---|---|
 | `scripts/dev.mjs` — heap ceiling via `NODE_OPTIONS` | **KEEP permanently** | Verified byte-identical lookup in 16.3.0: Next still substitutes **half of installed RAM** absent the env var. The ceiling bounds *any* future runaway, not just this leak. This is insurance, not scaffolding |
-| `scripts/dev.mjs` — supervisor (auto-restart on OOM) | **KEEP until V4 verdict** | If V4a shows the per-request leak dead → delete the supervisor section per its own self-retirement notice (already fires at ≥16.3.0). If the leak survives → keep, and file a NEW upstream issue with our repro: the fingerprint matches neither known issue, so it may be ours to report |
+| `scripts/dev.mjs` — supervisor (auto-restart on OOM) | **KEEP until V4 verdict → MEASURED 2026-08-12: KEPT** | V4a: 2.00 MB/req, linear, no plateau — the drip survives 16.3.0 exactly as §11 predicted (#85666). Supervisor comment rewritten to the measured reality; self-retirement notice re-aimed at >16.3 so the next bump re-asks the question; OOM banner no longer blames a "fixed" bug. Owed: contribute the repro to [#85666](https://github.com/vercel/next.js/issues/85666) |
 | `scripts/memory-guard.mjs` — sweep preflight/watchdog | **KEEP permanently** | Guards a different risk: total-system free-memory exhaustion during ~29-route cold sweeps. Eviction is probabilistic ('auto' = OS memory-pressure heuristics, explicitly "experimental and under active development") and does not bound Turbopack's native Rust memory. An abort-before-baseline guard stays correct even on a healthy framework |
-| `AGENTS.md` memory rules ("swept server is spent", restart-after-sweep) | **REWORD after V4b, keep the guard rails** | If eviction works here, a swept server may now shrink back — but reword on evidence, and only in the follow-up commit. The restart-before-sweep discipline likely relaxes; the "don't sweep a server someone is using" rule stays (compile spikes still cost) |
+| `AGENTS.md` memory rules ("swept server is spent", restart-after-sweep) | **REWORD after V4b → REWORDED 2026-08-12** | V4b evidence: full walk ends at 11% of ceiling, RSS returns on idle → restart-after-sweep no longer mandatory on 16.3+; restart moves to "after sustained heavy browsing" (the drip) and "after any aborted sweep". Kept verbatim: don't-sweep-a-used-server, npm-run-dev-only + inert-flag warning, memory-guard abort-is-a-failure. memory-guard.mjs header carries the same 16.3 note; the numbers stay in dev.mjs (single home) |
 
 ## 7. Risk assessment — how each failure would surface
 
@@ -307,7 +309,7 @@ V7's measured prod-build test is what finally closes it, on this machine, with n
 | 0 ⛔ | Commit the currently-**uncommitted** mitigation scripts (`scripts/dev.mjs`, `scripts/memory-guard.mjs`, sweep-guard edits, `AGENTS.md` rule, `package.json` dev script) + this plan pair. ⚠ Another session was still editing `dev.mjs` today 08:38 — coordinate before committing | ✅ DONE 2026-08-12 — mitigations committed `c16931d9`; the plan-pair docs ride the Step 2 housekeeping commit |
 | 1 ⛔ | Promote the pending 20 feature commits as their own release (normal `/release` flow) | ✅ DONE 2026-08-12 — promoted to prod; dev == origin/master at execution start |
 | 2 | On dev: V0 baseline → bump commit (`next` + `eslint-config-next` + `sharp` + `agentRules:false` + both lockfiles) → V1–V6 | The upgrade exists on dev, fully verified locally; before/after memory numbers exist |
-| 3 ⛔ | Report V4 verdict to owner → D6 retirement decision → follow-up commit (supervisor removal and/or doc rewording, only as measured) | Mitigations right-sized on evidence, as their own commit |
+| 3 ⛔ | Report V4 verdict to owner → D6 retirement decision → follow-up commit (supervisor removal and/or doc rewording, only as measured) | ✅ DONE 2026-08-12 — verdict reported; owner ruled "go ahead"; supervisor/guards KEPT, docs reworded (this commit) |
 | 4 | V7 prod-build test + V8 soak (2–3 days). If 16.3.1 stable lands: bump to it, re-run V1/V4a/V5 | Confidence for the promote; prod-leak question closed with numbers |
 | 5 ⛔ | Promote the upgrade **alone** → V9 → post-release truth-up per `.claude/commands/release.md` Phase 2b | 16.3.x live; security exposure closed; records updated |
 

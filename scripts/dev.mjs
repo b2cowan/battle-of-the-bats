@@ -72,16 +72,24 @@ if (alreadyCapped) {
 /**
  * ── Supervisor ───────────────────────────────────────────────────────────────
  *
- * Next 16.2.4's dev runtime leaks roughly 2.7 MB per request and never gives it back (measured
- * 2026-08-11 with a forced GC over the inspector: the surviving bytes trace almost entirely to
- * `next/dist/compiled/next-server/app-page-turbo.runtime.dev.js`, the DEV build of the runtime —
- * production loads the `.prod` one). In practice ~21 coach pages of ordinary clicking exhausts
- * the ceiling. When it goes, `next dev` exits outright rather than reviving its worker, so the
- * site simply stops answering until somebody notices and restarts by hand.
+ * The dev runtime leaks memory per REQUEST and never gives it back. First measured 2026-08-11 on
+ * 16.2.4: ~2.7 MB/request, forced GC over the inspector, surviving bytes tracing almost entirely
+ * to `next/dist/compiled/next-server/app-page-turbo.runtime.dev.js` — the DEV build of the
+ * runtime. Production loads the `.prod` one and measured 0.00 MB/request over 200 requests.
  *
- * Until the fix lands (Next 16.3.0, which targets exactly this), bring it back automatically.
- * This is recovery, not a cure — the log line is deliberately loud so the frequency stays
- * visible rather than becoming invisible background noise that hides how bad it is.
+ * ⚠ The 16.3.0 upgrade did NOT cure this. Re-measured 2026-08-12 with the committed instrument
+ *   (scripts/measure-dev-memory.mjs): 2.00 MB/request, still linear, no plateau. The fingerprint
+ *   matches OPEN vercel/next.js#85666 (React's dev-only async_hooks promise instrumentation),
+ *   which no release claims to fix. What 16.3.0 DID fix is the other, larger half — per-COMPILE
+ *   memory: the coach-help route went from a guaranteed V8 heap-limit fatal under the ceiling to
+ *   a ~456 MB settled compile, and a full 15-route walk now ends at ~11% of the ceiling (full
+ *   table: docs/projects/active/NEXT_16_3_UPGRADE_PLAN.md §12). With only the drip left,
+ *   exhausting the ceiling takes thousands of repeat views instead of ~21 fresh pages — the
+ *   supervisor should act rarely, but its reason to exist is measured, not gone.
+ *
+ * So: keep bringing the server back automatically. This is recovery, not a cure — the log line
+ * is deliberately loud so the frequency stays visible rather than becoming invisible background
+ * noise that hides how bad it is.
  *
  * ⚠ Restart ONLY what looks like a running server that fell over. A process dying immediately
  *   after boot is a broken build or a taken port, and relaunching that is an infinite loop that
@@ -93,16 +101,20 @@ const OOM_EXIT_CODE = 134; // SIGABRT — how a V8 "heap out of memory" abort su
 
 const nextBin = require.resolve('next/dist/bin/next');
 
-// ⚠ Self-retirement notice. The supervisor below exists ONLY for the 16.2.x leak, and a comment
-// saying so is not a mechanism — bumping the pinned version does not touch this file, so without
-// this the workaround quietly outlives its reason and nobody is ever prompted to delete it.
+// ⚠ Self-retirement notice, re-aimed after the 16.3.0 re-measure answered its original question
+// (2026-08-12: drip NOT fixed → supervisor KEPT — see the Supervisor comment above). The mechanism
+// survives for the NEXT bump: any version beyond 16.3.x is again an unmeasured world, and a
+// comment is not a mechanism — bumping the pinned version does not touch this file, so without
+// this prompt the workaround would quietly outlive its reason (or its reason would quietly
+// outlive the measurement).
 const nextVersion = require('next/package.json').version;
 const [major, minor] = nextVersion.split('.').map(Number);
-if (major > 16 || (major === 16 && minor >= 3)) {
+if (major > 16 || (major === 16 && minor > 3)) {
   console.warn(
-    `\ndev · ⚠ Next is ${nextVersion}. The dev-runtime leak this launcher supervises was fixed in\n` +
-      `dev ·   16.3.0, so the auto-restart below may now be dead weight. Confirm the leak is gone\n` +
-      `dev ·   (re-measure), then delete the Supervisor section and this notice.\n`,
+    `\ndev · ⚠ Next is ${nextVersion} — newer than 16.3.x, the last line where the per-request dev\n` +
+      `dev ·   leak was re-measured (2.00 MB/req, open vercel/next.js#85666; supervisor kept).\n` +
+      `dev ·   Re-measure with npm run measure:memory; if the drip is finally dead, delete the\n` +
+      `dev ·   Supervisor section and this notice.\n`,
   );
 }
 
@@ -185,8 +197,9 @@ function launch() {
     // ⚠ Only blame the leak when it actually WAS the leak. Attributing every crash to a known
     // upstream bug is how a genuine, unrelated failure gets waved through as "oh, that again".
     const because = oom
-      ? `dev ·   Known Next 16.2.4 dev-runtime leak; fixed upstream in 16.3.0. The first few\n` +
-        `dev ·   page loads after this will recompile and feel slow. Nothing is wrong with your app.\n`
+      ? `dev ·   Known dev-only per-request leak (open vercel/next.js#85666; ~2 MB/request,\n` +
+        `dev ·   re-measured 2026-08-12 on 16.3.0). The first few page loads after this will\n` +
+        `dev ·   recompile and feel slow. Nothing is wrong with your app.\n`
       : `dev ·   This was NOT the memory leak — check the output above for the real cause.\n`;
     console.warn(
       `\ndev · ⚠ dev server ${why} — restarting (restart #${restarts} this session).\n${because}`,
