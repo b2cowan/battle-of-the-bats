@@ -1,6 +1,6 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-08-10 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-08-12 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
 **✅ No structural drift** between dev and prod.
 
