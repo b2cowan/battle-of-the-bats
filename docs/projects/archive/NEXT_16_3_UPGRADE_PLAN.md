@@ -1,12 +1,14 @@
 # Next.js 16.2.4 → 16.3.0 — Upgrade Plan
 
-**Status:** RELEASING 2026-08-12 — §10 Steps 0–4 DONE: **16.3.0 on dev (`8d0688b6`)**, V1–V7 all
-green and measured both sides (§12 complete); Gate 3 delivered, **D6 executed** (nets KEPT on the
-measured verdict, docs reworded, `bf594ea7`). **V8 soak WAIVED by owner 2026-08-12** — no active
-prod customers yet, so prod itself is the bake window and the §9 rollback ladder (console redeploy
-in minutes) covers the residual risk; the soak's watch items (dev.mjs restart counter, #96705
-stale-HMR symptom) carry into normal dev use instead. Step 5 promote: owner-directed 2026-08-12,
-proceeding via the normal release flow.
+**Status:** ✅ COMPLETE — **LIVE ON PROD 2026-08-12** (promote job **254 SUCCEED** 13:42 ET, prod
+HEAD `396bd7cc`; staged via dev job 251 with the sharp/native path verified on the deployed
+environment first per the 1d-2 gate). V9 all green: home/login/platform-admin/org 200, both demo
+doors 307 into their worlds, both icon routes 200 image/png byte-identical to local, 0 ERROR and
+0 detect-libc events, build 5m27s (vs 5m53s/5m44s for jobs 253/252 on 16.2.4 — slightly faster).
+All §10 steps done; V8 soak waived by owner (no active prod customers — the bake continues in
+place; watch items ride normal dev use). The 21-advisory security exposure is CLOSED. Residual
+follow-through: contribute the per-request-leak repro to vercel/next.js#85666; root-cause fix for
+the Money-hub page-export typegen quirk (tracked in TODO).
 **Companion:** [NEXT_16_3_UPGRADE_PM_BRIEF.md](NEXT_16_3_UPGRADE_PM_BRIEF.md) (plain-language brief)
 **Origin:** [NEXT_16_3_UPGRADE_PROMPT.md](NEXT_16_3_UPGRADE_PROMPT.md) — its 2026-08-11 measurements and claims were
 re-verified per its own instruction; the corrections are in §1.
