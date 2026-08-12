@@ -1,8 +1,9 @@
 # Coach Portal Page Headers — Consistency Build Plan
 
-**Status:** ruled 2026-08-11 (owner-approved through four mockup rounds). **BOTH PASSES BUILT on
-dev 2026-08-11 — owner QA pending as `OWNER_QA_LEDGER.md` §10 (Group 3A), one sitting covering the
-whole ruling.**
+**Status:** ruled 2026-08-11 (owner-approved through four mockup rounds). **BOTH PASSES BUILT on dev
+2026-08-11 · ✅ OWNER QA PASSED 2026-08-12** (`OWNER_QA_LEDGER.md` §10, one sitting covering the whole
+ruling; no defects raised). Commits: `ad43cae1` Pass 1 · `8e3014b3` Pass 2 · `8247ae03` the two
+call-backs from the QA walk (Overview icon, anchor-card height — §5f). **Awaiting release only.**
 
 **Pass 2 (§4) BUILT 2026-08-11** (+ `/simplify` §5d and `/review` §5e the same day). The remaining
 27 pages migrated; **zero `.pageSub` and zero `.breadcrumb` renders survive portal-wide, and the

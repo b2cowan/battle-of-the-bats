@@ -150,7 +150,7 @@ the sequence.
 | **2C** | The free portal | §3.1 | 📱 | LIVE |
 | **2D** | House league schedule — fields + double-booking | §8 | 🖥 | ON DEV · mig **229** ✅ on prod |
 | **2E** | Tournament schedule — a field is picked, not typed | §9 · §9b | 🖥 | ON DEV · no migration |
-| **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 · §10 | 🖥📱 | §6 + §10 ON DEV, rest LIVE |
+| **3A** | The coach portal — words, findability, close behaviour | §6 · §1.6 · §2.4 · §4 · §10 | 🖥📱 | §6 ON DEV · §10 ✅ **PASSED 2026-08-12** · rest LIVE |
 | **3B** | The shop window — what a prospect walks into | §5.1 · §5.2 · §5.3 · §5.4 · §5.5 | 🖥📱 | Mixed · §5.5 ON DEV |
 | **3C** | The day-of volunteer bars — scorekeeper + gate get a bottom | §7 | 📱🖥 | ✅ **PASSED 2026-08-07** — 6 defects fixed in the run |
 
@@ -2215,7 +2215,13 @@ Archived plan: `archive/DISMISS_BEHAVIOUR_SWEEP_PLAN.md`.
 
 ---
 
-### 10 🖥📱 Forty screens open the same way — the page-header ruling, BOTH passes — **ON DEV** (Pass 1 `ad43cae1`, Pass 2 pending commit) · no migration
+### 10 🖥📱 Forty screens open the same way — the page-header ruling, BOTH passes — ✅ **PASSED 2026-08-12**, no defects raised · commits `ad43cae1` (Pass 1) · `8e3014b3` (Pass 2) · `8247ae03` (the two owner call-backs) · no migration
+*Owner walked the whole ruling in one sitting — desktop + phone, an archived season and an
+assistant-coach account — and the two follow-ups in part H. **Two changes came out of the walk and
+are already built and in the pass:** the Overview's title-only icon exception was retired, and the
+next-event card went from five stacked rows to three (228→144px desktop, 267→199px phone), which put
+the board's first row back above the fold on a phone. This section is closed; it needs no re-walk
+before release.*
 *Presentation only. Nothing calculates differently, no new data is fetched, no route changed, and
 the archive allow-lists are untouched. What changed is the first inch of every screen.*
 
@@ -3090,7 +3096,7 @@ this is now most of the newest work, not two odds and ends:
 | Group **1E** | §1.15 · §1.17 · §1.18 — game day on the bench | — (mig 228 shipped) |
 | Inside **1B** | §1.9c — the roster switch | — |
 | Inside **3A** | §6 — the playing-time wording sweep | — |
-| Inside **3A** | §10 — the page-header ruling, both passes | — (no migration, no route change) |
+| ~~Inside **3A**~~ | ✅ §10 — the page-header ruling, both passes — **PASSED 2026-08-12**, gate cleared | — (no migration, no route change) |
 | ~~Group **3C**~~ | ✅ §7 — the day-of volunteer bottom bars — **PASSED 2026-08-07**, gate cleared | — (no migration) |
 | Group **2D** | §8 — house-league fields + double-booking | mig **229** applied to **prod** before promoting |
 | Most of **3B** | §5.2's C · C2 · E · J2 · J3 · K · §5.3 · §5.4 | — (mig **226** applied both envs 2026-08-08) |

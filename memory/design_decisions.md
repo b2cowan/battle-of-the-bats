@@ -45,7 +45,8 @@ row moved from 40px BELOW the fold to 14px above it.
 - **The resolver is untouched.** Which card appears, and when, is tested, ruled logic; only how much
   room its answer takes has changed.
 
-**Status:** built on dev 2026-08-12; owner QA rides `OWNER_QA_LEDGER.md` §10.
+**Status:** built on dev 2026-08-12 (`8247ae03`); ✅ **owner QA PASSED 2026-08-12** — both of these
+came OUT of that QA walk and were re-checked in it. Ledger §10 is closed.
 
 ---
 
