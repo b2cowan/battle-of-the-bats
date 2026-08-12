@@ -30,7 +30,8 @@
     "check:layout:report": "node scripts/check-layout-invariants.mjs --report",
     "check:layout:prune": "node scripts/check-layout-invariants.mjs --prune",
     "check:demos": "node scripts/check-demos.mjs",
-    "tick:demos": "node scripts/check-demos.mjs --tick"
+    "tick:demos": "node scripts/check-demos.mjs --tick",
+    "measure:memory": "node scripts/measure-dev-memory.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
