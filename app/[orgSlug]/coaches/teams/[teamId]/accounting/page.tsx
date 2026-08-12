@@ -15,14 +15,16 @@ import styles from '../../../coaches.module.css';
 
 // Code-split, not just lazy-mounted: each panel is 1000+ lines and a couple pull in
 // heavy export libraries (e.g. ExcelJS), so a coach who only ever opens Overview +
-// one tab shouldn't pay to download all seven.
-const BudgetPlanPanel = dynamic(() => import('./budget/page').then(m => m.BudgetPlanPanel), { ssr: false });
-const PlayerDuesPanel = dynamic(() => import('./dues/page').then(m => m.PlayerDuesPanel), { ssr: false });
-const FundraisersPanel = dynamic(() => import('./fundraisers/page').then(m => m.FundraisersPanel), { ssr: false });
-const ExpensesPayablesPanel = dynamic(() => import('./expenses/page').then(m => m.ExpensesPayablesPanel), { ssr: false });
-const OrgAllocationsPanel = dynamic(() => import('./allocations/page').then(m => m.OrgAllocationsPanel), { ssr: false });
-const PaymentRequestsPanel = dynamic(() => import('./payment-requests/page').then(m => m.PaymentRequestsPanel), { ssr: false });
-const BudgetVsActualPanel = dynamic(() => import('./budget-vs-actual/page').then(m => m.BudgetVsActualPanel), { ssr: false });
+// one tab shouldn't pay to download all seven. Panels live in ./{tab}/panel, NOT the
+// page files: a page module may only export Next's page contract, and the build's
+// route-type stubs fail `tsc` on any extra export (bitten 2026-08-12).
+const BudgetPlanPanel = dynamic(() => import('./budget/panel').then(m => m.BudgetPlanPanel), { ssr: false });
+const PlayerDuesPanel = dynamic(() => import('./dues/panel').then(m => m.PlayerDuesPanel), { ssr: false });
+const FundraisersPanel = dynamic(() => import('./fundraisers/panel').then(m => m.FundraisersPanel), { ssr: false });
+const ExpensesPayablesPanel = dynamic(() => import('./expenses/panel').then(m => m.ExpensesPayablesPanel), { ssr: false });
+const OrgAllocationsPanel = dynamic(() => import('./allocations/panel').then(m => m.OrgAllocationsPanel), { ssr: false });
+const PaymentRequestsPanel = dynamic(() => import('./payment-requests/panel').then(m => m.PaymentRequestsPanel), { ssr: false });
+const BudgetVsActualPanel = dynamic(() => import('./budget-vs-actual/panel').then(m => m.BudgetVsActualPanel), { ssr: false });
 
 type PanelProps = {
   params: Promise<{ orgSlug: string; teamId: string }>;

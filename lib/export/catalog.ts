@@ -330,7 +330,7 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     label: 'Coaches Portal — Player Dues',
     module: 'coaches',
     page: 'Player Dues',
-    file: 'app/[orgSlug]/coaches/teams/[id]/accounting/dues/page.tsx',
+    file: 'app/[orgSlug]/coaches/teams/[id]/accounting/dues/panel.tsx',
     formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'club',

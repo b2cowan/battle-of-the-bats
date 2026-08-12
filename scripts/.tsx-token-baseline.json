@@ -183,7 +183,7 @@
     "hex": 5,
     "rgba": 0
   },
-  "app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/page.tsx": {
+  "app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx": {
     "hex": 4,
     "rgba": 0
   },
@@ -191,7 +191,7 @@
     "hex": 3,
     "rgba": 0
   },
-  "app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/page.tsx": {
+  "app/[orgSlug]/coaches/teams/[teamId]/accounting/fundraisers/panel.tsx": {
     "hex": 1,
     "rgba": 0
   },
@@ -199,7 +199,7 @@
     "hex": 2,
     "rgba": 0
   },
-  "app/[orgSlug]/coaches/teams/[teamId]/accounting/payment-requests/page.tsx": {
+  "app/[orgSlug]/coaches/teams/[teamId]/accounting/payment-requests/panel.tsx": {
     "hex": 3,
     "rgba": 0
   },
