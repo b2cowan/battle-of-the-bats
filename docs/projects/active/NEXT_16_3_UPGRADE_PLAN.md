@@ -360,14 +360,33 @@ server is not survivable (220 requests retain ~755 MB and the next heavy compile
 so V0a (`--requests=220 --routes=0`), V0b (`--requests=0 --routes=15`) and V0c (idle) each got a
 fresh server; V4 repeats the same split.
 
-| Reading | 16.2.4 (V0, measured 2026-08-12) | 16.3.0 (V4/V7) | Pass? |
+| Reading | 16.2.4 (V0, measured 2026-08-12) | 16.3.0 (V4 measured 2026-08-12; V7 = soak window) | Pass? |
 |---|---|---|---|
-| Per-request slope, compiled coach page (MB/req) | **2.06** (two full 220-req runs: 2.05/2.06; heap 299→755 MB; arrayBuffers +36.5 MB) | — | — |
-| Plateau observed? | **NO — dead linear through req 220** (last-third slope 2.05) | — | — |
-| Per-compile cost, coach route (MB) | **coach-overview 261–264** (3 runs); siblings 6–13 once portal chrome is compiled (team-hub 12.5, notifications 6.1) | — | — |
-| Post-sweep heap vs cold boot (V4b) | **No eviction:** 180 s idle returned 1.3 MB (317.8→316.5, 8.3× cold boot; walk truncated — see fatality below) | — | — |
-| Prod build (`next start`) slope, 200 req | **0.00 MB/req, plateau YES** (heap 89→101 MB total over 200 req; rss ~180 MB) — **prod does NOT leak; the §7/§11 "UNPROVEN" is now closed on this machine** | — | — |
-| `.next` artifact size | server 70.4 MB · static 14.7 MB · **~175 MB** incl. root manifests/types (excl. the 3.5 GB `.next/dev` Turbopack cache, which never deploys) — vs the 220 MB context | — | — |
+| Per-request slope, compiled coach page (MB/req) | **2.06** (two full 220-req runs: 2.05/2.06; heap 299→755 MB; arrayBuffers +36.5 MB) | **2.00** (220 req; last-third 1.93; arrayBuffers +38.5 MB — unchanged) | **Leak persists as predicted (#85666, unclaimed by 16.3.0)** → D6: supervisor + heap ceiling STAY; contribute repro upstream |
+| Plateau observed? | **NO — dead linear through req 220** (last-third slope 2.05) | **NO — same linearity** | — |
+| Per-compile cost, coach route (MB) | **coach-overview 261–264** (3 runs); siblings 6–13 once portal chrome is compiled (team-hub 12.5, notifications 6.1) | **coach-overview 72–82 (−70%)**; siblings 4–22; **coach-help 456 settled — IT COMPILES AND THE SERVER LIVES** (was a 3/3-deterministic V8 fatal on 16.2.4) | **PASS — the compile-memory fix is real here** |
+| Post-sweep heap vs cold boot (V4b) | **No eviction:** 180 s idle returned 1.3 MB (317.8→316.5, 8.3× cold boot; walk truncated — see fatality below) | Full 15-route walk **completes** at 692 MB heap (11% of ceiling); idle +180 s: heap 717 (11.1× cold — strict heap-shrink criterion NOT met) but **RSS 2987→1181 MB (−1.8 GB returned to the OS)**; linear-growth-per-route is broken | **PASS on the alternative criterion** — eviction works at process level, not V8-heap level; "swept = spent" softens accordingly |
+| Prod build (`next start`) slope, 200 req | **0.00 MB/req, plateau YES** (heap 89→101 MB total over 200 req; rss ~180 MB) — **prod does NOT leak; the §7/§11 "UNPROVEN" is now closed on this machine** | — (V7, during soak) | — |
+| `.next` artifact size | server 70.4 MB · static 14.7 MB · **~175 MB** incl. root manifests/types (excl. the 3.5 GB `.next/dev` Turbopack cache, which never deploys) — vs the 220 MB context | — (V7, during soak) | — |
+
+**V1–V6 battery on 16.3.0 (all run 2026-08-12):** V1 typecheck 0 errors (against fresh `next typegen`
+output — note: BUILD-generated `.next/types` stubs reject the Money-hub pages' extra named exports on
+*both* versions; dev/typegen stubs don't — latent pre-existing quirk, not a bump issue) · full lint 0
+errors after one scoped disable (`eslint-plugin-react-hooks` 7 via eslint-config-next 16.3.0 flags
+Playwright's `use()` fixture continuation as a React hook — false positive, disabled file-scoped in
+`tests/uat/helpers/fixtures.ts`) · tests 1595/1595 · V2 `verify:changed` fully green · V3 Ready in
+359 ms, dev.mjs self-retirement notice fired as designed, platform-admin login 200, no EACCES,
+`AGENTS.md` byte-identical after boot (D4 works under a live AI-agent session) · V5 probe 17/17
+(both sandbox write-blocks with their own copy, both doors route correctly, `headers()` consumer
+fresh, x-request-id present+unique, no org bleed; coach-demo public root 404 verified as
+matching-prod behavior, not a regression) · V6 `check:layout` **completes** (the sweep was
+unfinishable on 16.2.4 under this ceiling), low-water 3282 MB free; its 7 NEW tap-floor findings
+belong to the 2026-08-11/12 page-header rework (5 of 7 sit on that rework's header elements; the
+baseline was last written by that very commit, `8e3014b3`) — routed to the header Pass-2 thread,
+deliberately NOT absorbed into the baseline and NOT fixed inside this upgrade · `check:demos` green.
+Also fixed in passing: pnpm ≥10 ignores the `.npmrc` build-approval list — approvals now live in the
+local gitignored `pnpm-workspace.yaml` (`allowBuilds`), with `core-js` added to `.npmrc` for
+Amplify's older pnpm.
 
 **V0 finding beyond the plan's expectations — `coach-help` cannot compile on 16.2.4 under the
 6144 MB ceiling at all.** Deterministic, 3/3 runs, including on a FRESH server with only 316 MB

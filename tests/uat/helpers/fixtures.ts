@@ -11,6 +11,11 @@
  *   });
  */
 
+/* eslint-disable react-hooks/rules-of-hooks -- Playwright fixtures receive a `use` continuation
+   (`await use(value)`), and eslint-plugin-react-hooks 7 (arrived with eslint-config-next 16.3.0)
+   treats every bare `use()` call as React's hook. This file is Playwright harness code — there is
+   no React runtime anywhere near it. Scoped here rather than config-wide so the rule stays live
+   for real components. */
 import { test as base, expect, type Page } from '@playwright/test';
 import path from 'path';
 import { loadUATEnv, type UATEnv } from './types';

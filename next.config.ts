@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // 16.3's `next dev` auto-appends a managed block to AGENTS.md when it detects an AI coding
+  // agent. Ours is a governed, hand-authored convention document (its content already points
+  // agents at node_modules/next/dist/docs/), so silent framework appends are drift by definition.
+  agentRules: false,
   // Next's own build-time TypeScript check is a second, memory-heavy full-project typecheck on
   // top of webpack compilation - and it's redundant with the `npx tsc --noEmit` the /release
   // pre-flight already runs locally before every push. Skipping it here removes that duplicate
