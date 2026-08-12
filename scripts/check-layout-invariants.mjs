@@ -43,6 +43,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { resolveUatContext } from './uat-fixture-context.mjs';
 import { SCREENS, WIDTHS } from './layout-screens.mjs';
+import { preflight, createWatchdog } from './memory-guard.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const BASELINE = path.join(ROOT, 'scripts/.layout-baseline.json');
@@ -570,10 +571,18 @@ const findings = [];
 const landingFailures = [];
 const navFailures = [];
 
+// ⚠ A sweep is the heaviest thing this repo asks of a dev server: every screen it has not seen
+// yet is compiled on demand and then held forever. Refuse to start with no headroom, and watch
+// it as we go — see scripts/memory-guard.mjs for what happened the two times nothing was watching.
+preflight('Memory');
+const memory = createWatchdog('layout sweep');
+let aborted = null;
+
 const browser = await chromium.launch();
 console.log(`Layout sweep · ${screens.length} screen(s) × ${widths.length} width(s) · ${ctx.baseUrl}\n`);
 
 for (const session of neededSessions) {
+  if (aborted) break;
   const list = screens.filter((s) => s.session === session);
   if (!list.length) continue;
   const file = SESSION_FILES[session];
@@ -588,12 +597,16 @@ for (const session of neededSessions) {
   });
 
   for (const w of widths) {
+    if (aborted) break;
     const page = await context.newPage();
     await page.setViewportSize({ width: w.width, height: w.height });
 
     for (const screen of list) {
       const url = ctx.baseUrl + screen.path(ctx);
       const label = `${screen.id} @${w.name}`;
+      // Checked before the page is opened, not after: the goal is to not take the next bite.
+      aborted = memory.check(label);
+      if (aborted) break;
       try {
         // ⚠ Generous on purpose. The dev server compiles each route on first visit, and the help
         // hub — which renders the whole guide catalogue — exceeded a 60s ceiling on a cold cache
@@ -661,6 +674,20 @@ for (const session of neededSessions) {
   await context.close();
 }
 await browser.close();
+
+// ⚠ Must come BEFORE anything that writes the baseline. An aborted sweep left screens
+// unmeasured, and unmeasured screens contribute no findings — so a baseline written from one
+// records the product as cleaner than it is. Same reasoning as the partial-run guard below,
+// except an abort produces no nav failures for that guard to catch, so it needs its own exit.
+// ⚠ And unlike that guard, this one has NO --allow-partial escape hatch, deliberately: a nav
+// failure is a countable, inspectable set of screens you might knowingly accept, whereas an
+// abort stopped at an arbitrary point with an unknown remainder. There is no case where
+// snapshotting that is the right thing to do, so the override is not offered.
+if (aborted) {
+  memory.report(aborted);
+  process.exit(1);
+}
+memory.summarise();
 
 // ── hard failures first: a screen we could not measure is not a pass ──────────
 if (navFailures.length || landingFailures.length) {

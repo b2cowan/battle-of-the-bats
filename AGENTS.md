@@ -32,3 +32,14 @@ Correct sequence:
 4. Wait for "✓ Ready" before testing in the browser
 
 Symptoms of a stale cache — page never loads, "compiling → rendering → compiling" loop in the terminal, or 500 Internal Server Error on all routes — are always fixed by this sequence. Do not ask the user to debug these symptoms; just stop, clear, and restart proactively.
+
+## Memory rule — a swept dev server is a spent dev server
+
+The dev server compiles each route on first visit and **holds it for the life of the process**. It never gives that memory back. So anything that walks the app — `npm run check:layout`, `node scripts/mobile-review-capture.mjs`, a broad Playwright/UAT run — leaves the server permanently large, and the next sweep starts from that inflated floor.
+
+- **Restart the dev server after any full sweep**, before the next one. This is a restart trigger in its own right, alongside the file/shared-module triggers above.
+- **Do not launch a sweep against a server that has just been started and is also being used for something else.** A cold sweep compiles ~29 routes back to back; that is the single heaviest thing this repo asks of it.
+- **Start the dev server only with `npm run dev`.** It goes through `scripts/dev.mjs`, which is the only thing imposing a heap ceiling and the only thing that restarts the server when it dies. ⚠ Never "simplify" that back to `node --max-old-space-size=N node_modules/next/dist/bin/next dev` — Next reads that limit from the `NODE_OPTIONS` **environment variable** only, silently discards a command-line one, and substitutes **half of installed RAM**. That inert flag sat in `package.json` for months. **`scripts/dev.mjs` is the single home for the measurements and the incident history — read its header before changing it, and do not restate its numbers here or anywhere else** (they go stale independently, which is how a rule ends up citing figures that stopped being true).
+- Override the ceiling for a one-off heavy run with `DEV_HEAP_MB=<mb> npm run dev`; the sweeps' abort floor moves with `DEV_FREE_FLOOR_MB=<mb>`.
+
+The sweeps refuse to start, and abort mid-run, when free memory falls through the floor — see `scripts/memory-guard.mjs`. **An abort is a failure, not a pass:** it exits non-zero before writing anything, because a sweep that stopped early has unmeasured screens and a baseline written from one records the product as cleaner than it is.

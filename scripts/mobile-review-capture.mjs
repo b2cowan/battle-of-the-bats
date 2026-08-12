@@ -20,6 +20,7 @@ import { chromium } from 'playwright';
 import { createClient } from '@supabase/supabase-js';
 import fs from 'fs';
 import path from 'path';
+import { preflight, createWatchdog } from './memory-guard.mjs';
 
 const BASE = 'http://localhost:3000';
 const ORG = 'dev-test-org';
@@ -234,9 +235,17 @@ await goLive(seed.tournamentId);
 if (goLiveOnly) process.exit(0);
 
 fs.mkdirSync(OUT, { recursive: true });
+// Same hazard as the layout sweep: every target is a route the dev server may not have compiled
+// yet, and it never gives that memory back. See scripts/memory-guard.mjs.
+preflight('Memory');
+const memory = createWatchdog('mobile capture');
+let aborted = null;
+
 const browser = await chromium.launch();
 const results = {};
 for (const t of buildTargets(seed)) {
+  aborted = memory.check(t.name);
+  if (aborted) break;
   const vp = t.viewport || { width: 390, height: 844 };
   const context = await browser.newContext({
     viewport: vp, deviceScaleFactor: 2, isMobile: true, hasTouch: true, colorScheme: 'dark',
@@ -272,5 +281,18 @@ for (const t of buildTargets(seed)) {
   await context.close();
 }
 await browser.close();
+
+if (aborted) {
+  // The index still gets written — unlike a layout baseline these are diagnostic captures, and
+  // half a set is worth keeping. It is flagged so nobody reads it as a complete run.
+  fs.writeFileSync(
+    path.join(OUT, '_index.json'),
+    JSON.stringify({ aborted: 'low memory', capturedBefore: aborted.where, results }, null, 1),
+  );
+  memory.report(aborted);
+  process.exit(1);
+}
+
 fs.writeFileSync(path.join(OUT, '_index.json'), JSON.stringify(results, null, 1));
+memory.summarise();
 console.log(`\nDone → ${OUT}`);

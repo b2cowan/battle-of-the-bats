@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
-    "dev": "node --max-old-space-size=3072 node_modules/next/dist/bin/next dev",
+    "dev": "node scripts/dev.mjs",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",
