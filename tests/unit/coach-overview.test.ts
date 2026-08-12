@@ -52,6 +52,12 @@ function anchorInput(overrides: Partial<AnchorInput> = {}): AnchorInput {
     caps: HEAD_CAPS,
     canManageSeasons: true,
     isColdStart: false,
+    // Game prep defaults = "nothing done, console not open", which is the state the card shipped
+    // in before these inputs existed — so every pre-existing case below still describes the same
+    // situation it always did.
+    lineupReady: null,
+    attendanceTaken: false,
+    gameDayOpen: false,
     ...overrides,
   };
 }
@@ -263,6 +269,123 @@ describe('resolveOverviewAnchor — state proposes, capability disposes (D14)', 
     }));
     assert.equal(decision?.kind, 'next_event');
     assert.equal(decision?.primary, 'take_attendance');
+  });
+});
+
+/**
+ * ── The card must not ask for work it has already reported as done (owner 2026-08-12) ─────────
+ *
+ * THE REPORTED DEFECT, verbatim: the game-day card showed "✓ Lineup ready" and a "Build lineup"
+ * button at the same time, with "Take attendance" offered beside a "10 of 12 in" headcount. The
+ * primary was chosen from CAPABILITY alone and never from PROGRESS, while the readiness strip
+ * beside it read the real state — so the two could only agree by coincidence.
+ *
+ * These cases pin the second question (is it still undone?) without loosening the first
+ * (can this coach do it?) — the failure mode of a fix like this is quietly offering an action to
+ * someone who cannot complete it, so every case below re-checks the capability side too.
+ */
+describe('resolveOverviewAnchor — the button is the first thing NOT DONE', () => {
+  function gameDay(overrides: Partial<AnchorInput> = {}) {
+    return resolveOverviewAnchor(anchorInput({
+      phase: 'game_day', hasNextEvent: true, nextIsGame: true, ...overrides,
+    }));
+  }
+
+  it('never offers "build lineup" once the lineup is set', () => {
+    // The exact screen that was reported.
+    const decision = gameDay({ lineupReady: true, attendanceTaken: true });
+    assert.notEqual(decision?.primary, 'build_lineup');
+  });
+
+  it('never offers "take attendance" once attendance is taken', () => {
+    const decision = gameDay({ lineupReady: true, attendanceTaken: true });
+    assert.notEqual(decision?.primary, 'take_attendance');
+    assert.ok(!decision?.answers.includes('take_attendance'), 'nor as a text answer');
+  });
+
+  it('steps to attendance when the lineup is done but attendance is not', () => {
+    const decision = gameDay({ lineupReady: true, attendanceTaken: false });
+    assert.equal(decision?.primary, 'take_attendance');
+  });
+
+  it('still asks for the lineup when attendance is done but the lineup is not', () => {
+    const decision = gameDay({ lineupReady: false, attendanceTaken: true });
+    assert.equal(decision?.primary, 'build_lineup');
+  });
+
+  it('treats a lineup read that has not landed as NOT ready — never claims done on unknown', () => {
+    // `null` is "still loading". Offering work that turns out to be finished is recoverable;
+    // telling a coach they are ready when nobody knows is not.
+    const decision = gameDay({ lineupReady: null, attendanceTaken: true });
+    assert.equal(decision?.primary, 'build_lineup');
+  });
+
+  it('opens the game-day console once nothing is outstanding AND the live window is open', () => {
+    const decision = gameDay({ lineupReady: true, attendanceTaken: true, gameDayOpen: true });
+    assert.equal(decision?.primary, 'open_game_day');
+  });
+
+  it('goes quiet — no button — when everything is done but the window has not opened', () => {
+    // The console at that URL is a read-only recap of a game that has not happened. A button that
+    // does nothing the coach wanted is worse than no button; the chips still carry the state.
+    const decision = gameDay({ lineupReady: true, attendanceTaken: true, gameDayOpen: false });
+    assert.equal(decision?.kind, 'game_day', 'the card itself must stay — the game still matters');
+    assert.equal(decision?.primary, null);
+  });
+
+  it('does not offer the console while there is still prep outstanding', () => {
+    // Window open at 3:50pm with no lineup: the outstanding work outranks the console, and the
+    // masthead already carries a game-day door of its own.
+    const decision = gameDay({ lineupReady: false, attendanceTaken: true, gameDayOpen: true });
+    assert.equal(decision?.primary, 'build_lineup');
+  });
+
+  it('never offers the console to a coach who cannot see the schedule', () => {
+    const decision = gameDay({
+      lineupReady: true, attendanceTaken: true, gameDayOpen: true,
+      caps: caps({ schedule: false, lineups: false, attendance: false }),
+    });
+    assert.notEqual(decision?.primary, 'open_game_day');
+  });
+
+  it('a coach with no prep grants at all keeps the schedule door, never a dead end', () => {
+    // They have no chips either, so silence would leave the card with nothing to touch.
+    const decision = gameDay({
+      lineupReady: true, attendanceTaken: true,
+      caps: caps({ lineups: false, attendance: false }),
+    });
+    assert.equal(decision?.primary, 'open_schedule');
+  });
+
+  it('a lineup-less coach is asked for attendance, and never for the lineup, however set it is', () => {
+    // D14 still first: progress narrows what is offered, it never widens it.
+    const outstanding = gameDay({ lineupReady: false, attendanceTaken: false, caps: caps({ lineups: false }) });
+    assert.equal(outstanding?.primary, 'take_attendance');
+    const done = gameDay({ lineupReady: false, attendanceTaken: true, caps: caps({ lineups: false }) });
+    assert.equal(done?.primary, null, 'their own work is finished — the lineup is not theirs to do');
+  });
+
+  it('stops offering attendance on a PRACTICE once it is taken', () => {
+    const outstanding = resolveOverviewAnchor(anchorInput({
+      phase: 'in_season', hasNextEvent: true, nextIsGame: false, attendanceTaken: false,
+    }));
+    assert.equal(outstanding?.primary, 'take_attendance');
+    const done = resolveOverviewAnchor(anchorInput({
+      phase: 'in_season', hasNextEvent: true, nextIsGame: false, attendanceTaken: true,
+    }));
+    assert.equal(done?.primary, 'open_schedule');
+  });
+
+  it('offers no text answers on a game card — the chip row carries them', () => {
+    // A text link beside a chip saying the same thing is the duplication this pass removed,
+    // re-created one row lower.
+    for (const state of [
+      { lineupReady: null, attendanceTaken: false },
+      { lineupReady: false, attendanceTaken: true },
+      { lineupReady: true, attendanceTaken: true, gameDayOpen: true },
+    ]) {
+      assert.deepEqual(gameDay(state)?.answers, [], JSON.stringify(state));
+    }
   });
 });
 

@@ -140,7 +140,7 @@ the sequence.
 
 | # | Group | Sections, in order | Device | State |
 |---|---|---|---|---|
-| **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ON DEV |
+| **1A** | Access and entitlement — is this org still a customer? | §1.19 | 🖥📱 | ✅ **PASSED 2026-08-12** — 17/19; steps 9+9b owed (order defeated them) |
 | **1B** | Who can see a child | §1.5 · §1.6b · §1.6c · §1.7 · §1.9b · §1.9c · §1.11 · §2.6a | 🖥📱 | LIVE, except §1.9c ON DEV · §1.6c ⛔ |
 | **1C** | Money | §1.2 · §1.3 · §2.3 | 🖥📱 | LIVE |
 | **1D** | The opponent book, and the club that shares it | §1.12 · §1.13 · §1.14 · §1.16 | 🖥📱 | ON DEV |
@@ -233,7 +233,36 @@ A cancelled subscription is the only thing in this ledger that can switch a whol
 needs a throwaway org and a platform-admin sign-in, so it batches with nothing else — do it first and
 alone, while you still have the patience for a before/after.
 
-### 1.19 🖥📱 A cancelled subscription actually stops — **✅ LIVE ON PRODUCTION** (all three waves) · no migration
+### 1.19 ✅ A cancelled subscription actually stops — **PASSED 2026-08-12** (17 of 19 steps) · LIVE ON PRODUCTION
+
+> ## ✅ Owner QA PASSED 2026-08-12 — 17 of 19 steps
+>
+> The rail holds. Cancelling shuts down the coach portal, the scorekeeper and gate check-in; the
+> comeback path loads; reactivating restores everything untouched; the family portal, tryout
+> registration and the redirect-trap fixes all behave.
+>
+> **One finding, moderate — the way back is unlabelled.** Once an org is cancelled the **Cancel
+> Subscription** section disappears (correct — you cannot cancel twice), but nothing replaces it.
+> There is no Reactivate control and no pointer to the one that exists. Reinstating access means
+> knowing to go to **Active Overrides → + Add Override → Subscription Status → active**, which the
+> owner did not find unaided. The escape hatch itself is intentional and works; what is missing is
+> any signpost from the cancelled state to it. **Suggested fix:** where the Cancel section used to
+> sit, show a line saying access is off and naming the override. Not built — owner's call.
+>
+> ### ⚠ Steps 9 and 9b did NOT get a fair test — the step ORDER defeated them
+>
+> **This is a flaw in this checklist, not in the product.** Cancelling an org *already archives every
+> non-archived tournament* (that is the cancellation working as designed). Reactivating does **not**
+> un-archive them. So by the time step 9 dropped the org to a one-tournament plan there was nothing
+> left over the cap: the downgrade had nothing to archive, printed nothing, and the check the fixture
+> was purpose-built for never ran.
+>
+> Confirmed from the billing record afterwards: **one cancellation intent, no downgrade intent.**
+>
+> **To test it properly, step 9 must come BEFORE step 4** — or on a freshly re-seeded org. Re-seed,
+> then downgrade to a one-tournament plan *without cancelling first*: the survivor must be
+> **QA Lab Summer Showdown** (running today) and April Open + Fall Invitational must be the two
+> archived. The order below is corrected for the next run.
 
 *A platform admin cancels an org. Until now the coach portal and the scorekeeper app kept working —
 forever — even though the confirm dialog promised both would shut down. They stop now.*
@@ -286,42 +315,47 @@ come back tomorrow, re-run it — otherwise the scorekeeper's "before" shows no 
 step proves nothing.
 
 #### Setup (5 min)
-- [ ] **1.** ✅ Already true: `qa-cancel-lab` is on the **Club** plan with a rep team, a coach, and three
+- [x] **1.** ✅ Already true: `qa-cancel-lab` is on the **Club** plan with a rep team, a coach, and three
    tournaments — **QA Lab Summer Showdown** (running today, carrying two games), **QA Lab April
    Open** (finished, earlier this year) and **QA Lab Fall Invitational** (last year). Step 9 turns
    on which of those survives, so glance at the three now.
-- [ ] **2.** Sign in as the **coach** and open the Coaches Portal at `/qa-cancel-lab/coaches`. **Do the
+- [x] **2.** Sign in as the **coach** and open the Coaches Portal at `/qa-cancel-lab/coaches`. **Do the
    things.** Open the roster, open attendance, open lineups — all three have real data in them.
    *This is the "before" half — without it the "after" proves nothing.*
    → While you are here, **create a family link** on the Roster page and open it in a private
    window. That is the "before" for step 12, and it can only be made from this screen.
-- [ ] **3.** In a second browser (or private window) sign in as the **scorekeeper** and open
+- [x] **3.** In a second browser (or private window) sign in as the **scorekeeper** and open
    `/qa-cancel-lab/scorekeeper`. Confirm you can see the day's games — there are two.
 
+#### ⚠ Do the downgrade FIRST — steps 9 and 9b, before anything is cancelled
+*Corrected 2026-08-12 after the first run. Cancelling archives every tournament as a side effect, so
+running the downgrade afterwards leaves it nothing to do and the check silently passes on an empty
+board. **Do 9 and 9b here, then re-seed, then carry on to step 4.***
+
 #### The act
-- [ ] **4.** As platform admin → the org → **Billing & Access** → **Cancel Subscription**. Read the
+- [x] **4.** As platform admin → the org → **Billing & Access** → **Cancel Subscription**. Read the
    **"Will shut down:"** list in the dialog before you confirm — that list is the promise this whole
    change exists to make true. Give any reason, confirm.
 
 #### After (the part that matters)
-- [ ] **5.** **Coach browser — refresh.** Expected: the portal shell still frames the page, but instead of
+- [x] **5.** **Coach browser — refresh.** Expected: the portal shell still frames the page, but instead of
    the team you get *"{Org} 's subscription has ended"* with a short explanation and a way home.
    ❌ If you still see rosters/attendance/lineups, the fix has failed — say so.
-- [ ] **6.** **Scorekeeper browser — refresh.** Expected: the same "subscription has ended" message.
+- [x] **6.** **Scorekeeper browser — refresh.** Expected: the same "subscription has ended" message.
    ❌ If you can still enter a score, the fix has failed. *(This one is the sharpest test: the
    scorekeeper is an installed phone app that lives outside the admin screens, which is exactly why
    it kept working before.)*
-- [ ] **6b.** **Check-in, the third volunteer door.** Still cancelled, open `/qa-cancel-lab/check-in`.
+- [x] **6b.** **Check-in, the third volunteer door.** Still cancelled, open `/qa-cancel-lab/check-in`.
    Expected: the same "subscription has ended" wall — **not** "Access Denied". The distinction
    matters: Access Denied sends a volunteer to their org admin over something that is not their
    fault and cannot be fixed at that end. *(Same class of surface as the scorekeeper — outside the
    admin shell, so the original client-side redirect never reached it either.)*
-- [ ] **7.** **The comeback path — the thing most likely to be broken by this change.** As the org owner,
+- [x] **7.** **The comeback path — the thing most likely to be broken by this change.** As the org owner,
    go to `/{orgSlug}/admin`. Expected: you land on the **Billing** page (everything else redirects
    there) and **that page loads properly** — plan cards, prices, a way to resubscribe.
    ❌ If the billing page errors, 500s, or bounces in a loop, **stop and tell me** — that would mean
    a cancelled customer cannot pay us again, which is worse than the bug we set out to fix.
-- [ ] **8.** **Undo it.** Platform admin → set the org's plan back / re-activate. Expected: the coach portal
+- [x] **8.** **Undo it.** Platform admin → set the org's plan back / re-activate. Expected: the coach portal
    and scorekeeper both come back **exactly as they were** — nothing was deleted.
    *(Belt and braces: re-running `scripts/seed-qa-day-fixtures.mjs --cancel-lab` also resets the
    org to active/Club and un-archives all three tournaments. Use it if step 8 goes wrong — but do
@@ -352,11 +386,11 @@ step proves nothing.
    archiving did not happen. ❌ A plain "Plan and access updated" with no mention either way is the
    defect: the plan change lands regardless, so a silent screen would leave the org over its cap
    with a live tournament still running and nobody the wiser.
-- [ ] **10.** **Plans & Pricing → Feature Matrix.** Expected: a banner stating plainly that publishing the
+- [x] **10.** **Plans & Pricing → Feature Matrix.** Expected: a banner stating plainly that publishing the
     matrix records the decision but does **not** change customer access, plus either a list of
     "published but not live" rows or a ✅ saying published and live agree. *(Publishing used to
     imply a packaging change had taken effect when nothing had.)*
-- [ ] **11.** **Bulk Operations → Comp Period.** Expected: the same warning the single-org screen has always
+- [x] **11.** **Bulk Operations → Comp Period.** Expected: the same warning the single-org screen has always
     carried — comp period is a billing tag and grants no access. It used to just say "Grant a comp
     period", which reads like it gives something.
 
@@ -364,14 +398,14 @@ step proves nothing.
 The review found the *same* defect on three surfaces the first pass missed. All three are worth a
 look because none of them are reachable from the coach or admin screens you just tested.
 
-- [ ] **12.** **The family portal.** Use the family link you made in setup step 2 — the parent-facing team
+- [x] **12.** **The family portal.** Use the family link you made in setup step 2 — the parent-facing team
     page. Confirm it works. Then cancel and reload: expected **404 / not found**, not a working
     schedule. *(A cancelled club's families kept the team page, schedule and calendar feed
     indefinitely — the family portal never consulted billing at all.)*
-- [ ] **13.** **Tryout registration.** With the org cancelled, open its public rep-team tryout registration
+- [x] **13.** **Tryout registration.** With the org cancelled, open its public rep-team tryout registration
     page and try to submit. Expected: the org reads as not found. ❌ If it accepts a registration,
     a cancelled club is still collecting players' dates of birth and guardian contact details.
-- [ ] **14.** **Dues reminder emails.** Nothing to click — just know that the nightly reminder sweep now skips
+- [x] **14.** **Dues reminder emails.** Nothing to click — just know that the nightly reminder sweep now skips
     cancelled orgs. Previously a cancelled club kept emailing its families about money.
 
 #### Found while setting this section up — the door that trapped you (3 min)
@@ -383,7 +417,7 @@ the club bounced you to the sign-in screen and the sign-in screen bounced you st
 forever. No form ever appeared, no button, no message. The only escape was clearing cookies. Both
 halves were individually behaving sensibly; together they trapped you.
 
-- [ ] **15.** **The trap itself.** Signed in as the **platform admin** (or any account that is *not*
+- [x] **15.** **The trap itself.** Signed in as the **platform admin** (or any account that is *not*
     `qa-lab-coach@dev.local`), open `/qa-cancel-lab/coaches`.
     - Expected: a page headed **"No access to this organization"**, saying you're signed in but this
       account isn't a coach here — with the portal's usual top strip above it (wordmark, Account,
@@ -395,13 +429,13 @@ halves were individually behaving sensibly; together they trapped you.
     - ⚠ On a **phone** the top strip is deliberately absent (it is desktop-only everywhere in the
       portal); the three buttons carry the whole job there. That is intended, not a gap.
 
-- [ ] **16.** **The same trap, elsewhere.** The bounce-protection is global, so spot-check one other door:
+- [x] **16.** **The same trap, elsewhere.** The bounce-protection is global, so spot-check one other door:
     signed in as the coach, open `/qa-cancel-lab/admin` (they are not an org admin).
     - Expected: you end up somewhere you can actually use — Home, or your own workspace — **not** a
       flickering loop. The wording there is still generic; only the coach portal got a purpose-built
       page in this pass, which is a known and deliberate gap.
 
-- [ ] **17.** **📱 The sign-in screen's bottom bar.** On a phone, sign out completely and open `/auth/login`.
+- [x] **17.** **📱 The sign-in screen's bottom bar.** On a phone, sign out completely and open `/auth/login`.
     - Expected: three tabs — **Home · Scores · Sign In** — with **Sign In lit up** as the tab you're
       on. Previously it showed only Home and Scores, with nothing highlighted and no indication of
       where you were.
@@ -1555,7 +1589,8 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_I_ONE_THING_PLAN.md` (its PM brief's 
 - [ ] As a default assistant (money off): board shows Attendance + Playing time instead of money;
       quiet team's season-check card has NO button (sentence only).
 - [ ] Assistant with money **read**: money tiles visible, zero money write actions anywhere.
-- [ ] Assistant with lineups off, game-day team: anchor's action falls back to "Take attendance";
+- [ ] Assistant with lineups off, game-day team: anchor's action falls back to "Take attendance"
+      (⚠ amended by §1.1b — once that attendance IS taken the card correctly goes button-less);
       Playing-time slot falls back to Development.
 - [ ] Assistant with attendance off, game-day team: anchor goes informational (no button);
       Attendance tile is absent (not greyed).
@@ -1564,6 +1599,33 @@ Archived plan: `archive/COACH_PORTAL_CHUNK_I_ONE_THING_PLAN.md` (its PM brief's 
       team's money" tile and Attendance fills the gap (not a missing tile).
 - [ ] A finished tournament sits in the tail with a "Finished" chip, never in the anchor slot.
 - Note: two coaches on the same team correctly see DIFFERENT anchors — not a bug.
+
+### 1.1b 🖥📱 The game-day card stops contradicting itself — **BUILT 2026-08-12** · no migration
+*Owner-reported: the card showed "✓ Lineup ready" and a "Build lineup" button at the same time,
+offered "Take attendance" beside a headcount proving attendance was taken, and named the venue
+"1". Mockup + diagnosis: Claude artifact `137039b5` (option B). Deployment state lives in the
+release-history record, not here.*
+- [ ] Game today, **lineup set and attendance taken**: no "Build lineup", no "Take attendance"
+      anywhere on the card. Two GREEN chips instead — "10 of 12 in" and "Lineup set".
+- [ ] Same team, **hours before the game**: the card has NO button at all. This is correct, not a
+      missing control — the chips carry everything and the console has nothing to run yet.
+- [ ] Same team, **from the call time (or 2h before start) until 3h after the end**: the button
+      appears as "Open game day" and lands on the bench console.
+- [ ] Clear the lineup → the button returns as "Build lineup" and its chip flips to amber.
+      Clear attendance instead → "Take attendance" returns.
+- [ ] The where-line reads the VENUE and the surface — "Lab Field, Diamond 1" — never a bare
+      number, and the noun matches the sport (Diamond / Rink / Court / Pitch).
+- [ ] The gap in "10 of 12 in" is explained IN FULL — mark one player late, one absent and leave
+      two unanswered, and the row reads "1 late · 1 out · 2 no reply". The numbers always add up.
+- [ ] Every chip that goes somewhere is tappable. An assistant WITHOUT attendance access sees no
+      attendance chip, and one without lineup access sees no lineup chip — the card says nothing
+      rather than guessing about a read they are not cleared to make. (It must NOT say "Attendance
+      not taken" to them; that was the old strip's lie.) Time, place, call time and uniform still
+      show to everyone on staff.
+- [ ] Cold-load the Overview on a game day with the lineup built and attendance taken: the card
+      must appear ALREADY correct — it must never flash "Build lineup" or "Take attendance" first.
+- [ ] The "Next up" tile below and the card now use the SAME words: "Lineup set" / "Lineup not set".
+- [ ] A practice (not a game) shows no chips, and stops offering "Take attendance" once taken.
 
 ### 1.10 🖥 Ask the Front Office, Phase A — **LIVE ON PRODUCTION**
 Archived plan: `archive/ASK_FRONT_OFFICE_PLAN.md` + `_PM_BRIEF.md`. Mockups (binding):
@@ -2237,82 +2299,82 @@ server IS required before this section (new files + shared chrome).
 **A. The shape, on a desktop.** Walk the left nav top to bottom — Overview, Schedule, Roster,
 Attendance, Lineups, Development, Insights, Money, Tryouts, Documents, Email families, Coaching
 staff, Team settings, Tournaments, Season's End.
-- [ ] Every screen: **one row** — icon, title, then actions, then "?" at the far right. No second
+- [x] Every screen: **one row** — icon, title, then actions, then "?" at the far right. No second
       line under any title, anywhere. If you find one, that is the defect this whole pass exists
       to remove.
-- [ ] Every section icon is the **same size** (they used to be two sizes), and seven screens that
+- [x] Every section icon is the **same size** (they used to be two sizes), and seven screens that
       had no icon at all now have one: Documents, Email families, Team settings, Tournaments,
       Season's End, Link Organization, Roster player page.
-- [ ] The "?" is in the **same corner on every screen**. Open it on three or four — the guide that
+- [x] The "?" is in the **same corner on every screen**. Open it on three or four — the guide that
       opens should be about *that* screen, not the help index.
-- [ ] No breadcrumb trail anywhere ("Coaches Portal › …" is gone from four screens — the masthead
+- [x] No breadcrumb trail anywhere ("Coaches Portal › …" is gone from four screens — the masthead
       and the title already say where you are).
 
 **B. The renames — do they read better, or did we break your muscle memory?** Your call.
-- [ ] **Insights → the coverage report** is now titled **"Is everyone getting attention?"** (was
+- [x] **Insights → the coverage report** is now titled **"Is everyone getting attention?"** (was
       "Development", which is also the name of a different screen — that pairing is what we were
       trying to break).
-- [ ] **Tryouts → history** is now **"Tryout history"** (was "Tryouts", same as the live hub).
-- [ ] **Season's End** now titles itself "Season's End" rather than repeating the team name.
+- [x] **Tryouts → history** is now **"Tryout history"** (was "Tryouts", same as the live hub).
+- [x] **Season's End** now titles itself "Season's End" rather than repeating the team name.
 
 **C. Where the facts went.** Each of these used to be a subtitle. Confirm the fact is still findable
 and now reads as part of the thing it describes:
-- [ ] **Team board** (Development → Team board): "Roster order — a coverage view, not a ranking" now
+- [x] **Team board** (Development → Team board): "Roster order — a coverage view, not a ranking" now
       leads the board itself. ⚠ **This wording is binding** — if it is missing above a board that
       HAS rows, that is a defect. (Above an empty board it is deliberately absent — there is no
       roster order there to misread.)
-- [ ] **Playing time**: the "one row per player, from your saved lineups" provenance is now folded
+- [x] **Playing time**: the "one row per player, from your saved lineups" provenance is now folded
       into the line above the table that says how many games it is based on.
-- [ ] **Lineup builder / Practice plan**: the date, time and "View on schedule" link now sit below
+- [x] **Lineup builder / Practice plan**: the date, time and "View on schedule" link now sit below
       the header as the first line of the body.
-- [ ] **Evaluation session**: the session date. As head coach you see it in the editable Date field;
+- [x] **Evaluation session**: the session date. As head coach you see it in the editable Date field;
       **as an assistant with read-only access** it appears as a line above the readings. Check both.
-- [ ] **Tryout history**: "N sessions" joined the turnout strip rather than becoming a second strip.
-- [ ] **Plan template editor**: "shape · started N plans" now leads the editor.
+- [x] **Tryout history**: "N sessions" joined the turnout strip rather than becoming a second strip.
+- [x] **Plan template editor**: "shape · started N plans" now leads the editor.
 
 **D. On a 390px phone.** Same walk, faster.
-- [ ] Every header fits **one line for the title + "?"**, with the actions on a right-pinned row
+- [x] Every header fits **one line for the title + "?"**, with the actions on a right-pinned row
       beneath. Nothing scrolls sideways.
-- [ ] Secondary buttons are **icons only**; the one lime primary keeps its words. Every header
+- [x] Secondary buttons are **icons only**; the one lime primary keeps its words. Every header
       control is comfortably finger-sized.
-- [ ] The masthead's role tag folds away when you scroll (the collapsed bar stays bare team name).
+- [x] The masthead's role tag folds away when you scroll (the collapsed bar stays bare team name).
 
 **E. Going back.** Every drill-in (a Money panel, a template, an opponent, a past practice, the
 awards certificate, a player) has **one** back link, top-left, with an arrow.
-- [ ] Tap several. They all look and behave identically, and each lands one level up — **carrying
+- [x] Tap several. They all look and behave identically, and each lands one level up — **carrying
       the season you were viewing** if you are in an archive.
 
 **F. In an archived season** (switch via the chip beside a title, or the season switcher).
-- [ ] The "{year} · Complete" chip sits **inside the title** on every screen that has one, and it is
+- [x] The "{year} · Complete" chip sits **inside the title** on every screen that has one, and it is
       still the way back out to a live season.
-- [ ] **A past practice plan** (Insights → "Is everyone getting attention?" → a practice) now shows
+- [x] **A past practice plan** (Insights → "Is everyone getting attention?" → a practice) now shows
       that chip instead of a hand-written one — and the chip is now a working season switcher there,
       which it was not before.
-- [ ] Nothing new became reachable in the archive. If a screen you did not expect opens read-only,
+- [x] Nothing new became reachable in the archive. If a screen you did not expect opens read-only,
       say so — the allow-lists were deliberately untouched.
 
 **G. As an assistant coach.** Sign in as an assistant on the same team.
-- [ ] Actions you are not granted are **absent, not disabled** — exactly as before the pass. This is
+- [x] Actions you are not granted are **absent, not disabled** — exactly as before the pass. This is
       the one thing a header migration could plausibly have broken, so it is worth a careful look on
       Money, Lineups, Roster and Development.
-- [ ] Your role reads **"Assistant Coach"** in the masthead beside the team name.
+- [x] Your role reads **"Assistant Coach"** in the masthead beside the team name.
 
 **H. The two things you sent back (added 2026-08-12).** Both on the Overview.
-- [ ] **The Overview now has a section icon** like every other screen — so the page title starts at
+- [x] **The Overview now has a section icon** like every other screen — so the page title starts at
       the same place on all forty. Walk the nav again and check nothing else is still missing one.
-- [ ] **The next-event card is shorter.** It was 228px on a desktop and 267px on a phone; it is now
+- [x] **The next-event card is shorter.** It was 228px on a desktop and 267px on a phone; it is now
       144px and 199px. **On a 390px phone the Dues / Budget / Record row should now be visible
       without scrolling** — that's the whole point of the change, so it's the one thing to check.
-- [ ] The card still says the full date and time. It deliberately repeats what the team bar says,
+- [x] The card still says the full date and time. It deliberately repeats what the team bar says,
       because the bar's copy disappears once you scroll on a phone — scroll down and confirm the
       card is still telling you when.
-- [ ] **The action button now sits beside the title** instead of under it. On a phone it may drop to
+- [x] **The action button now sits beside the title** instead of under it. On a phone it may drop to
       its own full-width row when the title is long — that's intended; what's not intended is a
       squashed or hard-to-hit button. Check both a game and a practice.
-- [ ] **Game day should still be the fullest version of this card** — score, who's in, lineup ready,
+- [x] **Game day should still be the fullest version of this card** — score, who's in, lineup ready,
       any arm-care warning. It legitimately stays taller than the others; confirm nothing went
       missing from it.
-- [ ] The other situations use the same card: a brand-new team ("Welcome"), a quiet week, a season
+- [x] The other situations use the same card: a brand-new team ("Welcome"), a quiet week, a season
       that looks finished, and pre-season's next step. Copy is unchanged in all of them — you're
       checking the shape holds, not re-reading the words.
 

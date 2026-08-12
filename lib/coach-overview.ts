@@ -50,6 +50,11 @@ export type AnchorAction =
   | 'build_lineup'
   | 'take_attendance'
   | 'open_schedule'
+  /**
+   * The bench console. Offered ONLY inside the game's live window (`gameDayOpen`) — outside it
+   * the console is a read-only recap of a game that has not happened, which is not an action.
+   */
+  | 'open_game_day'
   | 'add_event'
   | 'close_season'
   | 'setup_step'
@@ -104,6 +109,35 @@ export interface AnchorInput {
    * it comes from the season's management scope, so it is passed alongside rather than folded in.
    */
   canManageSeasons: boolean;
+  /**
+   * ── GAME PREP (owner 2026-08-12) ──────────────────────────────────────────────────────────
+   * The three facts that stop the card contradicting itself.
+   *
+   * THE DEFECT THESE FIX: the primary used to be chosen from CAPABILITY alone — "may this coach
+   * build lineups?" — and never from PROGRESS. The readiness row underneath read the real state.
+   * So a coach who had already built the lineup was shown "Lineup ready" and asked to "Build
+   * lineup", in the same card, and "Take attendance" beside a headcount that proved attendance was
+   * taken. Two systems on one card with no conversation between them: correct only by coincidence,
+   * and the coincidence ended the moment the coach did the work.
+   *
+   * D14 is unchanged and still first — capability still DISPOSES. This adds the second question it
+   * was always missing: of the things this coach CAN do, which are still undone?
+   */
+  /**
+   * Does the next game already have a lineup? `null` = not known yet (the read is in flight, or
+   * the next event is not a game). Null is treated as NOT ready on purpose: the card must never
+   * claim work is finished on the strength of an unfinished read — the safe direction is to offer
+   * the work, which is exactly what shipped before this input existed.
+   */
+  lineupReady: boolean | null;
+  /** Has anyone been marked present/late/absent for the next event? Same not-yet-known discipline. */
+  attendanceTaken: boolean;
+  /**
+   * Is the game's live window open right now (arrival time or 2h before start → 3h after the end)?
+   * Comes from `lib/coach-game-day`'s single predicate, the same one the schedule row and lineups
+   * hub use to decide whether to show their "Game day" door — one clock, no drift.
+   */
+  gameDayOpen: boolean;
 }
 
 export interface AnchorDecision {
@@ -115,30 +149,53 @@ export interface AnchorDecision {
 }
 
 /**
- * The event-shaped fallback chain, shared by game day and the next-event card so the two can never
- * diverge: Build lineup → Take attendance → Open schedule → informational.
+ * The event-shaped action chain, shared by game day and the next-event card so the two can never
+ * diverge. Two questions in order, never one:
+ *
+ *   1. CAN this coach do it?   (D14 — unchanged, still first)
+ *   2. Is it still UNDONE?     (owner 2026-08-12 — the question the card was missing)
  *
  * Game day and next-event NEVER yield to a later candidate when their gates fail. Opponent, time and
  * place matter to every coach on the staff, so the card stays and loses its button instead — the
  * alternative would show a coach without lineup access a "season is winding down" card on the
  * morning of a game.
  */
-function eventActions(nextIsGame: boolean, caps: CoachCapabilities): Pick<AnchorDecision, 'primary' | 'answers'> {
+function eventActions(
+  nextIsGame: boolean,
+  caps: CoachCapabilities,
+  prep: Pick<AnchorInput, 'lineupReady' | 'attendanceTaken' | 'gameDayOpen'>,
+): Pick<AnchorDecision, 'primary' | 'answers'> {
   // ⚠ 2026-08-03: this door OPENS the schedule, so it wants the VIEW half of the split — not the
   // half that adds and cancels events. Both are true for every coach invited before the split, so
   // this changes no behaviour; it stops the wrong one being inherited by the next reader.
   const canSchedule = canViewSchedule(caps);
+  // ⚠ `!== true` rather than `=== false`: an unfinished read must fall on the OFFER-THE-WORK side.
+  const lineupOutstanding = caps.lineups && prep.lineupReady !== true;
+  const attendanceOutstanding = caps.attendance && !prep.attendanceTaken;
+
   if (!nextIsGame) {
     // A practice or team event: there is no lineup and attendance is the only real preparation.
-    if (caps.attendance) return { primary: 'take_attendance', answers: canSchedule ? ['open_schedule'] : [] };
+    if (attendanceOutstanding) return { primary: 'take_attendance', answers: canSchedule ? ['open_schedule'] : [] };
     return { primary: canSchedule ? 'open_schedule' : null, answers: [] };
   }
-  if (caps.lineups) {
-    return { primary: 'build_lineup', answers: caps.attendance ? ['take_attendance'] : [] };
-  }
-  if (caps.attendance) {
-    return { primary: 'take_attendance', answers: canSchedule ? ['open_schedule'] : [] };
-  }
+
+  // ── A GAME ────────────────────────────────────────────────────────────────────────────────
+  // `answers` is deliberately EMPTY on every game branch. The card's chip row carries each prep
+  // item, its state and its door, so a text link beside it would be the same fact twice — which is
+  // the duplication this pass exists to delete, re-created one row lower.
+  if (lineupOutstanding) return { primary: 'build_lineup', answers: [] };
+  if (attendanceOutstanding) return { primary: 'take_attendance', answers: [] };
+
+  // Nothing outstanding. Inside the live window the console is genuinely the next thing a coach
+  // touches, so it becomes the primary. OUTSIDE it there is nothing to do yet, and the card says so
+  // by going quiet — the console at that URL is a read-only recap of a game that has not happened,
+  // and offering it would be a button that does nothing a coach wanted.
+  if (prep.gameDayOpen && canSchedule) return { primary: 'open_game_day', answers: [] };
+  // A coach with NO prep grants has no chips either — both reads are denied to them at the API, so
+  // the row has nothing to draw — and silence here would leave them a dead end. They keep the
+  // schedule door, the shape that shipped before prep state existed.
+  const hasPrepChips = caps.lineups || caps.attendance;
+  if (hasPrepChips) return { primary: null, answers: [] };
   return { primary: canSchedule ? 'open_schedule' : null, answers: [] };
 }
 
@@ -157,7 +214,8 @@ function eventActions(nextIsGame: boolean, caps: CoachCapabilities): Pick<Anchor
  * opens on the board. A calm board beats narrating a situation the reader cannot act on.
  */
 export function resolveOverviewAnchor(input: AnchorInput): AnchorDecision | null {
-  const { phase, hasNextEvent, nextIsGame, seasonWindingDown, hasOpenSetupStep, hasUpcomingTournament, caps, canManageSeasons, isColdStart } = input;
+  const { phase, hasNextEvent, nextIsGame, seasonWindingDown, hasOpenSetupStep, hasUpcomingTournament, caps, canManageSeasons, isColdStart, lineupReady, attendanceTaken, gameDayOpen } = input;
+  const prep = { lineupReady, attendanceTaken, gameDayOpen };
   // ⚠ TWO answers since the 2026-08-03 split, and this function needs both. `canSchedule` gates the
   // "add an event" DOOR (a write); `canSeeSchedule` gates any card that makes a CLAIM about what is
   // or isn't on the calendar. Conflating them is how a coach who cannot see the schedule gets told,
@@ -193,11 +251,11 @@ export function resolveOverviewAnchor(input: AnchorInput): AnchorDecision | null
   // access never makes. Without it the page has NO event data — so these cards could only ever
   // announce "nothing scheduled" to someone simply not permitted to see the schedule.
   if (canSchedule && hasNextEvent && phase === 'game_day') {
-    return { kind: 'game_day', shape: 'working', ...eventActions(nextIsGame, caps) };
+    return { kind: 'game_day', shape: 'working', ...eventActions(nextIsGame, caps, prep) };
   }
 
   if (canSchedule && hasNextEvent && phase === 'in_season') {
-    return { kind: 'next_event', shape: 'working', ...eventActions(nextIsGame, caps) };
+    return { kind: 'next_event', shape: 'working', ...eventActions(nextIsGame, caps, prep) };
   }
 
   // (3) before (4). This single ordering is the defect fix.

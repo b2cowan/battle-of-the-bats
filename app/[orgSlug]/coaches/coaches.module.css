@@ -1795,23 +1795,55 @@ a.railRow:focus-visible {
 }
 .oneScoreResult { font-size: 0.85rem; font-weight: 700; color: var(--white-55); }
 
-/* Readiness rides the card on both working shapes — it used to sit three scrolls down, which is
-   backwards on the one morning a coach has the least patience. */
-.oneReady {
+/* ── The prep row (owner 2026-08-12) ─────────────────────────────────────────────────────────
+   Readiness rides the card on both working shapes — it used to sit three scrolls down, which is
+   backwards on the one morning a coach has the least patience.
+
+   ⚠ These chips REPLACED a plain text strip plus a separate row of text answers. Each one now
+   carries its item's state AND its door, which is what stops the card offering work it has just
+   reported as finished. Colour is the state, so the row is readable before a word of it is. */
+.oneChips {
   display: flex;
   align-items: center;
-  gap: 0.5rem 0.9rem;
+  gap: 0.35rem;
   flex-wrap: wrap;
-  margin-top: 0.5rem;
+  margin-top: 0.55rem;
   padding-top: 0.55rem;
   border-top: 1px solid var(--border-2);
-  font-size: 0.85rem;
-  color: var(--white-70);
 }
-.oneReady strong { font-family: var(--font-display); font-weight: 800; color: var(--white-90); }
-.oneReadyMuted { color: var(--white-45); }
-.oneReadyOk { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--success); font-weight: 600; }
-.oneReadyWarn { display: inline-flex; align-items: center; gap: 0.3rem; color: var(--warning); font-weight: 600; }
+.oneChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  /* A real touch target even where the chip is only a fact, so the row keeps ONE height and the
+     tappable ones are never the odd size out. */
+  min-height: 32px;
+  padding: 0 0.6rem;
+  border: 1px solid var(--border-2);
+  border-radius: 999px;
+  background: var(--home-fill, var(--white-8));
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white-70);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.oneChip strong { font-family: var(--font-display); font-weight: 800; color: currentColor; }
+.oneChip svg { flex: none; }
+.oneChip[data-state="done"] {
+  color: var(--success);
+  border-color: rgba(var(--success-rgb), 0.32);
+  background: rgba(var(--success-rgb), 0.09);
+}
+.oneChip[data-state="todo"] {
+  color: var(--warning);
+  border-color: rgba(var(--warning-rgb), 0.34);
+  background: rgba(var(--warning-rgb), 0.09);
+}
+.oneChip[data-state="fact"] { color: var(--white-55); }
+/* Only the ones that GO somewhere react — a fact that lights up on hover promises a click that
+   never happens. */
+a.oneChip:hover { border-color: currentColor; }
 
 /* Layout ONLY — colour and hover come from the shipped `btn btn-lime`, so the warm-theme
    ink-on-lime handling and the one-lime-action rule are inherited, not re-implemented. */
@@ -2061,7 +2093,14 @@ a.tailRow:hover .tailArrow { color: var(--blueprint-blue); }
   font-size: 0.82rem;
 }
 .loadErrorLine svg { color: var(--warning); flex-shrink: 0; }
+/* ⚠ Pre-existing, surfaced by the rendered sweep 2026-08-12: this read as text and shipped at 21px,
+   well under the 44px tap floor — and it is the ONLY control on the page when the dashboard read
+   fails, i.e. exactly when a coach most needs to hit it. Inline-flex + the floor, without changing
+   how it looks. */
 .loadErrorRetry {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
   background: none;
   border: none;
   padding: 0;

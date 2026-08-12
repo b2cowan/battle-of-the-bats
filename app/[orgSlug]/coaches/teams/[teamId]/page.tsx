@@ -34,6 +34,8 @@ import { hasNoTeamRecordAccess, hasRecordAccess } from '@/lib/coach-capabilities
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
+import { fieldNounFor } from '@/lib/sports';
+import { gameDayEntryHref, isInGameDayWindow, toGameDayEventShape } from '@/lib/coach-game-day';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
@@ -191,6 +193,25 @@ export default function TeamOverviewPage({
    */
   const closedCapsAreHelperShaped = !!closedAssignment && hasNoTeamRecordAccess(closedAssignment.capabilities);
   const isClosedTeam = !loading && !!closedAssignment && !closedCapsAreHelperShaped;
+  // Clock snapshot (render must stay pure) — see the schedule and lineups pages' twin notes.
+  // Decides whether the anchor may offer the game-day console. ⚠ Unlike those two pages this one
+  // REFRESHES it; see the sync effect below for why a once-per-mount snapshot is not enough here.
+  const [gameDayNowMs, setGameDayNowMs] = useState(() => Date.now());
+  /**
+   * WHICH EVENT the two game-prep reads have actually answered for.
+   *
+   * Keyed by event id rather than a pair of booleans so it resets ITSELF the moment the next event
+   * changes — no reset call in an effect body, which is exactly where this file already carries its
+   * cascading-render warnings.
+   *
+   * The anchor card is held back until these land (see `eventPrepSettled`). Without that, a coach
+   * who had already built the lineup AND taken attendance watched the card offer "Build lineup",
+   * then "Take attendance", then drop its button entirely as the two reads landed — three paints,
+   * two of them the exact false prompt this whole change exists to delete.
+   */
+  const [prepAnsweredFor, setPrepAnsweredFor] = useState<{ lineup: string | null; attendance: string | null }>(
+    { lineup: null, attendance: null },
+  );
   const [setupStats, setSetupStats] = useState<SetupStats | null>(null);
   const [setupLoading, setSetupLoading] = useState(true);
   const [setupError, setSetupError] = useState('');
@@ -546,6 +567,7 @@ export default function TeamOverviewPage({
   useEffect(() => {
     setNextLineupReady(null);
     if (!nextEvent || !GAME_EVENT_TYPES.includes(nextEvent.eventType)) return;
+    const eventId = nextEvent.id;
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${nextEvent.id}/lineup`)
       .then(res => (res.ok ? res.json() : null))
@@ -554,7 +576,11 @@ export default function TeamOverviewPage({
         const entries = (json.entries ?? []) as { inningPositions?: Record<string, string> }[];
         setNextLineupReady(entries.some(e => Object.values(e.inningPositions ?? {}).some(Boolean)));
       })
-      .catch(() => {});
+      .catch(() => {})
+      // ⚠ `.finally`, not the success path: a 403 (no lineup access) resolves to a null body and a
+      // network error rejects, and BOTH have to count as answered — otherwise the anchor card,
+      // which now waits on this, would never appear for the coaches those cases describe.
+      .finally(() => { if (!cancelled) setPrepAnsweredFor(p => ({ ...p, lineup: eventId })); });
     return () => { cancelled = true; };
     // Keyed on the event's id/type (not the object identity) so a fresh loadSetup doesn't re-fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -565,6 +591,7 @@ export default function TeamOverviewPage({
   useEffect(() => {
     setNextAttendance(null);
     if (!nextEvent) return;
+    const eventId = nextEvent.id;
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${nextEvent.id}/attendance`)
       .then(res => (res.ok ? res.json() : null))
@@ -581,10 +608,39 @@ export default function TeamOverviewPage({
         c.noReply = Math.max(0, total - c.in - c.late - c.out);
         setNextAttendance(c.in + c.late + c.out > 0 ? c : null);
       })
-      .catch(() => {});
+      .catch(() => {})
+      // See the lineup read's note: a denied or failed read still counts as answered.
+      .finally(() => { if (!cancelled) setPrepAnsweredFor(p => ({ ...p, attendance: eventId })); });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orgSlug, teamId, nextEvent?.id]);
+
+  /**
+   * Keep the game-day clock honest.
+   *
+   * The console door opens on a WINDOW (call time, or two hours before the start, until three hours
+   * after the end), and this is the one page a coach leaves open on a game morning. A snapshot taken
+   * once at 9am still says "not yet" at 4pm — so on the single screen where that door matters most,
+   * it would never appear without a reload. It also goes stale on a TEAM SWITCH: the App Router
+   * reuses this component across a `[teamId]` change (no `key` anywhere in the coach layouts), so a
+   * `useState` initializer does not run again.
+   *
+   * ⚠ The tick re-renders only when the ANSWER changes, never merely because a minute has passed.
+   * Nothing here touches the network, and it does not run at all unless a game is pending.
+   */
+  useEffect(() => {
+    if (!nextEvent || !GAME_EVENT_TYPES.includes(nextEvent.eventType)) return;
+    const shape = toGameDayEventShape(nextEvent);
+    const sync = () => setGameDayNowMs(prev => {
+      const now = Date.now();
+      return isInGameDayWindow(shape, prev) === isInGameDayWindow(shape, now) ? prev : now;
+    });
+    // Immediately (catches the team switch above), then once a minute while the game is pending.
+    const first = setTimeout(sync, 0);
+    const timer = setInterval(sync, 60_000);
+    return () => { clearTimeout(first); clearInterval(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nextEvent?.id, nextEvent?.eventType, nextEvent?.startsAt, nextEvent?.endsAt, nextEvent?.arrivalTime]);
 
   // Tournament registrations summary (count, next date, pending, live today) → Tournaments tile.
   useEffect(() => {
@@ -1118,8 +1174,11 @@ export default function TeamOverviewPage({
             : 'scheduled ahead',
           href: `${base}/schedule`,
           tone: nextEvent ? 'default' : 'muted',
+          // "Set / Not set", matching the anchor's chip above and the Lineups hub's own row flags.
+          // This tile said "Lineup ready" while the card said "Lineup set" about the SAME lineup,
+          // on the same screen — one fact needs one word (owner 2026-08-12).
           flag: (nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType) && nextLineupReady !== null)
-            ? (nextLineupReady ? { text: 'Lineup ready', tone: 'ok' } : { text: 'Lineup not set', tone: 'warn' })
+            ? (nextLineupReady ? { text: 'Lineup set', tone: 'ok' } : { text: 'Lineup not set', tone: 'warn' })
             : null,
         };
       }
@@ -1475,7 +1534,47 @@ export default function TeamOverviewPage({
     && !seasonCueDismissed;
 
   const attendanceTotal = nextAttendance ? nextAttendance.in + nextAttendance.late + nextAttendance.out + nextAttendance.noReply : 0;
-  const fieldOrLoc = nextEvent ? (nextEvent.fieldNumber || nextEvent.location || null) : null;
+
+  /**
+   * WHERE the game is. ⚠ This used to be `fieldNumber || location`, which meant the field number
+   * REPLACED the venue — so the coach whose event carried both (the normal case) was shown a naked
+   * "1" and lost "Lab Field" entirely. Both now render, and the number gets the sport's own noun
+   * from the ONE derivation every field-picking label uses (Diamond / Rink / Court / Pitch), rather
+   * than arriving as a digit with nothing to say what it counts.
+   */
+  const placeLabel = (() => {
+    if (!nextEvent) return null;
+    const venue = nextEvent.location?.trim() || null;
+    const field = nextEvent.fieldNumber?.trim() || null;
+    // A field value that already names itself ("Diamond 2", "Court A") must not become
+    // "Diamond Diamond 2" — only a bare number takes the noun.
+    // ⚠ A bare code takes the noun — "1" and "1A" alike, since a letter suffix is a common way to
+    // number a surface and is no more self-describing than a digit. Anything that already names
+    // itself ("Diamond 2", "North Court") is left exactly as the coach typed it.
+    const surface = field ? (/^\d+[A-Za-z]?$/.test(field) ? `${fieldNounFor(assignment.teamSport)} ${field}` : field) : null;
+    return [venue, surface].filter(Boolean).join(', ') || null;
+  })();
+
+  /**
+   * ── The next game's PREP STATE, for the anchor resolver ───────────────────────────────────
+   * `nextAttendance` is null both while the read is in flight AND when nobody has been marked, so
+   * it answers "taken?" correctly in the only direction that matters: not-yet-known reads as
+   * not-taken, which offers the work rather than claiming it is done.
+   */
+  const attendanceTaken = nextAttendance !== null;
+  /**
+   * Both prep reads have ANSWERED for the event now on screen — so the card can be built from
+   * facts rather than from the absence of them. Without this the card renders three times on a cold
+   * load, and two of those paints ask a fully-prepared coach for work they have already done.
+   *
+   * A non-game needs only the attendance answer; there is no lineup to wait for.
+   */
+  const eventPrepSettled = !nextEvent
+    || (prepAnsweredFor.attendance === nextEvent.id
+        && (!nextIsGame || prepAnsweredFor.lineup === nextEvent.id));
+  // The console's live window, from the same predicate the schedule row and lineups hub use.
+  // Clock snapshot taken once per mount so render stays pure (the schedule page's twin note).
+  const gameDayOpen = !!nextEvent && isInGameDayWindow(toGameDayEventShape(nextEvent), gameDayNowMs);
   // C0: the ORG'S clock, never the device's. A coach travelling, or a family in another province,
   // must see the game's local start time — the one that means anything.
   const nextTimeLabel = nextEvent
@@ -1491,7 +1590,7 @@ export default function TeamOverviewPage({
   //
   // Held back until the first read lands, so the page never renders a confident card built on data
   // it does not have yet.
-  const anchor = setupLoading ? null : resolveOverviewAnchor({
+  const anchor = (setupLoading || !eventPrepSettled) ? null : resolveOverviewAnchor({
     phase,
     hasNextEvent: !!nextEvent,
     nextIsGame,
@@ -1515,6 +1614,11 @@ export default function TeamOverviewPage({
     isColdStart:
       !tourSeen && !hintsOff && !!setupStats
       && setupStats.activeRosterCount === 0 && setupStats.eventCount === 0,
+    // Game prep (owner 2026-08-12) — so the button is the first thing NOT DONE rather than
+    // whatever this coach happens to be allowed to do. See the input's own note for the defect.
+    lineupReady: nextLineupReady,
+    attendanceTaken,
+    gameDayOpen,
   });
 
   /**
@@ -1556,8 +1660,8 @@ export default function TeamOverviewPage({
           headline: nextEvent?.opponent ? `vs ${nextEvent.opponent}` : (nextEvent?.name || 'Game day'),
           // On a mirrored tournament game the event's NAME is the tournament, and the headline has
           // already taken the opponent — so name it here or it disappears entirely.
-          meta: nextEvent && (nextTimeLabel || fieldOrLoc || isMirroredEvent(nextEvent))
-            ? [isMirroredEvent(nextEvent) ? nextEvent.name : null, nextTimeLabel, fieldOrLoc].filter(Boolean).join(' · ')
+          meta: nextEvent && (nextTimeLabel || placeLabel || isMirroredEvent(nextEvent))
+            ? [isMirroredEvent(nextEvent) ? nextEvent.name : null, nextTimeLabel, placeLabel].filter(Boolean).join(' · ')
             : null,
         };
       case 'next_event':
@@ -1570,7 +1674,7 @@ export default function TeamOverviewPage({
             ? `${formatEventDate(nextEvent.startsAt)}${nextTimeLabel ? `, ${nextTimeLabel}` : ''}${nextEvent.opponent ? ` vs ${nextEvent.opponent}` : ''}`
             : '',
           meta: nextEvent
-            ? ([nextEvent.opponent ? null : (nextEvent.name || 'Upcoming event'), fieldOrLoc].filter(Boolean).join(' · ') || 'On your schedule')
+            ? ([nextEvent.opponent ? null : (nextEvent.name || 'Upcoming event'), placeLabel].filter(Boolean).join(' · ') || 'On your schedule')
             : null,
         };
       case 'season_check':
@@ -1624,6 +1728,10 @@ export default function TeamOverviewPage({
     switch (action) {
       case 'build_lineup': return nextEvent ? `${base}/lineups/${nextEvent.id}` : `${base}/lineups`;
       case 'take_attendance': return nextEvent ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`;
+      // The console's ONE address, via the same helper the schedule row and lineups hub use — it
+      // returns null outside the live window, which the resolver has already ruled out here.
+      case 'open_game_day':
+        return (nextEvent && gameDayEntryHref(orgSlug, teamId, nextEvent, gameDayNowMs)) || `${base}/schedule`;
       case 'open_schedule': return `${base}/schedule`;
       case 'add_event': return `${base}/schedule`;
       case 'view_tournaments': return `${base}/tournaments`;
@@ -1634,6 +1742,7 @@ export default function TeamOverviewPage({
   const ANCHOR_LABEL: Record<string, string> = {
     build_lineup: 'Build lineup',
     take_attendance: 'Take attendance',
+    open_game_day: 'Open game day',
     open_schedule: 'Open schedule',
     add_event: 'Add an event',
     view_tournaments: 'View tournaments',
@@ -1652,6 +1761,74 @@ export default function TeamOverviewPage({
     got_it: 'Got it',
     skip_step: 'Skip this step',
   };
+
+  /**
+   * ── THE PREP ROW (owner 2026-08-12, mockup artifact 137039b5 option B) ────────────────────
+   *
+   * ONE row replacing TWO: the read-only readiness strip AND the text answers row, on
+   * game-shaped cards only. Those were two renderings of a single subject — the strip reported
+   * prep state in words you could not tap, and the answers row offered doors that had no idea
+   * whether the work was already done. That is how the card came to show "Lineup ready" beside a
+   * "Build lineup" button and "Take attendance" beside a headcount proving attendance was taken.
+   * Each chip now carries the state AND the door for its own item, so the two cannot disagree:
+   * there is only one of them left.
+   *
+   * ⚠ WHO SEES WHAT, and why it is not a judgement call: both prep reads are capability-gated at
+   * the API (`denyUnless(capabilities.attendance)` / `.lineups`), so for a coach without the duty
+   * there is simply no answer to show — and a chip is suppressed rather than guessed. The old strip
+   * got this wrong in the one direction that lies: with the attendance read denied it printed
+   * "Attendance not taken" at a coach who could not have known either way. Nothing real is lost
+   * here — call time and uniform ride the event itself and still show to everyone on staff.
+   *
+   * Where a chip DOES appear, it is a LINK only if this coach can act on it; otherwise it stays a
+   * plain fact. That is D14 applied one level down.
+   *
+   * ⚠ Order is FIXED, never "outstanding first". A row that re-sorts itself as the morning
+   * progresses moves the thing a coach is reaching for while they reach for it.
+   */
+  const prepChips: { key: string; state: 'done' | 'todo' | 'fact'; href: string | null; body: React.ReactNode }[] = [];
+  if (nextEvent && nextIsGame && (anchor?.kind === 'game_day' || anchor?.kind === 'next_event')) {
+    const chipCaps = assignment.capabilities;
+    /**
+     * ⚠ NO CAPABILITY, NO CLAIM. The next-event attendance read is denied outright to a coach
+     * without the attendance duty, so `nextAttendance` is null for them for a reason that has
+     * nothing to do with whether attendance was taken. Rendering the "not taken" chip there would
+     * be a confident wrong answer — the very thing this card's resolver refuses to do about the
+     * schedule one level up — and this pass makes it an AMBER warning chip, which shouts it.
+     * They see no attendance chip at all, which is honest: we do not know.
+     */
+    const attendanceHref = chipCaps.attendance ? anchorHref('take_attendance') : null;
+    if (chipCaps.attendance) {
+      prepChips.push(nextAttendance
+        ? { key: 'attendance', state: 'done', href: attendanceHref,
+            body: <><CheckCircle2 size={13} aria-hidden /> <strong>{nextAttendance.in}</strong> of {attendanceTotal} in</> }
+        : { key: 'attendance', state: 'todo', href: attendanceHref,
+            body: <><TriangleAlert size={13} aria-hidden /> Attendance not taken</> });
+    }
+    // Only once the read has landed — `null` is "not known yet", and a card that guesses about the
+    // lineup is the whole defect this row exists to remove.
+    if (nextLineupReady !== null) {
+      const lineupHref = chipCaps.lineups ? anchorHref('build_lineup') : null;
+      prepChips.push(nextLineupReady
+        ? { key: 'lineup', state: 'done', href: lineupHref, body: <><CheckCircle2 size={13} aria-hidden /> Lineup set</> }
+        : { key: 'lineup', state: 'todo', href: lineupHref, body: <><TriangleAlert size={13} aria-hidden /> Lineup not set</> });
+    }
+    // ⚠ "10 of 12 in" alone hides WHY the other two are missing — two who said they are out and two
+    // who never answered are different mornings, and one of each is a third. So the gap is accounted
+    // for IN FULL rather than partially: every non-"in" state with anyone in it gets a chip, and the
+    // numbers on this row always add up to the total. Only once attendance has actually been taken.
+    if (nextAttendance) {
+      ([
+        ['late', nextAttendance.late, 'late'],
+        ['out', nextAttendance.out, 'out'],
+        ['noreply', nextAttendance.noReply, 'no reply'],
+      ] as const).forEach(([key, count, word]) => {
+        if (count > 0) prepChips.push({ key, state: 'fact', href: attendanceHref, body: <>{count} {word}</> });
+      });
+    }
+    if (nextEvent.arrivalTime) prepChips.push({ key: 'call', state: 'fact', href: null, body: <>Call {fmtClockLabel(nextEvent.arrivalTime)}</> });
+    if (nextEvent.uniform) prepChips.push({ key: 'uniform', state: 'fact', href: null, body: <>{nextEvent.uniform}</> });
+  }
 
   // ⚠ THE OVERVIEW HAS NO REFERENCE RAIL, DELIBERATELY (owner ruling 2026-08-03, after seeing it
   // built). Every line of it restated a tile the board already carries — the week's counts, the
@@ -1837,18 +2014,15 @@ export default function TeamOverviewPage({
 
           {/* Readiness rides the card on BOTH working shapes — it is the whole reason a coach
               opens the portal on a game morning, and it used to sit three scrolls down.
-              Chunk C adds the two facts a coach re-checks on a game morning that otherwise mean
-              opening the event: the call time and the uniform. They show for EVERYONE on staff —
-              they are facts, not actions — while the arm-care line below needs lineup access. */}
-          {(anchor.kind === 'game_day' || anchor.kind === 'next_event') && nextIsGame && (
-            <div className={styles.oneReady}>
-              {nextAttendance
-                ? <span><strong>{nextAttendance.in}</strong> of {attendanceTotal} in</span>
-                : <span className={styles.oneReadyMuted}>Attendance not taken</span>}
-              {nextLineupReady === true && <span className={styles.oneReadyOk}><CheckCircle2 size={14} aria-hidden /> Lineup ready</span>}
-              {nextLineupReady === false && <span className={styles.oneReadyWarn}><TriangleAlert size={14} aria-hidden /> Lineup not set</span>}
-              {nextEvent?.arrivalTime && <span>Call {fmtClockLabel(nextEvent.arrivalTime)}</span>}
-              {nextEvent?.uniform && <span>{nextEvent.uniform}</span>}
+              Chunk C's two extra facts (call time, uniform) ride here too. Everything about WHAT
+              this row contains and who gets a tappable version of it is decided in `prepChips`
+              above; this only draws it. */}
+          {prepChips.length > 0 && (
+            <div className={styles.oneChips}>
+              {prepChips.map(c => (c.href
+                ? <Link key={c.key} href={c.href} className={styles.oneChip} data-state={c.state}>{c.body}</Link>
+                : <span key={c.key} className={styles.oneChip} data-state={c.state}>{c.body}</span>
+              ))}
             </div>
           )}
 
