@@ -4,6 +4,8 @@ import type { NextRequest } from 'next/server';
 import { assertSafeSupabaseServerEnvironment } from './lib/supabase-safety';
 import { isTournamentTier } from './lib/billing-urls';
 import { demoOrgSlugForBlockedWrite, sandboxRejectionResponse } from './lib/demo-guard';
+import { getDemoOrgBySlug } from './lib/demo-org';
+import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH } from './lib/sandbox-door';
 
 export async function proxy(request: NextRequest) {
   assertSafeSupabaseServerEnvironment('Proxy Supabase client');
@@ -136,6 +138,21 @@ export async function proxy(request: NextRequest) {
   const isOrgCheckIn = segments.length >= 2 && segments[0] !== 'api' && segments[1] === 'check-in';
 
   if ((isOrgAdmin || isLegacyAdmin || isOrgScorekeeper || isOrgCheckIn) && !user) {
+    // A SANDBOX org has no login to send anyone to — its whole promise is that there isn't one,
+    // and the shared demo account's password was discarded at seed time, so this form is a wall
+    // rather than a door. An anonymous arrival on a demo org's operator half (a Back after the
+    // marketing bar ended the demo session, a second tab, a forwarded deep link) is walked back
+    // through that sandbox's own front door instead. Twin of the coach portal's branch in
+    // `app/[orgSlug]/coaches/layout.tsx`; both exist because the session is now deliberately
+    // short-lived. The door takes NO redirect target (open-redirect ruling), and `segments[0]` is
+    // only ever a lookup key here — so nothing user-controlled reaches the destination.
+    const demoOrg = getDemoOrgBySlug(segments[0]);
+    if (demoOrg) {
+      const doorUrl = request.nextUrl.clone();
+      doorUrl.pathname = demoOrg.kind === 'coach' ? SEE_IT_LIVE_COACHES_PATH : SEE_IT_LIVE_PATH;
+      doorUrl.search = '';
+      return NextResponse.redirect(doorUrl);
+    }
     const url = request.nextUrl.clone();
     url.pathname = '/auth/login';
     // WI-2: preserve the query string so a deep-linked score push (…/results?tournamentId=&gameId=)

@@ -39,6 +39,22 @@ export const COACH_CONFIRM_PATH = '/see-it-live/coaches/switch';
 export const COACH_SWITCH_ENDPOINT = '/api/sandbox/switch-coach';
 
 /**
+ * The CHOOSER — both doors on one page, at one short shareable address.
+ *
+ * The 2026-08-10 placement ruling declined a standalone chooser on the grounds that the homepage's
+ * persona questions are a better chooser than any demo picker, and named its own revisit trigger:
+ * *"when a campaign needs one URL"*. That trigger fired (owner, 2026-08-11) — a single link to hand
+ * to people in the industry who should walk BOTH worlds, for whom "which persona are you?" is the
+ * wrong question. It does not displace the persona doors: they remain the funnel, this is an
+ * outbound address, and it is a FOOTER link rather than a nav item, so the ruling's "no nav item"
+ * half stands.
+ *
+ * Lives at a top level (not under `/see-it-live`) because being short is the whole feature — and it
+ * is therefore reserved in `lib/reserved-slugs.ts` like every other top-level route.
+ */
+export const DEMOS_PATH = '/demos';
+
+/**
  * The confirm screen, shown to the ONE kind of visitor the door has to ask something of: somebody
  * already signed in as themselves, whose session would be replaced by the demo's.
  *

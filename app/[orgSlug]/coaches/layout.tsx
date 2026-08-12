@@ -17,6 +17,8 @@ import { getCoachOnboardingPrefs } from '@/lib/user-preferences';
 import { CoachesOverlayProvider } from '@/lib/coaches-overlay';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { COACHES_HOME_PATH } from '@/lib/coaches-portal-routes';
+import { getDemoOrgBySlug } from '@/lib/demo-org';
+import { SEE_IT_LIVE_COACHES_PATH } from '@/lib/sandbox-door';
 import CoachesSidebar from '@/components/coaches/CoachesSidebar';
 import CoachesBottomNav from '@/components/coaches/CoachesBottomNav';
 import CoachTopStrip from '@/components/coaches/CoachTopStrip';
@@ -61,6 +63,15 @@ export default async function CoachesLayout({
     // read, and only on a path that was already failing.
     const user = await getAuthenticatedUser();
     if (!user) {
+      // The coach SANDBOX has no login to send anyone to — its whole promise is that there
+      // isn't one. An anonymous arrival here is a visitor who lost the shared demo session
+      // (the marketing bar ends it when they leave the demo; a shared deep link never had
+      // it), so walk them back through their own door instead of showing a form they can
+      // never fill in. The door re-establishes the session and lands on the sandbox's own
+      // constant landing path — it takes no redirect target, by ruling (`/see-it-live`), so
+      // this cannot become an open redirect, and every failure branch inside it lands on
+      // /for-coaches rather than back here.
+      if (getDemoOrgBySlug(orgSlug)?.kind === 'coach') redirect(SEE_IT_LIVE_COACHES_PATH);
       redirect(`/auth/login?next=/${orgSlug}/coaches`);
     }
     return (

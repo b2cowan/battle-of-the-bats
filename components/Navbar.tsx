@@ -17,6 +17,7 @@ import { resolveOrgReturnFlip } from '@/lib/flip-twins';
 import { showsOrgPublicChrome } from '@/lib/consumer-routes';
 import { orgSectionCrumb } from '@/lib/org-public-sections';
 import { reportNavClick } from '@/lib/nav-beacon';
+import { DEMOS_PATH } from '@/lib/sandbox-door';
 import TournamentTopTabs from '@/components/public/TournamentTopTabs';
 import { visibleTournamentTabs } from '@/lib/tournament-page-tabs';
 import styles from './Navbar.module.css';
@@ -46,6 +47,7 @@ function isMarketingPath(pathname: string) {
     pathname.startsWith('/coaches') ||
     pathname.startsWith('/pricing') ||
     pathname.startsWith('/changelog') ||
+    pathname.startsWith(DEMOS_PATH) ||
     pathname.startsWith('/my')
   );
 }
@@ -79,8 +81,15 @@ export default function Navbar() {
   // anonymous visitor's page is byte-identical to before. Deliberately does NOT fetch the role
   // summary: the two doors below need only "is someone signed in", and marketing is the one
   // surface where a per-visit identity round-trip would be pure cost.
+  //
+  // `endDemoSession`: marketing ground is also where a "See it live" visit ENDS. The demo doors
+  // establish a real session for a shared fictional account, which this check would otherwise
+  // read as a login and answer with "Account" / "Open app →" — offering a prospect two doors into
+  // somebody else's demo account and telling them they have an account they never made. Reaching a
+  // marketing page is the visitor leaving the demo, so the demo session ends here. A real
+  // customer's session is untouched (see the hook).
   const onMarketing = isMarketingPath(pathname);
-  const marketingSignedIn = useClientSignedIn(onMarketing);
+  const marketingSignedIn = useClientSignedIn(onMarketing, { endDemoSession: true });
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);

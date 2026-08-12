@@ -8,6 +8,56 @@
 
 ---
 
+### 2026-08-11 — The chooser's revisit trigger FIRED: `/demos` ships as a single shareable demo address for outbound industry contact — the funnel's own chooser is untouched
+
+**Status:** Decided (owner, 2026-08-11 — *"I want a page that has that so I can send to people in the industry for them to try all demos… we can put a simple link in the marketing pages footer for now"*). ✅ BUILT on `dev` 2026-08-11, verified rendering, **not committed and not on production**.
+
+**Decision:** A standalone demo chooser exists at **`/demos`** — both "See it live" doors (tournament sandbox `riverdale-minor-ball`, coach sandbox `riverdale-ridge`) on one page, at one short top-level address, reserved so no org slug can shadow it.
+
+This exercises the 2026-08-10 ruling's **own reopening condition** rather than overriding it. That ruling deferred the chooser "revisit only when a campaign needs a single shareable URL" (logged twice — the part-3 resolution and the standing HANDOFF trigger), and the design twin phrased the same carve-out as "a campaign needing a single URL may get a tiny unlisted chooser — deferred until a campaign asks." **A campaign has now asked.** The use is outbound: a link handed to industry contacts who should walk *both* worlds, for whom "which persona are you?" is the wrong question.
+
+**What the 2026-08-10 ruling KEEPS — the reversal is partial and narrow:**
+
+1. **The funnel's chooser is unchanged.** The homepage persona questions remain THE chooser for cold prospects; hero twin doors, persona-page doors, the pricing "see it first" line and the `/for-clubs` both-halves block are all untouched. `/demos` is an *inbound landing pad for an outbound link*, not a funnel surface, and nothing on-site routes a prospect to it in preference to a persona door.
+2. **"No nav item" STILL HOLDS.** Reached by a footer link only — never top nav, never mobile bottom nav.
+3. **The ungated-door ruling (2026-08-02) is honoured in full**: no form, no email, no interstitial, no lead capture. Two doors and a plain description of what is behind each.
+4. **`/demos` is deliberately NOT in the sitemap** (which is an explicit allow-list). It stays unlisted to search — the "unlisted" half of the design carve-out survives in the sense that matters commercially: this is an address we hand out, not a page we compete for.
+
+**Two deliberate departures, both recorded here so they are not read later as drift:**
+
+- **The page itself is NOT gated on `sandboxDoorsVisible()`** — a departure from binding design rule 5 ("every door is gated on the doors flag"). Rationale: the page follows the same contract as the doors it links to — *the door is always live wherever the sandbox is seeded; the flag governs whether the marketing site ADVERTISES it*. Gating the page would kill a link already sent to a named person, which is the one failure this page exists to prevent. **The footer link is what the flag governs**, so with the doors off the build collapses back to exactly the design ruling's "tiny unlisted chooser."
+- **The chooser is LISTED (footer), where the design carve-out said "unlisted."** Owner-directed. This is the substantive amendment and `memory/design_decisions.md` must be amended to match — see Handoff.
+
+**Recorded alongside, deliberately, not as a defect:** the same unit of work fixed the marketing header reading a *demo* session as a *login*. Because the doors establish a real session for a shared fictional account, a prospect who had only ever pressed "See it live" came back to the homepage and was offered "Account" and "Open app →" for an account that was never theirs. **A demo session is not an identity on marketing ground, and now ends there** (real customer sessions untouched; the coach demo re-enters through its own door rather than showing a login wall to an anonymous arrival). Logged as *context*, not as a decision — but it is a funnel-presentation fact, and the reason it belongs here is that it was invisible for the eight days the doors were open.
+
+**Rationale:** The 2026-08-10 argument against a chooser was that the persona questions ask about the visitor's own life rather than our catalogue, which is a better chooser *for a stranger*. That argument does not reach an industry recipient who was sent a link precisely because they should see everything — for them the persona fork is friction and an arbitrary guess. The deferral was never a judgement that the artifact was wrong; it was a judgement that no one needed it yet.
+
+**Affects:** demo discoverability, outbound/industry GTM motion, marketing footer inventory, the 2026-08-10 placement ruling (partially resolved), `memory/design_decisions.md` rules 2 and 5.
+
+**Handoff:**
+```
+HANDOFF → /design (REQUIRED — binding-record drift, currently live in code)
+- memory/design_decisions.md 2026-08-10 rule 2 says "NO standalone chooser page and NO nav item…
+  a campaign needing a single URL may get a tiny UNLISTED chooser". The chooser now exists and is
+  FOOTER-LISTED. Amend rule 2 to record the trigger as fired and the listing as owner-directed;
+  leave "no nav item" standing. Add the rule-5 carve-out (page ungated / footer link gated).
+- ⚠ SCOPE DEFECT to rule on: the owner asked for "the marketing pages footer", but the footer
+  component also renders on the signed-in consumer app (/discover, /scores, /following, /account,
+  /family), so "Live Demos" currently shows to paying customers and families. Rule 1 says the door
+  pattern is "marketing layout only". RECOMMEND restricting the link to the marketing surface.
+HANDOFF → /marketing
+- Copy pass on the /demos page (shipped as working copy: "Walk the real product. Nothing to sign
+  up for.", the two card descriptions, the can-I-break-it / can-I-see-both pair) and on the footer
+  label "Live Demos". Folds into the door-label copy pass already owed from 2026-08-10.
+HANDOFF → owner
+- One standing revisit trigger from 2026-08-10 REMAINS OPEN: the 2027-01-01 ungated-door re-ask in
+  the January conversion runbook. The chooser trigger is now closed by this entry.
+```
+
+**Supersedes:** nothing wholesale. **Resolves** the deferred part 3 of the 2026-08-07 proposal and closes the chooser half of the 2026-08-10 standing revisit triggers.
+
+---
+
 ### 2026-08-10 — Premium Coaches Portal seats clarified: coaching staff is unlimited, the bundled tournament-admin side keeps the free-tier 3-seat guard; officials exemption extended to the portal; config label aligned to the canonical name
 
 **Status:** Decided (owner, 2026-08-10 — officials flip and label alignment ratified directly; the seat ruling ratified after a clarification pass established exactly who a "seat" is)
@@ -48,6 +98,13 @@ HANDOFF → /marketing — none. No customer copy changes; marketing already use
 
 **Resolution of the 2026-08-07 proposal's three parts:** part 1 (the coach front door) executed and extended; part 2 (per-demo addresses — `/see-it-live/tournament`) **not executed**, the bare address still means the tournament demo; part 3 (bare-address chooser) **deferred by ruling** — revisit only when a campaign needs a single shareable URL.
 
+> **⚠ Amended 2026-08-11 — the chooser trigger FIRED.** Part 3 is no longer deferred: the chooser
+> shipped as **`/demos`** (a top-level shareable address, not the bare `/see-it-live`, which still
+> means the tournament demo). See **2026-08-11 — The chooser's revisit trigger FIRED** at the top of
+> this log for what carried over and what changed. The "no nav item" half of rule 3 below **stands**;
+> the "no standalone chooser" half is now scoped to the funnel, not to outbound links. The OTHER
+> standing trigger in the Handoff below (the 2027-01-01 ungated-door re-ask) remains open.
+
 **Rationale:** The funnel changed shape: a stranger can now find, walk, and sign up for either live product with zero contact and zero forms — the ungated-door posture (2026-08-02) applied to the whole shop window. The demos went public only after both were verified self-maintaining and health-checked on production; the two demo-integrity defects found during the launch window (a Saturday false alarm in the checker, a Sunday roll-forward in the re-anchor) were fixed and shipped in the same release, so the surfaces being advertised are the surfaces being maintained.
 
 **Affects:** GTM funnel (zero-contact proof path), marketing entry points on all five surfaces, demo discoverability, express-interest routing for Club.
@@ -57,8 +114,9 @@ HANDOFF → /marketing — none. No customer copy changes; marketing already use
 HANDOFF → /marketing — door-label + demo-adjacent copy pass (owed since the door-open step was
   defined; labels shipped as working copy: "See it live — no sign-up", "See a live tournament
   first", "See a coach's season first", the Club block's "Both halves are live today").
-HANDOFF → owner — two standing revisit triggers, unchanged: the bare-address chooser (when a
-  campaign needs one URL) and the 2027-01-01 ungated-door re-ask in the January conversion runbook.
+HANDOFF → owner — two standing revisit triggers: the bare-address chooser (when a campaign needs
+  one URL) — ✅ FIRED 2026-08-11, closed by the `/demos` entry at the top of this log — and the
+  2027-01-01 ungated-door re-ask in the January conversion runbook, still OPEN.
 HANDOFF → /plan — the in-demo cross-door follow-up build, when scheduled.
 ```
 
