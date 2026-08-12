@@ -44,6 +44,44 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-08-12',
+    title: 'The coach portal gets easier to find your way around',
+    highlights: [
+      {
+        category: 'new',
+        text: 'Every screen in the coach portal now opens the same way — team, season, and your role always show in the same place at the top, with one consistent way back to team home from anywhere.',
+      },
+      {
+        category: 'new',
+        text: 'Team Money is now one page with tabs instead of seven separate pages — switch between Overview, Dues, Budget, Expenses, Fundraisers, Allocations, and Payment Requests without losing your place.',
+      },
+      {
+        category: 'new',
+        text: 'The Money Overview now tells the story in three cards — what\'s been collected, what\'s on hand, and how the budget\'s tracking — plus a single day-by-day list of what\'s coming up in the next 30 days.',
+      },
+      {
+        category: 'new',
+        text: 'The live demos are easier to explore on any screen size — the guided tour and season banner tuck away as you scroll and reappear exactly when you need them, and finishing a tour lets you walk it again.',
+      },
+      {
+        category: 'fixed',
+        text: 'Coaching staff invites on the Team plan were being counted against a seat limit that every other plan is exempt from — fixed. Invite your whole staff; there\'s no cap.',
+      },
+      {
+        category: 'fixed',
+        text: 'Text on the demos, homepage, and pricing pages that was too faint to read comfortably now meets accessibility contrast standards.',
+      },
+      {
+        category: 'fixed',
+        text: 'A past season\'s Money tab no longer shows today\'s upcoming payments — it now shows only what was actually due during that season, matching what the coach saw at the time.',
+      },
+      {
+        category: 'fixed',
+        text: 'The demo banner no longer overlaps page content when you scroll, and "See it live" now goes straight into the demo instead of pausing on a login-style screen first.',
+      },
+    ],
+  },
+  {
     date: '2026-08-10',
     title: 'No more guessing where the game is',
     highlights: [
